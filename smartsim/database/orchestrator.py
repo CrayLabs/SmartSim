@@ -305,6 +305,14 @@ class Orchestrator(EntityList[DBNode]):
             self._hosts = self._get_db_hosts()
         return self._hosts
 
+    def clear_hosts(self) -> None:
+        """Clears the list of hosts for this orchestrator.
+        """
+        for node in self.entities:
+            node.clear_hosts()
+
+        self._hosts = []
+
     def remove_stale_files(self) -> None:
         """Can be used to remove database files of a previous launch"""
 

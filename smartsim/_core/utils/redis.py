@@ -95,7 +95,7 @@ def check_cluster_status(
     :raises SmartSimError: If cluster status cannot be verified
     """
     cluster_nodes = [
-        ClusterNode(get_ip_from_host(host), port)
+        ClusterNode(get_ip_from_host(host), port)  # type: ignore
         for host, port in product(hosts, ports)
     ]
 
@@ -109,9 +109,9 @@ def check_cluster_status(
         # wait for cluster to spin up
         time.sleep(5)
         try:
-            redis_tester: "RedisCluster[t.Any]" = RedisCluster(
+            redis_tester: "RedisCluster[t.Any]" = RedisCluster(  # type: ignore
                 startup_nodes=cluster_nodes
-            )
+            )  # type: ignore
             redis_tester.set("__test__", "__test__")
             redis_tester.delete("__test__")  # type: ignore
             logger.debug("Cluster status verified")
@@ -219,31 +219,33 @@ def set_script(db_script: DBScript, client: Client) -> None:
             raise error
 
 
-def shutdown_db(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
-    """Send shutdown signal to cluster instances.
+def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-wlm
+    """Send shutdown signal to DB node.
 
     Should only be used in the case where cluster deallocation
     needs to occur manually. Usually, the SmartSim task manager
     will take care of this automatically.
 
-    :param hosts: List of hostnames to connect to
-    :type hosts: List[str]
-    :param ports: List of ports for each hostname
-    :type ports: List[int]
+    :param host_ip: IP of host to connect to
+    :type hosts: str
+    :param ports: Port to which node is listening
+    :type ports: int
+    :return: returncode, output, and error of the process
+    :rtype: tuple of (int, str, str)
     :raises SmartSimError: if cluster creation fails
     """
-    for host_ip, port in itertools.product(
-        (get_ip_from_host(host) for host in hosts), ports
-    ):
-        # call cluster command
-        redis_cli = CONFIG.database_cli
-        cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
-        returncode, out, err = execute_cmd(
-            cmd, proc_input="yes", shell=False, timeout=10
-        )
 
-        if returncode != 0:
-            logger.error(out)
-            logger.error(err)
-        else:
-            logger.debug(out)
+    # call cluster command
+    redis_cli = CONFIG.database_cli
+    cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
+    returncode, out, err = execute_cmd(
+        cmd, proc_input="yes", shell=False, timeout=10
+    )
+
+    if returncode != 0:
+        logger.error(out)
+        logger.error(err)
+    elif out:
+        logger.debug(out)
+
+    return returncode, out, err

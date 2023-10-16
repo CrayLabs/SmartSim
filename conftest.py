@@ -396,16 +396,14 @@ def local_db(
 
 @pytest.fixture
 def db(
-    fileutils: t.Type[FileUtils], wlmutils: t.Type[WLMUtils], request: t.Any
+    request: t.Any, wlmutils: t.Type[WLMUtils], make_test_dir: t.Any
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an orchestrator"""
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(
-        caller_function=exp_name, caller_fspath=request.fspath
-    )
+    test_dir = make_test_dir
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -441,7 +439,9 @@ def db_cluster(
 
 @pytest.fixture(scope="function", autouse=True)
 def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("SSDB", raising=False)
+    for key in os.environ.keys():
+        if key.startswith("SSDB"):
+            monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("SSKEYIN", raising=False)
     monkeypatch.delenv("SSKEYOUT", raising=False)
 
@@ -548,7 +548,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
 
 @pytest.fixture
 def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
-    caller_function = _sanitize_caller_function(caller_function)
+    caller_function = _sanitize_caller_function(request.node.name)
     dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
 
     if not os.path.exists(os.path.dirname(dir_path)):
@@ -559,7 +559,7 @@ def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
 
 @pytest.fixture
 def make_test_dir(request: t.Optional[pytest.FixtureRequest]):
-    caller_function = request.node.name.replace("[", ".").replace("]", "")
+    caller_function = _sanitize_caller_function(request.node.name)
     dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
 
     try:

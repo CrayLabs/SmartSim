@@ -379,12 +379,14 @@ def test_multidb_standard_then_colo(fileutils, make_test_dir, wlmutils, coloutil
     exp.start(smartsim_model)
 
     exp.stop(db)
+
     # test restart standard db
     exp.start(db)
-
     exp.stop(db)
     exp.stop(smartsim_model)
     print(exp.summary())
+
+    assert all(stat is not status.STATUS_FAILED for stat in exp.get_status(db, smartsim_model))
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
