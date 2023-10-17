@@ -75,7 +75,8 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
-    parser.add_argument("--devices_per_node", type=int)
+    parser.add_argument("--devices_per_node", type=int, default=1)
+    parser.add_argument("--first_device", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=0)
     parser.add_argument("--min_batch_size", type=int, default=0)
     parser.add_argument("--min_batch_timeout", type=int, default=0)
@@ -100,7 +101,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             name=name,
             model_file=args.file,
             backend=args.backend,
-            fist_gpu=0,
+            first_gpu=args.first_device,
             num_gpus=args.devices_per_node,
             batch_size=args.batch_size,
             min_batch_size=args.min_batch_size,
@@ -142,7 +143,8 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
-    parser.add_argument("--devices_per_node", type=int)
+    parser.add_argument("--devices_per_node", type=int, default=1)
+    parser.add_argument("--first_device", type=int, default=0)
     args = parser.parse_args(db_script)
 
     if args.file and args.func:
@@ -151,13 +153,15 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     if args.func:
         func = args.func.replace("\\n", "\n")
         if args.devices_per_node > 1 and args.device.lower() == "gpu":
-            client.set_script_multigpu(args.name, func, 0, args.devices_per_node)
+            client.set_script_multigpu(
+                args.name, func, args.first_device, args.devices_per_node
+            )
         else:
             client.set_script(args.name, func, args.device)
     elif args.file:
         if args.devices_per_node > 1 and args.device.lower() == "gpu":
             client.set_script_from_file_multigpu(
-                args.name, args.file, 0, args.devices_per_node
+                args.name, args.file, args.first_device, args.devices_per_node
             )
         else:
             client.set_script_from_file(args.name, args.file, args.device)
