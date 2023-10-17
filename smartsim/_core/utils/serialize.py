@@ -31,7 +31,7 @@ TStepLaunchMetaData = t.Tuple[
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
-    manifest_dir = Path(manifest.metadata.exp_path) / ".smartsim/manifest"
+    manifest_dir = Path(manifest.metadata.exp_path) / ".smartsim/telemetry"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     manifest_file = manifest_dir / "manifest.json"
 
@@ -96,10 +96,11 @@ def _dictify_model(
     return {
         "name": model.name,
         "path": model.path,
+        "exe_args": model.run_settings.exe_args,
         "run_settings": _dictify_run_settings(model.run_settings),
         "batch_settings": _dictify_batch_settings(model.batch_settings)
         if model.batch_settings
-        else None,
+        else {},
         "params": model.params,
         "files": {
             "Symlink": model.files.link,
@@ -134,7 +135,7 @@ def _dictify_model(
             ],
         }
         if colo_settings
-        else None,
+        else {},
         "telemetry_metadata": {
             "status_dir": str(telemetry_data_path / model.name),
             "step_id": step_id,
@@ -142,7 +143,7 @@ def _dictify_model(
             "managed": managed,
         },
         "out_file": out_file,
-        "error_file": err_file,
+        "err_file": err_file,
     }
 
 
@@ -157,7 +158,7 @@ def _dictify_ensemble(
         "batch_settings": _dictify_batch_settings(ens.batch_settings)
         # FIXME: Typehint here is wrong, ``ens.batch_settings`` can
         # also be an empty dict for no discernible reason...
-        if ens.batch_settings else None,
+        if ens.batch_settings else {},
         "models": [
             _dictify_model(
                 model, *launching_metadata, telemetry_data_path / ens.name
@@ -170,7 +171,8 @@ def _dictify_ensemble(
 def _dictify_run_settings(run_settings: RunSettings) -> t.Dict[str, t.Any]:
     return {
         "exe": run_settings.exe,
-        "exe_args": run_settings.exe_args,
+        # TODO: We should try to move this back
+        # "exe_args": run_settings.exe_args,
         "run_command": run_settings.run_command,
         "run_args": run_settings.run_args,
         # TODO: We currently do not have a way to represent MPMD commands!
