@@ -169,7 +169,6 @@ def test_tf_db_model(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create database
     db = exp.create_database(port=test_port, interface=test_interface)
@@ -208,6 +207,8 @@ def test_tf_db_model(fileutils, make_test_dir, wlmutils, mlutils):
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 2
 
+    exp.generate(smartsim_model)
+
     # Launch and check successful completion
     try:
         exp.start(db, smartsim_model, block=True)
@@ -243,7 +244,6 @@ def test_pt_db_model(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create database
     db = exp.create_database(port=test_port, interface=test_interface)
@@ -270,6 +270,8 @@ def test_pt_db_model(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 1
+
+    exp.generate(smartsim_model)
 
     # Launch and check successful completion
     try:
@@ -308,11 +310,9 @@ def test_db_model_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     smartsim_ensemble = exp.create_ensemble(
         "smartsim_model", run_settings=run_settings, replicas=2
     )
-    smartsim_ensemble.set_path(test_dir)
 
     # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create database
     db = exp.create_database(port=test_port, interface=test_interface)
@@ -366,6 +366,8 @@ def test_db_model_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     # Assert we have added two models to each entity
     assert all([len(entity._db_models) == 2 for entity in smartsim_ensemble])
 
+    exp.generate(smartsim_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(db, smartsim_ensemble, block=True)
@@ -392,7 +394,7 @@ def test_colocated_db_model_tf(fileutils, make_test_dir, wlmutils, mlutils):
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experience
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -401,7 +403,6 @@ def test_colocated_db_model_tf(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Create colocated Model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
@@ -436,6 +437,8 @@ def test_colocated_db_model_tf(fileutils, make_test_dir, wlmutils, mlutils):
     # Assert we have added both models
     assert len(colo_model._db_models) == 2
 
+    exp.generate(colo_model)
+
     # Launch and check successful completion
     try:
         exp.start(colo_model, block=True)
@@ -461,7 +464,7 @@ def test_colocated_db_model_pytorch(fileutils, make_test_dir, wlmutils, mlutils)
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -470,13 +473,13 @@ def test_colocated_db_model_pytorch(fileutils, make_test_dir, wlmutils, mlutils)
 
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         debug=True,
         ifname=test_interface
     )
+
 
     # Create and save ML model to filesystem
     save_torch_cnn(test_dir, "model1.pt")
@@ -491,6 +494,8 @@ def test_colocated_db_model_pytorch(fileutils, make_test_dir, wlmutils, mlutils)
 
     # Assert we have added both models
     assert len(colo_model._db_models) == 1
+
+    exp.generate(colo_model)
 
     # Launch and check successful completion
     try:
@@ -531,7 +536,6 @@ def test_colocated_db_model_ensemble(fileutils, make_test_dir, wlmutils, mlutils
     colo_ensemble: Ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Create a third model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
@@ -593,6 +597,8 @@ def test_colocated_db_model_ensemble(fileutils, make_test_dir, wlmutils, mlutils
         outputs=outputs2,
     )
 
+    exp.generate(colo_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -621,7 +627,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, make_test_dir, wlmutil
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -632,11 +638,9 @@ def test_colocated_db_model_ensemble_reordered(fileutils, make_test_dir, wlmutil
     colo_ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
 
     # Create and save ML model to filesystem
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
@@ -694,6 +698,8 @@ def test_colocated_db_model_ensemble_reordered(fileutils, make_test_dir, wlmutil
         outputs=outputs2,
     )
 
+    exp.generate(colo_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -720,7 +726,7 @@ def test_colocated_db_model_errors(fileutils, make_test_dir, wlmutils, mlutils):
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -752,7 +758,6 @@ def test_colocated_db_model_errors(fileutils, make_test_dir, wlmutils, mlutils):
     colo_ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Colocate a db with each ensemble member
     for i, entity in enumerate(colo_ensemble):

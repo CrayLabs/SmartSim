@@ -158,11 +158,9 @@ def test_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     ensemble = exp.create_ensemble(
         "dbscript_ensemble", run_settings=run_settings, replicas=2
     )
-    ensemble.set_path(test_dir)
 
     # Create SmartSim model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create SmartSim database
     db = exp.create_database(port=test_port, interface=test_interface)
@@ -212,6 +210,8 @@ def test_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     # Assert we have added all three models to entities in ensemble
     assert all([len(entity._db_scripts) == 3 for entity in ensemble])
 
+    exp.generate(ensemble)
+
     try:
         exp.start(db, ensemble, block=True)
         statuses = exp.get_status(ensemble)
@@ -238,7 +238,7 @@ def test_colocated_db_script(fileutils, make_test_dir, wlmutils, mlutils):
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -247,7 +247,6 @@ def test_colocated_db_script(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Create model with colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
@@ -272,6 +271,8 @@ def test_colocated_db_script(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Assert we have added both models
     assert len(colo_model._db_scripts) == 2
+
+    exp.generate(colo_model)
 
     for db_script in colo_model._db_scripts:
         logger.debug(db_script)
@@ -304,7 +305,7 @@ def test_colocated_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutil
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -315,11 +316,9 @@ def test_colocated_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutil
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Create a SmartSim model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
 
     # Colocate a db with each ensemble entity and add a script
     # to each entity via file
@@ -372,6 +371,8 @@ def test_colocated_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutil
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
 
+    exp.generate(colo_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -400,7 +401,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, make_test_dir, wlmuti
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -411,11 +412,9 @@ def test_colocated_db_script_ensemble_reordered(fileutils, make_test_dir, wlmuti
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Create an additional SmartSim Model entity
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
 
     # Add a script via string to the ensemble members
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -467,6 +466,8 @@ def test_colocated_db_script_ensemble_reordered(fileutils, make_test_dir, wlmuti
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
 
+    exp.generate(colo_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -491,10 +492,9 @@ def test_db_script_errors(fileutils, make_test_dir, wlmutils, mlutils):
     test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-    torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -503,7 +503,6 @@ def test_db_script_errors(fileutils, make_test_dir, wlmutils, mlutils):
 
     # Create a SmartSim model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
@@ -526,7 +525,6 @@ def test_db_script_errors(fileutils, make_test_dir, wlmutils, mlutils):
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Add a colocated database for each ensemble member
     for i, entity in enumerate(colo_ensemble):
@@ -552,7 +550,6 @@ def test_db_script_errors(fileutils, make_test_dir, wlmutils, mlutils):
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Add an in-memory function to the ensemble
     colo_ensemble.add_function(
