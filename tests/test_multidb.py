@@ -45,6 +45,15 @@ should_run = True
 
 supported_dbs = ["uds", "tcp"]
 
+@contextmanager
+def start_in_context(exp, entity):
+    """Start entity in a context to ensure that it is always stopped"""
+    exp.generate(entity)
+    try:
+        exp.start(entity)
+        yield entity
+    finally:
+        exp.stop(entity)
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
@@ -62,15 +71,13 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, test_dir, launcher=test_launcher)
 
     # create regular database
     orc = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_db"
+        port=test_port, interface=test_interface, db_identifier="my_db",
+        hosts=wlmutils.get_test_hostlist(),
     )
-
-    exp.generate(orc)
-
     assert orc.name == "my_db"
 
     # create run settings
@@ -80,7 +87,6 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
     #  # Create the SmartSim Model
     smartsim_model = exp.create_model("colocated_model", colo_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port + 1,
@@ -99,26 +105,19 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
     assert smartsim_model.run_settings.colocated_db_settings["db_identifier"] == "my_db"
 
-    try:
-        exp.start(orc)
+    with start_in_context(exp, orc) as orc:
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(smartsim_model, block=True)
-
         assert (
             "has already been used. Pass in a unique name for db_identifier"
             in ex.value.args[0]
         )
 
-    except:
-        exp.stop(smartsim_model)
-    finally:
-        exp.stop(orc)
-
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
     """Test colocate_db_uds/colocate_db_tcp then create_database with database
-    identifiers. 
+    identifiers.
     """
 
     # Set experiment name
@@ -132,7 +131,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, test_dir, launcher=test_launcher)
 
     # Create run settings
     colo_settings = exp.create_run_settings("python", test_script)
@@ -162,7 +161,8 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
 
     # Create Database
     orc = exp.create_database(
-        port=test_port + 1, interface=test_interface, db_identifier="my_db"
+        port=test_port + 1, interface=test_interface, db_identifier="my_db",
+        hosts=wlmutils.get_test_hostlist(),
     )
 
     exp.generate(orc)
@@ -170,9 +170,6 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
 
     exp.start(smartsim_model, block=True)
     exp.start(orc)
-
-    exp.stop(smartsim_model)
-    exp.stop(orc)
 
 
 def test_db_identifier_standard_twice_not_unique(wlmutils):
@@ -186,40 +183,36 @@ def test_db_identifier_standard_twice_not_unique(wlmutils):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
+    test_dir = fileutils.make_test_dir()
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, test_dir, launcher=test_launcher)
 
     # CREATE DATABASE with db_identifier
     orc = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_db"
+        port=test_port, interface=test_interface, db_identifier="my_db",
+        hosts=wlmutils.get_test_hostlist(),
     )
     exp.generate(orc)
 
     assert orc.name == "my_db"
 
     orc2 = exp.create_database(
-        port=test_port + 1, interface=test_interface, db_identifier="my_db"
+        port=test_port + 1, interface=test_interface, db_identifier="my_db",
+        hosts=wlmutils.get_test_hostlist(),
     )
     exp.generate(orc2)
 
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    try:
-        exp.start(orc)
+    with start_in_context(exp, orc) as orc:
         with pytest.raises(SSDBIDConflictError) as ex:
-            exp.start(orc2)
-
-        assert (
-            "has already been used. Pass in a unique name for db_identifier"
-            in ex.value.args[0]
-        )
-    except:
-        exp.stop(orc2)
-    finally:
-        exp.stop(orc)
-        # exp.stop(orc2)
+            with start_in_context(exp, orc2) as orc2:
+                assert (
+                    "has already been used. Pass in a unique name for db_identifier"
+                    in ex.value.args[0]
+                )
 
 
 def test_db_identifier_create_standard_once(fileutils, wlmutils):
@@ -249,9 +242,6 @@ def test_db_identifier_create_standard_once(fileutils, wlmutils):
     exp.start(db)
     exp.stop(db)
 
-    print(exp.summary())
-
-
 def test_multidb_create_standard_twice(fileutils, wlmutils):
     """Multiple calls to create database with unique db_identifiers"""
 
@@ -268,26 +258,22 @@ def test_multidb_create_standard_twice(fileutils, wlmutils):
 
     # create and start an instance of the Orchestrator database
     db = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="testdb_reg"
+        port=test_port, interface=test_interface, db_identifier="testdb_reg",
+        hosts=wlmutils.get_test_hostlist(),
     )
-    exp.generate(db)
 
     # create database with different db_id
     db2 = exp.create_database(
-        port=test_port + 1, interface=test_interface, db_identifier="testdb_reg2"
+        port=test_port + 1, interface=test_interface, db_identifier="testdb_reg2",
+        hosts=wlmutils.get_test_hostlist(),
     )
-    exp.generate(db2)
 
     # launch
-    exp.start(db, db2)
-    exp.stop(db, db2)
+    with start_in_context(exp, db) as db, start_in_context(exp, db2) as db2:
+        print("Databases started")
 
-    # test restart
-    exp.start(db, db2)
-    exp.stop(db, db2)
-
-    print(exp.summary())
-
+    with start_in_context(exp, db) as db, start_in_context(exp, db2) as db2:
+        print("Databases restarted")
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_multidb_colo_once(fileutils, wlmutils, coloutils, db_type):
@@ -300,7 +286,7 @@ def test_multidb_colo_once(fileutils, wlmutils, coloutils, db_type):
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # start a new Experiment for this section
-    exp = Experiment("test_multidb_colo_once", launcher=test_launcher)
+    exp = Experiment("test_multidb_colo_once", test_dir, launcher=test_launcher)
 
     # create run settings
     run_settings = exp.create_run_settings("python", test_script)
@@ -356,7 +342,8 @@ def test_multidb_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
 
     # create and start an instance of the Orchestrator database
     db = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="testdb_reg"
+        port=test_port, interface=test_interface, db_identifier="testdb_reg",
+        hosts=wlmutils.get_test_hostlist(),
     )
     exp.generate(db)
 
@@ -436,7 +423,8 @@ def test_multidb_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
 
     # create and start an instance of the Orchestrator database
     db = exp.create_database(
-        port=test_port + 1, interface=test_interface, db_identifier="testdb_reg"
+        port=test_port + 1, interface=test_interface, db_identifier="testdb_reg",
+        hosts=wlmutils.get_test_hostlist(),
     )
     exp.generate(db)
 
@@ -466,7 +454,7 @@ def test_launch_cluster_orc_single_dbid(fileutils, wlmutils):
 
     exp_name = "test_launch_cluster_orc_single_dbid"
     launcher = wlmutils.get_test_launcher()
-    exp = Experiment(exp_name, launcher=launcher)
+    exp = Experiment(exp_name, test_dir, launcher=launcher)
     test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
