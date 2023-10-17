@@ -109,7 +109,7 @@ def test_launched_manifest_transform_data():
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
     dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
     launched = LaunchedManifest(
-        metadata=LaunchedManifestMetadata("naem", "path", "launcher"),
+        metadata=LaunchedManifestMetadata("name", "path", "launcher"),
         models=models,
         ensembles=ensembles,
         databases=dbs,
