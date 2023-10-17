@@ -47,12 +47,12 @@ def add_batch_resources(wlmutils, batch_settings):
             batch_settings.set_resource(key, value)
 
 
-def test_batch_model(fileutils, wlmutils):
+def test_batch_model(fileutils, make_test_dir, wlmutils):
     """Test the launch of a manually construced batch model"""
 
     exp_name = "test-batch-model"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
@@ -73,12 +73,12 @@ def test_batch_model(fileutils, wlmutils):
     assert statuses[0] == status.STATUS_COMPLETED
 
 
-def test_batch_ensemble(fileutils, wlmutils):
+def test_batch_ensemble(fileutils, make_test_dir, wlmutils):
     """Test the launch of a manually constructed batch ensemble"""
 
     exp_name = "test-batch-ensemble"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
@@ -101,10 +101,10 @@ def test_batch_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_batch_ensemble_replicas(fileutils, wlmutils):
+def test_batch_ensemble_replicas(fileutils, make_test_dir, wlmutils):
     exp_name = "test-batch-ensemble-replicas"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")

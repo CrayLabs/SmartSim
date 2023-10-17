@@ -56,7 +56,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_sklearn_onnx(fileutils, mlutils, wlmutils):
+def test_sklearn_onnx(make_test_dir, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 some sklearn models
 
      here we test the following sklearn models:
@@ -75,7 +75,7 @@ def test_sklearn_onnx(fileutils, mlutils, wlmutils):
     """
 
     exp_name = "test_sklearn_onnx"
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 

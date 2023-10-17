@@ -87,9 +87,9 @@ def test_singularity_commands(fileutils):
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_basic(fileutils):
+def test_singularity_basic(fileutils, make_test_dir):
     """Basic argument-less Singularity test"""
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     container = Singularity(containerURI)
 
@@ -113,9 +113,9 @@ def test_singularity_basic(fileutils):
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_args(fileutils):
+def test_singularity_args(fileutils, make_test_dir):
     """Test combinations of args and mount arguments for Singularity"""
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     hometest_dir = os.path.join(str(Path.home()), "test")  # $HOME/test
     mount_paths = {test_dir + "/singularity_args": hometest_dir}
     container = Singularity(containerURI, args="--contain", mount=mount_paths)
@@ -140,7 +140,7 @@ def test_singularity_args(fileutils):
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_smartredis(fileutils, wlmutils):
+def test_singularity_smartredis(make_test_dir, fileutils, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -148,7 +148,7 @@ def test_singularity_smartredis(fileutils, wlmutils):
     Note: This is a containerized port of test_smartredis.py
     """
 
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )

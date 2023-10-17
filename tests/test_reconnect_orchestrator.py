@@ -37,12 +37,12 @@ first_dir = ""
 # use https://stackoverflow.com/questions/22627659/run-code-before-and-after-each-test-in-py-test
 
 
-def test_local_orchestrator(fileutils, wlmutils):
+def test_local_orchestrator(make_test_dir, wlmutils):
     """Test launching orchestrator locally"""
     global first_dir
     exp_name = "test-orc-launch-local"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     first_dir = test_dir
 
     orc = Orchestrator(port=wlmutils.get_test_port())

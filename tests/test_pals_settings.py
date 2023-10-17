@@ -115,7 +115,7 @@ def set_env_var_to_inherit(rs):
     ],
 )
 def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
-    monkeypatch, mock_mpiexec, fileutils, rs_mutation, run_args
+    monkeypatch, mock_mpiexec, make_test_dir, rs_mutation, run_args
 ):
     # Setup run settings
     exe_args = ["-c", """'print("Hello")'"""]
@@ -126,7 +126,7 @@ def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
     launcher = PBSLauncher()
     monkeypatch.setenv(f"PBS_JOBID", "mock-job")
 
-    wdir = fileutils.make_test_dir()
+    wdir = make_test_dir
     step = launcher.create_step("my_step", wdir, rs)
     assert isinstance(step, MpiexecStep)
     assert step.get_launch_cmd() == [
@@ -139,7 +139,7 @@ def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
     ]
 
 
-def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, fileutils, mock_mpiexec):
+def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, make_test_dir, mock_mpiexec):
     # Setup run settings
     def make_rs(exe, exe_args):
         return PalsMpiexecSettings(exe, exe_args), [exe] + exe_args
@@ -166,7 +166,7 @@ def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, fileutils, mock_m
     launcher = PBSLauncher()
     monkeypatch.setenv(f"PBS_JOBID", "mock-job")
 
-    wdir = fileutils.make_test_dir()
+    wdir = make_test_dir
     step = launcher.create_step("my_step", wdir, rs_1)
     assert isinstance(step, MpiexecStep)
     assert step.get_launch_cmd() == [

@@ -42,13 +42,13 @@ if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
         reason="Launching orchestrators in a batch job is not supported on PBS without ALPS"
     )
 
-def test_launch_orc_auto_batch(fileutils, wlmutils):
+def test_launch_orc_auto_batch(make_test_dir, wlmutils):
     """test single node orchestrator"""
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-orc-batch"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -80,14 +80,14 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
+def test_launch_cluster_orc_batch_single(make_test_dir, wlmutils):
     """test clustered 3-node orchestrator with single command"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-cluster-orc-batch-single"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -123,14 +123,14 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
+def test_launch_cluster_orc_batch_multi(make_test_dir, wlmutils):
     """test clustered 3-node orchestrator"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-cluster-orc-batch-multi"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -162,12 +162,12 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
+def test_launch_cluster_orc_reconnect(make_test_dir, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
     launcher = wlmutils.get_test_launcher()
     exp_name = "test-launch-cluster-orc-batch-reconect"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()

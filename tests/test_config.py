@@ -55,7 +55,7 @@ def test_all_config_defaults():
 
 
 def get_redisai_env(rai_path: t.Optional[str], lib_path: t.Optional[str]) -> t.Dict[str, str]:
-    """Convenience method to create a set of environment variables 
+    """Convenience method to create a set of environment variables
     that include RedisAI-specific variables
     :param rai_path: The path to the RedisAI library
     :type: str (optional)
@@ -68,21 +68,25 @@ def get_redisai_env(rai_path: t.Optional[str], lib_path: t.Optional[str]) -> t.D
         env["RAI_PATH"] = rai_path
     else:
         env.pop("RAI_PATH", None)
-    
+
     if lib_path is not None:
         env["SMARTSIM_DEP_INSTALL_PATH"] = lib_path
     else:
         env.pop("SMARTSIM_DEP_INSTALL_PATH", None)
-    
+
     return env
 
 
-def test_redisai_invalid_rai_path(fileutils, monkeypatch):
-    """An invalid RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should fail"""
-    test_dir = fileutils.make_test_dir()
-    rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
-    _ = fileutils.make_test_file("redisai.so", "lib")
+def make_file(filepath: str) -> None:
+    os.makedirs(os.path.dirname(filepath))
+    with open(filepath, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy\n")
 
+def test_redisai_invalid_rai_path(get_test_dir, monkeypatch):
+    """An invalid RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should fail"""
+    test_dir = get_test_dir
+    rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
+    make_file(os.path.join(test_dir, "lib", "redisai.so"))
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
 
@@ -95,11 +99,11 @@ def test_redisai_invalid_rai_path(fileutils, monkeypatch):
     assert 'RedisAI dependency not found' in ex.value.args[0]
 
 
-def test_redisai_valid_rai_path(fileutils, monkeypatch):
+def test_redisai_valid_rai_path(get_test_dir, monkeypatch):
     """A valid RAI_PATH should override valid SMARTSIM_DEP_INSTALL_PATH and succeed"""
-    test_dir = fileutils.make_test_dir()
-    rai_file_path = fileutils.make_test_file("mock-redisai.so", "lib")
-    _ = fileutils.make_test_file("redisai.so", "deps")
+    test_dir = get_test_dir
+    rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
+    make_file(rai_file_path)
 
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
@@ -110,14 +114,14 @@ def test_redisai_valid_rai_path(fileutils, monkeypatch):
     assert config.redisai == rai_file_path
 
 
-def test_redisai_invalid_lib_path(fileutils, monkeypatch):
+def test_redisai_invalid_lib_path(make_test_dir, monkeypatch):
     """Invalid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should fail"""
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     rai_file_path = f"{test_dir}/railib/redisai.so"
 
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
-    
+
     config = Config()
     # Fail when no files exist @ either location
     with pytest.raises(SSConfigError) as ex:
@@ -126,29 +130,29 @@ def test_redisai_invalid_lib_path(fileutils, monkeypatch):
     assert 'RedisAI dependency not found' in ex.value.args[0]
 
 
-def test_redisai_valid_lib_path(fileutils, monkeypatch):
+def test_redisai_valid_lib_path(get_test_dir, monkeypatch):
     """Valid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should succeed"""
-    test_dir = fileutils.make_test_dir()
-    rai_file_path = fileutils.make_test_file("mock-redisai.so", "lib")
-
+    test_dir = get_test_dir
+    rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
+    make_file(rai_file_path)
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
-    
+
     config = Config()
     assert config.redisai
     assert Path(config.redisai).is_file()
     assert config.redisai == rai_file_path
 
 
-def test_redisai_valid_lib_path_null_rai(fileutils, monkeypatch):
+def test_redisai_valid_lib_path_null_rai(get_test_dir, monkeypatch):
     """Missing RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should succeed"""
-    test_dir = fileutils.make_test_dir()
+    test_dir = get_test_dir
     rai_file_path: t.Optional[str] = None
-    lib_file_path = fileutils.make_test_file("redisai.so", "lib")
-
+    lib_file_path = os.path.join(test_dir, "lib", "redisai.so")
+    make_file(lib_file_path)
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
-    
+
     config = Config()
     assert config.redisai
     assert Path(config.redisai).is_file()

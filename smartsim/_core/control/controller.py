@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
+import itertools
 
 import os.path as osp
 from os import environ
@@ -36,8 +37,10 @@ import typing as t
 
 from smartredis import Client, ConfigOptions
 
+from smartsim._core.utils.network import get_ip_from_host
+
 from ..._core.launcher.step import Step
-from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
+from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db_node
 from ..._core.utils.helpers import (
     unpack_db_identifier,
     unpack_colo_db_identifier,
@@ -53,7 +56,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...settings.base import BatchSettings
-from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...status import STATUS_CANCELLED, STATUS_FAILED, STATUS_RUNNING, TERMINAL_STATUSES
 from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
@@ -212,12 +215,23 @@ class Controller:
         if db.batch:
             self.stop_entity(db)
         else:
-            shutdown_db(db.hosts, db.ports)
-            with JM_LOCK:
-                for entity in db:
-                    job = self._jobs[entity.name]
-                    job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
-                    self._jobs.move_to_completed(job)
+            for node in db.entities:
+                for host_ip, port in itertools.product(
+                (get_ip_from_host(host) for host in node.hosts), db.ports
+                ):
+                    retcode, _, _ = shutdown_db_node(host_ip, port)
+                    # Sometimes the DB will not shutdown (unless we force NOSAVE)
+                    if retcode != 0:
+                        self.stop_entity(node)
+                        continue
+
+                    with JM_LOCK:
+                        job = self._jobs[node.name]
+                        job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                        self._jobs.move_to_completed(job)
+
+        db.clear_hosts()
+
 
     def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
         """Stop an instance of an entity list

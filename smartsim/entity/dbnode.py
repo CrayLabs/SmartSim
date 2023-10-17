@@ -97,6 +97,9 @@ class DBNode(SmartSimEntity):
             self._hosts = self._parse_db_hosts()
         return self._hosts
 
+    def clear_hosts(self) -> None:
+        self._hosts = None
+
     @property
     def is_mpmd(self) -> bool:
         try:
@@ -227,7 +230,7 @@ class DBNode(SmartSimEntity):
 
 @dataclass(frozen=True)
 class LaunchedShardData:
-    """Data class to write an parse data about a launched database shard"""
+    """Data class to write and parse data about a launched database shard"""
 
     name: str
     hostname: str
