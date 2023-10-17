@@ -77,13 +77,16 @@ class SmartCli:
         app_args = cli_args[1:]  # exclude the path to executable
         subcommand = cli_args[1]  # first positional arg is the subcommand
 
-        self.args, unparsed_args = self.parser.parse_known_args(app_args)
-
         menu_item = self.menu.get(subcommand, None)
-
         if not menu_item:
             self.parser.print_help()
             return 0
+
+        if menu_item.is_plugin:
+            self.args, unparsed_args = self.parser.parse_known_args(app_args)
+        else:
+            unparsed_args = []
+            self.args = self.parser.parse_args(app_args)
 
         return menu_item.handler(self.args, unparsed_args)
 

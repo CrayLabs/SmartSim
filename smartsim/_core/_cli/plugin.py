@@ -30,6 +30,7 @@ def dashboard() -> MenuItemConfig:
         "dashboard",
         "Start the SmartSim dashboard",
         dynamic_execute("smart-dash"),
+        is_plugin=True,
     )
 
 
