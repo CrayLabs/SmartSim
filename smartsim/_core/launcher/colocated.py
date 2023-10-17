@@ -218,6 +218,7 @@ def _build_db_model_cmd(db_models: t.List[DBModel]) -> t.List[str]:
         cmd.append(f"--backend={db_model.backend}")
         cmd.append(f"--device={db_model.device}")
         cmd.append(f"--devices_per_node={db_model.devices_per_node}")
+        cmd.append(f"--first_device={db_model.first_device}")
         if db_model.batch_size:
             cmd.append(f"--batch_size={db_model.batch_size}")
         if db_model.min_batch_size:
@@ -254,5 +255,5 @@ def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
             cmd.append(f"--file={db_script.file}")
         cmd.append(f"--device={db_script.device}")
         cmd.append(f"--devices_per_node={db_script.devices_per_node}")
-
+        cmd.append(f"--first_device={db_script.first_device}")
     return cmd
