@@ -26,6 +26,7 @@
 
 import argparse
 from contextlib import contextmanager
+import pathlib
 import typing as t
 
 import pytest
@@ -536,12 +537,12 @@ def test_cli_full_clean_execute(capsys, monkeypatch):
     exp_retval = 0
     exp_output = "mocked-clean utility"
 
-    def mock_execute(ns: argparse.Namespace, unparsed: t.Optional[t.List[str]] = None):
+    # mock out the internal clean method so we don't actually delete anything
+    def mock_clean(core_path: pathlib.Path, _all: bool = False) -> int:
         print(exp_output)
         return exp_retval
-
-    # mock out the internal clean method so we don't actually delete anything
-    monkeypatch.setattr(smartsim._core._cli.clean, "clean", mock_execute)
+    
+    monkeypatch.setattr(smartsim._core._cli.clean, "clean", mock_clean)
 
     command = "clean"
     cfg = MenuItemConfig(command,
