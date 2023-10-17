@@ -41,6 +41,7 @@ from smartsim._core._cli.validate import (
     execute as validate_execute,
     configure_parser as validate_parser,
 )
+from smartsim._core._cli.plugin import plugins
 from smartsim._core._cli.utils import MenuItemConfig
 
 
@@ -54,7 +55,7 @@ class SmartCli:
         self.parser = parser
         self.args: t.Optional[argparse.Namespace] = None
 
-        subparsers = parser.add_subparsers(
+        self.subparsers = parser.add_subparsers(
             dest="command",
             required=True,
             metavar="<command>",
@@ -62,7 +63,7 @@ class SmartCli:
         )
 
         for cmd, item in self.menu.items():
-            parser = subparsers.add_parser(
+            parser = self.subparsers.add_parser(
                 cmd, description=item.description, help=item.description
             )
             if item.configurator:
@@ -73,14 +74,31 @@ class SmartCli:
             self.parser.print_help()
             return 0
 
-        app_args = cli_args[1:]
-        self.args = self.parser.parse_args(app_args)
+        app_args = cli_args[1:]  # exclude the path to executable
+        subcommand = cli_args[1]  # first positional arg is the subcommand
 
-        if not (menu_item := self.menu.get(app_args[0], None)):
+        self.args, unparsed_args = self.parser.parse_known_args(app_args)
+
+        menu_item = self.menu.get(subcommand, None)
+
+        if not menu_item:
             self.parser.print_help()
             return 0
 
-        return menu_item.handler(self.args)
+        return menu_item.handler(self.args, unparsed_args)
+
+    def _register_plugin(self, item: MenuItemConfig) -> None:
+        parser = self.subparsers.add_parser(
+            item.command, description=item.description, help=item.description
+        )
+        if item.configurator:
+            item.configurator(parser)
+
+        self.menu[item.command] = item
+
+    def register_plugins(self) -> None:
+        for plugin in plugins:
+            self._register_plugin(plugin())
 
 
 def default_cli() -> SmartCli:

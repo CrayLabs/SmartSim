@@ -121,7 +121,7 @@ def get_db_path() -> t.Optional[Path]:
     return None
 
 
-_CliHandler = t.Callable[[Namespace], int]
+_CliHandler = t.Callable[[Namespace, t.List[str]], int]
 _CliParseConfigurator = t.Callable[[ArgumentParser], None]
 
 
