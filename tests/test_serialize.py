@@ -6,7 +6,7 @@ from smartsim._core.utils import serialize
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 
 
-def test_serialize_creates_a_maifest_json_file_if_dne(fileutils):
+def test_serialize_creates_a_manifest_json_file_if_dne(fileutils):
     test_dir = fileutils.get_test_dir()
     lmb = LaunchedManifestBuilder()
     serialize.save_launch_manifest(lmb.finalize("exp", test_dir, "launcher"))
