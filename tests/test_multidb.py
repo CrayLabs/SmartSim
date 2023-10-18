@@ -27,6 +27,7 @@ from contextlib import contextmanager
 import pytest
 
 from smartsim import Experiment, status
+from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
 
@@ -41,13 +42,13 @@ should_run = True
 supported_dbs = ["uds", "tcp"]
 
 @contextmanager
-def start_in_context(exp, entity):
+def start_in_context(exp: Experiment, entity: SmartSimEntity):
     """Start entity in a context to ensure that it is always stopped"""
     exp.generate(entity, overwrite=True)
     try:
         yield entity
     finally:
-        if exp.get_status(entity) == status.STATUS_RUNNING:
+        if exp.get_status(entity)[0] == status.STATUS_RUNNING:
             exp.stop(entity)
 
 def choose_host(wlmutils, index=0):
