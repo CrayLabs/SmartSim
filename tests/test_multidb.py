@@ -23,6 +23,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from contextlib import contextmanager
 import pytest
 
 from smartsim import Experiment, status
@@ -42,12 +43,18 @@ supported_dbs = ["uds", "tcp"]
 @contextmanager
 def start_in_context(exp, entity):
     """Start entity in a context to ensure that it is always stopped"""
-    exp.generate(entity)
+    exp.generate(entity, overwrite=True)
     try:
-        exp.start(entity)
         yield entity
     finally:
-        exp.stop(entity)
+        if exp.get_status(entity) == status.STATUS_RUNNING:
+            exp.stop(entity)
+
+def choose_host(wlmutils, index=0):
+    hosts = wlmutils.get_test_hostlist()
+    if hosts:
+        hosts = hosts[index]
+    return hosts
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_type, make_test_dir):
@@ -70,7 +77,7 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
     # create regular database
     orc = exp.create_database(
         port=test_port, interface=test_interface, db_identifier="my_db",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils),
     )
     assert orc.name == "my_db"
 
@@ -99,11 +106,11 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
     assert smartsim_model.run_settings.colocated_db_settings["db_identifier"] == "my_db"
 
-    exp.generate(orc, smartsim_model)
-
-    with start_in_context(exp, orc) as orc:
+    with start_in_context(exp, orc) as orc, start_in_context(exp, smartsim_model) as smartsim_model:
+        exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
-            exp.start(smartsim_model, block=True)
+            exp.start(smartsim_model)
+
         assert (
             "has already been used. Pass in a unique name for db_identifier"
             in ex.value.args[0]
@@ -157,14 +164,15 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     # Create Database
     orc = exp.create_database(
         port=test_port + 1, interface=test_interface, db_identifier="my_db",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils),
     )
 
     exp.generate(orc, smartsim_model)
     assert orc.name == "my_db"
 
-    exp.start(smartsim_model, block=True)
-    exp.start(orc)
+    with start_in_context(exp, orc) as orc, start_in_context(exp, smartsim_model) as smartsim_model:
+        exp.start(smartsim_model, block=True)
+        exp.start(orc)
 
 
 def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
@@ -178,7 +186,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -186,28 +194,27 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
     # CREATE DATABASE with db_identifier
     orc = exp.create_database(
         port=test_port, interface=test_interface, db_identifier="my_db",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils),
     )
-    exp.generate(orc)
 
     assert orc.name == "my_db"
 
     orc2 = exp.create_database(
         port=test_port + 1, interface=test_interface, db_identifier="my_db",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils, index=1),
     )
-    exp.generate(orc2)
 
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    with start_in_context(exp, orc) as orc:
+    with start_in_context(exp, orc) as orc, start_in_context(exp, orc2):
+        exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
-            with start_in_context(exp, orc2) as orc2:
-                assert (
-                    "has already been used. Pass in a unique name for db_identifier"
-                    in ex.value.args[0]
-                )
+            exp.start(orc2)
+        assert (
+            "has already been used. Pass in a unique name for db_identifier"
+            in ex.value.args[0]
+        )
 
 
 def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
@@ -231,13 +238,12 @@ def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
         db_nodes=1,
         interface=test_interface,
         db_identifier="testdb_reg",
+        hosts=choose_host(wlmutils)
     )
-    exp.generate(db)
+    with start_in_context(exp, db):
+        exp.start(db)
 
-    exp.start(db)
-    exp.stop(db)
-
-def test_multidb_create_standard_twice(fileutils, wlmutils):
+def test_multidb_create_standard_twice(fileutils, wlmutils, make_test_dir):
     """Multiple calls to create database with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
@@ -254,21 +260,21 @@ def test_multidb_create_standard_twice(fileutils, wlmutils):
     # create and start an instance of the Orchestrator database
     db = exp.create_database(
         port=test_port, interface=test_interface, db_identifier="testdb_reg",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils,1),
     )
 
     # create database with different db_id
     db2 = exp.create_database(
         port=test_port + 1, interface=test_interface, db_identifier="testdb_reg2",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils,2),
     )
 
     # launch
     with start_in_context(exp, db) as db, start_in_context(exp, db2) as db2:
-        print("Databases started")
+        exp.start(db, db2)
 
     with start_in_context(exp, db) as db, start_in_context(exp, db2) as db2:
-        print("Databases restarted")
+        exp.start(db, db2)
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_multidb_colo_once(fileutils, make_test_dir, wlmutils, coloutils, db_type):

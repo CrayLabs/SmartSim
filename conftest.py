@@ -544,6 +544,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
     # We split at the opening bracket, sanitize the string
     # to its right and then merge the function name and
     # the sanitized list with a dot.
+    caller_function = caller_function.replace("]","")
     caller_function_list = caller_function.split("[", maxsplit=1)
 
     def is_accepted_char(char: str):
@@ -553,6 +554,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
         caller_function_list[1] = "".join(
             filter(is_accepted_char, caller_function_list[1])
         )
+
     return ".".join(caller_function_list)
 
 
@@ -639,7 +641,7 @@ class ColoUtils:
         """Setup database needed for the colo pinning tests"""
 
         # get test setup
-        test_dir = fileutils.make_test_dir(level=2)
+        test_dir = make_test_dir
         sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu
@@ -651,7 +653,6 @@ class ColoUtils:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
         colo_model = exp.create_model(colo_model_name, colo_settings)
-        colo_model.set_path(test_dir)
 
         if db_type in ["tcp", "deprecated"]:
             db_args["port"] = port
@@ -671,7 +672,6 @@ class ColoUtils:
                     message="`colocate_db` has been deprecated"
                 )
             colocate_fun[db_type](**db_args)
-        exp.generate(colo_model, overwrite=True)
         # assert model will launch with colocated db
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
