@@ -81,7 +81,7 @@ def test_status_typeerror():
 def test_status_pre_launch():
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    assert exp.get_status(model) == STATUS_NEVER_STARTED
+    assert exp.get_status(model)[0] == STATUS_NEVER_STARTED
 
 
 def test_bad_ensemble_init_no_rs():
