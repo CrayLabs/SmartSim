@@ -33,6 +33,7 @@ from ..log import get_logger
 
 logger = get_logger(__name__)
 
+
 class QsubBatchSettings(BatchSettings):
     def __init__(
         self,
@@ -191,7 +192,7 @@ class QsubBatchSettings(BatchSettings):
         res = []
 
         # get select statement from resources or kwargs
-        if ("select" in self.resources) and not ("nodes" in self.resources):
+        if ("select" in self.resources) and "nodes" not in self.resources:
             res += [f"-l select={str(self.resources['select'])}"]
         elif ("select" in self.resources) and ("nodes" in self.resources):
             nselect = self.resources["select"]
@@ -202,7 +203,7 @@ class QsubBatchSettings(BatchSettings):
                 raise SmartSimError(
                     (
                         "select and nodes were both specified, but do not have "
-                        f"the same value. select={nselect} nodes={self.nodes}"
+                        f"the same value. select={nselect} nodes={self._nodes}"
                     )
                 )
         elif "nodes" in self.resources:

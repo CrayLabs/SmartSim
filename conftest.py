@@ -641,7 +641,6 @@ class ColoUtils:
         """Setup database needed for the colo pinning tests"""
 
         # get test setup
-        test_dir = make_test_dir
         sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu

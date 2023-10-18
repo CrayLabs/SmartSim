@@ -23,15 +23,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-import contextlib
-
 import pytest
 
 from smartsim import Experiment
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
+from smartsim.status import STATUS_NEVER_STARTED
 
 
 def test_model_prefix(make_test_dir):
@@ -83,8 +81,7 @@ def test_status_typeerror():
 def test_status_pre_launch():
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    with pytest.raises(SmartSimError):
-        exp.get_status(model)
+    assert exp.get_status(model)[0] == STATUS_NEVER_STARTED
 
 
 def test_bad_ensemble_init_no_rs():

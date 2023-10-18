@@ -110,13 +110,13 @@ def test_create_pinning_string(pin_list, num_cpus, expected):
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_launch_colocated_model_defaults(
-    fileutils, coloutils, db_type, launcher="local"
+    fileutils, make_test_dir, coloutils, db_type, launcher="local"
 ):
     """Test the launch of a model with a colocated database and local launcher"""
 
     db_args = {}
 
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     exp = Experiment(f"colocated_model_defaults_{db_type}", test_dir, launcher=launcher)
     colo_model = coloutils.setup_test_colo(
         fileutils,
@@ -133,6 +133,7 @@ def test_launch_colocated_model_defaults(
     assert (
         colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
     )
+    exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
@@ -188,7 +189,6 @@ def test_launch_multiple_colocated_models(
 def test_colocated_model_disable_pinning(
     fileutils, make_test_dir, coloutils, db_type, launcher="local"
 ):
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(f"colocated_model_pinning_auto_1cpu_{db_type}", launcher=launcher, exp_path=make_test_dir)
     db_args = {
         "db_cpus": 1,
@@ -213,7 +213,6 @@ def test_colocated_model_disable_pinning(
 def test_colocated_model_pinning_auto_2cpu(
     fileutils, make_test_dir, coloutils, db_type, launcher="local"
 ):
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(f"colocated_model_pinning_auto_2cpu_{db_type}", launcher=launcher, exp_path=make_test_dir)
 
     db_args = {
@@ -246,7 +245,6 @@ def test_colocated_model_pinning_auto_2cpu(
 def test_colocated_model_pinning_range(fileutils, make_test_dir, coloutils, db_type, launcher="local"):
     # Check to make sure that the CPU mask was correctly generated
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher, exp_path=make_test_dir)
 
     db_args = {"db_cpus": 2, "custom_pinning": range(2)}
@@ -270,7 +268,6 @@ def test_colocated_model_pinning_range(fileutils, make_test_dir, coloutils, db_t
 def test_colocated_model_pinning_list(fileutils, make_test_dir, coloutils, db_type, launcher="local"):
     # Check to make sure that the CPU mask was correctly generated
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher, exp_path=make_test_dir)
 
     db_args = {"db_cpus": 1, "custom_pinning": [1]}
