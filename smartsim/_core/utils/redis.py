@@ -94,7 +94,7 @@ def check_cluster_status(
     :raises SmartSimError: If cluster status cannot be verified
     """
     cluster_nodes = [
-        ClusterNode(get_ip_from_host(host), port)  # type: ignore
+        ClusterNode(get_ip_from_host(host), port)
         for host, port in product(hosts, ports)
     ]
 
@@ -110,9 +110,9 @@ def check_cluster_status(
         try:
             redis_tester: "RedisCluster[t.Any]" = RedisCluster(
                 startup_nodes=cluster_nodes
-            )  # type: ignore
+            )
             redis_tester.set("__test__", "__test__")
-            redis_tester.delete("__test__")
+            redis_tester.delete("__test__")  # type: ignore
             logger.debug("Cluster status verified")
             return
         except (ClusterDownError, RedisClusterException, redis.RedisError):
