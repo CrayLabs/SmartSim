@@ -54,6 +54,11 @@ default_kwargs = {"fail_if_missing_exec": False}
 #    with pytest.raises(SSUnsupportedError):
 #        func(None)
 
+def test_affinity_script():
+    settings = PalsMpiexecSettings(default_exe, **default_kwargs)
+    settings.set_gpu_affinity_script("/path/to/set_affinity_gpu.sh", 1, 2)
+    assert settings.format_run_args() == ["/path/to/set_affinity_gpu.sh", "1", "2"]
+
 
 def test_cpu_binding_type():
     settings = PalsMpiexecSettings(default_exe, **default_kwargs)
