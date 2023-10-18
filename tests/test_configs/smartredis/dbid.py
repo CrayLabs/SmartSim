@@ -39,8 +39,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     env_vars = [
-        "SSKEYIN_testdb_colo",
-        "SSKEYOUT_testdb_colo",
         "SSDB_testdb_colo",
         "SR_DB_TYPE_testdb_colo",
     ]
@@ -50,7 +48,3 @@ if __name__ == "__main__":
     opts1 = ConfigOptions.create_from_environment("testdb_colo")
 
     client = Client(opts1, logger_name="SmartSim")
-
-
-
-    
