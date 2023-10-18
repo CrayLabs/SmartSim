@@ -506,12 +506,10 @@ class Orchestrator(EntityList[DBNode]):
                         mpmd.run_args[arg] = value
 
     def enable_checkpoints(self, frequency: int) -> None:
-        """Sets the database's save configuration to save the
-        DB every 'frequency' seconds given that at least one
-        write operation against the DB occurred in that time.
-        For example, if `frequency` is 900, then the database
-        will save to disk after 900 seconds if there is at least
-        1 change to the dataset.
+        """Sets the database's save configuration to save the DB every 'frequency'
+        seconds given that at least one write operation against the DB occurred in
+        that time. E.g., if `frequency` is 900, then the database will save to disk
+        after 900 seconds if there is at least 1 change to the dataset.
 
         :param frequency: the given number of seconds before the DB saves
         :type frequency: int
@@ -532,7 +530,6 @@ class Orchestrator(EntityList[DBNode]):
 
         :param mem: the desired max memory size e.g. 3gb
         :type mem: str
-
         :raises SmartSimError: If 'mem' is an invalid memory value
         :raises SmartSimError: If database is not active
         """
@@ -545,7 +542,6 @@ class Orchestrator(EntityList[DBNode]):
         :param strategy: The max memory policy to use
             e.g. "volatile-lru", "allkeys-lru", etc.
         :type strategy: str
-
         :raises SmartSimError: If 'strategy' is an invalid maxmemory policy
         :raises SmartSimError: If database is not active
         """

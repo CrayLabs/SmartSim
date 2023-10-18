@@ -32,7 +32,6 @@ from types import FrameType
 
 from ...database import Orchestrator
 from ...entity import DBNode, SmartSimEntity, EntitySequence
-from ...error import SmartSimError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES, STATUS_NEVER_STARTED
 from ..config import CONFIG
@@ -162,11 +161,11 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         try:
-            self[key]
+            _ = self[key]
             return True
-        except KeyError as e:
+        except KeyError:
             return False
 
     def add_job(
@@ -252,11 +251,12 @@ class JobManager:
         with self._lock:
             if entity.name in self.completed:
                 return self.completed[entity.name].status
-            elif entity.name in self:
+
+            if entity.name in self:
                 job: Job = self[entity.name]  # locked
                 return job.status
-            else:
-                return STATUS_NEVER_STARTED
+
+            return STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
