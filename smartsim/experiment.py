@@ -791,18 +791,17 @@ class Experiment:
             logger.error(e)
             raise
 
-    # pylint: disable-next=redefined-builtin
-    def summary(self, format: str = "github") -> str:
+    def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
-        :param format: the style in which the summary table is formatted,
+        :param style: the style in which the summary table is formatted,
                        for a full list of styles see:
                        https://github.com/astanin/python-tabulate#table-format,
                        defaults to "github"
-        :type format: str, optional
+        :type style: str, optional
         :return: tabulate string of ``Experiment`` history
         :rtype: str
         """
@@ -833,7 +832,7 @@ class Experiment:
             values,
             headers,
             showindex=True,
-            tablefmt=format,
+            tablefmt=style,
             missingval="None",
             disable_numparse=True,
         )
