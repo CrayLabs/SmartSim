@@ -85,7 +85,7 @@ def test_db_identifier_standard_then_colo_error(
         port=test_port, interface=test_interface, db_identifier="testdb_colo",
         hosts=choose_host(wlmutils),
     )
-    assert orc.name == "test_db_colo"
+    assert orc.name == "testdb_colo"
 
     db_args = {
         "port": test_port + 1,
