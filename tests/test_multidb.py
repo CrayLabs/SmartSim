@@ -41,13 +41,15 @@ should_run = True
 supported_dbs = ["uds", "tcp"]
 
 @contextmanager
-def start_in_context(exp, entity):
+def make_entity_context(exp, entity):
     """Start entity in a context to ensure that it is always stopped"""
     exp.generate(entity, overwrite=True)
     try:
         yield entity
     finally:
-        if exp.get_status(entity) == status.STATUS_RUNNING:
+        print(exp.get_status(entity)[0])
+        if exp.get_status(entity)[0] == status.STATUS_RUNNING:
+            print(f"Stopping {entity.name}")
             exp.stop(entity)
 
 def choose_host(wlmutils, index=0):
@@ -106,7 +108,7 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
     assert smartsim_model.run_settings.colocated_db_settings["db_identifier"] == "my_db"
 
-    with start_in_context(exp, orc) as orc, start_in_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, orc) as orc, make_entity_context(exp, smartsim_model) as smartsim_model:
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(smartsim_model)
@@ -170,7 +172,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     exp.generate(orc, smartsim_model)
     assert orc.name == "my_db"
 
-    with start_in_context(exp, orc) as orc, start_in_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, orc) as orc, make_entity_context(exp, smartsim_model) as smartsim_model:
         exp.start(smartsim_model, block=True)
         exp.start(orc)
 
@@ -207,7 +209,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    with start_in_context(exp, orc) as orc, start_in_context(exp, orc2):
+    with make_entity_context(exp, orc) as orc, make_entity_context(exp, orc2):
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(orc2)
@@ -240,7 +242,7 @@ def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
         db_identifier="testdb_reg",
         hosts=choose_host(wlmutils)
     )
-    with start_in_context(exp, db):
+    with make_entity_context(exp, db):
         exp.start(db)
 
 def test_multidb_create_standard_twice(fileutils, wlmutils, make_test_dir):
@@ -270,10 +272,10 @@ def test_multidb_create_standard_twice(fileutils, wlmutils, make_test_dir):
     )
 
     # launch
-    with start_in_context(exp, db) as db, start_in_context(exp, db2) as db2:
+    with make_entity_context(exp, db) as db, make_entity_context(exp, db2) as db2:
         exp.start(db, db2)
 
-    with start_in_context(exp, db) as db, start_in_context(exp, db2) as db2:
+    with make_entity_context(exp, db) as db, make_entity_context(exp, db2) as db2:
         exp.start(db, db2)
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -296,7 +298,6 @@ def test_multidb_colo_once(fileutils, make_test_dir, wlmutils, coloutils, db_typ
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port + 1,
@@ -314,11 +315,8 @@ def test_multidb_colo_once(fileutils, make_test_dir, wlmutils, coloutils, db_typ
         db_args,
     )
 
-    exp.generate(smartsim_model)
-    exp.start(smartsim_model)
-
-    exp.stop(smartsim_model)
-    print(exp.summary())
+    with make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model)
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -345,12 +343,11 @@ def test_multidb_standard_then_colo(fileutils, make_test_dir, wlmutils, coloutil
     # create and generate an instance of the Orchestrator database
     db = exp.create_database(
         port=test_port, interface=test_interface, db_identifier="testdb_reg",
-        hosts=wlmutils.get_test_hostlist(),
+        hosts=choose_host(wlmutils),
     )
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port + 1,
@@ -367,20 +364,11 @@ def test_multidb_standard_then_colo(fileutils, make_test_dir, wlmutils, coloutil
         db_args,
     )
 
-    exp.generate(db, smartsim_model)
-    exp.start(db)
-    exp.start(smartsim_model, block=True)
 
-    # test restart colocated db
-    exp.start(smartsim_model)
-
-    exp.stop(db)
-
-    # test restart standard db
-    exp.start(db)
-    exp.stop(db)
-    exp.stop(smartsim_model)
-    print(exp.summary())
+    with make_entity_context(exp, db) as db, \
+         make_entity_context(exp, smartsim_model) as smartsim_model:
+        exp.start(db)
+        exp.start(smartsim_model, block=True)
 
     assert all(stat is not status.STATUS_FAILED for stat in exp.get_status(db, smartsim_model))
 
