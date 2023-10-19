@@ -180,7 +180,7 @@ class TrainingDataUploader:
         if not sample_name:
             raise ValueError("Sample name can not be empty")
 
-        self.client = Client(cluster, address=address)
+        self.client = Client(address=address, cluster=cluster)
         self.verbose = verbose
         self.batch_idx = 0
         self.rank = rank

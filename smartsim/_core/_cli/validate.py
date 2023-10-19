@@ -164,7 +164,7 @@ def _make_managed_local_orc(
     exp.start(orc)
     try:
         (client_addr,) = orc.get_address()
-        yield Client(False, address=client_addr)
+        yield Client(address=client_addr, cluster=False)
     finally:
         exp.stop(orc)
 
