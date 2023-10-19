@@ -198,6 +198,7 @@ class Orchestrator(EntityList[DBNode]):
         self.ports: t.List[int] = []
         self.path = getcwd()
         self._hosts: t.List[str] = []
+        self._user_hostlist: t.List[str] = []
         if isinstance(interface, str):
             interface = [interface]
         self._interfaces = interface
@@ -305,13 +306,15 @@ class Orchestrator(EntityList[DBNode]):
             self._hosts = self._get_db_hosts()
         return self._hosts
 
-    def clear_hosts(self) -> None:
-        """Clears the list of hosts for this orchestrator.
+    def reset_hosts(self) -> None:
+        """Clear hosts or reset them to last user choice
         """
         for node in self.entities:
             node.clear_hosts()
-
         self._hosts = []
+        # This is only needed on LSF
+        if self._user_hostlist:
+            self.set_hosts(self._user_hostlist)
 
     def remove_stale_files(self) -> None:
         """Can be used to remove database files of a previous launch"""
@@ -415,7 +418,7 @@ class Orchestrator(EntityList[DBNode]):
         if hasattr(self, "batch_settings") and self.batch_settings:
             self.batch_settings.set_walltime(walltime)
 
-    def set_hosts(self, host_list: t.List[str]) -> None:
+    def set_hosts(self, host_list: t.List[str] | str) -> None:
         """Specify the hosts for the ``Orchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
@@ -428,6 +431,7 @@ class Orchestrator(EntityList[DBNode]):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
+        self._user_hostlist = host_list
         # TODO check length
         if self.batch:
             if hasattr(self, "batch_settings") and self.batch_settings:
@@ -441,8 +445,7 @@ class Orchestrator(EntityList[DBNode]):
             and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
             and self.entities[0].is_mpmd
         ):
-            # In this case, --hosts is a global option, we only set it to the
-            # first run command
+            # In this case, --hosts is a global option, set it to first run command
             self.entities[0].run_settings.set_hostlist(host_list)
         else:
             for host, db in zip(host_list, self.entities):
@@ -694,7 +697,6 @@ class Orchestrator(EntityList[DBNode]):
         **_kwargs: t.Any  # Needed to ensure no API break and do not want to
         # introduce that possibility, even if this method is
         # protected, without running the test suite.
-        # TODO: Test against an LSF system before merge!
     ) -> t.Optional[JsrunSettings]:
         run_args = {} if run_args is None else run_args
         erf_rs: t.Optional[JsrunSettings] = None
@@ -738,9 +740,6 @@ class Orchestrator(EntityList[DBNode]):
 
         return erf_rs
 
-    # Old pylint from TF 2.6.x does not understand that this argument list is
-    # equivalent to `(self, **kwargs)`
-    # # pylint: disable-next=arguments-differ
     def _initialize_entities(
         self,
         *,
@@ -775,7 +774,6 @@ class Orchestrator(EntityList[DBNode]):
                 start_script_args = self._get_start_script_args(
                     db_node_name, port, cluster
                 )
-
                 # if only launching 1 db per command, we don't need a
                 # list of exe args lists
                 run_settings = self._build_run_settings(
@@ -829,7 +827,6 @@ class Orchestrator(EntityList[DBNode]):
 
         node = DBNode(self.name, self.path, run_settings, [port], output_files)
         self.entities.append(node)
-
         self.ports = [port]
 
     def _get_start_script_args(

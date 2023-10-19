@@ -25,44 +25,41 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-import itertools
 
+import itertools
 import os.path as osp
-from os import environ
 import pickle
 import signal
 import threading
 import time
 import typing as t
+from os import environ
 
 from smartredis import Client, ConfigOptions
 
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
+from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
 from ..._core.utils.redis import (
     db_is_active,
     set_ml_model,
     set_script,
     shutdown_db_node,
 )
-from ..._core.utils.helpers import (
-    unpack_db_identifier,
-    unpack_colo_db_identifier,
-)
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
+    SSDBIDConflictError,
     SSInternalError,
     SSUnsupportedError,
-    SSDBIDConflictError,
 )
 from ...log import get_logger
+from ...servertype import CLUSTERED, STANDALONE
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
-from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
     CobaltLauncher,
@@ -235,7 +232,7 @@ class Controller:
                         job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                         self._jobs.move_to_completed(job)
 
-        db.clear_hosts()
+        db.reset_hosts()
 
     def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
         """Stop an instance of an entity list

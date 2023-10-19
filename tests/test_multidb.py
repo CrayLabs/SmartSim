@@ -31,7 +31,6 @@ from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
 
-from smartsim.entity.dbobject import DBScript
 
 from smartredis import *
 
@@ -241,7 +240,7 @@ def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
 
     check_not_failed(exp, db)
 
-def test_multidb_create_standard_twice(fileutils, wlmutils, make_test_dir):
+def test_multidb_create_standard_twice(wlmutils, make_test_dir):
     """Multiple calls to create database with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
