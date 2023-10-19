@@ -122,6 +122,7 @@ def main(args: argparse.Namespace) -> int:
         for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
     except Exception as e:
+        cleanup()
         raise SSInternalError("Database process starter raised an exception") from e
     return 0
 
