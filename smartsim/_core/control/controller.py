@@ -113,12 +113,17 @@ def start_telemetry_monitor(
     return process
 
 
-def start_telemetry_callback(_job: Job, _logger: Logger) -> None:
-    global TELEMETRY_MONITOR  # pylint: disable=global-statement
+def create_telmon_callback(exp_dir: str) -> t.Callable[[Job, Logger], None]:
+    """Create a callback function that can be executed by the job manager"""
+    def start_telemetry_callback(_job: Job, _logger: Logger) -> None:
+        """A callback that will start a telemetry monitor 
+        process if a task is started"""
+        global TELEMETRY_MONITOR  # pylint: disable=global-statement
 
-    # if never started or if a prior instance has shut down
-    if TELEMETRY_MONITOR is None or TELEMETRY_MONITOR.returncode is not None:
-        TELEMETRY_MONITOR = start_telemetry_monitor()
+        # if never started or if a prior instance has shut down
+        if TELEMETRY_MONITOR is None or TELEMETRY_MONITOR.returncode is not None:
+            TELEMETRY_MONITOR = start_telemetry_monitor(exp_dir)
+    return start_telemetry_callback
 
 
 class Controller:
@@ -134,9 +139,6 @@ class Controller:
         :type launcher: str
         """
         self._jobs = JobManager(JM_LOCK)
-        # have job manager launch a telemetry monitor if any jobs are run
-        self._jobs.add_job_onstart_callback(start_telemetry_callback)
-
         self.init_launcher(launcher)
 
     def start(
@@ -158,6 +160,10 @@ class Controller:
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+
+        # have job manager launch a telemetry monitor if any jobs are run
+        self._jobs.add_job_onstart_callback(create_telmon_callback(exp_path))
+
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
