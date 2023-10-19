@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import itertools
 import time
 import typing as t
 from collections import ChainMap
@@ -32,6 +33,7 @@ from logging import Logger
 from threading import Thread, RLock
 from types import FrameType
 
+from ..._core.utils.network import get_ip_from_host
 from ...database import Orchestrator
 from ...entity import DBNode, SmartSimEntity, EntitySequence
 from ...error import SmartSimError

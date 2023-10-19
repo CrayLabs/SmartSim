@@ -38,7 +38,6 @@ import sys
 import threading
 import time
 import typing as t
-from os import environ
 
 from smartredis import Client, ConfigOptions
 
