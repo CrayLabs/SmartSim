@@ -418,7 +418,7 @@ class Orchestrator(EntityList[DBNode]):
         if hasattr(self, "batch_settings") and self.batch_settings:
             self.batch_settings.set_walltime(walltime)
 
-    def set_hosts(self, host_list: t.List[str] | str) -> None:
+    def set_hosts(self, host_list: t.Union[t.List[str], str]) -> None:
         """Specify the hosts for the ``Orchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
