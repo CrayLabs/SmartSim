@@ -85,41 +85,6 @@ class JobManager:
         self.on_start_hook: t.List[t.Callable[[Job, Logger], None]] = []
         self.on_timestep_hook: t.List[t.Callable[[Job, Logger], None]] = []
 
-        # self._telemetry: t.Optional[subprocess.Popen] = None
-
-    # def start_telemetry_monitor(self,
-    #                             exp_dir: str = ".",
-    #                             frequency: int = 10) -> None:
-    #     if self._telemetry is None:
-    #         logger.debug("Starting telemetry monitor process")
-    #         self._telemetry = subprocess.Popen(
-    #             [
-    #                 sys.executable,
-    #                 "-m",
-    #                 "smartsim._core.entrypoints.telemetrymonitor",
-    #                 "-d",
-    #                 exp_dir,
-    #                 "-f",
-    #                 str(frequency)
-    #             ],
-    #             stdin=subprocess.PIPE,
-    #             stdout=subprocess.PIPE,
-    #             cwd=str(pathlib.Path(__file__).parent.parent.parent),
-    #             shell=False,
-    #         )
-
-    # def stop_telemetry_monitor(self) -> None:
-    #     if self._telemetry is None:
-    #         return
-
-    #     try:
-    #         self._telemetry.terminate()
-    #     except Exception:
-    #         logger.warn("An error occurred while terminating the telemetry monitor",
-    #                     exc_info=True)
-    #     finally:
-    #         self._telemetry = None
-
     def start_job_monitor(self) -> None:
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
@@ -127,7 +92,6 @@ class JobManager:
 
     def start(self) -> None:
         self.start_job_monitor()
-        # self.start_telemetry_monitor()
 
     def run(self) -> None:
         """Start the JobManager thread to continually check
@@ -415,9 +379,6 @@ class JobManager:
         if not signo:
             logger.warning("Received SIGINT with no signal number")
         """Custom handler for whenever SIGINT is received"""
-        # if self._telemetry:
-        #     self.stop_monitor()
-
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():

@@ -216,7 +216,6 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
 
 def track_event(
     timestamp: int,
-    # entity: JobEntity,
     ename: str,
     job_id: str,
     step_id: str,
@@ -294,7 +293,6 @@ def track_started(job: Job, logger: logging.Logger) -> None:
 
 def track_timestep(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for a timestep"""
-    # inactive_entity = job.entity
     exp_dir = pathlib.Path(job.entity.path)
 
     track_event(
@@ -384,9 +382,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if not self._launcher:
             self._launcher = LocalLauncher()
 
-        # if not self._launcher:
-        #     raise ValueError("Launcher failed to instantiate properly")
-
         return self._launcher
 
     def process_manifest(self, manifest_path: str) -> None:
@@ -436,7 +431,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity.job_id,
                     entity,
                     entity.is_managed,
-                    # is_orch=entity.is_db,
                 )
                 self.job_manager._launcher.step_mapping.add(  # pylint: disable=protected-access
                     entity.name, entity.step_id, entity.step_id, entity.is_managed
@@ -627,7 +621,6 @@ def get_parser() -> argparse.ArgumentParser:
         type=str,
         help="Experiment root directory",
         required=True,
-        # default="/lus/cls01029/mcbridch/ss/smartsim",
     )
     arg_parser.add_argument(
         "-n",
