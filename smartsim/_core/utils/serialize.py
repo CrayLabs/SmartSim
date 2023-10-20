@@ -29,10 +29,10 @@ from __future__ import annotations
 import json
 import time
 import typing as t
-import uuid
 from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
+import smartsim._core.utils.helpers as _helpers
 
 if t.TYPE_CHECKING:
     from smartsim import Experiment
@@ -41,14 +41,6 @@ if t.TYPE_CHECKING:
     from smartsim.entity import DBNode, Ensemble, Model
     from smartsim.entity.dbobject import DBModel, DBScript
     from smartsim.settings.base import BatchSettings, RunSettings
-
-
-# Many of the required fields for serialization require attrs that protected.
-# I do not want to accidentally expose something to users that should not see
-# for a prototype feature. This suppression should probably be removed before
-# this is officially released!
-#
-# pylint: disable=protected-access
 
 
 TStepLaunchMetaData = t.Tuple[
@@ -61,7 +53,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     manifest_dir.mkdir(parents=True, exist_ok=True)
     manifest_file = manifest_dir / "manifest.json"
 
-    run_id = str(uuid.uuid4())
+    run_id = _helpers.create_short_id_str()
     telemetry_data_root = manifest_dir / f"{manifest.metadata.exp_name}/{run_id}"
 
     new_run = {
@@ -76,15 +68,11 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
             for model, telemetry_metadata in manifest.models
         ],
         "orchestrator": [
-            _dictify_db(
-                db, nodes_info, telemetry_data_root / "database"
-            )
+            _dictify_db(db, nodes_info, telemetry_data_root / "database")
             for db, nodes_info in manifest.databases
         ],
         "ensemble": [
-            _dictify_ensemble(
-                ens, member_info, telemetry_data_root / "ensemble"
-            )
+            _dictify_ensemble(ens, member_info, telemetry_data_root / "ensemble")
             for ens, member_info in manifest.ensembles
         ],
     }
@@ -93,6 +81,10 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
             manifest_dict = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         manifest_dict = {
+            "schema info": {
+                "schema_name": "entity manifest",
+                "version": "0.0.1",
+            },
             "experiment": {
                 "name": manifest.metadata.exp_name,
                 "path": manifest.metadata.exp_path,
@@ -186,9 +178,7 @@ def _dictify_ensemble(
         # also be an empty dict for no discernible reason...
         if ens.batch_settings else {},
         "models": [
-            _dictify_model(
-                model, *launching_metadata, telemetry_data_path / ens.name
-            )
+            _dictify_model(model, *launching_metadata, telemetry_data_path / ens.name)
             for model, launching_metadata in members
         ],
     }
@@ -227,7 +217,7 @@ def _dictify_db(
     return {
         "name": db.name,
         "type": db_type,
-        "interface": db._interfaces,
+        "interface": db._interfaces,  # pylint: disable=protected-access
         "shards": [
             {
                 **shard.to_dict(),
@@ -235,9 +225,7 @@ def _dictify_db(
                 "out_file": out_file,
                 "err_file": err_file,
                 "telemetry_metadata": {
-                    "status_dir": str(
-                        telemetry_data_path / f"{db.name}/{dbnode.name}"
-                    ),
+                    "status_dir": str(telemetry_data_path / f"{db.name}/{dbnode.name}"),
                     "step_id": step_id,
                     "task_id": task_id,
                     "managed": managed,

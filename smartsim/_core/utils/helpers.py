@@ -64,9 +64,13 @@ def unpack_colo_db_identifier(db_id: str) -> str:
     return "_" + db_id if db_id else ""
 
 
+def create_short_id_str() -> str:
+    return str(uuid.uuid4())[:7]
+
+
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
-    lock_suffix = str(uuid.uuid4())[:7]
+    lock_suffix = create_short_id_str()
     return f"smartsim-{lock_suffix}.lock"
 
 
