@@ -97,8 +97,6 @@ class RuntimeManifest:
     name: str
     path: pathlib.Path
     launcher: str
-    out_file: pathlib.Path
-    err_file: pathlib.Path
     runs: t.List[Run] = field(default_factory=list)
 
 
@@ -199,15 +197,11 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
         raise ValueError("Manifest missing required runs")
 
     exp_dir = pathlib.Path(exp["path"])
-    out_file = pathlib.Path(exp["out_file"])
-    err_file = pathlib.Path(exp["err_file"])
     runs = hydrate_runs(runs, exp_dir)
 
     manifest = RuntimeManifest(
         name=exp["name"],
         path=exp_dir,
-        out_file=out_file,
-        err_file=err_file,
         launcher=exp["launcher"],
         runs=runs,
     )
