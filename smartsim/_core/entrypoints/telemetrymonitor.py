@@ -54,6 +54,7 @@ from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.utils.helpers import get_ts
+from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
 
 from smartsim.error.errors import SmartSimError
 from smartsim.status import TERMINAL_STATUSES
@@ -228,7 +229,7 @@ def track_event(
     entity_type = etype or "missing_entity_type"
 
     name: str = ename or "entity-name-not-found"
-    tgt_path = exp_dir / "manifest" / entity_type / name / f"{action}.json"
+    tgt_path = exp_dir / TELMON_SUBDIR / entity_type / name / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -399,8 +400,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
 
-        # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
-        exp_dir = pathlib.Path(manifest_path).parent.parent
+        exp_dir = pathlib.Path(manifest_path).parent.parent.parent
 
         for run in runs:
             for entity in run.flatten(
@@ -554,18 +554,22 @@ def main(
         f", on target directory: {experiment_dir}"
     )
 
-    mani_name, mani_dir = "manifest.json", "manifest"
-    manifest_dir = experiment_dir / mani_dir
-    manifest_path = manifest_dir / mani_name
+    manifest_dir = experiment_dir / TELMON_SUBDIR
+    manifest_path = manifest_dir / MANIFEST_FILENAME
     logger.debug(f"Monitoring manifest changes at: {manifest_dir}")
 
     log_handler = LoggingEventHandler(logger)  # type: ignore
-    action_handler = ManifestEventHandler(mani_name, logger)
+    action_handler = ManifestEventHandler(MANIFEST_FILENAME, logger)
 
     if observer is None:
         observer = Observer()
 
     try:
+        while not manifest_dir.exists():
+            time.sleep(10)
+            # # a manifest may not exist depending on startup timing
+            # manifest_dir.mkdir(parents=True)
+
         if manifest_path.exists():
             # a manifest may not exist depending on startup timing
             action_handler.process_manifest(str(manifest_path))

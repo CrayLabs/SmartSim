@@ -46,12 +46,14 @@ if t.TYPE_CHECKING:
 TStepLaunchMetaData = t.Tuple[
     t.Optional[str], t.Optional[str], t.Optional[bool], str, str
 ]
+TELMON_SUBDIR = ".smartsim/telemetry"
+MANIFEST_FILENAME = "manifest.json"
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
-    manifest_dir = Path(manifest.metadata.exp_path) / ".smartsim/telemetry"
+    manifest_dir = Path(manifest.metadata.exp_path) / TELMON_SUBDIR
     manifest_dir.mkdir(parents=True, exist_ok=True)
-    manifest_file = manifest_dir / "manifest.json"
+    manifest_file = manifest_dir / MANIFEST_FILENAME
 
     run_id = _helpers.create_short_id_str()
     telemetry_data_root = manifest_dir / f"{manifest.metadata.exp_name}/{run_id}"

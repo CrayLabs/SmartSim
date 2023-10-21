@@ -31,7 +31,7 @@ from smartsim import Experiment
 from smartsim._core.utils import serialize
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 
-_REL_MANIFEST_PATH = ".smartsim/telemetry/manifest.json"
+_REL_MANIFEST_PATH = f"{serialize.TELMON_SUBDIR}/{serialize.MANIFEST_FILENAME}"
 
 
 def test_serialize_creates_a_manifest_json_file_if_dne(fileutils):

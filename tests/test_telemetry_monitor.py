@@ -45,6 +45,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     load_manifest,
     hydrate_persistable,
 )
+from smartsim._core.utils import serialize
 
 
 ALL_ARGS = {"-d", "-f"}
@@ -127,7 +128,7 @@ def test_track_event(
     exp_path = pathlib.Path(exp_dir)
     track_event(timestamp, name, job_id, step_id, etype, evt_type, exp_path, logger)
 
-    expected_output = exp_path / "manifest" / etype / name / f"{evt_type}.json"
+    expected_output = exp_path / serialize.TELMON_SUBDIR / etype / name / f"{evt_type}.json"
 
     assert expected_output.exists()
     assert expected_output.is_file()
@@ -172,7 +173,7 @@ def test_track_specific(
     track_fn(job, logger)
 
     fname = f"{evt_type}.json"
-    expected_output = exp_path / "manifest" / etype / name / fname
+    expected_output = exp_path / serialize.TELMON_SUBDIR / etype / name / fname
 
     assert expected_output.exists()
     assert expected_output.is_file()
@@ -185,7 +186,7 @@ def test_load_manifest(fileutils: FileUtils):
     assert sample_manifest.exists()
 
     test_manifest_path = fileutils.make_test_file(
-        "manifest.json", "manifest", sample_manifest.read_text()
+        serialize.MANIFEST_FILENAME, serialize.TELMON_SUBDIR, sample_manifest.read_text()
     )
     test_manifest = pathlib.Path(test_manifest_path)
     assert test_manifest.exists()
@@ -247,7 +248,7 @@ def test_limit(fileutils, monkeypatch, capsys, num_iters: int, freq: int):
     assert sample_manifest.exists()
 
     test_manifest_path = fileutils.make_test_file(
-        "manifest.json", "manifest", sample_manifest.read_text()
+        serialize.MANIFEST_FILENAME, serialize.TELMON_SUBDIR, sample_manifest.read_text()
     )
     test_manifest = pathlib.Path(test_manifest_path)
     assert test_manifest.exists()
@@ -255,7 +256,7 @@ def test_limit(fileutils, monkeypatch, capsys, num_iters: int, freq: int):
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx:
         ctx.setattr("smartsim._core.entrypoints.telemetrymonitor.ManifestEventHandler.on_timestep", lambda a,b,c: print("timestep!"))
-        rc = main(freq, test_manifest.parent.parent, logger, num_iters=num_iters)
+        rc = main(freq, test_manifest.parent.parent.parent, logger, num_iters=num_iters)
 
         captured = capsys.readouterr()
         m = re.findall(r"(timestep!)", captured.out)
