@@ -247,7 +247,9 @@ def track_event(
         if return_code is not None:
             entity_dict["return_code"] = str(return_code)
 
-        tgt_path.write_text(json.dumps(entity_dict))
+        if not tgt_path.exists():
+            """Don't overwrite existing tracking files"""
+            tgt_path.write_text(json.dumps(entity_dict))
     except Exception:
         logger.error("Unable to write tracking file.", exc_info=True)
 
