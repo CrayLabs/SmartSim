@@ -76,6 +76,10 @@ class DBNode(SmartSimEntity):
 
     @property
     def num_shards(self) -> int:
+        if not hasattr(self.run_settings, "mpmd"):
+            # return default number of shards if mpmd is not set
+            return 1
+
         try:
             return len(self.run_settings.mpmd) + 1  # type: ignore[attr-defined]
         except AttributeError:
@@ -99,6 +103,10 @@ class DBNode(SmartSimEntity):
 
     @property
     def is_mpmd(self) -> bool:
+        if not hasattr(self.run_settings, "mpmd"):
+            # missing mpmd property guarantees this is not an mpmd run
+            return False
+
         try:
             return bool(self.run_settings.mpmd)  # type: ignore[attr-defined]
         except AttributeError:
