@@ -232,21 +232,21 @@ def track_event(
     tgt_path = exp_dir / TELMON_SUBDIR / entity_type / name / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
+    entity_dict = {
+        "timestamp": timestamp,
+        "job_id": job_id,
+        "step_id": step_id,
+        "type": etype,
+        "action": action,
+    }
+
+    if detail is not None:
+        entity_dict["detail"] = detail
+
+    if return_code is not None:
+        entity_dict["return_code"] = str(return_code)
+
     try:
-        entity_dict = {
-            "timestamp": timestamp,
-            "job_id": job_id,
-            "step_id": step_id,
-            "type": etype,
-            "action": action,
-        }
-
-        if detail is not None:
-            entity_dict["detail"] = detail
-
-        if return_code is not None:
-            entity_dict["return_code"] = str(return_code)
-
         if not tgt_path.exists():
             """Don't overwrite existing tracking files"""
             tgt_path.write_text(json.dumps(entity_dict))
@@ -600,8 +600,8 @@ def main(
             # a manifest may not exist depending on startup timing
             action_handler.process_manifest(str(manifest_path))
 
-        observer.schedule(log_handler, experiment_dir, recursive=True)  # type: ignore
-        observer.schedule(action_handler, experiment_dir, recursive=True)  # type: ignore
+        observer.schedule(log_handler, experiment_dir, recursive=True)  # type:ignore
+        observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
         event_loop(observer, action_handler, frequency, experiment_dir, logger)
