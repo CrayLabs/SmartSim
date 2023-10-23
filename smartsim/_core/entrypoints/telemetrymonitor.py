@@ -539,42 +539,43 @@ def main(
     experiment_dir: pathlib.Path,
     logger: logging.Logger,
     observer: t.Optional[BaseObserver] = None,
-    num_iters: int = 0,
 ) -> int:
     """Setup the monitoring entities and start the timer-based loop that
-    will poll for telemetry data"""
+    will poll for telemetry data
+
+    :param frequency: frequency (in seconds) of update loop
+    :type frequency: t.Union[int, float]
+    :param experiment_dir: the experiement directory to monitor for changes
+    :type experiment_dir: pathlib.Path
+    :param observer: (optional) a preconfigured Observer to inject
+    :type observer: t.Optional[BaseObserver]
+    """
+    manifest_relpath = pathlib.Path(TELMON_SUBDIR) / MANIFEST_FILENAME
+    manifest_path = experiment_dir / manifest_relpath
+    monitor_pattern = str(manifest_relpath)
+
     logger.info(
-        f"Executing telemetry monitor with frequency: {frequency}"
+        f"Executing telemetry monitor with frequency: {frequency}s"
         f", on target directory: {experiment_dir}"
+        f"matching pattern: {monitor_pattern}"
     )
 
-    manifest_dir = experiment_dir / TELMON_SUBDIR
-    manifest_path = manifest_dir / MANIFEST_FILENAME
-    logger.debug(f"Monitoring manifest changes at: {manifest_dir}")
-
     log_handler = LoggingEventHandler(logger)  # type: ignore
-    action_handler = ManifestEventHandler(MANIFEST_FILENAME, logger)
+    action_handler = ManifestEventHandler(monitor_pattern, logger)
 
     if observer is None:
         observer = Observer()
 
     try:
-        while not manifest_dir.exists():
-            time.sleep(10)
-            # # a manifest may not exist depending on startup timing
-            # manifest_dir.mkdir(parents=True)
-
         if manifest_path.exists():
             # a manifest may not exist depending on startup timing
             action_handler.process_manifest(str(manifest_path))
 
-        observer.schedule(log_handler, manifest_dir)  # type: ignore
-        observer.schedule(action_handler, manifest_dir)  # type: ignore
+        observer.schedule(log_handler, experiment_dir, recursive=True)  # type: ignore
+        observer.schedule(action_handler, experiment_dir, recursive=True)  # type: ignore
         observer.start()  # type: ignore
 
-        event_loop(
-            observer, action_handler, frequency, experiment_dir, logger
-        )
+        event_loop(observer, action_handler, frequency, experiment_dir, logger)
         return 0
     except Exception as ex:
         logger.error(ex)
