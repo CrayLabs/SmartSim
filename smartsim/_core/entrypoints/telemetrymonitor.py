@@ -522,22 +522,14 @@ def event_loop(
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
-    num_iters: int,
     logger: logging.Logger,
 ) -> None:
     """Executes all attached timestep handlers every <frequency> seconds"""
-    num_iters = num_iters if num_iters > 0 else 0  # ensure non-negative limits
-    remaining = num_iters if num_iters else 0  # track completed iterations
-
     while observer.is_alive():
         timestamp = get_ts()
         logger.debug(f"Telemetry timestep: {timestamp}")
         action_handler.on_timestep(timestamp, experiment_dir)
         time.sleep(frequency)
-
-        remaining -= 1
-        if num_iters and not remaining:
-            break
 
         shutdown_when_completed(observer, action_handler)
 
@@ -581,7 +573,7 @@ def main(
         observer.start()  # type: ignore
 
         event_loop(
-            observer, action_handler, frequency, experiment_dir, num_iters, logger
+            observer, action_handler, frequency, experiment_dir, logger
         )
         return 0
     except Exception as ex:
