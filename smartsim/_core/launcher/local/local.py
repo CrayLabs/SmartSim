@@ -125,7 +125,8 @@ class LocalLauncher(Launcher):
         passed_env = step.env if isinstance(step, LocalStep) else None
 
         cmd = step.get_launch_cmd()
-        if os.environ.get("SSFLAG_TELEMETRY", False):
+        is_enabled = int(os.environ.get("SSFLAG_TELEMETRY", 0))
+        if is_enabled:
             cmd = LocalLauncher.get_proxy_cmd(step)
 
         task_id = self.task_manager.start_task(
