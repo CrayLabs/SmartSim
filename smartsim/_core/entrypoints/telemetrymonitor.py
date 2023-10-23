@@ -382,8 +382,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         return self._launcher
 
     def process_manifest(self, manifest_path: str) -> None:
-        """Load the runtime manifest for the experiment and add the entities
-        to the collections of items being tracked for updates"""
+        """Read the runtime manifest for the experiment and track new entities
+
+        :param manifest_path: The full path to the manifest file
+        :type manifest_path: str"""
         try:
             manifest = load_manifest(manifest_path)
             if not manifest:
@@ -436,22 +438,16 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def on_modified(self, event: FileModifiedEvent) -> None:
         """Event handler for when a file or directory is modified.
 
-        :param event:
-            Event representing file/directory modification.
-        :type event:
-            :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
-        """
+        :param event: Event representing file/directory modification.
+        :type event: FileModifiedEvent"""
         super().on_modified(event)  # type: ignore
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
         """Event handler for when a file or directory is created.
 
-        :param event:
-            Event representing file/directory creation.
-        :type event:
-            :class:`DirCreatedEvent` or :class:`FileCreatedEvent`
-        """
+        :param event: Event representing file/directory creation.
+        :type event: FileCreatedEvent"""
         super().on_created(event)  # type: ignore
         self.process_manifest(event.src_path)
 
@@ -459,11 +455,21 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self,
         timestamp: int,
         entity: JobEntity,
-        exp_dir: pathlib.Path,
+        experiment_dir: pathlib.Path,
         step_info: t.Optional[StepInfo],
     ) -> None:
         """Move a monitored entity from the active to completed collection to
-        stop monitoring for updates during timesteps."""
+        stop monitoring for updates during timesteps.
+
+        :param timestamp: the current timestamp for event logging
+        :type timestamp: int
+        :param entity: the running SmartSim Job
+        :type entity: JobEntity
+        :param experiment_dir: the experiement directory to monitor for changes
+        :type experiment_dir: pathlib.Path
+        :param entity: the StepInfo received when requesting a Job status update
+        :type entity: t.Optional[StepInfo]
+        """
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
             self._completed_jobs[entity.key] = inactive_entity
@@ -483,14 +489,19 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             entity.step_id,
             entity.type,
             "stop",
-            exp_dir,
+            experiment_dir,
             self._logger,
             detail=detail,
         )
 
-    def on_timestep(self, timestamp: int, exp_dir: pathlib.Path) -> None:
+    def on_timestep(self, timestamp: int, experiment_dir: pathlib.Path) -> None:
         """Called at polling frequency to request status updates on
-        monitored entities"""
+        monitored entities
+
+        :param timestamp: the current timestamp for event logging
+        :type timestamp: int
+        :param experiment_dir: the experiement directory to monitor for changes
+        :type experiment_dir: pathlib.Path"""
         launcher = self.launcher
         entity_map = self._tracked_jobs
 
@@ -502,13 +513,20 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             for step_name, step_info in step_updates:
                 if step_info and step_info.status in TERMINAL_STATUSES:
                     completed_entity = names[step_name]
-                    self._to_completed(timestamp, completed_entity, exp_dir, step_info)
+                    self._to_completed(
+                        timestamp, completed_entity, experiment_dir, step_info
+                    )
 
 
 def shutdown_when_completed(
     observer: BaseObserver, action_handler: ManifestEventHandler
 ) -> None:
-    """Inspect active and completed job queues and shutdown if all jobs are complete"""
+    """Inspect active and completed job queues and shutdown if all jobs are complete
+
+    :param observer: (optional) the watchdog Observer instance
+    :type observer: t.Optional[BaseObserver]
+    :param action_handler: The manifest event processor instance
+    :type action_handler: ManifestEventHandler"""
     has_running_jobs = (
         not action_handler.job_manager.jobs and not action_handler.job_manager.db_jobs
     )
@@ -524,7 +542,18 @@ def event_loop(
     experiment_dir: pathlib.Path,
     logger: logging.Logger,
 ) -> None:
-    """Executes all attached timestep handlers every <frequency> seconds"""
+    """Executes all attached timestep handlers every <frequency> seconds
+
+    :param observer: (optional) a preconfigured watchdog Observer to inject
+    :type observer: t.Optional[BaseObserver]
+    :param action_handler: The manifest event processor instance
+    :type action_handler: ManifestEventHandler
+    :param frequency: frequency (in seconds) of update loop
+    :type frequency: t.Union[int, float]
+    :param experiment_dir: the experiement directory to monitor for changes
+    :type experiment_dir: pathlib.Path
+    :param logger: a preconfigured Logger instance
+    :type logger: logging.Logger"""
     while observer.is_alive():
         timestamp = get_ts()
         logger.debug(f"Telemetry timestep: {timestamp}")
