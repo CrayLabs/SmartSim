@@ -81,7 +81,7 @@ class DBNode(SmartSimEntity):
             return 1
 
         try:
-            return len(self.run_settings.mpmd) + 1  # type: ignore[attr-defined]
+            return len(self.run_settings.mpmd) + 1
         except AttributeError:
             return 1
 
@@ -108,7 +108,7 @@ class DBNode(SmartSimEntity):
             return False
 
         try:
-            return bool(self.run_settings.mpmd)  # type: ignore[attr-defined]
+            return bool(self.run_settings.mpmd)
         except AttributeError:
             return False
 
