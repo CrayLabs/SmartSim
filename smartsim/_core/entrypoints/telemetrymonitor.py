@@ -230,9 +230,6 @@ def track_event(
     """
     Persist a tracking event for an entity
     """
-    job_id = job_id or ""
-    step_id = step_id or ""
-
     tgt_path = status_dir / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
