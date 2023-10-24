@@ -363,14 +363,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                                     a supported launcher
         :raises TypeError: if no launcher argument is provided.
         """
+        if not launcher:
+            raise TypeError("Must provide a 'launcher' argument")
 
-        if launcher is not None:
-            launcher = launcher.lower()
-            if launcher in self._launcher_map:
-                return self._launcher_map[launcher]()
-            raise ValueError("Launcher type not supported: " + launcher)
+        if launcher_type := self._launcher_map.get(launcher.lower(), None):
+            return launcher_type()
+        
+        raise ValueError("Launcher type not supported: " + launcher)
 
-        raise TypeError("Must provide a 'launcher' argument")
 
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment"""
