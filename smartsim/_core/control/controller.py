@@ -307,7 +307,7 @@ class Controller:
     def get_db_jobs(self) -> t.Dict[str, t.Tuple[Job, t.Union[DBNode, Orchestrator]]]:
         """Return a dictionary of database job data
 
-        :returns: dict[str, Job]
+        :returns: Dict[str, Tuple[Job, DBNode | Orchestrator]]
         """
         with JM_LOCK:
             db_jobs = {
