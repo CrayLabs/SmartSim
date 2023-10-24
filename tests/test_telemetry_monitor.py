@@ -104,19 +104,18 @@ def test_ts():
 
 
 @pytest.mark.parametrize(
-    ["etype", "name", "job_id", "step_id", "timestamp", "evt_type"],
+    ["etype", "job_id", "step_id", "timestamp", "evt_type"],
     [
         pytest.param(
-            "ensemble", "test-ensemble", "", "123", get_ts(), "start", id="start event"
+            "ensemble", "", "123", get_ts(), "start", id="start event"
         ),
         pytest.param(
-            "ensemble", "test-ensemble", "", "123", get_ts(), "start", id="stop event"
+            "ensemble", "", "123", get_ts(), "start", id="stop event"
         ),
     ],
 )
 def test_track_event(
     etype: str,
-    name: str,
     job_id: str,
     step_id: str,
     timestamp: int,
@@ -126,9 +125,9 @@ def test_track_event(
     """Ensure that track event writes a file to the expected location"""
     exp_dir = fileutils.make_test_dir()
     exp_path = pathlib.Path(exp_dir)
-    track_event(timestamp, name, job_id, step_id, etype, evt_type, exp_path, logger)
+    track_event(timestamp, job_id, step_id, etype, evt_type, exp_path, logger)
 
-    expected_output = exp_path / serialize.TELMON_SUBDIR / etype / name / f"{evt_type}.json"
+    expected_output = exp_path / f"{evt_type}.json"
 
     assert expected_output.exists()
     assert expected_output.is_file()

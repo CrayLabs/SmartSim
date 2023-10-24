@@ -85,7 +85,6 @@ def main(
 
             track_event(
                 get_ts(),
-                step_name,
                 job_id,
                 str(STEP_PID),
                 etype,
@@ -111,7 +110,6 @@ def main(
         finally:
             track_event(
                 get_ts(),
-                step_name,
                 job_id,
                 str(STEP_PID),
                 etype,

@@ -218,7 +218,6 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
 
 def track_event(
     timestamp: int,
-    ename: str,
     job_id: str,
     step_id: str,
     etype: str,
@@ -266,7 +265,6 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
 
     track_event(
         get_ts(),
-        job.entity.name,
         job.jid or "" if not job.is_task else "",
         job.jid or "" if job.is_task else "",
         job.entity.type,
@@ -283,7 +281,6 @@ def track_started(job: Job, logger: logging.Logger) -> None:
 
     track_event(
         get_ts(),
-        job.entity.name,
         job.jid or "" if not job.is_task else "",
         job.jid or "" if job.is_task else "",
         job.entity.type,
@@ -299,7 +296,6 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
 
     track_event(
         get_ts(),
-        job.entity.name,
         job.jid or "" if not job.is_task else "",
         job.jid or "" if job.is_task else "",
         job.entity.type,
@@ -420,7 +416,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 self._tracked_jobs[entity.key] = entity
                 track_event(
                     run.timestamp,
-                    entity.name,
                     entity.job_id,
                     entity.step_id,
                     entity.type,
@@ -489,7 +484,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         track_event(
             timestamp,
-            entity.name,
             entity.job_id,
             entity.step_id,
             entity.type,
