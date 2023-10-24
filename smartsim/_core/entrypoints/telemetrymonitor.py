@@ -437,7 +437,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity,
                     entity.is_managed,
                 )
-                self.job_manager._launcher.step_mapping.add(  # pylint: disable=protected-access
+                self._launcher.step_mapping.add(
                     entity.name, entity.step_id, entity.step_id, entity.is_managed
                 )
             self._tracked_runs[run.timestamp] = run
