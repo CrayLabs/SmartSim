@@ -78,13 +78,10 @@ def create_lockfile_name() -> str:
 
 @lru_cache(maxsize=20, typed=False)
 def check_dev_log_level() -> bool:
-    try:
-        lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
-        if lvl == "developer":
-            return True
-        return False
-    except KeyError:
-        return False
+    lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
+    if lvl == "developer":
+        return True
+    return False
 
 
 def fmt_dict(value: t.Dict[str, t.Any]) -> str:
