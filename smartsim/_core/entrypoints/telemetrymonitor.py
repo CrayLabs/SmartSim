@@ -121,7 +121,7 @@ def hydrate_persistable(
             entity.name = persistable_entity["name"]
             entity.job_id = str(metadata.get("job_id", ""))
             entity.step_id = str(metadata.get("step_id", ""))
-            entity.timestamp = int(persistable_entity.get("run_id", "0"))
+            entity.timestamp = int(persistable_entity.get("timestamp", "0"))
             entity.path = str(exp_dir)
             entity.status_dir = str(status_dir)
 
@@ -138,7 +138,7 @@ def hydrate_persistable(
     entity.name = persistable_entity["name"]
     entity.job_id = str(metadata.get("job_id", ""))
     entity.step_id = str(metadata.get("step_id", ""))
-    entity.timestamp = int(persistable_entity.get("run_id", "0"))
+    entity.timestamp = int(persistable_entity.get("timestamp", "0"))
     entity.path = str(exp_dir)
     entity.status_dir = str(status_dir)
 
@@ -169,7 +169,7 @@ def hydrate_runs(
     """Map run data persisted in a manifest file to an object"""
     runs = [
         Run(
-            timestamp=instance["run_id"],
+            timestamp=instance["timestamp"],
             models=hydrate_persistables("model", instance, exp_dir),
             orchestrators=hydrate_persistables("orchestrator", instance, exp_dir),
             ensembles=hydrate_persistables("ensemble", instance, exp_dir),
