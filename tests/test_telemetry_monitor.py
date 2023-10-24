@@ -104,7 +104,7 @@ def test_ts():
 
 
 @pytest.mark.parametrize(
-    ["etype", "job_id", "step_id", "timestamp", "evt_type"],
+    ["etype", "task_id", "step_id", "timestamp", "evt_type"],
     [
         pytest.param(
             "ensemble", "", "123", get_ts(), "start", id="start event"
@@ -116,7 +116,7 @@ def test_ts():
 )
 def test_track_event(
     etype: str,
-    job_id: str,
+    task_id: str,
     step_id: str,
     timestamp: int,
     evt_type: str,
@@ -125,7 +125,7 @@ def test_track_event(
     """Ensure that track event writes a file to the expected location"""
     exp_dir = fileutils.make_test_dir()
     exp_path = pathlib.Path(exp_dir)
-    track_event(timestamp, job_id, step_id, etype, evt_type, exp_path, logger)
+    track_event(timestamp, task_id, step_id, etype, evt_type, exp_path, logger)
 
     expected_output = exp_path / f"{evt_type}.json"
 
@@ -148,7 +148,7 @@ def test_track_specific(
 
     etype = "ensemble"
     name = f"test-ensemble-{uuid.uuid4()}"
-    job_id = ""
+    task_id = ""
     step_id = "1234"
     timestamp = get_ts()
 
@@ -157,22 +157,20 @@ def test_track_specific(
         "name": name,
         "run_id": timestamp,
         "telemetry_metadata": {
-            "status_dir": "/foo/bar",
-            "job_id": job_id,
+            "status_dir": str(exp_dir / serialize.TELMON_SUBDIR),
+            "task_id": task_id,
             "step_id": step_id,        
         },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
     persistable = persistables[0] if persistables else None
 
-    exp_path = pathlib.Path(exp_dir)
-
-    job = Job(name, job_id, persistable, "local", False)
+    job = Job(name, task_id, persistable, "local", False)
     
     track_fn(job, logger)
 
     fname = f"{evt_type}.json"
-    expected_output = exp_path / serialize.TELMON_SUBDIR / etype / name / fname
+    expected_output = exp_dir / serialize.TELMON_SUBDIR / fname
 
     assert expected_output.exists()
     assert expected_output.is_file()
@@ -202,7 +200,7 @@ def test_load_manifest(fileutils: FileUtils):
 
 
 @pytest.mark.parametrize(
-    ["job_id", "step_id", "etype", "exp_isorch", "exp_ismanaged"],
+    ["task_id", "step_id", "etype", "exp_isorch", "exp_ismanaged"],
     [
         pytest.param("", "123", "model", False, False, id="unmanaged, non-orch"),
         pytest.param("456", "123", "ensemble", False, True, id="managed, non-orch"),
@@ -211,7 +209,7 @@ def test_load_manifest(fileutils: FileUtils):
     ],
 )
 def test_persistable_computed_properties(
-    job_id: str, step_id: str, etype: str, exp_isorch: bool, exp_ismanaged: bool
+    task_id: str, step_id: str, etype: str, exp_isorch: bool, exp_ismanaged: bool
 ):
     name = f"test-{etype}-{uuid.uuid4()}"
     timestamp = get_ts()
@@ -220,8 +218,8 @@ def test_persistable_computed_properties(
         "name": name,
         "run_id": timestamp,
         "telemetry_metadata": {
-            "status_dir": "/foo/bar",
-            "job_id": job_id,
+            "status_dir": str(exp_dir),
+            "task_id": task_id,
             "step_id": step_id,
         },
     }
