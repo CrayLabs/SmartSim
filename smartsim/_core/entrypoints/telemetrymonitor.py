@@ -46,8 +46,9 @@ from watchdog.events import FileCreatedEvent, FileModifiedEvent
 from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.stepInfo import StepInfo
-from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
 
+
+from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
