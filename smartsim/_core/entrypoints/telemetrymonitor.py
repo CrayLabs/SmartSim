@@ -124,7 +124,7 @@ def _hydrate_persistable(
         entity.job_id = ""
     if entity.step_id == "None":
         entity.step_id = ""
-    
+
     return entity
 
 
@@ -261,7 +261,11 @@ def track_event(
 def track_completed(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the end of job"""
     detail = job.status
-    exp_dir = pathlib.Path(job.entity.path)
+
+    if hasattr(job.entity, "status_dir"):
+        write_path = pathlib.Path(job.entity.status_dir)
+    else:
+        write_path = pathlib.Path(job.entity.path)
 
     track_event(
         get_ts(),
@@ -269,7 +273,7 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
         job.jid or "" if job.is_task else "",
         job.entity.type,
         "stop",
-        pathlib.Path(job.entity.status_dir),
+        write_path,
         logger,
         detail=detail,
     )
@@ -277,7 +281,10 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
 
 def track_started(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the start of job"""
-    exp_dir = pathlib.Path(job.entity.path)
+    if hasattr(job.entity, "status_dir"):
+        write_path = pathlib.Path(job.entity.status_dir)
+    else:
+        write_path = pathlib.Path(job.entity.path)
 
     track_event(
         get_ts(),
@@ -285,14 +292,17 @@ def track_started(job: Job, logger: logging.Logger) -> None:
         job.jid or "" if job.is_task else "",
         job.entity.type,
         "start",
-        pathlib.Path(job.entity.status_dir),
+        write_path,
         logger,
     )
 
 
 def track_timestep(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for a timestep"""
-    exp_dir = pathlib.Path(job.entity.path)
+    if hasattr(job.entity, "status_dir"):
+        write_path = pathlib.Path(job.entity.status_dir)
+    else:
+        write_path = pathlib.Path(job.entity.path)
 
     track_event(
         get_ts(),
@@ -300,7 +310,7 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
         job.jid or "" if job.is_task else "",
         job.entity.type,
         "timestep",
-        pathlib.Path(job.entity.status_dir),
+        write_path,
         logger,
     )
 
@@ -455,7 +465,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self,
         timestamp: int,
         entity: JobEntity,
-        experiment_dir: pathlib.Path,
         step_info: t.Optional[StepInfo],
     ) -> None:
         """Move a monitored entity from the active to completed collection to
@@ -482,18 +491,23 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         else:
             detail = "unknown status. step_info not retrieved"
 
+        if hasattr(job.entity, "status_dir"):
+            write_path = pathlib.Path(job.entity.status_dir)
+        else:
+            write_path = pathlib.Path(job.entity.path)
+
         track_event(
             timestamp,
             entity.job_id,
             entity.step_id,
             entity.type,
             "stop",
-            pathlib.Path(job.entity.status_dir),
+            write_path,
             self._logger,
             detail=detail,
         )
 
-    def on_timestep(self, timestamp: int, experiment_dir: pathlib.Path) -> None:
+    def on_timestep(self, timestamp: int) -> None:
         """Called at polling frequency to request status updates on
         monitored entities
 
@@ -513,7 +527,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 if step_info and step_info.status in TERMINAL_STATUSES:
                     completed_entity = names[step_name]
                     self._to_completed(
-                        timestamp, completed_entity, experiment_dir, step_info
+                        timestamp, completed_entity, step_info
                     )
 
 
@@ -538,7 +552,6 @@ def event_loop(
     observer: BaseObserver,
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
-    experiment_dir: pathlib.Path,
     logger: logging.Logger,
 ) -> None:
     """Executes all attached timestep handlers every <frequency> seconds
@@ -556,7 +569,7 @@ def event_loop(
     while observer.is_alive():
         timestamp = get_ts()
         logger.debug(f"Telemetry timestep: {timestamp}")
-        action_handler.on_timestep(timestamp, experiment_dir)
+        action_handler.on_timestep(timestamp)
         time.sleep(frequency)
 
         shutdown_when_completed(observer, action_handler)
@@ -603,7 +616,7 @@ def main(
         observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
-        event_loop(observer, action_handler, frequency, experiment_dir, logger)
+        event_loop(observer, action_handler, frequency, logger)
         return 0
     except Exception as ex:
         logger.error(ex)

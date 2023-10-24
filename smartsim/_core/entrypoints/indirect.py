@@ -50,7 +50,6 @@ SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 def main(
     cmd: str,
     etype: str,
-    step_name: str,
     output_path: str,
     error_path: str,
     exp_dir: str = "",
@@ -195,8 +194,6 @@ if __name__ == "__main__":
         rc = main(
             cmd=parsed_args.c,
             etype=parsed_args.t,
-            step_name=parsed_args.n,
-            # cwd=parsed_args.w,
             output_path=parsed_args.o,
             error_path=parsed_args.e,
             exp_dir=parsed_args.d,
