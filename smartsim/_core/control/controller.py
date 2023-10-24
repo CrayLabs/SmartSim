@@ -87,7 +87,7 @@ logger = get_logger(__name__)
 
 # job manager lock
 JM_LOCK = threading.RLock()
-TELEMETRY_MONITOR: t.Optional[t.Any] = None
+_TELEMETRY_MONITOR: t.Optional[subprocess.Popen] = None
 
 
 def start_telemetry_monitor(
@@ -118,11 +118,11 @@ def create_telmon_callback(exp_dir: str) -> t.Callable[[Job, Logger], None]:
     def start_telemetry_callback(_job: Job, _logger: Logger) -> None:
         """A callback that will start a telemetry monitor 
         process if a task is started"""
-        global TELEMETRY_MONITOR  # pylint: disable=global-statement
+        global _TELEMETRY_MONITOR  # pylint: disable=global-statement
 
         # if never started or if a prior instance has shut down
-        if TELEMETRY_MONITOR is None or TELEMETRY_MONITOR.returncode is not None:
-            TELEMETRY_MONITOR = start_telemetry_monitor(exp_dir)
+        if _TELEMETRY_MONITOR is None or _TELEMETRY_MONITOR.returncode is not None:
+            _TELEMETRY_MONITOR = start_telemetry_monitor(exp_dir)
     return start_telemetry_callback
 
 
