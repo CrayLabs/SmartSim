@@ -375,8 +375,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             self._launcher_type = launcher_type
             self._launcher = self.init_launcher(launcher_type)
             self.job_manager.set_launcher(self._launcher)
-            self.job_manager.add_job_onstart_callback(track_started)
-            self.job_manager.add_job_onstop_callback(track_completed)
+            # self.job_manager.add_job_onstart_callback(track_started)
+            # self.job_manager.add_job_onstop_callback(track_completed)
             self.job_manager.add_job_onstep_callback(track_timestep)
 
             self.job_manager.start()
