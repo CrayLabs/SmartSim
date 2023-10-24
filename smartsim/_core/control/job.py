@@ -27,11 +27,13 @@
 import time
 import typing as t
 
+from collections import namedtuple
+
 from ...entity import SmartSimEntity, EntityList, EntitySequence
 from ...status import STATUS_NEW
 
 
-_JobKey = t.Tuple[str, str]
+_JobKey = namedtuple("_JobKey", ["job_id", "step_id"])
 
 
 class JobEntity:
@@ -60,7 +62,7 @@ class JobEntity:
 
     @property
     def key(self) -> _JobKey:
-        return (self.job_id, self.step_id)
+        return _JobKey(self.job_id, self.step_id)
 
 
 class Job:

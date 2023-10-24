@@ -43,7 +43,7 @@ from watchdog.observers.api import BaseObserver
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
-from smartsim._core.control.job import Job, JobEntity
+from smartsim._core.control.job import Job, JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.stepInfo import StepInfo
 
@@ -69,7 +69,6 @@ Telemetry Monitor entrypoint
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _ManifestKey = t.Literal["timestamp", "model", "orchestrator", "ensemble", "run_id"]
-_JobKey = t.Tuple[str, str]
 
 
 @dataclass
@@ -135,7 +134,7 @@ def hydrate_persistable(
     db_keys = db_keys.intersection(persistable_entity.keys())
     if db_keys:
         container = "shards" if "shards" in db_keys else "models"
-        for shard in persistable_entity[container]:            
+        for shard in persistable_entity[container]:
             entity = _hydrate_persistable(shard, entity_type, str(exp_dir))
             entities.append(entity)
 
