@@ -155,8 +155,8 @@ class LocalLauncher(Launcher):
     def __str__(self) -> str:
         return "Local"
 
-    @classmethod
-    def get_proxy_cmd(cls, step: Step) -> t.List[str]:
+    @staticmethod
+    def get_proxy_cmd(step: Step) -> t.List[str]:
         """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
         continue telemetry logging after a driver process exits or fails.
 
