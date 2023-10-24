@@ -810,7 +810,8 @@ class Controller:
 
         address_dict: t.Dict[str, t.List[str]] = {}
         addresses: t.List[str] = []
-        for entity_name, db_entity in self.get_db_jobs().items():
+        for entity_name, value in self.get_db_jobs().items():
+            db_entity = value[1]
             if isinstance(db_entity, (DBNode, Orchestrator)):
                 for combine in itertools.product(db_entity.hosts, db_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
