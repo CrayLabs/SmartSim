@@ -13,6 +13,7 @@
     "runs": [
         {
             "run_id": 1,
+            "timestamp": 111,
             "model": [
                 {
                     "name": "app1",
@@ -20,6 +21,7 @@
                     "exe_args": [
                         "string"
                     ],
+                    "timestamp": 111,
                     "batch_settings": {
                         "batch_cmd": "command",
                         "batch_args": {
@@ -103,6 +105,7 @@
                     "exe_args": [
                         "string"
                     ],
+                    "timestamp": 111,
                     "batch_settings": {
                         "batch_cmd": "command",
                         "batch_args": {
@@ -191,6 +194,7 @@
                         "lo",
                         "lo2"
                     ],
+                    "timestamp": 111,
                     "shards": [
                         {
                             "name": "shard 1",
@@ -228,6 +232,7 @@
                     "batch_settings": {
                         "string": "Any0"
                     },
+                    "timestamp": 111,
                     "params": {
                         "string": [
                             "Any1",
