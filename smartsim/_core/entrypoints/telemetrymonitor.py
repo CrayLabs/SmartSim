@@ -136,10 +136,11 @@ def hydrate_persistable(
     """Map entity data persisted in a manifest file to an object"""
     entities: t.List[JobEntity] = []
 
-    db_keys = {"shards", "models"}
-    db_keys = db_keys.intersection(persistable_entity.keys())
-    if db_keys:
-        container = "shards" if "shards" in db_keys else "models"
+    # an entity w/parent key creates persistables for entities it contains
+    parent_keys = {"shards", "models"}
+    parent_keys = parent_keys.intersection(persistable_entity.keys())
+    if parent_keys:
+        container = "shards" if "shards" in parent_keys else "models"
         for shard in persistable_entity[container]:
             entity = _hydrate_persistable(shard, entity_type, str(exp_dir))
             entities.append(entity)
