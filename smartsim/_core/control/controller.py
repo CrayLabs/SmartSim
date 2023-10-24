@@ -404,7 +404,7 @@ class Controller:
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]]()
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
-            for key in self._jobs.get_db_host_addresses():
+            for key in self._get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if orchestrator.name == db_id:
                     raise SSDBIDConflictError(
@@ -616,7 +616,7 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._get_db_host_addresses()
 
         for db_id, addresses in address_dict.items():
             db_name, _ = unpack_db_identifier(db_id, "_")
@@ -643,7 +643,7 @@ class Controller:
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
 
-            for key in self._jobs.get_db_host_addresses():
+            for key in self._get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
                     raise SSDBIDConflictError(
@@ -796,22 +796,24 @@ class Controller:
 
             return orc
 
-    def _get_db_host_addresses(self) -> t.List[str]:
+    def _get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
+        for corresponding database identifiers
 
-        :return: list of host ip addresses
-        :rtype: list[str]
-        """
+        :return: dictionary of host ip addresses
+        :rtype: Dict[str, list]"""
+
+        address_dict: t.Dict[str, t.List[str]] = {}
         addresses: t.List[str] = []
-        db_jobs = self.get_db_jobs()
+        for entity_name, db_entity in self.get_db_jobs().items():
+            if isinstance(db_entity, (DBNode, Orchestrator)):
+                for combine in itertools.product(db_entity.hosts, db_entity.ports):
+                    ip_addr = get_ip_from_host(combine[0])
+                    addresses.append(":".join((ip_addr, str(combine[1]))))
 
-        for db_job, db_entity in db_jobs.values():
-            addr_options = itertools.product(db_job.hosts, db_entity.ports)
+            address_dict.update({entity_name: addresses})
 
-            for host_addr, port in addr_options:
-                ip_addr = get_ip_from_host(host_addr)
-                addresses.append(f"{ip_addr}:{port}")
-        return addresses
+        return address_dict
 
     def _set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
@@ -834,7 +836,7 @@ class Controller:
         if not manifest.has_db_objects:
             return
 
-        address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._get_db_host_addresses()
         for (
             db_id,
             db_addresses,
