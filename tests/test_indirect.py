@@ -32,6 +32,7 @@ import sys
 import uuid
 
 from smartsim._core.entrypoints.indirect import get_parser, cleanup, get_ts, main
+from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
 
 
 ALL_ARGS = {"+c", "+t", "+n", "+d"}
@@ -183,7 +184,7 @@ def test_complete_process(capsys, fileutils):
     rc = main(cmd, "application", "unit-test-step-1", std_out, err_out, exp_dir)
     assert rc == 0
 
-    app_dir = exp_dir / "manifest" / "application" / "unit-test-step-1"
+    app_dir = exp_dir / TELMON_SUBDIR / "application" / "unit-test-step-1"
     assert app_dir.exists()
     
     start_evt = app_dir / "start.json"
