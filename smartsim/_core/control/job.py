@@ -35,9 +35,8 @@ _JobKey = t.Tuple[str, str]
 
 
 class JobEntity:
-    """
-    Minimum entity API required for Job to do what it does...
-    """
+    """Minimum API required for a job processed in the JobManager with support for
+    telemetry monitoring"""
 
     def __init__(
         self,
