@@ -114,11 +114,17 @@ def _hydrate_persistable(
 
     entity.type = entity_type
     entity.name = persistable_entity["name"]
-    entity.job_id = str(metadata.get("job_id", ""))
+    entity.job_id = str(metadata.get("task_id", ""))
     entity.step_id = str(metadata.get("step_id", ""))
     entity.timestamp = int(persistable_entity.get("timestamp", "0"))
     entity.path = str(exp_dir)
     entity.status_dir = str(status_dir)
+
+    if entity.job_id == "None":
+        entity.job_id = ""
+    if entity.step_id == "None":
+        entity.step_id = ""
+    
     return entity
 
 
@@ -216,7 +222,7 @@ def track_event(
     step_id: str,
     etype: str,
     action: _EventClass,
-    exp_dir: pathlib.Path,
+    status_dir: pathlib.Path,
     logger: logging.Logger,
     detail: str = "",
     return_code: t.Optional[int] = None,
@@ -226,10 +232,8 @@ def track_event(
     """
     job_id = job_id or ""
     step_id = step_id or ""
-    entity_type = etype or "missing_entity_type"
 
-    name: str = ename or "entity-name-not-found"
-    tgt_path = exp_dir / TELMON_SUBDIR / entity_type / name / f"{action}.json"
+    tgt_path = status_dir / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
     entity_dict = {
@@ -266,7 +270,7 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
         job.jid or "" if job.is_task else "",
         job.entity.type,
         "stop",
-        exp_dir,
+        pathlib.Path(job.entity.status_dir),
         logger,
         detail=detail,
     )
@@ -283,7 +287,7 @@ def track_started(job: Job, logger: logging.Logger) -> None:
         job.jid or "" if job.is_task else "",
         job.entity.type,
         "start",
-        exp_dir,
+        pathlib.Path(job.entity.status_dir),
         logger,
     )
 
@@ -299,7 +303,7 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
         job.jid or "" if job.is_task else "",
         job.entity.type,
         "timestep",
-        exp_dir,
+        pathlib.Path(job.entity.status_dir),
         logger,
     )
 
@@ -420,7 +424,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity.step_id,
                     entity.type,
                     "start",
-                    exp_dir,
+                    pathlib.Path(entity.status_dir),
                     self._logger,
                 )
 
@@ -489,7 +493,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             entity.step_id,
             entity.type,
             "stop",
-            experiment_dir,
+            pathlib.Path(job.entity.status_dir),
             self._logger,
             detail=detail,
         )
