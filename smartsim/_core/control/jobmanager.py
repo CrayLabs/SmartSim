@@ -85,13 +85,9 @@ class JobManager:
         self.on_start_hook: t.List[t.Callable[[Job, Logger], None]] = []
         self.on_timestep_hook: t.List[t.Callable[[Job, Logger], None]] = []
 
-    def start_job_monitor(self) -> None:
-        """Start a thread for the job manager"""
+    def start(self) -> None:
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
-
-    def start(self) -> None:
-        self.start_job_monitor()
 
     def run(self) -> None:
         """Start the JobManager thread to continually check
