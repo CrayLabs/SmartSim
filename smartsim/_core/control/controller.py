@@ -83,11 +83,16 @@ if t.TYPE_CHECKING:
     from ..launcher.stepMapping import StepMap
     from ..utils.serialize import TStepLaunchMetaData
 
+    _TELEMETRY_MONITOR: t.Optional[subprocess.Popen[t.Any]] = None
+else:
+    _TELEMETRY_MONITOR = None
+
+
 logger = get_logger(__name__)
 
 # job manager lock
 JM_LOCK = threading.RLock()
-_TELEMETRY_MONITOR: t.Optional[subprocess.Popen] = None
+
 
 
 def start_telemetry_monitor(
