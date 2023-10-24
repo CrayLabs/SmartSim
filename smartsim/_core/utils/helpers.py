@@ -279,7 +279,7 @@ def installed_redisai_backends(
 
 
 def get_ts() -> int:
-    """Helper function to ensure all timestamps are converted to integers"""
+    """Return the current timestamp (accurate to seconds) cast to an integer"""
     return int(datetime.timestamp(datetime.now()))
 
 
