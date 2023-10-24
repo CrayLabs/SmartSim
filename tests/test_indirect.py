@@ -134,7 +134,7 @@ def test_indirect_main_dir_check():
     err_out = str(exp_dir / "err.txt")
 
     with pytest.raises(ValueError) as ex:
-        main("echo unit-test", "application", "unit-test-step-1", std_out, err_out, exp_dir)
+        main("echo unit-test", "application", std_out, err_out, exp_dir)
 
     assert "directory does not exist" in ex.value.args[0]
 
@@ -149,7 +149,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("", "application", "unit-test-step-1", std_out, err_out, exp_dir)
+        _ = main("", "application", std_out, err_out, exp_dir)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -160,7 +160,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("  \n  \t   ", "application", "unit-test-step-1", std_out, err_out, exp_dir)
+        _ = main("  \n  \t   ", "application", std_out, err_out, exp_dir)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -181,14 +181,13 @@ def test_complete_process(capsys, fileutils):
     raw_cmd = f"{sys.executable}|{script}|--time=1"
     cmd = base64.b64encode(raw_cmd.encode('ascii')).decode('ascii')
 
-    rc = main(cmd, "application", "unit-test-step-1", std_out, err_out, exp_dir)
+    rc = main(cmd, "application", std_out, err_out, exp_dir)
     assert rc == 0
 
-    app_dir = exp_dir / TELMON_SUBDIR / "application" / "unit-test-step-1"
-    assert app_dir.exists()
+    assert exp_dir.exists()
     
-    start_evt = app_dir / "start.json"
-    exit_evt = app_dir / "stop.json"
+    start_evt = exp_dir / "start.json"
+    exit_evt = exp_dir / "stop.json"
 
     assert start_evt.exists()
     assert start_evt.is_file()
