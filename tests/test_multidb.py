@@ -62,7 +62,7 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # create regular database
     orc = exp.create_database(
@@ -132,7 +132,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create run settings
     colo_settings = exp.create_run_settings("python", test_script)
@@ -175,7 +175,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     exp.stop(orc)
 
 
-def test_db_identifier_standard_twice_not_unique(wlmutils):
+def test_db_identifier_standard_twice_not_unique(wlmutils, fileutils):
     """Test uniqueness of db_identifier several calls to create_database, with non unique names,
     checking error is raised before exp start is called"""
 
@@ -186,9 +186,10 @@ def test_db_identifier_standard_twice_not_unique(wlmutils):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
+    test_dir = fileutils.make_test_dir()
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # CREATE DATABASE with db_identifier
     orc = exp.create_database(
@@ -300,7 +301,9 @@ def test_multidb_colo_once(fileutils, wlmutils, coloutils, db_type):
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # start a new Experiment for this section
-    exp = Experiment("test_multidb_colo_once", launcher=test_launcher)
+    exp = Experiment("test_multidb_colo_once",
+                     launcher=test_launcher,
+                     exp_path=test_dir)
 
     # create run settings
     run_settings = exp.create_run_settings("python", test_script)
@@ -466,8 +469,8 @@ def test_launch_cluster_orc_single_dbid(fileutils, wlmutils):
 
     exp_name = "test_launch_cluster_orc_single_dbid"
     launcher = wlmutils.get_test_launcher()
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()

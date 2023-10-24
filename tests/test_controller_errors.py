@@ -97,7 +97,7 @@ def test_wrong_orchestrator(wlmutils):
     cont = Controller(launcher="local")
     manifest = Manifest(orc)
     with pytest.raises(SmartSimError):
-        cont._launch(manifest)
+        cont._launch("exp_name", "exp_path", manifest)
 
 
 def test_bad_orc_checkpoint():

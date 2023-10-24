@@ -194,6 +194,8 @@ class Experiment:
             if summary:
                 self._launch_summary(start_manifest)
             self._control.start(
+                exp_name=self.name,
+                exp_path=self.exp_path,
                 manifest=start_manifest,
                 block=block,
                 kill_on_interrupt=kill_on_interrupt,

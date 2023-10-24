@@ -30,7 +30,12 @@ from copy import deepcopy
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.control import Manifest
+from smartsim._core.control.manifest import (
+    Manifest,
+    LaunchedManifest,
+    LaunchedManifestBuilder,
+    _LaunchedManifestMetadata as LaunchedManifestMetadata,
+)
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
@@ -49,7 +54,6 @@ exp = Experiment("util-test", launcher="local")
 model = exp.create_model("model_1", run_settings=rs)
 model_2 = exp.create_model("model_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
-
 
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
@@ -99,3 +103,48 @@ def test_corner_case():
     p = Person()
     with pytest.raises(TypeError):
         _ = Manifest(p)
+
+def test_launched_manifest_transform_data():
+    models = [(model, 1), (model_2, 2)]
+    ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
+    dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
+    launched = LaunchedManifest(
+        metadata=LaunchedManifestMetadata("name", "path", "launcher"),
+        models=models,
+        ensembles=ensembles,
+        databases=dbs,
+    )
+    transformed = launched.map(lambda x: str(x))
+    assert transformed.models == tuple((m, str(i)) for m, i in models)
+    assert transformed.ensembles[0][1] == tuple((m, str(i)) for m, i in ensembles[0][1])
+    assert transformed.databases[0][1] == tuple((n, str(i)) for n, i in dbs[0][1])
+
+
+def test_launched_manifest_builder_correctly_maps_data():
+    lmb = LaunchedManifestBuilder()
+    lmb.add_model(model, 1)
+    lmb.add_model(model_2, 1)
+    lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
+    lmb.add_database(orc, [i for i in range(len(orc.entities))])
+
+    manifest = lmb.finalize("name", "path", "launcher name")
+    assert len(manifest.models) == 2
+    assert len(manifest.ensembles) == 1
+    assert len(manifest.databases) == 1
+
+
+def test_launced_manifest_builder_raises_if_lens_do_not_match():
+    lmb = LaunchedManifestBuilder()
+    with pytest.raises(ValueError):
+        lmb.add_ensemble(ensemble, list(range(123)))
+    with pytest.raises(ValueError):
+        lmb.add_database(orc, list(range(123)))
+
+
+def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
+    monkeypatch
+):
+    lmb = LaunchedManifestBuilder()
+    monkeypatch.setattr(ensemble, "entities", [])
+    with pytest.raises(ValueError):
+        lmb.add_ensemble(ensemble, [])

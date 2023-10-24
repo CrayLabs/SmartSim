@@ -27,34 +27,31 @@
 from __future__ import annotations
 
 import os.path as osp
-from os import environ
 import pickle
 import signal
 import threading
 import time
 import typing as t
+from os import environ
 
 from smartredis import Client, ConfigOptions
 
 from ..._core.launcher.step import Step
+from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
-from ..._core.utils.helpers import (
-    unpack_db_identifier,
-    unpack_colo_db_identifier,
-)
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
+    SSDBIDConflictError,
     SSInternalError,
     SSUnsupportedError,
-    SSDBIDConflictError,
 )
 from ...log import get_logger
+from ...servertype import CLUSTERED, STANDALONE
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
-from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
     CobaltLauncher,
@@ -64,10 +61,14 @@ from ..launcher import (
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
-from ..utils import check_cluster_status, create_cluster
+from ..utils import check_cluster_status, create_cluster, serialize
 from .job import Job
 from .jobmanager import JobManager
-from .manifest import Manifest
+from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
+
+if t.TYPE_CHECKING:
+    from ..launcher.stepMapping import StepMap
+    from ..utils.serialize import TStepLaunchMetaData
 
 logger = get_logger(__name__)
 
@@ -91,7 +92,12 @@ class Controller:
         self.init_launcher(launcher)
 
     def start(
-        self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
+        self,
+        exp_name: str,
+        exp_path: str,
+        manifest: Manifest,
+        block: bool = True,
+        kill_on_interrupt: bool = True,
     ) -> None:
         """Start the passed SmartSim entities
 
@@ -104,11 +110,15 @@ class Controller:
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
-        self._launch(manifest)
+        launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
             self._jobs.start()
+
+        serialize.save_launch_manifest(
+            launched.map(_look_up_launched_data(self._launcher))
+        )
 
         # block until all non-database jobs are complete
         if block:
@@ -312,7 +322,9 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
-    def _launch(self, manifest: Manifest) -> None:
+    def _launch(
+        self, exp_name: str, exp_path: str, manifest: Manifest
+    ) -> LaunchedManifest[t.Tuple[str, Step]]:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
@@ -322,6 +334,7 @@ class Controller:
         :type manifest: Manifest
         """
 
+        manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]]()
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -339,7 +352,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator)
+            self._launch_orchestrator(orchestrator, manifest_builder)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -351,10 +364,17 @@ class Controller:
         all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
-                batch_step = self._create_batch_job_step(elist)
+                batch_step, substeps = self._create_batch_job_step(elist)
+                manifest_builder.add_ensemble(
+                    elist, [(batch_step.name, step) for step in substeps]
+                )
                 steps.append((batch_step, elist))
             else:
+                # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                manifest_builder.add_ensemble(
+                    elist, [(step.name, step) for step, _ in job_steps]
+                )
                 steps.extend(job_steps)
         # models themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
@@ -364,17 +384,25 @@ class Controller:
                     model.name, model.path, model.batch_settings
                 )
                 anon_entity_list.entities.append(model)
-                batch_step = self._create_batch_job_step(anon_entity_list)
+                batch_step, _ = self._create_batch_job_step(anon_entity_list)
+                manifest_builder.add_model(model, (batch_step.name, batch_step))
                 steps.append((batch_step, model))
             else:
                 job_step = self._create_job_step(model)
+                manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
         # launch steps
         for step, entity in steps:
             self._launch_step(step, entity)
 
-    def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
+        return manifest_builder.finalize(exp_name, exp_path, str(self._launcher))
+
+    def _launch_orchestrator(
+        self,
+        orchestrator: Orchestrator,
+        manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
+    ) -> None:
         """Launch an Orchestrator instance
 
         This function will launch the Orchestrator instance and
@@ -385,14 +413,21 @@ class Controller:
         :type orchestrator: Orchestrator
         """
         orchestrator.remove_stale_files()
+
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            orc_batch_step = self._create_batch_job_step(orchestrator)
+            orc_batch_step, substeps = self._create_batch_job_step(orchestrator)
+            manifest_builder.add_database(
+                orchestrator, [(orc_batch_step.name, step) for step in substeps]
+            )
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
             db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
+            manifest_builder.add_database(
+                orchestrator, [(step.name, step) for step, _ in db_steps]
+            )
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
@@ -463,13 +498,14 @@ class Controller:
 
     def _create_batch_job_step(
         self, entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob]
-    ) -> Step:
+    ) -> t.Tuple[Step, t.List[Step]]:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
         :type entity_list: EntityList
-        :return: job step instance
-        :rtype: Step
+        :return: batch job step instance and a list of run steps to be
+                 executed within the batch job
+        :rtype: tuple[Step, list[Step]]
         """
         if not entity_list.batch_settings:
             raise ValueError(
@@ -479,12 +515,14 @@ class Controller:
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
+        substeps = []
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
             entity.run_settings.in_batch = True
             step = self._create_job_step(entity)
+            substeps.append(step)
             batch_step.add_to_batch(step)
-        return batch_step
+        return batch_step, substeps
 
     def _create_job_step(self, entity: SmartSimEntity) -> Step:
         """Create job steps for all entities with the launcher
@@ -749,3 +787,25 @@ class _AnonymousBatchJob(EntityList[Model]):
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         ...
+
+
+def _look_up_launched_data(
+    launcher: Launcher,
+) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
+    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
+        # NOTE: we cannot assume that the name of the launched step
+        # ``launched_step_name`` is equal to the name of the step referring to
+        # the entity ``step.name`` as is the case when an entity list is
+        # launched as a batch job
+        launched_step_name, step = data
+        launched_step_map = launcher.step_mapping[launched_step_name]
+        out_file, err_file = step.get_output_files()
+        return (
+            launched_step_map.step_id,
+            launched_step_map.task_id,
+            launched_step_map.managed,
+            out_file,
+            err_file,
+        )
+
+    return _unpack_launched_data

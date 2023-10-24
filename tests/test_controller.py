@@ -26,28 +26,41 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim._core.control.controller import Controller
+from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
+from smartsim._core.launcher.step import Step
+from smartsim.entity.ensemble import Ensemble
+from smartsim.database.orchestrator import Orchestrator
 
-# retrieved from pytest fixtures
-if pytest.test_launcher not in pytest.wlm_options:
-    pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
+controller = Controller()
 
+rs = SrunSettings('echo', ['spam', 'eggs'])
+bs = SbatchSettings()
 
-@pytest.mark.skip("OpenMPI currently not working on LSF systems")
-def test_launch_openmpi_lsf(wlmutils, fileutils):
-    launcher = wlmutils.get_test_launcher()
-    if launcher != "lsf":
-        pytest.skip("Test only runs on systems with LSF as WLM")
-    exp_name = "test-launch-openmpi-lsf"
-    test_dir = fileutils.make_test_dir()
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
+ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
+orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 
-    script = fileutils.get_test_conf_path("sleep.py")
-    settings = exp.create_run_settings("python", script, "mpirun")
-    settings.set_cpus_per_task(1)
-    settings.set_tasks(1)
+class MockStep(Step):
+    @staticmethod
+    def _create_unique_name(name):
+        return name
 
-    model = exp.create_model("ompi-model", path=test_dir, run_settings=settings)
-    exp.start(model, block=True)
-    statuses = exp.get_status(model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    def add_to_batch(self, step):
+        ...
+
+    def get_launch_cmd(self):
+        return []
+
+@pytest.mark.parametrize("collection", [
+    pytest.param(ens, id="Ensemble"),
+    pytest.param(orc, id="Database"),
+])
+def test_controller_batch_step_creation_preserves_entity_order(collection, monkeypatch):
+    monkeypatch.setattr(controller._launcher, "create_step",
+                        lambda name, path, settings: MockStep(name, path, settings))
+    entity_names = [x.name for x in collection.entities]
+    assert len(entity_names) == len(set(entity_names))
+    _, steps = controller._create_batch_job_step(collection)
+    assert entity_names == [step.name for step in steps]
+
+    
