@@ -368,7 +368,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if launcher_type := self._launcher_map.get(launcher.lower(), None):
             return launcher_type()
-        
+
         raise ValueError("Launcher type not supported: " + launcher)
 
 
@@ -410,7 +410,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         self.set_launcher(manifest.launcher)
 
-        if not self.job_manager._launcher:  # pylint: disable=protected-access
+        if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
