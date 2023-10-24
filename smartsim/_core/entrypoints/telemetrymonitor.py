@@ -507,7 +507,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         names = {entity.name: entity for entity in entity_map.values()}
 
-        if launcher and names:
+        if names:
             step_updates = launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:
