@@ -102,33 +102,12 @@ class RuntimeManifest:
     runs: t.List[Run] = field(default_factory=list)
 
 
-def hydrate_persistable(
-    entity_type: str,
+def _hydrate_persistable(
     persistable_entity: t.Dict[str, t.Any],
-    exp_dir: pathlib.Path,
-) -> t.List[JobEntity]:
-    """Map entity data persisted in a manifest file to an object"""
-    entities: t.List[JobEntity] = []
-
-    if "shards" in persistable_entity or "models" in persistable_entity:
-        container = "shards" if "shards" in persistable_entity else "models"
-        for shard in persistable_entity[container]:
-            entity = JobEntity()
-            metadata = shard["telemetry_metadata"]
-            status_dir = pathlib.Path(metadata.get("status_dir"))
-
-            entity.type = entity_type
-            entity.name = persistable_entity["name"]
-            entity.job_id = str(metadata.get("job_id", ""))
-            entity.step_id = str(metadata.get("step_id", ""))
-            entity.timestamp = int(persistable_entity.get("timestamp", "0"))
-            entity.path = str(exp_dir)
-            entity.status_dir = str(status_dir)
-
-            entities.append(entity)
-
-        return entities
-
+    entity_type: str,
+    exp_dir: str,
+) -> JobEntity:
+    """Populate JobEntity instance with supplied metdata and instance details"""
     entity = JobEntity()
 
     metadata = persistable_entity["telemetry_metadata"]
@@ -141,7 +120,28 @@ def hydrate_persistable(
     entity.timestamp = int(persistable_entity.get("timestamp", "0"))
     entity.path = str(exp_dir)
     entity.status_dir = str(status_dir)
+    return entity
 
+
+def hydrate_persistable(
+    entity_type: str,
+    persistable_entity: t.Dict[str, t.Any],
+    exp_dir: pathlib.Path,
+) -> t.List[JobEntity]:
+    """Map entity data persisted in a manifest file to an object"""
+    entities: t.List[JobEntity] = []
+
+    db_keys = {"shards", "models"}
+    db_keys = db_keys.intersection(persistable_entity.keys())
+    if db_keys:
+        container = "shards" if "shards" in db_keys else "models"
+        for shard in persistable_entity[container]:            
+            entity = _hydrate_persistable(shard, entity_type, str(exp_dir))
+            entities.append(entity)
+
+        return entities
+
+    entity = _hydrate_persistable(persistable_entity, entity_type, str(exp_dir))
     entities.append(entity)
 
     return entities
