@@ -80,10 +80,7 @@ class DBNode(SmartSimEntity):
             # return default number of shards if mpmd is not set
             return 1
 
-        try:
-            return len(self.run_settings.mpmd) + 1
-        except AttributeError:
-            return 1
+        return len(self.run_settings.mpmd) + 1
 
     @property
     def host(self) -> str:
@@ -107,10 +104,7 @@ class DBNode(SmartSimEntity):
             # missing mpmd property guarantees this is not an mpmd run
             return False
 
-        try:
-            return bool(self.run_settings.mpmd)
-        except AttributeError:
-            return False
+        return bool(self.run_settings.mpmd)
 
     def set_hosts(self, hosts: t.List[str]) -> None:
         self._hosts = [str(host) for host in hosts]
