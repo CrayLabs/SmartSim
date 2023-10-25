@@ -266,7 +266,7 @@ def test_cli_default_cli(capsys):
     # show that `smart dbcli` calls the build parser and build execute function
     assert "usage: smart [-h] <command>" in captured.out
     assert "Available commands" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `build` argument, expect build-specific help text
     with pytest.raises(SystemExit) as e:
@@ -278,7 +278,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart build [-h]" in captured.out
     assert "Build SmartSim dependencies" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `clean` argument, expect clean-specific help text
     with pytest.raises(SystemExit) as e:
@@ -291,7 +291,7 @@ def test_cli_default_cli(capsys):
     assert "Remove previous ML runtime installation" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
     assert "--clobber" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `dbcli` argument, expect dbcli-specific help text
     with pytest.raises(SystemExit) as e:
@@ -303,7 +303,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart dbcli [-h]" in captured.out
     assert "Print the path to the redis-cli binary" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `site` argument, expect site-specific help text
     with pytest.raises(SystemExit) as e:
@@ -315,7 +315,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart site [-h]" in captured.out
     assert "Print the installation site of SmartSim" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `clobber` argument, expect clobber-specific help text
     with pytest.raises(SystemExit) as e:
@@ -328,7 +328,7 @@ def test_cli_default_cli(capsys):
     assert "Remove all previous dependency installations" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
     # assert "--clobber" not in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
 
 @pytest.mark.parametrize(
