@@ -406,7 +406,7 @@ def local_db(
 
 @pytest.fixture
 def db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], make_test_dir: t.Any
+    request: t.Any, wlmutils: t.Type[WLMUtils], make_test_dir: str
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an orchestrator"""
     launcher = wlmutils.get_test_launcher()
@@ -426,7 +426,7 @@ def db(
 
 @pytest.fixture
 def db_cluster(
-    make_test_dir: t.Any, wlmutils: t.Type[WLMUtils], request: t.Any
+    make_test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
 ) -> t.Generator[Orchestrator, None, None]:
     """
     Yield fixture for startup and teardown of a clustered orchestrator.
@@ -548,7 +548,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
     caller_function_list = caller_function.split("[", maxsplit=1)
 
     def is_accepted_char(char: str):
-        return char.isalnum or char in "-."
+        return char.isalnum() or char in "-._"
 
     if len(caller_function_list) > 1:
         caller_function_list[1] = "".join(
@@ -559,9 +559,9 @@ def _sanitize_caller_function(caller_function: str) -> str:
 
 
 @pytest.fixture
-def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
+def get_test_dir(request: pytest.FixtureRequest):
     caller_function = _sanitize_caller_function(request.node.name)
-    dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
+    dir_path = FileUtils._test_dir_path(caller_function, str(request.path))
 
     if not os.path.exists(os.path.dirname(dir_path)):
         os.makedirs(os.path.dirname(dir_path))
@@ -570,9 +570,9 @@ def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
 
 
 @pytest.fixture
-def make_test_dir(request: t.Optional[pytest.FixtureRequest]):
+def make_test_dir(request: pytest.FixtureRequest):
     caller_function = _sanitize_caller_function(request.node.name)
-    dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
+    dir_path = FileUtils._test_dir_path(caller_function, str(request.path))
 
     try:
         os.makedirs(dir_path)
