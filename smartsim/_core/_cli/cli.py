@@ -72,7 +72,7 @@ class SmartCli:
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:
             self.parser.print_help()
-            return 0
+            return 2
 
         app_args = cli_args[1:]  # exclude the path to executable
         subcommand = cli_args[1]  # first positional arg is the subcommand
@@ -80,7 +80,7 @@ class SmartCli:
         menu_item = self.menu.get(subcommand, None)
         if not menu_item:
             self.parser.print_help()
-            return 0
+            return 2
 
         if menu_item.is_plugin:
             self.args, unparsed_args = self.parser.parse_known_args(app_args)
