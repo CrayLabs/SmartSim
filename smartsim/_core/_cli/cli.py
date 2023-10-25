@@ -97,6 +97,9 @@ class SmartCli:
         if item.configurator:
             item.configurator(parser)
 
+        if item.command in self.menu:
+            raise ValueError(f"{item.command} plugin cannot overwrite built-in CLI command")
+
         self.menu[item.command] = item
 
     def register_plugins(self) -> None:
