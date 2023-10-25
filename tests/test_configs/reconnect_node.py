@@ -38,9 +38,9 @@ if __name__ == "__main__":
 
     client = None
     if args.cluster:
-        client = Client(cluster=True)
+        client = Client(True)
     else:
-        client = Client(cluster=False)
+        client = Client(False)
 
     for i in range(0, 5):
         data = client.get_array_nd_float64(str(i))

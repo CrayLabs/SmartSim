@@ -77,7 +77,7 @@ def calc_svd(input_tensor):
 def run(device):
 
     # connect a client to the database
-    client = Client(cluster=False)
+    client = Client(False)
 
     # test the SVD function
     tensor = np.random.randint(0, 100, size=(5, 3, 2)).astype(np.float32)

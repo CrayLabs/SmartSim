@@ -32,7 +32,7 @@ def main():
     # address should be set as we are launching through
     # SmartSim.
 
-    client = Client(cluster=False)
+    client = Client(False)
 
     array = np.array([1, 2, 3, 4])
     client.put_tensor("test_array", array)

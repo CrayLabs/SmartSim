@@ -32,7 +32,7 @@ from smartredis import Client
 def main():
     # Address should be set as we are launching through
     # SmartSim.
-    client = Client(cluster=False)
+    client = Client(False)
 
     array = np.ones((1, 1, 28, 28)).astype(np.single)
     client.put_tensor("test_array", array)

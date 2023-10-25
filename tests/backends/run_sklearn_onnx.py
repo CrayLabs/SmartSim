@@ -78,7 +78,7 @@ def run_model(client, model_name, device, model, model_input, in_name, out_names
 def run(device):
 
     # connect a client to the database
-    client = Client(cluster=False)
+    client = Client(False)
 
     # linreg test
     X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]]).astype(np.float32)
