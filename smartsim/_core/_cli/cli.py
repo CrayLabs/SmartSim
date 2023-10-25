@@ -47,27 +47,22 @@ from smartsim._core._cli.utils import MenuItemConfig
 
 class SmartCli:
     def __init__(self, menu: t.List[MenuItemConfig]) -> None:
-        self.menu: t.Dict[str, MenuItemConfig] = {item.command: item for item in menu}
-        parser = argparse.ArgumentParser(
+        self.menu: t.Dict[str, MenuItemConfig] = {}
+        self.parser = argparse.ArgumentParser(
             prog="smart",
             description="SmartSim command line interface",
         )
-        self.parser = parser
         self.args: t.Optional[argparse.Namespace] = None
 
-        self.subparsers = parser.add_subparsers(
+        self.subparsers = self.parser.add_subparsers(
             dest="command",
             required=True,
             metavar="<command>",
             help="Available commands",
         )
 
-        for cmd, item in self.menu.items():
-            parser = self.subparsers.add_parser(
-                cmd, description=item.description, help=item.description
-            )
-            if item.configurator:
-                item.configurator(parser)
+        for item in menu:
+            self._register_menu_item(item)
 
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:
@@ -90,7 +85,7 @@ class SmartCli:
 
         return menu_item.handler(self.args, unparsed_args)
 
-    def _register_plugin(self, item: MenuItemConfig) -> None:
+    def _register_menu_item(self, item: MenuItemConfig) -> None:
         parser = self.subparsers.add_parser(
             item.command, description=item.description, help=item.description
         )
@@ -98,13 +93,15 @@ class SmartCli:
             item.configurator(parser)
 
         if item.command in self.menu:
-            raise ValueError(f"{item.command} plugin cannot overwrite built-in CLI command")
+            raise ValueError(
+                f"{item.command} cannot overwrite existing CLI command"
+            )
 
         self.menu[item.command] = item
 
     def register_plugins(self) -> None:
         for plugin in plugins:
-            self._register_plugin(plugin())
+            self._register_menu_item(plugin())
 
 
 def default_cli() -> SmartCli:
