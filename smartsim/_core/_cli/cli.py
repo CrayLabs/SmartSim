@@ -61,8 +61,8 @@ class SmartCli:
             help="Available commands",
         )
 
-        for item in menu:
-            self._register_menu_item(item)
+        self.register_menu_items(menu)
+        self.register_menu_items([plugin() for plugin in plugins])
 
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:
@@ -99,9 +99,9 @@ class SmartCli:
 
         self.menu[item.command] = item
 
-    def register_plugins(self) -> None:
-        for plugin in plugins:
-            self._register_menu_item(plugin())
+    def register_menu_items(self, menu_items: t.List[MenuItemConfig]) -> None:
+        for item in menu_items:
+            self._register_menu_item(item)
 
 
 def default_cli() -> SmartCli:

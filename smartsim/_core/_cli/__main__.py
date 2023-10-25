@@ -31,7 +31,6 @@ from smartsim._core._cli.cli import default_cli
 
 def main() -> int:
     smart_cli = default_cli()
-    smart_cli.register_plugins()
 
     return smart_cli.execute(sys.argv)
 
