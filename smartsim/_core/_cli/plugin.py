@@ -30,4 +30,4 @@ def dashboard() -> MenuItemConfig:
         is_plugin=True,
     )
 
-plugins = [dashboard]
+plugins = (dashboard, )
