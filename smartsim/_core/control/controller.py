@@ -27,7 +27,6 @@
 from __future__ import annotations
 from logging import Logger
 
-import itertools
 import os.path as osp
 from os import environ
 import pathlib
@@ -74,7 +73,6 @@ from ..launcher import (
 )
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
-from ..utils.network import get_ip_from_host
 from .job import Job
 from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
@@ -409,7 +407,7 @@ class Controller:
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]]()
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
-            for key in self._get_db_host_addresses():
+            for key in self._jobs.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if orchestrator.name == db_id:
                     raise SSDBIDConflictError(
@@ -508,7 +506,7 @@ class Controller:
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
-        self._set_db_hosts(orchestrator)
+        self._jobs.set_db_hosts(orchestrator)
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -621,7 +619,7 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        address_dict = self._get_db_host_addresses()
+        address_dict = self._jobs.get_db_host_addresses()
 
         for db_id, addresses in address_dict.items():
             db_name, _ = unpack_db_identifier(db_id, "_")
@@ -648,7 +646,7 @@ class Controller:
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
 
-            for key in self._get_db_host_addresses():
+            for key in self._jobs.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
                     raise SSDBIDConflictError(
@@ -801,48 +799,11 @@ class Controller:
 
             return orc
 
-    def _get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
-        """Retrieve the list of hosts for the database
-        for corresponding database identifiers
-
-        :return: dictionary of host ip addresses
-        :rtype: Dict[str, list]"""
-
-        address_dict: t.Dict[str, t.List[str]] = {}
-        addresses: t.List[str] = []
-        for entity_name, value in self.get_db_jobs().items():
-            db_entity = value[1]
-            if isinstance(db_entity, (DBNode, Orchestrator)):
-                for combine in itertools.product(db_entity.hosts, db_entity.ports):
-                    ip_addr = get_ip_from_host(combine[0])
-                    addresses.append(":".join((ip_addr, str(combine[1]))))
-
-            address_dict.update({entity_name: addresses})
-
-        return address_dict
-
-    def _set_db_hosts(self, orchestrator: Orchestrator) -> None:
-        """Set the DB hosts in db_jobs so future entities can query this
-
-        :param orchestrator: orchestrator instance
-        :type orchestrator: Orchestrator
-        """
-        # should only be called during launch in the controller
-        with JM_LOCK:
-            if orchestrator.batch:
-                self._jobs.db_jobs[orchestrator.name].hosts = orchestrator.hosts
-            else:
-                for dbnode in orchestrator.entities:
-                    if not dbnode.is_mpmd:
-                        self._jobs.db_jobs[dbnode.name].hosts = [dbnode.host]
-                    else:
-                        self._jobs.db_jobs[dbnode.name].hosts = dbnode.hosts
-
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
             return
 
-        address_dict = self._get_db_host_addresses()
+        address_dict = self._jobs.get_db_host_addresses()
         for (
             db_id,
             db_addresses,
