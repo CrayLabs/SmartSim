@@ -6,9 +6,6 @@ import typing as t
 from smartsim._core._cli.utils import MenuItemConfig
 
 
-plugins: t.List[t.Callable[[], MenuItemConfig]] = []
-
-
 def dynamic_execute(cmd: str) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
     def process_execute(_args: argparse.Namespace, unparsed_args: t.List[str]) -> int:
         if not shutil.which(cmd):
@@ -33,5 +30,4 @@ def dashboard() -> MenuItemConfig:
         is_plugin=True,
     )
 
-
-plugins.append(dashboard)
+plugins = [dashboard]
