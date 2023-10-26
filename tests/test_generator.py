@@ -112,8 +112,8 @@ def test_ensemble_overwrite_error(fileutils, get_test_dir):
         gen.generate_experiment(ensemble)
 
 
-def test_full_exp(fileutils, make_test_dir, wlmutils):
-    test_dir = make_test_dir
+def test_full_exp(fileutils, test_dir, wlmutils):
+    test_dir = test_dir
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     model = exp.create_model("model", run_settings=rs)
@@ -141,12 +141,12 @@ def test_full_exp(fileutils, make_test_dir, wlmutils):
     assert osp.isfile(osp.join(test_dir, "model/sleep.py"))
 
 
-def test_dir_files(fileutils, make_test_dir):
+def test_dir_files(fileutils, test_dir):
     """test the generate of models with files that
     are directories with subdirectories and files
     """
 
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -164,10 +164,10 @@ def test_dir_files(fileutils, make_test_dir):
         assert osp.isfile(osp.join(model_path, "test.py"))
 
 
-def test_print_files(fileutils, make_test_dir, capsys):
+def test_print_files(fileutils, test_dir, capsys):
     """Test the stdout print of files attached to an ensemble"""
 
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment("print-attached-files-test", test_dir, launcher="local")
 
     ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
@@ -245,9 +245,9 @@ def test_print_files(fileutils, make_test_dir, capsys):
     assert captured.out == expected_out_multi
 
 
-def test_multiple_tags(fileutils, make_test_dir):
+def test_multiple_tags(fileutils, test_dir):
     """Test substitution of multiple tagged parameters on same line"""
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     exp = Experiment("test-multiple-tags", test_dir)
     model_params = {"port": 6379, "password": "unbreakable_password"}
@@ -267,10 +267,10 @@ def test_multiple_tags(fileutils, make_test_dir):
         )
 
 
-def test_generation_log(fileutils, make_test_dir):
+def test_generation_log(fileutils, test_dir):
     """Test that an error is issued when a tag is unused and make_fatal is True"""
 
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment("gen-log-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20], "STEPS": [10, 20]}
@@ -302,12 +302,12 @@ def test_generation_log(fileutils, make_test_dir):
             ),
         )
 
-def test_config_dir(fileutils, make_test_dir):
+def test_config_dir(fileutils, test_dir):
     """Test the generation and configuration of models with
     tagged files that are directories with subdirectories and files
     """
     exp = Experiment("config-dir", launcher="local")
-    test_dir = make_test_dir
+    test_dir = test_dir
     gen = Generator(test_dir)
 
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}

@@ -47,7 +47,7 @@ except ImportError:
 
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     local_db,
-    get_test_dir,
+    test_dir,
     monkeypatch,
 ):
     """Presumably devs running the test suite have built SS correctly.
@@ -71,7 +71,7 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     smartsim._core._cli.validate.test_install(
         # Shouldn't matter bc we are stubbing creation of orc
         # but best to give it "correct" vals for safety
-        location=get_test_dir,
+        location=test_dir,
         port=db_port,
         # Always test on CPU, heads don't always have GPU
         device="CPU",

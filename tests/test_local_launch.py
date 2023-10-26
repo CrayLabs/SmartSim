@@ -32,10 +32,10 @@ Test the launch of simple entity types with local launcher
 """
 
 
-def test_models(fileutils, make_test_dir):
+def test_models(fileutils, test_dir):
     exp_name = "test-models-local-launch"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=3")
@@ -48,10 +48,10 @@ def test_models(fileutils, make_test_dir):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_ensemble(fileutils, make_test_dir):
+def test_ensemble(fileutils, test_dir):
     exp_name = "test-ensemble-launch"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=3")

@@ -62,7 +62,7 @@ def check_not_failed(exp, *args):
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_standard_then_colo_error(
-    fileutils, wlmutils, coloutils, db_type, make_test_dir):
+    fileutils, wlmutils, coloutils, db_type, test_dir):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
 
@@ -73,7 +73,7 @@ def test_db_identifier_standard_then_colo_error(
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
 
     # Create SmartSim Experiment
@@ -118,7 +118,7 @@ def test_db_identifier_standard_then_colo_error(
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type, make_test_dir):
+def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type, test_dir):
     """Test colocate_db_uds/colocate_db_tcp then create_database with database
     identifiers.
     """
@@ -130,7 +130,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # Create SmartSim Experiment
@@ -170,7 +170,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     check_not_failed(exp, orc, smartsim_model)
 
 
-def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
+def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
     """Test uniqueness of db_identifier several calls to create_database, with non unique names,
     checking error is raised before exp start is called"""
 
@@ -181,7 +181,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -212,7 +212,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, make_test_dir):
         )
         check_not_failed(exp, orc)
 
-def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
+def test_db_identifier_create_standard_once(test_dir, wlmutils):
     """One call to create database with a database identifier"""
 
     # Set experiment name
@@ -222,7 +222,7 @@ def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     # Create the SmartSim Experiment
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
@@ -240,14 +240,14 @@ def test_db_identifier_create_standard_once(make_test_dir, wlmutils):
 
     check_not_failed(exp, db)
 
-def test_multidb_create_standard_twice(wlmutils, make_test_dir):
+def test_multidb_create_standard_twice(wlmutils, test_dir):
     """Multiple calls to create database with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     # start a new Experiment for this section
     exp = Experiment(
@@ -274,13 +274,13 @@ def test_multidb_create_standard_twice(wlmutils, make_test_dir):
         exp.start(db, db2)
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_multidb_colo_once(fileutils, make_test_dir, wlmutils, coloutils, db_type):
+def test_multidb_colo_once(fileutils, test_dir, wlmutils, coloutils, db_type):
     """create one model with colocated database with db_identifier"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # start a new Experiment for this section
@@ -310,12 +310,12 @@ def test_multidb_colo_once(fileutils, make_test_dir, wlmutils, coloutils, db_typ
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_multidb_standard_then_colo(fileutils, make_test_dir, wlmutils, coloutils, db_type):
+def test_multidb_standard_then_colo(fileutils, test_dir, wlmutils, coloutils, db_type):
     """Create regular database then colocate_db_tcp/uds with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
@@ -356,12 +356,12 @@ def test_multidb_standard_then_colo(fileutils, make_test_dir, wlmutils, coloutil
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_multidb_colo_then_standard(fileutils, make_test_dir, wlmutils, coloutils, db_type):
+def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db_type):
     """create regular database then colocate_db_tcp/uds with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
-    test_dir = make_test_dir
+    test_dir = test_dir
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
@@ -406,13 +406,13 @@ def test_multidb_colo_then_standard(fileutils, make_test_dir, wlmutils, coloutil
     pytest.test_launcher not in pytest.wlm_options,
     reason="Not testing WLM integrations",
 )
-def test_launch_cluster_orc_single_dbid(make_test_dir, wlmutils):
+def test_launch_cluster_orc_single_dbid(test_dir, wlmutils):
     """test clustered 3-node orchestrator with single command with a database identifier"""
     # TODO detect number of nodes in allocation and skip if not sufficent
 
     exp_name = "test_launch_cluster_orc_single_dbid"
     launcher = wlmutils.get_test_launcher()
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation

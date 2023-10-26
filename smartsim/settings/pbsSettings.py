@@ -236,5 +236,4 @@ class QsubBatchSettings(BatchSettings):
         for resource, value in self.resources.items():
             if resource not in ["select", "walltime", "place"]:
                 res += [f"-l {resource}={str(value)}"]
-        print(res)
         return res

@@ -40,7 +40,7 @@ containerURI = "docker://alrigazzi/smartsim-testing:latest"
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_wlm_smartredis(fileutils, make_test_dir, wlmutils):
+def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -55,7 +55,7 @@ def test_singularity_wlm_smartredis(fileutils, make_test_dir, wlmutils):
             f"Test only runs on systems with PBS or Slurm as WLM. Current launcher: {launcher}"
         )
 
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher=launcher
     )

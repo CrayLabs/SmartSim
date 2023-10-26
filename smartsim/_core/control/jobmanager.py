@@ -163,7 +163,7 @@ class JobManager:
 
     def __contains__(self, key: str) -> bool:
         try:
-            _ = self[key]
+            self[key]  # pylint: disable=pointless-statement
             return True
         except KeyError:
             return False

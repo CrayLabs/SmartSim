@@ -431,7 +431,7 @@ class Orchestrator(EntityList[DBNode]):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        self._user_hostlist = host_list
+        self._user_hostlist = host_list.copy()
         # TODO check length
         if self.batch:
             if hasattr(self, "batch_settings") and self.batch_settings:

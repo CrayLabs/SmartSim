@@ -50,7 +50,7 @@ tf_backend_available = "tensorflow" in installed_redisai_backends()
     (not tf_backend_available) or (not tf_available),
     reason="Requires RedisAI TF backend",
 )
-def test_keras_model(make_test_dir, mlutils, wlmutils):
+def test_keras_model(test_dir, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 for a keras model script
 
     this test can run on CPU/GPU by setting SMARTSIM_TEST_DEVICE=GPU
@@ -61,7 +61,7 @@ def test_keras_model(make_test_dir, mlutils, wlmutils):
     """
 
     exp_name = "test_keras_model"
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 
@@ -110,8 +110,8 @@ def create_tf_model():
 
 
 @pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
-def test_freeze_model(make_test_dir):
-    test_dir = make_test_dir
+def test_freeze_model(test_dir):
+    test_dir = test_dir
 
     model = create_tf_model()
     model_path, inputs, outputs = freeze_model(model, test_dir, "mnist.pb")

@@ -32,10 +32,10 @@ from smartsim.settings import RunSettings
 from smartsim.status import STATUS_NEVER_STARTED
 
 
-def test_model_prefix(make_test_dir):
+def test_model_prefix(test_dir):
     exp_name = "test_prefix"
     exp = Experiment(exp_name)
-    test_dir = make_test_dir
+    test_dir = test_dir
     model = exp.create_model(
         "model",
         path=test_dir,
@@ -105,10 +105,10 @@ def test_bad_ensemble_init_no_rs_bs():
         exp.create_ensemble("name")
 
 
-def test_stop_entity(make_test_dir):
+def test_stop_entity(test_dir):
     exp_name = "test_stop_entity"
     exp = Experiment(exp_name)
-    test_dir = make_test_dir
+    test_dir = test_dir
     m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
     exp.start(m, block=False)
     assert exp.finished(m) == False
@@ -116,11 +116,11 @@ def test_stop_entity(make_test_dir):
     assert exp.finished(m) == True
 
 
-def test_poll(make_test_dir):
+def test_poll(test_dir):
     # Ensure that a SmartSimError is not raised
     exp_name = "test_exp_poll"
     exp = Experiment(exp_name)
-    test_dir = make_test_dir
+    test_dir = test_dir
     model = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("sleep", "5")
     )
@@ -129,10 +129,10 @@ def test_poll(make_test_dir):
     exp.stop(model)
 
 
-def test_summary(make_test_dir):
+def test_summary(test_dir):
     exp_name = "test_exp_summary"
     exp = Experiment(exp_name)
-    test_dir = make_test_dir
+    test_dir = test_dir
     m = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )

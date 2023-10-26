@@ -48,7 +48,7 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_simple_model_on_wlm(fileutils, make_test_dir, wlmutils):
+def test_simple_model_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
         pytest.skip(
@@ -57,7 +57,7 @@ def test_simple_model_on_wlm(fileutils, make_test_dir, wlmutils):
 
     exp_name = "test-simplebase-settings-model-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")
@@ -69,7 +69,7 @@ def test_simple_model_on_wlm(fileutils, make_test_dir, wlmutils):
         assert exp.get_status(M)[0] == status.STATUS_COMPLETED
 
 
-def test_simple_model_stop_on_wlm(fileutils, make_test_dir, wlmutils):
+def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
         pytest.skip(
@@ -78,7 +78,7 @@ def test_simple_model_stop_on_wlm(fileutils, make_test_dir, wlmutils):
 
     exp_name = "test-simplebase-settings-model-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")

@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import json
 import os
-import inspect
 import pytest
 import psutil
 import shutil
@@ -56,7 +55,7 @@ import warnings
 
 # Globals, yes, but its a testing file
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_dir = os.path.join(test_path, "tests", "test_output")
+test_output_root = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 test_num_gpus = CONFIG.test_num_gpus
@@ -84,7 +83,7 @@ def print_test_configuration() -> None:
     print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
     if test_alloc_specs_path:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
-    print("TEST_DIR:", test_dir)
+    print("TEST_DIR:", test_output_root)
     print("Test output will be located in TEST_DIR if there is a failure")
     print(
         "TEST_PORTS:", ", ".join(str(port) for port in range(test_port, test_port + 3))
@@ -110,9 +109,9 @@ def pytest_sessionstart(
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    if os.path.isdir(test_dir):
-        shutil.rmtree(test_dir)
-    os.makedirs(test_dir)
+    if os.path.isdir(test_output_root):
+        shutil.rmtree(test_output_root)
+    os.makedirs(test_output_root)
     print_test_configuration()
 
 
@@ -124,7 +123,7 @@ def pytest_sessionfinish(
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_dir)
+        shutil.rmtree(test_output_root)
     else:
         # kill all spawned processes in case of error
         kill_all_test_spawned_processes()
@@ -387,13 +386,13 @@ class WLMUtils:
 
 @pytest.fixture
 def local_db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], make_test_dir: t.Any
+    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
-    test_dir = make_test_dir
+    test_dir = test_dir
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -406,14 +405,14 @@ def local_db(
 
 @pytest.fixture
 def db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], make_test_dir: str
+    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an orchestrator"""
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = make_test_dir
+    test_dir = test_dir
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -426,7 +425,7 @@ def db(
 
 @pytest.fixture
 def db_cluster(
-    make_test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
+    test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
 ) -> t.Generator[Orchestrator, None, None]:
     """
     Yield fixture for startup and teardown of a clustered orchestrator.
@@ -436,7 +435,7 @@ def db_cluster(
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = make_test_dir
+    test_dir = test_dir
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -559,20 +558,9 @@ def _sanitize_caller_function(caller_function: str) -> str:
 
 
 @pytest.fixture
-def get_test_dir(request: pytest.FixtureRequest):
+def test_dir(request: pytest.FixtureRequest):
     caller_function = _sanitize_caller_function(request.node.name)
-    dir_path = FileUtils._test_dir_path(caller_function, str(request.path))
-
-    if not os.path.exists(os.path.dirname(dir_path)):
-        os.makedirs(os.path.dirname(dir_path))
-
-    return dir_path
-
-
-@pytest.fixture
-def make_test_dir(request: pytest.FixtureRequest):
-    caller_function = _sanitize_caller_function(request.node.name)
-    dir_path = FileUtils._test_dir_path(caller_function, str(request.path))
+    dir_path = FileUtils.get_test_dir_path(caller_function, str(request.path))
 
     try:
         os.makedirs(dir_path)
@@ -588,10 +576,10 @@ def fileutils() -> t.Type[FileUtils]:
 
 class FileUtils:
     @staticmethod
-    def _test_dir_path(caller_function: str, caller_fspath: str) -> str:
+    def get_test_dir_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
-        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_dir))
-        dir_path = os.path.join(test_dir, rel_path, caller_function)
+        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_output_root))
+        dir_path = os.path.join(test_output_root, rel_path, caller_function)
         return dir_path
 
     @staticmethod

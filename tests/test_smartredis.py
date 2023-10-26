@@ -55,13 +55,13 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_exchange(fileutils, make_test_dir, wlmutils):
+def test_exchange(fileutils, test_dir, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
     """
 
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )
@@ -100,14 +100,14 @@ def test_exchange(fileutils, make_test_dir, wlmutils):
         exp.stop(orc)
 
 
-def test_consumer(fileutils, make_test_dir, wlmutils):
+def test_consumer(fileutils, test_dir, wlmutils):
     """Run three processes, each one of the first two processes
     puts a tensor on the DB; the third process accesses the
     tensors put by the two producers.
     Finally, the tensor is used to run a model by each producer
     and the consumer accesses the two results.
     """
-    test_dir = make_test_dir
+    test_dir = test_dir
     exp = Experiment(
         "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
     )

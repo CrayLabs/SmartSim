@@ -46,10 +46,10 @@ def test_parse_db_host_error():
         orc.entities[0].host
 
 
-def test_hosts(make_test_dir, wlmutils):
+def test_hosts(test_dir, wlmutils):
     exp_name = "test_hosts"
     exp = Experiment(exp_name)
-    test_dir = make_test_dir
+    test_dir = test_dir
 
     orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
     orc.set_path(test_dir)
