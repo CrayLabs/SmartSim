@@ -12,7 +12,9 @@ from smartsim._core._install.buildenv import BuildEnv as _BuildEnv
 _MISSING_DEP = _helpers.colorize("Not Installed", "red")
 
 
-def execute(_args: argparse.Namespace, /) -> int:
+def execute(
+    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+) -> int:
     print("\nSmart Python Packages:")
     print(
         tabulate(

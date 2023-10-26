@@ -26,6 +26,7 @@
 
 import argparse
 from contextlib import contextmanager
+import pathlib
 import typing as t
 
 import pytest
@@ -51,11 +52,11 @@ def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     return retval
 
 
-def mock_execute_good(_ns: argparse.Namespace) -> int:
+def mock_execute_good(_ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None) -> int:
     return mock_execute_custom("GOOD THINGS", good = True)
 
 
-def mock_execute_fail(_ns: argparse.Namespace) -> int:
+def mock_execute_fail(_ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None) -> int:
     return mock_execute_custom("BAD THINGS", good = False)
 
 
@@ -216,8 +217,8 @@ def test_cli_command_execution(capsys):
     exp_b_help = "this is my mock help text for build"
     exp_b_cmd = "build"
     
-    dbcli_exec = lambda x: mock_execute_custom(msg="Database", good=True)
-    build_exec = lambda x: mock_execute_custom(msg="Builder", good=True)
+    dbcli_exec = lambda x, y: mock_execute_custom(msg="Database", good=True)
+    build_exec = lambda x, y: mock_execute_custom(msg="Builder", good=True)
     
     menu = [cli.MenuItemConfig(exp_a_cmd,
                                exp_a_help,
@@ -265,7 +266,7 @@ def test_cli_default_cli(capsys):
     # show that `smart dbcli` calls the build parser and build execute function
     assert "usage: smart [-h] <command>" in captured.out
     assert "Available commands" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `build` argument, expect build-specific help text
     with pytest.raises(SystemExit) as e:
@@ -277,7 +278,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart build [-h]" in captured.out
     assert "Build SmartSim dependencies" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `clean` argument, expect clean-specific help text
     with pytest.raises(SystemExit) as e:
@@ -290,7 +291,7 @@ def test_cli_default_cli(capsys):
     assert "Remove previous ML runtime installation" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
     assert "--clobber" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `dbcli` argument, expect dbcli-specific help text
     with pytest.raises(SystemExit) as e:
@@ -302,7 +303,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart dbcli [-h]" in captured.out
     assert "Print the path to the redis-cli binary" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `site` argument, expect site-specific help text
     with pytest.raises(SystemExit) as e:
@@ -314,7 +315,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart site [-h]" in captured.out
     assert "Print the installation site of SmartSim" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
     # execute with `clobber` argument, expect clobber-specific help text
     with pytest.raises(SystemExit) as e:
@@ -327,7 +328,7 @@ def test_cli_default_cli(capsys):
     assert "Remove all previous dependency installations" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
     # assert "--clobber" not in captured.out
-    assert ret_val == 0
+    assert ret_val == 2
 
 
 @pytest.mark.parametrize(
@@ -344,7 +345,7 @@ def test_cli_default_cli(capsys):
 )
 def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
     """Ensure the default CLI executes the build action"""
-    def mock_execute(ns: argparse.Namespace):
+    def mock_execute(ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None):
         print(exp_output)
         return 0
 
@@ -396,7 +397,7 @@ def test_cli_optional_args(capsys,
                            check_prop: str,
                            exp_prop_val: t.Any):
     """Ensure the parser for a command handles expected optional arguments"""
-    def mock_execute(ns: argparse.Namespace):
+    def mock_execute(ns: argparse.Namespace, _unparsed: t.Optional[t.List[str]] = None):
         print(exp_output)
         return 0
 
@@ -445,7 +446,7 @@ def test_cli_help_support(capsys,
                            mock_output: str,
                            exp_output: str):
     """Ensure the parser supports help optional for commands as expected"""
-    def mock_execute(ns: argparse.Namespace):
+    def mock_execute(ns: argparse.Namespace, unparsed: t.Optional[t.List[str]] = None):
         print(mock_output)
         return 0
 
@@ -483,7 +484,7 @@ def test_cli_invalid_optional_args(capsys,
                            mock_location: str,
                            exp_output: str):
     """Ensure the parser throws expected error for an invalid argument"""
-    def mock_execute(ns: argparse.Namespace):
+    def mock_execute(ns: argparse.Namespace, unparsed: t.Optional[t.List[str]] = None):
         print(exp_output)
         return 0
 
@@ -536,12 +537,12 @@ def test_cli_full_clean_execute(capsys, monkeypatch):
     exp_retval = 0
     exp_output = "mocked-clean utility"
 
-    def mock_operation(*args, **kwargs) -> int:
+    # mock out the internal clean method so we don't actually delete anything
+    def mock_clean(core_path: pathlib.Path, _all: bool = False) -> int:
         print(exp_output)
         return exp_retval
-
-    # mock out the internal clean method so we don't actually delete anything
-    monkeypatch.setattr(smartsim._core._cli.clean, "clean", mock_operation)
+    
+    monkeypatch.setattr(smartsim._core._cli.clean, "clean", mock_clean)
 
     command = "clean"
     cfg = MenuItemConfig(command,

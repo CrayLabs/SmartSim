@@ -121,7 +121,7 @@ def get_db_path() -> t.Optional[Path]:
     return None
 
 
-_CliHandler = t.Callable[[Namespace], int]
+_CliHandler = t.Callable[[Namespace, t.List[str]], int]
 _CliParseConfigurator = t.Callable[[ArgumentParser], None]
 
 
@@ -132,8 +132,10 @@ class MenuItemConfig:
         description: str,
         handler: _CliHandler,
         configurator: t.Optional[_CliParseConfigurator] = None,
+        is_plugin: bool = False
     ):
         self.command = cmd
         self.description = description
         self.handler = handler
         self.configurator = configurator
+        self.is_plugin = is_plugin
