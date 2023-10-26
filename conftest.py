@@ -560,7 +560,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
 @pytest.fixture
 def test_dir(request: pytest.FixtureRequest):
     caller_function = _sanitize_caller_function(request.node.name)
-    dir_path = FileUtils.get_test_dir_path(caller_function, str(request.path))
+    dir_path = FileUtils.get_test_output_path(caller_function, str(request.path))
 
     try:
         os.makedirs(dir_path)
@@ -576,7 +576,7 @@ def fileutils() -> t.Type[FileUtils]:
 
 class FileUtils:
     @staticmethod
-    def get_test_dir_path(caller_function: str, caller_fspath: str) -> str:
+    def get_test_output_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
         rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_output_root))
         dir_path = os.path.join(test_output_root, rel_path, caller_function)
