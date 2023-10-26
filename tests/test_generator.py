@@ -53,9 +53,9 @@ def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(osp.join("generator_files", filename))
 
 
-def test_ensemble(fileutils, get_test_dir):
+def test_ensemble(fileutils, test_dir):
     exp = Experiment("gen-test", launcher="local")
-    test_dir = get_test_dir
+    test_dir = test_dir
     gen = Generator(test_dir)
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
@@ -70,9 +70,9 @@ def test_ensemble(fileutils, get_test_dir):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
 
-def test_ensemble_overwrite(fileutils, get_test_dir):
+def test_ensemble_overwrite(fileutils, test_dir):
     exp = Experiment("gen-test-overwrite", launcher="local")
-    test_dir = get_test_dir
+    test_dir = test_dir
     gen = Generator(test_dir, overwrite=True)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -93,9 +93,9 @@ def test_ensemble_overwrite(fileutils, get_test_dir):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
 
-def test_ensemble_overwrite_error(fileutils, get_test_dir):
+def test_ensemble_overwrite_error(fileutils, test_dir):
     exp = Experiment("gen-test-overwrite-error", launcher="local")
-    test_dir = get_test_dir
+    test_dir = test_dir
     gen = Generator(test_dir)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
