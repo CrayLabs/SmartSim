@@ -33,6 +33,8 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 
+# Test that common ways of launching commands
+# raise when expected to do so
 @pytest.mark.parametrize(
     "cmd,raises",
     [
@@ -48,6 +50,6 @@ def test_error_raises(cmd, raises):
     args = ["--non_existing_arg"]
     if raises:
         with pytest.raises(LauncherError):
-            cmd(args)
+            cmd(args, raise_on_err = True)
     else:
         cmd(args)

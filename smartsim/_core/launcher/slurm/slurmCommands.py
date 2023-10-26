@@ -34,62 +34,62 @@ from ..util.shell import execute_cmd
 logger = get_logger(__name__)
 
 
-def sstat(args: t.List[str]) -> t.Tuple[str, str]:
+def sstat(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls sstat with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sstat
     """
-    _, out, err = _execute_slurm_cmd("sstat", args, True)
+    _, out, err = _execute_slurm_cmd("sstat", args, raise_on_err=raise_on_err)
     return out, err
 
 
-def sacct(args: t.List[str]) -> t.Tuple[str, str]:
+def sacct(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls sacct with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sacct
     """
-    _, out, err = _execute_slurm_cmd("sacct", args, True)
+    _, out, err = _execute_slurm_cmd("sacct", args, raise_on_err=raise_on_err)
     return out, err
 
 
-def salloc(args: t.List[str]) -> t.Tuple[str, str]:
+def salloc(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls slurm salloc with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of salloc
     """
-    _, out, err = _execute_slurm_cmd("salloc", args)
+    _, out, err = _execute_slurm_cmd("salloc", args, raise_on_err=raise_on_err)
     return out, err
 
 
-def sinfo(args: t.List[str]) -> t.Tuple[str, str]:
+def sinfo(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls slurm sinfo with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sinfo
     """
-    _, out, err = _execute_slurm_cmd("sinfo", args)
+    _, out, err = _execute_slurm_cmd("sinfo", args, raise_on_err=raise_on_err)
     return out, err
 
 
-def scontrol(args: t.List[str]) -> t.Tuple[str, str]:
+def scontrol(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls slurm scontrol with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sinfo
     """
-    _, out, err = _execute_slurm_cmd("scontrol", args)
+    _, out, err = _execute_slurm_cmd("scontrol", args, raise_on_err=raise_on_err)
     return out, err
 
 
-def scancel(args: t.List[str]) -> t.Tuple[int, str, str]:
+def scancel(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[int, str, str]:
     """Calls slurm scancel with args.
 
     returncode is also supplied in this function.
@@ -99,7 +99,7 @@ def scancel(args: t.List[str]) -> t.Tuple[int, str, str]:
     :return: output and error
     :rtype: str
     """
-    return _execute_slurm_cmd("scancel", args)
+    return _execute_slurm_cmd("scancel", args, raise_on_err=raise_on_err)
 
 
 def _find_slurm_command(cmd: str) -> str:
@@ -118,10 +118,9 @@ def _execute_slurm_cmd(
     cmd_exe = _find_slurm_command(command)
     cmd = [cmd_exe] + args
     returncode, out, error = execute_cmd(cmd)
-    # Only raise if there was no output
-    if error:
+    if returncode != 0:
         msg = f"An error occurred while calling {command}: {error}"
         if raise_on_err:
             raise LauncherError(msg)
-        logger.warning(msg)
+        logger.error(msg)
     return returncode, out, error
