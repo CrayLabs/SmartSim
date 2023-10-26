@@ -56,7 +56,7 @@ def run(device):
 
     model = create_tf_mnist_model()
 
-    client = Client(False)
+    client = Client(cluster=False)
 
     model_path, inputs, outputs = freeze_model(model, os.getcwd(), "mnist.pb")
 
