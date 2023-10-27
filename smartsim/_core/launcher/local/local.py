@@ -125,7 +125,7 @@ class LocalLauncher(Launcher):
         passed_env = step.env if isinstance(step, LocalStep) else None
 
         cmd = step.get_launch_cmd()
-        is_enabled = int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 0))
+        is_enabled = int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
         if is_enabled:
             cmd = LocalLauncher.get_proxy_cmd(step)
 

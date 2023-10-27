@@ -404,6 +404,7 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
+        self.exp_path = exp_path
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]]()
         # Loop over deployables to launch and launch multiple orchestrators
@@ -608,7 +609,9 @@ class Controller:
             self._prep_entity_client_env(entity)
 
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
+        
         step.meta["entity_type"] = str(type(entity).__name__).lower()
+        step.meta["exp_path"] = self.exp_path
 
         return step
 

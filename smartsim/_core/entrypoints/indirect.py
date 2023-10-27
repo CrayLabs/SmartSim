@@ -30,6 +30,8 @@ import pathlib
 import psutil
 import signal
 import sys
+from smartsim._core.control.job import JobEntity
+import smartsim._core.entrypoints.telemetrymonitor as tm
 import time
 import typing as t
 
@@ -68,6 +70,7 @@ def main(
 
     job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
     ret_code: int = 1
+    logger.info("Indirect step starting")
 
     with open(output_path, "w+", encoding="utf-8") as ofp, open(
         error_path, "w+", encoding="utf-8"
@@ -81,24 +84,56 @@ def main(
                 close_fds=True,
             )
             STEP_PID = process.pid
-
-            track_event(
-                get_ts(),
-                job_id,
-                str(STEP_PID),
-                etype,
-                "start",
-                exp_path,
-                logger,
-            )
+            logger.info(f"Indirect step step {STEP_PID} started")
+            start_ts = get_ts()
 
         except Exception:
             logger.error("Failed to create process", exc_info=True)
             cleanup()
             return 1
 
+        target: t.Any = None
+        start_written = False
+
+        def _get_target(run: tm.Run, etype: str) -> t.Optional[JobEntity]:
+            list_map = {
+                "model": run.models,
+                "ensemble": run.ensembles,
+                "orchestrator": run.orchestrators,
+            }
+            
+            for item in  list_map[etype]:
+                if not item.is_managed and item.step_id == STEP_PID:
+                    return item
+            return None
+
+        def _track_target_start(mani_path: pathlib.Path) -> bool:
+            if not mani_path.exists():
+                return False
+
+            rm = tm.load_manifest(str(mani_path))
+            for run in rm.runs:
+                target = _get_target(run, etype)
+                if target is not None:
+                    track_event(
+                        start_ts,
+                        job_id,
+                        target.step_id,
+                        target.type,
+                        "start",
+                        target.status_dir,
+                        logger,
+                    )
+                    return True
+            return False
+
+        mani_path = pathlib.Path(exp_dir) / ".smartsim/telemetry" / "manifest.json"
+
         try:
             while all((process.is_running(), STEP_PID > 0)):
+                logger.debug(f"Indirect step {STEP_PID} is running")
+                if not start_written:
+                    start_written = _track_target_start(mani_path)
                 result = process.poll()
                 if result is not None:
                     ret_code = result
@@ -107,17 +142,20 @@ def main(
         except Exception:
             logger.error("Failed to execute process", exc_info=True)
         finally:
-            track_event(
-                get_ts(),
-                job_id,
-                str(STEP_PID),
-                etype,
-                "stop",
-                exp_path,
-                logger,
-                detail=f"process {STEP_PID} finished with return code: {ret_code}",
-                return_code=ret_code,
-            )
+            logger.info(f"Indirect step {STEP_PID} complete")
+
+            if target:
+                track_event(
+                    get_ts(),
+                    job_id,
+                    target.step_id,
+                    target.type,
+                    "stop",
+                    target.status_dir,
+                    logger,
+                    detail=f"process {target.step_id} finished with return code: {ret_code}",
+                    return_code=ret_code,
+                )
             cleanup()
 
     return ret_code
