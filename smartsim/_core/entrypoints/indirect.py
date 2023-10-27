@@ -146,8 +146,8 @@ def main(
                 if target is None:
                     target = _track_target_start(mani_path, step_name, start_ts, etype)
 
-                if result := process.poll():
-                    ret_code = result
+                ret_code = process.poll()
+                if ret_code is not None:
                     break
                 time.sleep(1)
         except Exception:
