@@ -49,6 +49,52 @@ logger = get_logger(__name__)
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 
+def _get_target(run: tm.Run,
+                etype: str,
+                step_name: str) -> t.Optional[JobEntity]:
+    list_map = {
+        "model": run.models,
+        "ensemble": run.ensembles,
+        "orchestrator": run.orchestrators,
+    }
+
+    for item in  list_map[etype]:
+        # note: matching name is problematic but the job manager is
+        # tracking the proxy task instead of the actual task
+        # if item.job_id == str(STEP_PID):
+        #     return item
+        if step_name.startswith(f"{item.name}-"):
+            return item
+    return None
+
+
+def _track_target_start(mani_path: pathlib.Path,
+                        step_name: str,
+                        start_ts: int,
+                        etype: str) -> t.Optional[JobEntity]:
+    if not mani_path.exists():
+        return None
+
+    runtime_manifest = tm.load_manifest(str(mani_path))
+    if not runtime_manifest:
+        return None
+
+    for run in runtime_manifest.runs:
+        target = _get_target(run, etype, step_name)
+        if target is not None:
+            track_event(
+                start_ts,
+                target.job_id,
+                target.step_id,
+                target.type,
+                "start",
+                pathlib.Path(target.status_dir),
+                logger,
+            )
+            return target
+    return None
+
+
 def main(
     cmd: str,
     etype: str,
@@ -94,53 +140,15 @@ def main(
             cleanup()
             return 1
 
-
-        def _get_target(run: tm.Run, etype: str, step_name: str) -> t.Optional[JobEntity]:
-            list_map = {
-                "model": run.models,
-                "ensemble": run.ensembles,
-                "orchestrator": run.orchestrators,
-            }
-            
-            for item in  list_map[etype]:
-                # note: matching name is problematic but the job manager is
-                # tracking the proxy task instead of the actual task
-                # if item.job_id == str(STEP_PID):
-                #     return item
-                if step_name.startswith(f"{item.name}-"):
-                    return item
-            return None
-
-        def _track_target_start(mani_path: pathlib.Path) -> t.Optional[JobEntity]:
-            if not mani_path.exists():
-                return None
-
-            rm = tm.load_manifest(str(mani_path))
-            for run in rm.runs:
-                target = _get_target(run, etype, step_name)
-                if target is not None:
-                    track_event(
-                        start_ts,
-                        target.job_id,
-                        target.step_id,
-                        target.type,
-                        "start",
-                        pathlib.Path(target.status_dir),
-                        logger,
-                    )
-                    return target
-            return None
-
         mani_path = pathlib.Path(exp_dir) / ".smartsim/telemetry" / "manifest.json"
         target: t.Optional[tm.JobEntity] = None
 
         try:
             while all((process.is_running(), STEP_PID > 0)):
-                logger.debug(f"Indirect step {STEP_PID} is running")
                 if target is None:
-                    target = _track_target_start(mani_path)
-                result = process.poll()
-                if result is not None:
+                    target = _track_target_start(mani_path, step_name, start_ts, etype)
+
+                if result := process.poll():
                     ret_code = result
                     break
                 time.sleep(1)
@@ -150,9 +158,10 @@ def main(
             logger.info(f"Indirect step {STEP_PID} complete")
 
             if target is None:
-                target = _track_target_start(mani_path)
+                target = _track_target_start(mani_path, step_name, start_ts, etype)
 
             if target is not None:
+                msg = f"process {target.step_id} finished with return code: {ret_code}"
                 track_event(
                     get_ts(),
                     job_id,
@@ -161,7 +170,7 @@ def main(
                     "stop",
                     pathlib.Path(target.status_dir),
                     logger,
-                    detail=f"process {target.step_id} finished with return code: {ret_code}",
+                    detail=msg,
                     return_code=ret_code,
                 )
             cleanup()

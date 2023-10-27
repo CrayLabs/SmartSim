@@ -143,6 +143,7 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
+        self.exp_path = ""
 
     def start(
         self,
@@ -609,7 +610,7 @@ class Controller:
             self._prep_entity_client_env(entity)
 
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
-        
+
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         step.meta["exp_path"] = self.exp_path
 
