@@ -115,10 +115,8 @@ def main(
         raise ValueError("Invalid cmd supplied")
 
     cleaned_cmd = decode_cmd(cmd)
-
-    job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
     ret_code: int = 1
-    logger.info("Indirect step starting")
+    logger.debug("Indirect step starting")
 
     with open(output_path, "w+", encoding="utf-8") as ofp, open(
         error_path, "w+", encoding="utf-8"
@@ -164,7 +162,7 @@ def main(
                 msg = f"process {target.step_id} finished with return code: {ret_code}"
                 track_event(
                     get_ts(),
-                    job_id,
+                    target.job_id,
                     target.step_id,
                     target.type,
                     "stop",
