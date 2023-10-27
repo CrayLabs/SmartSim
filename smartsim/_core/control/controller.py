@@ -217,17 +217,17 @@ class Controller:
         if db.batch:
             self.stop_entity(db)
         else:
-            for node in db.entities:
-                for host_ip, port in itertools.product(
-                    (get_ip_from_host(host) for host in node.hosts), db.ports
-                ):
-                    retcode, _, _ = shutdown_db_node(host_ip, port)
-                    # Sometimes the DB will not shutdown (unless we force NOSAVE)
-                    if retcode != 0:
-                        self.stop_entity(node)
-                        continue
+            with JM_LOCK:
+                for node in db.entities:
+                    for host_ip, port in itertools.product(
+                        (get_ip_from_host(host) for host in node.hosts), db.ports
+                    ):
+                        retcode, _, _ = shutdown_db_node(host_ip, port)
+                        # Sometimes the DB will not shutdown (unless we force NOSAVE)
+                        if retcode != 0:
+                            self.stop_entity(node)
+                            continue
 
-                    with JM_LOCK:
                         job = self._jobs[node.name]
                         job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                         self._jobs.move_to_completed(job)

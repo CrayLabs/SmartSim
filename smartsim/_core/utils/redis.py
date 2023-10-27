@@ -222,7 +222,7 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
     """Send shutdown signal to DB node.
 
     Should only be used in the case where cluster deallocation
-    needs to occur manually. Usually, the SmartSim task manager
+    needs to occur manually. Usually, the SmartSim job manager
     will take care of this automatically.
 
     :param host_ip: IP of host to connect to
@@ -231,10 +231,7 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
     :type ports: int
     :return: returncode, output, and error of the process
     :rtype: tuple of (int, str, str)
-    :raises SmartSimError: if cluster creation fails
     """
-
-    # call cluster command
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
     returncode, out, err = execute_cmd(
