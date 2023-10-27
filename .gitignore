@@ -35,3 +35,4 @@ smartsim/_core/lib
 **/manifest/
 **/*.err
 **/*.out
+**/.smartsim/*

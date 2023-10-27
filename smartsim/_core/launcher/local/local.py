@@ -186,6 +186,8 @@ class LocalLauncher(Launcher):
             "+n",
             step.name,
             "+d",
+            step.meta["exp_path"],
+            "+w",
             step.cwd,
             "+o",
             out,

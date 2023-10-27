@@ -54,7 +54,9 @@ def main(
     etype: str,
     output_path: str,
     error_path: str,
-    exp_dir: str = "",
+    cwd: str,
+    exp_dir: str,
+    step_name: str,
 ) -> int:
     """Execute the step command and emit tracking events"""
     global STEP_PID  # pylint: disable=global-statement
@@ -78,7 +80,7 @@ def main(
         try:
             process = psutil.Popen(
                 cleaned_cmd,
-                cwd=exp_dir,
+                cwd=cwd,
                 stdout=ofp.fileno(),
                 stderr=efp.fileno(),
                 close_fds=True,
@@ -92,10 +94,8 @@ def main(
             cleanup()
             return 1
 
-        target: t.Any = None
-        start_written = False
 
-        def _get_target(run: tm.Run, etype: str) -> t.Optional[JobEntity]:
+        def _get_target(run: tm.Run, etype: str, step_name: str) -> t.Optional[JobEntity]:
             list_map = {
                 "model": run.models,
                 "ensemble": run.ensembles,
@@ -103,37 +103,42 @@ def main(
             }
             
             for item in  list_map[etype]:
-                if not item.is_managed and item.step_id == STEP_PID:
+                # note: matching name is problematic but the job manager is
+                # tracking the proxy task instead of the actual task
+                # if item.job_id == str(STEP_PID):
+                #     return item
+                if step_name.startswith(f"{item.name}-"):
                     return item
             return None
 
-        def _track_target_start(mani_path: pathlib.Path) -> bool:
+        def _track_target_start(mani_path: pathlib.Path) -> t.Optional[JobEntity]:
             if not mani_path.exists():
-                return False
+                return None
 
             rm = tm.load_manifest(str(mani_path))
             for run in rm.runs:
-                target = _get_target(run, etype)
+                target = _get_target(run, etype, step_name)
                 if target is not None:
                     track_event(
                         start_ts,
-                        job_id,
+                        target.job_id,
                         target.step_id,
                         target.type,
                         "start",
-                        target.status_dir,
+                        pathlib.Path(target.status_dir),
                         logger,
                     )
-                    return True
-            return False
+                    return target
+            return None
 
         mani_path = pathlib.Path(exp_dir) / ".smartsim/telemetry" / "manifest.json"
+        target: t.Optional[tm.JobEntity] = None
 
         try:
             while all((process.is_running(), STEP_PID > 0)):
                 logger.debug(f"Indirect step {STEP_PID} is running")
-                if not start_written:
-                    start_written = _track_target_start(mani_path)
+                if target is None:
+                    target = _track_target_start(mani_path)
                 result = process.poll()
                 if result is not None:
                     ret_code = result
@@ -144,14 +149,17 @@ def main(
         finally:
             logger.info(f"Indirect step {STEP_PID} complete")
 
-            if target:
+            if target is None:
+                target = _track_target_start(mani_path)
+
+            if target is not None:
                 track_event(
                     get_ts(),
                     job_id,
                     target.step_id,
                     target.type,
                     "stop",
-                    target.status_dir,
+                    pathlib.Path(target.status_dir),
                     logger,
                     detail=f"process {target.step_id} finished with return code: {ret_code}",
                     return_code=ret_code,
@@ -212,6 +220,9 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "+d", type=str, help="The experiment root directory", required=True
     )
+    parser.add_argument(
+        "+w", type=str, help="The working directory of the executable", required=True
+    )
     parser.add_argument("+o", type=str, help="Output file", required=True)
     parser.add_argument("+e", type=str, help="Erorr output file", required=True)
     return parser
@@ -234,7 +245,9 @@ if __name__ == "__main__":
             etype=parsed_args.t,
             output_path=parsed_args.o,
             error_path=parsed_args.e,
+            cwd=parsed_args.w,
             exp_dir=parsed_args.d,
+            step_name=parsed_args.n,
         )
         sys.exit(rc)
 
