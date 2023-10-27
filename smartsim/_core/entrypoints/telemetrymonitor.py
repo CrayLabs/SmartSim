@@ -593,7 +593,7 @@ def main(
     logger.info(
         f"Executing telemetry monitor with frequency: {frequency}s"
         f", on target directory: {experiment_dir}"
-        f"matching pattern: {monitor_pattern}"
+        f" matching pattern: {monitor_pattern}"
     )
 
     log_handler = LoggingEventHandler(logger)  # type: ignore
