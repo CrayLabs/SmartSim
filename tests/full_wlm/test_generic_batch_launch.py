@@ -42,7 +42,6 @@ if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
 
 def add_batch_resources(wlmutils, batch_settings):
     if isinstance(batch_settings, QsubBatchSettings):
-        print(wlmutils.get_batch_resources())
         for key, value in wlmutils.get_batch_resources().items():
             batch_settings.set_resource(key, value)
 
