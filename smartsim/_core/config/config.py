@@ -182,7 +182,17 @@ class Config:
 
     @property
     def test_batch_resources(self) -> t.Any: # pragma: no cover
-        return json.loads(os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}"))
+        resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
+        resources = json.loads(resource_str)
+        if not isinstance(resources, dict):
+            raise TypeError(
+                (
+                    "SMARTSIM_TEST_BATCH_RESOURCES was not interpreted as a "
+                    "dictionary, check to make sure that it is a valid "
+                    f"JSON string: {resource_str}"
+                )
+            )
+        return resources
 
     @property
     def test_interface(self) -> t.List[str]:  # pragma: no cover
