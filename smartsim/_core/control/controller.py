@@ -108,7 +108,7 @@ def start_telemetry_monitor(
             "-f",
             str(frequency),
         ],
-        stdin=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         cwd=str(pathlib.Path(__file__).parent.parent.parent),
         shell=False,
