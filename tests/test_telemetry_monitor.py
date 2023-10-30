@@ -38,7 +38,6 @@ from smartsim._core.control.job import Job
 from smartsim._core.entrypoints.telemetrymonitor import (
     get_parser,
     get_ts,
-    main,
     track_event,
     track_started,
     track_completed,
