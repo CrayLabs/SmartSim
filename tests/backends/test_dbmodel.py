@@ -109,12 +109,6 @@ else:
 
 should_run_pt &= "torch" in installed_redisai_backends()
 
-def choose_host(run_settings, wlmutils):
-    host = None
-    if isinstance(run_settings, (MpirunSettings, MpiexecSettings)):
-        host = wlmutils.get_test_hostlist()[0]
-    return host
-
 def save_tf_cnn(path, file_name):
     """Create a Keras CNN for testing purposes"""
     from smartsim.ml.tf import freeze_model
@@ -177,7 +171,7 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = choose_host(run_settings, wlmutils)
+    host = wlmutils.choose_host(run_settings)
     db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
@@ -255,7 +249,7 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = choose_host(run_settings, wlmutils)
+    host = wlmutils.choose_host(run_settings)
     db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
@@ -326,7 +320,7 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = choose_host(run_settings, wlmutils)
+    host = wlmutils.choose_host(run_settings)
     db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 

@@ -40,6 +40,7 @@ from smartsim.settings import (
     AprunSettings,
     JsrunSettings,
     MpirunSettings,
+    MpiexecSettings,
     PalsMpiexecSettings,
     RunSettings,
 )
@@ -382,6 +383,10 @@ class WLMUtils:
             )
 
         return Orchestrator(port=test_port, interface="lo")
+
+    @staticmethod
+    def choose_host(rs):
+        return get_hostlist()[0] if isinstance(rs, (MpirunSettings, MpiexecSettings)) else None
 
 
 @pytest.fixture

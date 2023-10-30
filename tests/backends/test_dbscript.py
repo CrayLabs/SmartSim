@@ -53,12 +53,6 @@ except ImportError:
 
 should_run &= "torch" in installed_redisai_backends()
 
-def choose_host(run_settings, wlmutils):
-    host = None
-    if isinstance(run_settings, (MpirunSettings, MpiexecSettings)):
-        host = wlmutils.get_test_hostlist()[0]
-    return host
-
 def timestwo(x):
     return 2 * x
 
@@ -93,7 +87,7 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model.set_path(test_dir)
 
     # Create the SmartSim database
-    host = choose_host(run_settings, wlmutils)
+    host = wlmutils.choose_host(run_settings)
     db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
@@ -173,7 +167,7 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create SmartSim database
-    host = choose_host(run_settings, wlmutils)
+    host = wlmutils.choose_host(run_settings)
     db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
