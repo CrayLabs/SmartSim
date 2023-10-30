@@ -56,6 +56,7 @@ def _get_target(run: tm.Run,
         "model": run.models,
         "ensemble": run.ensembles,
         "orchestrator": run.orchestrators,
+        "dbnode": run.orchestrators,
     }
 
     for item in list_map[etype]:
