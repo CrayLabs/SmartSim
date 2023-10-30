@@ -134,7 +134,11 @@ def hydrate_persistable(
     exp_dir: pathlib.Path,
 ) -> t.Dict[str, t.List[JobEntity]]:
     """Map entity data persisted in a manifest file to an object"""
-    entities: t.Dict[str, t.List[JobEntity]] = {}  # defaultdict(lambda: [])
+    entities: t.Dict[str, t.List[JobEntity]] = {
+        "model": [],
+        "orchestrator": [],
+        "ensemble": [],
+    }
 
     # an entity w/parent key creates persistables for entities it contains
     parent_keys = {"shards", "models"}
@@ -142,9 +146,6 @@ def hydrate_persistable(
     if parent_keys:
         container = "shards" if "shards" in parent_keys else "models"
         child_type = "orchestrator" if container == "shards" else "model"
-        if child_type not in entities:
-            entities[child_type] = []
-
         for child_entity in persistable_entity[container]:
             entity = _hydrate_persistable(child_entity, child_type, str(exp_dir))
             entities[child_type].append(entity)
@@ -162,7 +163,7 @@ def hydrate_persistables(
     exp_dir: pathlib.Path,
 ) -> t.Dict[str, t.List[JobEntity]]:
     """Map a collection of entity data persisted in a manifest file to an object"""
-    persisted: t.Dict[str, t.List[JobEntity]] = {}  # defaultdict(lambda: [])
+    persisted: t.Dict[str, t.List[JobEntity]] = {}
     for item in run[entity_type]:
         entities = hydrate_persistable(entity_type, item, exp_dir)
         persisted.update(entities)
