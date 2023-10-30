@@ -27,6 +27,7 @@
 
 import logging
 import pathlib
+from random import sample
 import pytest
 import re
 import typing as t
@@ -228,3 +229,20 @@ def test_persistable_computed_properties(
 
     assert persistable.is_managed == exp_ismanaged
     assert persistable.is_db == exp_isorch
+
+
+def test_deserialize_ensemble(fileutils: FileUtils):
+    """Ensure that the children of ensembles (models) are correctly 
+    placed in the models collection"""
+    sample_manifest_path = fileutils.get_test_conf_path("telemetry/ensembles.json")
+    sample_manifest = pathlib.Path(sample_manifest_path)
+    assert sample_manifest.exists()
+
+    manifest = load_manifest(sample_manifest_path)
+    assert manifest
+
+    assert len(manifest.runs) == 1
+
+    # NOTE: no longer returning ensembles, only children...
+    # assert len(manifest.runs[0].ensembles) == 1  
+    assert len(manifest.runs[0].models) == 8

@@ -58,7 +58,7 @@ def _get_target(run: tm.Run,
         "orchestrator": run.orchestrators,
     }
 
-    for item in  list_map[etype]:
+    for item in list_map[etype]:
         # note: matching name is problematic but the job manager is
         # tracking the proxy task instead of the actual task
         # if item.job_id == str(STEP_PID):

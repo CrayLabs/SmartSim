@@ -132,57 +132,65 @@ def hydrate_persistable(
     entity_type: str,
     persistable_entity: t.Dict[str, t.Any],
     exp_dir: pathlib.Path,
-) -> t.List[JobEntity]:
+) -> t.Dict[str, t.List[JobEntity]]:
     """Map entity data persisted in a manifest file to an object"""
-    entities: t.List[JobEntity] = []
+    entities: t.Dict[str, t.List[JobEntity]] = {}  # defaultdict(lambda: [])
 
     # an entity w/parent key creates persistables for entities it contains
     parent_keys = {"shards", "models"}
     parent_keys = parent_keys.intersection(persistable_entity.keys())
     if parent_keys:
         container = "shards" if "shards" in parent_keys else "models"
-        for shard in persistable_entity[container]:
-            entity = _hydrate_persistable(shard, entity_type, str(exp_dir))
-            entities.append(entity)
+        child_type = "orchestrator" if container == "shards" else "model"
+        if child_type not in entities:
+            entities[child_type] = []
+
+        for child_entity in persistable_entity[container]:
+            entity = _hydrate_persistable(child_entity, child_type, str(exp_dir))
+            entities[child_type].append(entity)
 
         return entities
 
     entity = _hydrate_persistable(persistable_entity, entity_type, str(exp_dir))
-    entities.append(entity)
-
+    entities[entity_type].append(entity)
     return entities
 
 
 def hydrate_persistables(
-    entity_type: _ManifestKey,
-    run: t.Dict[_ManifestKey, t.Any],
+    entity_type: str,
+    run: t.Dict[str, t.Any],
     exp_dir: pathlib.Path,
-) -> t.List[JobEntity]:
+) -> t.Dict[str, t.List[JobEntity]]:
     """Map a collection of entity data persisted in a manifest file to an object"""
-    persisted: t.List[JobEntity] = []
-
+    persisted: t.Dict[str, t.List[JobEntity]] = {}  # defaultdict(lambda: [])
     for item in run[entity_type]:
         entities = hydrate_persistable(entity_type, item, exp_dir)
-        for entity in entities:
-            persisted.append(entity)
+        persisted.update(entities)
 
     return persisted
 
 
 def hydrate_runs(
-    persisted_runs: t.List[t.Dict[_ManifestKey, t.Any]], exp_dir: pathlib.Path
+    persisted_runs: t.List[t.Dict[str, t.Any]], exp_dir: pathlib.Path
 ) -> t.List[Run]:
     """Map run data persisted in a manifest file to an object"""
-    runs = [
-        Run(
-            timestamp=instance["timestamp"],
-            models=hydrate_persistables("model", instance, exp_dir),
-            orchestrators=hydrate_persistables("orchestrator", instance, exp_dir),
-            ensembles=hydrate_persistables("ensemble", instance, exp_dir),
+    the_runs: t.List[Run] = []
+    for run_instance in persisted_runs:
+        run_entities: t.Dict[str, t.List[JobEntity]] = {}
+        for key in ["model", "orchestrator", "ensemble"]:
+            run_entities[key] = []
+            _entities = hydrate_persistables(key, run_instance, exp_dir)
+            run_entities.update(_entities)
+
+        run = Run(
+            run_instance["timestamp"],
+            run_entities["model"],
+            run_entities["orchestrator"],
+            run_entities["ensemble"],
         )
-        for instance in persisted_runs
-    ]
-    return runs
+        the_runs.append(run)
+
+    return the_runs
 
 
 def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
