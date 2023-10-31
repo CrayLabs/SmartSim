@@ -115,6 +115,13 @@ class LocalLauncher(Launcher):
             self.task_manager.start()
 
         out, err = step.get_output_files()
+        cmd = step.get_launch_cmd()
+        
+        is_enabled = int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
+        if is_enabled:
+            out = step.get_step_file(ending=".indirect.out")
+            err = step.get_step_file(ending=".indirect.err")
+            cmd = LocalLauncher.get_proxy_cmd(step)
 
         # pylint: disable-next=consider-using-with
         output = open(out, "w+", encoding="utf-8")
@@ -124,13 +131,8 @@ class LocalLauncher(Launcher):
         # LocalStep.run_command omits env, include it here
         passed_env = step.env if isinstance(step, LocalStep) else None
 
-        cmd = step.get_launch_cmd()
-        is_enabled = int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
-        if is_enabled:
-            cmd = LocalLauncher.get_proxy_cmd(step)
-
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
+            cmd, step.cwd, env=passed_env, out=output, err=error
         )
 
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
