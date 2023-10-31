@@ -132,7 +132,7 @@ class LocalLauncher(Launcher):
         passed_env = step.env if isinstance(step, LocalStep) else None
 
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=passed_env, out=output, err=error
+            cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
         )
 
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
