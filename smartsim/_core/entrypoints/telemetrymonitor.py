@@ -114,8 +114,8 @@ def _hydrate_persistable(
 
     entity.type = entity_type
     entity.name = persistable_entity["name"]
-    entity.job_id = str(metadata.get("task_id", ""))
-    entity.step_id = str(metadata.get("step_id", ""))
+    entity.job_id = str(metadata.get("step_id", ""))
+    entity.step_id = str(metadata.get("task_id", ""))
     entity.timestamp = int(persistable_entity.get("timestamp", "0"))
     entity.path = str(exp_dir)
     entity.status_dir = str(status_dir)
