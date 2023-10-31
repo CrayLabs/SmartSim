@@ -456,7 +456,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                         entity.name,
                         entity.job_id if entity.job_id else entity.step_id,
                         entity,
-                        entity.is_managed,
+                        False,
                     )
                     self._launcher.step_mapping.add(
                         entity.name, entity.step_id, entity.job_id, entity.is_managed
