@@ -270,7 +270,9 @@ def track_event(
     try:
         if not tgt_path.exists():
             """Don't overwrite existing tracking files"""
-            tgt_path.write_text(json.dumps(entity_dict))
+            bytes_written = tgt_path.write_text(json.dumps(entity_dict))
+            if bytes_written < 1:
+                logger.warning("event tracking failed to write tracking file.")
     except Exception:
         logger.error("Unable to write tracking file.", exc_info=True)
 
