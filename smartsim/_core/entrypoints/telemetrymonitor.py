@@ -196,15 +196,26 @@ def hydrate_runs(
 
 def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
     """Load a persisted manifest and return the content"""
-    source = pathlib.Path(file_path)
-    source = source.resolve()
+    manifest_dict: t.Optional[t.Dict[str, t.Any]] = None
+    try_count = 1
 
-    text = source.read_text(encoding="utf-8")
-    text = text.strip()
-    if not text:
+    while manifest_dict is None and try_count < 6:
+        source = pathlib.Path(file_path)
+        source = source.resolve()
+
+        try:
+            if text := source.read_text(encoding="utf-8").strip():
+                manifest_dict = json.loads(text)
+        except json.JSONDecodeError as ex:
+            print(f"Error loading manifest: {ex}")
+            # hack/fix: handle issues reading file before it is fully written
+            time.sleep(0.5 * try_count)
+        finally:
+            try_count += 1
+
+    if not manifest_dict:
         return None
 
-    manifest_dict = json.loads(text)
     exp = manifest_dict.get("experiment", None)
     if not exp:
         raise ValueError("Manifest missing required experiment")
@@ -536,7 +547,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     )
 
 
-def can_shutdown(action_handler: ManifestEventHandler):
+def can_shutdown(action_handler: ManifestEventHandler) -> bool:
     has_jobs = bool(action_handler.job_manager.jobs)
     has_dbs = bool(action_handler.job_manager.db_jobs)
     has_running_jobs = has_jobs or has_dbs
