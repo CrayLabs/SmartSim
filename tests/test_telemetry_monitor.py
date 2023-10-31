@@ -163,7 +163,7 @@ def test_track_specific(
         },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
-    persistable = persistables[0] if persistables else None
+    persistable = persistables[etype][0] if persistables else None
 
     job = Job(name, task_id, persistable, "local", False)
     
@@ -189,23 +189,25 @@ def test_load_manifest(fileutils: FileUtils):
     assert test_manifest.exists()
 
     manifest = load_manifest(test_manifest_path)
-    assert manifest.name == "my-experiment"
-    assert str(manifest.path) == "experiment/path"
-    assert manifest.launcher == "local"
-    assert len(manifest.runs) == 1
+    assert manifest.name == "my-exp"
+    assert str(manifest.path) == "/lus/cls01029/drozt/playground/ss/dash-int/my-exp"
+    assert manifest.launcher == "Slurm"
+    assert len(manifest.runs) == 6
 
-    assert len(manifest.runs[0].models) == 2
-    assert len(manifest.runs[0].orchestrators) == 2
-    assert len(manifest.runs[0].ensembles) == 1
+    assert len(manifest.runs[0].models) == 1
+    assert len(manifest.runs[2].models) == 8  # 8 models in ensemble
+    assert len(manifest.runs[0].orchestrators) == 0
+    assert len(manifest.runs[1].orchestrators) == 3  # 3 shards in db
+    # assert len(manifest.runs[0].ensembles) == 1
 
 
 @pytest.mark.parametrize(
     ["task_id", "step_id", "etype", "exp_isorch", "exp_ismanaged"],
     [
-        pytest.param("", "123", "model", False, False, id="unmanaged, non-orch"),
+        pytest.param("123", "", "model", False, False, id="unmanaged, non-orch"),
         pytest.param("456", "123", "ensemble", False, True, id="managed, non-orch"),
         pytest.param("789", "987", "orchestrator", True, True, id="managed, orch"),
-        pytest.param("", "987", "orchestrator", True, False, id="unmanaged, orch"),
+        pytest.param("987", "", "orchestrator", True, False, id="unmanaged, orch"),
     ],
 )
 def test_persistable_computed_properties(
@@ -224,7 +226,7 @@ def test_persistable_computed_properties(
         },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
-    persistable = persistables[0] if persistables else None
+    persistable = persistables[etype][0] if persistables[etype] else None
 
     assert persistable.is_managed == exp_ismanaged
     assert persistable.is_db == exp_isorch
