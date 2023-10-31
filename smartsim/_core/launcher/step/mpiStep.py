@@ -26,8 +26,8 @@
 
 import os
 import shutil
-from shlex import split as sh_split
 import typing as t
+from shlex import split as sh_split
 
 from ....error import AllocationError, SmartSimError
 from ....log import get_logger
