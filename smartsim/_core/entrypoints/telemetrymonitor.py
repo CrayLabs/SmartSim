@@ -536,6 +536,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     )
 
 
+def can_shutdown(action_handler: ManifestEventHandler):
+    has_jobs = bool(action_handler.job_manager.jobs)
+    has_dbs = bool(action_handler.job_manager.db_jobs)
+    has_running_jobs = has_jobs or has_dbs
+
+    return not has_running_jobs
+
+
 def shutdown_when_completed(
     observer: BaseObserver, action_handler: ManifestEventHandler
 ) -> None:
@@ -545,11 +553,7 @@ def shutdown_when_completed(
     :type observer: t.Optional[BaseObserver]
     :param action_handler: The manifest event processor instance
     :type action_handler: ManifestEventHandler"""
-    has_running_jobs = (
-        not action_handler.job_manager.jobs and not action_handler.job_manager.db_jobs
-    )
-    has_completed_jobs = action_handler.job_manager.completed
-    if not has_running_jobs and has_completed_jobs:
+    if can_shutdown(action_handler):
         observer.stop()  # type: ignore[no-untyped-call]
 
 

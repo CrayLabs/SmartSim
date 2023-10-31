@@ -29,21 +29,23 @@ import logging
 import pathlib
 from random import sample
 import pytest
-import re
 import typing as t
 import uuid
 from conftest import FileUtils
-from smartsim._core.control.job import Job
+from smartsim._core.control.job import Job, JobEntity
 
 from smartsim._core.entrypoints.telemetrymonitor import (
+    can_shutdown,
     get_parser,
     get_ts,
+    shutdown_when_completed,
     track_event,
     track_started,
     track_completed,
     track_timestep,
     load_manifest,
     hydrate_persistable,
+    ManifestEventHandler,
 )
 from smartsim._core.utils import serialize
 
@@ -247,3 +249,140 @@ def test_deserialize_ensemble(fileutils: FileUtils):
     # NOTE: no longer returning ensembles, only children...
     # assert len(manifest.runs[0].ensembles) == 1  
     assert len(manifest.runs[0].models) == 8
+
+
+def test_shutdown_conditions():
+    """Ensure conditions to shutdown telemetry monitor are correctly evaluated"""
+    job_entity1 = JobEntity()
+    job_entity1.name = "xyz"
+    job_entity1.job_id = "123"
+    job_entity1.step_id = ""
+
+    # show that an event handler w/no monitored jobs can shutdown
+    mani_handler = ManifestEventHandler("xyz", logger)
+    assert can_shutdown(mani_handler)
+
+    # show that an event handler w/a monitored job cannot shutdown
+    mani_handler = ManifestEventHandler("xyz", logger)
+    mani_handler.job_manager.add_job(job_entity1.name,
+                                     job_entity1.job_id, 
+                                     job_entity1,
+                                     False)
+    assert not can_shutdown(mani_handler)
+    assert not bool(mani_handler.job_manager.db_jobs)
+    assert bool(mani_handler.job_manager.jobs)
+
+    # show that an event handler w/a monitored db cannot shutdown
+    mani_handler = ManifestEventHandler("xyz", logger)
+    job_entity1.type = "orchestrator"
+    mani_handler.job_manager.add_job(job_entity1.name,
+                                     job_entity1.job_id, 
+                                     job_entity1,
+                                     False)
+    assert not can_shutdown(mani_handler)
+    assert bool(mani_handler.job_manager.db_jobs)
+    assert not bool(mani_handler.job_manager.jobs)
+
+    # show that an event handler w/a dbs & tasks cannot shutdown
+    job_entity2 = JobEntity()
+    job_entity2.name = "xyz"
+    job_entity2.job_id = "123"
+    job_entity2.step_id = ""
+
+    mani_handler = ManifestEventHandler("xyz", logger)
+    job_entity1.type = "orchestrator"
+    mani_handler.job_manager.add_job(job_entity1.name,
+                                     job_entity1.job_id, 
+                                     job_entity1,
+                                     False)
+    
+    mani_handler.job_manager.add_job(job_entity2.name,
+                                    job_entity2.job_id, 
+                                    job_entity2,
+                                    False)
+    assert not can_shutdown(mani_handler)
+    assert bool(mani_handler.job_manager.db_jobs)
+    assert bool(mani_handler.job_manager.jobs)
+
+    # ... now, show that removing 1 of 2 jobs still doesn't shutdown
+    mani_handler.job_manager.db_jobs.popitem()
+    assert not can_shutdown(mani_handler)
+
+    # ... now, show that removing final job will allow shutdown
+    mani_handler.job_manager.jobs.popitem()
+    assert can_shutdown(mani_handler)
+
+
+def test_shutdown_action():
+    """Ensure file system listener is properly shutdown"""
+    class FauxObserver:
+        def __init__(self):
+            self.stop_count = 0
+
+        def stop(self):
+            self.stop_count += 1
+
+    job_entity1 = JobEntity()
+    job_entity1.name = "xyz"
+    job_entity1.job_id = "123"
+    job_entity1.step_id = ""
+
+    # show that an event handler w/no monitored jobs can shutdown
+    mani_handler = ManifestEventHandler("xyz", logger)
+    observer = FauxObserver()
+    shutdown_when_completed(observer, mani_handler)
+    assert observer.stop_count == 1
+
+    # show that an event handler w/a monitored job cannot shutdown
+    mani_handler = ManifestEventHandler("xyz", logger)
+    mani_handler.job_manager.add_job(job_entity1.name,
+                                     job_entity1.job_id, 
+                                     job_entity1,
+                                     False)
+    observer = FauxObserver()
+    shutdown_when_completed(observer, mani_handler)
+    assert observer.stop_count == 0
+
+    # show that an event handler w/a monitored db cannot shutdown
+    mani_handler = ManifestEventHandler("xyz", logger)
+    job_entity1.type = "orchestrator"
+    mani_handler.job_manager.add_job(job_entity1.name,
+                                     job_entity1.job_id, 
+                                     job_entity1,
+                                     False)
+    observer = FauxObserver()
+    shutdown_when_completed(observer, mani_handler)
+    assert observer.stop_count == 0
+
+    # show that an event handler w/a dbs & tasks cannot shutdown
+    job_entity2 = JobEntity()
+    job_entity2.name = "xyz"
+    job_entity2.job_id = "123"
+    job_entity2.step_id = ""
+
+    mani_handler = ManifestEventHandler("xyz", logger)
+    job_entity1.type = "orchestrator"
+    mani_handler.job_manager.add_job(job_entity1.name,
+                                     job_entity1.job_id, 
+                                     job_entity1,
+                                     False)
+    
+    mani_handler.job_manager.add_job(job_entity2.name,
+                                    job_entity2.job_id, 
+                                    job_entity2,
+                                    False)
+    observer = FauxObserver()
+    shutdown_when_completed(observer, mani_handler)
+    assert observer.stop_count == 0
+
+    # ... now, show that removing 1 of 2 jobs still doesn't shutdown
+    mani_handler.job_manager.db_jobs.popitem()
+    observer = FauxObserver()
+    shutdown_when_completed(observer, mani_handler)
+    assert observer.stop_count == 0
+
+    # ... now, show that removing final job will allow shutdown
+    mani_handler.job_manager.jobs.popitem()
+    observer = FauxObserver()
+    shutdown_when_completed(observer, mani_handler)
+    assert observer.stop_count == 1
