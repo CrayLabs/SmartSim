@@ -48,6 +48,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     ManifestEventHandler,
 )
 from smartsim._core.utils import serialize
+from smartsim import Experiment
 
 
 ALL_ARGS = {"-d", "-f"}
@@ -161,14 +162,14 @@ def test_track_specific(
         "telemetry_metadata": {
             "status_dir": str(exp_dir / serialize.TELMON_SUBDIR),
             "task_id": task_id,
-            "step_id": step_id,        
+            "step_id": step_id,
         },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
     persistable = persistables[etype][0] if persistables else None
 
     job = Job(name, task_id, persistable, "local", False)
-    
+
     track_fn(job, logger)
 
     fname = f"{evt_type}.json"
@@ -235,7 +236,7 @@ def test_persistable_computed_properties(
 
 
 def test_deserialize_ensemble(fileutils: FileUtils):
-    """Ensure that the children of ensembles (models) are correctly 
+    """Ensure that the children of ensembles (models) are correctly
     placed in the models collection"""
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/ensembles.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -247,7 +248,7 @@ def test_deserialize_ensemble(fileutils: FileUtils):
     assert len(manifest.runs) == 1
 
     # NOTE: no longer returning ensembles, only children...
-    # assert len(manifest.runs[0].ensembles) == 1  
+    # assert len(manifest.runs[0].ensembles) == 1
     assert len(manifest.runs[0].models) == 8
 
 
@@ -265,7 +266,7 @@ def test_shutdown_conditions():
     # show that an event handler w/a monitored job cannot shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id, 
+                                     job_entity1.job_id,
                                      job_entity1,
                                      False)
     assert not can_shutdown(mani_handler)
@@ -276,7 +277,7 @@ def test_shutdown_conditions():
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id, 
+                                     job_entity1.job_id,
                                      job_entity1,
                                      False)
     assert not can_shutdown(mani_handler)
@@ -292,12 +293,12 @@ def test_shutdown_conditions():
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id, 
+                                     job_entity1.job_id,
                                      job_entity1,
                                      False)
-    
+
     mani_handler.job_manager.add_job(job_entity2.name,
-                                    job_entity2.job_id, 
+                                    job_entity2.job_id,
                                     job_entity2,
                                     False)
     assert not can_shutdown(mani_handler)
@@ -336,7 +337,7 @@ def test_shutdown_action():
     # show that an event handler w/a monitored job cannot shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id, 
+                                     job_entity1.job_id,
                                      job_entity1,
                                      False)
     observer = FauxObserver()
@@ -347,7 +348,7 @@ def test_shutdown_action():
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id, 
+                                     job_entity1.job_id,
                                      job_entity1,
                                      False)
     observer = FauxObserver()
@@ -363,12 +364,12 @@ def test_shutdown_action():
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id, 
+                                     job_entity1.job_id,
                                      job_entity1,
                                      False)
-    
+
     mani_handler.job_manager.add_job(job_entity2.name,
-                                    job_entity2.job_id, 
+                                    job_entity2.job_id,
                                     job_entity2,
                                     False)
     observer = FauxObserver()
@@ -386,3 +387,136 @@ def test_shutdown_action():
     observer = FauxObserver()
     shutdown_when_completed(observer, mani_handler)
     assert observer.stop_count == 1
+
+def test_telemetry_single_model(fileutils, wlmutils):
+    """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
+    with unique db_identifiers"""
+
+    # Set experiment name
+    exp_name = "telemetry_single_model"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("echo.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create run settings
+    app_settings = exp.create_run_settings("python", test_script)
+    app_settings.set_nodes(1)
+    app_settings.set_tasks_per_node(1)
+
+    #  # Create the SmartSim Model
+    smartsim_model = exp.create_model("perroquet", app_settings)
+    exp.generate(smartsim_model)
+    exp.start(smartsim_model, block=True)
+
+def test_telemetry_serial_models(fileutils, wlmutils):
+    """
+    Test telemetry with models being run in serial (one after each other)
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_serial_models"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("echo.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create run settings
+    app_settings = exp.create_run_settings("python", test_script)
+    app_settings.set_nodes(1)
+    app_settings.set_tasks_per_node(1)
+
+    #  # Create the SmartSim Model
+    smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
+    exp.generate(*smartsim_models)
+    exp.start(*smartsim_models, block=True)
+
+def test_telemetry_db_only_with_generate(fileutils, wlmutils):
+    """
+    Test telemetry with only a database running
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_db_only"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_dir = fileutils.make_test_dir()
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create regular database
+    orc = exp.create_database(port=test_port, interface=test_interface)
+    exp.generate(orc)
+    try:
+        exp.start(orc)
+    finally:
+        exp.stop(orc)
+
+def test_telemetry_db_only_without_generate(fileutils, wlmutils):
+    """
+    Test telemetry with only a database running
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_db_only"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_dir = fileutils.make_test_dir()
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create regular database
+    orc = exp.create_database(port=test_port, interface=test_interface)
+    try:
+        exp.start(orc)
+    finally:
+        exp.stop(orc)
+
+def test_telemetry_db_and_model(fileutils, wlmutils):
+    """
+    Test telemetry with only a database running
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_db_only"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_dir = fileutils.make_test_dir()
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create regular database
+    orc = exp.create_database(port=test_port, interface=test_interface)
+    try:
+        exp.start(orc)
+        # create run settings
+        app_settings = exp.create_run_settings("python", test_script)
+        app_settings.set_nodes(1)
+        app_settings.set_tasks_per_node(1)
+
+        #  # Create the SmartSim Model
+        smartsim_model = exp.create_model("perroquet", app_settings)
+        exp.generate(smartsim_model)
+        exp.start(smartsim_model, block=True)
+    finally:
+        exp.stop(orc)
