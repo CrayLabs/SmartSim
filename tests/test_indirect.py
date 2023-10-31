@@ -128,17 +128,22 @@ def test_ts():
     assert isinstance(ts, int)
 
 
-def test_indirect_main_dir_check():
+def test_indirect_main_dir_check(fileutils):
     """Ensure that the proxy validates the test directory exists"""
-    test_dir = f"/foo/{uuid.uuid4()}"
+    test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
     std_out = str(exp_dir / "out.txt")
     err_out = str(exp_dir / "err.txt")
 
-    with pytest.raises(ValueError) as ex:
-        main("echo unit-test", "application", std_out, err_out, exp_dir, exp_dir, "step-name")
+    cmd = ["echo", "unit-test"]
+    encoded_cmd = encode_cmd(cmd)
 
-    assert "directory does not exist" in ex.value.args[0]
+    status_path = exp_dir / TELMON_SUBDIR
+    
+    # show that a missing status_path is created when missing
+    main(encoded_cmd, "application", std_out, err_out, exp_dir, status_path)
+
+    assert status_path.exists()
 
 
 def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
@@ -151,7 +156,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("", "application", std_out, err_out, exp_dir, exp_dir, "step-name")
+        _ = main("", "application", std_out, err_out, exp_dir, exp_dir / TELMON_SUBDIR)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -162,7 +167,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("  \n  \t   ", "application", std_out, err_out, exp_dir, exp_dir, "step-name")
+        _ = main("  \n  \t   ", "application", std_out, err_out, exp_dir, exp_dir / TELMON_SUBDIR)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -182,7 +187,7 @@ def test_complete_process(capsys, fileutils):
     raw_cmd = f"{sys.executable} {script} --time=1"
     cmd = encode_cmd(raw_cmd.split())
 
-    rc = main(cmd, "application", std_out, err_out, exp_dir, exp_dir, "step-name")
+    rc = main(cmd, "application", std_out, err_out, exp_dir, exp_dir / TELMON_SUBDIR)
     assert rc == 0
 
     assert exp_dir.exists()

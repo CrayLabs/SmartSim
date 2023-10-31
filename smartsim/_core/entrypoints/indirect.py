@@ -50,59 +50,21 @@ logger = get_logger(__name__)
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 
-def _get_target(run: tm.Run,
-                etype: str,
-                step_name: str) -> t.Optional[JobEntity]:
-    list_map = {
-        "model": run.models,
-        "ensemble": run.ensembles,
-        "orchestrator": run.orchestrators,
-        "dbnode": run.orchestrators,
-    }
-
-    for item in list_map[etype]:
-        # note: matching name is problematic but the job manager is
-        # tracking the proxy task instead of the actual task
-        # if item.job_id == str(STEP_PID):
-        #     return item
-        if step_name.startswith(f"{item.name}-"):
-            return item
-    return None
-
-
-def _find_target(mani_path: pathlib.Path,
-                        step_name: str,
-                        etype: str) -> t.Optional[JobEntity]:
-    if not mani_path.exists():
-        return None
-
-    runtime_manifest = tm.load_manifest(str(mani_path))
-    if not runtime_manifest:
-        return None
-
-    for run in runtime_manifest.runs:
-        target = _get_target(run, etype, step_name)
-        if target is not None:
-            return target
-    return None
-
-
 def main(
     cmd: str,
     etype: str,
     output_path: str,
     error_path: str,
     cwd: str,
-    exp_dir: str,
-    step_name: str,
+    status_dir: str,
 ) -> int:
     """Execute the step command and emit tracking events"""
     global STEP_PID  # pylint: disable=global-statement
     proxy_pid = os.getpid()
 
-    exp_path = pathlib.Path(exp_dir)
-    if not exp_path.exists():
-        raise ValueError(f"The experiment directory does not exist: {exp_dir}")
+    status_path = pathlib.Path(status_dir)
+    if not status_path.exists():
+        status_path.mkdir(parents=True, exist_ok=True)
 
     if not cmd.strip():
         raise ValueError("Invalid cmd supplied")
@@ -130,15 +92,7 @@ def main(
             cleanup()
             return 1
 
-        mani_path = pathlib.Path(exp_dir) / TELMON_SUBDIR / MANIFEST_FILENAME
-        target: t.Optional[tm.JobEntity] = None
-        status_dir = pathlib.Path(exp_dir)  / TELMON_SUBDIR / etype / str(proxy_pid)
-
         while all((process.is_running(), STEP_PID > 0)):
-            if target is None:
-                if target := _find_target(mani_path, step_name, etype):
-                    status_dir = pathlib.Path(target.status_dir)
-
             track_event(
                 get_ts(),
                 str(proxy_pid),
@@ -155,12 +109,6 @@ def main(
             time.sleep(1)
 
         logger.info(f"Indirect step {STEP_PID} complete")
-
-        if target is None:
-            target = _find_target(mani_path, step_name, etype)
-
-        status_dir = pathlib.Path(target.status_dir) if target else status_dir
-
         msg = f"Process {STEP_PID} finished with return code: {ret_code}"
         track_event(
             get_ts(),
@@ -228,13 +176,11 @@ def get_parser() -> argparse.ArgumentParser:
         "+n", type=str, help="The step name being executed", required=True
     )
     parser.add_argument(
-        "+d", type=str, help="The experiment root directory", required=True
-    )
-    parser.add_argument(
         "+w", type=str, help="The working directory of the executable", required=True
     )
     parser.add_argument("+o", type=str, help="Output file", required=True)
     parser.add_argument("+e", type=str, help="Erorr output file", required=True)
+    parser.add_argument("+d", type=str, help="Directory for telemetry output", required=True)
     return parser
 
 
@@ -256,8 +202,7 @@ if __name__ == "__main__":
             output_path=parsed_args.o,
             error_path=parsed_args.e,
             cwd=parsed_args.w,
-            exp_dir=parsed_args.d,
-            step_name=parsed_args.n,
+            status_dir=parsed_args.d,
         )
         sys.exit(rc)
 
