@@ -58,6 +58,8 @@ class JobEntity:
 
     @property
     def is_managed(self) -> bool:
+        if self.job_id == "None":
+            return False
         return bool(self.job_id)
 
     @property
