@@ -124,7 +124,6 @@ def main(
             )
             STEP_PID = process.pid
             logger.info(f"Indirect step step {STEP_PID} started")
-            start_ts = get_ts()
 
         except Exception:
             logger.error("Failed to create process", exc_info=True)
@@ -142,7 +141,7 @@ def main(
                         status_dir = pathlib.Path(target.status_dir)
 
                 track_event(
-                    start_ts,
+                    get_ts(),
                     PROXY_PID,
                     "", # step_id for unmanaged task is always empty
                     etype,
