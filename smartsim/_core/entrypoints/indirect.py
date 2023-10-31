@@ -30,8 +30,6 @@ import pathlib
 import psutil
 import signal
 import sys
-from smartsim._core.control.job import JobEntity
-import smartsim._core.entrypoints.telemetrymonitor as tm
 import time
 import typing as t
 
@@ -40,7 +38,6 @@ from types import FrameType
 from smartsim.log import get_logger
 from smartsim._core.entrypoints.telemetrymonitor import track_event
 from smartsim._core.utils.helpers import get_ts, decode_cmd
-from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
 
 
 STEP_PID: t.Optional[int] = None
@@ -99,7 +96,7 @@ def main(
                 "", # step_id for unmanaged task is always empty
                 etype,
                 "start",
-                status_dir,
+                status_path,
                 logger,
             )
 
@@ -116,7 +113,7 @@ def main(
             "", # step_id for unmanaged task is always empty
             etype,
             "stop",
-            status_dir,
+            status_path,
             logger,
             detail=msg,
             return_code=ret_code,
@@ -180,7 +177,9 @@ def get_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("+o", type=str, help="Output file", required=True)
     parser.add_argument("+e", type=str, help="Erorr output file", required=True)
-    parser.add_argument("+d", type=str, help="Directory for telemetry output", required=True)
+    parser.add_argument(
+        "+d", type=str, help="Directory for telemetry output", required=True
+    )
     return parser
 
 
