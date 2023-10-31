@@ -438,15 +438,16 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._logger,
                 )
 
-                self.job_manager.add_job(
-                    entity.name,
-                    entity.job_id,
-                    entity,
-                    entity.is_managed,
-                )
-                self._launcher.step_mapping.add(
-                    entity.name, entity.step_id, entity.step_id, entity.is_managed
-                )
+                if entity.is_managed:
+                    self.job_manager.add_job(
+                        entity.name,
+                        entity.job_id if entity.job_id else entity.step_id,
+                        entity,
+                        entity.is_managed,
+                    )
+                    self._launcher.step_mapping.add(
+                        entity.name, entity.step_id, entity.job_id, entity.is_managed
+                    )
             self._tracked_runs[run.timestamp] = run
 
     def on_modified(self, event: FileModifiedEvent) -> None:
