@@ -40,6 +40,7 @@ from types import FrameType
 from smartsim.log import get_logger
 from smartsim._core.entrypoints.telemetrymonitor import track_event
 from smartsim._core.utils.helpers import get_ts, decode_cmd
+from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
 
 
 STEP_PID: t.Optional[int] = None
@@ -69,9 +70,8 @@ def _get_target(run: tm.Run,
     return None
 
 
-def _track_target_start(mani_path: pathlib.Path,
+def _find_target(mani_path: pathlib.Path,
                         step_name: str,
-                        start_ts: int,
                         etype: str) -> t.Optional[JobEntity]:
     if not mani_path.exists():
         return None
@@ -83,15 +83,6 @@ def _track_target_start(mani_path: pathlib.Path,
     for run in runtime_manifest.runs:
         target = _get_target(run, etype, step_name)
         if target is not None:
-            track_event(
-                start_ts,
-                target.job_id,
-                target.step_id,
-                target.type,
-                "start",
-                pathlib.Path(target.status_dir),
-                logger,
-            )
             return target
     return None
 
@@ -107,6 +98,7 @@ def main(
 ) -> int:
     """Execute the step command and emit tracking events"""
     global STEP_PID  # pylint: disable=global-statement
+    PROXY_PID = os.getpid()
 
     exp_path = pathlib.Path(exp_dir)
     if not exp_path.exists():
@@ -139,13 +131,25 @@ def main(
             cleanup()
             return 1
 
-        mani_path = pathlib.Path(exp_dir) / ".smartsim/telemetry" / "manifest.json"
+        mani_path = pathlib.Path(exp_dir) / TELMON_SUBDIR / MANIFEST_FILENAME
         target: t.Optional[tm.JobEntity] = None
+        status_dir = pathlib.Path(exp_dir)  / TELMON_SUBDIR / etype / str(PROXY_PID)
 
         try:
             while all((process.is_running(), STEP_PID > 0)):
                 if target is None:
-                    target = _track_target_start(mani_path, step_name, start_ts, etype)
+                    if target := _find_target(mani_path, step_name, etype):
+                        status_dir = pathlib.Path(target.status_dir)
+
+                track_event(
+                    start_ts,
+                    PROXY_PID,
+                    "", # step_id for unmanaged task is always empty
+                    etype,
+                    "start",
+                    status_dir,
+                    logger,
+                )
 
                 ret_code = process.poll()
                 if ret_code is not None:
@@ -157,22 +161,24 @@ def main(
             logger.info(f"Indirect step {STEP_PID} complete")
 
             if target is None:
-                target = _track_target_start(mani_path, step_name, start_ts, etype)
+                target = _find_target(mani_path, step_name, etype)
 
-            if target is not None:
-                msg = f"process {target.step_id} finished with return code: {ret_code}"
-                track_event(
-                    get_ts(),
-                    target.job_id,
-                    target.step_id,
-                    target.type,
-                    "stop",
-                    pathlib.Path(target.status_dir),
-                    logger,
-                    detail=msg,
-                    return_code=ret_code,
-                )
-            cleanup()
+        if target:
+            status_dir = pathlib.Path(target.status_dir)
+
+        msg = f"Process {STEP_PID} finished with return code: {ret_code}"
+        track_event(
+            get_ts(),
+            PROXY_PID,
+            "", # step_id for unmanaged task is always empty
+            etype,
+            "stop",
+            status_dir,
+            logger,
+            detail=msg,
+            return_code=ret_code,
+        )
+        cleanup()
 
     return ret_code
 
@@ -185,8 +191,9 @@ def cleanup() -> None:
 
     try:
         # attempt to stop the subprocess performing step-execution
-        process = psutil.Process(STEP_PID)
-        process.terminate()
+        if psutil.pid_exists(STEP_PID):
+            process = psutil.Process(STEP_PID)
+            process.terminate()
 
     except psutil.NoSuchProcess:
         # swallow exception to avoid overwriting outputs from cmd

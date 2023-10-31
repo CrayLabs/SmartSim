@@ -33,7 +33,7 @@ import uuid
 
 from smartsim._core.entrypoints.indirect import get_parser, cleanup, get_ts, main
 from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
-
+from smartsim._core.utils.helpers import encode_cmd
 
 ALL_ARGS = {"+c", "+t", "+n", "+d"}
 
@@ -87,6 +87,7 @@ def test_cleanup(capsys, monkeypatch):
     captured = capsys.readouterr()  # throw away existing output
 
     with monkeypatch.context() as ctx:
+        ctx.setattr('psutil.pid_exists', lambda pid: True)
         ctx.setattr('psutil.Process', MockProc)
         ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
         cleanup()        
@@ -103,15 +104,16 @@ def test_cleanup_late(capsys, monkeypatch):
     term_msg = "terminating: {0}"
 
     class MockMissingProc:
-        def __init__(self, pid: int):
+        def __init__(self, pid: int) -> None:
             print(create_msg.format(mock_pid))
             raise psutil.NoSuchProcess(pid)
-        def terminate(self):
+        def terminate(self) -> None:
             print(term_msg.format(mock_pid))
     
     captured = capsys.readouterr()  # throw away existing output
 
     with monkeypatch.context() as ctx:
+        ctx.setattr('psutil.pid_exists', lambda pid: True)
         ctx.setattr('psutil.Process', MockMissingProc)
         ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
         cleanup()
@@ -134,7 +136,7 @@ def test_indirect_main_dir_check():
     err_out = str(exp_dir / "err.txt")
 
     with pytest.raises(ValueError) as ex:
-        main("echo unit-test", "application", std_out, err_out, exp_dir)
+        main("echo unit-test", "application", std_out, err_out, exp_dir, exp_dir, "step-name")
 
     assert "directory does not exist" in ex.value.args[0]
 
@@ -149,7 +151,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("", "application", std_out, err_out, exp_dir)
+        _ = main("", "application", std_out, err_out, exp_dir, exp_dir, "step-name")
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -160,7 +162,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("  \n  \t   ", "application", std_out, err_out, exp_dir)
+        _ = main("  \n  \t   ", "application", std_out, err_out, exp_dir, exp_dir, "step-name")
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -175,22 +177,20 @@ def test_complete_process(capsys, fileutils):
     std_out = str(exp_dir / "out.txt")
     err_out = str(exp_dir / "err.txt")
 
-    captured = capsys.readouterr()  # throw away existing output
+    _ = capsys.readouterr()  # throw away existing output
 
-    import base64
-    raw_cmd = f"{sys.executable}|{script}|--time=1"
-    cmd = base64.b64encode(raw_cmd.encode('ascii')).decode('ascii')
+    raw_cmd = f"{sys.executable} {script} --time=1"
+    cmd = encode_cmd(raw_cmd.split())
 
-    rc = main(cmd, "application", std_out, err_out, exp_dir)
+    rc = main(cmd, "application", std_out, err_out, exp_dir, exp_dir, "step-name")
     assert rc == 0
 
     assert exp_dir.exists()
-    
-    start_evt = exp_dir / "start.json"
-    exit_evt = exp_dir / "stop.json"
 
-    assert start_evt.exists()
-    assert start_evt.is_file()
+    # NOTE: don't have a manifest so we're falling back to default event path
+    data_dir = exp_dir / TELMON_SUBDIR
+    start_events = list(data_dir.rglob("start.json"))
+    stop_events = list(data_dir.rglob("stop.json"))
 
-    assert exit_evt.exists()
-    assert exit_evt.is_file()
+    assert start_events
+    assert stop_events
