@@ -98,7 +98,7 @@ def main(
 ) -> int:
     """Execute the step command and emit tracking events"""
     global STEP_PID  # pylint: disable=global-statement
-    PROXY_PID = os.getpid()
+    proxy_pid = os.getpid()
 
     exp_path = pathlib.Path(exp_dir)
     if not exp_path.exists():
@@ -132,43 +132,39 @@ def main(
 
         mani_path = pathlib.Path(exp_dir) / TELMON_SUBDIR / MANIFEST_FILENAME
         target: t.Optional[tm.JobEntity] = None
-        status_dir = pathlib.Path(exp_dir)  / TELMON_SUBDIR / etype / str(PROXY_PID)
+        status_dir = pathlib.Path(exp_dir)  / TELMON_SUBDIR / etype / str(proxy_pid)
 
-        try:
-            while all((process.is_running(), STEP_PID > 0)):
-                if target is None:
-                    if target := _find_target(mani_path, step_name, etype):
-                        status_dir = pathlib.Path(target.status_dir)
-
-                track_event(
-                    get_ts(),
-                    PROXY_PID,
-                    "", # step_id for unmanaged task is always empty
-                    etype,
-                    "start",
-                    status_dir,
-                    logger,
-                )
-
-                ret_code = process.poll()
-                if ret_code is not None:
-                    break
-                time.sleep(1)
-        except Exception:
-            logger.error("Failed to execute process", exc_info=True)
-        finally:
-            logger.info(f"Indirect step {STEP_PID} complete")
-
+        while all((process.is_running(), STEP_PID > 0)):
             if target is None:
-                target = _find_target(mani_path, step_name, etype)
+                if target := _find_target(mani_path, step_name, etype):
+                    status_dir = pathlib.Path(target.status_dir)
 
-        if target:
-            status_dir = pathlib.Path(target.status_dir)
+            track_event(
+                get_ts(),
+                str(proxy_pid),
+                "", # step_id for unmanaged task is always empty
+                etype,
+                "start",
+                status_dir,
+                logger,
+            )
+
+            ret_code = process.poll()
+            if ret_code is not None:
+                break
+            time.sleep(1)
+
+        logger.info(f"Indirect step {STEP_PID} complete")
+
+        if target is None:
+            target = _find_target(mani_path, step_name, etype)
+
+        status_dir = pathlib.Path(target.status_dir) if target else status_dir
 
         msg = f"Process {STEP_PID} finished with return code: {ret_code}"
         track_event(
             get_ts(),
-            PROXY_PID,
+            str(proxy_pid),
             "", # step_id for unmanaged task is always empty
             etype,
             "stop",
@@ -190,7 +186,7 @@ def cleanup() -> None:
 
     try:
         # attempt to stop the subprocess performing step-execution
-        if psutil.pid_exists(STEP_PID):
+        if STEP_PID is not None and psutil.pid_exists(STEP_PID):
             process = psutil.Process(STEP_PID)
             process.terminate()
 
