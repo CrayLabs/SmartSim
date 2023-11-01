@@ -169,6 +169,7 @@ class LocalLauncher(Launcher):
 
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
+        status_dir = step.meta["status_dir"]
         cmd_list = step.get_launch_cmd()
         encoded_cmd = encode_cmd(cmd_list)
 
@@ -187,7 +188,7 @@ class LocalLauncher(Launcher):
             "+n",
             step.name,
             "+d",
-            f"{step.meta['exp_path']}/{serialize.TELMON_SUBDIR}/{etype}/{step.name}",
+            status_dir,
             "+w",
             step.cwd,
             "+o",
