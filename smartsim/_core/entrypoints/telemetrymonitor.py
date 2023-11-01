@@ -277,45 +277,6 @@ def track_event(
         logger.error("Unable to write tracking file.", exc_info=True)
 
 
-def track_completed(job: Job, logger: logging.Logger) -> None:
-    """Persists telemetry event for the end of job"""
-    detail = job.status
-
-    if hasattr(job.entity, "status_dir"):
-        write_path = pathlib.Path(job.entity.status_dir)
-    else:
-        write_path = pathlib.Path(job.entity.path)
-
-    track_event(
-        get_ts(),
-        job.jid or "" if not job.is_task else "",
-        job.jid or "" if job.is_task else "",
-        job.entity.type,
-        "stop",
-        write_path,
-        logger,
-        detail=detail,
-    )
-
-
-def track_started(job: Job, logger: logging.Logger) -> None:
-    """Persists telemetry event for the start of job"""
-    if hasattr(job.entity, "status_dir"):
-        write_path = pathlib.Path(job.entity.status_dir)
-    else:
-        write_path = pathlib.Path(job.entity.path)
-
-    track_event(
-        get_ts(),
-        job.jid or "" if not job.is_task else "",
-        job.jid or "" if job.is_task else "",
-        job.entity.type,
-        "start",
-        write_path,
-        logger,
-    )
-
-
 def track_timestep(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for a timestep"""
     if hasattr(job.entity, "status_dir"):

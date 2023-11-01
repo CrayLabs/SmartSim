@@ -35,14 +35,13 @@ from conftest import FileUtils
 from smartsim._core.control.job import Job, JobEntity
 from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
 
+
 from smartsim._core.entrypoints.telemetrymonitor import (
     can_shutdown,
     get_parser,
     get_ts,
     shutdown_when_completed,
     track_event,
-    track_started,
-    track_completed,
     track_timestep,
     load_manifest,
     hydrate_persistable,
@@ -140,8 +139,6 @@ def test_track_event(
 @pytest.mark.parametrize(
     ["evt_type", "track_fn"],
     [
-        pytest.param("start", track_started, id="start event"),
-        pytest.param("stop", track_completed, id="stop event"),
         pytest.param("timestep", track_timestep, id="update event"),
     ],
 )
