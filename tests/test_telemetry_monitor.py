@@ -501,6 +501,7 @@ def test_telemetry_db_and_model(fileutils, wlmutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("echo.py")
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
