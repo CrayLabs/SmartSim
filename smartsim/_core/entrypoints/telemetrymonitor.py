@@ -270,50 +270,11 @@ def track_event(
     try:
         if not tgt_path.exists():
             """Don't overwrite existing tracking files"""
-            bytes_written = tgt_path.write_text(json.dumps(entity_dict))
+            bytes_written = tgt_path.write_text(json.dumps(entity_dict, indent=2))
             if bytes_written < 1:
                 logger.warning("event tracking failed to write tracking file.")
     except Exception:
         logger.error("Unable to write tracking file.", exc_info=True)
-
-
-def track_completed(job: Job, logger: logging.Logger) -> None:
-    """Persists telemetry event for the end of job"""
-    detail = job.status
-
-    if hasattr(job.entity, "status_dir"):
-        write_path = pathlib.Path(job.entity.status_dir)
-    else:
-        write_path = pathlib.Path(job.entity.path)
-
-    track_event(
-        get_ts(),
-        job.jid or "" if not job.is_task else "",
-        job.jid or "" if job.is_task else "",
-        job.entity.type,
-        "stop",
-        write_path,
-        logger,
-        detail=detail,
-    )
-
-
-def track_started(job: Job, logger: logging.Logger) -> None:
-    """Persists telemetry event for the start of job"""
-    if hasattr(job.entity, "status_dir"):
-        write_path = pathlib.Path(job.entity.status_dir)
-    else:
-        write_path = pathlib.Path(job.entity.path)
-
-    track_event(
-        get_ts(),
-        job.jid or "" if not job.is_task else "",
-        job.jid or "" if job.is_task else "",
-        job.entity.type,
-        "start",
-        write_path,
-        logger,
-    )
 
 
 def track_timestep(job: Job, logger: logging.Logger) -> None:
@@ -436,7 +397,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         for run in runs:
             for entity in run.flatten(
-                filter_fn=lambda e: e.key not in self._tracked_jobs
+                filter_fn=lambda e: e.key not in self._tracked_jobs and e.is_managed
             ):
                 entity.path = str(exp_dir)
 
