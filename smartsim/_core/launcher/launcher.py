@@ -34,9 +34,6 @@ from .taskManager import TaskManager
 from .step import Step
 from ...settings import SettingsBase
 
-if t.TYPE_CHECKING:
-    import pathlib
-
 
 class Launcher(abc.ABC):  # pragma: no cover
     """Abstract base class of all launchers

@@ -39,9 +39,6 @@ from ..taskManager import TaskManager
 from ...._core.utils import serialize
 from ...._core.utils.helpers import encode_cmd
 
-if t.TYPE_CHECKING:
-    import pathlib
-
 logger = get_logger(__name__)
 
 

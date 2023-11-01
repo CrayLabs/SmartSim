@@ -34,12 +34,7 @@ logger = get_logger(__name__)
 
 
 class QsubBatchStep(Step):
-    def __init__(
-        self,
-        name: str,
-        cwd: str,
-        batch_settings: QsubBatchSettings,
-    ) -> None:
+    def __init__(self, name: str, cwd: str, batch_settings: QsubBatchSettings) -> None:
         """Initialize a PBSpro qsub step
 
         :param name: name of the entity to launch
