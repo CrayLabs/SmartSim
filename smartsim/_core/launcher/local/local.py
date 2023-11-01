@@ -36,9 +36,8 @@ from ..step import Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
-from ...._core.utils.helpers import encode_cmd
 from ...._core.utils import serialize
-
+from ...._core.utils.helpers import encode_cmd
 
 logger = get_logger(__name__)
 
@@ -65,8 +64,7 @@ class LocalLauncher(Launcher):
             raise TypeError(
                 f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
             )
-        step = LocalStep(name, cwd, step_settings)
-        return step
+        return LocalStep(name, cwd, step_settings)
 
     def get_step_update(
         self, step_names: t.List[str]
@@ -117,7 +115,7 @@ class LocalLauncher(Launcher):
 
         out, err = step.get_output_files()
         cmd = step.get_launch_cmd()
-        
+
         is_enabled = int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
         if is_enabled:
             out = step.get_step_file(ending=".indirect.out")
@@ -168,7 +166,7 @@ class LocalLauncher(Launcher):
         :return: CLI arguments to execute the step via the proxy step executor
         :rtype: t.List[str]
         """
-        
+
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
         cmd_list = step.get_launch_cmd()

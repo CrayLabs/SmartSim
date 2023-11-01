@@ -26,6 +26,8 @@
 
 import pytest
 
+import pathlib
+
 from smartsim._core.control.controller import Controller
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 from smartsim._core.launcher.step import Step
@@ -60,7 +62,7 @@ def test_controller_batch_step_creation_preserves_entity_order(collection, monke
                         lambda name, path, settings: MockStep(name, path, settings))
     entity_names = [x.name for x in collection.entities]
     assert len(entity_names) == len(set(entity_names))
-    _, steps = controller._create_batch_job_step(collection)
+    _, steps = controller._create_batch_job_step(collection, pathlib.Path("mock/exp/path"))
     assert entity_names == [step.name for step in steps]
 
     

@@ -24,17 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
 import typing as t
 from dataclasses import dataclass, field
 
 from ...database import Orchestrator
 from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import SmartSimError
-from ..utils.helpers import fmt_dict
+from ..utils import helpers as _helpers
+from ..utils import serialize as _serialize
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 _AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Model, DBNode)
+
+if t.TYPE_CHECKING:
+    import os
 
 
 class Manifest:
@@ -154,7 +159,7 @@ class Manifest:
                     output += f"{model.batch_settings}\n"
                 output += f"{model.run_settings}\n"
                 if model.params:
-                    output += f"Parameters: \n{fmt_dict(model.params)}\n"
+                    output += f"Parameters: \n{_helpers.fmt_dict(model.params)}\n"
             output += "\n"
 
         for adb in self.dbs:
@@ -222,10 +227,24 @@ class Manifest:
         return has_db_objects
 
 
+
 class _LaunchedManifestMetadata(t.NamedTuple):
+    run_id: str
     exp_name: str
     exp_path: str
     launcher_name: str
+
+    @property
+    def exp_telemetry_subdirectory(self) -> pathlib.Path:
+        return _fmt_exp_telemetry_path(self.exp_path)
+
+    @property
+    def run_telemetry_subdirectory(self) -> pathlib.Path:
+        return _fmt_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
+
+    @property
+    def manifest_file_path(self) -> pathlib.Path:
+        return self.exp_telemetry_subdirectory / _serialize.MANIFEST_FILENAME
 
 
 @dataclass(frozen=True)
@@ -269,13 +288,26 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     the launching process.
     """
 
-    _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list)
+    exp_name: str
+    exp_path: str
+    launcher_name: str
+    run_id: str = field(default_factory=_helpers.create_short_id_str)
+
+    _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list, init=False)
     _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
-        default_factory=list
+        default_factory=list, init=False
     )
     _databases: t.List[
         t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]
-    ] = field(default_factory=list)
+    ] = field(default_factory=list, init=False)
+
+    @property
+    def exp_telemetry_subdirectory(self) -> pathlib.Path:
+        return _fmt_exp_telemetry_path(self.exp_path)
+
+    @property
+    def run_telemetry_subdirectory(self) -> pathlib.Path:
+        return _fmt_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
 
     def add_model(self, model: Model, data: _T) -> None:
         self._models.append((model, data))
@@ -299,12 +331,24 @@ class LaunchedManifestBuilder(t.Generic[_T]):
             )
         return tuple(zip(entities, data))
 
-    def finalize(
-        self, exp_name: str, exp_path: str, launcher_name: str
-    ) -> LaunchedManifest[_T]:
+    def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
-            metadata=_LaunchedManifestMetadata(exp_name, exp_path, launcher_name),
+            metadata=_LaunchedManifestMetadata(
+                self.run_id, self.exp_name, self.exp_path, self.launcher_name
+            ),
             models=tuple(self._models),
             ensembles=tuple(self._ensembles),
             databases=tuple(self._databases),
         )
+
+
+def _fmt_exp_telemetry_path(
+    exp_path: t.Union[str, "os.PathLike[str]"]
+) -> pathlib.Path:
+    return pathlib.Path(exp_path, _serialize.TELMON_SUBDIR)
+
+
+def _fmt_run_telemetry_path(
+    exp_path: t.Union[str, "os.PathLike[str]"], exp_name: str, run_id: str
+) -> pathlib.Path:
+    return _fmt_exp_telemetry_path(exp_path) / f"{exp_name}/{run_id}"

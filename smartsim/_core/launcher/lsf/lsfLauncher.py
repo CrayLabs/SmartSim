@@ -42,13 +42,13 @@ from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
-    Step,
     BsubBatchStep,
     JsrunStep,
     LocalStep,
     MpiexecStep,
     MpirunStep,
     OrterunStep,
+    Step,
 )
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo, StepInfo
 from .lsfCommands import bjobs, bkill, jskill, jslist
