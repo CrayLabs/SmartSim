@@ -204,6 +204,10 @@ class Config:
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
 
+    @property
+    def telemetry_frequency(self) -> int:
+        return int(os.environ.get("SMARTSIM_TELEMETRY_FREQUENCY", 5))
+
 
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:
