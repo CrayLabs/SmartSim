@@ -265,7 +265,7 @@ def track_event(
         entity_dict["detail"] = detail
 
     if return_code is not None:
-        entity_dict["return_code"] = str(return_code)
+        entity_dict["return_code"] = return_code
 
     try:
         if not tgt_path.exists():
