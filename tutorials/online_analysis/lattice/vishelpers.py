@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def plot_lattice_vorticity(timestep, ux, uy, cylinder):
-    
+
     fig = plt.figure(figsize=(12,6), dpi=80)
 
     plt.cla()
@@ -23,3 +23,41 @@ def plot_lattice_vorticity(timestep, ux, uy, cylinder):
     ax.set_aspect('equal')
     plt.pause(0.001)
     print(f"Vorticity plot at timestep: {timestep}\n")
+
+
+def plot_lattice_norm(timestep, u, cylinder):
+
+    fig = plt.figure(figsize=(12,6), dpi=80)
+
+    plt.cla()
+
+    u[cylinder] = np.nan
+    cmap = plt.cm.get_cmap("viridis").copy()
+    cmap.set_bad(color='black')
+    plt.contour(u, cmap=cmap)
+    plt.clim(-.1, .1)
+    ax = plt.gca()
+    ax.invert_yaxis()
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_aspect('equal')
+    plt.pause(0.001)
+    print(f"Velocity magnitude: {timestep}\n")
+
+
+def plot_lattice_probes(timestep, probe_x, probe_y, probe_u):
+
+    fig = plt.figure(figsize=(12,6), dpi=80)
+
+    plt.cla()
+    cmap = plt.cm.get_cmap("Greys").copy()
+    cmap.set_bad(color='black')
+    plt.quiver(probe_x, probe_y, probe_u[:,:,0], probe_u[:,:,1], np.linalg.norm(probe_u, axis=2), cmap=cmap, scale=15)
+    plt.clim(-.1, .1)
+    ax = plt.gca()
+    ax.invert_yaxis()
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_aspect('equal')
+    plt.pause(0.001)
+    print(f"Velocity magnitude: {timestep}\n")
