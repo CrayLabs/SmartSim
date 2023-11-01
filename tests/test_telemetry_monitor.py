@@ -423,6 +423,49 @@ def test_telemetry_single_model(fileutils, wlmutils):
     assert len(stop_events) == 1
 
 
+def test_telemetry_single_model_nonblocking(fileutils, wlmutils):
+    """Ensure that the telemetry monitor logs exist when the experiment 
+    is non-blocking"""
+
+    # Set experiment name
+    exp_name = "test_telemetry_single_model_nonblocking"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("echo.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create run settings
+    app_settings = exp.create_run_settings("python", test_script)
+    app_settings.set_nodes(1)
+    app_settings.set_tasks_per_node(1)
+
+    #  # Create the SmartSim Model
+    smartsim_model = exp.create_model("perroquet", app_settings)
+    exp.generate(smartsim_model)
+    exp.start(smartsim_model)
+
+    telmon_subdir = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    # let the non-blocking experiment complete.
+    for _ in range(20):
+        time.sleep(1)
+        if telmon_subdir.exists():
+            time.sleep(1)
+            break
+
+    assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
+
+    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    start_events = list(telemetry_output_path.rglob("start.json"))
+    stop_events = list(telemetry_output_path.rglob("stop.json"))
+
+    assert len(start_events) == 1
+    assert len(stop_events) == 1
+
+
 def test_telemetry_serial_models(fileutils, wlmutils):
     """
     Test telemetry with models being run in serial (one after each other)
