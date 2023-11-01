@@ -397,7 +397,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         for run in runs:
             for entity in run.flatten(
-                filter_fn=lambda e: e.key not in self._tracked_jobs
+                filter_fn=lambda e: e.key not in self._tracked_jobs and e.is_managed
             ):
                 entity.path = str(exp_dir)
 
