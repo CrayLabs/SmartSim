@@ -97,7 +97,7 @@ def main(
         finally:
             track_event(
                 get_ts(),
-                str(proxy_pid),
+                proxy_pid,
                 "", # step_id for unmanaged task is always empty
                 etype,
                 "start",
@@ -117,7 +117,7 @@ def main(
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
     track_event(
         get_ts(),
-        str(proxy_pid),
+        proxy_pid,
         "", # step_id for unmanaged task is always empty
         etype,
         "stop",

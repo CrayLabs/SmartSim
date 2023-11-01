@@ -238,7 +238,7 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
 
 def track_event(
     timestamp: int,
-    job_id: str,
+    job_id: t.Union[int, str],
     step_id: str,
     etype: str,
     action: _EventClass,
@@ -252,6 +252,11 @@ def track_event(
     """
     tgt_path = status_dir / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        job_id = int(job_id)
+    except ValueError:
+        pass
 
     entity_dict = {
         "timestamp": timestamp,
