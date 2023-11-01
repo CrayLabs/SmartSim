@@ -37,6 +37,7 @@ from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 from ...._core.utils.helpers import encode_cmd
+from ...._core.utils import serialize
 
 
 logger = get_logger(__name__)
@@ -188,7 +189,7 @@ class LocalLauncher(Launcher):
             "+n",
             step.name,
             "+d",
-            step.meta["exp_path"],
+            f"{step.meta['exp_path']}/{serialize.TELMON_SUBDIR}/{etype}/{step.name}",
             "+w",
             step.cwd,
             "+o",
