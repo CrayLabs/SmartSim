@@ -414,7 +414,7 @@ def test_telemetry_single_model(fileutils, wlmutils):
     smartsim_model = exp.create_model("perroquet", app_settings)
     exp.generate(smartsim_model)
     exp.start(smartsim_model, block=True)
-    assert exp.get_status(smartsim_model) == STATUS_COMPLETED
+    assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
 
 def test_telemetry_serial_models(fileutils, wlmutils):
@@ -469,7 +469,7 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils):
         exp.start(orc)
     finally:
         exp.stop(orc)
-    assert exp.get_status(orc) == STATUS_CANCELLED
+    assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
 def test_telemetry_db_only_without_generate(fileutils, wlmutils):
     """
@@ -494,7 +494,7 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils):
         exp.start(orc)
     finally:
         exp.stop(orc)
-    assert exp.get_status(orc) == STATUS_CANCELLED
+    assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
 def test_telemetry_db_and_model(fileutils, wlmutils):
     """
@@ -529,8 +529,8 @@ def test_telemetry_db_and_model(fileutils, wlmutils):
         exp.start(smartsim_model, block=True)
     finally:
         exp.stop(orc)
-    assert exp.get_status(orc) == STATUS_CANCELLED
-    assert exp.get_status(smartsim_model) == STATUS_COMPLETED
+    assert exp.get_status(orc)[0] == STATUS_CANCELLED
+    assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
 def test_telemetry_ensemble(fileutils, wlmutils):
     """
@@ -557,3 +557,30 @@ def test_telemetry_ensemble(fileutils, wlmutils):
     exp.start(ens, block=True)
     assert all([status == STATUS_COMPLETED for status in exp.get_status(ens)])
 
+
+def test_telemetry_colo(fileutils, wlmutils, coloutils):
+    """
+    Test telemetry with only a database running
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_ensemble"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_dir = fileutils.make_test_dir()
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    smartsim_model = coloutils.setup_test_colo(
+        fileutils,
+        "uds",
+        exp,
+        "echo.py",
+        {},
+    )
+
+    exp.generate(smartsim_model)
+    exp.start(smartsim_model, block=True)
+    assert all([status == STATUS_COMPLETED for status in exp.get_status(smartsim_model)])
