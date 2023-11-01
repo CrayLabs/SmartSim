@@ -57,6 +57,16 @@ ALL_ARGS = {"-d", "-f"}
 logger = logging.getLogger()
 
 
+def snooze_nonblocking(test_dir: str, max_delay: int = 20, post_data_delay: int = 2):
+    telmon_subdir = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    # let the non-blocking experiment complete.
+    for _ in range(max_delay):
+        time.sleep(1)
+        if telmon_subdir.exists():
+            time.sleep(post_data_delay)
+            break
+
+
 @pytest.mark.parametrize(
     ["cmd", "missing"],
     [
@@ -448,13 +458,7 @@ def test_telemetry_single_model_nonblocking(fileutils, wlmutils):
     exp.generate(smartsim_model)
     exp.start(smartsim_model)
 
-    telmon_subdir = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
-    # let the non-blocking experiment complete.
-    for _ in range(20):
-        time.sleep(1)
-        if telmon_subdir.exists():
-            time.sleep(1)
-            break
+    snooze_nonblocking(test_dir)
 
     assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
@@ -491,6 +495,45 @@ def test_telemetry_serial_models(fileutils, wlmutils):
     smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
     exp.generate(*smartsim_models)
     exp.start(*smartsim_models, block=True)
+    assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
+
+    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    start_events = list(telemetry_output_path.rglob("start.json"))
+    stop_events = list(telemetry_output_path.rglob("stop.json"))
+
+    assert len(start_events) == 5
+    assert len(stop_events) == 5
+
+
+def test_telemetry_serial_models_nonblocking(fileutils, wlmutils):
+    """
+    Test telemetry with models being run in serial (one after each other)
+    in a non-blocking experiment
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_serial_models"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("echo.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # create run settings
+    app_settings = exp.create_run_settings("python", test_script)
+    app_settings.set_nodes(1)
+    app_settings.set_tasks_per_node(1)
+
+    #  # Create the SmartSim Model
+    smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
+    exp.generate(*smartsim_models)
+    exp.start(*smartsim_models)
+
+    snooze_nonblocking(test_dir, max_delay=45, post_data_delay=10)
+
     assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
 
     telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
@@ -580,6 +623,7 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
+
 
 def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
     """
