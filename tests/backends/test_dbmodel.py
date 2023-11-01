@@ -583,6 +583,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
             inputs=inputs2,
             outputs=outputs2,
         )
+        entity.disable_key_prefixing()
 
     # Test adding a model from Ensemble object
     colo_ensemble.add_ml_model(
@@ -693,13 +694,14 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
             inputs=inputs2,
             outputs=outputs2,
         )
+        entity.disable_key_prefixing()
 
     # Add another ensemble member
     colo_ensemble.add_model(colo_model)
 
     # Colocate a database with the new ensemble member
     colo_model.colocate_db_tcp(
-        port=test_port + len(colo_ensemble),
+        port=test_port + len(colo_ensemble) - 1,
         db_cpus=1,
         debug=True,
         ifname=test_interface
