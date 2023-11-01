@@ -33,6 +33,7 @@ import typing as t
 import uuid
 from conftest import FileUtils
 from smartsim._core.control.job import Job, JobEntity
+from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
 
 from smartsim._core.entrypoints.telemetrymonitor import (
     can_shutdown,
@@ -388,6 +389,7 @@ def test_shutdown_action():
     shutdown_when_completed(observer, mani_handler)
     assert observer.stop_count == 1
 
+
 def test_telemetry_single_model(fileutils, wlmutils):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
@@ -412,6 +414,8 @@ def test_telemetry_single_model(fileutils, wlmutils):
     smartsim_model = exp.create_model("perroquet", app_settings)
     exp.generate(smartsim_model)
     exp.start(smartsim_model, block=True)
+    assert exp.get_status(smartsim_model) == STATUS_COMPLETED
+
 
 def test_telemetry_serial_models(fileutils, wlmutils):
     """
@@ -438,6 +442,8 @@ def test_telemetry_serial_models(fileutils, wlmutils):
     smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
     exp.generate(*smartsim_models)
     exp.start(*smartsim_models, block=True)
+    assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
+
 
 def test_telemetry_db_only_with_generate(fileutils, wlmutils):
     """
@@ -445,7 +451,7 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils):
     """
 
     # Set experiment name
-    exp_name = "telemetry_db_only"
+    exp_name = "telemetry_db_with_generate"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -463,6 +469,7 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils):
         exp.start(orc)
     finally:
         exp.stop(orc)
+    assert exp.get_status(orc) == STATUS_CANCELLED
 
 def test_telemetry_db_only_without_generate(fileutils, wlmutils):
     """
@@ -470,7 +477,7 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils):
     """
 
     # Set experiment name
-    exp_name = "telemetry_db_only"
+    exp_name = "telemetry_db_only_without_generate"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -487,6 +494,7 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils):
         exp.start(orc)
     finally:
         exp.stop(orc)
+    assert exp.get_status(orc) == STATUS_CANCELLED
 
 def test_telemetry_db_and_model(fileutils, wlmutils):
     """
@@ -494,7 +502,7 @@ def test_telemetry_db_and_model(fileutils, wlmutils):
     """
 
     # Set experiment name
-    exp_name = "telemetry_db_only"
+    exp_name = "telemetry_db_and_model"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -521,3 +529,31 @@ def test_telemetry_db_and_model(fileutils, wlmutils):
         exp.start(smartsim_model, block=True)
     finally:
         exp.stop(orc)
+    assert exp.get_status(orc) == STATUS_CANCELLED
+    assert exp.get_status(smartsim_model) == STATUS_COMPLETED
+
+def test_telemetry_ensemble(fileutils, wlmutils):
+    """
+    Test telemetry with only a database running
+    """
+
+    # Set experiment name
+    exp_name = "telemetry_ensemble"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("echo.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    app_settings = exp.create_run_settings("python", test_script)
+    app_settings.set_nodes(1)
+    app_settings.set_tasks_per_node(1)
+
+    ens = exp.create_ensemble("troupeau", run_settings=app_settings, replicas=5)
+    exp.generate(ens)
+    exp.start(ens, block=True)
+    assert all([status == STATUS_COMPLETED for status in exp.get_status(ens)])
+
