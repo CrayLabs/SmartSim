@@ -73,6 +73,9 @@ def main(
     with open(output_path, "w+", encoding="utf-8") as ofp, open(
         error_path, "w+", encoding="utf-8"
     ) as efp:
+        start_detail = f"Proxy process {proxy_pid}"
+        start_rc: t.Optional[int] = None
+
         try:
             process = psutil.Popen(
                 cleaned_cmd,
@@ -83,13 +86,15 @@ def main(
             )
             STEP_PID = process.pid
             logger.info(f"Indirect step step {STEP_PID} started")
+            start_detail += f" started child process {STEP_PID}"
 
-        except Exception:
+        except Exception as ex:
+            start_detail += f" failed to start child process. {ex}"
+            start_rc = 1
             logger.error("Failed to create process", exc_info=True)
             cleanup()
             return 1
-
-        while all((process.is_running(), STEP_PID > 0)):
+        finally:
             track_event(
                 get_ts(),
                 str(proxy_pid),
@@ -98,27 +103,30 @@ def main(
                 "start",
                 status_path,
                 logger,
+                detail=start_detail,
+                return_code=start_rc
             )
 
+        while all((process.is_running(), STEP_PID > 0)):
             ret_code = process.poll()
             if ret_code is not None:
                 break
             time.sleep(1)
 
-        logger.info(f"Indirect step {STEP_PID} complete")
-        msg = f"Process {STEP_PID} finished with return code: {ret_code}"
-        track_event(
-            get_ts(),
-            str(proxy_pid),
-            "", # step_id for unmanaged task is always empty
-            etype,
-            "stop",
-            status_path,
-            logger,
-            detail=msg,
-            return_code=ret_code,
-        )
-        cleanup()
+    logger.info(f"Indirect step {STEP_PID} complete")
+    msg = f"Process {STEP_PID} finished with return code: {ret_code}"
+    track_event(
+        get_ts(),
+        str(proxy_pid),
+        "", # step_id for unmanaged task is always empty
+        etype,
+        "stop",
+        status_path,
+        logger,
+        detail=msg,
+        return_code=ret_code,
+    )
+    cleanup()
 
     return ret_code
 
