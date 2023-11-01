@@ -600,6 +600,10 @@ class Controller:
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
+        batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
+        batch_step.meta["exp_path"] = self.exp_path
+        batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
+
         substeps = []
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
