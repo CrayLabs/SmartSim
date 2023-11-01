@@ -324,7 +324,7 @@ class JobManager:
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-                address_dict.update({db_entity.name: addresses})
+                address_dict.update({db_entity.db_identifier: addresses})
 
         return address_dict
 

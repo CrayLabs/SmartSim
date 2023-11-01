@@ -532,23 +532,23 @@ class Controller:
                 # Cap max length of SSDB
                 client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
 
-            # Retrieve num_shards to append to client env
-            client_env[f"SR_DB_TYPE{db_name}"] = (
-                CLUSTERED if len(addresses) > 1 else STANDALONE
-            )
+                # Retrieve num_shards to append to client env
+                client_env[f"SR_DB_TYPE{db_name}"] = (
+                    CLUSTERED if len(addresses) > 1 else STANDALONE
+                )
 
         if entity.incoming_entities:
-            client_env[f"SSKEYIN"] = ",".join(
+            client_env["SSKEYIN"] = ",".join(
                 [in_entity.name for in_entity in entity.incoming_entities]
             )
         if entity.query_key_prefixing():
-            client_env[f"SSKEYOUT"] = entity.name
+            client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
 
-            for key in self._jobs.get_db_host_addresses():
+            for key in address_dict:
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
                     raise SSDBIDConflictError(

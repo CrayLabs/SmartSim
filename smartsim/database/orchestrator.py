@@ -307,8 +307,7 @@ class Orchestrator(EntityList[DBNode]):
         return self._hosts
 
     def reset_hosts(self) -> None:
-        """Clear hosts or reset them to last user choice
-        """
+        """Clear hosts or reset them to last user choice"""
         for node in self.entities:
             node.clear_hosts()
         self._hosts = []
@@ -786,7 +785,7 @@ class Orchestrator(EntityList[DBNode]):
                     run_settings,
                     [port],
                     [db_node_name + ".out"],
-                    self.name,
+                    db_node_name,
                 )
                 self.entities.append(node)
 
@@ -808,9 +807,7 @@ class Orchestrator(EntityList[DBNode]):
             )
             exe_args = " ".join(start_script_args)
             exe_args_mpmd.append(sh_split(exe_args))
-
         run_settings: t.Optional[RunSettings] = None
-
         if self.launcher == "lsf":
             run_settings = self._build_run_settings_lsf(
                 sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
@@ -821,11 +818,16 @@ class Orchestrator(EntityList[DBNode]):
                 sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
             output_files = [self.name + ".out"]
-
         if not run_settings:
             raise ValueError(f"Could not build run settings for {self.launcher}")
-
-        node = DBNode(self.name, self.path, run_settings, [port], output_files)
+        node = DBNode(
+            self.name,
+            self.path,
+            run_settings,
+            [port],
+            output_files,
+            db_identifier=self.name + "_0",
+        )
         self.entities.append(node)
         self.ports = [port]
 

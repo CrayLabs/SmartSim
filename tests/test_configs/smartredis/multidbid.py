@@ -25,8 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-
-
 import os
 
 from smartredis import ConfigOptions, Client
@@ -53,5 +51,3 @@ if __name__ == "__main__":
 
     c1 = Client(opts1, logger_name="SmartSim")
     c2 = Client(opts2, logger_name="SmartSim")
-
-

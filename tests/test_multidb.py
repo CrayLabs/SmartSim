@@ -27,6 +27,7 @@ from contextlib import contextmanager
 import pytest
 
 from smartsim import Experiment, status
+from smartsim.database import Orchestrator
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
@@ -406,18 +407,21 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     pytest.test_launcher not in pytest.wlm_options,
     reason="Not testing WLM integrations",
 )
-def test_launch_cluster_orc_single_dbid(test_dir, wlmutils):
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_launch_cluster_orc_single_dbid(test_dir, coloutils, fileutils, wlmutils, db_type):
     """test clustered 3-node orchestrator with single command with a database identifier"""
     # TODO detect number of nodes in allocation and skip if not sufficent
 
     exp_name = "test_launch_cluster_orc_single_dbid"
     launcher = wlmutils.get_test_launcher()
+    test_port = wlmutils.get_test_port()
+    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
     test_dir = test_dir
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    orc: Orchestrator = exp.create_database(
         wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
@@ -427,8 +431,29 @@ def test_launch_cluster_orc_single_dbid(test_dir, wlmutils):
         db_identifier="testdb_reg",
     )
 
-    with make_entity_context(exp, orc) as orc:
-        exp.start(orc, block=True)
+    db_args = {
+        "port": test_port,
+        "db_cpus": 1,
+        "debug": True,
+        "db_identifier": "testdb_colo",
+    }
 
-    statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    # Create model with colocated database
+    smartsim_model = coloutils.setup_test_colo(
+        fileutils,
+        db_type,
+        exp,
+        test_script,
+        db_args,
+        on_wlm = on_wlm
+    )
+
+    with make_entity_context(exp, orc) as orc, \
+         make_entity_context(exp, smartsim_model) as smartsim_model:
+        exp.start(orc, block=True)
+        exp.start(smartsim_model, block=True)
+        job_dict = exp._control._jobs.get_db_host_addresses()
+        print(job_dict)
+        assert len(job_dict[orc.entities[0].db_identifier]) == 3
+
+    check_not_failed(exp, orc, smartsim_model)
