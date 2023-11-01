@@ -528,24 +528,21 @@ class Controller:
 
         for db_id, addresses in address_dict.items():
             db_name, _ = unpack_db_identifier(db_id, "_")
-
             if addresses:
-                if len(addresses) <= 128:
-                    client_env[f"SSDB{db_name}"] = ",".join(addresses)
-                else:
-                    # Cap max length of SSDB
-                    client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
-                if entity.incoming_entities:
-                    client_env[f"SSKEYIN{db_name}"] = ",".join(
-                        [in_entity.name for in_entity in entity.incoming_entities]
-                    )
-                if entity.query_key_prefixing():
-                    client_env[f"SSKEYOUT{db_name}"] = entity.name
+                # Cap max length of SSDB
+                client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
 
             # Retrieve num_shards to append to client env
             client_env[f"SR_DB_TYPE{db_name}"] = (
                 CLUSTERED if len(addresses) > 1 else STANDALONE
             )
+
+        if entity.incoming_entities:
+            client_env[f"SSKEYIN"] = ",".join(
+                [in_entity.name for in_entity in entity.incoming_entities]
+            )
+        if entity.query_key_prefixing():
+            client_env[f"SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
