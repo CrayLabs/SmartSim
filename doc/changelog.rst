@@ -19,6 +19,7 @@ To be released at some future point in time
 
 Description
 
+- Change signature of `Experiment.summary()`
 - Expose first_device parameter for scripts, functions, models
 - Added support for MINBATCHTIMEOUT in model execution
 - Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
@@ -26,6 +27,8 @@ Description
 
 Detailed Notes
 
+- Change `format` argument to `style` in `Experiment.summary()`, this is
+  an API break (PR391_)
 - Added support for first_device parameter for scripts, functions,
   and models. This causes them to be loaded to the first num_devices
   beginning with first_device (PR394_)
@@ -39,11 +42,15 @@ Detailed Notes
   bug has been fixed. This applies to all operating systems. (PR383_)
 - Add support for creation of multiple databases with unique identifiers. (PR342_)
 
+
+  .. _PR391: https://github.com/CrayLabs/SmartSim/pull/391
+  .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
   .. _PR394: https://github.com/CrayLabs/SmartSim/pull/394
   .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
   .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
+
 
 0.5.1
 -----
