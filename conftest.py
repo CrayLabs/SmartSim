@@ -626,7 +626,7 @@ class ColoUtils:
         exp: Experiment,
         application_file: str,
         db_args: t.Dict[str, t.Any],
-        colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
+        colo_settings: t.Optional[RunSettings] = None,
         colo_model_name: t.Optional[str] = "colocated_model",
         port: t.Optional[int] = test_port,
         on_wlm: t.Optional[bool] = False,
