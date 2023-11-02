@@ -33,7 +33,7 @@ from ...entity import SmartSimEntity, EntityList, EntitySequence
 from ...status import STATUS_NEW
 
 
-_JobKey = namedtuple("_JobKey", ["job_id", "step_id"])
+_JobKey = namedtuple("_JobKey", ["step_id", "task_id"])
 
 
 class JobEntity:
@@ -46,8 +46,8 @@ class JobEntity:
     ) -> None:
         self.name: str = entity.name if entity else ""
         self.path: str = entity.path if entity else ""
-        self.job_id: str = ""
         self.step_id: str = ""
+        self.task_id: str = ""
         self.type: str = type(entity).__name__.lower() if entity else ""
         self.timestamp: int = 0
         self.status_dir: str = ""
@@ -58,13 +58,13 @@ class JobEntity:
 
     @property
     def is_managed(self) -> bool:
-        if self.job_id == "None":
+        if self.step_id == "None":
             return False
-        return bool(self.job_id)
+        return bool(self.step_id)
 
     @property
     def key(self) -> _JobKey:
-        return _JobKey(self.job_id, self.step_id)
+        return _JobKey(self.step_id, self.task_id)
 
 
 class Job:

@@ -266,8 +266,8 @@ def test_shutdown_conditions():
     """Ensure conditions to shutdown telemetry monitor are correctly evaluated"""
     job_entity1 = JobEntity()
     job_entity1.name = "xyz"
-    job_entity1.job_id = "123"
-    job_entity1.step_id = ""
+    job_entity1.step_id = "123"
+    job_entity1.task_id = ""
 
     # show that an event handler w/no monitored jobs can shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
@@ -276,7 +276,7 @@ def test_shutdown_conditions():
     # show that an event handler w/a monitored job cannot shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id,
+                                     job_entity1.step_id,
                                      job_entity1,
                                      False)
     assert not can_shutdown(mani_handler)
@@ -287,7 +287,7 @@ def test_shutdown_conditions():
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id,
+                                     job_entity1.step_id,
                                      job_entity1,
                                      False)
     assert not can_shutdown(mani_handler)
@@ -297,18 +297,18 @@ def test_shutdown_conditions():
     # show that an event handler w/a dbs & tasks cannot shutdown
     job_entity2 = JobEntity()
     job_entity2.name = "xyz"
-    job_entity2.job_id = "123"
-    job_entity2.step_id = ""
+    job_entity2.step_id = "123"
+    job_entity2.task_id = ""
 
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id,
+                                     job_entity1.step_id,
                                      job_entity1,
                                      False)
 
     mani_handler.job_manager.add_job(job_entity2.name,
-                                    job_entity2.job_id,
+                                    job_entity2.step_id,
                                     job_entity2,
                                     False)
     assert not can_shutdown(mani_handler)
@@ -335,8 +335,8 @@ def test_shutdown_action():
 
     job_entity1 = JobEntity()
     job_entity1.name = "xyz"
-    job_entity1.job_id = "123"
-    job_entity1.step_id = ""
+    job_entity1.step_id = "123"
+    job_entity1.task_id = ""
 
     # show that an event handler w/no monitored jobs can shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
@@ -347,7 +347,7 @@ def test_shutdown_action():
     # show that an event handler w/a monitored job cannot shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id,
+                                     job_entity1.step_id,
                                      job_entity1,
                                      False)
     observer = FauxObserver()
@@ -358,7 +358,7 @@ def test_shutdown_action():
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id,
+                                     job_entity1.step_id,
                                      job_entity1,
                                      False)
     observer = FauxObserver()
@@ -368,18 +368,18 @@ def test_shutdown_action():
     # show that an event handler w/a dbs & tasks cannot shutdown
     job_entity2 = JobEntity()
     job_entity2.name = "xyz"
-    job_entity2.job_id = "123"
-    job_entity2.step_id = ""
+    job_entity2.step_id = "123"
+    job_entity2.task_id = ""
 
     mani_handler = ManifestEventHandler("xyz", logger)
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.job_id,
+                                     job_entity1.step_id,
                                      job_entity1,
                                      False)
 
     mani_handler.job_manager.add_job(job_entity2.name,
-                                    job_entity2.job_id,
+                                    job_entity2.step_id,
                                     job_entity2,
                                     False)
     observer = FauxObserver()
@@ -458,7 +458,7 @@ def test_telemetry_single_model_nonblocking(fileutils, wlmutils):
     exp.generate(smartsim_model)
     exp.start(smartsim_model)
 
-    snooze_nonblocking(test_dir)
+    snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
 
     assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
@@ -532,7 +532,7 @@ def test_telemetry_serial_models_nonblocking(fileutils, wlmutils):
     exp.generate(*smartsim_models)
     exp.start(*smartsim_models)
 
-    snooze_nonblocking(test_dir, max_delay=45, post_data_delay=10)
+    snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
 
     assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
 
@@ -609,6 +609,8 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
         try:
             exp.start(orc)
 
+            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+
             telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -650,6 +652,9 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
         orc = exp.create_database(port=test_port, interface=test_interface)
         try:
             exp.start(orc)
+
+            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+
             # create run settings
             app_settings = exp.create_run_settings("python", test_script)
             app_settings.set_nodes(1)
@@ -748,7 +753,6 @@ def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
         exp.start(smartsim_model, block=True)
         assert all([status == STATUS_COMPLETED for status in exp.get_status(smartsim_model)])
 
-        time.sleep(3)
         telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))

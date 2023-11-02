@@ -114,16 +114,16 @@ def _hydrate_persistable(
 
     entity.type = entity_type
     entity.name = persistable_entity["name"]
-    entity.job_id = str(metadata.get("step_id", ""))
-    entity.step_id = str(metadata.get("task_id", ""))
+    entity.step_id = str(metadata.get("step_id", ""))
+    entity.task_id = str(metadata.get("task_id", ""))
     entity.timestamp = int(persistable_entity.get("timestamp", "0"))
     entity.path = str(exp_dir)
     entity.status_dir = str(status_dir)
 
-    if entity.job_id == "None":
-        entity.job_id = ""
     if entity.step_id == "None":
         entity.step_id = ""
+    if entity.task_id == "None":
+        entity.task_id = ""
 
     return entity
 
@@ -238,7 +238,7 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
 
 def track_event(
     timestamp: int,
-    job_id: t.Union[int, str],
+    task_id: t.Union[int, str],
     step_id: str,
     etype: str,
     action: _EventClass,
@@ -254,13 +254,13 @@ def track_event(
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        job_id = int(job_id)
+        task_id = int(task_id)
     except ValueError:
         pass
 
     entity_dict = {
         "timestamp": timestamp,
-        "job_id": job_id,
+        "job_id": task_id,
         "step_id": step_id,
         "type": etype,
         "action": action,
@@ -409,7 +409,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 self._tracked_jobs[entity.key] = entity
                 track_event(
                     run.timestamp,
-                    entity.job_id,
+                    entity.task_id,
                     entity.step_id,
                     entity.type,
                     "start",
@@ -420,12 +420,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 if entity.is_managed:
                     self.job_manager.add_job(
                         entity.name,
-                        entity.job_id if entity.job_id else entity.step_id,
+                        entity.task_id,
                         entity,
                         False,
                     )
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, entity.job_id, entity.is_managed
+                        entity.name, entity.step_id, entity.task_id, True
                     )
             self._tracked_runs[run.timestamp] = run
 
@@ -478,11 +478,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if hasattr(job.entity, "status_dir"):
             write_path = pathlib.Path(job.entity.status_dir)
         else:
-            write_path = pathlib.Path(job.entity.path)
+            write_path = pathlib.Path(job.entity.path) # todo: raise exception to figure out if this gets hit
 
         track_event(
             timestamp,
-            entity.job_id,
+            entity.task_id,
             entity.step_id,
             entity.type,
             "stop",
@@ -492,7 +492,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         )
 
     def on_timestep(self, timestamp: int) -> None:
-        """Called at polling frequency to request status updates on
+        """Called at polling frequency .to request status updates on
         monitored entities
 
         :param timestamp: the current timestamp for event logging
@@ -502,7 +502,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         launcher = self.launcher
         entity_map = self._tracked_jobs
 
-        names = {entity.name: entity for entity in entity_map.values()}
+        names = {entity.name: entity for entity in entity_map.values()}  # consider not using name to avoid collisions
 
         if names:
             step_updates = launcher.get_step_update(list(names.keys()))
@@ -532,8 +532,8 @@ def shutdown_when_completed(
     :type observer: t.Optional[BaseObserver]
     :param action_handler: The manifest event processor instance
     :type action_handler: ManifestEventHandler"""
-    if can_shutdown(action_handler):
-        observer.stop()  # type: ignore[no-untyped-call]
+    # if can_shutdown(action_handler):
+    #     observer.stop()  # type: ignore[no-untyped-call]
 
 
 def event_loop(
