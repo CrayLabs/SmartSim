@@ -166,13 +166,13 @@ A full example of configuring KeyDB to run in SmartSim is shown below
 
   # run smartsim workload
 
-Multidb
-=======
+Multiple Orchestrators
+======================
 
 To support computationally intensive tasks like scientific simulations,
 SmartSim provides functionality to automate the deployment of multiple
 databases on an HPC cluster. As data volume increases, consider augmenting
-the number of sharded databases or provision multiple standalone databases,
+the number of clustered orchestrators or provisioning multiple co-located orchestrators,
 to ensure the workload can scale to meet resource demands. To ensure that data
 retrieval, updates, and synchronization are carried out smoothly and efficiently
 across multiple database nodes, unique identifier names are given to each database
