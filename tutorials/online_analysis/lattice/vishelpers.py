@@ -70,4 +70,4 @@ def plot_lattice_probes(timestep, probe_x, probe_y, probe_u):
     ax.set_xlim([0, 399])
     ax.set_ylim([0, 99])
     plt.pause(0.001)
-    print(f"Velocity magnitude: {timestep}\n")
+    print(f"Velocity field: {timestep}\n")
