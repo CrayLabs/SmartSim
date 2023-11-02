@@ -171,7 +171,7 @@ Multiple Orchestrators
 
 SmartSim offers functionality to automate the deployment of multiple
 databases on an HPC cluster, supporting workloads that require multiple
-Orchestrators for an Experiment. For instance, a workload may consist of a
+``Orchestrators`` for an ``Experiment``. For instance, a workload may consist of a
 simulation with high inference performance demands, along with an analysis and
 visualization workflow connected to the simulation. In such cases, SmartSim
 allows you to augment the number of clustered orchestrators or provision multiple
@@ -180,10 +180,10 @@ requirements. Below is a general example demonstrating the process of launching
 multiple databases with unique identifiers and distributing data between them.
 
 Defining workflow stages requires the utilization of functions associated
-with the Experiment object. The Experiment object is intended to be instantiated
-once and utilized throughout the workflow runtime. Begin by creating an Experiment
-object and assign it to the 'exp' variable. In this example, we instantiate the
-Experiment object with the name 'getting-started-multidb'.
+with the ``Experiment`` object. The Experiment object is intended to be instantiated
+once and utilized throughout the workflow runtime. Begin by creating an ``Experiment``
+object and assign it to the ``exp`` variable. In this example, we instantiate the
+``Experiment`` object with the name ``getting-started-multidb``.
 
 .. code-block:: python
 
@@ -194,14 +194,14 @@ Experiment object with the name 'getting-started-multidb'.
   exp = Experiment("getting-started-multidb", launcher="auto")
 
 
-In the context of this Experiment, it's essential to create and launch
+In the context of this ``Experiment``, it's essential to create and launch
 the databases as a preliminary step before any other components. We aim
 to showcase the multi-database automation capabilities of SmartSim, so we
 create two types of databases in the workflow: a standalone database and a
 clustered database.
 
 To create a database, you can utilize the ``create_database()`` function located
-in the Experiment class. For launching multiple databases, this function requires
+in the ``Experiment`` class. For launching multiple databases, this function requires
 specifying a unique database identifier argument named ``db_identifier``. The ``db_identifier``
 argument plays a crucial role in SmartSim multi-database support by serving as a unique
 identifier for each database being launched. The ``db_identifier`` will be utilized later
@@ -229,29 +229,29 @@ Next, pass the database instances to the following command:
 
   exp.start(single-shard-db-example, clustered_db_example, summary=True)
 
-The ``Experiment.start()`` function launches the Orchestrators for use within the workflow.
+The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow.
 
 .. note::
 
-  Once the multiple Orchestrators have been launched with ``Experiment.start()``, SmartSim creates separate
+  Once the multiple ``Orchestrators`` have been launched with ``Experiment.start()``, SmartSim creates separate
   ``SSDB`` environment variables with the ``db_identifier`` argument suffixed. In this example, there are
   ``SSDB_std_deployment_db_identifier`` and ``SSDB_clus_deployment_db_identifier``. The environment variables
   hold the address of the associated database. The two environment variables will be used later in the example
-  to establish a SmartRedis Client connection with the launched databases.
+  to establish a SmartRedis ``Client`` connection with the launched databases.
 
-Next in the example, we distribute data between the launched databases with the Client SmartRedis API.
+Next in the example, we distribute data between the launched databases with the ``Client`` SmartRedis API.
 
-The SmartRedis Client object contains functions that manipulate, send, and receive
-data within the database. Each database has a single, dedicated SmartRedis Client.
-Begin by initializing a SmartRedis Client object per launched database.
+The SmartRedis ``Client`` object contains functions that manipulate, send, and receive
+data within the database. Each database has a single, dedicated SmartRedis ``Client``.
+Begin by initializing a SmartRedis ``Client`` object per launched database.
 
-To create a designated SmartRedis Client, you need to specify the address of the target
-running database. You can easily retrieve this address using the get_address() function
-provided by the initialized Orchestrator object.
+To create a designated SmartRedis ``Client``, you need to specify the address of the target
+running database. You can easily retrieve this address using the ``get_address()`` function
+provided by the initialized ``Orchestrator`` object.
 
 .. note::
 
-  Make sure to set the 'cluster' argument appropriately based on whether the database is in a clustered configuration or not.
+  Make sure to set the ``cluster`` argument appropriately based on whether the database is in a clustered configuration or not.
 
 Here's the code example:
 
@@ -264,8 +264,8 @@ initialized for the clustered Orchestrator.
 
 In this example, we transmit, retrieve and manipulate a NumPy tensor. Begin by creating a
 NumPy array and send it to each database using the associated SmartRedis client. To
-accomplish this, use the put_tensor() function provided by the SmartRedis Client API.
-We access this function through the SmartRedis Client objects, client1 and client2.
+accomplish this, use the ``put_tensor()`` function provided by the SmartRedis ``Client`` API.
+We access this function through the SmartRedis ``Client`` objects, client1 and client2.
 In this example, we are sending the same 'array' to both databases.
 
 .. code-block:: python
@@ -276,12 +276,12 @@ In this example, we are sending the same 'array' to both databases.
 
 In the next stage of the workflow, we are going to write a software program
 that utilizes the previously launched databases. In SmartSim terms, the application
-is called a Model.
+is called a ``Model``.
 
 To run a software program, you must specify the run settings: run command and
 source code file. In this example, we invoke the Python interpreter to run a
-python script. Create the run settings using the create_run_settings() function
-provided by the exp (Experiment) object. Specify the path to the script to the argument
+python script. Create the run settings using the ``create_run_settings()`` function
+provided by the ``exp`` (``Experiment``) object. Specify the path to the script to the argument
 `exe_args` and the executable to the `exe` argument.
 
 .. code-block:: python
