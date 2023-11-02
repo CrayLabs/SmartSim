@@ -220,22 +220,26 @@ For the clustered database:
 
 .. code-block:: python
 
-  clustered_database = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus_deployment_db_identifier")
-  exp.generate(clustered_database, overwrite=True)
+  clustered_db_example = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus_deployment_db_identifier")
+  exp.generate(clustered_db_example, overwrite=True)
 
 Next, pass the database instances to the following command:
 
 .. code-block:: python
 
-  exp.start(standalone_database, clustered_database, summary=True)
+  exp.start(single-shard-db-example, clustered_db_example, summary=True)
 
-The Experiment.start() function launches the Orchestrators for use within the workflow.
+The ``Experiment.start()`` function launches the Orchestrators for use within the workflow.
 
 .. note::
 
-  The Orchestrator is an in-memory database that can be launched alongside entities in SmartSim
+  Once the multiple Orchestrators have been launched with ``Experiment.start()``, SmartSim creates separate
+  ``SSDB`` environment variables with the ``db_identifier`` argument suffixed. In this example, there are
+  ``SSDB_std_deployment_db_identifier`` and ``SSDB_clus_deployment_db_identifier``. The environment variables
+  hold the address of the associated database. The two environment variables will be used later in the example
+  to establish a SmartRedis Client connection with the launched databases.
 
-Next in the example, learn to distribute data between the launched databases by using the Client SmartRedis API.
+Next in the example, we distribute data between the launched databases with the Client SmartRedis API.
 
 The SmartRedis Client object contains functions that manipulate, send, and receive
 data within the database. Each database has a single, dedicated SmartRedis Client.
@@ -252,8 +256,8 @@ provided by the initialized Orchestrator object.
 Here's the code example:
 
 .. code-block:: python
-  client1 = Client(address=standalone_database.get_address()[0], cluster=False)
-  client2 = Client(address=clustered_database.get_address()[0], cluster=True)
+  sr_client_std = Client(cluster=False, address=single-shard-db-example.get_address()[0])
+  sr_client_clus = Client(cluster=True, address=clustered_db_example.get_address()[0])
 
 In this code, 'client1' is initialized for the standalone Orchestrator, while 'client2' is
 initialized for the clustered Orchestrator.
@@ -265,6 +269,7 @@ We access this function through the SmartRedis Client objects, client1 and clien
 In this example, we are sending the same 'array' to both databases.
 
 .. code-block:: python
+
   array = np.array([1, 2, 3, 4])
   client1.put_tensor("tensor1", array)
   client2.put_tensor("tensor2", array)
@@ -274,13 +279,13 @@ that utilizes the previously launched databases. In SmartSim terms, the applicat
 is called a Model.
 
 To run a software program, you must specify the run settings: run command and
-source code file. In this example, we invoke the Python 3 interpreter to run a
+source code file. In this example, we invoke the Python interpreter to run a
 python script. Create the run settings using the create_run_settings() function
 provided by the exp (Experiment) object. Specify the path to the script to the argument
-`exe_args` and the executable to the `exe_ex` argument.
+`exe_args` and the executable to the `exe` argument.
 
 .. code-block:: python
-  srun_settings = exp.create_run_settings(exe="python3", exe_args="/path/to/file.py")
+  model_settings = exp.create_run_settings(exe="python3", exe_args="/path/to/file.py")
 
 Next, set the number of nodes and tasks per node for the ‘Model’. For the application (Model),
 the number of nodes determines the distribution of computational tasks while tasks per node
@@ -289,8 +294,8 @@ example, we specify to SmartSim that we intend to execute the `Model` once on a 
 
 .. code-block:: python
 
-  srun_settings.set_nodes(1)
-  srun_settings.set_tasks_per_node(1)
+  model_settings.set_nodes(1)
+  model_settings.set_tasks_per_node(1)
 
 Next, create an instance of the Model object using the create_model() function of the
 exp object. Pass in the srun_settings object, which was configured earlier, as an argument
@@ -298,7 +303,7 @@ to the create_model() function and assign to the variable ‘model’.
 
 .. code-block:: python
 
-  model = exp.create_model("tutorial-model", srun_settings)
+  model = exp.create_model("tutorial-model", model_settings)
 
 Next, launch the model instance using the exp.start() function.
 
@@ -311,7 +316,7 @@ Navigate to the file specified in the exe_args argument of the create_run_settin
 function, exe_args="/path/to/model_multidb_example.py".
 
 To begin, learn to retrieve data from the launched databases by using a SmartRedis Client
-and the database identifier.In the Model script, we do not have access to the
+and the database identifier. In the Model script, we do not have access to the
 Experiment.get_address() function. To establish a connection with the launched databases,
 we still need to initialize a SmartRedis client for each Orchestrator with the address of
 the launched database.
