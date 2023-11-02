@@ -181,7 +181,7 @@ multiple databases with unique identifiers and distributing data between them.
 
 Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object. The Experiment object is intended to be instantiated
-once and utilized throughout the workflow runtime. Begin by creating an ``Experiment``
+once and utilized throughout the workflow runtime. Begin by creating a ``Experiment``
 object and assign it to the ``exp`` variable. In this example, we instantiate the
 ``Experiment`` object with the name ``getting-started-multidb``.
 
@@ -193,14 +193,17 @@ object and assign it to the ``exp`` variable. In this example, we instantiate th
 
   exp = Experiment("getting-started-multidb", launcher="auto")
 
-
 In the context of this ``Experiment``, it's essential to create and launch
 the databases as a preliminary step before any other components. We aim
 to showcase the multi-database automation capabilities of SmartSim, so we
-create two types of databases in the workflow: a standalone database and a
-clustered database.
+create two types of Orchestrators in the workflow: a co-located Orchestrator and a
+clustered Orchestrator.
 
-To create a database, you can utilize the ``create_database()`` function located
+.. note::
+
+  An Orchestrator object supports the deployment of the database. 
+
+To create a Orchestrator, you can utilize the ``create_database()`` function located
 in the ``Experiment`` class. For launching multiple databases, this function requires
 specifying a unique database identifier argument named ``db_identifier``. The ``db_identifier``
 argument plays a crucial role in SmartSim multi-database support by serving as a unique
@@ -209,7 +212,7 @@ in the example.
 
 Here's how to create the databases:
 
-For the standalone database:
+For the co-located database:
 
 .. code-block:: python
 
