@@ -324,6 +324,9 @@ object when creating the SmartRedis client.
 For the standalone database:
 
 .. code-block:: python
+  from smartredis import ConfigOptions, Client
+  import torch
+
   std_config = ConfigOptions.create_from_environment("std-deployment")
   std_db_client = Client(std_config, "client_1")
 
@@ -345,3 +348,98 @@ retrieval of a tensor by passing in the tensor name.
   val2 = clus_db_client.get_tensor("tensor2")
   print(f"{val1} + {val2}")
 
+This code showcases that we can retrieve data from each database effectively.
+
+Lastly, within the model, the example will demonstrate creating and setting
+a callable function to a launched database and running the function with the stored tensors.
+
+To begin, add the function to the Model file. This function accepts a tensor and
+adds 1 to each value in the tensor.
+
+.. code-block:: python
+  def sum_tensor(a):
+    val = a + 1
+    return val
+
+Next, send the function to a database using the Client.set_function() method.
+Provide the callable method name, ``sum_tensor``, and a name to store the function,
+in this case ``sum``.
+
+.. code-block:: python
+  std_db_client.set_function("sum", sum_tensor)
+
+Next, execute the script or stored function using the Client.run_script() method.
+Provide the script name, the callable function name, the inputs to provide and the
+name the output should be stored under.
+
+.. code-block:: python
+  std_db_client.run_script("sum", "sum_tensor", inputs=["tensor1"], outputs=["output"])
+
+Now validate the output.
+
+.. code-block:: python
+  out = std_db_client.get_tensor("output")
+  print(f"{out}")
+
+
+The example source code is pasted below.
+
+Application file:
+.. code-block:: python
+  import numpy as np
+  from smartredis import ConfigOptions, Client
+  from smartsim import Experiment
+  import sys
+
+  exe_ex = sys.executable
+  exp = Experiment("getting-started-multidb", launcher="slurm")
+
+  standalone_database = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="std-deployment")
+  exp.generate(standalone_database, overwrite=True)
+
+  clustered_database = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus-deployment")
+  exp.generate(clustered_database, overwrite=True)
+  exp.start(standalone_database, clustered_database, block=False, summary=True)
+
+  client1 = Client(address=standalone_database.get_address()[0], cluster=False)
+  client2 = Client(address=clustered_database.get_address()[0], cluster=True)
+
+  array = np.array([1, 2, 3, 4])
+  client1.put_tensor("tensor1", array)
+  client2.put_tensor("tensor2", array)
+
+  srun_settings = exp.create_run_settings(exe=exe_ex, exe_args="/lus/scratch/richaama/model_ex.py")
+  srun_settings.set_nodes(1)
+  srun_settings.set_tasks_per_node(1)
+  model = exp.create_model("tutorial-model", srun_settings)
+  exp.generate(model, overwrite=True)
+
+  exp.start(model, block=True, summary=True)
+
+  exp.stop(standalone_database, clustered_database)
+
+  print(exp.summary())
+
+Model file:
+.. code-block:: python
+  from smartredis import ConfigOptions, Client
+  import torch
+
+  def sum_tensor(a):
+    val = a + 1
+    return val
+
+  std_config = ConfigOptions.create_from_environment("std-deployment")
+  std_db_client = Client(std_config, "client_1")
+
+  clus_config = ConfigOptions.create_from_environment("clus-deployment")
+  clus_db_client = Client(clus_config, "client_2")
+
+  val1 = std_db_client.get_tensor("tensor1")
+  val2 = clus_db_client.get_tensor("tensor2")
+  print(f"{val1} + {val2}")
+
+  std_db_client.set_function("sum", sum_tensor)
+  std_db_client.run_script("sum", "sum_tensor", inputs=["tensor1"], outputs=["output"])
+  out = std_db_client.get_tensor("output")
+  print(f"{out}")
