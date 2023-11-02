@@ -510,7 +510,7 @@ class Experiment:
                 "epoch": 10,
                 "lr": 0.001
             }
-            model = exp.create_model("pytorch_model", run_settings, params=params)
+            model = exp.create_model("pytorch_model", run_settings, params=train_params)
             model.attach_generator_files(to_configure="./train.cfg")
             exp.generate(model)
 
