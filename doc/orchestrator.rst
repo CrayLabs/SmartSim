@@ -381,6 +381,12 @@ Now validate the output.
   out = std_db_client.get_tensor("output")
   print(f"{out}")
 
+Finally, navigate to the previous file and use the Experiment.stop() function to
+stop the database instances.
+
+.. code-block:: python
+  exp.stop(standalone_database, clustered_database)
+  print(exp.summary())
 
 The example source code is pasted below.
 
