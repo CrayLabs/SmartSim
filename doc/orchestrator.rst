@@ -169,29 +169,29 @@ A full example of configuring KeyDB to run in SmartSim is shown below
 Multiple Orchestrators
 ======================
 
-To support computationally intensive tasks like scientific simulations,
-SmartSim provides functionality to automate the deployment of multiple
-databases on an HPC cluster. As data volume increases, consider augmenting
-the number of clustered orchestrators or provisioning multiple co-located orchestrators,
-to ensure the workload can scale to meet resource demands. To ensure that data
-retrieval, updates, and synchronization are carried out smoothly and efficiently
-across multiple database nodes, unique identifier names are given to each database
-during initialization. Below is a general example of launching multiple databases
-with a unique identifier and distributing data between the launched databases.
+SmartSim offers functionality to automate the deployment of multiple
+databases on an HPC cluster, supporting workloads that require multiple
+Orchestrators for an Experiment. For instance, a workload may consist of a
+simulation with high inference performance demands, along with an analysis and
+visualization workflow connected to the simulation. In such cases, SmartSim
+allows you to augment the number of clustered orchestrators or provision multiple
+co-located orchestrators, ensuring that the workload can scale to meet its resource
+requirements. Below is a general example demonstrating the process of launching
+multiple databases with unique identifiers and distributing data between them.
 
 Defining workflow stages requires the utilization of functions associated
 with the Experiment object. The Experiment object is intended to be instantiated
 once and utilized throughout the workflow runtime. Begin by creating an Experiment
 object and assign it to the 'exp' variable. In this example, we instantiate the
-Experiment object with the name 'getting-started-multidb' and the 'launcher=slurm'
-configuration.
+Experiment object with the name 'getting-started-multidb'.
 
 .. code-block:: python
+
   import numpy as np
   from smartredis import Client
   from smartsim import Experiment
 
-  exp = Experiment("getting-started-multidb", launcher="slurm")
+  exp = Experiment("getting-started-multidb", launcher="auto")
 
 
 In the context of this Experiment, it's essential to create and launch
@@ -200,11 +200,11 @@ to showcase the multi-database automation capabilities of SmartSim, so we
 create two types of databases in the workflow: a standalone database and a
 clustered database.
 
-To create a database, you can utilize the create_database() function located
+To create a database, you can utilize the ``create_database()`` function located
 in the Experiment class. For launching multiple databases, this function requires
-specifying a unique database identifier argument named db_identifier. The db_identifier
+specifying a unique database identifier argument named ``db_identifier``. The ``db_identifier``
 argument plays a crucial role in SmartSim multi-database support by serving as a unique
-identifier for each database being launched. The db_identifier will be utilized later
+identifier for each database being launched. The ``db_identifier`` will be utilized later
 in the example.
 
 Here's how to create the databases:
@@ -212,19 +212,22 @@ Here's how to create the databases:
 For the standalone database:
 
 .. code-block:: python
-  standalone_database = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="std-deployment")
-  exp.generate(standalone_database, overwrite=True)
+
+  single-shard-db-example = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="std_deployment_db_identifier")
+  exp.generate(single-shard-db-example, overwrite=True)
 
 For the clustered database:
 
 .. code-block:: python
-  clustered_database = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus-deployment")
+
+  clustered_database = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus_deployment_db_identifier")
   exp.generate(clustered_database, overwrite=True)
 
 Next, pass the database instances to the following command:
 
 .. code-block:: python
-  exp.start(standalone_database, clustered_database, block=False, summary=True)
+
+  exp.start(standalone_database, clustered_database, summary=True)
 
 The Experiment.start() function launches the Orchestrators for use within the workflow.
 
@@ -285,6 +288,7 @@ specifies how many individual instances of the program (tasks) can run on each n
 example, we specify to SmartSim that we intend to execute the `Model` once on a single node.
 
 .. code-block:: python
+
   srun_settings.set_nodes(1)
   srun_settings.set_tasks_per_node(1)
 
@@ -293,11 +297,13 @@ exp object. Pass in the srun_settings object, which was configured earlier, as a
 to the create_model() function and assign to the variable ‘model’.
 
 .. code-block:: python
+
   model = exp.create_model("tutorial-model", srun_settings)
 
 Next, launch the model instance using the exp.start() function.
 
 .. code-block:: python
+
   exp.start(model, block=True, summary=True)
 
 Next in the example, add SmartRedis multi-database functionality to the Model.
@@ -324,6 +330,7 @@ object when creating the SmartRedis client.
 For the standalone database:
 
 .. code-block:: python
+
   from smartredis import ConfigOptions, Client
   import torch
 
@@ -333,6 +340,7 @@ For the standalone database:
 For the clustered database:
 
 .. code-block:: python
+
   clus_config = ConfigOptions.create_from_environment("clus-deployment")
   clus_db_client = Client(clus_config, "client_2")
 
@@ -344,6 +352,7 @@ stored using the created SmartRedis clients. The `get_tensor` Client method allo
 retrieval of a tensor by passing in the tensor name.
 
 .. code-block:: python
+
   val1 = std_db_client.get_tensor("tensor1")
   val2 = clus_db_client.get_tensor("tensor2")
   print(f"{val1} + {val2}")
@@ -357,6 +366,7 @@ To begin, add the function to the Model file. This function accepts a tensor and
 adds 1 to each value in the tensor.
 
 .. code-block:: python
+
   def sum_tensor(a):
     val = a + 1
     return val
@@ -366,6 +376,7 @@ Provide the callable method name, ``sum_tensor``, and a name to store the functi
 in this case ``sum``.
 
 .. code-block:: python
+
   std_db_client.set_function("sum", sum_tensor)
 
 Next, execute the script or stored function using the Client.run_script() method.
@@ -373,11 +384,13 @@ Provide the script name, the callable function name, the inputs to provide and t
 name the output should be stored under.
 
 .. code-block:: python
+
   std_db_client.run_script("sum", "sum_tensor", inputs=["tensor1"], outputs=["output"])
 
 Now validate the output.
 
 .. code-block:: python
+
   out = std_db_client.get_tensor("output")
   print(f"{out}")
 
@@ -385,6 +398,7 @@ Finally, navigate to the previous file and use the Experiment.stop() function to
 stop the database instances.
 
 .. code-block:: python
+
   exp.stop(standalone_database, clustered_database)
   print(exp.summary())
 
@@ -392,6 +406,7 @@ The example source code is pasted below.
 
 Application file:
 .. code-block:: python
+
   import numpy as np
   from smartredis import ConfigOptions, Client
   from smartsim import Experiment
@@ -428,6 +443,7 @@ Application file:
 
 Model file:
 .. code-block:: python
+
   from smartredis import ConfigOptions, Client
   import torch
 
