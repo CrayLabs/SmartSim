@@ -405,6 +405,7 @@ stop the database instances.
 The example source code is pasted below.
 
 Application file:
+
 .. code-block:: python
 
   import numpy as np
@@ -442,6 +443,7 @@ Application file:
   print(exp.summary())
 
 Model file:
+
 .. code-block:: python
 
   from smartredis import ConfigOptions, Client
