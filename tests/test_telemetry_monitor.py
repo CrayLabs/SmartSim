@@ -661,7 +661,8 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
             exp.start(smartsim_model, block=True)
         finally:
             exp.stop(orc)
-            time.sleep(3)
+            
+        snooze_nonblocking(test_dir, max_delay=30, post_data_delay=10)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
         assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
