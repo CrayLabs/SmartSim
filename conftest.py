@@ -397,7 +397,7 @@ def local_db(
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
-    test_dir = test_dir
+
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -417,7 +417,7 @@ def db(
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = test_dir
+
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -440,7 +440,7 @@ def db_cluster(
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = test_dir
+
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)

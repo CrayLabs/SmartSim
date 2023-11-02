@@ -70,7 +70,7 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -146,7 +146,7 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -242,7 +242,7 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -311,7 +311,7 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -410,7 +410,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -507,7 +507,7 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
 
     # Create SmartSim experiment

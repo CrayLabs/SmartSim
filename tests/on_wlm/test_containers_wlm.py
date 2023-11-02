@@ -55,7 +55,7 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
             f"Test only runs on systems with PBS or Slurm as WLM. Current launcher: {launcher}"
         )
 
-    test_dir = test_dir
+
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher=launcher
     )

@@ -55,7 +55,7 @@ def get_gen_file(fileutils, filename):
 
 def test_ensemble(fileutils, test_dir):
     exp = Experiment("gen-test", launcher="local")
-    test_dir = test_dir
+
     gen = Generator(test_dir)
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
@@ -72,7 +72,7 @@ def test_ensemble(fileutils, test_dir):
 
 def test_ensemble_overwrite(fileutils, test_dir):
     exp = Experiment("gen-test-overwrite", launcher="local")
-    test_dir = test_dir
+
     gen = Generator(test_dir, overwrite=True)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -95,7 +95,7 @@ def test_ensemble_overwrite(fileutils, test_dir):
 
 def test_ensemble_overwrite_error(fileutils, test_dir):
     exp = Experiment("gen-test-overwrite-error", launcher="local")
-    test_dir = test_dir
+
     gen = Generator(test_dir)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -113,7 +113,7 @@ def test_ensemble_overwrite_error(fileutils, test_dir):
 
 
 def test_full_exp(fileutils, test_dir, wlmutils):
-    test_dir = test_dir
+
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     model = exp.create_model("model", run_settings=rs)
@@ -146,7 +146,7 @@ def test_dir_files(fileutils, test_dir):
     are directories with subdirectories and files
     """
 
-    test_dir = test_dir
+
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -167,7 +167,7 @@ def test_dir_files(fileutils, test_dir):
 def test_print_files(fileutils, test_dir, capsys):
     """Test the stdout print of files attached to an ensemble"""
 
-    test_dir = test_dir
+
     exp = Experiment("print-attached-files-test", test_dir, launcher="local")
 
     ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
@@ -247,7 +247,7 @@ def test_print_files(fileutils, test_dir, capsys):
 
 def test_multiple_tags(fileutils, test_dir):
     """Test substitution of multiple tagged parameters on same line"""
-    test_dir = test_dir
+
 
     exp = Experiment("test-multiple-tags", test_dir)
     model_params = {"port": 6379, "password": "unbreakable_password"}
@@ -270,7 +270,7 @@ def test_multiple_tags(fileutils, test_dir):
 def test_generation_log(fileutils, test_dir):
     """Test that an error is issued when a tag is unused and make_fatal is True"""
 
-    test_dir = test_dir
+
     exp = Experiment("gen-log-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20], "STEPS": [10, 20]}
@@ -307,7 +307,7 @@ def test_config_dir(fileutils, test_dir):
     tagged files that are directories with subdirectories and files
     """
     exp = Experiment("config-dir", launcher="local")
-    test_dir = test_dir
+
     gen = Generator(test_dir)
 
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}

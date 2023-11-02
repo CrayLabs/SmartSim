@@ -156,7 +156,7 @@ def train_tf(generator):
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
 def test_tf_dataloaders(test_dir, wlmutils):
-    test_dir = test_dir
+
     exp = Experiment("test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher())
     orc: Orchestrator = wlmutils.get_orchestrator()
     exp.generate(orc)
@@ -222,7 +222,7 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
 
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
 def test_torch_dataloaders(fileutils, test_dir, wlmutils):
-    test_dir = test_dir
+
     exp = Experiment("test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher())
     orc: Orchestrator = wlmutils.get_orchestrator()
     config_dir = fileutils.get_test_dir_path("ml")
@@ -318,7 +318,7 @@ def test_data_info_repr():
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
 )
 def test_wrong_dataloaders(test_dir, wlmutils):
-    test_dir = test_dir
+
     exp = Experiment("test-wrong-dataloaders", exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     orc = wlmutils.get_orchestrator()
     exp.generate(orc)

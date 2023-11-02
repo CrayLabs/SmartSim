@@ -46,7 +46,7 @@ def test_interrupt_blocked_jobs(test_dir):
     Once polling starts, the SIGINT signal is sent to the main thread,
     and consequently, all running jobs are killed.
     """
-    test_dir = test_dir
+
     exp_name = "test_interrupt_blocked_jobs"
     exp = Experiment(exp_name, exp_path=test_dir)
     model = exp.create_model(
@@ -85,7 +85,7 @@ def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
     the SIGINT signal is sent, resulting in both
     Experiment's running jobs to be killed.
     """
-    test_dir = test_dir
+
     exp_names = ["test_interrupt_jobs_0", "test_interrupt_jobs_1"]
     experiments = [Experiment(exp_names[i], exp_path=test_dir) for i in range(2)]
     jobs_per_experiment = [0] * len(experiments)

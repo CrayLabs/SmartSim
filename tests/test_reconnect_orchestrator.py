@@ -42,7 +42,7 @@ def test_local_orchestrator(test_dir, wlmutils):
     global first_dir
     exp_name = "test-orc-launch-local"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = test_dir
+
     first_dir = test_dir
 
     orc = Orchestrator(port=wlmutils.get_test_port())

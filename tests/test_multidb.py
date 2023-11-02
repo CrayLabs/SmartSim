@@ -74,7 +74,7 @@ def test_db_identifier_standard_then_colo_error(
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
 
     # Create SmartSim Experiment
@@ -131,7 +131,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # Create SmartSim Experiment
@@ -182,7 +182,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -223,7 +223,7 @@ def test_db_identifier_create_standard_once(test_dir, wlmutils):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
 
     # Create the SmartSim Experiment
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
@@ -248,7 +248,7 @@ def test_multidb_create_standard_twice(wlmutils, test_dir):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
 
     # start a new Experiment for this section
     exp = Experiment(
@@ -281,7 +281,7 @@ def test_multidb_colo_once(fileutils, test_dir, wlmutils, coloutils, db_type):
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # start a new Experiment for this section
@@ -316,7 +316,7 @@ def test_multidb_standard_then_colo(fileutils, test_dir, wlmutils, coloutils, db
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
@@ -362,7 +362,7 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
@@ -416,7 +416,7 @@ def test_launch_cluster_orc_single_dbid(test_dir, coloutils, fileutils, wlmutils
     launcher = wlmutils.get_test_launcher()
     test_port = wlmutils.get_test_port()
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
-    test_dir = test_dir
+
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation

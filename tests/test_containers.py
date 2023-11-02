@@ -89,7 +89,7 @@ def test_singularity_commands(fileutils):
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_basic(fileutils, test_dir):
     """Basic argument-less Singularity test"""
-    test_dir = test_dir
+
 
     container = Singularity(containerURI)
 
@@ -115,7 +115,7 @@ def test_singularity_basic(fileutils, test_dir):
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_args(fileutils, test_dir):
     """Test combinations of args and mount arguments for Singularity"""
-    test_dir = test_dir
+
     hometest_dir = os.path.join(str(Path.home()), "test")  # $HOME/test
     mount_paths = {test_dir + "/singularity_args": hometest_dir}
     container = Singularity(containerURI, args="--contain", mount=mount_paths)
@@ -148,7 +148,7 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     Note: This is a containerized port of test_smartredis.py
     """
 
-    test_dir = test_dir
+
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )

@@ -116,7 +116,7 @@ def test_launch_colocated_model_defaults(
 
     db_args = {}
 
-    test_dir = test_dir
+
     exp = Experiment(f"colocated_model_defaults_{db_type}", test_dir, launcher=launcher)
     colo_model = coloutils.setup_test_colo(
         fileutils,

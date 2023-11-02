@@ -41,7 +41,7 @@ def test_failed_status(fileutils, test_dir, wlmutils):
 
     exp_name = "test-report-failure"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = test_dir
+
 
     script = fileutils.get_test_conf_path("bad.py")
     settings = exp.create_run_settings(
@@ -70,7 +70,7 @@ def test_bad_run_command_args(fileutils, test_dir, wlmutils):
 
     exp_name = "test-bad-run-command-args"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = test_dir
+
 
     script = fileutils.get_test_conf_path("bad.py")
 

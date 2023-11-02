@@ -75,7 +75,7 @@ def test_sklearn_onnx(test_dir, mlutils, wlmutils):
     """
 
     exp_name = "test_sklearn_onnx"
-    test_dir = test_dir
+
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 

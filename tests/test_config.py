@@ -84,7 +84,7 @@ def make_file(filepath: str) -> None:
 
 def test_redisai_invalid_rai_path(test_dir, monkeypatch):
     """An invalid RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should fail"""
-    test_dir = test_dir
+
     rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
     make_file(os.path.join(test_dir, "lib", "redisai.so"))
     env = get_redisai_env(rai_file_path, test_dir)
@@ -101,7 +101,7 @@ def test_redisai_invalid_rai_path(test_dir, monkeypatch):
 
 def test_redisai_valid_rai_path(test_dir, monkeypatch):
     """A valid RAI_PATH should override valid SMARTSIM_DEP_INSTALL_PATH and succeed"""
-    test_dir = test_dir
+
     rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
     make_file(rai_file_path)
 
@@ -116,7 +116,7 @@ def test_redisai_valid_rai_path(test_dir, monkeypatch):
 
 def test_redisai_invalid_lib_path(test_dir, monkeypatch):
     """Invalid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should fail"""
-    test_dir = test_dir
+
     rai_file_path = f"{test_dir}/railib/redisai.so"
 
     env = get_redisai_env(rai_file_path, test_dir)
@@ -132,7 +132,7 @@ def test_redisai_invalid_lib_path(test_dir, monkeypatch):
 
 def test_redisai_valid_lib_path(test_dir, monkeypatch):
     """Valid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should succeed"""
-    test_dir = test_dir
+
     rai_file_path = os.path.join(test_dir, "lib", "mock-redisai.so")
     make_file(rai_file_path)
     env = get_redisai_env(rai_file_path, test_dir)
@@ -146,7 +146,7 @@ def test_redisai_valid_lib_path(test_dir, monkeypatch):
 
 def test_redisai_valid_lib_path_null_rai(test_dir, monkeypatch):
     """Missing RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should succeed"""
-    test_dir = test_dir
+
     rai_file_path: t.Optional[str] = None
     lib_file_path = os.path.join(test_dir, "lib", "redisai.so")
     make_file(lib_file_path)

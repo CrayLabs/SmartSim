@@ -156,7 +156,7 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -234,7 +234,7 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -300,7 +300,7 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -399,7 +399,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experience
@@ -471,7 +471,7 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -533,7 +533,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -639,7 +639,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -742,7 +742,7 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = test_dir
+
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experiment

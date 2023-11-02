@@ -43,7 +43,7 @@ if pytest.test_launcher not in pytest.wlm_options:
 def test_model_on_wlm(fileutils, test_dir, wlmutils):
     exp_name = "test-base-settings-model-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = test_dir
+
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings1 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
@@ -61,7 +61,7 @@ def test_model_on_wlm(fileutils, test_dir, wlmutils):
 def test_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     exp_name = "test-base-settings-model-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = test_dir
+
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings1 = wlmutils.get_base_run_settings("python", f"{script} --time=5")

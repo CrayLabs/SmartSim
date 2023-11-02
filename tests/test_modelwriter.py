@@ -41,7 +41,7 @@ def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(path.join("generator_files", filename))
 
 def test_write_easy_configs(fileutils, test_dir):
-    test_dir = test_dir
+
 
     param_dict = {
         "5": 10,  # MOM_input
@@ -70,7 +70,7 @@ def test_write_easy_configs(fileutils, test_dir):
 
 
 def test_write_med_configs(fileutils, test_dir):
-    test_dir = test_dir
+
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -104,7 +104,7 @@ def test_write_med_configs(fileutils, test_dir):
 def test_write_new_tag_configs(fileutils, test_dir):
     """sets the tag to the dollar sign"""
 
-    test_dir = test_dir
+
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -147,7 +147,7 @@ def test_mw_error_2():
 
 
 def test_write_mw_error_3(fileutils, test_dir):
-    test_dir = test_dir
+
 
     param_dict = {
         "5": 10,  # MOM_input

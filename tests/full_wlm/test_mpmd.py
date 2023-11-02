@@ -77,7 +77,7 @@ def test_mpmd(fileutils, test_dir, wlmutils):
             f"MPMD on {launcher} only supported for run commands {by_launcher[launcher]}"
         )
 
-    test_dir = test_dir
+
     for run_command in run_commands:
         script = fileutils.get_test_conf_path("sleep.py")
         settings = exp.create_run_settings(

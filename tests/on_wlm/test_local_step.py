@@ -46,7 +46,7 @@ def test_local_env_pass_implicit(fileutils, test_dir) -> None:
     env_key = "test_local_env_pass_implicit"
     os.environ[env_key] = exp_value
 
-    test_dir = test_dir
+
     exp_dir = f"{test_dir}/exp"
     os.makedirs(exp_dir)
     script = fileutils.get_test_conf_path("check_env.py")
@@ -84,7 +84,7 @@ def test_local_env_pass_explicit(fileutils, test_dir) -> None:
 
     assert env_key not in os.environ
 
-    test_dir = test_dir
+
     script = fileutils.get_test_conf_path("check_env.py")
 
     exp_dir = f"{test_dir}/exp"
