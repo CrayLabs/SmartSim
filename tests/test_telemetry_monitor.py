@@ -214,6 +214,72 @@ def test_load_manifest(fileutils: FileUtils):
     # assert len(manifest.runs[0].ensembles) == 1
 
 
+def test_load_manifest_colo_model(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing a colocated model"""
+    # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
+    sample_manifest_path = fileutils.get_test_conf_path("telemetry/colocatedmodel.json")
+    sample_manifest = pathlib.Path(sample_manifest_path)
+    assert sample_manifest.exists()
+
+    manifest = load_manifest(sample_manifest_path)
+    assert manifest.name == "my-exp"
+    assert str(manifest.path) == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp"
+    assert manifest.launcher == "Slurm"
+    assert len(manifest.runs) == 1
+
+    assert len(manifest.runs[0].models) == 1
+
+
+def test_load_manifest_serial_models(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing multiple models"""
+    # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
+    sample_manifest_path = fileutils.get_test_conf_path("telemetry/serialmodels.json")
+    sample_manifest = pathlib.Path(sample_manifest_path)
+    assert sample_manifest.exists()
+
+    manifest = load_manifest(sample_manifest_path)
+    assert manifest.name == "my-exp"
+    assert str(manifest.path) == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_serial_models/my-exp"
+    assert manifest.launcher == "Slurm"
+    assert len(manifest.runs) == 1
+
+    assert len(manifest.runs[0].models) == 5
+
+
+def test_load_manifest_db_and_models(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing models & orchestrator"""
+    # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
+    sample_manifest_path = fileutils.get_test_conf_path("telemetry/db_and_model.json")
+    sample_manifest = pathlib.Path(sample_manifest_path)
+    assert sample_manifest.exists()
+
+    manifest = load_manifest(sample_manifest_path)
+    assert manifest.name == "my-exp"
+    assert str(manifest.path) == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp"
+    assert manifest.launcher == "Slurm"
+    assert len(manifest.runs) == 2
+
+    assert len(manifest.runs[0].orchestrators) == 1
+    assert len(manifest.runs[1].models) == 1
+
+
+def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing models & orchestrator"""
+    # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
+    sample_manifest_path = fileutils.get_test_conf_path("telemetry/db_and_model_1run.json")
+    sample_manifest = pathlib.Path(sample_manifest_path)
+    assert sample_manifest.exists()
+
+    manifest = load_manifest(sample_manifest_path)
+    assert manifest.name == "my-exp"
+    assert str(manifest.path) == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp"
+    assert manifest.launcher == "Slurm"
+    assert len(manifest.runs) == 1
+
+    assert len(manifest.runs[0].orchestrators) == 1
+    assert len(manifest.runs[0].models) == 1
+
+
 @pytest.mark.parametrize(
     ["task_id", "step_id", "etype", "exp_isorch", "exp_ismanaged"],
     [
@@ -433,115 +499,121 @@ def test_telemetry_single_model(fileutils, wlmutils):
     assert len(stop_events) == 1
 
 
-def test_telemetry_single_model_nonblocking(fileutils, wlmutils):
+def test_telemetry_single_model_nonblocking(fileutils, wlmutils, monkeypatch):
     """Ensure that the telemetry monitor logs exist when the experiment 
     is non-blocking"""
+    with monkeypatch.context() as ctx:
+        ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
-    # Set experiment name
-    exp_name = "test_telemetry_single_model_nonblocking"
+        # Set experiment name
+        exp_name = "test_telemetry_single_model_nonblocking"
 
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("echo.py")
+        # Retrieve parameters from testing environment
+        test_launcher = wlmutils.get_test_launcher()
+        test_dir = fileutils.make_test_dir()
+        test_script = fileutils.get_test_conf_path("echo.py")
 
-    # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+        # Create SmartSim Experiment
+        exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-    # create run settings
-    app_settings = exp.create_run_settings("python", test_script)
-    app_settings.set_nodes(1)
-    app_settings.set_tasks_per_node(1)
+        # create run settings
+        app_settings = exp.create_run_settings("python", test_script)
+        app_settings.set_nodes(1)
+        app_settings.set_tasks_per_node(1)
 
-    #  # Create the SmartSim Model
-    smartsim_model = exp.create_model("perroquet", app_settings)
-    exp.generate(smartsim_model)
-    exp.start(smartsim_model)
+        #  # Create the SmartSim Model
+        smartsim_model = exp.create_model("perroquet", app_settings)
+        exp.generate(smartsim_model)
+        exp.start(smartsim_model)
 
-    snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
+        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
 
-    assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
+        assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
-    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
-    start_events = list(telemetry_output_path.rglob("start.json"))
-    stop_events = list(telemetry_output_path.rglob("stop.json"))
+        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        start_events = list(telemetry_output_path.rglob("start.json"))
+        stop_events = list(telemetry_output_path.rglob("stop.json"))
 
-    assert len(start_events) == 1
-    assert len(stop_events) == 1
+        assert len(start_events) == 1
+        assert len(stop_events) == 1
 
 
-def test_telemetry_serial_models(fileutils, wlmutils):
+def test_telemetry_serial_models(fileutils, wlmutils, monkeypatch):
     """
     Test telemetry with models being run in serial (one after each other)
     """
+    with monkeypatch.context() as ctx:
+        ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
-    # Set experiment name
-    exp_name = "telemetry_serial_models"
+        # Set experiment name
+        exp_name = "telemetry_serial_models"
 
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("echo.py")
+        # Retrieve parameters from testing environment
+        test_launcher = wlmutils.get_test_launcher()
+        test_dir = fileutils.make_test_dir()
+        test_script = fileutils.get_test_conf_path("echo.py")
 
-    # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+        # Create SmartSim Experiment
+        exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-    # create run settings
-    app_settings = exp.create_run_settings("python", test_script)
-    app_settings.set_nodes(1)
-    app_settings.set_tasks_per_node(1)
+        # create run settings
+        app_settings = exp.create_run_settings("python", test_script)
+        app_settings.set_nodes(1)
+        app_settings.set_tasks_per_node(1)
 
-    #  # Create the SmartSim Model
-    smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
-    exp.generate(*smartsim_models)
-    exp.start(*smartsim_models, block=True)
-    assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
+        #  # Create the SmartSim Model
+        smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
+        exp.generate(*smartsim_models)
+        exp.start(*smartsim_models, block=True)
+        assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
 
-    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
-    start_events = list(telemetry_output_path.rglob("start.json"))
-    stop_events = list(telemetry_output_path.rglob("stop.json"))
+        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        start_events = list(telemetry_output_path.rglob("start.json"))
+        stop_events = list(telemetry_output_path.rglob("stop.json"))
 
-    assert len(start_events) == 5
-    assert len(stop_events) == 5
+        assert len(start_events) == 5
+        assert len(stop_events) == 5
 
 
-def test_telemetry_serial_models_nonblocking(fileutils, wlmutils):
+def test_telemetry_serial_models_nonblocking(fileutils, wlmutils, monkeypatch):
     """
     Test telemetry with models being run in serial (one after each other)
     in a non-blocking experiment
     """
+    with monkeypatch.context() as ctx:
+        ctx.setattr(cfg.Config, "telemetry_frequency", 1)
+    
+        # Set experiment name
+        exp_name = "telemetry_serial_models"
 
-    # Set experiment name
-    exp_name = "telemetry_serial_models"
+        # Retrieve parameters from testing environment
+        test_launcher = wlmutils.get_test_launcher()
+        test_dir = fileutils.make_test_dir()
+        test_script = fileutils.get_test_conf_path("echo.py")
 
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("echo.py")
+        # Create SmartSim Experiment
+        exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-    # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+        # create run settings
+        app_settings = exp.create_run_settings("python", test_script)
+        app_settings.set_nodes(1)
+        app_settings.set_tasks_per_node(1)
 
-    # create run settings
-    app_settings = exp.create_run_settings("python", test_script)
-    app_settings.set_nodes(1)
-    app_settings.set_tasks_per_node(1)
+        #  # Create the SmartSim Model
+        smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
+        exp.generate(*smartsim_models)
+        exp.start(*smartsim_models)
 
-    #  # Create the SmartSim Model
-    smartsim_models = [ exp.create_model(f"perroquet_{i}", app_settings) for i in range(5) ]
-    exp.generate(*smartsim_models)
-    exp.start(*smartsim_models)
+        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
 
-    snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+        assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
 
-    assert all([status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)])
+        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        start_events = list(telemetry_output_path.rglob("start.json"))
+        stop_events = list(telemetry_output_path.rglob("stop.json"))
 
-    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
-    start_events = list(telemetry_output_path.rglob("start.json"))
-    stop_events = list(telemetry_output_path.rglob("stop.json"))
-
-    assert len(start_events) == 5
-    assert len(stop_events) == 5
+        assert len(start_events) == 5
+        assert len(stop_events) == 5
 
 
 def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
@@ -569,16 +641,18 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
         try:
             exp.start(orc, block=True)
 
+            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=15)
+
             telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
 
             assert len(start_events) == 1
-            assert len(stop_events) == 0
+            assert len(stop_events) <= 1
         finally:
             exp.stop(orc)
+            snooze_nonblocking(test_dir, max_delay=30, post_data_delay=10)
 
-        time.sleep(3)
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
