@@ -817,11 +817,11 @@ class Orchestrator(EntityList[DBNode]):
             run_settings = self._build_run_settings(
                 sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
-            output_files = [self.name + ".out"]
+            output_files = [self.name + "_0.out"]
         if not run_settings:
             raise ValueError(f"Could not build run settings for {self.launcher}")
         node = DBNode(
-            self.name,
+            self.name + "_0",
             self.path,
             run_settings,
             [port],

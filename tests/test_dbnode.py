@@ -123,3 +123,11 @@ def test_set_host():
     orc = Orchestrator()
     orc.entities[0].set_hosts(["host"])
     assert orc.entities[0].host == "host"
+
+
+@pytest.mark.parametrize("nodes, mpmd", [[3, False], [3,True], [1, False]])
+def test_db_id_and_name(mpmd, nodes):
+    orc = Orchestrator(db_identifier="test_db", db_nodes=nodes, single_cmd=mpmd, launcher="slurm")
+    for i, node in enumerate(orc.entities):
+        assert node.name == f"{orc.name}_{i}"
+        assert node.db_identifier == orc.db_identifier
