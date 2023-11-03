@@ -540,8 +540,8 @@ def shutdown_when_completed(
     :type observer: t.Optional[BaseObserver]
     :param action_handler: The manifest event processor instance
     :type action_handler: ManifestEventHandler"""
-    # if can_shutdown(action_handler):
-    #     observer.stop()  # type: ignore[no-untyped-call]
+    if can_shutdown(action_handler):
+        observer.stop()  # type: ignore[no-untyped-call]
 
 
 def event_loop(
