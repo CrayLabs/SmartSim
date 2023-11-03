@@ -171,13 +171,17 @@ Multiple Orchestrators
 
 SmartSim offers functionality to automate the deployment of multiple
 databases on an HPC cluster, supporting workloads that require multiple
-``Orchestrators`` for an ``Experiment``. For instance, a workload may consist of a
+``Orchestrators`` for a ``Experiment``. For instance, a workload may consist of a
 simulation with high inference performance demands, along with an analysis and
 visualization workflow connected to the simulation. In such cases, SmartSim
 allows you to augment the number of clustered orchestrators or provision multiple
 co-located orchestrators, ensuring that the workload can scale to meet its resource
 requirements. Below is a general example demonstrating the process of launching
 multiple databases with unique identifiers and distributing data between them.
+
+
+Workflow Initialization and Multi Orchestrator Setup
+----------------------------------------------------
 
 Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object. The Experiment object is intended to be instantiated
@@ -189,6 +193,7 @@ object and assign it to the ``exp`` variable. In this example, we instantiate th
 
   import numpy as np
   from smartredis import Client
+  from smartredis.log import get_logger
   from smartsim import Experiment
 
   exp = Experiment("getting-started-multidb", launcher="auto")
@@ -203,7 +208,7 @@ clustered Orchestrator.
 
   An Orchestrator object supports the deployment of the database. 
 
-To create a Orchestrator, you can utilize the ``create_database()`` function located
+To create an Orchestrator, you can utilize the ``create_database()`` function located
 in the ``Experiment`` class. For launching multiple databases, this function requires
 specifying a unique database identifier argument named ``db_identifier``. The ``db_identifier``
 argument plays a crucial role in SmartSim multi-database support by serving as a unique
@@ -235,7 +240,6 @@ Next, pass the database instances to the following command:
 The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow.
 
 .. note::
-
   Once the multiple ``Orchestrators`` have been launched with ``Experiment.start()``, SmartSim creates separate
   ``SSDB`` environment variables with the ``db_identifier`` argument suffixed. In this example, there are
   ``SSDB_std_deployment_db_identifier`` and ``SSDB_clus_deployment_db_identifier``. The environment variables
@@ -259,8 +263,12 @@ provided by the initialized ``Orchestrator`` object.
 Here's the code example:
 
 .. code-block:: python
-  sr_client_std = Client(cluster=False, address=single-shard-db-example.get_address()[0])
-  sr_client_clus = Client(cluster=True, address=clustered_db_example.get_address()[0])
+
+  log_client_std = get_logger(f"Standard SmartRedis logger")
+  sr_client_std = Client(cluster=False, log_client_std, address=single-shard-db-example.get_address()[0], logger_name="log_client_std")
+
+  log_client_clus = get_logger(f"Clustered SmartRedis logger")
+  sr_client_clus = Client(cluster=True, log_client_clus, address=clustered_db_example.get_address()[0])
 
 In this code, 'client1' is initialized for the standalone Orchestrator, while 'client2' is
 initialized for the clustered Orchestrator.
@@ -273,9 +281,23 @@ In this example, we are sending the same 'array' to both databases.
 
 .. code-block:: python
 
-  array = np.array([1, 2, 3, 4])
-  client1.put_tensor("tensor1", array)
-  client2.put_tensor("tensor2", array)
+  array_1 = np.array([1, 2, 3, 4])
+  sr_client_std.put_tensor("tensor1", array_1)
+  array_2 = np.array([5, 6, 7, 8])
+  sr_client_clus.put_tensor("tensor2", array_2)
+
+Lets check to make sure the database tensors are in the correct database
+
+.. code-block:: python
+
+  check_client1 = sr_client_std.key_exists("tensor2")
+  check_client2= sr_client_clus.key_exists("tensor1")
+  logger.info(f"Tensor1 exists in the incorrect database: {check_client1}")
+  ogger.info(f"Tensor1 exists in the incorrect database: {check_client2}")
+
+.. code-block:: bash
+
+  the outputs
 
 In the next stage of the workflow, we are going to write a software program
 that utilizes the previously launched databases. In SmartSim terms, the application
@@ -313,6 +335,9 @@ Next, launch the model instance using the exp.start() function.
 .. code-block:: python
 
   exp.start(model, block=True, summary=True)
+
+Integrating SmartRedis Multi-Database Functionality into the Model
+------------------------------------------------------------------
 
 Next in the example, add SmartRedis multi-database functionality to the Model.
 Navigate to the file specified in the exe_args argument of the create_run_settings()
@@ -410,7 +435,8 @@ stop the database instances.
   exp.stop(standalone_database, clustered_database)
   print(exp.summary())
 
-The example source code is pasted below.
+Source Code
+------------------------
 
 Application file:
 
