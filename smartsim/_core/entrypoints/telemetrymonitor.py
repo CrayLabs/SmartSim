@@ -187,9 +187,9 @@ def hydrate_runs(
 
         for key in ["model", "orchestrator", "ensemble"]:
             _entities = hydrate_persistables(key, run_instance, exp_dir)
-            for entity_type in _entities:
-                if _entities[entity_type]:
-                    run_entities[entity_type].extend(_entities[entity_type])
+            for entity_type, new_entities in _entities.items():
+                if new_entities:
+                    run_entities[entity_type].extend(new_entities)
 
         run = Run(
             run_instance["timestamp"],
@@ -486,7 +486,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if hasattr(job.entity, "status_dir"):
             write_path = pathlib.Path(job.entity.status_dir)
         else:
-            write_path = pathlib.Path(job.entity.path) # todo: raise exception to figure out if this gets hit
+            # todo: raise exception to figure out if this gets hit
+            write_path = pathlib.Path(job.entity.path)
 
         track_event(
             timestamp,
@@ -510,7 +511,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         launcher = self.launcher
         entity_map = self._tracked_jobs
 
-        names = {entity.name: entity for entity in entity_map.values()}  # consider not using name to avoid collisions
+        # consider not using name to avoid collisions
+        names = {entity.name: entity for entity in entity_map.values()}
 
         if names:
             step_updates = launcher.get_step_update(list(names.keys()))
