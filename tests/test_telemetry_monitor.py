@@ -176,7 +176,7 @@ def test_track_specific(
         },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
-    persistable = persistables[etype][0] if persistables else None
+    persistable = persistables[0] if persistables else None
 
     job = Job(name, task_id, persistable, "local", False)
 
@@ -239,7 +239,7 @@ def test_persistable_computed_properties(
         },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
-    persistable = persistables[etype][0] if persistables[etype] else None
+    persistable = persistables[0] if persistables else None
 
     assert persistable.is_managed == exp_ismanaged
     assert persistable.is_db == exp_isorch
