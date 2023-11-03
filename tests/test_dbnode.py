@@ -37,7 +37,6 @@ from smartsim.database import Orchestrator
 from smartsim.entity.dbnode import DBNode, LaunchedShardData
 from smartsim.error.errors import SmartSimError
 
-
 def test_parse_db_host_error():
     orc = Orchestrator()
     orc.entities[0].path = "not/a/path"
@@ -126,8 +125,10 @@ def test_set_host():
 
 
 @pytest.mark.parametrize("nodes, mpmd", [[3, False], [3,True], [1, False]])
-def test_db_id_and_name(mpmd, nodes):
-    orc = Orchestrator(db_identifier="test_db", db_nodes=nodes, single_cmd=mpmd, launcher="slurm")
+def test_db_id_and_name(mpmd, nodes, wlmutils):
+    if nodes > 1 and wlmutils.get_test_launcher() not in pytest.wlm_options:
+        pytest.skip(reason="Clustered DB can only be checked on WLMs")
+    orc = Orchestrator(db_identifier="test_db", db_nodes=nodes, single_cmd=mpmd, launcher=wlmutils.get_test_launcher())
     for i, node in enumerate(orc.entities):
         assert node.name == f"{orc.name}_{i}"
         assert node.db_identifier == orc.db_identifier
