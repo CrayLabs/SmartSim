@@ -54,8 +54,9 @@ def make_entity_context(exp: Experiment, entity: SmartSimEntity):
 def choose_host(wlmutils, index=0):
     hosts = wlmutils.get_test_hostlist()
     if hosts:
-        hosts = hosts[index]
-    return hosts
+        return hosts[index]
+    else:
+        return None
 
 def check_not_failed(exp, *args):
     statuses = exp.get_status(*args)
@@ -105,8 +106,8 @@ def test_db_identifier_standard_then_colo_error(
 
     assert smartsim_model.run_settings.colocated_db_settings["db_identifier"] == "testdb_colo"
 
-    with make_entity_context(exp, orc) as orc, \
-         make_entity_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, orc), \
+         make_entity_context(exp, smartsim_model):
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(smartsim_model)
@@ -163,8 +164,8 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
 
     assert orc.name == "testdb_colo"
 
-    with make_entity_context(exp, orc) as orc, \
-         make_entity_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, orc), \
+         make_entity_context(exp, smartsim_model):
         exp.start(smartsim_model, block=True)
         exp.start(orc)
 
@@ -203,7 +204,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    with make_entity_context(exp, orc) as orc, make_entity_context(exp, orc2):
+    with make_entity_context(exp, orc), make_entity_context(exp, orc2):
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(orc2)
@@ -268,10 +269,10 @@ def test_multidb_create_standard_twice(wlmutils, test_dir):
     )
 
     # launch
-    with make_entity_context(exp, db) as db, make_entity_context(exp, db2) as db2:
+    with make_entity_context(exp, db), make_entity_context(exp, db2):
         exp.start(db, db2)
 
-    with make_entity_context(exp, db) as db, make_entity_context(exp, db2) as db2:
+    with make_entity_context(exp, db), make_entity_context(exp, db2):
         exp.start(db, db2)
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -348,8 +349,8 @@ def test_multidb_standard_then_colo(fileutils, test_dir, wlmutils, coloutils, db
         on_wlm = on_wlm,
     )
 
-    with make_entity_context(exp, db) as db, \
-         make_entity_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, db), \
+         make_entity_context(exp, smartsim_model):
         exp.start(db)
         exp.start(smartsim_model, block=True)
 
@@ -395,8 +396,8 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
         hosts=choose_host(wlmutils),
     )
 
-    with make_entity_context(exp, db) as db, \
-         make_entity_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, db), \
+         make_entity_context(exp, smartsim_model):
         exp.start(db)
         exp.start(smartsim_model, block=True)
 
@@ -448,8 +449,8 @@ def test_launch_cluster_orc_single_dbid(test_dir, coloutils, fileutils, wlmutils
         on_wlm = on_wlm
     )
 
-    with make_entity_context(exp, orc) as orc, \
-         make_entity_context(exp, smartsim_model) as smartsim_model:
+    with make_entity_context(exp, orc), \
+         make_entity_context(exp, smartsim_model):
         exp.start(orc, block=True)
         exp.start(smartsim_model, block=True)
         job_dict = exp._control._jobs.get_db_host_addresses()

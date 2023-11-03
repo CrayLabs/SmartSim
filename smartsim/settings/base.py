@@ -586,10 +586,31 @@ class BatchSettings(SettingsBase):
         self._batch_cmd = batch_cmd
         self.batch_args = batch_args or {}
         self._preamble: t.List[str] = []
+        self._nodes: t.Optional[int] = None
         self.set_nodes(kwargs.get("nodes", None))
         self.set_walltime(kwargs.get("time", None))
         self.set_queue(kwargs.get("queue", None))
         self.set_account(kwargs.get("account", None))
+
+    @property
+    def nodes(self) -> t.Optional[int]:
+        return self._nodes
+
+
+    @nodes.setter
+    def nodes(self, num_nodes: t.Optional[t.Union[int, str]]) -> None:
+        if num_nodes:
+            if isinstance(num_nodes, int):
+                self._nodes = num_nodes
+            elif isinstance(num_nodes, str):
+                self._nodes = int(num_nodes)
+            else:
+                raise TypeError(
+                    "Nodes must be an int or a string interpretable as an int"
+                )
+        else:
+            self._nodes = None
+
 
     @property
     def batch_cmd(self) -> str:

@@ -73,6 +73,13 @@ class QsubBatchSettings(BatchSettings):
         self._nodes: t.Optional[int] = None
         self._ncpus = ncpus
 
+        if resources and "nodes" in resources and nodes is not None:
+            if nodes != resources["nodes"]:
+                raise ValueError(
+                    "nodes was specified as a kwarg and also in the resources "
+                    f"but are not the same value: {nodes=} {resources['nodes']=}"
+                )
+
         # time, queue, nodes, and account set in parent class init
         super().__init__(
             "qsub",
@@ -86,6 +93,7 @@ class QsubBatchSettings(BatchSettings):
         self.resources = init_default({}, resources, dict)
         self._hosts: t.List[str] = []
 
+
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
@@ -96,7 +104,7 @@ class QsubBatchSettings(BatchSettings):
         :type num_nodes: int
         """
         if num_nodes:
-            self._nodes = int(num_nodes)
+            self._nodes = num_nodes
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job

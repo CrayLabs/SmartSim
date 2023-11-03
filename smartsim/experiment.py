@@ -696,7 +696,7 @@ class Experiment:
         port: int = 6379,
         db_nodes: int = 1,
         batch: bool = False,
-        hosts: t.Optional[t.List[str]] = None,
+        hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
         interface: str = "ipogif0",
         account: t.Optional[str] = None,

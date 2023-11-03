@@ -156,7 +156,7 @@ class Orchestrator(EntityList[DBNode]):
         run_command: str = "auto",
         db_nodes: int = 1,
         batch: bool = False,
-        hosts: t.Optional[t.List[str]] = None,
+        hosts: t.Optional[t.Union[t.List[str], str]] = None,
         account: t.Optional[str] = None,
         time: t.Optional[str] = None,
         alloc: t.Optional[str] = None,

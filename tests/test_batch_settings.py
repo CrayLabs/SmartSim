@@ -191,3 +191,11 @@ def test_preamble():
 
     bsub.add_preamble(["first line", "last line"])
     assert len(list(bsub.preamble)) == 4
+
+def test_qsub_batch_nodes():
+    """
+    Test specifying nodes in as kwarg and in resources
+    """
+    with pytest.raises(ValueError):
+        QsubBatchSettings(nodes=1, resources={"nodes":2})
+    QsubBatchSettings(nodes=1, resources={"nodes":1})
