@@ -38,28 +38,28 @@ from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBacke
 
 
 def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
-    """Unpack the unformatted database identifier using the token,
-    and format for env variable suffix
-    :db_id: the unformatted database identifier eg. identifier_1_0
-    :token: character '_' or '-' to use to unpack the database identifier
-    :return: db suffix, and formatted db_id eg. _identifier_1, identifier_1
+    """Unpack the unformatted database identifier
+    and format for env variable suffix using the token
+    :param db_id: the unformatted database identifier eg. identifier_1
+    :type db_id: str
+    :param token: character to use to construct the db suffix
+    :type token: str
+    :return: db id suffix and formatted db_id e.g. ("_identifier_1", "identifier_1")
+    :rtype: (str, str)
     """
 
     if db_id == "orchestrator":
         return "", ""
-    db_id = "_".join(db_id.split(token)[:-1])
-    # if unpacked db_id is default, return empty
-    if db_id == "orchestrator":
-        # if db_id is default after unpack, return empty
-        return "", ""
-    db_name_suffix = "_" + db_id
+    db_name_suffix = token + db_id
     return db_name_suffix, db_id
 
 
 def unpack_colo_db_identifier(db_id: str) -> str:
     """Create database identifier suffix for colocated database
-    :db_id: the unformatted database identifier
+    :param db_id: the unformatted database identifier
+    :type db_id: str
     :return: db suffix
+    :rtype: str
     """
     return "_" + db_id if db_id else ""
 

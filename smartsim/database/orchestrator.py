@@ -785,7 +785,7 @@ class Orchestrator(EntityList[DBNode]):
                     run_settings,
                     [port],
                     [db_node_name + ".out"],
-                    db_node_name,
+                    self.db_identifier,
                 )
                 self.entities.append(node)
 
@@ -826,7 +826,7 @@ class Orchestrator(EntityList[DBNode]):
             run_settings,
             [port],
             output_files,
-            db_identifier=self.name + "_0",
+            db_identifier=self.db_identifier,
         )
         self.entities.append(node)
         self.ports = [port]

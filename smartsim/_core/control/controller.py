@@ -341,9 +341,9 @@ class Controller:
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
-                if orchestrator.name == db_id:
+                if orchestrator.db_identifier == db_id:
                     raise SSDBIDConflictError(
-                        f"Database identifier {orchestrator.name}"
+                        f"Database identifier {orchestrator.db_identifier}"
                         " has already been used. Pass in a unique"
                         " name for db_identifier"
                     )
