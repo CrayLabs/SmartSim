@@ -132,13 +132,10 @@ def hydrate_persistable(
     entity_type: str,
     persistable_entity: t.Dict[str, t.Any],
     exp_dir: pathlib.Path,
-) -> t.Dict[str, t.List[JobEntity]]:
+# ) -> t.Dict[str, t.List[JobEntity]]:
+) -> t.List[JobEntity]:
     """Map entity data persisted in a manifest file to an object"""
-    entities: t.Dict[str, t.List[JobEntity]] = {
-        "model": [],
-        "orchestrator": [],
-        "ensemble": [],
-    }
+    entities = []
 
     # an entity w/parent key creates persistables for entities it contains
     parent_keys = {"shards", "models"}
@@ -148,12 +145,12 @@ def hydrate_persistable(
         child_type = "orchestrator" if container == "shards" else "model"
         for child_entity in persistable_entity[container]:
             entity = _hydrate_persistable(child_entity, child_type, str(exp_dir))
-            entities[child_type].append(entity)
+            entities.append(entity)
 
         return entities
 
     entity = _hydrate_persistable(persistable_entity, entity_type, str(exp_dir))
-    entities[entity_type].append(entity)
+    entities.append(entity)
     return entities
 
 
@@ -163,10 +160,15 @@ def hydrate_persistables(
     exp_dir: pathlib.Path,
 ) -> t.Dict[str, t.List[JobEntity]]:
     """Map a collection of entity data persisted in a manifest file to an object"""
-    persisted: t.Dict[str, t.List[JobEntity]] = {}
+    persisted: t.Dict[str, t.List[JobEntity]] = {
+        "model": [],
+        "orchestrator": [],
+        "ensemble": [],
+    }
     for item in run[entity_type]:
         entities = hydrate_persistable(entity_type, item, exp_dir)
-        persisted.update(entities)
+        for new_entity in entities:
+            persisted[new_entity.type].append(new_entity)
 
     return persisted
 
@@ -177,11 +179,17 @@ def hydrate_runs(
     """Map run data persisted in a manifest file to an object"""
     the_runs: t.List[Run] = []
     for run_instance in persisted_runs:
-        run_entities: t.Dict[str, t.List[JobEntity]] = {}
+        run_entities: t.Dict[str, t.List[JobEntity]] = {
+            "model": [],
+            "orchestrator": [],
+            "ensemble": [],
+        }
+
         for key in ["model", "orchestrator", "ensemble"]:
-            run_entities[key] = []
             _entities = hydrate_persistables(key, run_instance, exp_dir)
-            run_entities.update(_entities)
+            for entity_type in _entities:
+                if _entities[entity_type]:
+                    run_entities[entity_type].extend(_entities[entity_type])
 
         run = Run(
             run_instance["timestamp"],
