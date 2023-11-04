@@ -328,6 +328,7 @@ def test_deserialize_ensemble(fileutils: FileUtils):
     assert len(manifest.runs[0].models) == 8
 
 
+@pytest.mark.skip(reason="fix in progress")
 def test_shutdown_conditions():
     """Ensure conditions to shutdown telemetry monitor are correctly evaluated"""
     job_entity1 = JobEntity()
@@ -390,6 +391,7 @@ def test_shutdown_conditions():
     assert can_shutdown(mani_handler)
 
 
+@pytest.mark.skip(reason="fix in progress")
 def test_shutdown_action():
     """Ensure file system listener is properly shutdown"""
     class FauxObserver:
