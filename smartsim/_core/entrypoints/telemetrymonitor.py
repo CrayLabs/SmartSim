@@ -443,6 +443,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory modification.
         :type event: FileModifiedEvent"""
         super().on_modified(event)  # type: ignore
+        print(f"processing modified manifest @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -525,7 +526,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     )
 
 
-def can_shutdown(action_handler: ManifestEventHandler) -> bool:
+def can_shutdown(_action_handler: ManifestEventHandler) -> bool:
     # has_jobs = bool(action_handler.job_manager.jobs)
     # has_dbs = bool(action_handler.job_manager.db_jobs)
     # has_running_jobs = has_jobs or has_dbs
