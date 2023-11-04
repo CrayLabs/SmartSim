@@ -526,9 +526,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
 
 def can_shutdown(action_handler: ManifestEventHandler) -> bool:
-    has_jobs = bool(action_handler.job_manager.jobs)
-    has_dbs = bool(action_handler.job_manager.db_jobs)
-    has_running_jobs = has_jobs or has_dbs
+    # has_jobs = bool(action_handler.job_manager.jobs)
+    # has_dbs = bool(action_handler.job_manager.db_jobs)
+    # has_running_jobs = has_jobs or has_dbs
 
     return False # known defect; must manually shutdown until fixed
     # return not has_running_jobs
