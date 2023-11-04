@@ -530,7 +530,8 @@ def can_shutdown(action_handler: ManifestEventHandler) -> bool:
     has_dbs = bool(action_handler.job_manager.db_jobs)
     has_running_jobs = has_jobs or has_dbs
 
-    return not has_running_jobs
+    return False # known defect; must manually shutdown until fixed
+    # return not has_running_jobs
 
 
 def shutdown_when_completed(
