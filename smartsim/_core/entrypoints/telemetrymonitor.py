@@ -132,7 +132,6 @@ def hydrate_persistable(
     entity_type: str,
     persistable_entity: t.Dict[str, t.Any],
     exp_dir: pathlib.Path,
-# ) -> t.Dict[str, t.List[JobEntity]]:
 ) -> t.List[JobEntity]:
     """Map entity data persisted in a manifest file to an object"""
     entities = []
