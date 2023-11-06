@@ -179,6 +179,12 @@ co-located orchestrators, ensuring that the workload can scale to meet its resou
 requirements. Below is a general example demonstrating the process of launching
 multiple databases with unique identifiers and distributing data between them.
 
+.. note::
+
+  To run the following example, configure your environment by following
+  :ref:`Site Installation <site_installation>` then build SmartSim
+  by following :ref:`Build SmartSim <from-pypi>`.
+
 Workflow Initialization and Multi Orchestrator Setup
 ----------------------------------------------------
 
@@ -300,7 +306,7 @@ Lets check to make sure the database tensors are not in the opposite databases
   logger.info(f"The colo array key exists in the incorrect database: {check_colo_db_tensor_incorrect}")
   logger.info(f"The clus array key exists in the incorrect database: {check_clus_db_tensor_incorrect}")
 
-When you execute the program **later** the following output will appear.
+When you execute the program the following output will appear.
 
 .. code-block:: bash
 
@@ -348,8 +354,8 @@ Next, launch the model instance using the exp.start() function.
   exp.generate(model, overwrite=True)
 
 
-Finally, use the Experiment.stop() function to stop the database instances and print the
-workflow summary.
+Finally, use the ``Experiment.stop()`` function to stop the database instances and print the
+workflow summary with ``exp.summary()``.
 
 .. code-block:: python
 
@@ -407,7 +413,7 @@ These steps allow us to set up SmartRedis clients for each ``Orchestrator`` and
 establish effective communication with the respective databases.
 
 To confirm a successful connection to each database, retrieve the tensors previously
-stored using the created SmartRedis clients. The ``get_tensor`` Client method allows
+stored using the created SmartRedis clients. The ``get_tensor()`` Client method allows
 retrieval of a tensor by passing in the tensor name.
 
 .. code-block:: python
@@ -417,12 +423,13 @@ retrieval of a tensor by passing in the tensor name.
   logger.info(f"The colocated db tensor is: {val1}")
   logger.info(f"The clustered db tensor is: {val2}")
 
-When you execute the program **later** the following output will appear.
+When you execute the program the following output will appear in ``tutorial_mode.out``
+located in ``getting-started-multidb/tutorial_model/``.
 
 .. code-block:: bash
 
-  The colocated db tensor is: [1, 2, 3, 4]
-  The clustered db tensor is: [5, 6, 7, 8]
+  21:01:55 prod-0005 SmartSim[34075] INFO The colocated db tensor is: [1 2 3 4]
+  21:01:55 prod-0005 SmartSim[34075] INFO The clustered db tensor is: [5 6 7 8]
 
 This code showcases that we can retrieve data from each database effectively.
 
@@ -461,6 +468,13 @@ Now validate the output.
 
   out = std_db_client.get_tensor("output")
   logger.info(f"{out}")
+
+When you execute the program the following output will appear in ``tutorial_mode.out``
+located in ``getting-started-multidb/tutorial_model/``.
+
+.. code-block:: bash
+
+  21:01:55 prod-0005 SmartSim[34075] INFO [2 3 4 5]
 
 
 Source Code
