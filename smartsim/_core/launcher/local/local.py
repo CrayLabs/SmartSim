@@ -178,8 +178,6 @@ class LocalLauncher(Launcher):
             encoded_cmd,
             "+t",
             etype,
-            "+n",
-            step.name,
             "+d",
             status_dir,
             "+w",
