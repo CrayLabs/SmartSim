@@ -44,12 +44,6 @@ logger = get_logger(__name__)
 class LocalLauncher(Launcher):
     """Launcher used for spawning proceses on a localhost machine."""
 
-    @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
-        return {
-            RunSettings: LocalStep,
-        }
-
     def __init__(self) -> None:
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
