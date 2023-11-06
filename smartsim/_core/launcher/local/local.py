@@ -119,7 +119,7 @@ class LocalLauncher(Launcher):
         if is_enabled:
             out = step.get_step_file(ending=".indirect.out")
             err = step.get_step_file(ending=".indirect.err")
-            cmd = LocalLauncher.get_proxy_cmd(step)
+            cmd = self.get_proxy_cmd(step)
 
         # pylint: disable-next=consider-using-with
         output = open(out, "w+", encoding="utf-8")
