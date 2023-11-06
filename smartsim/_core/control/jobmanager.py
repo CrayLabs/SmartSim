@@ -80,9 +80,9 @@ class JobManager:
         self._lock = lock  # thread lock
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
-        self.on_complete_hook: t.List[t.Callable[[Job, Logger], None]] = []
-        self.on_start_hook: t.List[t.Callable[[Job, Logger], None]] = []
-        self.on_timestep_hook: t.List[t.Callable[[Job, Logger], None]] = []
+        self._on_complete_hook: t.List[t.Callable[[Job, Logger], None]] = []
+        self._on_start_hook: t.List[t.Callable[[Job, Logger], None]] = []
+        self._on_timestep_hook: t.List[t.Callable[[Job, Logger], None]] = []
 
     def start(self) -> None:
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
@@ -133,7 +133,7 @@ class JobManager:
         """
         with self._lock:
             self.completed[job.ename] = job
-            for hook in self.on_complete_hook:
+            for hook in self._on_complete_hook:
                 hook(job, logger)
             job.record_history()
 
@@ -193,20 +193,20 @@ class JobManager:
         else:
             self.jobs[entity.name] = job
 
-        for hook in self.on_start_hook:
+        for hook in self._on_start_hook:
             hook(job, logger)
 
     def add_job_onstart_callback(self, hook: t.Callable[[Job, Logger], None]) -> None:
-        if not hook in self.on_start_hook:
-            self.on_start_hook.append(hook)
+        if not hook in self._on_start_hook:
+            self._on_start_hook.append(hook)
 
     def add_job_onstop_callback(self, hook: t.Callable[[Job, Logger], None]) -> None:
-        if not hook in self.on_complete_hook:
-            self.on_complete_hook.append(hook)
+        if not hook in self._on_complete_hook:
+            self._on_complete_hook.append(hook)
 
     def add_job_onstep_callback(self, hook: t.Callable[[Job, Logger], None]) -> None:
-        if not hook in self.on_timestep_hook:
-            self.on_timestep_hook.append(hook)
+        if not hook in self._on_timestep_hook:
+            self._on_timestep_hook.append(hook)
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
@@ -273,7 +273,7 @@ class JobManager:
                     f"Entity {entity.name} has not been launched in this Experiment"
                 ) from None
 
-            for hook in self.on_timestep_hook:
+            for hook in self._on_timestep_hook:
                 hook(job, logger)
 
             return job.status

@@ -166,7 +166,7 @@ class Controller:
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
 
         # have job manager launch a telemetry monitor if any jobs are run
-        if not self._jobs.on_start_hook:
+        if not self._jobs._on_start_hook:  # pylint: disable=protected-access
             self._jobs.add_job_onstart_callback(create_telmon_callback(exp_path))
 
         launched = self._launch(exp_name, exp_path, manifest)
