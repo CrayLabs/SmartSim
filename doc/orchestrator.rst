@@ -183,7 +183,7 @@ multiple databases with unique identifiers and distributing data between them.
 
   To run the following example, configure your environment by following
   :ref:`Site Installation <site_installation>` then build SmartSim
-  by following :ref:`Build SmartSim <from-pypi>`.
+  by following the :ref:`Build Steps <from-pypi>`.
 
 Workflow Initialization and Multi Orchestrator Setup
 ----------------------------------------------------
@@ -255,7 +255,7 @@ deploys the databases on the allocated compute resources.
 
 .. note::
   Once the multiple ``Orchestrators`` have been launched with ``Experiment.start()``, SmartSim creates separate
-  ``SSDB`` environment variables with the ``db_identifier`` argument suffixed. In this example, there are
+  ``SSDB`` environment variables per orchestrator with the ``db_identifier`` argument suffixed. In this example, the created env vars are
   ``SSDB_single_shard_db_identifier`` and ``SSDB_clustered_db_identifier``. The environment variables
   hold the address of the associated database. The two environment variables will be used later in the example
   to establish a SmartRedis ``Client`` connection with the launched databases.
