@@ -178,9 +178,6 @@ def get_parser() -> argparse.ArgumentParser:
         "+t", type=str, help="The type of entity related to the step", required=True
     )
     parser.add_argument(
-        "+n", type=str, help="The step name being executed", required=True
-    )
-    parser.add_argument(
         "+w", type=str, help="The working directory of the executable", required=True
     )
     parser.add_argument("+o", type=str, help="Output file", required=True)

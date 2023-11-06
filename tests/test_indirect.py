@@ -35,21 +35,19 @@ from smartsim._core.entrypoints.indirect import get_parser, cleanup, get_ts, mai
 from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
 from smartsim._core.utils.helpers import encode_cmd
 
-ALL_ARGS = {"+c", "+t", "+n", "+d"}
+ALL_ARGS = {"+c", "+t", "+d", "+o", "+e", "+w"}
 
 
 @pytest.mark.parametrize(
         ["cmd", "missing"],
         [
-            pytest.param("indirect.py", {"+c", "+t", "+n", "+d"}, id="no args"),
-            pytest.param("indirect.py -c echo", {"+c", "+t", "+n", "+d"}, id="cmd typo"),
-            pytest.param("indirect.py -t orchestrator", {"+c", "+t", "+n", "+d"}, id="etype typo"),
-            pytest.param("indirect.py -n expname", {"+c", "+t", "+n", "+d"}, id="name typo"),
-            pytest.param("indirect.py -d /foo/bar", {"+c", "+t", "+n", "+d"}, id="dir typo"),
-            pytest.param("indirect.py        +t ttt +d ddd +n nnn", {"+c", "+t", "+n", "+d"}, id="no cmd"),
-            pytest.param("indirect.py +c ccc        +d ddd +n nnn", {"+c", "+t", "+n", "+d"}, id="no etype"),
-            pytest.param("indirect.py +c ccc +t ttt +d ddd       ", {"+c", "+t", "+n", "+d"}, id="no name"),
-            pytest.param("indirect.py +c ccc +t ttt        +n nnn", {"+c", "+t", "+n", "+d"}, id="no dir"),
+            pytest.param("indirect.py", {"+c", "+t", "+d", "+o", "+e", "+w"}, id="no args"),
+            pytest.param("indirect.py -c echo +t ttt +d ddd +o ooo +w www +e eee", {"+c"}, id="cmd typo"),
+            pytest.param("indirect.py -t orchestrator +c ccc +d ddd +o ooo +w www +e eee", {"+t"}, id="etype typo"),
+            pytest.param("indirect.py -d /foo/bar +t ttt +c ccc +o ooo +w www +e eee", {"+d"}, id="dir typo"),
+            pytest.param("indirect.py        +t ttt +d ddd +o ooo +w www +e eee", {"+c"}, id="no cmd"),
+            pytest.param("indirect.py +c ccc        +d ddd +o ooo +w www +e eee", {"+t"}, id="no etype"),
+            pytest.param("indirect.py +c ccc +t ttt        +o ooo +w www +e eee", {"+d"}, id="no dir"),
         ]
 )
 def test_parser(capsys, cmd, missing):
@@ -68,8 +66,13 @@ def test_parser(capsys, cmd, missing):
         assert arg in captured.err
 
     expected = ALL_ARGS - missing
+    msg_tuple = captured.err.split("the following arguments are required: ")
+    if len(msg_tuple) < 2:
+        assert False, "error message indicates no missing arguments"
+
+    actual_missing = msg_tuple[1].strip()
     for exp in expected:
-        assert exp not in captured.err
+        assert exp not in actual_missing
 
 
 def test_cleanup(capsys, monkeypatch):
