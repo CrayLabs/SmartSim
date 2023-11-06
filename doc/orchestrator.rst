@@ -179,7 +179,6 @@ co-located orchestrators, ensuring that the workload can scale to meet its resou
 requirements. Below is a general example demonstrating the process of launching
 multiple databases with unique identifiers and distributing data between them.
 
-
 Workflow Initialization and Multi Orchestrator Setup
 ----------------------------------------------------
 
@@ -187,16 +186,19 @@ Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object. The Experiment object is intended to be instantiated
 once and utilized throughout the workflow runtime. Begin by creating a ``Experiment``
 object and assign it to the ``exp`` variable. In this example, we instantiate the
-``Experiment`` object with the name ``getting-started-multidb``.
+``Experiment`` object with the name ``getting-started-multidb``. We setup the SmartSim
+``logger`` as well for use within the Experiment. For more information on the SmartSim,
+click here.
 
 .. code-block:: python
 
-  import numpy as np
+  from smartsim import Experiment
   from smartredis import Client
   from smartredis.log import get_logger
-  from smartsim import Experiment
+  import numpy as np
 
   exp = Experiment("getting-started-multidb", launcher="auto")
+  logger = get_logger("Multidb Experiment Log")
 
 In the context of this ``Experiment``, it's essential to create and launch
 the databases as a preliminary step before any other components. We aim
@@ -204,16 +206,12 @@ to showcase the multi-database automation capabilities of SmartSim, so we
 create two types of Orchestrators in the workflow: a co-located Orchestrator and a
 clustered Orchestrator.
 
-.. note::
-
-  An Orchestrator object supports the deployment of the database. 
-
-To create an Orchestrator, you can utilize the ``create_database()`` function located
-in the ``Experiment`` class. For launching multiple databases, this function requires
-specifying a unique database identifier argument named ``db_identifier``. The ``db_identifier``
-argument plays a crucial role in SmartSim multi-database support by serving as a unique
-identifier for each database being launched. The ``db_identifier`` will be utilized later
-in the example.
+To create an Orchestrator, utilize the ``create_database()`` function located
+in the ``Experiment`` class. When launching more than one Orchestrator, the
+function requires specifying a unique database identifier
+argument named ``db_identifier``. The ``db_identifier``
+serves as a unique identifier for each database being launched. Usage of the ``db_identifier``
+is show in the example below.
 
 Here's how to create the databases:
 
@@ -221,32 +219,42 @@ For the co-located database:
 
 .. code-block:: python
 
-  single-shard-db-example = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="std_deployment_db_identifier")
-  exp.generate(single-shard-db-example, overwrite=True)
+  colocated_orch = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="single_shard_db_identifier")
+  exp.generate(colocated_orch, overwrite=True)
 
 For the clustered database:
 
 .. code-block:: python
 
-  clustered_db_example = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus_deployment_db_identifier")
-  exp.generate(clustered_db_example, overwrite=True)
+  clustered_orch = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clustered_db_identifier")
+  exp.generate(clustered_orch, overwrite=True)
 
-Next, pass the database instances to the following command:
+.. note::
+  The ``exp.generate()`` function accepts entities within the workflow, such as Model,
+  Ensemble, and Orchestrator. This function organizes the outputs of these entities
+  under the associated Experiment folder. In this example, the Experiment folder is
+  named ``getting-started-multidb/``. Within this folder, two Orchestrator subfolders will
+  be created, namely ``single_shard_db_identifier/`` and ``clustered_db_identifier/``. It's
+  important to note that the names of the Orchestrator subfolders are determined by
+  the db_identifier value we set when instantiating an ``Orchestrator``.
+
+Next, pass the database instances, ``clustered_orch`` and ``colocated_orch``, to the following command: ``exp.start()``:
 
 .. code-block:: python
 
-  exp.start(single-shard-db-example, clustered_db_example, summary=True)
+  exp.start(colocated_orch, clustered_orch, summary=True)
 
-The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow.
+The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow. In other words, the function
+deploys the databases on the allocated compute resources.
 
 .. note::
   Once the multiple ``Orchestrators`` have been launched with ``Experiment.start()``, SmartSim creates separate
   ``SSDB`` environment variables with the ``db_identifier`` argument suffixed. In this example, there are
-  ``SSDB_std_deployment_db_identifier`` and ``SSDB_clus_deployment_db_identifier``. The environment variables
+  ``SSDB_single_shard_db_identifier`` and ``SSDB_clustered_db_identifier``. The environment variables
   hold the address of the associated database. The two environment variables will be used later in the example
   to establish a SmartRedis ``Client`` connection with the launched databases.
 
-Next in the example, we distribute data between the launched databases with the ``Client`` SmartRedis API.
+Next within the workflow, we send tensors to the launched databases with the ``Client`` SmartRedis API.
 
 The SmartRedis ``Client`` object contains functions that manipulate, send, and receive
 data within the database. Each database has a single, dedicated SmartRedis ``Client``.
@@ -257,145 +265,171 @@ running database. You can easily retrieve this address using the ``get_address()
 provided by the initialized ``Orchestrator`` object.
 
 .. note::
-
   Make sure to set the ``cluster`` argument appropriately based on whether the database is in a clustered configuration or not.
 
 Here's the code example:
 
 .. code-block:: python
 
-  log_client_std = get_logger(f"Standard SmartRedis logger")
-  sr_client_std = Client(cluster=False, log_client_std, address=single-shard-db-example.get_address()[0], logger_name="log_client_std")
+  sr_client_colo = Client(cluster=False, address=colocated_orch.get_address()[0], logger_name="Colo client logger")
+  sr_client_clus = Client(cluster=True, address=clustered_orch.get_address()[0], logger_name="Clus client logger")
 
-  log_client_clus = get_logger(f"Clustered SmartRedis logger")
-  sr_client_clus = Client(cluster=True, log_client_clus, address=clustered_db_example.get_address()[0])
-
-In this code, 'client1' is initialized for the standalone Orchestrator, while 'client2' is
-initialized for the clustered Orchestrator.
+In this code, ``sr_client_colo`` is an initialized client for the colocated Orchestrator, while ``sr_client_clus`` is an
+initialized client for the clustered Orchestrator.
 
 In this example, we transmit, retrieve and manipulate a NumPy tensor. Begin by creating a
-NumPy array and send it to each database using the associated SmartRedis client. To
+NumPy array and send it to each database using the assigned SmartRedis client. To
 accomplish this, use the ``put_tensor()`` function provided by the SmartRedis ``Client`` API.
-We access this function through the SmartRedis ``Client`` objects, client1 and client2.
-In this example, we are sending the same 'array' to both databases.
+We access this function through the SmartRedis ``Client`` objects, ``sr_client_colo`` and ``sr_client_clus``.
+In this example, we are sending different numpy arrays to both databases.
 
 .. code-block:: python
 
-  array_1 = np.array([1, 2, 3, 4])
-  sr_client_std.put_tensor("tensor1", array_1)
-  array_2 = np.array([5, 6, 7, 8])
-  sr_client_clus.put_tensor("tensor2", array_2)
+  array_colo = np.array([1, 2, 3, 4])
+  sr_client_colo.put_tensor("tensor_1", array_colo)
 
-Lets check to make sure the database tensors are in the correct database
+  array_clus = np.array([5, 6, 7, 8])
+  sr_client_clus.put_tensor("tensor_2", array_clus)
+
+Lets check to make sure the database tensors are not in the opposite databases
 
 .. code-block:: python
 
-  check_client1 = sr_client_std.key_exists("tensor2")
-  check_client2= sr_client_clus.key_exists("tensor1")
-  logger.info(f"Tensor1 exists in the incorrect database: {check_client1}")
-  ogger.info(f"Tensor1 exists in the incorrect database: {check_client2}")
+  check_colo_db_tensor_incorrect = sr_client_colo.key_exists("tensor_2")
+  check_clus_db_tensor_incorrect = sr_client_clus.key_exists("tensor_1")
+  logger.info(f"The colo array key exists in the incorrect database: {check_colo_db_tensor_incorrect}")
+  logger.info(f"The clus array key exists in the incorrect database: {check_clus_db_tensor_incorrect}")
+
+When you execute the program **later** the following output will appear.
 
 .. code-block:: bash
 
-  the outputs
+  21:01:54 osprey.us.cray.com SmartSim[105901] INFO The colo array key exists in the incorrect database: False
+  21:01:54 osprey.us.cray.com SmartSim[105901] INFO The clus array key exists in the incorrect database: False
 
-In the next stage of the workflow, we are going to write a software program
+In the next stage of the workflow, we are going to write an application
 that utilizes the previously launched databases. In SmartSim terms, the application
 is called a ``Model``.
 
 To run a software program, you must specify the run settings: run command and
 source code file. In this example, we invoke the Python interpreter to run a
 python script. Create the run settings using the ``create_run_settings()`` function
-provided by the ``exp`` (``Experiment``) object. Specify the path to the script to the argument
-`exe_args` and the executable to the `exe` argument.
+provided by the ``exp`` (``Experiment``) object. Specify the path to the source code file (script) to the argument
+``exe_args`` and the run command to the ``exe`` argument.
 
 .. code-block:: python
-  model_settings = exp.create_run_settings(exe="python3", exe_args="/path/to/file.py")
 
-Next, set the number of nodes and tasks per node for the ‘Model’. For the application (Model),
+  model_settings = exp.create_run_settings(exe="python", exe_args="model_multidb_example.py")
+
+Next, set the number of nodes and tasks per node for the ``Model``. For the application (``Model``),
 the number of nodes determines the distribution of computational tasks while tasks per node
-specifies how many individual instances of the program (tasks) can run on each node. In this
-example, we specify to SmartSim that we intend to execute the `Model` once on a single node.
+specifies how many individual instances of the ``Model`` (tasks) can run on each node. In this
+example, we specify to SmartSim that we intend to execute the ``Model`` once on a single node.
 
 .. code-block:: python
 
   model_settings.set_nodes(1)
   model_settings.set_tasks_per_node(1)
 
-Next, create an instance of the Model object using the create_model() function of the
-exp object. Pass in the srun_settings object, which was configured earlier, as an argument
-to the create_model() function and assign to the variable ‘model’.
+Next, create an instance of the ``Model`` object using the ``create_model()`` function of the
+``exp`` object. Pass in the ``model_settings`` object, which was configured earlier, as an argument
+to the ``create_model()`` function and assign to the variable ``model``.
 
 .. code-block:: python
 
   model = exp.create_model("tutorial-model", model_settings)
+  exp.generate(model_example, overwrite=True)
 
 Next, launch the model instance using the exp.start() function.
 
 .. code-block:: python
 
   exp.start(model, block=True, summary=True)
+  exp.generate(model, overwrite=True)
+
+
+Finally, use the Experiment.stop() function to stop the database instances and print the
+workflow summary.
+
+.. code-block:: python
+
+  exp.stop(colocated_orch, clustered_orch)
+  logger.info(exp.summary())
+
 
 Integrating SmartRedis Multi-Database Functionality into the Model
 ------------------------------------------------------------------
 
-Next in the example, add SmartRedis multi-database functionality to the Model.
-Navigate to the file specified in the exe_args argument of the create_run_settings()
-function, exe_args="/path/to/model_multidb_example.py".
+Next in the example, add SmartRedis multi-database functionality to the ``Model``.
+Navigate to the file specified in the ``exe_args`` argument of the ``create_run_settings()``
+function, ``exe_args="/path/to/model_multidb_example.py"``.
 
 To begin, learn to retrieve data from the launched databases by using a SmartRedis Client
-and the database identifier. In the Model script, we do not have access to the
-Experiment.get_address() function. To establish a connection with the launched databases,
-we still need to initialize a SmartRedis client for each Orchestrator with the address of
+and the database identifier. In the script, we do not have access to the
+``exp.get_address()`` function. To establish a connection with the launched databases,
+we still need to initialize a new SmartRedis client for each ``Orchestrator`` with the address of
 the launched database.
 
-Previously, we added the db_identifier argument when creating the two databases.
-When a database is created with a db_identifier name, SmartSim creates an environment
-variable named SSDB for each database with the db_identifier variable value suffixed to
-SSDB. In the case of the example, the environment variables created are SSDB_std-deployment
-and SSDB_clus-deployment.
+Previously, we added the ``db_identifier`` argument when creating the two ``Orchestrators``.
+When a database is created with a ``db_identifier`` name, SmartSim creates an environment
+variable named ``SSDB`` for each database with the ``db_identifier`` variable value suffixed to
+``SSDB``. In the case of the example, the environment variables created are ``SSDB_single_shard_db_identifier``
+and ``SSDB_clustered_db_identifier``.
 
 To create a SmartRedis Client for each database, first use the
-ConfigOptions.create_from_environment() factory method, which accepts the
-suffix to be applied to the SSDB environment variable. Then pass the ConfigOptions
+``ConfigOptions.create_from_environment()`` factory method, which accepts the
+suffix to be applied to the ``SSDB`` environment variable. Then pass the ``ConfigOptions``
 object when creating the SmartRedis client.
+
+.. code-block:: python
+
+  from smartredis import ConfigOptions, Client
+  from smartsim.log import get_logger
+  import torch
+
+  logger = get_logger("Multidb App Log")
 
 For the standalone database:
 
 .. code-block:: python
 
-  from smartredis import ConfigOptions, Client
-  import torch
-
-  std_config = ConfigOptions.create_from_environment("std-deployment")
-  std_db_client = Client(std_config, "client_1")
+  colo_config = ConfigOptions.create_from_environment("single_shard_db_identifier")
+  colo_orch_client = Client(colo_config, "client_colo")
 
 For the clustered database:
 
 .. code-block:: python
 
-  clus_config = ConfigOptions.create_from_environment("clus-deployment")
-  clus_db_client = Client(clus_config, "client_2")
+  clus_config = ConfigOptions.create_from_environment("clustered-db-identifier")
+  clus_orch_client = Client(clus_config, "client_clus")
 
-These steps allow us to set up SmartRedis clients for each Orchestrator and
+These steps allow us to set up SmartRedis clients for each ``Orchestrator`` and
 establish effective communication with the respective databases.
 
 To confirm a successful connection to each database, retrieve the tensors previously
-stored using the created SmartRedis clients. The `get_tensor` Client method allows
+stored using the created SmartRedis clients. The ``get_tensor`` Client method allows
 retrieval of a tensor by passing in the tensor name.
 
 .. code-block:: python
 
-  val1 = std_db_client.get_tensor("tensor1")
-  val2 = clus_db_client.get_tensor("tensor2")
-  print(f"{val1} + {val2}")
+  val1 = colo_orch_client.get_tensor("tensor_1")
+  val2 = clus_orch_client.get_tensor("tensor_2")
+  logger.info(f"The colocated db tensor is: {val1}")
+  logger.info(f"The clustered db tensor is: {val2}")
+
+When you execute the program **later** the following output will appear.
+
+.. code-block:: bash
+
+  The colocated db tensor is: [1, 2, 3, 4]
+  The clustered db tensor is: [5, 6, 7, 8]
 
 This code showcases that we can retrieve data from each database effectively.
 
-Lastly, within the model, the example will demonstrate creating and setting
-a callable function to a launched database and running the function with the stored tensors.
+Lastly, within the model, we will demonstrate creating and setting
+a callable torch function to a launched database and running the function with a stored tensor.
 
-To begin, add the function to the Model file. This function accepts a tensor and
+To begin, add the torch function to the script file. This function accepts a tensor and
 adds 1 to each value in the tensor.
 
 .. code-block:: python
@@ -404,100 +438,109 @@ adds 1 to each value in the tensor.
     val = a + 1
     return val
 
-Next, send the function to a database using the Client.set_function() method.
+Next, send the function to a database using the ``Client.set_function()`` method.
 Provide the callable method name, ``sum_tensor``, and a name to store the function,
-in this case ``sum``.
+in this case ``sum``. We are storing the function in the colocated database so we use
+the associated SmartRedis client, ``colo_orch_client``.
 
 .. code-block:: python
 
-  std_db_client.set_function("sum", sum_tensor)
+  colo_orch_client.set_function("sum", sum_tensor)
 
-Next, execute the script or stored function using the Client.run_script() method.
+Next, execute the script or stored function using the ``Client.run_script()`` method.
 Provide the script name, the callable function name, the inputs to provide and the
 name the output should be stored under.
 
 .. code-block:: python
 
-  std_db_client.run_script("sum", "sum_tensor", inputs=["tensor1"], outputs=["output"])
+  colo_orch_client.run_script("sum", "sum_tensor", inputs=["tensor_1"], outputs=["output"])
 
 Now validate the output.
 
 .. code-block:: python
 
   out = std_db_client.get_tensor("output")
-  print(f"{out}")
+  logger.info(f"{out}")
 
-Finally, navigate to the previous file and use the Experiment.stop() function to
-stop the database instances.
-
-.. code-block:: python
-
-  exp.stop(standalone_database, clustered_database)
-  print(exp.summary())
 
 Source Code
-------------------------
+-----------
 
-Application file:
+Experiment file:
 
 .. code-block:: python
 
   import numpy as np
-  from smartredis import ConfigOptions, Client
+  from smartredis import Client
   from smartsim import Experiment
+  from smartsim.log import get_logger
   import sys
 
   exe_ex = sys.executable
-  exp = Experiment("getting-started-multidb", launcher="slurm")
+  logger = get_logger("Multidb Experiment Log")
+  exp = Experiment("getting-started-multidb", launcher="auto")
 
-  standalone_database = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="std-deployment")
-  exp.generate(standalone_database, overwrite=True)
+  colocated_orch = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="single_shard_db_identifier")
+  exp.generate(colocated_orch, overwrite=True)
 
-  clustered_database = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clus-deployment")
-  exp.generate(clustered_database, overwrite=True)
-  exp.start(standalone_database, clustered_database, block=False, summary=True)
+  clustered_orch = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="clustered_db_identifier") #change this back to -
+  exp.generate(clustered_orch, overwrite=True)
 
-  client1 = Client(address=standalone_database.get_address()[0], cluster=False)
-  client2 = Client(address=clustered_database.get_address()[0], cluster=True)
+  exp.start(colocated_orch, clustered_orch, summary=True)
 
-  array = np.array([1, 2, 3, 4])
-  client1.put_tensor("tensor1", array)
-  client2.put_tensor("tensor2", array)
+  sr_client_colo = Client(cluster=False, address=colocated_orch.get_address()[0])
+  sr_client_clus = Client(cluster=True, address=clustered_orch.get_address()[0])
 
-  srun_settings = exp.create_run_settings(exe=exe_ex, exe_args="/lus/scratch/richaama/model_ex.py")
-  srun_settings.set_nodes(1)
-  srun_settings.set_tasks_per_node(1)
-  model = exp.create_model("tutorial-model", srun_settings)
-  exp.generate(model, overwrite=True)
+  array_colo = np.array([1, 2, 3, 4])
+  sr_client_colo.put_tensor("tensor_1", array_colo)
 
-  exp.start(model, block=True, summary=True)
+  array_clus = np.array([5, 6, 7, 8])
+  sr_client_clus.put_tensor("tensor_2", array_clus)
 
-  exp.stop(standalone_database, clustered_database)
+  check_colo_db_tensor_incorrect = sr_client_colo.key_exists("tensor_2")
+  check_clus_db_tensor_incorrect = sr_client_clus.key_exists("tensor_1")
+  logger.info(f"The colo array key exists in the incorrect database: {check_colo_db_tensor_incorrect}")
+  logger.info(f"The clus array key exists in the incorrect database: {check_clus_db_tensor_incorrect}")
 
-  print(exp.summary())
+  model_settings = exp.create_run_settings(exe="python3", exe_args="/path/to/file.py")
+  model_settings.set_nodes(1)
+  model_settings.set_tasks_per_node(1)
+  model_example = exp.create_model("tutorial_model", model_settings)
+  exp.generate(model_example, overwrite=True)
 
-Model file:
+  exp.start(model_example, block=True, summary=True)
+
+  exp.stop(colocated_orch, clustered_orch)
+
+  logger.info(exp.summary())
+
+
+Application (Model) file:
 
 .. code-block:: python
 
   from smartredis import ConfigOptions, Client
+  from smartsim.log import get_logger
   import torch
 
   def sum_tensor(a):
-    val = a + 1
-    return val
+      val = a + 1
+      return val
 
-  std_config = ConfigOptions.create_from_environment("std-deployment")
-  std_db_client = Client(std_config, "client_1")
+  logger = get_logger("Multidb App Log")
 
-  clus_config = ConfigOptions.create_from_environment("clus-deployment")
-  clus_db_client = Client(clus_config, "client_2")
+  colo_config = ConfigOptions.create_from_environment("single_shard_db_identifier")
+  colo_orch_client = Client(colo_config, "client_colo")
 
-  val1 = std_db_client.get_tensor("tensor1")
-  val2 = clus_db_client.get_tensor("tensor2")
-  print(f"{val1} + {val2}")
+  clus_config = ConfigOptions.create_from_environment("clustered_db_identifier")
+  clus_orch_client = Client(clus_config, "client_clus")
 
-  std_db_client.set_function("sum", sum_tensor)
-  std_db_client.run_script("sum", "sum_tensor", inputs=["tensor1"], outputs=["output"])
-  out = std_db_client.get_tensor("output")
-  print(f"{out}")
+  val1 = colo_orch_client.get_tensor("tensor_1")
+  val2 = clus_orch_client.get_tensor("tensor_2")
+  logger.info(f"The colocated db tensor is: {val1}")
+  logger.info(f"The clustered db tensor is: {val2}")
+
+  colo_orch_client.set_function("sum", sum_tensor)
+  colo_orch_client.run_script("sum", "sum_tensor", inputs=["tensor_1"], outputs=["output"])
+  out = colo_orch_client.get_tensor("output")
+  logger.info(f"{out}")
