@@ -13,6 +13,7 @@
    overview
    installation_instructions/basic
    installation_instructions/platform
+   advanced_topics
    contributing
    smartsim_zoo
 
@@ -46,6 +47,7 @@
    sr_data_structures
    sr_dataset_conversions
    sr_runtime
+   sr_advanced_topics
    api/smartredis_api
 
 .. toctree::

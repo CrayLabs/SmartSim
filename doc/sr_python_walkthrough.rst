@@ -59,7 +59,7 @@ Users can set models from a file, as shown in the code below.
 .. literalinclude:: ../smartredis/examples/serial/python/example_model_file_torch.py
   :language: python
   :linenos:
-  :lines: 27-69
+  :lines: 27-68
 
 Scripts
 =======
