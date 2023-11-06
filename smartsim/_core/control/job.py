@@ -42,15 +42,12 @@ class JobEntity:
     """Minimum API required for a job processed in the JobManager with support for
     telemetry monitoring"""
 
-    def __init__(
-        self,
-        entity: t.Optional[t.Union[SmartSimEntity, EntityList[SmartSimEntity]]] = None,
-    ) -> None:
-        self.name: str = entity.name if entity else ""
-        self.path: str = entity.path if entity else ""
+    def __init__(self) -> None:
+        self.name: str = ""
+        self.path: str = ""
         self.step_id: str = ""
         self.task_id: str = ""
-        self.type: str = type(entity).__name__.lower() if entity else ""
+        self.type: str = ""
         self.timestamp: int = 0
         self.status_dir: str = ""
 
