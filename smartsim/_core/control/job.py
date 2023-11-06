@@ -27,13 +27,15 @@
 import time
 import typing as t
 
-from collections import namedtuple
-
+from dataclasses import dataclass
 from ...entity import SmartSimEntity, EntityList, EntitySequence
 from ...status import STATUS_NEW
 
 
-_JobKey = namedtuple("_JobKey", ["step_id", "task_id"])
+@dataclass(frozen=True)
+class _JobKey():
+    step_id: str
+    task_id: str
 
 
 class JobEntity:
