@@ -315,6 +315,8 @@ class Controller:
         :returns: Dict[str, Tuple[Job, DBNode | Orchestrator]]
         """
         with JM_LOCK:
+            # todo: if this method remains unused after building telemetry
+            # monitor auto-shutdown fix, remove the method completely
             db_jobs = {
                 job.name: (job, job.entity)
                 for job in self._jobs.db_jobs.values()
