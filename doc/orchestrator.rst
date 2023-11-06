@@ -362,6 +362,7 @@ workflow summary with ``exp.summary()``.
   exp.stop(colocated_orch, clustered_orch)
   logger.info(exp.summary())
 
+We have finished writing the experiment workflow. Continue reading to write the application workflow.
 
 Integrating SmartRedis Multi-Database Functionality into the Model
 ------------------------------------------------------------------
@@ -476,6 +477,8 @@ located in ``getting-started-multidb/tutorial_model/``.
 
   21:01:55 prod-0005 SmartSim[34075] INFO [2 3 4 5]
 
+We have finished writing the application workflow. You may now execute the workload.
+This can be done by running the experiment file with the appropriate executable.
 
 Source Code
 -----------
