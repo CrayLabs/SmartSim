@@ -68,7 +68,6 @@ Telemetry Monitor entrypoint
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
-_ManifestKey = t.Literal["timestamp", "model", "orchestrator", "ensemble", "run_id"]
 
 
 @dataclass
