@@ -442,7 +442,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory modification.
         :type event: FileModifiedEvent"""
         super().on_modified(event)  # type: ignore
-        print(f"processing modified manifest @ {event.src_path}")
+        self._logger.info(f"processing modified manifest @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
