@@ -181,7 +181,7 @@ class LocalLauncher(Launcher):
             status_dir,
             "+working_dir",
             step.cwd,
-            "+outout_file",
+            "+output_file",
             out,
             "+error_file",
             err,

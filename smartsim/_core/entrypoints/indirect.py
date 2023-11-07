@@ -169,30 +169,27 @@ def get_parser() -> argparse.ArgumentParser:
         prefix_chars="+", description="SmartSim Step Executor"
     )
     parser.add_argument(
-        "+c", "+command", type=str, help="The command to execute", required=True
+        "+command", type=str, help="The command to execute", required=True
     )
     parser.add_argument(
-        "+t",
         "+entity_type",
         type=str,
         help="The type of entity related to the step",
         required=True,
     )
     parser.add_argument(
-        "+w",
         "+working_dir",
         type=str,
         help="The working directory of the executable",
         required=True,
     )
     parser.add_argument(
-        "+o", "+outout_file", type=str, help="Output file", required=True
+        "+output_file", type=str, help="Output file", required=True
     )
     parser.add_argument(
-        "+e", "+error_file", type=str, help="Erorr output file", required=True
+        "+error_file", type=str, help="Erorr output file", required=True
     )
     parser.add_argument(
-        "+d",
         "+telemetry_dir",
         type=str,
         help="Directory for telemetry output",
