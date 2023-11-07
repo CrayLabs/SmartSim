@@ -28,7 +28,7 @@ import time
 import typing as t
 
 from dataclasses import dataclass
-from ...entity import SmartSimEntity, EntityList, EntitySequence
+from ...entity import SmartSimEntity, EntitySequence
 from ...status import STATUS_NEW
 
 
