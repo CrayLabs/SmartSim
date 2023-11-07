@@ -157,7 +157,6 @@ def hydrate_persistables(
     persisted: t.Dict[str, t.List[JobEntity]] = {
         "model": [],
         "orchestrator": [],
-        "ensemble": [],
     }
     for item in run[entity_type]:
         entities = hydrate_persistable(entity_type, item, exp_dir)
