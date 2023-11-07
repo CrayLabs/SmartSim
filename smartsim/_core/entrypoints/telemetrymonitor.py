@@ -287,8 +287,6 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for a timestep"""
     if hasattr(job.entity, "status_dir"):
         write_path = pathlib.Path(job.entity.status_dir)
-    else:
-        write_path = pathlib.Path(job.entity.path)
 
     track_event(
         get_ts(),
@@ -476,9 +474,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if hasattr(job.entity, "status_dir"):
             write_path = pathlib.Path(job.entity.status_dir)
-        else:
-            # todo: raise exception to figure out if this gets hit
-            write_path = pathlib.Path(job.entity.path)
 
         track_event(
             timestamp,
