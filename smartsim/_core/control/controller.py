@@ -45,7 +45,6 @@ from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifi
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
 from ...database import Orchestrator
 from ...entity import (
-    DBNode,
     Ensemble,
     EntityList,
     EntitySequence,
@@ -308,21 +307,6 @@ class Controller:
         """
         with JM_LOCK:
             return self._jobs.completed
-
-    def get_db_jobs(self) -> t.Dict[str, t.Tuple[Job, t.Union[DBNode, Orchestrator]]]:
-        """Return a dictionary of database job data
-
-        :returns: Dict[str, Tuple[Job, DBNode | Orchestrator]]
-        """
-        with JM_LOCK:
-            # todo: if this method remains unused after building telemetry
-            # monitor auto-shutdown fix, remove the method completely
-            db_jobs = {
-                job.name: (job, job.entity)
-                for job in self._jobs.db_jobs.values()
-                if isinstance(job.entity, (DBNode, Orchestrator))
-            }
-            return db_jobs
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
