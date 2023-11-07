@@ -489,13 +489,8 @@ SmartSim includes built-in utilities for supporting TensorFlow and Keras in trai
 
 .. currentmodule:: smartsim.ml.tf.utils
 
-.. autosummary::
-
-    freeze_model
-
 .. automodule:: smartsim.ml.tf.utils
     :members:
-
 
 .. currentmodule:: smartsim.ml.tf
 
@@ -548,4 +543,3 @@ Slurm
 
 .. automodule:: smartsim.slurm
     :members:
-
