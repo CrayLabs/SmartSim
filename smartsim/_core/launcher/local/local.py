@@ -37,9 +37,10 @@ from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 from ...utils.helpers import encode_cmd
+from ...config.config import get_config
 
 logger = get_logger(__name__)
-
+cfg = get_config()
 
 class LocalLauncher(Launcher):
     """Launcher used for spawning proceses on a localhost machine."""
@@ -108,8 +109,7 @@ class LocalLauncher(Launcher):
         out, err = step.get_output_files()
         cmd = step.get_launch_cmd()
 
-        is_enabled = int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
-        if is_enabled:
+        if cfg.telemetry_enabled:
             out = step.get_step_file(ending=".indirect.out")
             err = step.get_step_file(ending=".indirect.err")
             cmd = self.get_proxy_cmd(step)
