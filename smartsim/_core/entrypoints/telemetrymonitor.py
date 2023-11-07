@@ -179,7 +179,7 @@ def hydrate_runs(
             "ensemble": [],
         }
 
-        for key in ["model", "orchestrator", "ensemble"]:
+        for key in run_entities:
             _entities = hydrate_persistables(key, run_instance, exp_dir)
             for entity_type, new_entities in _entities.items():
                 if new_entities:
