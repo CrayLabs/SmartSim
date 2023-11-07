@@ -97,13 +97,13 @@ def main(
             track_event(
                 get_ts(),
                 proxy_pid,
-                "", # step_id for unmanaged task is always empty
+                "",  # step_id for unmanaged task is always empty
                 etype,
                 "start",
                 status_path,
                 logger,
                 detail=start_detail,
-                return_code=start_rc
+                return_code=start_rc,
             )
 
         ret_code = process.wait()
@@ -113,7 +113,7 @@ def main(
     track_event(
         get_ts(),
         proxy_pid,
-        "", # step_id for unmanaged task is always empty
+        "",  # step_id for unmanaged task is always empty
         etype,
         "stop",
         status_path,
@@ -168,17 +168,35 @@ def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Step Executor"
     )
-    parser.add_argument("+c", type=str, help="The command to execute", required=True)
     parser.add_argument(
-        "+t", type=str, help="The type of entity related to the step", required=True
+        "+c", "+command", type=str, help="The command to execute", required=True
     )
     parser.add_argument(
-        "+w", type=str, help="The working directory of the executable", required=True
+        "+t",
+        "+entity_type",
+        type=str,
+        help="The type of entity related to the step",
+        required=True,
     )
-    parser.add_argument("+o", type=str, help="Output file", required=True)
-    parser.add_argument("+e", type=str, help="Erorr output file", required=True)
     parser.add_argument(
-        "+d", type=str, help="Directory for telemetry output", required=True
+        "+w",
+        "+working_dir",
+        type=str,
+        help="The working directory of the executable",
+        required=True,
+    )
+    parser.add_argument(
+        "+o", "+outout_file", type=str, help="Output file", required=True
+    )
+    parser.add_argument(
+        "+e", "+error_file", type=str, help="Erorr output file", required=True
+    )
+    parser.add_argument(
+        "+d",
+        "+telemetry_dir",
+        type=str,
+        help="Directory for telemetry output",
+        required=True,
     )
     return parser
 
@@ -196,12 +214,12 @@ if __name__ == "__main__":
         register_signal_handlers()
 
         rc = main(
-            cmd=parsed_args.c,
-            etype=parsed_args.t,
-            output_path=parsed_args.o,
-            error_path=parsed_args.e,
-            cwd=parsed_args.w,
-            status_dir=parsed_args.d,
+            cmd=parsed_args.command,
+            etype=parsed_args.entity_type,
+            output_path=parsed_args.output_file,
+            error_path=parsed_args.error_file,
+            cwd=parsed_args.working_dir,
+            status_dir=parsed_args.telemetry_dir,
         )
         sys.exit(rc)
 

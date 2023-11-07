@@ -72,7 +72,7 @@ def test_parser(capsys, cmd, missing):
 
     actual_missing = msg_tuple[1].strip()
     for exp in expected:
-        assert exp not in actual_missing
+        assert f"{exp}/" not in actual_missing
 
 
 def test_cleanup(capsys, monkeypatch):
