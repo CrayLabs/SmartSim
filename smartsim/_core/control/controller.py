@@ -142,7 +142,6 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
-        self.exp_path = ""
 
     def start(
         self,
@@ -391,7 +390,6 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
-        self.exp_path = exp_path
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
             exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
@@ -589,7 +587,6 @@ class Controller:
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
-        batch_step.meta["exp_path"] = self.exp_path
         batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
 
         substeps = []
@@ -618,7 +615,6 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
-        step.meta["exp_path"] = self.exp_path
         step.meta["status_dir"] = str(telemetry_path / entity.name)
 
         return step
