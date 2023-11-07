@@ -367,7 +367,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def launcher(self) -> Launcher:
         """Return a launcher appropriate for the experiment"""
         if not self._launcher:
-            self._launcher = self.set_launcher("local")
+            self.set_launcher("local")
+
+        if not self._launcher:
+            raise SmartSimError("Unable to set launcher")
 
         return self._launcher
 
