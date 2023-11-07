@@ -30,7 +30,6 @@ import pathlib
 import psutil
 import signal
 import sys
-import time
 import typing as t
 
 from types import FrameType
@@ -130,12 +129,12 @@ def main(
 def cleanup() -> None:
     """Perform cleanup required for clean termination"""
     global STEP_PID  # pylint: disable=global-statement
-    if STEP_PID is not None and STEP_PID < 1:
+    if STEP_PID is None:
         return
 
     try:
         # attempt to stop the subprocess performing step-execution
-        if STEP_PID is not None and psutil.pid_exists(STEP_PID):
+        if psutil.pid_exists(STEP_PID):
             process = psutil.Process(STEP_PID)
             process.terminate()
 
@@ -146,7 +145,7 @@ def cleanup() -> None:
     except OSError as ex:
         logger.warning(f"Failed to clean up step executor gracefully: {ex}")
     finally:
-        STEP_PID = 0
+        STEP_PID = None
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
