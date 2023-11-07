@@ -87,7 +87,7 @@ Detailed Notes
 - Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any`. (SmartSim-PR338_)
 - Add a `smart validate` target to provide a simple smoke test to assess a SmartSim build. (SmartSim-PR336_, SmartSim-PR351_)
 - Add typehints to `smartsim._core.launcher.step.*`. (SmartSim-PR334_)
-- Log errors reported from slurm WLM when attempts to retrieve status fail. (SmartSim-PR331_, (SmartSim-PR332_)
+- Log errors reported from slurm WLM when attempts to retrieve status fail. (SmartSim-PR331_, SmartSim-PR332_)
 - Fix incorrectly formatted positional arguments in log format strings. (SmartSim-PR330_)
 - Ensure that launchers pass environment variables to unmanaged job steps. (SmartSim-PR329_)
 - Add additional tests surrounding the `RAI_PATH` configuration environment variable. (SmartSim-PR328_)
@@ -153,8 +153,8 @@ A full list of changes and detailed notes can be found below:
 Detailed notes
 
 - Updates SmartRedis to the most current release (SmartSim-PR316_)
-- Fixes and enhancements to documentation (SmartSim-PR317_, (SmartSim-PR314_, (SmartSim-PR287_)
-- Various fixes and enhancements to the test suite (SmartSim-PR315_, (SmartSim-PR312_, (SmartSim-PR310_, (SmartSim-PR302_, (SmartSim-PR283_)
+- Fixes and enhancements to documentation (SmartSim-PR317_, SmartSim-PR314_, SmartSim-PR287_)
+- Various fixes and enhancements to the test suite (SmartSim-PR315_, SmartSim-PR312_, SmartSim-PR310_, SmartSim-PR302_, SmartSim-PR283_)
 - Fix a defect in the tests related to database models and scripts that was
   causing key collisions when testing on workload managers (SmartSim-PR313_)
 - Remove `requirements.txt` and other places where dependencies were defined. (SmartSim-PR307_)
