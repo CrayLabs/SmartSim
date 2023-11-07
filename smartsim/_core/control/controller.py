@@ -80,7 +80,7 @@ if t.TYPE_CHECKING:
     from ..launcher.stepMapping import StepMap
     from ..utils.serialize import TStepLaunchMetaData
 
-    _TELEMETRY_MONITOR: t.Optional[subprocess.Popen[t.Any]] = None
+    _TELEMETRY_MONITOR: t.Optional[subprocess.Popen[str]] = None
 else:
     _TELEMETRY_MONITOR = None
 
