@@ -13,7 +13,6 @@
    overview
    installation_instructions/basic
    installation_instructions/platform
-   advanced_topics
    contributing
    smartsim_zoo
 
@@ -33,6 +32,7 @@
    experiment
    orchestrator
    launchers
+   advanced_topics
    api/smartsim_api
 
 .. toctree::
