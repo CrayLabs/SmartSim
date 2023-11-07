@@ -85,7 +85,7 @@ Detailed Notes
 - Create public properties where appropriate to mitigate `protected-access` errors. (SmartSim-PR341_)
 - Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check. (SmartSim-PR339_)
 - Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any`. (SmartSim-PR338_)
-- Add a `smart validate` target to provide a simple smoke test to assess a SmartSim build. (SmartSim-PR336_, PR351_)
+- Add a `smart validate` target to provide a simple smoke test to assess a SmartSim build. (SmartSim-PR336_, SmartSim-PR351_)
 - Add typehints to `smartsim._core.launcher.step.*`. (SmartSim-PR334_)
 - Log errors reported from slurm WLM when attempts to retrieve status fail. (SmartSim-PR331_, (SmartSim-PR332_)
 - Fix incorrectly formatted positional arguments in log format strings. (SmartSim-PR330_)
@@ -165,7 +165,7 @@ Detailed notes
   non-local launchers.  Documentation was updated and fixed.  Also, the default
   testing interface has been changed to lo instead of ipogif. (SmartSim-PR304_)
 - Typehints have been added. A makefile target `make check-mypy` executes static
-  analysis with mypy. (SmartSim-PR295_, PR301_, PR303_)
+  analysis with mypy. (SmartSim-PR295_, SmartSim-PR301_, SmartSim-PR303_)
 - Replace `limit_app_cpus` with `limit_db_cpus` for co-located orchestrators.
   This resolves some incorrect behavior/assumptions about how the application
   would be pinned.  Instead, users should directly specify the binding options in
