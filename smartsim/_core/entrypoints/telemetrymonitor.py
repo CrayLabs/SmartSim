@@ -327,7 +327,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._tracked_runs: t.Dict[int, Run] = {}
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
-        self._launcher_type: str = ""
         self._launcher: t.Optional[Launcher] = None
         self.job_manager: JobManager = JobManager(threading.RLock())
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
@@ -360,13 +359,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment"""
-        if launcher_type != self._launcher_type:
-            self._launcher_type = launcher_type
-            self._launcher = self.init_launcher(launcher_type)
-            self.job_manager.set_launcher(self._launcher)
-            self.job_manager.add_job_onstep_callback(track_timestep)
+        self._launcher = self.init_launcher(launcher_type)
+        self.job_manager.set_launcher(self._launcher)
+        self.job_manager.add_job_onstep_callback(track_timestep)
 
-            self.job_manager.start()
+        self.job_manager.start()
 
     @property
     def launcher(self) -> Launcher:
