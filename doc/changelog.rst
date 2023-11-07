@@ -43,13 +43,13 @@ Detailed Notes
 - Add support for creation of multiple databases with unique identifiers. (SmartSim-PR342_)
 
 
-  .. _SmartSim-PR391: https://github.com/CrayLabs/SmartSim/pull/391
-  .. _SmartSim-PR342: https://github.com/CrayLabs/SmartSim/pull/342
-  .. _SmartSim-PR394: https://github.com/CrayLabs/SmartSim/pull/394
-  .. _SmartSim-PR387: https://github.com/CrayLabs/SmartSim/pull/387
-  .. _SmartSim-PR383: https://github.com/CrayLabs/SmartSim/pull/383
-  .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
-  .. _SmartSim-PR342: https://github.com/CrayLabs/SmartSim/pull/342
+.. _SmartSim-PR391: https://github.com/CrayLabs/SmartSim/pull/391
+.. _SmartSim-PR342: https://github.com/CrayLabs/SmartSim/pull/342
+.. _SmartSim-PR394: https://github.com/CrayLabs/SmartSim/pull/394
+.. _SmartSim-PR387: https://github.com/CrayLabs/SmartSim/pull/387
+.. _SmartSim-PR383: https://github.com/CrayLabs/SmartSim/pull/383
+.. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
+.. _SmartSim-PR342: https://github.com/CrayLabs/SmartSim/pull/342
 
 
 0.5.1
