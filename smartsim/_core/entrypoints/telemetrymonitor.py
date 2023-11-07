@@ -369,7 +369,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def launcher(self) -> Launcher:
         """Return a launcher appropriate for the experiment"""
         if not self._launcher:
-            self._launcher = LocalLauncher()
+            self._launcher = self.set_launcher("local")
 
         return self._launcher
 
