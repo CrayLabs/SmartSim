@@ -86,10 +86,9 @@ class LocalLauncher(Launcher):
         :param step_names: list of step_names
         :type step_names: list[str]
         :return: list of node addresses
-        :rtype: list[str]
+        :rtype: list[list[str]]
 
         TODO: Use socket to find the actual Lo address?
-        :return: a list containing the local host address
         """
         return [["127.0.0.1"] * len(step_names)]
 
