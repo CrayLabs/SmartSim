@@ -107,11 +107,7 @@ def main(
                 return_code=start_rc
             )
 
-        while all((process.is_running(), STEP_PID > 0)):
-            ret_code = process.poll()
-            if ret_code is not None:
-                break
-            time.sleep(1)
+        ret_code = process.wait()
 
     logger.info(f"Indirect step {STEP_PID} complete")
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
