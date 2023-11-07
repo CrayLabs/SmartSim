@@ -400,9 +400,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         self.set_launcher(manifest.launcher)
 
-        if not self._launcher:
-            raise SmartSimError(f"Unable to set launcher from {manifest_path}")
-
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
 
         exp_dir = pathlib.Path(manifest_path).parent.parent.parent
