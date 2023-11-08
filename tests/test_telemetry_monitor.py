@@ -44,7 +44,6 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     get_ts,
     shutdown_when_completed,
     track_event,
-    track_timestep,
     load_manifest,
     hydrate_persistable,
     ManifestEventHandler,
@@ -143,47 +142,6 @@ def test_track_event(
     track_event(timestamp, task_id, step_id, etype, evt_type, exp_path, logger)
 
     expected_output = exp_path / f"{evt_type}.json"
-
-    assert expected_output.exists()
-    assert expected_output.is_file()
-
-
-@pytest.mark.parametrize(
-    ["evt_type", "track_fn"],
-    [
-        pytest.param("timestep", track_timestep, id="update event"),
-    ],
-)
-def test_track_specific(
-    fileutils, evt_type: str, track_fn: t.Callable[[Job, logging.Logger], None]
-):
-    """Ensure that track start writes a file to the expected location with expected name"""
-
-    etype = "ensemble"
-    name = f"test-ensemble-{uuid.uuid4()}"
-    task_id = ""
-    step_id = "1234"
-    timestamp = get_ts()
-
-    exp_dir = pathlib.Path(fileutils.make_test_dir())
-    stored = {
-        "name": name,
-        "run_id": timestamp,
-        "telemetry_metadata": {
-            "status_dir": str(exp_dir / serialize.TELMON_SUBDIR),
-            "task_id": task_id,
-            "step_id": step_id,
-        },
-    }
-    persistables = hydrate_persistable(etype, stored, exp_dir)
-    persistable = persistables[0] if persistables else None
-
-    job = Job(name, task_id, persistable, "local", False)
-
-    track_fn(job, logger)
-
-    fname = f"{evt_type}.json"
-    expected_output = exp_dir / serialize.TELMON_SUBDIR / fname
 
     assert expected_output.exists()
     assert expected_output.is_file()
