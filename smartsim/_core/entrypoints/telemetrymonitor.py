@@ -43,6 +43,7 @@ from watchdog.observers.api import BaseObserver
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
+from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.stepInfo import StepInfo
@@ -337,23 +338,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         raise ValueError("Launcher type not supported: " + launcher)
 
-
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment"""
         self._launcher = self.init_launcher(launcher_type)
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
-
-    @property
-    def launcher(self) -> Launcher:
-        """Return a launcher appropriate for the experiment"""
-        if not self._launcher:
-            self.set_launcher("local")
-
-        if not self._launcher:
-            raise SmartSimError("Unable to set launcher")
-
-        return self._launcher
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the runtime manifest for the experiment and track new entities
@@ -415,7 +404,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory modification.
         :type event: FileModifiedEvent"""
         super().on_modified(event)  # type: ignore
-        self._logger.info(f"processing modified manifest @ {event.src_path}")
+        self._logger.info(f"processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -424,6 +413,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory creation.
         :type event: FileCreatedEvent"""
         super().on_created(event)  # type: ignore
+        self._logger.info(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def _to_completed(
@@ -478,14 +468,16 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type timestamp: int
         :param experiment_dir: the experiement directory to monitor for changes
         :type experiment_dir: pathlib.Path"""
-        launcher = self.launcher
         entity_map = self._tracked_jobs
+
+        if not self._launcher:
+            return
 
         # consider not using name to avoid collisions
         names = {entity.name: entity for entity in entity_map.values()}
 
         if names:
-            step_updates = launcher.get_step_update(list(names.keys()))
+            step_updates = self._launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:
                 if step_info and step_info.status in TERMINAL_STATUSES:
@@ -495,26 +487,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     )
 
 
-def can_shutdown(_action_handler: ManifestEventHandler) -> bool:
-    # has_jobs = bool(action_handler.job_manager.jobs)
-    # has_dbs = bool(action_handler.job_manager.db_jobs)
-    # has_running_jobs = has_jobs or has_dbs
+def can_shutdown(action_handler: ManifestEventHandler) -> bool:
+    has_jobs = bool(action_handler.job_manager.jobs)
+    has_dbs = bool(action_handler.job_manager.db_jobs)
+    has_running_jobs = has_jobs or has_dbs
 
-    return False # known defect; must manually shutdown until fixed
-    # return not has_running_jobs
-
-
-def shutdown_when_completed(
-    observer: BaseObserver, action_handler: ManifestEventHandler
-) -> None:
-    """Inspect active and completed job queues and shutdown if all jobs are complete
-
-    :param observer: (optional) the watchdog Observer instance
-    :type observer: t.Optional[BaseObserver]
-    :param action_handler: The manifest event processor instance
-    :type action_handler: ManifestEventHandler"""
-    if can_shutdown(action_handler):
-        observer.stop()  # type: ignore[no-untyped-call]
+    return not has_running_jobs
 
 
 def event_loop(
@@ -522,6 +500,7 @@ def event_loop(
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
     logger: logging.Logger,
+    cooldown_duration: int
 ) -> None:
     """Executes all attached timestep handlers every <frequency> seconds
 
@@ -535,13 +514,24 @@ def event_loop(
     :type experiment_dir: pathlib.Path
     :param logger: a preconfigured Logger instance
     :type logger: logging.Logger"""
+    elapsed: int = 0
+    last_ts: int = get_ts()
+
     while observer.is_alive():
         timestamp = get_ts()
         logger.debug(f"Telemetry timestep: {timestamp}")
         action_handler.on_timestep(timestamp)
         time.sleep(frequency)
 
-        shutdown_when_completed(observer, action_handler)
+        elapsed += timestamp - last_ts
+        last_ts = timestamp
+
+        if can_shutdown(action_handler):
+            if elapsed >= cooldown_duration:
+                observer.stop()  # type: ignore
+        else:
+            # reset cooldown any time there are still jobs running
+            elapsed = 0
 
 
 def main(
@@ -570,6 +560,7 @@ def main(
         f" matching pattern: {monitor_pattern}"
     )
 
+    telemetry_cooldown = CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
     action_handler = ManifestEventHandler(monitor_pattern, logger)
 
@@ -585,7 +576,7 @@ def main(
         observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
-        event_loop(observer, action_handler, frequency, logger)
+        event_loop(observer, action_handler, frequency, logger, telemetry_cooldown)
         return 0
     except Exception as ex:
         logger.error(ex)

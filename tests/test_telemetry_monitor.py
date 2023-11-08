@@ -40,9 +40,9 @@ from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
 
 from smartsim._core.entrypoints.telemetrymonitor import (
     can_shutdown,
+    event_loop,
     get_parser,
     get_ts,
-    shutdown_when_completed,
     track_event,
     load_manifest,
     hydrate_persistable,
@@ -286,7 +286,7 @@ def test_deserialize_ensemble(fileutils: FileUtils):
     assert len(manifest.runs[0].models) == 8
 
 
-@pytest.mark.skip(reason="fix in progress")
+
 def test_shutdown_conditions():
     """Ensure conditions to shutdown telemetry monitor are correctly evaluated"""
     job_entity1 = JobEntity()
@@ -349,9 +349,8 @@ def test_shutdown_conditions():
     assert can_shutdown(mani_handler)
 
 
-@pytest.mark.skip(reason="fix in progress")
-def test_shutdown_action():
-    """Ensure file system listener is properly shutdown"""
+def test_auto_shutdown():
+    """Ensure that the cooldown timer is respected"""
     class FauxObserver:
         def __init__(self):
             self.stop_count = 0
@@ -359,69 +358,41 @@ def test_shutdown_action():
         def stop(self):
             self.stop_count += 1
 
+        def is_alive(self) -> bool:
+            if self.stop_count > 0:
+                return False
+
+            return True
+    
     job_entity1 = JobEntity()
     job_entity1.name = "xyz"
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
 
-    # show that an event handler w/no monitored jobs can shutdown
+    frequency = 1
+    
+    # show that an event handler w/out a monitored task will automatically stop
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    shutdown_when_completed(observer, mani_handler)
+    duration = 2
+
+    ts0 = get_ts()
+    event_loop(observer, mani_handler, frequency, logger, cooldown_duration=duration)
+    ts1 = get_ts()
+
+    assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
 
-    # show that an event handler w/a monitored job cannot shutdown
+    # show that the new cooldown duration is respected
     mani_handler = ManifestEventHandler("xyz", logger)
-    mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.step_id,
-                                     job_entity1,
-                                     False)
     observer = FauxObserver()
-    shutdown_when_completed(observer, mani_handler)
-    assert observer.stop_count == 0
+    duration = 5
 
-    # show that an event handler w/a monitored db cannot shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
-    job_entity1.type = "orchestrator"
-    mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.step_id,
-                                     job_entity1,
-                                     False)
-    observer = FauxObserver()
-    shutdown_when_completed(observer, mani_handler)
-    assert observer.stop_count == 0
+    ts0 = get_ts()
+    event_loop(observer, mani_handler, frequency, logger, cooldown_duration=duration)
+    ts1 = get_ts()
 
-    # show that an event handler w/a dbs & tasks cannot shutdown
-    job_entity2 = JobEntity()
-    job_entity2.name = "xyz"
-    job_entity2.step_id = "123"
-    job_entity2.task_id = ""
-
-    mani_handler = ManifestEventHandler("xyz", logger)
-    job_entity1.type = "orchestrator"
-    mani_handler.job_manager.add_job(job_entity1.name,
-                                     job_entity1.step_id,
-                                     job_entity1,
-                                     False)
-
-    mani_handler.job_manager.add_job(job_entity2.name,
-                                    job_entity2.step_id,
-                                    job_entity2,
-                                    False)
-    observer = FauxObserver()
-    shutdown_when_completed(observer, mani_handler)
-    assert observer.stop_count == 0
-
-    # ... now, show that removing 1 of 2 jobs still doesn't shutdown
-    mani_handler.job_manager.db_jobs.popitem()
-    observer = FauxObserver()
-    shutdown_when_completed(observer, mani_handler)
-    assert observer.stop_count == 0
-
-    # ... now, show that removing final job will allow shutdown
-    mani_handler.job_manager.jobs.popitem()
-    observer = FauxObserver()
-    shutdown_when_completed(observer, mani_handler)
+    assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
 
 
@@ -576,7 +547,6 @@ def test_telemetry_serial_models_nonblocking(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 5
 
 
-@pytest.mark.skip(reason="unreliable timing w/WLM")
 def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
@@ -602,7 +572,7 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
         try:
             exp.start(orc, block=True)
 
-            snooze_nonblocking(test_dir, max_delay=90, post_data_delay=45)
+            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
 
             telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
             start_events = list(telemetry_output_path.rglob("start.json"))
@@ -612,7 +582,7 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
             assert len(stop_events) <= 1
         finally:
             exp.stop(orc)
-            snooze_nonblocking(test_dir, max_delay=30, post_data_delay=10)
+            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
@@ -620,7 +590,6 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-@pytest.mark.skip(reason="unreliable timing w/WLM")
 def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
@@ -645,7 +614,7 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
         try:
             exp.start(orc)
 
-            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
 
             telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
             start_events = list(telemetry_output_path.rglob("start.json"))
@@ -663,7 +632,6 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-@pytest.mark.skip(reason="unreliable timing w/WLM")
 def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
@@ -702,7 +670,7 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
         finally:
             exp.stop(orc)
             
-        snooze_nonblocking(test_dir, max_delay=30, post_data_delay=30)
+        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
         assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
@@ -720,7 +688,7 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
         assert len(start_events) == 1
         assert len(stop_events) == 1
 
-@pytest.mark.skip(reason="unreliable timing w/WLM")
+
 def test_telemetry_ensemble(fileutils, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running

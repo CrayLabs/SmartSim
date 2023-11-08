@@ -212,6 +212,10 @@ class Config:
     def telemetry_enabled(self) -> bool:
         return bool(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
 
+    @property
+    def telemetry_cooldown(self) -> int:
+        return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
+
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:
     # wrap into a function with a cached result
