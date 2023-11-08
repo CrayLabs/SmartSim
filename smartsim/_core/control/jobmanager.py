@@ -81,6 +81,7 @@ class JobManager:
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
 
     def start(self) -> None:
+        """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
 
@@ -211,7 +212,6 @@ class JobManager:
         """
         with self._lock:
             jobs = self().values()
-
             job_name_map = {job.name: job.ename for job in jobs}
 
             # returns (job step name, StepInfo) tuples
@@ -307,6 +307,7 @@ class JobManager:
     def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
         for corresponding database identifiers
+
         :return: dictionary of host ip addresses
         :rtype: Dict[str, list]"""
 
@@ -325,6 +326,7 @@ class JobManager:
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
+
         :param orchestrator: orchestrator instance
         :type orchestrator: Orchestrator
         """
