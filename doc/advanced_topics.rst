@@ -264,12 +264,11 @@ as ``"./shift.py"``.
     client.put_tensor("Y_rand", y)
 
     client.set_script_from_file("shifter", "./shift.py", device="CPU")
-    client.run_script("shifter", "shift_y_to_x_points", inputs=["X_rand", "Y_rand"], outputs=["Y_scaled"])
+    client.run_script("shifter", "shift_y_to_x", inputs=["X_rand", "Y_rand"], outputs=["Y_scaled"])
     y_scaled = client.get_tensor("Y_scaled")
 
 Simpler functions (or functions that do not require calling other functions),
 can be defined inline and uploaded to the DB. For example:
-
 
 .. code-block:: python
 
