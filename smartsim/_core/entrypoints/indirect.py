@@ -163,8 +163,6 @@ def register_signal_handlers() -> None:
 
 
 def get_parser() -> argparse.ArgumentParser:
-    # NOTE: plus prefix avoids passing param incorrectly to python interpreter,
-    # e.g. `python -m smartsim._core.entrypoints.indirect -c ... -t ...`
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Step Executor"
     )
