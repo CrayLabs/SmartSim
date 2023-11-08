@@ -35,7 +35,6 @@ import sys
 import threading
 import time
 import typing as t
-from logging import Logger
 from os import environ
 
 from smartredis import Client, ConfigOptions
@@ -76,56 +75,13 @@ from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:
-    from ..launcher.stepMapping import StepMap
     from ..utils.serialize import TStepLaunchMetaData
-
-    _TELEMETRY_MONITOR: t.Optional[subprocess.Popen[str]] = None
-else:
-    _TELEMETRY_MONITOR = None
 
 
 logger = get_logger(__name__)
 
 # job manager lock
 JM_LOCK = threading.RLock()
-
-
-def start_telemetry_monitor(exp_dir: str, frequency: int) -> t.Any:
-    logger.debug("Starting telemetry monitor process")
-    # pylint: disable-next=consider-using-with
-    process = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "smartsim._core.entrypoints.telemetrymonitor",
-            "-d",
-            exp_dir,
-            "-f",
-            str(frequency),
-        ],
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        cwd=str(pathlib.Path(__file__).parent.parent.parent),
-        shell=False,
-    )
-    return process
-
-
-def create_telmon_callback(exp_dir: str) -> t.Callable[[Job, Logger], None]:
-    """Create a callback function that can be executed by the job manager"""
-
-    def start_telemetry_callback(_job: Job, _logger: Logger) -> None:
-        """A callback that will start a telemetry monitor
-        process if a task is started"""
-        global _TELEMETRY_MONITOR  # pylint: disable=global-statement
-
-        # if never started or if a prior instance has shut down
-        if _TELEMETRY_MONITOR is None or _TELEMETRY_MONITOR.returncode is not None:
-            _TELEMETRY_MONITOR = start_telemetry_monitor(
-                exp_dir, CONFIG.telemetry_frequency
-            )
-
-    return start_telemetry_callback
 
 
 class Controller:
@@ -142,6 +98,7 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
+        self._telemetry_monitor: t.Optional[subprocess.Popen[str]] = None
 
     def start(
         self,
@@ -163,10 +120,6 @@ class Controller:
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
 
-        # have job manager launch a telemetry monitor if any jobs are run
-        if not self._jobs._on_start_hook:  # pylint: disable=protected-access
-            self._jobs.add_job_onstart_callback(create_telmon_callback(exp_path))
-
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
@@ -176,6 +129,9 @@ class Controller:
         serialize.save_launch_manifest(
             launched.map(_look_up_launched_data(self._launcher))
         )
+
+        # launch a telemetry monitor to track job progress
+        self.start_telemetry_monitor(exp_path, CONFIG.telemetry_frequency)
 
         # block until all non-database jobs are complete
         if block:
@@ -856,6 +812,32 @@ class Controller:
                         for db_script in entity.db_scripts:
                             if db_script not in ensemble.db_scripts:
                                 set_script(db_script, client)
+
+    def start_telemetry_monitor(self, exp_dir: str, frequency: int) -> None:
+        logger.debug("Starting telemetry monitor process")
+        if not CONFIG.telemetry_enabled:
+            return
+
+        if (
+            self._telemetry_monitor is None
+            or self._telemetry_monitor.returncode is not None
+        ):
+            # pylint: disable-next=consider-using-with
+            self._telemetry_monitor = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "smartsim._core.entrypoints.telemetrymonitor",
+                    "-d",
+                    exp_dir,
+                    "-f",
+                    str(frequency),
+                ],
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                cwd=str(pathlib.Path(__file__).parent.parent.parent),
+                shell=False,
+            )
 
 
 class _AnonymousBatchJob(EntityList[Model]):
