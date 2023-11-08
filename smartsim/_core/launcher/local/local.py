@@ -37,10 +37,8 @@ from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 from ...utils.helpers import encode_cmd
-from ...config.config import get_config
+from ...config.config import CONFIG
 
-logger = get_logger(__name__)
-cfg = get_config()
 
 class LocalLauncher(Launcher):
     """Launcher used for spawning proceses on a localhost machine."""
@@ -109,7 +107,7 @@ class LocalLauncher(Launcher):
         out, err = step.get_output_files()
         cmd = step.get_launch_cmd()
 
-        if cfg.telemetry_enabled:
+        if CONFIG.telemetry_enabled:
             out = step.get_step_file(ending=".indirect.out")
             err = step.get_step_file(ending=".indirect.err")
             cmd = self.get_proxy_cmd(step)
