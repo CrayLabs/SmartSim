@@ -37,7 +37,7 @@ from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 from ...utils.helpers import encode_cmd
-from ...config.config import CONFIG
+from ...config import CONFIG
 
 
 class LocalLauncher(Launcher):
