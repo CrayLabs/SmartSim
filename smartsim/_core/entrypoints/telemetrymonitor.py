@@ -43,7 +43,7 @@ from watchdog.observers.api import BaseObserver
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
-from smartsim._core.control.job import Job, JobEntity, _JobKey
+from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.stepInfo import StepInfo
 
@@ -282,22 +282,6 @@ def track_event(
         logger.error("Unable to write tracking file.", exc_info=True)
 
 
-def track_timestep(job: Job, logger: logging.Logger) -> None:
-    """Persists telemetry event for a timestep"""
-    if hasattr(job.entity, "status_dir"):
-        write_path = pathlib.Path(job.entity.status_dir)
-
-    track_event(
-        get_ts(),
-        job.jid or "" if not job.is_task else "",
-        job.jid or "" if job.is_task else "",
-        job.entity.type,
-        "timestep",
-        write_path,
-        logger,
-    )
-
-
 class ManifestEventHandler(PatternMatchingEventHandler):
     """The ManifestEventHandler monitors an experiment for changes and updates
     a telemetry datastore as needed.
@@ -358,8 +342,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Set the launcher for the experiment"""
         self._launcher = self.init_launcher(launcher_type)
         self.job_manager.set_launcher(self._launcher)
-        self.job_manager.add_job_onstep_callback(track_timestep)
-
         self.job_manager.start()
 
     @property
