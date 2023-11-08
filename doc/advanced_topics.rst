@@ -6,13 +6,13 @@ In this section, we illustrate some topics which experienced
 users are expected to use in HPC workloads, especially when
 simulation and AI are required to interact. The topics are
 explained through code snippets,
-with code which goes beyond SmartSim's and SmartRedis's API
+with code which goes beyond SmartSim and SmartRedis API
 (e.g. code showing how to jit-script a PyTorch model): the
 intention is that of showing *one* simple way of leveraging
 a feature, and they can be potentially optimized in
 several ways. Examples are written in Python, but the same
 result can be achieved with any SmartRedis client (C, C++,
-Fortran and Python). Please refer to SmartRedis's API
+Fortran and Python). Please refer to SmartRedis API
 for language-specific details.
 
 Using ML models on the DB
@@ -40,7 +40,7 @@ TensorFlow and Keras models <smartsim_tf_api>`: ``freeze_model`` and
 ``serialize_model``.
 
 The method ``freeze_model`` is thought to be used in conjunction
-with SmartRedis's ``set_model_from_file``. The following is a typical
+with SmartRedis ``set_model_from_file``. The following is a typical
 workflow, first we define the model:
 
 .. code-block:: python
@@ -76,7 +76,7 @@ and the names of the input and output layers, which are needed to upload the Ten
 model on the DB, as shown in the following code snippet, where we also upload a
 synthetic sample to be passed to the model. Notice that we could also upload a batch
 of samples, instead of a single one. For details about ``set_model_from_file``, please
-refer to :ref:`SmartRedis's API <smartredis-api>`.
+refer to :ref:`SmartRedis API <smartredis-api>`.
 
 .. code-block:: python
 
