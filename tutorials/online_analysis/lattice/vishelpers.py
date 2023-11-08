@@ -20,8 +20,8 @@ def plot_lattice_vorticity(timestep, ux, uy, cylinder):
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     ax.set_aspect("equal")
+    ax.set_title(f"Vorticity plot at timestep {timestep}\n")
     plt.pause(0.001)
-    print(f"Vorticity plot at timestep: {timestep}\n")
 
 
 def plot_lattice_norm(timestep, u, cylinder):
@@ -39,8 +39,8 @@ def plot_lattice_norm(timestep, u, cylinder):
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     ax.set_aspect("equal")
+    ax.set_title(f"Velocity magnitude at timestep {timestep}\n")
     plt.pause(0.001)
-    print(f"Velocity magnitude: {timestep}\n")
 
 
 def plot_lattice_probes(timestep, probe_x, probe_y, probe_u):
@@ -69,5 +69,5 @@ def plot_lattice_probes(timestep, probe_x, probe_y, probe_u):
     ax.set_aspect("equal")
     ax.set_xlim([0, 399])
     ax.set_ylim([0, 99])
+    ax.set_title(f"Velocity field at timestep {timestep}\n")
     plt.pause(0.001)
-    print(f"Velocity field: {timestep}\n")
