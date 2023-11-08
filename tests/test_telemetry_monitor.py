@@ -52,7 +52,7 @@ from smartsim._core.utils import serialize
 from smartsim import Experiment
 
 
-ALL_ARGS = {"-d", "-f"}
+ALL_ARGS = {"-exp_dir", "-frequency"}
 logger = logging.getLogger()
 
 
@@ -69,9 +69,9 @@ def snooze_nonblocking(test_dir: str, max_delay: int = 20, post_data_delay: int 
 @pytest.mark.parametrize(
     ["cmd", "missing"],
     [
-        pytest.param("", {"-d", "-f"}, id="no args"),
-        pytest.param("-d /foo/bar", {"-f"}, id="no freq"),
-        pytest.param("-f 123", {"-d"}, id="no dir"),
+        pytest.param("", {"-exp_dir", "-frequency"}, id="no args"),
+        pytest.param("-exp_dir /foo/bar", {"-frequency"}, id="no freq"),
+        pytest.param("-frequency 123", {"-exp_dir"}, id="no dir"),
     ],
 )
 def test_parser_reqd_args(capsys, cmd, missing):
@@ -102,13 +102,13 @@ def test_parser():
     test_dir = "/foo/bar"
     test_freq = "123"
 
-    cmd = f"-d {test_dir} -f {test_freq}"
+    cmd = f"-exp_dir {test_dir} -frequency {test_freq}"
     args = cmd.split()
 
     ns = parser.parse_args(args)
 
-    assert ns.d == test_dir
-    assert ns.f == test_freq
+    assert ns.exp_dir == test_dir
+    assert ns.frequency == test_freq
 
 
 def test_ts():

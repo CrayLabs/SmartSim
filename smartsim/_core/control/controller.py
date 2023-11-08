@@ -119,7 +119,6 @@ class Controller:
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
-
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started

@@ -614,23 +614,16 @@ def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments"""
     arg_parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     arg_parser.add_argument(
-        "-f",
+        "-frequency",
         type=str,
-        help="Frequency of telemetry updates",
+        help="Frequency of telemetry updates (in seconds))",
         required=True,
     )
     arg_parser.add_argument(
-        "-d",
+        "-exp_dir",
         type=str,
         help="Experiment root directory",
         required=True,
-    )
-    arg_parser.add_argument(
-        "-n",
-        type=int,
-        help="Automatically shutdown after a specific number of polling iterations",
-        default=0,
-        required=False,
     )
     return arg_parser
 
@@ -647,7 +640,7 @@ if __name__ == "__main__":
     register_signal_handlers()
 
     try:
-        main(int(args.f), pathlib.Path(args.d), log)
+        main(int(args.frequency), pathlib.Path(args.exp_dir), log)
         sys.exit(0)
     except Exception:
         log.exception(
