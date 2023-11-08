@@ -711,14 +711,14 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
 
         telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
 
-        start_events = list(telemetry_output_path.rglob("dbnode/*/start.json"))
-        stop_events = list(telemetry_output_path.rglob("dbnode/*/stop.json"))
+        start_events = list(telemetry_output_path.rglob("database/**/start.json"))
+        stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
 
         assert len(start_events) == 1
         assert len(stop_events) == 1
 
-        start_events = list(telemetry_output_path.rglob("model/*/start.json"))
-        stop_events = list(telemetry_output_path.rglob("model/*/stop.json"))
+        start_events = list(telemetry_output_path.rglob("model/**/start.json"))
+        stop_events = list(telemetry_output_path.rglob("model/**/stop.json"))
         assert len(start_events) == 1
         assert len(stop_events) == 1
 
