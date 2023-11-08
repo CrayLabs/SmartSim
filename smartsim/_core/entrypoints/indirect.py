@@ -69,8 +69,8 @@ def main(
     ret_code: int = 1
     logger.debug("Indirect step starting")
 
-    ofp = open(output_path, "w+", encoding="utf-8")  # pylint: ignore=consider-using-with
-    efp = open(error_path, "w+", encoding="utf-8")  # pylint: ignore=consider-using-with
+    ofp = open(output_path, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
+    efp = open(error_path, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
 
     start_detail = f"Proxy process {proxy_pid}"
     start_rc: t.Optional[int] = None
