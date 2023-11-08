@@ -98,7 +98,7 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
-        self._telemetry_monitor: t.Optional[subprocess.Popen[str]] = None
+        self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
 
     def start(
         self,
