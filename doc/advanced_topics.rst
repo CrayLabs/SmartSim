@@ -76,7 +76,7 @@ and the names of the input and output layers, which are needed to upload the Ten
 model on the DB, as shown in the following code snippet, where we also upload a
 synthetic sample to be passed to the model. Notice that we could also upload a batch
 of samples, instead of a single one. For details about ``set_model_from_file``, please
-refer to `SmartRedis's API <smartredis-api>`__.
+refer to :ref:`SmartRedis's API <smartredis-api>`.
 
 .. code-block:: python
 
