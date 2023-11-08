@@ -69,46 +69,48 @@ def main(
     ret_code: int = 1
     logger.debug("Indirect step starting")
 
-    with open(output_path, "w+", encoding="utf-8") as ofp, open(
-        error_path, "w+", encoding="utf-8"
-    ) as efp:
-        start_detail = f"Proxy process {proxy_pid}"
-        start_rc: t.Optional[int] = None
+    ofp = open(output_path, "w+", encoding="utf-8")  # pylint: ignore=consider-using-with
+    efp = open(error_path, "w+", encoding="utf-8")  # pylint: ignore=consider-using-with
 
-        try:
-            process = psutil.Popen(
-                cleaned_cmd,
-                cwd=cwd,
-                stdout=ofp.fileno(),
-                stderr=efp.fileno(),
-                close_fds=True,
-            )
-            STEP_PID = process.pid
-            logger.info(f"Indirect step step {STEP_PID} started")
-            start_detail += f" started child process {STEP_PID}"
+    start_detail = f"Proxy process {proxy_pid}"
+    start_rc: t.Optional[int] = None
 
-        except Exception as ex:
-            start_detail += f" failed to start child process. {ex}"
-            start_rc = 1
-            logger.error("Failed to create process", exc_info=True)
-            cleanup()
-            return 1
-        finally:
-            track_event(
-                get_ts(),
-                proxy_pid,
-                "",  # step_id for unmanaged task is always empty
-                etype,
-                "start",
-                status_path,
-                logger,
-                detail=start_detail,
-                return_code=start_rc,
-            )
+    try:
+        process = psutil.Popen(
+            cleaned_cmd,
+            cwd=cwd,
+            stdout=ofp.fileno(),
+            stderr=efp.fileno(),
+            close_fds=True,
+        )
+        STEP_PID = process.pid
+        logger.info(f"Indirect proxy {proxy_pid} child process {STEP_PID} started")
+        start_detail += f" started child process {STEP_PID}"
 
-        ret_code = process.wait()
+    except Exception as ex:
+        start_detail += f" failed to start child process. {ex}"
+        start_rc = 1
+        logger.error("Failed to create process", exc_info=True)
+        cleanup()
+        return 1
+    finally:
+        track_event(
+            get_ts(),
+            proxy_pid,
+            "",  # step_id for unmanaged task is always empty
+            etype,
+            "start",
+            status_path,
+            logger,
+            detail=start_detail,
+            return_code=start_rc,
+        )
 
-    logger.info(f"Indirect step {STEP_PID} complete")
+    logger.info(f"Waiting for child process {STEP_PID} to complete")
+    ret_code = process.wait()
+
+    logger.info(f"Indirect proxy {proxy_pid} child process {STEP_PID} complete."
+                f" return code: {ret_code}")
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
     track_event(
         get_ts(),
@@ -128,6 +130,7 @@ def main(
 
 def cleanup() -> None:
     """Perform cleanup required for clean termination"""
+    logger.info("Performing cleanup")
     global STEP_PID  # pylint: disable=global-statement
     if STEP_PID is None:
         return
@@ -150,6 +153,7 @@ def cleanup() -> None:
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     """Helper function to ensure clean process termination"""
+    logger.info(f"handling signal {signo}")
     if not signo:
         logger.warning("Received signal with no signo")
 
