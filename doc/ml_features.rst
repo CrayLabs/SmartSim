@@ -1,16 +1,18 @@
-###############
-Advanced Topics
-###############
+###########
+ML Features
+###########
 
-In this section, we illustrate some topics which experienced
+In this section, we illustrate features which
 users are expected to use in HPC workloads, especially when
 simulation and AI are required to interact. The topics are
 explained through code snippets,
-with code which goes beyond SmartSim and SmartRedis API
+with code that goes beyond SmartSim and SmartRedis API
 (e.g. code showing how to jit-script a PyTorch model): the
 intention is that of showing *one* simple way of leveraging
-a feature, and they can be potentially optimized in
-several ways. Examples are written in Python, but the same
+a feature, but more optimized ways of using third-party
+libraries may exist.
+
+Examples are written in Python, but the same
 result can be achieved with any SmartRedis client (C, C++,
 Fortran and Python). Please refer to SmartRedis API
 for language-specific details.
@@ -127,7 +129,7 @@ PyTorch
 PyTorch requires models to be `jit-traced <https://pytorch.org/docs/1.11/generated/torch.jit.save.html>`__.
 The method ``torch.jit.save`` can either store the model in memory or on file.
 
-First, we define the model and a
+First, we define the model, which in this case is a simple Neural Network:
 
 .. code-block:: python
 
@@ -165,7 +167,7 @@ First, we define the model and a
             output = F.log_softmax(x, dim=1)
             return output
 
-We can then creat the Neural Network, jit-trace it and upload it
+We can then create the Neural Network, jit-trace it and upload it
 to the DB. Note that we are storing the serialized model in a ``BytesIO``
 object, which means that we are keeping it in memory and not storing
 it on the file system. For this reason, we need to call SmartRedis's

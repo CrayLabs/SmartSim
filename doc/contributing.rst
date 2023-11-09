@@ -48,11 +48,11 @@ How to contribute
 We welcome contributions from the broader community. These generally fall under
 two categories:
 
-- Developments to the main codebases: These contributions directly modify the
+- Contributions to the main codebases: These contributions directly modify the
   SmartSim and SmartRedis repositories to fix bugs in the code, improve
   the documentation, or add new features. Before embarking on major development,
   please contact the developers first to make sure that your proposal aligns
-  with the internal development by opening an issue or reach out to us. Please
+  with the internal development by opening an issue or reaching out to us. Please
   follow the :ref:`Developer Guidelines <developer_guide>`.
 
 - Applications of SmartSim: Many of our users build scientific/engineering
@@ -62,13 +62,13 @@ two categories:
 In both cases, contributors can expect the following:
 
 - A quick response to your pull requests detailing why we are accepting or
-  rejecting your contribution
+  rejecting your contribution.
 
 - If we accept your contribution, a SmartSim developer will be assigned to help
   bring your contribution into the codebases by testing it across a variety of
   platforms and ensuring code quality.
 
-- You will be credited as a co-author when the contribution is merged
+- You will be credited as a co-author when the contribution is merged.
 
 .. note::
     The last point serves as a `Developer Certificate of Origin <https://developercertificate.org/>`_.

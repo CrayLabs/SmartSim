@@ -32,7 +32,7 @@
    experiment
    orchestrator
    launchers
-   advanced_topics
+   ml_features
    api/smartsim_api
 
 .. toctree::
