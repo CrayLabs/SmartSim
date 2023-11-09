@@ -60,7 +60,6 @@ from ..servertype import STANDALONE, CLUSTERED
 
 logger = get_logger(__name__)
 
-
 by_launcher: t.Dict[str, t.List[str]] = {
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
@@ -69,7 +68,6 @@ by_launcher: t.Dict[str, t.List[str]] = {
     "lsf": ["jsrun"],
     "local": [""],
 }
-
 
 def _detect_command(launcher: str) -> str:
     if launcher in by_launcher:
@@ -85,7 +83,6 @@ def _detect_command(launcher: str) -> str:
     )
     raise SmartSimError(msg)
 
-
 def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
     """Automatically detect the launcher and run command to use"""
     if launcher == "auto":
@@ -96,7 +93,6 @@ def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
 
     return launcher, run_command
 
-
 def _check_run_command(launcher: str, run_command: str) -> None:
     """Check that the run command is supported by the launcher"""
     if run_command not in by_launcher[launcher]:
@@ -106,7 +102,6 @@ def _check_run_command(launcher: str, run_command: str) -> None:
             + f"{by_launcher[launcher]}"
         )
         raise SmartSimError(msg)
-
 
 def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
     if not single_cmd:
@@ -132,7 +127,6 @@ def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool
         return False
 
     return single_cmd
-
 
 def _check_local_constraints(launcher: str, batch: bool) -> None:
     """Check that the local launcher is not launched with invalid batch config"""
@@ -187,14 +181,9 @@ class Orchestrator(EntityList[DBNode]):
         :type intra_op_threads: int, optional
         """
         self.launcher, self.run_command = _autodetect(launcher, run_command)
-
         _check_run_command(self.launcher, self.run_command)
         _check_local_constraints(self.launcher, batch)
-
         single_cmd = _get_single_command(self.run_command, batch, single_cmd)
-
-        self.db_identifier = db_identifier
-
         self.ports: t.List[int] = []
         self.path = getcwd()
         self._hosts: t.List[str] = []
@@ -214,8 +203,8 @@ class Orchestrator(EntityList[DBNode]):
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
 
         super().__init__(
-            db_identifier,
-            self.path,
+            name=db_identifier,
+            path=self.path,
             port=port,
             interface=interface,
             db_nodes=db_nodes,
@@ -268,6 +257,15 @@ class Orchestrator(EntityList[DBNode]):
             self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
             self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
             self._fill_reserved()
+
+    @property
+    def db_identifier(self) -> str:
+        """Return the DB identifier, which is common to a DB and all of its nodes
+
+        :return: DB identifier
+        :rtype: str
+        """
+        return self.name
 
     @property
     def num_shards(self) -> int:
@@ -795,7 +793,7 @@ class Orchestrator(EntityList[DBNode]):
         self, *, db_nodes: int = 1, port: int = 6379, **kwargs: t.Any
     ) -> None:
         cluster = db_nodes >= 3
-
+        mpmd_node_name = self.name + "_0"
         exe_args_mpmd: t.List[t.List[str]] = []
 
         for db_id in range(db_nodes):
@@ -817,11 +815,11 @@ class Orchestrator(EntityList[DBNode]):
             run_settings = self._build_run_settings(
                 sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
-            output_files = [self.name + "_0.out"]
+            output_files = [mpmd_node_name + ".out"]
         if not run_settings:
             raise ValueError(f"Could not build run settings for {self.launcher}")
         node = DBNode(
-            self.name + "_0",
+            mpmd_node_name,
             self.path,
             run_settings,
             [port],
