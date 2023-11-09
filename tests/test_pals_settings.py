@@ -39,6 +39,15 @@ from smartsim._core.launcher.step.mpiStep import MpiexecStep
 default_exe = sys.executable
 default_kwargs = {"fail_if_missing_exec": False}
 
+@pytest.fixture(autouse=True)
+def turnoff_telemetry_inderict(monkeypatch):
+    import smartsim._core.launcher.launcher
+    monkeypatch.setattr(
+        smartsim._core.config.config.Config,
+        "telemetry_enabled", property(lambda self: False))
+    yield
+
+
 # Uncomment when
 # @pytest.mark.parametrize(
 #    "function_name",[
@@ -53,6 +62,7 @@ default_kwargs = {"fail_if_missing_exec": False}
 #    func = getattr(settings, function_name)
 #    with pytest.raises(SSUnsupportedError):
 #        func(None)
+
 
 def test_affinity_script():
     settings = PalsMpiexecSettings(default_exe, **default_kwargs)

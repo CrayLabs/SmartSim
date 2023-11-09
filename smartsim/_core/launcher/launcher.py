@@ -31,8 +31,9 @@ from ...error import AllocationError, LauncherError, SSUnsupportedError
 from .stepInfo import UnmanagedStepInfo, StepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
-from .step import Step
+from .step.step import Step, UnmanagedProxyStep
 from ...settings import SettingsBase
+from ..config import CONFIG
 
 
 class Launcher(abc.ABC):  # pragma: no cover
@@ -88,6 +89,7 @@ class WLMLauncher(Launcher):  # cov-wlm
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
+    @t.final
     def create_step(
         self, name: str, cwd: str, step_settings: SettingsBase
     ) -> Step:  # cov-wlm
@@ -111,9 +113,13 @@ class WLMLauncher(Launcher):  # cov-wlm
                 f"RunSettings type {type(step_settings)} not supported by this launcher"
             ) from None
         try:
-            return step_class(name, cwd, step_settings)
+            step = step_class(name, cwd, step_settings)
         except AllocationError as e:
             raise LauncherError("Step creation failed") from e
+        else:
+            if not step.managed and CONFIG.telemetry_enabled:
+                step = UnmanagedProxyStep.from_step(step)
+        return step
 
     # these methods are implemented in WLM launchers and
     # don't need to be covered here.

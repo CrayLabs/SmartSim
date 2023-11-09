@@ -115,12 +115,11 @@ class LSFLauncher(WLMLauncher):
             time.sleep(1)
             step_id = self._get_lsf_step_id(step)
             logger.debug(f"Gleaned jsrun step id: {step_id} for {step.name}")
-        else:  # isinstance(step, MpirunStep) or isinstance(step, LocalStep)
+        else:
             # mpirun and local launch don't direct output for us
             out, err = step.get_output_files()
 
-            # LocalStep.run_command omits env, include it here
-            passed_env = step.env if isinstance(step, LocalStep) else None
+            passed_env = step.env
 
             # pylint: disable-next=consider-using-with
             output = open(out, "w+", encoding="utf-8")

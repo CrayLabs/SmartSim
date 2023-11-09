@@ -31,8 +31,8 @@ import typing as t
 from ..launcher import Launcher
 from ....log import get_logger
 from ....settings import RunSettings, SettingsBase
-from ..step import LocalStep
-from ..step import Step
+from ..step.localStep import LocalStep
+from ..step.step import Step, UnmanagedProxyStep
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
@@ -56,7 +56,10 @@ class LocalLauncher(Launcher):
             raise TypeError(
                 f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
             )
-        return LocalStep(name, cwd, step_settings)
+        step: Step = LocalStep(name, cwd, step_settings)
+        if CONFIG.telemetry_enabled:
+            step = UnmanagedProxyStep.from_step(step)
+        return step
 
     def get_step_update(
         self, step_names: t.List[str]
@@ -107,18 +110,12 @@ class LocalLauncher(Launcher):
         out, err = step.get_output_files()
         cmd = step.get_launch_cmd()
 
-        if CONFIG.telemetry_enabled:
-            out = step.get_step_file(ending=".indirect.out")
-            err = step.get_step_file(ending=".indirect.err")
-            cmd = self.get_proxy_cmd(step)
-
         # pylint: disable-next=consider-using-with
         output = open(out, "w+", encoding="utf-8")
         # pylint: disable-next=consider-using-with
         error = open(err, "w+", encoding="utf-8")
 
-        # LocalStep.run_command omits env, include it here
-        passed_env = step.env if isinstance(step, LocalStep) else None
+        passed_env = step.env
 
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
@@ -145,43 +142,3 @@ class LocalLauncher(Launcher):
 
     def __str__(self) -> str:
         return "Local"
-
-    @staticmethod
-    def get_proxy_cmd(step: Step) -> t.List[str]:
-        """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
-        continue telemetry logging after a driver process exits or fails.
-
-        :param step: the step to produce a proxied command for
-        :type step: Step
-        :return: CLI arguments to execute the step via the proxy step executor
-        :rtype: t.List[str]
-        """
-
-        proxy_module = "smartsim._core.entrypoints.indirect"
-        etype = step.meta["entity_type"]
-        status_dir = step.meta["status_dir"]
-        cmd_list = step.get_launch_cmd()
-        encoded_cmd = encode_cmd(cmd_list)
-
-        out, err = step.get_output_files()
-
-        # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
-        # the indirect entrypoint rebuild the cmd... for now, test away...
-        proxied_cmd = [
-            sys.executable,
-            "-m",
-            proxy_module,
-            "+command",
-            encoded_cmd,
-            "+entity_type",
-            etype,
-            "+telemetry_dir",
-            status_dir,
-            "+working_dir",
-            step.cwd,
-            "+output_file",
-            out,
-            "+error_file",
-            err,
-        ]
-        return proxied_cmd
