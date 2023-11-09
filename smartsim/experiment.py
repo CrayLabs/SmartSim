@@ -510,7 +510,7 @@ class Experiment:
                 "epoch": 10,
                 "lr": 0.001
             }
-            model = exp.create_model("pytorch_model", run_settings, params=params)
+            model = exp.create_model("pytorch_model", run_settings, params=train_params)
             model.attach_generator_files(to_configure="./train.cfg")
             exp.generate(model)
 
@@ -746,6 +746,9 @@ class Experiment:
         :type queue: str, optional
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
+        :param db_identifier: an identifier to distinguish this orchestrator in 
+            multiple-database experiments, defaults to "orchestrator"
+        :type db_identifier: str, optional
         :raises SmartSimError: if detection of launcher or of run command fails
         :raises SmartSimError: if user indicated an incompatible run command
             for the launcher
