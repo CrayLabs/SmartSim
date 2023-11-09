@@ -32,7 +32,6 @@ import typing as t
 from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
-import smartsim._core.utils.helpers as _helpers
 
 if t.TYPE_CHECKING:
     from smartsim import Experiment
@@ -44,40 +43,32 @@ if t.TYPE_CHECKING:
 
 
 TStepLaunchMetaData = t.Tuple[
-    t.Optional[str], t.Optional[str], t.Optional[bool], str, str
+    t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
 ]
+TELMON_SUBDIR: t.Final[str] = ".smartsim/telemetry"
+MANIFEST_FILENAME: t.Final[str] = "manifest.json"
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
-    manifest_dir = Path(manifest.metadata.exp_path) / ".smartsim/telemetry"
-    manifest_dir.mkdir(parents=True, exist_ok=True)
-    manifest_file = manifest_dir / "manifest.json"
-
-    run_id = _helpers.create_short_id_str()
-    telemetry_data_root = manifest_dir / f"{manifest.metadata.exp_name}/{run_id}"
+    manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
 
     new_run = {
-        "run_id": run_id,
+        "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
         "model": [
-            _dictify_model(
-                model,
-                *telemetry_metadata,
-                telemetry_data_root / "model",
-            )
+            _dictify_model(model, *telemetry_metadata)
             for model, telemetry_metadata in manifest.models
         ],
         "orchestrator": [
-            _dictify_db(db, nodes_info, telemetry_data_root / "database")
-            for db, nodes_info in manifest.databases
+            _dictify_db(db, nodes_info) for db, nodes_info in manifest.databases
         ],
         "ensemble": [
-            _dictify_ensemble(ens, member_info, telemetry_data_root / "ensemble")
+            _dictify_ensemble(ens, member_info)
             for ens, member_info in manifest.ensembles
         ],
     }
     try:
-        with open(manifest_file, "r", encoding="utf-8") as file:
+        with open(manifest.metadata.manifest_file_path, "r", encoding="utf-8") as file:
             manifest_dict = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         manifest_dict = {
@@ -95,7 +86,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     else:
         manifest_dict["runs"].append(new_run)
     finally:
-        with open(manifest_file, "w", encoding="utf-8") as file:
+        with open(manifest.metadata.manifest_file_path, "w", encoding="utf-8") as file:
             json.dump(manifest_dict, file, indent=2)
 
 
@@ -155,7 +146,7 @@ def _dictify_model(
         if colo_settings
         else {},
         "telemetry_metadata": {
-            "status_dir": str(telemetry_data_path / model.name),
+            "status_dir": str(telemetry_data_path),
             "step_id": step_id,
             "task_id": task_id,
             "managed": managed,
@@ -168,7 +159,6 @@ def _dictify_model(
 def _dictify_ensemble(
     ens: Ensemble,
     members: t.Sequence[t.Tuple[Model, TStepLaunchMetaData]],
-    telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
     return {
         "name": ens.name,
@@ -178,7 +168,7 @@ def _dictify_ensemble(
         # also be an empty dict for no discernible reason...
         if ens.batch_settings else {},
         "models": [
-            _dictify_model(model, *launching_metadata, telemetry_data_path / ens.name)
+            _dictify_model(model, *launching_metadata)
             for model, launching_metadata in members
         ],
     }
@@ -207,7 +197,6 @@ def _dictify_batch_settings(batch_settings: BatchSettings) -> t.Dict[str, t.Any]
 def _dictify_db(
     db: Orchestrator,
     nodes: t.Sequence[t.Tuple[DBNode, TStepLaunchMetaData]],
-    telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
     db_path = _utils.get_db_path()
     if db_path:
@@ -225,13 +214,20 @@ def _dictify_db(
                 "out_file": out_file,
                 "err_file": err_file,
                 "telemetry_metadata": {
-                    "status_dir": str(telemetry_data_path / f"{db.name}/{dbnode.name}"),
+                    "status_dir": str(status_dir),
                     "step_id": step_id,
                     "task_id": task_id,
                     "managed": managed,
                 },
             }
-            for dbnode, (step_id, task_id, managed, out_file, err_file) in nodes
+            for dbnode, (
+                step_id,
+                task_id,
+                managed,
+                out_file,
+                err_file,
+                status_dir,
+            ) in nodes
             for shard in dbnode.get_launched_shard_info()
         ],
     }

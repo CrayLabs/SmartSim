@@ -1,0 +1,69 @@
+{
+  "schema info": {
+    "schema_name": "entity manifest",
+    "version": "0.0.1"
+  },
+  "experiment": {
+    "name": "my-exp",
+    "path": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp",
+    "launcher": "Slurm"
+  },
+  "runs": [
+    {
+      "run_id": "002816b",
+      "timestamp": 1699037041106269774,
+      "model": [
+        {
+          "name": "colocated_model",
+          "path": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/colocated_model",
+          "exe_args": [
+            "/lus/cls01029/mcbridch/ss/tests/test_configs/echo.py"
+          ],
+          "run_settings": {
+            "exe": [
+              "/home/users/mcbridch/anaconda3/envs/ss/bin/python"
+            ],
+            "run_command": "/opt/slurm/20.11.5/bin/srun",
+            "run_args": {}
+          },
+          "batch_settings": {},
+          "params": {},
+          "files": {
+            "Symlink": [],
+            "Configure": [],
+            "Copy": []
+          },
+          "colocated_db": {
+            "settings": {
+              "unix_socket": "/tmp/redis.socket",
+              "socket_permissions": 755,
+              "port": 0,
+              "cpus": 1,
+              "custom_pinning": "0",
+              "debug": false,
+              "db_identifier": "",
+              "rai_args": {
+                "threads_per_queue": null,
+                "inter_op_parallelism": null,
+                "intra_op_parallelism": null
+              },
+              "extra_db_args": {}
+            },
+            "scripts": [],
+            "models": []
+          },
+          "telemetry_metadata": {
+            "status_dir": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/model/colocated_model",
+            "step_id": "4139111.21",
+            "task_id": "21529",
+            "managed": true
+          },
+          "out_file": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/colocated_model/colocated_model.out",
+          "err_file": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/colocated_model/colocated_model.err"
+        }
+      ],
+      "orchestrator": [],
+      "ensemble": []
+    }
+  ]
+}

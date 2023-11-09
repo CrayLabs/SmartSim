@@ -24,9 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 import itertools
 import time
 import typing as t
+from collections import ChainMap
 from threading import Thread, RLock
 from types import FrameType
 
@@ -38,7 +40,8 @@ from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
-from .job import Job
+from .job import Job, JobEntity
+
 
 logger = get_logger(__name__)
 
@@ -145,13 +148,8 @@ class JobManager:
         :rtype: Job
         """
         with self._lock:
-            if entity_name in self.db_jobs:
-                return self.db_jobs[entity_name]
-            if entity_name in self.jobs:
-                return self.jobs[entity_name]
-            if entity_name in self.completed:
-                return self.completed[entity_name]
-            raise KeyError
+            entities = ChainMap(self.db_jobs, self.jobs, self.completed)
+            return entities[entity_name]
 
     def __call__(self) -> t.Dict[str, Job]:
         """Returns dictionary all jobs for () operator
@@ -166,7 +164,7 @@ class JobManager:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -185,7 +183,8 @@ class JobManager:
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
-
+        elif isinstance(entity, JobEntity) and entity.is_db:
+            self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
 

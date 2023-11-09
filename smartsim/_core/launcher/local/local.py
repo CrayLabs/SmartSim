@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import sys
 import typing as t
 
 from ..launcher import Launcher
@@ -34,19 +36,13 @@ from ..step import Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
-
-logger = get_logger(__name__)
+from ...utils.helpers import encode_cmd
+from ...config import CONFIG
 
 
 class LocalLauncher(Launcher):
     """Launcher used for spawning proceses on a localhost machine."""
 
-    @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
-       return {
-            RunSettings: LocalStep,
-        }    
-    
     def __init__(self) -> None:
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
@@ -60,10 +56,11 @@ class LocalLauncher(Launcher):
             raise TypeError(
                 f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
             )
-        step = LocalStep(name, cwd, step_settings)
-        return step
+        return LocalStep(name, cwd, step_settings)
 
-    def get_step_update(self, step_names: t.List[str]) -> t.List[t.Tuple[str, t.Optional[StepInfo]]]:
+    def get_step_update(
+        self, step_names: t.List[str]
+    ) -> t.List[t.Tuple[str, t.Optional[StepInfo]]]:
         """Get status updates of each job step name provided
 
         :param step_names: list of step_names
@@ -85,8 +82,12 @@ class LocalLauncher(Launcher):
     def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
         """Return the address of nodes assigned to the step
 
+        :param step_names: list of step_names
+        :type step_names: list[str]
+        :return: list of node addresses
+        :rtype: list[list[str]]
+
         TODO: Use socket to find the actual Lo address?
-        :return: a list containing the local host address
         """
         return [["127.0.0.1"] * len(step_names)]
 
@@ -104,9 +105,17 @@ class LocalLauncher(Launcher):
             self.task_manager.start()
 
         out, err = step.get_output_files()
-        output = open(out, "w+")
-        error = open(err, "w+")
         cmd = step.get_launch_cmd()
+
+        if CONFIG.telemetry_enabled:
+            out = step.get_step_file(ending=".indirect.out")
+            err = step.get_step_file(ending=".indirect.err")
+            cmd = self.get_proxy_cmd(step)
+
+        # pylint: disable-next=consider-using-with
+        output = open(out, "w+", encoding="utf-8")
+        # pylint: disable-next=consider-using-with
+        error = open(err, "w+", encoding="utf-8")
 
         # LocalStep.run_command omits env, include it here
         passed_env = step.env if isinstance(step, LocalStep) else None
@@ -114,6 +123,7 @@ class LocalLauncher(Launcher):
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
         )
+
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id
 
@@ -127,7 +137,7 @@ class LocalLauncher(Launcher):
         """
         # step_id is task_id for local. Naming for consistency
         step_id = self.step_mapping[step_name].task_id
-        
+
         self.task_manager.remove_task(str(step_id))
         _, rc, out, err = self.task_manager.get_task_update(str(step_id))
         step_info = UnmanagedStepInfo("Cancelled", rc, out, err)
@@ -135,3 +145,43 @@ class LocalLauncher(Launcher):
 
     def __str__(self) -> str:
         return "Local"
+
+    @staticmethod
+    def get_proxy_cmd(step: Step) -> t.List[str]:
+        """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
+        continue telemetry logging after a driver process exits or fails.
+
+        :param step: the step to produce a proxied command for
+        :type step: Step
+        :return: CLI arguments to execute the step via the proxy step executor
+        :rtype: t.List[str]
+        """
+
+        proxy_module = "smartsim._core.entrypoints.indirect"
+        etype = step.meta["entity_type"]
+        status_dir = step.meta["status_dir"]
+        cmd_list = step.get_launch_cmd()
+        encoded_cmd = encode_cmd(cmd_list)
+
+        out, err = step.get_output_files()
+
+        # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
+        # the indirect entrypoint rebuild the cmd... for now, test away...
+        proxied_cmd = [
+            sys.executable,
+            "-m",
+            proxy_module,
+            "+command",
+            encoded_cmd,
+            "+entity_type",
+            etype,
+            "+telemetry_dir",
+            status_dir,
+            "+working_dir",
+            step.cwd,
+            "+output_file",
+            out,
+            "+error_file",
+            err,
+        ]
+        return proxied_cmd

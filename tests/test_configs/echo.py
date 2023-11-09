@@ -24,45 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
+import argparse
+import time
 
-import pathlib
 
-from smartsim._core.control.controller import Controller
-from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
-from smartsim._core.launcher.step import Step
-from smartsim.entity.ensemble import Ensemble
-from smartsim.database.orchestrator import Orchestrator
+def echo(message: str, sleep_time: int):
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+    print(f"Echoing: {message}")
 
-controller = Controller()
+if __name__ == "__main__":
 
-rs = SrunSettings('echo', ['spam', 'eggs'])
-bs = SbatchSettings()
-
-ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
-
-class MockStep(Step):
-    @staticmethod
-    def _create_unique_name(name):
-        return name
-
-    def add_to_batch(self, step):
-        ...
-
-    def get_launch_cmd(self):
-        return []
-
-@pytest.mark.parametrize("collection", [
-    pytest.param(ens, id="Ensemble"),
-    pytest.param(orc, id="Database"),
-])
-def test_controller_batch_step_creation_preserves_entity_order(collection, monkeypatch):
-    monkeypatch.setattr(controller._launcher, "create_step",
-                        lambda name, path, settings: MockStep(name, path, settings))
-    entity_names = [x.name for x in collection.entities]
-    assert len(entity_names) == len(set(entity_names))
-    _, steps = controller._create_batch_job_step(collection, pathlib.Path("mock/exp/path"))
-    assert entity_names == [step.name for step in steps]
-
-    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--message", type=str, default="Lorem ipsum")
+    parser.add_argument("--sleep_time", type=int, default=0)
+    args = parser.parse_args()
+    echo(args.message, args.sleep_time)

@@ -29,14 +29,14 @@ from __future__ import annotations
 import os.path as osp
 import time
 import typing as t
-
 from os import makedirs
+
 from smartsim.error.errors import SmartSimError
 
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
-from ....settings.base import SettingsBase, RunSettings
+from ....settings.base import RunSettings, SettingsBase
 
 logger = get_logger(__name__)
 
@@ -48,6 +48,7 @@ class Step:
         self.cwd = cwd
         self.managed = False
         self.step_settings = step_settings
+        self.meta: t.Dict[str, str] = {}
 
     def get_launch_cmd(self) -> t.List[str]:
         raise NotImplementedError
