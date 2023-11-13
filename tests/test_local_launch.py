@@ -24,8 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+import pytest
 from smartsim import Experiment, status
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 """
 Test the launch of simple entity types with local launcher

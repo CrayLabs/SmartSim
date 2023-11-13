@@ -19,6 +19,7 @@ To be released at some future point in time
 
 Description
 
+- Split tests into groups for parallel execution in CI/CD pipeline
 - Change signature of `Experiment.summary()`
 - Expose first_device parameter for scripts, functions, models
 - Added support for MINBATCHTIMEOUT in model execution

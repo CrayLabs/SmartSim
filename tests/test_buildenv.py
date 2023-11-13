@@ -30,6 +30,9 @@ import pytest
 from smartsim._core._install.buildenv import Version_
 from pkg_resources import packaging  # type: ignore
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_version_hash_eq():
     """Ensure hashes are equal if data is equal"""

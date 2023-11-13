@@ -33,6 +33,9 @@ from smartsim import Experiment
 from smartsim.entity import EntityList
 from smartsim.settings import RunSettings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_entity_list_init():
     with pytest.raises(NotImplementedError):
