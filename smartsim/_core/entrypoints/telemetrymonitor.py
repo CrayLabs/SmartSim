@@ -521,7 +521,6 @@ def event_loop(
         timestamp = get_ts()
         logger.debug(f"Telemetry timestep: {timestamp}")
         action_handler.on_timestep(timestamp)
-        time.sleep(frequency)
 
         elapsed += timestamp - last_ts
         last_ts = timestamp
@@ -533,12 +532,15 @@ def event_loop(
             # reset cooldown any time there are still jobs running
             elapsed = 0
 
+        time.sleep(frequency)
+
 
 def main(
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
     logger: logging.Logger,
     observer: t.Optional[BaseObserver] = None,
+    cooldown: t.Optional[int] = 0,
 ) -> int:
     """Setup the monitoring entities and start the timer-based loop that
     will poll for telemetry data
@@ -560,7 +562,7 @@ def main(
         f" matching pattern: {monitor_pattern}"
     )
 
-    telemetry_cooldown = CONFIG.telemetry_cooldown
+    telemetry_cooldown = cooldown or CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
     action_handler = ManifestEventHandler(monitor_pattern, logger)
 
@@ -616,6 +618,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Experiment root directory",
         required=True,
     )
+    arg_parser.add_argument(
+        "-cooldown",
+        type=int,
+        help="Default lifetime of telemetry monitor (in seconds)) before auto-shutdown",
+        default=CONFIG.telemetry_cooldown,
+    )
     return arg_parser
 
 
@@ -631,7 +639,9 @@ if __name__ == "__main__":
     register_signal_handlers()
 
     try:
-        main(int(args.frequency), pathlib.Path(args.exp_dir), log)
+        main(
+            int(args.frequency), pathlib.Path(args.exp_dir), log, cooldown=args.cooldown
+        )
         sys.exit(0)
     except Exception:
         log.exception(

@@ -763,3 +763,50 @@ def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
         # the colodb does NOT show up as a unique entity in the telemetry
         assert len(start_events) == 1
         assert len(stop_events) == 1
+
+
+@pytest.mark.parametrize("frequency, cooldown",
+        [
+            pytest.param(1, 1, id="1s shutdown"),
+            pytest.param(1, 5, id="5s shutdown"),
+            pytest.param(1, 15, id="15s shutdown"),
+        ]
+)
+def test_telemetry_autoshutdown(fileutils, wlmutils, monkeypatch, frequency, cooldown):
+    """
+    Ensure that the telemetry monitor process shuts down after the desired
+    cooldown period
+    """
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(cfg.Config, "telemetry_frequency", frequency)
+        ctx.setattr(cfg.Config, "telemetry_cooldown", cooldown)
+
+        # Set experiment name
+        exp_name = "telemetry_ensemble"
+
+        # Retrieve parameters from testing environment
+        test_launcher = wlmutils.get_test_launcher()
+        test_dir = fileutils.make_test_dir()
+
+        # Create SmartSim Experiment
+        exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+        exp.start(block=False)
+
+        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        empty_mani = list(telemetry_output_path.rglob("manifest.json"))
+        assert len(empty_mani) == 1, "an  manifest.json should be created"
+
+        popen = exp._control._telemetry_monitor
+        assert popen.pid > 0
+        assert popen.returncode is None
+
+        # give some leeway during testing for the cooldown to get hit
+        for i in range(10):
+            if popen.poll() is not None:
+                print(f"Completed polling for telemetry shutdown after {i} attempts")
+                break
+            time.sleep(3)
+
+        assert popen.returncode is not None
