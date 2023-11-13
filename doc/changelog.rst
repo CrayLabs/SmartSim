@@ -28,6 +28,7 @@ Description
 
 Detailed Notes
 
+- Split tests into `group_a`, `group_b`, `slow_tests` for parallel execution in CI/CD pipeline (PR417_)
 - Change `format` argument to `style` in `Experiment.summary()`, this is
   an API break (PR391_)
 - Added support for first_device parameter for scripts, functions,
@@ -44,6 +45,7 @@ Detailed Notes
 - Add support for creation of multiple databases with unique identifiers. (PR342_)
 
 
+  .. _PR417: https://github.com/CrayLabs/SmartSim/pull/417
   .. _PR391: https://github.com/CrayLabs/SmartSim/pull/391
   .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
   .. _PR394: https://github.com/CrayLabs/SmartSim/pull/394
