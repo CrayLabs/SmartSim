@@ -839,7 +839,6 @@ class Controller:
                 stdout=subprocess.PIPE,
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
-                # start_new_session=True,
             )
 
 
