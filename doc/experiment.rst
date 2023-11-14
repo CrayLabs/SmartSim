@@ -111,16 +111,16 @@ The Experiment class is responsible for all entity initialization functions:
 4. ``Experiment.create_run_settings()`` :raw-html:`&rarr; ``RunSettings``
 5. ``Experiment.create_batch_settings()`` :raw-html:`&rarr; ``BatchSettings``
 
+.. |SmartSim ERD| image:: images/edr.png
+  :width: 700
+  :alt: Alternative text
+
 Moving on to the ``Model`` entity class, you will notice that a ``Model`` requires a
 minimum and maximum of one ``RunSetting`` object. However, it accepts a minimum of zero
 and a maximum of one ``BatchSetting`` object.
 
 The ``Ensemble`` entity class does not require either ``RunSetting`` or ``BatchSetting``
 objects upon initialization but does accept a maximum of one for each.
-
-.. |SmartSim ERD| image:: images/edr.png
-  :width: 700
-  :alt: Alternative text
 
 |SmartSim ERD|
 
