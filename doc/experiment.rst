@@ -122,7 +122,7 @@ minimum and maximum of one ``RunSetting`` object. However, it accepts a minimum 
 and a maximum of one ``BatchSetting`` object.
 
 The ``Ensemble`` entity class does not require either ``RunSetting`` or ``BatchSetting``
-objects upon initialization but does accept a maximum of one for each.
+objects upon initialization but does accept a maximum of one for each. INCORRECT
 
 Orchestrator
 ^^^^^^^^^^^^
@@ -216,6 +216,18 @@ launch single-host jobs, and as such will set the `launcher` argument to `local`
     # Init a SmartSim logger
     smartsim_logger = get_logger("tutorial-experiment")
 
+.. code-block:: python
+
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(db_nodes=1, port=6899, interface="lo")
+    # create an output directory for the database log files
+    exp.generate(db)
+
+.. code-block:: python
+
+    settings = exp.create_run_settings("echo", exe_args="Hello World")
+    model = exp.create_model("hello_world", settings)
+
 =========
  Starting
 =========
@@ -224,16 +236,15 @@ Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object. Here we will demonstrate how to create an Orchestrator
 stage using ``Experiment.create_database()``, then launch the database with ``Experiment.start()``.
 
+A simple example of using the Experiment API to create a model and run it locally:
+
 .. code-block:: python
 
-  # create and start an instance of the Orchestrator database
-  db = exp.create_database(db_nodes=1, port=6899, interface="lo")
-  # create an output directory for the database log files
-  exp.generate(db)
   # start the database
-  exp.start(db)
+  exp.start(db, model)
   # log the status of the db
   smartsim_logger(f"Database status: {exp.get_status(db)}")
+  smartsim_logger(f"Model status: {exp.get_status(model)}")
 
 =========
  Stopping
