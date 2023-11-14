@@ -129,10 +129,9 @@ Orchestrator
 The ``Orchestrator`` is an in-memory database that can be launched alongside
 ``Model`` and ``Ensemble`` entities in SmartSim. The ``Orchestrator`` can be used to store and retrieve
 data during the course of an experiment and across multiple entities.
-The ``Experiment`` object initializes a ``Orchestrator`` object through the function
-``Experiment.create_database()``. The database can be single-sharded or
-multi-sharded using the parameter, `db_nodes` passed in when creating a
-``Orchestrator`` object. SmartSim also provides multi-database support,
+The database can be single-sharded or multi-sharded using the parameter,
+`db_nodes` passed in when creating a
+``Orchestrator`` object. SmartSim provides multi-database support,
 meaning an experiment can have multiple launched database instances.
 When launching more than one ``Orchestrator``, the ``Experiment.create_database()``
 function requires specifying a unique database identifier
@@ -140,14 +139,18 @@ argument named `db_identifier`.
 
 Model
 ^^^^^
-Models represent any computational kernel: applications, scripts, or generally a program.
-Models are flexible enough to support many different applications, however, to be used with our clients
-(SmartRedis) the application will have to be written in Python, C, C++, or Fortran.
-A ``Model`` is created through the function ``Experiment.create_model()``.
-Models are given ``RunSettings`` objects during initialization that specify how a kernel should be
-executed with regard to the workload manager (e.g. Slurm) and the available
-compute resources on the system. Optionally, the user may also specify a
-``BatchSettings`` object if should be launched as a batch on the WLM system.
+Models represent any computational kernel, including applications,
+scripts, or generally, a program. They are flexible enough
+to support various applications; however, to be used with our
+clients (SmartRedis), the application must be written in Python,
+C, C++, or Fortran.
+
+A Model is created through the function ``Experiment.create_model()``.
+During initialization, models are given RunSettings objects that specify
+how a kernel should be executed with regard to the workload manager
+(e.g., Slurm) and the available compute resources on the system.
+Optionally, the user may also specify a BatchSettings object if
+the model should be launched as a batch on the WLM system.
 
 Ensemble
 ^^^^^^^^
