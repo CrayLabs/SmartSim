@@ -216,12 +216,21 @@ launch single-host jobs, and as such will set the `launcher` argument to `local`
     # Init a SmartSim logger
     smartsim_logger = get_logger("tutorial-experiment")
 
+To *initialize* a ``Orchestrator`` object, use the ``Experiment.create_database()``
+function. The Orchestrator defaults to `db_nodes=1`. SmartSim will detect and assign the `port`
+and `interface` parameters.
+
 .. code-block:: python
 
     # create and start an instance of the Orchestrator database
     db = exp.create_database(db_nodes=1, port=6899, interface="lo")
     # create an output directory for the database log files
     exp.generate(db)
+
+To *initialize* a ``Model`` object, you must specify a `RunSettings` object and Model
+name. Use the ``Experiment.create_run_settings()`` object to specify the executable to
+run and the arguments to pass to the executable. We create a simple `Hello World` program
+below that `echos` "Hellow World" to stdout.
 
 .. code-block:: python
 
