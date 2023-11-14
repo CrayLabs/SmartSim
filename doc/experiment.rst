@@ -128,17 +128,23 @@ Orchestrator
 ^^^^^^^^^^^^
 The ``Orchestrator`` is an in-memory database that can be launched alongside
 ``Model`` and ``Ensemble`` entities in SmartSim. The ``Orchestrator`` can be used to store and retrieve
-data during the course of an experiment and across multiple entities by using SmartRedis clients.
-The database can be single-sharded or multi-sharded using the parameter,
-`db_nodes` passed in when creating a
-``Orchestrator`` object. All Orchestrators begin as clustered: the app and model 
-run on separate nodes. It is not until a model is applied that an 
-Orchestrator through `model.colocated_db()`
-SmartSim provides multi-database support,
-meaning an experiment can have multiple launched database instances.
-When launching more than one ``Orchestrator``, the ``Experiment.create_database()``
-function requires specifying a unique database identifier
-argument named `db_identifier`.
+data during the course of an experiment. In order to stream data into or
+receive data from the Orchestrator, one of the SmartSim clients
+(SmartRedis) has to be used within a Model.
+
+To create a standard orchestrator, use the ``Experiment.create_database()``
+function. A standard orchestrator will run the database and applications on
+separate nodes. The database can be single or multi-sharded.
+For a colocated orchestrator, use the ``model.colocated_db()``
+function provided by the Model object. This action results in
+the launch of an orchestrator on the same node as the application
+but is limited to single-sharded database configuration.
+
+SmartSim supports multi-database functionality, enabling an experiment
+to have several concurrently launched database instances. If there is a
+need to launch more than one ``Orchestrator``, the ``Experiment.create_database()``
+function mandates the specification of a unique database identifier, denoted
+by the `db_identifier` argument, per created orchestrator.
 
 Model
 ^^^^^
@@ -175,11 +181,12 @@ When running SmartSim on laptops and single node workstations,
 the base ``RunSettings`` object is used to parameterize jobs.
 ``RunSettings`` includes a ``run_command`` parameter for local
 launches that utilize a parallel launch binary like
-``mpirun``, ``mpiexec``, and others. The ``RunSettings`` object is applied to an
-entity during stage initialization via the `batch_settings` parameter.
+``mpirun``, ``mpiexec``, and others. The ``RunSettings`` object is pass to an
+entity during stage initialization via the `run_settings` parameter.
 When creating a ``RunSettings`` object
 via the ``Experiment.create_run_settings()`` function, the appropriate ``RunSettings``
 object will be return based on what WLM you initialized the experiment with.
+See here to view the list of offered RunSettings WLM objects.
 
 BatchSettings
 ^^^^^^^^^^^^^
@@ -189,6 +196,7 @@ entity during stage initialization via the `batch_settings` parameter.
 When creating a ``BatchSettings`` object
 via the ``Experiment.create_batch_settings()`` function, the appropriate ``BatchSettings``
 object will be return based on what WLM you initialized the experiment with.
+See here to view the list of offered RunSettings WLM objects.
 
 ===========
  Initialize
