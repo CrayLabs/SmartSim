@@ -82,10 +82,16 @@ html_theme = "sphinx_book_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+slack_invite ="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"
+extra_footer = ('Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or '
+                f'<a href="{slack_invite}">join us on Slack!</a>'
+                )
+
 html_theme_options = {
     "repository_url": "https://github.com/CrayLabs/SmartSim",
     "use_repository_button": True,
     "use_issues_button": True,
+    "extra_footer": extra_footer,
 }
 
 autoclass_content = 'both'

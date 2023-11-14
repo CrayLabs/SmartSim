@@ -312,8 +312,8 @@ class JobManager:
         :rtype: Dict[str, list]"""
 
         address_dict = {}
-        addresses = []
         for db_job in self.db_jobs.values():
+            addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
                 for combine in itertools.product(db_job.hosts, db_entity.ports):

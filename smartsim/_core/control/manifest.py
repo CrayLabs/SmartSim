@@ -189,8 +189,6 @@ class Manifest:
             return len(list(entity.db_scripts)) > 0
 
         has_db_objects = False
-        for model in self.models:
-            has_db_objects |= hasattr(model, "_db_models")
 
         # Check if any model has either a DBModel or a DBScript
         # we update has_db_objects so that as soon as one check
