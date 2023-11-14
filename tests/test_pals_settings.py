@@ -40,7 +40,7 @@ default_exe = sys.executable
 default_kwargs = {"fail_if_missing_exec": False}
 
 @pytest.fixture(autouse=True)
-def turnoff_telemetry_inderict(monkeypatch):
+def turnoff_telemetry_indirect(monkeypatch):
     import smartsim._core.launcher.launcher
     monkeypatch.setattr(
         smartsim._core.config.config.Config,

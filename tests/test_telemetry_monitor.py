@@ -33,10 +33,13 @@ import typing as t
 import time
 import uuid
 from conftest import FileUtils
-import smartsim._core.config.config as cfg
-from smartsim._core.control.job import Job, JobEntity
-from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
 
+from smartsim._core.control.job import Job, JobEntity
+from smartsim._core.launcher.launcher import WLMLauncher
+from smartsim._core.launcher.step.step import Step, UnmanagedProxyStep
+from smartsim.settings.base import RunSettings
+from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
+import smartsim._core.config.config as cfg
 
 from smartsim._core.entrypoints.telemetrymonitor import (
     can_shutdown,
@@ -797,3 +800,31 @@ def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
         # the colodb does NOT show up as a unique entity in the telemetry
         assert len(start_events) == 1
         assert len(stop_events) == 1
+
+
+for_all_wlm_launchers = pytest.mark.parametrize("wlm_launcher", [
+    pytest.param(cls(), id=cls.__name__) for cls in WLMLauncher.__subclasses__()
+])
+
+@for_all_wlm_launchers
+def test_unmanaged_steps_are_proxyed_through_indirect(wlm_launcher, fileutils, monkeypatch):
+    monkeypatch.setattr(cfg.Config, "telemetry_enabled", True)
+    test_dir = fileutils.make_test_dir()
+    rs = RunSettings("echo", ["hello", "world"])
+    step = wlm_launcher.create_step('test-step', test_dir, rs)
+    assert isinstance(step, Step)
+    assert not step.managed
+    assert isinstance(step, UnmanagedProxyStep)
+
+
+@for_all_wlm_launchers
+def test_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
+    wlm_launcher, fileutils, monkeypatch
+):
+    monkeypatch.setattr(cfg.Config, "telemetry_enabled", False)
+    test_dir = fileutils.make_test_dir()
+    rs = RunSettings("echo", ["hello", "world"])
+    step = wlm_launcher.create_step('test-step', test_dir, rs)
+    assert isinstance(step, Step)
+    assert not step.managed
+    assert not isinstance(step, UnmanagedProxyStep)
