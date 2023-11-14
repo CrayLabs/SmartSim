@@ -96,14 +96,14 @@ workflow: ``Orchestrator``, ``Model`` and ``Ensemble``.
 To configure the job execution of ``Model`` and ``Ensemble``,
 the ``Experiment`` object offers two additional entities,
 ``RunSettings`` and ``BatchSettings``, to parameterize the entities.
-Below we have provided disscussion on entities as well as an Entity
+Below we have provided entity discussions as well as an Entity
 Relationship Diagram.
 
-.. |SmartSim Architecture| image:: images/edr.png
+.. |SmartSim ERD| image:: images/edr.png
   :width: 700
   :alt: Alternative text
 
-|SmartSim Architecture|
+|SmartSim ERD|
 
 Orchestrator
 ^^^^^^^^^^^^
@@ -125,19 +125,20 @@ Model
 Models represent any computational kernel: applications, scripts, or generally a program.
 Models are flexible enough to support many different applications, however, to be used with our clients
 (SmartRedis) the application will have to be written in Python, C, C++, or Fortran.
-Models are given RunSettings objects that specify how a kernel should be
+A ``Model`` is created through the function ``Experiment.create_model()``.
+Models are given ``RunSettings`` objects during initialization that specify how a kernel should be
 executed with regard to the workload manager (e.g. Slurm) and the available
 compute resources on the system. Optionally, the user may also specify a
-``BatchSettings`` object when creating a Model with ``Experiment.create_model()``.
+``BatchSettings`` object if should be launched as a batch on the WLM system.
 
 Ensemble
 ^^^^^^^^
-In addition to a single model, SmartSim has the ability to launch an
+In addition to a single model, SmartSim has the ability to launch a
 ``Ensemble`` of ``Model`` applications simultaneously.
 Ensembles can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying model objects. An ensemble is created
-with ``Experiment.create_ensemble``. An ``Ensemble`` can have both ``BatchSettings``
-and ``RunSettings`` objects upon creation. However, neither is required.
+with ``Experiment.create_ensemble``. A ``Ensemble`` accepts both ``BatchSettings``
+and ``RunSettings`` objects during initialization to parameterize the job.
 
 RunSettings
 ^^^^^^^^^^^
