@@ -103,7 +103,7 @@ Entity Relationship Diagram
 Below is an Entity Relationship Diagram using Crow's Foot Notation.
 Moving from the top to the bottom of the diagram, you will first notice that
 an Experiment can have none or many ``Orchestrators``, ``Models``, and ``Ensembles``.
-The Experiment class is responsible entity initialization functions:
+The Experiment class is responsible for all entity initialization functions:
 
 1. ``Experiment.create_orchestrator()`` :raw-html:`&rarr; ``Orchestrator``
 2. ``Experiment.create_model()`` :raw-html:`&rarr; ``Model``
