@@ -98,31 +98,52 @@ to the ``Experiment`` initialization.
  Entities
 =========
 
-The ``Experiment`` object offers three entities that represent stages in the
-workflow: ``Orchestrator``, ``Model`` and ``Ensemble``. To configure
-the job (entity) execution parameters of the ``Model`` and ``Ensemble``, the ``Experiment``
-object offers two additional entities: ``RunSettings`` and ``BatchSettings``.
+The Experiment factory class offers three entities that represent stages of the
+workflow: ``Orchestrator``, ``Model`` and ``Ensemble``.
+To configure the job execution of ``Model`` and ``Ensemble``,
+the ``Experiment`` object offers two additional entities,
+``RunSettings`` and ``BatchSettings``, to parameterize the entities.
+Below we have provided disscussion on entities as well as an Entity
+Relationship Diagram.
+
+.. |SmartSim Architecture| image:: images/edr.png
+  :width: 700
+  :alt: Alternative text
+
+|SmartSim Architecture|
 
 Workflow Stages:
 
 Orchestrator
 ^^^^^^^^^^^^
-The ``Orchestrator`` is the SmartSim object for the in-memory database.
-The ``Orchestrator`` can be used to store and retrieve
+The ``Orchestrator`` is an in-memory database that can be launched alongside
+``Model`` and ``Ensemble`` entities in SmartSim. The Orchestrator does not accept a ``RunSettings``
+or ``BatchSettings`` object. The ``Orchestrator`` can be used to store and retrieve
 data during the course of an experiment and across multiple entities.
+The ``Experiment`` object initializes a ``Orchestrator`` object through the function
+``Experiment.create_database()``. The database can be single-sharded or
+multi-sharded using the parameter, `db_nodes` passed in when creating a
+``Orchestrator`` object. SmartSim also provides multi-database support,
+meaning an experiment can have multiple launched database instances.
+When launching more than one ``Orchestrator``, the ``Experiment.create_database()``
+function requires specifying a unique database identifier
+argument named `db_identifier`.
 
 Model
 ^^^^^
-``Model(s)`` are subclasses of ``SmartSimEntity(s)`` and are created through the
-Experiment API. Models represent any computational kernel. Models are flexible
-enough to support many different applications, however, to be used with our
-clients (SmartRedis) the application will have to be written in Python, C, C++,
-or Fortran.
+Models represent any computational kernel: applications, scripts, or generally a program.
+Models are flexible enough to support many different applications, however, to be used with our clients
+(SmartRedis) the application will have to be written in Python, C, C++, or Fortran.
+Models are given RunSettings objects that specify how a kernel should be
+executed with regard to the workload manager (e.g. Slurm) and the available
+compute resources on the system. Optionally, the user may also specify a
+``BatchSettings`` object when creating a Model with ``Experiment.create_model()``.
 
-1. The Experiment is used to create Model instances which represent applications, scripts, or generally a program.
-2. An experiment can start and stop a Model and monitor execution.
 Ensemble
 ^^^^^^^^
+Ensemble is a group of Model instances that can be treated as a
+reference to a single instance.
+
 In addition to a single model, SmartSim has the ability to launch an
 ``Ensemble`` of ``Model`` applications simultaneously.
 Ensembles can be given parameters and permutation strategies that define how the
