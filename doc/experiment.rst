@@ -115,14 +115,14 @@ The Experiment class is responsible for all entity initialization functions:
   :width: 700
   :alt: Alternative text
 
+|SmartSim ERD|
+
 Moving on to the ``Model`` entity class, you will notice that a ``Model`` requires a
 minimum and maximum of one ``RunSetting`` object. However, it accepts a minimum of zero
 and a maximum of one ``BatchSetting`` object.
 
 The ``Ensemble`` entity class does not require either ``RunSetting`` or ``BatchSetting``
 objects upon initialization but does accept a maximum of one for each.
-
-|SmartSim ERD|
 
 Orchestrator
 ^^^^^^^^^^^^
