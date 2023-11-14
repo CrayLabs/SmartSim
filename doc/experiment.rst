@@ -38,13 +38,6 @@ Jupyter notebook, interactive python session, or Python file and use the
 ``Experiment`` to iteratively create, configure and launch computational kernels
 on the system through the specified launcher.
 
-.. |SmartSim Architecture| image:: images/ss-arch-overview.png
-  :width: 700
-  :alt: Alternative text
-
-|SmartSim Architecture|
-
-
 The interface was designed to be simple, with as little complexity as possible,
 and agnostic to the backend launching mechanism (local, Slurm, PBSPro, etc.).
 
