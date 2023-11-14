@@ -128,10 +128,13 @@ Orchestrator
 ^^^^^^^^^^^^
 The ``Orchestrator`` is an in-memory database that can be launched alongside
 ``Model`` and ``Ensemble`` entities in SmartSim. The ``Orchestrator`` can be used to store and retrieve
-data during the course of an experiment and across multiple entities.
+data during the course of an experiment and across multiple entities by using SmartRedis clients.
 The database can be single-sharded or multi-sharded using the parameter,
 `db_nodes` passed in when creating a
-``Orchestrator`` object. SmartSim provides multi-database support,
+``Orchestrator`` object. All Orchestrators begin as clustered: the app and model 
+run on separate nodes. It is not until a model is applied that an 
+Orchestrator through `model.colocated_db()`
+SmartSim provides multi-database support,
 meaning an experiment can have multiple launched database instances.
 When launching more than one ``Orchestrator``, the ``Experiment.create_database()``
 function requires specifying a unique database identifier
@@ -158,9 +161,13 @@ In addition to a single model, SmartSim has the ability to launch a
 ``Ensemble`` of ``Model`` applications simultaneously.
 Ensembles can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying model objects. An ensemble is created
-with ``Experiment.create_ensemble``. A ``Ensemble`` accepts both,
-but does not require, a ``BatchSettings``
-and ``RunSettings`` object during initialization to parameterize the job.
+with the function ``Experiment.create_ensemble()`` and requires
+one of the subsequent sets of arguments upon initialization:
+1. run_settings and params
+2. run_settings and replicas
+3. batch_settings
+4. batch_settings, run_settings, and params
+5. batch_settings, run_settings, and replicas
 
 RunSettings
 ^^^^^^^^^^^
