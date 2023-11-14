@@ -91,24 +91,32 @@ to the ``Experiment`` initialization.
  Entities
 =========
 
-Defining workflow stages requires the utilization of functions associated
-with the Experiment object. The Experiment object is intended to be
-instantiated once and utilized throughout the workflow runtime.
-In the following content, we define five entities, ``Orchestrator``, ``Model``,
-``Ensemble``, ``RunSettings``, ``BatchSettings``, and discuss the relationships.
+Defining workflow stages requires the utilization of functions
+associated with the ``Experiment`` object. The ``Experiment`` object
+is intended to be instantiated once and utilized throughout
+the workflow runtime. In the following content, we define five
+entities created by an experiment: ``Orchestrator``, ``Model``, ``Ensemble``,
+``RunSettings``, and ``BatchSettings``, along with a discussion of their relationships.
 
 Entity Relationship Diagram
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Below is an Entity Relationship Diagram demonstrated with Crow's Foot Notation.
+Below is an Entity Relationship Diagram using Crow's Foot Notation.
 Moving from the top to the bottom of the diagram, you will first notice that
-an Experiment can have none or many Orchestrators, Models, and Ensembles.
+an Experiment can have none or many ``Orchestrators``, ``Models``, and ``Ensembles``.
+The Experiment class is responsible entity initialization functions:
 
-Moving on to the Model entity, you will notice that a Model requires a
-minimum of one RunSetting object and a maximum of one RunSetting object.
-However, it accepts none or one BatchSetting object.
+1. ``Experiment.create_orchestrator()`` -> ``Orchestrator``
+2. ``Experiment.create_model()`` -> ``Model``
+3. ``Experiment.create_ensemble()`` -> ``Ensemble``
+4. ``Experiment.create_run_settings()`` -> ``RunSettings``
+5. ``Experiment.create_batch_settings()`` -> ``BatchSettings``
 
-An Ensemble object does not require either RunSetting or BatchSetting
-objects upon initialization but does accept a maximum of one.
+Moving on to the ``Model`` entity class, you will notice that a ``Model`` requires a
+minimum and maximum of one ``RunSetting`` object. However, it accepts a minimum of zero
+and a maximum of one ``BatchSetting`` object.
+
+The ``Ensemble`` entity class does not require either ``RunSetting`` or ``BatchSetting``
+objects upon initialization but does accept a maximum of one for each.
 
 .. |SmartSim ERD| image:: images/edr.png
   :width: 700
@@ -119,8 +127,7 @@ objects upon initialization but does accept a maximum of one.
 Orchestrator
 ^^^^^^^^^^^^
 The ``Orchestrator`` is an in-memory database that can be launched alongside
-``Model`` and ``Ensemble`` entities in SmartSim. The Orchestrator does not accept a ``RunSettings``
-or ``BatchSettings`` object. The ``Orchestrator`` can be used to store and retrieve
+``Model`` and ``Ensemble`` entities in SmartSim. The ``Orchestrator`` can be used to store and retrieve
 data during the course of an experiment and across multiple entities.
 The ``Experiment`` object initializes a ``Orchestrator`` object through the function
 ``Experiment.create_database()``. The database can be single-sharded or
