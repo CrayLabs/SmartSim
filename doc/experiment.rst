@@ -105,8 +105,6 @@ Relationship Diagram.
 
 |SmartSim Architecture|
 
-Workflow Stages:
-
 Orchestrator
 ^^^^^^^^^^^^
 The ``Orchestrator`` is an in-memory database that can be launched alongside
@@ -134,28 +132,33 @@ compute resources on the system. Optionally, the user may also specify a
 
 Ensemble
 ^^^^^^^^
-Ensemble is a group of Model instances that can be treated as a
-reference to a single instance.
-
 In addition to a single model, SmartSim has the ability to launch an
 ``Ensemble`` of ``Model`` applications simultaneously.
 Ensembles can be given parameters and permutation strategies that define how the
-``Ensemble`` will create the underlying model objects.
-
-Job Parameterization:
+``Ensemble`` will create the underlying model objects. An ensemble is created
+with ``Experiment.create_ensemble``. An ``Ensemble`` can have both ``BatchSettings``
+and ``RunSettings`` objects upon creation. However, neither is required.
 
 RunSettings
 ^^^^^^^^^^^
 When running SmartSim on laptops and single node workstations,
 the base ``RunSettings`` object is used to parameterize jobs.
-``RunSettings`` include a ``run_command`` parameter for local
+``RunSettings`` includes a ``run_command`` parameter for local
 launches that utilize a parallel launch binary like
-``mpirun``, ``mpiexec``, and others.
+``mpirun``, ``mpiexec``, and others. The ``RunSettings`` object is applied to an
+entity during stage initialization via the `batch_settings` parameter.
+When creating a ``RunSettings`` object
+via the ``Experiment.create_run_settings()`` function, the appropriate ``RunSettings``
+object will be return based on what WLM you initialized the experiment with.
 
 BatchSettings
 ^^^^^^^^^^^^^
-``BatchSettings`` is used to configure jobs that should be launched
-as a batch on a WLM system.
+``BatchSettings`` is used to configure entities that should be launched
+as a batch on a WLM system. The ``BatchSettings`` object is applied to an
+entity during stage initialization via the `batch_settings` parameter.
+When creating a ``BatchSettings`` object
+via the ``Experiment.create_batch_settings()`` function, the appropriate ``BatchSettings``
+object will be return based on what WLM you initialized the experiment with.
 
 ===========
  Initialize
