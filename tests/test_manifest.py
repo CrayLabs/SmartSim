@@ -35,10 +35,8 @@ from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 
-try:
-    import tensorflow
-except ImportError:
-    pass
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
 
 
 # ---- create entities for testing --------
@@ -85,7 +83,7 @@ def test_catch_empty_ensemble():
     e = deepcopy(ensemble)
     e.entities = []
     with pytest.raises(ValueError):
-        manifest = Manifest(e)
+        _ = Manifest(e)
 
 
 def test_corner_case():

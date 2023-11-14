@@ -24,14 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import contextlib
-
 import pytest
 
 from smartsim import Experiment
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
+
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
 
 
 def test_model_prefix(fileutils):
