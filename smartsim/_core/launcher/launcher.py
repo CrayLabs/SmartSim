@@ -31,7 +31,7 @@ from ...error import AllocationError, LauncherError, SSUnsupportedError
 from .stepInfo import UnmanagedStepInfo, StepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
-from .step.step import Step, UnmanagedProxyStep
+from .step.step import Step
 from ...settings import SettingsBase
 from ..config import CONFIG
 
@@ -116,9 +116,6 @@ class WLMLauncher(Launcher):  # cov-wlm
             step = step_class(name, cwd, step_settings)
         except AllocationError as e:
             raise LauncherError("Step creation failed") from e
-        else:
-            if not step.managed and CONFIG.telemetry_enabled:
-                step = UnmanagedProxyStep.from_step(step)
         return step
 
     # these methods are implemented in WLM launchers and

@@ -200,6 +200,11 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def format_proxy_output_file(s: str, /) -> str:
+    before, _, end = s.rpartition('.')
+    return f"{before}.target.{end}"
+
+
 if __name__ == "__main__":
     arg_parser = get_parser()
     os.environ["PYTHONUNBUFFERED"] = "1"
@@ -212,11 +217,14 @@ if __name__ == "__main__":
         # so our signaller will be able to stop the database process.
         register_signal_handlers()
 
+        out = format_proxy_output_file(parsed_args.output_file)
+        err = format_proxy_output_file(parsed_args.error_file)
+
         rc = main(
             cmd=parsed_args.command,
             etype=parsed_args.entity_type,
-            output_path=parsed_args.output_file,
-            error_path=parsed_args.error_file,
+            output_path=out,
+            error_path=err,
             cwd=parsed_args.working_dir,
             status_dir=parsed_args.telemetry_dir,
         )

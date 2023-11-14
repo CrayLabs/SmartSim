@@ -32,7 +32,7 @@ from ..launcher import Launcher
 from ....log import get_logger
 from ....settings import RunSettings, SettingsBase
 from ..step.localStep import LocalStep
-from ..step.step import Step, UnmanagedProxyStep
+from ..step.step import Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
@@ -56,9 +56,7 @@ class LocalLauncher(Launcher):
             raise TypeError(
                 f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
             )
-        step: Step = LocalStep(name, cwd, step_settings)
-        if CONFIG.telemetry_enabled:
-            step = UnmanagedProxyStep.from_step(step)
+        step = LocalStep(name, cwd, step_settings)
         return step
 
     def get_step_update(

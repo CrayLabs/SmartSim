@@ -33,6 +33,7 @@ import typing as t
 from os import makedirs
 
 from smartsim.error.errors import SmartSimError
+from smartsim._core.config import CONFIG
 
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr, encode_cmd
@@ -116,90 +117,24 @@ class Step:
         raise SmartSimError("add_to_batch not implemented for this step type")
 
 
-# TODO: We should really consider adding ``typing_extensions`` as a dependency
-#       To avoid needing to do this hacky solution for type hinting ``Self``
-_TSelfUnmanagedProxyStep = t.TypeVar(
-    "_TSelfUnmanagedProxyStep", bound="UnmanagedProxyStep"
-)
+_TStep = t.TypeVar('_TStep', bound=Step)
 
 
-class UnmanagedProxyStep(Step):
-    def __init__(
-        self,
-        name: str,
-        command: t.Sequence[str],
-        cwd: str,
-        settings: SettingsBase,
-        proxy_cmd_output_files: t.Tuple[str, str],
-        proxy_env: t.Optional[t.Dict[str, str]],
-    ) -> None:
-        super().__init__(name, cwd, settings)
-        self._proxy_cmd_output_files = proxy_cmd_output_files
-        self._env = proxy_env.copy() if proxy_env is not None else None
-        self._wrapped_command = tuple(command)
+def proxyable_launch_cmd(fn: t.Callable[[_TStep], t.List[str]]) -> t.Callable[[_TStep], t.List[str]]:
+    def _get_launch_cmd(self: _TStep) -> t.List[str]:
+        original_cmd_list = fn(self)
 
-    @classmethod
-    def from_step(
-        cls: t.Type[_TSelfUnmanagedProxyStep], step: Step
-    ) -> _TSelfUnmanagedProxyStep:
-        proxy_step = cls(
-            step.entity_name,
-            step.get_launch_cmd(),
-            step.cwd,
-            step.step_settings,
-            step.get_output_files(),
-            step.env,
-        )
-        proxy_step.meta = step.meta.copy()
-        if step.managed:
-            logger.debug(
-                f"Managed step of type {type(step)} is has been cast to a {cls}"
-            )
-        return proxy_step
+        if not CONFIG.telemetry_enabled:
+            return original_cmd_list
 
-    @property
-    def managed(self) -> bool:
-        """Unmanaged steps will always be not managed"""
-        return False
-
-    @managed.setter
-    def managed(self, val: bool) -> None:
-        """Annoying no-op setter bc ``managed`` is not an abstract property in
-        the ``Step`` interface
-        """
-        # TODO: This method should not exist and this attr
-        # should be read only (I would argue same for base class)
-
-    @property
-    def env(self) -> t.Optional[t.Dict[str, str]]:
-        return self._env
-
-    @property
-    def wrapped_command(self) -> t.Tuple[str, ...]:
-        return self._wrapped_command
-
-    def get_output_files(self) -> t.Tuple[str, str]:
-        """Return two paths to error and output files based on cwd"""
-        output = self.get_step_file(ending=".indirect.out")
-        error = self.get_step_file(ending=".indirect.err")
-        return output, error
-
-    def get_launch_cmd(self) -> t.List[str]:
-        """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
-        continue telemetry logging after a driver process exits or fails.
-
-        :param step: the step to produce a proxied command for
-        :type step: Step
-        :return: CLI arguments to execute the step via the proxy step executor
-        :rtype: t.List[str]
-        """
+        if self.managed:
+            raise Exception("Proxying a managed step")  # XXX: better msg/exception type
 
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
-        cmd_list = self.wrapped_command
-        encoded_cmd = encode_cmd(list(cmd_list))
-        out, err = self._proxy_cmd_output_files
+        encoded_cmd = encode_cmd(original_cmd_list)
+        out, err = self.get_output_files()
 
         # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
         # the indirect entrypoint rebuild the cmd... for now, test away...
@@ -220,3 +155,6 @@ class UnmanagedProxyStep(Step):
             "+error_file",
             err,
         ]
+
+    return _get_launch_cmd
+             
