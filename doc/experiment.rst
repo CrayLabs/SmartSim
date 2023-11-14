@@ -97,7 +97,19 @@ instantiated once and utilized throughout the workflow runtime.
 In the following content, we define five entities, ``Orchestrator``, ``Model``,
 ``Ensemble``, ``RunSettings``, ``BatchSettings``, and discuss the relationships.
 
-Below is a Entity Reltionship Diagram using Crows Foot Notation.
+Entity Relationship Diagram
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Below is an Entity Relationship Diagram demonstrated with Crow's Foot Notation.
+Moving from the top to the bottom of the diagram, you will first notice that
+an Experiment can have none or many Orchestrators, Models, and Ensembles.
+
+Moving on to the Model entity, you will notice that a Model requires a
+minimum of one RunSetting object and a maximum of one RunSetting object.
+However, it accepts none or one BatchSetting object.
+
+An Ensemble object does not require either RunSetting or BatchSetting
+objects upon initialization but does accept a maximum of one.
+
 .. |SmartSim ERD| image:: images/edr.png
   :width: 700
   :alt: Alternative text
