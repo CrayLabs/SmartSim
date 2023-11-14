@@ -158,8 +158,9 @@ In addition to a single model, SmartSim has the ability to launch a
 ``Ensemble`` of ``Model`` applications simultaneously.
 Ensembles can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying model objects. An ensemble is created
-with ``Experiment.create_ensemble``. A ``Ensemble`` accepts both ``BatchSettings``
-and ``RunSettings`` objects during initialization to parameterize the job.
+with ``Experiment.create_ensemble``. A ``Ensemble`` accepts both,
+but does not require, a ``BatchSettings``
+and ``RunSettings`` object during initialization to parameterize the job.
 
 RunSettings
 ^^^^^^^^^^^
