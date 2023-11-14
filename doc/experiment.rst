@@ -105,11 +105,11 @@ Moving from the top to the bottom of the diagram, you will first notice that
 an Experiment can have none or many ``Orchestrators``, ``Models``, and ``Ensembles``.
 The Experiment class is responsible entity initialization functions:
 
-1. ``Experiment.create_orchestrator()`` -> ``Orchestrator``
-2. ``Experiment.create_model()`` -> ``Model``
-3. ``Experiment.create_ensemble()`` -> ``Ensemble``
-4. ``Experiment.create_run_settings()`` -> ``RunSettings``
-5. ``Experiment.create_batch_settings()`` -> ``BatchSettings``
+1. ``Experiment.create_orchestrator()`` :raw-html:`&rarr; ``Orchestrator``
+2. ``Experiment.create_model()`` :raw-html:`&rarr; ``Model``
+3. ``Experiment.create_ensemble()`` :raw-html:`&rarr; ``Ensemble``
+4. ``Experiment.create_run_settings()`` :raw-html:`&rarr; ``RunSettings``
+5. ``Experiment.create_batch_settings()`` :raw-html:`&rarr; ``BatchSettings``
 
 Moving on to the ``Model`` entity class, you will notice that a ``Model`` requires a
 minimum and maximum of one ``RunSetting`` object. However, it accepts a minimum of zero
