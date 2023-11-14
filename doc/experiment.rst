@@ -91,14 +91,13 @@ to the ``Experiment`` initialization.
  Entities
 =========
 
-The Experiment factory class offers three entities that represent stages of the
-workflow: ``Orchestrator``, ``Model`` and ``Ensemble``.
-To configure the job execution of ``Model`` and ``Ensemble``,
-the ``Experiment`` object offers two additional entities,
-``RunSettings`` and ``BatchSettings``, to parameterize the entities.
-Below we have provided entity discussions as well as an Entity
-Relationship Diagram.
+Defining workflow stages requires the utilization of functions associated
+with the Experiment object. The Experiment object is intended to be
+instantiated once and utilized throughout the workflow runtime.
+In the following content, we define five entities, ``Orchestrator``, ``Model``,
+``Ensemble``, ``RunSettings``, ``BatchSettings``, and discuss the relationships.
 
+Below is a Entity Reltionship Diagram using Crows Foot Notation.
 .. |SmartSim ERD| image:: images/edr.png
   :width: 700
   :alt: Alternative text
