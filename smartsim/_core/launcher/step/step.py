@@ -141,7 +141,6 @@ def proxyable_launch_cmd(
         etype = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
         encoded_cmd = encode_cmd(original_cmd_list)
-        out, err = self.get_output_files()
 
         # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
         #       serialize step and let the indirect entrypoint rebuild the
