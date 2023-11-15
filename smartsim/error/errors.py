@@ -137,7 +137,7 @@ class TelemetryError(SSInternalError):
     telemetry information
     """
 
-class UnproxiableStepError(TelemetryError):
+class UnproxyableStepError(TelemetryError):
     """Raised when a user attempts to proxy a managed ``Step`` through the
     unmanaged step proxy entry point
     """

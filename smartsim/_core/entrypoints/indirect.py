@@ -25,22 +25,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import logging
 import os
 import pathlib
-import psutil
 import signal
 import sys
 import typing as t
-
 from types import FrameType
 
-from smartsim.log import get_logger
-from smartsim._core.entrypoints.telemetrymonitor import track_event
-from smartsim._core.utils.helpers import get_ts, decode_cmd
+import coloredlogs
+import psutil
 
+import smartsim.log
+from smartsim._core.entrypoints.telemetrymonitor import track_event
+from smartsim._core.utils.helpers import decode_cmd, get_ts
 
 STEP_PID: t.Optional[int] = None
-logger = get_logger(__name__)
+logger = smartsim.log.get_logger(__name__)
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
@@ -49,8 +50,6 @@ SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 def main(
     cmd: str,
     etype: str,
-    output_path: str,
-    error_path: str,
     cwd: str,
     status_dir: str,
 ) -> int:
@@ -69,9 +68,6 @@ def main(
     ret_code: int = 1
     logger.debug("Indirect step starting")
 
-    ofp = open(output_path, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
-    efp = open(error_path, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
-
     start_detail = f"Proxy process {proxy_pid}"
     start_rc: t.Optional[int] = None
 
@@ -79,9 +75,8 @@ def main(
         process = psutil.Popen(
             cleaned_cmd,
             cwd=cwd,
-            stdout=ofp.fileno(),
-            stderr=efp.fileno(),
-            close_fds=True,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
         )
         STEP_PID = process.pid
         logger.info(f"Indirect proxy {proxy_pid} child process {STEP_PID} started")
@@ -109,8 +104,10 @@ def main(
     logger.info(f"Waiting for child process {STEP_PID} to complete")
     ret_code = process.wait()
 
-    logger.info(f"Indirect proxy {proxy_pid} child process {STEP_PID} complete."
-                f" return code: {ret_code}")
+    logger.info(
+        f"Indirect proxy {proxy_pid} child process {STEP_PID} complete."
+        f" return code: {ret_code}"
+    )
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
     track_event(
         get_ts(),
@@ -140,7 +137,6 @@ def cleanup() -> None:
         if psutil.pid_exists(STEP_PID):
             process = psutil.Process(STEP_PID)
             process.terminate()
-
     except psutil.NoSuchProcess:
         # swallow exception to avoid overwriting outputs from cmd
         ...
@@ -171,6 +167,9 @@ def get_parser() -> argparse.ArgumentParser:
         prefix_chars="+", description="SmartSim Step Executor"
     )
     parser.add_argument(
+        "+name", type=str, help="Name of the step being executed", required=True
+    )
+    parser.add_argument(
         "+command", type=str, help="The command to execute", required=True
     )
     parser.add_argument(
@@ -186,12 +185,6 @@ def get_parser() -> argparse.ArgumentParser:
         required=True,
     )
     parser.add_argument(
-        "+output_file", type=str, help="Output file", required=True
-    )
-    parser.add_argument(
-        "+error_file", type=str, help="Erorr output file", required=True
-    )
-    parser.add_argument(
         "+telemetry_dir",
         type=str,
         help="Directory for telemetry output",
@@ -200,31 +193,37 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def format_proxy_output_file(s: str, /) -> str:
-    before, _, end = s.rpartition('.')
-    return f"{before}.target.{end}"
-
-
 if __name__ == "__main__":
     arg_parser = get_parser()
     os.environ["PYTHONUNBUFFERED"] = "1"
+    parsed_args = arg_parser.parse_args()
+
+    # Set up a local private logger for when this module is run as an entry point
+    level = logger.getEffectiveLevel()
+    logger = logging.getLogger(f"{__name__}.{parsed_args.name}")
+    logger.propagate = False
+    logger.setLevel(level)
+
+    fh = logging.FileHandler(f"{parsed_args.name}.indirect.log")
+    coloredlogs.HostNameFilter.install(fh)
+    fh.setFormatter(
+        logging.Formatter(
+            smartsim.log.DEFAULT_LOG_FORMAT,
+            datefmt=smartsim.log.DEFAULT_DATE_FORMAT,
+        )
+    )
+    logger.addHandler(fh)
 
     try:
-        parsed_args = arg_parser.parse_args()
         logger.debug("Starting indirect step execution")
 
         # make sure to register the cleanup before the start the process
         # so our signaller will be able to stop the database process.
         register_signal_handlers()
 
-        out = format_proxy_output_file(parsed_args.output_file)
-        err = format_proxy_output_file(parsed_args.error_file)
-
         rc = main(
             cmd=parsed_args.command,
             etype=parsed_args.entity_type,
-            output_path=out,
-            error_path=err,
             cwd=parsed_args.working_dir,
             status_dir=parsed_args.telemetry_dir,
         )

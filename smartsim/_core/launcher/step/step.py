@@ -33,7 +33,7 @@ import time
 import typing as t
 from os import makedirs
 
-from smartsim.error.errors import SmartSimError, UnproxiableStepError
+from smartsim.error.errors import SmartSimError, UnproxyableStepError
 from smartsim._core.config import CONFIG
 
 from ....log import get_logger
@@ -132,9 +132,9 @@ def proxyable_launch_cmd(
             return original_cmd_list
 
         if self.managed:
-            raise UnproxiableStepError(
-                f"Attempting to proxy managed step of type {self} through"
-                "the unmanaged step proxy entry point"
+            raise UnproxyableStepError(
+                f"Attempting to proxy managed step of type {type(self)}"
+                "through the unmanaged step proxy entry point"
             )
 
         proxy_module = "smartsim._core.entrypoints.indirect"
@@ -150,6 +150,8 @@ def proxyable_launch_cmd(
             sys.executable,
             "-m",
             proxy_module,
+            "+name",
+            self.name,
             "+command",
             encoded_cmd,
             "+entity_type",
@@ -158,10 +160,6 @@ def proxyable_launch_cmd(
             status_dir,
             "+working_dir",
             self.cwd,
-            "+output_file",
-            out,
-            "+error_file",
-            err,
         ]
 
     return _get_launch_cmd
