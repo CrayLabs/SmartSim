@@ -58,7 +58,7 @@ class _BaseMPIStep(Step):
         self.run_settings = run_settings
 
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
-    
+
     @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step

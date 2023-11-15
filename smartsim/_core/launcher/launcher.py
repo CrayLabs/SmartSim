@@ -33,7 +33,6 @@ from .stepMapping import StepMapping
 from .taskManager import TaskManager
 from .step.step import Step
 from ...settings import SettingsBase
-from ..config import CONFIG
 
 
 class Launcher(abc.ABC):  # pragma: no cover

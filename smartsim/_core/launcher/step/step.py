@@ -26,13 +26,14 @@
 
 from __future__ import annotations
 
+import functools
 import os.path as osp
 import sys
 import time
 import typing as t
 from os import makedirs
 
-from smartsim.error.errors import SmartSimError
+from smartsim.error.errors import SmartSimError, UnproxiableStepError
 from smartsim._core.config import CONFIG
 
 from ....log import get_logger
@@ -117,18 +118,24 @@ class Step:
         raise SmartSimError("add_to_batch not implemented for this step type")
 
 
-_TStep = t.TypeVar('_TStep', bound=Step)
+_StepT = t.TypeVar("_StepT", bound=Step)
 
 
-def proxyable_launch_cmd(fn: t.Callable[[_TStep], t.List[str]]) -> t.Callable[[_TStep], t.List[str]]:
-    def _get_launch_cmd(self: _TStep) -> t.List[str]:
+def proxyable_launch_cmd(
+    fn: t.Callable[[_StepT], t.List[str]], /
+) -> t.Callable[[_StepT], t.List[str]]:
+    @functools.wraps(fn)
+    def _get_launch_cmd(self: _StepT) -> t.List[str]:
         original_cmd_list = fn(self)
 
         if not CONFIG.telemetry_enabled:
             return original_cmd_list
 
         if self.managed:
-            raise Exception("Proxying a managed step")  # XXX: better msg/exception type
+            raise UnproxiableStepError(
+                f"Attempting to proxy managed step of type {self} through"
+                "the unmanaged step proxy entry point"
+            )
 
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = self.meta["entity_type"]
@@ -136,8 +143,9 @@ def proxyable_launch_cmd(fn: t.Callable[[_TStep], t.List[str]]) -> t.Callable[[_
         encoded_cmd = encode_cmd(original_cmd_list)
         out, err = self.get_output_files()
 
-        # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
-        # the indirect entrypoint rebuild the cmd... for now, test away...
+        # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
+        #       serialize step and let the indirect entrypoint rebuild the
+        #       cmd... for now, test away...
         return [
             sys.executable,
             "-m",
@@ -157,4 +165,3 @@ def proxyable_launch_cmd(fn: t.Callable[[_TStep], t.List[str]]) -> t.Callable[[_
         ]
 
     return _get_launch_cmd
-             
