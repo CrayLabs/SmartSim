@@ -31,7 +31,7 @@ from ...error import AllocationError, LauncherError, SSUnsupportedError
 from .stepInfo import UnmanagedStepInfo, StepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
-from .step.step import Step
+from .step import Step
 from ...settings import SettingsBase
 
 
@@ -111,10 +111,9 @@ class WLMLauncher(Launcher):  # cov-wlm
                 f"RunSettings type {type(step_settings)} not supported by this launcher"
             ) from None
         try:
-            step = step_class(name, cwd, step_settings)
+            return step_class(name, cwd, step_settings)
         except AllocationError as e:
             raise LauncherError("Step creation failed") from e
-        return step
 
     # these methods are implemented in WLM launchers and
     # don't need to be covered here.

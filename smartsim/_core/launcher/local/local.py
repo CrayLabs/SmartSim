@@ -56,8 +56,7 @@ class LocalLauncher(Launcher):
             raise TypeError(
                 f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
             )
-        step = LocalStep(name, cwd, step_settings)
-        return step
+        return LocalStep(name, cwd, step_settings)
 
     def get_step_update(
         self, step_names: t.List[str]
