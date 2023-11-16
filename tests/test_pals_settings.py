@@ -31,6 +31,7 @@ import sys
 
 import pytest
 
+import smartsim._core.config.config
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import PalsMpiexecSettings
 from smartsim._core.launcher import PBSLauncher
