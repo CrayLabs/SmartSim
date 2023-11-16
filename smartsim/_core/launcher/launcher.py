@@ -88,7 +88,6 @@ class WLMLauncher(Launcher):  # cov-wlm
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
-    @t.final
     def create_step(
         self, name: str, cwd: str, step_settings: SettingsBase
     ) -> Step:  # cov-wlm
