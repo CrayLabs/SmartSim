@@ -77,8 +77,7 @@ Note that ``freeze_model`` conveniently returns the path to the serialized model
 and the names of the input and output layers, which are needed to upload the TensorFlow
 model on the DB, as shown in the following code snippet, where we also upload a
 synthetic sample to be passed to the model. Notice that we could also upload a batch
-of samples, instead of a single one. For details about ``set_model_from_file``, please
-refer to :ref:`SmartRedis API <smartredis-api>`.
+of samples, instead of a single one.
 
 .. code-block:: python
 
@@ -90,6 +89,8 @@ refer to :ref:`SmartRedis API <smartredis-api>`.
     mnist_image = np.random.rand(1, 28, 28).astype(np.float32)
     client.put_tensor("mnist_input", mnist_image)
 
+For details about ``set_model_from_file``, please
+refer to :ref:`SmartRedis API <smartredis-api>`.
 Finally, the model can be run on the sample and the output is ready to be downloaded.
 
 .. code-block:: python
@@ -192,7 +193,10 @@ it on the file system. For this reason, we need to call SmartRedis's
     client.run_model("cnn", inputs=["input"], outputs=["output"])
     output = client.get_tensor("output")
 
-We can also store the serialized model on the file system as follows.
+The model can be serialized and stored on disk by replacing the
+``BytesIO`` object by a string representing the file name. It can
+then be uploaded to the DB by calling ``set_model_from_file`` instead
+of ``set_model``.
 
 .. code-block:: python
 
@@ -239,7 +243,7 @@ same file. A typical script file would look like this:
     def shift_y_to_x(x, y):
         mu_x = x.mean()
         sigma_x = x.std()
-        y_rescaled = rescale(y, mu_x, mu_y)
+        y_rescaled = rescale(y, mu_x, sigma_x)
 
         return y_rescaled
 
@@ -247,7 +251,9 @@ In the script, we defined ``shift_y_to_x``,
 a function which returns a modified copy of a tensor ``y``,
 which matches the statistical distribution of the tensor ``x``.
 Notice that we are not importing ``torch`` in the script, as it will
-be recognized as a built-in by the TorchScript compiler.
+be recognized as a built-in by the TorchScript compiler. Because
+of the discrepancy between TorchScript's and Python's syntaxes, TorchScript
+scripts cannot be run as standalone Python scripts.
 
 Here is the code which allows us to run the function ``shift_y_to_x`` on
 tensors stored in the DB. We will assume that the above script is stored
@@ -269,8 +275,8 @@ as ``"./shift.py"``.
     client.run_script("shifter", "shift_y_to_x", inputs=["X_rand", "Y_rand"], outputs=["Y_scaled"])
     y_scaled = client.get_tensor("Y_scaled")
 
-Simpler functions (or functions that do not require calling other functions),
-can be defined inline and uploaded to the DB. For example:
+Simpler functions (or functions that do not require calling other user-defined
+or imported functions), can be defined inline and uploaded to the DB. For example:
 
 .. code-block:: python
 
@@ -324,8 +330,6 @@ representing a linear regression can be uploaded to the DB and applied to a tens
     # linreg test
     X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]]).astype(np.float32)
     linreg = build_lin_reg()
-    outputs = run_model(client, "linreg", device, linreg, X, "X", ["Y"])
-    run_model(client, model_name, device, model, model_input, in_name, out_names):
     client.put_tensor("X", X)
     client.set_model("linreg", linreg, "ONNX", device="GPU")
     client.run_model("linreg", inputs=["X"], outputs=["Y"])
