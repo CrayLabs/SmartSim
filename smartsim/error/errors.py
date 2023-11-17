@@ -130,3 +130,14 @@ class ShellError(LauncherError):
         if details:
             msg += f"\nError from shell: {details}"
         return msg
+
+
+class TelemetryError(SSInternalError):
+    """Raised when SmartSim runs into trouble establishing or communicating
+    telemetry information
+    """
+
+class UnproxyableStepError(TelemetryError):
+    """Raised when a user attempts to proxy a managed ``Step`` through the
+    unmanaged step proxy entry point
+    """

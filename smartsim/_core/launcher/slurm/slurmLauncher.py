@@ -155,8 +155,7 @@ class SlurmLauncher(WLMLauncher):
             # MPI/local steps don't direct output like slurm steps
             out, err = step.get_output_files()
 
-            # LocalStep.run_command omits env, include it here
-            passed_env = step.env if isinstance(step, LocalStep) else None
+            passed_env = step.env
 
             # pylint: disable-next=consider-using-with
             output = open(out, "w+", encoding="utf-8")

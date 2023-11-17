@@ -30,11 +30,15 @@ import sys
 
 import coloredlogs
 
-# constants for logging
-coloredlogs.DEFAULT_DATE_FORMAT = "%H:%M:%S"
-coloredlogs.DEFAULT_LOG_FORMAT = (
+# constants
+DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
+DEFAULT_LOG_FORMAT: t.Final[str] = (
     "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 )
+
+# configure colored loggs
+coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
+coloredlogs.DEFAULT_LOG_FORMAT = DEFAULT_LOG_FORMAT
 
 
 def _get_log_level() -> str:
