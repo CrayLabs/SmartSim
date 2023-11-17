@@ -294,9 +294,11 @@ def test_shutdown_conditions():
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
 
+    logger = logging.getLogger()
+
     # show that an event handler w/no monitored jobs can shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
-    assert can_shutdown(mani_handler)
+    assert can_shutdown(mani_handler, logger)
 
     # show that an event handler w/a monitored job cannot shutdown
     mani_handler = ManifestEventHandler("xyz", logger)
@@ -304,7 +306,7 @@ def test_shutdown_conditions():
                                      job_entity1.step_id,
                                      job_entity1,
                                      False)
-    assert not can_shutdown(mani_handler)
+    assert not can_shutdown(mani_handler, logger)
     assert not bool(mani_handler.job_manager.db_jobs)
     assert bool(mani_handler.job_manager.jobs)
 
@@ -315,7 +317,7 @@ def test_shutdown_conditions():
                                      job_entity1.step_id,
                                      job_entity1,
                                      False)
-    assert not can_shutdown(mani_handler)
+    assert not can_shutdown(mani_handler, logger)
     assert bool(mani_handler.job_manager.db_jobs)
     assert not bool(mani_handler.job_manager.jobs)
 
@@ -336,17 +338,17 @@ def test_shutdown_conditions():
                                     job_entity2.step_id,
                                     job_entity2,
                                     False)
-    assert not can_shutdown(mani_handler)
+    assert not can_shutdown(mani_handler, logger)
     assert bool(mani_handler.job_manager.db_jobs)
     assert bool(mani_handler.job_manager.jobs)
 
     # ... now, show that removing 1 of 2 jobs still doesn't shutdown
     mani_handler.job_manager.db_jobs.popitem()
-    assert not can_shutdown(mani_handler)
+    assert not can_shutdown(mani_handler, logger)
 
     # ... now, show that removing final job will allow shutdown
     mani_handler.job_manager.jobs.popitem()
-    assert can_shutdown(mani_handler)
+    assert can_shutdown(mani_handler, logger)
 
 
 def test_auto_shutdown():
