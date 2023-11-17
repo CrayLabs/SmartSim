@@ -100,7 +100,7 @@ def test_parser():
     parser = get_parser()
 
     test_dir = "/foo/bar"
-    test_freq = "123"
+    test_freq = 123
 
     cmd = f"-exp_dir {test_dir} -frequency {test_freq}"
     args = cmd.split()
