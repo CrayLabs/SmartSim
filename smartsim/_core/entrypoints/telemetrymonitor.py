@@ -360,7 +360,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             self._logger.error("Manifest content error", exc_info=True)
             return
 
-        self.set_launcher(manifest.launcher)
+        if self._launcher is None:
+            self.set_launcher(manifest.launcher)
 
         if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
