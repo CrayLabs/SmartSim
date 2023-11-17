@@ -41,7 +41,7 @@ ALL_ARGS = {"+command", "+entity_type", "+telemetry_dir", "+output_file", "+erro
 @pytest.mark.parametrize(
         ["cmd", "missing"],
         [
-            pytest.param("indirect.py", {"+command", "+entity_type", "+telemetry_dir", "+output_file", "+error_file", "+working_dir"}, id="no args"),
+            pytest.param("indirect.py", {"+name", "+command", "+entity_type", "+telemetry_dir", "+working_dir"}, id="no args"),
             pytest.param("indirect.py -c echo +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+command"}, id="cmd typo"),
             pytest.param("indirect.py -t orchestrator +command ccc +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="etype typo"),
             pytest.param("indirect.py -d /foo/bar +entity_type ttt +command ccc +output_file ooo +working_dir www +error_file eee", {"+telemetry_dir"}, id="dir typo"),
@@ -135,8 +135,6 @@ def test_indirect_main_dir_check(fileutils):
     """Ensure that the proxy validates the test directory exists"""
     test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
-    std_out = str(exp_dir / "out.txt")
-    err_out = str(exp_dir / "err.txt")
 
     cmd = ["echo", "unit-test"]
     encoded_cmd = encode_cmd(cmd)
@@ -144,7 +142,7 @@ def test_indirect_main_dir_check(fileutils):
     status_path = exp_dir / TELMON_SUBDIR
     
     # show that a missing status_path is created when missing
-    main(encoded_cmd, "application", std_out, err_out, exp_dir, status_path)
+    main(encoded_cmd, "application", exp_dir, status_path)
 
     assert status_path.exists()
 
@@ -153,44 +151,35 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     """Ensure that the proxy validates the cmd is not empty or whitespace-only"""
     test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
-    std_out = str(exp_dir / "out.txt")
-    err_out = str(exp_dir / "err.txt")
 
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("", "application", std_out, err_out, exp_dir, exp_dir / TELMON_SUBDIR)
+        _ = main("", "application", exp_dir, exp_dir / TELMON_SUBDIR)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
-
-    std_out = str(exp_dir / "out.txt")
-    err_out = str(exp_dir / "err.txt")
 
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
-        _ = main("  \n  \t   ", "application", std_out, err_out, exp_dir, exp_dir / TELMON_SUBDIR)
+        _ = main("  \n  \t   ", "application", exp_dir, exp_dir / TELMON_SUBDIR)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
 
 
-def test_complete_process(capsys, fileutils):
+def test_complete_process(fileutils):
     """Ensure the happy-path completes and returns a success return code"""
     script = fileutils.get_test_conf_path("sleep.py")
 
     test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
-    std_out = str(exp_dir / "out.txt")
-    err_out = str(exp_dir / "err.txt")
-
-    _ = capsys.readouterr()  # throw away existing output
 
     raw_cmd = f"{sys.executable} {script} --time=1"
     cmd = encode_cmd(raw_cmd.split())
 
-    rc = main(cmd, "application", std_out, err_out, exp_dir, exp_dir / TELMON_SUBDIR)
+    rc = main(cmd, "application", exp_dir, exp_dir / TELMON_SUBDIR)
     assert rc == 0
 
     assert exp_dir.exists()

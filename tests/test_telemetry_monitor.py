@@ -29,14 +29,19 @@ import logging
 import pathlib
 from random import sample
 import pytest
+import sys
 import typing as t
 import time
 import uuid
 from conftest import FileUtils
-import smartsim._core.config.config as cfg
-from smartsim._core.control.job import Job, JobEntity
-from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
 
+from smartsim._core.control.job import Job, JobEntity
+from smartsim._core.launcher.launcher import WLMLauncher
+from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
+from smartsim.error.errors import UnproxyableStepError
+from smartsim.settings.base import RunSettings
+from smartsim.status import STATUS_COMPLETED, STATUS_CANCELLED
+import smartsim._core.config.config as cfg
 
 from smartsim._core.entrypoints.telemetrymonitor import (
     can_shutdown,
@@ -53,6 +58,15 @@ from smartsim import Experiment
 
 
 ALL_ARGS = {"-exp_dir", "-frequency"}
+PROXY_ENTRY_POINT = "smartsim._core.entrypoints.indirect"
+CFG_TM_ENABLED_ATTR = "telemetry_enabled"
+
+
+for_all_wlm_launchers = pytest.mark.parametrize("wlm_launcher", [
+    pytest.param(cls(), id=cls.__name__) for cls in WLMLauncher.__subclasses__()
+])
+
+
 logger = logging.getLogger()
 
 
@@ -797,3 +811,95 @@ def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
         # the colodb does NOT show up as a unique entity in the telemetry
         assert len(start_events) == 1
         assert len(stop_events) == 1
+
+
+class MockStep(Step):
+    """Mock step to implement any abstract methods so that it can be
+    instanced for test purposes
+    """
+    def get_launch_cmd(self):
+        return ["spam", "eggs"]
+
+
+@pytest.fixture
+def mock_step_meta_dict(fileutils):
+    test_dir = fileutils.make_test_dir()
+    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    yield {
+        "entity_type": "mock",
+        "status_dir": telemetry_output_path,
+    }
+
+
+@pytest.fixture
+def mock_step(fileutils, mock_step_meta_dict):
+    test_dir = fileutils.make_test_dir()
+    rs = RunSettings('echo')
+    step =  MockStep('mock-step', test_dir, rs)
+    step.meta = mock_step_meta_dict
+    yield step
+
+
+def test_proxy_launch_cmd_decorator_reformats_cmds(
+    mock_step, monkeypatch
+):
+    monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, True)
+    get_launch_cmd = proxyable_launch_cmd(lambda step: ["some", "cmd", "list"])
+    cmd = get_launch_cmd(mock_step)
+    assert cmd != ["some", "cmd", "list"]
+    assert sys.executable in cmd
+    assert PROXY_ENTRY_POINT in cmd
+
+
+def test_proxy_launch_cmd_decorator_does_not_reformat_cmds_if_the_tm_is_off(
+    mock_step, monkeypatch
+):
+    monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, False)
+    get_launch_cmd = proxyable_launch_cmd(lambda step: ["some", "cmd", "list"])
+    cmd = get_launch_cmd(mock_step)
+    assert cmd == ["some", "cmd", "list"]
+
+
+def test_proxy_launch_cmd_decorator_errors_if_attempt_to_proxy_a_managed_step(
+    mock_step, monkeypatch
+):
+    monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, True)
+    mock_step.managed = True
+    get_launch_cmd = proxyable_launch_cmd(lambda step: ["some", "cmd", "list"])
+    with pytest.raises(UnproxyableStepError):
+        get_launch_cmd(mock_step)
+
+
+@for_all_wlm_launchers
+def test_unmanaged_steps_are_proxyed_through_indirect(
+    wlm_launcher, mock_step_meta_dict, fileutils, monkeypatch
+):
+    monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, True)
+    test_dir = fileutils.make_test_dir()
+    rs = RunSettings("echo", ["hello", "world"])
+    step = wlm_launcher.create_step('test-step', test_dir, rs)
+    step.meta = mock_step_meta_dict
+    assert isinstance(step, Step)
+    assert not step.managed
+    cmd = step.get_launch_cmd()
+    assert  sys.executable in cmd
+    assert PROXY_ENTRY_POINT in cmd
+    assert "hello" not in cmd
+    assert "world" not in cmd
+
+
+@for_all_wlm_launchers
+def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
+    wlm_launcher, mock_step_meta_dict, fileutils, monkeypatch
+):
+    monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, False)
+    test_dir = fileutils.make_test_dir()
+    rs = RunSettings("echo", ["hello", "world"])
+    step = wlm_launcher.create_step('test-step', test_dir, rs)
+    step.meta = mock_step_meta_dict
+    assert isinstance(step, Step)
+    assert not step.managed
+    cmd = step.get_launch_cmd()
+    assert PROXY_ENTRY_POINT not in cmd
+    assert "hello" in cmd
+    assert "world" in cmd
