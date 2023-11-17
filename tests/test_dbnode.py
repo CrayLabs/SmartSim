@@ -37,6 +37,9 @@ from smartsim.database import Orchestrator
 from smartsim.entity.dbnode import DBNode, LaunchedShardData
 from smartsim.error.errors import SmartSimError
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_parse_db_host_error():
     orc = Orchestrator()

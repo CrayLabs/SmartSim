@@ -32,6 +32,10 @@ from smartsim import Experiment, status
 from smartsim.error import SSUnsupportedError
 from smartsim.entity import Model
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
+
 if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
 else:

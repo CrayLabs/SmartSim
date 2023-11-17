@@ -24,8 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 
 from smartsim._core.utils.helpers import cat_arg_and_value
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
 
 def test_double_dash_concat():

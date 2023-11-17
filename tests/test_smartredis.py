@@ -32,6 +32,10 @@ from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
+
 """Test smartredis integration for ensembles. Two copies of the same
    program will be executed concurrently, and name collisions
    will be avoided through smartredis prefixing:
