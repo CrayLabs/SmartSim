@@ -257,7 +257,7 @@ scripts cannot be run as standalone Python scripts.
 
 Here is the code which allows us to run the function ``shift_y_to_x`` on
 tensors stored in the DB. We will assume that the above script is stored
-as ``"./shift.py"``.
+as ``"./shift.script"``.
 
 .. code-block:: python
 
@@ -271,7 +271,7 @@ as ``"./shift.py"``.
     client.put_tensor("X_rand", x)
     client.put_tensor("Y_rand", y)
 
-    client.set_script_from_file("shifter", "./shift.py", device="CPU")
+    client.set_script_from_file("shifter", "./shift.script", device="CPU")
     client.run_script("shifter", "shift_y_to_x", inputs=["X_rand", "Y_rand"], outputs=["Y_scaled"])
     y_scaled = client.get_tensor("Y_scaled")
 
