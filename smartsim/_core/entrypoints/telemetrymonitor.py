@@ -608,7 +608,7 @@ def get_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     arg_parser.add_argument(
         "-frequency",
-        type=str,
+        type=int,
         help="Frequency of telemetry updates (in seconds))",
         required=True,
     )
