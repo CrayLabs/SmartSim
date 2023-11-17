@@ -487,10 +487,18 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     )
 
 
-def can_shutdown(action_handler: ManifestEventHandler) -> bool:
-    has_jobs = bool(action_handler.job_manager.jobs)
-    has_dbs = bool(action_handler.job_manager.db_jobs)
+def can_shutdown(action_handler: ManifestEventHandler, logger: logging.Logger) -> bool:
+    jobs = action_handler.job_manager.jobs
+    db_jobs = action_handler.job_manager.db_jobs
+
+    has_jobs = bool(jobs)
+    has_dbs = bool(db_jobs)
     has_running_jobs = has_jobs or has_dbs
+
+    if has_jobs:
+        logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
+    if has_dbs:
+        logger.debug(f"telemetry monitor is monitoring {len(jobs)} dbs")
 
     return not has_running_jobs
 
@@ -525,8 +533,9 @@ def event_loop(
         elapsed += timestamp - last_ts
         last_ts = timestamp
 
-        if can_shutdown(action_handler):
+        if can_shutdown(action_handler, logger):
             if elapsed >= cooldown_duration:
+                logger.info("beginning telemetry manager shutdown")
                 observer.stop()  # type: ignore
         else:
             # reset cooldown any time there are still jobs running
