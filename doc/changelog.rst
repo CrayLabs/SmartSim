@@ -19,6 +19,7 @@ To be released at some future point in time
 
 Description
 
+- Add template for pull requests
 - Split tests into groups for parallel execution in CI/CD pipeline
 - Change signature of `Experiment.summary()`
 - Expose first_device parameter for scripts, functions, models
@@ -28,6 +29,7 @@ Description
 
 Detailed Notes
 
+- Add a template for Github pull requests (PR423_)
 - Split tests into `group_a`, `group_b`, `slow_tests` for parallel execution in CI/CD pipeline (PR417_)
 - Change `format` argument to `style` in `Experiment.summary()`, this is
   an API break (PR391_)
@@ -44,7 +46,7 @@ Detailed Notes
   bug has been fixed. This applies to all operating systems. (PR383_)
 - Add support for creation of multiple databases with unique identifiers. (PR342_)
 
-
+  .. _PR423: https://github.com/CrayLabs/SmartSim/pull/423
   .. _PR417: https://github.com/CrayLabs/SmartSim/pull/417
   .. _PR391: https://github.com/CrayLabs/SmartSim/pull/391
   .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
