@@ -835,8 +835,8 @@ class Controller:
             # pylint: disable-next=consider-using-with
             self._telemetry_monitor = subprocess.Popen(
                 cmd,
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
+                stderr=sys.stderr,
+                stdout=sys.stdout,
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
