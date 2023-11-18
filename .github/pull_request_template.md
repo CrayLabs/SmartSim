@@ -7,8 +7,8 @@ A clear and concise description of the implementation strategy.
 # Pull Request Acceptance Criteria
 The following pull request review steps must be completed before merging:
 
- - [ ] Code review for style, design, and accuracy
- - [ ] Unit test review for completeness and accuracy
+ - [ ] Review code for style, design, and accuracy
+ - [ ] Review unit tests for completeness and accuracy
  - [ ] Verify ``changelog.rst`` entry
  - [ ] Verify Github CI/CD actions passing
  - [ ] Verify external WLM tests passing
