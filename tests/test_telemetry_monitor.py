@@ -830,7 +830,7 @@ def test_telemetry_autoshutdown(fileutils, wlmutils, monkeypatch, frequency, coo
             time.sleep(3)
 
         assert popen.returncode is not None
-        assert stop_time >= (start_time + cooldown - 3)
+        assert stop_time >= (start_time + cooldown)
 
 
 class MockStep(Step):
