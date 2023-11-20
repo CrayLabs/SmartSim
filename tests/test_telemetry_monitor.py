@@ -809,6 +809,8 @@ def test_telemetry_autoshutdown(fileutils, wlmutils, monkeypatch, frequency, coo
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
+        start_time = get_ts()
+        stop_time = start_time
         exp.start(block=False)
 
         telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
@@ -822,11 +824,13 @@ def test_telemetry_autoshutdown(fileutils, wlmutils, monkeypatch, frequency, coo
         # give some leeway during testing for the cooldown to get hit
         for i in range(10):
             if popen.poll() is not None:
+                stop_time = get_ts()
                 print(f"Completed polling for telemetry shutdown after {i} attempts")
                 break
             time.sleep(3)
 
         assert popen.returncode is not None
+        assert stop_time >= (start_time + cooldown - 3)
 
 
 class MockStep(Step):
