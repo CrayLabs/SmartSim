@@ -310,7 +310,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._launcher: t.Optional[Launcher] = None
-        self.job_manager: JobManager = JobManager(threading.RLock())
+        self.job_manager = JobManager(threading.RLock())
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
@@ -643,7 +643,13 @@ if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
 
-    log = logging.getLogger()
+    log = logging.getLogger(f"{__name__}.TelemetryMonitor")
+    log.setLevel(logging.DEBUG)
+    log.propagate = False
+
+    log_path = os.path.join(args.exp_dir, TELMON_SUBDIR, "telemetrymonitor.log")
+    fh = logging.FileHandler(log_path, 'a')
+    log.addHandler(fh)
 
     # Must register cleanup before the main loop is running
     register_signal_handlers()
