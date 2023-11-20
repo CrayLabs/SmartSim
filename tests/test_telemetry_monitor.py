@@ -29,11 +29,12 @@ import logging
 import pathlib
 from random import sample
 import pytest
+import shutil
 import sys
 import typing as t
 import time
 import uuid
-from conftest import FileUtils
+from conftest import FileUtils, MLUtils, WLMUtils
 
 from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.launcher.launcher import WLMLauncher
@@ -918,3 +919,110 @@ def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
     assert PROXY_ENTRY_POINT not in cmd
     assert "hello" in cmd
     assert "world" in cmd
+
+
+@pytest.mark.parametrize(
+        "run_command, num_db_nodes, launcher",
+        [
+            pytest.param("auto", 1, "local", id="use auto"),
+            pytest.param("mpirun", 1, "local", id="use mpirun"),
+            pytest.param("srun", 1, "slurm", id="use srun"),
+            pytest.param("srun", 2, "slurm", id="use srun w/2 db"),
+        ]
+)
+def test_multistart_experiment(mlutils: MLUtils, 
+                               wlmutils: WLMUtils,
+                               fileutils: FileUtils,
+                               monkeypatch: pytest.MonkeyPatch,
+                               run_command: str,
+                               num_db_nodes: int,
+                               launcher: str):
+    """Run an experiment with multiple start calls to ensure that telemetry is
+    saved correctly for each run"""
+    test_dir = fileutils.make_test_dir()
+
+    if run_command != "auto" and not shutil.which(run_command):
+        assert True, f"{run_command} not supported on test environment"
+        return
+
+    exp_name = "my-exp"
+    exp = Experiment(exp_name, 
+                     launcher=launcher,
+                     exp_path=test_dir)
+    rs_e = exp.create_run_settings(sys.executable, ["printing_model.py"],
+                                   run_command=run_command)
+    rs_e.set_nodes(1)
+    rs_e.set_tasks(1)
+    ens = exp.create_ensemble(
+        "my-ens",
+        run_settings=rs_e,
+        perm_strategy="all_perm",
+        params={
+            "START": ["spam", "foo"],
+            "MID": ["eggs", "bar"],
+            "END": ["ham", "baz"],
+        },
+    )
+
+    yo_path = fileutils.get_test_conf_path("printing_model.py")
+    ens.attach_generator_files(to_configure=[yo_path])
+
+    rs_m = exp.create_run_settings("echo", ["hello", "world"],
+                                   run_command=run_command)
+    rs_m.set_nodes(1)
+    rs_m.set_tasks(1)
+    model = exp.create_model("my-model", run_settings=rs_m)
+    model.colocate_db_tcp(port=5757, db_identifier="COLO")
+
+    model_file = mlutils.save_torch_cnn(test_dir, "model1.pt")
+    model.add_ml_model(
+            "cnn",
+            "TORCH",
+            model_path=model_file,
+            device="CPU")
+
+    db = exp.create_database(db_nodes=num_db_nodes,  #  if USE_SLURM else 1,
+                             port=wlmutils.get_test_port(),
+                             interface=wlmutils.get_test_interface(),  # "ipogif0" if _launcher != "local" else "lo",
+                             single_cmd=False)
+
+    exp.generate(db, ens, model, overwrite=True)
+
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(cfg.Config, "telemetry_frequency", 1)
+        ctx.setattr(cfg.Config, "telemetry_cooldown", 45)
+        
+        exp.start(model, block=False)
+
+        # track PID to see that telmon cooldown avoids restarting process
+        tm_pid = exp._control._telemetry_monitor.pid
+
+        exp.start(db, block=False)
+        assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
+        try:
+            exp.start(ens, block=True, summary=True)
+            assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
+        finally:
+            exp.stop(db)
+            assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
+            time.sleep(3)  # time for telmon to write db stop event
+
+    assert True, "TODO: check telemetry output"
+
+    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    
+    db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
+    db_stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
+    assert len(db_start_events) == num_db_nodes
+    assert len(db_stop_events) == num_db_nodes
+
+    m_start_events = list(telemetry_output_path.rglob("model/**/start.json"))
+    m_stop_events = list(telemetry_output_path.rglob("model/**/stop.json"))
+    assert len(m_start_events) == 1
+    assert len(m_stop_events) == 1
+
+    m_start_events = list(telemetry_output_path.rglob("ensemble/**/start.json"))
+    m_stop_events = list(telemetry_output_path.rglob("ensemble/**/stop.json"))
+    assert len(m_start_events) == 8
+    assert len(m_stop_events) == 8
