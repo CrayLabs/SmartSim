@@ -166,8 +166,8 @@ A full example of configuring KeyDB to run in SmartSim is shown below
 
   # run smartsim workload
 
-Multi-database Example
-======================
+Multi-Orchestrator Example
+==========================
 SmartSim offers functionality to automate the deployment of multiple
 databases on an HPC cluster, supporting workloads that require multiple
 ``Orchestrators`` for a ``Experiment``. For instance, a workload may consist of a
@@ -176,13 +176,14 @@ along with an analysis and
 visualization workflow connected to the simulation (requiring a standard orchestrator).
 
 Below is a simple example demonstrating the process of:
+
 1. Launching two std deployment Orchestrators within an experiment with unique identifiers
 2. Launching one colo deployment Orchestrator within an experiment
 3. Connecting SmartRedis clients within the driver script and sending tensors to databases
 4. Connecting SmartRedis clients within the application and retrieving tensors from databases
 
-The Application
----------------
+The Application Script
+----------------------
 To store and retrieve data from the two databases
 during the course of application, you must correctly
 initialize two SmartSim clients (SmartRedis).
