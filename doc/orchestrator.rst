@@ -421,8 +421,8 @@ When you run the experiment, the following output will appear:
   00:00:00 system.host.com SmartSim[#####] INFO The multi shard array key exists in the incorrect database: False
   00:00:00 system.host.com SmartSim[#####] INFO The single shard array key exists in the incorrect database: False
 
-Initializing a Model
-^^^^^^^^^^^^^^^^^^^^
+Initializing a Std Model
+^^^^^^^^^^^^^^^^^^^^^^^^
 In the next stage of the experiment, we will utilize the
 application script by configuring and creating
 a two SmartSim ``Models``.
@@ -476,14 +476,14 @@ Next, launch the model instance using the ``Experiment.start()`` function.
   before returning: it will act like a job monitor, letting us know
   if processes run, complete, or fail.
 
-Initializing a Model
-^^^^^^^^^^^^^^^^^^^^
+Initializing a Colo Model
+^^^^^^^^^^^^^^^^^^^^^^^^^
 Next we will create a colocated model
 that echos "Hello World" to stdout.
 
 .. note::
   The model is not a colocated model until
-  we apply the ``Model.colocate_db_tcp()``.
+  we apply the ``Model.colocate_db_tcp()`` function.
 
 Step 1: Configure
 """""""""""""""""
@@ -499,8 +499,8 @@ Step 2: Initialize
 Next, to create the ``Model`` instance using the ``Experiment.create_model()``.
 Pass the ``model_settings_2`` object as an argument
 to the ``create_model()`` function and assign to the variable ``model_colo``.
-The pass using the ``Model.colocate_db_tcp()`` provided by the ``Model`` API
-to colocate an ``Orchestrator`` instance with this Model over TCP/IP.
+Use the ``Model.colocate_db_tcp()`` function provided to colocate
+an ``Orchestrator`` instance with this Model over TCP/IP.
 
 .. code-block:: python
 
