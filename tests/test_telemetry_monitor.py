@@ -1091,11 +1091,13 @@ def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
         pytest.param(STATUS_RUNNING, None, True, id="failure on running"),
     ],
 )
-def test_wlm_completion_handling(fileutils: FileUtils, 
-                                 monkeypatch: pytest.MonkeyPatch,
-                                 status_in: str,
-                                 expected_out: t.Optional[int],
-                                 expected_has_jobs: bool):
+def test_wlm_completion_handling(
+    fileutils: FileUtils,
+    monkeypatch: pytest.MonkeyPatch,
+    status_in: str,
+    expected_out: t.Optional[int],
+    expected_has_jobs: bool,
+):
     test_dir = fileutils.make_test_dir(sub_dir=str(uuid.uuid4()))
 
     def get_faux_update(status: str) -> t.Callable:
@@ -1114,14 +1116,14 @@ def test_wlm_completion_handling(fileutils: FileUtils,
 
         # prep a fake job to request updates for
         job_entity = JobEntity()
-        job_entity.name="faux-name"
-        job_entity.step_id="faux-step-id"
-        job_entity.task_id=1234
-        job_entity.status_dir=test_dir
+        job_entity.name = "faux-name"
+        job_entity.step_id = "faux-step-id"
+        job_entity.task_id = 1234
+        job_entity.status_dir = test_dir
         job_entity.type = "orchestrator"
 
         job = Job(job_entity.name, job_entity.step_id, job_entity, "slurm", True)
-        
+
         # populate our tracking collections
         mani_handler._tracked_jobs = {job_entity.key: job_entity}
         mani_handler.job_manager.jobs[job.name] = job
@@ -1134,8 +1136,7 @@ def test_wlm_completion_handling(fileutils: FileUtils,
 
         # see that the event was properly written
         stop_event_path = pathlib.Path(test_dir) / "stop.json"
-        
+
         # if a status wasn't terminal, no stop event should have been written
         should_have_stop_event = False if expected_out is None else True
         assert should_have_stop_event == stop_event_path.exists()
-
