@@ -177,20 +177,22 @@ visualization workflow connected to the simulation (requiring a standard orchest
 
 Below is a simple example demonstrating the process of:
 
-1. Launching two std deployment Orchestrators within an experiment with unique identifiers
-2. Launching one colo deployment Orchestrator within an experiment
-3. Connecting SmartRedis clients within the driver script and sending tensors to databases
-4. Connecting SmartRedis clients within the application and retrieving tensors from databases
+1. Launch two standard Orchestrators within the experiment with unique identifiers
+2. Launch one colocated Orchestrator within the experiment with a unique identifier
+3. Connect SmartRedis clients within the driver script to send tensors to std Orchestrators
+4. Connect SmartRedis clients within the application to retrieve tensors from std databases to store in colo databases
 
 The Application Script
 ----------------------
-To store and retrieve data from the two databases
-during the course of application, you must correctly
-initialize two SmartSim clients (SmartRedis).
-In this section, we will write a application script
+To store and retrieve data to and from databases
+during the course of an application, you must
+initialize multiple SmartSim clients (SmartRedis).
+In this section, we write an application script
 to demonstrate how to connect SmartRedis
 clients in the context of multiple
-launched databases.
+launched databases. Using the clients, we retrieve tensors
+from two databases launched in the driver script, then store
+the tensors in the colocated database.
 
 To begin, import the necessary packages:
 
@@ -203,19 +205,20 @@ through the course of the Experiment.
 
 Initialize the Clients
 ^^^^^^^^^^^^^^^^^^^^^^
-To establish a connection with each databases,
+To establish a connection with each database,
 we need to initialize a new SmartRedis client for each
 ``Orchestrator``.
 
 Step 1: Initialize ConfigOptions
 """"""""""""""""""""""""""""""""
 Since we are launching multiple databases within the experiment,
-when initializing a client in the application,
-the SmartRedis ``ConfigOptions`` object is required.
-We create two ``ConfigOptions`` instances through the
-``ConfigOptions.create_from_environment()`` function,
-one instance per launched Orchestrator.
-Most importantly, the ``create_from_environment()`` function requires specifying the unique database identifier
+the SmartRedis ``ConfigOptions`` object is required when initializing
+a client in the application.
+We use the ``ConfigOptions.create_from_environment()``
+function to create three instances of ``ConfigOptions``,
+with one instance associated with each launched ``Orchestrator``.
+Most importantly, to associate each launched Orch to a ConfigOptions object,
+the ``create_from_environment()`` function requires specifying the unique database identifier
 argument named `db_identifier`. The `db_identifier` argument
 serves as a unique identifier for each database launched, guiding
 SmartSim in assigning clients to their respective databases.
@@ -230,18 +233,21 @@ For the multi-sharded database:
 
 .. code-block:: python
 
-  multi_shard_config = ConfigOptions.create_from_environment("multi-shard-db-identifier")
+  multi_shard_config = ConfigOptions.create_from_environment("multi_shard_db_identifier")
+
+For the colocated database:
+
+.. code-block:: python
+
+  colo_config = ConfigOptions.create_from_environment("colo_db_identifier")
 
 Step 2: Initialize the Clients
 """"""""""""""""""""""""""""""
-Now that we have two ``ConfigOptions`` objects, we have the
-tools necessary to initialize two SmartRedis clients and
-establish a connection with the two databases.
+Now that we have three ``ConfigOptions`` objects, we have the
+tools necessary to initialize three SmartRedis clients and
+establish a connection with the three databases.
 We use the SmartRedis ``Client`` API to create the client instances by passing in
 the ``ConfigOptions`` objects and assigning a `logger_name` argument.
-It is good practice to use SmartRedis logging
-capabilities within your script to help monitor
-your ``Model`` during the course of an experiment.
 
 Single-sharded database:
 
@@ -255,12 +261,17 @@ Multi-sharded database:
 
   app_multi_shard_client = Client(multi_shard_config, logger_name="Model: single shard logger")
 
+Colocated database:
 
-Retrieve Data Using Clients
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+  colo_client = Client(colo_config, logger_name="Model: colo logger")
+
+Retrieve Data and Store Using Clients
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To confirm a successful connection to each database, we will retrieve the tensors
-that we store in the python driver script later in the example.
-After initializing a client instance, you have access to the Client API functions.
+that we plan to store in the python driver script. After retrieving, we
+store both tensors in the colocated database.
 The ``Client.get_tensor()`` method allows
 retrieval of a tensor. It requires the `name` of the tensor assigned
 when sent to the database via ``Client.put_tensor()``.
@@ -281,6 +292,30 @@ located in ``getting-started-multidb/tutorial_model/``.
   Model: single shard logger@00-00-00:The clustered db tensor is: [5 6 7 8]
 
 This output showcases that we have established a connection with multiple Orchestrators.
+
+Next, let's take the tensors retrieved from the standard deployment databases and
+store them in the colocated database using  ``Client.put_tensor(name, data)``.
+
+.. code-block:: python
+
+  colo_client.put_tensor("tensor_1", val1)
+  colo_client.put_tensor("tensor_2", val2)
+
+Next, check if the tensors exist in the colocated database using ``Client.poll_tensor(name, poll_frequency_ms, num_tries)``:
+
+.. code-block:: python
+
+  colo_val1 = colo_client.poll_tensor("tensor_1", 10, 10)
+  colo_val2 = colo_client.poll_tensor("tensor_2", 10, 10)
+  colo_client.log_data(LLInfo, f"The colocated db has tensor_1: {colo_val1}")
+  colo_client.log_data(LLInfo, f"The colocated db has tensor_2: {colo_val2}")
+
+The output will be as follows:
+
+.. code-block:: bash
+
+  Model: colo logger@00-00-00:The colocated db has tensor_1: True
+  Model: colo logger@00-00-00:The colocated db has tensor_2: True
 
 The Experiment Script
 ---------------------
@@ -421,11 +456,11 @@ When you run the experiment, the following output will appear:
   00:00:00 system.host.com SmartSim[#####] INFO The multi shard array key exists in the incorrect database: False
   00:00:00 system.host.com SmartSim[#####] INFO The single shard array key exists in the incorrect database: False
 
-Initializing a Std Model
-^^^^^^^^^^^^^^^^^^^^^^^^
+Initializing the colo Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In the next stage of the experiment, we will utilize the
 application script by configuring and creating
-a two SmartSim ``Models``.
+a SmartSim colocated ``Model``.
 
 Step 1: Configure
 """""""""""""""""
@@ -459,61 +494,27 @@ to the ``create_model()`` function and assign to the variable ``model``.
 .. code-block:: python
 
   model = exp.create_model("colocated_model", model_settings)
+
+Step 2: Colocate
+""""""""""""""""
+To colocate the model, use the ``Model.colocate_db_tcp()`` function to
+Colocate an Orchestrator instance with this Model over TCP/IP.
+
+.. code-block:: python
+
   model.colocate_db_tcp()
-  exp.generate(model, overwrite=True)
+
+This method will initialize settings which add an unsharded
+database to this Model instance. Only this Model will be able
+to communicate with this colocated database by using the loopback TCP interface.
 
 Step 3: Start
 """""""""""""
-Next, launch the model instance using the ``Experiment.start()`` function.
+Next, launch the colocated model instance using the ``Experiment.start()`` function.
 
 .. code-block:: python
 
   exp.start(model, block=True, summary=True)
-
-.. note::
-  We set `block=True`,
-  so that ``Experiment.start()`` waits until the last Model has finished
-  before returning: it will act like a job monitor, letting us know
-  if processes run, complete, or fail.
-
-Initializing a Colo Model
-^^^^^^^^^^^^^^^^^^^^^^^^^
-Next we will create a colocated model
-that echos "Hello World" to stdout.
-
-.. note::
-  The model is not a colocated model until
-  we apply the ``Model.colocate_db_tcp()`` function.
-
-Step 1: Configure
-"""""""""""""""""
-Once again, use the ``Experiment.create_run_settings()`` function
-to specify the executable argument (`exe_args`) and run command (`exe`).
-
-.. code-block:: python
-
-  model_settings_2 = exp.create_run_settings("echo", exe_args="Hello World")
-
-Step 2: Initialize
-""""""""""""""""""
-Next, to create the ``Model`` instance using the ``Experiment.create_model()``.
-Pass the ``model_settings_2`` object as an argument
-to the ``create_model()`` function and assign to the variable ``model_colo``.
-Use the ``Model.colocate_db_tcp()`` function provided to colocate
-an ``Orchestrator`` instance with this Model over TCP/IP.
-
-.. code-block:: python
-
-  model_colo = exp.create_model("colo_model", model_settings_2)
-  model_colo.colocate_db_tcp()
-
-Step 3: Start
-"""""""""""""
-Next, launch the model instance using the ``Experiment.start()`` function.
-
-.. code-block:: python
-
-  exp.start(model_colo, block=True, summary=True)
 
 .. note::
   We set `block=True`,
@@ -538,7 +539,6 @@ When you run the experiment, the following output will appear.
   00:00:00 system.host.com SmartSim[#####]INFO
   |    | Name                         | Entity-Type   | JobID       | RunID   | Time    | Status    | Returncode   |
   |----|------------------------------|---------------|-------------|---------|---------|-----------|--------------|
-  | 0  | std_model                    | Model         | 1538905.7   | 0       | 1.7516  | Completed | 0            |
   | 1  | colo_model                   | Model         | 1538905.8   | 0       | 3.5465  | Completed | 0            |
   | 2  | single_shard_db_identifier_0 | DBNode        | 1538905.5   | 0       | 73.1798 | Cancelled | 0            |
   | 3  | multi-shard-db-identifier    | DBNode        | 1538905.6+2 | 0       | 49.8503 | Cancelled | 0            |
@@ -585,9 +585,9 @@ Experiment script
   model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/lus/scratch/richaama/model_ex.py")
   model_settings.set_nodes(1)
   model_settings.set_tasks_per_node(1)
-  model_example = exp.create_model("colocated_model", model_settings)
-  model_example.colocate_db_tcp()
-  exp.start(model_example, block=True, summary=True)
+  model = exp.create_model("colo_model", model_settings)
+  model.colocate_db_tcp(db_identifier="colo_db_identifier")
+  exp.start(model, block=True, summary=True)
 
   exp.stop(single_shard_db, multi_shard_db)
   logger.info(exp.summary())
@@ -606,8 +606,19 @@ Application Script
   multi_shard_config = ConfigOptions.create_from_environment("multi-shard-db-identifier")
   app_multi_shard_client = Client(multi_shard_config, logger_name="Model: multi shard logger")
 
+  colo_config = ConfigOptions.create_from_environment("colo_db_identifier")
+  colo_client = Client(colo_config, logger_name="Model: colo logger")
+
   val1 = app_single_shard_client.get_tensor("tensor_1")
   val2 = app_multi_shard_client.get_tensor("tensor_2")
 
-  app_single_shard_client.log_data(LLInfo, f"The colocated db tensor is: {val1}")
-  app_multi_shard_client.log_data(LLInfo, f"The clustered db tensor is: {val2}")
+  app_single_shard_client.log_data(LLInfo, f"The single sharded db tensor is: {val1}")
+  app_multi_shard_client.log_data(LLInfo, f"The multi sharded db tensor is: {val2}")
+
+  colo_client.put_tensor("tensor_1", val1)
+  colo_client.put_tensor("tensor_2", val2)
+
+  colo_val1 = colo_client.poll_tensor("tensor_1", 10, 10)
+  colo_val2 = colo_client.poll_tensor("tensor_2", 10, 10)
+  colo_client.log_data(LLInfo, f"The colocated db has tensor_1: {colo_val1}")
+  colo_client.log_data(LLInfo, f"The colocated db has tensor_2: {colo_val2}")
