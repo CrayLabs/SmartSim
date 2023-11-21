@@ -59,7 +59,7 @@ from smartsim._core.utils.helpers import get_ts
 from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
 
 from smartsim.error.errors import SmartSimError
-from smartsim.status import TERMINAL_STATUSES
+from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
 
 """
@@ -283,6 +283,18 @@ def track_event(
         logger.error("Unable to write tracking file.", exc_info=True)
 
 
+def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
+    """Create a faux return code for a task run by the WLM. Must not be
+    called with non-terminal statuses or results may be confusing"""
+    if step_info.status not in TERMINAL_STATUSES:
+        return None
+
+    if step_info.status == STATUS_COMPLETED:
+        return 0
+
+    return 1
+
+
 class ManifestEventHandler(PatternMatchingEventHandler):
     """The ManifestEventHandler monitors an experiment for changes and updates
     a telemetry datastore as needed.
@@ -421,7 +433,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self,
         timestamp: int,
         entity: JobEntity,
-        step_info: t.Optional[StepInfo],
+        step_info: StepInfo,
     ) -> None:
         """Move a monitored entity from the active to completed collection to
         stop monitoring for updates during timesteps.
@@ -433,7 +445,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param experiment_dir: the experiement directory to monitor for changes
         :type experiment_dir: pathlib.Path
         :param entity: the StepInfo received when requesting a Job status update
-        :type entity: t.Optional[StepInfo]
+        :type entity: StepInfo
         """
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
@@ -442,10 +454,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         job = self.job_manager[entity.name]
         self.job_manager.move_to_completed(job)
 
-        if step_info:
-            detail = f"status: {step_info.status}, error: {step_info.error}"
-        else:
-            detail = "unknown status. step_info not retrieved"
+        status_clause = f"status: {step_info.status}"
+        error_clause = f", error: {step_info.error}" if step_info.error else ""
+        detail = f"{status_clause}{error_clause}"
 
         if hasattr(job.entity, "status_dir"):
             write_path = pathlib.Path(job.entity.status_dir)
@@ -459,6 +470,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             write_path,
             self._logger,
             detail=detail,
+            return_code=faux_return_code(step_info),
         )
 
     def on_timestep(self, timestamp: int) -> None:
@@ -483,9 +495,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             for step_name, step_info in step_updates:
                 if step_info and step_info.status in TERMINAL_STATUSES:
                     completed_entity = names[step_name]
-                    self._to_completed(
-                        timestamp, completed_entity, step_info
-                    )
+                    self._to_completed(timestamp, completed_entity, step_info)
 
 
 def can_shutdown(action_handler: ManifestEventHandler, logger: logging.Logger) -> bool:
@@ -509,7 +519,7 @@ def event_loop(
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
     logger: logging.Logger,
-    cooldown_duration: int
+    cooldown_duration: int,
 ) -> None:
     """Executes all attached timestep handlers every <frequency> seconds
 
@@ -648,7 +658,7 @@ if __name__ == "__main__":
     log.propagate = False
 
     log_path = os.path.join(args.exp_dir, TELMON_SUBDIR, "telemetrymonitor.log")
-    fh = logging.FileHandler(log_path, 'a')
+    fh = logging.FileHandler(log_path, "a")
     log.addHandler(fh)
 
     # Must register cleanup before the main loop is running
