@@ -174,15 +174,25 @@ databases, supporting workloads that require multiple
 simulation with high inference performance demands (necessitating a co-located deployment),
 along with an analysis and
 visualization workflow connected to the simulation (requiring a standard orchestrator).
-In the example, we first walk through the :ref:`application<The Application Script>`, then
-the :ref:`experiment<The Experiment Script>`.
+In the following sections, we simulate a simple version of this use case.
 
-This simple multiple Orchestrator example demonstrates the process of:
+The example is comprised of two script files:
 
-1. Launching two standard Orchestrators within the experiment with unique identifiers
-2. Launching one colocated Orchestrator within the experiment with a unique identifier
+* The :ref:`Application Script<The Application Script>`
+* The :ref:`Experiment Script<The Experiment Script>`
+
+**The Application Script demonstrates:**
+
+1. Connecting SmartRedis clients within the application to retrieve tensors
+   from the standard databases to store in a colocated database.
+
+**The Experiment Script demonstrates:**
+
+1. Launching two standard Orchestrators with unique identifiers.
+2. Creating a colocated model (launches one colocated Orchestrator) with
+   a unique identifier that inherits the application script.
 3. Connecting SmartRedis clients within the driver script to send tensors to standard Orchestrators
-4. Connecting SmartRedis clients within the application to retrieve tensors from standard databases to store in colocated databases
+   for retrieval within the application.
 
 The Application Script
 ----------------------
