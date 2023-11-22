@@ -42,13 +42,22 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /usr/local/src/SmartSim/
 WORKDIR /usr/local/src/SmartSim/
 
+RUN pip install tensorflow==2.8.0
+
 # Install docs dependencies and SmartSim
 RUN python -m pip install -r doc/requirements-doc.txt && \
     NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
 
 # Install smartredis
-RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
+RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch doc-deps --depth=1 smartredis \
     && cd smartredis \
+    && python -m pip install . \
+    && rm -rf ~/.cache/pip
+
+# Install smartdashboard
+# TODO: once merged into develop, replace docs branch w/develop
+RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch main --depth=1 smartdashboard \
+    && cd smartdashboard \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
