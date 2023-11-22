@@ -322,7 +322,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._launcher: t.Optional[Launcher] = None
-        self.job_manager = JobManager(threading.RLock())
+        self.job_manager: JobManager = JobManager(threading.RLock())
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
