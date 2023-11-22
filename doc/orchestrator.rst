@@ -174,31 +174,57 @@ databases, supporting workloads that require multiple
 simulation with high inference performance demands (necessitating a co-located deployment),
 along with an analysis and
 visualization workflow connected to the simulation (requiring a standard orchestrator).
-In the following sections, we simulate a simple version of this use case.
+In the following example, we simulate a simple version of this use case.
 
 The example is comprised of two script files:
 
 * The :ref:`Application Script<The Application Script>`
-* The :ref:`Experiment Script<The Experiment Script>`
+* The :ref:`Experiment Driver Script<The Experiment Driver Script>`
 
-**The Application Script demonstrates:**
+**The Application Script Overview:**
+In this example, the application script is a python file that
+contains instructions to complete computational
+tasks. Applications are not limited to Python
+and can also be written in C, C++ and Fortran.
+This script specifies creating a Python SmartRedis client for each
+standard orchestrator and a colocated orchestrator. We use the
+clients to request data from both standard databases, then
+transfer the data to the colocated database. The application
+file is launched by the experiment driver script
+through a ``Model`` stage.
+
+**The Application Script Contents:**
 
 1. Connecting SmartRedis clients within the application to retrieve tensors
-   from the standard databases to store in a colocated database.
+   from the standard databases to store in a colocated database. Details in section:
+   :ref:`Initialize the Clients<Initialize the Clients>`.
 
-**The Experiment Script demonstrates:**
+**The Experiment Driver Script Overview:**
+The experiment driver script holds the stages of the workflow
+and manages their execution through the ``Experiment`` API.
+We initialize an Experiment
+at the beginning of the Python file and use the ``Experiment`` to
+iteratively create, configure and launch computational kernels
+on the system through the `slurm` launcher.
+In the driver script, we use the ``Experiment`` to create and launch a ``Model`` instance that
+runs the application.
 
-1. Launching two standard Orchestrators with unique identifiers.
-2. Creating a colocated model (launches one colocated Orchestrator) with
-   a unique identifier that inherits the application script.
+**The Experiment Driver Script Contents:**
+
+1. Launching two standard Orchestrators with unique identifiers. Details in section:
+   :ref:`Launch Multiple Orchestrators<Launch Multiple Orchestrators>`.
+2. Launching the application script with a co-located database. Details in section:
+   :ref:`Initialize a Colocated Model<Initialize a Colocated Model>`.
 3. Connecting SmartRedis clients within the driver script to send tensors to standard Orchestrators
-   for retrieval within the application.
+   for retrieval within the application. Details in section:
+   :ref:`Create Client Connections to Orchestrators<Create Client Connections to Orchestrators>`.
+
+Setup and run instructions can be found :ref:`here<How to Run the Example>`
 
 The Application Script
 ----------------------
-To store and retrieve data to and from databases
-during the course of an application, you must
-initialize multiple SmartSim clients (SmartRedis).
+Applications interact with the databases
+through a SmartRedis client.
 In this section, we write an application script
 to demonstrate how to connect SmartRedis
 clients in the context of multiple
@@ -215,10 +241,7 @@ To begin, import the necessary packages:
 
 .. code-block:: python
 
-  from smartredis import ConfigOptions, Client, log_data
-
-The SmartRedis ``log_data`` will be used to monitor the application status
-through the course of the Experiment.
+  from smartredis import ConfigOptions, Client
 
 Initialize the Clients
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -298,7 +321,7 @@ when sent to the database via ``Client.put_tensor()``.
   app_single_shard_client.log_data(LLInfo, f"The colocated db tensor is: {val1}")
   app_multi_shard_client.log_data(LLInfo, f"The clustered db tensor is: {val2}")
 
-Later, when you run the experiment the following output will appear in ``tutorial_model.out``
+Later, when you run the experiment driver script the following output will appear in ``tutorial_model.out``
 located in ``getting-started-multidb/tutorial_model/``::
 
   Model: multi shard logger@00-00-00:The colocated db tensor is: [1 2 3 4]
@@ -331,8 +354,8 @@ The output will be as follows::
   Model: colocated logger@00-00-00:The colocated db has tensor_1: True
   Model: colocated logger@00-00-00:The colocated db has tensor_2: True
 
-The Experiment Script
----------------------
+The Experiment Driver Script
+----------------------------
 To run the previous application, we must define workflow stages within a workload.
 Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object. The Experiment object is intended to be instantiated
@@ -470,8 +493,8 @@ When you run the experiment, the following output will appear::
 
 Initialize a Colocated Model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In the next stage of the experiment, we will utilize the
-application script we previously went through
+In the next stage of the experiment, we
+launch the application script with a co-located database
 by configuring and creating
 a SmartSim colocated ``Model``.
 
@@ -569,6 +592,13 @@ Below are the steps to run the experiment. Find the
 and :ref:`application source code<Application Source Code>`
 below in the respective subsections.
 
+.. note::
+  The example assumes that you have already installed and built
+  SmartSim and SmartRedis. Please refer to Section :ref:`Basic Installation<Basic Installation>`
+  for further details. For simplicity, we assume that you are
+  running on a SLURM-based HPC-platform. Refer to the steps below
+  for more details.
+
 Step 1 : Setup your directory tree
     Your directory tree should look similar to below::
 
@@ -642,10 +672,10 @@ Experiment Source Code
   logger = get_logger("Multidb Experiment Log")
   exp = Experiment("getting-started-multidb", launcher="auto")
 
-  single_shard_db = exp.create_database(port=6379, db_nodes=1, interface="ib0", db_identifier="single_shard_db_identifier")
+  single_shard_db = exp.create_database(db_nodes=1, db_identifier="single_shard_db_identifier")
   exp.generate(single_shard_db, overwrite=True)
 
-  multi_shard_db = exp.create_database(port=6380, db_nodes=3, interface="ib0", db_identifier="multi-shard-db-identifier")
+  multi_shard_db = exp.create_database(db_nodes=3, db_identifier="multi-shard-db-identifier")
   exp.generate(multi_shard_db, overwrite=True)
 
   exp.start(single_shard_db, multi_shard_db)
