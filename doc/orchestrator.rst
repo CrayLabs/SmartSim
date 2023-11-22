@@ -133,7 +133,7 @@ Redis was chosen for the Orchestrator because it resides in-memory, can be distr
 as well as across nodes, and provides low latency data access to many clients in parallel. The
 Redis ecosystem was a primary driver as the Redis module system provides APIs for languages,
 libraries, and techniques used in Data Science. In particular, the ``Orchestrator``
-relies on `RedisAI`_ to provide access to Machine Learning runtime's.
+relies on `RedisAI`_ to provide access to Machine Learning runtimes.
 
 At its core, Redis is a key-value store. This means that put/get semantics are used to send
 messages to and from the database. SmartRedis clients use a specific hashing algorithm, CRC16, to ensure
@@ -307,7 +307,7 @@ store them in the colocated database using  ``Client.put_tensor(name, data)``.
 Next, check if the tensors exist in the colocated database using ``Client.poll_tensor()``.
 This function queries for data in the database. The function requires the tensor name (`name`),
 how many milliseconds to wait in between queries (`poll_frequency_ms`),
-ad the total number of times to query (`num_tries`):
+and the total number of times to query (`num_tries`):
 
 .. code-block:: python
 
@@ -508,7 +508,8 @@ to the ``create_model()`` function and assign to the variable ``model``.
 Step 2: Colocate
 """"""""""""""""
 To colocate the model, use the ``Model.colocate_db_uds()`` function to
-Colocate an Orchestrator instance with this Model over TCP/IP.
+Colocate an Orchestrator instance with this Model over
+a Unix domain socket connection.
 
 .. code-block:: python
 
@@ -561,9 +562,9 @@ below in the respective subsections.
 Step 1 : Setup your directory tree
     Your directory tree should look similar to below::
 
+      SmartSim/
+      SmartRedis/
       Multi-db-example/
-        SmartSim/
-        SmartRedis/
         application_script.py
         experiment_script.py
 
@@ -571,7 +572,7 @@ Step 1 : Setup your directory tree
 
 Step 2 : Install and Build SmartSim
     This example assumes you have installed SmartSim and SmartRedis in your
-    python environment. We also assume that you have built SmartSim with
+    Python environment. We also assume that you have built SmartSim with
     the necessary modules for the machine you are running on.
 
 Step 3 : Change the `exe_args` file path
