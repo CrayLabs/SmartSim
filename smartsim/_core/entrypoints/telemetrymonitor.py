@@ -509,7 +509,7 @@ def can_shutdown(action_handler: ManifestEventHandler, logger: logging.Logger) -
     if has_jobs:
         logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
     if has_dbs:
-        logger.debug(f"telemetry monitor is monitoring {len(jobs)} dbs")
+        logger.debug(f"telemetry monitor is monitoring {len(db_jobs)} dbs")
 
     return not has_running_jobs
 
