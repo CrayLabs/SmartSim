@@ -641,7 +641,7 @@ def get_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "-cooldown",
         type=int,
-        help="Default lifetime of telemetry monitor (in seconds)) before auto-shutdown",
+        help="Default lifetime of telemetry monitor (in seconds) before auto-shutdown",
         default=CONFIG.telemetry_cooldown,
     )
     return arg_parser
