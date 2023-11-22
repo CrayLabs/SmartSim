@@ -46,6 +46,10 @@ from smartsim._core._cli.validate import (
     configure_parser as validate_parser,
 )
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
+
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
     print(msg)

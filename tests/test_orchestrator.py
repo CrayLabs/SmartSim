@@ -33,6 +33,9 @@ from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
 
 def test_orc_parameters():
     threads_per_queue = 2

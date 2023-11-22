@@ -24,20 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
-
-import os
-
 import pytest
 
 from smartsim import Experiment, status
-from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
 
-from smartsim.entity.dbobject import DBScript
-
 from smartredis import *
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 logger = get_logger(__name__)
 

@@ -34,6 +34,9 @@ from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_finished_entity_orc_error():
     """Orchestrators are never 'finished', either run forever or stopped by user"""

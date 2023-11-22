@@ -34,6 +34,9 @@ from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
 
 def test_register_incoming_entity_preexists():
     exp = Experiment("experiment", launcher="local")

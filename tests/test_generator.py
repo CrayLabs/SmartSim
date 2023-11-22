@@ -26,7 +26,6 @@
 
 import filecmp
 from os import path as osp
-
 import pytest
 
 from smartsim import Experiment
@@ -34,6 +33,10 @@ from smartsim._core.generation import Generator
 from smartsim.database import Orchestrator
 from smartsim.settings import RunSettings
 from tabulate import tabulate
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 rs = RunSettings("python", exe_args="sleep.py")
 

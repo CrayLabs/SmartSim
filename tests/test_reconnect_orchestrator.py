@@ -24,12 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 import os.path as osp
+import pytest
 import time
 
 from smartsim import Experiment, status
 from smartsim.database import Orchestrator
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 first_dir = ""
 
