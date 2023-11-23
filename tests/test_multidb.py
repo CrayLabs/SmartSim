@@ -33,8 +33,6 @@ from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
 
 
-from smartredis import *
-
 logger = get_logger(__name__)
 
 supported_dbs = ["uds", "tcp"]
@@ -454,7 +452,6 @@ def test_launch_cluster_orc_single_dbid(test_dir, coloutils, fileutils, wlmutils
         exp.start(orc, block=True)
         exp.start(smartsim_model, block=True)
         job_dict = exp._control._jobs.get_db_host_addresses()
-        print(job_dict)
         assert len(job_dict[orc.entities[0].db_identifier]) == 3
 
     check_not_failed(exp, orc, smartsim_model)

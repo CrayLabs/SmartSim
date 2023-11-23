@@ -48,7 +48,9 @@ from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
 from subprocess import run
 import sys
+import tempfile
 import typing as t
+import uuid
 import warnings
 
 
@@ -551,7 +553,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
     caller_function = caller_function.replace("]","")
     caller_function_list = caller_function.split("[", maxsplit=1)
 
-    def is_accepted_char(char: str):
+    def is_accepted_char(char: str) -> bool:
         return char.isalnum() or char in "-._"
 
     if len(caller_function_list) > 1:
@@ -650,7 +652,10 @@ class ColoUtils:
             db_args["port"] = port
             db_args["ifname"] = "lo"
         if db_type == "uds" and colo_model_name is not None:
-            db_args["unix_socket"] = f"/tmp/{colo_model_name}.socket"
+            tmp_dir = os.path.join(tempfile.gettempdir())
+            socket_suffix = str(uuid.uuid4())[:7]
+            db_args["unix_socket"] = os.path.join(tmp_dir,
+                f"{colo_model_name}_{socket_suffix}.socket")
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,

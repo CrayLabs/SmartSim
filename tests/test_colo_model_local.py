@@ -136,12 +136,12 @@ def test_launch_colocated_model_defaults(
     exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses)
 
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses)
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -176,7 +176,7 @@ def test_launch_multiple_colocated_models(
     exp.generate(*colo_models)
     exp.start(*colo_models, block=True)
     statuses = exp.get_status(*colo_models)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses)
 
     # test restarting the colocated model
     exp.start(*colo_models, block=True)
