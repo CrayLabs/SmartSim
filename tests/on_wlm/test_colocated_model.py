@@ -63,12 +63,12 @@ def test_launch_colocated_model_defaults(fileutils, test_dir, coloutils, db_type
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0"
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses]), f"Statuses: {(stat for stat in statuses)}"
 
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses]), f"Statuses: {(stat for stat in statuses)}"
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_disable_pinning(fileutils, test_dir, coloutils, db_type):
