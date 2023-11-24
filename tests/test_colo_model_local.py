@@ -141,7 +141,7 @@ def test_launch_colocated_model_defaults(
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all(stat == status.STATUS_COMPLETED for stat in statuses)
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses {statuses}"
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
