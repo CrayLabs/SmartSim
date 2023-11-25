@@ -84,12 +84,11 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create the SmartSim database
     host = wlmutils.choose_host(run_settings)
     db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    exp.generate(db, smartsim_model)
 
     # Define the torch script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
