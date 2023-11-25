@@ -82,7 +82,10 @@ def print_test_configuration() -> None:
     print("TEST_LAUNCHER:", test_launcher)
     if test_account != "":
         print("TEST_ACCOUNT:", test_account)
-    print("TEST_DEVICE:", test_device)
+    test_device_msg = f"TEST_DEVICE: {test_device}"
+    if test_device == "GPU":
+        test_device_msg += f"x{test_num_gpus}"
+    print(test_device_msg)
     print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
     if test_alloc_specs_path:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
