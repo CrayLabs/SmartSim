@@ -60,7 +60,7 @@ import warnings
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_output_root = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
-test_device = CONFIG.test_device
+test_device = CONFIG.test_device.upper()
 test_num_gpus = CONFIG.test_num_gpus
 test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
@@ -655,7 +655,7 @@ class ColoUtils:
             db_args["port"] = port
             db_args["ifname"] = "lo"
         if db_type == "uds" and colo_model_name is not None:
-            tmp_dir = os.path.join(tempfile.gettempdir())
+            tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
             db_args["unix_socket"] = os.path.join(tmp_dir,
                 f"{colo_model_name}_{socket_suffix}.socket")

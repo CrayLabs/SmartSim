@@ -34,7 +34,6 @@ from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity import Ensemble
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
-from smartsim.settings import MpirunSettings, MpiexecSettings
 
 from smartsim.entity.dbobject import DBModel
 
@@ -216,7 +215,7 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
 
@@ -282,7 +281,7 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
 
@@ -381,7 +380,7 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_ensemble, block=True)
         statuses = exp.get_status(smartsim_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
 
@@ -454,7 +453,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
 
@@ -513,7 +512,7 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
 
@@ -619,7 +618,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
 
@@ -724,7 +723,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
 
