@@ -232,7 +232,7 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
@@ -469,7 +469,7 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
