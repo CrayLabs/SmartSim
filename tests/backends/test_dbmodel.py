@@ -62,10 +62,10 @@ else:
             return y
     if pytest.test_device == "GPU":
         try:
-            physical_devices = tf.config.list_physical_devices('GPU')
-            tf.config.set_logical_device_configuration(
-                physical_devices[0],
-                [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
+            for device in tf.config.list_physical_devices('GPU'):
+                tf.config.set_logical_device_configuration(
+                    device,
+                    [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
         except:
             logger.warning("Could not set TF max memory limit for GPU")
 

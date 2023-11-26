@@ -35,16 +35,29 @@ from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
 from smartsim.ml.data import DataInfo, TrainingDataUploader
 from smartsim.status import STATUS_COMPLETED
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 shouldrun_tf = True
 if shouldrun_tf:
     try:
         from tensorflow import keras
+        import tensorflow as tf
 
         from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
         from smartsim.ml.tf import StaticDataGenerator as TFStaticDataGenerator
     except:
         shouldrun_tf = False
+    else:
+        if pytest.test_device == "GPU":
+            try:
+                for device in tf.config.list_physical_devices('GPU'):
+                    tf.config.set_logical_device_configuration(
+                        device,
+                        [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
+            except:
+                logger.warning("Could not set TF max memory limit for GPU")
 
 shouldrun_torch = True
 if shouldrun_torch:
