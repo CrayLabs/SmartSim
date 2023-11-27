@@ -821,19 +821,22 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+            cmd = [
+                sys.executable,
+                "-m",
+                "smartsim._core.entrypoints.telemetrymonitor",
+                "-exp_dir",
+                exp_dir,
+                "-frequency",
+                str(frequency),
+                "-cooldown",
+                str(CONFIG.telemetry_cooldown),
+            ]
             # pylint: disable-next=consider-using-with
             self._telemetry_monitor = subprocess.Popen(
-                [
-                    sys.executable,
-                    "-m",
-                    "smartsim._core.entrypoints.telemetrymonitor",
-                    "-exp_dir",
-                    exp_dir,
-                    "-frequency",
-                    str(frequency),
-                ],
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
+                cmd,
+                stderr=sys.stderr,
+                stdout=sys.stdout,
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
