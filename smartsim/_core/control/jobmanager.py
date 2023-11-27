@@ -315,7 +315,7 @@ class JobManager:
         :return: dictionary of host ip addresses
         :rtype: Dict[str, list]"""
 
-        address_dict = {}
+        address_dict: t.Dict[str, t.List[str]] = {}
         for db_job in self.db_jobs.values():
             addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
