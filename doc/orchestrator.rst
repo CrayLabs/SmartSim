@@ -239,9 +239,10 @@ the tensors in the colocated database.
 
 To begin, import the necessary packages:
 
-.. code-block:: python
-
-  from smartredis import ConfigOptions, Client
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 1-3
 
 Initialize the Clients
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -263,21 +264,24 @@ argument named `db_identifier`.
 
 For the single-sharded database:
 
-.. code-block:: python
-
-  single_shard_config = ConfigOptions.create_from_environment("single_shard_db_identifier")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 5-6
 
 For the multi-sharded database:
 
-.. code-block:: python
-
-  multi_shard_config = ConfigOptions.create_from_environment("multi_shard_db_identifier")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 10-11
 
 For the colocated database:
 
-.. code-block:: python
-
-  colo_config = ConfigOptions.create_from_environment("colo_db_identifier")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 15-16
 
 Step 2: Initialize the Client Connections
 """""""""""""""""""""""""""""""""""""""""
@@ -289,21 +293,24 @@ the ``ConfigOptions`` objects and assigning a `logger_name` argument.
 
 Single-sharded database:
 
-.. code-block:: python
-
-  app_single_shard_client = Client(single_shard_config, logger_name="Model: multi shard logger")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 7-8
 
 Multi-sharded database:
 
-.. code-block:: python
-
-  app_multi_shard_client = Client(multi_shard_config, logger_name="Model: single shard logger")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 12-13
 
 Colocated database:
 
-.. code-block:: python
-
-  colo_client = Client(colo_config, logger_name="Model: colocated logger")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 17-18
 
 Retrieve Data and Store Using SmartRedis Client Objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -314,45 +321,41 @@ The ``Client.get_tensor()`` method allows
 retrieval of a tensor. It requires the `name` of the tensor assigned
 when sent to the database via ``Client.put_tensor()``.
 
-.. code-block:: python
-
-  val1 = app_single_shard_client.get_tensor("tensor_1")
-  val2 = app_multi_shard_client.get_tensor("tensor_2")
-  app_single_shard_client.log_data(LLInfo, f"The colocated db tensor is: {val1}")
-  app_multi_shard_client.log_data(LLInfo, f"The clustered db tensor is: {val2}")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 20-26
 
 Later, when you run the experiment driver script the following output will appear in ``tutorial_model.out``
 located in ``getting-started-multidb/tutorial_model/``::
 
-  Model: multi shard logger@00-00-00:The colocated db tensor is: [1 2 3 4]
-  Model: single shard logger@00-00-00:The clustered db tensor is: [5 6 7 8]
+  Model: single shard logger@00-00-00:The single sharded db tensor is: [1 2 3 4]
+  Model: multi shard logger@00-00-00:The multi sharded db tensor is: [5 6 7 8]
 
 This output showcases that we have established a connection with multiple Orchestrators.
 
-Next, let's take the tensors retrieved from the standard deployment databases and
+Next, take the tensors retrieved from the standard deployment databases and
 store them in the colocated database using  ``Client.put_tensor(name, data)``.
 
-.. code-block:: python
-
-  colo_client.put_tensor("tensor_1", val1)
-  colo_client.put_tensor("tensor_2", val2)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 28-30
 
 Next, check if the tensors exist in the colocated database using ``Client.poll_tensor()``.
 This function queries for data in the database. The function requires the tensor name (`name`),
 how many milliseconds to wait in between queries (`poll_frequency_ms`),
 and the total number of times to query (`num_tries`):
 
-.. code-block:: python
-
-  colo_val1 = colo_client.poll_tensor("tensor_1", 10, 10)
-  colo_val2 = colo_client.poll_tensor("tensor_2", 10, 10)
-  colo_client.log_data(LLInfo, f"The colocated db has tensor_1: {colo_val1}")
-  colo_client.log_data(LLInfo, f"The colocated db has tensor_2: {colo_val2}")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
+  :linenos:
+  :lines: 32-37
 
 The output will be as follows::
 
-  Model: colocated logger@00-00-00:The colocated db has tensor_1: True
-  Model: colocated logger@00-00-00:The colocated db has tensor_2: True
+  Model: colo logger@00-00-00:The colocated db has tensor_1: True
+  Model: colo logger@00-00-00:The colocated db has tensor_2: True
 
 The Experiment Driver Script
 ----------------------------
@@ -363,15 +366,10 @@ once and utilized throughout the workflow runtime.
 In this example, we instantiate an ``Experiment`` object with the name ``getting-started-multidb``.
 We setup the SmartSim ``logger`` to output information from the Experiment.
 
-.. code-block:: python
-
-  from smartsim import Experiment
-  from smartredis import Client
-  from smartredis.log import get_logger
-  import numpy as np
-
-  exp = Experiment("getting-started-multidb", launcher="auto")
-  logger = get_logger("Multidb Experiment Log")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 1-10
 
 Launch Multiple Orchestrators
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -393,17 +391,17 @@ We will use the `db_identifier` names we specified in the application script.
 
 For the single-sharded database:
 
-.. code-block:: python
-
-  single_shard_db = exp.create_database(db_nodes=1, db_identifier="single_shard_db_identifier")
-  exp.generate(single_shard_db, overwrite=True)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 12-14
 
 For the multi-sharded database:
 
-.. code-block:: python
-
-  multi_shard_db = exp.create_database(db_nodes=3, db_identifier="multi-shard-db-identifier")
-  exp.generate(multi_shard_db, overwrite=True)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 16-18
 
 .. note::
   Calling ``exp.generate()`` will create two subfolders
@@ -411,18 +409,17 @@ For the multi-sharded database:
   whose names are based on the db_identifier of that Orchestrator.
   In this example, the Experiment folder is
   named ``getting-started-multidb/``. Within this folder, two Orchestrator subfolders will
-  be created, namely ``single_shard_db_identifier/`` and ``multi_shard_db_identifier/``. It's
-  important to note that the names of the Orchestrator subfolders are determined by
-  the db_identifier value we set when instantiating an ``Orchestrator``.
+  be created, namely ``single_shard_db_identifier/`` and ``multi_shard_db_identifier/``.
 
 Step 2: Start Databases
 """""""""""""""""""""""
 Next, to launch the databases,
 pass the database instances to ``Experiment.start()``.
 
-.. code-block:: python
-
-  exp.start(single_shard_db, multi_shard_db, summary=True)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 20-21
 
 The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow. In other words, the function
 deploys the databases on the allocated compute resources.
@@ -445,15 +442,17 @@ running database. You can easily retrieve this address using the ``Orchestrator.
 
 For the single-sharded database:
 
-.. code-block:: python
-
-  driver_client_single_shard = Client(cluster=False, address=single_shard_db.get_address()[0], logger_name="Single shard db logger")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 23-24
 
 For the multi-sharded database:
 
-.. code-block:: python
-
-  driver_client_multi_shard = Client(cluster=True, address=multi_shard_db.get_address()[0], logger_name="Multi shard db logger")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 25-26
 
 Store Data Using Clients
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -465,26 +464,24 @@ database client instances.
 
 For the single-sharded database:
 
-.. code-block:: python
-
-  array_1 = np.array([1, 2, 3, 4])
-  driver_client_single_shard.put_tensor("tensor_1", array_1)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 28-31
 
 For the multi-sharded database:
 
-.. code-block:: python
-
-  array_2 = np.array([5, 6, 7, 8])
-  driver_client_multi_shard.put_tensor("tensor_2", array_2)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 33-36
 
 Lets check to make sure the database tensors do not exist in the incorrect databases:
 
-.. code-block:: python
-
-  check_single_shard_db_tensor_incorrect = driver_client_single_shard.key_exists("tensor_2")
-  check_multi_shard_db_tensor_incorrect = driver_client_multi_shard.key_exists("tensor_1")
-  logger.info(f"The multi shard array key exists in the incorrect database: {check_single_shard_db_tensor_incorrect}")
-  logger.info(f"The single shard array key exists in the incorrect database: {check_multi_shard_db_tensor_incorrect}")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 38-42
 
 When you run the experiment, the following output will appear::
 
@@ -510,9 +507,10 @@ we specify the path to the application file,
 `application_script.py`, for
 ``exe_args``, and the run command for ``exe``.
 
-.. code-block:: python
-
-  model_settings = exp.create_run_settings(exe="python", exe_args="./path/to/application_script.py")
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 44-45
 
 .. note::
   You will have to change the `exe_args` argument to the path of the application script
@@ -523,10 +521,10 @@ configure the the distribution of computational tasks (``RunSettings.set_nodes()
 the script is execute on each node (``RunSettings.set_tasks_per_node()``). In this
 example, we specify to SmartSim that we intend to execute the script once on a single node.
 
-.. code-block:: python
-
-  model_settings.set_nodes(1)
-  model_settings.set_tasks_per_node(1)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 46-48
 
 Step 2: Initialize
 """"""""""""""""""
@@ -534,9 +532,10 @@ Next, create a ``Model`` instance using the ``Experiment.create_model()``.
 Pass the ``model_settings`` object as an argument
 to the ``create_model()`` function and assign to the variable ``model``.
 
-.. code-block:: python
-
-  model = exp.create_model("colocated_model", model_settings)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 49-50
 
 Step 2: Colocate
 """"""""""""""""
@@ -544,9 +543,10 @@ To colocate the model, use the ``Model.colocate_db_uds()`` function to
 Colocate an Orchestrator instance with this Model over
 a Unix domain socket connection.
 
-.. code-block:: python
-
-  model.colocate_db_uds()
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 51-52
 
 This method will initialize settings which add an unsharded
 database to this Model instance. Only this Model will be able
@@ -556,9 +556,10 @@ Step 3: Start
 """""""""""""
 Next, launch the colocated model instance using the ``Experiment.start()`` function.
 
-.. code-block:: python
-
-  exp.start(model, block=True, summary=True)
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 53-54
 
 .. note::
   We set `block=True`,
@@ -571,19 +572,19 @@ Cleanup Experiment
 Finally, use the ``Experiment.stop()`` function to stop the database instances. Print the
 workflow summary with ``Experiment.summary()``.
 
-.. code-block:: python
-
-  exp.stop(single_shard_db, multi_shard_db)
-  logger.info(exp.summary())
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
+  :linenos:
+  :lines: 56-59
 
 When you run the experiment, the following output will appear::
 
   00:00:00 system.host.com SmartSim[#####]INFO
   |    | Name                         | Entity-Type   | JobID       | RunID   | Time    | Status    | Returncode   |
   |----|------------------------------|---------------|-------------|---------|---------|-----------|--------------|
-  | 1  | colo_model                   | Model         | 1538905.8   | 0       | 3.5465  | Completed | 0            |
-  | 2  | single_shard_db_identifier_0 | DBNode        | 1538905.5   | 0       | 73.1798 | Cancelled | 0            |
-  | 3  | multi-shard-db-identifier    | DBNode        | 1538905.6+2 | 0       | 49.8503 | Cancelled | 0            |
+  | 0  | colo_model                   | Model         | 1556529.5   | 0       | 1.7437  | Completed | 0            |
+  | 1  | single_shard_db_identifier_0 | DBNode        | 1556529.3   | 0       | 68.8732 | Cancelled | 0            |
+  | 2  | multi_shard_db_identifier_0  | DBNode        | 1556529.4+2 | 0       | 45.5139 | Cancelled | 0            |
 
 How to Run the Example
 ----------------------
@@ -627,79 +628,12 @@ Step 4 : Run the Experiment
 
 Application Source Code
 ^^^^^^^^^^^^^^^^^^^^^^^
-.. sourcecode:: python
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
+  :language: python
   :linenos:
-
-  from smartredis import ConfigOptions, Client
-  from smartredis import *
-  from smartredis.error import *
-
-  single_shard_config = ConfigOptions.create_from_environment("single_shard_db_identifier")
-  app_single_shard_client = Client(single_shard_config, logger_name="Model: single shard logger")
-
-  multi_shard_config = ConfigOptions.create_from_environment("multi-shard-db-identifier")
-  app_multi_shard_client = Client(multi_shard_config, logger_name="Model: multi shard logger")
-
-  colo_config = ConfigOptions.create_from_environment("colo_db_identifier")
-  colo_client = Client(colo_config, logger_name="Model: colocated logger")
-
-  val1 = app_single_shard_client.get_tensor("tensor_1")
-  val2 = app_multi_shard_client.get_tensor("tensor_2")
-
-  app_single_shard_client.log_data(LLInfo, f"The single sharded db tensor is: {val1}")
-  app_multi_shard_client.log_data(LLInfo, f"The multi sharded db tensor is: {val2}")
-
-  colo_client.put_tensor("tensor_1", val1)
-  colo_client.put_tensor("tensor_2", val2)
-
-  colo_val1 = colo_client.poll_tensor("tensor_1", 10, 10)
-  colo_val2 = colo_client.poll_tensor("tensor_2", 10, 10)
-  colo_client.log_data(LLInfo, f"The colocated db has tensor_1: {colo_val1}")
-  colo_client.log_data(LLInfo, f"The colocated db has tensor_2: {colo_val2}")
 
 Experiment Source Code
 ^^^^^^^^^^^^^^^^^^^^^^
-.. sourcecode:: python
+.. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
+  :language: python
   :linenos:
-
-  import numpy as np
-  from smartredis import Client
-  from smartsim import Experiment
-  from smartsim.log import get_logger
-  import sys
-
-  exe_ex = sys.executable
-  logger = get_logger("Multidb Experiment Log")
-  exp = Experiment("getting-started-multidb", launcher="auto")
-
-  single_shard_db = exp.create_database(db_nodes=1, db_identifier="single_shard_db_identifier")
-  exp.generate(single_shard_db, overwrite=True)
-
-  multi_shard_db = exp.create_database(db_nodes=3, db_identifier="multi-shard-db-identifier")
-  exp.generate(multi_shard_db, overwrite=True)
-
-  exp.start(single_shard_db, multi_shard_db)
-
-  driver_client_single_shard = Client(cluster=False, address=single_shard_db.get_address()[0], logger_name="Single shard db logger")
-  driver_client_multi_shard = Client(cluster=True, address=multi_shard_db.get_address()[0], logger_name="Multi shard db logger")
-
-  array_1 = np.array([1, 2, 3, 4])
-  driver_client_single_shard.put_tensor("tensor_1", array_1)
-
-  array_2 = np.array([5, 6, 7, 8])
-  driver_client_multi_shard.put_tensor("tensor_2", array_2)
-
-  check_single_shard_db_tensor_incorrect = driver_client_single_shard.key_exists("tensor_2")
-  check_multi_shard_db_tensor_incorrect = driver_client_multi_shard.key_exists("tensor_1")
-  logger.info(f"The multi shard array key exists in the incorrect database: {check_single_shard_db_tensor_incorrect}")
-  logger.info(f"The single shard array key exists in the incorrect database: {check_multi_shard_db_tensor_incorrect}")
-
-  model_settings = exp.create_run_settings(exe=exe_ex, exe_args="./path/to/application_script.py")
-  model_settings.set_nodes(1)
-  model_settings.set_tasks_per_node(1)
-  model = exp.create_model("colo_model", model_settings)
-  model.colocate_db_uds(db_identifier="colo_db_identifier")
-  exp.start(model, block=True, summary=True)
-
-  exp.stop(single_shard_db, multi_shard_db)
-  logger.info(exp.summary())
