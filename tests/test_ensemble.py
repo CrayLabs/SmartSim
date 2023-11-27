@@ -34,6 +34,10 @@ from smartsim.entity import Ensemble, Model
 from smartsim.error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from smartsim.settings import RunSettings
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
+
 """
 Test ensemble creation
 

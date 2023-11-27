@@ -32,6 +32,9 @@ from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 logger = get_logger(__name__)
 

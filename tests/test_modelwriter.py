@@ -24,16 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 import filecmp
 from distutils import dir_util
 from glob import glob
 from os import path
 
-import pytest
-
 from smartsim._core.generation.modelwriter import ModelWriter
 from smartsim.error.errors import ParameterWriterError, SmartSimError
 from smartsim.settings import RunSettings
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
 

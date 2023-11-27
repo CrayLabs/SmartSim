@@ -28,7 +28,6 @@
 import itertools
 import logging
 import os.path as osp
-
 import pytest
 
 from smartsim.error.errors import SSUnsupportedError
@@ -41,6 +40,9 @@ from smartsim.settings import (
     Singularity,
 )
 from smartsim.settings.settings import create_run_settings
+
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
 
 
 def test_create_run_settings_local():

@@ -26,15 +26,17 @@
 
 
 import os.path as osp
+import pytest
 import shutil
 import sys
 
-import pytest
-
-from smartsim.error import SSUnsupportedError
 from smartsim.settings import PalsMpiexecSettings
 from smartsim._core.launcher import PBSLauncher
 from smartsim._core.launcher.step.mpiStep import MpiexecStep
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 default_exe = sys.executable
 default_kwargs = {"fail_if_missing_exec": False}

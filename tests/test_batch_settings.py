@@ -30,6 +30,9 @@ import pytest
 from smartsim.settings import BsubBatchSettings, QsubBatchSettings, SbatchSettings
 from smartsim.settings.settings import create_batch_settings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_create_pbs_batch():
     pbs_batch = create_batch_settings(

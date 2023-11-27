@@ -31,6 +31,9 @@ from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 from smartsim.status import STATUS_NEVER_STARTED
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
 
 def test_model_prefix(test_dir):
     exp_name = "test_prefix"

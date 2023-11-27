@@ -32,10 +32,13 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment, status
-from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
-from smartsim.entity import Ensemble, Model
+from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 # Check if singularity is available as command line tool
 singularity_exists = which("singularity") is not None

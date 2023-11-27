@@ -36,6 +36,9 @@ try:
 except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 def test_config_methods(dbutils, local_db):
     """Test all configuration file edit methods on an active db"""

@@ -28,13 +28,14 @@
 from pathlib import Path
 
 import os
-from re import A, L
 import pytest
-import shutil
 import typing as t
 
 from smartsim._core.config.config import Config
 from smartsim.error import SSConfigError
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
 
 def test_all_config_defaults():
