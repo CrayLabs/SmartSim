@@ -53,7 +53,6 @@ RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch doc-deps --dep
     && rm -rf ~/.cache/pip
 
 # Install smartdashboard
-# TODO: once merged into develop, replace docs branch w/develop
 RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
     && cd smartdashboard \
     && python -m pip install . \
