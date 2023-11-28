@@ -197,12 +197,31 @@ is ideal for use cases where a SmartSim ``Model`` is run on a compute node
 that has hardware accelerators (e.g. GPUs) and low-latency inference is
 a critical component of the workflow.
 
-Colocated Deployment
-""""""""""""""""""""
-To create an orchestrator that shares compute resources ``Model``
-SmartSim entity, use the ``model.colocate_db`` factory method.
+Colocated Deployment Diagram
+""""""""""""""""""""""""""""
+During colocated deployment, a SmartSim ``Orchestrator`` (the database) runs on the same
+compute node(s) as a Smartsim ``Model`` (the application).
+This type of deployment is optimal for high data inference scenarios.
+
+Below is an image illustrating communication
+between a colocated ``Model`` spanning multiple compute nodes, and the ``Orchestrator``
+running on each application compute node. A single SmartRedis client is initialized
+for the colocated Orchestrator and is used to communicate with the application.
+Data is streamed from the application to the database via the client on the same node.
+
+.. |colo-orc| image:: images/co-located-orc-diagram.png
+  :width: 700
+  :alt: Alternative text
+
+|colo-orc|
+
+Initialize a Colocated Orchestrator
+"""""""""""""""""""""""""""""""""""
+To create an orchestrator that shares compute resources with a ``Model``
+SmartSim entity, use the ``model.colocate_db()`` factory method.
 In this case, the Orchestrator
 is created via the SmartSim Model API function ``model.colocate_db``.
+The Model API is accessed once a ``Model`` object has been initialized.
 
 
 Multi-db support
@@ -225,7 +244,8 @@ Model
 -----
 ``Model(s)`` represent any computational kernel, including applications,
 scripts, or generally, a program. They can interact with other
-SmartSim entities via data transmitted to/from SmartSim Orchestrators.
+SmartSim entities via data transmitted to/from SmartSim Orchestrators
+using a SmartRedis client.
 Models in PT, TF, and ONNX (scikit-learn, spark, and others) can be
 written in Python and called from Fortran or any other client languages.
 The Python code executes in a C runtime without the python interpreter.
