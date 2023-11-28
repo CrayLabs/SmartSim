@@ -9,10 +9,13 @@ from smartsim._core._cli.utils import MenuItemConfig
 
 def dynamic_execute(cmd: str) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
     def process_execute(_args: argparse.Namespace, unparsed_args: t.List[str]) -> int:
+        not_found = f"{cmd} plugin not found. Please ensure it is installed"
         try:
-            importlib.find_spec(cmd)
+            spec = importlib.util.find_spec(cmd)
+            if spec is None:
+                raise AttributeError()
         except (ModuleNotFoundError, AttributeError):
-            print(f"{cmd} plugin not found. Please ensure it is installed")
+            print(not_found)
             return 1
 
         combined_cmd = [sys.executable, "-m", cmd] + unparsed_args
