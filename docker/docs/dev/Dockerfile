@@ -47,7 +47,7 @@ RUN python -m pip install -r doc/requirements-doc.txt && \
     NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
 
 # Install smartredis
-RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch doc-deps --depth=1 smartredis \
+RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
     && cd smartredis \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
