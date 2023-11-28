@@ -103,9 +103,7 @@ Experiment API factory methods:
 * ``Ensemble``
 
 To create a reference to each entity object, use the associated
-``Experiment.create_...()`` function. Each returned entity instance
-can be used to start, monitor, and stop simulations from
-the notebook.
+``Experiment.create_...()`` function.
 
 .. list-table:: Experiment API Entity Creation
    :widths: 20 65 25
@@ -123,6 +121,27 @@ the notebook.
    * - ``create_ensemble()``
      - ``ensemble = exp.create_ensemble(name[, params, ...])``
      - :ref:`Ensemble <ensem_api>`
+
+Each entity instance can be used to start,
+monitor, and stop simulations from the notebook
+using the :ref:`Experiment API<experiment_api>`.
+
+.. list-table:: Interact with Entities during the Experiment
+   :widths: 25 55 25
+   :header-rows: 1
+
+   * - Experiment Function
+     - Example
+     - Desc
+   * - ``start()``
+     - ``exp.start(*args[, block, summary, ...])``
+     - Launch an Entity
+   * - ``stop()``
+     - ``exp.stop(*args)``
+     - Clobber an Entity
+   * - ``get_status()``
+     - ``exp.get_status(*args)``
+     - Retrieve Entity Status
 
 Orchestrator
 ------------
@@ -243,7 +262,8 @@ and co-located ``Orchestrator(s)`` are available in sections... (link)
 Model
 -----
 ``Model(s)`` represent any computational kernel, including applications,
-scripts, or generally, a program. They can interact with other
+scripts, or generally, a program.
+They can interact with other
 SmartSim entities via data transmitted to/from SmartSim Orchestrators
 using a SmartRedis client.
 Models in PT, TF, and ONNX (scikit-learn, spark, and others) can be
@@ -253,7 +273,7 @@ The Python code executes in a C runtime without the python interpreter.
 Create a Model
 ^^^^^^^^^^^^^^
 A ``Model`` is created through the function: ``Experiment.create_model()``.
-During initialization, models are given ``RunSettings`` objects that specify
+For initialization, models require ``RunSettings`` objects that specify
 how a kernel should be executed with regard to the workload manager
 (e.g., Slurm) and the available compute resources on the system.
 Optionally, the user may also specify a ``BatchSettings`` object if
@@ -264,8 +284,9 @@ gives you access to functions associated with the :ref:`Model API<mode_api>`.
 Ensemble
 --------
 In addition to a single model, SmartSim offers the ability to run an
-``Ensemble`` of simulations, i.e. multiple replicas of the simulation.
-In an Experiment, you can create, configure and launch groups of workloads (Ensembles).
+``Ensemble`` of ``Model`` applications, i.e. multiple replicas of the simulation.
+More specifically, you can create, configure and launch groups of workloads (Ensembles)
+within the Experiment.
 Ensembles can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying model objects.
 
@@ -309,8 +330,9 @@ gives you access to functions associated with the :ref:`Ensemble API<ensem_api>`
 ===========
  Initialize
 ===========
-A simple example of using the Experiment API to launch an Orchestrator,
-create a model that prints `hello world` and run it locally.
+In the following sections we provide a simple example of
+using the Experiment API to launch an Orchestrator and
+create a model that prints `hello world` to run locally.
 
 To *initialize* a ``Experiment`` object, you must specify a `string` name and the systems
 `launcher`. For simplicity, we will start on a single host and only
