@@ -32,7 +32,7 @@ import typing as t
 import pytest
 
 import smartsim
-from smartsim._core._cli import build, cli
+from smartsim._core._cli import build, cli, plugin
 from smartsim._core._cli.build import configure_parser as build_parser
 from smartsim._core._cli.build import execute as build_execute
 from smartsim._core._cli.clean import configure_parser as clean_parser
@@ -360,6 +360,36 @@ def test_cli_plugin_dashboard(capsys):
     assert "optional arguments:" in captured.out
     assert rc == 0
 
+
+def test_cli_plugin_invalid(capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch):
+    """Ensure unexpected CLI plugins are reported"""
+    plugin_module = "notinstalled.Experiment_Overview"
+    bad_plugins = [
+        lambda: MenuItemConfig(
+            "dashboard",
+            "Start the SmartSim dashboard",
+            plugin.dynamic_execute(plugin_module),
+            is_plugin=True,
+        )
+    ]
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr("smartsim._core._cli.cli.plugins", bad_plugins)
+
+        smart_cli = cli.default_cli()
+        
+        captured = capsys.readouterr()  # throw away existing output
+
+        # execute with `dashboard` argument, expect failure to find dashboard plugin
+        build_args = ["smart", "dashboard", "-h"]
+
+        rc = smart_cli.execute(build_args)
+
+        captured = capsys.readouterr() # capture new output
+
+        assert plugin_module in captured.out
+        assert "not found" in captured.out
+        assert rc == 1
 
 @pytest.mark.parametrize(
     "command,mock_location,exp_output",
