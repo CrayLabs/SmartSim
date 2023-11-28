@@ -116,13 +116,13 @@ the notebook.
      - Return Type
    * - ``create_database()``
      - ``orch = exp.create_database([port, db_nodes, ...])``
-     - :ref:`Orchestrator <experiment_api>`
+     - :ref:`Orchestrator <orc_api>`
    * - ``create_model()``
      - ``model = exp.create_model(name, run_settings)``
-     - :ref:`Model <experiment_api>`
+     - :ref:`Model <mode_api>`
    * - ``create_ensemble()``
      - ``ensemble = exp.create_ensemble(name[, params, ...])``
-     - :ref:`Ensemble <experiment_api>`
+     - :ref:`Ensemble <ensem_api>`
 
 Orchestrator
 ------------
@@ -221,7 +221,7 @@ To create an orchestrator that shares compute resources with a ``Model``
 SmartSim entity, use the ``model.colocate_db()`` factory method.
 In this case, the Orchestrator
 is created via the SmartSim Model API function ``model.colocate_db``.
-The Model API is accessed once a ``Model`` object has been initialized.
+The :ref:`Model API<model_api>` is accessed once a ``Model`` object has been initialized.
 
 
 Multi-db support
@@ -250,7 +250,7 @@ Models in PT, TF, and ONNX (scikit-learn, spark, and others) can be
 written in Python and called from Fortran or any other client languages.
 The Python code executes in a C runtime without the python interpreter.
 
-Create a model
+Create a Model
 ^^^^^^^^^^^^^^
 A ``Model`` is created through the function: ``Experiment.create_model()``.
 During initialization, models are given ``RunSettings`` objects that specify
@@ -259,7 +259,7 @@ how a kernel should be executed with regard to the workload manager
 Optionally, the user may also specify a ``BatchSettings`` object if
 the model should be launched as a batch on the WLM system.
 The ``create_model()`` factory method returns an initialized ``Model`` object that
-gives you access to functions associated with the Model API (link).
+gives you access to functions associated with the :ref:`Model API<mode_api>`.
 
 Ensemble
 --------
@@ -269,17 +269,8 @@ In an Experiment, you can create, configure and launch groups of workloads (Ense
 Ensembles can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying model objects.
 
-
-Add:
-An ``Ensemble`` is a collection of SmartSim ``Models`` with features designed
-to enable a wide variety of AI-enabled workflows, including features
-for reinforcement learning, multiple simulations in parallel, , and more (Link to example).
-No manuel steps; the entire process of iterative parameter optimization
-is automated via the driver script. Coordination of the workflow is managed
-via the infrastructure library. SmartRedis is used to store intermediate states.
-
-Create an Ensemble
-^^^^^^^^^^^^^^
+Create a Ensemble
+^^^^^^^^^^^^^^^^^
 An ensemble is created through the function: ``Experiment.create_ensemble()``. The function requires
 one of the subsequent sets of arguments upon initialization:
 
@@ -313,7 +304,7 @@ Case 4 : ``BatchSettings``, ``RunSettings``, and `replicas`
     ensemble members can use the same code.
 
 The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
-gives you access to functions associated with the Ensemble API (link).
+gives you access to functions associated with the :ref:`Ensemble API<ensem_api>`.
 
 ===========
  Initialize

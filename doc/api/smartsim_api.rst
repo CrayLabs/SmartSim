@@ -441,6 +441,11 @@ Model
    Model.disable_key_prefixing
    Model.query_key_prefixing
 
+Model
+-----
+
+.. _mode_api:
+
 .. autoclass:: Model
    :members:
    :show-inheritance:
@@ -449,8 +454,6 @@ Model
 
 Ensemble
 ========
-
-.. _ensemble_api:
 
 .. currentmodule:: smartsim.entity.ensemble
 
@@ -466,6 +469,11 @@ Ensemble
    Ensemble.models
    Ensemble.query_key_prefixing
    Ensemble.register_incoming_entity
+
+Ensemble
+--------
+
+.. _ensem_api:
 
 .. autoclass:: Ensemble
    :members:
