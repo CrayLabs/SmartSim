@@ -50,6 +50,12 @@ from smartsim._core._cli.validate import (
 pytestmark = pytest.mark.group_a
 
 
+test_dash_plugin = True
+try:
+    import smartdashboard
+except:
+    test_dash_plugin = False
+
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
     print(msg)
@@ -333,6 +339,26 @@ def test_cli_default_cli(capsys):
     assert "optional arguments:" in captured.out or "options:" in captured.out
     # assert "--clobber" not in captured.out
     assert ret_val == 2
+
+
+@pytest.mark.skipif(not test_dash_plugin, reason="plugin not found")
+def test_cli_plugin_dashboard(capsys):
+    """Ensure expected dashboard CLI plugin commands are supported"""
+    smart_cli = cli.default_cli()
+    
+    captured = capsys.readouterr()  # throw away existing output
+
+    # execute with `dashboard` argument, expect dashboard-specific help text
+    build_args = ["smart", "dashboard", "-h"]
+    rc = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert "[-d DIRECTORY]" in captured.out
+    assert "[-p PORT]" in captured.out
+
+    assert "optional arguments:" in captured.out
+    assert rc == 0
 
 
 @pytest.mark.parametrize(
