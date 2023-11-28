@@ -78,7 +78,8 @@ class SmartCli:
             return 2
 
         if menu_item.is_plugin:
-            self.args, unparsed_args = self.parser.parse_known_args(app_args)
+            self.args = argparse.Namespace()
+            unparsed_args = app_args[1:]
         else:
             unparsed_args = []
             self.args = self.parser.parse_args(app_args)
