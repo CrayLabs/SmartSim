@@ -42,8 +42,6 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /usr/local/src/SmartSim/
 WORKDIR /usr/local/src/SmartSim/
 
-RUN pip install tensorflow==2.8.0
-
 # Install docs dependencies and SmartSim
 RUN python -m pip install -r doc/requirements-doc.txt && \
     NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
