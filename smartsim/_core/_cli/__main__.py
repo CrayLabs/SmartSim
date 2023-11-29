@@ -36,7 +36,7 @@ def main() -> int:
         return smart_cli.execute(sys.argv)
     except KeyboardInterrupt:
         print("Dashboard terminated by user")
-        return 1
+        return 0
 
 
 if __name__ == "__main__":
