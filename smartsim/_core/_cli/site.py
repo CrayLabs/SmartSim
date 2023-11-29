@@ -30,6 +30,6 @@ import typing as t
 from smartsim._core._cli.utils import get_install_path
 
 
-def execute(_args: argparse.Namespace, _unparsed_args: t.List[str]) -> int:
+def execute(_args: argparse.Namespace, _unparsed_args: t.List[str], /) -> int:
     print(get_install_path())
     return 0

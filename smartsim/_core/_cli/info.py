@@ -13,7 +13,7 @@ _MISSING_DEP = _helpers.colorize("Not Installed", "red")
 
 
 def execute(
-    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     print("\nSmart Python Packages:")
     print(
