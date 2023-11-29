@@ -41,13 +41,13 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 
 
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     return clean(get_install_path() / "_core", _all=args.clobber)
 
 
 def execute_all(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     args.clobber = True
     return execute(args)

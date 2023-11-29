@@ -32,7 +32,7 @@ import typing as t
 import pytest
 
 import smartsim
-from smartsim._core._cli import build, cli
+from smartsim._core._cli import build, cli, plugin
 from smartsim._core._cli.build import configure_parser as build_parser
 from smartsim._core._cli.build import execute as build_execute
 from smartsim._core._cli.clean import configure_parser as clean_parser
@@ -49,6 +49,12 @@ from smartsim._core._cli.validate import (
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
+test_dash_plugin = True
+try:
+    import smartdashboard
+except:
+    test_dash_plugin = False
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
@@ -335,6 +341,56 @@ def test_cli_default_cli(capsys):
     assert ret_val == 2
 
 
+@pytest.mark.skipif(not test_dash_plugin, reason="plugin not found")
+def test_cli_plugin_dashboard(capsys):
+    """Ensure expected dashboard CLI plugin commands are supported"""
+    smart_cli = cli.default_cli()
+    
+    captured = capsys.readouterr()  # throw away existing output
+
+    # execute with `dashboard` argument, expect dashboard-specific help text
+    build_args = ["smart", "dashboard", "-h"]
+    rc = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert "[-d DIRECTORY]" in captured.out
+    assert "[-p PORT]" in captured.out
+
+    assert "optional arguments:" in captured.out
+    assert rc == 0
+
+
+def test_cli_plugin_invalid(capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch):
+    """Ensure unexpected CLI plugins are reported"""
+    plugin_module = "notinstalled.Experiment_Overview"
+    bad_plugins = [
+        lambda: MenuItemConfig(
+            "dashboard",
+            "Start the SmartSim dashboard",
+            plugin.dynamic_execute(plugin_module),
+            is_plugin=True,
+        )
+    ]
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr("smartsim._core._cli.cli.plugins", bad_plugins)
+
+        smart_cli = cli.default_cli()
+        
+        captured = capsys.readouterr()  # throw away existing output
+
+        # execute with `dashboard` argument, expect failure to find dashboard plugin
+        build_args = ["smart", "dashboard", "-h"]
+
+        rc = smart_cli.execute(build_args)
+
+        captured = capsys.readouterr() # capture new output
+
+        assert plugin_module in captured.out
+        assert "not found" in captured.out
+        assert rc == 1
+
 @pytest.mark.parametrize(
     "command,mock_location,exp_output",
     [
@@ -419,9 +475,6 @@ def test_cli_optional_args(capsys,
 
         assert exp_output in captured.out  # did the expected execution method occur?
         assert ret_val == 0  # is the retval is non-failure code?
-        
-        # is the value from the optional argument set in the parsed args?
-        assert smart_cli.args.__dict__[check_prop] == exp_prop_val
     else:
         with pytest.raises(SystemExit) as e:
             ret_val = smart_cli.execute(build_args)
