@@ -8,7 +8,9 @@ from smartsim._core._cli.utils import MenuItemConfig
 
 
 def dynamic_execute(cmd: str) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
-    def process_execute(_args: argparse.Namespace, unparsed_args: t.List[str]) -> int:
+    def process_execute(
+        _args: argparse.Namespace, unparsed_args: t.List[str], /
+    ) -> int:
         not_found = f"{cmd} plugin not found. Please ensure it is installed"
         try:
             spec = importlib.util.find_spec(cmd)
@@ -39,4 +41,5 @@ def dashboard() -> MenuItemConfig:
         is_plugin=True,
     )
 
-plugins = (dashboard, )
+
+plugins = (dashboard,)

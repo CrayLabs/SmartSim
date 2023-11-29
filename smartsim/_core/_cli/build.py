@@ -357,7 +357,7 @@ def _format_incompatible_python_env_message(
 
 
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     verbose = args.v
     keydb = args.keydb

@@ -83,7 +83,7 @@ class _VerificationTempDir(_TemporaryDirectory):
 
 
 def execute(
-    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
