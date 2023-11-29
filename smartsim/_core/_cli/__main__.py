@@ -32,7 +32,11 @@ from smartsim._core._cli.cli import default_cli
 def main() -> int:
     smart_cli = default_cli()
 
-    return smart_cli.execute(sys.argv)
+    try:
+        return smart_cli.execute(sys.argv)
+    except KeyboardInterrupt:
+        print("Dashboard terminated by user")
+        return 1
 
 
 if __name__ == "__main__":
