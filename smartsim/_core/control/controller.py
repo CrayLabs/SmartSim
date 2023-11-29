@@ -130,7 +130,7 @@ class Controller:
         )
 
         # launch a telemetry monitor to track job progress
-        self.start_telemetry_monitor(exp_path, CONFIG.telemetry_frequency)
+        self.start_telemetry_monitor(exp_path)
 
         # block until all non-database jobs are complete
         if block:
@@ -812,7 +812,7 @@ class Controller:
                             if db_script not in ensemble.db_scripts:
                                 set_script(db_script, client)
 
-    def start_telemetry_monitor(self, exp_dir: str, frequency: int) -> None:
+    def start_telemetry_monitor(self, exp_dir: str) -> None:
         logger.debug("Starting telemetry monitor process")
         if not CONFIG.telemetry_enabled:
             return
@@ -828,7 +828,7 @@ class Controller:
                 "-exp_dir",
                 exp_dir,
                 "-frequency",
-                str(frequency),
+                str(CONFIG.telemetry_frequency),
                 "-cooldown",
                 str(CONFIG.telemetry_cooldown),
             ]
