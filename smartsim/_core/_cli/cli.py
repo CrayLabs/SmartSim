@@ -77,14 +77,15 @@ class SmartCli:
             self.parser.print_help()
             return 2
 
-        if menu_item.is_plugin:
-            self.args = argparse.Namespace()
-            unparsed_args = app_args[1:]
-        else:
-            unparsed_args = []
-            self.args = self.parser.parse_args(app_args)
+        args = argparse.Namespace()        
+        unparsed_args = []
 
-        return menu_item.handler(self.args, unparsed_args)
+        if menu_item.is_plugin:            
+            unparsed_args = app_args[1:]
+        else:    
+            args = self.parser.parse_args(app_args)
+
+        return menu_item.handler(args, unparsed_args)
 
     def _register_menu_item(self, item: MenuItemConfig) -> None:
         parser = self.subparsers.add_parser(
