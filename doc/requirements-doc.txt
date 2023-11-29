@@ -1,6 +1,6 @@
 sphinx==4.4.0
 breathe==4.31.0
-sphinx-book-theme==0.2.0
+sphinx-book-theme
 sphinx-fortran==1.1.1
 nbsphinx>=0.8.2
 docutils==0.17

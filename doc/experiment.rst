@@ -5,35 +5,33 @@ Experiments
 =========
  Overview
 =========
+SmartSim offers functionality to automate the deployment of HPC workloads and distributed,
+in-memory storage via the :ref:`Experiment API<experiment_api>`.
+The ``Experiment`` is SmartSims Python user interface that enables users to create and construct
+the stages of a workflow. The Experiment API offers three different workflow stages:
+:ref:`Orchestrator<Orchestrator>`, :ref:`Model<Model>`, and :ref:`Ensemble<Ensemble>`.
 
-Experiments are the SmartSim Python user interface for automating the deployment of HPC workflows
-and distributed, in-memory storage. The Experiment acts as a factory class
-for constructing the stages of an experiment: ``Orchestrator``, ``Model`` and ``Ensemble``.
-It also provides an interface to interact with the entities created by the experiment.
+Once an experiment entity is initialized, a user has access
+to the associated entity interface that enables a user to configure the entity and
+retrieve entity information: :ref:`Model API<mode_api>`, :ref:`Orchestrator API<orc_api>` and
+:ref:`Ensemble API<ensem_api>`. There is no limit to the number of stages a user can
+initialize within an experiment.
 
+The Experiment controls launching, monitoring
+and stopping all entities.
 Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a
 Jupyter notebook, interactive python session, or Python file and use the
 ``Experiment`` to iteratively create, configure and launch computational kernels
-on the system through the specified launcher.
+via entities on the system through the specified launcher.
+The interface was designed to be simple, with as little complexity
+as possible, and agnostic to the backend launching mechanism
+(local, Slurm, PBSPro, etc.).
 
 .. figure:: images/Experiment.png
 
   Sample experiment showing a user application leveraging
   machine learning infrastructure launched by SmartSim and connected
   to online analysis and visualization via the in-memory database.
-
-The interface was designed to be simple, with as little complexity as possible,
-and agnostic to the backend launching mechanism (local, Slurm, PBSPro, etc.).
-
-AL IS AWESOME
-1. resource allocation: exp.create_run_settings, exp.create_batch_settings -> created an object -> bc pass into Experiment entities and then pass entities into exp.start, exp.stop
-2. job submission: exp.start -> use to launch smartsim entities with the WLM
-3. job control: Exp.stop -> cleanup entities launched by exp.start
-4. monitoring: exp.get_status -> retrieve status of launched entities, exp.poll -> used for polling the experiment not entities of the exp, exp.summary -> summary of exp, exp.finished -> query if a experiment entity has finished
-
-The Experiment API is responsible for job submission, job control, error handling
-and cleanup. Experiments are the SmartSim Python user interface to interact with the WLM
-for automating the deployment of HPC workflows and distributed, in-memory storage. 
 
 ==========
  Launchers
@@ -176,11 +174,7 @@ running on each application compute node. A single SmartRedis client is initiali
 the clustered database address and used to communicate with the application's compute nodes.
 Data is streamed from the application compute nodes to the sharded database via the client.
 
-.. |cluster-orc| image:: images/clustered-orc-diagram.png
-  :width: 700
-  :alt: Diagram demonstrating communication between a sharded database and a sharded model.
-
-|cluster-orc|
+.. figure::  images/clustered-orc-diagram.png
 
 Initialize a Clustered Orchestrator
 """""""""""""""""""""""""""""""""""
@@ -218,11 +212,7 @@ running on each application compute node. A single SmartRedis client is initiali
 for the colocated Orchestrator and is used to communicate with the application.
 Data is streamed from the application to the database via the client on the same node.
 
-.. |colo-orc| image:: images/co-located-orc-diagram.png
-  :width: 700
-  :alt: Alternative text
-
-|colo-orc|
+.. figure:: images/co-located-orc-diagram.png
 
 Initialize a Colocated Orchestrator
 """""""""""""""""""""""""""""""""""
