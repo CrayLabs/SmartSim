@@ -52,7 +52,6 @@ class SmartCli:
             prog="smart",
             description="SmartSim command line interface",
         )
-        self.args: t.Optional[argparse.Namespace] = None
 
         self.subparsers = self.parser.add_subparsers(
             dest="command",
