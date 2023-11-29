@@ -5,6 +5,26 @@ Experiments
 =========
  Overview
 =========
+
+Experiments are the SmartSim Python user interface for automating the deployment of HPC workflows
+and distributed, in-memory storage. The Experiment acts as a factory class
+for constructing the stages of an experiment: ``Orchestrator``, ``Model`` and ``Ensemble``.
+It also provides an interface to interact with the entities created by the experiment.
+
+Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a
+Jupyter notebook, interactive python session, or Python file and use the
+``Experiment`` to iteratively create, configure and launch computational kernels
+on the system through the specified launcher.
+
+.. figure:: images/Experiment.png
+
+  Sample experiment showing a user application leveraging
+  machine learning infrastructure launched by SmartSim and connected
+  to online analysis and visualization via the in-memory database.
+
+The interface was designed to be simple, with as little complexity as possible,
+and agnostic to the backend launching mechanism (local, Slurm, PBSPro, etc.).
+
 AL IS AWESOME
 1. resource allocation: exp.create_run_settings, exp.create_batch_settings -> created an object -> bc pass into Experiment entities and then pass entities into exp.start, exp.stop
 2. job submission: exp.start -> use to launch smartsim entities with the WLM
@@ -14,36 +34,6 @@ AL IS AWESOME
 The Experiment API is responsible for job submission, job control, error handling
 and cleanup. Experiments are the SmartSim Python user interface to interact with the WLM
 for automating the deployment of HPC workflows and distributed, in-memory storage. 
-
-Experiments are the SmartSim Python user interface for automating the deployment of HPC workflows
-and distributed, in-memory storage. The Experiment is a factory class 
-that is responsible for creating, managing and monitoring the stages of an experiment: 
-``Model``, ``Ensemble`` and ``Orchestrator``.
-It is also responsible for creating instances ``RunSettings``
-and ``BatchSettings`` that are passed to the creation of the stages of an experiment
-for the configuring the entities ``Model``, ``Ensemble`` and ``Orchestrator``.
-
-It is also used to interact with the entities associated with the Experiment 
-object in the workflow. This interaction includes retrieving the status of these 
-entities, polling to monitor the progress of jobs, generating summaries of their 
-performance, as well as initiating the start and stop actions when necessary.
-
-
-The Experiment acts as both a factory class for constructing the stages of an
-experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc.) as well as an
-interface to interact with the entities created by the experiment.
-
-Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a
-Jupyter notebook, interactive python session, or Python file and use the
-``Experiment`` to iteratively create, configure and launch computational kernels
-on the system through the specified launcher.
-
-The interface was designed to be simple, with as little complexity as possible,
-and agnostic to the backend launching mechanism (local, Slurm, PBSPro, etc.).
-
-Defining workflow stages requires the utilization of functions associated
-with the ``Experiment`` object. The Experiment object is intended to be instantiated
-once and utilized throughout the workflow runtime.
 
 ==========
  Launchers
@@ -327,74 +317,124 @@ Case 4 : ``BatchSettings``, ``RunSettings``, and `replicas`
 The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
 gives you access to functions associated with the :ref:`Ensemble API<ensem_api>`.
 
-===========
- Initialize
-===========
-In the following sections we provide a simple example of
-using the Experiment API to launch an Orchestrator and
-create a model that prints `hello world` to run locally.
+===================
+ Experiment Example
+===================
+.. compound::
+  In the following subsections, we provide an example of using SmartSim to automate the
+  deployment of an HPC workload and distributed, in-memory storage, within
+  the workflow.
 
-To *initialize* a ``Experiment`` object, you must specify a `string` name and the systems
-`launcher`. For simplicity, we will start on a single host and only
-launch single-host jobs, and as such will set the `launcher` argument to `local`.
+  Continue to the example to:
 
-.. code-block:: python
+  .. list-table:: Experiment example contents
+   :widths: auto
+   :header-rows: 1
 
-    from smartsim import Experiment
-    from smartsim.log import get_logger
+   * - Initialize
+     - Start
+     - Stop
+   * - a workflow (``Experiment``)
+     - the in-memory database (``Orchestrator``)
+     - the in-memory database (``Orchestrator``)
+   * - a in-memory database (``Orchestrator``)
+     - the workload (``Model``)
+     - 
+   * - a workload (``Model``)
+     - 
+     - 
 
-    # Init Experiment and specify to launch locally
-    exp = Experiment("name-of-experiment", launcher="local")
-    # Init a SmartSim logger
-    smartsim_logger = get_logger("tutorial-experiment")
+Initialize
+----------
+.. compound::
+  To create a workflow, we *initialize* an ``Experiment`` object
+  once at the beginning of the Python driver script.
+  To create an Experiment, we specify a name
+  and the system launcher of which we will execute the driver script on.
+  We are running the example on a Slurm machine and as such will
+  set the `launcher` argument to `slurm`.
 
-To *initialize* a ``Orchestrator`` object, use the ``Experiment.create_database()``
-function. The Orchestrator defaults to `db_nodes=1`. SmartSim will detect and assign the `port`
-and `interface` parameters.
+  .. code-block:: python
 
-.. code-block:: python
+      from smartsim import Experiment
+      from smartsim.log import get_logger
 
-    # create and start an instance of the Orchestrator database
-    db = exp.create_database(db_nodes=1, port=6899, interface="lo")
-    # create an output directory for the database log files
-    exp.generate(db)
+      # Initialize an Experiment
+      exp = Experiment("name-of-experiment", launcher="slurm")
+      # Initialize a SmartSim logger
+      smartsim_logger = get_logger("tutorial-experiment")
 
-To *initialize* a ``Model`` object, you must specify a `RunSettings` object and Model
-name. Use the ``Experiment.create_run_settings()`` object to specify the executable to
-run and the arguments to pass to the executable. We create a simple `Hello World` program
-below that `echos` `Hello World` to stdout.
+  We also initialize a SmartSim logger. We will use the logger throughout the experiment
+  to monitor the entities.
 
-.. code-block:: python
+.. compound::
+  Next, we will launch a SmartSim in-memory database called an ``Orchestrator``.
+  To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database()``
+  function. We will create a single-sharded database and therefore will set
+  the argument `db_nodes` to 1. SmartSim will assign a `port` to the database
+  and detect your machines `interface`.
 
-    settings = exp.create_run_settings("echo", exe_args="Hello World")
-    model = exp.create_model("hello_world", settings)
+  .. code-block:: python
 
-=========
- Starting
-=========
+      # Initialize an Orchestrator
+      database = exp.create_database(db_nodes=1)
+      # Create an output directory
+      exp.generate(database)
 
-Defining workflow stages requires the utilization of functions associated
-with the ``Experiment`` object. Here we will demonstrate how to create an Orchestrator
-stage using ``Experiment.create_database()``, then launch the database with ``Experiment.start()``.
+  We use the ``Experiment.generate()`` function to create an
+  output directory for the database log files.
 
-A simple example of using the Experiment API to create a model and run it locally:
+.. compound::
+  Next, we create a workload within the experiment.
+  We begin by *initializing* a ``Model`` object.
+  To create a ``Model``, we must instruct SmartSim how we would
+  like to execute the workload by passing in a ``RunSettings``` object.
+  We create a RunSettings object using the
+  ``Experiment.create_run_settings()`` function.
+  We specify the executable to run and the arguments to pass to
+  the executable. The example workload is a simple `Hello World` program
+  that `echos` `Hello World` to stdout.
 
-.. code-block:: python
+  .. code-block:: python
 
-  # start the database
-  exp.start(db, model)
-  # log the status of the db
-  smartsim_logger(f"Database status: {exp.get_status(db)}")
-  smartsim_logger(f"Model status: {exp.get_status(model)}")
+      settings = exp.create_run_settings("echo", exe_args="Hello World")
+      model = exp.create_model("hello_world", settings)
 
-=========
- Stopping
-=========
+  Notice above we creating the ``Model`` through the ``Experiment.create_model()``
+  function. We specify a `name` and the ``RunSettings`` object we created.
 
-To clean up, we need to tear down the DB. We do this by stopping the Orchestrator.
 
-.. code-block:: python
+Starting
+--------
+.. compound::
+  Next we will launch the stages of our experiment (``Orchestrator`` and ``Model``) using functions
+  provided by the ``Experiment`` API. To do so, we will use
+  the ``Experiment.start()`` function and pass in the ``Orchestrator``
+  and ``Model`` instance previously created.
 
-  exp.stop(db)
-  # log the summary of the experiment
-  smartsim_logger(f"{exp.summary()}")
+  .. code-block:: python
+
+    # Launch the Orchestrator and Model instance
+    exp.start(database, model)
+    # log the status of the db
+    exp.get_status(database)
+    exp.get_status(model)
+
+  Notice above we use the ``Experiment.get_status()`` function to query the
+  status of launched instances.
+
+
+Stopping
+--------
+.. compound::
+  Lastly, to clean up the experiment, we need to tear down the launched database.
+  We do this by stopping the Orchestrator using the ``Experiment.stop()`` function.
+
+  .. code-block:: python
+
+    exp.stop(db)
+    # log the summary of the experiment
+    exp.summary()
+
+  Notice that we use the ``Experiment.summary()`` function to print
+  the summary of our workflow.
