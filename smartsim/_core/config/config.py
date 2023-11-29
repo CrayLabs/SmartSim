@@ -210,7 +210,7 @@ class Config:
 
     @property
     def telemetry_enabled(self) -> bool:
-        return bool(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 1))
+        return bool(os.environ.get("SMARTSIM_FLAG_TELEMETRY", 0))
 
     @property
     def telemetry_cooldown(self) -> int:
