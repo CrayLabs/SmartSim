@@ -103,7 +103,7 @@ def execute(
         logger.error(
             "SmartSim failed to run a simple experiment!\n"
             f"Experiment failed due to the following exception:\n{e}\n\n"
-            f"Output files are available at `{temp_dir}`"
+            f"Output files are available at `{temp_dir}`", exc_info=True
         )
         return 2
     return 0
@@ -141,7 +141,7 @@ def test_install(
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
     port = _find_free_port() if port is None else port
-    with _make_managed_local_orc(exp, port) as client:
+    with disable_telmon(), _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
@@ -169,6 +169,20 @@ def _make_managed_local_orc(
         yield Client(False, address=client_addr)
     finally:
         exp.stop(orc)
+
+
+@contextmanager
+def disable_telmon() -> t.Generator[None, None, None]:
+    """Ensure the telemetry monitor is disabled during a test and the environment
+    is left in correct state after completion"""
+    orig = os.environ.get("SMART_TELEMETRY_ENABLED", None)
+    if orig is not None:
+        os.environ["SMART_TELEMETRY_ENABLED"] = "0"
+    try:
+        yield
+    finally:
+        if orig is not None:
+            os.environ["SMART_TELEMETRY_ENABLED"] = orig
 
 
 def _find_free_port() -> int:

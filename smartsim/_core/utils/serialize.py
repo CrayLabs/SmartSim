@@ -32,10 +32,10 @@ import typing as t
 from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
+from smartsim._core.config import CONFIG
 
 if t.TYPE_CHECKING:
     from smartsim import Experiment
-    from smartsim._core.config import CONFIG
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import Orchestrator
     from smartsim.entity import DBNode, Ensemble, Model
