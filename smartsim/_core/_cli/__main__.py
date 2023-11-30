@@ -42,11 +42,11 @@ def main() -> int:
         return smart_cli.execute(sys.argv)
     except SmartSimCLIActionCancelled as ssi:
         logger.debug(ssi, exc_info=True)
-        print(ssi)
+        logger.info(ssi)
     except KeyboardInterrupt:
         msg = "SmartSim was terminated by user"
         logger.debug(msg, exc_info=True)
-        print(msg)
+        logger.info(msg)
 
     return 0
 
