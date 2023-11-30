@@ -150,7 +150,7 @@ def test_ts():
     ["etype", "task_id", "step_id", "timestamp", "evt_type"],
     [
         pytest.param("ensemble", "", "123", get_ts(), "start", id="start event"),
-        pytest.param("ensemble", "", "123", get_ts(), "start", id="stop event"),
+        pytest.param("ensemble", "", "123", get_ts(), "stop", id="stop event"),
     ],
 )
 def test_track_event(
