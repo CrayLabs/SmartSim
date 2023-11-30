@@ -2,9 +2,9 @@
 Experiments
 ***********
 
-=========
- Overview
-=========
+========
+Overview
+========
 SmartSim offers functionality to automate the deployment of HPC workloads and distributed,
 in-memory storage via the :ref:`Experiment API<experiment_api>`.
 The ``Experiment`` is SmartSims Python user interface that enables users to create and construct
@@ -33,10 +33,9 @@ as possible, and agnostic to the backend launching mechanism
   machine learning infrastructure launched by SmartSim and connected
   to online analysis and visualization via the in-memory database.
 
-==========
- Launchers
-==========
-
+=========
+Launchers
+=========
 The Experiment API *interfaces* both locally and with four
 different job schedulers that SmartSim refers to as `launchers`. `Launchers`
 provide SmartSim the ability to construct and execute complex workloads
@@ -48,36 +47,30 @@ SmartSim currently supports 5 `launchers`:
   3. ``pbs``: for systems using the PBSpro scheduler
   4. ``cobalt``: for systems using the Cobalt scheduler
   5. ``lsf``: for systems using the LSF scheduler
-  6. ``auto``: have SmartSim auto-detect the launcher to use.
+  6. ``auto``: have SmartSim auto-detect the launcher to use
 
-If `launcher="auto"` is used, the experiment will attempt to find a launcher
-on the system, and use the first one it encounters. If a launcher cannot
-be found or no launcher parameter is provided, the default value of
-`launcher="local"` will be used.
+.. compound::
+  To specify a launcher, the `launcher` argument must be provided
+  upon ``Experiment`` initialization.
+  For example, to set up a local launcher, the workflow should be initialized as follows:
 
-A `launcher` enables SmartSim to interact with the compute system
-programmatically through the Experiment python user interface.
-SmartSim users do not have to leave the Jupyter Notebook,
-Python REPL, or Python script to launch, query, and interact with their jobs.
+  .. code-block:: python
 
-To specify a specific launcher, one argument needs to be provided
-to the ``Experiment`` initialization.
+      exp = Experiment("name-of-experiment", launcher="local")  # local launcher
 
-.. code-block:: python
+  To have SmartSim attempt to find a launcher on your machine, set the `launcher`
+  argument to `"auto"` during ``Experiment`` initialization like below:
 
-    from smartsim import Experiment
+  .. code-block:: python
 
-    exp = Experiment("name-of-experiment", launcher="local")  # local launcher
-    exp = Experiment("name-of-experiment", launcher="slurm")  # Slurm launcher
-    exp = Experiment("name-of-experiment", launcher="pbs")    # PBSpro launcher
-    exp = Experiment("name-of-experiment", launcher="cobalt") # Cobalt launcher
-    exp = Experiment("name-of-experiment", launcher="lsf")    # LSF launcher
-    exp = Experiment("name-of-experiment", launcher="auto")   # auto-detect launcher
+      exp = Experiment("name-of-experiment", launcher="auto")  # auto-detect launcher
 
+  If a launcher cannot be found or no `launcher` parameter is provided, the default value of
+  `launcher="local"` will be used.
 
-=========
- Entities
-=========
+========
+Entities
+========
 Entities are SmartSim API objects that can be launched and
 managed on the compute system via the Experiment API. While the
 ``Experiment`` object is intended to be instantiated once in a
@@ -133,7 +126,7 @@ using the :ref:`Experiment API<experiment_api>`.
 
 Orchestrator
 ------------
-The ``Orchestrator`` is an in-memory database with features designed
+The orchestrator is an in-memory database with features designed
 to enable a wide variety of AI-enabled workflows, including features
 for online training, low-latency inference, cross-application data
 exchange, online interactive visualization, online data analysis, computational
@@ -151,7 +144,7 @@ client library to transmit data, execute ML models, and execute scripts.
 
 Clustered Orchestrator
 ^^^^^^^^^^^^^^^^^^^^^^
-The ``Orchestrator`` can be composed of one or more in-memory database shards that are spread
+The orchestrator can be composed of one or more in-memory database shards that are spread
 across one or more compute nodes.
 The multiple compute hosts memory can be used together to store data.
 Users do not need to know how the data is stored in a clustered
@@ -168,8 +161,8 @@ A clustered database is optimal for high data throughput scenarios
 such as online analysis, training and processing.
 
 Below is an image illustrating communication
-between a clustered ``Orchestrator`` and a
-multi-node ``Model``. In the Diagram, an instance of the application is
+between a clustered orchestrator and a
+multi-node model. In the Diagram, an instance of the application is
 running on each application compute node. A single SmartRedis client is initialized with
 the clustered database address and used to communicate with the application's compute nodes.
 Data is streamed from the application compute nodes to the sharded database via the client.
@@ -178,7 +171,7 @@ Data is streamed from the application compute nodes to the sharded database via 
 
 Initialize a Clustered Orchestrator
 """""""""""""""""""""""""""""""""""
-To create an orchestrator that does not share compute resources with other
+To create an ``Orchestrator`` that does not share compute resources with other
 SmartSim entities, use the ``Experiment.create_database()`` factory method.
 Specifying the parameter `db_nodes` as greater than or equal to 1 will determine
 whether your database is multi-sharded or single-sharded.
@@ -188,7 +181,7 @@ gives you access to functions associated with the :ref:`Orchestrator API<orc_api
 Colocated Orchestrator
 ^^^^^^^^^^^^^^^^^^^^^^
 An ``Orchestrator`` can be created to share the compute node(s)
-and resources with a SmartSim ``Model``. In this case, the Orchestrator
+and resources with a SmartSim ``Model``. In this case, the database
 is deployed on the same compute hosts as a Model instance
 defined by the user. In this deployment, the database is not connected
 together in a cluster and each shard of the database is addressed
@@ -202,12 +195,12 @@ a critical component of the workflow.
 
 Colocated Deployment Diagram
 """"""""""""""""""""""""""""
-During colocated deployment, a SmartSim ``Orchestrator`` (the database) runs on the same
-compute node(s) as a Smartsim ``Model`` (the application).
+During colocated deployment, a SmartSim orchestrator (the database) runs on the same
+compute node(s) as a Smartsim model (the application).
 This type of deployment is optimal for high data inference scenarios.
 
 Below is an image illustrating communication
-between a colocated ``Model`` spanning multiple compute nodes, and the ``Orchestrator``
+between a colocated model spanning multiple compute nodes, and the database
 running on each application compute node. A single SmartRedis client is initialized
 for the colocated Orchestrator and is used to communicate with the application.
 Data is streamed from the application to the database via the client on the same node.
@@ -216,9 +209,9 @@ Data is streamed from the application to the database via the client on the same
 
 Initialize a Colocated Orchestrator
 """""""""""""""""""""""""""""""""""
-To create an orchestrator that shares compute resources with a ``Model``
+To create an ``Orchestrator`` that shares compute resources with a ``Model``
 SmartSim entity, use the ``model.colocate_db()`` factory method.
-In this case, the Orchestrator
+In this case, the database
 is created via the SmartSim Model API function ``model.colocate_db``.
 The :ref:`Model API<model_api>` is accessed once a ``Model`` object has been initialized.
 
@@ -232,12 +225,12 @@ function mandates the specification of a unique database identifier,
 denoted by the `db_identifier` argument, per created orchestrator.
 
 The `db-identifier` is used to reference SmartSim
-``Orchestrator(s)`` from application client code. This is particularly
-useful in instances where an ``Orchestrator`` is colocated with a SmartSim
+orchestrator(s) from application client code. This is particularly
+useful in instances where an orchestrator is colocated with a SmartSim
 model for low-latency inference and another Orchestrator is launched to
 handle other aspects of the workflow such as visualization and ML model
-training. More detailed information on the ideal use cases for ``Orchestrator(s)``
-and co-located ``Orchestrator(s)`` are available in sections... (link)
+training. More detailed information on the ideal use cases for orchestrator(s)
+and co-located ``Orchestrator(s)`` are available in sections... (update this when use cases added)
 
 Model
 -----
@@ -248,7 +241,7 @@ SmartSim entities via data transmitted to/from SmartSim Orchestrators
 using a SmartRedis client.
 Models in PT, TF, and ONNX (scikit-learn, spark, and others) can be
 written in Python and called from Fortran or any other client languages.
-The Python code executes in a C runtime without the python interpreter.
+The Python code executes in a C runtime without the Python interpreter.
 
 Create a Model
 ^^^^^^^^^^^^^^
@@ -257,7 +250,7 @@ For initialization, models require ``RunSettings`` objects that specify
 how a kernel should be executed with regard to the workload manager
 (e.g., Slurm) and the available compute resources on the system.
 Optionally, the user may also specify a ``BatchSettings`` object if
-the model should be launched as a batch on the WLM system.
+the model should be launched as a batch job on the WLM system.
 The ``create_model()`` factory method returns an initialized ``Model`` object that
 gives you access to functions associated with the :ref:`Model API<mode_api>`.
 
@@ -278,13 +271,13 @@ one of the subsequent sets of arguments upon initialization:
 Case 1 : ``RunSettings`` and `params` or `replicas`
     If it only passed RunSettings, Ensemble, objects will
     require either a replicas argument or a params argument to
-    expand parameters into Model instances.
+    expand parameters into ``Model`` instances.
     At launch, the Ensemble will look for interactive allocations to launch models in.
 
 Case 2 : ``BatchSettings``
     If it passed BatchSettings without other arguments,
-    an empty Ensemble will be created that Model objects
-    can be added to manually. All Model objects added to
+    an empty Ensemble will be created that ``Model`` objects
+    can be added to manually. All ``Model`` objects added to
     the Ensemble will be launched in a single batch.
 
 Case 3 : ``BatchSettings``, `run_settings`, and `params`
@@ -307,9 +300,9 @@ Case 4 : ``BatchSettings``, ``RunSettings``, and `replicas`
 The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
 gives you access to functions associated with the :ref:`Ensemble API<ensem_api>`.
 
-===================
- Experiment Example
-===================
+==================
+Experiment Example
+==================
 .. compound::
   In the following subsections, we provide an example of using SmartSim to automate the
   deployment of an HPC workload and distributed, in-memory storage, within
@@ -397,7 +390,7 @@ Initialize
 Starting
 --------
 .. compound::
-  Next we will launch the stages of our experiment (``Orchestrator`` and ``Model``) using functions
+  Next we will launch the stages of the experiment (``Orchestrator`` and ``Model``) using functions
   provided by the ``Experiment`` API. To do so, we will use
   the ``Experiment.start()`` function and pass in the ``Orchestrator``
   and ``Model`` instance previously created.
@@ -427,4 +420,4 @@ Stopping
     exp.summary()
 
   Notice that we use the ``Experiment.summary()`` function to print
-  the summary of our workflow.
+  the summary of the workflow.
