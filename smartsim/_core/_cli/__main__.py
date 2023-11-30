@@ -24,10 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 import sys
 
 from smartsim._core._cli.cli import default_cli
 from smartsim.error.errors import SmartSimInterrupt
+from smartsim.log import _get_log_level
+
+
+logger = logging.getLogger(__name__)
+logger.propagate = False
+logger.setLevel(_get_log_level().upper())
 
 
 def main() -> int:
@@ -36,9 +43,12 @@ def main() -> int:
     try:
         return smart_cli.execute(sys.argv)
     except SmartSimInterrupt as ssi:
+        logger.debug(ssi, exc_info=True)
         print(ssi)
     except KeyboardInterrupt as ki:
-        print("SmartSim was terminated by user")
+        msg = "SmartSim was terminated by user"
+        logger.debug(msg, exc_info=True)
+        print(msg)
     
     return 0
 
