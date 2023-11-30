@@ -175,14 +175,15 @@ def _make_managed_local_orc(
 def _disable_telmon() -> t.Generator[None, None, None]:
     """Ensure the telemetry monitor is disabled during a test and the environment
     is left in correct state after completion"""
-    orig = os.environ.get("SMART_TELEMETRY_ENABLED", None)
+    tm_key = "SMARTSIM_FLAG_TELEMETRY"
+    orig = os.environ.get(tm_key, None)
     if orig is not None:
-        os.environ["SMART_TELEMETRY_ENABLED"] = "0"
+        os.environ[tm_key] = "0"
     try:
         yield
     finally:
         if orig is not None:
-            os.environ["SMART_TELEMETRY_ENABLED"] = orig
+            os.environ[tm_key] = orig
 
 
 def _find_free_port() -> int:
