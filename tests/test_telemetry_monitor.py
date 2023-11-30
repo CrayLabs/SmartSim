@@ -1040,8 +1040,6 @@ def test_multistart_experiment(
             assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
             time.sleep(3)  # time for telmon to write db stop event
 
-    assert True, "TODO: check telemetry output"
-
     telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
 
     db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
