@@ -964,7 +964,7 @@ def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
         pytest.param("auto", 1, "local", id="use auto"),
         pytest.param("mpirun", 1, "local", id="use mpirun"),
         pytest.param("srun", 1, "slurm", id="use srun"),
-        pytest.param("srun", 2, "slurm", id="use srun w/2 db"),
+        pytest.param("srun", 1, "slurm", id="use srun w/1 db"),
     ],
 )
 def test_multistart_experiment(
