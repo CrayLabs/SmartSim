@@ -27,6 +27,7 @@
 import sys
 
 from smartsim._core._cli.cli import default_cli
+from smartsim.error.errors import SmartSimInterrupt
 
 
 def main() -> int:
@@ -34,9 +35,12 @@ def main() -> int:
 
     try:
         return smart_cli.execute(sys.argv)
-    except KeyboardInterrupt:
-        print("Dashboard terminated by user")
-        return 0
+    except SmartSimInterrupt as ssi:
+        print(ssi)
+    except KeyboardInterrupt as ki:
+        print("SmartSim was terminated by user")
+    
+    return 0
 
 
 if __name__ == "__main__":

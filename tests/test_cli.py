@@ -368,7 +368,7 @@ def test_cli_plugin_invalid(capsys: pytest.CaptureFixture, monkeypatch: pytest.M
         lambda: MenuItemConfig(
             "dashboard",
             "Start the SmartSim dashboard",
-            plugin.dynamic_execute(plugin_module),
+            plugin.dynamic_execute(plugin_module, "Dashboard!"),
             is_plugin=True,
         )
     ]

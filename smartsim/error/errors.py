@@ -141,3 +141,7 @@ class UnproxyableStepError(TelemetryError):
     """Raised when a user attempts to proxy a managed ``Step`` through the
     unmanaged step proxy entry point
     """
+
+class SmartSimInterrupt(SmartSimError):
+    """Raised when the SmartSim application is terminated"""
+
