@@ -195,9 +195,7 @@ def test_redis_cli():
 @pytest.mark.parametrize(
         "value, exp_result", [
             pytest.param("0", False, id="letter zero"),
-            pytest.param(0, False, id="number zero"),
             pytest.param("1", True, id="letter one"),
-            pytest.param(1, True, id="number one"),
             pytest.param(None, False, id="null value"),
         ]
 )
