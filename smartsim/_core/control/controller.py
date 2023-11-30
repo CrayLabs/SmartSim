@@ -846,7 +846,8 @@ class _AnonymousBatchJob(EntityList[Model]):
     @staticmethod
     def _validate(model: Model):
         if model.batch_settings is None:
-            raise SmartSimError("Unable to create _AnonymousBatchJob without batch_settings")
+            msg = "Unable to create _AnonymousBatchJob without batch_settings"
+            raise SmartSimError(msg)
 
     def __init__(self, model: Model) -> None:
         _AnonymousBatchJob._validate(model)
