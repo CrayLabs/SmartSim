@@ -980,8 +980,7 @@ def test_multistart_experiment(
     test_dir = fileutils.make_test_dir()
 
     if run_command != "auto" and not shutil.which(run_command):
-        assert True, f"{run_command} not supported on test environment"
-        return
+        pytest.skip(reason=f"{run_command} not supported on test environment")
 
     exp_name = "my-exp"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
