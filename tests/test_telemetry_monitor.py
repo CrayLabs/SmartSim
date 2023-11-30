@@ -1002,8 +1002,8 @@ def test_multistart_experiment(
         },
     )
 
-    yo_path = fileutils.get_test_conf_path("printing_model.py")
-    ens.attach_generator_files(to_configure=[yo_path])
+    test_script_path = fileutils.get_test_conf_path("printing_model.py")
+    ens.attach_generator_files(to_configure=[test_script_path])
 
     rs_m = exp.create_run_settings("echo", ["hello", "world"], run_command=run_command)
     rs_m.set_nodes(1)
