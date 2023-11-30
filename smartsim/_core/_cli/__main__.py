@@ -27,11 +27,12 @@
 import sys
 
 from smartsim._core._cli.cli import default_cli
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
 
 
-logger = get_logger(__name__)
+logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 def main() -> int:
