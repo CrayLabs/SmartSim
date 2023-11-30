@@ -850,7 +850,7 @@ class _AnonymousBatchJob(EntityList[Model]):
             raise SmartSimError(msg)
 
     def __init__(self, model: Model) -> None:
-        _AnonymousBatchJob._validate(model)
+        self._validate(model)
         super().__init__(model.name, model.path)
         self.entities = [model]
         self.batch_settings = model.batch_settings
