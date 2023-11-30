@@ -190,3 +190,20 @@ def test_redis_cli():
     with pytest.raises(SSConfigError):
         config.database_cli
     os.environ.pop("REDIS_CLI_PATH")
+
+
+@pytest.mark.parametrize(
+        "value, exp_result", [
+            pytest.param("0", False, id="letter zero"),
+            pytest.param(0, False, id="number zero"),
+            pytest.param("1", True, id="letter one"),
+            pytest.param(1, True, id="number one"),
+        ]
+)
+def test_telemetry_flag(monkeypatch: pytest.MonkeyPatch, 
+                        value: t.Union[int, str],
+                        exp_result: bool):
+    with monkeypatch.context() as ctx:
+        ctx.setattr(os, "environ", {"SMARTSIM_FLAG_TELEMETRY": value})
+        config = Config()
+        assert config.telemetry_enabled == exp_result
