@@ -238,7 +238,8 @@ def test_load_manifest_serial_models(fileutils: FileUtils):
 
 
 def test_load_manifest_db_and_models(fileutils: FileUtils):
-    """Ensure that the runtime manifest loads correctly when containing models & orchestrator"""
+    """Ensure that the runtime manifest loads correctly when containing models &
+    orchestrator across 2 separate runs"""
     # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/db_and_model.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -258,7 +259,8 @@ def test_load_manifest_db_and_models(fileutils: FileUtils):
 
 
 def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
-    """Ensure that the runtime manifest loads correctly when containing models & orchestrator"""
+    """Ensure that the runtime manifest loads correctly when containing models &
+    orchestrator in a single run"""
     # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
     sample_manifest_path = fileutils.get_test_conf_path(
         "telemetry/db_and_model_1run.json"
