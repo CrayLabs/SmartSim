@@ -196,7 +196,6 @@ def test_load_manifest(fileutils: FileUtils):
     assert len(manifest.runs[2].models) == 8  # 8 models in ensemble
     assert len(manifest.runs[0].orchestrators) == 0
     assert len(manifest.runs[1].orchestrators) == 3  # 3 shards in db
-    # assert len(manifest.runs[0].ensembles) == 1
 
 
 def test_load_manifest_colo_model(fileutils: FileUtils):
