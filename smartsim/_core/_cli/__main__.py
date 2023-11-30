@@ -24,17 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging
 import sys
 
 from smartsim._core._cli.cli import default_cli
 from smartsim.error.errors import SmartSimCLIActionCancelled
-from smartsim.log import _get_log_level
+from smartsim.log import get_logger
 
 
-logger = logging.getLogger(__name__)
-logger.propagate = False
-logger.setLevel(_get_log_level().upper())
+logger = get_logger(__name__)
 
 
 def main() -> int:
