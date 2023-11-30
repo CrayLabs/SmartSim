@@ -27,12 +27,28 @@
 import sys
 
 from smartsim._core._cli.cli import default_cli
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
+from smartsim.error.errors import SmartSimCLIActionCancelled
+from smartsim.log import get_logger
+
+
+logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 def main() -> int:
     smart_cli = default_cli()
 
-    return smart_cli.execute(sys.argv)
+    try:
+        return smart_cli.execute(sys.argv)
+    except SmartSimCLIActionCancelled as ssi:
+        logger.debug(ssi, exc_info=True)
+        logger.info(ssi)
+    except KeyboardInterrupt:
+        msg = "SmartSim was terminated by user"
+        logger.debug(msg, exc_info=True)
+        logger.info(msg)
+
+    return 0
 
 
 if __name__ == "__main__":
