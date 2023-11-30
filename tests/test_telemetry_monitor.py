@@ -979,7 +979,7 @@ def test_multistart_experiment(
 ):
     """Run an experiment with multiple start calls to ensure that telemetry is
     saved correctly for each run"""
-    test_dir = fileutils.make_test_dir()
+    test_dir = fileutils.make_test_dir(sub_dir=str(uuid.uuid4()))
 
     if run_command != "auto" and not shutil.which(run_command):
         pytest.skip(reason=f"{run_command} not supported on test environment")
