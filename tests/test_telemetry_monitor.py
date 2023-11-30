@@ -85,6 +85,15 @@ for_all_wlm_launchers = pytest.mark.parametrize(
 logger = logging.getLogger()
 
 
+@pytest.fixture(autouse=True)
+def turn_on_tm(monkeypatch):
+    monkeypatch.setattr(
+        cfg.Config,
+        CFG_TM_ENABLED_ATTR,
+        property(lambda self: True))
+    yield
+
+
 def snooze_nonblocking(test_dir: str, max_delay: int = 20, post_data_delay: int = 2):
     telmon_subdir = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
     # let the non-blocking experiment complete.
