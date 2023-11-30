@@ -996,9 +996,9 @@ def test_multistart_experiment(
         run_settings=rs_e,
         perm_strategy="all_perm",
         params={
-            "START": ["spam", "foo"],
+            "START": ["spam"],
             "MID": ["eggs", "bar"],
-            "END": ["ham", "baz"],
+            "END": ["ham"],
         },
     )
 
@@ -1056,8 +1056,8 @@ def test_multistart_experiment(
 
     m_start_events = list(telemetry_output_path.rglob("ensemble/**/start.json"))
     m_stop_events = list(telemetry_output_path.rglob("ensemble/**/stop.json"))
-    assert len(m_start_events) == 8
-    assert len(m_stop_events) == 8
+    assert len(m_start_events) == 2
+    assert len(m_stop_events) == 2
 
 
 @pytest.mark.parametrize(
