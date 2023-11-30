@@ -141,7 +141,7 @@ def test_install(
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
     port = _find_free_port() if port is None else port
-    with disable_telmon(), _make_managed_local_orc(exp, port) as client:
+    with _disable_telmon(), _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
@@ -172,7 +172,7 @@ def _make_managed_local_orc(
 
 
 @contextmanager
-def disable_telmon() -> t.Generator[None, None, None]:
+def _disable_telmon() -> t.Generator[None, None, None]:
     """Ensure the telemetry monitor is disabled during a test and the environment
     is left in correct state after completion"""
     orig = os.environ.get("SMART_TELEMETRY_ENABLED", None)
