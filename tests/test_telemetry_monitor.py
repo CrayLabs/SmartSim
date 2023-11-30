@@ -81,6 +81,11 @@ for_all_wlm_launchers = pytest.mark.parametrize(
     [pytest.param(cls(), id=cls.__name__) for cls in WLMLauncher.__subclasses__()],
 )
 
+requires_wlm = pytest.mark.skipif(
+    pytest.test_launcher == "local",
+    reason="Test requires WLM"
+)
+
 
 logger = logging.getLogger()
 
@@ -967,13 +972,12 @@ def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
     assert "world" in cmd
 
 
+@requires_wlm
 @pytest.mark.parametrize(
-    "run_command, num_db_nodes, launcher",
+    "run_command",
     [
-        pytest.param("auto", 1, "local", id="use auto"),
-        pytest.param("mpirun", 1, "local", id="use mpirun"),
-        pytest.param("srun", 1, "slurm", id="use srun"),
-        pytest.param("srun", 1, "slurm", id="use srun w/1 db"),
+        pytest.param("", id="Unmanaged"),
+        pytest.param("auto", id="Managed"),
     ],
 )
 def test_multistart_experiment(
@@ -982,18 +986,16 @@ def test_multistart_experiment(
     fileutils: FileUtils,
     monkeypatch: pytest.MonkeyPatch,
     run_command: str,
-    num_db_nodes: int,
-    launcher: str,
 ):
     """Run an experiment with multiple start calls to ensure that telemetry is
-    saved correctly for each run"""
+    saved correctly for each run
+    """
     test_dir = fileutils.make_test_dir(sub_dir=str(uuid.uuid4()))
 
-    if run_command != "auto" and not shutil.which(run_command):
-        pytest.skip(reason=f"{run_command} not supported on test environment")
-
     exp_name = "my-exp"
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
+    exp = Experiment(exp_name,
+                     launcher=wlmutils.get_test_launcher(),
+                     exp_path=test_dir)
     rs_e = exp.create_run_settings(
         sys.executable, ["printing_model.py"], run_command=run_command
     )
@@ -1005,8 +1007,8 @@ def test_multistart_experiment(
         perm_strategy="all_perm",
         params={
             "START": ["spam"],
-            "MID": ["eggs", "bar"],
-            "END": ["ham"],
+            "MID": ["eggs"],
+            "END": ["sausage", "and spam"],
         },
     )
 
@@ -1023,10 +1025,9 @@ def test_multistart_experiment(
     model.add_ml_model("cnn", "TORCH", model_path=model_file, device="CPU")
 
     db = exp.create_database(
-        db_nodes=num_db_nodes,  #  if USE_SLURM else 1,
+        db_nodes=1,
         port=wlmutils.get_test_port(),
-        interface=wlmutils.get_test_interface(),  # "ipogif0" if _launcher != "local" else "lo",
-        single_cmd=False,
+        interface=wlmutils.get_test_interface(),
     )
 
     exp.generate(db, ens, model, overwrite=True)
@@ -1041,31 +1042,31 @@ def test_multistart_experiment(
         tm_pid = exp._control._telemetry_monitor.pid
 
         exp.start(db, block=False)
-        assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
+        # check that same TM proc is active
+        assert tm_pid == exp._control._telemetry_monitor.pid
         try:
             exp.start(ens, block=True, summary=True)
-            assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
         finally:
             exp.stop(db)
-            assert tm_pid == tm_pid == exp._control._telemetry_monitor.pid
+            assert tm_pid == exp._control._telemetry_monitor.pid
             time.sleep(3)  # time for telmon to write db stop event
 
     telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
 
     db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
     db_stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
-    assert len(db_start_events) == num_db_nodes
-    assert len(db_stop_events) == num_db_nodes
+    assert len(db_start_events) == 1
+    assert len(db_stop_events) == 1
 
     m_start_events = list(telemetry_output_path.rglob("model/**/start.json"))
     m_stop_events = list(telemetry_output_path.rglob("model/**/stop.json"))
     assert len(m_start_events) == 1
     assert len(m_stop_events) == 1
 
-    m_start_events = list(telemetry_output_path.rglob("ensemble/**/start.json"))
-    m_stop_events = list(telemetry_output_path.rglob("ensemble/**/stop.json"))
-    assert len(m_start_events) == 2
-    assert len(m_stop_events) == 2
+    e_start_events = list(telemetry_output_path.rglob("ensemble/**/start.json"))
+    e_stop_events = list(telemetry_output_path.rglob("ensemble/**/stop.json"))
+    assert len(e_start_events) == 2
+    assert len(e_stop_events) == 2
 
 
 @pytest.mark.parametrize(
