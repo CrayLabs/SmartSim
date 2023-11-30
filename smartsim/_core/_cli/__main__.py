@@ -28,7 +28,7 @@ import logging
 import sys
 
 from smartsim._core._cli.cli import default_cli
-from smartsim.error.errors import SmartSimInterrupt
+from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import _get_log_level
 
 
@@ -42,7 +42,7 @@ def main() -> int:
 
     try:
         return smart_cli.execute(sys.argv)
-    except SmartSimInterrupt as ssi:
+    except SmartSimCLIActionCancelled as ssi:
         logger.debug(ssi, exc_info=True)
         print(ssi)
     except KeyboardInterrupt:

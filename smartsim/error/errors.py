@@ -142,5 +142,5 @@ class UnproxyableStepError(TelemetryError):
     unmanaged step proxy entry point
     """
 
-class SmartSimInterrupt(SmartSimError):
+class SmartSimCLIActionCancelled(SmartSimError):
     """Raised when the SmartSim application is terminated"""

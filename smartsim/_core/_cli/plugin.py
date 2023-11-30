@@ -5,7 +5,7 @@ import subprocess as sp
 import typing as t
 
 from smartsim._core._cli.utils import MenuItemConfig
-from smartsim.error.errors import SmartSimInterrupt
+from smartsim.error.errors import SmartSimCLIActionCancelled
 
 
 def dynamic_execute(
@@ -36,7 +36,7 @@ def dynamic_execute(
                 return process.returncode
         except KeyboardInterrupt as ex:
             msg = f"{plugin_name} terminated by user"
-            raise SmartSimInterrupt(msg) from ex
+            raise SmartSimCLIActionCancelled(msg) from ex
 
     return process_execute
 
