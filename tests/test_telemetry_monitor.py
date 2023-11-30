@@ -1008,7 +1008,7 @@ def test_multistart_experiment(
     rs_m.set_nodes(1)
     rs_m.set_tasks(1)
     model = exp.create_model("my-model", run_settings=rs_m)
-    model.colocate_db_tcp(port=WLMUtils.get_test_port(), db_identifier="COLO")
+    model.colocate_db_tcp(port=wlmutils.get_test_port(), db_identifier="COLO")
 
     model_file = mlutils.save_torch_cnn(test_dir, f"model_{uuid.uuid4()}.pt")
     model.add_ml_model("cnn", "TORCH", model_path=model_file, device="CPU")
