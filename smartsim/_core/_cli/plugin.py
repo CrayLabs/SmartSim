@@ -8,7 +8,9 @@ from smartsim._core._cli.utils import MenuItemConfig
 from smartsim.error.errors import SmartSimInterrupt
 
 
-def dynamic_execute(cmd: str, plugin_name: str) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
+def dynamic_execute(
+    cmd: str, plugin_name: str
+) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
     def process_execute(
         _args: argparse.Namespace, unparsed_args: t.List[str], /
     ) -> int:
@@ -22,7 +24,7 @@ def dynamic_execute(cmd: str, plugin_name: str) -> t.Callable[[argparse.Namespac
             return 1
 
         combined_cmd = [sys.executable, "-m", cmd] + unparsed_args
-        
+
         try:
             with sp.Popen(combined_cmd, stdout=sp.PIPE, stderr=sp.PIPE) as process:
                 stdout, _ = process.communicate()

@@ -45,11 +45,11 @@ def main() -> int:
     except SmartSimInterrupt as ssi:
         logger.debug(ssi, exc_info=True)
         print(ssi)
-    except KeyboardInterrupt as ki:
+    except KeyboardInterrupt:
         msg = "SmartSim was terminated by user"
         logger.debug(msg, exc_info=True)
         print(msg)
-    
+
     return 0
 
 

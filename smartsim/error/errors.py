@@ -144,4 +144,3 @@ class UnproxyableStepError(TelemetryError):
 
 class SmartSimInterrupt(SmartSimError):
     """Raised when the SmartSim application is terminated"""
-
