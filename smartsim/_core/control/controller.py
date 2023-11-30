@@ -844,7 +844,7 @@ class Controller:
 
 class _AnonymousBatchJob(EntityList[Model]):
     @staticmethod
-    def _validate(model: Model):
+    def _validate(model: Model) -> None:
         if model.batch_settings is None:
             msg = "Unable to create _AnonymousBatchJob without batch_settings"
             raise SmartSimError(msg)
