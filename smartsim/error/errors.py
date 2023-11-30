@@ -143,4 +143,4 @@ class UnproxyableStepError(TelemetryError):
     """
 
 class SmartSimCLIActionCancelled(SmartSimError):
-    """Raised when the SmartSim application is terminated"""
+    """Raised when a `smart` CLI command is terminated"""
