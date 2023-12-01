@@ -52,10 +52,6 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 if t.TYPE_CHECKING:
-    # Pylint disables needed for old version of pylint w/ TF 2.6.2
-    # pylint: disable-next=unused-import
-    from multiprocessing.connection import Connection
-
     # pylint: disable-next=unsubscriptable-object
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
 else:
@@ -86,16 +82,23 @@ def execute(args: argparse.Namespace, /) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
     """
+    from importlib.util import find_spec
+
+    torch_available = find_spec("torch")
+    tensorflow_available = find_spec("tensorflow")
+    onnx_available = find_spec("skl2onnx") and find_spec("sklearn")
+
     backends = installed_redisai_backends()
+    has_tf = False
     try:
         with _VerificationTempDir(dir=os.getcwd()) as temp_dir:
             test_install(
                 location=temp_dir,
                 port=args.port,
                 device=args.device.upper(),
-                with_tf="tensorflow" in backends,
-                with_pt="torch" in backends,
-                with_onnx="onnxruntime" in backends,
+                with_tf="tensorflow" in backends and torch_available,
+                with_pt="torch" in backends and tensorflow_available,
+                with_onnx="onnxruntime" in backends and onnx_available,
             )
     except Exception as e:
         logger.error(
@@ -146,12 +149,18 @@ def test_install(
         if with_tf:
             logger.info("Verifying TensorFlow Backend")
             _test_tf_install(client, location, device)
+        else:
+            logger.warning("Tensorflow not available. Skipping test")
         if with_pt:
             logger.info("Verifying Torch Backend")
             _test_torch_install(client, device)
+        else:
+            logger.warning("Torch not available. Skipping test")
         if with_onnx:
             logger.info("Verifying ONNX Backend")
             _test_onnx_install(client, device)
+        else:
+            logger.warning("ONNX not available. Skipping test")
 
 
 @contextmanager
@@ -178,39 +187,10 @@ def _find_free_port() -> int:
 
 
 def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -> None:
-    recv_conn, send_conn = mp.Pipe(duplex=False)
-    # Build the model in a subproc so that keras does not hog the gpu
-    proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
-    proc.start()
-
-    # do not need the sending connection in this proc anymore
-    send_conn.close()
-
-    proc.join(timeout=120)
-    if proc.is_alive():
-        proc.terminate()
-        raise Exception("Failed to build a simple keras model within 2 minutes")
-    try:
-        model_path, inputs, outputs = recv_conn.recv()
-    except EOFError as e:
-        raise Exception(
-            "Failed to receive serialized model from subprocess. "
-            "Is the `tensorflow` python package installed?"
-        ) from e
-
-    client.set_model_from_file(
-        "keras-fcn", model_path, "TF", device=device, inputs=inputs, outputs=outputs
-    )
-    client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
-    client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
-    client.get_tensor("keras-output")
-
-
-def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
     from tensorflow import keras
-
     from smartsim.ml.tf import freeze_model
 
+    # Build a small TF model and freeze it
     fcn = keras.Sequential(
         layers=[
             keras.layers.InputLayer(input_shape=(28, 28), name="input"),
@@ -224,7 +204,14 @@ def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
         optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
     model_path, inputs, outputs = freeze_model(fcn, tmp_dir, "keras_model.pb")
-    conn.send((model_path, inputs, outputs))
+
+    # Try to set the model and use it
+    client.set_model_from_file(
+        "keras-fcn", model_path, "TF", device=device, inputs=inputs, outputs=outputs
+    )
+    client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
+    client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
+    client.get_tensor("keras-output")
 
 
 def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
