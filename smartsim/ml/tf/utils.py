@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import annotations
 from pathlib import Path
 
 import tensorflow as tf
@@ -33,63 +32,7 @@ import typing as t
 from tensorflow.python.framework.convert_to_constants import (
     convert_variables_to_constants_v2,
 )
-import multiprocessing as mp
 
-if t.TYPE_CHECKING:
-    from multiprocessing.connection import Connection
-
-def _serialize_internals(connection: "Connection", model: keras.Model) -> None:
-
-    full_model = tf.function(model)
-    full_model = full_model.get_concrete_function(
-        tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
-    )
-
-    frozen_func = convert_variables_to_constants_v2(full_model)
-    frozen_func.graph.as_graph_def()
-
-    input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
-    output_names = [x.name.split(":")[0] for x in frozen_func.outputs]
-
-    model_serialized = frozen_func.graph.as_graph_def().SerializeToString(
-        deterministic=True
-    )
-
-    connection.send((model_serialized, input_names, output_names))
-    connection.close()
-
-def _freeze_internals(
-    connection: "Connection", model: keras.Model, output_dir: str, file_name: str
-) -> None:
-    """
-    Needed to run the freezing in separate process
-    to avoid locking up the GPU
-    """
-
-    if not file_name.endswith(".pb"):
-        file_name = file_name + ".pb"
-
-
-    full_model = tf.function(model)
-    full_model = full_model.get_concrete_function(
-        tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
-    )
-
-    frozen_func = convert_variables_to_constants_v2(full_model)
-    frozen_func.graph.as_graph_def()
-
-    input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
-    output_names = [x.name.split(":")[0] for x in frozen_func.outputs]
-
-    tf.io.write_graph(
-        graph_or_graph_def=frozen_func.graph,
-        logdir=output_dir,
-        name=file_name,
-        as_text=False,
-    )
-    model_file_path = str(Path(output_dir, file_name).resolve())
-    connection.send((model_file_path, input_names, output_names))
-    connection.close()
 
 def freeze_model(
     model: keras.Model, output_dir: str, file_name: str
@@ -115,15 +58,27 @@ def freeze_model(
     # TODO figure out why layer names don't match up to
     # specified name in Model init.
 
+    if not file_name.endswith(".pb"):
+        file_name = file_name + ".pb"
 
-    parent_connection, child_connection = mp.Pipe()
-    graph_freeze_process = mp.Process(
-        target=_freeze_internals,
-        args=(child_connection, model, output_dir, file_name)
+    full_model = tf.function(model)
+    full_model = full_model.get_concrete_function(
+        tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
-    graph_freeze_process.start()
-    model_file_path, input_names, output_names = parent_connection.recv()
-    graph_freeze_process.join()
+
+    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func.graph.as_graph_def()
+
+    input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
+    output_names = [x.name.split(":")[0] for x in frozen_func.outputs]
+
+    tf.io.write_graph(
+        graph_or_graph_def=frozen_func.graph,
+        logdir=output_dir,
+        name=file_name,
+        as_text=False,
+    )
+    model_file_path = str(Path(output_dir, file_name).resolve())
     return model_file_path, input_names, output_names
 
 
@@ -143,13 +98,19 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
     :rtype: str, list[str], list[str]
     """
 
-
-    parent_connection, child_connection = mp.Pipe()
-    graph_freeze_process = mp.Process(
-        target=_serialize_internals,
-        args=(child_connection, model)
+    full_model = tf.function(model)
+    full_model = full_model.get_concrete_function(
+        tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
-    graph_freeze_process.start()
-    model_serialized, input_names, output_names = parent_connection.recv()
-    graph_freeze_process.join()
+
+    frozen_func = convert_variables_to_constants_v2(full_model)
+    frozen_func.graph.as_graph_def()
+
+    input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
+    output_names = [x.name.split(":")[0] for x in frozen_func.outputs]
+
+    model_serialized = frozen_func.graph.as_graph_def().SerializeToString(
+        deterministic=True
+    )
+
     return model_serialized, input_names, output_names
