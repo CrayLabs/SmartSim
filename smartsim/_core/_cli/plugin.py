@@ -5,9 +5,12 @@ import subprocess as sp
 import typing as t
 
 from smartsim._core._cli.utils import MenuItemConfig
+from smartsim.error.errors import SmartSimCLIActionCancelled
 
 
-def dynamic_execute(cmd: str) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
+def dynamic_execute(
+    cmd: str, plugin_name: str
+) -> t.Callable[[argparse.Namespace, t.List[str]], int]:
     def process_execute(
         _args: argparse.Namespace, unparsed_args: t.List[str], /
     ) -> int:
@@ -21,14 +24,19 @@ def dynamic_execute(cmd: str) -> t.Callable[[argparse.Namespace, t.List[str]], i
             return 1
 
         combined_cmd = [sys.executable, "-m", cmd] + unparsed_args
-        with sp.Popen(combined_cmd, stdout=sp.PIPE, stderr=sp.PIPE) as process:
-            stdout, _ = process.communicate()
-            while process.returncode is None:
-                stdout, _ = process.communicate()
 
-            plugin_stdout = stdout.decode("utf-8")
-            print(plugin_stdout)
-            return process.returncode
+        try:
+            with sp.Popen(combined_cmd, stdout=sp.PIPE, stderr=sp.PIPE) as process:
+                stdout, _ = process.communicate()
+                while process.returncode is None:
+                    stdout, _ = process.communicate()
+
+                plugin_stdout = stdout.decode("utf-8")
+                print(plugin_stdout)
+                return process.returncode
+        except KeyboardInterrupt as ex:
+            msg = f"{plugin_name} terminated by user"
+            raise SmartSimCLIActionCancelled(msg) from ex
 
     return process_execute
 
@@ -37,7 +45,7 @@ def dashboard() -> MenuItemConfig:
     return MenuItemConfig(
         "dashboard",
         "Start the SmartSim dashboard",
-        dynamic_execute("smartdashboard.Experiment_Overview"),
+        dynamic_execute("smartdashboard.Experiment_Overview", "Dashboard"),
         is_plugin=True,
     )
 
