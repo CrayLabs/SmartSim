@@ -32,6 +32,7 @@ import typing as t
 from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
+from smartsim._core.config import CONFIG
 
 if t.TYPE_CHECKING:
     from smartsim import Experiment
@@ -50,6 +51,9 @@ MANIFEST_FILENAME: t.Final[str] = "manifest.json"
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
+    if not CONFIG.telemetry_enabled:
+        return
+
     manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
 
     new_run = {
