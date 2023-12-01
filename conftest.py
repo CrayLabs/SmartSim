@@ -48,9 +48,6 @@ from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
 from subprocess import run
 import sys
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import typing as t
 
 
@@ -669,18 +666,6 @@ class MLUtils:
     def get_test_num_gpus() -> int:
         return test_num_gpus
 
-    @staticmethod
-    def save_torch_cnn(path: str, file_name: str):
-        """Create a simple torch CNN and save to file specified by path and file_name"""
-        model = PyTorchNet()
-        example_forward_input = torch.rand(1, 1, 28, 28)
-        module = torch.jit.trace(model, example_forward_input)
-
-        output_path = path + "/" + file_name
-        torch.jit.save(module, output_path)
-
-        return output_path
-
 
 @pytest.fixture
 def coloutils() -> t.Type[ColoUtils]:
@@ -731,29 +716,3 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
-
-
-class PyTorchNet(nn.Module):
-    def __init__(self):
-        super(PyTorchNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, 1)
-        self.conv2 = nn.Conv2d(32, 64, 3, 1)
-        self.dropout1 = nn.Dropout(0.25)
-        self.dropout2 = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(9216, 128)
-        self.fc2 = nn.Linear(128, 10)
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = F.relu(x)
-        x = self.conv2(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = self.dropout1(x)
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.dropout2(x)
-        x = self.fc2(x)
-        output = F.log_softmax(x, dim=1)
-        return output
