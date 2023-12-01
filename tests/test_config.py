@@ -196,13 +196,15 @@ def test_redis_cli():
         "value, exp_result", [
             pytest.param("0", False, id="letter zero"),
             pytest.param("1", True, id="letter one"),
-            pytest.param(None, False, id="null value"),
+            pytest.param(None, False, id="not in env"),
         ]
 )
 def test_telemetry_flag(monkeypatch: pytest.MonkeyPatch, 
                         value: t.Union[int, str],
                         exp_result: bool):
-    with monkeypatch.context() as ctx:
-        ctx.setenv("SMARTSIM_FLAG_TELEMETRY", value)
-        config = Config()
-        assert config.telemetry_enabled == exp_result
+    if value is not None:
+        monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", value)
+    else:
+        monkeypatch.delenv("SMARTSIM_FLAG_TELEMETRY", raising=False)
+    config = Config()
+    assert config.telemetry_enabled == exp_result

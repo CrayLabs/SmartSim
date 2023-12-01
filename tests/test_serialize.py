@@ -24,14 +24,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
+
 from pathlib import Path
 import json
 
 from smartsim import Experiment
 from smartsim._core.utils import serialize
 from smartsim._core.control.manifest import LaunchedManifestBuilder
+import smartsim._core.config.config
 
 _REL_MANIFEST_PATH = f"{serialize.TELMON_SUBDIR}/{serialize.MANIFEST_FILENAME}"
+_CFG_TM_ENABLED_ATTR = "telemetry_enabled"
+
+
+@pytest.fixture(autouse=True)
+def turn_on_tm(monkeypatch):
+    monkeypatch.setattr(
+        smartsim._core.config.config.Config,
+        _CFG_TM_ENABLED_ATTR,
+        property(lambda self: True))
+    yield
 
 
 def test_serialize_creates_a_manifest_json_file_if_dne(fileutils):
@@ -47,6 +60,20 @@ def test_serialize_creates_a_manifest_json_file_if_dne(fileutils):
         assert manifest["experiment"]["launcher"] == "launcher"
         assert isinstance(manifest["runs"], list)
         assert len(manifest["runs"]) == 1
+
+
+def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
+    fileutils, monkeypatch
+):
+    monkeypatch.setattr(
+        smartsim._core.config.config.Config,
+        _CFG_TM_ENABLED_ATTR,
+        property(lambda self: False))
+    test_dir = fileutils.get_test_dir()
+    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
+    serialize.save_launch_manifest(lmb.finalize())
+    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
+    assert not manifest_json.exists()
 
 
 def test_serialize_appends_a_manifest_json_exists(fileutils):

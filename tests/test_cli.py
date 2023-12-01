@@ -26,6 +26,7 @@
 
 import argparse
 from contextlib import contextmanager
+import logging
 import pathlib
 import typing as t
 
@@ -49,6 +50,7 @@ from smartsim._core._cli.validate import (
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+_TEST_LOGGER = logging.getLogger(__name__)
 
 test_dash_plugin = True
 try:
@@ -746,7 +748,7 @@ def test_cli_full_build_execute(capsys, monkeypatch):
 
 
 def _good_build(*args, **kwargs):
-    print("LGTM")
+    _TEST_LOGGER.info("LGTM")
 
 
 def _bad_build(*args, **kwargs):
@@ -770,8 +772,8 @@ def _mock_temp_dir(*a, **kw):
         )
     ],
 )
-def test_cli_build_test_execute(
-    capsys,
+def test_cli_validation_test_execute(
+    caplog,
     monkeypatch,
     mock_verify_fn,
     expected_stdout,
@@ -782,6 +784,7 @@ def test_cli_build_test_execute(
     checks that if at any point the test raises an exception an appropriate error
     code and error msg are returned.
     """
+    caplog.set_level(logging.INFO)
 
     # Mock out the verification tests/avoid file system ops
     monkeypatch.setattr(smartsim._core._cli.validate, "test_install", mock_verify_fn)
@@ -790,11 +793,11 @@ def test_cli_build_test_execute(
         "_VerificationTempDir",
         _mock_temp_dir,
     )
-    # Coloredlogs doesn't play nice with capsys
+    # Coloredlogs doesn't play nice with caplog
     monkeypatch.setattr(
-        smartsim._core._cli.validate.logger,
-        "error",
-        print,
+        smartsim._core._cli.validate,
+        "logger",
+        _TEST_LOGGER,
     )
 
     command = "validate"
@@ -805,12 +808,8 @@ def test_cli_build_test_execute(
     menu = [cfg]
     smart_cli = cli.SmartCli(menu)
 
-    captured = capsys.readouterr()  # throw away existing output
-
     verify_args = ["smart", command]
     actual_retval = smart_cli.execute(verify_args)
 
-    captured = capsys.readouterr()  # capture new output
-
-    assert expected_stdout in captured.out
+    assert expected_stdout in caplog.text
     assert actual_retval == expected_retval
