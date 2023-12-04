@@ -119,14 +119,17 @@ with the following ``RunSettings`` child classes per WLM below:
 
 1. Slurm WLM system
    - ``SrunSettings``
+   - ``OrterunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
 2. PBSPro WLM system
    - ``AprunSettings``
+   - ``OrterunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
 3. Cobalt WLM system
    - ``AprunSettings``
+   - ``OrterunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
 4. LSF WLM system
