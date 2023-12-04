@@ -63,21 +63,22 @@ Case 2 : Specifying with `run_command`
 ===
 HPC
 ===
-SmartSim offers ``RunSettings`` child classes per `launcher` specified below:
+SmartSim offers support to run your experiment entity instances
+with the following ``RunSettings`` child classes per WLM below:
 
-1. `launcher` - Slurm
+1. Slurm WLM system
    - ``SrunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
-2. `launcher` - PBSPro
+2. PBSPro WLM system
    - ``AprunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
-3. `launcher` - Cobalt
+3. Cobalt WLM system
    - ``AprunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
-4. `launcher` - LSF
+4. LSF WLM system
    - ``JsrunSettings``
    - ``MpirunSettings``
    - ``MpiexecSettings``
@@ -85,19 +86,19 @@ SmartSim offers ``RunSettings`` child classes per `launcher` specified below:
 Initialize
 ----------
 
-Case 1 : To use the an HPC launcher such as Slurm, specify at Experiment initialization:
+Case 1 : To use the an HPC launcher such as `Slurm`, specify at Experiment initialization:
 
     More specifically, specify through the `launcher` argument:
 
     .. code-block:: python
 
-      exp = Experiment("name-of-experiment", launcher="slurm")  # local launcher
+      exp = Experiment("name-of-experiment", launcher="slurm")  # slurm launcher
 
     ``SrunSettings`` will be returned
 
     .. code-block:: python
 
-      settings = exp.create_run_settings()  # local launcher
+      settings = exp.create_run_settings()
 
 Case 2 : To use the `run_command` variable, specify at RunSettings initializations
 
@@ -107,4 +108,6 @@ Case 2 : To use the `run_command` variable, specify at RunSettings initializatio
 
     .. code-block:: python
 
-      settings = exp.create_run_settings(run_command="slurm")  # local launcher
+      settings = exp.create_run_settings(run_command="mpiexec")  # local launcher
+
+    The above will return a ``MpiexecSettings`` object.
