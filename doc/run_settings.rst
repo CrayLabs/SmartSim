@@ -1,16 +1,64 @@
-***********
+************
 Run Settings
-***********
+************
 
 =========
  Overview
 =========
-SmartSim run settings describe how a Model or Ensemble should be executed provided the system
-and available computational resources. A ``RunSettings`` instance is created through the
+Run settings instruct SmartSim how to execute a Model or Ensemble, within an experiment,
+on the system and available computational resources. SmartSim offers the top level
+``RunSettings`` object to configure a SmartSim entity for a local launch.
+For configuring an entity to launch on a WLM system, SmartSim offers ``RunSettings`` child classes
+as follows:
+
+* ``SrunSettings``
+* ``AprunSettings``
+* ``JsrunSettings``
+* ``MpirunSettings``
+* ``MpiexecrunSettings``
+* ``OrterunSettings``
+
+A run settings object is initialized through the ``Experiment.create_run_settings()`` function
+which accepts a `run_command` argument. You may pass in your machines run command to the
+`run_command` argument.
+If `run_command` is set to `auto`, SmartSim will attempt to match a run command on the
+system with a RunSettings class in SmartSim. If found, the class corresponding to
+that run_command will be created and returned.
+
+* Navigate to the :ref:`local section<Local RunSettings Instance>` to initialize for local settings instance
+* Navigate to the :ref:`wlm section<HPC RunSetting Instance>` to initialize for local settings instance
+
+Once initialized, the ``RunSettings`` object and child classes offer functions to configure the
+run settings of the entity. The following chart displays the functions associated to
+the ``SrunSettings`` object that allows a user running on a `slurm` based machine
+to configure set the number of nodes, tasks and tasks per node for the job.
+
+.. list-table:: Slurm Run Settings Functions
+   :widths: 25 55 25
+   :header-rows: 1
+
+   * - ``SrunSettings`` function
+     - Example
+     - Description
+   * - ``set_nodes()``
+     - ``SrunSettings.set_nodes(nodes)``
+     - Set the number of nodes
+   * - ``set_tasks()``
+     - ``SrunSettings.set_tasks(tasks)``
+     - Set the number of tasks for this job
+   * - ``set_tasks_per_node()``
+     - ``SrunSettings.set_tasks_per_node(tasks_per_node)``
+     - Set the number of tasks for this job
+   * - ...
+     - ...
+     - ...
+
+To view a 
+A ``RunSettings`` instance is created through the
 ``Experiment.create_run_settings()`` function which accepts a `run_command` argument.
 If `run_command` is set to `auto`, SmartSim will attempt to match a run command on the
 system with a RunSettings class in SmartSim. If found, the class corresponding to
-that run_command will be created and returned:
+that run_command will be created and returned.
 
 When initializing an ``Experiment`` object and specifying `launcher="local"`, auto detection will be turned off.
 If the `run_command` is passed a recognized run command (ex. 'Slurm') the ``RunSettings``
@@ -19,50 +67,53 @@ instance will be a child class such as ``SrunSettings``.
 If not supported by smartsim, the base RunSettings class will be
 created and returned with the specified run_command and run_args will be evaluated literally.
 
-=====
-Local
-=====
+==========================
+Local RunSettings Instance
+==========================
 
 Local
 -----
 The local `launcher` supports the base :ref:`RunSettings API <rs-api>`
 which can be used to run executables as well as run executables
-with arbitrary launch binaries like `mpiexec`.
-
-The local launcher is the default launcher for all ``Experiment``
-instances.
-
-Ensembles are always executed in parallel but launched sequentially.
+with arbitrary launch binaries like `mpiexec`. The local launcher
+is the default launcher for all ``Experiment`` instances.
 
 Initialize
 ----------
-Case 1 : Setting when creating the Experiment
-    When initializing an ``Experiment`` object, by specifying the `launcher` argument
+There are two ways to initialize a ``RunSettings`` instance:
+
+Case 1 : Setting the `launcher` argument during ``Experiment`` creation.
+    When initializing an ``Experiment`` object, specify the `launcher` argument to `"local"`:
 
     .. code-block:: python
 
       exp = Experiment("name-of-experiment", launcher="local")  # local launcher
+
+    Now that the launcher is set to local, when calling ``Experiment.create_run_settings()``,
+    the ``RunSettings`` object will be returned:
 
     .. code-block:: python
 
       settings = exp.create_run_settings()  # local launcher
 
-    You can find the application and experiment source code in subsections below.
-
-Case 2 : Specifying with `run_command`
+Case 2 : Specify `local` to `run_command` during ``RunSettings`` object creation.
+    Adversely, you may specify to SmartSim a run command when initializing a run settings object:
 
     .. code-block:: python
 
       exp = Experiment("name-of-experiment", launcher="local")  # local launcher
 
+    Pass in string `"mpiexec"` to `run_command` to tell SmartSim to run executable
+    with the arbitrary launch binary mpiexec:
     .. code-block:: python
 
       settings = exp.create_run_settings(run_command="mpirun")  # local launcher
 
+    The ``MpiexecSetting`` child class will be returned.
 
-===
-HPC
-===
+=======================
+HPC RunSetting Instance
+=======================
 SmartSim offers support to run your experiment entity instances
 with the following ``RunSettings`` child classes per WLM below:
 
