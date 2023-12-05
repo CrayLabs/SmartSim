@@ -89,6 +89,9 @@ requires_wlm = pytest.mark.skipif(
 
 logger = logging.getLogger()
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
 
 @pytest.fixture(autouse=True)
 def turn_on_tm(monkeypatch):

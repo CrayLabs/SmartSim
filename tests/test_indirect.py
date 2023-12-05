@@ -37,6 +37,8 @@ from smartsim._core.utils.helpers import encode_cmd
 
 ALL_ARGS = {"+command", "+entity_type", "+telemetry_dir", "+output_file", "+error_file", "+working_dir"}
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
 @pytest.mark.parametrize(
         ["cmd", "missing"],

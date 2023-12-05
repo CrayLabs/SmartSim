@@ -37,6 +37,8 @@ import smartsim._core.config.config
 _REL_MANIFEST_PATH = f"{serialize.TELMON_SUBDIR}/{serialize.MANIFEST_FILENAME}"
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
 
 @pytest.fixture(autouse=True)
 def turn_on_tm(monkeypatch):
