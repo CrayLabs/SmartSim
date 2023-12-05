@@ -66,7 +66,7 @@ class LocalLauncher(Launcher):
         :param step_names: list of step_names
         :type step_names: list[str]
         :return: list of tuples for update
-        :rtype: list[(str, UnmanagedStepInfo)]
+        :rtype: list[tuple[str, StepInfo | None]]
         """
         # step ids are process ids of the tasks
         # as there is no WLM intermediary

@@ -532,10 +532,11 @@ def event_loop(
     :type action_handler: ManifestEventHandler
     :param frequency: frequency (in seconds) of update loop
     :type frequency: t.Union[int, float]
-    :param experiment_dir: the experiement directory to monitor for changes
-    :type experiment_dir: pathlib.Path
     :param logger: a preconfigured Logger instance
     :type logger: logging.Logger
+    :param cooldown_duration: number of seconds the telemetry monitor should
+                              poll for new jobs before attempting to shutdown
+    :type cooldown_duration: int
     """
     elapsed: int = 0
     last_ts: int = get_ts()
@@ -564,7 +565,7 @@ def main(
     experiment_dir: pathlib.Path,
     logger: logging.Logger,
     observer: t.Optional[BaseObserver] = None,
-    cooldown: t.Optional[int] = 0,
+    cooldown_duration: t.Optional[int] = 0,
 ) -> int:
     """Setup the monitoring entities and start the timer-based loop that
     will poll for telemetry data
@@ -573,8 +574,13 @@ def main(
     :type frequency: t.Union[int, float]
     :param experiment_dir: the experiement directory to monitor for changes
     :type experiment_dir: pathlib.Path
+    :param logger: a preconfigured Logger instance
+    :type logger: logging.Logger
     :param observer: (optional) a preconfigured Observer to inject
     :type observer: t.Optional[BaseObserver]
+    :param cooldown_duration: number of seconds the telemetry monitor should
+                              poll for new jobs before attempting to shutdown
+    :type cooldown_duration: int
     """
     manifest_relpath = pathlib.Path(TELMON_SUBDIR) / MANIFEST_FILENAME
     manifest_path = experiment_dir / manifest_relpath
@@ -586,7 +592,7 @@ def main(
         f" matching pattern: {monitor_pattern}"
     )
 
-    telemetry_cooldown = cooldown or CONFIG.telemetry_cooldown
+    cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
     action_handler = ManifestEventHandler(monitor_pattern, logger)
 
@@ -602,7 +608,7 @@ def main(
         observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
-        event_loop(observer, action_handler, frequency, logger, telemetry_cooldown)
+        event_loop(observer, action_handler, frequency, logger, cooldown_duration)
         return os.EX_OK
     except Exception as ex:
         logger.error(ex)
@@ -670,7 +676,10 @@ if __name__ == "__main__":
 
     try:
         main(
-            int(args.frequency), pathlib.Path(args.exp_dir), log, cooldown=args.cooldown
+            int(args.frequency),
+            pathlib.Path(args.exp_dir),
+            log,
+            cooldown_duration=args.cooldown,
         )
         sys.exit(0)
     except Exception:

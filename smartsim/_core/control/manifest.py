@@ -282,8 +282,9 @@ class LaunchedManifest(t.Generic[_T]):
 
 @dataclass(frozen=True)
 class LaunchedManifestBuilder(t.Generic[_T]):
-    """A mutable class used to build a ``LaunchedManifest`` while going through
-    the launching process.
+    """A class comprised of mutable collections of SmartSim entities that is
+    used to build a ``LaunchedManifest`` while going through the launching
+    process.
     """
 
     exp_name: str

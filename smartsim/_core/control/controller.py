@@ -131,7 +131,7 @@ class Controller:
 
         # launch a telemetry monitor to track job progress
         if CONFIG.telemetry_enabled:
-            self.start_telemetry_monitor(exp_path)
+            self._start_telemetry_monitor(exp_path)
 
         # block until all non-database jobs are complete
         if block:
@@ -429,6 +429,9 @@ class Controller:
 
         :param orchestrator: orchestrator to launch
         :type orchestrator: Orchestrator
+        :param manifest_builder: An `LaunchedManifestBuilder` to record the
+                                 names and `Step`s of the launched orchestrator
+        :type manifest_builder: LaunchedManifestBuilder[tuple[str, Step]]
         """
         orchestrator.remove_stale_files()
         orc_telem_dir = manifest_builder.run_telemetry_subdirectory / "database"
@@ -529,6 +532,9 @@ class Controller:
 
         :param entity_list: EntityList to launch as batch
         :type entity_list: EntityList
+        :param telemetry_dir: Path to a directory in which the batch job step
+                              may write telemetry events
+        :type telemetry_dir: pathlib.Path
         :return: batch job step instance and a list of run steps to be
                  executed within the batch job
         :rtype: tuple[Step, list[Step]]
@@ -555,12 +561,15 @@ class Controller:
         return batch_step, substeps
 
     def _create_job_step(
-        self, entity: SmartSimEntity, telemetry_path: pathlib.Path
+        self, entity: SmartSimEntity, telemetry_dir: pathlib.Path
     ) -> Step:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for
         :type entity: SmartSimEntity
+        :param telemetry_dir: Path to a directory in which the job step
+                               may write telemetry events
+        :type telemetry_dir: pathlib.Path
         :return: the job step
         :rtype: Step
         """
@@ -571,7 +580,7 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
-        step.meta["status_dir"] = str(telemetry_path / entity.name)
+        step.meta["status_dir"] = str(telemetry_dir / entity.name)
 
         return step
 
@@ -813,7 +822,13 @@ class Controller:
                             if db_script not in ensemble.db_scripts:
                                 set_script(db_script, client)
 
-    def start_telemetry_monitor(self, exp_dir: str) -> None:
+    def _start_telemetry_monitor(self, exp_dir: str) -> None:
+        """Spawns a telemetry monitor process to keep track of the life times
+        of the processes launched through this controller.
+
+        :param exp_dir: An experiment directory
+        :type exp_dir: str
+        """
         logger.debug("Starting telemetry monitor process")
         if (
             self._telemetry_monitor is None
