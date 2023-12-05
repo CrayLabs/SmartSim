@@ -274,28 +274,38 @@ Create a Ensemble
 An ``Ensemble`` is created through the factory method: ``Experiment.create_ensemble()``.
 To create an ensemble, follow one of the cases below:
 
-Case 1 : Launch in previously obtained interactive allocation.
-    A ``RunSettings`` object and `params` or `replicas` are required.
-    At launch, the Ensemble will look for interactive
-    allocations to launch models in.
-    A `replicas` argument or a `params` argument
-    is required to expand parameters into ``Model`` instances.
+Case 1 : If you would like to define a set of parameter values
+  for which you want to test different combinations/permutations,
+  initialize an ``Ensemble`` with a ``RunSettings`` object and
+  `params` argument. The way the executed permutations are
+  chosen can be defined through the `perm_strat` parameter.
+  ``RunSettings`` will be identical for all models, chosen
+  parameters will vary.
 
-Case 2 : Launch as a batch job.
-    A ``BatchSettings`` object is required.
-    If passed BatchSettings without other arguments,
-    an empty Ensemble will be created that ``Model`` objects
-    can be added to manually. All ``Model`` objects added to
-    the Ensemble will be launched in a single batch.
+Case 2 : If you would like to define the same set of parameter values
+  for all Models, initialize an ``Ensemble`` with a ``RunSettings`` object and
+  `replicas` argument. The `replicas` argument will create clones
+  of the ``Model`` object.
 
-Case 3 : Launch as batch and configure individual ``Model`` instances.
-    A ``BatchSettings``, ``RunSettings``, and `params` or `replicas`
-    are required.
-    If it passed ``BatchSettings`` and ``RunSettings``, the ``BatchSettings`` will
-    determine the allocation settings for the entire batch, and the ``RunSettings``
-    will determine how each individual Model instance is executed within that batch.
-    A `replicas` argument or a `params` argument
-    is required to expand parameters into ``Model`` instances.
+Case 3 : If you would like to launch the Ensemble as a batch job,
+  specify ``BatchSettings`` when initializing the ``Ensemble`` object.
+  An empty Ensemble object will be created. You will have to add the Models
+  individually here where they will all be launched as a single batch job.
+
+Case 4 : If you would like to launch the Ensemble as a batch job and
+  define a set of parameter values
+  for which you want to test different combinations/permutations,
+  initialize an ``Ensemble`` with a ``BatchSettings``, ``RunSettings`` objects
+  and `params` argument. Again, the way the executed permutations are
+  chosen can be defined through the `perm_strat` parameter.
+  ``RunSettings`` will be identical for all models, chosen
+  parameters will vary.
+
+Case 5 : If you would like to launch the Ensemble as a batch job
+  define the same set of parameter values
+  for all Models, initialize an ``Ensemble`` with a ``RunSettings`` object and
+  `replicas` argument. The `replicas` argument will create clones
+  of the ``Model`` object.
 
 The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
 gives you access to functions associated with the :ref:`Ensemble API<ensemble_api>`.
