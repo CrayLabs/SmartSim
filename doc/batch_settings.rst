@@ -59,7 +59,7 @@ In the following example, we walk through creating and launching a
 The ``BatchSettings`` object allocates resources for the job while the
 ``RunSettings`` object feeds SmartSim the run parameters for the job.
 
-Begin by initializing an Experiment object
+Begin by initializing an ``Experiment`` object
 and specifying the systems WLM to the `launcher` argument.
 In this example, we use the slurm job scheduler:
 
