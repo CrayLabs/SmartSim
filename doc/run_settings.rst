@@ -7,7 +7,8 @@ Overview
 ========
 SmartSim allows you to configure the run settings of a job (``Model`` or ``Ensemble``)
 based on the system and available computational resources
-by initializing a ``RunSettings`` object. `Launchers` work directly with WLM schedulers to
+by initializing a ``RunSettings`` object that are then given to a job upon initialization.
+`Launchers` work directly with WLM schedulers to
 launch, query, monitor and stop applications. For the local `launcher`, SmartSim supports
 a base ``RunSettings`` object. For the WLM `launchers`, SmartSim supports a variety of
 ``RunSettings`` child classes.
@@ -63,44 +64,24 @@ which can be used to run executables as well as run executables
 with arbitrary launch binaries like `mpiexec`. The local launcher
 is the default launcher for all ``Experiment`` instances.
 
-Initialize
-----------
-There are two ways to initialize a ``RunSettings`` instance:
+First specify the `launcher` argument as `"local"` when initializing the ``Experiment``:
 
-Case 1 : Setting the `launcher` argument during ``Experiment`` creation.
-    When initializing an ``Experiment`` object, specify the `launcher` argument to `"local"`:
+.. code-block:: python
 
-    .. code-block:: python
+      exp = Experiment("name-of-experiment", launcher="local")
 
-      exp = Experiment("name-of-experiment", launcher="local")  # local launcher
+Next, initialize the ``RunSettings`` base object for a job that uses Mpiexec:
 
-    Now that the launcher is set to local, when calling ``Experiment.create_run_settings()``,
-    the ``RunSettings`` object will be returned:
+.. code-block:: python
 
-    .. code-block:: python
-
-      settings = exp.create_run_settings()  # local launcher
-
-Case 2 : Specify `local` to `run_command` during ``RunSettings`` object creation.
-    Adversely, you may specify to SmartSim a run command when initializing a run settings object:
-
-    .. code-block:: python
-
-      exp = Experiment("name-of-experiment", launcher="local")  # local launcher
-
-    Pass in string `"mpiexec"` to `run_command` to tell SmartSim to run executable
-    with the arbitrary launch binary mpiexec:
-    .. code-block:: python
-
-      settings = exp.create_run_settings(run_command="mpirun")  # local launcher
-
-    The ``MpiexecSetting`` child class will be returned.
+      settings = exp.create_run_settings(run_command="mpiexec")
 
 ===
 HPC
 ===
-For configuring an entity to launch on a WLM system, SmartSim offers ``RunSettings`` child classes
-as follows:
+To configure an entity for launch on an HPC, SmartSim offers ``RunSettings`` child classes.
+If an allocation is specified, the instance receiving these run parameters will launch on that allocation.
+Each WLM `launcher` supports different ``RunSettings`` child classes as shown below:
 
 1. The Slurm `launcher` supports four types of ``RunSettings``:
    - ``SrunSettings``
@@ -122,35 +103,14 @@ as follows:
    - ``MpirunSettings``
    - ``MpiexecSettings``
 
-Each `launcher` supports different ``RunSettings`` child
-classes as shown below:
+For example, initialize run parameters for a slurm job.
 
-Initialize run parameters for a slurm job with srun
-SrunSettings should only be used on Slurm based systems.
-If an allocation is specified, the instance receiving these run parameters will launch on that allocation.
-
-Case 1 : To use the an HPC launcher such as `Slurm`, specify at Experiment initialization:
-
-    More specifically, specify through the `launcher` argument:
-
-    .. code-block:: python
+.. code-block:: python
 
       exp = Experiment("name-of-experiment", launcher="slurm")  # slurm launcher
 
-    ``SrunSettings`` will be returned
+.. code-block:: python
 
-    .. code-block:: python
+      settings = exp.create_run_settings(run_command="srun")  # local launcher
 
-      settings = exp.create_run_settings()
-
-Case 2 : To use the `run_command` variable, specify at RunSettings initializations
-
-    .. code-block:: python
-
-      exp = Experiment("name-of-experiment", launcher="slurm")  # local launcher
-
-    .. code-block:: python
-
-      settings = exp.create_run_settings(run_command="mpiexec")  # local launcher
-
-    The above will return a ``MpiexecSettings`` object.
+SrunSettings should only be used on Slurm based systems.
