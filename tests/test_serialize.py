@@ -26,11 +26,14 @@
 
 import pytest
 
+import logging
 from pathlib import Path
 import json
 
 from smartsim import Experiment
+from smartsim.database.orchestrator import Orchestrator
 from smartsim._core.utils import serialize
+from smartsim._core._cli import utils
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 import smartsim._core.config.config
 
@@ -138,3 +141,35 @@ def test_started_entities_are_serialized(fileutils):
             assert len(manifest["runs"][1]["ensemble"][0]["models"]) == 3
     finally:
         exp.stop(hello_world_model, spam_eggs_model, hello_ensemble)
+
+
+def test_serialzed_database_does_not_break_if_using_a_non_standard_install(
+    monkeypatch
+):
+    monkeypatch.setattr(utils, "get_db_path", lambda: None)
+    db = Orchestrator()
+    dict_ = serialize._dictify_db(db, [])
+    assert dict_["type"] == "Unknown"
+
+
+def test_dictify_run_settings_warns_when_attepting_to_dictify_mpmd(
+    monkeypatch, caplog, fileutils
+):
+    # TODO: Eventually this test should be removed and we should be able to
+    #       handle MPMD run settings as part of the output dict
+    exp_name = "test-exp"
+    test_dir = Path(fileutils.make_test_dir()) / exp_name
+    test_dir.mkdir(parents=True)
+    exp = Experiment(exp_name, exp_path=str(test_dir), launcher="local")
+
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+
+    # Make rs "MPMD"
+    monkeypatch.setattr(rs1, "mpmd", [rs2], raising=False)
+    # Make work with colored logs
+    monkeypatch.setattr(serialize, "_LOGGER", logging.getLogger())
+    serialize._dictify_run_settings(rs1)
+    rec ,= caplog.records
+    assert rec.levelno == logging.WARNING
+    assert "MPMD run settings" in rec.msg
