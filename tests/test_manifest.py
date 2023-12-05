@@ -26,6 +26,7 @@
 
 
 from copy import deepcopy
+import os.path
 
 import pytest
 
@@ -146,3 +147,22 @@ def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
     monkeypatch.setattr(ensemble, "entities", [])
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, [])
+
+
+def test_lmb_and_launched_manifest_have_same_paths_for_launched_metadata():
+    exp_path = "/path/to/some/exp"
+    lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher")
+    manifest = lmb.finalize()
+    assert lmb.exp_telemetry_subdirectory == manifest.metadata.exp_telemetry_subdirectory
+    assert lmb.run_telemetry_subdirectory == manifest.metadata.run_telemetry_subdirectory
+    assert os.path.commonprefix([
+        manifest.metadata.run_telemetry_subdirectory,
+        manifest.metadata.exp_telemetry_subdirectory,
+        manifest.metadata.manifest_file_path,
+        exp_path,
+    ]) == exp_path
+    assert os.path.commonprefix([
+        manifest.metadata.run_telemetry_subdirectory,
+        manifest.metadata.exp_telemetry_subdirectory,
+        manifest.metadata.manifest_file_path,
+    ]) == str(manifest.metadata.exp_telemetry_subdirectory)
