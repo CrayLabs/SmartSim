@@ -130,7 +130,8 @@ class Controller:
         )
 
         # launch a telemetry monitor to track job progress
-        self.start_telemetry_monitor(exp_path)
+        if CONFIG.telemetry_enabled:
+            self.start_telemetry_monitor(exp_path)
 
         # block until all non-database jobs are complete
         if block:
@@ -814,9 +815,6 @@ class Controller:
 
     def start_telemetry_monitor(self, exp_dir: str) -> None:
         logger.debug("Starting telemetry monitor process")
-        if not CONFIG.telemetry_enabled:
-            return
-
         if (
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None

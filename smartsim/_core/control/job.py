@@ -39,8 +39,9 @@ class _JobKey():
 
 
 class JobEntity:
-    """Minimum API required for a job processed in the JobManager with support for
-    telemetry monitoring"""
+    """API required for a job processed in the JobManager with support for
+    telemetry monitoring
+    """
 
     def __init__(self) -> None:
         self.name: str = ""

@@ -1,5 +1,6 @@
 import argparse
 import importlib.metadata
+import os
 import pathlib
 import typing as t
 
@@ -68,7 +69,7 @@ def execute(
         ),
         end="\n\n",
     )
-    return 0
+    return os.EX_OK
 
 
 def _fmt_installed_db(db_path: t.Optional[pathlib.Path]) -> str:

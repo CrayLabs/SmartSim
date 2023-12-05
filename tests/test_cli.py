@@ -27,6 +27,7 @@
 import argparse
 from contextlib import contextmanager
 import logging
+import os
 import pathlib
 import typing as t
 
@@ -278,7 +279,7 @@ def test_cli_default_cli(capsys):
     # show that `smart dbcli` calls the build parser and build execute function
     assert "usage: smart [-h] <command>" in captured.out
     assert "Available commands" in captured.out
-    assert ret_val == 2
+    assert ret_val == os.EX_USAGE
 
     # execute with `build` argument, expect build-specific help text
     with pytest.raises(SystemExit) as e:
@@ -290,7 +291,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart build [-h]" in captured.out
     assert "Build SmartSim dependencies" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 2
+    assert ret_val == os.EX_USAGE
 
     # execute with `clean` argument, expect clean-specific help text
     with pytest.raises(SystemExit) as e:
@@ -303,7 +304,7 @@ def test_cli_default_cli(capsys):
     assert "Remove previous ML runtime installation" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
     assert "--clobber" in captured.out
-    assert ret_val == 2
+    assert ret_val == os.EX_USAGE
 
     # execute with `dbcli` argument, expect dbcli-specific help text
     with pytest.raises(SystemExit) as e:
@@ -315,7 +316,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart dbcli [-h]" in captured.out
     assert "Print the path to the redis-cli binary" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 2
+    assert ret_val == os.EX_USAGE
 
     # execute with `site` argument, expect site-specific help text
     with pytest.raises(SystemExit) as e:
@@ -327,7 +328,7 @@ def test_cli_default_cli(capsys):
     assert "usage: smart site [-h]" in captured.out
     assert "Print the installation site of SmartSim" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
-    assert ret_val == 2
+    assert ret_val == os.EX_USAGE
 
     # execute with `clobber` argument, expect clobber-specific help text
     with pytest.raises(SystemExit) as e:
@@ -340,7 +341,7 @@ def test_cli_default_cli(capsys):
     assert "Remove all previous dependency installations" in captured.out
     assert "optional arguments:" in captured.out or "options:" in captured.out
     # assert "--clobber" not in captured.out
-    assert ret_val == 2
+    assert ret_val == os.EX_USAGE
 
 
 @pytest.mark.skipif(not test_dash_plugin, reason="plugin not found")
@@ -391,7 +392,7 @@ def test_cli_plugin_invalid(capsys: pytest.CaptureFixture, monkeypatch: pytest.M
 
         assert plugin_module in captured.out
         assert "not found" in captured.out
-        assert rc == 1
+        assert rc == os.EX_CONFIG
 
 @pytest.mark.parametrize(
     "command,mock_location,exp_output",
@@ -763,11 +764,11 @@ def _mock_temp_dir(*a, **kw):
 @pytest.mark.parametrize(
     "mock_verify_fn, expected_stdout, expected_retval",
     [
-        pytest.param(_good_build, 'LGTM', 0, id="Configured Correctly"),
+        pytest.param(_good_build, 'LGTM', os.EX_OK, id="Configured Correctly"),
         pytest.param(
             _bad_build,
             "SmartSim failed to run a simple experiment", 
-            2, 
+            os.EX_SOFTWARE,
             id="Configured Incorrectly",
         )
     ],

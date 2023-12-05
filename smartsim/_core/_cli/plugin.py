@@ -1,5 +1,6 @@
 import argparse
 import importlib
+import os
 import sys
 import subprocess as sp
 import typing as t
@@ -21,7 +22,7 @@ def dynamic_execute(
                 raise AttributeError()
         except (ModuleNotFoundError, AttributeError):
             print(not_found)
-            return 1
+            return os.EX_CONFIG
 
         combined_cmd = [sys.executable, "-m", cmd] + unparsed_args
 
@@ -44,7 +45,12 @@ def dynamic_execute(
 def dashboard() -> MenuItemConfig:
     return MenuItemConfig(
         "dashboard",
-        "Start the SmartSim dashboard",
+        (
+            "Start the SmartSim dashboard to monitor experiment output from a "
+            "graphical user interface. This requires that the SmartSim Dashboard "
+            "Package be installed. For more infromation please visit "
+            "https://github.com/CrayLabs/SmartDashboard"
+        ),
         dynamic_execute("smartdashboard.Experiment_Overview", "Dashboard"),
         is_plugin=True,
     )

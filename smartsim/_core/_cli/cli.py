@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import os
 import typing as t
 
 from smartsim._core._cli.build import configure_parser as build_parser
@@ -66,7 +67,7 @@ class SmartCli:
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:
             self.parser.print_help()
-            return 2
+            return os.EX_USAGE
 
         app_args = cli_args[1:]  # exclude the path to executable
         subcommand = cli_args[1]  # first positional arg is the subcommand
@@ -74,7 +75,7 @@ class SmartCli:
         menu_item = self.menu.get(subcommand, None)
         if not menu_item:
             self.parser.print_help()
-            return 2
+            return os.EX_USAGE
 
         args = argparse.Namespace()
         unparsed_args = []

@@ -31,6 +31,7 @@ import time
 import typing as t
 from pathlib import Path
 
+import smartsim.log
 import smartsim._core._cli.utils as _utils
 from smartsim._core.config import CONFIG
 
@@ -48,6 +49,8 @@ TStepLaunchMetaData = t.Tuple[
 ]
 TELMON_SUBDIR: t.Final[str] = ".smartsim/telemetry"
 MANIFEST_FILENAME: t.Final[str] = "manifest.json"
+
+_LOGGER = smartsim.log.get_logger(__name__)
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
@@ -179,6 +182,12 @@ def _dictify_ensemble(
 
 
 def _dictify_run_settings(run_settings: RunSettings) -> t.Dict[str, t.Any]:
+    # TODO: remove this downcast
+    if hasattr(run_settings, "mpmd") and run_settings.mpmd:
+        _LOGGER.warning(
+            "SmartSim currently cannot properly serialize all information in "
+            "MPMD run settings"
+        )
     return {
         "exe": run_settings.exe,
         # TODO: We should try to move this back

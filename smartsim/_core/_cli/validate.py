@@ -105,8 +105,8 @@ def execute(
             f"Experiment failed due to the following exception:\n{e}\n\n"
             f"Output files are available at `{temp_dir}`", exc_info=True
         )
-        return 2
-    return 0
+        return os.EX_SOFTWARE
+    return os.EX_OK
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
@@ -141,7 +141,7 @@ def test_install(
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
     port = _find_free_port() if port is None else port
-    with _disable_telmon(), _make_managed_local_orc(exp, port) as client:
+    with _disable_telemetry_monitor(), _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
@@ -172,7 +172,7 @@ def _make_managed_local_orc(
 
 
 @contextmanager
-def _disable_telmon() -> t.Generator[None, None, None]:
+def _disable_telemetry_monitor() -> t.Generator[None, None, None]:
     """Ensure the telemetry monitor is disabled during a test and the environment
     is left in correct state after completion"""
     tm_key = "SMARTSIM_FLAG_TELEMETRY"

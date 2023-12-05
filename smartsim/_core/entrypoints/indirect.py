@@ -53,7 +53,12 @@ def main(
     cwd: str,
     status_dir: str,
 ) -> int:
-    """Execute the step command and emit tracking events"""
+    """The main function of the entrypoint. This function takes an encoded step
+    command and runs it in a subprocess. In the background, this entrypoint
+    will then monitor the subprocess and write out status events such as when
+    the subprocess has started or stopped and write these events to a status
+    directory.
+    """
     global STEP_PID  # pylint: disable=global-statement
     proxy_pid = os.getpid()
 

@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import importlib.util
+import os
 import shutil
 import subprocess as sp
 import sys
@@ -110,7 +111,7 @@ def clean(core_path: Path, _all: bool = False) -> int:
         if removed:
             logger.info("Successfully removed SmartSim database installation")
 
-    return 0
+    return os.EX_OK
 
 
 def get_db_path() -> t.Optional[Path]:

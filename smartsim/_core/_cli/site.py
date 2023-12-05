@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import os
 import typing as t
 
 from smartsim._core._cli.utils import get_install_path
@@ -32,4 +33,4 @@ from smartsim._core._cli.utils import get_install_path
 
 def execute(_args: argparse.Namespace, _unparsed_args: t.List[str], /) -> int:
     print(get_install_path())
-    return 0
+    return os.EX_OK

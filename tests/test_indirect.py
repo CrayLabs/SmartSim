@@ -76,7 +76,7 @@ def test_parser(capsys, cmd, missing):
 
 
 def test_cleanup(capsys, monkeypatch):
-    """Ensure cleanup attempts termination of correcct process"""
+    """Ensure cleanup attempts termination of correct process"""
     mock_pid = 123
     create_msg = "creating: {0}"
     term_msg = "terminating: {0}"

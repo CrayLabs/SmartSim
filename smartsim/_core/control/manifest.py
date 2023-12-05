@@ -234,11 +234,11 @@ class _LaunchedManifestMetadata(t.NamedTuple):
 
     @property
     def exp_telemetry_subdirectory(self) -> pathlib.Path:
-        return _fmt_exp_telemetry_path(self.exp_path)
+        return _format_exp_telemetry_path(self.exp_path)
 
     @property
     def run_telemetry_subdirectory(self) -> pathlib.Path:
-        return _fmt_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
+        return _format_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
 
     @property
     def manifest_file_path(self) -> pathlib.Path:
@@ -301,11 +301,11 @@ class LaunchedManifestBuilder(t.Generic[_T]):
 
     @property
     def exp_telemetry_subdirectory(self) -> pathlib.Path:
-        return _fmt_exp_telemetry_path(self.exp_path)
+        return _format_exp_telemetry_path(self.exp_path)
 
     @property
     def run_telemetry_subdirectory(self) -> pathlib.Path:
-        return _fmt_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
+        return _format_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
 
     def add_model(self, model: Model, data: _T) -> None:
         self._models.append((model, data))
@@ -340,13 +340,13 @@ class LaunchedManifestBuilder(t.Generic[_T]):
         )
 
 
-def _fmt_exp_telemetry_path(
+def _format_exp_telemetry_path(
     exp_path: t.Union[str, "os.PathLike[str]"]
 ) -> pathlib.Path:
     return pathlib.Path(exp_path, _serialize.TELMON_SUBDIR)
 
 
-def _fmt_run_telemetry_path(
+def _format_run_telemetry_path(
     exp_path: t.Union[str, "os.PathLike[str]"], exp_name: str, run_id: str
 ) -> pathlib.Path:
-    return _fmt_exp_telemetry_path(exp_path) / f"{exp_name}/{run_id}"
+    return _format_exp_telemetry_path(exp_path) / f"{exp_name}/{run_id}"

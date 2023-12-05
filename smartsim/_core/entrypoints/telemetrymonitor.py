@@ -69,7 +69,7 @@ Telemetry Monitor entrypoint
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
-
+_MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
 
 @dataclass
 class Run:
@@ -200,7 +200,7 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
     manifest_dict: t.Optional[t.Dict[str, t.Any]] = None
     try_count = 1
 
-    while manifest_dict is None and try_count < 6:
+    while manifest_dict is None and try_count < _MAX_MANIFEST_LOAD_ATTEMPTS:
         source = pathlib.Path(file_path)
         source = source.resolve()
 
@@ -290,7 +290,7 @@ def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
         return None
 
     if step_info.status == STATUS_COMPLETED:
-        return 0
+        return os.EX_OK
 
     return 1
 
@@ -474,7 +474,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         )
 
     def on_timestep(self, timestamp: int) -> None:
-        """Called at polling frequency .to request status updates on
+        """Called at polling frequency to request status updates on
         monitored entities
 
         :param timestamp: the current timestamp for event logging
@@ -599,7 +599,7 @@ def main(
         observer.start()  # type: ignore
 
         event_loop(observer, action_handler, frequency, logger, telemetry_cooldown)
-        return 0
+        return os.EX_OK
     except Exception as ex:
         logger.error(ex)
     finally:
