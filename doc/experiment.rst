@@ -27,9 +27,8 @@ initialize within an experiment.
 =========
 Launchers
 =========
-The components of the workflow can be executed locally or via different job schedulers.
 `Launchers` provide SmartSim the ability to construct and execute complex workloads
-on HPC systems with job schedulers (workload managers) like Slurm, or PBS.
+locally or on HPC systems with job schedulers (workload managers) like Slurm, or PBS.
 
 SmartSim currently supports 6 `launchers`:
   1. ``local``: for single-node, workstation, or laptop
@@ -176,8 +175,8 @@ An ``Orchestrator`` can be created to share the compute node(s)
 and resources with a SmartSim ``Model``. In this case, the database
 is deployed on the same compute hosts as a Model instance
 defined by the user. In this deployment, the database is not connected
-together in a cluster and each shard of the database is addressed
-individually by the processes running on that compute host.
+together in a cluster and the database is addressed
+by the process running on that compute host.
 Essentially, this means that you have N independent databases,
 where N is the number of compute nodes assigned to the application.
 The colocated deployment strategy for the Orchestrator
@@ -226,13 +225,14 @@ and co-located ``Orchestrator(s)`` are available in sections... (update this whe
 
 Model
 -----
-``Model(s)`` represent any computational kernel, including applications,
+``Model(s)`` represent a simulation model or any
+computational kernel, including applications,
 scripts, or generally, a program.
 They can interact with other
 SmartSim entities via data transmitted to/from SmartSim Orchestrators
 using a SmartRedis client.
-Models in PT, TF, and ONNX (scikit-learn, spark, and others) can be
-written in Python and called from Fortran or any other client languages.
+Scripts in PT, TF, and ONNX (scikit-learn, spark, and others) can be
+written in TorchScript and called from Fortran or any other client languages.
 The Python code executes in a C runtime without the Python interpreter.
 
 Create a Model
@@ -257,11 +257,17 @@ If each of multiple ensemble members attempt to use the
 same code to access their respective models in the Orchestrator,
 the keys by which they do this will overlap and they can end up
 accessing each others’ data inadvertently. To prevent
-this situation, the SmartSim Entity object supports
+this situation, the SmartSim ``Ensemble`` object supports
 key prefixing, which automatically prepends the name
 of the model to the keys by which it is accessed. With
 this enabled, key overlapping is no longer an issue and
 ensemble members can use the same code.
+
+For example, assume you have two models in the Ensemble object,
+named `bar_0` and `bar_1`. In the application code you'll
+have code like this ``Client.put_tensor("foo")``. With
+ensemble key prefixing turned on, the actual key that
+will end up in the database is `bar_0_foo` and `bar_1_foo`.
 
 Create a Ensemble
 ^^^^^^^^^^^^^^^^^
