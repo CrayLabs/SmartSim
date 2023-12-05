@@ -119,14 +119,12 @@ class LSFLauncher(WLMLauncher):
             # mpirun and local launch don't direct output for us
             out, err = step.get_output_files()
 
-            passed_env = step.env
-
             # pylint: disable-next=consider-using-with
             output = open(out, "w+", encoding="utf-8")
             # pylint: disable-next=consider-using-with
             error = open(err, "w+", encoding="utf-8")
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, passed_env, out=output.fileno(), err=error.fileno()
+                cmd_list, step.cwd, step.env, out=output.fileno(), err=error.fileno()
             )
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)

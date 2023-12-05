@@ -112,10 +112,8 @@ class LocalLauncher(Launcher):
         # pylint: disable-next=consider-using-with
         error = open(err, "w+", encoding="utf-8")
 
-        passed_env = step.env
-
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
+            cmd, step.cwd, env=step.env, out=output.fileno(), err=error.fileno()
         )
 
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
