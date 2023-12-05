@@ -1,5 +1,5 @@
 import argparse
-import importlib
+import importlib.util
 import os
 import sys
 import subprocess as sp
@@ -21,7 +21,7 @@ def dynamic_execute(
         try:
             spec = importlib.util.find_spec(cmd)
             if spec is None:
-                raise AttributeError()
+                raise AttributeError
         except (ModuleNotFoundError, AttributeError):
             _LOGGER.error(f"{cmd} plugin not found. Please ensure it is installed")
             return os.EX_CONFIG

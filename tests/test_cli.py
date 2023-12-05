@@ -53,11 +53,12 @@ pytestmark = pytest.mark.group_a
 
 _TEST_LOGGER = logging.getLogger(__name__)
 
-test_dash_plugin = True
 try:
     import smartdashboard
 except:
     test_dash_plugin = False
+else:
+    test_dash_plugin = True
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
@@ -347,6 +348,8 @@ def test_cli_default_cli(capsys):
 @pytest.mark.skipif(not test_dash_plugin, reason="plugin not found")
 def test_cli_plugin_dashboard(capsys):
     """Ensure expected dashboard CLI plugin commands are supported"""
+    # FIXME: This test is failing!!
+
     smart_cli = cli.default_cli()
     
     captured = capsys.readouterr()  # throw away existing output
@@ -364,8 +367,12 @@ def test_cli_plugin_dashboard(capsys):
     assert rc == 0
 
 
-def test_cli_plugin_invalid(capsys: pytest.CaptureFixture, monkeypatch: pytest.MonkeyPatch):
+def test_cli_plugin_invalid(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
     """Ensure unexpected CLI plugins are reported"""
+    import smartsim._core._cli.cli
+    import smartsim._core._cli.plugin
     plugin_module = "notinstalled.Experiment_Overview"
     bad_plugins = [
         lambda: MenuItemConfig(
@@ -375,24 +382,24 @@ def test_cli_plugin_invalid(capsys: pytest.CaptureFixture, monkeypatch: pytest.M
             is_plugin=True,
         )
     ]
+    monkeypatch.setattr(smartsim._core._cli.cli, "plugins", bad_plugins)
+    # Coloredlogs doesn't play nice with caplog
+    monkeypatch.setattr(
+        smartsim._core._cli.plugin,
+        "_LOGGER",
+        _TEST_LOGGER,
+    )
 
-    with monkeypatch.context() as ctx:
-        ctx.setattr("smartsim._core._cli.cli.plugins", bad_plugins)
+    smart_cli = cli.default_cli()
 
-        smart_cli = cli.default_cli()
-        
-        captured = capsys.readouterr()  # throw away existing output
+    # execute with `dashboard` argument, expect failure to find dashboard plugin
+    build_args = ["smart", "dashboard", "-h"]
 
-        # execute with `dashboard` argument, expect failure to find dashboard plugin
-        build_args = ["smart", "dashboard", "-h"]
+    rc = smart_cli.execute(build_args)
 
-        rc = smart_cli.execute(build_args)
-
-        captured = capsys.readouterr() # capture new output
-
-        assert plugin_module in captured.out
-        assert "not found" in captured.out
-        assert rc == os.EX_CONFIG
+    assert plugin_module in caplog.text
+    assert "not found" in caplog.text
+    assert rc == os.EX_CONFIG
 
 @pytest.mark.parametrize(
     "command,mock_location,exp_output",

@@ -473,7 +473,7 @@ def test_telemetry_single_model(fileutils, wlmutils):
     app_settings.set_nodes(1)
     app_settings.set_tasks_per_node(1)
 
-    #  # Create the SmartSim Model
+    # Create the SmartSim Model
     smartsim_model = exp.create_model("perroquet", app_settings)
     exp.generate(smartsim_model)
     exp.start(smartsim_model, block=True)
@@ -509,7 +509,7 @@ def test_telemetry_single_model_nonblocking(fileutils, wlmutils, monkeypatch):
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
-        #  # Create the SmartSim Model
+        # Create the SmartSim Model
         smartsim_model = exp.create_model("perroquet", app_settings)
         exp.generate(smartsim_model)
         exp.start(smartsim_model)
@@ -549,7 +549,7 @@ def test_telemetry_serial_models(fileutils, wlmutils, monkeypatch):
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
-        #  # Create the SmartSim Model
+        # Create the SmartSim Model
         smartsim_models = [
             exp.create_model(f"perroquet_{i}", app_settings) for i in range(5)
         ]
@@ -591,7 +591,7 @@ def test_telemetry_serial_models_nonblocking(fileutils, wlmutils, monkeypatch):
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
-        #  # Create the SmartSim Model
+        # Create the SmartSim Model
         smartsim_models = [
             exp.create_model(f"perroquet_{i}", app_settings) for i in range(5)
         ]
