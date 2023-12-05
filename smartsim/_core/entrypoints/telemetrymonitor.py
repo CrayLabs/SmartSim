@@ -62,9 +62,7 @@ from smartsim.error.errors import SmartSimError
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
 
-"""
-Telemetry Monitor entrypoint
-"""
+"""Telemetry Monitor entrypoint"""
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
@@ -93,7 +91,8 @@ class Run:
 @dataclass
 class RuntimeManifest:
     """The runtime manifest holds meta information about the experiment entities created
-    at runtime to satisfy the experiment requirements."""
+    at runtime to satisfy the experiment requirements.
+    """
 
     name: str
     path: pathlib.Path
@@ -248,9 +247,7 @@ def track_event(
     detail: str = "",
     return_code: t.Optional[int] = None,
 ) -> None:
-    """
-    Persist a tracking event for an entity
-    """
+    """Persist a tracking event for an entity"""
     tgt_path = status_dir / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -285,7 +282,8 @@ def track_event(
 
 def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
     """Create a faux return code for a task run by the WLM. Must not be
-    called with non-terminal statuses or results may be confusing"""
+    called with non-terminal statuses or results may be confusing
+    """
     if step_info.status not in TERMINAL_STATUSES:
         return None
 
@@ -304,7 +302,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     may contain multiple experiment executions in a `runs` collection.
 
     It also contains a long-polling loop that checks experiment entities for updates
-    at each timestep."""
+    at each timestep.
+    """
 
     def __init__(
         self,
@@ -360,7 +359,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Read the runtime manifest for the experiment and track new entities
 
         :param manifest_path: The full path to the manifest file
-        :type manifest_path: str"""
+        :type manifest_path: str
+        """
         try:
             manifest = load_manifest(manifest_path)
             if not manifest:
@@ -415,7 +415,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Event handler for when a file or directory is modified.
 
         :param event: Event representing file/directory modification.
-        :type event: FileModifiedEvent"""
+        :type event: FileModifiedEvent
+        """
         super().on_modified(event)  # type: ignore
         self._logger.info(f"processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
@@ -424,7 +425,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Event handler for when a file or directory is created.
 
         :param event: Event representing file/directory creation.
-        :type event: FileCreatedEvent"""
+        :type event: FileCreatedEvent
+        """
         super().on_created(event)  # type: ignore
         self._logger.info(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
@@ -480,7 +482,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param timestamp: the current timestamp for event logging
         :type timestamp: int
         :param experiment_dir: the experiement directory to monitor for changes
-        :type experiment_dir: pathlib.Path"""
+        :type experiment_dir: pathlib.Path
+        """
         entity_map = self._tracked_jobs
 
         if not self._launcher:
@@ -532,7 +535,8 @@ def event_loop(
     :param experiment_dir: the experiement directory to monitor for changes
     :type experiment_dir: pathlib.Path
     :param logger: a preconfigured Logger instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
     elapsed: int = 0
     last_ts: int = get_ts()
 

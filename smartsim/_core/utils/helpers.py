@@ -285,7 +285,8 @@ def get_ts() -> int:
 
 def encode_cmd(cmd: t.List[str]) -> str:
     """Transform a standard command list into an encoded string safe for providing as an
-    argument to a proxy entrypoint"""
+    argument to a proxy entrypoint
+    """
     if not cmd:
         raise ValueError("Invalid cmd supplied")
 

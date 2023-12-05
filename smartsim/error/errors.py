@@ -39,12 +39,14 @@ class SSUnsupportedError(Exception):
 
 class EntityExistsError(SmartSimError):
     """Raised when a user tries to create an entity or files/directories for
-    an entity and either the entity/files/directories already exist"""
+    an entity and either the entity/files/directories already exist
+    """
 
 
 class UserStrategyError(SmartSimError):
     """Raised when there is an error with model creation inside an ensemble
-    that is from a user provided permutation strategy"""
+    that is from a user provided permutation strategy
+    """
 
     def __init__(self, perm_strat: str) -> None:
         message = self.create_message(perm_strat)
@@ -80,16 +82,15 @@ class SSReservedKeywordError(SmartSimError):
 
 class SSDBIDConflictError(SmartSimError):
     """Raised in the event that a database identifier
-    is not unique when multiple databases are created"""
+    is not unique when multiple databases are created
+    """
 
 
 # Internal Exceptions
 
 
 class SSInternalError(Exception):
-    """
-    SSInternalError is raised when an internal error is encountered.
-    """
+    """SSInternalError is raised when an internal error is encountered"""
 
 
 class SSConfigError(SSInternalError):
@@ -106,7 +107,8 @@ class AllocationError(LauncherError):
 
 class ShellError(LauncherError):
     """Raised when error arises from function within launcher.shell
-    Closely related to error from subprocess(Popen) commands"""
+    Closely related to error from subprocess(Popen) commands
+    """
 
     def __init__(
         self,

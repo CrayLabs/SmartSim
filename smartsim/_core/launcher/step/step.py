@@ -77,7 +77,8 @@ class Step:
     ) -> str:
         """Get the name for a file/script created by the step class
 
-        Used for Batch scripts, mpmd scripts, etc"""
+        Used for Batch scripts, mpmd scripts, etc.
+        """
         if script_name:
             script_name = script_name if "." in script_name else script_name + ending
             return osp.join(self.cwd, script_name)

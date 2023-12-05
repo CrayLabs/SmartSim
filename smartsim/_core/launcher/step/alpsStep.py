@@ -56,7 +56,8 @@ class AprunStep(Step):
 
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
-        of attached RunSettings"""
+        of attached RunSettings
+        """
         return self.run_settings.mpmd
 
     @proxyable_launch_cmd

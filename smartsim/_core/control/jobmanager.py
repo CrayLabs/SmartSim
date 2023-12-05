@@ -309,7 +309,8 @@ class JobManager:
         for corresponding database identifiers
 
         :return: dictionary of host ip addresses
-        :rtype: Dict[str, list]"""
+        :rtype: Dict[str, list]
+        """
 
         address_dict = {}
         for db_job in self.db_jobs.values():

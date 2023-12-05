@@ -174,7 +174,8 @@ def _make_managed_local_orc(
 @contextmanager
 def _disable_telemetry_monitor() -> t.Generator[None, None, None]:
     """Ensure the telemetry monitor is disabled during a test and the environment
-    is left in correct state after completion"""
+    is left in correct state after completion
+    """
     tm_key = "SMARTSIM_FLAG_TELEMETRY"
     orig = os.environ.get(tm_key, None)
     if orig is not None:
