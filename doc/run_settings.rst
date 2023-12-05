@@ -103,14 +103,19 @@ Each WLM `launcher` supports different ``RunSettings`` child classes as shown be
    - ``MpirunSettings``
    - ``MpiexecSettings``
 
-For example, initialize run parameters for a slurm job.
+For example, initialize run parameters for a slurm job. Begin by specifying
+`launcher="slurm"` when initializing the Experiment:
 
 .. code-block:: python
 
       exp = Experiment("name-of-experiment", launcher="slurm")  # slurm launcher
 
+Next, specify the slurm run command to `run_command` when initializing the
+run settings object using ``Experiment.create_run_settings()``:
+
 .. code-block:: python
 
       settings = exp.create_run_settings(run_command="srun")  # local launcher
 
-SrunSettings should only be used on Slurm based systems.
+The above code will return a ``SrunSettings`` object to pass to a SmartSim
+entity.
