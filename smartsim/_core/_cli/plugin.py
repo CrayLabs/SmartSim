@@ -5,8 +5,11 @@ import sys
 import subprocess as sp
 import typing as t
 
-from smartsim._core._cli.utils import MenuItemConfig
+import smartsim.log
+from smartsim._core._cli.utils import MenuItemConfig, SMART_LOGGER_FORMAT
 from smartsim.error.errors import SmartSimCLIActionCancelled
+
+_LOGGER = smartsim.log.get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 def dynamic_execute(
@@ -15,29 +18,22 @@ def dynamic_execute(
     def process_execute(
         _args: argparse.Namespace, unparsed_args: t.List[str], /
     ) -> int:
-        not_found = f"{cmd} plugin not found. Please ensure it is installed"
         try:
             spec = importlib.util.find_spec(cmd)
             if spec is None:
                 raise AttributeError()
         except (ModuleNotFoundError, AttributeError):
-            print(not_found)
+            _LOGGER.error(f"{cmd} plugin not found. Please ensure it is installed")
             return os.EX_CONFIG
 
         combined_cmd = [sys.executable, "-m", cmd] + unparsed_args
 
         try:
-            with sp.Popen(combined_cmd, stdout=sp.PIPE, stderr=sp.PIPE) as process:
-                stdout, _ = process.communicate()
-                while process.returncode is None:
-                    stdout, _ = process.communicate()
-
-                plugin_stdout = stdout.decode("utf-8")
-                print(plugin_stdout)
-                return process.returncode
+            completed_proc = sp.run(combined_cmd)
         except KeyboardInterrupt as ex:
             msg = f"{plugin_name} terminated by user"
             raise SmartSimCLIActionCancelled(msg) from ex
+        return completed_proc.returncode
 
     return process_execute
 
