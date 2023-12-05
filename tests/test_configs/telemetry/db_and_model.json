@@ -5,7 +5,7 @@
     },
     "experiment": {
         "name": "my-exp",
-        "path": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp",
+        "path": "/tmp/my-exp",
         "launcher": "Slurm"
     },
     "runs": [
@@ -27,10 +27,10 @@
                             "port": 6780,
                             "cluster": false,
                             "conf_file": null,
-                            "out_file": "/lus/cls01029/mcbridch/ss/orchestrator_0.out",
-                            "err_file": "/lus/cls01029/mcbridch/ss/orchestrator_0.err",
+                            "out_file": "/path/to/some/file.out",
+                            "err_file": "/path/to/some/file.err",
                             "telemetry_metadata": {
-                                "status_dir": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp/.smartsim/telemetry/telemetry_db_and_model/2ca19ad/database/orchestrator/orchestrator_0",
+                                "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/2ca19ad/database/orchestrator/orchestrator_0",
                                 "step_id": "4139111.27",
                                 "task_id": "1452",
                                 "managed": true
@@ -47,13 +47,13 @@
             "model": [
                 {
                     "name": "perroquet",
-                    "path": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp/perroquet",
+                    "path": "/tmp/my-exp/perroquet",
                     "exe_args": [
-                        "/lus/cls01029/mcbridch/ss/tests/test_configs/echo.py"
+                        "/path/to/my/script.py"
                     ],
                     "run_settings": {
                         "exe": [
-                            "/home/users/mcbridch/anaconda3/envs/ss/bin/python"
+                            "/path/to/my/python"
                         ],
                         "run_command": "/opt/slurm/20.11.5/bin/srun",
                         "run_args": {
@@ -70,13 +70,13 @@
                     },
                     "colocated_db": {},
                     "telemetry_metadata": {
-                        "status_dir": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp/.smartsim/telemetry/telemetry_db_and_model/4b5507a/model/perroquet",
+                        "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/4b5507a/model/perroquet",
                         "step_id": "4139111.28",
                         "task_id": "2929",
                         "managed": true
                     },
-                    "out_file": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp/perroquet/perroquet.out",
-                    "err_file": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp/perroquet/perroquet.err"
+                    "out_file": "/tmp/my-exp/perroquet/perroquet.out",
+                    "err_file": "/tmp/my-exp/perroquet/perroquet.err"
                 }
             ],
             "orchestrator": [],

@@ -1,7 +1,7 @@
 {
     "experiment": {
       "name": "my-exp",
-      "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp",
+      "path": "/path/to/my-exp",
       "launcher": "Slurm"
     },
     "runs": [
@@ -11,7 +11,7 @@
         "model": [
           {
             "name": "my-model",
-            "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-model",
+            "path": "/path/to/my-exp/my-model",
             "exe_args": [
               "hello",
               "world"
@@ -59,13 +59,13 @@
               ]
             },
             "telemetry_metadata": {
-              "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d999ad89-020f-4e6a-b834-dbd88658ce84/model/my-model",
+              "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d999ad89-020f-4e6a-b834-dbd88658ce84/model/my-model",
               "step_id": "4121050.30",
               "task_id": "25230",
               "managed": true
             },
-            "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-model/my-model.out",
-            "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-model/my-model.err"
+            "out_file": "/path/to/my-exp/my-model/my-model.out",
+            "err_file": "/path/to/my-exp/my-model/my-model.err"
           }
         ],
         "orchestrator": [],
@@ -89,10 +89,10 @@
                 "port": 2424,
                 "cluster": true,
                 "conf_file": "nodes-orchestrator_1-2424.conf",
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.err",
+                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
                   "step_id": "4121050.31+2",
                   "task_id": "25241",
                   "managed": true
@@ -104,10 +104,10 @@
                 "port": 2424,
                 "cluster": true,
                 "conf_file": "nodes-orchestrator_2-2424.conf",
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.err",
+                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
                   "step_id": "4121050.31+2",
                   "task_id": "25241",
                   "managed": true
@@ -119,10 +119,10 @@
                 "port": 2424,
                 "cluster": true,
                 "conf_file": "nodes-orchestrator_0-2424.conf",
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.err",
+                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
                   "step_id": "4121050.31+2",
                   "task_id": "25241",
                   "managed": true
@@ -159,13 +159,13 @@
             "models": [
               {
                 "name": "my-ens_0",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_0",
+                "path": "/path/to/my-exp/my-ens/my-ens_0",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -182,29 +182,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_0",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_0",
                   "step_id": "4121050.32",
                   "task_id": "25639",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_0/my-ens_0.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_0/my-ens_0.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.err"
               },
               {
                 "name": "my-ens_1",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_1",
+                "path": "/path/to/my-exp/my-ens/my-ens_1",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -221,29 +221,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_1",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_1",
                   "step_id": "4121050.33",
                   "task_id": "25768",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_1/my-ens_1.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_1/my-ens_1.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.err"
               },
               {
                 "name": "my-ens_2",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_2",
+                "path": "/path/to/my-exp/my-ens/my-ens_2",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -260,29 +260,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_2",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_2",
                   "step_id": "4121050.34",
                   "task_id": "25817",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_2/my-ens_2.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_2/my-ens_2.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.err"
               },
               {
                 "name": "my-ens_3",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_3",
+                "path": "/path/to/my-exp/my-ens/my-ens_3",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -299,29 +299,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_3",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_3",
                   "step_id": "4121050.35",
                   "task_id": "25837",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_3/my-ens_3.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_3/my-ens_3.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.err"
               },
               {
                 "name": "my-ens_4",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_4",
+                "path": "/path/to/my-exp/my-ens/my-ens_4",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -338,29 +338,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_4",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_4",
                   "step_id": "4121050.36",
                   "task_id": "25872",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_4/my-ens_4.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_4/my-ens_4.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.err"
               },
               {
                 "name": "my-ens_5",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_5",
+                "path": "/path/to/my-exp/my-ens/my-ens_5",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -377,29 +377,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_5",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_5",
                   "step_id": "4121050.37",
                   "task_id": "25930",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_5/my-ens_5.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_5/my-ens_5.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.err"
               },
               {
                 "name": "my-ens_6",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_6",
+                "path": "/path/to/my-exp/my-ens/my-ens_6",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -416,29 +416,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_6",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_6",
                   "step_id": "4121050.38",
                   "task_id": "25945",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_6/my-ens_6.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_6/my-ens_6.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.err"
               },
               {
                 "name": "my-ens_7",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_7",
+                "path": "/path/to/my-exp/my-ens/my-ens_7",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -455,19 +455,19 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_7",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_7",
                   "step_id": "4121050.39",
                   "task_id": "25967",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_7/my-ens_7.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_7/my-ens_7.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.err"
               }
             ]
           }
@@ -479,7 +479,7 @@
         "model": [
           {
             "name": "my-model",
-            "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-model",
+            "path": "/path/to/my-exp/my-model",
             "exe_args": [
               "hello",
               "world"
@@ -527,13 +527,13 @@
               ]
             },
             "telemetry_metadata": {
-              "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/e41f8e17-c4b2-441d-adf9-707443ee2c72/model/my-model",
+              "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/e41f8e17-c4b2-441d-adf9-707443ee2c72/model/my-model",
               "step_id": "4121904.0",
               "task_id": "28277",
               "managed": true
             },
-            "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-model/my-model.out",
-            "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-model/my-model.err"
+            "out_file": "/path/to/my-exp/my-model/my-model.out",
+            "err_file": "/path/to/my-exp/my-model/my-model.err"
           }
         ],
         "orchestrator": [],
@@ -557,10 +557,10 @@
                 "port": 2424,
                 "cluster": true,
                 "conf_file": "nodes-orchestrator_0-2424.conf",
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.err",
+                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
                   "step_id": "4121904.1+2",
                   "task_id": "28289",
                   "managed": true
@@ -572,10 +572,10 @@
                 "port": 2424,
                 "cluster": true,
                 "conf_file": "nodes-orchestrator_2-2424.conf",
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.err",
+                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
                   "step_id": "4121904.1+2",
                   "task_id": "28289",
                   "managed": true
@@ -587,10 +587,10 @@
                 "port": 2424,
                 "cluster": true,
                 "conf_file": "nodes-orchestrator_1-2424.conf",
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/orchestrator/orchestrator.err",
+                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
                   "step_id": "4121904.1+2",
                   "task_id": "28289",
                   "managed": true
@@ -627,13 +627,13 @@
             "models": [
               {
                 "name": "my-ens_0",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_0",
+                "path": "/path/to/my-exp/my-ens/my-ens_0",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -650,29 +650,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_0",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_0",
                   "step_id": "4121904.2",
                   "task_id": "28333",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_0/my-ens_0.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_0/my-ens_0.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.err"
               },
               {
                 "name": "my-ens_1",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_1",
+                "path": "/path/to/my-exp/my-ens/my-ens_1",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -689,29 +689,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_1",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_1",
                   "step_id": "4121904.3",
                   "task_id": "28342",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_1/my-ens_1.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_1/my-ens_1.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.err"
               },
               {
                 "name": "my-ens_2",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_2",
+                "path": "/path/to/my-exp/my-ens/my-ens_2",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -728,29 +728,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_2",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_2",
                   "step_id": "4121904.4",
                   "task_id": "28353",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_2/my-ens_2.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_2/my-ens_2.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.err"
               },
               {
                 "name": "my-ens_3",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_3",
+                "path": "/path/to/my-exp/my-ens/my-ens_3",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -767,29 +767,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_3",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_3",
                   "step_id": "4121904.5",
                   "task_id": "28362",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_3/my-ens_3.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_3/my-ens_3.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.err"
               },
               {
                 "name": "my-ens_4",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_4",
+                "path": "/path/to/my-exp/my-ens/my-ens_4",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -806,29 +806,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_4",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_4",
                   "step_id": "4121904.6",
                   "task_id": "28371",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_4/my-ens_4.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_4/my-ens_4.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.err"
               },
               {
                 "name": "my-ens_5",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_5",
+                "path": "/path/to/my-exp/my-ens/my-ens_5",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -845,29 +845,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_5",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_5",
                   "step_id": "4121904.7",
                   "task_id": "28380",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_5/my-ens_5.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_5/my-ens_5.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.err"
               },
               {
                 "name": "my-ens_6",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_6",
+                "path": "/path/to/my-exp/my-ens/my-ens_6",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -884,29 +884,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_6",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_6",
                   "step_id": "4121904.8",
                   "task_id": "28389",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_6/my-ens_6.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_6/my-ens_6.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.err"
               },
               {
                 "name": "my-ens_7",
-                "path": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_7",
+                "path": "/path/to/my-exp/my-ens/my-ens_7",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/lus/scratch/drozt/miniconda3/envs/ss/bin/python3"
+                    "/path/to/my/python3"
                   ],
                   "run_command": "/opt/slurm/20.11.5/bin/srun",
                   "run_args": {
@@ -923,19 +923,19 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/lus/cls01029/drozt/playground/ss/dash-int/yo.py"
+                    "/path/to/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_7",
+                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_7",
                   "step_id": "4121904.9",
                   "task_id": "28398",
                   "managed": true
                 },
-                "out_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_7/my-ens_7.out",
-                "err_file": "/lus/cls01029/drozt/playground/ss/dash-int/my-exp/my-ens/my-ens_7/my-ens_7.err"
+                "out_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.out",
+                "err_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.err"
               }
             ]
           }

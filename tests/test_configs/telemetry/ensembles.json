@@ -5,7 +5,7 @@
     },
     "experiment": {
       "name": "my-exp",
-      "path": "/home/chris/code/ss/my-exp",
+      "path": "/home/someuser/code/ss/my-exp",
       "launcher": "Local"
     },
     "runs": [
@@ -35,13 +35,13 @@
             "models": [
               {
                 "name": "my-ens_0",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -55,29 +55,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_0",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_0",
                   "step_id": null,
                   "task_id": "88118",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_0.out",
-                "err_file": "/home/chris/code/ss/my-ens_0.err"
+                "out_file": "/home/someuser/code/ss/my-ens_0.out",
+                "err_file": "/home/someuser/code/ss/my-ens_0.err"
               },
               {
                 "name": "my-ens_1",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -91,29 +91,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_1",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_1",
                   "step_id": null,
                   "task_id": "88131",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_1.out",
-                "err_file": "/home/chris/code/ss/my-ens_1.err"
+                "out_file": "/home/someuser/code/ss/my-ens_1.out",
+                "err_file": "/home/someuser/code/ss/my-ens_1.err"
               },
               {
                 "name": "my-ens_2",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -127,29 +127,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_2",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_2",
                   "step_id": null,
                   "task_id": "88146",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_2.out",
-                "err_file": "/home/chris/code/ss/my-ens_2.err"
+                "out_file": "/home/someuser/code/ss/my-ens_2.out",
+                "err_file": "/home/someuser/code/ss/my-ens_2.err"
               },
               {
                 "name": "my-ens_3",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -163,29 +163,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_3",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_3",
                   "step_id": null,
                   "task_id": "88170",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_3.out",
-                "err_file": "/home/chris/code/ss/my-ens_3.err"
+                "out_file": "/home/someuser/code/ss/my-ens_3.out",
+                "err_file": "/home/someuser/code/ss/my-ens_3.err"
               },
               {
                 "name": "my-ens_4",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -199,29 +199,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_4",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_4",
                   "step_id": null,
                   "task_id": "88178",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_4.out",
-                "err_file": "/home/chris/code/ss/my-ens_4.err"
+                "out_file": "/home/someuser/code/ss/my-ens_4.out",
+                "err_file": "/home/someuser/code/ss/my-ens_4.err"
               },
               {
                 "name": "my-ens_5",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -235,29 +235,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_5",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_5",
                   "step_id": null,
                   "task_id": "88193",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_5.out",
-                "err_file": "/home/chris/code/ss/my-ens_5.err"
+                "out_file": "/home/someuser/code/ss/my-ens_5.out",
+                "err_file": "/home/someuser/code/ss/my-ens_5.err"
               },
               {
                 "name": "my-ens_6",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -271,29 +271,29 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_6",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_6",
                   "step_id": null,
                   "task_id": "88221",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_6.out",
-                "err_file": "/home/chris/code/ss/my-ens_6.err"
+                "out_file": "/home/someuser/code/ss/my-ens_6.out",
+                "err_file": "/home/someuser/code/ss/my-ens_6.err"
               },
               {
                 "name": "my-ens_7",
-                "path": "/home/chris/code/ss",
+                "path": "/home/someuser/code/ss",
                 "exe_args": [
                   "yo.py"
                 ],
                 "run_settings": {
                   "exe": [
-                    "/home/chris/.pyenv/versions/3.9.16/envs/ss/bin/python"
+                    "/home/someuser/.pyenv/versions/3.9.16/envs/ss/bin/python"
                   ],
                   "run_command": null,
                   "run_args": {}
@@ -307,19 +307,19 @@
                 "files": {
                   "Symlink": [],
                   "Configure": [
-                    "/home/chris/code/ss/manifest/demo/yo.py"
+                    "/home/someuser/code/ss/manifest/demo/yo.py"
                   ],
                   "Copy": []
                 },
                 "colocated_db": {},
                 "telemetry_metadata": {
-                  "status_dir": "/home/chris/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_7",
+                  "status_dir": "/home/someuser/code/ss/my-exp/.smartsim/telemetry/my-exp/d041b90/ensemble/my-ens/my-ens_7",
                   "step_id": null,
                   "task_id": "88241",
                   "managed": false
                 },
-                "out_file": "/home/chris/code/ss/my-ens_7.out",
-                "err_file": "/home/chris/code/ss/my-ens_7.err"
+                "out_file": "/home/someuser/code/ss/my-ens_7.out",
+                "err_file": "/home/someuser/code/ss/my-ens_7.err"
               }
             ]
           }

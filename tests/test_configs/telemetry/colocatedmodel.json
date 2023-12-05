@@ -5,7 +5,7 @@
   },
   "experiment": {
     "name": "my-exp",
-    "path": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp",
+    "path": "/tmp/my-exp",
     "launcher": "Slurm"
   },
   "runs": [
@@ -15,13 +15,13 @@
       "model": [
         {
           "name": "colocated_model",
-          "path": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/colocated_model",
+          "path": "/tmp/my-exp/colocated_model",
           "exe_args": [
-            "/lus/cls01029/mcbridch/ss/tests/test_configs/echo.py"
+            "/path/to/my/script.py"
           ],
           "run_settings": {
             "exe": [
-              "/home/users/mcbridch/anaconda3/envs/ss/bin/python"
+              "/path/to/my/python"
             ],
             "run_command": "/opt/slurm/20.11.5/bin/srun",
             "run_args": {}
@@ -53,13 +53,13 @@
             "models": []
           },
           "telemetry_metadata": {
-            "status_dir": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/model/colocated_model",
+            "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/model/colocated_model",
             "step_id": "4139111.21",
             "task_id": "21529",
             "managed": true
           },
-          "out_file": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/colocated_model/colocated_model.out",
-          "err_file": "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp/colocated_model/colocated_model.err"
+          "out_file": "/tmp/my-exp/colocated_model/colocated_model.out",
+          "err_file": "/tmp/my-exp/colocated_model/colocated_model.err"
         }
       ],
       "orchestrator": [],

@@ -205,7 +205,7 @@ def test_load_manifest(fileutils: FileUtils):
 
     manifest = load_manifest(test_manifest_path)
     assert manifest.name == "my-exp"
-    assert str(manifest.path) == "/lus/cls01029/drozt/playground/ss/dash-int/my-exp"
+    assert str(manifest.path) == "/path/to/my-exp"
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 6
 
@@ -226,7 +226,7 @@ def test_load_manifest_colo_model(fileutils: FileUtils):
     assert manifest.name == "my-exp"
     assert (
         str(manifest.path)
-        == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_load_manifest_colo_model/my-exp"
+        == "/tmp/my-exp"
     )
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
@@ -243,10 +243,7 @@ def test_load_manifest_serial_models(fileutils: FileUtils):
 
     manifest = load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
-    assert (
-        str(manifest.path)
-        == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_serial_models/my-exp"
-    )
+    assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
 
@@ -263,10 +260,7 @@ def test_load_manifest_db_and_models(fileutils: FileUtils):
 
     manifest = load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
-    assert (
-        str(manifest.path)
-        == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp"
-    )
+    assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 2
 
@@ -286,10 +280,7 @@ def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
 
     manifest = load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
-    assert (
-        str(manifest.path)
-        == "/lus/cls01029/mcbridch/ss/tests/test_output/test_telemetry_monitor/test_telemetry_db_and_model/my-exp"
-    )
+    assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
 
