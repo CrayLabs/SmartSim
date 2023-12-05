@@ -29,7 +29,7 @@ def dynamic_execute(
         combined_cmd = [sys.executable, "-m", cmd] + unparsed_args
 
         try:
-            completed_proc = sp.run(combined_cmd)
+            completed_proc = sp.run(combined_cmd, check=False)
         except KeyboardInterrupt as ex:
             msg = f"{plugin_name} terminated by user"
             raise SmartSimCLIActionCancelled(msg) from ex

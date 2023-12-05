@@ -69,6 +69,7 @@ SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
 
+
 @dataclass
 class Run:
     """Model containing entities of an individual start call for an experiment"""
@@ -617,7 +618,7 @@ def main(
             observer.stop()  # type: ignore
             observer.join()
 
-    return 1
+    return os.EX_SOFTWARE
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:

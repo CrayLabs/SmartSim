@@ -31,8 +31,7 @@ import typing as t
 from ..launcher import Launcher
 from ....log import get_logger
 from ....settings import RunSettings, SettingsBase
-from ..step.localStep import LocalStep
-from ..step.step import Step
+from ..step import LocalStep, Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
