@@ -276,24 +276,79 @@ Example
 -------
 The Application Script
 ----------------------
+.. code-block:: python
+
+  from smartredis import ConfigOptions, Client, log_data
+  from smartredis import *
+  import numpy as np
+
 Initialize the Clients
 ^^^^^^^^^^^^^^^^^^^^^^
-Retrieve Data and Store Using SmartRedis Client Objects
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+  # Initialize a Client
+  colo_client = Client(cluster=False)
+
+Store Data
+^^^^^^^^^^
+.. code-block:: python
+    # Create NumPy array
+    array_1 = np.array([1, 2, 3, 4])
+    # Use SmartRedis client to place tensor in single sharded db
+    colo_client.put_tensor("tensor_1", array_1)
+Retrieve Data
+^^^^^^^^^^^^^
+.. code-block:: python
+    # Retrieve tensor from driver script
+    value_1 = colo_client.get_tensor("tensor_1")
+    # Log tensor
+    colo_client.log_data(LLInfo, f"The colocated db tensor is: {value_1}")
+
 The Experiment Driver Script
 ----------------------------
+.. code-block:: python
+    import numpy as np
+    from smartredis import Client
+    from smartsim import Experiment
+    from smartsim.log import get_logger
+    import sys
+
+    exe_ex = sys.executable
+    logger = get_logger("Example Experiment Log")
+    # Initialize the Experiment
+    exp = Experiment("tester", launcher="auto")
+
 Initialize a Colocated Model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Step 1: Configure
 """""""""""""""""
+.. code-block:: python
+    # Initialize a RunSettings object
+    model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/lus/scratch/richaama/clustered_model.py")
+    # Configure RunSettings object
+    model_settings.set_nodes(1)
+
 Step 2: Initialize
 """"""""""""""""""
+.. code-block:: python
+    # Initialize a SmartSim Model
+    model = exp.create_model("colo_model", model_settings)
 Step 2: Colocate
 """"""""""""""""
+.. code-block:: python
+    # Colocate the Model
+    model.colocate_db_tcp()
+
 Step 3: Start
 """""""""""""
+.. code-block:: python
+    # Launch the colocated Model
+    exp.start(model, block=True, summary=True)
 Cleanup Experiment
 ^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+    logger.info(exp.summary())
+
 How to Run the Example
 ----------------------
 Source Code
