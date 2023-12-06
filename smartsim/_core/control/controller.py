@@ -27,34 +27,39 @@
 from __future__ import annotations
 
 import os.path as osp
-from os import environ
+import pathlib
 import pickle
 import signal
+import subprocess
+import sys
 import threading
 import time
 import typing as t
+from os import environ
 
 from smartredis import Client, ConfigOptions
 
 from ..._core.launcher.step import Step
+from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
-from ..._core.utils.helpers import (
-    unpack_db_identifier,
-    unpack_colo_db_identifier,
-)
 from ...database import Orchestrator
-from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
+from ...entity import (
+    Ensemble,
+    EntityList,
+    EntitySequence,
+    Model,
+    SmartSimEntity,
+)
 from ...error import (
     LauncherError,
     SmartSimError,
+    SSDBIDConflictError,
     SSInternalError,
     SSUnsupportedError,
-    SSDBIDConflictError,
 )
 from ...log import get_logger
-from ...settings.base import BatchSettings
+from ...servertype import CLUSTERED, STANDALONE
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
-from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
     CobaltLauncher,
@@ -64,10 +69,14 @@ from ..launcher import (
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
-from ..utils import check_cluster_status, create_cluster
+from ..utils import check_cluster_status, create_cluster, serialize
 from .job import Job
 from .jobmanager import JobManager
-from .manifest import Manifest
+from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
+
+if t.TYPE_CHECKING:
+    from ..utils.serialize import TStepLaunchMetaData
+
 
 logger = get_logger(__name__)
 
@@ -89,9 +98,15 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
+        self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
 
     def start(
-        self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
+        self,
+        exp_name: str,
+        exp_path: str,
+        manifest: Manifest,
+        block: bool = True,
+        kill_on_interrupt: bool = True,
     ) -> None:
         """Start the passed SmartSim entities
 
@@ -104,11 +119,19 @@ class Controller:
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
-        self._launch(manifest)
+        launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
             self._jobs.start()
+
+        serialize.save_launch_manifest(
+            launched.map(_look_up_launched_data(self._launcher))
+        )
+
+        # launch a telemetry monitor to track job progress
+        if CONFIG.telemetry_enabled:
+            self._start_telemetry_monitor(exp_path)
 
         # block until all non-database jobs are complete
         if block:
@@ -312,16 +335,25 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
-    def _launch(self, manifest: Manifest) -> None:
+    def _launch(
+        self, exp_name: str, exp_path: str, manifest: Manifest
+    ) -> LaunchedManifest[t.Tuple[str, Step]]:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
         address of the database can be given to following entities
 
+        :param exp_name: The name of the launching experiment
+        :type exp_name: str
+        :param exp_path: path to location of ``Experiment`` directory if generated
+        :type exp_path: str
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
 
+        manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
+            exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
+        )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -339,7 +371,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator)
+            self._launch_orchestrator(orchestrator, manifest_builder)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -348,33 +380,51 @@ class Controller:
         steps: t.List[
             t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
         ] = []
-        all_entity_lists = manifest.ensembles
-        for elist in all_entity_lists:
+        for elist in manifest.ensembles:
+            ens_telem_dir = manifest_builder.run_telemetry_subdirectory / "ensemble"
             if elist.batch:
-                batch_step = self._create_batch_job_step(elist)
+                batch_step, substeps = self._create_batch_job_step(elist, ens_telem_dir)
+                manifest_builder.add_ensemble(
+                    elist, [(batch_step.name, step) for step in substeps]
+                )
                 steps.append((batch_step, elist))
             else:
-                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                # if ensemble is to be run as separate job steps, aka not in a batch
+                job_steps = [
+                    (self._create_job_step(e, ens_telem_dir / elist.name), e)
+                    for e in elist.entities
+                ]
+                manifest_builder.add_ensemble(
+                    elist, [(step.name, step) for step, _ in job_steps]
+                )
                 steps.extend(job_steps)
         # models themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
+            model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
             if model.batch_settings:
-                anon_entity_list = _AnonymousBatchJob(
-                    model.name, model.path, model.batch_settings
+                anon_entity_list = _AnonymousBatchJob(model)
+                batch_step, _ = self._create_batch_job_step(
+                    anon_entity_list, model_telem_dir
                 )
-                anon_entity_list.entities.append(model)
-                batch_step = self._create_batch_job_step(anon_entity_list)
+                manifest_builder.add_model(model, (batch_step.name, batch_step))
                 steps.append((batch_step, model))
             else:
-                job_step = self._create_job_step(model)
+                job_step = self._create_job_step(model, model_telem_dir)
+                manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
         # launch steps
         for step, entity in steps:
             self._launch_step(step, entity)
 
-    def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
+        return manifest_builder.finalize()
+
+    def _launch_orchestrator(
+        self,
+        orchestrator: Orchestrator,
+        manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
+    ) -> None:
         """Launch an Orchestrator instance
 
         This function will launch the Orchestrator instance and
@@ -383,16 +433,32 @@ class Controller:
 
         :param orchestrator: orchestrator to launch
         :type orchestrator: Orchestrator
+        :param manifest_builder: An `LaunchedManifestBuilder` to record the
+                                 names and `Step`s of the launched orchestrator
+        :type manifest_builder: LaunchedManifestBuilder[tuple[str, Step]]
         """
         orchestrator.remove_stale_files()
+        orc_telem_dir = manifest_builder.run_telemetry_subdirectory / "database"
+
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            orc_batch_step = self._create_batch_job_step(orchestrator)
+            orc_batch_step, substeps = self._create_batch_job_step(
+                orchestrator, orc_telem_dir
+            )
+            manifest_builder.add_database(
+                orchestrator, [(orc_batch_step.name, step) for step in substeps]
+            )
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
+            db_steps = [
+                (self._create_job_step(db, orc_telem_dir / orchestrator.name), db)
+                for db in orchestrator.entities
+            ]
+            manifest_builder.add_database(
+                orchestrator, [(step.name, step) for step, _ in db_steps]
+            )
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
@@ -462,35 +528,52 @@ class Controller:
             self._jobs.add_job(job_step.name, job_id, entity, is_task)
 
     def _create_batch_job_step(
-        self, entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob]
-    ) -> Step:
+        self,
+        entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob],
+        telemetry_dir: pathlib.Path,
+    ) -> t.Tuple[Step, t.List[Step]]:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
         :type entity_list: EntityList
-        :return: job step instance
-        :rtype: Step
+        :param telemetry_dir: Path to a directory in which the batch job step
+                              may write telemetry events
+        :type telemetry_dir: pathlib.Path
+        :return: batch job step instance and a list of run steps to be
+                 executed within the batch job
+        :rtype: tuple[Step, list[Step]]
         """
         if not entity_list.batch_settings:
             raise ValueError(
                 "EntityList must have batch settings to be launched as batch"
             )
 
+        telemetry_dir = telemetry_dir / entity_list.name
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
+        batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
+        batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
+
+        substeps = []
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
             entity.run_settings.in_batch = True
-            step = self._create_job_step(entity)
+            step = self._create_job_step(entity, telemetry_dir)
+            substeps.append(step)
             batch_step.add_to_batch(step)
-        return batch_step
+        return batch_step, substeps
 
-    def _create_job_step(self, entity: SmartSimEntity) -> Step:
+    def _create_job_step(
+        self, entity: SmartSimEntity, telemetry_dir: pathlib.Path
+    ) -> Step:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for
         :type entity: SmartSimEntity
+        :param telemetry_dir: Path to a directory in which the job step
+                               may write telemetry events
+        :type telemetry_dir: pathlib.Path
         :return: the job step
         :rtype: Step
         """
@@ -499,6 +582,10 @@ class Controller:
             self._prep_entity_client_env(entity)
 
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
+
+        step.meta["entity_type"] = str(type(entity).__name__).lower()
+        step.meta["status_dir"] = str(telemetry_dir / entity.name)
+
         return step
 
     def _prep_entity_client_env(self, entity: Model) -> None:
@@ -739,13 +826,74 @@ class Controller:
                             if db_script not in ensemble.db_scripts:
                                 set_script(db_script, client)
 
+    def _start_telemetry_monitor(self, exp_dir: str) -> None:
+        """Spawns a telemetry monitor process to keep track of the life times
+        of the processes launched through this controller.
+
+        :param exp_dir: An experiment directory
+        :type exp_dir: str
+        """
+        logger.debug("Starting telemetry monitor process")
+        if (
+            self._telemetry_monitor is None
+            or self._telemetry_monitor.returncode is not None
+        ):
+            cmd = [
+                sys.executable,
+                "-m",
+                "smartsim._core.entrypoints.telemetrymonitor",
+                "-exp_dir",
+                exp_dir,
+                "-frequency",
+                str(CONFIG.telemetry_frequency),
+                "-cooldown",
+                str(CONFIG.telemetry_cooldown),
+            ]
+            # pylint: disable-next=consider-using-with
+            self._telemetry_monitor = subprocess.Popen(
+                cmd,
+                stderr=sys.stderr,
+                stdout=sys.stdout,
+                cwd=str(pathlib.Path(__file__).parent.parent.parent),
+                shell=False,
+            )
+
 
 class _AnonymousBatchJob(EntityList[Model]):
-    def __init__(
-        self, name: str, path: str, batch_settings: BatchSettings, **kwargs: t.Any
-    ) -> None:
-        super().__init__(name, path)
-        self.batch_settings = batch_settings
+    @staticmethod
+    def _validate(model: Model) -> None:
+        if model.batch_settings is None:
+            msg = "Unable to create _AnonymousBatchJob without batch_settings"
+            raise SmartSimError(msg)
+
+    def __init__(self, model: Model) -> None:
+        self._validate(model)
+        super().__init__(model.name, model.path)
+        self.entities = [model]
+        self.batch_settings = model.batch_settings
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         ...
+
+
+def _look_up_launched_data(
+    launcher: Launcher,
+) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
+    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
+        # NOTE: we cannot assume that the name of the launched step
+        # ``launched_step_name`` is equal to the name of the step referring to
+        # the entity ``step.name`` as is the case when an entity list is
+        # launched as a batch job
+        launched_step_name, step = data
+        launched_step_map = launcher.step_mapping[launched_step_name]
+        out_file, err_file = step.get_output_files()
+        return (
+            launched_step_map.step_id,
+            launched_step_map.task_id,
+            launched_step_map.managed,
+            out_file,
+            err_file,
+            pathlib.Path(step.meta.get("status_dir", step.cwd)),
+        )
+
+    return _unpack_launched_data

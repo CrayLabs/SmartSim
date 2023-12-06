@@ -40,8 +40,10 @@ def test_failed_status(fileutils, wlmutils):
     """Test when a failure occurs deep into model execution"""
 
     exp_name = "test-report-failure"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name,
+            launcher=wlmutils.get_test_launcher(),
+            exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("bad.py")
     settings = exp.create_run_settings(
@@ -69,8 +71,8 @@ def test_bad_run_command_args(fileutils, wlmutils):
         pytest.skip(f"Only fails with slurm. Launcher is {launcher}")
 
     exp_name = "test-bad-run-command-args"
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("bad.py")
 

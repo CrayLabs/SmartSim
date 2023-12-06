@@ -245,7 +245,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -313,7 +313,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -412,7 +412,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -509,7 +509,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)

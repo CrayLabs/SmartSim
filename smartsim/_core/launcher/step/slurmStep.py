@@ -26,13 +26,13 @@
 
 import os
 import shutil
-from shlex import split as sh_split
 import typing as t
+from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import SrunSettings, SbatchSettings, RunSettings, Singularity
+from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
 
 logger = get_logger(__name__)
 
@@ -189,13 +189,15 @@ class SrunStep(Step):
 
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
-        of attached RunSettings"""
+        of attached RunSettings
+        """
         return self.run_settings.mpmd
 
     @staticmethod
     def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:
         """Convenience function to encapsulate checking the
-        runsettings.exe_args type to always return a list"""
+        runsettings.exe_args type to always return a list
+        """
         exe_args = run_setting.exe_args
         args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
         return args

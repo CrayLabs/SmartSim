@@ -26,10 +26,13 @@
 
 import pytest
 
+import os
+
 from smartsim import Experiment
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
+from smartsim._core.config import CONFIG
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -111,8 +114,8 @@ def test_bad_ensemble_init_no_rs_bs():
 
 def test_stop_entity(fileutils):
     exp_name = "test_stop_entity"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
     exp.start(m, block=False)
     assert exp.finished(m) == False
@@ -123,8 +126,8 @@ def test_stop_entity(fileutils):
 def test_poll(fileutils):
     # Ensure that a SmartSimError is not raised
     exp_name = "test_exp_poll"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     model = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("sleep", "5")
     )
@@ -135,8 +138,8 @@ def test_poll(fileutils):
 
 def test_summary(fileutils):
     exp_name = "test_exp_summary"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )
@@ -156,6 +159,7 @@ def test_summary(fileutils):
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 
+
 def test_launcher_detection(wlmutils, monkeypatch):
     if wlmutils.get_test_launcher() == "pals":
         pytest.skip(reason="Launcher detection cannot currently detect pbs vs pals")
@@ -165,3 +169,16 @@ def test_launcher_detection(wlmutils, monkeypatch):
     exp = Experiment("test-launcher-detection", launcher="auto")
 
     assert exp._launcher == wlmutils.get_test_launcher()
+
+
+def test_enable_disable_telemtery(monkeypatch):
+    # TODO: Currently these are implemented by setting an environment variable
+    #       so that ALL experiments instanced in a driver script will begin
+    #       producing telemetry data. In the future it is planned to have this
+    #       work on a "per-instance" basis
+    monkeypatch.setattr(os, "environ", {})
+    exp = Experiment("my-exp")
+    exp.enable_telemetry()
+    assert CONFIG.telemetry_enabled
+    exp.disable_telemetry()
+    assert not CONFIG.telemetry_enabled

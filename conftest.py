@@ -380,10 +380,10 @@ def local_db(
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir(
         caller_function=exp_name, caller_fspath=request.fspath
     )
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -402,10 +402,10 @@ def db(
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir(
         caller_function=exp_name, caller_fspath=request.fspath
     )
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -427,10 +427,10 @@ def db_cluster(
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir(
         caller_function=exp_name, caller_fspath=request.fspath
     )
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -630,7 +630,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_file(file_name: str, file_dir: t.Optional[str] = None) -> str:
+    def make_test_file(file_name: str, file_dir: t.Optional[str] = None, file_content: t.Optional[str] = None) -> str:
         """Create a dummy file in the test output directory.
 
         :param file_name: name of file to create, e.g. "file.txt"
@@ -644,7 +644,10 @@ class FileUtils:
         file_path = os.path.join(test_dir, file_name)
 
         with open(file_path, "w+", encoding="utf-8") as dummy_file:
-            dummy_file.write("dummy\n")
+            if not file_content:
+                dummy_file.write("dummy\n")
+            else:
+                dummy_file.write(file_content)
 
         return file_path
 

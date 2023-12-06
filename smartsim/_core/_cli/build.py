@@ -356,7 +356,9 @@ def _format_incompatible_python_env_message(
     )
 
 
-def execute(args: argparse.Namespace) -> int:
+def execute(
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+) -> int:
     verbose = args.v
     keydb = args.keydb
     device: _TDeviceStr = args.device
@@ -416,7 +418,7 @@ def execute(args: argparse.Namespace) -> int:
             )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
-        return 1
+        return os.EX_SOFTWARE
 
     backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
@@ -431,10 +433,10 @@ def execute(args: argparse.Namespace) -> int:
             check_py_onnx_version(versions)
     except (SetupError, BuildError) as e:
         logger.error(str(e))
-        return 1
+        return os.EX_SOFTWARE
 
     logger.info("SmartSim build complete!")
-    return 0
+    return os.EX_OK
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:

@@ -190,3 +190,57 @@ def test_redis_cli():
     with pytest.raises(SSConfigError):
         config.database_cli
     os.environ.pop("REDIS_CLI_PATH")
+
+
+@pytest.mark.parametrize(
+        "value, exp_result", [
+            pytest.param("0", False, id="letter zero"),
+            pytest.param("1", True, id="letter one"),
+            pytest.param("-1", False, id="letter negative one"),
+            pytest.param(None, False, id="not in env"),
+        ]
+)
+def test_telemetry_flag(monkeypatch: pytest.MonkeyPatch, 
+                        value: t.Optional[str],
+                        exp_result: bool):
+    if value is not None:
+        monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", value)
+    else:
+        monkeypatch.delenv("SMARTSIM_FLAG_TELEMETRY", raising=False)
+    config = Config()
+    assert config.telemetry_enabled == exp_result
+
+@pytest.mark.parametrize(
+    "value, exp_result", [
+        pytest.param("1", 1, id="1"),
+        pytest.param("123", 123, id="123"),
+        pytest.param(None, 5, id="not in env"),
+    ]
+)
+def test_telemetry_frequency(
+    monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: int
+):
+    if value is not None:
+        monkeypatch.setenv("SMARTSIM_TELEMETRY_FREQUENCY", value)
+    else:
+        monkeypatch.delenv("SMARTSIM_TELEMETRY_FREQUENCY", raising=False)
+    config = Config()
+    assert config.telemetry_frequency == exp_result
+
+
+@pytest.mark.parametrize(
+    "value, exp_result", [
+        pytest.param("30", 30, id="30"),
+        pytest.param("123", 123, id="123"),
+        pytest.param(None, 90, id="not in env"),
+    ]
+)
+def test_telemetry_cooldown(
+    monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: bool
+):
+    if value is not None:
+        monkeypatch.setenv("SMARTSIM_TELEMETRY_COOLDOWN", value)
+    else:
+        monkeypatch.delenv("SMARTSIM_TELEMETRY_COOLDOWN", raising=False)
+    config = Config()
+    assert config.telemetry_cooldown == exp_result
