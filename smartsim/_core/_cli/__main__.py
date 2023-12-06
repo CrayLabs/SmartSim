@@ -38,16 +38,16 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 def main() -> int:
     smart_cli = default_cli()
+    excpetion_trace_back_msg = "SmartSim exited with the following exception info:"
 
     try:
         return smart_cli.execute(sys.argv)
     except SmartSimCLIActionCancelled as ssi:
-        logger.debug(ssi, exc_info=True)
-        logger.info(ssi)
-    except KeyboardInterrupt:
-        msg = "SmartSim was terminated by user"
-        logger.debug(msg, exc_info=True)
-        logger.info(msg)
+        logger.info(str(ssi))
+        logger.debug(excpetion_trace_back_msg, exc_info=ssi)
+    except KeyboardInterrupt as e:
+        logger.info("SmartSim was terminated by user")
+        logger.debug(excpetion_trace_back_msg, exc_info=e)
     return os.EX_OK
 
 
