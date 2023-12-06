@@ -47,7 +47,7 @@ def dashboard() -> MenuItemConfig:
             "Package be installed. For more infromation please visit "
             "https://github.com/CrayLabs/SmartDashboard"
         ),
-        dynamic_execute("smartdashboard.Experiment_Overview", "Dashboard"),
+        dynamic_execute("smartdashboard", "Dashboard"),
         is_plugin=True,
     )
 
