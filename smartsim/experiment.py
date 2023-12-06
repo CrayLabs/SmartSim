@@ -882,7 +882,7 @@ class Experiment:
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
 
-    def enable_telemetry(cls) -> None:
+    def enable_telemetry(self) -> None:
         """Experiments will start producing telemetry for all entities run
         through ``Experiment.start``
 
@@ -892,9 +892,9 @@ class Experiment:
             instances will begin producing telemetry data. In the future it
             planned to have this method work on a "per instance" basis!
         """
-        cls._set_telemetry(True)
+        self._set_telemetry(True)
 
-    def disable_telemetry(cls) -> None:
+    def disable_telemetry(self) -> None:
         """Experiments will stop producing telemetry for all entities run
         through ``Experiment.start``
 
@@ -904,7 +904,7 @@ class Experiment:
             instances will stop producing telemetry data. In the future it
             planned to have this method work on a "per instance" basis!
         """
-        cls._set_telemetry(False)
+        self._set_telemetry(False)
 
     @staticmethod
     def _set_telemetry(switch: bool, /) -> None:
