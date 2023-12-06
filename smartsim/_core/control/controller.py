@@ -343,6 +343,10 @@ class Controller:
         Orchestrators are always launched first so that the
         address of the database can be given to following entities
 
+        :param exp_name: The name of the launching experiment
+        :type exp_name: str
+        :param exp_path: path to location of ``Experiment`` directory if generated
+        :type exp_path: str
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
