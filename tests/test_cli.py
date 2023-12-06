@@ -346,20 +346,17 @@ def test_cli_default_cli(capsys):
 
 
 @pytest.mark.skipif(not test_dash_plugin, reason="plugin not found")
-def test_cli_plugin_dashboard(capsys):
+def test_cli_plugin_dashboard(capfd):
     """Ensure expected dashboard CLI plugin commands are supported"""
-    # FIXME: This test is failing!!
-
     smart_cli = cli.default_cli()
-    
-    captured = capsys.readouterr()  # throw away existing output
+    capfd.readouterr()  # throw away existing output
 
     # execute with `dashboard` argument, expect dashboard-specific help text
     build_args = ["smart", "dashboard", "-h"]
     rc = smart_cli.execute(build_args)
 
-    captured = capsys.readouterr() # capture new output
-    
+    captured = capfd.readouterr()  # capture new output
+
     assert "[-d DIRECTORY]" in captured.out
     assert "[-p PORT]" in captured.out
 
