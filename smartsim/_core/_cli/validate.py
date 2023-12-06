@@ -140,8 +140,9 @@ def test_install(
     with_onnx: bool,
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
+    exp.disable_telemetry()
     port = _find_free_port() if port is None else port
-    with _disable_telemetry_monitor(), _make_managed_local_orc(exp, port) as client:
+    with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
@@ -169,22 +170,6 @@ def _make_managed_local_orc(
         yield Client(False, address=client_addr)
     finally:
         exp.stop(orc)
-
-
-@contextmanager
-def _disable_telemetry_monitor() -> t.Generator[None, None, None]:
-    """Ensure the telemetry monitor is disabled during a test and the environment
-    is left in correct state after completion
-    """
-    tm_key = "SMARTSIM_FLAG_TELEMETRY"
-    orig = os.environ.get(tm_key, None)
-    if orig is not None:
-        os.environ[tm_key] = "0"
-    try:
-        yield
-    finally:
-        if orig is not None:
-            os.environ[tm_key] = orig
 
 
 def _find_free_port() -> int:
