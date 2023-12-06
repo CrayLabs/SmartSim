@@ -890,7 +890,7 @@ class Experiment:
 
             This method is currently implemented so that ALL ``Experiment``
             instances will begin producing telemetry data. In the future it
-            planned to have this method work on a "per instance" basis!
+            is planned to have this method work on a "per instance" basis!
         """
         self._set_telemetry(True)
 
@@ -902,7 +902,7 @@ class Experiment:
 
             This method is currently implemented so that ALL ``Experiment``
             instances will stop producing telemetry data. In the future it
-            planned to have this method work on a "per instance" basis!
+            is planned to have this method work on a "per instance" basis!
         """
         self._set_telemetry(False)
 
