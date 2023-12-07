@@ -134,6 +134,7 @@ def log_to_file(
     if logger is None:
         logger = logging.getLogger("SmartSim")
 
+    # pylint: disable-next=consider-using-with
     stream = open(
         filename, "w+", encoding="utf-8"
     )  # pylint: disable=consider-using-with
