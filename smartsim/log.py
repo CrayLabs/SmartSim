@@ -32,9 +32,9 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
-)
+DEFAULT_LOG_FORMAT: t.Final[
+    str
+] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
@@ -117,7 +117,9 @@ def get_logger(
     return logger
 
 
-def log_to_file(filename: str, log_level: str = "debug", logger: t.Optional[logging.Logger] = None) -> None:
+def log_to_file(
+    filename: str, log_level: str = "debug", logger: t.Optional[logging.Logger] = None
+) -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 
@@ -132,5 +134,7 @@ def log_to_file(filename: str, log_level: str = "debug", logger: t.Optional[logg
     if logger is None:
         logger = logging.getLogger("SmartSim")
 
-    stream = open(filename, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
+    stream = open(
+        filename, "w+", encoding="utf-8"
+    )  # pylint: disable=consider-using-with
     coloredlogs.install(stream=stream, logger=logger, level=log_level)
