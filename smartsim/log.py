@@ -111,7 +111,8 @@ def get_logger(
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
 
     if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0:
-        log_to_file("smartsim.log", active_level, logger)
+        log_to_file("smartsim.out", log_level, logger)
+        log_to_file("smartsim.err", "error", logger)
 
     return logger
 
