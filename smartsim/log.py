@@ -109,10 +109,14 @@ def get_logger(
     else:
         log_level = user_log_level
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
+
+    if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0:
+        log_to_file("smartsim.log", active_level, logger)
+
     return logger
 
 
-def log_to_file(filename: str, log_level: str = "debug") -> None:
+def log_to_file(filename: str, log_level: str = "debug", logger: t.Optional[logging.Logger] = None) -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 
@@ -124,8 +128,8 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
                       logging information.
     :type log_level: int | str
     """
-    logger = logging.getLogger("SmartSim")
-    stream = open(  # pylint: disable=consider-using-with
-        filename, "w+", encoding="utf-8"
-    )
+    if logger is None:
+        logger = logging.getLogger("SmartSim")
+
+    stream = open(filename, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
     coloredlogs.install(stream=stream, logger=logger, level=log_level)
