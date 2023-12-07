@@ -27,9 +27,9 @@
 import typing as t
 
 from .._core.utils import init_default
-from ..error import SmartSimError
-from .base import BatchSettings
+from ..error import SSConfigError
 from ..log import get_logger
+from .base import BatchSettings
 
 logger = get_logger(__name__)
 
@@ -72,13 +72,7 @@ class QsubBatchSettings(BatchSettings):
         self._time: t.Optional[str] = None
         self._nodes: t.Optional[int] = None
         self._ncpus = ncpus
-
-        if resources and "nodes" in resources and nodes is not None:
-            if nodes != resources["nodes"]:
-                raise ValueError(
-                    "nodes was specified as a kwarg and also in the resources "
-                    f"but are not the same value: {nodes=} {resources['nodes']=}"
-                )
+        self.resources = init_default({}, resources, dict)
 
         # time, queue, nodes, and account set in parent class init
         super().__init__(
@@ -90,21 +84,33 @@ class QsubBatchSettings(BatchSettings):
             time=time,
             **kwargs,
         )
-        self.resources = init_default({}, resources, dict)
-        self._hosts: t.List[str] = []
 
+        self._sanity_check_resources()
+        # Set the number of nodes if it was specified, note this needs
+        # to be done after the super init because nodes might also be set
+        self._nodes = self.resources.get("nodes", None) or self.resources.get(
+            "select", None
+        )
+
+        self._hosts: t.List[str] = []
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
-        If a select argument is provided in ``QsubBatchSettings.resources``
-        this value will be overridden
+        In PBS, 'select' is the more primitive way of describing how
+        many nodes to allocate for the job. 'nodes' is equivalent to
+        'select' with a 'place' statement. Assuming that only advanced
+        users would use 'set_resource' instead, defining the number of
+        nodes here is sets the 'nodes' resource.
 
         :param num_nodes: number of nodes
         :type num_nodes: int
         """
+
         if num_nodes:
             self._nodes = num_nodes
+            self.set_resource("nodes", self._nodes)
+            self._sanity_check_resources()
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
@@ -180,6 +186,11 @@ class QsubBatchSettings(BatchSettings):
         # TODO add error checking here
         # TODO include option to overwrite place (warning for orchestrator?)
         self.resources[resource_name] = value
+        self._sanity_check_resources()
+        # Capture the case where someone is setting the number of nodes
+        # through 'select' or 'nodes'
+        if resource_name in ["select", "nodes"] and value:
+            self._nodes = int(value)
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
@@ -196,40 +207,43 @@ class QsubBatchSettings(BatchSettings):
             opts += [" ".join((prefix + opt, str(value)))]
         return opts
 
+    def _sanity_check_resources(self) -> None:
+        """Check that only select or nodes was specified in resources
+
+        Note: For PBS Pro, nodes is equivalent to 'select' and 'place' so
+        they are not quite synonyms. Here we assume that
+        """
+
+        has_select = self.resources.get("select", None)
+        has_nodes = self.resources.get("nodes", None)
+
+        if has_select and has_nodes:
+            raise SSConfigError(
+                "'select' and 'nodes' cannot both be specified. This can happen "
+                "if nodes were specified using the 'set_nodes' method and"
+                "'select' was set using 'set_resource'. Please only specify one."
+            )
+
     def _create_resource_list(self) -> t.List[str]:
+
+        self._sanity_check_resources()
         res = []
 
-        # get select statement from resources or kwargs
-        if ("select" in self.resources) and "nodes" not in self.resources:
-            res += [f"-l select={str(self.resources['select'])}"]
-        elif ("select" in self.resources) and ("nodes" in self.resources):
-            nselect = self.resources["select"]
-            if nselect == self._nodes:
-                logger.warning("select and nodes were both specified, specifying nodes")
-                res += [f"-l nodes={self._nodes}"]
-            else:
-                raise SmartSimError(
-                    (
-                        "select and nodes were both specified, but do not have "
-                        f"the same value. select={nselect} nodes={self._nodes}"
-                    )
-                )
-        elif "nodes" in self.resources:
-            res += [f"-l nodes={self._nodes}"]
+        # Construct the basic select/nodes statement
+        if self.resources.get("select", None):
+            select_command = f"-l select={self.resources['select']}"
+        elif self.resources.get("nodes", None):
+            select_command = f"-l nodes={self.resources['nodes']}"
         else:
-            select = "-l select="
-            if self._nodes:
-                select += str(self._nodes)
-            else:
-                raise SmartSimError(
-                    "Insufficient resource specification: no nodes or select statement"
-                )
-            if self._ncpus:
-                select += f":ncpus={self._ncpus}"
-            if self._hosts:
-                hosts = ["=".join(("host", str(host))) for host in self._hosts]
-                select += f":{'+'.join(hosts)}"
-            res += [select]
+            raise SSConfigError(
+                "Insufficient resource specification: no nodes or select statement"
+            )
+        if self._ncpus:
+            select_command += f":ncpus={self._ncpus}"
+        if self._hosts:
+            hosts = ["=".join(("host", str(host))) for host in self._hosts]
+            select_command += f":{'+'.join(hosts)}"
+        res += [select_command]
 
         if "place" in self.resources:
             res += [f"-l place={str(self.resources['place'])}"]
@@ -242,6 +256,6 @@ class QsubBatchSettings(BatchSettings):
                 res += [f"-l walltime={self._time}"]
 
         for resource, value in self.resources.items():
-            if resource not in ["select", "walltime", "place"]:
+            if resource not in ["nodes", "select", "walltime", "place"]:
                 res += [f"-l {resource}={str(value)}"]
         return res
