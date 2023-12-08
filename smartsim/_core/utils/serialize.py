@@ -87,6 +87,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
                 "name": manifest.metadata.exp_name,
                 "path": manifest.metadata.exp_path,
                 "launcher": manifest.metadata.launcher_name,
+                "out_file": str(Path(manifest.metadata.exp_path) / "smartsim.out"),
+                "err_file": str(Path(manifest.metadata.exp_path) / "smartsim.err"),
             },
             "runs": [new_run],
         }
