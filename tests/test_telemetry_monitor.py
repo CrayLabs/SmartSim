@@ -29,14 +29,16 @@ import logging
 import pathlib
 from random import sample
 import pytest
+import shutil
 import sys
 import typing as t
 import time
 import uuid
-from conftest import FileUtils, WLMUtils
+from conftest import FileUtils, MLUtils, WLMUtils
+import smartsim
 
 from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.control.job import Job, JobEntity
+from smartsim._core.control.job import Job, JobEntity, _JobKey
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
@@ -174,7 +176,7 @@ def test_track_event(
     step_id: str,
     timestamp: int,
     evt_type: str,
-    test_dir,
+    test_dir: str,
 ):
     """Ensure that track event writes a file to the expected location"""
     exp_path = pathlib.Path(test_dir)
