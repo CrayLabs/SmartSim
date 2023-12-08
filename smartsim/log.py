@@ -113,12 +113,14 @@ def get_logger(
     return logger
 
 
-def add_exp_loggers(exp_path: str, logger: logging.Logger, fmt: str, name: str) -> None:
-    """Add FileHandlers to a logger instance for producing logs 
+def add_exp_loggers(
+    exp_path: str, logger: logging.Logger, fmt: t.Optional[str] = None
+) -> None:
+    """Add FileHandlers to a logger instance for producing logs
     in an experiment directory"""
     if int(
         os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")
-    ) > 0 and name.lower().startswith("smartsim"):
+    ) > 0 and logger.name.lower().startswith("smartsim"):
         out_path = os.path.join(exp_path, "smartsim.out")
         err_path = os.path.join(exp_path, "smartsim.err")
 
@@ -129,17 +131,18 @@ def add_exp_loggers(exp_path: str, logger: logging.Logger, fmt: str, name: str) 
 
 class LevelFilter(logging.Filter):
     """A filter that passes all records below a desired level"""
-
-    def __init__(self, maximum_level: t.Optional[str] = "INFO"):
+    def __init__(self, maximum_level: str = "INFO"):
         """Create a high-pass log filter allowing messages below a specific log level
-        
+
         :param maximum_level: The maximum log level to be passed by the filter
         :type maximum_level: str
         """
         super().__init__()
         self.max = maximum_level
 
-    def filter(self, record) -> bool:
+    def filter(self, record: logging.LogRecord) -> bool:
+        # If a string representation of the level is passed in,
+        # the corresponding numeric value is returned.
         if record.levelno <= logging.getLevelName(self.max):
             return True
         return False

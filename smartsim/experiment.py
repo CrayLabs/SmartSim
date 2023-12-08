@@ -116,7 +116,7 @@ class Experiment:
                          Defaults to "local"
         :type launcher: str, optional
         """
-        add_exp_loggers(exp_path, logger, None, __name__)
+        add_exp_loggers(exp_path or ".", logger)
         self.name = name
         if exp_path:
             if not isinstance(exp_path, str):
