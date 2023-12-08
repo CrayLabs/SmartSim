@@ -98,8 +98,9 @@ def get_logger(
     :rtype: logging.Logger
     """
     # if name is None, then logger is the root logger
-    # if not root logger, get the name of file without prefix.
+    # if not root logger, get the name of file wi thout prefix.
     user_log_level = _get_log_level()
+    oname = name
     if user_log_level != "developer":
         name = "SmartSim"
 
@@ -110,15 +111,37 @@ def get_logger(
         log_level = user_log_level
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
 
-    if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0:
-        log_to_file("smartsim.out", log_level, logger)
-        log_to_file("smartsim.err", "error", logger)
+    # Add a file handler to the root logger only.
+    if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0 and oname.lower().startswith("smartsim"):
+        # hasFileHandlers = any(isinstance(h, logging.FileHandler) for h in logger.handlers)
+        # if not hasFileHandlers:
+        # log errors below warning to <outfile>.out & those above to <outfile>.err
+        log_to_file("smartsim.out", "INFO", logger, fmt, LevelFilter(max="INFO"))
+        log_to_file("smartsim.err", "WARN", logger, fmt)
 
     return logger
 
 
+class LevelFilter(logging.Filter):
+    """A filter that passes all records below a desired level"""
+    def __init__(
+        self,
+        max: t.Optional[str] = "INFO"
+    ):
+        self.max = max
+
+    def filter(self, record) -> bool:
+        if record.levelno <= logging.getLevelName(self.max):
+            return True
+        return False
+
+
 def log_to_file(
-    filename: str, log_level: str = "debug", logger: t.Optional[logging.Logger] = None
+    filename: str,
+    log_level: str = "warn",
+    logger: t.Optional[logging.Logger] = None,
+    fmt: t.Optional[str] = None,
+    filter: t.Optional[logging.Filter] = None,
 ) -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
@@ -134,8 +157,13 @@ def log_to_file(
     if logger is None:
         logger = logging.getLogger("SmartSim")
 
-    # pylint: disable-next=consider-using-with
-    stream = open(
-        filename, "w+", encoding="utf-8"
-    )  # pylint: disable=consider-using-with
-    coloredlogs.install(stream=stream, logger=logger, level=log_level)
+    handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
+    
+    if filter:
+        handler.addFilter(filter)
+
+    formatter = logging.Formatter(fmt=fmt or DEFAULT_LOG_FORMAT, datefmt=DEFAULT_DATE_FORMAT)
+    handler.setFormatter(formatter)
+    handler.setLevel(log_level.upper())
+
+    logger.addHandler(handler)
