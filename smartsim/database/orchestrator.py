@@ -185,7 +185,6 @@ class Orchestrator(EntityList[DBNode]):
         _check_local_constraints(self.launcher, batch)
         single_cmd = _get_single_command(self.run_command, batch, single_cmd)
         self.ports: t.List[int] = []
-        self.path = getcwd()
         self._hosts: t.List[str] = []
         self._user_hostlist: t.List[str] = []
         if isinstance(interface, str):
@@ -204,7 +203,7 @@ class Orchestrator(EntityList[DBNode]):
 
         super().__init__(
             name=db_identifier,
-            path=self.path,
+            path=getcwd(),
             port=port,
             interface=interface,
             db_nodes=db_nodes,

@@ -39,7 +39,6 @@ def test_node_formatting():
             f"-l {spec}={num_nodes}:ncpus={num_cpus}"
         ]
         assert settings._ncpus == num_cpus
-        assert settings._nodes == num_nodes
 
     num_nodes = 10
     num_cpus = 36
@@ -80,12 +79,16 @@ def test_select_nodes_error():
     # Manually put "select" in the resource dictionary and
     # make sure the resource formatter catches the error
     settings = QsubBatchSettings()
-    settings.resources = {"nodes": 10, "select": 20}
     with pytest.raises(SSConfigError):
-        settings._create_resource_list()
+        settings.resources = {"nodes": 10, "select": 20}
 
     # # Test setting via select and then nodes
     settings = QsubBatchSettings()
     settings.set_resource("select", 10)
     with pytest.raises(SSConfigError):
         settings.set_nodes(10)
+
+def test_resources_is_a_copy():
+    settings = QsubBatchSettings()
+    resources = settings.resources
+    assert resources is not settings._resources
