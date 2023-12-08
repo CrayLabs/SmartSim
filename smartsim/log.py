@@ -111,15 +111,28 @@ def get_logger(
         log_level = user_log_level
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
 
-    # Add a file handler to the root logger only.
-    if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0 and oname.lower().startswith("smartsim"):
-        # hasFileHandlers = any(isinstance(h, logging.FileHandler) for h in logger.handlers)
-        # if not hasFileHandlers:
-        # log errors below warning to <outfile>.out & those above to <outfile>.err
-        log_to_file("smartsim.out", "INFO", logger, fmt, LevelFilter(max="INFO"))
-        log_to_file("smartsim.err", "WARN", logger, fmt)
+    # # Add a file handler to the root logger only.
+    # if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0 and oname.lower().startswith("smartsim"):
+    #     # hasFileHandlers = any(isinstance(h, logging.FileHandler) for h in logger.handlers)
+    #     # if not hasFileHandlers:
+    #     # log errors below warning to <outfile>.out & those above to <outfile>.err
+    #     log_to_file("smartsim.out", "INFO", logger, fmt, LevelFilter(max="INFO"))
+    #     log_to_file("smartsim.err", "WARN", logger, fmt)
+    # add_exp_loggers("./", logger, fmt, oname)
 
     return logger
+
+def add_exp_loggers(exp_path: str, logger: logging.Logger, fmt: str, name: str) -> None:
+    # Add a file handler to the root logger only.
+    if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0 and name.lower().startswith("smartsim"):
+        # hasFileHandlers = any(isinstance(h, logging.FileHandler) for h in logger.handlers)
+        # if not hasFileHandlers:
+        out_path = os.path.join(exp_path, "smartsim.out")
+        err_path = os.path.join(exp_path, "smartsim.err")
+
+        # log errors below warning to <outfile>.out & those above to <outfile>.err
+        log_to_file(out_path, "INFO", logger, fmt, LevelFilter(max="INFO"))
+        log_to_file(err_path, "WARN", logger, fmt)
 
 
 class LevelFilter(logging.Filter):
