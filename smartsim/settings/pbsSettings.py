@@ -26,7 +26,6 @@
 
 import typing as t
 
-from .._core.utils import init_default
 from ..error import SSConfigError
 from ..log import get_logger
 from .base import BatchSettings
@@ -42,7 +41,7 @@ class QsubBatchSettings(BatchSettings):
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         account: t.Optional[str] = None,
-        resources: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
         batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ):
@@ -71,14 +70,15 @@ class QsubBatchSettings(BatchSettings):
         """
 
         self._ncpus = ncpus
-        self._resources = resources or {}
+        self.resources: dict[str, t.Union[str,int]] = {}
 
+        self.resources = resources or {}
         resource_nodes = self.resources.get("nodes", None)
 
         if nodes and resource_nodes:
             raise ValueError(
-                "nodes was incorrectly specified as its own kwarg and also in the "
-                "resource kwarg."
+                "nodes was incorrectly specified as constructor parameter and also "
+                "in the as a key in the resource mapping"
             )
 
         # time, queue, nodes, and account set in parent class init
@@ -95,13 +95,13 @@ class QsubBatchSettings(BatchSettings):
         self._hosts: t.List[str] = []
 
     @property
-    def resources(self):
+    def resources(self) -> t.Dict[str, t.Union[str,int]]:
         return self._resources.copy()
 
     @resources.setter
-    def resources(self, resources: dict[str, str | int]):
+    def resources(self, resources: dict[str, str | int]) -> None:
+        self._sanity_check_resources(resources)
         self._resources = resources.copy()
-        self._sanity_check_resources()
 
 
     def set_nodes(self, num_nodes: int) -> None:
@@ -119,7 +119,6 @@ class QsubBatchSettings(BatchSettings):
 
         if num_nodes:
             self.set_resource("nodes", num_nodes)
-            self._sanity_check_resources()
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
@@ -181,7 +180,7 @@ class QsubBatchSettings(BatchSettings):
         if account:
             self.batch_args["A"] = str(account)
 
-    def set_resource(self, resource_name: str, value: str) -> None:
+    def set_resource(self, resource_name: str, value: str | int) -> None:
         """Set a resource value for the Qsub batch
 
         If a select statement is provided, the nodes and ncpus
@@ -194,12 +193,10 @@ class QsubBatchSettings(BatchSettings):
         """
         # TODO add error checking here
         # TODO include option to overwrite place (warning for orchestrator?)
-        self._resources[resource_name] = value
-        self._sanity_check_resources()
-        # Capture the case where someone is setting the number of nodes
-        # through 'select' or 'nodes'
-        if resource_name in ["select", "nodes"] and value:
-            self._nodes = int(value)
+        updated_dict = self.resources
+        updated_dict.update({resource_name:value})
+        self._sanity_check_resources(updated_dict)
+        self.resources = updated_dict
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
@@ -216,15 +213,19 @@ class QsubBatchSettings(BatchSettings):
             opts += [" ".join((prefix + opt, str(value)))]
         return opts
 
-    def _sanity_check_resources(self) -> None:
+    def _sanity_check_resources(
+            self,
+            resources: t.Optional[t.Dict[str, t.Union[str,int]]] = None
+    ) -> None:
         """Check that only select or nodes was specified in resources
 
         Note: For PBS Pro, nodes is equivalent to 'select' and 'place' so
         they are not quite synonyms. Here we assume that
         """
+        checked_resources = resources if resources else self.resources
 
-        has_select = self.resources.get("select", None)
-        has_nodes = self.resources.get("nodes", None)
+        has_select = checked_resources.get("select", None)
+        has_nodes = checked_resources.get("nodes", None)
 
         if has_select and has_nodes:
             raise SSConfigError(
@@ -232,6 +233,24 @@ class QsubBatchSettings(BatchSettings):
                 "if nodes were specified using the 'set_nodes' method and "
                 "'select' was set using 'set_resource'. Please only specify one."
             )
+
+        if has_select and not isinstance(has_select, int):
+            raise TypeError("The value for 'select' must be an integer")
+        if has_nodes and not isinstance(has_nodes, int):
+            raise TypeError("The value for 'nodes' must be an integer")
+
+        for key, value in checked_resources.items():
+            allowed_types = [int, str]
+            if not any(isinstance(key, type) for type in allowed_types):
+                raise TypeError(
+                    f"The type of {key=} is {type(key)}. Only int and str "
+                    "are allowed."
+                )
+            if not any(isinstance(value, type) for type in allowed_types):
+                raise TypeError(
+                    f"The value associated with {key=} is {type(value)}. Only int "
+                    "and str are allowed."
+                )
 
     def _create_resource_list(self) -> t.List[str]:
 
@@ -256,13 +275,6 @@ class QsubBatchSettings(BatchSettings):
             hosts = ["=".join(("host", str(host))) for host in self._hosts]
             select_command += f":{'+'.join(hosts)}"
         res += [select_command]
-
-        if place := resources.pop("place", None):
-            res += [f"-l place={place}"]
-
-        # get time from resources or kwargs
-        if walltime := resources.pop("walltime", None):
-            res += [f"-l walltime={walltime}"]
 
         # All other "standard" resource specs
         for resource, value in resources.items():
