@@ -32,9 +32,9 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[
-    str
-] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+DEFAULT_LOG_FORMAT: t.Final[str] = (
+    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+)
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
@@ -98,7 +98,7 @@ def get_logger(
     :rtype: logging.Logger
     """
     # if name is None, then logger is the root logger
-    # if not root logger, get the name of file wi thout prefix.
+    # if not root logger, get the name of file without prefix.
     user_log_level = _get_log_level()
     if user_log_level != "developer":
         name = "SmartSim"
@@ -118,9 +118,9 @@ def add_exp_loggers(
 ) -> None:
     """Add FileHandlers to a logger instance for producing logs
     in an experiment directory"""
-    if int(
-        os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")
-    ) > 0 and logger.name.lower().startswith("smartsim"):
+    logfile_enabled = os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")
+
+    if int(logfile_enabled) > 0 and logger.name.lower().startswith("smartsim"):
         out_path = os.path.join(exp_path, "smartsim.out")
         err_path = os.path.join(exp_path, "smartsim.err")
 
