@@ -32,9 +32,9 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
-)
+DEFAULT_LOG_FORMAT: t.Final[
+    str
+] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
@@ -131,6 +131,7 @@ def add_exp_loggers(
 
 class LevelFilter(logging.Filter):
     """A filter that passes all records below a desired level"""
+
     def __init__(self, maximum_level: str = "INFO"):
         """Create a high-pass log filter allowing messages below a specific log level
 
@@ -174,9 +175,8 @@ def log_to_file(
     if log_filter:
         handler.addFilter(log_filter)
 
-    formatter = logging.Formatter(
-        fmt=fmt or DEFAULT_LOG_FORMAT, datefmt=DEFAULT_DATE_FORMAT
-    )
+    fmt = fmt or DEFAULT_LOG_FORMAT
+    formatter = logging.Formatter(fmt=fmt, datefmt=DEFAULT_DATE_FORMAT)
     handler.setFormatter(formatter)
     handler.setLevel(log_level.upper())
 
