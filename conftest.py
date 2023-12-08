@@ -66,7 +66,7 @@ test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
-test_batch_resources = CONFIG.test_batch_resources
+test_batch_resources: t.Dict[t.Any,t.Any] = CONFIG.test_batch_resources
 
 # Fill this at runtime if needed
 test_hostlist = None
@@ -390,9 +390,13 @@ class WLMUtils:
         return Orchestrator(port=test_port, interface="lo")
 
     @staticmethod
-    def choose_host(rs):
-        return get_hostlist()[0] if isinstance(rs, (MpirunSettings, MpiexecSettings)) else None
+    def choose_host(rs: RunSettings) -> t.Optional[str]:
+        if isinstance(rs, (MpirunSettings, MpiexecSettings)):
+            hl = get_hostlist()
+            if hl is not None:
+                return hl[0]
 
+        return None
 
 @pytest.fixture
 def local_db(
@@ -401,8 +405,7 @@ def local_db(
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher="local")
-
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -421,8 +424,7 @@ def db(
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher)
-
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -444,8 +446,7 @@ def db_cluster(
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher)
-
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -568,7 +569,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
 
 
 @pytest.fixture
-def test_dir(request: pytest.FixtureRequest):
+def test_dir(request: pytest.FixtureRequest) -> str:
     caller_function = _sanitize_caller_function(request.node.name)
     dir_path = FileUtils.get_test_output_path(caller_function, str(request.path))
 
@@ -601,6 +602,27 @@ class FileUtils:
     def get_test_dir_path(dirname: str) -> str:
         dir_path = os.path.join(test_path, "tests", "test_configs", dirname)
         return dir_path
+
+    @staticmethod
+    def make_test_file(file_name: str, file_dir: str, file_content: t.Optional[str] = None) -> str:
+        """Create a dummy file in the test output directory.
+
+        :param file_name: name of file to create, e.g. "file.txt"
+        :type file_name: str
+        :param file_dir: path
+        :type file_dir: str
+        :return: String path to test output file
+        :rtype: str
+        """
+        file_path = os.path.join(file_dir, file_name)
+        os.makedirs(file_dir)
+        with open(file_path, "w+", encoding="utf-8") as dummy_file:
+            if not file_content:
+                dummy_file.write("dummy\n")
+            else:
+                dummy_file.write(file_content)
+
+        return file_path
 
 
 @pytest.fixture

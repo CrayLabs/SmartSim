@@ -827,6 +827,7 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
+
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TensorFlow to run")
 def test_inconsistent_params_db_model():
     """Test error when devices_per_node parameter>1 when devices is set to CPU in DBModel"""

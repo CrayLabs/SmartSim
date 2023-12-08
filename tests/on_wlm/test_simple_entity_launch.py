@@ -48,8 +48,9 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 def test_models(fileutils, test_dir, wlmutils):
     exp_name = "test-models-launch"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-
+    exp = Experiment(
+        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
+    )
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
@@ -65,8 +66,9 @@ def test_models(fileutils, test_dir, wlmutils):
 
 def test_ensemble(fileutils, test_dir, wlmutils):
     exp_name = "test-ensemble-launch"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-
+    exp = Experiment(
+        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
+    )
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
@@ -84,8 +86,9 @@ def test_summary(fileutils, test_dir, wlmutils):
     """Fairly rudimentary test of the summary dataframe"""
 
     exp_name = "test-launch-summary"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-
+    exp = Experiment(
+        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
+    )
 
     sleep = fileutils.get_test_conf_path("sleep.py")
     bad = fileutils.get_test_conf_path("bad.py")

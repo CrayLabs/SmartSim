@@ -133,11 +133,19 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    # Create run settings
+    colo_settings = exp.create_run_settings("python", test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create the SmartSim Model
+    smartsim_model = exp.create_model("colocated_model", colo_settings)
+    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port,
@@ -287,7 +295,18 @@ def test_multidb_colo_once(fileutils, test_dir, wlmutils, coloutils, db_type):
     test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # start a new Experiment for this section
-    exp = Experiment("test_multidb_colo_once", launcher=test_launcher, exp_path=test_dir)
+    exp = Experiment("test_multidb_colo_once",
+                     launcher=test_launcher,
+                     exp_path=test_dir)
+
+    # create run settings
+    run_settings = exp.create_run_settings("python", test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create the SmartSim Model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port + 1,
@@ -418,7 +437,6 @@ def test_launch_cluster_orc_single_dbid(test_dir, coloutils, fileutils, wlmutils
     launcher = wlmutils.get_test_launcher()
     test_port = wlmutils.get_test_port()
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
-
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation

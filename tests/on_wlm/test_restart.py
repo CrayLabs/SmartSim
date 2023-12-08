@@ -38,8 +38,9 @@ if pytest.test_launcher not in pytest.wlm_options:
 def test_restart(fileutils, test_dir, wlmutils):
 
     exp_name = "test-restart"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-
+    exp = Experiment(exp_name,
+            launcher=wlmutils.get_test_launcher(),
+            exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")

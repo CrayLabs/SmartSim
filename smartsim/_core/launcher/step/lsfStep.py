@@ -213,7 +213,8 @@ class JsrunStep(Step):
 
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
-        of attached RunSettings"""
+        of attached RunSettings
+        """
         if isinstance(self.step_settings, JsrunSettings):
             return self.step_settings.mpmd
         return []

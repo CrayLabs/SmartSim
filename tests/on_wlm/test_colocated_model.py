@@ -50,7 +50,7 @@ def test_launch_colocated_model_defaults(fileutils, test_dir, coloutils, db_type
 
     db_args = { "debug": DEBUG_DB }
 
-    exp = Experiment(f"colocated_model_defaults_{db_type}", launcher=launcher, exp_path=test_dir)
+    exp = Experiment("colocated_model_defaults", launcher=launcher, exp_path=test_dir)
     colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
@@ -73,7 +73,11 @@ def test_launch_colocated_model_defaults(fileutils, test_dir, coloutils, db_type
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_disable_pinning(fileutils, test_dir, coloutils, db_type):
 
-    exp = Experiment(f"colocated_model_pinning_auto_1cpu_{db_type}", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_model_pinning_auto_1cpu",
+        launcher=launcher,
+        exp_path=test_dir
+    )
     db_args = {
         "db_cpus": 1,
         "custom_pinning": [],
@@ -98,7 +102,11 @@ def test_colocated_model_disable_pinning(fileutils, test_dir, coloutils, db_type
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_auto_2cpu(fileutils, test_dir, coloutils, db_type):
 
-    exp = Experiment(f"colocated_model_pinning_auto_2cpu_{db_type}", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_model_pinning_auto_2cpu",
+        launcher=launcher,
+        exp_path=test_dir,
+    )
 
     db_args = {
         "db_cpus": 2,
@@ -125,7 +133,11 @@ def test_colocated_model_pinning_range(fileutils, test_dir, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
     # Assume that there are at least 4 cpus on the node
 
-    exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_model_pinning_manual",
+        launcher=launcher,
+        exp_path=test_dir,
+    )
 
     db_args = {
         "db_cpus": 4,
@@ -152,7 +164,11 @@ def test_colocated_model_pinning_list(fileutils, test_dir, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
     # note we presume that this has more than 2 CPUs on the supercomputer node
 
-    exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_model_pinning_manual",
+        launcher=launcher,
+        exp_path=test_dir,
+    )
 
     db_args = {
         "db_cpus": 2,
@@ -178,7 +194,11 @@ def test_colocated_model_pinning_mixed(fileutils, test_dir, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
     # note we presume that this at least 4 CPUs on the supercomputer node
 
-    exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_model_pinning_manual",
+        launcher=launcher,
+        exp_path=test_dir,
+    )
 
     db_args = {
         "db_cpus": 2,

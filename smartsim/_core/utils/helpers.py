@@ -27,9 +27,11 @@
 """
 A file of helper functions for SmartSim
 """
+import base64
 import os
 import uuid
 import typing as t
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from shutil import which
@@ -64,21 +66,20 @@ def unpack_colo_db_identifier(db_id: str) -> str:
     return "_" + db_id if db_id else ""
 
 
+def create_short_id_str() -> str:
+    return str(uuid.uuid4())[:7]
+
+
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
-    lock_suffix = str(uuid.uuid4())[:7]
+    lock_suffix = create_short_id_str()
     return f"smartsim-{lock_suffix}.lock"
 
 
 @lru_cache(maxsize=20, typed=False)
 def check_dev_log_level() -> bool:
-    try:
-        lvl = os.environ["SMARTSIM_LOG_LEVEL"]
-        if lvl == "developer":
-            return True
-        return False
-    except KeyError:
-        return False
+    lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
+    return lvl == "developer"
 
 
 def fmt_dict(value: t.Dict[str, t.Any]) -> str:
@@ -273,3 +274,31 @@ def installed_redisai_backends(
     }
 
     return {backend for backend in backends if _installed(base_path, backend)}
+
+
+def get_ts() -> int:
+    """Return the current timestamp (accurate to seconds) cast to an integer"""
+    return int(datetime.timestamp(datetime.now()))
+
+
+def encode_cmd(cmd: t.List[str]) -> str:
+    """Transform a standard command list into an encoded string safe for providing as an
+    argument to a proxy entrypoint
+    """
+    if not cmd:
+        raise ValueError("Invalid cmd supplied")
+
+    ascii_cmd = "|".join(cmd).encode("ascii")
+    encoded_cmd = base64.b64encode(ascii_cmd).decode("ascii")
+    return encoded_cmd
+
+
+def decode_cmd(encoded_cmd: str) -> t.List[str]:
+    """Decode an encoded command string to the original command list format"""
+    if not encoded_cmd.strip():
+        raise ValueError("Invalid cmd supplied")
+
+    decoded_cmd = base64.b64decode(encoded_cmd.encode("ascii"))
+    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
+
+    return cleaned_cmd

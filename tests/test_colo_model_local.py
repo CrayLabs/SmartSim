@@ -45,11 +45,11 @@ is_mac = sys.platform == "darwin"
 
 
 @pytest.mark.skipif(not is_mac, reason="MacOS-only test")
-def test_macosx_warning(fileutils, coloutils):
+def test_macosx_warning(fileutils, test_dir, coloutils):
     db_args = {"custom_pinning": [1]}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_defaults", launcher="local")
+    exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
     with pytest.warns(
         RuntimeWarning,
         match="CPU pinning is not supported on MacOSX. Ignoring pinning specification.",
@@ -63,11 +63,11 @@ def test_macosx_warning(fileutils, coloutils):
         )
 
 
-def test_unsupported_limit_app(fileutils, coloutils):
+def test_unsupported_limit_app(fileutils, test_dir, coloutils):
     db_args = {"limit_app_cpus": True}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_defaults", launcher="local")
+    exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
     with pytest.raises(SSUnsupportedError):
         coloutils.setup_test_colo(
             fileutils,
@@ -80,11 +80,11 @@ def test_unsupported_limit_app(fileutils, coloutils):
 
 @pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
 @pytest.mark.parametrize("custom_pinning", [1, "10", "#", 1.0, ["a"], [1.0]])
-def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
+def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinning):
     db_type = "uds"  # Test is insensitive to choice of db
     db_args = {"custom_pinning": custom_pinning}
 
-    exp = Experiment("colocated_model_defaults", launcher="local")
+    exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
     with pytest.raises(TypeError):
         coloutils.setup_test_colo(
             fileutils,
@@ -120,8 +120,7 @@ def test_launch_colocated_model_defaults(
 
     db_args = {}
 
-
-    exp = Experiment(f"colocated_model_defaults_{db_type}", test_dir, launcher=launcher)
+    exp = Experiment("colocated_model_defaults", launcher=launcher, exp_path=test_dir)
     colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
@@ -193,9 +192,7 @@ def test_colocated_model_disable_pinning(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     exp = Experiment(
-        f"colocated_model_pinning_auto_1cpu_{db_type}",
-        launcher=launcher,
-        exp_path=test_dir,
+        "colocated_model_pinning_auto_1cpu", launcher=launcher, exp_path=test_dir
     )
     db_args = {
         "db_cpus": 1,
@@ -221,9 +218,7 @@ def test_colocated_model_pinning_auto_2cpu(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     exp = Experiment(
-        f"colocated_model_pinning_auto_2cpu_{db_type}",
-        launcher=launcher,
-        exp_path=test_dir,
+        "colocated_model_pinning_auto_2cpu", launcher=launcher, exp_path=test_dir
     )
 
     db_args = {
@@ -259,9 +254,7 @@ def test_colocated_model_pinning_range(
     # Check to make sure that the CPU mask was correctly generated
 
     exp = Experiment(
-        f"colocated_model_pinning_manual_{db_type}",
-        launcher=launcher,
-        exp_path=test_dir,
+        "colocated_model_pinning_manual", launcher=launcher, exp_path=test_dir
     )
 
     db_args = {"db_cpus": 2, "custom_pinning": range(2)}
@@ -288,9 +281,7 @@ def test_colocated_model_pinning_list(
     # Check to make sure that the CPU mask was correctly generated
 
     exp = Experiment(
-        f"colocated_model_pinning_manual_{db_type}",
-        launcher=launcher,
-        exp_path=test_dir,
+        "colocated_model_pinning_manual", launcher=launcher, exp_path=test_dir
     )
 
     db_args = {"db_cpus": 1, "custom_pinning": [1]}
