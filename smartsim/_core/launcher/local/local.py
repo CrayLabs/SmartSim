@@ -24,19 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import sys
 import typing as t
 
 from ..launcher import Launcher
-from ....log import get_logger
 from ....settings import RunSettings, SettingsBase
 from ..step import LocalStep, Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
-from ...utils.helpers import encode_cmd
-from ...config import CONFIG
 
 
 class LocalLauncher(Launcher):
@@ -53,7 +48,8 @@ class LocalLauncher(Launcher):
         """
         if not isinstance(step_settings, RunSettings):
             raise TypeError(
-                f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
+                "Local Launcher only supports entities with RunSettings, "
+                f"not {type(step_settings)}"
             )
         return LocalStep(name, cwd, step_settings)
 
@@ -72,8 +68,8 @@ class LocalLauncher(Launcher):
         updates: t.List[t.Tuple[str, t.Optional[StepInfo]]] = []
         s_names, s_ids = self.step_mapping.get_ids(step_names, managed=False)
         for step_name, step_id in zip(s_names, s_ids):
-            status, rc, out, err = self.task_manager.get_task_update(str(step_id))
-            step_info = UnmanagedStepInfo(status, rc, out, err)
+            status, ret_code, out, err = self.task_manager.get_task_update(str(step_id))
+            step_info = UnmanagedStepInfo(status, ret_code, out, err)
             update = (step_name, step_info)
             updates.append(update)
         return updates
@@ -130,8 +126,8 @@ class LocalLauncher(Launcher):
         step_id = self.step_mapping[step_name].task_id
 
         self.task_manager.remove_task(str(step_id))
-        _, rc, out, err = self.task_manager.get_task_update(str(step_id))
-        step_info = UnmanagedStepInfo("Cancelled", rc, out, err)
+        _, ret_code, out, err = self.task_manager.get_task_update(str(step_id))
+        step_info = UnmanagedStepInfo("Cancelled", ret_code, out, err)
         return step_info
 
     def __str__(self) -> str:
