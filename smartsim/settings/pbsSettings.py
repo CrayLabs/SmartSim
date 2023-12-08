@@ -69,10 +69,17 @@ class QsubBatchSettings(BatchSettings):
         :param batch_args: overrides for PBS batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        self._time: t.Optional[str] = None
-        self._nodes: t.Optional[int] = None
+
         self._ncpus = ncpus
-        self.resources = init_default({}, resources, dict)
+        self._resources = resources or {}
+
+        resource_nodes = self.resources.get("nodes", None)
+
+        if nodes and resource_nodes:
+            raise ValueError(
+                "nodes was incorrectly specified as its own kwarg and also in the "
+                "resource kwarg."
+            )
 
         # time, queue, nodes, and account set in parent class init
         super().__init__(
@@ -85,14 +92,17 @@ class QsubBatchSettings(BatchSettings):
             **kwargs,
         )
 
-        self._sanity_check_resources()
-        # Set the number of nodes if it was specified, note this needs
-        # to be done after the super init because nodes might also be set
-        self._nodes = self.resources.get("nodes", None) or self.resources.get(
-            "select", None
-        )
-
         self._hosts: t.List[str] = []
+
+    @property
+    def resources(self):
+        return self._resources.copy()
+
+    @resources.setter
+    def resources(self, resources: dict[str, str | int]):
+        self._resources = resources.copy()
+        self._sanity_check_resources()
+
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
@@ -108,8 +118,7 @@ class QsubBatchSettings(BatchSettings):
         """
 
         if num_nodes:
-            self._nodes = num_nodes
-            self.set_resource("nodes", self._nodes)
+            self.set_resource("nodes", num_nodes)
             self._sanity_check_resources()
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -140,7 +149,7 @@ class QsubBatchSettings(BatchSettings):
         :type walltime: str
         """
         if walltime:
-            self._time = walltime
+            self.set_resource("walltime", walltime)
 
     def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
@@ -185,7 +194,7 @@ class QsubBatchSettings(BatchSettings):
         """
         # TODO add error checking here
         # TODO include option to overwrite place (warning for orchestrator?)
-        self.resources[resource_name] = value
+        self._resources[resource_name] = value
         self._sanity_check_resources()
         # Capture the case where someone is setting the number of nodes
         # through 'select' or 'nodes'
@@ -220,7 +229,7 @@ class QsubBatchSettings(BatchSettings):
         if has_select and has_nodes:
             raise SSConfigError(
                 "'select' and 'nodes' cannot both be specified. This can happen "
-                "if nodes were specified using the 'set_nodes' method and"
+                "if nodes were specified using the 'set_nodes' method and "
                 "'select' was set using 'set_resource'. Please only specify one."
             )
 
@@ -229,11 +238,14 @@ class QsubBatchSettings(BatchSettings):
         self._sanity_check_resources()
         res = []
 
+        # Pop off some specific keywords that need to be treated separately
+        resources = self.resources # Note this is a copy so not modifying original
+
         # Construct the basic select/nodes statement
-        if self.resources.get("select", None):
-            select_command = f"-l select={self.resources['select']}"
-        elif self.resources.get("nodes", None):
-            select_command = f"-l nodes={self.resources['nodes']}"
+        if select := resources.pop("select", None):
+            select_command = f"-l select={select}"
+        elif nodes := resources.pop("nodes", None):
+            select_command = f"-l nodes={nodes}"
         else:
             raise SSConfigError(
                 "Insufficient resource specification: no nodes or select statement"
@@ -245,17 +257,15 @@ class QsubBatchSettings(BatchSettings):
             select_command += f":{'+'.join(hosts)}"
         res += [select_command]
 
-        if "place" in self.resources:
-            res += [f"-l place={str(self.resources['place'])}"]
+        if place := resources.pop("place", None):
+            res += [f"-l place={place}"]
 
         # get time from resources or kwargs
-        if "walltime" in self.resources:
-            res += [f"-l walltime={str(self.resources['walltime'])}"]
-        else:
-            if self._time:
-                res += [f"-l walltime={self._time}"]
+        if walltime := resources.pop("walltime", None):
+            res += [f"-l walltime={walltime}"]
 
-        for resource, value in self.resources.items():
-            if resource not in ["nodes", "select", "walltime", "place"]:
-                res += [f"-l {resource}={str(value)}"]
+        # All other "standard" resource specs
+        for resource, value in resources.items():
+            res += [f"-l {resource}={str(value)}"]
+
         return res

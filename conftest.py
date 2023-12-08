@@ -632,9 +632,9 @@ class ColoUtils:
         application_file: str,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[RunSettings] = None,
-        colo_model_name: t.Optional[str] = "colocated_model",
-        port: t.Optional[int] = test_port,
-        on_wlm: t.Optional[bool] = False,
+        colo_model_name: str = "colocated_model",
+        port: int = test_port,
+        on_wlm: bool = False,
     ) -> Model:
         """Setup database needed for the colo pinning tests"""
 

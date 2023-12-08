@@ -56,7 +56,7 @@ if shouldrun_tf:
                     tf.config.set_logical_device_configuration(
                         device,
                         [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
-            except:
+            except Exception:
                 logger.warning("Could not set TF max memory limit for GPU")
 
 shouldrun_torch = True
