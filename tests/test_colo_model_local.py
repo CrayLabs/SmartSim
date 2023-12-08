@@ -301,8 +301,6 @@ def test_colocated_model_pinning_list(
 
 
 def test_colo_uds_verifies_socket_file_name(test_dir, launcher="local"):
-    # Check to make sure that the CPU mask was correctly generated
-
     exp = Experiment(f"colo_uds_wrong_name", launcher=launcher, exp_path=test_dir)
 
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=["--version"])
