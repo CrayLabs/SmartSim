@@ -100,7 +100,6 @@ def get_logger(
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file wi thout prefix.
     user_log_level = _get_log_level()
-    oname = name
     if user_log_level != "developer":
         name = "SmartSim"
 
@@ -111,37 +110,34 @@ def get_logger(
         log_level = user_log_level
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
 
-    # # Add a file handler to the root logger only.
-    # if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0 and oname.lower().startswith("smartsim"):
-    #     # hasFileHandlers = any(isinstance(h, logging.FileHandler) for h in logger.handlers)
-    #     # if not hasFileHandlers:
-    #     # log errors below warning to <outfile>.out & those above to <outfile>.err
-    #     log_to_file("smartsim.out", "INFO", logger, fmt, LevelFilter(max="INFO"))
-    #     log_to_file("smartsim.err", "WARN", logger, fmt)
-    # add_exp_loggers("./", logger, fmt, oname)
-
     return logger
 
+
 def add_exp_loggers(exp_path: str, logger: logging.Logger, fmt: str, name: str) -> None:
-    # Add a file handler to the root logger only.
-    if int(os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")) > 0 and name.lower().startswith("smartsim"):
-        # hasFileHandlers = any(isinstance(h, logging.FileHandler) for h in logger.handlers)
-        # if not hasFileHandlers:
+    """Add FileHandlers to a logger instance for producing logs 
+    in an experiment directory"""
+    if int(
+        os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")
+    ) > 0 and name.lower().startswith("smartsim"):
         out_path = os.path.join(exp_path, "smartsim.out")
         err_path = os.path.join(exp_path, "smartsim.err")
 
         # log errors below warning to <outfile>.out & those above to <outfile>.err
-        log_to_file(out_path, "INFO", logger, fmt, LevelFilter(max="INFO"))
+        log_to_file(out_path, "INFO", logger, fmt, LevelFilter(maximum_level="INFO"))
         log_to_file(err_path, "WARN", logger, fmt)
 
 
 class LevelFilter(logging.Filter):
     """A filter that passes all records below a desired level"""
-    def __init__(
-        self,
-        max: t.Optional[str] = "INFO"
-    ):
-        self.max = max
+
+    def __init__(self, maximum_level: t.Optional[str] = "INFO"):
+        """Create a high-pass log filter allowing messages below a specific log level
+        
+        :param maximum_level: The maximum log level to be passed by the filter
+        :type maximum_level: str
+        """
+        super().__init__()
+        self.max = maximum_level
 
     def filter(self, record) -> bool:
         if record.levelno <= logging.getLevelName(self.max):
@@ -154,7 +150,7 @@ def log_to_file(
     log_level: str = "warn",
     logger: t.Optional[logging.Logger] = None,
     fmt: t.Optional[str] = None,
-    filter: t.Optional[logging.Filter] = None,
+    log_filter: t.Optional[logging.Filter] = None,
 ) -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
@@ -171,11 +167,13 @@ def log_to_file(
         logger = logging.getLogger("SmartSim")
 
     handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
-    
-    if filter:
-        handler.addFilter(filter)
 
-    formatter = logging.Formatter(fmt=fmt or DEFAULT_LOG_FORMAT, datefmt=DEFAULT_DATE_FORMAT)
+    if log_filter:
+        handler.addFilter(log_filter)
+
+    formatter = logging.Formatter(
+        fmt=fmt or DEFAULT_LOG_FORMAT, datefmt=DEFAULT_DATE_FORMAT
+    )
     handler.setFormatter(formatter)
     handler.setLevel(log_level.upper())
 
