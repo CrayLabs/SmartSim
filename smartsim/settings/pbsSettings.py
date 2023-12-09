@@ -180,7 +180,7 @@ class QsubBatchSettings(BatchSettings):
         if account:
             self.batch_args["A"] = str(account)
 
-    def set_resource(self, resource_name: str, value: str | int) -> None:
+    def set_resource(self, resource_name: str, value: t.Union[str,int]) -> None:
         """Set a resource value for the Qsub batch
 
         If a select statement is provided, the nodes and ncpus
