@@ -70,7 +70,6 @@ class QsubBatchSettings(BatchSettings):
         """
 
         self._ncpus = ncpus
-        self.resources: dict[str, t.Union[str,int]] = {}
 
         self.resources = resources or {}
         resource_nodes = self.resources.get("nodes", None)
@@ -95,14 +94,13 @@ class QsubBatchSettings(BatchSettings):
         self._hosts: t.List[str] = []
 
     @property
-    def resources(self) -> t.Dict[str, t.Union[str,int]]:
+    def resources(self) -> t.Dict[str, t.Union[str, int]]:
         return self._resources.copy()
 
     @resources.setter
-    def resources(self, resources: t.Dict[str, t.Union[str,int]]) -> None:
+    def resources(self, resources: t.Dict[str, t.Union[str, int]]) -> None:
         self._sanity_check_resources(resources)
         self._resources = resources.copy()
-
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
@@ -180,7 +178,7 @@ class QsubBatchSettings(BatchSettings):
         if account:
             self.batch_args["A"] = str(account)
 
-    def set_resource(self, resource_name: str, value: t.Union[str,int]) -> None:
+    def set_resource(self, resource_name: str, value: t.Union[str, int]) -> None:
         """Set a resource value for the Qsub batch
 
         If a select statement is provided, the nodes and ncpus
@@ -194,7 +192,7 @@ class QsubBatchSettings(BatchSettings):
         # TODO add error checking here
         # TODO include option to overwrite place (warning for orchestrator?)
         updated_dict = self.resources
-        updated_dict.update({resource_name:value})
+        updated_dict.update({resource_name: value})
         self._sanity_check_resources(updated_dict)
         self.resources = updated_dict
 
@@ -214,8 +212,7 @@ class QsubBatchSettings(BatchSettings):
         return opts
 
     def _sanity_check_resources(
-            self,
-            resources: t.Optional[t.Dict[str, t.Union[str,int]]] = None
+        self, resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None
     ) -> None:
         """Check that only select or nodes was specified in resources
 
@@ -258,7 +255,7 @@ class QsubBatchSettings(BatchSettings):
         res = []
 
         # Pop off some specific keywords that need to be treated separately
-        resources = self.resources # Note this is a copy so not modifying original
+        resources = self.resources  # Note this is a copy so not modifying original
 
         # Construct the basic select/nodes statement
         if select := resources.pop("select", None):
