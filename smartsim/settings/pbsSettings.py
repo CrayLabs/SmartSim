@@ -99,7 +99,7 @@ class QsubBatchSettings(BatchSettings):
         return self._resources.copy()
 
     @resources.setter
-    def resources(self, resources: dict[str, t.Union[str,int]]) -> None:
+    def resources(self, resources: t.Dict[str, t.Union[str,int]]) -> None:
         self._sanity_check_resources(resources)
         self._resources = resources.copy()
 
