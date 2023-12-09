@@ -76,8 +76,8 @@ class QsubBatchSettings(BatchSettings):
 
         if nodes and resource_nodes:
             raise ValueError(
-                "nodes was incorrectly specified as constructor parameter and also "
-                "in the as a key in the resource mapping"
+                "nodes was incorrectly specified as a constructor parameter and also "
+                "as a key in the resource mapping"
             )
 
         # time, queue, nodes, and account set in parent class init
@@ -237,13 +237,12 @@ class QsubBatchSettings(BatchSettings):
             raise TypeError("The value for 'nodes' must be an integer")
 
         for key, value in checked_resources.items():
-            allowed_types = [int, str]
-            if not any(isinstance(key, type) for type in allowed_types):
+            if not isinstance(key, str):
                 raise TypeError(
                     f"The type of {key=} is {type(key)}. Only int and str "
                     "are allowed."
                 )
-            if not any(isinstance(value, type) for type in allowed_types):
+            if not isinstance(value, (str, int)):
                 raise TypeError(
                     f"The value associated with {key=} is {type(value)}. Only int "
                     "and str are allowed."
@@ -275,6 +274,6 @@ class QsubBatchSettings(BatchSettings):
 
         # All other "standard" resource specs
         for resource, value in resources.items():
-            res += [f"-l {resource}={str(value)}"]
+            res += [f"-l {resource}={value}"]
 
         return res
