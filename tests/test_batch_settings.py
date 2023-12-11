@@ -41,8 +41,7 @@ def test_create_pbs_batch():
     args = pbs_batch.format_batch_args()
     assert isinstance(pbs_batch, QsubBatchSettings)
     assert args == [
-        "-l select=1:ncpus=10",
-        "-l place=scatter",
+        "-l nodes=1:ncpus=10",
         "-l walltime=10:00:00",
         "-q default",
         "-A myproject",
@@ -105,7 +104,7 @@ def test_existing_batch_args_mutation():
         queue="default",
         batch_args=batch_args,
     )
-    
+
     # verify initial expectations
     assert "k1" in bsub.batch_args
     assert "k2" in bsub.batch_args
@@ -132,7 +131,7 @@ def test_direct_set_batch_args_mutation():
         queue="default",
     )
     bsub.batch_args = batch_args
-    
+
     # verify initial expectations
     assert "k1" in bsub.batch_args
     assert "k2" in bsub.batch_args

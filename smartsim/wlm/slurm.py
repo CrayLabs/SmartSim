@@ -237,7 +237,8 @@ def _get_alloc_cmd(
     options: t.Optional[t.Dict[str, str]] = None,
 ) -> t.List[str]:
     """Return the command to request an allocation from Slurm with
-    the class variables as the slurm options."""
+    the class variables as the slurm options.
+    """
 
     salloc_args = [
         "--no-shell",

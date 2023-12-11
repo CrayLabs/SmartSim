@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import os.path as osp
 import typing as t
 from os import getcwd
@@ -194,6 +195,8 @@ class Experiment:
             if summary:
                 self._launch_summary(start_manifest)
             self._control.start(
+                exp_name=self.name,
+                exp_path=self.exp_path,
                 manifest=start_manifest,
                 block=block,
                 kill_on_interrupt=kill_on_interrupt,
@@ -696,7 +699,7 @@ class Experiment:
         port: int = 6379,
         db_nodes: int = 1,
         batch: bool = False,
-        hosts: t.Optional[t.List[str]] = None,
+        hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
         interface: str = "ipogif0",
         account: t.Optional[str] = None,
@@ -878,3 +881,35 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
+
+    def enable_telemetry(self) -> None:
+        """Experiments will start producing telemetry for all entities run
+        through ``Experiment.start``
+
+        .. warning::
+
+            This method is currently implemented so that ALL ``Experiment``
+            instances will begin producing telemetry data. In the future it
+            is planned to have this method work on a "per instance" basis!
+        """
+        self._set_telemetry(True)
+
+    def disable_telemetry(self) -> None:
+        """Experiments will stop producing telemetry for all entities run
+        through ``Experiment.start``
+
+        .. warning::
+
+            This method is currently implemented so that ALL ``Experiment``
+            instances will stop producing telemetry data. In the future it
+            is planned to have this method work on a "per instance" basis!
+        """
+        self._set_telemetry(False)
+
+    @staticmethod
+    def _set_telemetry(switch: bool, /) -> None:
+        tm_key = "SMARTSIM_FLAG_TELEMETRY"
+        if switch:
+            os.environ[tm_key] = "1"
+        else:
+            os.environ[tm_key] = "0"

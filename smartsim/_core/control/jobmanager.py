@@ -24,21 +24,23 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 import itertools
 import time
 import typing as t
+from collections import ChainMap
 from threading import Thread, RLock
 from types import FrameType
 
 from ...database import Orchestrator
 from ...entity import DBNode, SmartSimEntity, EntitySequence
-from ...error import SmartSimError
 from ...log import get_logger
-from ...status import TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, STATUS_NEVER_STARTED
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
-from .job import Job
+from .job import Job, JobEntity
+
 
 logger = get_logger(__name__)
 
@@ -145,13 +147,8 @@ class JobManager:
         :rtype: Job
         """
         with self._lock:
-            if entity_name in self.db_jobs:
-                return self.db_jobs[entity_name]
-            if entity_name in self.jobs:
-                return self.jobs[entity_name]
-            if entity_name in self.completed:
-                return self.completed[entity_name]
-            raise KeyError
+            entities = ChainMap(self.db_jobs, self.jobs, self.completed)
+            return entities[entity_name]
 
     def __call__(self) -> t.Dict[str, Job]:
         """Returns dictionary all jobs for () operator
@@ -162,11 +159,18 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
+    def __contains__(self, key: str) -> bool:
+        try:
+            self[key]  # pylint: disable=pointless-statement
+            return True
+        except KeyError:
+            return False
+
     def add_job(
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -185,7 +189,8 @@ class JobManager:
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
-
+        elif isinstance(entity, JobEntity) and entity.is_db:
+            self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
 
@@ -243,17 +248,14 @@ class JobManager:
         :returns: tuple of status
         """
         with self._lock:
-            try:
-                if entity.name in self.completed:
-                    return self.completed[entity.name].status
+            if entity.name in self.completed:
+                return self.completed[entity.name].status
 
+            if entity.name in self:
                 job: Job = self[entity.name]  # locked
-            except KeyError:
-                raise SmartSimError(
-                    f"Entity {entity.name} has not been launched in this Experiment"
-                ) from None
+                return job.status
 
-            return job.status
+            return STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
@@ -310,9 +312,10 @@ class JobManager:
         for corresponding database identifiers
 
         :return: dictionary of host ip addresses
-        :rtype: Dict[str, list]"""
+        :rtype: Dict[str, list]
+        """
 
-        address_dict = {}
+        address_dict: t.Dict[str, t.List[str]] = {}
         for db_job in self.db_jobs.values():
             addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
@@ -321,7 +324,9 @@ class JobManager:
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-            address_dict.update({db_entity.name: addresses})
+                dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
+                dict_entry.extend(addresses)
+                address_dict[db_entity.db_identifier] = dict_entry
 
         return address_dict
 

@@ -52,6 +52,12 @@ RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --dept
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
+# Install smartdashboard
+RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
+    && cd smartdashboard \
+    && python -m pip install . \
+    && rm -rf ~/.cache/pip
+
 RUN mkdir doc/tutorials/ && \
     cd doc/tutorials/ && \
     ln -s ../../tutorials/* .

@@ -1,0 +1,86 @@
+{
+    "schema info": {
+        "schema_name": "entity manifest",
+        "version": "0.0.1"
+    },
+    "experiment": {
+        "name": "my-exp",
+        "path": "/tmp/my-exp",
+        "launcher": "Slurm"
+    },
+    "runs": [
+        {
+            "run_id": "2ca19ad",
+            "timestamp": 1699038647234488933,
+            "model": [],
+            "orchestrator": [
+                {
+                    "name": "orchestrator",
+                    "type": "redis",
+                    "interface": [
+                        "ipogif0"
+                    ],
+                    "shards": [
+                        {
+                            "name": "orchestrator_0",
+                            "hostname": "10.128.0.4",
+                            "port": 6780,
+                            "cluster": false,
+                            "conf_file": null,
+                            "out_file": "/path/to/some/file.out",
+                            "err_file": "/path/to/some/file.err",
+                            "telemetry_metadata": {
+                                "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/2ca19ad/database/orchestrator/orchestrator_0",
+                                "step_id": "4139111.27",
+                                "task_id": "1452",
+                                "managed": true
+                            }
+                        }
+                    ]
+                }
+            ],
+            "ensemble": []
+        },
+        {
+            "run_id": "4b5507a",
+            "timestamp": 1699038661491043211,
+            "model": [
+                {
+                    "name": "perroquet",
+                    "path": "/tmp/my-exp/perroquet",
+                    "exe_args": [
+                        "/path/to/my/script.py"
+                    ],
+                    "run_settings": {
+                        "exe": [
+                            "/path/to/my/python"
+                        ],
+                        "run_command": "/opt/slurm/20.11.5/bin/srun",
+                        "run_args": {
+                            "nodes": 1,
+                            "ntasks-per-node": 1
+                        }
+                    },
+                    "batch_settings": {},
+                    "params": {},
+                    "files": {
+                        "Symlink": [],
+                        "Configure": [],
+                        "Copy": []
+                    },
+                    "colocated_db": {},
+                    "telemetry_metadata": {
+                        "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/4b5507a/model/perroquet",
+                        "step_id": "4139111.28",
+                        "task_id": "2929",
+                        "managed": true
+                    },
+                    "out_file": "/tmp/my-exp/perroquet/perroquet.out",
+                    "err_file": "/tmp/my-exp/perroquet/perroquet.err"
+                }
+            ],
+            "orchestrator": [],
+            "ensemble": []
+        }
+    ]
+}
