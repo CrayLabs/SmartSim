@@ -31,6 +31,7 @@
    :caption: SmartSim
 
    experiment
+   model
    orchestrator
    launchers
    api/smartsim_api
