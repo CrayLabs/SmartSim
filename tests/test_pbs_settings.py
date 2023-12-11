@@ -93,7 +93,7 @@ def test_resources_is_a_copy():
     resources = settings.resources
     assert resources is not settings._resources
 
-def test_nodes_and_select_not_ints_rrror():
+def test_nodes_and_select_not_ints_error():
     expected_error = TypeError
     with pytest.raises(expected_error):
         settings = QsubBatchSettings()

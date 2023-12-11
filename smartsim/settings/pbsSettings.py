@@ -219,7 +219,8 @@ class QsubBatchSettings(BatchSettings):
         Note: For PBS Pro, nodes is equivalent to 'select' and 'place' so
         they are not quite synonyms. Here we assume that
         """
-        checked_resources = resources if resources else self.resources
+        # Note: isinstance check here to avoid collision with default
+        checked_resources = resources if isinstance(resources, dict) else self.resources
 
         has_select = checked_resources.get("select", None)
         has_nodes = checked_resources.get("nodes", None)
