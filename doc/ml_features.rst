@@ -17,22 +17,25 @@ result can be achieved with any SmartRedis client (C, C++,
 Fortran and Python). Please refer to SmartRedis API
 for language-specific details.
 
-Using ML models on the DB
-=========================
+ML Model Deployment and Execution in the Database
+===================================================
 
 The combination of SmartSim and SmartRedis allows users
-to store more than simple tensors on the DB. In the following
+to store more than simple tensors on the DataBase (DB). In the following
 subsections, we show how to upload executable code, in the
 form of ML models or functions, to the DB.
 The stored code can then be run on stored tensors, and
 the output is stored on the DB as well, where it can be
-downloaded with standard ``get_tensor`` calls.
+downloaded with standard SmartRedis ``Client.get_tensor()`` calls.
 
-In general, there are two ways to upload serialized code
-to the DB: from memory and from file. In all examples, we
-will assume that a SmartSim ``Orchestator`` is up and running,
-and that the code we will show is run as part of a SmartSim-launched
-application ``Model``.
+SmartRedis offers two ways to upload serialized code
+to the DB: from memory and from file. In each example, we will
+demonstrate how to upload from each. We provide the following examples:
+
+.. note::
+    In all examples, we will assume that a SmartSim ``Orchestator``
+    is up and running, and that the code we will show is run as part
+    of a SmartSim-launched application ``Model``.
 
 
 TensorFlow
@@ -194,7 +197,7 @@ it on the file system. For this reason, we need to call SmartRedis's
     output = client.get_tensor("output")
 
 The model can be serialized and stored on disk by replacing the
-``BytesIO`` object by a string representing the file name. It can
+``BytesIO`` object with a string representing the file name. It can
 then be uploaded to the DB by calling ``set_model_from_file`` instead
 of ``set_model``.
 
@@ -222,6 +225,7 @@ possible to upload to the DB (collections of) functions which can be used e.g.
 to perform pre- or post-processing operations on tensors stored on the DB.
 
 Since the functions are going to be stored as TorchScript modules, they
+
 - need to be jit-traceable
 - can use ``torch`` as a built-in module
 - can **not** import modules
