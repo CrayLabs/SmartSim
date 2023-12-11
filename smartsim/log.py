@@ -126,11 +126,11 @@ def add_exp_loggers(
         err_path = os.path.join(exp_path, "smartsim.err")
 
         # log errors below warning to <outfile>.out & those above to <outfile>.err
-        log_to_file(out_path, "INFO", logger, fmt, LowPassLevelFilter(maximum_level="INFO"))
+        log_to_file(out_path, "INFO", logger, fmt, LowPassFilter(maximum_level="INFO"))
         log_to_file(err_path, "WARN", logger, fmt)
 
 
-class LowPassLevelFilter(logging.Filter):
+class LowPassFilter(logging.Filter):
     """A filter that passes all records below a specified level"""
 
     def __init__(self, maximum_level: str = "INFO"):
@@ -170,14 +170,13 @@ def log_to_file(
     """
     if logger is None:
         logger = logging.getLogger("SmartSim")
-    
+
     # ensure logs can are written if specified dir doesn't exist
     log_path = pathlib.Path(filename)
     if not log_path.parent.exists():
-        logger.warn("Attempted to write logs to missing directory. Fallback to cwd")
+        logger.warning("Attempted to write logs to missing directory. Fallback to cwd")
         filename = log_path.name
 
-    
     handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
 
     if log_filter:
