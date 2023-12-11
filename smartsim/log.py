@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
+import pathlib
 import sys
 import typing as t
 
@@ -169,7 +170,14 @@ def log_to_file(
     """
     if logger is None:
         logger = logging.getLogger("SmartSim")
+    
+    # ensure logs can are written if specified dir doesn't exist
+    log_path = pathlib.Path(filename)
+    if not log_path.parent.exists():
+        logger.warn("Attempted to write logs to missing directory. Fallback to cwd")
+        filename = log_path.name
 
+    
     handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
 
     if log_filter:
