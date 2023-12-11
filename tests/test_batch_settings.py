@@ -41,7 +41,7 @@ def test_create_pbs_batch():
     args = pbs_batch.format_batch_args()
     assert isinstance(pbs_batch, QsubBatchSettings)
     assert args == [
-        "-l select=1:ncpus=10",
+        "-l nodes=1:ncpus=10",
         "-l walltime=10:00:00",
         "-q default",
         "-A myproject",
