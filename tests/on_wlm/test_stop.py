@@ -42,9 +42,8 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_stop_entity(fileutils, wlmutils):
+def test_stop_entity(fileutils, test_dir, wlmutils):
     exp_name = "test-launch-stop-model"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
     )
@@ -61,10 +60,9 @@ def test_stop_entity(fileutils, wlmutils):
     assert exp.get_status(M1)[0] == status.STATUS_CANCELLED
 
 
-def test_stop_entity_list(fileutils, wlmutils):
+def test_stop_entity_list(fileutils, test_dir, wlmutils):
 
     exp_name = "test-launch-stop-ensemble"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
     )

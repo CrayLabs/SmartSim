@@ -41,11 +41,10 @@ first_dir = ""
 # use https://stackoverflow.com/questions/22627659/run-code-before-and-after-each-test-in-py-test
 
 
-def test_local_orchestrator(fileutils, wlmutils):
+def test_local_orchestrator(test_dir, wlmutils):
     """Test launching orchestrator locally"""
     global first_dir
     exp_name = "test-orc-launch-local"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     first_dir = test_dir
 
@@ -61,12 +60,11 @@ def test_local_orchestrator(fileutils, wlmutils):
     exp._control._launcher.task_manager.actively_monitoring = False
 
 
-def test_reconnect_local_orc(fileutils):
+def test_reconnect_local_orc(test_dir):
     """Test reconnecting to orchestrator from first experiment"""
     global first_dir
     # start new experiment
     exp_name = "test-orc-local-reconnect-2nd"
-    test_dir = fileutils.make_test_dir()
     exp_2 = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     checkpoint = osp.join(first_dir, "smartsim_db.dat")

@@ -33,12 +33,11 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_launch_orc_auto(fileutils, wlmutils):
+def test_launch_orc_auto(test_dir, wlmutils):
     """test single node orchestrator"""
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-orc"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
@@ -65,13 +64,12 @@ def test_launch_orc_auto(fileutils, wlmutils):
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_single(fileutils, wlmutils):
+def test_launch_cluster_orc_single(test_dir, wlmutils):
     """test clustered 3-node orchestrator with single command"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-cluster-orc-single"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
@@ -99,13 +97,12 @@ def test_launch_cluster_orc_single(fileutils, wlmutils):
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_multi(fileutils, wlmutils):
+def test_launch_cluster_orc_multi(test_dir, wlmutils):
     """test clustered 3-node orchestrator with multiple commands"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-cluster-orc-multi"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation

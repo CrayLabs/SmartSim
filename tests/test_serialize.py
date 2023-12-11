@@ -52,8 +52,7 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def test_serialize_creates_a_manifest_json_file_if_dne(fileutils):
-    test_dir = fileutils.get_test_dir()
+def test_serialize_creates_a_manifest_json_file_if_dne(test_dir):
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
@@ -68,21 +67,19 @@ def test_serialize_creates_a_manifest_json_file_if_dne(fileutils):
 
 
 def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
-    fileutils, monkeypatch
+    test_dir, monkeypatch
 ):
     monkeypatch.setattr(
         smartsim._core.config.config.Config,
         _CFG_TM_ENABLED_ATTR,
         property(lambda self: False))
-    test_dir = fileutils.get_test_dir()
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     assert not manifest_json.exists()
 
 
-def test_serialize_appends_a_manifest_json_exists(fileutils):
-    test_dir = fileutils.get_test_dir()
+def test_serialize_appends_a_manifest_json_exists(test_dir):
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     serialize.save_launch_manifest(
         LaunchedManifestBuilder("exp", test_dir, "launcher").finalize())
@@ -99,8 +96,7 @@ def test_serialize_appends_a_manifest_json_exists(fileutils):
         assert len({run["run_id"] for run in manifest["runs"]}) == 3
 
 
-def test_serialize_overwites_file_if_not_json(fileutils):
-    test_dir = fileutils.get_test_dir()
+def test_serialize_overwites_file_if_not_json(test_dir):
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     manifest_json.parent.mkdir(parents=True, exist_ok=True)
     with open(manifest_json, 'w') as f:
@@ -112,9 +108,9 @@ def test_serialize_overwites_file_if_not_json(fileutils):
         assert isinstance(json.load(f), dict)
 
 
-def test_started_entities_are_serialized(fileutils):
+def test_started_entities_are_serialized(test_dir):
     exp_name = "test-exp"
-    test_dir = Path(fileutils.make_test_dir()) / exp_name
+    test_dir = Path(test_dir) / exp_name
     test_dir.mkdir(parents=True)
     exp = Experiment(exp_name, exp_path=str(test_dir), launcher="local")
 
@@ -153,12 +149,12 @@ def test_serialzed_database_does_not_break_if_using_a_non_standard_install(
 
 
 def test_dictify_run_settings_warns_when_attepting_to_dictify_mpmd(
-    monkeypatch, caplog, fileutils
+    monkeypatch, caplog, test_dir
 ):
     # TODO: Eventually this test should be removed and we should be able to
     #       handle MPMD run settings as part of the output dict
     exp_name = "test-exp"
-    test_dir = Path(fileutils.make_test_dir()) / exp_name
+    test_dir = Path(test_dir) / exp_name
     test_dir.mkdir(parents=True)
     exp = Experiment(exp_name, exp_path=str(test_dir), launcher="local")
 

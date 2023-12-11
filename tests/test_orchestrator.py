@@ -68,9 +68,8 @@ def test_inactive_orc_get_address():
         db.get_address()
 
 
-def test_orc_active_functions(fileutils, wlmutils):
+def test_orc_active_functions(test_dir, wlmutils):
     exp_name = "test_orc_active_functions"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     db = Orchestrator(port=wlmutils.get_test_port())
@@ -96,9 +95,8 @@ def test_orc_active_functions(fileutils, wlmutils):
         db.get_address()
 
 
-def test_multiple_interfaces(fileutils, wlmutils):
+def test_multiple_interfaces(test_dir, wlmutils):
     exp_name = "test_multiple_interfaces"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     net_if_addrs = psutil.net_if_addrs()

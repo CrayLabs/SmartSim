@@ -46,9 +46,8 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_models(fileutils, wlmutils):
+def test_models(fileutils, test_dir, wlmutils):
     exp_name = "test-models-launch"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
     )
@@ -65,9 +64,8 @@ def test_models(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_ensemble(fileutils, wlmutils):
+def test_ensemble(fileutils, test_dir, wlmutils):
     exp_name = "test-ensemble-launch"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
     )
@@ -84,11 +82,10 @@ def test_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_summary(fileutils, wlmutils):
+def test_summary(fileutils, test_dir, wlmutils):
     """Fairly rudimentary test of the summary dataframe"""
 
     exp_name = "test-launch-summary"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
     )

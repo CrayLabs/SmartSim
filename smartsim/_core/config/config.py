@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
 import os
 import psutil
 import typing as t
@@ -178,6 +179,20 @@ class Config:
     @property
     def test_port(self) -> int:  # pragma: no cover
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
+
+    @property
+    def test_batch_resources(self) -> t.Dict[t.Any,t.Any]: # pragma: no cover
+        resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
+        resources = json.loads(resource_str)
+        if not isinstance(resources, dict):
+            raise TypeError(
+                (
+                    "SMARTSIM_TEST_BATCH_RESOURCES was not interpreted as a "
+                    "dictionary, check to make sure that it is a valid "
+                    f"JSON string: {resource_str}"
+                )
+            )
+        return resources
 
     @property
     def test_interface(self) -> t.List[str]:  # pragma: no cover

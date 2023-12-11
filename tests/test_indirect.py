@@ -88,14 +88,14 @@ def test_cleanup(capsys, monkeypatch):
             print(create_msg.format(pid))
         def terminate(self):
             print(term_msg.format(mock_pid))
-    
+
     captured = capsys.readouterr()  # throw away existing output
 
     with monkeypatch.context() as ctx:
         ctx.setattr('psutil.pid_exists', lambda pid: True)
         ctx.setattr('psutil.Process', MockProc)
         ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
-        cleanup()        
+        cleanup()
 
     captured = capsys.readouterr()
     assert create_msg.format(mock_pid) in captured.out
@@ -114,7 +114,7 @@ def test_cleanup_late(capsys, monkeypatch):
             raise psutil.NoSuchProcess(pid)
         def terminate(self) -> None:
             print(term_msg.format(mock_pid))
-    
+
     captured = capsys.readouterr()  # throw away existing output
 
     with monkeypatch.context() as ctx:
@@ -133,25 +133,23 @@ def test_ts():
     assert isinstance(ts, int)
 
 
-def test_indirect_main_dir_check(fileutils):
+def test_indirect_main_dir_check(test_dir):
     """Ensure that the proxy validates the test directory exists"""
-    test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
 
     cmd = ["echo", "unit-test"]
     encoded_cmd = encode_cmd(cmd)
 
     status_path = exp_dir / TELMON_SUBDIR
-    
+
     # show that a missing status_path is created when missing
     main(encoded_cmd, "application", exp_dir, status_path)
 
     assert status_path.exists()
 
 
-def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
+def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     """Ensure that the proxy validates the cmd is not empty or whitespace-only"""
-    test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
 
     captured = capsys.readouterr()  # throw away existing output
@@ -171,11 +169,10 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     assert "Invalid cmd supplied" in ex.value.args[0]
 
 
-def test_complete_process(fileutils):
+def test_complete_process(fileutils, test_dir):
     """Ensure the happy-path completes and returns a success return code"""
     script = fileutils.get_test_conf_path("sleep.py")
 
-    test_dir = fileutils.make_test_dir()
     exp_dir = pathlib.Path(test_dir)
 
     raw_cmd = f"{sys.executable} {script} --time=1"

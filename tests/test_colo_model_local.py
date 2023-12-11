@@ -45,11 +45,10 @@ is_mac = sys.platform == "darwin"
 
 
 @pytest.mark.skipif(not is_mac, reason="MacOS-only test")
-def test_macosx_warning(fileutils, coloutils):
+def test_macosx_warning(fileutils, test_dir, coloutils):
     db_args = {"custom_pinning": [1]}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
     with pytest.warns(
         RuntimeWarning,
@@ -64,11 +63,10 @@ def test_macosx_warning(fileutils, coloutils):
         )
 
 
-def test_unsupported_limit_app(fileutils, coloutils):
+def test_unsupported_limit_app(fileutils, test_dir, coloutils):
     db_args = {"limit_app_cpus": True}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
     with pytest.raises(SSUnsupportedError):
         coloutils.setup_test_colo(
@@ -82,11 +80,10 @@ def test_unsupported_limit_app(fileutils, coloutils):
 
 @pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
 @pytest.mark.parametrize("custom_pinning", [1, "10", "#", 1.0, ["a"], [1.0]])
-def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
+def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinning):
     db_type = "uds"  # Test is insensitive to choice of db
     db_args = {"custom_pinning": custom_pinning}
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
     with pytest.raises(TypeError):
         coloutils.setup_test_colo(
@@ -117,13 +114,12 @@ def test_create_pinning_string(pin_list, num_cpus, expected):
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_launch_colocated_model_defaults(
-    fileutils, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     """Test the launch of a model with a colocated database and local launcher"""
 
     db_args = {}
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("colocated_model_defaults", launcher=launcher, exp_path=test_dir)
     colo_model = coloutils.setup_test_colo(
         fileutils,
@@ -140,25 +136,25 @@ def test_launch_colocated_model_defaults(
     assert (
         colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
     )
+    exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses)
 
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses {statuses}"
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_launch_multiple_colocated_models(
-    fileutils, coloutils, wlmutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, wlmutils, db_type, launcher="local"
 ):
     """Test the concurrent launch of two models with a colocated database and local launcher"""
 
     db_args = {}
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("multi_colo_models", launcher=launcher, exp_path=test_dir)
     colo_models = [
         coloutils.setup_test_colo(
@@ -180,10 +176,10 @@ def test_launch_multiple_colocated_models(
             port=wlmutils.get_test_port() + 1,
         ),
     ]
-
+    exp.generate(*colo_models)
     exp.start(*colo_models, block=True)
     statuses = exp.get_status(*colo_models)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all(stat == status.STATUS_COMPLETED for stat in statuses)
 
     # test restarting the colocated model
     exp.start(*colo_models, block=True)
@@ -193,9 +189,8 @@ def test_launch_multiple_colocated_models(
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_disable_pinning(
-    fileutils, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         "colocated_model_pinning_auto_1cpu", launcher=launcher, exp_path=test_dir
     )
@@ -212,6 +207,7 @@ def test_colocated_model_disable_pinning(
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] is None
+    exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
@@ -219,9 +215,8 @@ def test_colocated_model_disable_pinning(
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_auto_2cpu(
-    fileutils, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         "colocated_model_pinning_auto_2cpu", launcher=launcher, exp_path=test_dir
     )
@@ -245,6 +240,7 @@ def test_colocated_model_pinning_auto_2cpu(
     assert (
         colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
     )
+    exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
@@ -252,10 +248,11 @@ def test_colocated_model_pinning_auto_2cpu(
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="local"):
+def test_colocated_model_pinning_range(
+    fileutils, test_dir, coloutils, db_type, launcher="local"
+):
     # Check to make sure that the CPU mask was correctly generated
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         "colocated_model_pinning_manual", launcher=launcher, exp_path=test_dir
     )
@@ -270,6 +267,7 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
@@ -277,10 +275,11 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_list(fileutils, coloutils, db_type, launcher="local"):
+def test_colocated_model_pinning_list(
+    fileutils, test_dir, coloutils, db_type, launcher="local"
+):
     # Check to make sure that the CPU mask was correctly generated
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         "colocated_model_pinning_manual", launcher=launcher, exp_path=test_dir
     )
@@ -295,6 +294,18 @@ def test_colocated_model_pinning_list(fileutils, coloutils, db_type, launcher="l
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "1"
+    exp.generate(colo_model)
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+
+def test_colo_uds_verifies_socket_file_name(test_dir, launcher="local"):
+    exp = Experiment(f"colo_uds_wrong_name", launcher=launcher, exp_path=test_dir)
+
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=["--version"])
+
+    colo_model = exp.create_model("wrong_uds_socket_name", colo_settings)
+
+    with pytest.raises(ValueError):
+        colo_model.colocate_db_uds(unix_socket="this is not a valid name!")

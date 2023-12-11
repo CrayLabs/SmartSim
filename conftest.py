@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import json
 import os
-import inspect
 import pytest
 import psutil
 import shutil
@@ -41,6 +40,7 @@ from smartsim.settings import (
     AprunSettings,
     JsrunSettings,
     MpirunSettings,
+    MpiexecSettings,
     PalsMpiexecSettings,
     RunSettings,
 )
@@ -48,25 +48,29 @@ from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
 from subprocess import run
 import sys
+import tempfile
 import typing as t
+import uuid
+import warnings
 
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
 
 # Globals, yes, but its a testing file
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_dir = os.path.join(test_path, "tests", "test_output")
+test_output_root = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
-test_device = CONFIG.test_device
+test_device = CONFIG.test_device.upper()
 test_num_gpus = CONFIG.test_num_gpus
 test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
+test_batch_resources: t.Dict[t.Any,t.Any] = CONFIG.test_batch_resources
 
 # Fill this at runtime if needed
 test_hostlist = None
-
+has_aprun = shutil.which("aprun") is not None
 
 def get_account() -> str:
     return test_account
@@ -78,13 +82,21 @@ def print_test_configuration() -> None:
     print("TEST_LAUNCHER:", test_launcher)
     if test_account != "":
         print("TEST_ACCOUNT:", test_account)
-    print("TEST_DEVICE:", test_device)
+    test_device_msg = f"TEST_DEVICE: {test_device}"
+    if test_device == "GPU":
+        test_device_msg += f"x{test_num_gpus}"
+    print(test_device_msg)
     print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
     if test_alloc_specs_path:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
-    print("TEST_DIR:", test_dir)
+    print("TEST_DIR:", test_output_root)
     print("Test output will be located in TEST_DIR if there is a failure")
-    print("TEST_PORTS", ", ".join(str(port) for port in range(test_port, test_port+3)))
+    print(
+        "TEST_PORTS:", ", ".join(str(port) for port in range(test_port, test_port + 3))
+    )
+    if test_batch_resources:
+        print("TEST_BATCH_RESOURCES: ")
+        print(json.dumps(test_batch_resources, indent=2))
 
 
 def pytest_configure() -> None:
@@ -93,6 +105,7 @@ def pytest_configure() -> None:
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
+    pytest.has_aprun = has_aprun
 
 
 def pytest_sessionstart(
@@ -102,9 +115,9 @@ def pytest_sessionstart(
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    if os.path.isdir(test_dir):
-        shutil.rmtree(test_dir)
-    os.makedirs(test_dir)
+    if os.path.isdir(test_output_root):
+        shutil.rmtree(test_output_root)
+    os.makedirs(test_output_root)
     print_test_configuration()
 
 
@@ -116,7 +129,7 @@ def pytest_sessionfinish(
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_dir)
+        shutil.rmtree(test_output_root)
     else:
         # kill all spawned processes in case of error
         kill_all_test_spawned_processes()
@@ -145,7 +158,7 @@ def get_hostlist() -> t.Optional[t.List[str]]:
                 return _parse_hostlist_file(os.environ["COBALT_NODEFILE"])
             except FileNotFoundError:
                 return None
-        elif "PBS_NODEFILE" in os.environ and test_launcher=="pals":
+        elif "PBS_NODEFILE" in os.environ and test_launcher == "pals":
             # with PALS, we need a hostfile even if `aprun` is available
             try:
                 return _parse_hostlist_file(os.environ["PBS_NODEFILE"])
@@ -222,6 +235,10 @@ class WLMUtils:
     @staticmethod
     def get_test_hostlist() -> t.Optional[t.List[str]]:
         return get_hostlist()
+
+    @staticmethod
+    def get_batch_resources() -> t.Dict:
+        return test_batch_resources
 
     @staticmethod
     def get_base_run_settings(
@@ -372,17 +389,22 @@ class WLMUtils:
 
         return Orchestrator(port=test_port, interface="lo")
 
+    @staticmethod
+    def choose_host(rs: RunSettings) -> t.Optional[str]:
+        if isinstance(rs, (MpirunSettings, MpiexecSettings)):
+            hl = get_hostlist()
+            if hl is not None:
+                return hl[0]
+
+        return None
 
 @pytest.fixture
 def local_db(
-    fileutils: FileUtils, request: t.Any, wlmutils: t.Type[WLMUtils]
+    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
-    test_dir = fileutils.make_test_dir(
-        caller_function=exp_name, caller_fspath=request.fspath
-    )
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
@@ -396,15 +418,12 @@ def local_db(
 
 @pytest.fixture
 def db(
-    fileutils: t.Type[FileUtils], wlmutils: t.Type[WLMUtils], request: t.Any
+    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an orchestrator"""
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
-    test_dir = fileutils.make_test_dir(
-        caller_function=exp_name, caller_fspath=request.fspath
-    )
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
@@ -418,7 +437,7 @@ def db(
 
 @pytest.fixture
 def db_cluster(
-    fileutils: t.Type[FileUtils], wlmutils: t.Type[WLMUtils], request: t.Any
+    test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
 ) -> t.Generator[Orchestrator, None, None]:
     """
     Yield fixture for startup and teardown of a clustered orchestrator.
@@ -427,9 +446,6 @@ def db_cluster(
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
-    test_dir = fileutils.make_test_dir(
-        caller_function=exp_name, caller_fspath=request.fspath
-    )
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
@@ -443,7 +459,9 @@ def db_cluster(
 
 @pytest.fixture(scope="function", autouse=True)
 def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("SSDB", raising=False)
+    for key in os.environ.keys():
+        if key.startswith("SSDB"):
+            monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("SSKEYIN", raising=False)
     monkeypatch.delenv("SSKEYOUT", raising=False)
 
@@ -530,6 +548,38 @@ class DBUtils:
         return config_edit_methods.get(config_setting, None)
 
 
+def _sanitize_caller_function(caller_function: str) -> str:
+    # Parametrized test functions end with a list of all
+    # parameter values. The list is enclosed in square brackets.
+    # We split at the opening bracket, sanitize the string
+    # to its right and then merge the function name and
+    # the sanitized list with a dot.
+    caller_function = caller_function.replace("]","")
+    caller_function_list = caller_function.split("[", maxsplit=1)
+
+    def is_accepted_char(char: str) -> bool:
+        return char.isalnum() or char in "-._"
+
+    if len(caller_function_list) > 1:
+        caller_function_list[1] = "".join(
+            filter(is_accepted_char, caller_function_list[1])
+        )
+
+    return ".".join(caller_function_list)
+
+
+@pytest.fixture
+def test_dir(request: pytest.FixtureRequest) -> str:
+    caller_function = _sanitize_caller_function(request.node.name)
+    dir_path = FileUtils.get_test_output_path(caller_function, str(request.path))
+
+    try:
+        os.makedirs(dir_path)
+    except Exception:
+        return dir_path
+    return dir_path
+
+
 @pytest.fixture
 def fileutils() -> t.Type[FileUtils]:
     return FileUtils
@@ -537,86 +587,10 @@ def fileutils() -> t.Type[FileUtils]:
 
 class FileUtils:
     @staticmethod
-    def _test_dir_path(caller_function: str, caller_fspath: str) -> str:
+    def get_test_output_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
-        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_dir))
-        dir_path = os.path.join(test_dir, rel_path, caller_function)
-        return dir_path
-
-    @staticmethod
-    def get_test_dir(
-        caller_function: t.Optional[str] = None,
-        caller_fspath: t.Optional[str] = None,
-        level: int = 1,
-    ) -> str:
-        """Get path to test output.
-
-        This function should be called without arguments from within
-        a test: the returned directory will be
-        `test_output/<relative_path_to_test_file>/<test_filename>/<test_name>`.
-        When called from other functions (e.g. from functions in this file),
-        the caller function and the caller file path should be provided.
-        The directory will not be created, but the parent (and all the needed
-        tree) will. This is to allow tests to create the directory.
-
-        :param caller_function: caller function name defaults to None
-        :type caller_function: str, optional
-        :param caller_fspath: absolute path to file containing caller, defaults to None
-        :type caller_fspath: str or Path, optional
-        :return: String path to test output directory
-        :rtype: str
-        """
-        if not caller_function or not caller_fspath:
-            caller_frame = inspect.stack()[level]
-            caller_fspath = caller_frame.filename
-            caller_function = caller_frame.function
-
-        dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
-        if not os.path.exists(os.path.dirname(dir_path)):
-            os.makedirs(os.path.dirname(dir_path))
-        # dir_path = os.path.join(test_dir, dir_name)
-        return dir_path
-
-    @staticmethod
-    def make_test_dir(
-        caller_function: t.Optional[str] = None,
-        caller_fspath: t.Optional[str] = None,
-        level: int = 1,
-        sub_dir: t.Optional[str] = None,
-    ) -> str:
-        """Create test output directory and return path to it.
-
-        This function should be called without arguments from within
-        a test: the directory will be created as
-        `test_output/<relative_path_to_test_file>/<test_filename>/<test_name>`.
-        When called from other functions (e.g. from functions in this file),
-        the caller function and the caller file path should be provided.
-
-        :param caller_function: caller function name defaults to None
-        :type caller_function: str, optional
-        :param caller_fspath: absolute path to file containing caller, defaults to None
-        :type caller_fspath: str or Path, optional
-        :param level: indicate depth in the call stack relative to test method.
-        :type level: int, optional
-        :param sub_dir: a relative path to create in the test directory
-        :type sub_dir: str or Path, optional
-
-        :return: String path to test output directory
-        :rtype: str
-        """
-        if not caller_function or not caller_fspath:
-            caller_frame = inspect.stack()[level]
-            caller_fspath = caller_frame.filename
-            caller_function = caller_frame.function
-
-        dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
-        if sub_dir:
-            dir_path = os.path.join(dir_path, sub_dir)
-
-        try:
-            os.makedirs(dir_path)
-        except Exception:
-            return dir_path
+        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_output_root))
+        dir_path = os.path.join(test_output_root, rel_path, caller_function)
         return dir_path
 
     @staticmethod
@@ -630,19 +604,18 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_file(file_name: str, file_dir: t.Optional[str] = None, file_content: t.Optional[str] = None) -> str:
+    def make_test_file(file_name: str, file_dir: str, file_content: t.Optional[str] = None) -> str:
         """Create a dummy file in the test output directory.
 
         :param file_name: name of file to create, e.g. "file.txt"
         :type file_name: str
-        :param file_dir: path relative to test output directory, e.g. "deps/libs"
+        :param file_dir: path
         :type file_dir: str
         :return: String path to test output file
         :rtype: str
         """
-        test_dir = FileUtils.make_test_dir(level=2, sub_dir=file_dir)
-        file_path = os.path.join(test_dir, file_name)
-
+        file_path = os.path.join(file_dir, file_name)
+        os.makedirs(file_dir)
         with open(file_path, "w+", encoding="utf-8") as dummy_file:
             if not file_content:
                 dummy_file.write("dummy\n")
@@ -680,14 +653,14 @@ class ColoUtils:
         exp: Experiment,
         application_file: str,
         db_args: t.Dict[str, t.Any],
-        colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
-        colo_model_name: t.Optional[str] = None,
-        port: t.Optional[int] = test_port
+        colo_settings: t.Optional[RunSettings] = None,
+        colo_model_name: str = "colocated_model",
+        port: int = test_port,
+        on_wlm: bool = False,
     ) -> Model:
-        """Setup things needed for setting up the colo pinning tests"""
-        # get test setup
-        test_dir = fileutils.make_test_dir(level=2)
+        """Setup database needed for the colo pinning tests"""
 
+        # get test setup
         sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu
@@ -695,23 +668,32 @@ class ColoUtils:
             colo_settings = exp.create_run_settings(
                 exe=sys.executable, exe_args=[sr_test_script]
             )
-        colo_name = colo_model_name if colo_model_name else "colocated_model"
-        colo_model = exp.create_model(colo_name, colo_settings)
-        colo_model.set_path(test_dir)
+        if on_wlm:
+            colo_settings.set_tasks(1)
+            colo_settings.set_nodes(1)
+        colo_model = exp.create_model(colo_model_name, colo_settings)
 
         if db_type in ["tcp", "deprecated"]:
             db_args["port"] = port
             db_args["ifname"] = "lo"
         if db_type == "uds" and colo_model_name is not None:
-            db_args["unix_socket"] = f"/tmp/{colo_model_name}.socket"
+            tmp_dir = tempfile.gettempdir()
+            socket_suffix = str(uuid.uuid4())[:7]
+            db_args["unix_socket"] = os.path.join(tmp_dir,
+                f"{colo_model_name}_{socket_suffix}.socket")
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,
             "deprecated": colo_model.colocate_db,
             "uds": colo_model.colocate_db_uds,
         }
-
-        colocate_fun[db_type](**db_args)
+        with warnings.catch_warnings():
+            if db_type == "deprecated":
+                warnings.filterwarnings(
+                    "ignore",
+                    message="`colocate_db` has been deprecated"
+                )
+            colocate_fun[db_type](**db_args)
         # assert model will launch with colocated db
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings

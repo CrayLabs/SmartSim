@@ -34,9 +34,8 @@ from types import FrameType
 
 from ...database import Orchestrator
 from ...entity import DBNode, SmartSimEntity, EntitySequence
-from ...error import SmartSimError
 from ...log import get_logger
-from ...status import TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, STATUS_NEVER_STARTED
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
@@ -160,6 +159,13 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
+    def __contains__(self, key: str) -> bool:
+        try:
+            self[key]  # pylint: disable=pointless-statement
+            return True
+        except KeyError:
+            return False
+
     def add_job(
         self,
         job_name: str,
@@ -242,17 +248,14 @@ class JobManager:
         :returns: tuple of status
         """
         with self._lock:
-            try:
-                if entity.name in self.completed:
-                    return self.completed[entity.name].status
+            if entity.name in self.completed:
+                return self.completed[entity.name].status
 
+            if entity.name in self:
                 job: Job = self[entity.name]  # locked
-            except KeyError:
-                raise SmartSimError(
-                    f"Entity {entity.name} has not been launched in this Experiment"
-                ) from None
+                return job.status
 
-            return job.status
+            return STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
@@ -312,7 +315,7 @@ class JobManager:
         :rtype: Dict[str, list]
         """
 
-        address_dict = {}
+        address_dict: t.Dict[str, t.List[str]] = {}
         for db_job in self.db_jobs.values():
             addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
@@ -321,7 +324,9 @@ class JobManager:
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-            address_dict.update({db_entity.name: addresses})
+                dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
+                dict_entry.extend(addresses)
+                address_dict[db_entity.db_identifier] = dict_entry
 
         return address_dict
 

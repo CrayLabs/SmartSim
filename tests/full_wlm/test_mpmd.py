@@ -36,7 +36,7 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_mpmd(fileutils, wlmutils):
+def test_mpmd(fileutils, test_dir, wlmutils):
     """Run an MPMD model twice
 
     and check that it always gets executed the same way.
@@ -61,7 +61,6 @@ def test_mpmd(fileutils, wlmutils):
         "cobalt": ["mpirun"],
     }
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     def prune_commands(launcher):

@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
 import logging
 import redis
 import time
@@ -219,31 +218,30 @@ def set_script(db_script: DBScript, client: Client) -> None:
             raise error
 
 
-def shutdown_db(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
-    """Send shutdown signal to cluster instances.
+def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-wlm
+    """Send shutdown signal to DB node.
 
     Should only be used in the case where cluster deallocation
-    needs to occur manually. Usually, the SmartSim task manager
+    needs to occur manually. Usually, the SmartSim job manager
     will take care of this automatically.
 
-    :param hosts: List of hostnames to connect to
-    :type hosts: List[str]
-    :param ports: List of ports for each hostname
-    :type ports: List[int]
-    :raises SmartSimError: if cluster creation fails
+    :param host_ip: IP of host to connect to
+    :type hosts: str
+    :param ports: Port to which node is listening
+    :type ports: int
+    :return: returncode, output, and error of the process
+    :rtype: tuple of (int, str, str)
     """
-    for host_ip, port in itertools.product(
-        (get_ip_from_host(host) for host in hosts), ports
-    ):
-        # call cluster command
-        redis_cli = CONFIG.database_cli
-        cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
-        returncode, out, err = execute_cmd(
-            cmd, proc_input="yes", shell=False, timeout=10
-        )
+    redis_cli = CONFIG.database_cli
+    cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
+    returncode, out, err = execute_cmd(
+        cmd, proc_input="yes", shell=False, timeout=10
+    )
 
-        if returncode != 0:
-            logger.error(out)
-            logger.error(err)
-        else:
-            logger.debug(out)
+    if returncode != 0:
+        logger.error(out)
+        logger.error(err)
+    elif out:
+        logger.debug(out)
+
+    return returncode, out, err

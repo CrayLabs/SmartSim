@@ -36,11 +36,10 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_failed_status(fileutils, wlmutils):
+def test_failed_status(fileutils, test_dir, wlmutils):
     """Test when a failure occurs deep into model execution"""
 
     exp_name = "test-report-failure"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name,
             launcher=wlmutils.get_test_launcher(),
             exp_path=test_dir)
@@ -60,7 +59,7 @@ def test_failed_status(fileutils, wlmutils):
     assert stat[0] == status.STATUS_FAILED
 
 
-def test_bad_run_command_args(fileutils, wlmutils):
+def test_bad_run_command_args(fileutils, test_dir, wlmutils):
     """Should fail because of incorrect arguments given to the
     run command
 
@@ -71,7 +70,6 @@ def test_bad_run_command_args(fileutils, wlmutils):
         pytest.skip(f"Only fails with slurm. Launcher is {launcher}")
 
     exp_name = "test-bad-run-command-args"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("bad.py")

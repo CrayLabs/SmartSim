@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import itertools
 import os.path as osp
 import pathlib
 import pickle
@@ -39,9 +40,16 @@ from os import environ
 
 from smartredis import Client, ConfigOptions
 
+from smartsim._core.utils.network import get_ip_from_host
+
 from ..._core.launcher.step import Step
 from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
-from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
+from ..._core.utils.redis import (
+    db_is_active,
+    set_ml_model,
+    set_script,
+    shutdown_db_node,
+)
 from ...database import Orchestrator
 from ...entity import (
     Ensemble,
@@ -235,12 +243,22 @@ class Controller:
         if db.batch:
             self.stop_entity(db)
         else:
-            shutdown_db(db.hosts, db.ports)
             with JM_LOCK:
-                for entity in db:
-                    job = self._jobs[entity.name]
-                    job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
-                    self._jobs.move_to_completed(job)
+                for node in db.entities:
+                    for host_ip, port in itertools.product(
+                        (get_ip_from_host(host) for host in node.hosts), db.ports
+                    ):
+                        retcode, _, _ = shutdown_db_node(host_ip, port)
+                        # Sometimes the DB will not shutdown (unless we force NOSAVE)
+                        if retcode != 0:
+                            self.stop_entity(node)
+                            continue
+
+                        job = self._jobs[node.name]
+                        job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                        self._jobs.move_to_completed(job)
+
+        db.reset_hosts()
 
     def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
         """Stop an instance of an entity list
@@ -358,9 +376,9 @@ class Controller:
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
-                if orchestrator.name == db_id:
+                if orchestrator.db_identifier == db_id:
                     raise SSDBIDConflictError(
-                        f"Database identifier {orchestrator.name}"
+                        f"Database identifier {orchestrator.db_identifier}"
                         " has already been used. Pass in a unique"
                         " name for db_identifier"
                     )
@@ -600,30 +618,27 @@ class Controller:
 
         for db_id, addresses in address_dict.items():
             db_name, _ = unpack_db_identifier(db_id, "_")
-
             if addresses:
-                if len(addresses) <= 128:
-                    client_env[f"SSDB{db_name}"] = ",".join(addresses)
-                else:
-                    # Cap max length of SSDB
-                    client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
-                if entity.incoming_entities:
-                    client_env[f"SSKEYIN{db_name}"] = ",".join(
-                        [in_entity.name for in_entity in entity.incoming_entities]
-                    )
-                if entity.query_key_prefixing():
-                    client_env[f"SSKEYOUT{db_name}"] = entity.name
+                # Cap max length of SSDB
+                client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
 
-            # Retrieve num_shards to append to client env
-            client_env[f"SR_DB_TYPE{db_name}"] = (
-                CLUSTERED if len(addresses) > 1 else STANDALONE
+                # Retrieve num_shards to append to client env
+                client_env[f"SR_DB_TYPE{db_name}"] = (
+                    CLUSTERED if len(addresses) > 1 else STANDALONE
+                )
+
+        if entity.incoming_entities:
+            client_env["SSKEYIN"] = ",".join(
+                [in_entity.name for in_entity in entity.incoming_entities]
             )
+        if entity.query_key_prefixing():
+            client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
 
-            for key in self._jobs.get_db_host_addresses():
+            for key in address_dict:
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
                     raise SSDBIDConflictError(

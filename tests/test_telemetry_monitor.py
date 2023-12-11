@@ -176,11 +176,10 @@ def test_track_event(
     step_id: str,
     timestamp: int,
     evt_type: str,
-    fileutils,
+    test_dir: str,
 ):
     """Ensure that track event writes a file to the expected location"""
-    exp_dir = fileutils.make_test_dir()
-    exp_path = pathlib.Path(exp_dir)
+    exp_path = pathlib.Path(test_dir)
     track_event(timestamp, task_id, step_id, etype, evt_type, exp_path, logger)
 
     expected_output = exp_path / f"{evt_type}.json"
@@ -189,7 +188,7 @@ def test_track_event(
     assert expected_output.is_file()
 
 
-def test_load_manifest(fileutils: FileUtils):
+def test_load_manifest(fileutils: FileUtils, test_dir: str):
     """Ensure that the runtime manifest loads correctly"""
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/telemetry.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -197,7 +196,7 @@ def test_load_manifest(fileutils: FileUtils):
 
     test_manifest_path = fileutils.make_test_file(
         serialize.MANIFEST_FILENAME,
-        serialize.TELMON_SUBDIR,
+        pathlib.Path(test_dir) / serialize.TELMON_SUBDIR,
         sample_manifest.read_text(),
     )
     test_manifest = pathlib.Path(test_manifest_path)
@@ -444,7 +443,7 @@ def test_auto_shutdown():
     assert observer.stop_count == 1
 
 
-def test_telemetry_single_model(fileutils, wlmutils):
+def test_telemetry_single_model(fileutils, test_dir, wlmutils):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
 
@@ -453,7 +452,6 @@ def test_telemetry_single_model(fileutils, wlmutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_dir = fileutils.make_test_dir()
     test_script = fileutils.get_test_conf_path("echo.py")
 
     # Create SmartSim Experiment
@@ -478,7 +476,7 @@ def test_telemetry_single_model(fileutils, wlmutils):
     assert len(stop_events) == 1
 
 
-def test_telemetry_single_model_nonblocking(fileutils, wlmutils, monkeypatch):
+def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monkeypatch):
     """Ensure that the telemetry monitor logs exist when the experiment
     is non-blocking"""
     with monkeypatch.context() as ctx:
@@ -489,7 +487,6 @@ def test_telemetry_single_model_nonblocking(fileutils, wlmutils, monkeypatch):
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
-        test_dir = fileutils.make_test_dir()
         test_script = fileutils.get_test_conf_path("echo.py")
 
         # Create SmartSim Experiment
@@ -517,7 +514,7 @@ def test_telemetry_single_model_nonblocking(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-def test_telemetry_serial_models(fileutils, wlmutils, monkeypatch):
+def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch):
     """
     Test telemetry with models being run in serial (one after each other)
     """
@@ -529,7 +526,6 @@ def test_telemetry_serial_models(fileutils, wlmutils, monkeypatch):
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
-        test_dir = fileutils.make_test_dir()
         test_script = fileutils.get_test_conf_path("echo.py")
 
         # Create SmartSim Experiment
@@ -558,7 +554,7 @@ def test_telemetry_serial_models(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 5
 
 
-def test_telemetry_serial_models_nonblocking(fileutils, wlmutils, monkeypatch):
+def test_telemetry_serial_models_nonblocking(fileutils, test_dir, wlmutils, monkeypatch):
     """
     Test telemetry with models being run in serial (one after each other)
     in a non-blocking experiment
@@ -571,7 +567,6 @@ def test_telemetry_serial_models_nonblocking(fileutils, wlmutils, monkeypatch):
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
-        test_dir = fileutils.make_test_dir()
         test_script = fileutils.get_test_conf_path("echo.py")
 
         # Create SmartSim Experiment
@@ -603,7 +598,7 @@ def test_telemetry_serial_models_nonblocking(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 5
 
 
-def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
+def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
     """
@@ -617,7 +612,6 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
         test_launcher = wlmutils.get_test_launcher()
         test_interface = wlmutils.get_test_interface()
         test_port = wlmutils.get_test_port()
-        test_dir = fileutils.make_test_dir()
 
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -646,7 +640,7 @@ def test_telemetry_db_only_with_generate(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
+def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
     """
@@ -660,7 +654,6 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
         test_launcher = wlmutils.get_test_launcher()
         test_interface = wlmutils.get_test_interface()
         test_port = wlmutils.get_test_port()
-        test_dir = fileutils.make_test_dir()
 
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -688,7 +681,7 @@ def test_telemetry_db_only_without_generate(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
+def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
     """
@@ -703,7 +696,6 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
         test_launcher = wlmutils.get_test_launcher()
         test_interface = wlmutils.get_test_interface()
         test_port = wlmutils.get_test_port()
-        test_dir = fileutils.make_test_dir()
         test_script = fileutils.get_test_conf_path("echo.py")
 
         # Create SmartSim Experiment
@@ -745,7 +737,7 @@ def test_telemetry_db_and_model(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-def test_telemetry_ensemble(fileutils, wlmutils, monkeypatch):
+def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
     """
     Test telemetry with only a database running
     """
@@ -758,7 +750,6 @@ def test_telemetry_ensemble(fileutils, wlmutils, monkeypatch):
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
-        test_dir = fileutils.make_test_dir()
         test_script = fileutils.get_test_conf_path("echo.py")
 
         # Create SmartSim Experiment
@@ -782,7 +773,7 @@ def test_telemetry_ensemble(fileutils, wlmutils, monkeypatch):
         assert len(stop_events) == 5
 
 
-def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
+def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch):
     """
     Test telemetry with only a database running
     """
@@ -795,7 +786,6 @@ def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
-        test_dir = fileutils.make_test_dir()
 
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -831,7 +821,7 @@ def test_telemetry_colo(fileutils, wlmutils, coloutils, monkeypatch):
         pytest.param(1, 15, id="15s shutdown"),
     ],
 )
-def test_telemetry_autoshutdown(fileutils, wlmutils, monkeypatch, frequency, cooldown):
+def test_telemetry_autoshutdown(test_dir, wlmutils, monkeypatch, frequency, cooldown):
     """
     Ensure that the telemetry monitor process shuts down after the desired
     cooldown period
@@ -846,7 +836,6 @@ def test_telemetry_autoshutdown(fileutils, wlmutils, monkeypatch, frequency, coo
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
-        test_dir = fileutils.make_test_dir()
 
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -885,8 +874,7 @@ class MockStep(Step):
 
 
 @pytest.fixture
-def mock_step_meta_dict(fileutils):
-    test_dir = fileutils.make_test_dir()
+def mock_step_meta_dict(test_dir):
     telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
     yield {
         "entity_type": "mock",
@@ -895,8 +883,7 @@ def mock_step_meta_dict(fileutils):
 
 
 @pytest.fixture
-def mock_step(fileutils, mock_step_meta_dict):
-    test_dir = fileutils.make_test_dir()
+def mock_step(test_dir, mock_step_meta_dict):
     rs = RunSettings("echo")
     step = MockStep("mock-step", test_dir, rs)
     step.meta = mock_step_meta_dict
@@ -933,10 +920,9 @@ def test_proxy_launch_cmd_decorator_errors_if_attempt_to_proxy_a_managed_step(
 
 @for_all_wlm_launchers
 def test_unmanaged_steps_are_proxyed_through_indirect(
-    wlm_launcher, mock_step_meta_dict, fileutils, monkeypatch
+    wlm_launcher, mock_step_meta_dict, test_dir, monkeypatch
 ):
     monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, True)
-    test_dir = fileutils.make_test_dir()
     rs = RunSettings("echo", ["hello", "world"])
     step = wlm_launcher.create_step("test-step", test_dir, rs)
     step.meta = mock_step_meta_dict
@@ -951,10 +937,9 @@ def test_unmanaged_steps_are_proxyed_through_indirect(
 
 @for_all_wlm_launchers
 def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
-    wlm_launcher, mock_step_meta_dict, fileutils, monkeypatch
+    wlm_launcher, mock_step_meta_dict, test_dir, monkeypatch
 ):
     monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, False)
-    test_dir = fileutils.make_test_dir()
     rs = RunSettings("echo", ["hello", "world"])
     step = wlm_launcher.create_step("test-step", test_dir, rs)
     step.meta = mock_step_meta_dict
@@ -977,13 +962,13 @@ def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
 def test_multistart_experiment(
     wlmutils: WLMUtils,
     fileutils: FileUtils,
+    test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     run_command: str,
 ):
     """Run an experiment with multiple start calls to ensure that telemetry is
     saved correctly for each run
     """
-    test_dir = fileutils.make_test_dir(sub_dir=str(uuid.uuid4()))
 
     exp_name = "my-exp"
     exp = Experiment(exp_name,
@@ -1089,13 +1074,12 @@ def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
     ],
 )
 def test_wlm_completion_handling(
-    fileutils: FileUtils,
+    test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     status_in: str,
     expected_out: t.Optional[int],
     expected_has_jobs: bool,
 ):
-    test_dir = fileutils.make_test_dir(sub_dir=str(uuid.uuid4()))
 
     def get_faux_update(status: str) -> t.Callable:
         def _faux_updates(_self: WLMLauncher, _names: t.List[str]) -> t.List[StepInfo]:

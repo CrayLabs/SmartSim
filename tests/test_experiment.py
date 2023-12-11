@@ -23,7 +23,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import pytest
 
 import os
@@ -33,15 +32,16 @@ from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 from smartsim._core.config import CONFIG
+from smartsim.status import STATUS_NEVER_STARTED
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
 
 
-def test_model_prefix(fileutils):
+def test_model_prefix(test_dir):
     exp_name = "test_prefix"
     exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+
     model = exp.create_model(
         "model",
         path=test_dir,
@@ -87,8 +87,7 @@ def test_status_typeerror():
 def test_status_pre_launch():
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    with pytest.raises(SmartSimError):
-        exp.get_status(model)
+    assert exp.get_status(model)[0] == STATUS_NEVER_STARTED
 
 
 def test_bad_ensemble_init_no_rs():
@@ -112,9 +111,8 @@ def test_bad_ensemble_init_no_rs_bs():
         exp.create_ensemble("name")
 
 
-def test_stop_entity(fileutils):
+def test_stop_entity(test_dir):
     exp_name = "test_stop_entity"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
     exp.start(m, block=False)
@@ -123,10 +121,9 @@ def test_stop_entity(fileutils):
     assert exp.finished(m) == True
 
 
-def test_poll(fileutils):
+def test_poll(test_dir):
     # Ensure that a SmartSimError is not raised
     exp_name = "test_exp_poll"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, exp_path=test_dir)
     model = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("sleep", "5")
@@ -136,9 +133,8 @@ def test_poll(fileutils):
     exp.stop(model)
 
 
-def test_summary(fileutils):
+def test_summary(test_dir):
     exp_name = "test_exp_summary"
-    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
