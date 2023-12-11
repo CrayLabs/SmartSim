@@ -43,7 +43,7 @@ Test logging features
 
 def test_level_filter_info():
     """Ensure that messages above maximum are not logged"""
-    log_filter = smartsim.log.LevelFilter("INFO")
+    log_filter = smartsim.log.LowPassLevelFilter("INFO")
     faux_out_stream = io.StringIO()
 
     logger = logging.getLogger("test_level_filter_info")
@@ -66,7 +66,7 @@ def test_level_filter_info():
 
 def test_level_filter_warn():
     """Ensure that messages above maximum are not logged"""
-    log_filter = smartsim.log.LevelFilter("WARN")
+    log_filter = smartsim.log.LowPassLevelFilter("WARN")
     faux_out_stream = io.StringIO()
 
     logger = logging.getLogger("test_level_filter_warn")

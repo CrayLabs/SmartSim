@@ -125,15 +125,15 @@ def add_exp_loggers(
         err_path = os.path.join(exp_path, "smartsim.err")
 
         # log errors below warning to <outfile>.out & those above to <outfile>.err
-        log_to_file(out_path, "INFO", logger, fmt, LevelFilter(maximum_level="INFO"))
+        log_to_file(out_path, "INFO", logger, fmt, LowPassLevelFilter(maximum_level="INFO"))
         log_to_file(err_path, "WARN", logger, fmt)
 
 
-class LevelFilter(logging.Filter):
-    """A filter that passes all records below a desired level"""
+class LowPassLevelFilter(logging.Filter):
+    """A filter that passes all records below a specified level"""
 
     def __init__(self, maximum_level: str = "INFO"):
-        """Create a high-pass log filter allowing messages below a specific log level
+        """Create a low-pass log filter allowing messages below a specific log level
 
         :param maximum_level: The maximum log level to be passed by the filter
         :type maximum_level: str
