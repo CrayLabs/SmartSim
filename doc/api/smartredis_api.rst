@@ -1,8 +1,9 @@
+.. _smartredis-api:
+
 **************
 SmartRedis API
 **************
 
-.. _smartredis-api:
 
 Python
 ******
