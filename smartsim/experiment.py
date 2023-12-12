@@ -36,9 +36,13 @@ from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
-from .log import get_logger, add_exp_loggers
+from .log import ctx_exp_path, get_logger
 from .settings import base, Container, settings
 from .wlm import detect_launcher
+
+
+import contextvars
+
 
 logger = get_logger(__name__)
 
@@ -116,7 +120,6 @@ class Experiment:
                          Defaults to "local"
         :type launcher: str, optional
         """
-        add_exp_loggers(exp_path or ".", logger)
         self.name = name
         if exp_path:
             if not isinstance(exp_path, str):
@@ -190,21 +193,28 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
+        def _start():
+            ctx_exp_path.set(self.exp_path)
+            logger.info("starting new experiment context")
 
-        start_manifest = Manifest(*args)
-        try:
-            if summary:
-                self._launch_summary(start_manifest)
-            self._control.start(
-                exp_name=self.name,
-                exp_path=self.exp_path,
-                manifest=start_manifest,
-                block=block,
-                kill_on_interrupt=kill_on_interrupt,
-            )
-        except SmartSimError as e:
-            logger.error(e)
-            raise
+            start_manifest = Manifest(*args)
+            try:
+                if summary:
+                    self._launch_summary(start_manifest)
+                self._control.start(
+                    exp_name=self.name,
+                    exp_path=self.exp_path,
+                    manifest=start_manifest,
+                    block=block,
+                    kill_on_interrupt=kill_on_interrupt,
+                )
+            except SmartSimError as e:
+                logger.error(e)
+                raise
+        
+        context = contextvars.copy_context()
+        context.run(_start)
+
 
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``

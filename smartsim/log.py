@@ -30,6 +30,8 @@ import sys
 import typing as t
 
 import coloredlogs
+import contextvars
+
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
@@ -40,6 +42,11 @@ DEFAULT_LOG_FORMAT: t.Final[
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
 coloredlogs.DEFAULT_LOG_FORMAT = DEFAULT_LOG_FORMAT
+
+
+ctx_logger_name = contextvars.ContextVar('logger_name', default="SmartSim")
+ctx_exp_path = contextvars.ContextVar("exp_path", default="")
+ctx_fh_registered = contextvars.ContextVar("fh_reg", default=False)
 
 
 def _get_log_level() -> str:
@@ -68,6 +75,20 @@ def _get_log_level() -> str:
         return "debug"
     return "info"
 
+
+class DeferredLogger(logging.Logger):
+    def _log(self, level: int, msg: object, args, exc_info = None, extra = None, stack_info: bool = False, stacklevel: int = 1) -> None:
+        if _exp_path :=  ctx_exp_path.get():
+            filename = pathlib.Path(_exp_path) / "smartsim.out"
+            handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
+            self.addHandler(handler)
+            # self.info(f"filehandler attached for {_exp_path}")
+            super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+            self.removeHandler(handler)
+            return
+
+        super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+        
 
 def get_logger(
     name: str, log_level: t.Optional[str] = None, fmt: t.Optional[str] = None
@@ -104,6 +125,7 @@ def get_logger(
     if user_log_level != "developer":
         name = "SmartSim"
 
+    logging.setLoggerClass(DeferredLogger)
     logger = logging.getLogger(name)
     if log_level:
         logger.setLevel(log_level)
@@ -121,7 +143,7 @@ def add_exp_loggers(
     in an experiment directory"""
     logfile_enabled = os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")
 
-    if int(logfile_enabled) > 0 and logger.name.lower().startswith("smartsim"):
+    if int(logfile_enabled) > 0:  #  and logger.name.lower().startswith("smartsim"):
         out_path = os.path.join(exp_path, "smartsim.out")
         err_path = os.path.join(exp_path, "smartsim.err")
 
@@ -188,3 +210,15 @@ def log_to_file(
     handler.setLevel(log_level.upper())
 
     logger.addHandler(handler)
+
+
+# def configure_experiment_logger():
+#     _logger_name: str = ctx_logger_name.get()
+#     _exp_path: str = ctx_exp_path.get()
+#     _fh_registered: bool = ctx_fh_registered.get()
+
+#     if not _fh_registered:
+#         # logger = logging.getLogger(_logger_name)
+#         logger.setLevel("DEBUG")
+#         add_exp_loggers(_exp_path, logger, DEFAULT_LOG_FORMAT)
+#         ctx_fh_registered.set(True)
