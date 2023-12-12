@@ -49,7 +49,9 @@ extensions = [
     'sphinxfortran.fortran_domain',
     'sphinxfortran.fortran_autodoc',
     'breathe',
-    'nbsphinx'
+    'nbsphinx',
+    'sphinx_copybutton',
+    'sphinx_tabs.tabs'
 ]
 
 

@@ -1,19 +1,21 @@
-*********************
+#####################
 Contributing Examples
-*********************
+#####################
 
 .. _smartsim_zoo:
 
+=========================
 What Is the SmartSim Zoo?
-#########################
+=========================
 
 Given that SmartSim is a community developed and maintained project, we have
 introduced a `SmartSim Example Zoo <https://github.com/CrayLabs/SmartSim-Zoo>`__
 that contains CrayLabs and user contributed examples of using SmartSim for
 various simulation and machine learning applications.
 
+--------------------------------------
 The Two Categories of the SmartSim Zoo
-**************************************
+--------------------------------------
 
  1. SmartSim Deployments (running SmartSim on various HPC Systems)
 
@@ -33,8 +35,9 @@ The Two Categories of the SmartSim Zoo
     based on existing research papers, and the examples by simulation models are
     integrations of SmartSim with existing simulation models.
 
+=================
 How To Contribute
-#################
+=================
 
 We support, encourage, and welcome all contributions to the `SmartSim Zoo
 <https://github.com/CrayLabs/SmartSim-Zoo>`__ repository. Instructions for
@@ -61,8 +64,9 @@ or a SmartSim application.
    7. Contact information
    8. Citation
 
+=================
 Existing Examples
-#################
+=================
 
 The subsequent tables summarize the examples provided in the SmartSim Zoo. You
 can find a more detailed description of each example in the `SmartSim Zoo
@@ -107,8 +111,9 @@ can find a more detailed description of each example in the `SmartSim Zoo
      - CrayLabs, Sandia National Laboratories
      - `Implementation <https://github.com/CrayLabs/smartsim-lammps>`__ `Forked Model <https://github.com/CrayLabs/LAMMPS>`__
 
+----------------------------------------
 Summary of SmartSim Application Examples
-########################################
+----------------------------------------
 
 * **DeepDriveMD:** Based on the original DeepDriveMD work, extended to
   orchestrate complex workflows with coupled applications without using the

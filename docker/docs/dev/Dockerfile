@@ -58,8 +58,9 @@ RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
-RUN mkdir doc/tutorials/ && \
+RUN mkdir -p doc/tutorials/ && \
     cd doc/tutorials/ && \
+    rm -rf * && \
     ln -s ../../tutorials/* .
 
 RUN make docs
