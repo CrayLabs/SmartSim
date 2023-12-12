@@ -297,7 +297,7 @@ to upload a tensor representing a batch of 20 synthetic MNIST images.
 
 
 Now we can use ``Client.run_model()`` to execute the model on the data we have
-just stored and ``Client.get_tensor()`` to donwload the output of the model execution.
+just stored and ``Client.get_tensor()`` to download the output of the model execution.
 Notice that, for this part, the code is identical for models uploaded from file and from memory, and
 with TensorFlow or PyTorch backends.
 
@@ -306,6 +306,9 @@ with TensorFlow or PyTorch backends.
     client.run_model(model_key, inputs=["mnist_imagse"], outputs=["mnist_output"])
     output = client.get_tensor("mnist_output")
 
+
+For details about ``Client.run_model()``, please
+refer to :ref:`SmartRedis API <smartredis-api>`.
 
 .. _ml_features_torchscript:
 
@@ -390,6 +393,15 @@ as ``"./shift.script"``.
     y_scaled = client.get_tensor("Y_scaled")
 
 
+In the above code, we used ``Client.put_tensor()`` to upload tensors to the DB, and
+``Client.set_script_from_file()`` to upload the script containing the collection of functions.
+We then used ``Client.run_script()`` to run the function ``shift_y_to_x`` on the stored
+tensors, and downloaded the result with ``Client.get_tensor()``.
+
+For details about ``Client.set_script_from_file()`` and ``Client.run_script()``, please
+refer to :ref:`SmartRedis API <smartredis-api>`.
+
+
 =========================================
 Uploading a function to the DB on-the-fly
 =========================================
@@ -430,6 +442,10 @@ For example:
 
 Notice that the key ``"normalizer"`` represents the script containing the function (similar to
 ``"shifter"`` in the previous example), while the function name is ``"normalize"``.
+
+
+For details about ``Client.set_function()`` and  ``Client.run_script()``, please
+refer to :ref:`SmartRedis API <smartredis-api>`.
 
 .. _ml_features_ONNX:
 
@@ -482,5 +498,8 @@ stored model on it using ``Client.run_model()``, and download the output calling
     X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]]).astype(np.float32)
     client.put_tensor("X", X)
     client.run_model("linreg", inputs=["X"], outputs=["Y"])
-
     Y = client.get_tensor("Y")
+
+
+For details about ``Client.run_model()``, please
+refer to :ref:`SmartRedis API <smartredis-api>`.
