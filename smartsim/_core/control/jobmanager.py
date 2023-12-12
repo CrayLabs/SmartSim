@@ -41,6 +41,10 @@ from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
 
+
+import contextvars
+
+
 logger = get_logger(__name__)
 
 
@@ -80,8 +84,9 @@ class JobManager:
 
     def start(self) -> None:
         """Start a thread for the job manager"""
-        self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
-        self.monitor.start()
+
+        ctx = contextvars.copy_context()
+        ctx.run(self.run)
 
     def run(self) -> None:
         """Start the JobManager thread to continually check
