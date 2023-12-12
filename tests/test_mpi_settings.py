@@ -27,10 +27,9 @@
 import logging
 import os
 import os.path as osp
+import pytest
 import stat
 import sys
-
-import pytest
 
 from smartsim.error import LauncherError, SSUnsupportedError
 from smartsim.settings.mpiSettings import (
@@ -39,6 +38,10 @@ from smartsim.settings.mpiSettings import (
     OrterunSettings,
     _BaseMPISettings,
 )
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 # Throw a warning instead of failing on machines without an MPI implementation
 default_mpi_args = (sys.executable,)

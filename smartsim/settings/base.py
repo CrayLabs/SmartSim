@@ -38,6 +38,7 @@ logger = get_logger(__name__)
 class SettingsBase:
     ...
 
+
 # pylint: disable=too-many-public-methods
 class RunSettings(SettingsBase):
     # pylint: disable=unused-argument

@@ -25,12 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from pprint import pformat
-
 import pytest
 
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import BsubBatchSettings, JsrunSettings
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
 
 # ------ Jsrun ------------------------------------------------
 

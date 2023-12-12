@@ -30,6 +30,9 @@ import pytest
 
 from smartsim._core.launcher.util.shell import *
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 def test_execute_cmd():
     returncode, out, err = execute_cmd(["hostname"])

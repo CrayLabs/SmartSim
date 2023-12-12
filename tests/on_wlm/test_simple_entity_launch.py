@@ -46,10 +46,11 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_models(fileutils, wlmutils):
+def test_models(fileutils, test_dir, wlmutils):
     exp_name = "test-models-launch"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(
+        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
+    )
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
@@ -63,10 +64,11 @@ def test_models(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_ensemble(fileutils, wlmutils):
+def test_ensemble(fileutils, test_dir, wlmutils):
     exp_name = "test-ensemble-launch"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(
+        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
+    )
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
@@ -80,12 +82,13 @@ def test_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_summary(fileutils, wlmutils):
+def test_summary(fileutils, test_dir, wlmutils):
     """Fairly rudimentary test of the summary dataframe"""
 
     exp_name = "test-launch-summary"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(
+        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
+    )
 
     sleep = fileutils.get_test_conf_path("sleep.py")
     bad = fileutils.get_test_conf_path("bad.py")
@@ -103,7 +106,7 @@ def test_summary(fileutils, wlmutils):
     assert exp.get_status(bad)[0] == status.STATUS_FAILED
     assert exp.get_status(sleep)[0] == status.STATUS_COMPLETED
 
-    summary_str = exp.summary(format="plain")
+    summary_str = exp.summary(style="plain")
     print(summary_str)
 
     rows = [s.split() for s in summary_str.split("\n")]

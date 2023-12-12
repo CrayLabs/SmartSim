@@ -76,10 +76,11 @@ class DBNode(SmartSimEntity):
 
     @property
     def num_shards(self) -> int:
-        try:
-            return len(self.run_settings.mpmd) + 1  # type: ignore[attr-defined]
-        except AttributeError:
+        if not hasattr(self.run_settings, "mpmd"):
+            # return default number of shards if mpmd is not set
             return 1
+
+        return len(self.run_settings.mpmd) + 1
 
     @property
     def host(self) -> str:
@@ -97,12 +98,16 @@ class DBNode(SmartSimEntity):
             self._hosts = self._parse_db_hosts()
         return self._hosts
 
+    def clear_hosts(self) -> None:
+        self._hosts = None
+
     @property
     def is_mpmd(self) -> bool:
-        try:
-            return bool(self.run_settings.mpmd)  # type: ignore[attr-defined]
-        except AttributeError:
+        if not hasattr(self.run_settings, "mpmd"):
+            # missing mpmd property guarantees this is not an mpmd run
             return False
+
+        return bool(self.run_settings.mpmd)
 
     def set_hosts(self, hosts: t.List[str]) -> None:
         self._hosts = [str(host) for host in hosts]
@@ -227,7 +232,7 @@ class DBNode(SmartSimEntity):
 
 @dataclass(frozen=True)
 class LaunchedShardData:
-    """Data class to write an parse data about a launched database shard"""
+    """Data class to write and parse data about a launched database shard"""
 
     name: str
     hostname: str

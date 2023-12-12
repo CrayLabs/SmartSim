@@ -24,13 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging
-import os
-
 import pytest
 
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import SbatchSettings, SrunSettings
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 # ------ Srun ------------------------------------------------
 

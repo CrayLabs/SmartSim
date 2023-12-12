@@ -33,6 +33,9 @@ from smartsim.entity import Model
 import smartsim.settings.base
 from smartsim.settings.lsfSettings import JsrunSettings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 is_mac = sys.platform == "darwin"
 

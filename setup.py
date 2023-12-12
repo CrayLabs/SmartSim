@@ -167,6 +167,7 @@ deps = [
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
+    "watchdog>=3.0.0",
 ]
 
 # Add SmartRedis at specific version
@@ -187,7 +188,7 @@ extras_require = {
         "types-redis",
         "types-tabulate",
         "types-tqdm",
-        "types-tensorflow",
+        "types-tensorflow==2.12.0.9",
         "types-setuptools",
     ],
     # see smartsim/_core/_install/buildenv.py for more details

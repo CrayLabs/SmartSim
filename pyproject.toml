@@ -51,6 +51,11 @@ exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
+markers = [
+  "group_a: fast test subset a",
+  "group_b: fast test subset b",
+  "slow_tests: tests that take a long duration to complete",
+]
 
 [tool.isort]
 # supress circular import warning
@@ -102,6 +107,7 @@ module = [
   "keras",
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
+  "watchdog",
 ]
 ignore_missing_imports = true
 ignore_errors = true

@@ -27,7 +27,6 @@
 import numpy as np
 from smartredis import Client
 
-
 def main():
     # address should be set as we are launching through
     # SmartSim.
@@ -39,7 +38,7 @@ def main():
     returned = client.get_tensor("test_array")
 
     np.testing.assert_array_equal(array, returned)
-    print(f"Test worked! Sent and received array: {str(array)}")
+    print(f"Test worked! Sent {str(array)} and received {str(returned)}")
 
 
 if __name__ == "__main__":
