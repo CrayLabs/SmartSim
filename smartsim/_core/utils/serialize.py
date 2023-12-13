@@ -114,44 +114,50 @@ def _dictify_model(
         "path": model.path,
         "exe_args": model.run_settings.exe_args,
         "run_settings": _dictify_run_settings(model.run_settings),
-        "batch_settings": _dictify_batch_settings(model.batch_settings)
-        if model.batch_settings
-        else {},
+        "batch_settings": (
+            _dictify_batch_settings(model.batch_settings)
+            if model.batch_settings
+            else {}
+        ),
         "params": model.params,
-        "files": {
-            "Symlink": model.files.link,
-            "Configure": model.files.tagged,
-            "Copy": model.files.copy,
-        }
-        if model.files
-        else {
-            "Symlink": [],
-            "Configure": [],
-            "Copy": [],
-        },
-        "colocated_db": {
-            "settings": colo_settings,
-            "scripts": [
-                {
-                    script.name: {
-                        "backend": "TORCH",
-                        "device": script.device,
+        "files": (
+            {
+                "Symlink": model.files.link,
+                "Configure": model.files.tagged,
+                "Copy": model.files.copy,
+            }
+            if model.files
+            else {
+                "Symlink": [],
+                "Configure": [],
+                "Copy": [],
+            }
+        ),
+        "colocated_db": (
+            {
+                "settings": colo_settings,
+                "scripts": [
+                    {
+                        script.name: {
+                            "backend": "TORCH",
+                            "device": script.device,
+                        }
                     }
-                }
-                for script in db_scripts
-            ],
-            "models": [
-                {
-                    model.name: {
-                        "backend": model.backend,
-                        "device": model.device,
+                    for script in db_scripts
+                ],
+                "models": [
+                    {
+                        model.name: {
+                            "backend": model.backend,
+                            "device": model.device,
+                        }
                     }
-                }
-                for model in db_models
-            ],
-        }
-        if colo_settings
-        else {},
+                    for model in db_models
+                ],
+            }
+            if colo_settings
+            else {}
+        ),
         "telemetry_metadata": {
             "status_dir": str(telemetry_data_path),
             "step_id": step_id,
@@ -170,10 +176,13 @@ def _dictify_ensemble(
     return {
         "name": ens.name,
         "params": ens.params,
-        "batch_settings": _dictify_batch_settings(ens.batch_settings)
-        # FIXME: Typehint here is wrong, ``ens.batch_settings`` can
-        # also be an empty dict for no discernible reason...
-        if ens.batch_settings else {},
+        "batch_settings": (
+            _dictify_batch_settings(ens.batch_settings)
+            # FIXME: Typehint here is wrong, ``ens.batch_settings`` can
+            # also be an empty dict for no discernible reason...
+            if ens.batch_settings
+            else {}
+        ),
         "models": [
             _dictify_model(model, *launching_metadata)
             for model, launching_metadata in members

@@ -695,7 +695,7 @@ class Orchestrator(EntityList[DBNode]):
         run_args: t.Optional[t.Dict[str, t.Any]] = None,
         cpus_per_shard: t.Optional[int] = None,
         gpus_per_shard: t.Optional[int] = None,
-        **_kwargs: t.Any  # Needed to ensure no API break and do not want to
+        **_kwargs: t.Any,  # Needed to ensure no API break and do not want to
         # introduce that possibility, even if this method is
         # protected, without running the test suite.
     ) -> t.Optional[JsrunSettings]:
