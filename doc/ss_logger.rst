@@ -15,16 +15,19 @@ Initialize a logger instance by providing a `name` to the function ``get_logger(
 
       logger = get_logger("example_logger")
 
-There are three logging levels indicating the severity of log messages.
-Each log level is associated with a function that can be used to log events at
-the associated level. The log levels, in order of increasing
-severity, are as follows:
+SmartSim uses log levels to indicate the severity of log messages.
+Each log level is associated with a logger helper function that is used to log events at
+that level. The levels, in order of increasing verboseness, are as follows:
+    1. `quiet`
+    2. `info`
+    3. `debug`
 
-1. quiet
-2. info
-3. debug
+The levels are set through the `SMARTSIM_LOG_LEVEL` environment variable
+which will be demonstrated later int he example.
+The level `info` is the default log level.
 
-Next, we place all four logging functions within the Python script:
+SmartSim offers four logging helper functions. Let's add to the all four
+to the Python script:
 
 .. code-block:: python
 
@@ -33,16 +36,31 @@ Next, we place all four logging functions within the Python script:
       logger.error("This is an error message")
       logger.warning("This is a warning message")
 
-When we run the script, the following output prints to stdout::
+Earlier we mentioned that log levels control the log helper functions.
+This is done by setting the `SMARTSIM_LOG_LEVEL` environment variable.
+For example, set `SMARTSIM_LOG_LEVEL` to `quiet`::
+    export SMARTSIM_LOG_LEVEL=quiet
+
+When we execute the Python script with `SMARTSIM_LOG_LEVEL=quiet`,
+the following messages will print::
+    21:07:40 osprey.us.cray.com SmartSim[10950] ERROR This is an error message
+    21:07:40 osprey.us.cray.com SmartSim[10950] WARNING This is a warning message
+
+Notice that the `info` and `debug` messages were ignored. This is because by setting
+a lower log level (`quiet`), we instruct SmartSim to ignore the higher levels (`debug` and `info`).
+SmartSim will always print `warning` and `error` messages to stdout.
+
+Next, set `SMARTSIM_LOG_LEVEL` to `info`::
+    export SMARTSIM_LOG_LEVEL=info
+
+When we run the script with `SMARTSIM_LOG_LEVEL=info`,
+the following output appears::
     19:52:05 osprey.us.cray.com SmartSim[130033] INFO This is a message
     19:52:05 osprey.us.cray.com SmartSim[130033] ERROR This is an error message
     19:52:05 osprey.us.cray.com SmartSim[130033] WARNING This is a warning message
 
-Notice that the `debug` function did not print. This is because
-`SMARTSIM_LOG_LEVEL` is defaulted to `info`. The `SMARTSIM_LOG_LEVEL` environment
-variable controls what log level messages are printed. Given a log level, SmartSim will
-ignore higher severity levels if present. Such as here, since `debug` is higher than `info`,
-it is ignored.
+Above, we have instructed SmartSim to print all `info` messages but ignore higher
+verbose messages (`debug`).
 
 Let's set the `SMARTSIM_LOG_LEVEL` to `debug` and check the output of the program.
 Set the environment variable in the terminal like so::
@@ -54,18 +72,8 @@ When we run the program once again, the following output is printed to stdout::
     20:11:12 osprey.us.cray.com SmartSim[65385] ERROR This is an error message
     20:11:12 osprey.us.cray.com SmartSim[65385] WARNING This is a warning message
 
-Notice that all messages are visible now. This is because we specified the highest
-severity level to `SMARTSIM_LOG_LEVEL`.
-
-Let's set the `SMARTSIM_LOG_LEVEL` to `quiet` and check the output of the program::
-    export SMARTSIM_LOG_LEVEL=quiet
-
-The output appears as follows::
-    21:07:40 osprey.us.cray.com SmartSim[10950] ERROR This is an error message
-    21:07:40 osprey.us.cray.com SmartSim[10950] WARNING This is a warning message
-
-SmartSim ignores `debug` and `info` logs, and will exclusively print `errors` and
-`warnings`.
+Notice that all log messages are visible since we set `SMARTSIM_LOG_LEVEL`
+to the highest log level.
 
 You may also instruct SmartSim to write the log messages
 to a file by using the `log_to_file()` function.
