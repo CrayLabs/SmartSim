@@ -6,16 +6,22 @@ Experiments
 Overview
 ========
 SmartSim offers functionality to automate the deployment of loosely-coupled HPC and
-AI workflows using an in-memory, AI-enabled, distributed memory store via the
+AI workflows using an in-memory, AI-enabled, distributed memory store supported by the
 :ref:`Experiment API<experiment_api>`.
 The ``Experiment`` is SmartSim's top level object that enables users to create and construct
 the components of a workflow. The Experiment API offers three different workflow components:
-:ref:`Orchestrator<Orchestrator>`, :ref:`Model<Model>`, and :ref:`Ensemble<Ensemble>`.
+  1. :ref:`Orchestrator<Orchestrator>`
+  2. :ref:`Model<Model>`
+  3. :ref:`Ensemble<Ensemble>`.
 
-Once an experiment entity is initialized, a user has access
-to the associated entity interface that enables a user to configure the entity and
-retrieve entity information: :ref:`Model API<model_api>`, :ref:`Orchestrator API<orchestrator_api>` and
-:ref:`Ensemble API<ensemble_api>`. There is no limit to the number of entities a user can
+Once a workflow component is initialized, a user has access
+to the associated entity interface that supports configuring and
+retrieving entity information:
+  * :ref:`Model API<model_api>`
+  * :ref:`Orchestrator API<orchestrator_api>`
+  * :ref:`Ensemble API<ensemble_api>`
+
+There is no limit to the number of entities a user can
 initialize within an experiment.
 
 .. figure:: images/Experiment.png
@@ -27,7 +33,7 @@ initialize within an experiment.
 =========
 Launchers
 =========
-`Launchers` provide SmartSim the ability to construct and execute complex workloads
+SmartSim `launchers` support constructing and executing complex workloads
 locally or on HPC systems with job schedulers (workload managers) like Slurm, or PBS.
 
 SmartSim currently supports 6 `launchers`:
@@ -38,12 +44,12 @@ SmartSim currently supports 6 `launchers`:
   5. ``lsf``: for systems using the LSF scheduler
   6. ``auto``: have SmartSim auto-detect the launcher to use
 
-If a launcher is not specified, it will default to `"local"`.
+If a launcher is not specified, the `launcher` will default to `"local"`.
 
 .. compound::
   By default, SmartSim will attempt to choose the correct
   launcher for the system, however the user can also choose
-  a specific launcher by passing in a value for launcher optional argument.
+  a specific launcher by passing in a value to the `launcher` argument.
   For example, to set up a local launcher, the workflow should be initialized as follows:
 
   .. code-block:: python
@@ -70,10 +76,9 @@ SmartSim driver script, there is no limit to the number of SmartSim entities
 within an Experiment. In the following subsections, we define the
 general purpose of the three entities that can be created via
 Experiment API factory methods:
-
-* ``Orchestrator``
-* ``Model``
-* ``Ensemble``
+  * ``Orchestrator``
+  * ``Model``
+  * ``Ensemble``
 
 To create a reference to each entity object, use the associated
 ``Experiment.create_...()`` function.
@@ -250,7 +255,11 @@ Ensemble
 In addition to a single model, SmartSim allows users to create,
 configure, and launch an ``Ensemble`` of ``Model`` objects.
 Ensembles can be given parameters and permutation strategies that define how the
-``Ensemble`` will create the underlying model objects.
+``Ensemble`` will create the underlying model objects. Users may also
+manually create and append ``Model(s)`` to an Ensemble.
+Lastly, the Ensemble API supports launching Machine Learning Models, TensorFlow
+scripts and functions at runtime to enable AI and ML within an Ensemble
+Workload.
 
 Ensemble Prefixing
 ^^^^^^^^^^^^^^^^^^
@@ -273,44 +282,50 @@ will end up in the database is `bar_0_foo` and `bar_1_foo`.
 Create a Ensemble
 ^^^^^^^^^^^^^^^^^
 An ``Ensemble`` is created through the factory method: ``Experiment.create_ensemble()``.
-To create an ensemble, follow one of the cases below:
+TO initialize an Ensemble, one of the cases below must be followed:
 
-Case 1 : If you would like to define a set of parameter values
+Case 1 : Test different combinations/permutations.
+  If you would like to define a set of parameter values
   for which you want to test different combinations/permutations,
-  initialize an ``Ensemble`` with a ``RunSettings`` object and
-  `params` argument. The way the executed permutations are
-  chosen can be defined through the `perm_strat` parameter.
-  ``RunSettings`` will be identical for all models, chosen
-  parameters will vary.
+  initialize the Ensemble with a ``RunSettings`` object and
+  `params` argument. The run settings and parameters will
+  expand to all Ensemble members.
 
-Case 2 : If you would like to define the same set of parameter values
-  for all Models, initialize an ``Ensemble`` with a ``RunSettings`` object and
+Case 2 : Define the number of Models created.
+  If you would like to manually define the number of models created
+  within an Ensemble, initialize an ``Ensemble`` with a ``RunSettings`` object and
   `replicas` argument. The `replicas` argument will create clones
-  of the ``Model`` object.
+  of the ``Model`` object. The run settings will
+  expand to all Ensemble members.
 
-Case 3 : If you would like to launch the Ensemble as a batch job,
-  specify ``BatchSettings`` when initializing the ``Ensemble`` object.
-  An empty Ensemble object will be created. You will have to add the Models
-  individually here where they will all be launched as a single batch job.
+Case 3 : Launch as a batch job and manually append Models.
+  If you would like to launch the Ensemble as a batch job,
+  specify ``BatchSettings`` when initializing an ``Ensemble`` object.
+  An empty Ensemble object will be created and manually appending Models
+  is required.
 
-Case 4 : If you would like to launch the Ensemble as a batch job and
+Case 4 : Launch as a batch job and test combinations/permutations.
+  If you would like to launch the Ensemble as a batch job and
   define a set of parameter values
   for which you want to test different combinations/permutations,
   initialize an ``Ensemble`` with a ``BatchSettings``, ``RunSettings`` objects
-  and `params` argument. Again, the way the executed permutations are
-  chosen can be defined through the `perm_strat` parameter.
-  ``RunSettings`` will be identical for all models, chosen
-  parameters will vary.
+  and `params` argument. The run settings and parameters will
+  expand to all Ensemble members. The Ensemble will be launched as
+  a single batch job.
 
-Case 5 : If you would like to launch the Ensemble as a batch job
-  define the same set of parameter values
-  for all Models, initialize an ``Ensemble`` with a ``RunSettings`` object and
+Case 5 : Launch as a batch job and define number of Models created.
+  If you would like to launch the Ensemble as a batch job
+  manually define the number of models created
+  within an Ensemble, initialize an ``Ensemble`` with a ``RunSettings`` object and
   `replicas` argument. The `replicas` argument will create clones
-  of the ``Model`` object.
+  of the ``Model`` object. The run settings will
+  expand to all Ensemble members.
 
 The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
 gives you access to functions associated with the :ref:`Ensemble API<ensemble_api>`.
 
+.. note::
+  For more information on all cases and input arguments, navigate to the Ensemble documentation page.
 ==================
 Experiment Example
 ==================
