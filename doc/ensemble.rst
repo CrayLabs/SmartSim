@@ -26,53 +26,51 @@ In the following Ensemble sections we discuss:
 5. Starting an Ensemble <link>
 6. Stopping an Ensemble <link>
 
-
 ==========
 Initialize
 ==========
-There are five different ways to initialize an ``Ensemble`` object using the
-given parameter options.
 
-.. autosummary::
+.. list-table:: title
+   :widths: auto
+   :header-rows: 1
 
-   Ensemble.__init__
+   * - input
+     - Description
+   * - `params`
+     - Parameters to expand into ``Model`` members. For example, if you
+       wanted to assign a parameter used within all Ensemble members,
+       you must first specify the argument to `params` like
+       `params="THERMO"`. You may then assign the value of this via the
+       ``Ensemble.attach_generator_file(to_config)`` function or set the
+       value in `params_as_args`.
+   * - `params_as_args`
+     - A list of params that should be used as command line arguments
+       to the ``Model`` member executables and not written to generator files.
+       For example, you have specified to `params` that the variable "THERMO"
+       is used across all ``Models``. To set the variable, assign like so:
+       `params_as_args={"THERMO": [95,100,105]}`.
+   * - `batch_settings`
+     - Describes settings for Ensemble as batch workload. This encompasses the
+       entire ``Ensemble``. For example, if an Ensemble needed to support
+       two ``Models`` that both required 5 nodes. Then we would specify that
+       the batch settings needs 10 nodes for the Ensemble.
+   * - `run_settings`
+     - Describes how each Model should be executed. The run settings will be applied to
+       all ``Models``.
+   * - `replicas`
+     - Represents the number of ``Model`` clones to create within an Ensemble. For example,
+       `replicas=4` specifies to the Ensemble API to create four of the same Models.
+   * - `perm_strategy`
+     - This parameter is used to determine how the `params_as_args`
+       will be distributed. There are three options for this argument: `all_perm`, `step`
+       and `random`. If you would like to use all possible combinations of the pass in `params_as_args`,
+       then `all_perm` is used. If you would like to step through each parameter passed
+       into `params_as_args`, then specify `step`. If you would like to randomly select from
+       all possible combinations, then use `random`. When using `random`, you can specify the
+       number of random times to sample by specifying the `replicas` argument.
 
-To prepare to discuss each case, lets first walk through each of the
-above arguments.
+Ensembles require one of the following combinations of arguments:
 
-1. `params`: Use the `params` argument to specify values used within the
-   application. This argument will expand all specified parameters to
-   all models. For example, if you wanted to replicate the `THERMO` for
-   use across all Models within an Ensemble, you could set `params="THERMO"`.
-   To set this argument, you could either use the function
-   Ensemble.attach_generator_files(`to_configure`) or set the function
-   `params_as_args` with the values you would like.
-2. `params_as_args`: You can use this parameter to set the `params` used
-   within the Models. For example, if I wanted to specify setting `THERMO`
-   to `1,2,3,4` then I would pass in a dictionary to `params_as_args` as
-   `params_as_args={"THERMO": [1,2,3,4]}`. You can then use the argument
-   `perm_strategy` to determine how to set the `THERMO` value.
-3. `batch_settings`: This parameter encompasses the deployment of the whole
-   Ensemble. For example, if an Ensemble was composed of 100 Models, each
-   requiring 10 nodes per simulation. Then the batch settings would specify
-   that 100 nodes are required for the entire ensemble. Through a run settings
-   object would you specify that the model requires 10 nodes.
-4. `run_settings`: This parameter determines the run settings for each
-   Model. This object is required per Model but can be added in different ways
-   as will be demonstrated in the cases.
-5. `replicas`: This argument is used when you would like to create clones of
-   a Model. For example, if I would like to create eight clones of the same
-   Model, I would specify this parameter equal to eight. This parameter is used
-   in certain cases which will be demonstrated further below.
-6. `perm_strategy`: This parameter is used to determine how the `params_as_args`
-   will be distributed. There are three options for this argument: `all_perm`, `step`
-   and `random`. If you would like to use all possible combinations of the pass in `params_as_args`,
-   then `all_perm` is used. If you would like to step through each parameter passed
-   into `params_as_args`, then specify `step`. If you would like to randomly select from
-   all possible combinations, then use `random`. When using `random`, you can specify the
-   number of random times to sample by specifying the `replicas` argument.
-
-Now lets walk through the possible cases:
 Case 1 : ``RunSettings`` and `params`
     This case is for initializing an Ensemble of Models with all the
     same run settings and parameters. You may want to use this case
@@ -85,6 +83,10 @@ Case 1 : ``RunSettings`` and `params`
     `perm_strategy` function, as the number of Models will correspond with
     the number of value groups to input.
 
+.. code-block:: python
+
+    test
+
 Case 2 : ``RunSettings`` and `replicas`
     This case is for creating an Ensemble of Model objects that
     use the same run settings and do not contain parameter values.
@@ -93,11 +95,19 @@ Case 2 : ``RunSettings`` and `replicas`
     Therefore, we need to specify how many Models should be created within
     an Ensemble which is done via `replicas`.
 
+.. code-block:: python
+
+    test
+
 Case 3 : ``BatchSettings``
     In this init strategy, you are able to manually add Models to the Ensemble
     and submit as a batch job. Each Model here may have different `params`
     and `param_as_args` values. This case is used in Ensemble workloads that require
     `Models` that work together. Learn to append a model here <link>.
+
+.. code-block:: python
+
+    test
 
 Case 4 : ``RunSettings``, ``BatchSettings`` and `params`
     This init strategy is used when you would like to submit the Ensemble as a batch job,
@@ -106,12 +116,20 @@ Case 4 : ``RunSettings``, ``BatchSettings`` and `params`
     values. The number of Models created is determined by the `perm_strategy` argument, as
     different permutations of the `params` values will be fed to each model.
 
+.. code-block:: python
+
+    test
+
 Case 5 : ``RunSettings``, ``BatchSettings`` and `replicas`
     This init strategy is used when you would like to submit the Ensemble as a batch job,
     but would also like all `Models` to have the same run settings. You may determine
     the number of `Models` within the `Ensemble` through the `replicas` argument. This
     case is used during an Ensemble that runs the same simulations, however, the simulations
     produce different outputs.
+
+.. code-block:: python
+
+    test
 
 =========
 Appending
@@ -330,3 +348,7 @@ You might use TorchScript scripts to represent individual models within the ense
 .. code-block:: python
 
     ensemble.add_script("test_script1", script_path=torch_script, device="CPU")
+
+=========================
+Data Collision Prevention
+=========================
