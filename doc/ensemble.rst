@@ -116,7 +116,86 @@ Case 5 : ``RunSettings``, ``BatchSettings`` and `replicas`
 =========
 Appending
 =========
-ensemble.add_model()
+SmartSim allows users to manually append Models to an Ensemble.
+This functionality is useful when an Ensemble workload requires
+the diversity of models. For example, an ensemble workload might
+require an *Ensemble of Experts*. In this case, different models specialize
+in different subtasks or aspects of the problem. The ensemble then
+combines their predictions to achieve a more robust and accurate overall prediction.
+
+In the following section, we walk through adding Model objects
+to the Ensemble. Init **Case 3** above mentions that an Ensemble
+initialized solely with a ``BatchSettings`` object requires
+that Models be manually appended. To demonstrate this, we
+follow case 3 to create the Ensemble in the example.
+
+.. note::
+    This example assumes that you have created an Experiment and
+    are adding this code to the Experiment driver script.
+    Remember that you only have access to the Ensemble, Model
+    and BatchSettings API (used in this example)
+    through the Experiment factory class. Our experiment object
+    will be named ``exp``.
+
+Later, we will create 2 Models that both utilize 5 nodes.
+We are submitting the Ensemble as a batch job, therefore,
+when initializing a ``BatchSettings`` object, specify that the batch
+job will require 10 nodes:
+
+.. code-block:: python
+
+    sbatch_settings = exp.create_batch_settings(nodes=10)
+
+Now initialize the Ensemble using the ``Experiment.create_ensemble()``
+factory method and specify the `sbatch_settings` object:
+
+.. code-block:: python
+
+    ensemble = exp.create_ensemble(sbatch_settings)
+
+Now that the empty Ensemble is initialized, begin taking steps to
+create the two Models to append to the Ensemble. Start by creating
+the model run settings. A Model object requires a ``RunSettings`` object,
+or instructions on how to execute the Model. Below, we create two run settings
+objects for `model_1` and `model_2`:
+
+.. code-block:: python
+
+    srun_settings_1 = exp.create_run_settings(exe=exe, exe_args="path/to/script_1")
+    srun_settings_2 = exp.create_run_settings(exe=exe, exe_args="path/to/script_2")
+
+Initialize the first Model using ``Experiment.create_model()``:
+
+.. code-block:: python
+
+    model_1 = exp.create_model(name="model_1", run_settings=srun_settings_1, params={"THERMO":[95,100]})
+
+Above, we specify Model parameters that are used within the application script via the `params`
+argument. In the application script, we set the parameter "THERMO_1" to a list of integers.
+
+We specify the `params` argument to `model_2`, again passing in a list of integers. The idea is
+that `model_1` and `model_2` are both different scripts that have the same end goal. They both use
+the same "THERMO" argument, however, we would like to compare the outputs of both Models.
+Initialize `model_2`:
+
+.. code-block:: python
+
+    model_2 = exp.create_model(name="model_2", run_settings=srun_settings_2, params={"THERMO":[95,100]})
+
+The Ensemble API has a helper function named ``Ensemble.add_model()`` that accepts model
+entities to add to an Ensemble:
+
+.. code-block:: python
+
+    ensemble.add_model(model_1)
+    ensemble.add_model(model_2)
+
+Now that we have added the models to the Ensemble, we can start the Ensemble via
+``Experiment.start()``:
+
+.. code-block:: python
+
+    exp.start(ensemble)
 
 =====================
 ML Models and Scripts
