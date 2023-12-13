@@ -19,6 +19,8 @@ To be released at some future point in time
 
 Description
 
+- Added documentation section about ML features and TorchScript
+- Added TorchScript functions to Online Analysis tutorial
 - Split tests into groups for parallel execution in CI/CD pipeline
 - Change signature of `Experiment.summary()`
 - Expose first_device parameter for scripts, functions, models
@@ -28,6 +30,9 @@ Description
 
 Detailed Notes
 
+- A section named *ML Features* was added to documentation. It contains multiple
+  examples of how ML models and functions can be added to and executed on the DB.
+  TorchScript-based post-processing was added to the *Online Analysis* tutorial (SmartSim-PR411_)
 - Split tests into `group_a`, `group_b`, `slow_tests` for parallel execution in CI/CD pipeline (SmartSim-PR417_, SmartSim-PR424_)
 - Change `format` argument to `style` in `Experiment.summary()`, this is
   an API break (SmartSim-PR391_)
@@ -45,6 +50,7 @@ Detailed Notes
 - Add support for creation of multiple databases with unique identifiers. (SmartSim-PR342_)
 
 
+.. _SmartSim-PR411: https://github.com/CrayLabs/SmartSim/pull/411
 .. _SmartSim-PR424: https://github.com/CrayLabs/SmartSim/pull/424
 .. _SmartSim-PR417: https://github.com/CrayLabs/SmartSim/pull/417
 .. _SmartSim-PR391: https://github.com/CrayLabs/SmartSim/pull/391
