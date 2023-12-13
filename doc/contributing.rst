@@ -1,5 +1,5 @@
 
-*********
+******************
 Contributing Guide
 ******************
 
@@ -48,30 +48,30 @@ How to contribute
 We welcome contributions from the broader community. These generally fall under
 two categories:
 
-- Developments to the main codebases: These contributions directly modify the
-SmartSim and SmartRedis repositories to fix bugs in the code, improve
-the documentation, or add new features. Before embarking on major development,
-please contact the developers first to make sure that your proposal aligns
-with the internal development by opening an issue or reach out to us. Please
-follow the :ref:`Developer Guidelines <developer_guide>`.
+- Contributions to the main codebases: These contributions directly modify the
+  SmartSim and SmartRedis repositories to fix bugs in the code, improve
+  the documentation, or add new features. Before embarking on major development,
+  please contact the developers first to make sure that your proposal aligns
+  with the internal development by opening an issue or reaching out to us. Please
+  follow the :ref:`Developer Guidelines <developer_guide>`.
 
 - Applications of SmartSim: Many of our users build scientific/engineering
-applications using SmartSim and SmartRedis. Please feel free to make
-contributions to the :ref:`SmartSim Zoo <smartsim_zoo>`.
+  applications using SmartSim and SmartRedis. Please feel free to make
+  contributions to the :ref:`SmartSim Zoo <smartsim_zoo>`.
 
 In both cases, contributors can expect the following:
 
 - A quick response to your pull requests detailing why we are accepting or
-rejecting your contribution
+  rejecting your contribution.
 
 - If we accept your contribution, a SmartSim developer will be assigned to help
-bring your contribution into the codebases by testing it across a variety of
-platforms and ensuring code quality.
+  bring your contribution into the codebases by testing it across a variety of
+  platforms and ensuring code quality.
 
-- You will be credited as a co-author when the contribution is merged
+- You will be credited as a co-author when the contribution is merged.
 
 .. note::
-    The last point serves as a `Developer Certificate of Origin<https://developercertificate.org/>`_.
+    The last point serves as a `Developer Certificate of Origin <https://developercertificate.org/>`_.
     More specifically, we will ask contributors to signoff on the final state
     of the PR before merging. This signoff will then be propagated into the
     final squash merge commit.
@@ -95,4 +95,3 @@ through GitHub. For issues related to `SmartSim post here
 
 4. **Contact the Development Team** - For all other inquiries including
 collaboration opportunities, please contact SmartSim at hpe dot com.
-

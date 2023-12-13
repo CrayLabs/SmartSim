@@ -3,9 +3,9 @@ C++
 ***
 
 
-This section presents examples that use the SmartRedis C++ API to 
-interact with the RedisAI tensor, model, and script data types. 
-Additionally, this section demonstrates an example of utilizing 
+This section presents examples that use the SmartRedis C++ API to
+interact with the RedisAI tensor, model, and script data types.
+Additionally, this section demonstrates an example of utilizing
 the SmartRedis ``DataSet`` API.
 
 
@@ -16,7 +16,7 @@ the SmartRedis ``DataSet`` API.
 
 
 .. note::
-    The C++ API examples are written to connect to a clustered database 
+    The C++ API examples are written to connect to a clustered database
     or clustered SmartSim Orchestrator.
     Update the ``Client`` constructor ``cluster`` flag to `false`
     to connect to a single shard (single compute host) database.
@@ -39,7 +39,7 @@ DataSets
 
 The C++ client can store and retrieve tensors and metadata in datasets.
 For further information about datasets, please refer to the :ref:`Dataset
-section of the Data Structures documentation page <data_structures_dataset>`.
+section of the Data Structures documentation page <data-structures-dataset>`.
 
 The code below shows how to store and retrieve tensors and metadata
 that belong to a ``DataSet``.
@@ -69,8 +69,8 @@ executes a preprocessing script.
 Scripts
 =======
 
-The example in :ref:`SR CPP Models` shows how to store and use 
-a PyTorch script in the database with the C++ Client.  
+The example in :ref:`SR CPP Models` shows how to store and use
+a PyTorch script in the database with the C++ Client.
 The script is stored as a file
 in the ``../../../common/mnist_data/`` path relative to the
 compiled executable.  Note that this example also sets and
@@ -104,4 +104,3 @@ source code is also shown.
   :linenos:
   :language: Python
   :lines: 15-20
-

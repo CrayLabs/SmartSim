@@ -42,23 +42,27 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY . /usr/local/src/SmartSim/
 WORKDIR /usr/local/src/SmartSim/
 
-# Install docs dependencies and SmartSim
-RUN python -m pip install -r doc/requirements-doc.txt && \
-    NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
-
 # Install smartredis
-RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
+RUN rm smartredis \
+    && git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
     && cd smartredis \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
 # Install smartdashboard
-RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
+RUN rm smartdashboard \
+    && git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
     && cd smartdashboard \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
-RUN cd doc/tutorials/ && \
-    ln -s ../../tutorials/* .
+# Install docs dependencies and SmartSim
+RUN python -m pip install -r doc/requirements-doc.txt \
+    && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
+
+RUN mkdir -p doc/tutorials/ \
+    && cd doc/tutorials/ \
+    && rm -rf * \
+    && ln -s ../../tutorials/* .
 
 RUN make docs
