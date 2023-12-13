@@ -151,12 +151,11 @@ compute node(s) from the database node(s).
 A clustered database is optimal for high data throughput scenarios
 such as online analysis, training and processing.
 
-The following image illustrates communication
-between a clustered orchestrator and a
-multi-node model. In the Diagram, an instance of the application is
-running on each application compute node. A single SmartRedis Client object is initialized with
-the clustered database address and used to communicate with the application's compute nodes.
-Data is streamed from the application compute nodes to the sharded database via the client.
+The following image illustrates communication between a clustered orchestrator and a
+model. In the diagram, the application is running on multiple compute node,
+separate from the orchestrator compute nodes. Each process the application lives on,
+creates its own SmartRedis client connection to the orchestrator. This connection is
+initialized in the Model application script, when a SmartRedis Client is initialized.
 
 .. figure::  images/clustered-orc-diagram.png
 
@@ -190,11 +189,11 @@ During colocated deployment, a SmartSim orchestrator (the database) runs on the 
 compute node as a Smartsim model (the application).
 This type of deployment is optimal for high data inference scenarios.
 
-Below is an image illustrating communication
-between a colocated model spanning multiple compute nodes, and the database
-running on each application compute node. A single SmartRedis client is initialized
-for the colocated Orchestrator and is used to communicate with the application.
-Data is streamed from the application to the database via the client on the same node.
+Below is an image illustrating communication within a colocated model
+spanning multiple compute nodes. As demonstrated in the diagram,
+each process the application lives on, creates its own SmartRedis client connection
+to the orchestrator running on the same process. This connection is
+started in the Model script, when a SmartRedis Client is initialized.
 
 .. figure:: images/co-located-orc-diagram.png
 
@@ -253,6 +252,8 @@ configure, and launch an ``Ensemble`` of ``Model`` objects.
 Ensembles can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying model objects.
 
+Ensemble Prefixing
+^^^^^^^^^^^^^^^^^^
 If each of multiple ensemble members attempt to use the
 same code to access their respective models in the Orchestrator,
 the keys by which they do this will overlap and they can end up
@@ -263,9 +264,9 @@ of the model to the keys by which it is accessed. With
 this enabled, key overlapping is no longer an issue and
 ensemble members can use the same code.
 
-For example, assume you have two models in the Ensemble object,
-named `bar_0` and `bar_1`. In the application code you'll
-have code like this ``Client.put_tensor("foo")``. With
+For example, assume you have two models in the ``Ensemble`` object,
+named `bar_0` and `bar_1`. In the application code you
+use the function ``Client.put_tensor("foo")``. With
 ensemble key prefixing turned on, the actual key that
 will end up in the database is `bar_0_foo` and `bar_1_foo`.
 

@@ -411,7 +411,7 @@ Orchestrator
 Orchestrator
 ------------
 
-.. _orc_api:
+.. _orchestrator_api:
 
 .. autoclass:: Orchestrator
    :members:
@@ -444,7 +444,7 @@ Model
 Model
 -----
 
-.. _mode_api:
+.. _model_api:
 
 .. autoclass:: Model
    :members:
@@ -473,7 +473,7 @@ Ensemble
 Ensemble
 --------
 
-.. _ensem_api:
+.. _ensemble_api:
 
 .. autoclass:: Ensemble
    :members:
