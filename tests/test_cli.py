@@ -397,50 +397,20 @@ def test_cli_plugin_invalid(
     assert rc == os.EX_CONFIG
 
 
+# fmt: off
 @pytest.mark.parametrize(
     "command,mock_location,exp_output",
     [
-        pytest.param(
-            "build",
-            "build_execute",
-            "mocked-build",
-            id="ensure build action is executed",
-        ),
-        pytest.param(
-            "clean",
-            "clean_execute",
-            "mocked-clean",
-            id="ensure clean action is executed",
-        ),
-        pytest.param(
-            "dbcli",
-            "dbcli_execute",
-            "mocked-dbcli",
-            id="ensure dbcli action is executed",
-        ),
-        pytest.param(
-            "site", "site_execute", "mocked-site", id="ensure site action is executed"
-        ),
-        pytest.param(
-            "clobber",
-            "clobber_execute",
-            "mocked-clobber",
-            id="ensure clobber action is executed",
-        ),
-        pytest.param(
-            "validate",
-            "validate_execute",
-            "mocked-validate",
-            id="ensure validate action is executed",
-        ),
-        pytest.param(
-            "info",
-            "info_execute",
-            "mocked-validate",
-            id="ensure info action is executed",
-        ),
-    ],
+        pytest.param("build", "build_execute", "mocked-build", id="ensure build action is executed"),
+        pytest.param("clean", "clean_execute", "mocked-clean", id="ensure clean action is executed"),
+        pytest.param("dbcli", "dbcli_execute", "mocked-dbcli", id="ensure dbcli action is executed"),
+        pytest.param("site", "site_execute", "mocked-site", id="ensure site action is executed"),
+        pytest.param("clobber", "clobber_execute", "mocked-clobber", id="ensure clobber action is executed"),
+        pytest.param("validate", "validate_execute", "mocked-validate", id="ensure validate action is executed"),
+        pytest.param("info", "info_execute", "mocked-validate", id="ensure info action is executed"),
+    ]
 )
+# fmt: on
 def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
     """Ensure the default CLI executes the build action"""
 
@@ -572,22 +542,20 @@ def test_cli_help_support(
     assert exp_output in captured.out
 
 
+# fmt: off
 @pytest.mark.parametrize(
     "command,mock_location,exp_output",
     [
         pytest.param("build", "build_execute", "verbose mocked-build", id="build"),
         pytest.param("clean", "clean_execute", "verbose mocked-clean", id="clean"),
-        pytest.param(
-            "clobber", "clobber_execute", "verbose mocked-clobber", id="clobber"
-        ),
+        pytest.param("clobber", "clobber_execute", "verbose mocked-clobber", id="clobber"),
         pytest.param("dbcli", "dbcli_execute", "verbose mocked-dbcli", id="dbcli"),
         pytest.param("site", "site_execute", "verbose mocked-site", id="site"),
-        pytest.param(
-            "validate", "validate_execute", "verbose mocked-validate", id="validate"
-        ),
+        pytest.param("validate", "validate_execute", "verbose mocked-validate", id="validate"),
         pytest.param("info", "info_execute", "verbose mocked-validate", id="validate"),
-    ],
+    ]
 )
+# fmt: on
 def test_cli_invalid_optional_args(
     capsys, monkeypatch, command: str, mock_location: str, exp_output: str
 ):
