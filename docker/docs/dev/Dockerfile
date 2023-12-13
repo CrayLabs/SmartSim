@@ -43,15 +43,13 @@ COPY . /usr/local/src/SmartSim/
 WORKDIR /usr/local/src/SmartSim/
 
 # Install smartredis
-RUN rm smartredis \
-    && git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
+RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
     && cd smartredis \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
 # Install smartdashboard
-RUN rm smartdashboard \
-    && git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
+RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
     && cd smartdashboard \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
