@@ -5,27 +5,27 @@ Batch Settings
 ========
 Overview
 ========
-SmartSim offers functionality to launch entities (``Model`` or ``Ensemble``)
+SmartSim offers functionality to launch workloads (``Model`` or ``Ensemble``)
 as batch jobs. Each SmartSim `launcher` interfaces with a ``BatchSettings`` object
 specific to a systems Workload Manager (WLM). The following ``BatchSettings`` child
 classes are provided per `launcher`:
 
 1. The Slurm `launcher` supports:
-   - ``SbatchSettings``
+   - :ref:`SbatchSettings<sbatch_api>`
 2. The PBSpro `launcher` supports:
-   - ``QsubBatchSettings``
+   - :ref:`QsubBatchSettings<qsub_api>`
 3. The Cobalt `launcher` supports:
-   - ``CobaltBatchSettings``
+   - :ref:`CobaltBatchSettings<cqsub_api>`
 4. The LSF `launcher` supports:
-   - ``BsubBatchSettings``
+   - :ref:`BsubBatchSettings<bsub_api>`
 
-The local `launcher` does not support batch launching.
 Each above child class allow you to specify the run parameters for a WLM batch job.
+The local `launcher` does **not** support batch jobs.
 
 Once a ``BatchSettings`` object is initialized via the ``Experiment.create_batch_settings()``
-function, you have access to helper functions associated with the helper class that
-configure the batch settings the job. The following chart illustrates helper functions
-associated with the ``SrunSettings`` object. The ``SbatchSettings`` object is used for
+function, you have access to helper functions associated with the object that allow
+configuring the job batch settings. The following chart illustrates helper functions
+provided by the ``SrunSettings`` object. The ``SbatchSettings`` object is used for
 launching batches on Slurm WLM systems.
 
 .. list-table:: SbatchSettings Helper Functions

@@ -105,24 +105,24 @@ If an allocation is specified, the instance receiving these run parameters will 
 Each WLM `launcher` supports different ``RunSettings`` child classes as shown below:
 
 1. The Slurm `launcher` supports:
-   - ``SrunSettings``
-   - ``OrterunSettings``
-   - ``MpirunSettings``
-   - ``MpiexecSettings``
+   - :ref:`SrunSettings<srun_api>`
+   - :ref:`OrterunSettings<openmpi_orte_api>`
+   - :ref:`MpirunSettings<openmpi_run_api>`
+   - :ref:`MpiexecSettings<openmpi_exec_api>`
 2. The PBSpro `launcher` supports:
-   - ``AprunSettings``
-   - ``OrterunSettings``
-   - ``MpirunSettings``
-   - ``MpiexecSettings``
+   - :ref:`AprunSettings<aprun_api>`
+   - :ref:`OrterunSettings<openmpi_orte_api>`
+   - :ref:`MpirunSettings<openmpi_run_api>`
+   - :ref:`MpiexecSettings<openmpi_exec_api>`
 3. The Cobalt `launcher` supports:
-   - ``AprunSettings``
-   - ``OrterunSettings``
-   - ``MpirunSettings``
-   - ``MpiexecSettings``
+   - :ref:`AprunSettings<aprun_api>`
+   - :ref:`OrterunSettings<openmpi_orte_api>`
+   - :ref:`MpirunSettings<openmpi_run_api>`
+   - :ref:`MpiexecSettings<openmpi_exec_api>`
 4. The LSF `launcher` supports:
-   - ``JsrunSettings``
-   - ``MpirunSettings``
-   - ``MpiexecSettings``
+   - :ref:`JsrunSettings<jsrun_api>`
+   - :ref:`MpirunSettings<openmpi_run_api>`
+   - :ref:`MpiexecSettings<openmpi_exec_api>`
 
 
 In the following example, we walk through creating and launching a
