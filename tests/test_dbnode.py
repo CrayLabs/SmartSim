@@ -49,10 +49,9 @@ def test_parse_db_host_error():
         orc.entities[0].host
 
 
-def test_hosts(fileutils, wlmutils):
+def test_hosts(test_dir, wlmutils):
     exp_name = "test_hosts"
-    exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
 
     orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
     orc.set_path(test_dir)
@@ -126,3 +125,13 @@ def test_set_host():
     orc = Orchestrator()
     orc.entities[0].set_hosts(["host"])
     assert orc.entities[0].host == "host"
+
+
+@pytest.mark.parametrize("nodes, mpmd", [[3, False], [3,True], [1, False]])
+def test_db_id_and_name(mpmd, nodes, wlmutils):
+    if nodes > 1 and wlmutils.get_test_launcher() not in pytest.wlm_options:
+        pytest.skip(reason="Clustered DB can only be checked on WLMs")
+    orc = Orchestrator(db_identifier="test_db", db_nodes=nodes, single_cmd=mpmd, launcher=wlmutils.get_test_launcher())
+    for i, node in enumerate(orc.entities):
+        assert node.name == f"{orc.name}_{i}"
+        assert node.db_identifier == orc.db_identifier

@@ -167,6 +167,7 @@ deps = [
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
+    "watchdog>=3.0.0",
 ]
 
 # Add SmartRedis at specific version
@@ -199,10 +200,6 @@ extras_require = {
 setup(
     version=smartsim_version,
     install_requires=deps,
-    packages=["smartsim"],
-    package_data={"smartsim": [
-        "_core/bin/*",
-    ]},
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,

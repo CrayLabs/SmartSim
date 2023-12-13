@@ -107,10 +107,7 @@ class SlurmLauncher(WLMLauncher):
         """
         _, step_ids = self.step_mapping.get_ids(step_names, managed=True)
         step_str = _create_step_id_str([val for val in step_ids if val is not None])
-        output, error = sstat([step_str, "-i", "-n", "-p", "-a"])
-
-        if "error:" in error.split(" "):
-            raise LauncherError("Failed to retrieve nodelist from stat")
+        output, _ = sstat([step_str, "-i", "-n", "-p", "-a"], raise_on_err=True)
 
         # parse node list for each step
         node_lists = []
@@ -155,15 +152,12 @@ class SlurmLauncher(WLMLauncher):
             # MPI/local steps don't direct output like slurm steps
             out, err = step.get_output_files()
 
-            # LocalStep.run_command omits env, include it here
-            passed_env = step.env if isinstance(step, LocalStep) else None
-
             # pylint: disable-next=consider-using-with
             output = open(out, "w+", encoding="utf-8")
             # pylint: disable-next=consider-using-with
             error = open(err, "w+", encoding="utf-8")
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, passed_env, out=output.fileno(), err=error.fileno()
+                cmd_list, step.cwd, step.env, out=output.fileno(), err=error.fileno()
             )
 
         if not step_id and step.managed:
@@ -243,9 +237,9 @@ class SlurmLauncher(WLMLauncher):
         step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
-            output, err = sacct(["--noheader", "-p", "--format=jobname,jobid"])
-            if err:
-                logger.warning(f"An error occurred while calling sacct: {err}")
+            output, _ = sacct(
+                ["--noheader", "-p", "--format=jobname,jobid"], raise_on_err=True
+            )
 
             step_id = parse_step_id_from_sacct(output, step.name)
             if step_id:
@@ -266,7 +260,10 @@ class SlurmLauncher(WLMLauncher):
         :rtype: list[StepInfo]
         """
         step_str = _create_step_id_str(step_ids)
-        sacct_out, _ = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
+        sacct_out, _ = sacct(
+            ["--noheader", "-p", "-b", "--jobs", step_str], raise_on_err=True
+        )
+
         # (status, returncode)
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 

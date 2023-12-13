@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import collections.abc
+import re
 import sys
 import typing as t
 import warnings
@@ -252,6 +253,12 @@ class Model(SmartSimEntity):
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
         """
+
+        if not re.match(r"^[a-zA-Z0-9.:\,_\-/]*$", unix_socket):
+            raise ValueError(
+                f"Invalid name for unix socket: {unix_socket}. Must only "
+                "contain alphanumeric characters or . : _ - /"
+                )
 
         uds_options = {
             "unix_socket": unix_socket,

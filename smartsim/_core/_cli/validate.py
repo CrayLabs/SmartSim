@@ -82,7 +82,9 @@ class _VerificationTempDir(_TemporaryDirectory):
             self._finalizer.detach()  # type: ignore[attr-defined]
 
 
-def execute(args: argparse.Namespace, /) -> int:
+def execute(
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+) -> int:
     """Validate the SmartSim installation works as expected given a
     simple experiment
     """
@@ -101,10 +103,10 @@ def execute(args: argparse.Namespace, /) -> int:
         logger.error(
             "SmartSim failed to run a simple experiment!\n"
             f"Experiment failed due to the following exception:\n{e}\n\n"
-            f"Output files are available at `{temp_dir}`"
+            f"Output files are available at `{temp_dir}`", exc_info=True
         )
-        return 2
-    return 0
+        return os.EX_SOFTWARE
+    return os.EX_OK
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
@@ -138,6 +140,7 @@ def test_install(
     with_onnx: bool,
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
+    exp.disable_telemetry()
     port = _find_free_port() if port is None else port
     with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")

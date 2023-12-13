@@ -1,5 +1,6 @@
 import argparse
 import importlib.metadata
+import os
 import pathlib
 import typing as t
 
@@ -12,7 +13,9 @@ from smartsim._core._install.buildenv import BuildEnv as _BuildEnv
 _MISSING_DEP = _helpers.colorize("Not Installed", "red")
 
 
-def execute(_args: argparse.Namespace, /) -> int:
+def execute(
+    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+) -> int:
     print("\nSmart Python Packages:")
     print(
         tabulate(
@@ -66,7 +69,7 @@ def execute(_args: argparse.Namespace, /) -> int:
         ),
         end="\n\n",
     )
-    return 0
+    return os.EX_OK
 
 
 def _fmt_installed_db(db_path: t.Optional[pathlib.Path]) -> str:
