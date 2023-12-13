@@ -25,13 +25,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import os
+import typing as t
 
 from smartsim._core._cli.utils import get_db_path
 
 
-def execute(_args: argparse.Namespace) -> int:
+def execute(
+    _args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+) -> int:
     if db_path := get_db_path():
         print(db_path)
-        return 0
+        return os.EX_OK
     print("Database (Redis or KeyDB) dependencies not found")
-    return 1
+    return os.EX_SOFTWARE

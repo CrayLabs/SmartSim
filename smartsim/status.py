@@ -32,6 +32,7 @@ STATUS_CANCELLED = "Cancelled"
 STATUS_FAILED = "Failed"
 STATUS_NEW = "New"
 STATUS_PAUSED = "Paused"
+STATUS_NEVER_STARTED = "NeverStarted"
 
 # SmartSim status mapping
 SMARTSIM_STATUS = {
@@ -41,6 +42,7 @@ SMARTSIM_STATUS = {
     "Cancelled": STATUS_CANCELLED,
     "Failed": STATUS_FAILED,
     "New": STATUS_NEW,
+    "NeverStarted": STATUS_NEVER_STARTED,
 }
 
 # Status groupings

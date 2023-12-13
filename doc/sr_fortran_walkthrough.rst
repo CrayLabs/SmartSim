@@ -1,9 +1,10 @@
+.. _fortran_client_examples:
+
 *******
 Fortran
 *******
 
 
-.. _fortran_client_examples:
 
 
 In this section, examples are presented using the SmartRedis Fortran

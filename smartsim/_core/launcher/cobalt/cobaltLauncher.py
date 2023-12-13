@@ -117,16 +117,13 @@ class CobaltLauncher(WLMLauncher):
             # aprun doesn't direct output for us.
             out, err = step.get_output_files()
 
-            # LocalStep.run_command omits env, include it here
-            passed_env = step.env if isinstance(step, LocalStep) else None
-
             # pylint: disable-next=consider-using-with
             output = open(out, "w+", encoding="utf-8")
             # pylint: disable-next=consider-using-with
             error = open(err, "w+", encoding="utf-8")
 
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, passed_env, out=output.fileno(), err=error.fileno()
+                cmd_list, step.cwd, step.env, out=output.fileno(), err=error.fileno()
             )
 
         # if batch submission did not successfully retrieve job ID
