@@ -23,44 +23,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import pytest
 
-FROM ubuntu:20.04
+from smartsim.error.errors import LauncherError
+from smartsim._core.launcher.slurm.slurmCommands import *
 
-LABEL maintainer="Cray Labs"
+# retrieved from pytest fixtures
+if pytest.test_launcher != "slurm":
+    pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
-ARG DEBIAN_FRONTEND="noninteractive"
-ENV TZ=US/Seattle
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y build-essential \
-    git gcc make \
-    python3-pip python3 python3-dev cmake pandoc doxygen \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-COPY . /usr/local/src/SmartSim/
-WORKDIR /usr/local/src/SmartSim/
-
-# Install smartredis
-RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
-    && cd smartredis \
-    && python -m pip install . \
-    && rm -rf ~/.cache/pip
-
-# Install smartdashboard
-RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
-    && cd smartdashboard \
-    && python -m pip install . \
-    && rm -rf ~/.cache/pip
-
-# Install docs dependencies and SmartSim
-RUN python -m pip install -r doc/requirements-doc.txt \
-    && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
-
-RUN mkdir -p doc/tutorials/ \
-    && cd doc/tutorials/ \
-    && rm -rf * \
-    && ln -s ../../tutorials/* .
-
-RUN make docs
+# Test that common ways of launching commands
+# raise when expected to do so
+@pytest.mark.parametrize(
+    "cmd,raises",
+    [
+        (sacct, True),
+        (sstat, True),
+        (sinfo, False),
+        (salloc, False),
+        (scancel, False),
+        (scontrol, False),
+    ],
+)
+def test_error_raises(cmd, raises):
+    args = ["--non_existing_arg"]
+    if raises:
+        with pytest.raises(LauncherError):
+            cmd(args, raise_on_err = True)
+    else:
+        cmd(args)

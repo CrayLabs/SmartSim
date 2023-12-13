@@ -27,18 +27,15 @@
 
 import logging
 import pathlib
-from random import sample
 import pytest
-import shutil
 import sys
 import typing as t
 import time
 import uuid
-from conftest import FileUtils, MLUtils, WLMUtils
-import smartsim
+from conftest import FileUtils, WLMUtils
 
 from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.control.job import Job, JobEntity, _JobKey
+from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
@@ -52,7 +49,6 @@ from smartsim.status import (
     STATUS_NEW,
     STATUS_PAUSED,
     STATUS_RUNNING,
-    TERMINAL_STATUSES,
 )
 import smartsim._core.config.config as cfg
 
@@ -642,7 +638,7 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch):
 
 def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
     """
-    Test telemetry with only a database running
+    Test telemetry with only a non-generated database running
     """
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
@@ -660,6 +656,8 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
 
         # create regular database
         orc = exp.create_database(port=test_port, interface=test_interface)
+        orc.set_path(test_dir)
+
         try:
             exp.start(orc)
 
@@ -683,7 +681,7 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
 
 def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
     """
-    Test telemetry with only a database running
+    Test telemetry with only a database and a model running
     """
 
     with monkeypatch.context() as ctx:
@@ -703,6 +701,7 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
 
         # create regular database
         orc = exp.create_database(port=test_port, interface=test_interface)
+        exp.generate(orc)
         try:
             exp.start(orc)
 
@@ -739,7 +738,7 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
 
 def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
     """
-    Test telemetry with only a database running
+    Test telemetry with only an ensemble
     """
 
     with monkeypatch.context() as ctx:
@@ -775,14 +774,14 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
 
 def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch):
     """
-    Test telemetry with only a database running
+    Test telemetry with only a colocated model running
     """
 
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "telemetry_ensemble"
+        exp_name = "telemetry_colo"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()

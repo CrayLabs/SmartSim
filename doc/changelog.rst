@@ -19,6 +19,7 @@ To be released at some future point in time
 
 Description
 
+- `sacct` and `sstat` errors are now fatal for Slurm-based workflow executions
 - Added documentation section about ML features and TorchScript
 - Added TorchScript functions to Online Analysis tutorial
 - Split tests into groups for parallel execution in CI/CD pipeline
@@ -30,6 +31,9 @@ Description
 
 Detailed Notes
 
+- When the Slurm functions `sacct` and `sstat` returned an error, it would be ignored
+  and SmartSim's state could become inconsistent. To prevent this, errors
+  raised by `sacct` or `sstat` now result in an exception. (SmartSim-PR392_)
 - A section named *ML Features* was added to documentation. It contains multiple
   examples of how ML models and functions can be added to and executed on the DB.
   TorchScript-based post-processing was added to the *Online Analysis* tutorial (SmartSim-PR411_)
@@ -50,6 +54,7 @@ Detailed Notes
 - Add support for creation of multiple databases with unique identifiers. (SmartSim-PR342_)
 
 
+.. _SmartSim-PR392: https://github.com/CrayLabs/SmartSim/pull/392
 .. _SmartSim-PR411: https://github.com/CrayLabs/SmartSim/pull/411
 .. _SmartSim-PR424: https://github.com/CrayLabs/SmartSim/pull/424
 .. _SmartSim-PR417: https://github.com/CrayLabs/SmartSim/pull/417
