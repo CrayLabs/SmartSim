@@ -35,9 +35,6 @@ import typing as t
 from pathlib import Path
 from typing import Iterable
 
-import pkg_resources
-from pkg_resources import packaging  # type: ignore
-
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items or non-standand library
 #       items should be imported here.
@@ -49,6 +46,11 @@ from pkg_resources import packaging  # type: ignore
 #       to remove
 # https://setuptools.pypa.io/en/latest/pkg_resources.html
 
+# isort: off
+import pkg_resources
+from pkg_resources import packaging  # type: ignore
+
+# isort: on
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
