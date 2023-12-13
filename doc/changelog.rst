@@ -11,6 +11,361 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
+
+Development branch
+------------------
+
+To be released at some future point in time
+
+Description
+
+- `sacct` and `sstat` errors are now fatal for Slurm-based workflow executions
+- Added documentation section about ML features and TorchScript
+- Added TorchScript functions to Online Analysis tutorial
+- Split tests into groups for parallel execution in CI/CD pipeline
+- Change signature of `Experiment.summary()`
+- Expose first_device parameter for scripts, functions, models
+- Added support for MINBATCHTIMEOUT in model execution
+- Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
+- Add support for multiple databases
+
+Detailed Notes
+
+- When the Slurm functions `sacct` and `sstat` returned an error, it would be ignored
+  and SmartSim's state could become inconsistent. To prevent this, errors
+  raised by `sacct` or `sstat` now result in an exception. (SmartSim-PR392_)
+- A section named *ML Features* was added to documentation. It contains multiple
+  examples of how ML models and functions can be added to and executed on the DB.
+  TorchScript-based post-processing was added to the *Online Analysis* tutorial (SmartSim-PR411_)
+- Split tests into `group_a`, `group_b`, `slow_tests` for parallel execution in CI/CD pipeline (SmartSim-PR417_, SmartSim-PR424_)
+- Change `format` argument to `style` in `Experiment.summary()`, this is
+  an API break (SmartSim-PR391_)
+- Added support for first_device parameter for scripts, functions,
+  and models. This causes them to be loaded to the first num_devices
+  beginning with first_device (SmartSim-PR394_)
+- Added support for MINBATCHTIMEOUT in model execution, which caps the delay
+  waiting for a minimium number of model execution operations to accumulate
+  before executing them as a batch (SmartSim-PR387_)
+- RedisAI 1.2.5 is not supported anymore. The only RedisAI version
+  is now 1.2.7. Since the officially released RedisAI 1.2.7 has a
+  bug which breaks the build process on Mac OSX, it was decided to
+  use commit 634916c_ from RedisAI's GitHub repository, where such
+  bug has been fixed. This applies to all operating systems. (SmartSim-PR383_)
+- Add support for creation of multiple databases with unique identifiers. (SmartSim-PR342_)
+
+
+.. _SmartSim-PR392: https://github.com/CrayLabs/SmartSim/pull/392
+.. _SmartSim-PR411: https://github.com/CrayLabs/SmartSim/pull/411
+.. _SmartSim-PR424: https://github.com/CrayLabs/SmartSim/pull/424
+.. _SmartSim-PR417: https://github.com/CrayLabs/SmartSim/pull/417
+.. _SmartSim-PR391: https://github.com/CrayLabs/SmartSim/pull/391
+.. _SmartSim-PR342: https://github.com/CrayLabs/SmartSim/pull/342
+.. _SmartSim-PR394: https://github.com/CrayLabs/SmartSim/pull/394
+.. _SmartSim-PR387: https://github.com/CrayLabs/SmartSim/pull/387
+.. _SmartSim-PR383: https://github.com/CrayLabs/SmartSim/pull/383
+.. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
+.. _SmartSim-PR342: https://github.com/CrayLabs/SmartSim/pull/342
+
+
+0.5.1
+-----
+
+Released on 14 September, 2023
+
+Description
+
+- Add typehints throughout the SmartSim codebase
+- Provide support for Slurm heterogeneous jobs
+- Provide better support for `PalsMpiexecSettings`
+- Allow for easier inspection of SmartSim entities
+- Log ignored error messages from `sacct`
+- Fix colocated db preparation bug when using `JsrunSettings`
+- Fix bug when user specify CPU and devices greater than 1
+- Fix bug when get_allocation called with reserved keywords
+- Enabled mypy in CI for better type safety
+- Mitigate additional suppressed pylint errors
+- Update linting support and apply to existing errors
+- Various improvements to the `smart` CLI
+- Various documentation improvements
+- Various test suite improvements
+
+Detailed Notes
+
+- Add methods to allow users to inspect files attached to models and ensembles. (SmartSim-PR352_)
+- Add a `smart info` target to provide rudimentary information about the SmartSim installation. (SmartSim-PR350_)
+- Remove unnecessary generation producing unexpected directories in the test suite. (SmartSim-PR349_)
+- Add support for heterogeneous jobs to `SrunSettings` by allowing users to set the `--het-group` parameter. (SmartSim-PR346_)
+- Provide clearer guidelines on how to contribute to SmartSim. (SmartSim-PR344_)
+- Integrate `PalsMpiexecSettings` into the `Experiment` factory methods when using the `"pals"` launcher. (SmartSim-PR343_)
+- Create public properties where appropriate to mitigate `protected-access` errors. (SmartSim-PR341_)
+- Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check. (SmartSim-PR339_)
+- Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any`. (SmartSim-PR338_)
+- Add a `smart validate` target to provide a simple smoke test to assess a SmartSim build. (SmartSim-PR336_, SmartSim-PR351_)
+- Add typehints to `smartsim._core.launcher.step.*`. (SmartSim-PR334_)
+- Log errors reported from slurm WLM when attempts to retrieve status fail. (SmartSim-PR331_, SmartSim-PR332_)
+- Fix incorrectly formatted positional arguments in log format strings. (SmartSim-PR330_)
+- Ensure that launchers pass environment variables to unmanaged job steps. (SmartSim-PR329_)
+- Add additional tests surrounding the `RAI_PATH` configuration environment variable. (SmartSim-PR328_)
+- Remove unnecessary execution of unescaped shell commands. (SmartSim-PR327_)
+- Add error if user calls get_allocation with reserved keywords in slurm get_allocation. (SmartSim-PR325_)
+- Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script. (SmartSim-PR324_)
+- Update documentation surrounding ensemble key prefixing. (SmartSim-PR322_)
+- Fix formatting of the Frontier site installation. (SmartSim-PR321_)
+- Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks. (SmartSim-PR311_)
+- Refactor the `smart` CLI to use subparsers for better documentation and extension. (SmartSim-PR308_)
+
+.. _SmartSim-PR352: https://github.com/CrayLabs/SmartSim/pull/352
+.. _SmartSim-PR351: https://github.com/CrayLabs/SmartSim/pull/351
+.. _SmartSim-PR350: https://github.com/CrayLabs/SmartSim/pull/350
+.. _SmartSim-PR349: https://github.com/CrayLabs/SmartSim/pull/349
+.. _SmartSim-PR346: https://github.com/CrayLabs/SmartSim/pull/346
+.. _SmartSim-PR344: https://github.com/CrayLabs/SmartSim/pull/344
+.. _SmartSim-PR343: https://github.com/CrayLabs/SmartSim/pull/343
+.. _SmartSim-PR341: https://github.com/CrayLabs/SmartSim/pull/341
+.. _SmartSim-PR339: https://github.com/CrayLabs/SmartSim/pull/339
+.. _SmartSim-PR338: https://github.com/CrayLabs/SmartSim/pull/338
+.. _SmartSim-PR336: https://github.com/CrayLabs/SmartSim/pull/336
+.. _SmartSim-PR334: https://github.com/CrayLabs/SmartSim/pull/334
+.. _SmartSim-PR332: https://github.com/CrayLabs/SmartSim/pull/332
+.. _SmartSim-PR331: https://github.com/CrayLabs/SmartSim/pull/331
+.. _SmartSim-PR330: https://github.com/CrayLabs/SmartSim/pull/330
+.. _SmartSim-PR329: https://github.com/CrayLabs/SmartSim/pull/329
+.. _SmartSim-PR328: https://github.com/CrayLabs/SmartSim/pull/328
+.. _SmartSim-PR327: https://github.com/CrayLabs/SmartSim/pull/327
+.. _SmartSim-PR325: https://github.com/CrayLabs/SmartSim/pull/325
+.. _SmartSim-PR324: https://github.com/CrayLabs/SmartSim/pull/324
+.. _SmartSim-PR322: https://github.com/CrayLabs/SmartSim/pull/322
+.. _SmartSim-PR321: https://github.com/CrayLabs/SmartSim/pull/321
+.. _SmartSim-PR311: https://github.com/CrayLabs/SmartSim/pull/311
+.. _SmartSim-PR308: https://github.com/CrayLabs/SmartSim/pull/308
+
+
+0.5.0
+-----
+
+Released on 6 July, 2023
+
+Description
+
+A full list of changes and detailed notes can be found below:
+
+- Update SmartRedis dependency to v0.4.1
+- Fix tests for db models and scripts
+- Fix add_ml_model() and add_script() documentation, tests, and code
+- Remove `requirements.txt` and other places where dependencies were defined
+- Replace `limit_app_cpus` with `limit_db_cpus` for co-located orchestrators
+- Remove wait time associated with Experiment launch summary
+- Update and rename Redis conf file
+- Migrate from redis-py-cluster to redis-py
+- Update full test suite to not require a TF wheel at test time
+- Update doc strings
+- Remove deprecated code
+- Relax the coloredlogs version
+- Update Fortran tutorials for SmartRedis
+- Add support for multiple network interface binding in Orchestrator and Colocated DBs
+- Add typehints and static analysis
+
+Detailed notes
+
+- Updates SmartRedis to the most current release (SmartSim-PR316_)
+- Fixes and enhancements to documentation (SmartSim-PR317_, SmartSim-PR314_, SmartSim-PR287_)
+- Various fixes and enhancements to the test suite (SmartSim-PR315_, SmartSim-PR312_, SmartSim-PR310_, SmartSim-PR302_, SmartSim-PR283_)
+- Fix a defect in the tests related to database models and scripts that was
+  causing key collisions when testing on workload managers (SmartSim-PR313_)
+- Remove `requirements.txt` and other places where dependencies were defined. (SmartSim-PR307_)
+- Fix defect where dictionaries used to create run settings can be changed
+  unexpectedly due to copy-by-ref (SmartSim-PR305_)
+- The underlying code for Model.add_ml_model() and Model.add_script() was fixed
+  to correctly handle multi-GPU configurations.  Tests were updated to run on
+  non-local launchers.  Documentation was updated and fixed.  Also, the default
+  testing interface has been changed to lo instead of ipogif. (SmartSim-PR304_)
+- Typehints have been added. A makefile target `make check-mypy` executes static
+  analysis with mypy. (SmartSim-PR295_, SmartSim-PR301_, SmartSim-PR303_)
+- Replace `limit_app_cpus` with `limit_db_cpus` for co-located orchestrators.
+  This resolves some incorrect behavior/assumptions about how the application
+  would be pinned.  Instead, users should directly specify the binding options in
+  their application using the options appropriate for their launcher (SmartSim-PR306_)
+- Simplify code in `random_permutations` parameter generation strategy (SmartSim-PR300_)
+- Remove wait time associated with Experiment launch summary (SmartSim-PR298_)
+- Update Redis conf file to conform with Redis v7.0.5 conf file (SmartSim-PR293_)
+- Migrate from redis-py-cluster to redis-py for cluster status checks (SmartSim-PR292_)
+- Update full test suite to no longer require a tensorflow wheel to be available at test time. (SmartSim-PR291_)
+- Correct spelling of colocated in doc strings (SmartSim-PR290_)
+- Deprecated launcher-specific orchestrators, constants, and ML
+  utilities were removed. (SmartSim-PR289_)
+- Relax the coloredlogs version to be greater than 10.0 (SmartSim-PR288_)
+- Update the Github Actions runner image from `macos-10.15`` to `macos-12``. The
+  former began deprecation in May 2022 and was finally removed in May 2023. (SmartSim-PR285_)
+- The Fortran tutorials had not been fully updated to show how to handle
+  return/error codes. These have now all been updated. (SmartSim-PR284_)
+- Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
+  argument name is still `interface` for backward compatibility reasons. (SmartSim-PR281_)
+- Typehints have been added to public APIs. A makefile target to execute static
+  analysis with mypy is available `make check-mypy`. (SmartSim-PR295_)
+
+.. _SmartSim-PR317: https://github.com/CrayLabs/SmartSim/pull/317
+.. _SmartSim-PR316: https://github.com/CrayLabs/SmartSim/pull/316
+.. _SmartSim-PR315: https://github.com/CrayLabs/SmartSim/pull/314
+.. _SmartSim-PR314: https://github.com/CrayLabs/SmartSim/pull/314
+.. _SmartSim-PR313: https://github.com/CrayLabs/SmartSim/pull/313
+.. _SmartSim-PR312: https://github.com/CrayLabs/SmartSim/pull/312
+.. _SmartSim-PR310: https://github.com/CrayLabs/SmartSim/pull/310
+.. _SmartSim-PR307: https://github.com/CrayLabs/SmartSim/pull/307
+.. _SmartSim-PR306: https://github.com/CrayLabs/SmartSim/pull/306
+.. _SmartSim-PR305: https://github.com/CrayLabs/SmartSim/pull/305
+.. _SmartSim-PR304: https://github.com/CrayLabs/SmartSim/pull/304
+.. _SmartSim-PR303: https://github.com/CrayLabs/SmartSim/pull/303
+.. _SmartSim-PR302: https://github.com/CrayLabs/SmartSim/pull/302
+.. _SmartSim-PR301: https://github.com/CrayLabs/SmartSim/pull/301
+.. _SmartSim-PR300: https://github.com/CrayLabs/SmartSim/pull/300
+.. _SmartSim-PR298: https://github.com/CrayLabs/SmartSim/pull/298
+.. _SmartSim-PR295: https://github.com/CrayLabs/SmartSim/pull/295
+.. _SmartSim-PR293: https://github.com/CrayLabs/SmartSim/pull/293
+.. _SmartSim-PR292: https://github.com/CrayLabs/SmartSim/pull/292
+.. _SmartSim-PR291: https://github.com/CrayLabs/SmartSim/pull/291
+.. _SmartSim-PR290: https://github.com/CrayLabs/SmartSim/pull/290
+.. _SmartSim-PR289: https://github.com/CrayLabs/SmartSim/pull/289
+.. _SmartSim-PR288: https://github.com/CrayLabs/SmartSim/pull/288
+.. _SmartSim-PR287: https://github.com/CrayLabs/SmartSim/pull/287
+.. _SmartSim-PR285: https://github.com/CrayLabs/SmartSim/pull/285
+.. _SmartSim-PR284: https://github.com/CrayLabs/SmartSim/pull/284
+.. _SmartSim-PR283: https://github.com/CrayLabs/SmartSim/pull/283
+.. _SmartSim-PR281: https://github.com/CrayLabs/SmartSim/pull/281
+
+0.4.2
+-----
+
+Released on April 12, 2023
+
+Description
+
+This release of SmartSim had a focus on polishing and extending exiting
+features already provided by SmartSim. Most notably, this release provides
+support to allow users to colocate their models with an orchestrator using
+Unix domain sockets and support for launching models as batch jobs.
+
+Additionally, SmartSim has updated its tool chains to provide a better user
+experience. Notably, SmarSim can now be used with Python 3.10, Redis 7.0.5, and
+RedisAI 1.2.7. Furthermore, SmartSim now utilizes SmartRedis's aggregation lists to
+streamline the use and extension of ML data loaders, making working with popular
+machine learning frameworks in SmartSim a breeze.
+
+A full list of changes and detailed notes can be found below:
+
+- Add support for colocating an orchestrator over UDS
+- Add support for Python 3.10, deprecate support for Python 3.7 and RedisAI 1.2.3
+- Drop support for Ray
+- Update ML data loaders to make use of SmartRedis's aggregation lists
+- Allow for models to be launched independently as batch jobs
+- Update to current version of Redis to 7.0.5
+- Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
+- Fix bug in colocated database entrypoint when loading PyTorch models
+- Fix test suite behavior with environment variables
+
+Detailed Notes
+
+- Running some tests could result in some SmartSim-specific environment variables to be set. Such environment variables are now reset
+  after each test execution. Also, a warning for environment variable usage in Slurm was added, to make the user aware in case an environment
+  variable will not be assigned the desired value with `--export`. (SmartSim-PR270_)
+- The PyTorch and TensorFlow data loaders were update to make use of aggregation lists. This breaks their API, but makes them easier to use. (SmartSim-PR264_)
+- The support for Ray was dropped, as its most recent versions caused problems when deployed through SmartSim.
+  We plan to release a separate add-on library to accomplish the same results. If
+  you are interested in getting the Ray launch functionality back in your workflow, please get in touch with us! (SmartSim-PR263_)
+- Update from Redis version 6.0.8 to 7.0.5. (SmartSim-PR258_)
+- Adds support for Python 3.10 without the ONNX machine learning backend. Deprecates support for
+  Python 3.7 as it will stop receiving security updates. Deprecates support for RedisAI 1.2.3.
+  Update the build process to be able to correctly fetch supported dependencies. If a user
+  attempts to build an unsupported dependency, an error message is shown highlighting the
+  discrepancy. (SmartSim-PR256_)
+- Models were given a `batch_settings` attribute. When launching a model through `Experiment.start`
+  the `Experiment` will first check for a non-nullish value at that attribute. If the check is
+  satisfied, the `Experiment` will attempt to wrap the underlying run command in a batch job using
+  the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
+  is not satisfied, the `Model` is launched in the traditional manner as a job step. (SmartSim-PR245_)
+- Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (SmartSim-PR237_)
+- The release of RedisAI 1.2.7 allows us to update support for recent versions of PyTorch, Tensorflow, and ONNX (SmartSim-PR234_)
+- Make installation of correct Torch backend more reliable according to instruction from PyTorch
+- In addition to TCP, add UDS support for colocating an orchestrator with models. Methods
+  `Model.colocate_db_tcp` and `Model.colocate_db_uds` were added to expose this functionality.
+  The `Model.colocate_db` method remains and uses TCP for backward compatibility (SmartSim-PR246_)
+
+.. _SmartSim-PR270: https://github.com/CrayLabs/SmartSim/pull/270
+.. _SmartSim-PR264: https://github.com/CrayLabs/SmartSim/pull/264
+.. _SmartSim-PR263: https://github.com/CrayLabs/SmartSim/pull/263
+.. _SmartSim-PR258: https://github.com/CrayLabs/SmartSim/pull/258
+.. _SmartSim-PR256: https://github.com/CrayLabs/SmartSim/pull/256
+.. _SmartSim-PR246: https://github.com/CrayLabs/SmartSim/pull/246
+.. _SmartSim-PR245: https://github.com/CrayLabs/SmartSim/pull/245
+.. _SmartSim-PR237: https://github.com/CrayLabs/SmartSim/pull/237
+.. _SmartSim-PR234: https://github.com/CrayLabs/SmartSim/pull/234
+
+
+0.4.1
+-----
+
+Released on June 24, 2022
+
+Description:
+This release of SmartSim introduces a new experimental feature to help make
+SmartSim workflows more portable: the ability to run simulations models in a
+container via Singularity. This feature has been tested on a small number of
+platforms and we encourage users to provide feedback on its use.
+
+We have also made improvements in a variety of areas: new utilities to load
+scripts and machine learning models into the database directly from SmartSim
+driver scripts and install-time choice to use either `KeyDB` or `Redis` for the
+Orchestrator. The `RunSettings` API is now more consistent across subclasses. Another
+key focus of this release was to aid new SmartSim users by including more
+extensive tutorials and improving the documentation. The docker image containing
+the SmartSim tutorials now also includes a tutorial on online training.
+
+
+Launcher improvements
+
+    - New methods for specifying `RunSettings` parameters (SmartSim-PR166_) (SmartSim-PR170_)
+    - Better support for `mpirun`, `mpiexec`, and `orterun` as launchers (SmartSim-PR186_)
+    - Experimental: add support for running models via Singularity (SmartSim-PR204_)
+
+Documentation and tutorials
+
+    - Tutorial updates (SmartSim-PR155_) (SmartSim-PR203_) (SmartSim-PR208_)
+    - Add SmartSim Zoo info to documentation (SmartSim-PR175_)
+    - New tutorial for demonstrating online training (SmartSim-PR176_) (SmartSim-PR188_)
+
+General improvements and bug fixes
+
+    - Set models and scripts at the driver level (SmartSim-PR185_)
+    - Optionally use KeyDB for the orchestrator (SmartSim-PR180_)
+    - Ability to specify system-level libraries (SmartSim-PR154_) (SmartSim-PR182_)
+    - Fix the handling of LSF gpus_per_shard (SmartSim-PR164_)
+    - Fix error when re-running `smart build` (SmartSim-PR165_)
+    - Fix generator hanging when tagged configuration variables are missing (SmartSim-PR177_)
+
+Dependency updates
+
+    - CMake version from 3.10 to 3.13 (SmartSim-PR152_)
+    - Update click to 8.0.2 (SmartSim-PR200_)
+
+.. _SmartSim-PR152: https://github.com/CrayLabs/SmartSim/pull/152
+.. _SmartSim-PR154: https://github.com/CrayLabs/SmartSim/pull/154
+.. _SmartSim-PR155: https://github.com/CrayLabs/SmartSim/pull/155
+.. _SmartSim-PR164: https://github.com/CrayLabs/SmartSim/pull/164
+.. _SmartSim-PR165: https://github.com/CrayLabs/SmartSim/pull/165
+.. _SmartSim-PR166: https://github.com/CrayLabs/SmartSim/pull/166
+.. _SmartSim-PR170: https://github.com/CrayLabs/SmartSim/pull/170
+.. _SmartSim-PR175: https://github.com/CrayLabs/SmartSim/pull/175
+.. _SmartSim-PR176: https://github.com/CrayLabs/SmartSim/pull/176
+.. _SmartSim-PR177: https://github.com/CrayLabs/SmartSim/pull/177
+.. _SmartSim-PR180: https://github.com/CrayLabs/SmartSim/pull/180
+.. _SmartSim-PR182: https://github.com/CrayLabs/SmartSim/pull/182
+.. _SmartSim-PR185: https://github.com/CrayLabs/SmartSim/pull/185
+.. _SmartSim-PR186: https://github.com/CrayLabs/SmartSim/pull/186
+.. _SmartSim-PR188: https://github.com/CrayLabs/SmartSim/pull/188
+.. _SmartSim-PR200: https://github.com/CrayLabs/SmartSim/pull/200
+.. _SmartSim-PR203: https://github.com/CrayLabs/SmartSim/pull/203
+.. _SmartSim-PR204: https://github.com/CrayLabs/SmartSim/pull/204
+.. _SmartSim-PR208: https://github.com/CrayLabs/SmartSim/pull/208
+
 0.4.0
 -----
 
@@ -161,7 +516,7 @@ Released on May 5, 2021
 
 Description:
 This release was dedicated to making the install process
-easier. SmartSim can be installed from PyPi now and the
+easier. SmartSim can be installed from PyPI now and the
 ``smart`` cli tool makes installing the machine learning
 runtimes much easier.
 

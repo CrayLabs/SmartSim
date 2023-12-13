@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,70 @@
 """
 A file of helper functions for SmartSim
 """
+import base64
 import os
 import uuid
+import typing as t
+from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from shutil import which
-from functools import lru_cache
 
-def create_lockfile_name():
+from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
+
+
+def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
+    """Unpack the unformatted database identifier
+    and format for env variable suffix using the token
+    :param db_id: the unformatted database identifier eg. identifier_1
+    :type db_id: str
+    :param token: character to use to construct the db suffix
+    :type token: str
+    :return: db id suffix and formatted db_id e.g. ("_identifier_1", "identifier_1")
+    :rtype: (str, str)
+    """
+
+    if db_id == "orchestrator":
+        return "", ""
+    db_name_suffix = token + db_id
+    return db_name_suffix, db_id
+
+
+def unpack_colo_db_identifier(db_id: str) -> str:
+    """Create database identifier suffix for colocated database
+    :param db_id: the unformatted database identifier
+    :type db_id: str
+    :return: db suffix
+    :rtype: str
+    """
+    return "_" + db_id if db_id else ""
+
+
+def create_short_id_str() -> str:
+    return str(uuid.uuid4())[:7]
+
+
+def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
-    lock_suffix = str(uuid.uuid4())[:7]
+    lock_suffix = create_short_id_str()
     return f"smartsim-{lock_suffix}.lock"
 
 
 @lru_cache(maxsize=20, typed=False)
-def check_dev_log_level():
-    try:
-        lvl = os.environ["SMARTSIM_LOG_LEVEL"]
-        if lvl == "developer":
-            return True
-        return False
-    except KeyError:
-        return False
+def check_dev_log_level() -> bool:
+    lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
+    return lvl == "developer"
 
-def fmt_dict(d):
+
+def fmt_dict(value: t.Dict[str, t.Any]) -> str:
     fmt_str = ""
-    for k, v in d.items():
+    for k, v in value.items():
         fmt_str += "\t" + str(k) + " = " + str(v)
-        fmt_str += "\n" if k != list(d.keys())[-1] else ""
-    return(fmt_str)
+        fmt_str += "\n" if k != list(value.keys())[-1] else ""
+    return fmt_str
 
 
-def get_base_36_repr(positive_int):
+def get_base_36_repr(positive_int: int) -> str:
     """Converts a positive integer to its base 36 representation
     :param positive_int: the positive integer to convert
     :type positive_int: int
@@ -75,7 +108,11 @@ def get_base_36_repr(positive_int):
     return "".join(reversed(result))
 
 
-def init_default(default, init_value, expected_type=None):
+def init_default(
+    default: t.Any,
+    init_value: t.Any,
+    expected_type: t.Union[t.Type[t.Any], t.Tuple[t.Type[t.Any], ...], None] = None,
+) -> t.Any:
     if init_value is None:
         return default
     if expected_type is not None and not isinstance(init_value, expected_type):
@@ -83,7 +120,7 @@ def init_default(default, init_value, expected_type=None):
     return init_value
 
 
-def expand_exe_path(exe):
+def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
@@ -103,28 +140,33 @@ def expand_exe_path(exe):
     return os.path.abspath(in_path)
 
 
-def is_valid_cmd(command):
+def is_valid_cmd(command: t.Union[str, None]) -> bool:
     try:
-        expand_exe_path(command)
-        return True
+        if command:
+            expand_exe_path(command)
+            return True
     except (TypeError, FileNotFoundError):
         return False
 
-
-color2num = dict(
-    gray=30,
-    red=31,
-    green=32,
-    yellow=33,
-    blue=34,
-    magenta=35,
-    cyan=36,
-    white=37,
-    crimson=38,
-)
+    return False
 
 
-def colorize(string, color, bold=False, highlight=False):
+color2num = {
+    "gray": 30,
+    "red": 31,
+    "green": 32,
+    "yellow": 33,
+    "blue": 34,
+    "magenta": 35,
+    "cyan": 36,
+    "white": 37,
+    "crimson": 38,
+}
+
+
+def colorize(
+    string: str, color: str, bold: bool = False, highlight: bool = False
+) -> str:
     """
     Colorize a string.
     This function was originally written by John Schulman.
@@ -138,10 +180,10 @@ def colorize(string, color, bold=False, highlight=False):
     attr.append(str(num))
     if bold:
         attr.append("1")
-    return "\x1b[%sm%s\x1b[0m" % (";".join(attr), string)
+    return f"\x1b[{';'.join(attr)}m{string}\x1b[0m"
 
 
-def delete_elements(dictionary, key_list):
+def delete_elements(dictionary: t.Dict[str, t.Any], key_list: t.List[str]) -> None:
     """Delete elements from a dictionary.
     :param dictionary: the dictionary from which the elements must be deleted.
     :type dictionary: dict
@@ -153,7 +195,7 @@ def delete_elements(dictionary, key_list):
             del dictionary[key]
 
 
-def cat_arg_and_value(arg_name, value):
+def cat_arg_and_value(arg_name: str, value: str) -> str:
     """Concatenate a command line argument and its value
 
     This function returns ``arg_name`` and ``value
@@ -177,16 +219,37 @@ def cat_arg_and_value(arg_name, value):
     """
 
     if arg_name.startswith("--"):
-        return "=".join((arg_name, str(value)))
-    elif arg_name.startswith("-"):
-        return " ".join((arg_name, str(value)))
-    elif len(arg_name) == 1:
-        return " ".join(("-" + arg_name, str(value)))
-    else:
-        return "=".join(("--" + arg_name, str(value)))
+        return f"{arg_name}={value}"
+    if arg_name.startswith("-"):
+        return f"{arg_name} {value}"
+    if len(arg_name) == 1:
+        return f"-{arg_name} {value}"
+
+    return f"--{arg_name}={value}"
 
 
-def installed_redisai_backends(backends_path=None):
+def _installed(base_path: Path, backend: str) -> bool:
+    """
+    Check if a backend is available for the RedisAI module.
+    """
+    backend_key = f"redisai_{backend}"
+    backend_path = base_path / backend_key / f"{backend_key}.so"
+    backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
+
+    return backend_so.is_file()
+
+
+def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
+    # pylint: disable-next=import-outside-toplevel
+    from ..._core.config import CONFIG
+
+    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    return base_path
+
+
+def installed_redisai_backends(
+    backends_path: t.Optional[str] = None,
+) -> t.Set[_TRedisAIBackendStr]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends
@@ -199,18 +262,43 @@ def installed_redisai_backends(backends_path=None):
     :param backends_path: path containing backends, defaults to None
     :type backends_path: str, optional
     :return: list of installed RedisAI backends
-    :rtype: list[str]
+    :rtype: set[str]
     """
     # import here to avoid circular import
-    from ..._core.config import CONFIG
+    base_path = redis_install_base(backends_path)
+    backends: t.Set[_TRedisAIBackendStr] = {
+        "tensorflow",
+        "torch",
+        "onnxruntime",
+        "tflite",
+    }
 
-    installed = []
-    if not backends_path:
-        backends_path = CONFIG.lib_path / "backends"
-    for backend in ["tensorflow", "torch", "onnxruntime", "tflite"]:
-        backend_path = backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
-        backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
-        if backend_so.is_file():
-            installed.append(backend)
+    return {backend for backend in backends if _installed(base_path, backend)}
 
-    return installed
+
+def get_ts() -> int:
+    """Return the current timestamp (accurate to seconds) cast to an integer"""
+    return int(datetime.timestamp(datetime.now()))
+
+
+def encode_cmd(cmd: t.List[str]) -> str:
+    """Transform a standard command list into an encoded string safe for providing as an
+    argument to a proxy entrypoint
+    """
+    if not cmd:
+        raise ValueError("Invalid cmd supplied")
+
+    ascii_cmd = "|".join(cmd).encode("ascii")
+    encoded_cmd = base64.b64encode(ascii_cmd).decode("ascii")
+    return encoded_cmd
+
+
+def decode_cmd(encoded_cmd: str) -> t.List[str]:
+    """Decode an encoded command string to the original command list format"""
+    if not encoded_cmd.strip():
+        raise ValueError("Invalid cmd supplied")
+
+    decoded_cmd = base64.b64decode(encoded_cmd.encode("ascii"))
+    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
+
+    return cleaned_cmd

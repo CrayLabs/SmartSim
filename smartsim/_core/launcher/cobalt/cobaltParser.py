@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-def parse_cobalt_step_status(output, step_id):
+def parse_cobalt_step_status(output: str, step_id: str) -> str:
+    """
+    Parse and return the status of a cobalt step
+
+    :param output: output qstat
+    :type output: str
+    :param step_id: the id of the step to query
+    :type step_id: str
+    :rtype: str
+    """
     status = "NOTFOUND"
     for line in output.split("\n"):
         fields = line.split()
@@ -36,7 +45,7 @@ def parse_cobalt_step_status(output, step_id):
     return status
 
 
-def parse_cobalt_step_id(output, step_name):
+def parse_cobalt_step_id(output: str, step_name: str) -> str:
     """Parse and return the step id from a cobalt qstat command
 
     :param output: output qstat
@@ -46,7 +55,7 @@ def parse_cobalt_step_id(output, step_name):
     :return: the step_id
     :rtype: str
     """
-    step_id = None
+    step_id = ""
     for line in output.split("\n"):
         fields = line.split()
         if len(fields) >= 2:
@@ -56,12 +65,22 @@ def parse_cobalt_step_id(output, step_name):
     return step_id
 
 
-def parse_qsub_out(output):
-    step_id = None
+def parse_qsub_out(output: str) -> str:
+    """
+    Parse and return the step id from a cobalt qsub command
+
+    :param output: output qstat
+    :type output: str
+    :return: the step_id
+    :rtype: str
+    """
+    step_id = ""
     for line in output.split("\n"):
         try:
-            step_id = int(line.strip())
+            value = line.strip()
+            int(value) # if the cast works, return original string
+            step_id = value
             break
         except ValueError:
             continue
-    return str(step_id)
+    return step_id

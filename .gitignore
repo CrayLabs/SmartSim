@@ -1,4 +1,5 @@
 .vscode
+**/*.swp
 __pycache__
 .ipynb_checkpoints
 .pytest_cache/
@@ -6,6 +7,7 @@ __pycache__
 htmlcov
 smartsim.egg-info
 tests/test_output
+.DS_Store
 
 # Dependencies
 smartsim/_core/.third-party
@@ -15,6 +17,12 @@ _build
 
 smartredis
 
+# Envs
+venv/
+.venv/
+env/
+.env/
+
 # written upon install
 smartsim/version.py
 
@@ -23,3 +31,8 @@ smartsim/_core/bin/*-cli
 
 # created upon install
 smartsim/_core/lib
+
+**/manifest/
+**/*.err
+**/*.out
+**/.smartsim/*
