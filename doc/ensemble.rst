@@ -203,25 +203,39 @@ ML Models and Scripts
 --------
 Overview
 --------
-An Ensemble object provides a subset of helper functions
-that enable AI and Machine Learning within the Ensemble. In this section
-we will demonstrate how to load a TF, TF-lite, PT, or ONNX model into the DB at runtime,
-add a TorchScript function to launch with ensemble entities,
-and load a TorchScript to launch with the ensembles Model entities.
+Smartsim enables users to build diverse ensembles that leverage
+the strengths of different model types.
+Users may integrate TorchScript functions, scripts, and
+TF, TF-lite, PT, or ONNX models within an ensemble workload.
+TorchScript provides a set of tools and functionalities that enhance
+the utility of PyTorch models within ensembles,
+offering benefits in terms of performance, deployment, interoperability, and
+composition of diverse model architectures.
+
+The Ensemble API provides a subset of helper functions that support
+adding TorchScript functions, scripts and Machine Learning models to
+an Ensemble:
+
+* ``Ensemble.add_ml_model()`` : Load a TF, TF-lite, PT, or ONNX model into the DB at runtime.
+* ``Ensemble.add_function()`` : Launch a TorchScript function with each ensemble member.
+* ``Ensemble.add_script()`` : Launch a TorchScript with each ensemble member.
+
+In this following subsections, we discuss each helper function as well as provide examples for
+each.
 
 AI Models
 ---------
-The ``Ensemble.add_ml_model()`` helper function adds a
-TF, TF-lite, PT, or ONNX model to load into the database at runtime.
-Each ML Model added will be loaded into an orchestrator (converged or not)
-prior to the execution of every entity belonging to the ensemble.
+The ``Ensemble.add_ml_model()`` helper function adds
+TF, TF-lite, PT, or ONNX models to the ensemble. Each model added
+will be loaded into the (colocated or standard) database at runtime
+prior to the execution of each entity belonging to the ensemble.
 
-When using the ``add_script()`` function, you may specify params:
+This function offers the following arguments:
 
 1. `name` (str) : key to store model under
 2. `model` (str | bytes | None) : model name in memory
 3. `model_path` (str) : file path to the serialized model
-4. `backend` (str) : name of the model backend (TORCH, TF, TFLITE, ONNX)
+4. `backend` (str) : name of the model backend (TORCH, TF, TF-LITE, ONNX)
 5. `device` (str, optional) : name of device for execution, defaults to “CPU”
 6. `batch_size` (int, optional) : batch size for execution, defaults to 0
 7. `min_batch_size` (int, optional) : minimum batch size for model execution, defaults to 0
@@ -229,27 +243,74 @@ When using the ``add_script()`` function, you may specify params:
 9.  `inputs` (list[str], optional) : names of model inputs (TF only), defaults to None
 10. `outputs` (list[str], optional) : names model outputs (TF only), defaults to None
 
+.. code-block:: python
+
+    def create_tf_cnn():
+        """Create a Keras CNN for testing purposes
+
+        """
+        from smartsim.ml.tf import serialize_model
+        n = Net()
+        input_shape = (3,3,1)
+        inputs = Input(input_shape)
+        outputs = n(inputs)
+        model = keras.Model(inputs=inputs, outputs=outputs, name=n.name)
+
+        return serialize_model(model)
+
+.. code-block:: python
+
+    run_settings = exp.create_run_settings(
+        exe=sys.executable,
+        exe_args=sr_test_script
+    )
+
+.. code-block:: python
+
+    smartsim_ensemble = exp.create_ensemble("smartsim_model", run_settings=run_settings, replicas=2)
+
+.. code-block:: python
+
+    smartsim_ensemble.add_ml_model("cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs)
+
+.. code-block:: python
+
+    db = exp.create_database(port=6780, interface="lo")
+
+.. code-block:: python
+
+    exp.start(db, smartsim_ensemble,  block=True)
+
 TorchScript functions
 ---------------------
 The ``Ensemble.add_function()`` helper function adds a
-TorchScript function to launch with every entity
+TorchScript function to launch with every Model entity
 belonging to the ensemble. Each function added
-is loaded into a non-converged orchestrator prior to the execution of any
-of the ensemble members. For converged orchestrators,
+is loaded into a colocated orchestrator prior to the execution of any
+of the ensemble members. For standard orchestrators,
 the ``add_script()``<link> method should be used.
 
-When using the ``add_script()`` function, you may specify params:
+This function offers the following arguments:
 
 1. `name`  (str) : key to store function under
 2. `function` (str, optional) : TorchScript code
 3. `device`  (str, optional) : device for script execution, defaults to “CPU”
 4. `devices_per_node` (int) : assign the number of CPU's or GPU's to use on the node
 
+.. code-block:: python
+
+    def timestwo(x):
+        return 2*x
+
+.. code-block:: python
+
+    ensemble.add_function("test_func", function=timestwo, device="CPU")
+
 TorchScript Scripts
 -------------------
-The ``Ensemble.add_script()`` helper function adds a TorchScript scripts to
+The ``Ensemble.add_script()`` helper function adds a TorchScript script to
 launch with every Model within an Ensemble. Each script added
-is loaded into an  (converged or not) orchestrator prior to the execution of any
+is loaded into an orchestrator (colocated or standard) prior to the execution of any
 of the ensemble members.
 
 When using the ``add_script()`` function, you may specify params:
@@ -259,3 +320,13 @@ When using the ``add_script()`` function, you may specify params:
 3. `script_path` (str, optional) : file path to TorchScript code
 4. `device`  (str, optional) : device for script execution, defaults to “CPU”
 5. `devices_per_node` (int) : assign the number of CPU's or GPU's to use on the node
+
+You might use TorchScript scripts to represent individual models within the ensemble:
+
+.. code-block:: python
+
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+.. code-block:: python
+
+    ensemble.add_script("test_script1", script_path=torch_script, device="CPU")
