@@ -33,8 +33,8 @@ def echo(message: str, sleep_time: int):
         time.sleep(sleep_time)
     print(f"Echoing: {message}")
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--message", type=str, default="Lorem ipsum")
     parser.add_argument("--sleep_time", type=int, default=0)

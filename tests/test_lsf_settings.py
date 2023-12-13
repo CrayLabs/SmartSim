@@ -106,16 +106,16 @@ def test_jsrun_args_mutation():
         "np": 100,
     }
     settings = JsrunSettings("python", run_args=run_args)
-    
+
     erf_settings = {"foo": "1", "bar": "2"}
-    
+
     settings.set_erf_sets(erf_settings)
     assert settings.erf_sets["foo"] == "1"
     assert settings.erf_sets["bar"] == "2"
 
     erf_settings["foo"] = "111"
     erf_settings["bar"] = "111"
-    
+
     assert settings.erf_sets["foo"] == "1"
     assert settings.erf_sets["bar"] == "2"
 
@@ -242,7 +242,7 @@ def test_bsub_batch_manual():
 
 def test_bsub_batch_alloc_flag_formatting_by_smt():
     """Ensure that alloc_flags are formatted correctly when smts is changed"""
-    
+
     # Check when no smt is set in the constructor
     sbatch = BsubBatchSettings()
     sbatch._format_alloc_flags()
@@ -277,9 +277,9 @@ def test_bsub_batch_alloc_flag_formatting_by_smt():
     # check multi-smt flag, with prefix
     sbatch = BsubBatchSettings(batch_args={"alloc_flags": '"smt3 smt4"'}, smts=4)
     sbatch._format_alloc_flags()
-    assert sbatch.batch_args["alloc_flags"] == "\"smt3 smt4\""  # <-- wrap in quotes
-    
+    assert sbatch.batch_args["alloc_flags"] == '"smt3 smt4"'  # <-- wrap in quotes
+
     # show that mismatched alloc_flags and smts are NOT touched
-    sbatch = BsubBatchSettings(batch_args={"alloc_flags": 'smt10'}, smts=2)
+    sbatch = BsubBatchSettings(batch_args={"alloc_flags": "smt10"}, smts=2)
     sbatch._format_alloc_flags()
     assert sbatch.batch_args["alloc_flags"] == "smt10"  # <-- not smt2

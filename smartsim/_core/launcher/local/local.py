@@ -26,10 +26,10 @@
 
 import typing as t
 
-from ..launcher import Launcher
 from ....settings import RunSettings, SettingsBase
+from ..launcher import Launcher
 from ..step import LocalStep, Step
-from ..stepInfo import UnmanagedStepInfo, StepInfo
+from ..stepInfo import StepInfo, UnmanagedStepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 

@@ -31,8 +31,8 @@ import time
 import typing as t
 from pathlib import Path
 
-import smartsim.log
 import smartsim._core._cli.utils as _utils
+import smartsim.log
 from smartsim._core.config import CONFIG
 
 if t.TYPE_CHECKING:

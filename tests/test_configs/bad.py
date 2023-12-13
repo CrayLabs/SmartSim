@@ -35,7 +35,6 @@ def divide_by_zero(time_to_wait):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--time", type=int, default=0)
     args = parser.parse_args()

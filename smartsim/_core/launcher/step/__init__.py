@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .step import Step
 from .alpsStep import AprunStep
 from .cobaltStep import CobaltBatchStep
 from .localStep import LocalStep
@@ -32,3 +31,4 @@ from .lsfStep import BsubBatchStep, JsrunStep
 from .mpiStep import MpiexecStep, MpirunStep, OrterunStep
 from .pbsStep import QsubBatchStep
 from .slurmStep import SbatchStep, SrunStep
+from .step import Step

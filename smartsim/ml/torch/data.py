@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 import numpy as np
 import torch
-import typing as t
 from smartredis import Client, Dataset
 
 from smartsim.ml.data import DataDownloader

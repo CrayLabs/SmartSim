@@ -24,18 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
-
+import json
 import logging
 from pathlib import Path
-import json
 
+import pytest
+
+import smartsim._core.config.config
 from smartsim import Experiment
-from smartsim.database.orchestrator import Orchestrator
-from smartsim._core.utils import serialize
 from smartsim._core._cli import utils
 from smartsim._core.control.manifest import LaunchedManifestBuilder
-import smartsim._core.config.config
+from smartsim._core.utils import serialize
+from smartsim.database.orchestrator import Orchestrator
 
 _REL_MANIFEST_PATH = f"{serialize.TELMON_SUBDIR}/{serialize.MANIFEST_FILENAME}"
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
@@ -43,12 +43,14 @@ _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
 
+
 @pytest.fixture(autouse=True)
 def turn_on_tm(monkeypatch):
     monkeypatch.setattr(
         smartsim._core.config.config.Config,
         _CFG_TM_ENABLED_ATTR,
-        property(lambda self: True))
+        property(lambda self: True),
+    )
     yield
 
 
@@ -58,7 +60,7 @@ def test_serialize_creates_a_manifest_json_file_if_dne(test_dir):
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
 
     assert manifest_json.is_file()
-    with open(manifest_json, 'r') as f:
+    with open(manifest_json, "r") as f:
         manifest = json.load(f)
         assert manifest["experiment"]["name"] == "exp"
         assert manifest["experiment"]["launcher"] == "launcher"
@@ -72,7 +74,8 @@ def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
     monkeypatch.setattr(
         smartsim._core.config.config.Config,
         _CFG_TM_ENABLED_ATTR,
-        property(lambda self: False))
+        property(lambda self: False),
+    )
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
@@ -82,14 +85,17 @@ def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
 def test_serialize_appends_a_manifest_json_exists(test_dir):
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize())
+        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
+    )
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize())
+        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
+    )
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize())
+        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
+    )
 
     assert manifest_json.is_file()
-    with open(manifest_json, 'r') as f:
+    with open(manifest_json, "r") as f:
         manifest = json.load(f)
         assert isinstance(manifest["runs"], list)
         assert len(manifest["runs"]) == 3
@@ -99,12 +105,12 @@ def test_serialize_appends_a_manifest_json_exists(test_dir):
 def test_serialize_overwites_file_if_not_json(test_dir):
     manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     manifest_json.parent.mkdir(parents=True, exist_ok=True)
-    with open(manifest_json, 'w') as f:
+    with open(manifest_json, "w") as f:
         f.write("This is not a json\n")
 
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
-    with open(manifest_json, 'r') as f:
+    with open(manifest_json, "r") as f:
         assert isinstance(json.load(f), dict)
 
 
@@ -119,7 +125,7 @@ def test_started_entities_are_serialized(test_dir):
 
     hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-    hello_ensemble = exp.create_ensemble('echo-ensemble', run_settings=rs1, replicas=3)
+    hello_ensemble = exp.create_ensemble("echo-ensemble", run_settings=rs1, replicas=3)
 
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
     exp.start(hello_world_model, spam_eggs_model, block=False)
@@ -127,7 +133,7 @@ def test_started_entities_are_serialized(test_dir):
 
     manifest_json = Path(exp.exp_path) / _REL_MANIFEST_PATH
     try:
-        with open(manifest_json, 'r') as f:
+        with open(manifest_json, "r") as f:
             manifest = json.load(f)
             assert len(manifest["runs"]) == 2
             assert len(manifest["runs"][0]["model"]) == 2
@@ -139,9 +145,7 @@ def test_started_entities_are_serialized(test_dir):
         exp.stop(hello_world_model, spam_eggs_model, hello_ensemble)
 
 
-def test_serialzed_database_does_not_break_if_using_a_non_standard_install(
-    monkeypatch
-):
+def test_serialzed_database_does_not_break_if_using_a_non_standard_install(monkeypatch):
     monkeypatch.setattr(utils, "get_db_path", lambda: None)
     db = Orchestrator()
     dict_ = serialize._dictify_db(db, [])
@@ -166,6 +170,6 @@ def test_dictify_run_settings_warns_when_attepting_to_dictify_mpmd(
     # Make work with colored logs
     monkeypatch.setattr(serialize, "_LOGGER", logging.getLogger())
     serialize._dictify_run_settings(rs1)
-    rec ,= caplog.records
+    (rec,) = caplog.records
     assert rec.levelno == logging.WARNING
     assert "MPMD run settings" in rec.msg

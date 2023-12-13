@@ -25,9 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import typing as t
 from shutil import which
 from subprocess import run
-import typing as t
 
 from ..error import SSUnsupportedError
 from . import pbs as _pbs

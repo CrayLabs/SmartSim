@@ -25,11 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
+import typing as t
 from pathlib import Path
 
-import os
 import pytest
-import typing as t
 
 from smartsim._core.config.config import Config
 from smartsim.error import SSConfigError
@@ -55,7 +55,9 @@ def test_all_config_defaults():
     config.test_device
 
 
-def get_redisai_env(rai_path: t.Optional[str], lib_path: t.Optional[str]) -> t.Dict[str, str]:
+def get_redisai_env(
+    rai_path: t.Optional[str], lib_path: t.Optional[str]
+) -> t.Dict[str, str]:
     """Convenience method to create a set of environment variables
     that include RedisAI-specific variables
     :param rai_path: The path to the RedisAI library
@@ -83,6 +85,7 @@ def make_file(filepath: str) -> None:
     with open(filepath, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("dummy\n")
 
+
 def test_redisai_invalid_rai_path(test_dir, monkeypatch):
     """An invalid RAI_PATH and valid SMARTSIM_DEP_INSTALL_PATH should fail"""
 
@@ -97,7 +100,7 @@ def test_redisai_invalid_rai_path(test_dir, monkeypatch):
     with pytest.raises(SSConfigError) as ex:
         _ = config.redisai
 
-    assert 'RedisAI dependency not found' in ex.value.args[0]
+    assert "RedisAI dependency not found" in ex.value.args[0]
 
 
 def test_redisai_valid_rai_path(test_dir, monkeypatch):
@@ -128,7 +131,7 @@ def test_redisai_invalid_lib_path(test_dir, monkeypatch):
     with pytest.raises(SSConfigError) as ex:
         _ = config.redisai
 
-    assert 'RedisAI dependency not found' in ex.value.args[0]
+    assert "RedisAI dependency not found" in ex.value.args[0]
 
 
 def test_redisai_valid_lib_path(test_dir, monkeypatch):
@@ -197,16 +200,17 @@ def test_redis_cli():
 
 
 @pytest.mark.parametrize(
-        "value, exp_result", [
-            pytest.param("0", False, id="letter zero"),
-            pytest.param("1", True, id="letter one"),
-            pytest.param("-1", False, id="letter negative one"),
-            pytest.param(None, False, id="not in env"),
-        ]
+    "value, exp_result",
+    [
+        pytest.param("0", False, id="letter zero"),
+        pytest.param("1", True, id="letter one"),
+        pytest.param("-1", False, id="letter negative one"),
+        pytest.param(None, False, id="not in env"),
+    ],
 )
-def test_telemetry_flag(monkeypatch: pytest.MonkeyPatch, 
-                        value: t.Optional[str],
-                        exp_result: bool):
+def test_telemetry_flag(
+    monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: bool
+):
     if value is not None:
         monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", value)
     else:
@@ -214,12 +218,14 @@ def test_telemetry_flag(monkeypatch: pytest.MonkeyPatch,
     config = Config()
     assert config.telemetry_enabled == exp_result
 
+
 @pytest.mark.parametrize(
-    "value, exp_result", [
+    "value, exp_result",
+    [
         pytest.param("1", 1, id="1"),
         pytest.param("123", 123, id="123"),
         pytest.param(None, 5, id="not in env"),
-    ]
+    ],
 )
 def test_telemetry_frequency(
     monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: int
@@ -233,11 +239,12 @@ def test_telemetry_frequency(
 
 
 @pytest.mark.parametrize(
-    "value, exp_result", [
+    "value, exp_result",
+    [
         pytest.param("30", 30, id="30"),
         pytest.param("123", 123, id="123"),
         pytest.param(None, 90, id="not in env"),
-    ]
+    ],
 )
 def test_telemetry_cooldown(
     monkeypatch: pytest.MonkeyPatch, value: t.Optional[str], exp_result: bool

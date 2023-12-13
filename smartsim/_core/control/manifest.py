@@ -225,7 +225,6 @@ class Manifest:
         return has_db_objects
 
 
-
 class _LaunchedManifestMetadata(t.NamedTuple):
     run_id: str
     exp_name: str

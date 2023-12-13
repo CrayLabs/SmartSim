@@ -91,7 +91,6 @@ def test_keras_model(test_dir, mlutils, wlmutils):
 
 
 def create_tf_model():
-
     model = keras.Sequential(
         layers=[
             keras.layers.InputLayer(input_shape=(28, 28), name="input"),
@@ -111,8 +110,6 @@ def create_tf_model():
 
 @pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
 def test_freeze_model(test_dir):
-
-
     model = create_tf_model()
     model_path, inputs, outputs = freeze_model(model, test_dir, "mnist.pb")
     assert len(inputs) == 1

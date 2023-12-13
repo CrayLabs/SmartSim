@@ -27,21 +27,19 @@
 import pathlib
 import shutil
 import typing as t
-
 from datetime import datetime
 from distutils import dir_util  # pylint: disable=deprecated-module
-from logging import INFO, DEBUG
+from logging import DEBUG, INFO
 from os import mkdir, path, symlink
 from os.path import join, relpath
+
 from tabulate import tabulate
 
-from ...entity import Model, TaggedFilesHierarchy
+from ...database import Orchestrator
+from ...entity import Ensemble, Model, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ModelWriter
-from ...database import Orchestrator
-from ...entity import Ensemble
-
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -160,7 +158,7 @@ class Generator:
         # this is to avoid gigantic files in case the user repeats
         # generation several times. The information is anyhow
         # redundant, as it is also written in each entity's dir
-        with open(self.log_file, mode= 'w', encoding='utf-8') as log_file:
+        with open(self.log_file, mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
@@ -301,8 +299,7 @@ class Generator:
         file_to_tables: t.Dict[str, str] = {}
         for file, params in files_to_params.items():
             used_params.update(params)
-            table = tabulate(params.items(),
-                             headers=["Name", "Value"])
+            table = tabulate(params.items(), headers=["Name", "Value"])
             file_to_tables[relpath(file, self.gen_path)] = table
 
         if used_params:
@@ -314,15 +311,15 @@ class Generator:
                 msg=f"Configured model {entity.name} with params {used_params_str}",
             )
             file_table = tabulate(
-                    file_to_tables.items(),
-                    headers=["File name", "Parameters"],
-                )
+                file_to_tables.items(),
+                headers=["File name", "Parameters"],
+            )
             log_entry = f"Model name: {entity.name}\n{file_table}\n\n"
             with open(self.log_file, mode="a", encoding="utf-8") as logfile:
                 logfile.write(log_entry)
-            with open(join(entity.path, "smartsim_params.txt"),
-                      mode="w",
-                      encoding="utf-8") as local_logfile:
+            with open(
+                join(entity.path, "smartsim_params.txt"), mode="w", encoding="utf-8"
+            ) as local_logfile:
                 local_logfile.write(log_entry)
 
         else:

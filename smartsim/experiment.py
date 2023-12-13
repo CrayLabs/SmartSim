@@ -37,7 +37,7 @@ from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
 from .log import get_logger
-from .settings import settings, base, Container
+from .settings import Container, base, settings
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -749,7 +749,7 @@ class Experiment:
         :type queue: str, optional
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
-        :param db_identifier: an identifier to distinguish this orchestrator in 
+        :param db_identifier: an identifier to distinguish this orchestrator in
             multiple-database experiments, defaults to "orchestrator"
         :type db_identifier: str, optional
         :raises SmartSimError: if detection of launcher or of run command fails

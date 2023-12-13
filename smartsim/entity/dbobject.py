@@ -25,11 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
-
 from pathlib import Path
+
 from .._core.utils import init_default
 from ..error import SSUnsupportedError
-
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
@@ -130,7 +129,9 @@ class DBObject:
 
     @staticmethod
     def _check_devices(
-        device: t.Literal["CPU", "GPU"], devices_per_node: int, first_device: int,
+        device: t.Literal["CPU", "GPU"],
+        devices_per_node: int,
+        first_device: int,
     ) -> None:
         if device == "CPU" and devices_per_node > 1:
             raise SSUnsupportedError(
@@ -263,7 +264,8 @@ class DBModel(DBObject):
         :type outputs: list[str], optional
         """
         super().__init__(
-            name, model, model_file, device, devices_per_node, first_device)
+            name, model, model_file, device, devices_per_node, first_device
+        )
         self.backend = self._check_backend(backend)
         if not model and not model_file:
             raise ValueError("Either model or model_file must be provided")

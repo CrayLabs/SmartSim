@@ -30,26 +30,26 @@ import typing as t
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
-    SettingsBase,
     AprunSettings,
-    QsubBatchSettings,
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
-    RunSettings,
     PalsMpiexecSettings,
+    QsubBatchSettings,
+    RunSettings,
+    SettingsBase,
 )
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
-    Step,
     AprunStep,
     LocalStep,
     MpiexecStep,
     MpirunStep,
     OrterunStep,
     QsubBatchStep,
+    Step,
 )
 from ..stepInfo import PBSStepInfo, StepInfo
 from .pbsCommands import qdel, qstat

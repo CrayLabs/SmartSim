@@ -31,13 +31,13 @@ import psutil
 
 from smartsim._core.launcher.step import Step
 from smartsim.settings import (
-    RunSettings,
-    SettingsBase,
     AprunSettings,
     CobaltBatchSettings,
-    MpirunSettings,
     MpiexecSettings,
+    MpirunSettings,
     OrterunSettings,
+    RunSettings,
+    SettingsBase,
 )
 
 from ....error import LauncherError
@@ -47,13 +47,13 @@ from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
 from ..step import (
-    Step,
     AprunStep,
     CobaltBatchStep,
     LocalStep,
     MpiexecStep,
     MpirunStep,
     OrterunStep,
+    Step,
 )
 from ..stepInfo import CobaltStepInfo, StepInfo
 from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out

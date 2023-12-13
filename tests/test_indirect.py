@@ -26,31 +26,68 @@
 
 
 import pathlib
-import psutil
-import pytest
 import sys
 import uuid
 
-from smartsim._core.entrypoints.indirect import get_parser, cleanup, get_ts, main
-from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
-from smartsim._core.utils.helpers import encode_cmd
+import psutil
+import pytest
 
-ALL_ARGS = {"+command", "+entity_type", "+telemetry_dir", "+output_file", "+error_file", "+working_dir"}
+from smartsim._core.entrypoints.indirect import cleanup, get_parser, get_ts, main
+from smartsim._core.utils.helpers import encode_cmd
+from smartsim._core.utils.serialize import MANIFEST_FILENAME, TELMON_SUBDIR
+
+ALL_ARGS = {
+    "+command",
+    "+entity_type",
+    "+telemetry_dir",
+    "+output_file",
+    "+error_file",
+    "+working_dir",
+}
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
 @pytest.mark.parametrize(
-        ["cmd", "missing"],
-        [
-            pytest.param("indirect.py", {"+name", "+command", "+entity_type", "+telemetry_dir", "+working_dir"}, id="no args"),
-            pytest.param("indirect.py -c echo +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+command"}, id="cmd typo"),
-            pytest.param("indirect.py -t orchestrator +command ccc +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="etype typo"),
-            pytest.param("indirect.py -d /foo/bar +entity_type ttt +command ccc +output_file ooo +working_dir www +error_file eee", {"+telemetry_dir"}, id="dir typo"),
-            pytest.param("indirect.py        +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+command"}, id="no cmd"),
-            pytest.param("indirect.py +command ccc        +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee", {"+entity_type"}, id="no etype"),
-            pytest.param("indirect.py +command ccc +entity_type ttt        +output_file ooo +working_dir www +error_file eee", {"+telemetry_dir"}, id="no dir"),
-        ]
+    ["cmd", "missing"],
+    [
+        pytest.param(
+            "indirect.py",
+            {"+name", "+command", "+entity_type", "+telemetry_dir", "+working_dir"},
+            id="no args",
+        ),
+        pytest.param(
+            "indirect.py -c echo +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee",
+            {"+command"},
+            id="cmd typo",
+        ),
+        pytest.param(
+            "indirect.py -t orchestrator +command ccc +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee",
+            {"+entity_type"},
+            id="etype typo",
+        ),
+        pytest.param(
+            "indirect.py -d /foo/bar +entity_type ttt +command ccc +output_file ooo +working_dir www +error_file eee",
+            {"+telemetry_dir"},
+            id="dir typo",
+        ),
+        pytest.param(
+            "indirect.py        +entity_type ttt +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee",
+            {"+command"},
+            id="no cmd",
+        ),
+        pytest.param(
+            "indirect.py +command ccc        +telemetry_dir ddd +output_file ooo +working_dir www +error_file eee",
+            {"+entity_type"},
+            id="no etype",
+        ),
+        pytest.param(
+            "indirect.py +command ccc +entity_type ttt        +output_file ooo +working_dir www +error_file eee",
+            {"+telemetry_dir"},
+            id="no dir",
+        ),
+    ],
 )
 def test_parser(capsys, cmd, missing):
     """Test that the parser reports any missing required arguments"""
@@ -86,15 +123,16 @@ def test_cleanup(capsys, monkeypatch):
     class MockProc:
         def __init__(self, pid: int):
             print(create_msg.format(pid))
+
         def terminate(self):
             print(term_msg.format(mock_pid))
 
     captured = capsys.readouterr()  # throw away existing output
 
     with monkeypatch.context() as ctx:
-        ctx.setattr('psutil.pid_exists', lambda pid: True)
-        ctx.setattr('psutil.Process', MockProc)
-        ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
+        ctx.setattr("psutil.pid_exists", lambda pid: True)
+        ctx.setattr("psutil.Process", MockProc)
+        ctx.setattr("smartsim._core.entrypoints.indirect.STEP_PID", mock_pid)
         cleanup()
 
     captured = capsys.readouterr()
@@ -112,15 +150,16 @@ def test_cleanup_late(capsys, monkeypatch):
         def __init__(self, pid: int) -> None:
             print(create_msg.format(mock_pid))
             raise psutil.NoSuchProcess(pid)
+
         def terminate(self) -> None:
             print(term_msg.format(mock_pid))
 
     captured = capsys.readouterr()  # throw away existing output
 
     with monkeypatch.context() as ctx:
-        ctx.setattr('psutil.pid_exists', lambda pid: True)
-        ctx.setattr('psutil.Process', MockMissingProc)
-        ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
+        ctx.setattr("psutil.pid_exists", lambda pid: True)
+        ctx.setattr("psutil.Process", MockMissingProc)
+        ctx.setattr("smartsim._core.entrypoints.indirect.STEP_PID", mock_pid)
         cleanup()
 
     captured = capsys.readouterr()
@@ -154,7 +193,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
 
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
-        ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
+        ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
         _ = main("", "application", exp_dir, exp_dir / TELMON_SUBDIR)
 
     captured = capsys.readouterr()
@@ -162,7 +201,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
 
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
-        ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
+        ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
         _ = main("  \n  \t   ", "application", exp_dir, exp_dir / TELMON_SUBDIR)
 
     captured = capsys.readouterr()

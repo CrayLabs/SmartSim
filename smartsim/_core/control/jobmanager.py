@@ -29,18 +29,17 @@ import itertools
 import time
 import typing as t
 from collections import ChainMap
-from threading import Thread, RLock
+from threading import RLock, Thread
 from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode, SmartSimEntity, EntitySequence
+from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import get_logger
-from ...status import TERMINAL_STATUSES, STATUS_NEVER_STARTED
+from ...status import STATUS_NEVER_STARTED, TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import LocalLauncher, Launcher
+from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
-
 
 logger = get_logger(__name__)
 

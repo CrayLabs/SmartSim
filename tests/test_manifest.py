@@ -25,16 +25,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from copy import deepcopy
 import os.path
+from copy import deepcopy
 
 import pytest
 
 from smartsim import Experiment
 from smartsim._core.control.manifest import (
-    Manifest,
     LaunchedManifest,
     LaunchedManifestBuilder,
+    Manifest,
+)
+from smartsim._core.control.manifest import (
     _LaunchedManifestMetadata as LaunchedManifestMetadata,
 )
 from smartsim.database import Orchestrator
@@ -103,6 +105,7 @@ def test_corner_case():
     with pytest.raises(TypeError):
         _ = Manifest(p)
 
+
 def test_launched_manifest_transform_data():
     models = [(model, 1), (model_2, 2)]
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
@@ -141,7 +144,7 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match():
 
 
 def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
-    monkeypatch
+    monkeypatch,
 ):
     lmb = LaunchedManifestBuilder("name", "path", "launcher")
     monkeypatch.setattr(ensemble, "entities", [])
@@ -153,16 +156,27 @@ def test_lmb_and_launched_manifest_have_same_paths_for_launched_metadata():
     exp_path = "/path/to/some/exp"
     lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher")
     manifest = lmb.finalize()
-    assert lmb.exp_telemetry_subdirectory == manifest.metadata.exp_telemetry_subdirectory
-    assert lmb.run_telemetry_subdirectory == manifest.metadata.run_telemetry_subdirectory
-    assert os.path.commonprefix([
-        manifest.metadata.run_telemetry_subdirectory,
-        manifest.metadata.exp_telemetry_subdirectory,
-        manifest.metadata.manifest_file_path,
-        exp_path,
-    ]) == exp_path
-    assert os.path.commonprefix([
-        manifest.metadata.run_telemetry_subdirectory,
-        manifest.metadata.exp_telemetry_subdirectory,
-        manifest.metadata.manifest_file_path,
-    ]) == str(manifest.metadata.exp_telemetry_subdirectory)
+    assert (
+        lmb.exp_telemetry_subdirectory == manifest.metadata.exp_telemetry_subdirectory
+    )
+    assert (
+        lmb.run_telemetry_subdirectory == manifest.metadata.run_telemetry_subdirectory
+    )
+    assert (
+        os.path.commonprefix(
+            [
+                manifest.metadata.run_telemetry_subdirectory,
+                manifest.metadata.exp_telemetry_subdirectory,
+                manifest.metadata.manifest_file_path,
+                exp_path,
+            ]
+        )
+        == exp_path
+    )
+    assert os.path.commonprefix(
+        [
+            manifest.metadata.run_telemetry_subdirectory,
+            manifest.metadata.exp_telemetry_subdirectory,
+            manifest.metadata.manifest_file_path,
+        ]
+    ) == str(manifest.metadata.exp_telemetry_subdirectory)

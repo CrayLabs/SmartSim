@@ -75,7 +75,6 @@ def calc_svd(input_tensor):
 
 
 def run(device):
-
     # connect a client to the database
     client = Client(cluster=False)
 

@@ -23,18 +23,18 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import typing as t
 import logging
 import os
 import sys
+import typing as t
 
 import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
-)
+DEFAULT_LOG_FORMAT: t.Final[
+    str
+] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
@@ -125,5 +125,7 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
     :type log_level: int | str
     """
     logger = logging.getLogger("SmartSim")
-    stream = open(filename, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
+    stream = open(
+        filename, "w+", encoding="utf-8"
+    )  # pylint: disable=consider-using-with
     coloredlogs.install(stream=stream, logger=logger, level=log_level)

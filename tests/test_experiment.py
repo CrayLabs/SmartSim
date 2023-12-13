@@ -23,15 +23,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pytest
-
 import os
 
+import pytest
+
 from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
-from smartsim._core.config import CONFIG
 from smartsim.status import STATUS_NEVER_STARTED
 
 # The tests in this file belong to the slow_tests group

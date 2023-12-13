@@ -26,14 +26,14 @@
 
 import time
 import typing as t
-
 from dataclasses import dataclass
-from ...entity import SmartSimEntity, EntitySequence
+
+from ...entity import EntitySequence, SmartSimEntity
 from ...status import STATUS_NEW
 
 
 @dataclass(frozen=True)
-class _JobKey():
+class _JobKey:
     step_id: str
     task_id: str
 

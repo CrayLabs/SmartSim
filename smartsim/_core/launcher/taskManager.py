@@ -26,12 +26,12 @@
 
 from __future__ import annotations
 
-import psutil
 import time
 import typing as t
-
 from subprocess import PIPE
 from threading import RLock, Thread
+
+import psutil
 
 from ...error import LauncherError
 from ...log import get_logger

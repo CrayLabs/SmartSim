@@ -27,8 +27,8 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.launcher.step import SbatchStep, SrunStep
 from smartsim._core.control.manifest import LaunchedManifestBuilder
+from smartsim._core.launcher.step import SbatchStep, SrunStep
 from smartsim.entity import Ensemble, Model
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
@@ -89,8 +89,9 @@ def monkeypatch_exp_controller(monkeypatch):
     def _monkeypatch_exp_controller(exp):
         entity_steps = []
 
-        def start_wo_job_manager(self, exp_name, exp_path, manifest,
-                                 block=True, kill_on_interrupt=True):
+        def start_wo_job_manager(
+            self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
+        ):
             self._launch(exp_name, exp_path, manifest)
             return LaunchedManifestBuilder("name", "path", "launcher").finalize()
 

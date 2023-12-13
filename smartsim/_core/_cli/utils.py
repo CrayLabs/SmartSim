@@ -133,7 +133,7 @@ class MenuItemConfig:
         description: str,
         handler: _CliHandler,
         configurator: t.Optional[_CliParseConfigurator] = None,
-        is_plugin: bool = False
+        is_plugin: bool = False,
     ):
         self.command = cmd
         self.description = description
