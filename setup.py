@@ -200,10 +200,6 @@ extras_require = {
 setup(
     version=smartsim_version,
     install_requires=deps,
-    packages=["smartsim"],
-    package_data={"smartsim": [
-        "_core/bin/*",
-    ]},
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,
