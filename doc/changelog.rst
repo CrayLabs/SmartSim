@@ -17,6 +17,13 @@ Development branch
 
 To be released at some future point in time
 
+
+
+0.6.0
+-----
+
+Released on 15 December, 2023
+
 Description
 
 - `sacct` and `sstat` errors are now fatal for Slurm-based workflow executions

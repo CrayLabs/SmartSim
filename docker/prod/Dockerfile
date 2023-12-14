@@ -44,7 +44,7 @@ WORKDIR /home/craylabs
 COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
 
 USER craylabs
-RUN python -m pip install smartsim[ml]==0.5.1 jupyter jupyterlab matplotlib && \
+RUN python -m pip install smartsim[ml]==0.6.0 jupyter jupyterlab matplotlib && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
     export PATH=/home/craylabs/.local/bin:$PATH && \
     smart build --device cpu -v && \
