@@ -81,7 +81,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         manifest_dict = {
             "schema info": {
                 "schema_name": "entity manifest",
-                "version": "0.0.1",
+                "version": "0.0.2",
             },
             "experiment": {
                 "name": manifest.metadata.exp_name,
