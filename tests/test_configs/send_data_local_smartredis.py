@@ -27,6 +27,7 @@
 import numpy as np
 from smartredis import Client
 
+
 def main():
     # address should be set as we are launching through
     # SmartSim.

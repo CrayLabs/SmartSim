@@ -78,7 +78,7 @@ def parse_qsub_out(output: str) -> str:
     for line in output.split("\n"):
         try:
             value = line.strip()
-            int(value) # if the cast works, return original string
+            int(value)  # if the cast works, return original string
             step_id = value
             break
         except ValueError:

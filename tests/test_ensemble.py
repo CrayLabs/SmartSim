@@ -49,7 +49,7 @@ TODO: test to add
 # ---- helpers ------------------------------------------------------
 
 
-def step_values(param_names, param_values, n_models = 0):
+def step_values(param_names, param_values, n_models=0):
     permutations = []
     for p in zip(*param_values):
         permutations.append(dict(zip(param_names, p)))
@@ -58,13 +58,13 @@ def step_values(param_names, param_values, n_models = 0):
 
 # bad permutation strategy that doesn't return
 # a list of dictionaries
-def bad_strategy(names, values, n_models = 0):
+def bad_strategy(names, values, n_models=0):
     return -1
 
 
 # test bad perm strategy that returns a list but of lists
 # not dictionaries
-def bad_strategy_2(names, values, n_models = 0):
+def bad_strategy_2(names, values, n_models=0):
     return [values]
 
 
@@ -229,6 +229,7 @@ def test_arg_and_model_params_all_perms():
 
 
 # ----- Error Handling --------------------------------------
+
 
 # unknown permuation strategy
 def test_unknown_perm_strat():

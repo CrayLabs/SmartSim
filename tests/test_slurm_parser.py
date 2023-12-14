@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+
 from smartsim._core.launcher.slurm import slurmParser
 
 # The tests in this file belong to the group_b group

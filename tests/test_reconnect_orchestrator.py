@@ -25,8 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os.path as osp
-import pytest
 import time
+
+import pytest
 
 from smartsim import Experiment, status
 from smartsim.database import Orchestrator

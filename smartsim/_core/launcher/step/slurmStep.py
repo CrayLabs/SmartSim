@@ -31,8 +31,8 @@ from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
-from .step import Step
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
+from .step import Step
 
 logger = get_logger(__name__)
 

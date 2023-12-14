@@ -26,8 +26,8 @@
 
 import typing as t
 
-from ....log import get_logger
 from ....error import LauncherError
+from ....log import get_logger
 from ...utils.helpers import expand_exe_path
 from ..util.shell import execute_cmd
 

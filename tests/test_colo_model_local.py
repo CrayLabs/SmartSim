@@ -29,8 +29,8 @@ import sys
 import pytest
 
 from smartsim import Experiment, status
-from smartsim.error import SSUnsupportedError
 from smartsim.entity import Model
+from smartsim.error import SSUnsupportedError
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -144,7 +144,9 @@ def test_launch_colocated_model_defaults(
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
-    assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses {statuses}"
+    assert all(
+        stat == status.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses {statuses}"
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)

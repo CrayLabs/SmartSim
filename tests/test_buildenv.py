@@ -26,9 +26,9 @@
 
 
 import pytest
+from pkg_resources import packaging  # type: ignore
 
 from smartsim._core._install.buildenv import Version_
-from pkg_resources import packaging  # type: ignore
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a

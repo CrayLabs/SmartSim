@@ -46,8 +46,11 @@ from typing import Iterable
 #       to remove
 # https://setuptools.pypa.io/en/latest/pkg_resources.html
 
+# isort: off
 import pkg_resources
 from pkg_resources import packaging  # type: ignore
+
+# isort: on
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
@@ -347,9 +350,7 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        return {
-            "ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
-        }
+        return {"ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:

@@ -23,10 +23,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import typing as t
 import logging
 import os
 import sys
+import typing as t
 
 import coloredlogs
 
@@ -125,5 +125,7 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
     :type log_level: int | str
     """
     logger = logging.getLogger("SmartSim")
-    stream = open(filename, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
+    stream = open(  # pylint: disable=consider-using-with
+        filename, "w+", encoding="utf-8"
+    )
     coloredlogs.install(stream=stream, logger=logger, level=log_level)

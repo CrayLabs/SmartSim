@@ -103,7 +103,8 @@ def execute(
         logger.error(
             "SmartSim failed to run a simple experiment!\n"
             f"Experiment failed due to the following exception:\n{e}\n\n"
-            f"Output files are available at `{temp_dir}`", exc_info=True
+            f"Output files are available at `{temp_dir}`",
+            exc_info=True,
         )
         return os.EX_SOFTWARE
     return os.EX_OK
@@ -246,7 +247,7 @@ def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
     forward_input = torch.rand(1, 1, 3, 3)
     traced = torch.jit.trace(net, forward_input)  # type: ignore[no-untyped-call]
     buffer = io.BytesIO()
-    torch.jit.save(traced, buffer) # type: ignore[no-untyped-call]
+    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
     model = buffer.getvalue()
 
     client.set_model("torch-nn", model, backend="TORCH", device=device)

@@ -44,9 +44,7 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 def test_stop_entity(fileutils, test_dir, wlmutils):
     exp_name = "test-launch-stop-model"
-    exp = Experiment(
-        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
-    )
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=10")
@@ -61,11 +59,8 @@ def test_stop_entity(fileutils, test_dir, wlmutils):
 
 
 def test_stop_entity_list(fileutils, test_dir, wlmutils):
-
     exp_name = "test-launch-stop-ensemble"
-    exp = Experiment(
-        exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir
-    )
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=10")

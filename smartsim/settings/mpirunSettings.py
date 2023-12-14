@@ -27,6 +27,7 @@
 from warnings import simplefilter, warn
 
 from ..log import get_logger
+
 # pylint: disable-next=unused-import
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
 

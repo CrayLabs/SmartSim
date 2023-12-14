@@ -40,9 +40,7 @@ def test_failed_status(fileutils, test_dir, wlmutils):
     """Test when a failure occurs deep into model execution"""
 
     exp_name = "test-report-failure"
-    exp = Experiment(exp_name,
-            launcher=wlmutils.get_test_launcher(),
-            exp_path=test_dir)
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("bad.py")
     settings = exp.create_run_settings(

@@ -28,23 +28,23 @@ import typing as t
 
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
-from ..wlm import detect_launcher
 from ..settings import (
-    base,
-    CobaltBatchSettings,
-    QsubBatchSettings,
-    SbatchSettings,
-    BsubBatchSettings,
-    Container,
-    RunSettings,
     AprunSettings,
-    SrunSettings,
-    MpirunSettings,
-    MpiexecSettings,
-    OrterunSettings,
+    BsubBatchSettings,
+    CobaltBatchSettings,
+    Container,
     JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
     PalsMpiexecSettings,
+    QsubBatchSettings,
+    RunSettings,
+    SbatchSettings,
+    SrunSettings,
+    base,
 )
+from ..wlm import detect_launcher
 
 _TRunSettingsSelector = t.Callable[[str], t.Callable[..., RunSettings]]
 

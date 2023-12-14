@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+
 from smartsim import Experiment, status
 
 # The tests in this file belong to the group_b group
@@ -37,7 +38,6 @@ Test restarting ensembles and models.
 
 
 def test_restart(fileutils, test_dir):
-
     exp_name = "test-models-local-restart"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 

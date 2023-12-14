@@ -25,12 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging
-import redis
 import time
 import typing as t
-
 from itertools import product
-from redis.cluster import RedisCluster, ClusterNode
+
+import redis
+from redis.cluster import ClusterNode, RedisCluster
 from redis.exceptions import ClusterDownError, RedisClusterException
 from smartredis import Client
 from smartredis.error import RedisReplyError
@@ -234,9 +234,7 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
     """
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
-    returncode, out, err = execute_cmd(
-        cmd, proc_input="yes", shell=False, timeout=10
-    )
+    returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False, timeout=10)
 
     if returncode != 0:
         logger.error(out)

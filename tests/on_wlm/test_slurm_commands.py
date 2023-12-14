@@ -25,8 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from smartsim.error.errors import LauncherError
 from smartsim._core.launcher.slurm.slurmCommands import *
+from smartsim.error.errors import LauncherError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher != "slurm":
@@ -50,6 +50,6 @@ def test_error_raises(cmd, raises):
     args = ["--non_existing_arg"]
     if raises:
         with pytest.raises(LauncherError):
-            cmd(args, raise_on_err = True)
+            cmd(args, raise_on_err=True)
     else:
         cmd(args)

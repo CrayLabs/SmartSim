@@ -34,9 +34,10 @@ from ..log import get_logger
 
 logger = get_logger(__name__)
 
-
+# fmt: off
 class SettingsBase:
     ...
+# fmt: on
 
 
 # pylint: disable=too-many-public-methods

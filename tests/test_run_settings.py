@@ -28,6 +28,7 @@
 import itertools
 import logging
 import os.path as osp
+
 import pytest
 
 from smartsim.error.errors import SSUnsupportedError

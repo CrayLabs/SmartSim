@@ -93,7 +93,6 @@ def test_singularity_commands(fileutils):
 def test_singularity_basic(fileutils, test_dir):
     """Basic argument-less Singularity test"""
 
-
     container = Singularity(containerURI)
 
     exp = Experiment("singularity_basic", exp_path=test_dir, launcher="local")
@@ -150,7 +149,6 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
 
     Note: This is a containerized port of test_smartredis.py
     """
-
 
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
