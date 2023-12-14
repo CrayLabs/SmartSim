@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,14 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ....log import get_logger
+from ....settings import QsubBatchSettings
 from .step import Step
 
 logger = get_logger(__name__)
 
 
 class QsubBatchStep(Step):
-    def __init__(self, name, cwd, batch_settings):
+    def __init__(self, name: str, cwd: str, batch_settings: QsubBatchSettings) -> None:
         """Initialize a PBSpro qsub step
 
         :param name: name of the entity to launch
@@ -39,14 +42,14 @@ class QsubBatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: QsubBatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
-        self.step_cmds = []
+        super().__init__(name, cwd, batch_settings)
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
+        self.batch_settings = batch_settings
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -55,7 +58,7 @@ class QsubBatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, script]
 
-    def add_to_batch(self, step):
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
@@ -65,7 +68,7 @@ class QsubBatchStep(Step):
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
-    def _write_script(self):
+    def _write_script(self) -> str:
         """Write the batch script
 
         :return: batch script path after writing
@@ -73,24 +76,24 @@ class QsubBatchStep(Step):
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
-        with open(batch_script, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            f.write(f"#PBS -o {output}\n")
-            f.write(f"#PBS -e {error}\n")
-            f.write(f"#PBS -N {self.name}\n")
-            f.write("#PBS -V \n")
+        with open(batch_script, "w", encoding="utf-8") as script_file:
+            script_file.write("#!/bin/bash\n\n")
+            script_file.write(f"#PBS -o {output}\n")
+            script_file.write(f"#PBS -e {error}\n")
+            script_file.write(f"#PBS -N {self.name}\n")
+            script_file.write("#PBS -V \n")
 
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():
-                f.write(f"#PBS {opt}\n")
+                script_file.write(f"#PBS {opt}\n")
 
-            for cmd in self.batch_settings._preamble:
-                f.write(f"{cmd}\n")
+            for cmd in self.batch_settings.preamble:
+                script_file.write(f"{cmd}\n")
 
-            for i, cmd in enumerate(self.step_cmds):
-                f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+            for i, step_cmd in enumerate(self.step_cmds):
+                script_file.write("\n")
+                script_file.write(f"{' '.join((step_cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
-                    f.write("\n")
-                    f.write("wait\n")
+                    script_file.write("\n")
+                    script_file.write("wait\n")
         return batch_script

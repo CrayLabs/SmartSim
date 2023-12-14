@@ -4,10 +4,11 @@ SmartSim API
 *************
 
 
+.. _experiment_api:
+
 Experiment
 ==========
 
-.. _experiment_api:
 
 .. currentmodule:: smartsim.experiment
 
@@ -62,11 +63,22 @@ Types of Settings:
     CobaltBatchSettings
     BsubBatchSettings
 
+Settings objects can accept a container object that defines a container
+runtime, image, and arguments to use for the workload. Below is a list of
+supported container runtimes.
+
+Types of Containers:
+
+.. autosummary::
+
+    Singularity
+
+
+.. _rs-api:
 
 RunSettings
 -----------
 
-.. _rs-api:
 
 When running SmartSim on laptops and single node workstations,
 the base ``RunSettings`` object is used to parameterize jobs.
@@ -86,10 +98,11 @@ launches that utilize a parallel launch binary like
     :members:
 
 
+.. _srun_api:
+
 SrunSettings
 ------------
 
-.. _srun_api:
 
 ``SrunSettings`` can be used for running on existing allocations,
 running jobs in interactive allocations, and for adding srun
@@ -116,11 +129,11 @@ steps to a batch.
     :members:
 
 
+.. _aprun_api:
 
 AprunSettings
 -------------
 
-.. _aprun_api:
 
 ``AprunSettings`` can be used on any system that supports the
 Cray ALPS layer. SmartSim supports using ``AprunSettings``
@@ -149,11 +162,11 @@ and within batch launches (e.g., ``QsubBatchSettings``)
 
 
 
+.. _jsrun_api:
 
 JsrunSettings
 -------------
 
-.. _jsrun_api:
 
 ``JsrunSettings`` can be used on any system that supports the
 IBM LSF launcher.
@@ -184,11 +197,11 @@ and within batch launches (i.e. ``BsubBatchSettings``)
     :undoc-members:
     :members:
 
+.. _openmpi_run_api:
 
 MpirunSettings
 --------------
 
-.. _openmpi_run_api:
 
 ``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
 supported on Slurm, PBSpro, and Cobalt.
@@ -211,11 +224,11 @@ supported on Slurm, PBSpro, and Cobalt.
     :undoc-members:
     :members:
 
+.. _openmpi_exec_api:
 
 MpiexecSettings
 ---------------
 
-.. _openmpi_exec_api:
 
 ``MpiexecSettings`` are for launching with OpenMPI's ``mpiexec``. ``MpirunSettings`` are
 supported on Slurm, PBSpro, and Cobalt.
@@ -238,11 +251,11 @@ supported on Slurm, PBSpro, and Cobalt.
     :undoc-members:
     :members:
 
+.. _openmpi_orte_api:
 
 OrterunSettings
 ---------------
 
-.. _openmpi_orte_api:
 
 ``OrterunSettings`` are for launching with OpenMPI's ``orterun``. ``OrterunSettings`` are
 supported on Slurm, PBSpro, and Cobalt.
@@ -269,11 +282,11 @@ supported on Slurm, PBSpro, and Cobalt.
 ------------------------------------------
 
 
+.. _sbatch_api:
 
 SbatchSettings
 --------------
 
-.. _sbatch_api:
 
 ``SbatchSettings`` are used for launching batches onto Slurm
 WLM systems.
@@ -295,11 +308,11 @@ WLM systems.
     :undoc-members:
     :members:
 
+.. _qsub_api:
 
 QsubBatchSettings
 -----------------
 
-.. _qsub_api:
 
 ``QsubBatchSettings`` are used to configure jobs that should
 be launched as a batch on PBSPro systems.
@@ -323,11 +336,11 @@ be launched as a batch on PBSPro systems.
     :members:
 
 
+.. _cqsub_api:
+
 
 CobaltBatchSettings
 -------------------
-
-.. _cqsub_api:
 
 ``CobaltBatchSettings`` are used to configure jobs that should
 be launched as a batch on Cobalt Systems. They closely mimic
@@ -349,11 +362,11 @@ that of the ``QsubBatchSettings`` for PBSPro.
     :members:
 
 
+.. _bsub_api:
 
 BsubBatchSettings
 -----------------
 
-.. _bsub_api:
 
 ``BsubBatchSettings`` are used to configure jobs that should
 be launched as a batch on LSF systems.
@@ -376,17 +389,32 @@ be launched as a batch on LSF systems.
     :undoc-members:
     :members:
 
+.. _singularity_api:
+
+Singularity
+-----------
+
+
+``Singularity`` is a type of ``Container`` that can be passed to a
+``RunSettings`` class or child class to enable running the workload in a
+container.
+
+.. autoclass:: Singularity
+    :inherited-members:
+    :undoc-members:
+    :members:
+
 
 Orchestrator
 ============
 
 .. currentmodule:: smartsim.database
 
+.. _orc_api:
 
 Orchestrator
 ------------
 
-.. _orc_api:
 
 .. autoclass:: Orchestrator
    :members:
@@ -404,6 +432,12 @@ Model
    Model.__init__
    Model.attach_generator_files
    Model.colocate_db
+   Model.colocate_db_tcp
+   Model.colocate_db_uds
+   Model.colocated
+   Model.add_ml_model
+   Model.add_script
+   Model.add_function
    Model.params_to_args
    Model.register_incoming_entity
    Model.enable_key_prefixing
@@ -415,51 +449,52 @@ Model
    :show-inheritance:
    :inherited-members:
 
+.. _ensemble_api:
 
 Ensemble
 ========
+
 
 .. currentmodule:: smartsim.entity.ensemble
 
 .. autosummary::
 
    Ensemble.__init__
-   Ensemble.models
    Ensemble.add_model
+   Ensemble.add_ml_model
+   Ensemble.add_script
+   Ensemble.add_function
    Ensemble.attach_generator_files
-   Ensemble.register_incoming_entity
    Ensemble.enable_key_prefixing
+   Ensemble.models
    Ensemble.query_key_prefixing
+   Ensemble.register_incoming_entity
 
 .. autoclass:: Ensemble
    :members:
    :show-inheritance:
    :inherited-members:
 
+.. _ml_api:
 
 Machine Learning
 ================
 
-.. _ml_api:
 
 SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytorch.
+
+.. _smartsim_tf_api:
 
 TensorFlow
 ----------
 
-.. _smartsim_tf_api:
 
 SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
 
 .. currentmodule:: smartsim.ml.tf.utils
 
-.. autosummary::
-
-    freeze_model
-
 .. automodule:: smartsim.ml.tf.utils
     :members:
-
 
 .. currentmodule:: smartsim.ml.tf
 
@@ -473,10 +508,10 @@ SmartSim includes built-in utilities for supporting TensorFlow and Keras in trai
    :show-inheritance:
    :inherited-members:
 
+.. _smartsim_torch_api:
+
 PyTorch
 ----------
-
-.. _smartsim_torch_api:
 
 SmartSim includes built-in utilities for supporting PyTorch in training and inference.
 
@@ -497,10 +532,10 @@ SmartSim includes built-in utilities for supporting PyTorch in training and infe
    :show-inheritance:
    :inherited-members:
 
+.. _slurm_module_api:
+
 Slurm
 =====
-
-.. _slurm_module_api:
 
 
 .. currentmodule:: smartsim.slurm
@@ -512,21 +547,3 @@ Slurm
 
 .. automodule:: smartsim.slurm
     :members:
-
-
-Ray
-===
-
-.. currentmodule:: smartsim.exp.ray
-
-.. _ray_api:
-
-``RayCluster`` is used to launch a Ray cluster
- and can be launched as a batch or in an interactive allocation.
-
-.. autoclass:: RayCluster
-    :show-inheritance:
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :exclude-members: batch set_path type

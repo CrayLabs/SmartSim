@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,12 @@
 import sys
 
 # -*- coding: utf-8 -*-
+# pylint: disable-next=useless-import-alias
 from .version import __version__ as __version__
 
-if sys.version_info < (3, 7):  # pragma: no cover
-    sys.exit("Python 3.7 or greater must be used with SmartSim.")
+if sys.version_info < (3, 8):  # pragma: no cover
+    sys.exit("Python 3.8 or greater must be used with SmartSim.")
 
 # Main API module
+# pylint: disable=wrong-import-position
 from .experiment import Experiment

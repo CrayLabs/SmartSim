@@ -1,4 +1,4 @@
-include requirements.txt
 include Makefile
 graft smartsim/
-
+global-exclude __pycache__
+global-exclude *.py[co]
