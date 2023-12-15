@@ -51,5 +51,4 @@ RUN python -m pip install smartsim[ml]==0.6.0 jupyter jupyterlab matplotlib && \
     chown craylabs:root -R /home/craylabs/.local && \
     rm -rf ~/.cache/pip
 
-# remove non-jupyter notebook tutorials
 CMD ["/bin/bash", "-c", "PATH=/home/craylabs/.local/bin:$PATH /home/craylabs/.local/bin/jupyter lab --port 8888 --no-browser --ip=0.0.0.0"]
