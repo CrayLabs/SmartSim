@@ -5,7 +5,7 @@ Changelog
 Listed here are the changes between each release of SmartSim
 and SmartRedis.
 
-Jump to :ref:`SmartRedis Changelog <changelog>`
+Jump to :ref:`SmartRedis Changelog <sr_changelog>`
 
 
 SmartSim
@@ -549,10 +549,10 @@ Description:
 
 ---------------------------------------------------------------
 
+.. _sr_changelog:
+
 SmartRedis
 ==========
-
-.. _changelog:
 
 .. include:: ../smartredis/doc/changelog.rst
     :start-line: 3
