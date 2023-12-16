@@ -76,7 +76,7 @@ def _get_log_level() -> str:
     return "info"
 
 
-class DeferredLogger(logging.Logger):
+class ContextAwareLogger(logging.Logger):
     def _log(self, level: int, msg: object, args, exc_info = None, extra = None, stack_info: bool = False, stacklevel: int = 1) -> None:
         if _exp_path :=  ctx_exp_path.get():
             filename = pathlib.Path(_exp_path) / "smartsim.out"
@@ -125,7 +125,7 @@ def get_logger(
     if user_log_level != "developer":
         name = "SmartSim"
 
-    logging.setLoggerClass(DeferredLogger)
+    logging.setLoggerClass(ContextAwareLogger)
     logger = logging.getLogger(name)
     if log_level:
         logger.setLevel(log_level)

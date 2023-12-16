@@ -28,6 +28,7 @@ import os
 import os.path as osp
 import typing as t
 from os import getcwd
+from typing import Any
 
 from tabulate import tabulate
 
@@ -47,7 +48,33 @@ import contextvars
 logger = get_logger(__name__)
 
 
-class Experiment:
+import abc
+
+class ContextAware(abc.ABC):
+    @property
+    def context_value(self) -> str:
+        raise NotImplemented()
+
+def contextualize(obj: ContextAware, func: t.Callable, context_var: contextvars.ContextVar) -> None:
+    fn_orig_key = func.__name__
+    fn_key = f"_ctx_{func.__name__}"
+    setattr(obj, fn_key, func)
+
+    def _inner(*args, **kwargs) -> t.Any:
+        ctx = contextvars.copy_context()    
+        def _wrapper() -> t.Any:
+            """A function that ensures the context var is set during context.run"""
+            token = context_var.set(obj.context_value)
+            fn = getattr(obj, fn_key)
+            result = fn(*args, **kwargs)
+            context_var.reset(token)
+            return result
+        return ctx.run(_wrapper)    
+    # return _inner
+    setattr(obj, fn_orig_key, _inner)
+
+
+class Experiment(ContextAware):
     """Experiments are the Python user interface for SmartSim.
 
     Experiment is a factory class that creates stages of a workflow
@@ -65,7 +92,7 @@ class Experiment:
     In general, the Experiment class is designed to be initialized once
     and utilized throughout runtime.
     """
-
+    
     def __init__(
         self,
         name: str,
@@ -136,6 +163,42 @@ class Experiment:
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
+        contextualize(self, self.start, ctx_exp_path)
+        contextualize(self, self.stop, ctx_exp_path)
+        contextualize(self, self.generate, ctx_exp_path)
+        contextualize(self, self.poll, ctx_exp_path)
+        contextualize(self, self.finished, ctx_exp_path)
+        contextualize(self, self.get_status, ctx_exp_path)
+
+    @property
+    def context_value(self) -> str:
+        return self.exp_path
+
+    def _contextual(self, func: t.Callable[..., t.Any]) -> t.Callable[..., t.Any]:
+        def _inner(*argz, **kwargz) -> t.Any:
+            ctx = contextvars.copy_context()
+            def _wrapper(*args, **kwargs) -> t.Any:
+                """A function that ensures the context var is set during context.run"""
+                token = ctx_exp_path.set(self.exp_path)
+                result = func(*args, **kwargs)
+                ctx_exp_path.reset(token)
+                return result
+            return ctx.run(_wrapper, *argz, **kwargz)
+        return _inner
+
+    # def start(
+    #     self,
+    #     *args: t.Any,
+    #     block: bool = True,
+    #     summary: bool = False,
+    #     kill_on_interrupt: bool = True,
+    # ) -> None:
+    #     ctx_fn = self._contextual(self._start)
+    #     ctx_fn(*args, 
+    #            block=block, 
+    #            summary=summary, 
+    #            kill_on_interrupt=kill_on_interrupt)
+    
     def start(
         self,
         *args: t.Any,
@@ -193,29 +256,48 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
-        def _start():
-            ctx_exp_path.set(self.exp_path)
-            logger.info("starting new experiment context")
+        # def _start():
+        #     ctx_exp_path.set(self.exp_path)
+        #     logger.info("starting new experiment context")
 
-            start_manifest = Manifest(*args)
-            try:
-                if summary:
-                    self._launch_summary(start_manifest)
-                self._control.start(
-                    exp_name=self.name,
-                    exp_path=self.exp_path,
-                    manifest=start_manifest,
-                    block=block,
-                    kill_on_interrupt=kill_on_interrupt,
-                )
-            except SmartSimError as e:
-                logger.error(e)
-                raise
+        #     start_manifest = Manifest(*args)
+        #     try:
+        #         if summary:
+        #             self._launch_summary(start_manifest)
+        #         self._control.start(
+        #             exp_name=self.name,
+        #             exp_path=self.exp_path,
+        #             manifest=start_manifest,
+        #             block=block,
+        #             kill_on_interrupt=kill_on_interrupt,
+        #         )
+        #     except SmartSimError as e:
+        #         logger.error(e)
+        #         raise
         
-        context = contextvars.copy_context()
-        context.run(_start)
+        # self._context.run(_start)
+        
+        logger.info("starting new experiment context")
 
+        start_manifest = Manifest(*args)
+        try:
+            if summary:
+                self._launch_summary(start_manifest)
+            self._control.start(
+                exp_name=self.name,
+                exp_path=self.exp_path,
+                manifest=start_manifest,
+                block=block,
+                kill_on_interrupt=kill_on_interrupt,
+            )
+        except SmartSimError as e:
+            logger.error(e)
+            raise
 
+    # def stop(self, *args: t.Any) -> None:
+    #     ctx_fn = self._contextual(self._stop)
+    #     ctx_fn(*args)
+        
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
@@ -251,6 +333,20 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    # def generate(
+    #     self,
+    #     *args: t.Any,
+    #     tag: t.Optional[str] = None,
+    #     overwrite: bool = False,
+    #     verbose: bool = False,
+    # ) -> None:
+        
+    #     ctx_fn = self._contextual(self._generate)
+    #     ctx_fn(*args, 
+    #            tag=tag, 
+    #            overwrite=overwrite, 
+    #            verbose=verbose)
 
     def generate(
         self,

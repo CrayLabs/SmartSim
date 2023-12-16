@@ -135,6 +135,8 @@ class Controller:
         if CONFIG.telemetry_enabled:
             self._start_telemetry_monitor(exp_path)
 
+        logger.info("testing context vars from controller...")
+
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
