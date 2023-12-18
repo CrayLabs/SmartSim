@@ -96,15 +96,15 @@ class ContextAwareLogger(logging.Logger):
     ) -> None:
         """Automatically attach file handlers if contextual information is found"""
         if _exp_path := ctx_exp_path.get():
-            filename_out = str(pathlib.Path(_exp_path) / "smartsim.out")
-            filename_err = str(pathlib.Path(_exp_path) / "smartsim.err")
+            file_out = str(pathlib.Path(_exp_path) / "smartsim.out")
+            file_err = str(pathlib.Path(_exp_path) / "smartsim.err")
 
             _lvl = logging.getLevelName(self.level)
+            fmt = EXPERIMENT_LOG_FORMAT
 
-            h_out = log_to_file(
-                filename_out, _lvl, self, EXPERIMENT_LOG_FORMAT, LowPassFilter(_lvl)
-            )
-            h_err = log_to_file(filename_err, "WARN", self, EXPERIMENT_LOG_FORMAT)
+            low_pass = LowPassFilter(_lvl)
+            h_out = log_to_file(file_out, _lvl, self, fmt, low_pass)
+            h_err = log_to_file(file_err, "WARN", self, fmt)
 
             super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 

@@ -46,7 +46,6 @@ from .wlm import detect_launcher
 logger = get_logger(__name__)
 
 
-
 class ContextAware(abc.ABC):
     @property
     def context_value(self) -> str:
@@ -54,7 +53,9 @@ class ContextAware(abc.ABC):
         raise NotImplementedError()
 
 
-def contextualize(obj: ContextAware, func: t.Callable[..., t.Any], ctx_var: ContextVar[str]) -> None:
+def contextualize(
+    obj: ContextAware, func: t.Callable[..., t.Any], ctx_var: ContextVar[str]
+) -> None:
     """Convert a function into a context aware function that sets the value
     of a target ContextVar prior to executing the function with Context().run"""
 
