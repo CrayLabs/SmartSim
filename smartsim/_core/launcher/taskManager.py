@@ -34,7 +34,7 @@ from threading import RLock, Thread
 import psutil
 
 from ...error import LauncherError
-from ...log import get_logger
+from ...log import get_logger, ContextThread
 from ..utils.helpers import check_dev_log_level
 from .util.shell import execute_async_cmd, execute_cmd
 
@@ -74,7 +74,7 @@ class TaskManager:
         The TaskManager is run as a daemon thread meaning
         that it will die when the main thread dies.
         """
-        monitor = Thread(name="TaskManager", daemon=True, target=self.run)
+        monitor = ContextThread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
     def run(self) -> None:
