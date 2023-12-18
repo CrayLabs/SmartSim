@@ -254,8 +254,6 @@ class Experiment(ContextAware):
         :type kill_on_interrupt: bool, optional
         """
 
-        logger.info("starting new experiment context")
-
         start_manifest = Manifest(*args)
         try:
             if summary:

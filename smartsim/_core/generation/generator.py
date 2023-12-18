@@ -75,8 +75,6 @@ class Generator:
         self.overwrite = overwrite
         self.log_level = DEBUG if not verbose else INFO
 
-        logger.info("Generator is doing something...")
-
     @property
     def log_file(self) -> str:
         """Returns the location of the file
