@@ -42,32 +42,38 @@ from .settings import base, Container, settings
 from .wlm import detect_launcher
 
 
-import contextvars
-
-
 logger = get_logger(__name__)
 
 
 import abc
+from contextvars import ContextVar, copy_context
+
 
 class ContextAware(abc.ABC):
     @property
     def context_value(self) -> str:
+        """Return a value used to establish the current execution context"""
         raise NotImplemented()
 
-def contextualize(obj: ContextAware, func: t.Callable, context_var: contextvars.ContextVar) -> None:
+def contextualize(obj: ContextAware, func: t.Callable, ctx_var: ContextVar) -> None:
+    """Convert a function into a context aware function that sets the value
+    of a target ContextVar prior to executing the function with Context().run"""
+
+    # Keep the original function call from the contextualized version
     fn_orig_key = func.__name__
-    fn_key = f"_ctx_{func.__name__}"
+    fn_key = f"_no_ctx__{fn_orig_key}"
     setattr(obj, fn_key, func)
 
     def _inner(*args, **kwargs) -> t.Any:
-        ctx = contextvars.copy_context()    
+        """An anonymous function executed by context.run that
+        modifies a ContextVar value based on the ContextAware object"""
+        ctx = copy_context()    
         def _wrapper() -> t.Any:
             """A function that ensures the context var is set during context.run"""
-            token = context_var.set(obj.context_value)
+            token = ctx_var.set(obj.context_value)
             fn = getattr(obj, fn_key)
             result = fn(*args, **kwargs)
-            context_var.reset(token)
+            ctx_var.reset(token)
             return result
         return ctx.run(_wrapper)    
     # return _inner
@@ -163,41 +169,10 @@ class Experiment(ContextAware):
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
-        contextualize(self, self.start, ctx_exp_path)
-        contextualize(self, self.stop, ctx_exp_path)
-        contextualize(self, self.generate, ctx_exp_path)
-        contextualize(self, self.poll, ctx_exp_path)
-        contextualize(self, self.finished, ctx_exp_path)
-        contextualize(self, self.get_status, ctx_exp_path)
-
-    @property
-    def context_value(self) -> str:
-        return self.exp_path
-
-    def _contextual(self, func: t.Callable[..., t.Any]) -> t.Callable[..., t.Any]:
-        def _inner(*argz, **kwargz) -> t.Any:
-            ctx = contextvars.copy_context()
-            def _wrapper(*args, **kwargs) -> t.Any:
-                """A function that ensures the context var is set during context.run"""
-                token = ctx_exp_path.set(self.exp_path)
-                result = func(*args, **kwargs)
-                ctx_exp_path.reset(token)
-                return result
-            return ctx.run(_wrapper, *argz, **kwargz)
-        return _inner
-
-    # def start(
-    #     self,
-    #     *args: t.Any,
-    #     block: bool = True,
-    #     summary: bool = False,
-    #     kill_on_interrupt: bool = True,
-    # ) -> None:
-    #     ctx_fn = self._contextual(self._start)
-    #     ctx_fn(*args, 
-    #            block=block, 
-    #            summary=summary, 
-    #            kill_on_interrupt=kill_on_interrupt)
+        ctx_fns = ["start", "stop", "generate", "poll", "finished", "get_status"]
+        for fn_name in ctx_fns:
+            fn = getattr(self, fn_name)
+            contextualize(self, fn, ctx_exp_path)
     
     def start(
         self,
@@ -256,26 +231,6 @@ class Experiment(ContextAware):
 
         :type kill_on_interrupt: bool, optional
         """
-        # def _start():
-        #     ctx_exp_path.set(self.exp_path)
-        #     logger.info("starting new experiment context")
-
-        #     start_manifest = Manifest(*args)
-        #     try:
-        #         if summary:
-        #             self._launch_summary(start_manifest)
-        #         self._control.start(
-        #             exp_name=self.name,
-        #             exp_path=self.exp_path,
-        #             manifest=start_manifest,
-        #             block=block,
-        #             kill_on_interrupt=kill_on_interrupt,
-        #         )
-        #     except SmartSimError as e:
-        #         logger.error(e)
-        #         raise
-        
-        # self._context.run(_start)
         
         logger.info("starting new experiment context")
 
@@ -294,10 +249,6 @@ class Experiment(ContextAware):
             logger.error(e)
             raise
 
-    # def stop(self, *args: t.Any) -> None:
-    #     ctx_fn = self._contextual(self._stop)
-    #     ctx_fn(*args)
-        
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
@@ -333,20 +284,6 @@ class Experiment(ContextAware):
         except SmartSimError as e:
             logger.error(e)
             raise
-
-    # def generate(
-    #     self,
-    #     *args: t.Any,
-    #     tag: t.Optional[str] = None,
-    #     overwrite: bool = False,
-    #     verbose: bool = False,
-    # ) -> None:
-        
-    #     ctx_fn = self._contextual(self._generate)
-    #     ctx_fn(*args, 
-    #            tag=tag, 
-    #            overwrite=overwrite, 
-    #            verbose=verbose)
 
     def generate(
         self,
