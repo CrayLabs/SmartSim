@@ -5,7 +5,7 @@ Changelog
 Listed here are the changes between each release of SmartSim
 and SmartRedis.
 
-Jump to :ref:`SmartRedis Changelog <changelog>`
+Jump to :ref:`SmartRedis Changelog <sr_changelog>`
 
 
 SmartSim
@@ -17,11 +17,21 @@ Development branch
 
 To be released at some future point in time
 
+
+0.6.0
+-----
+
+Released on 18 December, 2023
+
 Description
 
+- Conflicting directives in the SmartSim packaging instructions were fixed
 - `sacct` and `sstat` errors are now fatal for Slurm-based workflow executions
 - Added documentation section about ML features and TorchScript
 - Added TorchScript functions to Online Analysis tutorial
+- Added multi-DB example to documentation
+- Improved test stability on HPC systems
+- Added support for producing & consuming telemetry outputs
 - Split tests into groups for parallel execution in CI/CD pipeline
 - Change signature of `Experiment.summary()`
 - Expose first_device parameter for scripts, functions, models
@@ -31,12 +41,18 @@ Description
 
 Detailed Notes
 
+- Several conflicting directives between the `setup.py` and the `setup.cfg` were fixed
+  to mitigate warnings issued when building the pip wheel. (SmartSim-PR435_)
 - When the Slurm functions `sacct` and `sstat` returned an error, it would be ignored
   and SmartSim's state could become inconsistent. To prevent this, errors
   raised by `sacct` or `sstat` now result in an exception. (SmartSim-PR392_)
 - A section named *ML Features* was added to documentation. It contains multiple
   examples of how ML models and functions can be added to and executed on the DB.
   TorchScript-based post-processing was added to the *Online Analysis* tutorial (SmartSim-PR411_)
+- An example of how to use multiple Orchestrators concurrently was added to the documentation (SmartSim-PR409_)
+- The test infrastructure was improved. Tests on HPC system are now stable, and issues such
+  as non-stopped `Orchestrators` or experiments created in the wrong paths have been fixed (SmartSim-PR381_)
+- A telemetry monitor was added to check updates and produce events for SmartDashboard (SmartSim-PR426_)
 - Split tests into `group_a`, `group_b`, `slow_tests` for parallel execution in CI/CD pipeline (SmartSim-PR417_, SmartSim-PR424_)
 - Change `format` argument to `style` in `Experiment.summary()`, this is
   an API break (SmartSim-PR391_)
@@ -54,8 +70,12 @@ Detailed Notes
 - Add support for creation of multiple databases with unique identifiers. (SmartSim-PR342_)
 
 
+.. _SmartSim-PR435: https://github.com/CrayLabs/SmartSim/pull/435
 .. _SmartSim-PR392: https://github.com/CrayLabs/SmartSim/pull/392
 .. _SmartSim-PR411: https://github.com/CrayLabs/SmartSim/pull/411
+.. _SmartSim-PR409: https://github.com/CrayLabs/SmartSim/pull/409
+.. _SmartSim-PR381: https://github.com/CrayLabs/SmartSim/pull/381
+.. _SmartSim-PR426: https://github.com/CrayLabs/SmartSim/pull/426
 .. _SmartSim-PR424: https://github.com/CrayLabs/SmartSim/pull/424
 .. _SmartSim-PR417: https://github.com/CrayLabs/SmartSim/pull/417
 .. _SmartSim-PR391: https://github.com/CrayLabs/SmartSim/pull/391
@@ -542,10 +562,10 @@ Description:
 
 ---------------------------------------------------------------
 
+.. _sr_changelog:
+
 SmartRedis
 ==========
-
-.. _changelog:
 
 .. include:: ../smartredis/doc/changelog.rst
     :start-line: 3
