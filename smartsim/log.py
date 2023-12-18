@@ -27,10 +27,11 @@ import logging
 import os
 import pathlib
 import sys
+import threading
 import typing as t
 
 import coloredlogs
-import contextvars
+from contextvars import ContextVar, copy_context
 
 
 # constants
@@ -45,9 +46,9 @@ coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
 coloredlogs.DEFAULT_LOG_FORMAT = DEFAULT_LOG_FORMAT
 
 
-ctx_logger_name = contextvars.ContextVar("logger_name", default="SmartSim")
-ctx_exp_path = contextvars.ContextVar("exp_path", default="")
-ctx_fh_registered = contextvars.ContextVar("fh_reg", default=False)
+ctx_logger_name = ContextVar("logger_name", default="SmartSim")
+ctx_exp_path = ContextVar("exp_path", default="")
+ctx_fh_registered = ContextVar("fh_reg", default=False)
 
 
 def _get_log_level() -> str:
@@ -75,6 +76,15 @@ def _get_log_level() -> str:
     if log_level == "developer":
         return "debug"
     return "info"
+
+
+class ContextThread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        self.ctx = copy_context()
+        super().__init__(*args, **kwargs)
+
+    def run(self) -> None:
+        return self.ctx.run(super().run)
 
 
 class ContextInjectingLogFilter(logging.Filter):
@@ -227,3 +237,32 @@ def log_to_file(
 
     logger.addHandler(handler)
     return handler
+
+
+def contextualize(
+    obj: object, prop_name: str, func: t.Callable[..., t.Any], ctx_var: ContextVar[str]
+) -> None:
+    """Convert a function into a context aware function that sets the value
+    of a target ContextVar prior to executing the function with Context().run"""
+
+    # Keep the original function call from the contextualized version
+    fn_orig_key = func.__name__
+    fn_key = f"_no_ctx__{fn_orig_key}"
+    setattr(obj, fn_key, func)
+
+    def _inner(*args: t.Any, **kwargs: t.Any) -> t.Any:
+        """An anonymous function executed by context.run that
+        modifies a ContextVar value based on the ContextAware object"""
+        ctx = copy_context()
+
+        def _wrapper() -> t.Any:
+            """A function that ensures the context var is set during context.run"""
+            token = ctx_var.set(str(getattr(obj, prop_name, "")))
+            fn = getattr(obj, fn_key)
+            result = fn(*args, **kwargs)
+            ctx_var.reset(token)
+            return result
+
+        return ctx.run(_wrapper)
+
+    setattr(obj, fn_orig_key, _inner)

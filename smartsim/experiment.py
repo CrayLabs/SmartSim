@@ -38,7 +38,7 @@ from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
-from .log import ctx_exp_path, get_logger
+from .log import ctx_exp_path, get_logger, contextualize
 from .settings import base, Container, settings
 from .wlm import detect_launcher
 
@@ -46,44 +46,7 @@ from .wlm import detect_launcher
 logger = get_logger(__name__)
 
 
-class ContextAware(abc.ABC):
-    @property
-    def context_value(self) -> str:
-        """Return a value used to establish the current execution context"""
-        raise NotImplementedError()
-
-
-def contextualize(
-    obj: ContextAware, func: t.Callable[..., t.Any], ctx_var: ContextVar[str]
-) -> None:
-    """Convert a function into a context aware function that sets the value
-    of a target ContextVar prior to executing the function with Context().run"""
-
-    # Keep the original function call from the contextualized version
-    fn_orig_key = func.__name__
-    fn_key = f"_no_ctx__{fn_orig_key}"
-    setattr(obj, fn_key, func)
-
-    def _inner(*args: t.Any, **kwargs: t.Any) -> t.Any:
-        """An anonymous function executed by context.run that
-        modifies a ContextVar value based on the ContextAware object"""
-        ctx = copy_context()
-
-        def _wrapper() -> t.Any:
-            """A function that ensures the context var is set during context.run"""
-            token = ctx_var.set(obj.context_value)
-            fn = getattr(obj, fn_key)
-            result = fn(*args, **kwargs)
-            ctx_var.reset(token)
-            return result
-
-        return ctx.run(_wrapper)
-
-    # return _inner
-    setattr(obj, fn_orig_key, _inner)
-
-
-class Experiment(ContextAware):
+class Experiment:
     """Experiments are the Python user interface for SmartSim.
 
     Experiment is a factory class that creates stages of a workflow
@@ -101,11 +64,6 @@ class Experiment(ContextAware):
     In general, the Experiment class is designed to be initialized once
     and utilized throughout runtime.
     """
-
-    @property
-    def context_value(self) -> str:
-        """Return a value used to establish the current execution context"""
-        return self.exp_path
 
     def __init__(
         self,
@@ -194,7 +152,7 @@ class Experiment(ContextAware):
         ]
         for fn_name in ctx_fns:
             fn = getattr(self, fn_name)
-            contextualize(self, fn, ctx_exp_path)
+            contextualize(self, "exp_path", fn, ctx_exp_path)
 
     def start(
         self,
