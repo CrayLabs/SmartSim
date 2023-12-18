@@ -4,13 +4,28 @@ Model
 ========
 Overview
 ========
-SmartSim ``Models`` are an abstract representation for compiled applications,
-scripts, and general computational tasks. Models can be launched with other SmartSim
-entities and ML infrastructure to build AI-enabled workflows. Models are flexible enough
-to support many different applications, however, to be used with SmartSim clients
-(SmartRedis) the application must be written in Python, C, C++, or Fortran.
+SmartSim Models are an abstract representation for compiled applications,
+scripts, and general computational tasks. Models can be launched with
+other SmartSim entities and ML infrastructure to build AI-enabled workflows.
+SmartSim enables AI integration in ``Model`` workflows by allowing users to dynamically load
+TensorFlow (TF) functions, TorchScript, and various machine learning models
+(TF, TF-lite, PyTorch, or ONNX) into the database at runtime.
+Models are flexible enough to support many different applications, however,
+to be used with SmartSim clients (SmartRedis) the application must be written
+in Python, C, C++, or Fortran.
 
-There are **two** deployment options when initializing a Model:
+When initializing a ``Model``, users
+provide executable simulation code to the Models run settings as well as
+execution instructions with regard to the workload
+manager (e.g. Slurm) and available compute resources. Users can specify
+and assign values to parameters used within the simulation via the `params`
+initialization argument. Parameters supplied in the `params` argument can either be
+written into supplied configuration files or be assigned within configuration files
+for use within the simulation at runtime. This functionality is supported by the
+``Model.attach_generator_files()`` helper function users have access to
+once creating a Model instance.
+
+SmartSim supports **two** strategies for deploying Models:
 
 - **Standard Model**: Operating on a separate compute node from a
   SmartSim orchestrator, Standard Models facilitate communication with a clustered
@@ -22,35 +37,35 @@ There are **two** deployment options when initializing a Model:
   same compute node, Colocated Models offer advantages in scenarios where minimizing communication
   latency is critical, such as online inference or runtime processing.
 
-Model instances can be launched individually or added to an Ensemble for group launches.
-Create, launch, and monitor SmartSim Models with the `Experiment API`.
-Once a ``Model`` instance is set up, you have access to the Model API helper functions.
-With the helper functions, users may instruct SmartSim to load ML models, TensorFlow functions,
-and TorchScripts to an Orchestrator at runtime before the Models execution.
-Parameters supplied in the `params` argument can be written into configuration files
-supplied at runtime to the model through ``Model.attach_generator_files()``. `params` can
-also be turned into executable arguments by calling ``Model.params_to_args()``.
+SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
+launch, monitor, and stop simulations. Additionally, Models can be launched individually
+or as a group via an Ensemble. Once a Model instance has been initialized, users have access to
+the :ref:`Model API<model_api>` helper functions.
 
-==============
-Initialization
-==============
+==================
+Initialize A Model
+==================
 --------
 Overview
 --------
-The ``Experiment.create_model()`` function is used
-generate a ``Model`` instance given the specified initializer arguments.
+
+The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow components.
+A ``Model`` is created using the ``Experiment.create_model()`` helper function. Users can customize the
+the Model by specifying initializer arguments.
 
 The key initializer arguments are:
 
--  `name` (Type: str): Specify the name of the model, aiding in its unique identification.
--  `run_settings` (Type: RunSettings): Describes execution settings for a Model.
--  `params` (dict, optional): Provides a dictionary of parameters:values for Models.
+-  `name` (Type: str): Specify the name of the model for unique identification.
+-  `run_settings` (Type: RunSettings): Describe execution settings for a Model.
+-  `params` (dict, optional): Provides a dictionary of parameters for Models.
 -  `path` (str, optional): Path to where the model should be executed at runtime.
--  `enable_key_prefixing` (bool, optional): If True, data sent to the Orchestrator using SmartRedis from this Model will be prefixed with the Model name. Default is True.
+-  `enable_key_prefixing` (bool, optional): Prefix the model name to data sent to the database to prevent key collisions. Default is True.
 -  `batch_settings` (BatchSettings | None): Describes settings for batch workload treatment.
 
-``RunSettings`` object are required and define how the Model should be launched
-with regard to the workload manager (e.g. Slurm).
+To initialize a ``Model``, a `name` and ``RunSettings`` object is required.
+To instruct a Model to encapsulate a simulation, users must specify a simulation
+executable to the Models run settings with instructions on how the application should be launched.
+
 When a Model with a ``BatchSettings`` reference is added to an Ensemble with a ``BatchSettings`` reference,
 the Models batch settings are strategically ignored.
 
@@ -64,9 +79,9 @@ current working directory by default if no `path` argument is supplied. When a M
 instance is passed to ``Experiment.generate()``, a directory within the Experiment directory
 is automatically created to store input and output files from the model.
 
---------------
-Standard Model
---------------
+-----------------------
+Create A Standard Model
+-----------------------
 For standard model deployment in SmartSim, models run
 on separate compute nodes from orchestrators.
 SmartRedis clients connect to a clustered Orchestrator
@@ -114,9 +129,9 @@ in the Experiment working directory:
 1. `model.out` : this file will hold outputs produced by the Model workload
 2. `model.err` : will hold any errors that happened during workload execution
 
----------------
-Colocated Model
----------------
+------------------------
+Create A Colocated Model
+------------------------
 During colocated deployment, a Model and database share the same compute resources.
 Meaning, a SmartRedis client does not have to travel off the compute node to access
 either the database or model since they exist on the same node. During an
