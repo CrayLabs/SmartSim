@@ -24,11 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import abc
 import os
 import os.path as osp
 import typing as t
+from contextvars import ContextVar, copy_context
 from os import getcwd
-from typing import Any
 
 from tabulate import tabulate
 
@@ -45,15 +46,13 @@ from .wlm import detect_launcher
 logger = get_logger(__name__)
 
 
-import abc
-from contextvars import ContextVar, copy_context
-
 
 class ContextAware(abc.ABC):
     @property
     def context_value(self) -> str:
         """Return a value used to establish the current execution context"""
-        raise NotImplemented()
+        raise NotImplementedError()
+
 
 def contextualize(obj: ContextAware, func: t.Callable, ctx_var: ContextVar) -> None:
     """Convert a function into a context aware function that sets the value
@@ -67,7 +66,8 @@ def contextualize(obj: ContextAware, func: t.Callable, ctx_var: ContextVar) -> N
     def _inner(*args, **kwargs) -> t.Any:
         """An anonymous function executed by context.run that
         modifies a ContextVar value based on the ContextAware object"""
-        ctx = copy_context()    
+        ctx = copy_context()
+
         def _wrapper() -> t.Any:
             """A function that ensures the context var is set during context.run"""
             token = ctx_var.set(obj.context_value)
@@ -75,7 +75,9 @@ def contextualize(obj: ContextAware, func: t.Callable, ctx_var: ContextVar) -> N
             result = fn(*args, **kwargs)
             ctx_var.reset(token)
             return result
-        return ctx.run(_wrapper)    
+
+        return ctx.run(_wrapper)
+
     # return _inner
     setattr(obj, fn_orig_key, _inner)
 
@@ -98,11 +100,12 @@ class Experiment(ContextAware):
     In general, the Experiment class is designed to be initialized once
     and utilized throughout runtime.
     """
+
     @property
     def context_value(self) -> str:
         """Return a value used to establish the current execution context"""
         return self.exp_path
-    
+
     def __init__(
         self,
         name: str,
@@ -173,11 +176,25 @@ class Experiment(ContextAware):
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
-        ctx_fns = ["start", "stop", "generate", "poll", "finished", "get_status"]
+        ctx_fns = [
+            "start",
+            "stop",
+            "generate",
+            "poll",
+            "finished",
+            "get_status",
+            "create_ensemble",
+            "create_model",
+            "create_run_settings",
+            "create_batch_settings",
+            "create_database",
+            "reconnect_orchestrator",
+            "summary",
+        ]
         for fn_name in ctx_fns:
             fn = getattr(self, fn_name)
             contextualize(self, fn, ctx_exp_path)
-    
+
     def start(
         self,
         *args: t.Any,
@@ -235,7 +252,7 @@ class Experiment(ContextAware):
 
         :type kill_on_interrupt: bool, optional
         """
-        
+
         logger.info("starting new experiment context")
 
         start_manifest = Manifest(*args)

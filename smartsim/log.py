@@ -23,13 +23,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from collections.abc import MutableMapping
 import logging
 import os
 import pathlib
 import sys
 import typing as t
-from typing import Any
 
 import coloredlogs
 import contextvars
@@ -47,7 +45,7 @@ coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
 coloredlogs.DEFAULT_LOG_FORMAT = DEFAULT_LOG_FORMAT
 
 
-ctx_logger_name = contextvars.ContextVar('logger_name', default="SmartSim")
+ctx_logger_name = contextvars.ContextVar("logger_name", default="SmartSim")
 ctx_exp_path = contextvars.ContextVar("exp_path", default="")
 ctx_fh_registered = contextvars.ContextVar("fh_reg", default=False)
 
@@ -86,24 +84,38 @@ class ContextInjectingLogFilter(logging.Filter):
 
 
 class ContextAwareLogger(logging.Logger):
-    def _log(self, level: int, msg: object, args, exc_info = None, extra = None, stack_info: bool = False, stacklevel: int = 1) -> None:
-        if _exp_path :=  ctx_exp_path.get():
+    def _log(
+        self,
+        level: int,
+        msg: object,
+        args,
+        exc_info=None,
+        extra=None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+    ) -> None:
+        """Automatically attach file handlers if contextual information is found"""
+        if _exp_path := ctx_exp_path.get():
             filename_out = pathlib.Path(_exp_path) / "smartsim.out"
             filename_err = pathlib.Path(_exp_path) / "smartsim.err"
 
             _lvl = logging.getLevelName(self.level)
 
-            h_out = log_to_file(filename_out, self.level, self, EXPERIMENT_LOG_FORMAT, LowPassFilter(_lvl))
-            h_err = log_to_file(filename_err, self.level, self, EXPERIMENT_LOG_FORMAT, "WARN")
-            
+            h_out = log_to_file(
+                filename_out, _lvl, self, EXPERIMENT_LOG_FORMAT, LowPassFilter(_lvl)
+            )
+            h_err = log_to_file(filename_err, "WARN", self, EXPERIMENT_LOG_FORMAT)
+
             super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
             for handler in [h_out, h_err]:
                 self.removeHandler(handler)
 
+            return
+
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
-    
+
 def get_logger(
     name: str, log_level: t.Optional[str] = None, fmt: t.Optional[str] = None
 ) -> logging.Logger:
@@ -143,7 +155,7 @@ def get_logger(
     logger = logging.getLogger(name)
 
     logger.addFilter(ContextInjectingLogFilter())
-    
+
     if log_level:
         logger.setLevel(log_level)
     else:
@@ -215,4 +227,3 @@ def log_to_file(
 
     logger.addHandler(handler)
     return handler
-
