@@ -210,15 +210,3 @@ def log_to_file(
     handler.setLevel(log_level.upper())
 
     logger.addHandler(handler)
-
-
-# def configure_experiment_logger():
-#     _logger_name: str = ctx_logger_name.get()
-#     _exp_path: str = ctx_exp_path.get()
-#     _fh_registered: bool = ctx_fh_registered.get()
-
-#     if not _fh_registered:
-#         # logger = logging.getLogger(_logger_name)
-#         logger.setLevel("DEBUG")
-#         add_exp_loggers(_exp_path, logger, DEFAULT_LOG_FORMAT)
-#         ctx_fh_registered.set(True)
