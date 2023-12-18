@@ -18,11 +18,10 @@ Development branch
 To be released at some future point in time
 
 
-
 0.6.0
 -----
 
-Released on 15 December, 2023
+Released on 18 December, 2023
 
 Description
 
