@@ -35,7 +35,7 @@ ENV TZ=US/Seattle
 RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs && \
     apt-get update \
     && apt-get install --no-install-recommends -y build-essential \
-    git gcc make git-lfs wget libopenmpi-dev openmpi-bin \
+    git gcc make git-lfs wget libopenmpi-dev openmpi-bin unzip \
     python3-pip python3 python3-dev cmake \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
@@ -44,9 +44,9 @@ WORKDIR /home/craylabs
 COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
 
 USER craylabs
-RUN python -m pip install smartsim[ml]==0.6.0 jupyter jupyterlab matplotlib && \
+RUN export PATH=/home/craylabs/.local/bin:$PATH && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
-    export PATH=/home/craylabs/.local/bin:$PATH && \
+    python -m pip install smartsim[ml]==0.6.0 jupyter jupyterlab matplotlib && \
     smart build --device cpu -v && \
     chown craylabs:root -R /home/craylabs/.local && \
     rm -rf ~/.cache/pip
