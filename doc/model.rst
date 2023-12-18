@@ -42,9 +42,9 @@ launch, monitor, and stop simulations. Additionally, Models can be launched indi
 or as a group via an Ensemble. Once a Model instance has been initialized, users have access to
 the :ref:`Model API<model_api>` helper functions.
 
-==================
-Initialize A Model
-==================
+======================
+Initialize Model Types
+======================
 --------
 Overview
 --------
@@ -81,17 +81,23 @@ current working directory by default if no `path` argument is supplied. When a M
 instance is passed to ``Experiment.generate()``, a directory within the Experiment directory
 is automatically created to store input and output files from the model.
 
------------------------
-Create A Standard Model
------------------------
-For standard model deployment in SmartSim, models run
-on separate compute nodes from orchestrators.
-SmartRedis clients connect to a clustered Orchestrator
-and travel off the application compute node to send/retrieve
-data. Standard models are ideal for simulations benefiting from
+---------------------------
+Initialize A Standard Model
+---------------------------
+For standard model deployment, the model runs
+on separate compute nodes from SmartSim orchestrators.
+Standard models are able to communicate with clustered or standalone
+databases. SmartRedis clients connect to a clustered Orchestrator from
+within the Models executable script
+and travel off the simulation compute node to the database compute node to send/retrieve
+data. To use a database within the standard model workload, a
+SmartSim Orchestrator must be launched prior to the start of the Model.
+Standard models are ideal for simulations benefiting from
 distributed computing capabilities, enabling efficient
 parallelized execution across multiple compute nodes.
 
+Instructions
+------------
 In the following example,
 we demonstrate initializing a Standard Model,
 using the ``Experiment.create_model()`` function. We will also
