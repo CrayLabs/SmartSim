@@ -81,9 +81,9 @@ current working directory by default if no `path` argument is supplied. When a M
 instance is passed to ``Experiment.generate()``, a directory within the Experiment directory
 is automatically created to store input and output files from the model.
 
----------------------------
-Initialize A Standard Model
----------------------------
+----------------
+A Standard Model
+----------------
 For standard model deployment, the model runs
 on separate compute nodes from SmartSim orchestrators.
 Standard models are able to communicate with clustered or standalone
@@ -96,14 +96,17 @@ Standard models are ideal for simulations benefiting from
 distributed computing capabilities, enabling efficient
 parallelized execution across multiple compute nodes.
 
+In the `Instructions` subsection, we provide an example illustrating the deployment of a standard model.
+
 Instructions
 ------------
-In the following example,
-we demonstrate initializing a Standard Model,
-using the ``Experiment.create_model()`` function. We will also
-demonstrate starting the Models execution.
+This example provides a demonstration of how to initialize and launch a standard Model
+within the Experiment workflow.
 
-To begin, set up a SmartSim ``Experiment`` named "getting-started" and specifies a local launcher:
+All workflow entities are initialized through the Experiment API. To create a Model,
+the function ``Experiment.create_model()`` is used. To create Model, we must first
+initialize an instance of the Experiment class. Import the SmartSim Experiment module
+and initialize an Experiment instance. Provide a `name` and `launcher`:
 
 .. code-block:: python
 
@@ -112,82 +115,120 @@ To begin, set up a SmartSim ``Experiment`` named "getting-started" and specifies
     # Init Experiment and specify to launch locally
     exp = Experiment(name="getting-started", launcher="local")
 
-Here, we create run settings for the model using ``exp.create_run_settings()``.
-In this example, we use the Python executable with a script named "script.py".
+Models require run settings objects which are initialized through an Experiment instance.
+Use the experiment instance, `exp`, to access the helper method ``Experiment.create_run_settings()``
+to initialize a ``RunSettings`` object. In this example, we use the Python
+executable to execute the application script, "script.py":
 
 .. code-block:: python
 
     settings = exp.create_run_settings(exe="python", exe_args="script.py")
 
-Now, we create a standard model named "example-model" with the previously defined run settings:
+We now have an instance of run settings name `settings`. Using the instance, instruct SmartSim
+to encapsulate the simulation as a Model through ``Experiment.create_model()``:
 
 .. code-block:: python
 
     model = exp.create_model(name="example-model", run_settings=settings)
 
-To launch the workload, we need to specify the model instance to ``Experiment.start()``:
+Remember that all entities are launched, monitored and stopped by the Experiment instance.
+Specify the model instance, `model`, to ``Experiment.start()`` to start the standard model:
 
 .. code-block:: python
 
     exp.start(model)
 
-When the Python driver script is executed, two files from the model will be created
+When the Experiment Python driver script is executed, two files from the standard model will be created
 in the Experiment working directory:
 
 1. `model.out` : this file will hold outputs produced by the Model workload
-2. `model.err` : will hold any errors that happened during workload execution
+2. `model.err` : will hold any errors that occurred during Model execution
 
-------------------------
-Create A Colocated Model
-------------------------
-During colocated deployment, a Model and database share the same compute resources.
-Meaning, a SmartRedis client does not have to travel off the compute node to access
-either the database or model since they exist on the same node. During an
-experiment, if a SmartSim user colocates a Model, then an Orchestrator will be
-launched alongside on the resources allocated for the Model by the run settings object.
+-----------------
+A Colocated Model
+-----------------
+A colocated model is when both the application and the
+database share compute resource. To create a colocated model,
+users first initialize a Model instance with the ``Experiment.create_model()`` function.
+A user must then colocate the model with the Model API function ``Model.colocate_db()``.
+This instructs SmartSim to launch an Orchestrator on the same compute
+nodes as the model when the model instance is deployed via ``Experiment.start()``.
 
-You may colocate a Model after initializing a ``Model`` object via the ``Model.colocate_db()``
-function. If you would like to colocate an Orchestrator instance with the Model over TCP/IP,
-use ``Model.colocate_db_tcp()``. To colocate an Orchestrator instance with the Model over UDS,
-use the function ``Model.colocate_db_uds()``.
+There are **three** different Model API helper functions to colocate a Model:
 
-For an example of how to colocate a Model, navigate to the :ref:`Colocated Orchestrator<link>`
+- ``Model.colocate_db()``: An alias for `Model.colocate_db_tcp()`.
+- ``Model.colocate_db_tcp()``: Colocate an Orchestrator instance with this Model over TCP/IP.
+- ``Model.colocate_db_uds()``: Colocate an Orchestrator instance with this Model over UDS.
+
+Each function will initialize an unsharded database to the Model instance. Only the partnered Model
+may communicate with the database via a SmartRedis client by using the loopback TCP interface or
+Unix Domain sockets. Extra parameters for the database can be passed into the helper functions
+via kwargs.
+
+.. code-block:: python
+
+    example_kwargs = {
+        "maxclients": 100000,
+        "threads_per_queue": 1,
+        "inter_op_threads": 1,
+        "intra_op_threads": 1
+    }
+
+For a walkthrough of how to colocate a Model, navigate to the :ref:`Colocated Orchestrator<link>` for
 instructions.
 
 =====
 Files
 =====
-SmartSim enables users to attach files to a Model for utilization
-during entity launches triggered by ``Experiment.start()``. This is
-facilitated by the ``Model.attach_generator_files()`` function. Upon model generation,
-the attached files reside in the entity's path. It's worth noting that invoking
-this function post-attachment overwrites the existing list of entity files.
+--------
+Overview
+--------
+The ``Model.attach_generator_files()`` function enables users to write model
+parameters to a file or attachment a file of parameters with values to the
+Model entity for use within the simulation.
+Users can specify whether to copy, symlink, or configure files by passing parameters
+one of the following parameters: `to_copy`, `to_symlink`, or `to_configure`.
+It's worth noting that invoking
+this function, ``attach_generator_files()``, post-attachment overwrites the existing list of entity files.
 
-The ``Model.attach_generator_files()`` function takes three parameters:
+To write Model parameters to a file and attach to the Model, pass one of the
+following values to the helper function:
 
 * `to_copy`: Files that are copied into the path of the entity.
 * `to_symlink`: Files that are symlinked into the path of the entity.
-* `to_configure`: Specifically designed for text-based model input files,
+
+To attach a file to the Model and read the contents for use within the simulation, pass the
+following value to the helper function:
+
+* `to_configure`: Designed for text-based model input files,
   "to_configure" is exclusive to models. These files contain parameters for
   the model, with customizable tags corresponding to values users intend to
   modify. The default tag is a semicolon (e.g., THERMO = ;10;).
 
-Below we will provide a simple example on how to use the
-``Model.attach_generator_files()`` `to_configure` argument,
-to attach a file to a Model that will assign variables
-existing in the application.
+In the `Example` subsection, we provide an example illustrating using the value `to_configure`
+within ``attach_generator_files()``.
 
-For the Model, we will be attached the following text file
-named `configure_inputs.txt`.
+-------
+Example
+-------
+This example provides a demonstration of how to instruct SmartSim to attach a file
+containing parameters for use within the Model using ``Model.attach_generator_files()``
+and specifying `to_configure`.
+
+We have a text file named `configure_inputs.txt`. Within the text, is the parameter, `THERMO`,
+that is assigned a single value:
 
 .. code-block:: txt
 
    THERMO = ;10;
 
-The text file has a single variable assignment `THERMO=10`.
+The parameter `THERMO` is used within our application script and we would like to
+instruct SmartSim to assign the parameter value upon Model execution.
 
-Begin by importing the necessary modules and initializing
-a SmartSim ``Experiment`` object:
+To encapsulate our simulation using a Model, we must create an Experiment instance
+to gain access to the Experiment helper function that creates the Model.
+Begin by importing the Experiment module and SmartSim log module.
+Initialize an Experiment:
 
 .. code-block:: python
 
@@ -198,35 +239,35 @@ a SmartSim ``Experiment`` object:
     # Initialize the Experiment
     exp = Experiment("getting-started", launcher="auto")
 
-In order to create a ``Model``, we must first create a ``RunSettings``
-object to specify to SmartSim, run parameters for the application.
-Begin by initializing a ``RunSettings`` object:
+Models require run settings. Create a simple ``RunSettings`` object, specifying
+the path to our application script and the executable to run the script:
 
 .. code-block:: python
 
     # Initialize a RunSettings object
-    model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application")
+    model_settings = exp.create_run_settings(exe="python", exe_args="/path/to/application.py")
 
-Next, initialize a ``Model`` object and pass in the `model_settings`:
+Next, initialize a ``Model`` object with ``Experiment.create_model()``
+and pass in the `model_settings` instance:
 
 .. code-block:: python
 
     # Initialize a Model object
     model = exp.create_model("model", model_settings)
 
-Now that we have create the Model object, we have access to the function,
-``Model.attach_generator_files()``. Use the ``attach_generator_files()``
-function with the `to_configure` parameter to specify the path to the text
-file from above, `configure_inputs.txt`:
+We now have a ``Model`` instance named `model`. Attach the above text file
+to the Model for use at entity runtime. To do so, we use the
+``Model.attach_generator_files()`` function and specify the `to_configure`
+parameter with the path to the text file, `configure_params.txt`:
 
 .. code-block:: python
 
-    # Attach value configuration file
-    model.attach_generator_files(to_configure="path/to/configure_inputs.txt")
+    # Attach the file to the Model instance
+    model.attach_generator_files(to_configure="path/to/configure_params.txt")
 
-Now, when we execute the Model, the file, `configure_inputs.txt`, will be in the
-same file path as the application and will fill in the application arguments with
-the values set from within the text file.
+When we launch the Model, using ``Experiment.start()``, the file, `configure_inputs.txt`,
+will be in the same file path as the application and SmartSim will read and assign
+Model parameters from the text file.
 
 =====================
 ML Models and Scripts
