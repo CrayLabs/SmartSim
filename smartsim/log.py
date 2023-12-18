@@ -221,7 +221,6 @@ def log_to_file(
     # ensure logs can are written if specified dir doesn't exist
     log_path = pathlib.Path(filename)
     if not log_path.parent.exists():
-        logger.warning("Attempted to write logs to missing directory. Fallback to cwd")
         filename = log_path.name
 
     handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
