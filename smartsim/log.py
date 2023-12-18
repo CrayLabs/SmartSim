@@ -79,7 +79,7 @@ def _get_log_level() -> str:
 
 
 class ContextThread(threading.Thread):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         self.ctx = copy_context()
         super().__init__(*args, **kwargs)
 

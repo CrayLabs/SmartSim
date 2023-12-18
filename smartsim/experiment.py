@@ -24,11 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import abc
 import os
 import os.path as osp
 import typing as t
-from contextvars import ContextVar, copy_context
 from os import getcwd
 
 from tabulate import tabulate

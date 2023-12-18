@@ -29,7 +29,7 @@ from __future__ import annotations
 import time
 import typing as t
 from subprocess import PIPE
-from threading import RLock, Thread
+from threading import RLock
 
 import psutil
 
