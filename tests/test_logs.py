@@ -25,9 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import io
-import conftest
 import logging
 import os
+import pathlib
 import pytest
 import smartsim.log
 
@@ -87,21 +87,27 @@ def test_level_filter_warn():
     assert 'exception' not in logged_messages
 
 
-def test_add_exp_loggers(fileutils: conftest.FileUtils):
+def test_add_exp_loggers(test_dir):
     """Ensure that expected loggers are added"""
-    test_dir = fileutils.make_test_dir()
+    # test_dir = fileutils.make_test_dir()
     faux_out_stream = io.StringIO()
 
     logger = logging.getLogger("smartsim_test_add_exp_loggers")
     logger.addHandler(logging.StreamHandler(faux_out_stream))
+
+    filename1 = pathlib.Path(test_dir) / "smartsim.out"
+    filename2 = pathlib.Path(test_dir) / "smartsim.err"
+
+    filter_fn = lambda x: True
     
-    smartsim.log.add_exp_loggers(test_dir, logger)
+    smartsim.log.log_to_file(filename1, logger=logger, log_filter=filter_fn)
+    smartsim.log.log_to_file(filename2, "WARN", logger)
 
     logger.debug("debug")
     logger.exception("exception")
 
-    out_path = os.path.join(test_dir, "smartsim.out")
-    err_path = os.path.join(test_dir, "smartsim.err")
+    assert filename1.exists()
+    assert filename1.is_file()
 
-    assert os.path.exists(out_path)
-    assert os.path.exists(err_path)
+    assert filename2.exists()
+    assert filename2.is_file()
