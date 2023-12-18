@@ -84,9 +84,8 @@ class JobManager:
 
     def start(self) -> None:
         """Start a thread for the job manager"""
-
-        ctx = contextvars.copy_context()
-        ctx.run(self.run)
+        self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
+        self.monitor.start()
 
     def run(self) -> None:
         """Start the JobManager thread to continually check
