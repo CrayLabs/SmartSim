@@ -54,7 +54,7 @@ class ContextAware(abc.ABC):
         raise NotImplementedError()
 
 
-def contextualize(obj: ContextAware, func: t.Callable, ctx_var: ContextVar) -> None:
+def contextualize(obj: ContextAware, func: t.Callable[..., t.Any], ctx_var: ContextVar[str]) -> None:
     """Convert a function into a context aware function that sets the value
     of a target ContextVar prior to executing the function with Context().run"""
 
@@ -63,7 +63,7 @@ def contextualize(obj: ContextAware, func: t.Callable, ctx_var: ContextVar) -> N
     fn_key = f"_no_ctx__{fn_orig_key}"
     setattr(obj, fn_key, func)
 
-    def _inner(*args, **kwargs) -> t.Any:
+    def _inner(*args: t.Any, **kwargs: t.Any) -> t.Any:
         """An anonymous function executed by context.run that
         modifies a ContextVar value based on the ContextAware object"""
         ctx = copy_context()
@@ -167,7 +167,7 @@ class Experiment(ContextAware):
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+        self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
 
         if launcher == "auto":
             launcher = detect_launcher()

@@ -88,16 +88,16 @@ class ContextAwareLogger(logging.Logger):
         self,
         level: int,
         msg: object,
-        args,
-        exc_info=None,
-        extra=None,
+        args: t.Any,
+        exc_info: t.Optional[t.Any] = None,
+        extra: t.Optional[t.Any] = None,
         stack_info: bool = False,
         stacklevel: int = 1,
     ) -> None:
         """Automatically attach file handlers if contextual information is found"""
         if _exp_path := ctx_exp_path.get():
-            filename_out = pathlib.Path(_exp_path) / "smartsim.out"
-            filename_err = pathlib.Path(_exp_path) / "smartsim.err"
+            filename_out = str(pathlib.Path(_exp_path) / "smartsim.out")
+            filename_err = str(pathlib.Path(_exp_path) / "smartsim.err")
 
             _lvl = logging.getLevelName(self.level)
 
