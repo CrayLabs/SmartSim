@@ -101,7 +101,7 @@ class JobManager:
         The job manager thread will exit when no jobs are left
         or when the main thread dies
         """
-        logger.info("Starting Job Manager")
+        logger.debug("Starting Job Manager")
         self.actively_monitoring = True
         while self.actively_monitoring:
             self._thread_sleep()
