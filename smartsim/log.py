@@ -23,11 +23,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from collections.abc import MutableMapping
 import logging
 import os
 import pathlib
 import sys
 import typing as t
+from typing import Any
 
 import coloredlogs
 import contextvars
@@ -38,6 +40,7 @@ DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
 DEFAULT_LOG_FORMAT: t.Final[
     str
 ] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
@@ -76,20 +79,31 @@ def _get_log_level() -> str:
     return "info"
 
 
+class ContextInjectingLogFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.exp_path = ctx_exp_path.get()
+        return True
+
+
 class ContextAwareLogger(logging.Logger):
     def _log(self, level: int, msg: object, args, exc_info = None, extra = None, stack_info: bool = False, stacklevel: int = 1) -> None:
         if _exp_path :=  ctx_exp_path.get():
-            filename = pathlib.Path(_exp_path) / "smartsim.out"
-            handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
-            self.addHandler(handler)
-            # self.info(f"filehandler attached for {_exp_path}")
+            filename_out = pathlib.Path(_exp_path) / "smartsim.out"
+            filename_err = pathlib.Path(_exp_path) / "smartsim.err"
+
+            _lvl = logging.getLevelName(self.level)
+
+            h_out = log_to_file(filename_out, self.level, self, EXPERIMENT_LOG_FORMAT, LowPassFilter(_lvl))
+            h_err = log_to_file(filename_err, self.level, self, EXPERIMENT_LOG_FORMAT, "WARN")
+            
             super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
-            self.removeHandler(handler)
-            return
+
+            for handler in [h_out, h_err]:
+                self.removeHandler(handler)
 
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
-        
 
+    
 def get_logger(
     name: str, log_level: t.Optional[str] = None, fmt: t.Optional[str] = None
 ) -> logging.Logger:
@@ -127,6 +141,9 @@ def get_logger(
 
     logging.setLoggerClass(ContextAwareLogger)
     logger = logging.getLogger(name)
+
+    logger.addFilter(ContextInjectingLogFilter())
+    
     if log_level:
         logger.setLevel(log_level)
     else:
@@ -134,22 +151,6 @@ def get_logger(
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
 
     return logger
-
-
-def add_exp_loggers(
-    exp_path: str, logger: logging.Logger, fmt: t.Optional[str] = None
-) -> None:
-    """Add FileHandlers to a logger instance for producing logs
-    in an experiment directory"""
-    logfile_enabled = os.environ.get("SMARTSIM_LOGFILE_ENABLED", "1")
-
-    if int(logfile_enabled) > 0:  #  and logger.name.lower().startswith("smartsim"):
-        out_path = os.path.join(exp_path, "smartsim.out")
-        err_path = os.path.join(exp_path, "smartsim.err")
-
-        # log errors below warning to <outfile>.out & those above to <outfile>.err
-        log_to_file(out_path, "INFO", logger, fmt, LowPassFilter(maximum_level="INFO"))
-        log_to_file(err_path, "WARN", logger, fmt)
 
 
 class LowPassFilter(logging.Filter):
@@ -178,7 +179,7 @@ def log_to_file(
     logger: t.Optional[logging.Logger] = None,
     fmt: t.Optional[str] = None,
     log_filter: t.Optional[logging.Filter] = None,
-) -> None:
+) -> logging.Handler:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 
@@ -189,6 +190,8 @@ def log_to_file(
                       to allow the file to store more or less verbose
                       logging information.
     :type log_level: int | str
+    :return: strategy function
+    :rtype: callable
     """
     if logger is None:
         logger = logging.getLogger("SmartSim")
@@ -204,9 +207,12 @@ def log_to_file(
     if log_filter:
         handler.addFilter(log_filter)
 
-    fmt = fmt or DEFAULT_LOG_FORMAT
+    fmt = fmt or EXPERIMENT_LOG_FORMAT
     formatter = logging.Formatter(fmt=fmt, datefmt=DEFAULT_DATE_FORMAT)
+
     handler.setFormatter(formatter)
     handler.setLevel(log_level.upper())
 
     logger.addHandler(handler)
+    return handler
+

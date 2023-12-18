@@ -98,6 +98,10 @@ class Experiment(ContextAware):
     In general, the Experiment class is designed to be initialized once
     and utilized throughout runtime.
     """
+    @property
+    def context_value(self) -> str:
+        """Return a value used to establish the current execution context"""
+        return self.exp_path
     
     def __init__(
         self,
@@ -597,7 +601,6 @@ class Experiment(ContextAware):
         """
         path = init_default(getcwd(), path, str)
 
-        # mcb
         if path is None:
             path = getcwd()
         if params is None:
