@@ -1,9 +1,9 @@
+.. _developer_guide:
 
 *********
 Developer
 *********
 
-.. _developer_guide:
 
 This section details common practices and tips for contributors to SmartSim and
 SmartRedis.

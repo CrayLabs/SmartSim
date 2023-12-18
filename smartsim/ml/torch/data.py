@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 import numpy as np
 import torch
-import typing as t
 from smartredis import Client, Dataset
 
 from smartsim.ml.data import DataDownloader
@@ -45,7 +46,7 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
 
     def _add_samples(self, indices: t.List[int]) -> None:
         if self.client is None:
-            client = Client(self.address, self.cluster)
+            client = Client(self.cluster, self.address)
         else:
             client = self.client
 

@@ -10,6 +10,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+# pylint: skip-file
+
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
@@ -24,7 +26,7 @@ try:
     import smartsim
     version = smartsim.__version__
 except ImportError:
-    version = "0.5.1"
+    version = "0.6.0"
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -37,6 +39,7 @@ release = version
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
@@ -47,9 +50,12 @@ extensions = [
     'sphinxfortran.fortran_domain',
     'sphinxfortran.fortran_autodoc',
     'breathe',
-    'nbsphinx'
+    'nbsphinx',
+    'sphinx_copybutton',
+    'sphinx_tabs.tabs'
 ]
 
+suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -82,10 +88,16 @@ html_theme = "sphinx_book_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+slack_invite ="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"
+extra_footer = ('Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or '
+                f'<a href="{slack_invite}">join us on Slack!</a>'
+                )
+
 html_theme_options = {
     "repository_url": "https://github.com/CrayLabs/SmartSim",
     "use_repository_button": True,
     "use_issues_button": True,
+    "extra_footer": extra_footer,
 }
 
 autoclass_content = 'both'

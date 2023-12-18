@@ -32,9 +32,9 @@ from .errors import (
     ShellError,
     SmartSimError,
     SSConfigError,
+    SSDBIDConflictError,
     SSInternalError,
+    SSReservedKeywordError,
     SSUnsupportedError,
     UserStrategyError,
-    SSReservedKeywordError,
-
 )

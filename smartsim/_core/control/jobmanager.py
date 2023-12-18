@@ -24,21 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 import itertools
 import time
 import typing as t
-from threading import Thread, RLock
+from collections import ChainMap
+from threading import RLock, Thread
 from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode, SmartSimEntity, EntityList
-from ...error import SmartSimError
+from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import get_logger
-from ...status import TERMINAL_STATUSES
+from ...status import STATUS_NEVER_STARTED, TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import LocalLauncher, Launcher
+from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
-from .job import Job
+from .job import Job, JobEntity
 
 logger = get_logger(__name__)
 
@@ -145,13 +146,8 @@ class JobManager:
         :rtype: Job
         """
         with self._lock:
-            if entity_name in self.db_jobs:
-                return self.db_jobs[entity_name]
-            if entity_name in self.jobs:
-                return self.jobs[entity_name]
-            if entity_name in self.completed:
-                return self.completed[entity_name]
-            raise KeyError
+            entities = ChainMap(self.db_jobs, self.jobs, self.completed)
+            return entities[entity_name]
 
     def __call__(self) -> t.Dict[str, Job]:
         """Returns dictionary all jobs for () operator
@@ -162,11 +158,18 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
+    def __contains__(self, key: str) -> bool:
+        try:
+            self[key]  # pylint: disable=pointless-statement
+            return True
+        except KeyError:
+            return False
+
     def add_job(
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntityList],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -176,7 +179,7 @@ class JobManager:
         :param job_id: job step id created by launcher
         :type job_id: str
         :param entity: entity that was launched on job step
-        :type entity: SmartSimEntity | EntityList
+        :type entity: SmartSimEntity | EntitySequence
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
@@ -184,6 +187,8 @@ class JobManager:
         # all operations here should be atomic
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
+            self.db_jobs[entity.name] = job
+        elif isinstance(entity, JobEntity) and entity.is_db:
             self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
@@ -231,25 +236,25 @@ class JobManager:
                             output=status.output,
                         )
 
-    def get_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
+    def get_status(
+        self,
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+    ) -> str:
         """Return the status of a job.
 
-        :param entity: SmartSimEntity or EntityList instance
-        :type entity: SmartSimEntity | EntityList
+        :param entity: SmartSimEntity or EntitySequence instance
+        :type entity: SmartSimEntity | EntitySequence
         :returns: tuple of status
         """
         with self._lock:
-            try:
-                if entity.name in self.completed:
-                    return self.completed[entity.name].status
+            if entity.name in self.completed:
+                return self.completed[entity.name].status
 
+            if entity.name in self:
                 job: Job = self[entity.name]  # locked
-            except KeyError:
-                raise SmartSimError(
-                    f"Entity {entity.name} has not been launched in this Experiment"
-                ) from None
+                return job.status
 
-            return job.status
+            return STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
@@ -301,21 +306,28 @@ class JobManager:
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.List[str]:
+    def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
+        for corresponding database identifiers
 
-        :return: list of host ip addresses
-        :rtype: list[str]
+        :return: dictionary of host ip addresses
+        :rtype: Dict[str, list]
         """
-        addresses = []
+
+        address_dict: t.Dict[str, t.List[str]] = {}
         for db_job in self.db_jobs.values():
+            addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
-
                 for combine in itertools.product(db_job.hosts, db_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
-        return addresses
+
+                dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
+                dict_entry.extend(addresses)
+                address_dict[db_entity.db_identifier] = dict_entry
+
+        return address_dict
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
@@ -324,11 +336,13 @@ class JobManager:
         :type orchestrator: Orchestrator
         """
         # should only be called during launch in the controller
+
         with self._lock:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+
             else:
-                for dbnode in orchestrator.dbnodes:
+                for dbnode in orchestrator.entities:
                     if not dbnode.is_mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:

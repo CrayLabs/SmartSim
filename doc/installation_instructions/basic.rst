@@ -33,7 +33,6 @@ The base prerequisites to install SmartSim and SmartRedis are:
 
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
 
-.. _GPU Support:
 
 GPU Support
 ===========
@@ -80,16 +79,12 @@ Supported Versions
 
 
 Native support for various machine learning libraries and their
-versions is dictated by our dependency on RedisAI_ 1.2.7. Users
-can also select RedisAI 1.2.5 (though that also limits
-the version of the ML libraries).
+versions is dictated by our dependency on RedisAI_ 1.2.7.
 
 +------------------+----------+-------------+---------------+
 | RedisAI          | PyTorch  | Tensorflow  | ONNX Runtime  |
 +==================+==========+=============+===============+
 | 1.2.7 (default)  | 1.11.0   | 2.8.0       | 1.11.1        |
-+------------------+----------+-------------+---------------+
-| 1.2.5            | 1.9.0    | 2.6.0       | 1.9.0         |
 +------------------+----------+-------------+---------------+
 
 TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
@@ -304,5 +299,3 @@ Build the SmartRedis library
 ============================
 
 .. include:: ../../smartredis/doc/install/lib.rst
-
-

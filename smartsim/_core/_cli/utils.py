@@ -24,7 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import importlib
+import importlib.util
+import os
 import shutil
 import subprocess as sp
 import sys
@@ -110,7 +111,7 @@ def clean(core_path: Path, _all: bool = False) -> int:
         if removed:
             logger.info("Successfully removed SmartSim database installation")
 
-    return 0
+    return os.EX_OK
 
 
 def get_db_path() -> t.Optional[Path]:
@@ -121,7 +122,7 @@ def get_db_path() -> t.Optional[Path]:
     return None
 
 
-_CliHandler = t.Callable[[Namespace], int]
+_CliHandler = t.Callable[[Namespace, t.List[str]], int]
 _CliParseConfigurator = t.Callable[[ArgumentParser], None]
 
 
@@ -132,8 +133,10 @@ class MenuItemConfig:
         description: str,
         handler: _CliHandler,
         configurator: t.Optional[_CliParseConfigurator] = None,
+        is_plugin: bool = False,
     ):
         self.command = cmd
         self.description = description
         self.handler = handler
         self.configurator = configurator
+        self.is_plugin = is_plugin

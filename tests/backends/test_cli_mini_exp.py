@@ -27,15 +27,28 @@
 
 from contextlib import contextmanager
 
+import pytest
 import smartredis
 
 import smartsim._core._cli.validate
 from smartsim._core.utils.helpers import installed_redisai_backends
 
+sklearn_available = True
+try:
+    from skl2onnx import to_onnx
+    from sklearn.cluster import KMeans
+    from sklearn.datasets import load_iris
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import train_test_split
+
+except ImportError:
+    sklearn_available = False
+
 
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     local_db,
-    fileutils,
+    test_dir,
     monkeypatch,
 ):
     """Presumably devs running the test suite have built SS correctly.
@@ -45,8 +58,8 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
 
     @contextmanager
     def _mock_make_managed_local_orc(*a, **kw):
-        client_addr ,= local_db.get_address()
-        yield smartredis.Client(address=client_addr, cluster=False)
+        (client_addr,) = local_db.get_address()
+        yield smartredis.Client(False, address=client_addr)
 
     monkeypatch.setattr(
         smartsim._core._cli.validate,
@@ -54,17 +67,17 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         _mock_make_managed_local_orc,
     )
     backends = installed_redisai_backends()
-    db_port ,= local_db.ports
+    (db_port,) = local_db.ports
 
     smartsim._core._cli.validate.test_install(
         # Shouldn't matter bc we are stubbing creation of orc
         # but best to give it "correct" vals for safety
-        location=fileutils.get_test_dir(),
+        location=test_dir,
         port=db_port,
         # Always test on CPU, heads don't always have GPU
         device="CPU",
         # Test the backends the dev has installed
         with_tf="tensorflow" in backends,
         with_pt="torch" in backends,
-        with_onnx="onnxruntime" in backends,
+        with_onnx="onnxruntime" in backends and sklearn_available,
     )

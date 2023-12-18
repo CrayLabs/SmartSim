@@ -182,6 +182,16 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         logger.warning("set_walltime not supported under PALS")
 
+    def set_gpu_affinity_script(self, affinity: str, *args: t.Any) -> None:
+        """Set the GPU affinity through a bash script
+
+        :param affinity: path to the affinity script
+        :type affinity: str
+        """
+        self.affinity_script.append(str(affinity))
+        for arg in args:
+            self.affinity_script.append(str(arg))
+
     def format_run_args(self) -> t.List[str]:
         """Return a list of MPI-standard formatted run arguments
 
@@ -199,6 +209,10 @@ class PalsMpiexecSettings(_BaseMPISettings):
                     args += [prefix + opt]
                 else:
                     args += [prefix + opt, str(value)]
+
+        if self.affinity_script:
+            args += self.affinity_script
+
         return args
 
     def format_env_vars(self) -> t.List[str]:
@@ -221,3 +235,20 @@ class PalsMpiexecSettings(_BaseMPISettings):
             formatted += ["--envlist", ",".join(export_vars)]
 
         return formatted
+
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+        """Set the hostlist for the PALS ``mpiexec`` command
+
+        This sets ``--hosts``
+
+        :param host_list: list of host names
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all(isinstance(host, str) for host in host_list):
+            raise TypeError("host_list argument must be list of strings")
+        self.run_args["hosts"] = ",".join(host_list)

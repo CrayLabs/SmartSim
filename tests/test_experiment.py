@@ -23,21 +23,25 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-import contextlib
+import os
 
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
+from smartsim.status import STATUS_NEVER_STARTED
+
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
 
 
-def test_model_prefix(fileutils):
+def test_model_prefix(test_dir):
     exp_name = "test_prefix"
     exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+
     model = exp.create_model(
         "model",
         path=test_dir,
@@ -83,8 +87,7 @@ def test_status_typeerror():
 def test_status_pre_launch():
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    with pytest.raises(SmartSimError):
-        exp.get_status(model)
+    assert exp.get_status(model)[0] == STATUS_NEVER_STARTED
 
 
 def test_bad_ensemble_init_no_rs():
@@ -108,10 +111,9 @@ def test_bad_ensemble_init_no_rs_bs():
         exp.create_ensemble("name")
 
 
-def test_stop_entity(fileutils):
+def test_stop_entity(test_dir):
     exp_name = "test_stop_entity"
-    exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
     exp.start(m, block=False)
     assert exp.finished(m) == False
@@ -119,11 +121,10 @@ def test_stop_entity(fileutils):
     assert exp.finished(m) == True
 
 
-def test_poll(fileutils):
+def test_poll(test_dir):
     # Ensure that a SmartSimError is not raised
     exp_name = "test_exp_poll"
-    exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     model = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("sleep", "5")
     )
@@ -132,15 +133,14 @@ def test_poll(fileutils):
     exp.stop(model)
 
 
-def test_summary(fileutils):
+def test_summary(test_dir):
     exp_name = "test_exp_summary"
-    exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )
     exp.start(m)
-    summary_str = exp.summary(format="plain")
+    summary_str = exp.summary(style="plain")
     print(summary_str)
 
     summary_lines = summary_str.split("\n")
@@ -155,6 +155,7 @@ def test_summary(fileutils):
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 
+
 def test_launcher_detection(wlmutils, monkeypatch):
     if wlmutils.get_test_launcher() == "pals":
         pytest.skip(reason="Launcher detection cannot currently detect pbs vs pals")
@@ -164,3 +165,16 @@ def test_launcher_detection(wlmutils, monkeypatch):
     exp = Experiment("test-launcher-detection", launcher="auto")
 
     assert exp._launcher == wlmutils.get_test_launcher()
+
+
+def test_enable_disable_telemtery(monkeypatch):
+    # TODO: Currently these are implemented by setting an environment variable
+    #       so that ALL experiments instanced in a driver script will begin
+    #       producing telemetry data. In the future it is planned to have this
+    #       work on a "per-instance" basis
+    monkeypatch.setattr(os, "environ", {})
+    exp = Experiment("my-exp")
+    exp.enable_telemetry()
+    assert CONFIG.telemetry_enabled
+    exp.disable_telemetry()
+    assert not CONFIG.telemetry_enabled

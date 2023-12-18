@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import os.path as osp
 import typing as t
 from os import getcwd
@@ -36,7 +37,7 @@ from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
 from .log import get_logger
-from .settings import settings, base, Container
+from .settings import Container, base, settings
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -62,7 +63,10 @@ class Experiment:
     """
 
     def __init__(
-        self, name: str, exp_path: t.Optional[str] = None, launcher: str = "local"
+        self,
+        name: str,
+        exp_path: t.Optional[str] = None,
+        launcher: str = "local",
     ):
         """Initialize an Experiment instance
 
@@ -126,6 +130,7 @@ class Experiment:
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
+        self.db_identifiers: t.Set[str] = set()
 
     def start(
         self,
@@ -184,11 +189,14 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
+
         start_manifest = Manifest(*args)
         try:
             if summary:
                 self._launch_summary(start_manifest)
             self._control.start(
+                exp_name=self.name,
+                exp_path=self.exp_path,
                 manifest=start_manifest,
                 block=block,
                 kill_on_interrupt=kill_on_interrupt,
@@ -220,18 +228,25 @@ class Experiment:
         :raises TypeError: if wrong type
         :raises SmartSimError: if stop request fails
         """
+        stop_manifest = Manifest(*args)
         try:
-            stop_manifest = Manifest(*args)
             for entity in stop_manifest.models:
                 self._control.stop_entity(entity)
-            for entity_list in stop_manifest.all_entity_lists:
+            for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
+            dbs = stop_manifest.dbs
+            for db in dbs:
+                self._control.stop_db(db)
         except SmartSimError as e:
             logger.error(e)
             raise
 
     def generate(
-        self, *args: t.Any, tag: t.Optional[str] = None, overwrite: bool = False
+        self,
+        *args: t.Any,
+        tag: t.Optional[str] = None,
+        overwrite: bool = False,
+        verbose: bool = False,
     ) -> None:
         """Generate the file structure for an ``Experiment``
 
@@ -251,9 +266,11 @@ class Experiment:
         :param overwrite: overwrite existing folders and contents,
                defaults to False
         :type overwrite: bool, optional
+        :param verbose: log parameter settings to std out
+        :type verbose: bool
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite)
+            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
             if tag:
                 generator.set_tag(tag)
             generator.generate_experiment(*args)
@@ -496,7 +513,7 @@ class Experiment:
                 "epoch": 10,
                 "lr": 0.001
             }
-            model = exp.create_model("pytorch_model", run_settings, params=params)
+            model = exp.create_model("pytorch_model", run_settings, params=train_params)
             model.attach_generator_files(to_configure="./train.cfg")
             exp.generate(model)
 
@@ -682,13 +699,14 @@ class Experiment:
         port: int = 6379,
         db_nodes: int = 1,
         batch: bool = False,
-        hosts: t.Optional[t.List[str]] = None,
+        hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
         interface: str = "ipogif0",
         account: t.Optional[str] = None,
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
+        db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database
@@ -731,12 +749,18 @@ class Experiment:
         :type queue: str, optional
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
+        :param db_identifier: an identifier to distinguish this orchestrator in
+            multiple-database experiments, defaults to "orchestrator"
+        :type db_identifier: str, optional
         :raises SmartSimError: if detection of launcher or of run command fails
         :raises SmartSimError: if user indicated an incompatible run command
             for the launcher
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
+
+        self.append_to_db_identifier_list(db_identifier)
+
         return Orchestrator(
             port=port,
             db_nodes=db_nodes,
@@ -749,6 +773,7 @@ class Experiment:
             queue=queue,
             single_cmd=single_cmd,
             launcher=self._launcher,
+            db_identifier=db_identifier,
             **kwargs,
         )
 
@@ -772,18 +797,17 @@ class Experiment:
             logger.error(e)
             raise
 
-    # pylint: disable-next=redefined-builtin
-    def summary(self, format: str = "github") -> str:
+    def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
-        :param format: the style in which the summary table is formatted,
+        :param style: the style in which the summary table is formatted,
                        for a full list of styles see:
                        https://github.com/astanin/python-tabulate#table-format,
                        defaults to "github"
-        :type format: str, optional
+        :type style: str, optional
         :return: tabulate string of ``Experiment`` history
         :rtype: str
         """
@@ -814,7 +838,7 @@ class Experiment:
             values,
             headers,
             showindex=True,
-            tablefmt=format,
+            tablefmt=style,
             missingval="None",
             disable_numparse=True,
         )
@@ -835,7 +859,7 @@ class Experiment:
 
         if self._control.orchestrator_active:
             summary += "Database Status: active\n"
-        elif manifest.db:
+        elif manifest.dbs:
             summary += "Database Status: launching\n"
         else:
             summary += "Database Status: inactive\n"
@@ -846,3 +870,46 @@ class Experiment:
 
     def __str__(self) -> str:
         return self.name
+
+    def append_to_db_identifier_list(self, db_identifier: str) -> None:
+        """Check if db_identifier already exists when calling create_database"""
+        if db_identifier in self.db_identifiers:
+            logger.warning(
+                f"A database with the identifier {db_identifier} has already been made "
+                "An error will be raised if multiple databases are started "
+                "with the same identifier"
+            )
+        # Otherwise, add
+        self.db_identifiers.add(db_identifier)
+
+    def enable_telemetry(self) -> None:
+        """Experiments will start producing telemetry for all entities run
+        through ``Experiment.start``
+
+        .. warning::
+
+            This method is currently implemented so that ALL ``Experiment``
+            instances will begin producing telemetry data. In the future it
+            is planned to have this method work on a "per instance" basis!
+        """
+        self._set_telemetry(True)
+
+    def disable_telemetry(self) -> None:
+        """Experiments will stop producing telemetry for all entities run
+        through ``Experiment.start``
+
+        .. warning::
+
+            This method is currently implemented so that ALL ``Experiment``
+            instances will stop producing telemetry data. In the future it
+            is planned to have this method work on a "per instance" basis!
+        """
+        self._set_telemetry(False)
+
+    @staticmethod
+    def _set_telemetry(switch: bool, /) -> None:
+        tm_key = "SMARTSIM_FLAG_TELEMETRY"
+        if switch:
+            os.environ[tm_key] = "1"
+        else:
+            os.environ[tm_key] = "0"

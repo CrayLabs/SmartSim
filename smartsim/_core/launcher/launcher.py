@@ -28,11 +28,11 @@ import abc
 import typing as t
 
 from ...error import AllocationError, LauncherError, SSUnsupportedError
-from .stepInfo import UnmanagedStepInfo, StepInfo
+from ...settings import SettingsBase
+from .step import Step
+from .stepInfo import StepInfo, UnmanagedStepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
-from .step import Step
-from ...settings import SettingsBase
 
 
 class Launcher(abc.ABC):  # pragma: no cover
@@ -46,11 +46,6 @@ class Launcher(abc.ABC):  # pragma: no cover
 
     step_mapping: StepMapping
     task_manager: TaskManager
-
-    @property
-    @abc.abstractmethod
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
-        raise NotImplementedError
 
     @abc.abstractmethod
     def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
@@ -85,6 +80,11 @@ class WLMLauncher(Launcher):  # cov-wlm
         super().__init__()
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
+
+    @property
+    @abc.abstractmethod
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+        raise NotImplementedError
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
@@ -176,6 +176,6 @@ class WLMLauncher(Launcher):  # cov-wlm
     # pylint: disable-next=no-self-use
     def _get_managed_step_update(
         self,
-        step_ids: t.List[str], # pylint: disable=unused-argument
+        step_ids: t.List[str],  # pylint: disable=unused-argument
     ) -> t.List[StepInfo]:  # pragma: no cover
         return []

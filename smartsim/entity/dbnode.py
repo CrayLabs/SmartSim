@@ -24,16 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import fileinput
+import itertools
+import json
 import os
 import os.path as osp
 import time
 import typing as t
+from dataclasses import dataclass
 
+from .._core.config import CONFIG
 from ..error import SmartSimError
 from ..log import get_logger
-from .entity import SmartSimEntity
 from ..settings.base import RunSettings
-
+from .entity import SmartSimEntity
 
 logger = get_logger(__name__)
 
@@ -54,13 +58,11 @@ class DBNode(SmartSimEntity):
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
+        db_identifier: str = "",
     ) -> None:
         """Initialize a database node within an orchestrator."""
-        self.ports = ports
-        self._host: t.Optional[str] = None
         super().__init__(name, path, run_settings)
-        self._mpmd = False
-        self._num_shards: int = 0
+        self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 
         if not output_files:
@@ -70,20 +72,25 @@ class DBNode(SmartSimEntity):
         ):
             raise ValueError("output_files must be of type list[str]")
         self._output_files = output_files
+        self.db_identifier = db_identifier
 
     @property
     def num_shards(self) -> int:
-        return self._num_shards
+        if not hasattr(self.run_settings, "mpmd"):
+            # return default number of shards if mpmd is not set
+            return 1
 
-    @num_shards.setter
-    def num_shards(self, value: int) -> None:
-        self._num_shards = value
+        return len(self.run_settings.mpmd) + 1
 
     @property
     def host(self) -> str:
-        if not self._host:
-            self._host = self._parse_db_host()
-        return self._host
+        try:
+            (host,) = self.hosts
+        except ValueError:
+            raise ValueError(
+                f"Multiple hosts detected for this DB Node: {', '.join(self.hosts)}"
+            ) from None
+        return host
 
     @property
     def hosts(self) -> t.List[str]:
@@ -91,16 +98,16 @@ class DBNode(SmartSimEntity):
             self._hosts = self._parse_db_hosts()
         return self._hosts
 
+    def clear_hosts(self) -> None:
+        self._hosts = None
+
     @property
     def is_mpmd(self) -> bool:
-        return self._mpmd
+        if not hasattr(self.run_settings, "mpmd"):
+            # missing mpmd property guarantees this is not an mpmd run
+            return False
 
-    @is_mpmd.setter
-    def is_mpmd(self, value: bool) -> None:
-        self._mpmd = value
-
-    def set_host(self, host: str) -> None:
-        self._host = str(host)
+        return bool(self.run_settings.mpmd)
 
     def set_hosts(self, hosts: t.List[str]) -> None:
         self._hosts = [str(host) for host in hosts]
@@ -112,41 +119,26 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            if not self._mpmd:
-                conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
+            for conf_file in (
+                osp.join(self.path, filename)
+                for filename in self._get_cluster_conf_filenames(port)
+            ):
                 if osp.exists(conf_file):
                     os.remove(conf_file)
-            else:  # cov-lsf
-                conf_files = [
-                    osp.join(self.path, filename)
-                    for filename in self._get_cluster_conf_filenames(port)
-                ]
-                for conf_file in conf_files:
-                    if osp.exists(conf_file):
-                        os.remove(conf_file)
 
         for file_ending in [".err", ".out", ".mpmd"]:
             file_name = osp.join(self.path, self.name + file_ending)
             if osp.exists(file_name):
                 os.remove(file_name)
-        if self._mpmd:
+
+        if self.is_mpmd:
             for file_ending in [".err", ".out"]:
-                for shard_id in range(self._num_shards):
+                for shard_id in range(self.num_shards):
                     file_name = osp.join(
                         self.path, self.name + "_" + str(shard_id) + file_ending
                     )
                     if osp.exists(file_name):
                         os.remove(file_name)
-
-    def _get_cluster_conf_filename(self, port: int) -> str:
-        """Returns the .conf file name for the given port number
-
-        :param port: port number
-        :type port: int
-        :return: the dbnode configuration file name
-        :rtype: str
-        """
-        return "".join(("nodes-", self.name, "-", str(port), ".conf"))
 
     def _get_cluster_conf_filenames(self, port: int) -> t.List[str]:  # cov-lsf
         """Returns the .conf file name for the given port number
@@ -158,108 +150,98 @@ class DBNode(SmartSimEntity):
         :return: the dbnode configuration file name
         :rtype: str
         """
+        if self.num_shards == 1:
+            return [f"nodes-{self.name}-{port}.conf"]
         return [
-            "".join(("nodes-", self.name + f"_{shard_id}", "-", str(port), ".conf"))
-            for shard_id in range(self._num_shards)
+            f"nodes-{self.name}_{shard_id}-{port}.conf"
+            for shard_id in range(self.num_shards)
         ]
 
     @staticmethod
-    def _parse_ips(filepath: str, num_ips: t.Optional[int] = None) -> t.List[str]:
-        ips = []
-        with open(filepath, "r", encoding="utf-8") as dbnode_file:
-            lines = dbnode_file.readlines()
-            for line in lines:
-                content = line.split()
-                if "IPADDRESS:" in content:
-                    ips.append(content[-1])
-                    if num_ips and len(ips) == num_ips:
-                        break
+    def _parse_launched_shard_info_from_iterable(
+        stream: t.Iterable[str], num_shards: t.Optional[int] = None
+    ) -> "t.List[LaunchedShardData]":
+        lines = (line.strip() for line in stream)
+        lines = (line for line in lines if line)
+        tokenized = (line.split(maxsplit=1) for line in lines)
+        tokenized = (tokens for tokens in tokenized if len(tokens) > 1)
+        shard_data_jsons = (
+            kwjson for first, kwjson in tokenized if "SMARTSIM_ORC_SHARD_INFO" in first
+        )
+        shard_data_kwargs = (json.loads(kwjson) for kwjson in shard_data_jsons)
+        shard_data: "t.Iterable[LaunchedShardData]" = (
+            LaunchedShardData(**kwargs) for kwargs in shard_data_kwargs
+        )
+        if num_shards:
+            shard_data = itertools.islice(shard_data, num_shards)
+        return list(shard_data)
 
-        return ips
+    @classmethod
+    def _parse_launched_shard_info_from_files(
+        cls, file_paths: t.List[str], num_shards: t.Optional[int] = None
+    ) -> "t.List[LaunchedShardData]":
+        with fileinput.FileInput(file_paths) as ifstream:
+            return cls._parse_launched_shard_info_from_iterable(ifstream, num_shards)
 
-    def _parse_db_host(self, filepath: t.Optional[str] = None) -> str:
-        """Parse the database host/IP from the output file
+    def get_launched_shard_info(self) -> "t.List[LaunchedShardData]":
+        """Parse the launched database shard info from the output files
 
-        If no file is passed as argument, then the first
-        file in self._output_files is used.
-
-        :param filepath: Path to file to parse
-        :type filepath: str, optional
-        :raises SmartSimError: if host/ip could not be found
-        :return: ip address | hostname
-        :rtype: str
+        :raises SmartSimError: if all shard info could not be found
+        :return: The found launched shard info
+        :rtype: list[LaunchedShardData]
         """
-        if not filepath:
-            filepath = osp.join(self.path, self._output_files[0])
-        trials = 5
-        ip_address = None
+        ips: "t.List[LaunchedShardData]" = []
+        trials = CONFIG.database_file_parse_trials
+        interval = CONFIG.database_file_parse_interval
+        output_files = [osp.join(self.path, file) for file in self._output_files]
 
-        # try a few times to give the database files time to
-        # populate on busy systems.
-        while not ip_address and trials > 0:
+        while len(ips) < self.num_shards and trials > 0:
             try:
-                if ip_addresses := self._parse_ips(filepath, 1):
-                    ip_address = ip_addresses[0]
-            # suppress error
+                ips = self._parse_launched_shard_info_from_files(
+                    output_files, self.num_shards
+                )
             except FileNotFoundError:
-                pass
-
-            logger.debug("Waiting for Redis output files to populate...")
-            if not ip_address:
-                time.sleep(1)
+                ...
+            if len(ips) < self.num_shards:
+                logger.debug("Waiting for output files to populate...")
+                time.sleep(interval)
                 trials -= 1
 
-        if not ip_address:
-            logger.error(f"IP address lookup strategy failed for file {filepath}.")
-            raise SmartSimError("Failed to obtain database hostname")
-
-        return ip_address
+        if len(ips) < self.num_shards:
+            msg = (
+                f"Failed to parse the launched DB shard information from file(s) "
+                f"{', '.join(output_files)}. Found the information for "
+                f"{len(ips)} out of {self.num_shards} DB shards."
+            )
+            logger.error(msg)
+            raise SmartSimError(msg)
+        return ips
 
     def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
 
-        this uses the RedisIP module that is built as a dependency
         The IP address is preferred, but if hostname is only present
         then a lookup to /etc/hosts is done through the socket library.
-        This function must be called only if ``_mpmd==True``.
 
         :raises SmartSimError: if host/ip could not be found
         :return: ip addresses | hostnames
         :rtype: list[str]
         """
-        ips: t.List[str] = []
+        return list({shard.hostname for shard in self.get_launched_shard_info()})
 
-        # Find out if all shards' output streams are piped to separate files
-        if len(self._output_files) > 1:
-            for output_file in self._output_files:
-                filepath = osp.join(self.path, output_file)
-                _ = self._parse_db_host(filepath)
-        else:
-            filepath = osp.join(self.path, self._output_files[0])
-            trials = 10
-            ips = []
-            while len(ips) < self._num_shards and trials > 0:
-                ips = []
-                try:
-                    ip_address = self._parse_ips(filepath, self._num_shards)
-                    ips.extend(ip_address)
 
-                # suppress error
-                except FileNotFoundError:
-                    pass
+@dataclass(frozen=True)
+class LaunchedShardData:
+    """Data class to write and parse data about a launched database shard"""
 
-                if len(ips) < self._num_shards:
-                    logger.debug("Waiting for RedisIP files to populate...")
-                    # Larger sleep time, as this seems to be needed for
-                    # multihost setups
-                    time.sleep(2)
-                    trials -= 1
+    name: str
+    hostname: str
+    port: int
+    cluster: bool
 
-            if len(ips) < self._num_shards:
-                msg = f"IP address lookup strategy failed for file {filepath}. "
-                msg += f"Found {len(ips)} out of {self._num_shards} IPs."
-                logger.error(msg)
-                raise SmartSimError("Failed to obtain database hostname")
+    @property
+    def cluster_conf_file(self) -> t.Optional[str]:
+        return f"nodes-{self.name}-{self.port}.conf" if self.cluster else None
 
-        ips = list(dict.fromkeys(ips))
-        return ips
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return dict(self.__dict__)

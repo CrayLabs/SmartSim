@@ -6,10 +6,11 @@
     <br />
 <div display="inline-block">
     <a href="https://github.com/CrayLabs/SmartSim"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/docs/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/installation_instructions/basic.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://www.craylabs.org/docs/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Slack Invite</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://github.com/CrayLabs"><b>Cray Labs</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="mailto:craylabs@hpe.com"><b>Contact</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Join us on Slack!</b></a>&nbsp;&nbsp;&nbsp;
   </div>
     <br />
     <br />
@@ -648,18 +649,6 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     <tr>
       <td>ONNX</td>
       <td>1.11.x</td>
-    </tr>
-      <td rowspan="3">1.2.5</td>
-      <td>PyTorch</td>
-      <td>1.9.x</td>
-    </tr>
-    <tr>
-      <td>TensorFlow\Keras</td>
-      <td>2.6.x</td>
-    </tr>
-    <tr>
-      <td>ONNX</td>
-      <td>1.9.x</td>
     </tr>
   </tbody>
 </table>

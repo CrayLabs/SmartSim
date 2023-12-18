@@ -27,11 +27,10 @@
 import sys
 import typing as t
 
-
+from ...entity.dbobject import DBModel, DBScript
 from ...error import SSInternalError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
-from ...entity.dbobject import DBModel, DBScript
 
 
 def write_colocated_launch_script(
@@ -119,14 +118,14 @@ def _build_colocated_wrapper_cmd(
     # up the backgrounded db process
 
     cmd = [
-            sys.executable,
-            "-m",
-            "smartsim._core.entrypoints.colocated",
-            "+lockfile",
-            lockfile,
-            "+db_cpus",
-            str(cpus),
-        ]
+        sys.executable,
+        "-m",
+        "smartsim._core.entrypoints.colocated",
+        "+lockfile",
+        lockfile,
+        "+db_cpus",
+        str(cpus),
+    ]
     # Add in the interface if using TCP/IP
     if ifname:
         if isinstance(ifname, str):
@@ -137,16 +136,9 @@ def _build_colocated_wrapper_cmd(
 
     db_cmd = []
     if custom_pinning:
-        db_cmd.extend([
-            'taskset', '-c', custom_pinning
-        ])
+        db_cmd.extend(["taskset", "-c", custom_pinning])
     db_cmd.extend(
-        [
-            CONFIG.database_exe,
-            CONFIG.database_conf,
-            "--loadmodule",
-            CONFIG.redisai
-        ]
+        [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
     )
 
     # add extra redisAI configurations
@@ -218,6 +210,7 @@ def _build_db_model_cmd(db_models: t.List[DBModel]) -> t.List[str]:
         cmd.append(f"--backend={db_model.backend}")
         cmd.append(f"--device={db_model.device}")
         cmd.append(f"--devices_per_node={db_model.devices_per_node}")
+        cmd.append(f"--first_device={db_model.first_device}")
         if db_model.batch_size:
             cmd.append(f"--batch_size={db_model.batch_size}")
         if db_model.min_batch_size:
@@ -254,5 +247,5 @@ def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
             cmd.append(f"--file={db_script.file}")
         cmd.append(f"--device={db_script.device}")
         cmd.append(f"--devices_per_node={db_script.devices_per_node}")
-
+        cmd.append(f"--first_device={db_script.first_device}")
     return cmd

@@ -7,7 +7,7 @@ __pycache__
 htmlcov
 smartsim.egg-info
 tests/test_output
-docs/*
+.DS_Store
 
 # Dependencies
 smartsim/_core/.third-party
@@ -31,3 +31,8 @@ smartsim/_core/bin/*-cli
 
 # created upon install
 smartsim/_core/lib
+
+**/manifest/
+**/*.err
+**/*.out
+**/.smartsim/*

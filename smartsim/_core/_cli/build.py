@@ -65,11 +65,8 @@ def check_py_onnx_version(versions: Versioner) -> None:
         msg = (
             "An onnx wheel is not available for "
             f"Python {py_version.major}.{py_version.minor}. "
-            "Instead consider using Python 3.8 or 3.9 with Onnx "
+            "Instead consider using Python 3.8 or 3.9 for ONNX 1.11 support"
         )
-        if sys.platform == "linux":
-            msg += "1.2.5 or "
-        msg += "1.2.7."
         raise SetupError(msg)
     _check_packages_in_python_env(
         {
@@ -343,8 +340,8 @@ def _format_incompatible_python_env_message(
     missing: t.Iterable[str], conflicting: t.Iterable[str]
 ) -> str:
     indent = "\n\t"
-    fmt_list: t.Callable[[str, t.Iterable[str]], str] = (
-        lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+    fmt_list: t.Callable[[str, t.Iterable[str]], str] = lambda n, l: (
+        f"{n}:{indent}{indent.join(l)}" if l else ""
     )
     missing_str = fmt_list("Missing", missing)
     conflict_str = fmt_list("Conflicting", conflicting)
@@ -359,7 +356,9 @@ def _format_incompatible_python_env_message(
     )
 
 
-def execute(args: argparse.Namespace) -> int:
+def execute(
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+) -> int:
     verbose = args.v
     keydb = args.keydb
     device: _TDeviceStr = args.device
@@ -419,7 +418,7 @@ def execute(args: argparse.Namespace) -> int:
             )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
-        return 1
+        return os.EX_SOFTWARE
 
     backends = installed_redisai_backends()
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
@@ -434,10 +433,10 @@ def execute(args: argparse.Namespace) -> int:
             check_py_onnx_version(versions)
     except (SetupError, BuildError) as e:
         logger.error(str(e))
-        return 1
+        return os.EX_SOFTWARE
 
     logger.info("SmartSim build complete!")
-    return 0
+    return os.EX_OK
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:

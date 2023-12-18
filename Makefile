@@ -146,11 +146,11 @@ tutorials-dev:
 	@docker compose build tutorials-dev
 	@docker run -p 8888:8888 smartsim-tutorials:dev-latest
 
-# help: tutorials-prod                 - Build and start a docker container to run the tutorials (v0.4.2)
+# help: tutorials-prod                 - Build and start a docker container to run the tutorials (v0.6.0)
 .PHONY: tutorials-prod
 tutorials-prod:
 	@docker compose build tutorials-prod
-	@docker run -p 8888:8888 smartsim-tutorials:v0.4.2
+	@docker run -p 8888:8888 smartsim-tutorials:v0.6.0
 
 
 # help:

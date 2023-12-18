@@ -35,11 +35,9 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_restart(fileutils, wlmutils):
-
+def test_restart(fileutils, test_dir, wlmutils):
     exp_name = "test-restart"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")

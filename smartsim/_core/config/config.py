@@ -24,12 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
 import os
-import psutil
 import typing as t
-
 from functools import lru_cache
 from pathlib import Path
+
+import psutil
 
 from ...error import SSConfigError
 from ..utils.helpers import expand_exe_path
@@ -144,6 +145,14 @@ class Config:
             ) from e
 
     @property
+    def database_file_parse_trials(self) -> int:
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_TRIALS", "10"))
+
+    @property
+    def database_file_parse_interval(self) -> int:
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
+
+    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 
@@ -172,6 +181,20 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
+    def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
+        resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
+        resources = json.loads(resource_str)
+        if not isinstance(resources, dict):
+            raise TypeError(
+                (
+                    "SMARTSIM_TEST_BATCH_RESOURCES was not interpreted as a "
+                    "dictionary, check to make sure that it is a valid "
+                    f"JSON string: {resource_str}"
+                )
+            )
+        return resources
+
+    @property
     def test_interface(self) -> t.List[str]:  # pragma: no cover
         if interfaces_cfg := os.environ.get("SMARTSIM_TEST_INTERFACE", None):
             return interfaces_cfg.split(",")
@@ -195,6 +218,18 @@ class Config:
     def test_account(self) -> t.Optional[str]:  # pragma: no cover
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
+
+    @property
+    def telemetry_frequency(self) -> int:
+        return int(os.environ.get("SMARTSIM_TELEMETRY_FREQUENCY", 5))
+
+    @property
+    def telemetry_enabled(self) -> bool:
+        return int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", "0")) > 0
+
+    @property
+    def telemetry_cooldown(self) -> int:
+        return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
 
 
 @lru_cache(maxsize=128, typed=False)

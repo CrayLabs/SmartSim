@@ -59,8 +59,8 @@ deploying HPC workloads alongside an in-memory database: Redis.
 The key features of the IL are:
 
   - An API to start, monitor, and stop HPC jobs from Python or from a Jupyter notebook.
-  - Automated deployment of in-memory data staging (Redis) and computational
-    storage (RedisAI).
+  - Automated deployment of in-memory data staging (`Redis <https://redis.io>`_) and computational
+    storage (`RedisAI <https://redisai.io>`_).
   - Programmatic launches of batch and in-allocation jobs on PBS, Slurm, LSF,
     and Cobalt systems.
   - Creating and configuring ensembles of workloads with isolated communication channels.

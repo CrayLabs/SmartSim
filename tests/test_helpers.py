@@ -24,22 +24,47 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 
+from smartsim._core.utils import helpers
 from smartsim._core.utils.helpers import cat_arg_and_value
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
 
 def test_double_dash_concat():
     result = cat_arg_and_value("--foo", "FOO")
     assert result == "--foo=FOO"
 
+
 def test_single_dash_concat():
     result = cat_arg_and_value("-foo", "FOO")
     assert result == "-foo FOO"
+
 
 def test_single_char_concat():
     result = cat_arg_and_value("x", "FOO")
     assert result == "-x FOO"
 
+
 def test_fallthrough_concat():
     result = cat_arg_and_value("xx", "FOO")  # <-- no dashes, > 1 char
     assert result == "--xx=FOO"
+
+
+def test_encode_decode_cmd_round_trip():
+    orig_cmd = ["this", "is", "a", "cmd"]
+    decoded_cmd = helpers.decode_cmd(helpers.encode_cmd(orig_cmd))
+    assert orig_cmd == decoded_cmd
+    assert orig_cmd is not decoded_cmd
+
+
+def test_encode_raises_on_empty():
+    with pytest.raises(ValueError):
+        helpers.encode_cmd([])
+
+
+def test_decode_raises_on_empty():
+    with pytest.raises(ValueError):
+        helpers.decode_cmd("")

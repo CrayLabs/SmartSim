@@ -167,6 +167,7 @@ deps = [
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
+    "watchdog>=3.0.0",
 ]
 
 # Add SmartRedis at specific version
@@ -174,9 +175,9 @@ deps.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
-        "black>=20.8b1",
+        "black==24.1a1",
         "isort>=5.6.4",
-        "pylint>=2.10.0",
+        "pylint>=2.10.0,<3",
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
@@ -187,7 +188,7 @@ extras_require = {
         "types-redis",
         "types-tabulate",
         "types-tqdm",
-        "types-tensorflow",
+        "types-tensorflow==2.12.0.9",
         "types-setuptools",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
@@ -199,10 +200,6 @@ extras_require = {
 setup(
     version=smartsim_version,
     install_requires=deps,
-    packages=["smartsim"],
-    package_data={"smartsim": [
-        "_core/bin/*",
-    ]},
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,

@@ -25,12 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging
-import redis
 import time
 import typing as t
-
 from itertools import product
-from redis.cluster import RedisCluster, ClusterNode
+
+import redis
+from redis.cluster import ClusterNode, RedisCluster
 from redis.exceptions import ClusterDownError, RedisClusterException
 from smartredis import Client
 from smartredis.error import RedisReplyError
@@ -171,6 +171,7 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
                     device=device,
                     batch_size=db_model.batch_size,
                     min_batch_size=db_model.min_batch_size,
+                    min_batch_timeout=db_model.min_batch_timeout,
                     tag=db_model.tag,
                     inputs=db_model.inputs,
                     outputs=db_model.outputs,
@@ -183,6 +184,7 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
                     device=device,
                     batch_size=db_model.batch_size,
                     min_batch_size=db_model.min_batch_size,
+                    min_batch_timeout=db_model.min_batch_timeout,
                     tag=db_model.tag,
                     inputs=db_model.inputs,
                     outputs=db_model.outputs,
@@ -214,3 +216,30 @@ def set_script(db_script: DBScript, client: Client) -> None:
         except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error
+
+
+def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-wlm
+    """Send shutdown signal to DB node.
+
+    Should only be used in the case where cluster deallocation
+    needs to occur manually. Usually, the SmartSim job manager
+    will take care of this automatically.
+
+    :param host_ip: IP of host to connect to
+    :type hosts: str
+    :param ports: Port to which node is listening
+    :type ports: int
+    :return: returncode, output, and error of the process
+    :rtype: tuple of (int, str, str)
+    """
+    redis_cli = CONFIG.database_cli
+    cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
+    returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False, timeout=10)
+
+    if returncode != 0:
+        logger.error(out)
+        logger.error(err)
+    elif out:
+        logger.debug(out)
+
+    return returncode, out, err

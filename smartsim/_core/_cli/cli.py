@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import os
 import typing as t
 
 from smartsim._core._cli.build import configure_parser as build_parser
@@ -36,51 +37,69 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.info import execute as info_execute
+from smartsim._core._cli.plugin import plugins
 from smartsim._core._cli.site import execute as site_execute
-from smartsim._core._cli.validate import (
-    execute as validate_execute,
-    configure_parser as validate_parser,
-)
 from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.validate import configure_parser as validate_parser
+from smartsim._core._cli.validate import execute as validate_execute
 
 
 class SmartCli:
     def __init__(self, menu: t.List[MenuItemConfig]) -> None:
-        self.menu: t.Dict[str, MenuItemConfig] = {item.command: item for item in menu}
-        parser = argparse.ArgumentParser(
+        self.menu: t.Dict[str, MenuItemConfig] = {}
+        self.parser = argparse.ArgumentParser(
             prog="smart",
             description="SmartSim command line interface",
         )
-        self.parser = parser
-        self.args: t.Optional[argparse.Namespace] = None
 
-        subparsers = parser.add_subparsers(
+        self.subparsers = self.parser.add_subparsers(
             dest="command",
             required=True,
             metavar="<command>",
             help="Available commands",
         )
 
-        for cmd, item in self.menu.items():
-            parser = subparsers.add_parser(
-                cmd, description=item.description, help=item.description
-            )
-            if item.configurator:
-                item.configurator(parser)
+        self.register_menu_items(menu)
+        self.register_menu_items([plugin() for plugin in plugins])
 
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:
             self.parser.print_help()
-            return 0
+            return os.EX_USAGE
 
-        app_args = cli_args[1:]
-        self.args = self.parser.parse_args(app_args)
+        app_args = cli_args[1:]  # exclude the path to executable
+        subcommand = cli_args[1]  # first positional arg is the subcommand
 
-        if not (menu_item := self.menu.get(app_args[0], None)):
+        menu_item = self.menu.get(subcommand, None)
+        if not menu_item:
             self.parser.print_help()
-            return 0
+            return os.EX_USAGE
 
-        return menu_item.handler(self.args)
+        args = argparse.Namespace()
+        unparsed_args = []
+
+        if menu_item.is_plugin:
+            unparsed_args = app_args[1:]
+        else:
+            args = self.parser.parse_args(app_args)
+
+        return menu_item.handler(args, unparsed_args)
+
+    def _register_menu_item(self, item: MenuItemConfig) -> None:
+        parser = self.subparsers.add_parser(
+            item.command, description=item.description, help=item.description
+        )
+        if item.configurator:
+            item.configurator(parser)
+
+        if item.command in self.menu:
+            raise ValueError(f"{item.command} cannot overwrite existing CLI command")
+
+        self.menu[item.command] = item
+
+    def register_menu_items(self, menu_items: t.List[MenuItemConfig]) -> None:
+        for item in menu_items:
+            self._register_menu_item(item)
 
 
 def default_cli() -> SmartCli:
