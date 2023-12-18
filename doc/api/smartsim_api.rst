@@ -34,6 +34,8 @@ Experiment
    :members:
 
 
+.. _settings-info:
+
 Settings
 ========
 

@@ -62,17 +62,19 @@ The key initializer arguments are:
 -  `enable_key_prefixing` (bool, optional): Prefix the model name to data sent to the database to prevent key collisions. Default is True.
 -  `batch_settings` (BatchSettings | None): Describes settings for batch workload treatment.
 
-To initialize a ``Model``, a `name` and ``RunSettings`` object is required.
-To instruct a Model to encapsulate a simulation, users must specify a simulation
+To initialize a ``Model``, a `name` and :ref:`RunSettings<settings-info>` reference is required.
+To instruct a Model to encapsulate a simulation, users must provide the simulation
 executable to the Models run settings with instructions on how the application should be launched.
 
+Users may also launch Models as a batch job by specifying :ref:`BatchSettings<settings-info>` when initializing.
 When a Model with a ``BatchSettings`` reference is added to an Ensemble with a ``BatchSettings`` reference,
 the Models batch settings are strategically ignored.
 
-Parameters supplied in the `params` argument can be dynamically written
-into configuration files at runtime through ``Model.attach_generator_files()``.
-These parameters can also be transformed into executable arguments by
-invoking ``Model.params_to_args()``.
+The `params` init argument in for Models lets users define simulation parameters and their
+values through a dictionary. Using :ref:`Model API functions<model_api>`, users can write these parameters to
+a file in the Model's working directory. Similarly, the Model API provides functionality to
+instruct SmartSim to read a file and automatically fill in parameter values. Both behaviors are
+provided by the ``Model.attach_generator_files()`` function.
 
 Additionally, it's important to note that Model instances will be executed in the
 current working directory by default if no `path` argument is supplied. When a Model
