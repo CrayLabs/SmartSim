@@ -272,10 +272,12 @@ def contextualize(
 
 #########################################################
 # TODO: Move these!!
+# TODO: Prefix type vars with `_`
 #########################################################
 
 T = t.TypeVar("T")
 RT = t.TypeVar("RT")
+TCTX = t.TypeVar("TCTX")
 
 if t.TYPE_CHECKING:
     from typing_extensions import ParamSpec, Concatenate
@@ -284,8 +286,8 @@ if t.TYPE_CHECKING:
 #########################################################
 
 def method_contextualizer(
-    ctx_var: ContextVar[str],
-    ctx_map: t.Callable[[T], str],
+    ctx_var: ContextVar[TCTX],
+    ctx_map: t.Callable[[T], TCTX],
 ) -> t.Callable[
     [t.Callable[Concatenate[T, PR], RT]],
     t.Callable[Concatenate[T, PR], RT]
@@ -300,8 +302,8 @@ def method_contextualizer(
             **kwargs: PR.kwargs
         ) -> RT:
             ctx = copy_context()
-            ctx_name = ctx_map(self)
-            token = ctx_var.set(ctx_name)
+            ctx_val = ctx_map(self)
+            token = ctx_var.set(ctx_val)
             try:
                 return ctx.run(fn, self, *args, **kwargs)
             finally:
