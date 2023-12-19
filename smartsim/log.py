@@ -24,8 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import annotations # TODO: rm this
+from __future__ import annotations  # TODO: rm this
 
+import functools
 import logging
 import os
 import pathlib
@@ -272,35 +273,36 @@ def contextualize(
 
 #########################################################
 # TODO: Move these!!
-# TODO: Prefix type vars with `_`
 #########################################################
 
-T = t.TypeVar("T")
-RT = t.TypeVar("RT")
-TCTX = t.TypeVar("TCTX")
+_T = t.TypeVar("_T")
+_RT = t.TypeVar("_RT")
+_ContextT = t.TypeVar("_ContextT")
 
 if t.TYPE_CHECKING:
     from typing_extensions import ParamSpec, Concatenate
-    PR = ParamSpec("PR")
+
+    _PR = ParamSpec("_PR")
 
 #########################################################
 
+
 def method_contextualizer(
-    ctx_var: ContextVar[TCTX],
-    ctx_map: t.Callable[[T], TCTX],
+    ctx_var: ContextVar[_ContextT],
+    ctx_map: t.Callable[[_T], _ContextT],
 ) -> t.Callable[
-    [t.Callable[Concatenate[T, PR], RT]],
-    t.Callable[Concatenate[T, PR], RT]
+    [t.Callable[Concatenate[_T, _PR], _RT]],
+    t.Callable[Concatenate[_T, _PR], _RT],
 ]:
     def _contextualize(
-        fn: t.Callable[Concatenate[T, PR], RT],
-        /
-    ) -> t.Callable[Concatenate[T, PR], RT]:
+        fn: t.Callable[Concatenate[_T, _PR], _RT], /
+    ) -> t.Callable[Concatenate[_T, _PR], _RT]:
+        @functools.wraps(fn)
         def _contextual(
-            self: T,
-            *args: PR.args,
-            **kwargs: PR.kwargs
-        ) -> RT:
+            self: _T,
+            *args: _PR.args,
+            **kwargs: _PR.kwargs,
+        ) -> _RT:
             ctx = copy_context()
             ctx_val = ctx_map(self)
             token = ctx_var.set(ctx_val)
@@ -308,5 +310,7 @@ def method_contextualizer(
                 return ctx.run(fn, self, *args, **kwargs)
             finally:
                 ctx_var.reset(token)
+
         return _contextual
+
     return _contextualize

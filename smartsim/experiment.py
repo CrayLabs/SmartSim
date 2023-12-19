@@ -43,8 +43,10 @@ from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
+
 def _exp_contextualizer(e: "Experiment") -> str:
     return e.exp_path
+
 
 _with_exp_ctx = method_contextualizer(ctx_exp_path, _exp_contextualizer)
 
