@@ -23,6 +23,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from __future__ import annotations # TODO: rm this
+
 import logging
 import os
 import pathlib
@@ -265,3 +268,43 @@ def contextualize(
         return ctx.run(_wrapper)
 
     setattr(obj, fn_orig_key, _inner)
+
+
+#########################################################
+# TODO: Move these!!
+#########################################################
+
+T = t.TypeVar("T")
+RT = t.TypeVar("RT")
+
+if t.TYPE_CHECKING:
+    from typing_extensions import ParamSpec, Concatenate
+    PR = ParamSpec("PR")
+
+#########################################################
+
+def method_contextualizer(
+    ctx_var: ContextVar[str],
+    ctx_map: t.Callable[[T], str],
+) -> t.Callable[
+    [t.Callable[Concatenate[T, PR], RT]],
+    t.Callable[Concatenate[T, PR], RT]
+]:
+    def _contextualize(
+        fn: t.Callable[Concatenate[T, PR], RT],
+        /
+    ) -> t.Callable[Concatenate[T, PR], RT]:
+        def _contextual(
+            self: T,
+            *args: PR.args,
+            **kwargs: PR.kwargs
+        ) -> RT:
+            ctx = copy_context()
+            ctx_name = ctx_map(self)
+            token = ctx_var.set(ctx_name)
+            try:
+                return ctx.run(fn, self, *args, **kwargs)
+            finally:
+                ctx_var.reset(token)
+        return _contextual
+    return _contextualize

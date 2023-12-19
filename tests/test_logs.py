@@ -52,7 +52,7 @@ def test_level_filter_info():
     
     logger.debug("debug")
     logger.info("info")
-    logger.warn("warn")
+    logger.warning("warn")
     logger.error("error")
     logger.exception("exception")
 
@@ -75,7 +75,7 @@ def test_level_filter_warn():
     
     logger.debug("debug")
     logger.info("info")
-    logger.warn("warn")
+    logger.warning("warn")
     logger.error("error")
     logger.exception("exception")
 
