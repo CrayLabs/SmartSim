@@ -194,13 +194,13 @@ this function, ``attach_generator_files()``, post-attachment overwrites the exis
 To write Model parameters to a file and attach to the Model, pass one of the
 following values to the helper function:
 
-* `to_copy`: Files that are copied into the path of the entity.
-* `to_symlink`: Files that are symlinked into the path of the entity.
+* `to_copy` (list, optional): Files that are copied into the path of the entity.
+* `to_symlink` (list, optional): Files that are symlinked into the path of the entity.
 
 To attach a file to the Model and read the contents for use within the simulation, pass the
 following value to the helper function:
 
-* `to_configure`: Designed for text-based model input files,
+* `to_configure` (list, optional): Designed for text-based model input files,
   "to_configure" is exclusive to models. These files contain parameters for
   the model, with customizable tags corresponding to values users intend to
   modify. The default tag is a semicolon (e.g., THERMO = ;10;).
