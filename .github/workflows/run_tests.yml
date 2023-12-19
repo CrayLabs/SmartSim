@@ -60,8 +60,8 @@ jobs:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py_v }}
 
@@ -151,7 +151,7 @@ jobs:
           retention-days: 5
 
       - name: Upload Pytest coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3.1.4
         with:
           fail_ci_if_error: false
           files: ./coverage.xml
