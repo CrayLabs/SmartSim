@@ -23,8 +23,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import typing as t
 
-from .control import Controller, Manifest, Viewexp
-from .generation import Generator
 
-__all__ = ["Controller", "Manifest", "Generator", "Viewexp"]
+class Viewexp:
+    def __init__(self, exp_entity: t.Any) -> None:
+        self.exp_entity = exp_entity
+
+    def to_human_readable(self) -> str:
+        preview = "\n=== Experiment Overview ===\n"
+        preview += f"\tExperiment: {self.exp_entity.name}\n"
+        preview += f"\tExperiment Path: {self.exp_entity.exp_path}\n"
+        preview += f"\tLauncher: {self.exp_entity.get_launcher()}\n"
+
+        return preview

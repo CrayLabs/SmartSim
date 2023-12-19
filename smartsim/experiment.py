@@ -30,8 +30,7 @@ import typing as t
 from os import getcwd
 
 from tabulate import tabulate
-
-from ._core import Controller, Generator, Manifest
+from ._core import Controller, Generator, Manifest, Viewexp
 from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
@@ -796,6 +795,54 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    def preview(
+        self,
+        *args: t.Any,
+        output_format: t.Optional[str] = None,
+        output_filename: t.Optional[str] = None,
+        verbosity_level: t.Optional[str] = None,
+    ) -> None:
+        """Preview entity information prior to launch. This method
+        aggregates multiple pieces of information to give users insight
+        into what and how entities will be launched.  Any instance of
+        ``Model``, ``Ensemble`` or ``Orchestrator`` created by the
+        Experiment can be passed as an argument to the preview method.
+        param output_format: Set output destination. The possible accepted
+        output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
+        A filename is required if an output format is specified. If no output
+        format is set, the preview will be output to stdout. Defaults to None.
+        type output_type: str
+        param output_filename: Specify name of path to write preview data to.
+        Only needed when an output format has been specified. Defaults to None.
+        type output_filename: str
+        param verbosity level: the verbosity level.
+        info: Display User defined fields and entities
+        debug: Display user defined field and entities and auto generated
+        fields.
+        developer: Display user defined field and entities, auto generated
+        fields, and run commands.
+        Defaults to info.
+        type verbosity_level: str
+        """
+
+        if output_format:
+            raise NotImplementedError
+        if output_filename:
+            raise NotImplementedError
+        if verbosity_level:
+            raise NotImplementedError
+
+        logger.info(self._preview())
+
+    def _preview(self) -> str:
+        """String formatting"""
+        preview = Viewexp(self).to_human_readable()
+        return preview
+
+    def get_launcher(self) -> None:
+        """Get launcher"""
+        return self._launcher
 
     def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``

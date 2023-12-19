@@ -24,7 +24,49 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .control import Controller, Manifest, Viewexp
-from .generation import Generator
+import pytest
 
-__all__ = ["Controller", "Manifest", "Generator", "Viewexp"]
+from smartsim import Experiment
+
+
+def test_experiment_preview(test_dir, wlmutils):
+    """Test correct preview output for Experiment preview"""
+    test_launcher = wlmutils.get_test_launcher()
+    exp_name = "test_prefix"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    # Call method for string formatting for testing
+    output = exp._preview().strip()
+
+    summary_lines = output.split("\n")
+    summary_lines = [item.replace("\t", "") for item in summary_lines[-3:]]
+
+    assert 3 == len(summary_lines)
+
+    summary_dict = dict(row.split(": ") for row in summary_lines)
+    assert exp.name == summary_dict["Experiment"]
+    assert exp.exp_path == summary_dict["Experiment Path"]
+    assert exp.get_launcher() == summary_dict["Launcher"]
+
+
+def test_output_format_error():
+    exp_name = "test_prefix"
+    exp = Experiment(exp_name)
+
+    with pytest.raises(NotImplementedError):
+        exp.preview(exp_name, output_format="hello")
+
+
+def test_output_filename_error():
+    exp_name = "test_prefix"
+    exp = Experiment(exp_name)
+
+    with pytest.raises(NotImplementedError):
+        exp.preview(exp_name, output_filename="hello")
+
+
+def test_verbosity_level_error():
+    exp_name = "test_prefix"
+    exp = Experiment(exp_name)
+
+    with pytest.raises(NotImplementedError):
+        exp.preview(exp_name, verbosity_level="hello")
