@@ -5,11 +5,25 @@ Orchestrator
 ========
 Overview
 ========
-The ``Orchestrator`` is an in-memory database that is launched prior to all other
-entities within an ``Experiment``. The ``Orchestrator`` can be used to store and retrieve
-data during the course of an experiment and across multiple entities. In order to
-stream data into or receive data from the ``Orchestrator``, one of the SmartSim clients
+The SmartSim ``Orchestrator`` is an in-memory database that is used to store and retrieve
+data during the course of an experiment. Orchestrators can be used to 1) store and retrieve
+data across multiple entities or 2) store and retrieve with a single ``Model``.
+The two options refer to the two types of database deployments: clustered deployment
+and colocated deployment. During clustered deployment, an orchestrator is allocated
+its own compute resources. It does not resources with any other SmartSim entity.
+Colocated orchestrators share compute resources with a SmartSim ``Model``.
+In order to stream data into or receive data from the ``Orchestrator``, one of the SmartSim clients
 (SmartRedis) has to be used within a Model.
+
+Orchestrators support a wide variety of AI-enabled workloads via ``Model`` objects
+that can be instructed to load TF, TF-lite, PT, or ONNX machine learning models,
+as well as TensorFlow scripts and functions to the database at runtime.
+
+Below is a diagram demonstrating an orchestrator as a general feature store
+capable of storing numerical data (tensors and datasets), AI models, and scripts (TorchScript).
+Combined with the SmartRedis clients, the ``Orchestrator`` is capable of hosting and executing
+AI models written in Python on CPU or GPU. The ``Orchestrator`` supports models written with
+TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (e.g. sci-kit learn).
 
 .. |orchestrator| image:: images/Orchestrator.png
   :width: 700
@@ -17,22 +31,23 @@ stream data into or receive data from the ``Orchestrator``, one of the SmartSim 
 
 |orchestrator|
 
-Combined with the SmartRedis clients, the ``Orchestrator`` is capable of hosting and executing
-AI models written in Python on CPU or GPU. The ``Orchestrator`` supports models written with
-TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (e.g. sci-kit learn).
-
 ======================
 Clustered Orchestrator
 ======================
 --------
 Overview
 --------
-A clustered Orchestrator is a type of deployment where the application and database
-are launched on separate compute nodes. A clustered Orchestrator may be single-sharded
-(allocated one database node) or multi-sharded (allocated multiple database nodes).
-When initializing an ``Orchestrator`` within an Experiment, you may set
-the argument `db_nodes` to be 1 or greater than 2. This parameter controls the number
-of database nodes your in-memory database will span across.
+A clustered Orchestrator 
+A clustered Orchestrator is deployed on separate compute resources than
+a Model. 
+
+A clustered Orchestrator may be single-sharded
+(on a single compute node) or multi-sharded (spread across multiple compute nodes).
+When initializing a standalone ``Orchestrator`` using ``Experiment.create_orchestrator()``, set
+the init parameter `db_nodes` to be 1 or greater than 2. This parameter controls the number
+of nodes the in-memory database spans across.
+
+After initializing a 
 
 .. |cluster-orc| image:: images/clustered-orc-diagram.png
   :width: 700
@@ -43,7 +58,7 @@ of database nodes your in-memory database will span across.
 Clustered Orchestrators support data communication across multiple simulations.
 Given that a clustered database is standalone, meaning the database compute node
 is separate from the application compute node, the database node does not tear
-down after the finish of a SmartSim Model, unlike a colocated orchestrator.
+down after the finish of a SmartSim Model.
 With standalone database deployment, SmartSim can run AI models, and Torchscript
 code on the CPU(s) or GPU(s) with existing data in the ``Orchestrator``.
 Produced data can then requested by another application.
@@ -340,7 +355,7 @@ script.
 1. Launching the application script with a co-located database.
 
 The Application Script
-----------------------
+======================
 A SmartRedis client connects and interacts with
 a launched Orchestrator.
 In this section, we write an application script
@@ -364,7 +379,7 @@ To begin writing the application script, provide the imports:
   import numpy as np
 
 Initialize the Clients
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 To establish a connection with the colocated database,
 initialize a new SmartRedis client and specify `cluster=False`
 since our database is single-sharded:
@@ -380,7 +395,7 @@ since our database is single-sharded:
     SmartRedis will handle the connection.
 
 Store Data
-^^^^^^^^^^
+----------
 Next, using the SmartRedis client instance, we create and store
 a NumPy tensor using ``Client.put_tensor()``:
 .. code-block:: python
@@ -391,7 +406,7 @@ a NumPy tensor using ``Client.put_tensor()``:
     colo_client.put_tensor("tensor_1", array_1)
 
 Retrieve Data
-^^^^^^^^^^^^^
+-------------
 Next, retrieve the tensor using ``Client.get_tensor()``:
 .. code-block:: python
 
@@ -404,7 +419,7 @@ When the Experiment completes, you can find the following log message in `colo_m
     Default@21-48-01:The colocated db tensor is: [1 2 3 4]
 
 The Experiment Driver Script
-----------------------------
+============================
 To run the application, specify a Model workload from
 within the workflow (Experiment).
 Defining workflow stages requires the utilization of functions associated
@@ -425,7 +440,7 @@ We setup the SmartSim ``logger`` to output information from the Experiment.
     exp = Experiment("getting-started", launcher="auto")
 
 Initialize a Colocated Model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 In the next stage of the experiment, we
 create and launch a colocated ``Model`` that 
 runs the application script with a database
@@ -490,7 +505,7 @@ Next, launch the colocated model instance using the ``Experiment.start()`` funct
 test
 
 Cleanup Experiment
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. code-block:: python
 
@@ -526,8 +541,8 @@ In the following example, we simulate a simple version of this use case.
 
 The example is comprised of two script files:
 
-* The :ref:`Application Script<The Application Script>`
-* The :ref:`Experiment Driver Script<The Experiment Driver Script>`
+* The Application Script
+* The Experiment Driver Script
 
 **The Application Script Overview:**
 In this example, the application script is a python file that
