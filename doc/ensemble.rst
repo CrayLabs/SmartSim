@@ -5,28 +5,28 @@ Ensemble
 ========
 Overview
 ========
-An ``Ensemble`` is a SmartSim simulation object that comprises
-multiple SmartSim :ref:`Model<link>` objects, each representing an individual
-simulation. An Ensemble enables users to launch a group of simulations
-at runtime within an Experiment workflow. An Ensemble can be treated as
-a reference to a single instance and offers key features, including the ability to:
+An ``Ensemble`` is a SmartSim object comprised of multiple
+:ref:`Model<model_api>` objects, each representing an individual
+simulation. An Ensemble can be be reference as a single instance and
+enables users to launch a group of simulations
+at runtime. Ensembles can be launched with other SmartSim
+entities and ML infrastructure to build AI-enabled workflows.
+The :ref:`Ensemble API<ensemble_api>` offers key Ensemble features,
+including helper functions to:
 
-- load a TF, TF-lite, PT, or ONNX model into the database at runtime.
+- :ref:`Ensemble.add_ml_model()<load_ml_model>`: load a TF, TF-lite, PT, or ONNX model into the database at runtime.
+- :ref:`Ensemble.add_function()<load_tf_function>`: load TorchScript functions to launch with each entity belonging to the ensemble.
+- :ref:`Ensemble.add_script()<load_script>`: load TorchScripts to launch with each entity at runtime.
+- :ref:`Ensemble.enable_key_prefixing()<prefix_ensemble>`: prevent key overlapping and enable ensemble members to run the same code.
+- :ref:`Ensemble.attach_generator_files()<attach_file>`: attach configuration files to assign ensemble member parameters or load parameters to file.
 
-- load TorchScript functions to launch with each entity belonging to the ensemble.
+An Ensemble is created through the ``Experiment.create_ensemble()`` function.
+There are **three** Ensemble configuration that users can adjust to customize
+Ensemble behavior:
 
-- load TorchScripts to launch with each entity at runtime.
-
-- prevent key overlapping to enable ensemble members to use the same code.
-
-- attach configuration files to the ensemble for each model supplied at runtime.
-
-There are **three** configuration options when initializing an Ensemble that
-users can adjust to customize the behavior of Ensemble members:
-
-1. Manually: Create each Model individually and subsequently append the simulation to the ensemble.
-2. Replica creation: Generate a specified number of copies or instances of a simulation.
-3. Parameter expansion: Explore a range of simulation variable assignments by
+1. :ref:`Manually<append_init>`: Create each Model individually and subsequently append the simulation to the ensemble.
+2. :ref:`Replica creation<replicas_init>`: Generate a specified number of copies or instances of a simulation.
+3. :ref:`Parameter expansion<param_expansion_init>`: Explore a range of simulation variable assignments by
    specifying values of input parameters and selecting an expansion strategy to rearrange
    across multiple Models within the ensemble.
 
@@ -55,6 +55,7 @@ The key initializer arguments are:
 -------------------
 Parameter Expansion
 -------------------
+.. _param_expansion_init:
 In ensemble simulations, parameter expansion is a technique that
 allows users to set parameter values using the `params` initializer.
 User's may control how the parameter values spread across the ensemble
@@ -152,6 +153,7 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings`` and `par
 --------
 Replicas
 --------
+.. _replicas_init:
 In ensemble simulations, a replica strategy involves the creation of
 identical or closely related models within an ensemble, allowing for the
 assessment of how a system responds to the same set of parameters under
@@ -216,6 +218,7 @@ Example 2 : Replica Creation with ``RunSettings``, ``BatchSettings`` and `replic
 ---------------
 Manually Append
 ---------------
+.. _append_init:
 Manually appending models involves the addition of user created model instances to an ensemble,
 offering a level of customization in ensemble design. This approach is favorable when users
 have distinct requirements for individual models, such as variations in parameters, run settings,
@@ -248,6 +251,93 @@ Example 1 : Append Models with ``BatchSettings``
 
         ensemble.add_model(model_1)
         ensemble.add_model(model_2)
+=====
+Files
+=====
+.. _attach_files:
+--------
+Overview
+--------
+SmartSim enables users to attach files to Ensembles for use within the workflow
+through the ``Ensemble.attach_generator_file()`` function. The function
+accepts three input arguments:
+
+1. `to_copy` (list, optional): files to copy, defaults to [].
+2. `to_symlink` (list, optional): files to symlink, defaults to [].
+3. `to_configure` (list, optional): input files with tagged parameters, defaults to [].
+
+The `to_configure` argument accepts a list of files containing parameters and values
+to use within each member of the Ensemble simulation. The distribution of the parameters
+can be configured via the `perm_strategy` argument.
+
+The `to_copy` and `to_symlink` arguments accept a list of files to write `params` to.
+
+-------
+Example
+-------
+This example provides a demonstration of using ``Ensemble.attach_generator_files()``
+`to_configure` argument to load a text file to an Ensemble to set parameters used
+required for each simulation for Ensemble members.
+
+We want to load a text file named `configure_inputs.txt` to the workflow ensemble.
+Within the file, is the parameter, `THERMO`, that is assigned multiple values:
+
+.. code-block:: txt
+
+   THERMO = ;[10,11,12];
+
+The parameter `THERMO` is used within the application script that we will expand to
+all Ensemble members. We would like to instruct SmartSim use all permutations of the
+argument we passed in.
+
+To encapsulate our application using an Ensemble, we must create an Experiment instance
+to access Experiment helper function that create the Ensemble.
+Begin by importing the Experiment module and SmartSim log module
+to initialize the Experiment, `exp`:
+
+.. code-block:: python
+
+    from smartsim import Experiment
+    from smartsim.log import get_logger
+
+    logger = get_logger("Experiment Log")
+    # Initialize the Experiment
+    exp = Experiment("getting-started", launcher="auto")
+
+We are applying the same run settings to all Ensemble members, and therefore,
+will specify a run settings object when initializing the Ensemble.
+We create the run settings object with the path to the application script
+and the executable to run the script:
+
+.. code-block:: python
+
+    # Initialize a RunSettings object
+    ensemble_settings = exp.create_run_settings(exe="python", exe_args="/path/to/application.py")
+
+Next, initialize a ``Ensemble`` object with ``Experiment.create_ensemble()``
+and pass in the `model_settings` instance:
+
+.. code-block:: python
+
+    # Initialize a Model object
+    model = exp.create_ensemble("ensemble", run_settings=ensemble_settings, params={"THERMO"}, perm_strategy="all_perm")
+
+We now have a ``Ensemble`` instance named `ensemble`. We specify that the simulations use the
+variable `"THERMO"` and we specify that we would like the Ensemble to expand with all
+possible permutations of the variable values.
+
+Now attach the above text file to the Ensemble for use at entity runtime. We use the
+``Ensemble.attach_generator_files()`` function and specify the `to_configure`
+argument with the path to the text file, `configure_params.txt`:
+
+.. code-block:: python
+
+    # Attach the file to the Model instance
+    model.attach_generator_files(to_configure="path/to/configure_params.txt")
+
+When we launch the Ensemble using ``Experiment.start()``, SmartSim reads the values within the text
+file, registered the value of `perm_strategy` which we set to `all_perm`, and will create three
+different Models within the Ensemble.
 
 =====================
 ML Models and Scripts
@@ -268,6 +358,7 @@ these capabilities:
 ---------
 AI Models
 ---------
+.. _load_ml_model:
 When configuring an ensemble, users can instruct SmartSim to load
 TensorFlow (TF), TensorFlow Lite (TF-lite), PyTorch (PT), or ONNX
 models dynamically to the database (colocated or standard). Machine Learning (ML) models added
@@ -348,6 +439,7 @@ standard orchestrator that is launched prior to the start of the ensemble.
 ---------------------
 TorchScript functions
 ---------------------
+.. _load_tf_function:
 Users can instruct SmartSim to upload TorchScript functions to the database
 at runtime. Script functions are loaded into
 standard orchestrators prior to the execution of ensemble entities. If using a
@@ -401,6 +493,7 @@ standard orchestrator that is launched prior to the start of the ensemble.
 -------------------
 TorchScript Scripts
 -------------------
+.. _load_script:
 SmartSim supports the execution of TorchScripts
 with each entity belonging to the ensemble. Regardless of whether
 the orchestrator is colocated or not, each script added to the ensemble is
@@ -455,6 +548,7 @@ orchestrator that is launched prior to the start of the ensemble.
 =========================
 Data Collision Prevention
 =========================
+.. _prefix_ensemble:
 --------
 Overview
 --------
