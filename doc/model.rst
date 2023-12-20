@@ -58,11 +58,11 @@ the Model by specifying initializer arguments.
 The key initializer arguments are:
 
 -  `name` (str): Specify the name of the model for unique identification.
--  `run_settings` (RunSettings): Describe execution settings for a Model.
--  `params` (Dict[str, Any] | None = None): Provides a dictionary of parameters for Models.
--  `path` (str | None = None): Path to where the model should be executed at runtime.
+-  `run_settings` (base.RunSettings): Describe execution settings for a Model.
+-  `params` (t.Optional[t.Dict[str, t.Any]] = None): Provides a dictionary of parameters for Models.
+-  `path` (t.Optional[str] = None): Path to where the model should be executed at runtime.
 -  `enable_key_prefixing` (bool = False): Prefix the model name to data sent to the database to prevent key collisions. Default is True.
--  `batch_settings` (BatchSettings | None = None): Describes settings for batch workload treatment.
+-  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
 A `name` and :ref:`RunSettings<settings-info>` reference are required to initialize a ``Model``.
 To instruct a Model to encapsulate a simulation, users must provide the simulation
@@ -146,8 +146,8 @@ Specify the model instance, `model`, to ``Experiment.start()`` to start the stan
 When the Experiment Python driver script is executed, two files from the standard model will be created
 in the Experiment working directory:
 
-1. `model.out` : this file will hold outputs produced by the Model workload
-2. `model.err` : will hold any errors that occurred during Model execution
+1. `example-model.out` : this file will hold outputs produced by the Model workload
+2. `example-model.err` : will hold any errors that occurred during Model execution
 
 -----------------
 A Colocated Model
@@ -195,18 +195,18 @@ external files with a model.
 .. note::
     Post-attachment overwrites the existing list of entity files.
 
-To attach a file to a model for use within the simulation, provide one of the following values to the helper function:
+To attach a file to a model used within the simulation, provide one of the following values to the helper function:
 
-* `to_copy` (list, optional): Files that are copied into the path of the entity.
-* `to_symlink` (list, optional): Files that are symlinked into the path of the entity.
+* `to_copy` (t.Optional[t.List[str]] = None): Files that are copied into the path of the entity.
+* `to_symlink` (t.Optional[t.List[str]] = None): Files that are symlinked into the path of the entity.
 
-To attach a file to the Model and read the contents for use within the simulation, pass the
+To specify a template file to the Model to store a dynamic set of `params` values at runtime, pass the
 following value to the helper function:
 
-* `to_configure` (list, optional): Designed for text-based model input files,
-  "to_configure" is exclusive to models. These files contain parameters for
-  the model, with customizable tags corresponding to values users intend to
-  modify. The default tag is a semicolon (e.g., THERMO = ;10;).
+* `to_configure` (t.Optional[t.List[str]] = None): Designed for text-based model input files,
+  "to_configure" is exclusive to models. At runtime, these files are passed `params`
+  used within the model, to replace customizable tags corresponding to values users intend to
+  modify. The default tag is a semicolon (e.g., THERMO = ;THERMO;).
 
 In the `Example` subsection, we provide an example illustrating using the value `to_configure`
 within ``attach_generator_files()``.
@@ -215,18 +215,17 @@ within ``attach_generator_files()``.
 Example
 -------
 This example provides a demonstration of how to instruct SmartSim to attach a file
-containing parameters for use within the Model using ``Model.attach_generator_files()``
-and specifying `to_configure`.
+to load the Model `params` by using ``Model.attach_generator_files()`` to specify `to_configure`.
 
-We have a text file named `configure_inputs.txt`. Within the text, is the parameter, `THERMO`,
-that is assigned a single value:
+We have a text file named `params_inputs.txt`. Within the text, is the parameter, `THERMO`:
 
 .. code-block:: txt
 
-   THERMO = ;10;
+   THERMO = ;THERMO;
 
-The parameter `THERMO` is used within our application script and we would like to
-instruct SmartSim to assign the parameter value upon Model execution.
+The parameter `THERMO` with value is passed in when initializing the Model. We would like to
+instruct SmartSim to store the parameter value upon Model execution in `params_inputs.txt`
+between the semi-colons.
 
 To encapsulate our simulation using a Model, we must create an Experiment instance
 to gain access to the Experiment helper function that creates the Model.
@@ -256,21 +255,44 @@ and pass in the `model_settings` instance:
 .. code-block:: python
 
     # Initialize a Model object
-    model = exp.create_model("model", model_settings)
+    example_model = exp.create_model("model", model_settings, params={"THERMO":1})
 
 We now have a ``Model`` instance named `model`. Attach the above text file
 to the Model for use at entity runtime. To do so, we use the
 ``Model.attach_generator_files()`` function and specify the `to_configure`
-parameter with the path to the text file, `configure_params.txt`:
+parameter with the path to the text file, `params_inputs.txt`:
 
 .. code-block:: python
 
     # Attach the file to the Model instance
-    model.attach_generator_files(to_configure="path/to/configure_params.txt")
+    example_model.attach_generator_files(to_configure="path/to/params_inputs.txt")
 
-When we launch the Model, using ``Experiment.start()``, the file, `configure_inputs.txt`,
-will be in the same file path as the application and SmartSim will read and assign
-Model parameters from the text file.
+Launching the model with ``exp.start(example_model)`` processes attached generator files. `configure_inputs.txt` will be
+available in the model working directory and SmartSim will assign `example_model` `params` to the text file.
+
+The contents of `params_inputs.txt` after Model completion are:
+
+.. code-block:: txt
+
+   THERMO = ;1;
+
+=============
+Model Outputs
+=============
+A Model creates two files when started:
+
+* `<model_name>.out`
+* `<model_name>.err`
+
+The files are created in the working
+directory. These files capture outputs and errors during execution. The filenames directly match the
+model's name. The `<model_name>.out` file logs standard outputs and the
+`<model_name>.err` logs errors for debugging.
+
+.. note::
+    You can move these files by specifying a string path using the `path` parameter when instantiating the model.
+    You may also move these files by calling ``Experiment.generate(model)``. This will create a directory `model_name/`
+    and will store the two files within the new folder.
 
 =====================
 ML Models and Scripts
@@ -278,16 +300,13 @@ ML Models and Scripts
 --------
 Overview
 --------
-SmartSim supports sending TorchScript functions, scripts, and
-TensorFlow (TF), TensorFlow Lite (TF-lite), PyTorch (PT), or ONNX models to the database at runtime
-prior to the execution of a Model for use within the workload.
 The ``Model API`` provides a set of helper functions:
 
 * ``Model.add_ml_model()``
 * ``Model.add_function()``
 * ``Model.add_script()``
 
-These capabilities are exposed in the Model API:
+The helper functions expose the capabilities:
 
 * Load a TF, TF-lite, PT, or ONNX model into the DB at runtime
 * Launch a TorchScript function with the Model.
@@ -313,19 +332,19 @@ provide the model in memory or specify the file path via the
 When specifying an ML model using ``Model.add_ml_model()``, the
 following arguments are offered:
 
-- name (str): key to store model under
-- backend (str): name of the backend (TORCH, TF, TFLITE, ONNX)
-- model (byte string, optional): A model in memory (only supported for non-colocated orchestrators)
-- model_path (file path to model): serialized model
-- device (str, optional): name of device for execution, defaults to “CPU”
-- devices_per_node (int): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- first_device (int): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- batch_size (int, optional): batch size for execution, defaults to 0
-- min_batch_size (int, optional): minimum batch size for model execution, defaults to 0
-- min_batch_timeout (int, optional): time to wait for minimum batch size, defaults to 0
-- tag (str, optional): additional tag for model information, defaults to “”
-- inputs (list[str], optional): model inputs (TF only), defaults to None
-- outputs (list[str], optional): model outputs (TF only), defaults to None
+- name (str): key to store model under.
+- backend (str): name of the backend (TORCH, TF, TFLITE, ONNX).
+- model (t.Optional[str] = None): A model in memory (only supported for non-colocated orchestrators).
+- model_path (t.Optional[str] = None): serialized model.
+- device (t.Literal["CPU", "GPU"] = "CPU"): name of device for execution, defaults to “CPU”.
+- devices_per_node (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- first_device (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- batch_size (int = 0): batch size for execution, defaults to 0.
+- min_batch_size (int = 0): minimum batch size for model execution, defaults to 0.
+- min_batch_timeout (int = 0): time to wait for minimum batch size, defaults to 0.
+- tag (str = ""): additional tag for model information, defaults to “”.
+- inputs (t.Optional[t.List[str]] = None): model inputs (TF only), defaults to None.
+- outputs (t.Optional[t.List[str]] = None): model outputs (TF only), defaults to None.
 
 These arguments provide details to add and configure
 ML models within the model simulation.
@@ -360,23 +379,23 @@ For the purpose of the example, we define a Keras CNN within the experiment.
 
 **SmartSim Model Integration:**
 
-Assuming an initialized ``Model`` named `smartsim_model`, we specify the
-following parameters to the ``Model.add_ml_model()`` function:
+Assuming an initialized ``Model`` named `smartsim_model` exists, we add a TensorFlow model using
+the ``Model.add_ml_model()`` function:
 
 .. code-block:: python
 
     smartsim_model.add_ml_model(name="cnn", backend="TF", model=model, device="GPU", devices_per_node=2, first_device=0, inputs=inputs, outputs=outputs)
 
-In this integration, we provide the following details:
+In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the following arguments:
 
--  `name`: "cnn" - A key to uniquely identify the model within the database.
--  `backend`: "TF" - Indicating that the model is a TensorFlow model.
--  `model`: model - The in-memory representation of the TensorFlow model.
--  `device`: "GPU" - Specifying the device for ML model execution.
--  `devices_per_node`: 2 - Use two GPUs per node.
--  `first_device`: 0 - Start with 0 index GPU.
--  `inputs`: inputs - The names of the model inputs.
--  `outputs`: outputs - The names of the model outputs.
+-  name ("cnn"): A key to uniquely identify the model within the database.
+-  backend ("TF): Indicating that the model is a TensorFlow model.
+-  model (model): The in-memory representation of the TensorFlow model.
+-  device ("GPU"): Specifying the device for ML model execution.
+-  devices_per_node (2): Use two GPUs per node.
+-  first_device (0): Start with 0 index GPU.
+-  inputs (inputs): The names of the model inputs.
+-  outputs (outputs): The names of the model outputs.
 
 .. warning::
     Calling `exp.start(model)` prior to instantiation of an orchestrator will result in
@@ -396,11 +415,11 @@ devices, specific device numbers can be specified via `devices_per_node`.
 When specifying a TF function using ``Model.add_function()``, the
 following arguments are offered:
 
-- name (str): key to store function under
-- function (str, optional): TorchScript function code
-- device (str, optional): device for script execution, defaults to “CPU”
-- devices_per_node (int): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- first_device (int): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- name (str): key to store function under.
+- function (t.Optional[str] = None): TorchScript function code.
+- device (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
+- devices_per_node (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- first_device (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
 Example: Loading a TensorFlow Function to the Model
 ---------------------------------------------------
@@ -421,20 +440,20 @@ To load a TF function, define the function within the Python driver script.
 
 **SmartSim Model Integration:**
 
-Assuming an initialized ``Model`` named `smartsim_model`, we specify the
-following parameters to the ``Model.add_function()`` function:
+Assuming an initialized ``Model`` named `smartsim_model` exists, we add a TensorFlow model using
+the ``Model.add_function()`` function:
 
 .. code-block:: python
 
     smartsim_model.add_function(name="example_func", function=timestwo, device="GPU", devices_per_node=2, first_device=0)
 
-In this integration, we provide the following details:
+In the above ``smartsim_model.add_function()`` code snippet, we offer the following arguments:
 
--  `name`: "example_func" - A key to uniquely identify the model within the database.
--  `function`: timestwo - Name of the TorchScript function defined in the Python driver script.
--  `device`: "CPU" - Specifying the device for ML model execution.
--  `devices_per_node`: 2 - Use two GPUs per node.
--  `first_device`: 0 - Start with 0 index GPU.
+-  name ("example_func"): A key to uniquely identify the model within the database.
+-  function (timestwo): Name of the TorchScript function defined in the Python driver script.
+-  device ("CPU"): Specifying the device for ML model execution.
+-  devices_per_node (2): Use two GPUs per node.
+-  first_device (0): Start with 0 index GPU.
 
 When the model is started via ``Experiment.start()``, the TF function will be loaded to the
 standard orchestrator that is launched prior to the start of the model.
@@ -453,12 +472,12 @@ devices, specific device numbers can be specified via `devices_per_node` such as
 When specifying a TorchScript using ``Model.add_script()``, the
 following arguments are offered:
 
-- name (str): key to store script under
-- script (str, optional): TorchScript code (only supported for non-colocated orchestrators)
-- script_path (str, optional): path to TorchScript code
-- device (str, optional): device for script execution, defaults to “CPU”
-- devices_per_node (int): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- first_device (int): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- name (str): key to store script under.
+- script (t.Optional[str] = None): TorchScript code (only supported for non-colocated orchestrators).
+- script_path (t.Optional[str] = None): path to TorchScript code.
+- device (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
+- devices_per_node (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- first_device (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
 You might use TorchScript scripts to represent individual models within the model.
 
@@ -477,20 +496,20 @@ Define the TorchScript code as a variable in the Python driver script:
 
 **SmartSim Model Integration:**
 
-Assuming an initialized ``Model`` named `smartsim_model`, we specify the
-following parameters to the ``Model.add_script()`` function:
+Assuming an initialized ``Model`` named `smartsim_model` exists, we add a TensorFlow model using
+the ``Model.add_script()`` function:
 
 .. code-block:: python
 
     smartsim_model.add_script(name="example_script", script=torch_script_str, device="GPU", devices_per_node=2, first_device=0)
 
-In this integration, we provide the following details:
+In the above ``smartsim_model.add_script()`` code snippet, we offer the following arguments:
 
--  `name`: "example_script" - key to store script under
--  `script`: torch_script_str - TorchScript code
--  `device`: "CPU" - device for script execution
--  `devices_per_node`: 2 - Use two GPUs per node.
--  `first_device`: 0 - Start with 0 index GPU.
+-  name ("example_script"): key to store script under.
+-  script (torch_script_str): TorchScript code.
+-  device ("CPU"): device for script execution.
+-  devices_per_node (2): Use two GPUs per node.
+-  first_device (0): Start with 0 index GPU.
 
 When the model is started via ``Experiment.start()``, the TorchScript will be loaded to the
 orchestrator that is launched prior to the start of the model.
