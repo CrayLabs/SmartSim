@@ -17,13 +17,15 @@ in Python, C, C++, or Fortran.
 When initializing a ``Model``, users
 provide executable simulation code to the Models run settings as well as
 execution instructions with regard to the workload
-manager (e.g. Slurm) and available compute resources. Users can specify
-and assign values to parameters used within the simulation via the `params`
-initialization argument. Parameters supplied in the `params` argument can either be
-written into supplied configuration files or be assigned within configuration files
-for use within the simulation at runtime. This functionality is supported by the
-``Model.attach_generator_files()`` helper function users have access to
-once creating a Model instance.
+manager (e.g. Slurm) and available compute resources.
+Model parameters can be supplied directly during instantiation.
+The :ref:`Experiment API<experiment_api>` supports passing
+parameters up front. The passed in parameters may be written to a file
+and stored in the Models execution path.
+Files may also be attached to the Model for use
+within the simulation.
+Dynamically configuring and loading files at runtime is enabled
+by the :ref:`Model API<model_api.attach_generator_files>`.
 
 SmartSim supports **two** strategies for deploying Models:
 
@@ -55,30 +57,34 @@ the Model by specifying initializer arguments.
 
 The key initializer arguments are:
 
--  `name` (Type: str): Specify the name of the model for unique identification.
--  `run_settings` (Type: RunSettings): Describe execution settings for a Model.
--  `params` (dict, optional): Provides a dictionary of parameters for Models.
--  `path` (str, optional): Path to where the model should be executed at runtime.
--  `enable_key_prefixing` (bool, optional): Prefix the model name to data sent to the database to prevent key collisions. Default is True.
--  `batch_settings` (BatchSettings | None): Describes settings for batch workload treatment.
+-  `name` (str): Specify the name of the model for unique identification.
+-  `run_settings` (RunSettings): Describe execution settings for a Model.
+-  `params` (Dict[str, Any] | None = None): Provides a dictionary of parameters for Models.
+-  `path` (str | None = None): Path to where the model should be executed at runtime.
+-  `enable_key_prefixing` (bool = False): Prefix the model name to data sent to the database to prevent key collisions. Default is True.
+-  `batch_settings` (BatchSettings | None = None): Describes settings for batch workload treatment.
 
-To initialize a ``Model``, a `name` and :ref:`RunSettings<settings-info>` reference is required.
+A `name` and :ref:`RunSettings<settings-info>` reference are required to initialize a ``Model``.
 To instruct a Model to encapsulate a simulation, users must provide the simulation
 executable to the Models run settings with instructions on how the application should be launched.
 
 Users may also launch Models as a batch job by specifying :ref:`BatchSettings<settings-info>` when initializing.
-When a Model with a ``BatchSettings`` reference is added to an Ensemble with a ``BatchSettings`` reference,
-the Models batch settings are strategically ignored.
 
-The `params` init argument in for Models lets users define simulation parameters and their
+.. note::
+    ``BatchSettings`` attached to a model are ignored when the model is executed as part of an ensemble.
+
+The `params` init argument for Models lets users define simulation parameters and their
 values through a dictionary. Using :ref:`Model API functions<model_api>`, users can write these parameters to
 a file in the Model's working directory. Similarly, the Model API provides functionality to
 instruct SmartSim to read a file and automatically fill in parameter values. Both behaviors are
 provided by the ``Model.attach_generator_files()`` function.
 
-Additionally, it's important to note that Model instances will be executed in the
-current working directory by default if no `path` argument is supplied. When a Model
-instance is passed to ``Experiment.generate()``, a directory within the Experiment directory
+.. note::
+    Model instances will be executed in the
+    current working directory by default if no `path` argument is supplied.
+
+When a Model instance is passed to ``Experiment.generate()``, a
+directory within the Experiment directory
 is automatically created to store input and output files from the model.
 
 ----------------
@@ -103,9 +109,8 @@ Instructions
 This example provides a demonstration of how to initialize and launch a standard Model
 within the Experiment workflow.
 
-All workflow entities are initialized through the Experiment API. To create a Model,
-the function ``Experiment.create_model()`` is used. To create Model, we must first
-initialize an instance of the Experiment class. Import the SmartSim Experiment module
+All workflow entities are initialized through the Experiment API.
+Initialize an instance of the Experiment class to create the Model. Import the SmartSim Experiment module
 and initialize an Experiment instance. Provide a `name` and `launcher`:
 
 .. code-block:: python
@@ -124,7 +129,7 @@ executable to execute the application script, "script.py":
 
     settings = exp.create_run_settings(exe="python", exe_args="script.py")
 
-We now have an instance of run settings name `settings`. Using the instance, instruct SmartSim
+We now have an instance of run settings named `settings`. Using the instance, instruct SmartSim
 to encapsulate the simulation as a Model through ``Experiment.create_model()``:
 
 .. code-block:: python
@@ -156,13 +161,14 @@ nodes as the model when the model instance is deployed via ``Experiment.start()`
 
 There are **three** different Model API helper functions to colocate a Model:
 
-- ``Model.colocate_db()``: An alias for `Model.colocate_db_tcp()`.
-- ``Model.colocate_db_tcp()``: Colocate an Orchestrator instance with this Model over TCP/IP.
-- ``Model.colocate_db_uds()``: Colocate an Orchestrator instance with this Model over UDS.
+- ``Model.colocate_db_tcp()``: Colocate an Orchestrator instance and establish client communication using TCP/IP.
+- ``Model.colocate_db_uds()``: Colocate an Orchestrator instance and establish client communication using UDS.
+- ``Model.colocate_db()``: (deprecated) An alias for `Model.colocate_db_tcp()`.
 
-Each function will initialize an unsharded database to the Model instance. Only the partnered Model
+Each function initializes an unsharded database accessible only to the model. When the model
+is started, the database will be launched on the same compute resource as the model. Only the colocated Model
 may communicate with the database via a SmartRedis client by using the loopback TCP interface or
-Unix Domain sockets. Extra parameters for the database can be passed into the helper functions
+Unix Domain sockets. Extra parameters for the database can be passed into the helper functions above
 via kwargs.
 
 .. code-block:: python
@@ -183,16 +189,13 @@ Files
 --------
 Overview
 --------
-The ``Model.attach_generator_files()`` function enables users to write model
-parameters to a file or attachment a file of parameters with values to the
-Model entity for use within the simulation.
-Users can specify whether to copy, symlink, or configure files by passing parameters
-one of the following parameters: `to_copy`, `to_symlink`, or `to_configure`.
-It's worth noting that invoking
-this function, ``attach_generator_files()``, post-attachment overwrites the existing list of entity files.
+The ``Model.attach_generator_files()`` function enables the use of
+external files with a model.
 
-To write Model parameters to a file and attach to the Model, pass one of the
-following values to the helper function:
+.. note::
+    Post-attachment overwrites the existing list of entity files.
+
+To attach a file to a model for use within the simulation, provide one of the following values to the helper function:
 
 * `to_copy` (list, optional): Files that are copied into the path of the entity.
 * `to_symlink` (list, optional): Files that are symlinked into the path of the entity.
@@ -278,19 +281,31 @@ Overview
 SmartSim supports sending TorchScript functions, scripts, and
 TensorFlow (TF), TensorFlow Lite (TF-lite), PyTorch (PT), or ONNX models to the database at runtime
 prior to the execution of a Model for use within the workload.
-The ``Model API`` provides a subset of helper functions that support
-these capabilities:
+The ``Model API`` provides a set of helper functions:
 
-* ``Model.add_ml_model()`` : Load a TF, TF-lite, PT, or ONNX model into the DB at runtime.
-* ``Model.add_function()`` : Launch a TorchScript function with the Model.
-* ``Model.add_script()`` : Launch a TorchScript with the Model.
+* ``Model.add_ml_model()``
+* ``Model.add_function()``
+* ``Model.add_script()``
+
+These capabilities are exposed in the Model API:
+
+* Load a TF, TF-lite, PT, or ONNX model into the DB at runtime
+* Launch a TorchScript function with the Model.
+* Launch a TorchScript with the Model.
+
+--------
+Runtimes
+--------
+* TensorFlow (TF)
+* TensorFlow Lite (TF-lite)
+* PyTorch (PT)
+* ONNX
 
 ---------
 AI Models
 ---------
 When configuring a Model, users can instruct SmartSim to load
-TensorFlow (TF), TensorFlow Lite (TF-lite), PyTorch (PT), or ONNX
-models dynamically to the database (colocated or standard). Machine Learning (ML) models added
+Machine Learning (ML) models dynamically to the database (colocated or standard). ML models added
 are loaded prior to the execution of the model. SmartSim users may
 provide the model in memory or specify the file path via the
 ``Model.add_ml_model()`` Model API helper function.
@@ -317,7 +332,7 @@ ML models within the model simulation.
 
 Example: Loading an In-Memory ML Model to the Model
 ---------------------------------------------------
-In this example, we demonstrate how to instruct SmartSim to load
+This example demonstrates how to instruct SmartSim to load
 an in-memory ML model into the database at model runtime.
 
 **Python Script: Creating a Keras CNN for Model Purposes**
@@ -363,12 +378,13 @@ In this integration, we provide the following details:
 -  `inputs`: inputs - The names of the model inputs.
 -  `outputs`: outputs - The names of the model outputs.
 
-When the Model is started via ``Experiment.start()``, the ML model will be loaded to the
-standard orchestrator that is launched prior to the start of the Model.
+.. warning::
+    Calling `exp.start(model)` prior to instantiation of an orchestrator will result in
+    a failed attempt to load the ML model to a non-existent database.
 
----------------------
-TorchScript functions
----------------------
+--------------------
+Tensorflow functions
+--------------------
 Users can instruct SmartSim to upload TorchScript functions to the database
 at runtime. Script functions are loaded into
 standard orchestrators prior to the execution of Models. If using a
@@ -386,13 +402,14 @@ following arguments are offered:
 - devices_per_node (int): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 - first_device (int): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
-Example: Loading an TensorFlow Function to the Model
-----------------------------------------------------
-In this example, we demonstrate how to instruct SmartSim to load
-an TensorFlow function into the database at model runtime. It's
-important to note the function, ``Model.add_function()`` is supported
-for non-colocated deployments and during a colocated deployment, ``Model.add_script()``
-should be used.
+Example: Loading a TensorFlow Function to the Model
+---------------------------------------------------
+This example demonstrates how to instruct SmartSim to load
+a TensorFlow function into the database at model runtime.
+
+.. note::
+    - Use `Model.add_script` with a colocated deployment
+    - Use `Model.add_function` on standard model deployment
 
 **Python Script: Define a TF Function for Model Purposes**
 To load a TF function, define the function within the Python driver script.
@@ -445,14 +462,14 @@ following arguments are offered:
 
 You might use TorchScript scripts to represent individual models within the model.
 
-Example: Loading an TorchScript to the Model
+Example: Loading a TorchScript to the Model
 --------------------------------------------
 In this example, we demonstrate how to instruct SmartSim to load
 an TorchScript into the database at model runtime.
 
-**Python Script: Define a TorchScript for Model Purposes**
+**Python Script: Using Torch Scripts As ML Models**
 
-Define the TorchScript code to a variable in the Python driver script:
+Define the TorchScript code as a variable in the Python driver script:
 
 .. code-block:: python
 
