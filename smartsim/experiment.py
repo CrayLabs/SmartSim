@@ -36,7 +36,7 @@ from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
 from .log import get_logger
-from .settings import Container, base, settings
+from .settings import settings, base, Container
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -840,7 +840,7 @@ class Experiment:
         preview = Viewexp(self).to_human_readable()
         return preview
 
-    def get_launcher(self) -> None:
+    def get_launcher(self) -> str:
         """Get launcher"""
         return self._launcher
 
