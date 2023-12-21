@@ -1,7 +1,6 @@
 ************
 Orchestrator
 ************
-
 ========
 Overview
 ========
@@ -37,17 +36,13 @@ Clustered Orchestrator
 --------
 Overview
 --------
-A clustered Orchestrator 
-A clustered Orchestrator is deployed on separate compute resources than
-a Model. 
 
-A clustered Orchestrator may be single-sharded
-(on a single compute node) or multi-sharded (spread across multiple compute nodes).
-When initializing a standalone ``Orchestrator`` using ``Experiment.create_orchestrator()``, set
-the init parameter `db_nodes` to be 1 or greater than 2. This parameter controls the number
-of nodes the in-memory database spans across.
-
-After initializing a 
+In a clustered orchestrator deployment, the database is initiated on a separate compute host
+from the model's compute resources. Unlike a colocated orchestrator, a clustered orchestrator avoids
+sharing compute resources with the model. It can be configured as either single-sharded or multi-sharded.
+Data communication is initiated within the Model through a SmartRedis client. The client establishes a
+connection with the database using a specified database address and travels off-node to reach the database
+compute node.
 
 .. |cluster-orc| image:: images/clustered-orc-diagram.png
   :width: 700
@@ -295,10 +290,9 @@ Colocated Orchestrator
 --------
 Overview
 --------
-During colocated deployment, the application and database are deployed on the same
-compute node.In this deployment, the database is *not* connected together in a
-cluster and each shard of the database is addressed individually by the processes
-running on that compute host.
+In a colocated orchestrator deployment, the database and model coexist on shared compute resources.
+The orchestrator is non-clustered and each application compute node hosts an instance of the database.
+Processes on the compute host individually address the database.
 
 .. |colo-orc| image:: images/co-located-orc-diagram.png
   :width: 700
@@ -318,8 +312,6 @@ the distributed application is running.
 -------
 Example
 -------
-This example demonstrates using SmartSim functions and classes to
-
 This example provides a demonstration on automating the deployment of
 a colocated Orchestrator within an Experiment.
 
@@ -442,7 +434,7 @@ We setup the SmartSim ``logger`` to output information from the Experiment.
 Initialize a Colocated Model
 ----------------------------
 In the next stage of the experiment, we
-create and launch a colocated ``Model`` that 
+create and launch a colocated ``Model`` that
 runs the application script with a database
 on the same compute node.
 
