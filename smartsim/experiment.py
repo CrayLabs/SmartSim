@@ -798,7 +798,6 @@ class Experiment:
 
     def preview(
         self,
-        *args: t.Any,
         output_format: t.Optional[str] = None,
         output_filename: t.Optional[str] = None,
         verbosity_level: t.Optional[str] = None,
