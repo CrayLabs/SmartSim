@@ -36,7 +36,7 @@ from . import slurm as _slurm
 
 def detect_launcher() -> str:
     """Detect available launcher."""
-    # Precedence: PBS, Cobalt, LSF, Slurm, local
+    # Precedence: PBS, LSF, Slurm, local
     if which("qsub") and which("qstat") and which("qdel"):
         qsub_version = run(
             ["qsub", "--version"],
@@ -47,8 +47,6 @@ def detect_launcher() -> str:
         )
         if "pbs" in (qsub_version.stdout).lower():
             return "pbs"
-        if "cobalt" in (qsub_version.stdout).lower():
-            return "cobalt"
     if all(
         [which("bsub"), which("jsrun"), which("jslist"), which("bjobs"), which("bkill")]
     ):
@@ -66,9 +64,7 @@ def detect_launcher() -> str:
     ):
         return "slurm"
     # Systems like ThetaGPU don't have
-    # Cobalt or PBS on compute nodes
-    if "COBALT_JOBID" in os.environ:
-        return "cobalt"
+    # PBS on compute nodes
     if "PBS_JOBID" in os.environ:
         return "pbs"
     return "local"

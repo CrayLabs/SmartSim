@@ -110,7 +110,7 @@ class Experiment:
         :param exp_path: path to location of ``Experiment`` directory if generated
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "cobalt", "lsf", or "local". If set to "auto",
+                         "lsf", or "local". If set to "auto",
                          an attempt will be made to find an available launcher
                          on the system.
                          Defaults to "local"

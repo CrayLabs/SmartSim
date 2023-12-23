@@ -49,7 +49,6 @@ from watchdog.observers.api import BaseObserver
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
@@ -325,14 +324,13 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
-            "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
         }
 
     def init_launcher(self, launcher: str) -> Launcher:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        SmartSim currently supports slurm, pbs(pro), lsf,
         and local launching
 
         :param launcher: which launcher to initialize

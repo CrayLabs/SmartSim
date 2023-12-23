@@ -64,7 +64,6 @@ from ...servertype import CLUSTERED, STANDALONE
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import (
-    CobaltLauncher,
     LocalLauncher,
     LSFLauncher,
     PBSLauncher,
@@ -318,7 +317,7 @@ class Controller:
 
     def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        SmartSim currently supports slurm, pbs(pro), lsf,
         and local launching
 
         :param launcher: which launcher to initialize
@@ -331,7 +330,6 @@ class Controller:
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
             "pals": PBSLauncher,
-            "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
         }

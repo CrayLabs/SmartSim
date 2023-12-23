@@ -434,7 +434,7 @@ Expand Machine Learning Library Support:
 
 Expand Launcher Setting Options:
 
- - Add ability to use base ``RunSettings`` on a Slurm, PBS, or Cobalt launchers (SmartSim-PR90_)
+ - Add ability to use base ``RunSettings`` on a Slurm, or PBS launchers (SmartSim-PR90_)
  - Add ability to use base ``RunSettings`` on LFS launcher (SmartSim-PR108_)
 
 Deprecations and Breaking Changes
