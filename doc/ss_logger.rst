@@ -159,8 +159,8 @@ Initialize a logger for use within the Python driver script:
 
       logger = get_logger("SmartSim")
 
-Add the ``log_to_file()`` function to instruct SmartSim to create a file named
-`logger.out` to write log messages to:
+Add the ``log_to_file()`` function to instruct SmartSim to create a file named `logger.out`
+to write log messages to:
 
 .. code-block:: python
 
@@ -179,8 +179,8 @@ Remember that the default value for the `SMARTSIM_LOG_LEVEL` variable is `info`.
 Therefore, we will not set the environment variable and instead rely on the
 default.
 
-When we execute the Python script,
-a file named `logger.out` is created in our working directory with the listed contents::
+When we execute the Python script, a file named `logger.out` is created in our working
+directory with the listed contents::
     11:15:00 system.host.com SmartSim[10950] INFO This is a message
     11:15:00 system.host.com SmartSim[10950] ERROR This is an error message
     11:15:00 system.host.com SmartSim[10950] WARNING This is a warning message
@@ -194,8 +194,8 @@ In the same Python script, add a log level to the ``log_to_file()`` as a input a
 
       log_to_file("logger.out", "quiet")
 
-When we execute the Python script once again,
-SmartSim will override the `SMARTSIM_LOG_LEVEL` variable to output messages of log level `quiet`.
-SmartSim will overwrite the contents of `logger.out` with::
+When we execute the Python script once again, SmartSim will override the `SMARTSIM_LOG_LEVEL`
+variable to output messages of log level `quiet`. SmartSim will overwrite the contents
+of `logger.out` with::
     11:15:00 system.host.com SmartSim[10950] ERROR This is an error message
     11:15:00 system.host.com SmartSim[10950] WARNING This is a warning message
