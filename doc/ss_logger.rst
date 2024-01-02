@@ -4,27 +4,29 @@ SmartSim Logger
 ========
 Overview
 ========
-SmartSim supports experiment tracking through logging functionality
-offered by the SmartSim `log` module. The logger, supported by Python logging, enables
+SmartSim supports experiment tracking through logging functionality offered by
+the SmartSim `log` module. The logger, supported by Python logging, enables
 monitoring the experiment at runtime by allowing users to print messages **to stdout**
-and/or **to file** from within the Python driver script. The SmartSim logger permits users to categorize
-messages by severity level. Users may instruct SmartSim to print to stdout
-certain severity level log messages and omit others through the `SMARTSIM_LOG_LEVEL`
-environment variable. The `SMARTSIM_LOG_LEVEL` environment variable may be overridden when logging to file
-by specifying a log level to the ``log_to_file()`` function. Examples walking through
-both logging :ref:`to stdout<log_to_stdout>` and :ref:`to file<log_to_file>` are provided below.
+and/or **to file** from within the Python driver script. The SmartSim logger categorizes
+messages by severity level.
+
+Users may instruct SmartSim to log certain severity level log messages
+and omit others through the `SMARTSIM_LOG_LEVEL` environment variable. The `SMARTSIM_LOG_LEVEL`
+environment variable may be overridden when logging to file by specifying a log level to
+the ``log_to_file()`` function. Examples walking through logging :ref:`to stdout<log_to_stdout>`
+and :ref:`to file<log_to_file>` are provided below.
 
 SmartSim offers **four** log functions to use within the Python driver script. The
 below functions accept string messages:
 
-- ``logger.warning()``
 - ``logger.error()``
+- ``logger.warning()``
 - ``logger.info()``
 - ``logger.debug()``
 
-The `SMARTSIM_LOG_LEVEL` environment variable accepts **three** log levels: `quiet`,
-`info` and `debug`. By settings the environment to one of the log levels, will control
-the log messages printed at runtime. The log levels are listed below from
+The `SMARTSIM_LOG_LEVEL` environment variable accepts **four** log levels: `quiet`,
+`info`, `debug` and `developer`. Setting the log level in the environment (or via the override function)
+controls the log messages that are output at runtime. The log levels are listed below from
 highest severity to lowest severity:
 
 - level: `quiet`
@@ -33,8 +35,14 @@ highest severity to lowest severity:
    - The `info` log level instructs SmartSim to print ``info()``, ``error()`` and ``warning()`` messages.
 - level: `debug`
    - The `debug` log level instructs SmartSim to print ``debug()``, ``info()``, ``error()`` and ``warning()`` messages.
+- level: `developer`
+   - The `developer` log level instructs SmartSim to print ``debug()``, ``info()``, ``error()`` and ``warning()`` messages.
 
-`SMARTSIM_LOG_LEVEL` defaults to `info`. For SmartSim log sample usage examples, continue to the Configuration section.
+.. note::
+    The `developer` log level is intended for use during code development and signifies highly detailed and verbose logging.
+
+.. note::
+    `SMARTSIM_LOG_LEVEL` defaults to log level `info`. For SmartSim log sample usage examples, continue to the Configuration section.
 
 =============
 Configuration
@@ -43,19 +51,18 @@ Configuration
 Log to stdout
 -------------
 .. _log_to_stdout:
-The ``get_logger()`` function in SmartSim enables users to initialize
-a logger instance. Once initialize, a user may use the instance
-to specify a log level function and include a log message.
-A user may control which messages are logged via the
-`SMARTSIM_LOG_LEVEL` which defaults to `info`.
+The ``get_logger()`` function in SmartSim enables users to initialize a logger instance.
+Once initialized, a user may use the instance to log a message using one of the four
+logging functions.
 
-To use the SmartSim logger within the Python script, import the required module:
+To use the SmartSim logger within a Python script, import the required `get_logger`
+function from the `log` module:
 
 .. code-block:: python
 
       from smartsim.log import get_logger
 
-Next, initialize an instance of the logger and provide a `name`:
+Next, initialize an instance of the logger and provide a logger `name`:
 
 .. code-block:: python
 
@@ -71,18 +78,16 @@ functions in the Python driver script with log messages:
       logger.error("This is an error message")
       logger.warning("This is a warning message")
 
-Execute the script *without* setting the `SMARTSIM_LOG_LEVEL`.
-Note that `SMARTSIM_LOG_LEVEL` defaults to `info`.
-When we execute the script,
-the following messages will print to stdout::
+Execute the script *without* setting the `SMARTSIM_LOG_LEVEL`. Remember that `SMARTSIM_LOG_LEVEL`
+defaults to `info`. When we execute the script, the following messages will print to stdout::
     11:15:00 system.host.com SmartSim[130033] INFO This is a message
     11:15:00 system.host.com SmartSim[130033] ERROR This is an error message
     11:15:00 system.host.com SmartSim[130033] WARNING This is a warning message
 
-Notice that the `debug` messages were filtered. This is because by using
-a higher severity level (`info`), we instruct SmartSim to omit the lower severity level (`debug`).
+Notice that the `debug` function message was filtered. This is because by using
+a higher severity level (`info`), we instruct SmartSim to omit the lower severity levels (`debug` and `developer`).
 
-Next, set `SMARTSIM_LOG_LEVEL` to `debug` in terminal::
+Next, set `SMARTSIM_LOG_LEVEL` to `debug`::
     export SMARTSIM_LOG_LEVEL=debug
 
 When we execute the script,
@@ -92,36 +97,57 @@ the following messages will print to stdout::
     11:15:00 system.host.com SmartSim[65385] ERROR This is an error message
     11:15:00 system.host.com SmartSim[65385] WARNING This is a warning message
 
-Notice that all log messages printed to stdout. By using
-the lowest severity level (`debug`), we instruct SmartSim print all log levels.
+Notice that all log messages print to stdout. By using a lower severity level (`debug`),
+we instruct SmartSim to print all log functions at and above the level.
+
+Next, set `SMARTSIM_LOG_LEVEL` to `developer`::
+    export SMARTSIM_LOG_LEVEL=developer
+
+When we execute the script,
+the following messages will print to stdout::
+    11:15:00 system.host.com SmartSim[65385] INFO This is a message
+    11:15:00 system.host.com SmartSim[65385] DEBUG This is a debug message
+    11:15:00 system.host.com SmartSim[65385] ERROR This is an error message
+    11:15:00 system.host.com SmartSim[65385] WARNING This is a warning message
+
+Notice that all log messages print to stdout. By using the lowest severity level (`developer`),
+we instruct SmartSim to print all log messages. Remember that `developer` is extremely verbose
+logging and is intended for use during development.
 
 Next, set `SMARTSIM_LOG_LEVEL` to `quiet` in terminal::
     export SMARTSIM_LOG_LEVEL=quiet
 
-When we run the program once again,
-the following output is printed to stdout::
+When we run the program once again, the following output is printed
+to stdout::
     11:15:00 system.host.com SmartSim[65385] ERROR This is an error message
     11:15:00 system.host.com SmartSim[65385] WARNING This is a warning message
 
-Notice that the `info` and `debug` messages were filtered. This is because by using
+Notice that the `info` and `debug` log functions were filtered. This is because by using
 the highest severity level (`quiet`), we instruct SmartSim to omit the lower severity levels
-(`info` and `debug`).
+(`info`, `debug` and `developer`).
 
------------
-Log to File
------------
+To finish the example, set `SMARTSIM_LOG_LEVEL` to `info` in terminal::
+    export SMARTSIM_LOG_LEVEL=info
+
+When we execute the script, the following messages will print
+to stdout::
+    11:15:00 system.host.com SmartSim[130033] INFO This is a message
+    11:15:00 system.host.com SmartSim[130033] ERROR This is an error message
+    11:15:00 system.host.com SmartSim[130033] WARNING This is a warning message
+
+Notice that the same messages were logged to stdout as when we ran the script with the default value `info`.
+SmartSim omits the lower severity levels (`debug` and `developer`).
+
+---------------
+Logging to File
+---------------
 .. _log_to_file:
 The ``log_to_file()`` function in SmartSim allows users to log messages
-to a specified file by providing a file `name`. If the file name
-passed in does not exist, SmartSim will create the file.
-If the program is reran with the same
-file name, the file contents will be overwritten. The severity
-level of messages outputted to the file can be set by the
-`SMARTSIM_LOG_LEVEL` variable. The `SMARTSIM_LOG_LEVEL` may be overridden
-by specifying a log level to the ``log_to_file()`` function
-so file output is more/less verbose than stdout.
+to a specified file by providing a file name or relative file path. If the file name
+passed in does not exist, SmartSim will create the file. If the program is re-executed with the same
+file name, the file contents will be overwritten.
 
-To demonstrate, begin by importing the function `get_logger` and `log_to_file`:
+To demonstrate, begin by importing the functions `get_logger` and `log_to_file` from the `log` module:
 
 .. code-block:: python
 
@@ -140,7 +166,7 @@ Add the ``log_to_file()`` function to instruct SmartSim to create a file named
 
       log_to_file("logger.out")
 
-For the example, we add all log message severities to the script:
+For the example, we add all log functions to the script:
 
 .. code-block:: python
 
@@ -149,7 +175,7 @@ For the example, we add all log message severities to the script:
       logger.error("This is an error message")
       logger.warning("This is a warning message")
 
-Note that the default value for the `SMARTSIM_LOG_LEVEL` variable is `info`.
+Remember that the default value for the `SMARTSIM_LOG_LEVEL` variable is `info`.
 Therefore, we will not set the environment variable and instead rely on the
 default.
 
@@ -158,6 +184,9 @@ a file named `logger.out` is created in our working directory with the listed co
     11:15:00 system.host.com SmartSim[10950] INFO This is a message
     11:15:00 system.host.com SmartSim[10950] ERROR This is an error message
     11:15:00 system.host.com SmartSim[10950] WARNING This is a warning message
+
+Notice that the `debug` function message was filtered. This is because by using
+a higher severity level (`info`), we instruct SmartSim to omit the lower severity levels (`debug` and `developer`).
 
 In the same Python script, add a log level to the ``log_to_file()`` as a input argument:
 
