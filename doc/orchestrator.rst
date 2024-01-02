@@ -4,19 +4,19 @@ Orchestrator
 ========
 Overview
 ========
-The SmartSim ``Orchestrator`` is an in-memory database that is used to store and retrieve
-data during the course of an experiment. Orchestrators can be used to 1) store and retrieve
-data across multiple entities or 2) store and retrieve with a single ``Model``.
-The two options refer to the two types of database deployments: clustered deployment
-and colocated deployment. During clustered deployment, an orchestrator is allocated
-its own compute resources. It does not resources with any other SmartSim entity.
-Colocated orchestrators share compute resources with a SmartSim ``Model``.
-In order to stream data into or receive data from the ``Orchestrator``, one of the SmartSim clients
-(SmartRedis) has to be used within a Model.
+The orchestrator is an in-memory database with features built for
+AI-enabled workflows including online training, low-latency inference, cross-application data
+exchange, online interactive visualization, online data analysis, computational
+steering, and more. The ``Orchestrator`` can be thought of as a general
+feature store capable of storing numerical data, ML models, and scripts.
+The orchestrator is capable of performing inference and script evaluation using data in the feature store.
+Any SmartSim ``Model`` or ``Ensemble`` model can connect to the
+``Orchestrator`` via the :ref:`SmartRedis<smartredis-api>`
+client library to transmit data, execute ML models, and execute scripts.
 
-Orchestrators support a wide variety of AI-enabled workloads via ``Model`` objects
-that can be instructed to load TF, TF-lite, PT, or ONNX machine learning models,
-as well as TensorFlow scripts and functions to the database at runtime.
+SmartSim offers two types of orchestrator deployments: :ref:`clustered deployment<Clustered Deployment>` and
+:ref:`colocated deployment<Colocated Deployment>`. Continue to the respective deployment sections for
+information on deployment types.
 
 Below is a diagram demonstrating an orchestrator as a general feature store
 capable of storing numerical data (tensors and datasets), AI models, and scripts (TorchScript).
@@ -31,18 +31,24 @@ TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (e.g. sc
 |orchestrator|
 
 ======================
-Clustered Orchestrator
+Clustered Deployment
 ======================
 --------
 Overview
 --------
+During clustered deployment, a SmartSim ``Orchestrator`` (the database) runs on separate
+compute node(s) from the model node(s). A clustered orchestrator can be deployed on a single
+node or sharded (distributed) over multiple nodes.
+With a sharded orchestrator, available hardware for inference and script
+evaluation increases and overall memory for data storage increases.
 
-In a clustered orchestrator deployment, the database is initiated on a separate compute host
-from the model's compute resources. Unlike a colocated orchestrator, a clustered orchestrator avoids
-sharing compute resources with the model. It can be configured as either single-sharded or multi-sharded.
-Data communication is initiated within the Model through a SmartRedis client. The client establishes a
-connection with the database using a specified database address and travels off-node to reach the database
-compute node.
+Communication between a clustered Orchestrator and Model
+is initialized in the application script via a SmartRedis client.
+Users do not need to know how the data is stored in a clustered configuration and
+can address the cluster with the SmartRedis clients like a single block of memory
+using simple put/get semantics in SmartRedis. The client establishes a
+connection using the database address and travels off the model compute node to
+the database compute node.
 
 .. |cluster-orc| image:: images/clustered-orc-diagram.png
   :width: 700
@@ -50,27 +56,46 @@ compute node.
 
 |cluster-orc|
 
+A clustered database is optimal for high data throughput scenarios
+such as online analysis, training and processing.
 Clustered Orchestrators support data communication across multiple simulations.
-Given that a clustered database is standalone, meaning the database compute node
-is separate from the application compute node, the database node does not tear
-down after the finish of a SmartSim Model.
-With standalone database deployment, SmartSim can run AI models, and Torchscript
+With clustered database deployment, SmartSim can run AI models, and Torchscript
 code on the CPU(s) or GPU(s) with existing data in the ``Orchestrator``.
 Produced data can then requested by another application.
-
-Users do not need to know how the data is stored in a clustered configuration and
-can address the cluster with the SmartRedis clients like a single block of memory
-using simple put/get semantics in SmartRedis.
-
-The cluster deployment is optimal for high data throughput scenarios such as
-online analysis, training and processing.
 
 -------
 Example
 -------
-This example provides a demonstration on automating the deployment of
-a standard Orchestrator. Once the standard database is started,
-we demonstrate connecting a client from within the driver script.
+We provide a demonstration on automating the deployment of
+a standard Orchestrator from within a Python driver script. Once the standard database is started,
+we demonstrate connecting a client from within the application script to transmit and poll data.
+
+The example is comprised of two script files:
+
+* The Application Script
+* The Experiment Driver Script
+
+**The Application Script Overview:**
+The example application script is a Python file that contains
+instructions to create and connect a SmartRedis
+client to the standard Orchestrator to transmit and retrieve
+tensors.
+
+**The Application Script Contents:**
+
+1. Connecting a SmartRedis client within the application to send and retrieve a tensor
+   from the standard database.
+
+**The Experiment Driver Script Overview:**
+The experiment driver script launches and manages
+the example entities with the ``Experiment`` API.
+In the driver script, we use the ``Experiment``
+to create and launch a ``Model`` instance
+to communicate with a launched standard ``Orchestrator``.
+
+**The Experiment Driver Script Contents:**
+
+1. Launching a ``Model`` and ``Orchestrator``.
 
 The Application Script
 ======================
@@ -284,14 +309,15 @@ workflow summary with ``Experiment.summary()``:
 When you run the experiment, the following output will appear::
  test
 
-======================
-Colocated Orchestrator
-======================
+====================
+Colocated Deployment
+====================
 --------
 Overview
 --------
-In a colocated orchestrator deployment, the database and model coexist on shared compute resources.
-The orchestrator is non-clustered and each application compute node hosts an instance of the database.
+During colocated deployment, a SmartSim ``Orchestrator`` (the database) is launched on
+the ``Model`` compute node(s).
+The orchestrator is non-clustered and each ``Model`` compute node hosts an instance of the database.
 Processes on the compute host individually address the database.
 
 .. |colo-orc| image:: images/co-located-orc-diagram.png
@@ -344,7 +370,7 @@ script.
 
 **The Experiment Driver Script Contents:**
 
-1. Launching the application script with a co-located database.
+1. Launching the application script with a co-located model.
 
 The Application Script
 ======================
