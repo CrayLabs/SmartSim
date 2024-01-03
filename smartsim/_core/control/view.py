@@ -24,16 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
+import jinja2
 
 
 class Viewexp:
     def __init__(self, exp_entity: t.Any) -> None:
         self.exp_entity = exp_entity
 
-    def to_human_readable(self) -> str:
-        preview = "\n=== Experiment Overview ===\n"
-        preview += f"\tExperiment: {self.exp_entity.name}\n"
-        preview += f"\tExperiment Path: {self.exp_entity.exp_path}\n"
-        preview += f"\tLauncher: {self.exp_entity.get_launcher()}\n"
+    def render(self) -> str:
+        """
+        Render the template from the supplied entity
+        """
+        loader = jinja2.PackageLoader("templates")
+        env = jinja2.Environment(loader=loader, autoescape=True)
+        tpl = env.get_template("master.pytpl")
+        template = tpl.render(exp_entity=self.exp_entity)
 
-        return preview
+        return template

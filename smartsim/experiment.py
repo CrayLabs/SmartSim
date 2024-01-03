@@ -801,7 +801,7 @@ class Experiment:
         output_format: t.Optional[str] = None,
         output_filename: t.Optional[str] = None,
         verbosity_level: t.Optional[str] = None,
-    ) -> None:
+    ) -> str:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight
         into what and how entities will be launched.  Any instance of
@@ -832,11 +832,14 @@ class Experiment:
         if verbosity_level:
             raise NotImplementedError
 
-        logger.info(self._preview())
+        return self._preview()
 
     def _preview(self) -> str:
         """String formatting"""
-        preview = Viewexp(self).to_human_readable()
+
+        preview = Viewexp(self).render()
+        logger.info(preview)
+
         return preview
 
     def get_launcher(self) -> str:
