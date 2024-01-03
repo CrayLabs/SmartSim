@@ -1,110 +1,103 @@
 **************
 Batch Settings
 **************
-
 ========
 Overview
 ========
-SmartSim offers functionality to launch workloads (``Model`` or ``Ensemble``)
-as batch jobs. Each SmartSim `launcher` interfaces with a ``BatchSettings`` object
-specific to a systems Workload Manager (WLM). The following ``BatchSettings`` child
-classes are provided per `launcher`:
+SmartSim provides functionality to launch workloads (``Model`` or ``Ensemble``)
+as batch jobs via the ``BatchSettings`` base class. The ``BatchSettings`` base class extends
+to specialized child classes designed for HPC systems and Workload Managers (WLM) to support
+environment specific batch job launches. Each SmartSim `launcher` interfaces with a
+``BatchSettings`` subclass specific to a systems WLM.
 
-1. The Slurm `launcher` supports:
+- The Slurm `launcher` supports:
    - :ref:`SbatchSettings<sbatch_api>`
-2. The PBSpro `launcher` supports:
+- The PBSpro `launcher` supports:
    - :ref:`QsubBatchSettings<qsub_api>`
-3. The Cobalt `launcher` supports:
-   - :ref:`CobaltBatchSettings<cqsub_api>`
-4. The LSF `launcher` supports:
+- The LSF `launcher` supports:
    - :ref:`BsubBatchSettings<bsub_api>`
 
-Each above child class allow you to specify the run parameters for a WLM batch job.
-The local `launcher` does **not** support batch jobs.
+.. note::
+      The local `launcher` does not support batch jobs.
 
-Once a ``BatchSettings`` object is initialized via the ``Experiment.create_batch_settings()``
-function, you have access to helper functions associated with the object that allow
-configuring the job batch settings. The following chart illustrates helper functions
-provided by the ``SrunSettings`` object. The ``SbatchSettings`` object is used for
-launching batches on Slurm WLM systems.
+After a ``BatchSettings`` instance is created, a user has access to the associated child class feature set
+that allows a user to configure the job batch settings.
 
-.. list-table:: SbatchSettings Helper Functions
-   :widths: 25 55 25
-   :header-rows: 1
-
-   * - ``SbatchSettings`` func
-     - Example
-     - Description
-   * - ``set_account()``
-     - ``SbatchSettings.set_account(account)``
-     - Set the account for this batch job
-   * - ``set_batch_command()``
-     - ``SbatchSettings.set_batch_command(command)``
-     - Set the command used to launch the batch e.g.
-   * - ``set_nodes()``
-     - ``SbatchSettings.set_nodes(num_nodes)``
-     - Set the number of nodes for this batch job
-   * - ...
-     - ...
-     - ...
-
-In the following :ref:`HPC<HPC>` subsection, we demonstrate configuring a SmartSim entity to launch
-as a batch job on a Slurm system.
+In the following :ref:`HPC<HPC>` subsection, we demonstrate initializing and configuring a batch settings object
+per supported SmartSim `launcher`.
 
 ===
 HPC
 ===
-In the following example, we walk through creating and launching a
-``Model`` entity with ``BatchSettings`` and ``RunSettings`` objects.
-The ``BatchSettings`` object allocates resources for the job while the
-``RunSettings`` object feeds SmartSim the run parameters for the job.
+A ``BatchSettings`` subclass is created through the ``Experiment.create_batch_settings()``
+helper function. When the user initializes the ``Experiment`` at the beginning of the Python driver script,
+a `launcher` argument may be specified. SmartSim will register or detect the `launcher` and return the supported child class
+upon a call to ``Experiment.create_batch_settings()``. Below are examples of how to initialize a ``BatchSettings`` object per `launcher`.
 
-Begin by initializing an ``Experiment`` object
-and specifying the systems WLM to the `launcher` argument.
-In this example, we use the slurm job scheduler:
+.. tabs::
 
-.. code-block:: python
+    .. group-tab:: Slurm
+      To instantiate the ``SbatchSettings`` object that interfaces with the slurm job scheduler, specify
+      `launcher="slurm"` when initializing the ``Experiment``. Upon the call to ``create_batch_settings()``
+      SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
-      exp = Experiment("name-of-experiment", launcher="slurm")
+        .. code-block:: python
 
-Next, we initialize a simple ``Model`` entity that echos `Hello World` to stdout.
-Begin by initializing a ``RunSettings`` object to configure the run parameters of the ``Model``.
-Note that since we specified the `launcher` as slurm, the slurm specific ``RunSettings`` object
-(``SrunSettings``) will be returned upon initialization:
+            from smartsim import Experiment
 
-.. code-block:: python
+            # Initialize the experiment and provide launcher slurm
+            exp = Experiment("name-of-experiment", launcher="slurm")
 
-      srun_settings = exp.create_run_settings("echo", exe_args="Hello World")
+            # Initialize a SbatchSettings object
+            sbatch_settings = exp.create_batch_settings(nodes=1, time="10:00:00", batch_args={"ntasks": 1})
+            # Set the account for the slurm batch job
+            sbatch_settings.set_account("12345-Cray")
+            # Set the partition for the slurm batch job
+            sbatch_settings.set_queue("default")
 
-Next, initialized a ``BatchSettings`` object. Again, we specified `slurm` as the experiment `launcher`.
-Therefore, the child class ``SbatchSettings`` will be returned when we use the ``Experiment.create_batch_settings()``
-function. We allocate a single node for one hour and specify Slurm sbatch arguments to batch_args as a dictionary:
+      The initialized ``SbatchSettings`` instance can now be pass to a SmartSim entity via the `batch_args` argument.
 
-.. code-block:: python
+    .. group-tab:: PBSpro
+      To instantiate the ``QsubBatchSettings`` object that interfaces with the slurm job scheduler, specify
+      `launcher="pbs"` when initializing the ``Experiment``. Upon the call to ``create_batch_settings()``
+      SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
-      batch_settings = exp.create_batch_settings(nodes=1, time="01:00:00", account="name_of_account", batch_args={"ntasks": 1})
+        .. code-block:: python
 
-Note that initialization values provided (nodes, time, account) will overwrite the same arguments in batch_args if present.
-Next, we further configure the batch settings with the helper functions provided through the ``SbatchSettings`` object,
-``batch_settings``:
+            from smartsim import Experiment
 
-.. code-block:: python
+            # Initialize the experiment and provide launcher pbs
+            exp = Experiment("name-of-experiment", launcher="pbs")
 
-      batch_settings.set_batch_command("sbatch")
-      batch_settings.set_cpus_per_task(5)
+            # Initialize a QsubBatchSettings object
+            qsub_batch_settings = exp.create_batch_settings(nodes=1, time="10:00:00", batch_args={"ntasks": 1})
+            # Set the account for the pbs batch job
+            qsub_batch_settings.set_account("12345-Cray")
+            # Set the partition for the pbs batch job
+            qsub_batch_settings.set_queue("default")
 
-Finally, create a ``Model`` using ``Experiment.create_model()``. Specify
-the ``SbatchSettings`` and ``SrunSettings`` objects along with a `name` for the model:
+      The initialized ``QsubBatchSettings`` instance can now be pass to a SmartSim entity via the `batch_args` argument.
 
-.. code-block:: python
+    .. group-tab:: LSF
+      To instantiate the ``BsubBatchSettings`` object that interfaces with the slurm job scheduler, specify
+      `launcher="lsf"` when initializing the ``Experiment``. Upon the call to ``create_batch_settings()``
+      SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
-      model = exp.create_model("hello_world", batch_settings, run_settings)
+        .. code-block:: python
 
-Next, launch the Model using ``Experiment.start()``:
+            from smartsim import Experiment
 
-.. code-block:: python
+            # Initialize the experiment and provide launcher lsf
+            exp = Experiment("name-of-experiment", launcher="lsf")
 
-      exp.start(model)
+            # Initialize a BsubBatchSettings object
+            bsub_batch_settings = exp.create_batch_settings(nodes=1, time="10:00:00", batch_args={"ntasks": 1})
+            # Set the account for the lsf batch job
+            bsub_batch_settings.set_account("12345-Cray")
+            # Set the partition for the lsf batch job
+            bsub_batch_settings.set_queue("default")
 
-In this experiment, there is no need to use the ``Experiment.stop()`` function
-since there is no launched orchestrator.
+      The initialized ``BsubBatchSettings`` instance can now be pass to a SmartSim entity via the `batch_args` argument.
+
+.. warning::
+      Note that initialization values provided (nodes, time, account) will overwrite the same arguments in `batch_args` if present.
