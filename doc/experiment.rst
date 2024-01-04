@@ -62,7 +62,7 @@ manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
 6. ``auto``: have SmartSim auto-detect the launcher to use
 
 If a `launcher` is not specified, SmartSim will default to `"local"` which will start all Experiment created
-instances on the localhost.
+entities on the localhost.
 
 .. compound::
   For example, to set up a slurm launcher, the workflow should be initialized as follows:
@@ -91,9 +91,10 @@ SmartSim driver script, there is no limit to the number of SmartSim entities
 within an Experiment. In the following subsections, we define the
 general purpose of the three entities that can be created via
 Experiment API factory methods:
-  * ``Orchestrator``
-  * ``Model``
-  * ``Ensemble``
+
+* ``Orchestrator``
+* ``Model``
+* ``Ensemble``
 
 To create a reference to a newly instantiated entity object, use the associated
 ``Experiment.create_...()`` function.
@@ -130,7 +131,7 @@ using the :ref:`Experiment API<experiment_api>`.
      - Launch an Entity
    * - ``stop()``
      - ``exp.stop(*args)``
-     - Clobber an Entity
+     - Stop an Entity
    * - ``get_status()``
      - ``exp.get_status(*args)``
      - Retrieve Entity Status
@@ -150,11 +151,12 @@ client library to transmit data, execute ML models, and execute scripts.
 
 **SmartSim offers two types Orchestrator deployments:**
 
-* :ref:`Clustered Orchestrator Deployment<Clustered Deployment>`
-* :ref:`Colocated Orchestrator Deployment<Colocated Deployment>`
+* :ref:`Clustered Orchestrator Deployment<clustered_deployment_exp_docs>`
+* :ref:`Colocated Orchestrator Deployment<colocated_deployment_exp_docs>`
 
 Clustered Deployment
 --------------------
+.. _clustered_deployment_exp_docs:
 The standard orchestrator can be deployed on a single compute
 node or can be sharded (distributed) over multiple compute nodes.
 With multiple nodes, available hardware for inference and script
@@ -185,6 +187,7 @@ gives you access to functions associated with the :ref:`Orchestrator API<orchest
 
 Colocated Deployment
 --------------------
+.. _colocated_deployment_exp_docs:
 A colocated ``Orchestrator`` shares compute resources with a ``Model`` instance defined by the user.
 In this deployment, the database is not connected
 together as a single cluster, and the database on each
@@ -365,7 +368,7 @@ Initialize
 
 .. compound::
   Before invoking the factory method to create a ``Model``, we must
-  first create a ``RunSettings`` object which holds the information needed to executed the ``Model``
+  first create a ``RunSettings`` object which holds the information needed to execute the ``Model``
   on the system. The ``RunSettings`` object is initialized using the
   ``Experiment.create_run_settings()`` factory method. In this factory method,
   we specify the executable to run and the arguments to pass to
