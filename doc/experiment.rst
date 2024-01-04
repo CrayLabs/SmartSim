@@ -25,8 +25,8 @@ Settings are given to ``Model`` and ``Ensemble`` objects to provide parameters f
 :ref:`Experiment API<experiment_api>` offers customizable settings objects that are created and initialized via factory
 methods:
 
-1. :ref:`RunSettings<run_settings_doc>`
-2. :ref:`BatchSettings<batch_settings_doc>`
+1. :ref:`RunSettings<dead_link>`
+2. :ref:`BatchSettings<dead_link>`
 
 Once a workflow component is initialized, a user has access
 to the associated entity API that supports configuring and

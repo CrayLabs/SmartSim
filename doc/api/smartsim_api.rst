@@ -455,8 +455,6 @@ Model
    :show-inheritance:
    :inherited-members:
 
-.. _ensemble_api:
-
 Ensemble
 ========
 
