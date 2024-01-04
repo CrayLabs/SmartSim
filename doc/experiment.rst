@@ -10,16 +10,16 @@ scalable workflows.
 
 SmartSim interfaces with a diverse range of systems, including local environments such as
 Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS, and LSF). When initializing the Experiment workflow, a user can specify
-the :ref:`launcher<Launchers>` of the designated system or defer to automatic launcher selection.
+the :ref:`launcher<launcher_exp_docs>` of the designated system or defer to automatic launcher selection.
 
 The Experiment API is SmartSim's top level API that provides users with methods for creating, combining,
-configuring, launching and monitoring :ref:`entities<Entities>` in an AI-enabled workflow. More specifically, the
+configuring, launching and monitoring :ref:`entities<entities_exp_docs>` in an AI-enabled workflow. More specifically, the
 Experiment API offers three customizable workflow components that are created and initialized via factory
 methods:
 
-1. :ref:`Orchestrator<Orchestrator>`
-2. :ref:`Model<Model>`
-3. :ref:`Ensemble<Ensemble>`
+1. :ref:`Orchestrator<orchestrator_exp_docs>`
+2. :ref:`Model<model_exp_docs>`
+3. :ref:`Ensemble<ensemble_exp_docs>`
 
 Settings are given to ``Model`` and ``Ensemble`` objects to provide parameters for how a job should be executed. The
 :ref:`Experiment API<experiment_api>` offers customizable settings objects that are created and initialized via factory
@@ -32,8 +32,8 @@ Once a workflow component is initialized, a user has access
 to the associated entity API that supports configuring and
 retrieving entity information:
 
-* :ref:`Model API<model_api>`
 * :ref:`Orchestrator API<orchestrator_api>`
+* :ref:`Model API<model_api>`
 * :ref:`Ensemble API<ensemble_api>`
 
 There is no limit to the number of entities a user can
@@ -45,6 +45,7 @@ initialize within an experiment.
   machine learning infrastructure launched by SmartSim and connected
   to online analysis and visualization via the in-memory database.
 
+.. _launcher_exp_docs:
 =========
 Launchers
 =========
@@ -81,6 +82,7 @@ entities on the localhost.
   If the systems launcher cannot be found or no `launcher` argument is provided, the default value of
   `launcher="local"` will be used.
 
+.. _entities_exp_docs:
 ========
 Entities
 ========
@@ -136,6 +138,7 @@ using the :ref:`Experiment API<experiment_api>`.
      - ``exp.get_status(*args)``
      - Retrieve Entity Status
 
+.. _orchestrator_exp_docs:
 Orchestrator
 ============
 The orchestrator is an in-memory database with features built for
@@ -146,7 +149,7 @@ steering, and more. The ``Orchestrator`` can be thought of as a general
 feature store capable of storing numerical data, ML models, and scripts.
 The orchestrator is capable of performing inference and script evaluation using data in the feature store.
 Any SmartSim ``Model`` or ``Ensemble`` model can connect to the
-``Orchestrator`` via the :ref:`SmartRedis<SmartRedis Client Library Hook>`
+``Orchestrator`` via the :ref:`SmartRedis<dead_link>`
 client library to transmit data, execute ML models, and execute scripts.
 
 **SmartSim offers two types Orchestrator deployments:**
@@ -234,6 +237,7 @@ training. More detailed information on the ideal use cases for clustered ``Orche
 and co-located ``Orchestrator(s)`` is available in the :ref:`Orchestrator documentation
 page<dead_link>`.
 
+.. _model_exp_docs:
 Model
 =====
 ``Model(s)`` represent a simulation model or any
@@ -252,6 +256,7 @@ the model should be launched as a batch job on the WLM system.
 The ``create_model()`` factory method returns an initialized Model object that
 gives you access to functions associated with the :ref:`Model API<model_api>`.
 
+.. _ensemble_exp_docs:
 Ensemble
 ========
 In addition to a single model, SmartSim allows users to create,
