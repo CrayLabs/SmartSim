@@ -25,6 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import pytest
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
+
 __author__ = "Sam Partee"
 
 

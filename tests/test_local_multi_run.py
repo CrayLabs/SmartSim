@@ -24,18 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 
 from smartsim import Experiment, status
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 """
 Test the launch of simple entity types with local launcher
 """
 
 
-def test_models(fileutils):
+def test_models(fileutils, test_dir):
     exp_name = "test-models-local-launch"
-    exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")

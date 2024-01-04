@@ -29,23 +29,35 @@ from time import sleep
 import pytest
 
 from smartsim import Experiment, status
+from smartsim.settings import QsubBatchSettings
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
+if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
+    pytestmark = pytest.mark.skip(
+        reason="Launching batch jobs is not supported on PBS without ALPS"
+    )
 
-def test_batch_model(fileutils, wlmutils):
+
+def add_batch_resources(wlmutils, batch_settings):
+    if isinstance(batch_settings, QsubBatchSettings):
+        for key, value in wlmutils.get_batch_resources().items():
+            batch_settings.set_resource(key, value)
+
+
+def test_batch_model(fileutils, test_dir, wlmutils):
     """Test the launch of a manually construced batch model"""
 
     exp_name = "test-batch-model"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
 
     batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, batch_settings)
     if wlmutils.get_test_launcher() == "cobalt":
         batch_settings.set_queue("debug-flat-quad")
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
@@ -60,12 +72,11 @@ def test_batch_model(fileutils, wlmutils):
     assert statuses[0] == status.STATUS_COMPLETED
 
 
-def test_batch_ensemble(fileutils, wlmutils):
+def test_batch_ensemble(fileutils, test_dir, wlmutils):
     """Test the launch of a manually constructed batch ensemble"""
 
     exp_name = "test-batch-ensemble"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
@@ -73,6 +84,7 @@ def test_batch_ensemble(fileutils, wlmutils):
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
+    add_batch_resources(wlmutils, batch)
 
     batch.set_account(wlmutils.get_test_account())
     if wlmutils.get_test_launcher() == "cobalt":
@@ -87,15 +99,15 @@ def test_batch_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_batch_ensemble_replicas(fileutils, wlmutils):
+def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
     exp_name = "test-batch-ensemble-replicas"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
+    add_batch_resources(wlmutils, batch)
 
     batch.set_account(wlmutils.get_test_account())
     if wlmutils.get_test_launcher() == "cobalt":

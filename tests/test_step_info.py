@@ -24,9 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 
 from smartsim import status
 from smartsim._core.launcher.stepInfo import *
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
 
 
 def test_str():

@@ -35,14 +35,18 @@ from smartsim._core.generation.modelwriter import ModelWriter
 from smartsim.error.errors import ParameterWriterError, SmartSimError
 from smartsim.settings import RunSettings
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
+
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
+
 
 def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(path.join("generator_files", filename))
 
-def test_write_easy_configs(fileutils):
-    test_dir = fileutils.make_test_dir()
 
+def test_write_easy_configs(fileutils, test_dir):
     param_dict = {
         "5": 10,  # MOM_input
         "FIRST": "SECOND",  # example_input.i
@@ -69,9 +73,7 @@ def test_write_easy_configs(fileutils):
         assert filecmp.cmp(written, correct)
 
 
-def test_write_med_configs(fileutils):
-    test_dir = fileutils.make_test_dir()
-
+def test_write_med_configs(fileutils, test_dir):
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
         "'noleap'": "'leap'",  # input.nml
@@ -101,10 +103,8 @@ def test_write_med_configs(fileutils):
         assert filecmp.cmp(written, correct)
 
 
-def test_write_new_tag_configs(fileutils):
+def test_write_new_tag_configs(fileutils, test_dir):
     """sets the tag to the dollar sign"""
-
-    test_dir = fileutils.make_test_dir()
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -146,9 +146,7 @@ def test_mw_error_2():
         writer._write_changes("[not/a/path]")
 
 
-def test_write_mw_error_3(fileutils):
-    test_dir = fileutils.make_test_dir()
-
+def test_write_mw_error_3(fileutils, test_dir):
     param_dict = {
         "5": 10,  # MOM_input
     }

@@ -28,12 +28,16 @@ import filecmp
 from os import path as osp
 
 import pytest
+from tabulate import tabulate
 
 from smartsim import Experiment
 from smartsim._core.generation import Generator
 from smartsim.database import Orchestrator
 from smartsim.settings import RunSettings
-from tabulate import tabulate
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 rs = RunSettings("python", exe_args="sleep.py")
 
@@ -53,9 +57,9 @@ def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(osp.join("generator_files", filename))
 
 
-def test_ensemble(fileutils):
+def test_ensemble(fileutils, test_dir):
     exp = Experiment("gen-test", launcher="local")
-    test_dir = fileutils.get_test_dir()
+
     gen = Generator(test_dir)
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
@@ -70,9 +74,9 @@ def test_ensemble(fileutils):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
 
-def test_ensemble_overwrite(fileutils):
+def test_ensemble_overwrite(fileutils, test_dir):
     exp = Experiment("gen-test-overwrite", launcher="local")
-    test_dir = fileutils.get_test_dir()
+
     gen = Generator(test_dir, overwrite=True)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -93,9 +97,9 @@ def test_ensemble_overwrite(fileutils):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
 
-def test_ensemble_overwrite_error(fileutils):
+def test_ensemble_overwrite_error(fileutils, test_dir):
     exp = Experiment("gen-test-overwrite-error", launcher="local")
-    test_dir = fileutils.get_test_dir()
+
     gen = Generator(test_dir)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -112,8 +116,7 @@ def test_ensemble_overwrite_error(fileutils):
         gen.generate_experiment(ensemble)
 
 
-def test_full_exp(fileutils, wlmutils):
-    test_dir = fileutils.make_test_dir()
+def test_full_exp(fileutils, test_dir, wlmutils):
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     model = exp.create_model("model", run_settings=rs)
@@ -141,12 +144,11 @@ def test_full_exp(fileutils, wlmutils):
     assert osp.isfile(osp.join(test_dir, "model/sleep.py"))
 
 
-def test_dir_files(fileutils):
+def test_dir_files(fileutils, test_dir):
     """test the generate of models with files that
     are directories with subdirectories and files
     """
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -161,13 +163,12 @@ def test_dir_files(fileutils):
         model_path = osp.join(test_dir, "dir_test/dir_test_" + str(i))
         assert osp.isdir(model_path)
         assert osp.isdir(osp.join(model_path, "test_dir_1"))
-        assert osp.isfile(osp.join(model_path, "test.py"))
+        assert osp.isfile(osp.join(model_path, "test.in"))
 
 
-def test_print_files(fileutils, capsys):
+def test_print_files(fileutils, test_dir, capsys):
     """Test the stdout print of files attached to an ensemble"""
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("print-attached-files-test", test_dir, launcher="local")
 
     ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
@@ -245,9 +246,8 @@ def test_print_files(fileutils, capsys):
     assert captured.out == expected_out_multi
 
 
-def test_multiple_tags(fileutils):
+def test_multiple_tags(fileutils, test_dir):
     """Test substitution of multiple tagged parameters on same line"""
-    test_dir = fileutils.make_test_dir()
 
     exp = Experiment("test-multiple-tags", test_dir)
     model_params = {"port": 6379, "password": "unbreakable_password"}
@@ -261,16 +261,13 @@ def test_multiple_tags(fileutils):
     exp.start(parameterized_model, block=True)
 
     with open(osp.join(parameterized_model.path, "multi-tags.out")) as f:
-        line = f.readline()
-        assert (
-            line.strip() == "My two parameters are 6379 and unbreakable_password, OK?"
-        )
+        log_content = f.read()
+        assert "My two parameters are 6379 and unbreakable_password, OK?" in log_content
 
 
-def test_generation_log(fileutils):
+def test_generation_log(fileutils, test_dir):
     """Test that an error is issued when a tag is unused and make_fatal is True"""
 
-    test_dir = fileutils.make_test_dir()
     exp = Experiment("gen-log-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20], "STEPS": [10, 20]}
@@ -285,10 +282,12 @@ def test_generation_log(fileutils):
     exp.generate(ensemble, verbose=True)
 
     log_file = osp.join(test_dir, "smartsim_params.txt")
-    ground_truth = get_gen_file(fileutils, osp.join("log_params", "smartsim_params.txt"))
+    ground_truth = get_gen_file(
+        fileutils, osp.join("log_params", "smartsim_params.txt")
+    )
 
     with open(log_file) as f1, open(ground_truth) as f2:
-        assert(not not_header(f1.readline()))
+        assert not not_header(f1.readline())
         f1 = filter(not_header, f1)
         f2 = filter(not_header, f2)
         assert all(x == y for x, y in zip(f1, f2))
@@ -302,12 +301,13 @@ def test_generation_log(fileutils):
             ),
         )
 
-def test_config_dir(fileutils):
+
+def test_config_dir(fileutils, test_dir):
     """Test the generation and configuration of models with
     tagged files that are directories with subdirectories and files
     """
     exp = Experiment("config-dir", launcher="local")
-    test_dir = fileutils.make_test_dir()
+
     gen = Generator(test_dir)
 
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
@@ -366,8 +366,14 @@ def test_no_file_overwrite():
     exp = Experiment("test_no_file_overwrite", launcher="local")
     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
     with pytest.raises(ValueError):
-        ensemble.attach_generator_files(to_configure=["/normal/file.txt", "/path/to/smartsim_params.txt"])
+        ensemble.attach_generator_files(
+            to_configure=["/normal/file.txt", "/path/to/smartsim_params.txt"]
+        )
     with pytest.raises(ValueError):
-        ensemble.attach_generator_files(to_symlink=["/normal/file.txt", "/path/to/smartsim_params.txt"])
+        ensemble.attach_generator_files(
+            to_symlink=["/normal/file.txt", "/path/to/smartsim_params.txt"]
+        )
     with pytest.raises(ValueError):
-        ensemble.attach_generator_files(to_copy=["/normal/file.txt", "/path/to/smartsim_params.txt"])
+        ensemble.attach_generator_files(
+            to_copy=["/normal/file.txt", "/path/to/smartsim_params.txt"]
+        )

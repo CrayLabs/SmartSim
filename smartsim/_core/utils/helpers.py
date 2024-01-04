@@ -27,9 +27,11 @@
 """
 A file of helper functions for SmartSim
 """
+import base64
 import os
-import uuid
 import typing as t
+import uuid
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from shutil import which
@@ -38,47 +40,46 @@ from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBacke
 
 
 def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
-    """Unpack the unformatted database identifier using the token,
-    and format for env variable suffix
-    :db_id: the unformatted database identifier eg. identifier_1_0
-    :token: character '_' or '-' to use to unpack the database identifier
-    :return: db suffix, and formatted db_id eg. _identifier_1, identifier_1
+    """Unpack the unformatted database identifier
+    and format for env variable suffix using the token
+    :param db_id: the unformatted database identifier eg. identifier_1
+    :type db_id: str
+    :param token: character to use to construct the db suffix
+    :type token: str
+    :return: db id suffix and formatted db_id e.g. ("_identifier_1", "identifier_1")
+    :rtype: (str, str)
     """
 
     if db_id == "orchestrator":
         return "", ""
-    db_id = "_".join(db_id.split(token)[:-1])
-    # if unpacked db_id is default, return empty
-    if db_id == "orchestrator":
-        # if db_id is default after unpack, return empty
-        return "", ""
-    db_name_suffix = "_" + db_id
+    db_name_suffix = token + db_id
     return db_name_suffix, db_id
 
 
 def unpack_colo_db_identifier(db_id: str) -> str:
     """Create database identifier suffix for colocated database
-    :db_id: the unformatted database identifier
+    :param db_id: the unformatted database identifier
+    :type db_id: str
     :return: db suffix
+    :rtype: str
     """
     return "_" + db_id if db_id else ""
 
 
+def create_short_id_str() -> str:
+    return str(uuid.uuid4())[:7]
+
+
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
-    lock_suffix = str(uuid.uuid4())[:7]
+    lock_suffix = create_short_id_str()
     return f"smartsim-{lock_suffix}.lock"
 
 
 @lru_cache(maxsize=20, typed=False)
 def check_dev_log_level() -> bool:
-    try:
-        lvl = os.environ["SMARTSIM_LOG_LEVEL"]
-        if lvl == "developer":
-            return True
-        return False
-    except KeyError:
-        return False
+    lvl = os.environ.get("SMARTSIM_LOG_LEVEL", "")
+    return lvl == "developer"
 
 
 def fmt_dict(value: t.Dict[str, t.Any]) -> str:
@@ -273,3 +274,31 @@ def installed_redisai_backends(
     }
 
     return {backend for backend in backends if _installed(base_path, backend)}
+
+
+def get_ts() -> int:
+    """Return the current timestamp (accurate to seconds) cast to an integer"""
+    return int(datetime.timestamp(datetime.now()))
+
+
+def encode_cmd(cmd: t.List[str]) -> str:
+    """Transform a standard command list into an encoded string safe for providing as an
+    argument to a proxy entrypoint
+    """
+    if not cmd:
+        raise ValueError("Invalid cmd supplied")
+
+    ascii_cmd = "|".join(cmd).encode("ascii")
+    encoded_cmd = base64.b64encode(ascii_cmd).decode("ascii")
+    return encoded_cmd
+
+
+def decode_cmd(encoded_cmd: str) -> t.List[str]:
+    """Decode an encoded command string to the original command list format"""
+    if not encoded_cmd.strip():
+        raise ValueError("Invalid cmd supplied")
+
+    decoded_cmd = base64.b64decode(encoded_cmd.encode("ascii"))
+    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
+
+    return cleaned_cmd

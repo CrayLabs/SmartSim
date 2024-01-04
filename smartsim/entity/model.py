@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import collections.abc
+import re
 import sys
 import typing as t
 import warnings
@@ -170,8 +171,7 @@ class Model(SmartSimEntity):
         # restrictive than what we need (but it avoids relative path issues)
         for strategy in [to_copy, to_symlink, to_configure]:
             if strategy is not None and any(
-                osp.basename(filename) == "smartsim_params.txt"
-                for filename in strategy
+                osp.basename(filename) == "smartsim_params.txt" for filename in strategy
             ):
                 raise ValueError(
                     "`smartsim_params.txt` is a file automatically "
@@ -252,6 +252,12 @@ class Model(SmartSimEntity):
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
         """
+
+        if not re.match(r"^[a-zA-Z0-9.:\,_\-/]*$", unix_socket):
+            raise ValueError(
+                f"Invalid name for unix socket: {unix_socket}. Must only "
+                "contain alphanumeric characters or . : _ - /"
+            )
 
         uds_options = {
             "unix_socket": unix_socket,
@@ -609,8 +615,11 @@ class Model(SmartSimEntity):
         :type first_device: int
         """
         db_script = DBScript(
-            name=name, script=function, device=device,
-            devices_per_node=devices_per_node, first_device=first_device
+            name=name,
+            script=function,
+            device=device,
+            devices_per_node=devices_per_node,
+            first_device=first_device,
         )
         self.add_script_object(db_script)
 

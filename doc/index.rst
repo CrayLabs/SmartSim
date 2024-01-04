@@ -32,6 +32,7 @@
    experiment
    orchestrator
    launchers
+   ml_features
    api/smartsim_api
 
 .. toctree::
@@ -46,7 +47,14 @@
    sr_data_structures
    sr_dataset_conversions
    sr_runtime
+   sr_advanced_topics
    api/smartredis_api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: SmartDashboard
+
+   smartdashboard
 
 .. toctree::
    :maxdepth: 2

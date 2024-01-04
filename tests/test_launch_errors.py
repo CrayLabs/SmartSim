@@ -32,6 +32,9 @@ from smartsim.database import Orchestrator
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_unsupported_run_settings():
     exp_name = "test-unsupported-run-settings"
@@ -43,10 +46,9 @@ def test_unsupported_run_settings():
         exp.start(model)
 
 
-def test_model_failure(fileutils):
+def test_model_failure(fileutils, test_dir):
     exp_name = "test-model-failure"
-    exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("bad.py")
     settings = RunSettings("python", f"{script} --time=3")
@@ -58,11 +60,10 @@ def test_model_failure(fileutils):
     assert all([stat == status.STATUS_FAILED for stat in statuses])
 
 
-def test_orchestrator_relaunch(fileutils, wlmutils):
+def test_orchestrator_relaunch(test_dir, wlmutils):
     """Test when users try to launch second orchestrator"""
     exp_name = "test-orc-on-relaunch"
-    exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     orc = Orchestrator(port=wlmutils.get_test_port())
     orc.set_path(test_dir)

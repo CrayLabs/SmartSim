@@ -27,8 +27,8 @@
 import typing as t
 
 from ....log import get_logger
-from .step import Step
 from ....settings import QsubBatchSettings
+from .step import Step
 
 logger = get_logger(__name__)
 

@@ -10,6 +10,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+# pylint: skip-file
+
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
@@ -24,7 +26,7 @@ try:
     import smartsim
     version = smartsim.__version__
 except ImportError:
-    version = "0.5.1"
+    version = "0.6.0"
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -48,9 +50,12 @@ extensions = [
     'sphinxfortran.fortran_domain',
     'sphinxfortran.fortran_autodoc',
     'breathe',
-    'nbsphinx'
+    'nbsphinx',
+    'sphinx_copybutton',
+    'sphinx_tabs.tabs'
 ]
 
+suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

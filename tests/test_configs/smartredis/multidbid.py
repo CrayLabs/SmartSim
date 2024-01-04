@@ -25,12 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-
-
 import os
 
-from smartredis import ConfigOptions, Client
-
+from smartredis import Client, ConfigOptions
 
 if __name__ == "__main__":
     """For inclusion in test with two unique database identifiers with multiple databases"""
@@ -40,12 +37,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     env_vars = [
-        "SSKEYIN_testdb_reg",
-        "SSKEYOUT_testdb_reg",
         "SSDB_testdb_reg",
         "SR_DB_TYPE_testdb_reg",
-        "SSKEYIN_testdb_colo",
-        "SSKEYOUT_testdb_colo",
         "SSDB_testdb_colo",
         "SR_DB_TYPE_testdb_colo",
     ]
@@ -57,5 +50,3 @@ if __name__ == "__main__":
 
     c1 = Client(opts1, logger_name="SmartSim")
     c2 = Client(opts2, logger_name="SmartSim")
-
-  

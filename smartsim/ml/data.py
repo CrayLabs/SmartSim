@@ -35,7 +35,6 @@ from smartredis.error import RedisReplyError
 from ..error import SSInternalError
 from ..log import get_logger
 
-
 logger = get_logger(__name__)
 
 

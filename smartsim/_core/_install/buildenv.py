@@ -46,8 +46,11 @@ from typing import Iterable
 #       to remove
 # https://setuptools.pypa.io/en/latest/pkg_resources.html
 
+# isort: off
 import pkg_resources
 from pkg_resources import packaging  # type: ignore
+
+# isort: on
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
@@ -273,8 +276,8 @@ class Versioner:
     PYTHON_MIN = Version_("3.8.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.5.1"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.4.2"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.0"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
@@ -347,9 +350,7 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        return {
-            "ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
-        }
+        return {"ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:

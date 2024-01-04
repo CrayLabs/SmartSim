@@ -8,4 +8,4 @@ if env_value:
     print(f"{var_name}=={env_value}")
     sys.exit(0)
 
-print('env var not found')
+print("env var not found")

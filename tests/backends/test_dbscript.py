@@ -24,20 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import sys
 
-import os
-
 import pytest
+from smartredis import *
 
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
+from smartsim.entity.dbobject import DBScript
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
-
-from smartsim.entity.dbobject import DBScript
-
-from smartredis import *
+from smartsim.settings import MpiexecSettings, MpirunSettings
 
 logger = get_logger(__name__)
 
@@ -58,7 +56,7 @@ def timestwo(x):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script(fileutils, wlmutils, mlutils):
+def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     """Test DB scripts on remote DB"""
 
     # Set experiment name
@@ -69,8 +67,8 @@ def test_db_script(fileutils, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -80,15 +78,15 @@ def test_db_script(fileutils, wlmutils, mlutils):
     # Create the RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create the SmartSim database
-    db = exp.create_database(port=test_port, interface=test_interface)
-    exp.generate(db)
+    host = wlmutils.choose_host(run_settings)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
+    exp.generate(db, smartsim_model)
 
     # Define the torch script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -133,7 +131,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_ensemble(fileutils, wlmutils, mlutils):
+def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     """Test DB scripts on remote DB"""
 
     # Set experiment name
@@ -144,8 +142,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -155,20 +153,19 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Create RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create Ensemble with two identical models
     ensemble = exp.create_ensemble(
         "dbscript_ensemble", run_settings=run_settings, replicas=2
     )
-    ensemble.set_path(test_dir)
 
     # Create SmartSim model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     # Create SmartSim database
-    db = exp.create_database(port=test_port, interface=test_interface)
+    host = wlmutils.choose_host(run_settings)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
     # Create the script string
@@ -219,6 +216,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Assert we have added all three models to entities in ensemble
     assert all([len(entity._db_scripts) == 3 for entity in ensemble])
 
+    exp.generate(ensemble)
+
     try:
         exp.start(db, ensemble, block=True)
         statuses = exp.get_status(ensemble)
@@ -228,7 +227,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script(fileutils, wlmutils, mlutils):
+def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB"""
 
     # Set the experiment name
@@ -239,22 +238,21 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create model with colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
@@ -282,6 +280,8 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     # Assert we have added both models
     assert len(colo_model._db_scripts) == 2
 
+    exp.generate(colo_model)
+
     for db_script in colo_model._db_scripts:
         logger.debug(db_script)
 
@@ -294,7 +294,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
+def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB from ensemble, first colocating DB,
     then adding script.
     """
@@ -307,28 +307,26 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create SmartSim Ensemble with two identical models
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Create a SmartSim model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
 
     # Colocate a db with each ensemble entity and add a script
     # to each entity via file
@@ -384,6 +382,8 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
 
+    exp.generate(colo_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -394,7 +394,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
+def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB from ensemble, first adding the
     script to the ensemble, then colocating the DB"""
 
@@ -406,28 +406,26 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create Ensemble with two identical SmartSim Model
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Create an additional SmartSim Model entity
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
 
     # Add a script via string to the ensemble members
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -482,6 +480,8 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
 
+    exp.generate(colo_ensemble)
+
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -492,7 +492,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_errors(fileutils, wlmutils, mlutils):
+def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
     """Test DB Scripts error when setting a serialized function on colocated DB"""
 
     # Set Experiment name
@@ -503,22 +503,20 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-    torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create SmartSim experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create a SmartSim model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
@@ -542,7 +540,6 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Add a colocated database for each ensemble member
     for i, entity in enumerate(colo_ensemble):
@@ -569,7 +566,6 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     colo_ensemble = exp.create_ensemble(
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
-    colo_ensemble.set_path(test_dir)
 
     # Add an in-memory function to the ensemble
     colo_ensemble.add_function(
@@ -598,6 +594,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
+
 def test_inconsistent_params_db_script(fileutils):
     """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
 
@@ -611,9 +608,9 @@ def test_inconsistent_params_db_script(fileutils):
             first_device=0,
         )
     assert (
-            ex.value.args[0]
-            == "Cannot set devices_per_node>1 if CPU is specified under devices"
-        )
+        ex.value.args[0]
+        == "Cannot set devices_per_node>1 if CPU is specified under devices"
+    )
     with pytest.raises(SSUnsupportedError) as ex:
         _ = DBScript(
             name="test_script_db",
@@ -623,6 +620,6 @@ def test_inconsistent_params_db_script(fileutils):
             first_device=5,
         )
     assert (
-            ex.value.args[0]
-            == "Cannot set first_device>0 if CPU is specified under devices"
-        )
+        ex.value.args[0]
+        == "Cannot set first_device>0 if CPU is specified under devices"
+    )

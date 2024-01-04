@@ -33,6 +33,9 @@ from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
+
 
 def test_orc_parameters():
     threads_per_queue = 2
@@ -65,10 +68,9 @@ def test_inactive_orc_get_address():
         db.get_address()
 
 
-def test_orc_active_functions(fileutils, wlmutils):
+def test_orc_active_functions(test_dir, wlmutils):
     exp_name = "test_orc_active_functions"
-    exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     db = Orchestrator(port=wlmutils.get_test_port())
     db.set_path(test_dir)
@@ -93,10 +95,9 @@ def test_orc_active_functions(fileutils, wlmutils):
         db.get_address()
 
 
-def test_multiple_interfaces(fileutils, wlmutils):
+def test_multiple_interfaces(test_dir, wlmutils):
     exp_name = "test_multiple_interfaces"
-    exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     net_if_addrs = psutil.net_if_addrs()
     net_if_addrs = [
@@ -226,10 +227,13 @@ def test_slurm_set_batch_arg(wlmutils):
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
 
-@pytest.mark.parametrize("single_cmd", [
-    pytest.param(True, id="Single MPMD `srun`"),
-    pytest.param(False, id="Multiple `srun`s"),
-])
+@pytest.mark.parametrize(
+    "single_cmd",
+    [
+        pytest.param(True, id="Single MPMD `srun`"),
+        pytest.param(False, id="Multiple `srun`s"),
+    ],
+)
 def test_orc_results_in_correct_number_of_shards(single_cmd):
     num_shards = 5
     orc = Orchestrator(
@@ -242,13 +246,14 @@ def test_orc_results_in_correct_number_of_shards(single_cmd):
     )
     if single_cmd:
         assert len(orc.entities) == 1
-        node ,= orc.entities
+        (node,) = orc.entities
         assert len(node.run_settings.mpmd) == num_shards - 1
     else:
         assert len(orc.entities) == num_shards
         assert all(node.run_settings.mpmd == [] for node in orc.entities)
-    assert orc.num_shards == orc.db_nodes == sum(
-            node.num_shards for node in orc.entities)
+    assert (
+        orc.num_shards == orc.db_nodes == sum(node.num_shards for node in orc.entities)
+    )
 
 
 ###### Cobalt ######

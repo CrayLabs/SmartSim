@@ -30,6 +30,9 @@ import pytest
 from smartsim.settings import BsubBatchSettings, QsubBatchSettings, SbatchSettings
 from smartsim.settings.settings import create_batch_settings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_create_pbs_batch():
     pbs_batch = create_batch_settings(
@@ -38,8 +41,7 @@ def test_create_pbs_batch():
     args = pbs_batch.format_batch_args()
     assert isinstance(pbs_batch, QsubBatchSettings)
     assert args == [
-        "-l select=1:ncpus=10",
-        "-l place=scatter",
+        "-l nodes=1:ncpus=10",
         "-l walltime=10:00:00",
         "-q default",
         "-A myproject",
@@ -102,7 +104,7 @@ def test_existing_batch_args_mutation():
         queue="default",
         batch_args=batch_args,
     )
-    
+
     # verify initial expectations
     assert "k1" in bsub.batch_args
     assert "k2" in bsub.batch_args
@@ -113,6 +115,7 @@ def test_existing_batch_args_mutation():
     # verify that the batch_settings do not reflect the change
     assert bsub.batch_args["k1"] == orig_bargs["k1"]
     assert bsub.batch_args["k1"] != batch_args["k1"]
+
 
 def test_direct_set_batch_args_mutation():
     """
@@ -129,7 +132,7 @@ def test_direct_set_batch_args_mutation():
         queue="default",
     )
     bsub.batch_args = batch_args
-    
+
     # verify initial expectations
     assert "k1" in bsub.batch_args
     assert "k2" in bsub.batch_args

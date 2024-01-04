@@ -30,6 +30,9 @@ import pytest
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import AprunSettings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_aprun_settings():
     settings = AprunSettings("python")

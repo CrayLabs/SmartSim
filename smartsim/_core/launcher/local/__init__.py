@@ -23,26 +23,3 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-import numpy as np
-from smartredis import Client, ConfigOptions
-from os import environ
-
-
-def main():
-    # address should be set as we are launching through
-    # SmartSim.
-
-    opts1 = ConfigOptions.create_from_environment("testdb_colo")
-    client = Client(opts1, logger_name="SmartSim")
-
-    array = np.array([1, 2, 3, 4])
-    client.put_tensor("test_array", array)
-    returned = client.get_tensor("test_array")
-
-    np.testing.assert_array_equal(array, returned)
-    print(f"Test worked! Sent and received array: {str(array)}")
-
-
-if __name__ == "__main__":
-    main()

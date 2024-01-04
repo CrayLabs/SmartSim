@@ -37,6 +37,9 @@ from smartsim.database import Orchestrator
 from smartsim.entity.dbnode import DBNode, LaunchedShardData
 from smartsim.error.errors import SmartSimError
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 def test_parse_db_host_error():
     orc = Orchestrator()
@@ -46,10 +49,9 @@ def test_parse_db_host_error():
         orc.entities[0].host
 
 
-def test_hosts(fileutils, wlmutils):
+def test_hosts(test_dir, wlmutils):
     exp_name = "test_hosts"
-    exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
 
     orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
     orc.set_path(test_dir)
@@ -66,7 +68,7 @@ def test_hosts(fileutils, wlmutils):
 
 
 def _random_shard_info():
-    rand_string = lambda: ''.join(random.choices(string.ascii_letters, k=10))
+    rand_string = lambda: "".join(random.choices(string.ascii_letters, k=10))
     rand_num = lambda: random.randint(1000, 9999)
     flip_coin = lambda: random.choice((True, False))
 
@@ -91,9 +93,7 @@ def test_launched_shard_info_can_be_serialized():
 @pytest.mark.parametrize("limit", [None, 1])
 def test_db_node_can_parse_launched_shard_info(limit):
     rand_shards = [_random_shard_info() for _ in range(3)]
-    with io.StringIO(
-        textwrap.dedent(
-            """\
+    with io.StringIO(textwrap.dedent("""\
             This is some file like str
             --------------------------
 
@@ -108,12 +108,8 @@ def test_db_node_can_parse_launched_shard_info(limit):
             SMARTSIM_ORC_SHARD_INFO: {}
 
             All other lines should be ignored.
-            """
-        ).format(*(json.dumps(s.to_dict()) for s in rand_shards))
-    ) as stream:
-        parsed_shards = DBNode._parse_launched_shard_info_from_iterable(
-            stream, limit
-        )
+            """).format(*(json.dumps(s.to_dict()) for s in rand_shards))) as stream:
+        parsed_shards = DBNode._parse_launched_shard_info_from_iterable(stream, limit)
     if limit is not None:
         rand_shards = rand_shards[:limit]
     assert rand_shards == parsed_shards
@@ -123,3 +119,18 @@ def test_set_host():
     orc = Orchestrator()
     orc.entities[0].set_hosts(["host"])
     assert orc.entities[0].host == "host"
+
+
+@pytest.mark.parametrize("nodes, mpmd", [[3, False], [3, True], [1, False]])
+def test_db_id_and_name(mpmd, nodes, wlmutils):
+    if nodes > 1 and wlmutils.get_test_launcher() not in pytest.wlm_options:
+        pytest.skip(reason="Clustered DB can only be checked on WLMs")
+    orc = Orchestrator(
+        db_identifier="test_db",
+        db_nodes=nodes,
+        single_cmd=mpmd,
+        launcher=wlmutils.get_test_launcher(),
+    )
+    for i, node in enumerate(orc.entities):
+        assert node.name == f"{orc.name}_{i}"
+        assert node.db_identifier == orc.db_identifier

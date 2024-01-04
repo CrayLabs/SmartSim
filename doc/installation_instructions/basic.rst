@@ -33,7 +33,6 @@ The base prerequisites to install SmartSim and SmartRedis are:
 
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
 
-.. _GPU Support:
 
 GPU Support
 ===========

@@ -40,6 +40,10 @@ from smartsim.settings.mpiSettings import (
     _BaseMPISettings,
 )
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
+
 # Throw a warning instead of failing on machines without an MPI implementation
 default_mpi_args = (sys.executable,)
 default_mpi_kwargs = {"fail_if_missing_exec": False}
@@ -115,7 +119,6 @@ def test_expected_openmpi_instance_without_warning(
 
 
 def test_error_if_slurm_mpiexec(fileutils):
-
     stubs_path = osp.join("mpi_impl_stubs", "slurm")
     stubs_path = fileutils.get_test_dir_path(stubs_path)
     stub_exe = osp.join(stubs_path, "mpiexec")

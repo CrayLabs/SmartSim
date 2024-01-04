@@ -336,7 +336,7 @@ class SrunSettings(RunSettings):
                 # If a variable is defined, it will take precedence over --export
                 # we warn the user
                 preexisting_var = os.environ.get(k, None)
-                if preexisting_var is not None:
+                if preexisting_var is not None and preexisting_var != v:
                     msg = (
                         f"Variable {k} is set to {preexisting_var} in current "
                         "environment. If the job is running in an interactive "

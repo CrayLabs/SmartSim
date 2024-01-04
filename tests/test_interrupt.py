@@ -24,14 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 import os
 import signal
 import time
 from threading import Thread
 
+import pytest
+
 from smartsim import Experiment
 from smartsim.settings import RunSettings
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
 
 def keyboard_interrupt(pid):
@@ -40,13 +44,13 @@ def keyboard_interrupt(pid):
     os.kill(pid, signal.SIGINT)
 
 
-def test_interrupt_blocked_jobs(fileutils):
+def test_interrupt_blocked_jobs(test_dir):
     """
     Launches and polls a model and an ensemble with two more models.
     Once polling starts, the SIGINT signal is sent to the main thread,
     and consequently, all running jobs are killed.
     """
-    test_dir = fileutils.make_test_dir()
+
     exp_name = "test_interrupt_blocked_jobs"
     exp = Experiment(exp_name, exp_path=test_dir)
     model = exp.create_model(
@@ -77,7 +81,7 @@ def test_interrupt_blocked_jobs(fileutils):
         assert len(completed_jobs) == num_jobs
 
 
-def test_interrupt_multi_experiment_unblocked_jobs(fileutils):
+def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
     """
     Starts two Experiments, each having one model
     and an ensemble with two more models. Since
@@ -85,7 +89,7 @@ def test_interrupt_multi_experiment_unblocked_jobs(fileutils):
     the SIGINT signal is sent, resulting in both
     Experiment's running jobs to be killed.
     """
-    test_dir = fileutils.make_test_dir()
+
     exp_names = ["test_interrupt_jobs_0", "test_interrupt_jobs_1"]
     experiments = [Experiment(exp_names[i], exp_path=test_dir) for i in range(2)]
     jobs_per_experiment = [0] * len(experiments)

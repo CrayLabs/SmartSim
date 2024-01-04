@@ -45,9 +45,10 @@ try:
 except ImportError:
     sklearn_available = False
 
+
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     local_db,
-    fileutils,
+    test_dir,
     monkeypatch,
 ):
     """Presumably devs running the test suite have built SS correctly.
@@ -57,7 +58,7 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
 
     @contextmanager
     def _mock_make_managed_local_orc(*a, **kw):
-        client_addr ,= local_db.get_address()
+        (client_addr,) = local_db.get_address()
         yield smartredis.Client(False, address=client_addr)
 
     monkeypatch.setattr(
@@ -66,12 +67,12 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         _mock_make_managed_local_orc,
     )
     backends = installed_redisai_backends()
-    db_port ,= local_db.ports
+    (db_port,) = local_db.ports
 
     smartsim._core._cli.validate.test_install(
         # Shouldn't matter bc we are stubbing creation of orc
         # but best to give it "correct" vals for safety
-        location=fileutils.get_test_dir(),
+        location=test_dir,
         port=db_port,
         # Always test on CPU, heads don't always have GPU
         device="CPU",

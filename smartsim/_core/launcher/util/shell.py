@@ -24,10 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import psutil
 import time
 import typing as t
 from subprocess import PIPE, TimeoutExpired
+
+import psutil
 
 from ....error import ShellError
 from ....log import get_logger

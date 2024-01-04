@@ -183,7 +183,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         logger.warning("set_walltime not supported under PALS")
 
     def set_gpu_affinity_script(self, affinity: str, *args: t.Any) -> None:
-        """ Set the GPU affinity through a bash script
+        """Set the GPU affinity through a bash script
 
         :param affinity: path to the affinity script
         :type affinity: str

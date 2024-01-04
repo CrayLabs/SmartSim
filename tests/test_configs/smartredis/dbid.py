@@ -25,10 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-
 import os
 
-from smartredis import ConfigOptions, Client
+from smartredis import Client, ConfigOptions
 
 if __name__ == "__main__":
     """For inclusion in test with single database identifier in a single Client
@@ -39,8 +38,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     env_vars = [
-        "SSKEYIN_testdb_colo",
-        "SSKEYOUT_testdb_colo",
         "SSDB_testdb_colo",
         "SR_DB_TYPE_testdb_colo",
     ]
@@ -50,7 +47,3 @@ if __name__ == "__main__":
     opts1 = ConfigOptions.create_from_environment("testdb_colo")
 
     client = Client(opts1, logger_name="SmartSim")
-
-
-
-    

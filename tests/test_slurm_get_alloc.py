@@ -24,8 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
 
 from smartsim.slurm import _get_alloc_cmd
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
 
 
 def test_get_alloc_format():

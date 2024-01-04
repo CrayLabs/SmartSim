@@ -26,9 +26,43 @@
 
 import time
 import typing as t
+from dataclasses import dataclass
 
-from ...entity import SmartSimEntity, EntitySequence
+from ...entity import EntitySequence, SmartSimEntity
 from ...status import STATUS_NEW
+
+
+@dataclass(frozen=True)
+class _JobKey:
+    step_id: str
+    task_id: str
+
+
+class JobEntity:
+    """API required for a job processed in the JobManager with support for
+    telemetry monitoring
+    """
+
+    def __init__(self) -> None:
+        self.name: str = ""
+        self.path: str = ""
+        self.step_id: str = ""
+        self.task_id: str = ""
+        self.type: str = ""
+        self.timestamp: int = 0
+        self.status_dir: str = ""
+
+    @property
+    def is_db(self) -> bool:
+        return self.type in ["orchestrator", "dbnode"]
+
+    @property
+    def is_managed(self) -> bool:
+        return bool(self.step_id)
+
+    @property
+    def key(self) -> _JobKey:
+        return _JobKey(self.step_id, self.task_id)
 
 
 class Job:
@@ -42,7 +76,7 @@ class Job:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         launcher: str,
         is_task: bool,
     ) -> None:
@@ -53,7 +87,7 @@ class Job:
         :param job_id: The id associated with the job
         :type job_id: str
         :param entity: The SmartSim entity(list) associated with the job
-        :type entity: SmartSimEntity | EntitySequence
+        :type entity: SmartSimEntity | EntitySequence | JobEntity
         :param launcher: Launcher job was started with
         :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)

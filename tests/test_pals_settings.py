@@ -31,13 +31,25 @@ import sys
 
 import pytest
 
-from smartsim.error import SSUnsupportedError
-from smartsim.settings import PalsMpiexecSettings
+import smartsim._core.config.config
 from smartsim._core.launcher import PBSLauncher
 from smartsim._core.launcher.step.mpiStep import MpiexecStep
+from smartsim.error import SSUnsupportedError
+from smartsim.settings import PalsMpiexecSettings
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 default_exe = sys.executable
 default_kwargs = {"fail_if_missing_exec": False}
+
+
+@pytest.fixture(autouse=True)
+def turn_off_telemetry_indirect(monkeypatch):
+    monkeypatch.setattr(smartsim._core.config.config.Config, "telemetry_enabled", False)
+    yield
+
 
 # Uncomment when
 # @pytest.mark.parametrize(
@@ -53,6 +65,7 @@ default_kwargs = {"fail_if_missing_exec": False}
 #    func = getattr(settings, function_name)
 #    with pytest.raises(SSUnsupportedError):
 #        func(None)
+
 
 def test_affinity_script():
     settings = PalsMpiexecSettings(default_exe, **default_kwargs)
@@ -120,7 +133,7 @@ def set_env_var_to_inherit(rs):
     ],
 )
 def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
-    monkeypatch, mock_mpiexec, fileutils, rs_mutation, run_args
+    monkeypatch, mock_mpiexec, test_dir, rs_mutation, run_args
 ):
     # Setup run settings
     exe_args = ["-c", """'print("Hello")'"""]
@@ -131,7 +144,7 @@ def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
     launcher = PBSLauncher()
     monkeypatch.setenv(f"PBS_JOBID", "mock-job")
 
-    wdir = fileutils.make_test_dir()
+    wdir = test_dir
     step = launcher.create_step("my_step", wdir, rs)
     assert isinstance(step, MpiexecStep)
     assert step.get_launch_cmd() == [
@@ -144,7 +157,7 @@ def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
     ]
 
 
-def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, fileutils, mock_mpiexec):
+def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, test_dir, mock_mpiexec):
     # Setup run settings
     def make_rs(exe, exe_args):
         return PalsMpiexecSettings(exe, exe_args), [exe] + exe_args
@@ -171,7 +184,7 @@ def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, fileutils, mock_m
     launcher = PBSLauncher()
     monkeypatch.setenv(f"PBS_JOBID", "mock-job")
 
-    wdir = fileutils.make_test_dir()
+    wdir = test_dir
     step = launcher.create_step("my_step", wdir, rs_1)
     assert isinstance(step, MpiexecStep)
     assert step.get_launch_cmd() == [

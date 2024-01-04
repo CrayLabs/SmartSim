@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
-target-version = ['py37', 'py38']
+target-version = ['py38', 'py39', 'py310']
 exclude = '''
 (
   | \.egg
@@ -51,6 +51,11 @@ exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
+markers = [
+  "group_a: fast test subset a",
+  "group_b: fast test subset b",
+  "slow_tests: tests that take a long duration to complete",
+]
 
 [tool.isort]
 # supress circular import warning
@@ -102,6 +107,7 @@ module = [
   "keras",
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
+  "watchdog",
 ]
 ignore_missing_imports = true
 ignore_errors = true
