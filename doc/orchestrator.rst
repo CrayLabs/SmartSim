@@ -69,7 +69,7 @@ such as online analysis, training and processing.
 Clustered Orchestrators support data communication across multiple simulations.
 With clustered database deployment, SmartSim can run AI models, and Torchscript
 code on the CPU(s) or GPU(s) with existing data in the ``Orchestrator``.
-Data produced by by these processes and stored in the clustered database is available for
+Data produced by these processes and stored in the clustered database is available for
 consumption by other applications.
 
 -------
@@ -312,6 +312,13 @@ the ``Model`` compute node(s).
 The orchestrator is non-clustered and each ``Model`` compute node hosts an instance of the database.
 Processes on the compute host individually address the database.
 
+Communication between a colocated Orchestrator and Model
+is initialized in the application script via a SmartRedis client. Since a colocated Orchestrator is launched when the Model
+is started by the experiment, you may only connect a SmartRedis client to a colocated database from within
+the associated colocated Model script. The client establishes a connection using the database address detected
+by SmartSim or provided by the user. In multiple database experiments, users provide the `db_identifier` used to create the colocated
+Model when creating a client connection.
+
 .. |colo-orc| image:: images/co-located-orc-diagram.png
   :width: 700
   :alt: Alternative text
@@ -319,9 +326,14 @@ Processes on the compute host individually address the database.
 
 |colo-orc|
 
-This deployment is designed for highly performant online inference scenarios where
+Colocated deployment is designed for highly performant online inference scenarios where
 a distributed process (likely MPI processes) are performing inference with
-data local to each process.
+data local to each process. Data produced by these processes and stored in the colocated database
+can be transferred via a SmartRedis client to a standard database to become available for consumption
+by other applications. A tradeoff of colocated deployment is the ability to scale to a large workload.
+Colocated deployment rather benefits small/medium simulations with low latency requirements.
+By hosting the database and simulation on the same compute node, communication time is reduced which
+contributes to quicker processing speeds.
 
 This method is deemed ``locality based inference`` since data is local to each
 process and the ``Orchestrator`` is deployed locally on each compute host where
@@ -330,58 +342,26 @@ the distributed application is running.
 -------
 Example
 -------
-This example provides a demonstration on automating the deployment of
-a colocated Orchestrator within an Experiment.
+In the following example, we provide a demonstration on automating the deployment of
+a colocated Orchestrator using SmartSim from within a Python driver script. Once the colocated database is launched,
+we demonstrate connecting a client to the database from within the application script to transmit and poll data.
 
 The example is comprised of two script files:
 
-* The Application Script
-* The Experiment Driver Script
-
-**The Application Script Overview:**
-The example application script is a Python file that contains
-instructions to create and connect a SmartRedis
-client to the colocated Orchestrator.
-Since a colocated Orchestrator is launched when the Model
-is started by the experiment, you may only connect
-a SmartRedis client to a colocated database from within
-the associated colocated Model script.
-
-**The Application Script Contents:**
-
-1. Connecting a SmartRedis client within the application to send and retrieve a tensor
-   from the colocated database.
-
-**The Experiment Driver Script Overview:**
-The experiment driver script launches and manages
-the example entities with the ``Experiment`` API.
-In the driver script, we use the ``Experiment``
-to create and launch a colocated ``Model`` instance
-launches a colocated Orchestrator and runs the application
-script.
-
-**The Experiment Driver Script Contents:**
-
-1. Launching the application script with a co-located model.
+- The Application Script
+   The example application script is a Python file that contains
+   instructions to create and connect a SmartRedis
+   client to the colocated Orchestrator.
+- The Experiment Driver Script
+   The experiment driver script launches and manages
+   the example entities with the ``Experiment`` API.
+   In the driver script, we use the ``Experiment``
+   to create and launch a colocated ``Model``.
 
 The Application Script
 ======================
-A SmartRedis client connects and interacts with
-a launched Orchestrator.
-In this section, we write an application script
-that we will use as an executable argument
-for the colocated Model. We demonstrate
-how to connect a SmartRedis
-client to the active colocated database.
-Using the created client, we send a tensor
-from the database, then retrieve.
-
-.. note::
-   You must run the Python driver script to launch the Orchestrator within the
-   application script.  Otherwise, there will be no database to connect the
-   client to.
-
 To begin writing the application script, provide the imports:
+
 .. code-block:: python
 
   from smartredis import ConfigOptions, Client, log_data
@@ -400,14 +380,20 @@ since our database is single-sharded:
 
 .. note::
     Since there is only one database launched in the Experiment
-    (the colocated database), specifying a a datbase address
+    (the colocated database), specifying a a database address
     is not required when initializing the client.
     SmartRedis will handle the connection.
 
+.. note::
+   To create a client connection to the colocated database, the colocated Model must be launched
+   from within the driver script. You must execute the Python driver script, otherwise, there will
+   be no database to connect the client to.
+
 Store Data
 ----------
-Next, using the SmartRedis client instance, we create and store
-a NumPy tensor using ``Client.put_tensor()``:
+Next, using the SmartRedis client instance, we create and store a NumPy tensor using
+``Client.put_tensor()``:
+
 .. code-block:: python
 
     # Create NumPy array
@@ -496,9 +482,10 @@ to the ``create_model()`` function and assign to the variable ``model``.
 
 Step 2: Colocate
 """"""""""""""""
-To colocate the model, use the ``Model.colocate_db_uds()`` function.
+To colocate the model, use the ``Model.colocate_db_tcp()`` function.
 This function will colocate an Orchestrator instance with this Model over
 a Unix domain socket connection.
+
 .. code-block:: python
 
     # Colocate the Model
@@ -531,10 +518,9 @@ When you run the experiment, the following output will appear::
 Multiple Orchestrators
 ======================
 SmartSim supports automating the deployment of multiple Orchestrators
-from within an Experiment. Data communication for all
-Communication with the database via a SmartRedis Client is possible from the
-`db_identifier` argument that required when initializing an Orchestrator or
-colocated Model during a multi database Experiment. When initializing a SmartRedis
+from within an Experiment. Communication with the database via a SmartRedis client is possible with the
+`db_identifier` argument that is required when initializing an Orchestrator or
+colocated Model during a multiple database experiment. When initializing a SmartRedis
 client during the Experiment, first create a ``ConfigOptions`` object
 with the `db_identifier` argument created during before passing object to the Client()
 init call.
