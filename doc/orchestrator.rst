@@ -373,6 +373,7 @@ Initialize the Clients
 To establish a connection with the colocated database,
 initialize a new SmartRedis client and specify `cluster=False`
 since our database is single-sharded:
+
 .. code-block:: python
 
   # Initialize a Client
@@ -404,6 +405,7 @@ Next, using the SmartRedis client instance, we create and store a NumPy tensor u
 Retrieve Data
 -------------
 Next, retrieve the tensor using ``Client.get_tensor()``:
+
 .. code-block:: python
 
     # Retrieve tensor from driver script
@@ -422,6 +424,7 @@ Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object.
 In this example, we instantiate an ``Experiment`` object with the name ``getting-started``.
 We setup the SmartSim ``logger`` to output information from the Experiment.
+
 .. code-block:: python
 
     import numpy as np
