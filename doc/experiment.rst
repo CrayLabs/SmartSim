@@ -154,9 +154,9 @@ client library to transmit data, execute ML models, and execute scripts.
 * :ref:`Clustered Orchestrator Deployment<clustered_deployment_exp_docs>`
 * :ref:`Colocated Orchestrator Deployment<colocated_deployment_exp_docs>`
 
+.. _clustered_deployment_exp_docs:
 Clustered Deployment
 --------------------
-.. _clustered_deployment_exp_docs:
 The standard orchestrator can be deployed on a single compute
 node or can be sharded (distributed) over multiple compute nodes.
 With multiple nodes, available hardware for inference and script
@@ -176,7 +176,9 @@ model. In the diagram, the application is running on multiple compute nodes,
 separate from the orchestrator compute nodes. Connections are established between the
 Model application and the clustered deployment using the SmartRedis Client.
 
-.. figure::  images/clustered-orc-diagram.png
+.. figure::  images/clustered_orchestrator-1.png
+
+  Sample Clustered Orchestrator Deployment
 
 To create an ``Orchestrator`` that does not share compute resources with other
 SmartSim entities, use the ``Experiment.create_database()`` factory method.
@@ -185,9 +187,9 @@ be single-sharded; otherwise it is multi-shard.
 This factory method returns an initialized ``Orchestrator`` object that
 gives you access to functions associated with the :ref:`Orchestrator API<orchestrator_api>`.
 
+.. _colocated_deployment_exp_docs:
 Colocated Deployment
 --------------------
-.. _colocated_deployment_exp_docs:
 A colocated ``Orchestrator`` shares compute resources with a ``Model`` instance defined by the user.
 In this deployment, the database is not connected
 together as a single cluster, and the database on each
@@ -200,19 +202,20 @@ is ideal for use cases where a SmartSim ``Model`` is run on a compute node
 that has hardware accelerators (e.g. GPUs) and low-latency inference is
 a critical component of the workflow.
 
-Below is an image illustrating communication within a colocated model
-spanning multiple compute nodes. As demonstrated in the diagram,
-each process the application lives on, creates its own SmartRedis client connection
-to the orchestrator running on the same process. This connection is
-started in the Model script, when a SmartRedis Client is initialized.
+Below is an image illustrating communication within a colocated model spanning multiple compute nodes.
+As demonstrated in the diagram, each process of the application creates its own SmartRedis client
+connection to the orchestrator running on the same host.
 
-.. figure:: images/co-located-orc-diagram.png
+.. figure:: images/colocated_orchestrator-1.png
+
+  Sample Colocated Orchestrator Deployment
 
 To create an ``Orchestrator`` that shares compute resources with a ``Model``
-SmartSim entity, use the ``model.colocate_db()`` helper method.
-In this case, a colocated orchestrator is created
-via the SmartSim Model API function ``model.colocate_db``.
-The :ref:`Model API<model_api>` is accessed once a ``Model`` object has been initialized.
+SmartSim entity, use the ``model.colocate_db()`` helper method accessible after a
+``Model`` object has been initialized. This function instructs
+SmartSim to launch a database on the simulation compute nodes. A database object is not
+returned from a ``model.colocate_db()`` instruction, and subsequent interactions with the
+colocated Orchestrator are handled through the :ref:`Model API<model_api>`.
 
 Multiple database support
 ----------------
@@ -227,8 +230,9 @@ orchestrator(s) from application client code. This is particularly
 useful in instances where an orchestrator is colocated with a SmartSim
 model for low-latency inference and another Orchestrator is launched to
 handle other aspects of the workflow such as visualization and ML model
-training. More detailed information on the ideal use cases for orchestrator(s)
-and co-located ``Orchestrator(s)`` are available in sections... (update this when use cases added)
+training. More detailed information on the ideal use cases for clustered ``Orchestrator(s)``
+and co-located ``Orchestrator(s)`` is available in the :ref:`Orchestrator documentation
+page<dead_link>`.
 
 Model
 =====
@@ -262,10 +266,10 @@ Workload.
 Ensemble Prefixing
 ------------------
 If each of the ensemble members attempt to use the
-same code to access their respective models in the Orchestrator,
+same code to access their respective data in the Orchestrator,
 the names used to reference data, models, and scripts will be identical,
 and without the use of SmartSim and SmartRedis helper methods, ensemble members
-will end up accessing each other's data inadvertently. To prevent
+will end up inadvertently accessing or overwriting each other’s data. To prevent
 this situation, the SmartSim ``Ensemble`` object supports
 key prefixing, which automatically prepends the name
 of the model to the keys by which it is accessed. With
@@ -298,36 +302,31 @@ creation:
      how a system responds to the same set of parameters under multiple instances.
 
 .. note::
-  For more information and instruction on ensemble creation methods, navigate to the Ensemble documentation page.
+  For more information and instruction on ensemble creation methods, navigate to the :ref:`Ensemble documentation page<dead_link>`.
 
 ==================
 Experiment Example
 ==================
 .. compound::
   In the following subsections, we provide an example of using SmartSim to automate the
-  deployment of an HPC workload consisting of a ``Model`` and standard ``Orchestrator``.
+  deployment of an HPC workflow consisting of a ``Model`` and standard ``Orchestrator``.
+  The example demonstrates:
 
-  Continue to the example to:
-
-  .. list-table:: Experiment example contents
-   :widths: auto
-   :header-rows: 1
-
-   * - Initialize
-     - Start
-     - Stop
-   * - a workflow (``Experiment``)
-     - the in-memory database (``Orchestrator``)
-     - the in-memory database (``Orchestrator``)
-   * - a in-memory database (``Orchestrator``)
-     - the workload (``Model``)
-     - 
-   * - a workload (``Model``)
-     - 
-     - 
+  *Initializing*
+   - a workflow (``Experiment``)
+   - a in-memory database (clustered ``Orchestrator``)
+   - an application (``Model``)
+  *Generating*
+   - a in-memory database (clustered ``Orchestrator``) folder
+   - an application (``Model``) folder
+  *Starting*
+   - a in-memory database (clustered ``Orchestrator``)
+   - an application (``Model``)
+  *Stopping*
+   - the in-memory database (clustered ``Orchestrator``)
 
 Initialize
-----------
+==========
 .. compound::
   To create a workflow, we *initialize* an ``Experiment`` object
   once at the beginning of the Python driver script.
@@ -360,11 +359,6 @@ Initialize
 
       # Initialize an Orchestrator
       database = exp.create_database(db_nodes=1)
-      # Create an output directory
-      exp.generate(database)
-
-  We use the ``Experiment.generate()`` function to create an
-  output directory for the database log files.
 
 .. compound::
   Before invoking the factory method to create a ``Model``, we must
@@ -382,12 +376,30 @@ Initialize
       settings = exp.create_run_settings("echo", exe_args="Hello World")
       model = exp.create_model("hello_world", settings)
 
-  Notice above we are creating the ``Model`` through the ``Experiment.create_model()``
-  function. We specify a `name` and the ``RunSettings`` object we created.
+  After creating the ``RunSettings`` object, the ``Model`` object can be created and initialized using
+  the ``RunSettings`` object via the ``Experiment.create_model()`` function. In the ``Model`` factory method,
+  the ``Model`` `name` and the ``RunSettings`` object are provided as input parameters.
 
+Generating
+==========
+.. compound::
+  Next we generate the file structure for the ``Experiment``. A call to ``Experiment.generate()``
+  instructs SmartSim to create directories within the experiment folder for each instance passed in.
+  We plan to organize the ``Orchestrator`` and ``Model`` output files within the experiment folder and
+  therefore pass the database and model instances to ``exp.generate()``:
+
+  .. code-block:: python
+
+    # Create an output directory
+    exp.generate(database, model)
+
+  .. note::
+    If files or folders are attached to a ``Model`` or ``Ensemble`` members through ``Model.attach_generator_files()``
+    or ``Ensemble.attach_generator_files()``, the attached files or directories will be symlinked, copied, or configured and
+    written into the created directory for that instance.
 
 Starting
---------
+========
 .. compound::
   Next we will launch the components of the experiment (``Orchestrator`` and ``Model``) using functions
   provided by the ``Experiment`` API. To do so, we will use
@@ -399,9 +411,11 @@ Starting
     # Launch the Orchestrator and Model instance
     exp.start(database, model)
 
+  We use the ``Experiment.generate()`` function to create an
+  output directory for the database log files.
 
 Stopping
---------
+========
 .. compound::
   Lastly, to clean up the experiment, we need to tear down the launched database.
   We do this by stopping the Orchestrator using the ``Experiment.stop()`` function.
