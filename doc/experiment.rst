@@ -6,11 +6,8 @@ Overview
 ========
 SmartSim helps automate the deployment of AI-enabled workflows on HPC systems. With SmartSim, users
 can describe and launch combinations of applications and AI/ML infrastructure to produce novel and
-scalable workflows.
-
-SmartSim interfaces with a diverse range of systems, including local environments such as
-Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS, and LSF). When initializing the Experiment workflow, a user can specify
-the :ref:`launcher<launcher_exp_docs>` of the designated system or defer to automatic launcher selection.
+scalable workflows. SmartSim supports launching these workflows on a diverse set of systems, including
+local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS, and LSF).
 
 The Experiment API is SmartSim's top level API that provides users with methods for creating, combining,
 configuring, launching and monitoring :ref:`entities<entities_exp_docs>` in an AI-enabled workflow. More specifically, the
@@ -62,7 +59,7 @@ manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
 5. ``lsf``: for systems using the LSF scheduler
 6. ``auto``: have SmartSim auto-detect the launcher to use
 
-If a `launcher` is not specified, SmartSim will default to `"local"` which will start all Experiment created
+If a `launcher` is not specified, SmartSim will default to `"local"` which will start all Experiment launched
 entities on the localhost.
 
 .. compound::
@@ -72,7 +69,7 @@ entities on the localhost.
 
       exp = Experiment("name-of-experiment", launcher="slurm")  # slurm launcher
 
-  To instruct SmartSim attempt to find a launcher on your machine, set the `launcher`
+  To instruct SmartSim to search for a launcher on your machine, set the `launcher`
   argument to `"auto"` during ``Experiment`` initialization as shown below:
 
   .. code-block:: python
@@ -216,7 +213,7 @@ connection to the orchestrator running on the same host.
 To create an ``Orchestrator`` that shares compute resources with a ``Model``
 SmartSim entity, use the ``model.colocate_db()`` helper method accessible after a
 ``Model`` object has been initialized. This function instructs
-SmartSim to launch a database on the simulation compute nodes. A database object is not
+SmartSim to launch a database on the application compute nodes. A database object is not
 returned from a ``model.colocate_db()`` instruction, and subsequent interactions with the
 colocated Orchestrator are handled through the :ref:`Model API<model_api>`.
 
@@ -309,9 +306,9 @@ creation:
 .. note::
   For more information and instruction on ensemble creation methods, navigate to the :ref:`Ensemble documentation page<dead_link>`.
 
-==================
-Experiment Example
-==================
+=======
+Example
+=======
 .. compound::
   In the following subsections, we provide an example of using SmartSim to automate the
   deployment of an HPC workflow consisting of a ``Model`` and standard ``Orchestrator``.
@@ -319,16 +316,16 @@ Experiment Example
 
   *Initializing*
    - a workflow (``Experiment``)
-   - a in-memory database (clustered ``Orchestrator``)
+   - an in-memory database (clustered ``Orchestrator``)
    - an application (``Model``)
   *Generating*
-   - a in-memory database (clustered ``Orchestrator``) folder
+   - an in-memory database (clustered ``Orchestrator``) folder
    - an application (``Model``) folder
   *Starting*
-   - a in-memory database (clustered ``Orchestrator``)
+   - an in-memory database (clustered ``Orchestrator``)
    - an application (``Model``)
   *Stopping*
-   - the in-memory database (clustered ``Orchestrator``)
+   - an in-memory database (clustered ``Orchestrator``)
 
 Initialize
 ==========
