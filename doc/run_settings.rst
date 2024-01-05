@@ -260,6 +260,28 @@ by specifying the launcher during run settings creation. We show an example for 
             # Set the number of tasks for this job
             run_settings.set_tasks_per_node(25)
 
+    .. group-tab:: PALS
+      The PALS `launcher` supports the :ref:`MpiexecSettings API <openmpi_exec_api>` that can be used to run executables
+      with the `mpiexec` arbitrary launch binary.
+
+      **MpiexecSettings**
+
+      Run a job with `mpiexec` command on a PALS based system. Any arguments passed in the `run_args` dict will be converted into `mpiexec` arguments and prefixed with `--`.
+      Values of `None` can be provided for arguments that do not have values.
+
+      .. code-block:: python
+
+            # Initialize a MpiexecSettings object
+            run_settings = exp.create_run_settings(launcher="pals", exe="echo", exe_args="Hello World", run_command="mpiexec")
+            # Set the number of nodes
+            run_settings.set_nodes(4)
+            # Set the number of cpus to use per task
+            run_settings.set_cpus_per_task(2)
+            # Set the number of tasks for this job
+            run_settings.set_tasks(100)
+            # Set the number of tasks for this job
+            run_settings.set_tasks_per_node(25)
+
     .. group-tab:: LSF
       The LSF `launcher` supports the :ref:`JsrunSettings API <jsrun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
