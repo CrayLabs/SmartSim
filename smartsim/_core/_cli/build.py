@@ -260,10 +260,15 @@ def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> 
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
+        if device.lower() == "cpu":
+            index_url = "https://download.pytorch.org/whl/cpu"
+        else:
+            index_url = f"https://download.pytorch.org/whl/{device_suffix}"
+
         pip(
             "install",
-            "-f",
-            "https://download.pytorch.org/whl/torch_stable.html",
+            "--extra-index-url",
+            index_url,
             *(f"{package}=={version}" for package, version in torch_deps.items()),
         )
     elif missing or conflicts:
