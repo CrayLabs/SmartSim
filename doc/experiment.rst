@@ -1,327 +1,438 @@
-
 ***********
 Experiments
 ***********
+========
+Overview
+========
+SmartSim helps automate the deployment of AI-enabled workflows on HPC systems. With SmartSim, users
+can describe and launch combinations of applications and AI/ML infrastructure to produce novel and
+scalable workflows. SmartSim supports launching these workflows on a diverse set of systems, including
+local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS, and LSF).
 
-The Experiment acts as both a factory class for constructing the stages of an
-experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc.) as well as an
-interface to interact with the entities created by the experiment.
+The Experiment API is SmartSim's top level API that provides users with methods for creating, combining,
+configuring, launching and monitoring :ref:`entities<entities_exp_docs>` in an AI-enabled workflow. More specifically, the
+Experiment API offers three customizable workflow components that are created and initialized via factory
+methods:
 
-Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a
-Jupyter notebook, interactive python session, or Python file and use the
-``Experiment`` to iteratively create, configure and launch computational kernels
-on the system through the specified launcher.
+1. :ref:`Orchestrator<orchestrator_exp_docs>`
+2. :ref:`Model<model_exp_docs>`
+3. :ref:`Ensemble<ensemble_exp_docs>`
 
-.. |SmartSim Architecture| image:: images/ss-arch-overview.png
-  :width: 700
-  :alt: Alternative text
+Settings are given to ``Model`` and ``Ensemble`` objects to provide parameters for how a job should be executed. The
+:ref:`Experiment API<experiment_api>` offers customizable settings objects that are created and initialized via factory
+methods:
 
-|SmartSim Architecture|
+1. :ref:`RunSettings<dead_link>`
+2. :ref:`BatchSettings<dead_link>`
 
+Once a workflow component is initialized, a user has access
+to the associated entity API that supports configuring and
+retrieving entity information:
 
-The interface was designed to be simple, with as little complexity as possible,
-and agnostic to the backend launching mechanism (local, Slurm, PBSPro, etc.).
+* :ref:`Orchestrator API<orchestrator_api>`
+* :ref:`Model API<model_api>`
+* :ref:`Ensemble API<ensemble_api>`
 
+There is no limit to the number of entities a user can
+initialize within an experiment.
+
+.. figure:: images/Experiment.png
+
+  Sample experiment showing a user application leveraging
+  machine learning infrastructure launched by SmartSim and connected
+  to online analysis and visualization via the in-memory database.
+
+.. _launcher_exp_docs:
+=========
+Launchers
+=========
+SmartSim supports launching AI-enabled workflows on a wide variety of systems, including locally on a Mac or
+Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS, and LSF). When creating a SmartSim
+``Experiment``, the user has the opportunity to specify the launcher type or defer to automatic launcher selection.
+`Launcher` selection determines how SmartSim translates SmartSim entity configurations into system calls to launch,
+manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
+
+1. ``local``: for single-node, workstation, or laptop
+2. ``slurm``: for systems using the Slurm scheduler
+3. ``pbs``: for systems using the PBSpro scheduler
+4. ``pals``: for systems using the PALS scheduler
+5. ``cobalt``: for systems using the Cobalt scheduler
+6. ``lsf``: for systems using the LSF scheduler
+7. ``auto``: have SmartSim auto-detect the launcher to use
+
+If a `launcher` is not specified, SmartSim will default to `"local"` which will start all Experiment launched
+entities on the localhost.
+
+.. compound::
+  For example, to set up a slurm launcher, the workflow should be initialized as follows:
+
+  .. code-block:: python
+
+      exp = Experiment("name-of-experiment", launcher="slurm")  # slurm launcher
+
+  To instruct SmartSim to search for a launcher on your machine, set the `launcher`
+  argument to `"auto"` during ``Experiment`` initialization as shown below:
+
+  .. code-block:: python
+
+      exp = Experiment("name-of-experiment", launcher="auto")  # auto-detect launcher
+
+  If the systems launcher cannot be found or no `launcher` argument is provided, the default value of
+  `launcher="local"` will be used.
+
+.. _entities_exp_docs:
+========
+Entities
+========
+Entities are SmartSim API objects that can be launched and
+managed on the compute system via the Experiment API. While the
+``Experiment`` object is intended to be instantiated once in a
+SmartSim driver script, there is no limit to the number of SmartSim entities
+within an Experiment. In the following subsections, we define the
+general purpose of the three entities that can be created via
+Experiment API factory methods:
+
+* ``Orchestrator``
+* ``Model``
+* ``Ensemble``
+
+To create a reference to a newly instantiated entity object, use the associated
+``Experiment.create_...()`` function.
+
+.. list-table:: Experiment API Entity Creation
+   :widths: 20 65 25
+   :header-rows: 1
+
+   * - Factory Method
+     - Example
+     - Return Type
+   * - ``create_database()``
+     - ``orch = exp.create_database([port, db_nodes, ...])``
+     - :ref:`Orchestrator <orchestrator_api>`
+   * - ``create_model()``
+     - ``model = exp.create_model(name, run_settings)``
+     - :ref:`Model <model_api>`
+   * - ``create_ensemble()``
+     - ``ensemble = exp.create_ensemble(name[, params, ...])``
+     - :ref:`Ensemble <ensemble_api>`
+
+After initialization via the ``Experiment`` factory methods, each entity can be started, monitored, and stopped
+using the :ref:`Experiment API<experiment_api>`.
+
+.. list-table:: Interact with Entities during the Experiment
+   :widths: 25 55 25
+   :header-rows: 1
+
+   * - Experiment Function
+     - Example
+     - Desc
+   * - ``start()``
+     - ``exp.start(*args[, block, summary, ...])``
+     - Launch an Entity
+   * - ``stop()``
+     - ``exp.stop(*args)``
+     - Stop an Entity
+   * - ``get_status()``
+     - ``exp.get_status(*args)``
+     - Retrieve Entity Status
+
+.. _orchestrator_exp_docs:
+Orchestrator
+============
+The orchestrator is an in-memory database with features built for
+a wide variety of AI-enabled workflows, including features
+for online training, low-latency inference, cross-application data
+exchange, online interactive visualization, online data analysis, computational
+steering, and more. The ``Orchestrator`` can be thought of as a general
+feature store capable of storing numerical data, ML models, and scripts.
+The orchestrator is capable of performing inference and script evaluation using data in the feature store.
+Any SmartSim ``Model`` or ``Ensemble`` model can connect to the
+``Orchestrator`` via the :ref:`SmartRedis<dead_link>`
+client library to transmit data, execute ML models, and execute scripts.
+
+**SmartSim offers two types Orchestrator deployments:**
+
+* :ref:`Clustered Orchestrator Deployment<clustered_deployment_exp_docs>`
+* :ref:`Colocated Orchestrator Deployment<colocated_deployment_exp_docs>`
+
+.. _clustered_deployment_exp_docs:
+Clustered Deployment
+--------------------
+The standard orchestrator can be deployed on a single compute
+node or can be sharded (distributed) over multiple compute nodes.
+With multiple nodes, available hardware for inference and script
+evaluation increases and overall memory for data storage increases.
+Users do not need to know the number of compute nodes (shards) used for the
+in-memory database when interacting with the database via the SmartRedis client API;
+SmartRedis client API functions are designed to work with both single and multi-node
+configurations.
+
+During clustered deployment, a SmartSim ``Model`` (the application) runs on separate
+compute node(s) from the database node(s).
+A clustered database is optimal for high data throughput scenarios
+such as online analysis, training and processing.
+
+The following image illustrates communication between a clustered orchestrator and a
+model. In the diagram, the application is running on multiple compute nodes,
+separate from the orchestrator compute nodes. Connections are established between the
+Model application and the clustered deployment using the SmartRedis Client.
+
+.. figure::  images/clustered_orchestrator-1.png
+
+  Sample Clustered Orchestrator Deployment
+
+To create an ``Orchestrator`` that does not share compute resources with other
+SmartSim entities, use the ``Experiment.create_database()`` factory method.
+Specifying 1 for the `db_nodes` parameter causes the database to
+be single-sharded; otherwise it is multi-shard.
+This factory method returns an initialized ``Orchestrator`` object that
+gives you access to functions associated with the :ref:`Orchestrator API<orchestrator_api>`.
+
+.. _colocated_deployment_exp_docs:
+Colocated Deployment
+--------------------
+A colocated ``Orchestrator`` shares compute resources with a ``Model`` instance defined by the user.
+In this deployment, the database is not connected
+together as a single cluster, and the database on each
+application node is utilized by SmartRedis
+clients on the same node.
+Essentially, this means that you have N independent databases,
+where N is the number of compute nodes assigned to the application.
+The colocated deployment strategy for the Orchestrator
+is ideal for use cases where a SmartSim ``Model`` is run on a compute node
+that has hardware accelerators (e.g. GPUs) and low-latency inference is
+a critical component of the workflow.
+
+Below is an image illustrating communication within a colocated model spanning multiple compute nodes.
+As demonstrated in the diagram, each process of the application creates its own SmartRedis client
+connection to the orchestrator running on the same host.
+
+.. figure:: images/colocated_orchestrator-1.png
+
+  Sample Colocated Orchestrator Deployment
+
+To create an ``Orchestrator`` that shares compute resources with a ``Model``
+SmartSim entity, use the ``model.colocate_db()`` helper method accessible after a
+``Model`` object has been initialized. This function instructs
+SmartSim to launch a database on the application compute nodes. A database object is not
+returned from a ``model.colocate_db()`` instruction, and subsequent interactions with the
+colocated Orchestrator are handled through the :ref:`Model API<model_api>`.
+
+Multiple database support
+----------------
+SmartSim supports multi-database functionality, enabling an experiment
+to have several concurrently launched ``Orchestrator(s)``. If there is
+a need to launch more than one ``Orchestrator``, the ``Experiment.create_database()``
+function mandates the specification of a unique database identifier,
+denoted by the `db_identifier` argument, per created orchestrator.
+
+The `db-identifier` is used to reference SmartSim
+orchestrator(s) from application client code. This is particularly
+useful in instances where an orchestrator is colocated with a SmartSim
+model for low-latency inference and another Orchestrator is launched to
+handle other aspects of the workflow such as visualization and ML model
+training. More detailed information on the ideal use cases for clustered ``Orchestrator(s)``
+and co-located ``Orchestrator(s)`` is available in the :ref:`Orchestrator documentation
+page<dead_link>`.
+
+.. _model_exp_docs:
 Model
 =====
+``Model(s)`` represent a simulation model or any
+computational kernel, including applications,
+scripts, or generally, a program.
+They can interact with other
+SmartSim entities via data transmitted to/from SmartSim Orchestrators
+using a SmartRedis client.
 
-``Model(s)`` are subclasses of ``SmartSimEntity(s)`` and are created through the
-Experiment API. Models represent any computational kernel. Models are flexible
-enough to support many different applications, however, to be used with our
-clients (SmartRedis) the application will have to be written in Python, C, C++,
-or Fortran.
+A ``Model`` is created through the factory method: ``Experiment.create_model()``.
+Models are initialized with ``RunSettings`` objects that specify
+how a ``Model`` should be launched via a workload manager
+(e.g., Slurm) and the compute resources required.
+Optionally, the user may also specify a ``BatchSettings`` object if
+the model should be launched as a batch job on the WLM system.
+The ``create_model()`` factory method returns an initialized Model object that
+gives you access to functions associated with the :ref:`Model API<model_api>`.
 
-Models are given :ref:`RunSettings <rs-api>` objects that specify how a kernel
-should be executed with regard to the workload manager (e.g. Slurm) and the
-available compute resources on the system.
-
-Each launcher supports specific types of ``RunSettings``.
-
-   - :ref:`SrunSettings <srun_api>` for Slurm
-   - :ref:`AprunSettings <aprun_api>` for PBSPro and Cobalt
-   - :ref:`MpirunSettings <openmpi_run_api>` for OpenMPI with `mpirun` on PBSPro, Cobalt, LSF, and Slurm
-   - :ref:`JsrunSettings <jsrun_api>` for LSF
-
-These settings can be manually specified by the user, or auto-detected by the
-SmartSim Experiment through the ``Experiment.create_run_settings`` method.
-
-A simple example of using the Experiment API to create a model and run it
-locally:
-
-.. code-block:: Python
-
-  from smartsim import Experiment
-
-  exp = Experiment("simple", launcher="local")
-
-  settings = exp.create_run_settings("echo", exe_args="Hello World")
-  model = exp.create_model("hello_world", settings)
-
-  exp.start(model, block=True)
-  print(exp.get_status(model))
-
-If the launcher has been specified, or auto-detected through setting
-``launcher=auto`` in the Experiment initialization, the ``create_run_settings``
-method will automatically create the appropriate ``RunSettings`` object and
-return it.
-
-For example with Slurm
-
-.. code-block:: Python
-
-  from smartsim import Experiment
-
-  exp = Experiment("hello_world_exp", launcher="slurm")
-  srun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
-
-  # helper methods for configuring run settings are available in
-  # each of the implementations of RunSettings
-  srun.set_nodes(1)
-  srun.set_tasks(32)
-
-  model = exp.create_model("hello_world", srun)
-  exp.start(model, block=True, summary=True)
-
-  print(exp.get_status(model))
-
-The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor its
-execution, and inform the user when it is completed. This driver script can be
-executed in an interactive allocation, or placed into a batch script as follows:
-
-.. code-block:: bash
-
-    #!/bin/bash
-    #SBATCH --exclusive
-    #SBATCH --nodes=1
-    #SBATCH --ntasks-per-node=32
-    #SBATCH --time=00:10:00
-
-    python /path/to/script.py
-
+.. _ensemble_exp_docs:
 Ensemble
 ========
-
-In addition to a single model, SmartSim has the ability to launch an
-``Ensemble`` of ``Model`` applications simultaneously.
-
-An ``Ensemble`` can be constructed in three ways:
-  1. Parameter expansion (by specifying ``params`` and ``perm_strat`` argument)
-  2. Replica creation (by specifying ``replicas`` argument)
-  3. Manually (by adding created ``Model`` objects) if launching as a batch job
-
+In addition to a single model, SmartSim allows users to create,
+configure, and launch an ``Ensemble`` of ``Model`` objects.
 Ensembles can be given parameters and permutation strategies that define how the
-``Ensemble`` will create the underlying model objects.
+``Ensemble`` will create the underlying ``Model`` objects. Users may also
+manually create and append ``Model(s)`` to an ``Ensemble``.
+Lastly, the :ref:`Ensemble API<ensemble_api>` supports launching Machine Learning Models, TensorFlow
+scripts and functions at runtime to enable AI and ML within an Ensemble
+Workload.
 
-Three strategies are built in:
-  1. ``all_perm``: for generating all permutations of model parameters
-  2. ``step``: for creating one set of parameters for each element in `n` arrays
-  3. ``random``: for random selection from predefined parameter spaces
+Ensemble Prefixing
+------------------
+If each of the ensemble members attempt to use the
+same code to access their respective data in the Orchestrator,
+the names used to reference data, models, and scripts will be identical,
+and without the use of SmartSim and SmartRedis helper methods, ensemble members
+will end up inadvertently accessing or overwriting each other’s data. To prevent
+this situation, the SmartSim ``Ensemble`` object supports
+key prefixing, which automatically prepends the name
+of the model to the keys by which it is accessed. With
+this enabled, collision is resolved and
+ensemble members can use the same code.
 
-Here is an example that uses the ``random`` strategy to intialize four models
-with random parameters within a set range. We use the ``params_as_args`` field
-to specify that the randomly selected learning rate parameter should be passed
-to the created models as a executable argument.
+For example, assume you have two models in the ``Ensemble`` object,
+named `bar_0` and `bar_1`. In the application code you
+use the function ``Client.put_tensor("foo")``. With
+ensemble key prefixing turned on, the `bar_0` and `bar_1` Model applications
+can access the tensor `"foo"` by name without overwriting or accessing the other
+ensemble member's `"foo"` tensor.
 
-.. code-block:: bash
+Ensemble Creation
+-----------------
+An ``Ensemble`` is created through the factory method: ``Experiment.create_ensemble()``.
+The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
+gives you access to functions associated with the :ref:`Ensemble API<ensemble_api>`.
+To initialize an Ensemble, a user must follow one of the three methods of ensemble
+creation:
 
-  import numpy as np
-  from smartsim import Experiment
+1. Manual Model Appending
+     A technique that allows users to create and add model instances to an ensemble, offering a level
+     of customization in ensemble design.
+2. Parameter Expansion
+     A technique that allows users to set parameter values and control how the parameter values
+     spread across the ensemble members by specifying a permutation strategy.
+3. The Utilization of Replicas
+     A technique that allows users to create identical or closely related models within an ensemble. Users can assess
+     how a system responds to the same set of parameters under multiple instances.
 
-  exp = Experiment("Training-Run", launcher="auto")
+.. note::
+  For more information and instruction on ensemble creation methods, navigate to the :ref:`Ensemble documentation page<dead_link>`.
 
-  # setup ensemble parameter space
-  learning_rate = list(np.linspace(.01, .5))
-  train_params = {"LR": learning_rate}
+=======
+Example
+=======
+.. compound::
+  In the following subsections, we provide an example of using SmartSim to automate the
+  deployment of an HPC workflow consisting of a ``Model`` and standard ``Orchestrator``.
+  The example demonstrates:
 
-  # define how each member should run
-  run = exp.create_run_settings(exe="python",
-                                exe_args="./train-model.py")
+  *Initializing*
+   - a workflow (``Experiment``)
+   - an in-memory database (clustered ``Orchestrator``)
+   - an application (``Model``)
+  *Generating*
+   - an in-memory database (clustered ``Orchestrator``) folder
+   - an application (``Model``) folder
+  *Starting*
+   - an in-memory database (clustered ``Orchestrator``)
+   - an application (``Model``)
+  *Stopping*
+   - an in-memory database (clustered ``Orchestrator``)
 
-  ensemble = exp.create_ensemble("Training-Ensemble",
-                                params=train_params,
-                                params_as_args=["LR"],
-                                run_settings=run,
-                                perm_strategy="random",
-                                n_models=4)
-  exp.start(ensemble, summary=True)
+Initializing
+============
+.. compound::
+  To create a workflow, we *initialize* an ``Experiment`` object
+  once at the beginning of the Python driver script.
+  To create an Experiment, we specify a name
+  and the system launcher with which all entities will be executed.
+  Here, we are running the example on a Slurm machine and as such will
+  set the `launcher` argument to `slurm`.
 
+  .. code-block:: python
 
-A callable function can also be supplied for custom permutation strategies.  The
-function should take two arguments: a list of parameter names, and a list of
-lists of potential parameter values. The function should return a list of
-dictionaries that will be supplied as model parameters. The length of the list
-returned will determine how many ``Model`` instances are created.
+      from smartsim import Experiment
+      from smartsim.log import get_logger
 
-For example, the following is the built-in strategy ``all_perm``:
+      # Initialize an Experiment
+      exp = Experiment("name-of-experiment", launcher="slurm")
+      # Initialize a SmartSim logger
+      smartsim_logger = get_logger("tutorial-experiment")
 
-.. code-block:: python
+  We also initialize a SmartSim logger. We will use the logger throughout the experiment
+  to monitor the entities.
 
-    from itertools import product
+.. compound::
+  Next, we will launch a SmartSim in-memory database called an ``Orchestrator``.
+  To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database()``
+  function. We will create a single-sharded database and therefore will set
+  the argument `db_nodes` to 1. SmartSim will assign a `port` to the database
+  and attempt to detect your machine's interface if values are not provided to the ``Experiment.create_database()`` factory method.
 
-    def create_all_permutations(param_names, param_values):
-        perms = list(product(*param_values))
-        all_permutations = []
-        for p in perms:
-            temp_model = dict(zip(param_names, p))
-            all_permutations.append(temp_model)
-        return all_permutations
+  .. code-block:: python
 
+      # Initialize an Orchestrator
+      database = exp.create_database(db_nodes=1)
 
-After ``Ensemble`` initialization, ``Ensemble`` instances can be
-passed as arguments to ``Experiment.generate()`` to write assigned
-parameter values into attached and tagged configuration files.
+.. compound::
+  Before invoking the factory method to create a ``Model``, we must
+  first create a ``RunSettings`` object which holds the information needed to execute the ``Model``
+  on the system. The ``RunSettings`` object is initialized using the
+  ``Experiment.create_run_settings()`` factory method. In this factory method,
+  we specify the executable to run and the arguments to pass to
+  the executable.
 
-Launching Ensembles
--------------------
+  The example ``Model`` is a simple `Hello World` program
+  that echos `Hello World` to stdout.
 
-Ensembles can be launched in previously obtained interactive allocations
-and as a batch. Similar to ``RunSettings``, ``BatchSettings`` specify how
-an application(s) in a batch job should be executed with regards to the system
-workload manager and available compute resources.
+  .. code-block:: python
 
-  - :ref:`SbatchSettings <sbatch_api>` for Slurm
-  - :ref:`QsubBatchSettings <qsub_api>` for PBSPro
-  - :ref:`CobaltBatchSettings <cqsub_api>` for Cobalt
-  - :ref:`BsubBatchSettings <bsub_api>` for LSF
+      settings = exp.create_run_settings("echo", exe_args="Hello World")
+      model = exp.create_model("hello_world", settings)
 
-If it only passed ``RunSettings``, ``Ensemble``, objects will require either
-a ``replicas`` argument or a ``params`` argument to expand parameters
-into ``Model`` instances. At launch, the ``Ensemble`` will look for
-interactive allocations to launch models in.
+  After creating the ``RunSettings`` object, the ``Model`` object can be created and initialized using
+  the ``RunSettings`` object via the ``Experiment.create_model()`` function. In the ``Model`` factory method,
+  the ``Model`` `name` and the ``RunSettings`` object are provided as input parameters.
 
-If it passed ``BatchSettings`` without other arguments, an empty ``Ensemble``
-will be created that ``Model`` objects can be added to manually. All ``Model``
-objects added to the ``Ensemble`` will be launched in a single batch.
+Generating
+==========
+.. compound::
+  Next we generate the file structure for the ``Experiment``. A call to ``Experiment.generate()``
+  instructs SmartSim to create directories within the experiment folder for each instance passed in.
+  We plan to organize the ``Orchestrator`` and ``Model`` output files within the experiment folder and
+  therefore pass the database and model instances to ``exp.generate()``:
 
-If it passed ``BatchSettings`` and ``RunSettings``, the ``BatchSettings`` will
-determine the allocation settings for the entire batch, and the ``RunSettings``
-will determine how each individual ``Model`` instance is executed within
-that batch.
+  .. code-block:: python
 
-This is the same example as above, but tailored towards a running as a batch job
-on a slurm system:
+    # Create an output directory
+    exp.generate(database, model)
 
-.. code-block:: bash
+  .. note::
+    If files or folders are attached to a ``Model`` or ``Ensemble`` members through ``Model.attach_generator_files()``
+    or ``Ensemble.attach_generator_files()``, the attached files or directories will be symlinked, copied, or configured and
+    written into the created directory for that instance.
 
-  import numpy as np
-  from smartsim import Experiment
+Starting
+========
+.. compound::
+  Next we will launch the components of the experiment (``Orchestrator`` and ``Model``) using functions
+  provided by the ``Experiment`` API. To do so, we will use
+  the ``Experiment.start()`` function and pass in the ``Orchestrator``
+  and ``Model`` instances previously created.
 
-  exp = Experiment("Training-Run", launcher="slurm")
+  .. code-block:: python
 
-  # setup ensemble parameter space
-  learning_rate = list(np.linspace(.01, .5))
-  train_params = {"LR": learning_rate}
+    # Launch the Orchestrator and Model instance
+    exp.start(database, model)
 
-  # define resources for all ensemble members
-  sbatch = exp.create_batch_settings(nodes=4,
-                                    time="01:00:00",
-                                    account="12345-Cray",
-                                    queue="gpu")
+  We use the ``Experiment.generate()`` function to create an
+  output directory for the database log files.
 
-  # define how each member should run
-  srun = exp.create_run_settings(exe="python",
-                                exe_args="./train-model.py")
-  srun.set_nodes(1)
-  srun.set_tasks(24)
+Stopping
+========
+.. compound::
+  Lastly, to clean up the experiment, we need to tear down the launched database.
+  We do this by stopping the Orchestrator using the ``Experiment.stop()`` function.
 
-  ensemble = exp.create_ensemble("Training-Ensemble",
-                                params=train_params,
-                                params_as_args=["LR"],
-                                batch_settings=sbatch,
-                                run_settings=srun,
-                                perm_strategy="random",
-                                n_models=4)
-  exp.start(ensemble, summary=True)
+  .. code-block:: python
 
+    exp.stop(db)
+    # log the summary of the experiment
+    exp.summary()
 
-This will generate and execute a batch script that looks something like
-the following:
+  Notice that we use the ``Experiment.summary()`` function to print
+  the summary of the workflow.
 
-.. code-block:: bash
-
-  # GENERATED
-
-  #!/bin/bash
-
-  #SBATCH --output=/lus/smartsim/Training-Ensemble.out
-  #SBATCH --error=/lus/smartsim/Training-Ensemble.err
-  #SBATCH --job-name=Training-Ensemble-CHTN0UI2DORX
-  #SBATCH --nodes=4
-  #SBATCH --time=01:00:00
-  #SBATCH --partition=gpu
-  #SBATCH --account=12345-Cray
-
-  cd /scratch/smartsim/Training-Run ; /usr/bin/srun --output /scratch/smartsim/Training-Run/Training-Ensemble_0.out --error /scratch/smartsim/Training-Ensemble_0.err --job-name Training-Ensemble_0-CHTN0UI2E5DX --nodes=1 --ntasks=24 /scratch/pyenvs/smartsim/bin/python ./train-model.py --LR=0.17 &
-
-  cd /scratch/smartsim/Training-Run ; /usr/bin/srun --output /scratch/smartsim/Training-Run/Training-Ensemble_1.out --error /scratch/smartsim/Training-Ensemble_1.err --job-name Training-Ensemble_1-CHTN0UI2JQR5 --nodes=1 --ntasks=24 /scratch/pyenvs/smartsim/bin/python ./train-model.py --LR=0.32 &
-
-  cd /scratch/smartsim/Training-Run ; /usr/bin/srun --output /scratch/smartsim/Training-Run/Training-Ensemble_2.out --error /scratch/smartsim/Training-Ensemble_2.err --job-name Training-Ensemble_2-CHTN0UI2P2AR --nodes=1 --ntasks=24 /scratch/pyenvs/smartsim/bin/python ./train-model.py --LR=0.060000000000000005 &
-
-  cd /scratch/smartsim/Training-Run ; /usr/bin/srun --output /scratch/smartsim/Training-Run/Training-Ensemble_3.out --error /scratch/smartsim/Training-Ensemble_3.err --job-name Training-Ensemble_3-CHTN0UI2TRE7 --nodes=1 --ntasks=24 /scratch/pyenvs/smartsim/bin/python ./train-model.py --LR=0.35000000000000003 &
-
-  wait
-
-Prefixing Keys in the Orchestrator
-----------------------------------
-
-If each of multiple ensemble members attempt to use the same code to access their respective models
-in the Orchestrator, the keys by which they do this will overlap and they can end up accessing each
-others' data inadvertently. To prevent this situation, the SmartSim Entity object supports key
-prefixing, which automatically prepends the name of the model to the keys by which it is accessed.
-With this enabled, key overlapping is no longer an issue and ensemble members can use the same code.
-
-Under the hood, calling ensemble.enable_key_prefixing() causes the SSKEYOUT environment variable to
-be set, which in turn causes all keys generated by an ensemble member to be prefixed with its model
-name. Similarly, if the model for the ensemble member has incoming entities (such as those set via
-model.register_incoming_entity() or ensemble.register_incoming_entity()), the SSKEYIN environment
-variable will be set and the keys associated with those inputs will be automatically prefixed. Note
-that entities must register themselves as this is not done by default.
-
-Finally, please note that while prefixing is enabled by default for tensors, datasets, and aggregated
-lists of datasets, a SmartRedis client must manually call Client.use_model_ensemble_prefix() to
-ensure that prefixes are used with models and scripts.
-
-We modify the example above to enable key prefixing as follows:
-
-.. code-block:: bash
-
-  import numpy as np
-  from smartsim import Experiment
-
-  exp = Experiment("Training-Run", launcher="slurm")
-
-  # setup ensemble parameter space
-  learning_rate = list(np.linspace(.01, .5))
-  train_params = {"LR": learning_rate}
-
-  # define resources for all ensemble members
-  sbatch = exp.create_batch_settings(nodes=4,
-                                    time="01:00:00",
-                                    account="12345-Cray",
-                                    queue="gpu")
-
-  # define how each member should run
-  srun = exp.create_run_settings(exe="python",
-                                exe_args="./train-model.py")
-  srun.set_nodes(1)
-  srun.set_tasks(24)
-
-  ensemble = exp.create_ensemble("Training-Ensemble",
-                                params=train_params,
-                                params_as_args=["LR"],
-                                batch_settings=sbatch,
-                                run_settings=srun,
-                                perm_strategy="random",
-                                n_models=4)
-
-  # Enable key prefixing -- note that this should be done
-  # before starting the experiment
-  ensemble.enable_key_prefixing()
-
-  exp.start(ensemble, summary=True)
-
-
-Further Information
--------------------
-
-For more informtion about Ensembles, please refer to the :ref:`Ensemble API documentation <ensemble_api>`.
+.. note::
+  Failure to tear down the Orchestrator at the end of an experiment
+  may lead to Orchestrator launch failures if another experiment is
+  started on the same node.
