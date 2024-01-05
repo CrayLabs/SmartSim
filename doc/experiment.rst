@@ -55,9 +55,10 @@ manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
 1. ``local``: for single-node, workstation, or laptop
 2. ``slurm``: for systems using the Slurm scheduler
 3. ``pbs``: for systems using the PBSpro scheduler
-4. ``cobalt``: for systems using the Cobalt scheduler
-5. ``lsf``: for systems using the LSF scheduler
-6. ``auto``: have SmartSim auto-detect the launcher to use
+4. ``pals``: for systems using the PALS scheduler
+5. ``cobalt``: for systems using the Cobalt scheduler
+6. ``lsf``: for systems using the LSF scheduler
+7. ``auto``: have SmartSim auto-detect the launcher to use
 
 If a `launcher` is not specified, SmartSim will default to `"local"` which will start all Experiment launched
 entities on the localhost.
