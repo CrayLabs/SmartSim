@@ -286,7 +286,7 @@ ensemble key prefixing turned on, the `bar_0` and `bar_1` Model applications
 can access the tensor `"foo"` by name without overwriting or accessing the other
 ensemble member's `"foo"` tensor.
 
-Create a Ensemble
+Ensemble Creation
 -----------------
 An ``Ensemble`` is created through the factory method: ``Experiment.create_ensemble()``.
 The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
@@ -328,8 +328,8 @@ Example
   *Stopping*
    - an in-memory database (clustered ``Orchestrator``)
 
-Initialize
-==========
+Initializing
+============
 .. compound::
   To create a workflow, we *initialize* an ``Experiment`` object
   once at the beginning of the Python driver script.
