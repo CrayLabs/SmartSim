@@ -4,23 +4,27 @@ Model
 ========
 Overview
 ========
-SmartSim Models are an abstract representation for compiled applications,
-scripts, and general computational tasks. Models can be launched with
-other SmartSim entities and ML infrastructure to build AI-enabled workflows.
-SmartSim enables AI integration in ``Model`` workflows by allowing users to dynamically load
-TensorFlow (TF) functions, TorchScript, and various machine learning models
-(TF, TF-lite, PyTorch, or ONNX) into the database at runtime.
-Models are flexible enough to support many different applications, however,
-to be used with SmartSim clients (SmartRedis) the application must be written
+``Model`` objects enable SmartSim users to initiate various computational tasks such as
+launching compiled applications, running scripts, or performing general computational operations
+as part of an Experiment workflow. **Models can be launched with ``Orchestrators``
+with other SmartSim entities and infrastructure to build AI-enabled workflows.**
+SmartSim ``Model`` entities can leverage ML capabilities at runtime by using
+the SmartSim client (SmartRedis) to transfer data via the ``Orchestrator`` to
+other running SmartSim Models and execute ML models (TF, TF-lite, PyTorch, or ONNX)
+and TorchScripts that are stored in the ``Orchestrator``. SmartRedis is available
 in Python, C, C++, or Fortran.
 
-When initializing a ``Model``, users
-provide executable simulation code to the Models run settings as well as
-execution instructions with regard to the workload
-manager (e.g. Slurm) and available compute resources.
-Model parameters can be supplied directly during instantiation.
-The :ref:`Experiment API<experiment_api>` supports passing
-parameters up front. The passed in parameters may be written to a file
+A SmartSim ``Model`` is created and initialized using the ``Experiment.create_model()`` API function.
+When initializing a ``Model``, a ``RunSettings`` object must be provided to specify the executable
+simulation code (e.g. the full path to a compiled binary) as well as execution specifications. These
+specifications include workload manager commands (e.g. `srun`, `aprun`, `mpiexec`, etc), compute resource requirements,
+and application command line arguments.
+
+When initializing a ``Model`` object, users have the flexibility to pass parameters and values as a
+Python dictionary, that are utilized during the simulation. SmartSim will automatically write
+the parameters and values into a configuration file stored in the simulations execution path.
+
+The passed in parameters may be written to a file
 and stored in the Models execution path.
 Files may also be attached to the Model for use
 within the simulation.
@@ -40,18 +44,18 @@ SmartSim supports **two** strategies for deploying Models:
   latency is critical, such as online inference or runtime processing.
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
-launch, monitor, and stop simulations. Additionally, Models can be launched individually
+launch, monitor, and stop applications. Additionally, Models can be launched individually
 or as a group via an Ensemble. Once a Model instance has been initialized, users have access to
-the :ref:`Model API<model_api>` helper functions.
+the :ref:`Model API<model_api>` helper functions to further configure the ``Model``.
 
-======================
-Initialize Model Types
-======================
+====================
+Model Initialization
+====================
 --------
 Overview
 --------
 
-The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow components.
+The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow entities.
 A ``Model`` is created using the ``Experiment.create_model()`` helper function. Users can customize the
 the Model by specifying initializer arguments.
 
@@ -65,15 +69,11 @@ The key initializer arguments are:
 -  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
 A `name` and :ref:`RunSettings<settings-info>` reference are required to initialize a ``Model``.
-To instruct a Model to encapsulate a simulation, users must provide the simulation
-executable to the Models run settings with instructions on how the application should be launched.
-
-Users may also launch Models as a batch job by specifying :ref:`BatchSettings<settings-info>` when initializing.
 
 .. note::
     ``BatchSettings`` attached to a model are ignored when the model is executed as part of an ensemble.
 
-The `params` init argument for Models lets users define simulation parameters and their
+The `params` factory method parameter for Models lets users define simulation parameters and their
 values through a dictionary. Using :ref:`Model API functions<model_api>`, users can write these parameters to
 a file in the Model's working directory. Similarly, the Model API provides functionality to
 instruct SmartSim to read a file and automatically fill in parameter values. Both behaviors are
@@ -87,13 +87,12 @@ When a Model instance is passed to ``Experiment.generate()``, a
 directory within the Experiment directory
 is automatically created to store input and output files from the model.
 
-----------------
-A Standard Model
-----------------
+--------------
+Standard Model
+--------------
 For standard model deployment, the model runs
-on separate compute nodes from SmartSim orchestrators.
-Standard models are able to communicate with clustered or standalone
-databases. SmartRedis clients connect to a clustered Orchestrator from
+on separate compute nodes from SmartSim Orchestrators.
+SmartRedis clients connect to a clustered Orchestrator from
 within the Models executable script
 and travel off the simulation compute node to the database compute node to send/retrieve
 data. To use a database within the standard model workload, a
@@ -102,7 +101,7 @@ Standard models are ideal for simulations benefiting from
 distributed computing capabilities, enabling efficient
 parallelized execution across multiple compute nodes.
 
-In the `Instructions` subsection, we provide an example illustrating the deployment of a standard model.
+In the proceeding `Instructions` subsection, we provide an example illustrating the deployment of a standard model.
 
 Instructions
 ------------
