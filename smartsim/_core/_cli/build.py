@@ -226,10 +226,10 @@ def build_redis_ai(
         logger.info("ML Backends and RedisAI build complete!")
 
 
-def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> None:
+def check_py_torch_version(versions: Versioner, device_in: _TDeviceStr = "cpu") -> None:
     """Check Python environment for TensorFlow installation"""
 
-    device = device.lower()
+    device = device_in.lower()
     if BuildEnv.is_macos():
         if device == "gpu":
             raise BuildError("SmartSim does not support GPU on MacOS")
