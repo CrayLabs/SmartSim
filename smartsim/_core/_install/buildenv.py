@@ -204,12 +204,6 @@ class RedisAIVersion(Version_):
             "torchvision": "0.15.2",
         },
     }
-    # Remove options with unsported wheels for python>=3.10
-    if sys.version_info >= (3, 10):
-        defaults["1.2.7"].pop("onnx")
-        defaults["1.2.7"].pop("skl2onnx")
-        defaults["1.2.7"].pop("onnxmltools")
-        defaults["1.2.7"].pop("scikit-learn")
 
     def __init__(self, vers: str) -> None:  # pylint: disable=super-init-not-called
         min_rai_version = min(Version_(ver) for ver in self.defaults)
@@ -304,33 +298,19 @@ class Versioner:
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
-    try:
-        ONNX = Version_(REDISAI.onnx)
-    except AttributeError:
-        ONNX = None
+    ONNX = Version_(REDISAI.onnx)
 
-    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Any]:
-        packages = [
-            "SMARTSIM",
-            "SMARTREDIS",
-            db_name,
-            "REDISAI",
-            "TORCH",
-            "TENSORFLOW",
-        ]
-        versions = [
-            self.SMARTSIM,
-            self.SMARTREDIS,
-            self.REDIS,
-            self.REDISAI,
-            self.TORCH,
-            self.TENSORFLOW,
-        ]
-        if self.ONNX:
-            packages.append("ONNX")
-            versions.append(self.ONNX)
-        vers = {"Packages": packages, "Versions": versions}
-        return vers
+    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+        pkg_map = {
+            "SMARTSIM": self.SMARTSIM,
+            "SMARTREDIS": self.SMARTREDIS,
+            db_name: self.REDIS,
+            "REDISAI": self.REDISAI,
+            "TORCH": self.TORCH,
+            "TENSORFLOW": self.TENSORFLOW,
+            "ONNX": self.ONNX,
+        }
+        return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
 
     def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
         """Optional ML/DL dependencies we suggest for the user.
