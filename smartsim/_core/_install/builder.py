@@ -593,10 +593,15 @@ def _get_rai_deps(
             str(deps_dir / "dlpack"),
         )
 
+    # TODO: It would be nice if the backend version numbers were declared
+    #       alongside the python package version numbers so that all of the
+    #       dependency versions were declared in single location. Unfortunately
+    #       importing this declarations into this module would be non-trivial
+    #       as this module is used as script in the SmartSim `setup.py`.
     buildable_backends = (
-        (with_pt, PTArchive(os_, device, "1.11.0")),  # XXX: Upgrade
-        (with_tf, TFArchive(os_, arch, device, "2.8.0")),  # XXX: Upgrade
-        (with_ort, ORTArchive(os_, device, "1.11.1")),  # XXX: Upgrade
+        (with_pt, PTArchive(os_, device, "2.0.1")),
+        (with_tf, TFArchive(os_, arch, device, "2.13.1")),
+        (with_ort, ORTArchive(os_, device, "1.16.3")),
     )
     to_fetch = (backend for should_build, backend in buildable_backends if should_build)
 
@@ -660,11 +665,11 @@ class PTArchive(WebZip):
     def url(self) -> str:
         if "linux" in self.os_:
             if self.device == "gpu":
-                pt_build = "cu113"
+                pt_build = "cu117"
             else:
                 pt_build = "cpu"
             libtorch_arch = (
-                f"libtorch-cxx11-abi-shared-with-deps-{self.version}%2B{pt_build}.zip"
+                f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
             )
         elif "darwin" in self.os_:
             if self.device == "gpu":

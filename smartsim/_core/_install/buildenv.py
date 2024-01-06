@@ -193,15 +193,15 @@ class RedisAIVersion(Version_):
 
     defaults = {
         "1.2.7": {
-            "tensorflow": "2.8.0",
-            "onnx": "1.11.0",
-            "skl2onnx": "1.11.1",
-            "onnxmltools": "1.11.1",
-            "scikit-learn": "1.1.1",
-            "torch": "1.11.0",
+            "tensorflow": "2.13.1",
+            "onnx": "1.14.1",
+            "skl2onnx": "1.16.0",
+            "onnxmltools": "1.12.0",
+            "scikit-learn": "1.3.2",
+            "torch": "2.0.1",
             "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu113",
-            "torchvision": "0.12.0",
+            "torch_cuda_suffix": "+cu117",
+            "torchvision": "0.15.2",
         },
     }
     # Remove options with unsported wheels for python>=3.10
