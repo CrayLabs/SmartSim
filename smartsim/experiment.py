@@ -139,8 +139,6 @@ class Experiment:
             fn = getattr(self, fn_name)
             setattr(self, fn_name, contextualize(fn))
 
-    # @contextualize
-    # @contextualize("exp_path")
     @contextualize
     def start(
         self,
