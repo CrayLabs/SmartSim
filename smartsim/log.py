@@ -242,42 +242,13 @@ def log_to_file(
     return handler
 
 
-def contextualize(
-    obj: object, prop_name: str, func: t.Callable[..., t.Any], ctx_var: ContextVar[str]
-) -> None:
-    """Convert a function into a context aware function that sets the value
-    of a target ContextVar prior to executing the function with Context().run"""
-
-    # Keep the original function call from the contextualized version
-    fn_orig_key = func.__name__
-    fn_key = f"_no_ctx__{fn_orig_key}"
-    setattr(obj, fn_key, func)
-
-    def _inner(*args: t.Any, **kwargs: t.Any) -> t.Any:
-        """An anonymous function executed by context.run that
-        modifies a ContextVar value based on the ContextAware object"""
-        ctx = copy_context()
-
-        def _wrapper() -> t.Any:
-            """A function that ensures the context var is set during context.run"""
-            token = ctx_var.set(str(getattr(obj, prop_name, "")))
-            fn = getattr(obj, fn_key)
-            result = fn(*args, **kwargs)
-            ctx_var.reset(token)
-            return result
-
-        return ctx.run(_wrapper)
-
-    setattr(obj, fn_orig_key, _inner)
-
-
 #########################################################
 # TODO: Move these!!
 #########################################################
 
 _T = t.TypeVar("_T")
 _RT = t.TypeVar("_RT")
-_ContextT = t.TypeVar("_ContextT")
+# _ContextT = t.TypeVar("_ContextT")
 
 if t.TYPE_CHECKING:
     from typing_extensions import ParamSpec, Concatenate
@@ -287,30 +258,55 @@ if t.TYPE_CHECKING:
 #########################################################
 
 
-def method_contextualizer(
-    ctx_var: ContextVar[_ContextT],
-    ctx_map: t.Callable[[_T], _ContextT],
-) -> t.Callable[
-    [t.Callable[Concatenate[_T, _PR], _RT]],
-    t.Callable[Concatenate[_T, _PR], _RT],
-]:
-    def _contextualize(
-        fn: t.Callable[Concatenate[_T, _PR], _RT], /
-    ) -> t.Callable[Concatenate[_T, _PR], _RT]:
-        @functools.wraps(fn)
-        def _contextual(
-            self: _T,
-            *args: _PR.args,
-            **kwargs: _PR.kwargs,
-        ) -> _RT:
-            ctx = copy_context()
-            ctx_val = ctx_map(self)
-            token = ctx_var.set(ctx_val)
-            try:
-                return ctx.run(fn, self, *args, **kwargs)
-            finally:
-                ctx_var.reset(token)
+def contextualize(
+    fn: t.Callable[Concatenate[_T, _PR], _RT]
+) -> t.Callable[Concatenate[_T, _PR], _RT]:
+    def _alter_context(*args: t.Any, **kwargs: t.Any) -> _RT:
+        self = args[0]
+        exp_path: str = getattr(self, "exp_path", "")
+        ctx_exp_path.set(exp_path)
+        return fn(*args, **kwargs)
 
-        return _contextual
+    @functools.wraps(fn)
+    def _inner(self: _T, *args: _PR.args, **kwargs: _PR.kwargs) -> _RT:
+        ctx = copy_context()
+        return ctx.run(_alter_context, self, *args, **kwargs)
 
-    return _contextualize
+    return _inner
+
+# def method_contextualizer(
+#     # ctx_var: ContextVar[_ContextT],
+#     ctx_map: t.Callable[[_T], _ContextT],
+# ) -> t.Callable[
+#     [t.Callable[Concatenate[_T, _PR], _RT]],
+#     t.Callable[Concatenate[_T, _PR], _RT],
+# ]:
+#     def _contextualize(
+#         fn: t.Callable[Concatenate[_T, _PR], _RT], /
+#     ) -> t.Callable[Concatenate[_T, _PR], _RT]:
+
+#         @functools.wraps(fn)
+#         def _contextual(
+#             self: _T,
+#             *args: _PR.args,
+#             **kwargs: _PR.kwargs,
+#         ) -> _RT:
+#             # ctx_val = ctx_map(self)
+#             # ctx_val = self.exp_path
+#             def _ctx_modifier() -> _RT:
+#                 """Thin wrapper to ensure the target method changes
+#                 context var after ctx.run"""
+#                 # ctx_val = ctx_map(self)
+#                 # token = ctx_var.set(ctx_val)
+#                 token = ctx_exp_path.set(self.exp_path)
+#                 result = fn(self, *args, **kwargs)
+#                 # ctx_var.reset(token)
+#                 ctx_exp_path.reset(token)
+#                 return result
+
+#             ctx = copy_context()
+#             return ctx.run(_ctx_modifier)
+
+#         return _contextual
+
+#     return _contextualize

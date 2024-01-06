@@ -36,19 +36,12 @@ from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
-from .log import ctx_exp_path, get_logger, method_contextualizer, contextualize
+from .log import get_logger, contextualize
 from .settings import base, Container, settings
 from .wlm import detect_launcher
 
 
 logger = get_logger(__name__)
-
-
-def _exp_contextualizer(e: "Experiment") -> str:
-    return e.exp_path
-
-
-_with_exp_ctx = method_contextualizer(ctx_exp_path, _exp_contextualizer)
 
 
 class Experiment:
@@ -140,16 +133,15 @@ class Experiment:
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
-        ctx_fns = [
-            "create_ensemble",
-            "create_model",
-        ]
         # TODO: Still need this loop for the moment for `staticmethods` :(
+        ctx_fns = ["create_ensemble", "create_model"]
         for fn_name in ctx_fns:
             fn = getattr(self, fn_name)
-            contextualize(self, "exp_path", fn, ctx_exp_path)
+            setattr(self, fn_name, contextualize(fn))
 
-    @_with_exp_ctx
+    # @contextualize
+    # @contextualize("exp_path")
+    @contextualize
     def start(
         self,
         *args: t.Any,
@@ -223,7 +215,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
@@ -260,7 +252,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def generate(
         self,
         *args: t.Any,
@@ -298,7 +290,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def poll(
         self, interval: int = 10, verbose: bool = True, kill_on_interrupt: bool = True
     ) -> None:
@@ -342,7 +334,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
@@ -366,7 +358,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def get_status(self, *args: t.Any) -> t.List[str]:
         """Query the status of launched instances
 
@@ -594,7 +586,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def create_run_settings(
         self,
         exe: str,
@@ -659,7 +651,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def create_batch_settings(
         self,
         nodes: int = 1,
@@ -720,7 +712,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def create_database(
         self,
         port: int = 6379,
@@ -804,7 +796,7 @@ class Experiment:
             **kwargs,
         )
 
-    @_with_exp_ctx
+    @contextualize
     def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
         """Reconnect to a running ``Orchestrator``
 
@@ -825,7 +817,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_with_exp_ctx
+    @contextualize
     def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
