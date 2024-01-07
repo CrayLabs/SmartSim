@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import concurrent.futures
 import os
 import platform
 import re
@@ -571,7 +572,7 @@ def _get_rai_deps(
     with_pt: bool,
     with_ort: bool,
 ) -> None:
-    rai_path = Path(rai_path)
+    rai_path = Path(rai_path).resolve()
     if not rai_path.is_dir():
         raise BuildError(f"RedisAI directory not found: {rai_path}")
 
@@ -581,39 +582,85 @@ def _get_rai_deps(
         deps_dir = rai_path / f"deps/{os_}-{arch}-{device}"
 
     deps_dir.mkdir(parents=True, exist_ok=True)
-    if with_dlpack:
-        _git(
-            "clone",
-            "-q",
-            "--depth",
-            "1",
-            "--branch",
-            "v0.5_RAI",
-            "https://github.com/RedisAI/dlpack.git",
-            str(deps_dir / "dlpack"),
-        )
 
     # TODO: It would be nice if the backend version numbers were declared
     #       alongside the python package version numbers so that all of the
     #       dependency versions were declared in single location. Unfortunately
     #       importing this declarations into this module would be non-trivial
     #       as this module is used as script in the SmartSim `setup.py`.
-    buildable_backends = (
-        (with_pt, PTArchive(os_, device, "2.0.1")),
-        (with_tf, TFArchive(os_, arch, device, "2.13.1")),
-        (with_ort, ORTArchive(os_, device, "1.16.3")),
+    fetchable_deps: t.Sequence[t.Tuple[bool, "_RAIBuildDependency"]] = (
+        (with_dlpack, _DLPackRepository("v0.5_RAI")),
+        (with_pt, _PTArchive(os_, device, "2.0.1")),
+        (with_tf, _TFArchive(os_, arch, device, "2.13.1")),
+        (with_ort, _ORTArchive(os_, device, "1.16.3")),
     )
-    to_fetch = (backend for should_build, backend in buildable_backends if should_build)
-
-    for archive in to_fetch:
-        archive.extract(deps_dir)
+    to_fetch = (dep for should_fetch, dep in fetchable_deps if should_fetch)
+    _fetch_and_place_rai_deps(deps_dir, to_fetch)
 
 
-class WebArchive(ABC):
+def _fetch_and_place_rai_deps(
+    target: t.Union[str, os.PathLike[str]],
+    dependencies: t.Iterable["_RAIBuildDependency"],
+) -> None:
+    target = Path(target)
+    if not target.is_dir():
+        raise BuildError("RAI dependencies target must be a directory")
+    if tuple(target.iterdir()):
+        raise BuildError("RAI dependency directory is not empty")
+
+    dependencies = tuple(dependencies)
+    if not dependencies:  # No deps to fetch, so no work to do
+        return
+
+    def _place_dependency(dep: "_RAIBuildDependency") -> Path:
+        return dep.place_rai_dependency(target)
+
+    num_workers = min(len(dependencies), (os.cpu_count() or 8) * 5)
+    with concurrent.futures.ThreadPoolExecutor(num_workers) as pool:
+        pool.map(_place_dependency, dependencies)
+
+
+class _RAIBuildDependency(ABC):
+    @abstractmethod
+    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path: ...
+
+
+class _WebLocation(ABC):
     @property
     @abstractmethod
     def url(self) -> str: ...
 
+
+class _WebGitRepository(_WebLocation):
+    def clone(
+        self,
+        target: t.Union[str, os.PathLike[str]],
+        depth: t.Optional[int] = None,
+        branch: t.Optional[str] = None,
+    ) -> None:
+        depth_ = ("--depth", str(depth)) if depth is not None else ()
+        branch_ = ("--branch", branch) if branch is not None else ()
+        _git("clone", "-q", *depth_, *branch_, self.url, os.fspath(target))
+
+
+@t.final
+@dataclass(frozen=True)
+class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
+    version: t.Optional[str] = None
+
+    @property
+    def url(self) -> str:
+        return "https://github.com/RedisAI/dlpack.git"
+
+    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+        target = Path(target) / "dlpack"
+        self.clone(target, branch=self.version, depth=1)
+        if not target.is_dir():
+            raise BuildError("Failed to place dlpack")
+        return target
+
+
+class _WebArchive(_WebLocation):
     @property
     def name(self) -> str:
         _, name = self.url.rsplit("/", 1)
@@ -627,7 +674,7 @@ class WebArchive(ABC):
         return Path(file).resolve()
 
 
-class ExtractableWebArchive(WebArchive, ABC):
+class _ExtractableWebArchive(_WebArchive, ABC):
     @abstractmethod
     def _extract_download(
         self, download_path: Path, target: t.Union[str, os.PathLike[str]]
@@ -639,7 +686,7 @@ class ExtractableWebArchive(WebArchive, ABC):
             self._extract_download(arch_path, target)
 
 
-class WebTGZ(ExtractableWebArchive):
+class _WebTGZ(_ExtractableWebArchive):
     def _extract_download(
         self, download_path: Path, target: t.Union[str, os.PathLike[str]]
     ) -> None:
@@ -647,7 +694,7 @@ class WebTGZ(ExtractableWebArchive):
             tgz_file.extractall(target)
 
 
-class WebZip(ExtractableWebArchive):
+class _WebZip(_ExtractableWebArchive):
     def _extract_download(
         self, download_path: Path, target: t.Union[str, os.PathLike[str]]
     ) -> None:
@@ -655,8 +702,9 @@ class WebZip(ExtractableWebArchive):
             zip_file.extractall(target)
 
 
+@t.final
 @dataclass(frozen=True)
-class PTArchive(WebZip):
+class _PTArchive(_WebZip, _RAIBuildDependency):
     os_: str
     device: TDeviceStr
     version: str
@@ -668,9 +716,8 @@ class PTArchive(WebZip):
                 pt_build = "cu117"
             else:
                 pt_build = "cpu"
-            libtorch_arch = (
-                f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
-            )
+            # pylint: disable-next=line-too-long
+            libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
         elif "darwin" in self.os_:
             if self.device == "gpu":
                 raise BuildError("RedisAI does not currently support GPU on Macos")
@@ -680,9 +727,17 @@ class PTArchive(WebZip):
             raise BuildError(f"Unexpected OS for the PT Archive: {self.os_}")
         return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
 
+    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+        self.extract(target)
+        target = Path(target) / "libtorch"
+        if not target.is_dir():
+            raise BuildError("Failed to place RAI dependency: `libtorch`")
+        return target
 
+
+@t.final
 @dataclass(frozen=True)
-class TFArchive(WebTGZ):
+class _TFArchive(_WebTGZ, _RAIBuildDependency):
     os_: str
     architecture: TArchitectureStr
     device: TDeviceStr
@@ -712,16 +767,16 @@ class TFArchive(WebTGZ):
             f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
-    def _extract_download(
-        self, download_path: Path, target: t.Union[str, os.PathLike[str]]
-    ) -> None:
+    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
         target = Path(target) / "libtensorflow"
         target.mkdir()
-        super()._extract_download(download_path, target)
+        self.extract(target)
+        return target
 
 
+@t.final
 @dataclass(frozen=True)
-class ORTArchive(WebTGZ):
+class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     os_: str
     device: TDeviceStr
     version: str
@@ -747,11 +802,9 @@ class ORTArchive(WebTGZ):
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
         return f"{ort_url_base}/{ort_archive}"
 
-    def _extract_download(
-        self, download_path: Path, target: t.Union[str, os.PathLike[str]]
-    ) -> None:
+    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
         target = Path(target).resolve() / "onnxruntime"
-        super()._extract_download(download_path, target)
+        self.extract(target)
         try:
             (extracted_dir,) = target.iterdir()
         except ValueError:
@@ -761,6 +814,7 @@ class ORTArchive(WebTGZ):
         for file in extracted_dir.iterdir():
             file.rename(target / file.name)
         extracted_dir.rmdir()
+        return target
 
 
 def _git(*args: str) -> None:
