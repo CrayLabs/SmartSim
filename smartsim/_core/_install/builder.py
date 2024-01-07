@@ -54,6 +54,9 @@ TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 TDeviceStr = t.Literal["cpu", "gpu"]
 TArchitectureStr = t.Literal["x64"]
 
+_T = t.TypeVar("_T")
+_U = t.TypeVar("_U")
+
 
 def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
@@ -301,6 +304,18 @@ class DatabaseBuilder(Builder):
             raise BuildError("Installation of redis-cli failed!") from e
 
 
+class _RAIBuildDependency(ABC):
+    """An interface with a collection of magic methods so that
+    ``RedisAIBuilder`` can fetch and place its own dependencies
+    """
+
+    @property
+    @abstractmethod
+    def __rai_dependency_name__(self) -> str: ...
+    @abstractmethod
+    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path: ...
+
+
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
     Supported build method:
@@ -450,20 +465,11 @@ class RedisAIBuilder(Builder):
             "--branch",
             branch,
             "--depth=1",
-            self.rai_build_path.name,
+            os.fspath(self.rai_build_path),
         ]
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
-        _get_rai_deps(
-            rai_path=self.rai_build_path.resolve(),
-            os_=platform.system().lower(),
-            arch="x64",
-            device=device,
-            with_dlpack=True,
-            with_tf=self.build_tf,
-            with_pt=self.build_torch,
-            with_ort=self.build_onnx,
-        )
+        self._fetch_deps_for(device)
 
         if self.libtf_dir and device:
             self.symlink_libtf(device)
@@ -523,6 +529,68 @@ class RedisAIBuilder(Builder):
             *(f"{key}={val}" for key, val in extra_env.items()),
         ]
 
+    def _fetch_deps_for(self, device: TDeviceStr) -> None:
+        if not self.rai_build_path.is_dir():
+            raise BuildError("RedisAI build directory not found")
+
+        # TODO: It might be worth making these instance variables so that users
+        #       of this class can configure exactly _what_ they are building.
+        os_ = platform.system().lower()
+        arch: TArchitectureStr = "x64"
+
+        machine = platform.machine().lower()
+        if machine not in ("amd64", "x86_64") and any(
+            (self.fetch_tf, self.fetch_torch, self.fetch_onnx)
+        ):
+            # TODO: It's probably worth trying to fix this as all of our ML
+            #       backends do now offer ARM builds at versions we support
+            raise BuildError(
+                "SmartSim currently only supports building ML backends for "
+                "the 'x64' architecture; found unrecognized or unsupported "
+                f"architecture '{machine}'"
+            )
+
+        if "darwin" in os_:
+            deps_dir = self.rai_build_path / f"deps/macos-{arch}-{device}"
+        elif "linux" in os_:
+            deps_dir = self.rai_build_path / f"deps/linux-{arch}-{device}"
+        else:
+            raise BuildError(f"Unrecognized or unsupported operating system '{os_}'")
+
+        deps_dir.mkdir(parents=True, exist_ok=True)
+        if any(deps_dir.iterdir()):
+            raise BuildError("RAI build dependency directory is not empty")
+
+        # TODO: It would be nice if the backend version numbers were declared
+        #       alongside the python package version numbers so that all of the
+        #       dependency versions were declared in single location.
+        #       Unfortunately importing declarations into this module would be
+        #       non-trivial as this module is used as script in the SmartSim
+        #       `setup.py`.
+        fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
+            (True, _DLPackRepository("v0.5_RAI")),
+            (self.fetch_tf, _PTArchive(os_, device, "2.0.1")),
+            (self.fetch_torch, _TFArchive(os_, arch, device, "2.13.1")),
+            (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
+        )
+        to_fetch = tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
+
+        def _place_dep(dep: _RAIBuildDependency) -> Path:
+            if self.verbose:
+                print(f"Placing: '{dep.__rai_dependency_name__}'")
+            path = dep.__place_for_rai__(deps_dir)
+            if self.verbose:
+                print(f"Placed: '{dep.__rai_dependency_name__}' at '{path}'")
+            return path
+
+        placed_paths = _threaded_map(_place_dep, to_fetch)
+        unique_placed_paths = {os.fspath(path.resolve()) for path in placed_paths}
+        if len(unique_placed_paths) != len(to_fetch):
+            raise BuildError(
+                f"Expected to place {len(to_fetch)} dependnecies, but only "
+                f"found {len(unique_placed_paths)}"
+            )
+
     def _install_backends(self, device: str) -> None:
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
@@ -562,67 +630,13 @@ class RedisAIBuilder(Builder):
             self.copy_dir(dylibs, ss_rai_torch_path / ".dylibs", set_exe=True)
 
 
-def _get_rai_deps(
-    rai_path: t.Union[str, os.PathLike[str]],
-    os_: str,
-    arch: TArchitectureStr,
-    device: TDeviceStr,
-    with_dlpack: bool,
-    with_tf: bool,
-    with_pt: bool,
-    with_ort: bool,
-) -> None:
-    rai_path = Path(rai_path).resolve()
-    if not rai_path.is_dir():
-        raise BuildError(f"RedisAI directory not found: {rai_path}")
-
-    if "darwin" in os_:
-        deps_dir = rai_path / f"deps/macos-{arch}-{device}"
-    else:
-        deps_dir = rai_path / f"deps/{os_}-{arch}-{device}"
-
-    deps_dir.mkdir(parents=True, exist_ok=True)
-
-    # TODO: It would be nice if the backend version numbers were declared
-    #       alongside the python package version numbers so that all of the
-    #       dependency versions were declared in single location. Unfortunately
-    #       importing this declarations into this module would be non-trivial
-    #       as this module is used as script in the SmartSim `setup.py`.
-    fetchable_deps: t.Sequence[t.Tuple[bool, "_RAIBuildDependency"]] = (
-        (with_dlpack, _DLPackRepository("v0.5_RAI")),
-        (with_pt, _PTArchive(os_, device, "2.0.1")),
-        (with_tf, _TFArchive(os_, arch, device, "2.13.1")),
-        (with_ort, _ORTArchive(os_, device, "1.16.3")),
-    )
-    to_fetch = (dep for should_fetch, dep in fetchable_deps if should_fetch)
-    _fetch_and_place_rai_deps(deps_dir, to_fetch)
-
-
-def _fetch_and_place_rai_deps(
-    target: t.Union[str, os.PathLike[str]],
-    dependencies: t.Iterable["_RAIBuildDependency"],
-) -> None:
-    target = Path(target)
-    if not target.is_dir():
-        raise BuildError("RAI dependencies target must be a directory")
-    if tuple(target.iterdir()):
-        raise BuildError("RAI dependency directory is not empty")
-
-    dependencies = tuple(dependencies)
-    if not dependencies:  # No deps to fetch, so no work to do
-        return
-
-    def _place_dependency(dep: "_RAIBuildDependency") -> Path:
-        return dep.place_rai_dependency(target)
-
-    num_workers = min(len(dependencies), (os.cpu_count() or 8) * 5)
+def _threaded_map(fn: t.Callable[[_T], _U], items: t.Iterable[_T]) -> t.Sequence[_U]:
+    items = tuple(items)
+    if not items:  # No items so no work to do
+        return ()
+    num_workers = min(len(items), (os.cpu_count() or 8) * 5)
     with concurrent.futures.ThreadPoolExecutor(num_workers) as pool:
-        pool.map(_place_dependency, dependencies)
-
-
-class _RAIBuildDependency(ABC):
-    @abstractmethod
-    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path: ...
+        return tuple(pool.map(fn, items))
 
 
 class _WebLocation(ABC):
@@ -652,7 +666,11 @@ class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
     def url(self) -> str:
         return "https://github.com/RedisAI/dlpack.git"
 
-    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"dlpack@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
         target = Path(target) / "dlpack"
         self.clone(target, branch=self.version, depth=1)
         if not target.is_dir():
@@ -727,7 +745,11 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
             raise BuildError(f"Unexpected OS for the PT Archive: {self.os_}")
         return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
 
-    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"libtorch@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
         self.extract(target)
         target = Path(target) / "libtorch"
         if not target.is_dir():
@@ -767,7 +789,11 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
-    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"libtensorflow@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
         target = Path(target) / "libtensorflow"
         target.mkdir()
         self.extract(target)
@@ -802,7 +828,11 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
         return f"{ort_url_base}/{ort_archive}"
 
-    def place_rai_dependency(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"onnxruntime@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
         target = Path(target).resolve() / "onnxruntime"
         self.extract(target)
         try:
