@@ -353,10 +353,7 @@ class Experiment:
                                by this ``Experiment``
         """
         try:
-            is_finished = self._control.finished(entity)
-            if is_finished:
-                logger.info(f"queried entity has finished: {entity.name}")
-            return is_finished
+            return self._control.finished(entity)
         except SmartSimError as e:
             logger.error(e)
             raise
