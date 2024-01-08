@@ -135,7 +135,7 @@ class ContextAwareLogger(logging.Logger):
     ) -> None:
         """Automatically attach file handlers if contextual information is found"""
         file_out, file_err = get_exp_log_paths()
-        
+
         if file_out and file_err:
             _lvl = logging.getLevelName(self.level)
             fmt = EXPERIMENT_LOG_FORMAT
