@@ -67,6 +67,7 @@ def test_level_filter_info():
 def test_level_filter_warn():
     """Ensure that messages above maximum are not logged"""
     log_filter = smartsim.log.LowPassFilter("WARN")
+
     faux_out_stream = io.StringIO()
 
     logger = logging.getLogger("test_level_filter_warn")
@@ -111,3 +112,50 @@ def test_add_exp_loggers(test_dir):
 
     assert filename2.exists()
     assert filename2.is_file()
+
+
+def test_get_logger(test_dir: str):
+    """Ensure the correct logger type is instantiated"""
+    logger = smartsim.log.get_logger("SmartSimTest", "INFO")
+    assert isinstance(logger, smartsim.log.ContextAwareLogger)
+
+
+def test_exp_logs(test_dir: str):
+    """Ensure that experiment loggers are added when context info exists"""
+    test_dir = pathlib.Path(test_dir)
+    test_dir.mkdir(parents=True, exist_ok=True)
+
+    token = smartsim.log.ctx_exp_path.set(test_dir)
+    
+    logger = smartsim.log.get_logger("SmartSimTest", "INFO")
+    
+    faux_out_stream = io.StringIO()
+    logger.addHandler(logging.StreamHandler(faux_out_stream))
+
+    log_msg = "testing in a test!"
+    err_msg = "erroring in a test!"
+    logger.info(log_msg)
+    logger.error(err_msg)
+
+    # ensure that the default stream is written to
+    logged = faux_out_stream.getvalue()
+    assert log_msg in logged
+    assert err_msg in logged
+
+    out_file = pathlib.Path(test_dir) / "smartsim.out"
+    err_file = pathlib.Path(test_dir) / "smartsim.err"
+
+    out_content = out_file.read_text()
+    err_content = err_file.read_text()
+
+    # ensure the low-pass filter logs non-errors to out file
+    assert log_msg in out_content
+    assert err_msg not in out_content
+    assert str(test_dir) in out_content
+
+    # ensure the errors are logged to err file
+    assert err_msg in err_content
+    assert log_msg not in err_content
+    assert str(err_msg) in err_content
+
+    smartsim.log.ctx_exp_path.reset(token)

@@ -235,7 +235,7 @@ def log_to_file(
     if logger is None:
         logger = logging.getLogger("SmartSim")
 
-    # ensure logs can are written if specified dir doesn't exist
+    # ensure logs are written even if specified dir doesn't exist
     log_path = pathlib.Path(filename)
     if not log_path.parent.exists():
         filename = log_path.name
