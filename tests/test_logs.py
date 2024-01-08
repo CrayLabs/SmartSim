@@ -49,7 +49,7 @@ def test_level_filter_info():
     logger = logging.getLogger("test_level_filter_info")
     logger.addHandler(logging.StreamHandler(faux_out_stream))
     logger.addFilter(log_filter)
-    
+
     logger.debug("debug")
     logger.info("info")
     logger.warning("warn")
@@ -57,11 +57,11 @@ def test_level_filter_info():
     logger.exception("exception")
 
     logged_messages = faux_out_stream.getvalue().split("\n")
-    assert 'debug' in logged_messages
-    assert 'info' in logged_messages
-    assert 'warn' not in logged_messages
-    assert 'error' not in logged_messages
-    assert 'exception' not in logged_messages
+    assert "debug" in logged_messages
+    assert "info" in logged_messages
+    assert "warn" not in logged_messages
+    assert "error" not in logged_messages
+    assert "exception" not in logged_messages
 
 
 def test_level_filter_warn():
@@ -73,7 +73,7 @@ def test_level_filter_warn():
     logger = logging.getLogger("test_level_filter_warn")
     logger.addHandler(logging.StreamHandler(faux_out_stream))
     logger.addFilter(log_filter)
-    
+
     logger.debug("debug")
     logger.info("info")
     logger.warning("warn")
@@ -81,11 +81,11 @@ def test_level_filter_warn():
     logger.exception("exception")
 
     logged_messages = faux_out_stream.getvalue().split("\n")
-    assert 'debug' in logged_messages
-    assert 'info' in logged_messages
-    assert 'warn' in logged_messages
-    assert 'error' not in logged_messages
-    assert 'exception' not in logged_messages
+    assert "debug" in logged_messages
+    assert "info" in logged_messages
+    assert "warn" in logged_messages
+    assert "error" not in logged_messages
+    assert "exception" not in logged_messages
 
 
 def test_add_exp_loggers(test_dir):
@@ -100,7 +100,7 @@ def test_add_exp_loggers(test_dir):
     err_file = pathlib.Path(test_dir) / "smartsim.err"
 
     filter_fn = lambda x: True
-    
+
     smartsim.log.log_to_file(str(out_file), logger=logger, log_filter=filter_fn)
     smartsim.log.log_to_file(str(err_file), "WARN", logger)
 
@@ -126,9 +126,9 @@ def test_exp_logs(test_dir: str):
     test_dir.mkdir(parents=True, exist_ok=True)
 
     token = smartsim.log.ctx_exp_path.set(test_dir)
-    
+
     logger = smartsim.log.get_logger("SmartSimTest", "INFO")
-    
+
     faux_out_stream = io.StringIO()
     logger.addHandler(logging.StreamHandler(faux_out_stream))
 
@@ -161,8 +161,11 @@ def test_exp_logs(test_dir: str):
 
 
 @pytest.mark.parametrize(
-        "ctx_value",
-        [pytest.param(None), pytest.param("")]
+    "ctx_value",
+    [
+        pytest.param(None, id="Null context"),
+        pytest.param("", id="Empty-string context"),
+    ],
 )
 def test_exp_logs_without_ctx(test_dir: str, ctx_value: t.Optional[str]):
     """Ensure that experiment loggers are skipped without context info"""
@@ -170,9 +173,9 @@ def test_exp_logs_without_ctx(test_dir: str, ctx_value: t.Optional[str]):
     test_dir.mkdir(parents=True, exist_ok=True)
 
     token = smartsim.log.ctx_exp_path.set(ctx_value)
-    
+
     logger = smartsim.log.get_logger("SmartSimTest", "INFO")
-    
+
     faux_out_stream = io.StringIO()
     logger.addHandler(logging.StreamHandler(faux_out_stream))
 
