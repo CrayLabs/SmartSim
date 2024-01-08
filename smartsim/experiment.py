@@ -36,10 +36,9 @@ from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
-from .log import get_logger, method_contextualizer, ctx_exp_path
-from .settings import base, Container, settings
+from .log import ctx_exp_path, get_logger, method_contextualizer
+from .settings import Container, base, settings
 from .wlm import detect_launcher
-
 
 logger = get_logger(__name__)
 

@@ -34,13 +34,12 @@ from types import FrameType
 
 from ...database import Orchestrator
 from ...entity import DBNode, EntitySequence, SmartSimEntity
-from ...log import get_logger, ContextThread
+from ...log import ContextThread, get_logger
 from ...status import STATUS_NEVER_STARTED, TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
-
 
 logger = get_logger(__name__)
 

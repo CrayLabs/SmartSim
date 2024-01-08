@@ -33,10 +33,9 @@ import pathlib
 import sys
 import threading
 import typing as t
-
-import coloredlogs
 from contextvars import ContextVar, copy_context
 
+import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
@@ -59,7 +58,7 @@ _RT = t.TypeVar("_RT")
 _ContextT = t.TypeVar("_ContextT")
 
 if t.TYPE_CHECKING:
-    from typing_extensions import ParamSpec, Concatenate
+    from typing_extensions import Concatenate, ParamSpec
 
     _PR = ParamSpec("_PR")
 
