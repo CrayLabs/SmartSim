@@ -26,10 +26,10 @@
 
 import io
 import logging
-import os
 import pathlib
 import pytest
 import smartsim.log
+import typing as t
 
 
 # The tests in this file belong to the group_b group
@@ -96,22 +96,22 @@ def test_add_exp_loggers(test_dir):
     logger = logging.getLogger("smartsim_test_add_exp_loggers")
     logger.addHandler(logging.StreamHandler(faux_out_stream))
 
-    filename1 = pathlib.Path(test_dir) / "smartsim.out"
-    filename2 = pathlib.Path(test_dir) / "smartsim.err"
+    out_file = pathlib.Path(test_dir) / "smartsim.out"
+    err_file = pathlib.Path(test_dir) / "smartsim.err"
 
     filter_fn = lambda x: True
     
-    smartsim.log.log_to_file(filename1, logger=logger, log_filter=filter_fn)
-    smartsim.log.log_to_file(filename2, "WARN", logger)
+    smartsim.log.log_to_file(str(out_file), logger=logger, log_filter=filter_fn)
+    smartsim.log.log_to_file(str(err_file), "WARN", logger)
 
     logger.debug("debug")
     logger.exception("exception")
 
-    assert filename1.exists()
-    assert filename1.is_file()
+    assert out_file.exists()
+    assert out_file.is_file()
 
-    assert filename2.exists()
-    assert filename2.is_file()
+    assert err_file.exists()
+    assert err_file.is_file()
 
 
 def test_get_logger(test_dir: str):
@@ -142,8 +142,7 @@ def test_exp_logs(test_dir: str):
     assert log_msg in logged
     assert err_msg in logged
 
-    out_file = pathlib.Path(test_dir) / "smartsim.out"
-    err_file = pathlib.Path(test_dir) / "smartsim.err"
+    out_file, err_file = smartsim.log.get_exp_log_paths()
 
     out_content = out_file.read_text()
     err_content = err_file.read_text()
@@ -157,5 +156,39 @@ def test_exp_logs(test_dir: str):
     assert err_msg in err_content
     assert log_msg not in err_content
     assert str(err_msg) in err_content
+
+    smartsim.log.ctx_exp_path.reset(token)
+
+
+@pytest.mark.parametrize(
+        "ctx_value",
+        [pytest.param(None), pytest.param("")]
+)
+def test_exp_logs_without_ctx(test_dir: str, ctx_value: t.Optional[str]):
+    """Ensure that experiment loggers are skipped without context info"""
+    test_dir = pathlib.Path(test_dir)
+    test_dir.mkdir(parents=True, exist_ok=True)
+
+    token = smartsim.log.ctx_exp_path.set(ctx_value)
+    
+    logger = smartsim.log.get_logger("SmartSimTest", "INFO")
+    
+    faux_out_stream = io.StringIO()
+    logger.addHandler(logging.StreamHandler(faux_out_stream))
+
+    log_msg = "testing in a test!"
+    err_msg = "erroring in a test!"
+    logger.info(log_msg)
+    logger.error(err_msg)
+
+    # ensure that the default stream is written to
+    logged = faux_out_stream.getvalue()
+    assert log_msg in logged
+    assert err_msg in logged
+
+    out_file, err_file = smartsim.log.get_exp_log_paths()
+
+    assert not out_file
+    assert not err_file
 
     smartsim.log.ctx_exp_path.reset(token)

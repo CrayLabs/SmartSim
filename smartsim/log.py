@@ -90,8 +90,18 @@ def _get_log_level() -> str:
     return "info"
 
 
+def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.Path]]:
+    if _exp_path := ctx_exp_path.get():
+        file_out = pathlib.Path(_exp_path) / "smartsim.out"
+        file_err = pathlib.Path(_exp_path) / "smartsim.err"
+        return file_out, file_err
+
+    return None, None
+
+
 class ContextThread(threading.Thread):
     """Customized Thread that ensures new threads may change context vars"""
+
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         self.ctx = copy_context()
         super().__init__(*args, **kwargs)
@@ -103,6 +113,7 @@ class ContextThread(threading.Thread):
 class ContextInjectingLogFilter(logging.Filter):
     """Filter that performs enrichment of a log record by adding context
     information about the experiment being executed"""
+
     def filter(self, record: logging.LogRecord) -> bool:
         record.exp_path = ctx_exp_path.get()
         return True
@@ -111,6 +122,7 @@ class ContextInjectingLogFilter(logging.Filter):
 class ContextAwareLogger(logging.Logger):
     """A logger customized to automatically write experiment logs to a
     dynamic target directory by inspecting the value of a context var"""
+
     def _log(
         self,
         level: int,
@@ -122,16 +134,15 @@ class ContextAwareLogger(logging.Logger):
         stacklevel: int = 1,
     ) -> None:
         """Automatically attach file handlers if contextual information is found"""
-        if _exp_path := ctx_exp_path.get():
-            file_out = str(pathlib.Path(_exp_path) / "smartsim.out")
-            file_err = str(pathlib.Path(_exp_path) / "smartsim.err")
-
+        file_out, file_err = get_exp_log_paths()
+        
+        if file_out and file_err:
             _lvl = logging.getLevelName(self.level)
             fmt = EXPERIMENT_LOG_FORMAT
 
             low_pass = LowPassFilter(_lvl)
-            h_out = log_to_file(file_out, _lvl, self, fmt, low_pass)
-            h_err = log_to_file(file_err, "WARN", self, fmt)
+            h_out = log_to_file(str(file_out), _lvl, self, fmt, low_pass)
+            h_err = log_to_file(str(file_err), "WARN", self, fmt)
 
             super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
@@ -263,7 +274,7 @@ def method_contextualizer(
     t.Callable[Concatenate[_T, _PR], _RT],
 ]:
     """Parameterized-decorator factory that enables a target value
-    to be placed into global context prior to execution of the 
+    to be placed into global context prior to execution of the
     decorated method.
     Usage Note: the use of `self` below requires that the decorated function is passed
     the object containing a value that will be modified in the context. `ctx_map`
@@ -272,12 +283,14 @@ def method_contextualizer(
     :type ctx_var: ContextVar
     :param ctx_map: A function that returns the value to be set to ctx_var
     :type ctx_map: t.Callable[[_T], _ContextT]"""
+
     def _contextualize(
         fn: t.Callable[Concatenate[_T, _PR], _RT], /
     ) -> t.Callable[Concatenate[_T, _PR], _RT]:
         """Sets the value of a contextvar at runtime and executes
         the decorated method in a new thread with a context copy
         where `ctx_var` is set to the value returned by `ctx_map`"""
+
         @functools.wraps(fn)
         def _contextual(
             self: _T,
@@ -286,8 +299,9 @@ def method_contextualizer(
         ) -> _RT:
             """A decorator operator that runs the decorated method in a new
             thread with the desired contextual information."""
+
             def _ctx_modifier() -> _RT:
-                """Helper to simplify calling the target method with the 
+                """Helper to simplify calling the target method with the
                 modified value set in `ctx_var`"""
                 ctx_val = ctx_map(self)
                 token = ctx_var.set(ctx_val)
@@ -297,5 +311,7 @@ def method_contextualizer(
 
             ctx = copy_context()
             return ctx.run(_ctx_modifier)
+
         return _contextual
+
     return _contextualize
