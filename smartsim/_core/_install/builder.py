@@ -313,7 +313,7 @@ class _RAIBuildDependency(ABC):
     @abstractmethod
     def __rai_dependency_name__(self) -> str: ...
     @abstractmethod
-    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path: ...
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
 
 
 class RedisAIBuilder(Builder):
@@ -648,7 +648,7 @@ class _WebLocation(ABC):
 class _WebGitRepository(_WebLocation):
     def clone(
         self,
-        target: t.Union[str, os.PathLike[str]],
+        target: t.Union[str, "os.PathLike[str]"],
         depth: t.Optional[int] = None,
         branch: t.Optional[str] = None,
     ) -> None:
@@ -670,7 +670,7 @@ class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"dlpack@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         target = Path(target) / "dlpack"
         self.clone(target, branch=self.version, depth=1)
         if not target.is_dir():
@@ -684,7 +684,7 @@ class _WebArchive(_WebLocation):
         _, name = self.url.rsplit("/", 1)
         return name
 
-    def download(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    def download(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         target = Path(target)
         if target.is_dir():
             target = target / self.name
@@ -695,10 +695,10 @@ class _WebArchive(_WebLocation):
 class _ExtractableWebArchive(_WebArchive, ABC):
     @abstractmethod
     def _extract_download(
-        self, download_path: Path, target: t.Union[str, os.PathLike[str]]
+        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
     ) -> None: ...
 
-    def extract(self, target: t.Union[str, os.PathLike[str]]) -> None:
+    def extract(self, target: t.Union[str, "os.PathLike[str]"]) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             arch_path = self.download(tmp_dir)
             self._extract_download(arch_path, target)
@@ -706,7 +706,7 @@ class _ExtractableWebArchive(_WebArchive, ABC):
 
 class _WebTGZ(_ExtractableWebArchive):
     def _extract_download(
-        self, download_path: Path, target: t.Union[str, os.PathLike[str]]
+        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
     ) -> None:
         with tarfile.open(download_path, "r") as tgz_file:
             tgz_file.extractall(target)
@@ -714,7 +714,7 @@ class _WebTGZ(_ExtractableWebArchive):
 
 class _WebZip(_ExtractableWebArchive):
     def _extract_download(
-        self, download_path: Path, target: t.Union[str, os.PathLike[str]]
+        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
     ) -> None:
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
@@ -749,7 +749,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"libtorch@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         self.extract(target)
         target = Path(target) / "libtorch"
         if not target.is_dir():
@@ -793,7 +793,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"libtensorflow@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         target = Path(target) / "libtensorflow"
         target.mkdir()
         self.extract(target)
@@ -832,7 +832,7 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"onnxruntime@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, os.PathLike[str]]) -> Path:
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         target = Path(target).resolve() / "onnxruntime"
         self.extract(target)
         try:
