@@ -49,10 +49,19 @@ EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
 coloredlogs.DEFAULT_LOG_FORMAT = DEFAULT_LOG_FORMAT
 
-
-ctx_logger_name = ContextVar("logger_name", default="SmartSim")
+# create context vars used by loggers
 ctx_exp_path = ContextVar("exp_path", default="")
-ctx_fh_registered = ContextVar("fh_reg", default=False)
+
+
+# Generic types for method contextualizers
+_T = t.TypeVar("_T")
+_RT = t.TypeVar("_RT")
+_ContextT = t.TypeVar("_ContextT")
+
+if t.TYPE_CHECKING:
+    from typing_extensions import ParamSpec, Concatenate
+
+    _PR = ParamSpec("_PR")
 
 
 def _get_log_level() -> str:
@@ -83,6 +92,7 @@ def _get_log_level() -> str:
 
 
 class ContextThread(threading.Thread):
+    """Customized Thread that ensures new threads may change context vars"""
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         self.ctx = copy_context()
         super().__init__(*args, **kwargs)
@@ -92,12 +102,16 @@ class ContextThread(threading.Thread):
 
 
 class ContextInjectingLogFilter(logging.Filter):
+    """Filter that performs enrichment of a log record by adding context
+    information about the experiment being executed"""
     def filter(self, record: logging.LogRecord) -> bool:
         record.exp_path = ctx_exp_path.get()
         return True
 
 
 class ContextAwareLogger(logging.Logger):
+    """A logger customized to automatically write experiment logs to a
+    dynamic target directory by inspecting the value of a context var"""
     def _log(
         self,
         level: int,
@@ -242,71 +256,47 @@ def log_to_file(
     return handler
 
 
-#########################################################
-# TODO: Move these!!
-#########################################################
+def method_contextualizer(
+    ctx_var: ContextVar[_ContextT],
+    ctx_map: t.Callable[[_T], _ContextT],
+) -> t.Callable[
+    [t.Callable[Concatenate[_T, _PR], _RT]],
+    t.Callable[Concatenate[_T, _PR], _RT],
+]:
+    """Parameterized-decorator factory that enables a target value
+    to be placed into global context prior to execution of the 
+    decorated method.
+    Usage Note: the use of `self` below requires that the decorated function is passed
+    the object containing a value that will be modified in the context. `ctx_map`
+    must accept an instance of matching type.
+    :param ctx_var: The ContextVar that will be modified
+    :type ctx_var: ContextVar
+    :param ctx_map: A function that returns the value to be set to ctx_var
+    :type ctx_map: t.Callable[[_T], _ContextT]"""
+    def _contextualize(
+        fn: t.Callable[Concatenate[_T, _PR], _RT], /
+    ) -> t.Callable[Concatenate[_T, _PR], _RT]:
+        """Sets the value of a contextvar at runtime and executes
+        the decorated method in a new thread with a context copy
+        where `ctx_var` is set to the value returned by `ctx_map`"""
+        @functools.wraps(fn)
+        def _contextual(
+            self: _T,
+            *args: _PR.args,
+            **kwargs: _PR.kwargs,
+        ) -> _RT:
+            """A decorator operator that runs the decorated method in a new
+            thread with the desired contextual information."""
+            def _ctx_modifier() -> _RT:
+                """Helper to simplify calling the target method with the 
+                modified value set in `ctx_var`"""
+                ctx_val = ctx_map(self)
+                token = ctx_var.set(ctx_val)
+                result = fn(self, *args, **kwargs)
+                ctx_var.reset(token)
+                return result
 
-_T = t.TypeVar("_T")
-_RT = t.TypeVar("_RT")
-# _ContextT = t.TypeVar("_ContextT")
-
-if t.TYPE_CHECKING:
-    from typing_extensions import ParamSpec, Concatenate
-
-    _PR = ParamSpec("_PR")
-
-#########################################################
-
-
-def contextualize(
-    fn: t.Callable[Concatenate[_T, _PR], _RT]
-) -> t.Callable[Concatenate[_T, _PR], _RT]:
-    def _alter_context(*args: t.Any, **kwargs: t.Any) -> _RT:
-        self = args[0]
-        exp_path: str = getattr(self, "exp_path", "")
-        ctx_exp_path.set(exp_path)
-        return fn(*args, **kwargs)
-
-    @functools.wraps(fn)
-    def _inner(self: _T, *args: _PR.args, **kwargs: _PR.kwargs) -> _RT:
-        ctx = copy_context()
-        return ctx.run(_alter_context, self, *args, **kwargs)
-
-    return _inner
-
-# def method_contextualizer(
-#     # ctx_var: ContextVar[_ContextT],
-#     ctx_map: t.Callable[[_T], _ContextT],
-# ) -> t.Callable[
-#     [t.Callable[Concatenate[_T, _PR], _RT]],
-#     t.Callable[Concatenate[_T, _PR], _RT],
-# ]:
-#     def _contextualize(
-#         fn: t.Callable[Concatenate[_T, _PR], _RT], /
-#     ) -> t.Callable[Concatenate[_T, _PR], _RT]:
-
-#         @functools.wraps(fn)
-#         def _contextual(
-#             self: _T,
-#             *args: _PR.args,
-#             **kwargs: _PR.kwargs,
-#         ) -> _RT:
-#             # ctx_val = ctx_map(self)
-#             # ctx_val = self.exp_path
-#             def _ctx_modifier() -> _RT:
-#                 """Thin wrapper to ensure the target method changes
-#                 context var after ctx.run"""
-#                 # ctx_val = ctx_map(self)
-#                 # token = ctx_var.set(ctx_val)
-#                 token = ctx_exp_path.set(self.exp_path)
-#                 result = fn(self, *args, **kwargs)
-#                 # ctx_var.reset(token)
-#                 ctx_exp_path.reset(token)
-#                 return result
-
-#             ctx = copy_context()
-#             return ctx.run(_ctx_modifier)
-
-#         return _contextual
-
-#     return _contextualize
+            ctx = copy_context()
+            return ctx.run(_ctx_modifier)
+        return _contextual
+    return _contextualize
