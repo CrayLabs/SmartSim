@@ -52,6 +52,7 @@ def _exp_path_map(exp: "Experiment") -> str:
 _exp_contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 
+# pylint: disable=no-self-use
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
 
@@ -140,12 +141,6 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
-
-        # # TODO: Still need this loop for the moment for `staticmethods` :(
-        # ctx_fns = ["create_ensemble", "create_model"]
-        # for fn_name in ctx_fns:
-        #     fn = getattr(self, fn_name)
-        #     setattr(self, fn_name, contextualize(fn))
 
     @_exp_contextualize
     def start(
@@ -406,9 +401,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    @staticmethod
-    # TODO: Need to figure out if/how to decorate this
+    @_exp_contextualize
     def create_ensemble(
+        self,
         name: str,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
@@ -481,9 +476,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    @staticmethod
-    # TODO: Need to figure out if/how to decorate this
+    @_exp_contextualize
     def create_model(
+        self,
         name: str,
         run_settings: base.RunSettings,
         params: t.Optional[t.Dict[str, t.Any]] = None,
