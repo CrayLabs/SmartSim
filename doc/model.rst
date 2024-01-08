@@ -4,49 +4,58 @@ Model
 ========
 Overview
 ========
-``Model`` objects enable SmartSim users to initiate various computational tasks such as
-launching compiled applications, running scripts, or performing general computational operations
-as part of an Experiment workflow. **Models can be launched with ``Orchestrators``
-with other SmartSim entities and infrastructure to build AI-enabled workflows.**
-SmartSim ``Model`` entities can leverage ML capabilities at runtime by using
-the SmartSim client (SmartRedis) to transfer data via the ``Orchestrator`` to
-other running SmartSim Models and execute ML models (TF, TF-lite, PyTorch, or ONNX)
-and TorchScripts that are stored in the ``Orchestrator``. SmartRedis is available
-in Python, C, C++, or Fortran.
+SmartSim ``Model`` objects enable users to execute computational tasks in an
+``Experiment`` workflow, such as launching compiled applications,
+running scripts, or performing general computational operations. ``Models`` can be launched with
+other SmartSim entities and infrastructure to build AI-enabled workflows.
+``Model`` objects can leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
+to transfer data to the ``Orchestrator``, enabling other running SmartSim ``Models`` to access the data.
+Additionally, clients can execute ML models (TF, TF-lite, PyTorch, or ONNX) and TorchScripts stored in the
+``Orchestrator``. SmartRedis is available in Python, C, C++, or Fortran.
 
-A SmartSim ``Model`` is created and initialized using the ``Experiment.create_model()`` API function.
-When initializing a ``Model``, a ``RunSettings`` object must be provided to specify the executable
-simulation code (e.g. the full path to a compiled binary) as well as execution specifications. These
-specifications include workload manager commands (e.g. `srun`, `aprun`, `mpiexec`, etc), compute resource requirements,
-and application command line arguments.
+To initialize a SmartSim ``Model``, use the ``Experiment.create_model()`` API function.
+When creating a ``Model``, a :ref:`RunSettings<dead_link>` object must be provided. A ``RunSettings``
+object specifies the ``Models`` executable simulation code (e.g. the full path to a compiled binary) as well as
+application execution specifications. These specifications include :ref:`launch<dead_link>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
+compute resource requirements, and application command-line arguments.
 
-When initializing a ``Model`` object, users have the flexibility to pass parameters and values as a
-Python dictionary, that are utilized during the simulation. SmartSim will automatically write
-the parameters and values into a configuration file stored in the simulations execution path.
+When initializing a ``Model`` object, users can direct SmartSim to assign values at runtime to variables in the
+application code. Simply specify the variables with their corresponding values in a Python dictionary and pass it to
+the `params` factory method parameter during initialization. SmartSim then automatically writes these parameters and values into a
+configuration file stored in the simulation's execution path.
 
-The passed in parameters may be written to a file
-and stored in the Models execution path.
-Files may also be attached to the Model for use
-within the simulation.
-Dynamically configuring and loading files at runtime is enabled
-by the :ref:`Model API<model_api.attach_generator_files>`.
+SmartSim supports **two** strategies for deploying ``Models``:
 
-SmartSim supports **two** strategies for deploying Models:
+1. **Standard Model**: When a Standard Model is launched, it does not use or share compute
+resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
+It is instead launched on its own compute resources.
+Standard deployment is ideal for systems that have heterogeneous node types
+(i.e. a mix of CPU-only and GPU-enabled compute nodes) where
+ML model and TorchScript evaluation is more efficiently performed off-node. This
+deployment is also ideal for workflows relying on data exchange between multiple
+applications (e.g. online analysis, visualization, computational steering, or
+producer/consumer application couplings).
 
-- **Standard Model**: Operating on a separate compute node from a
-  SmartSim orchestrator, Standard Models facilitate communication with a clustered
-  Orchestrator through SmartRedis clients. This architecture is ideal for simulations
-  leveraging distributed computing capabilities, ensuring parallelized and efficient
-  execution across multiple nodes.
+2. **Colocated Model**: When the Colocated Model is launched, it shares compute resources with a colocated Orchestrator
+on the same compute node. A colocated Model is ideal when the data and hardware accelerator
+are located on the same compute node. This setup helps reduce latency in ML inference and TorchScript evaluation
+by eliminating off-node communication.
 
-- **Colocated Model**: Sharing compute resources with a colocated Orchestrator on the
-  same compute node, Colocated Models offer advantages in scenarios where minimizing communication
-  latency is critical, such as online inference or runtime processing.
+Once a Model instance has been initialized, users have access to
+the :ref:`Model API<model_api>` helper functions to further configure the ``Model``.
+The models helper functions allow users to:
+
+- attach files to a ``Model`` for use within the simulation
+- launch a ``Orchestrator`` on the ``Models`` compute nodes
+- add a ML model to launch with the ``Model`` instance
+- add a TorchScript to launch with the ``Model`` instance
+- add a TorchScript function to launch with the ``Model`` instance
+- register communication with another ``Model``
+- enable ``Model`` key collision prevention
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications. Additionally, Models can be launched individually
-or as a group via an Ensemble. Once a Model instance has been initialized, users have access to
-the :ref:`Model API<model_api>` helper functions to further configure the ``Model``.
+or as a group via an Ensemble.
 
 ====================
 Model Initialization
@@ -56,8 +65,8 @@ Overview
 --------
 
 The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow entities.
-A ``Model`` is created using the ``Experiment.create_model()`` helper function. Users can customize the
-the Model by specifying initializer arguments.
+A ``Model`` is created using the ``Experiment.create_model()`` factory method, and users can customize the
+``Model`` via the factory method parameters.
 
 The key initializer arguments are:
 
@@ -68,20 +77,19 @@ The key initializer arguments are:
 -  `enable_key_prefixing` (bool = False): Prefix the model name to data sent to the database to prevent key collisions. Default is True.
 -  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
-A `name` and :ref:`RunSettings<settings-info>` reference are required to initialize a ``Model``.
+A `name` and :ref:`RunSettings<dead_link>` reference are required to initialize a ``Model``.
+Optionally, include a :ref:`BatchSettings<dead_link>` object to specify workload manager batch launching.
 
 .. note::
     ``BatchSettings`` attached to a model are ignored when the model is executed as part of an ensemble.
 
-The `params` factory method parameter for Models lets users define simulation parameters and their
-values through a dictionary. Using :ref:`Model API functions<model_api>`, users can write these parameters to
-a file in the Model's working directory. Similarly, the Model API provides functionality to
-instruct SmartSim to read a file and automatically fill in parameter values. Both behaviors are
-provided by the ``Model.attach_generator_files()`` function.
+The `params` factory method parameter for ``Models`` lets users define simulation parameters and their
+values through a dictionary. Using :ref:`Model API<model_api>` functions, users can write these parameters to
+a file in the Model's working directory.
 
 .. note::
-    Model instances will be executed in the
-    current working directory by default if no `path` argument is supplied.
+    Model instances will be executed in the current working directory by default if no `path` argument
+    is supplied.
 
 When a Model instance is passed to ``Experiment.generate()``, a
 directory within the Experiment directory
@@ -90,27 +98,31 @@ is automatically created to store input and output files from the model.
 --------------
 Standard Model
 --------------
-For standard model deployment, the model runs
-on separate compute nodes from SmartSim Orchestrators.
-SmartRedis clients connect to a clustered Orchestrator from
-within the Models executable script
-and travel off the simulation compute node to the database compute node to send/retrieve
-data. To use a database within the standard model workload, a
-SmartSim Orchestrator must be launched prior to the start of the Model.
-Standard models are ideal for simulations benefiting from
-distributed computing capabilities, enabling efficient
-parallelized execution across multiple compute nodes.
+A standard ``Model`` runs on separate compute nodes from SmartSim ``Orchestrators``.
+A ``Model`` connects to an ``Orchestrator`` via the SmartSim client (:ref:`SmartRedis<dead_link>`).
+For the client connection to be successful, the SmartSim ``Orchestrator`` must be launched prior to the start of the ``Model``.
+Standard ``Model`` deployment is ideal for systems that have heterogeneous node types
+(i.e. a mix of CPU-only and GPU-enabled compute nodes) where ML model and TorchScript
+evaluation is more efficiently performed off-node. This deployment is also ideal for workflows
+relying on data exchange between multiple applications (e.g. online analysis, visualization,
+computational steering, or producer/consumer application couplings).
 
-In the proceeding `Instructions` subsection, we provide an example illustrating the deployment of a standard model.
+.. note::
+    A ``Model`` can be launched without an ``Orchestrator`` if data transfer and ML capabilities are not
+    required.
 
+In the proceeding :ref:`Instructions<std_model_init_instruct>` subsection, we provide an example illustrating the deployment of a standard model.
+
+.. _std_model_init_instruct:
 Instructions
 ------------
-This example provides a demonstration of how to initialize and launch a standard Model
-within the Experiment workflow.
+This example provides a demonstration of how to initialize and launch a standard ``Model``
+within an ``Experiment`` workflow. All workflow entities are initialized through the
+:ref:`Experiment API<experiment_api>`. Consequently, initializing
+a SmartSim ``Experiment`` is a prerequisite for ``Model`` initialization.
 
-All workflow entities are initialized through the Experiment API.
-Initialize an instance of the Experiment class to create the Model. Import the SmartSim Experiment module
-and initialize an Experiment instance. Provide a `name` and `launcher`:
+To initialize an instance of the ``Experiment`` class, import the SmartSim Experiment module and invoke the ``Experiment`` constructor
+with a `name` and `launcher`:
 
 .. code-block:: python
 
@@ -119,24 +131,32 @@ and initialize an Experiment instance. Provide a `name` and `launcher`:
     # Init Experiment and specify to launch locally
     exp = Experiment(name="getting-started", launcher="local")
 
-Models require run settings objects which are initialized through an Experiment instance.
-Use the experiment instance, `exp`, to access the helper method ``Experiment.create_run_settings()``
-to initialize a ``RunSettings`` object. In this example, we use the Python
-executable to execute the application script, "script.py":
+``Models`` require ``RunSettings`` objects. We use the `exp` instance to
+call the factory method ``Experiment.create_run_settings()`` to initialize a ``RunSettings``
+object. Finally, we specify the Python executable to run the executable simulation code named
+`script.py`:
 
 .. code-block:: python
 
     settings = exp.create_run_settings(exe="python", exe_args="script.py")
 
-We now have an instance of run settings named `settings`. Using the instance, instruct SmartSim
-to encapsulate the simulation as a Model through ``Experiment.create_model()``:
+We now have a ``RunSettings`` instance named `settings` that we can use to create
+a ``Model`` instance that contains all of the information required to launch our application:
 
 .. code-block:: python
 
     model = exp.create_model(name="example-model", run_settings=settings)
 
-Remember that all entities are launched, monitored and stopped by the Experiment instance.
-Specify the model instance, `model`, to ``Experiment.start()`` to start the standard model:
+To created an isolated output directory for the ``Model``, invoke ``Experiment.start()`` via the
+``Experiment`` instance `exp` with `model` as an input parameter:
+
+.. code-block:: python
+
+    model = exp.generate(model)
+
+Recall that all entities are launched, monitored and stopped by the ``Experiment`` instance.
+To start ``Model``, invoke ``Experiment.start()`` via the ``Experiment`` instance `exp` with `model` as an
+input parameter:
 
 .. code-block:: python
 
@@ -151,10 +171,11 @@ in the Experiment working directory:
 -----------------
 A Colocated Model
 -----------------
-A colocated model is when both the application and the
-database share compute resource. To create a colocated model,
-users first initialize a Model instance with the ``Experiment.create_model()`` function.
-A user must then colocate the model with the Model API function ``Model.colocate_db()``.
+A colocated ``Model`` runs on the same compute node(s) as a SmartSim ``Orchestrator``.
+With a colocated model, the Model and the Orchestrator share compute resources.
+To create a colocated model,
+users first initialize a ``Model`` instance with the ``Experiment.create_model()`` function.
+A user must then colocate the ``Model`` with the Model API function ``Model.colocate_db()``.
 This instructs SmartSim to launch an Orchestrator on the same compute
 nodes as the model when the model instance is deployed via ``Experiment.start()``.
 
