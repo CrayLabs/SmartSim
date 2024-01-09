@@ -91,6 +91,8 @@ def _get_log_level() -> str:
 
 
 def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.Path]]:
+    """Returns the paths to the output and error file where experiment logs should
+    be written. If no experiment context is identified, returns None for both"""
     if _exp_path := ctx_exp_path.get():
         file_out = pathlib.Path(_exp_path) / "smartsim.out"
         file_err = pathlib.Path(_exp_path) / "smartsim.err"
