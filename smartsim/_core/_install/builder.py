@@ -569,8 +569,8 @@ class RedisAIBuilder(Builder):
         #       `setup.py`.
         fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
             (True, _DLPackRepository("v0.5_RAI")),
-            (self.fetch_tf, _PTArchive(os_, device, "2.0.1")),
-            (self.fetch_torch, _TFArchive(os_, arch, device, "2.13.1")),
+            (self.fetch_torch, _PTArchive(os_, device, "2.0.1")),
+            (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
             (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
         )
         to_fetch = tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
@@ -660,7 +660,7 @@ class _WebGitRepository(_WebLocation):
 @t.final
 @dataclass(frozen=True)
 class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
-    version: t.Optional[str] = None
+    version: str
 
     @property
     def url(self) -> str:
