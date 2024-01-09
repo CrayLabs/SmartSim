@@ -1,13 +1,13 @@
-***************
-SmartSim Logger
-***************
+******
+Logger
+******
 ========
 Overview
 ========
 SmartSim supports logging experiment activity through a :ref:`logging API<dead_link>` accessible via
 the SmartSim `log` module. The SmartSim logger, backed by Python logging, enables
 real-time logging of experiment activity **to stdout** and/or **to file**, with
-multiple multiple verbosity levels for categorizing log messages.
+multiple verbosity levels for categorizing log messages.
 
 Users may instruct SmartSim to log certain verbosity level log messages
 and omit others through the `SMARTSIM_LOG_LEVEL` environment variable. The `SMARTSIM_LOG_LEVEL`
@@ -79,7 +79,10 @@ functions in the Python driver script with log messages:
       logger.warning("This is a warning message")
 
 Execute the script *without* setting the `SMARTSIM_LOG_LEVEL`. Remember that `SMARTSIM_LOG_LEVEL`
-defaults to `info`. When we execute the script, the following messages will print to stdout::
+defaults to `info`. When we execute the script, the following messages will print to stdout:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[130033] INFO This is a message
     11:15:00 system.host.com SmartSim[130033] ERROR This is an error message
     11:15:00 system.host.com SmartSim[130033] WARNING This is a warning message
@@ -87,11 +90,17 @@ defaults to `info`. When we execute the script, the following messages will prin
 Notice that the `debug` function message was filtered. This is because by using
 a lower verbosity level (`info`), we instruct SmartSim to omit the higher verbosity level messages (`debug` and `developer`).
 
-Next, set `SMARTSIM_LOG_LEVEL` to `debug`::
+Next, set `SMARTSIM_LOG_LEVEL` to `debug`:
+
+.. code-block:: bash
+
     export SMARTSIM_LOG_LEVEL=debug
 
-When we execute the script,
-the following messages will print to stdout::
+When we execute the script again,
+the following messages will print to stdout:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[65385] INFO This is a message
     11:15:00 system.host.com SmartSim[65385] DEBUG This is a debug message
     11:15:00 system.host.com SmartSim[65385] ERROR This is an error message
@@ -100,11 +109,17 @@ the following messages will print to stdout::
 Notice that all log messages print to stdout. By using a higher verbosity level (`debug`),
 we instruct SmartSim to print all log functions at and above the level.
 
-Next, set `SMARTSIM_LOG_LEVEL` to `developer`::
+Next, set `SMARTSIM_LOG_LEVEL` to `developer`:
+
+.. code-block:: bash
+
     export SMARTSIM_LOG_LEVEL=developer
 
 When we execute the script,
-the following messages will print to stdout::
+the following messages will print to stdout:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[65385] INFO This is a message
     11:15:00 system.host.com SmartSim[65385] DEBUG This is a debug message
     11:15:00 system.host.com SmartSim[65385] ERROR This is an error message
@@ -114,11 +129,17 @@ Notice that all log messages print to stdout. By using the highest verbosity lev
 we instruct SmartSim to print all log messages. Remember that `developer` is extremely verbose
 logging and is intended for use during development.
 
-Next, set `SMARTSIM_LOG_LEVEL` to `quiet` in terminal::
+Next, set `SMARTSIM_LOG_LEVEL` to `quiet` in terminal:
+
+.. code-block:: bash
+
     export SMARTSIM_LOG_LEVEL=quiet
 
 When we run the program once again, the following output is printed
-to stdout::
+to stdout:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[65385] ERROR This is an error message
     11:15:00 system.host.com SmartSim[65385] WARNING This is a warning message
 
@@ -126,11 +147,17 @@ Notice that the `info` and `debug` log functions were filtered. This is because 
 the least verbose level (`quiet`), we instruct SmartSim to omit messages at higher verbosity levels
 (`info`, `debug` and `developer`).
 
-To finish the example, set `SMARTSIM_LOG_LEVEL` to `info` in terminal::
+To finish the example, set `SMARTSIM_LOG_LEVEL` to `info` in terminal:
+
+.. code-block:: bash
+
     export SMARTSIM_LOG_LEVEL=info
 
 When we execute the script, the following messages will print
-to stdout::
+to stdout:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[130033] INFO This is a message
     11:15:00 system.host.com SmartSim[130033] ERROR This is an error message
     11:15:00 system.host.com SmartSim[130033] WARNING This is a warning message
@@ -159,7 +186,7 @@ Initialize a logger for use within the Python driver script:
 
       logger = get_logger("SmartSim")
 
-Add the ``log_to_file()`` function to instruct SmartSim to create a file named `logger.out`
+Invoke the ``log_to_file()`` function to instruct SmartSim to create a file named `logger.out`
 to write log messages to:
 
 .. code-block:: python
@@ -180,7 +207,10 @@ Therefore, we will not set the environment variable and instead rely on the
 default.
 
 When we execute the Python script, a file named `logger.out` is created in our working
-directory with the listed contents::
+directory with the listed contents:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[10950] INFO This is a message
     11:15:00 system.host.com SmartSim[10950] ERROR This is an error message
     11:15:00 system.host.com SmartSim[10950] WARNING This is a warning message
@@ -196,6 +226,9 @@ In the same Python script, add a log level to the ``log_to_file()`` as a input a
 
 When we execute the Python script once again, SmartSim will override the `SMARTSIM_LOG_LEVEL`
 variable to output messages of log level `quiet`. SmartSim will overwrite the contents
-of `logger.out` with::
+of `logger.out` with:
+
+.. code-block:: stdout
+
     11:15:00 system.host.com SmartSim[10950] ERROR This is an error message
     11:15:00 system.host.com SmartSim[10950] WARNING This is a warning message
