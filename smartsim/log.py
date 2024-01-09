@@ -287,9 +287,9 @@ def method_contextualizer(
     def _contextualize(
         fn: t.Callable[Concatenate[_T, _PR], _RT], /
     ) -> t.Callable[Concatenate[_T, _PR], _RT]:
-        """Sets the value of a contextvar at runtime and executes
-        the decorated method in a new thread with a context copy
-        where `ctx_var` is set to the value returned by `ctx_map`"""
+        """Executes the decorated method in a cloned context and ensures
+        `ctx_var` is updated to the value returned by `ctx_map` prior to
+        calling the decorated method"""
 
         @functools.wraps(fn)
         def _contextual(
@@ -298,7 +298,7 @@ def method_contextualizer(
             **kwargs: _PR.kwargs,
         ) -> _RT:
             """A decorator operator that runs the decorated method in a new
-            thread with the desired contextual information."""
+            context with the desired contextual information modified."""
 
             def _ctx_modifier() -> _RT:
                 """Helper to simplify calling the target method with the
