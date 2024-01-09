@@ -28,10 +28,10 @@ import argparse
 import time
 
 
-def echo(message, sleep_time):
+def echo(message: str, sleep_time: int):
     if sleep_time > 0:
         time.sleep(sleep_time)
-    print("Echoing:", message)
+    print(f"Echoing: {message}")
 
 
 if __name__ == "__main__":

@@ -447,7 +447,7 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # create run settings
-    app_settings = exp.create_run_settings("python", test_script)
+    app_settings = exp.create_run_settings(sys.executable, test_script)
     app_settings.set_nodes(1)
     app_settings.set_tasks_per_node(1)
 
@@ -482,7 +482,7 @@ def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monke
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create run settings
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -521,7 +521,7 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, con
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create run settings
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -564,7 +564,7 @@ def test_telemetry_serial_models_nonblocking(
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create run settings
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -703,7 +703,7 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
             exp.start(orc)
 
             # create run settings
-            app_settings = exp.create_run_settings("python", test_script)
+            app_settings = exp.create_run_settings(sys.executable, test_script)
             app_settings.set_nodes(1)
             app_settings.set_tasks_per_node(1)
 
@@ -750,7 +750,7 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
