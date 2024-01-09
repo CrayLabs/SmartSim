@@ -41,7 +41,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
 .. tabs::
 
     .. group-tab:: Slurm
-      To instantiate the ``SbatchSettings`` object that interfaces with the slurm job scheduler, specify
+      To instantiate the ``SbatchSettings`` object that interfaces with the Slurm job scheduler, specify
       `launcher="slurm"` when initializing the ``Experiment``. Upon the call to ``create_batch_settings()``
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
@@ -61,8 +61,8 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
 
       The initialized ``SbatchSettings`` instance can now be pass to a SmartSim entity via the `batch_args` argument.
 
-    .. group-tab:: PBSpro
-      To instantiate the ``QsubBatchSettings`` object that interfaces with the slurm job scheduler, specify
+    .. group-tab:: PBS Pro
+      To instantiate the ``QsubBatchSettings`` object that interfaces with the PBS Pro job scheduler, specify
       `launcher="pbs"` when initializing the ``Experiment``. Upon the call to ``create_batch_settings()``
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
@@ -83,7 +83,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
       The initialized ``QsubBatchSettings`` instance can now be pass to a SmartSim entity via the `batch_args` argument.
 
     .. group-tab:: LSF
-      To instantiate the ``BsubBatchSettings`` object that interfaces with the slurm job scheduler, specify
+      To instantiate the ``BsubBatchSettings`` object that interfaces with the LSF job scheduler, specify
       `launcher="lsf"` when initializing the ``Experiment``. Upon the call to ``create_batch_settings()``
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
