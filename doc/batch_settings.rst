@@ -4,11 +4,11 @@ Batch Settings
 ========
 Overview
 ========
-SmartSim provides functionality to launch workloads (``Model`` or ``Ensemble``)
-as batch jobs via the ``BatchSettings`` base class. The ``BatchSettings`` base class extends
-to specialized child classes designed for HPC systems and Workload Managers (WLM) to support
-environment specific batch job launches. Each SmartSim `launcher` interfaces with a
-``BatchSettings`` subclass specific to a systems WLM.
+SmartSim provides functionality to launch entities (``Model`` or ``Ensemble``)
+as batch jobs via the ``BatchSettings`` base class. While the ``BatchSettings`` base
+class is not intended for direct use by users, its derived child classes offer batch
+launching capabilities tailored for specific workload managers (WLMs). Each SmartSim
+`launcher` interfaces with a ``BatchSettings`` subclass specific to a systems WLM.
 
 - The Slurm `launcher` supports:
    - :ref:`SbatchSettings<sbatch_api>`
@@ -20,19 +20,23 @@ environment specific batch job launches. Each SmartSim `launcher` interfaces wit
 .. note::
       The local `launcher` does not support batch jobs.
 
-After a ``BatchSettings`` instance is created, a user has access to the associated child class feature set
-that allows a user to configure the job batch settings.
+After a ``BatchSettings`` instance is created, a user has access to the associated child class attributes and methods that allow a user
+to configure the job batch settings.
 
 In the following :ref:`HPC<HPC>` subsection, we demonstrate initializing and configuring a batch settings object
 per supported SmartSim `launcher`.
 
-===
-HPC
-===
+========
+Examples
+========
 A ``BatchSettings`` subclass is created through the ``Experiment.create_batch_settings()``
-helper function. When the user initializes the ``Experiment`` at the beginning of the Python driver script,
+factory method. When the user initializes the ``Experiment`` at the beginning of the Python driver script,
 a `launcher` argument may be specified. SmartSim will register or detect the `launcher` and return the supported child class
-upon a call to ``Experiment.create_batch_settings()``. Below are examples of how to initialize a ``BatchSettings`` object per `launcher`.
+upon a call to ``Experiment.create_batch_settings()``. In this way, SmartSim driver scripts that
+use ``BatchSettings`` are portable between systems by only changing the specified launcher when initializing
+the ``Experiment``.
+
+Below are examples of how to initialize a ``BatchSettings`` object per `launcher`.
 
 .. tabs::
 
