@@ -26,7 +26,7 @@ Detailed Notes
 
 - Updated SmartSim's machine learning backends to PyTorch 2.0.1, Tensorflow
   2.13.1, ONNX 1.14.1, and ONNX Runtime 1.16.1. As a result of this change,
-  there is now an available wheel ONNX wheel to use with Python 3.10.
+  there is now an available ONNX wheel for use with Python 3.10.
   (SmartSim-PR451_)
 
 
