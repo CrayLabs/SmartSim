@@ -7,7 +7,7 @@ Overview
 SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. ``Models`` can be launched with
-other SmartSim entities as well as Machine Learning (ML) models and TorchScripts to build AI-enabled workflows.
+other SmartSim entities and :ref:`SmartRedis<dead_link>` to build AI-enabled workflows.
 ``Model`` objects can leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
 to transfer data to a standard ``Orchestrator`` to enable other running ``Models`` to access the data.
 Additionally, clients can execute ML models (TF, TF-lite, PyTorch, or ONNX) and TorchScripts stored in the
@@ -19,24 +19,18 @@ object specifies the ``Models`` executable simulation code (e.g. the full path t
 application execution specifications. These specifications include :ref:`launch<dead_link>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
 compute resource requirements, and application command-line arguments.
 
-SmartSim supports **two** strategies for deploying ``Models``:
+A user can implement the use of an ``Orchestrator`` within a ``Model`` through **two** strategies:
 
-- **Standard Model**
-   When a Standard ``Model`` is launched, it does not use or share compute
-   resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
+- :ref:`Connect to an Orchestrator launched prior to the Model<std_model_doc>`
+   When a standard the ``Model`` is launched, it does not use or share compute
+   resources on the same host (computer/server) where the SmartSim ``Orchestrator`` is running.
    Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
-   Standard deployment is ideal for systems that have heterogeneous node types
-   (i.e. a mix of CPU-only and GPU-enabled compute nodes) where
-   ML model and TorchScript execution is more efficiently performed off-node. This
-   deployment is also ideal for workflows relying on data exchange between multiple
-   ``Models`` (e.g. online analysis, visualization, computational steering, or
-   producer/consumer application couplings).
+   A standard ``Model`` can connect via a SmartSim client to a launched clustered ``Orchestrator``.
 
-- **Colocated Model**
+- :ref:`Connect to an Orchestrator launched in parallel with the Model<colo_model_doc>`
    When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
-   nodes prior to the ``Models`` execution. A colocated ``Model`` is ideal when the data and hardware accelerator
-   are located on the same compute node. This setup helps reduce latency in ML inference and TorchScript evaluation
-   by eliminating off-node communication.
+   nodes prior to the ``Models`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
+   via a SmartSim client.
 
 Once a ``Model`` instance has been initialized, users have access to
 the :ref:`Model API<model_api>` functions to further configure the ``Model``.
@@ -89,6 +83,7 @@ is automatically created to store input and output files from the model.
     Model instances will be executed in the current working directory by default if no `path` argument
     is supplied.
 
+.. _std_model_doc:
 Standard Model
 ==============
 A standard ``Model`` runs on separate compute nodes from SmartSim ``Orchestrators``.
