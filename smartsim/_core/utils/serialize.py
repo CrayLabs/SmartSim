@@ -47,7 +47,7 @@ if t.TYPE_CHECKING:
 TStepLaunchMetaData = t.Tuple[
     t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
 ]
-TELMON_SUBDIR: t.Final[str] = ".smartsim/telemetry"
+
 MANIFEST_FILENAME: t.Final[str] = "manifest.json"
 
 _LOGGER = smartsim.log.get_logger(__name__)

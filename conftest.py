@@ -698,3 +698,7 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
+
+@pytest.fixture
+def config() -> smartsim._core.config.Config:
+    return CONFIG

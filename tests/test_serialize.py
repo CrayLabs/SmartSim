@@ -37,7 +37,7 @@ from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.utils import serialize
 from smartsim.database.orchestrator import Orchestrator
 
-_REL_MANIFEST_PATH = f"{serialize.TELMON_SUBDIR}/{serialize.MANIFEST_FILENAME}"
+
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 
 # The tests in this file belong to the group_b group
@@ -54,10 +54,10 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def test_serialize_creates_a_manifest_json_file_if_dne(test_dir):
+def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, config):
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
-    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
+    manifest_json = Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
 
     assert manifest_json.is_file()
     with open(manifest_json, "r") as f:
@@ -69,7 +69,7 @@ def test_serialize_creates_a_manifest_json_file_if_dne(test_dir):
 
 
 def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
-    test_dir, monkeypatch
+    test_dir, monkeypatch, config
 ):
     monkeypatch.setattr(
         smartsim._core.config.config.Config,
@@ -78,12 +78,12 @@ def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
     )
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
-    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
+    manifest_json = Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
     assert not manifest_json.exists()
 
 
-def test_serialize_appends_a_manifest_json_exists(test_dir):
-    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
+def test_serialize_appends_a_manifest_json_exists(test_dir, config):
+    manifest_json = Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
     serialize.save_launch_manifest(
         LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
     )
@@ -102,8 +102,8 @@ def test_serialize_appends_a_manifest_json_exists(test_dir):
         assert len({run["run_id"] for run in manifest["runs"]}) == 3
 
 
-def test_serialize_overwites_file_if_not_json(test_dir):
-    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
+def test_serialize_overwites_file_if_not_json(test_dir, config):
+    manifest_json = Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
     manifest_json.parent.mkdir(parents=True, exist_ok=True)
     with open(manifest_json, "w") as f:
         f.write("This is not a json\n")
@@ -114,7 +114,7 @@ def test_serialize_overwites_file_if_not_json(test_dir):
         assert isinstance(json.load(f), dict)
 
 
-def test_started_entities_are_serialized(test_dir):
+def test_started_entities_are_serialized(test_dir, config):
     exp_name = "test-exp"
     test_dir = Path(test_dir) / exp_name
     test_dir.mkdir(parents=True)
@@ -131,7 +131,7 @@ def test_started_entities_are_serialized(test_dir):
     exp.start(hello_world_model, spam_eggs_model, block=False)
     exp.start(hello_ensemble, block=False)
 
-    manifest_json = Path(exp.exp_path) / _REL_MANIFEST_PATH
+    manifest_json = Path(exp.exp_path) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
     try:
         with open(manifest_json, "r") as f:
             manifest = json.load(f)
