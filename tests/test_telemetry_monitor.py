@@ -94,12 +94,11 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def snooze_nonblocking(test_dir: os.PathLike[str], max_delay: int = 20, post_data_delay: int = 2):
-    telmon_subdir = pathlib.Path(test_dir)
+def snooze_nonblocking(test_dir: pathlib.Path, max_delay: int = 20, post_data_delay: int = 2):
     # let the non-blocking experiment complete.
     for _ in range(max_delay):
         time.sleep(1)
-        if telmon_subdir.exists():
+        if test_dir.exists():
             time.sleep(post_data_delay)
             break
 
