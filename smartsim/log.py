@@ -251,7 +251,7 @@ def log_to_file(
     # ensure logs are written even if specified dir doesn't exist
     log_path = pathlib.Path(filename)
     if not log_path.parent.exists():
-        filename = log_path.name
+        log_path.parent.mkdir(parents=True, exist_ok=True)
 
     handler = logging.FileHandler(filename, mode="a+", encoding="utf-8")
 
