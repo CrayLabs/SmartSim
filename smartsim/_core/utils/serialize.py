@@ -58,6 +58,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         return
 
     manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
+    exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
     new_run = {
         "run_id": manifest.metadata.run_id,
@@ -87,8 +88,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
                 "name": manifest.metadata.exp_name,
                 "path": manifest.metadata.exp_path,
                 "launcher": manifest.metadata.launcher_name,
-                "out_file": str(Path(manifest.metadata.exp_path) / "smartsim.out"),
-                "err_file": str(Path(manifest.metadata.exp_path) / "smartsim.err"),
+                "out_file": str(exp_out),
+                "err_file": str(exp_err),
             },
             "runs": [new_run],
         }
