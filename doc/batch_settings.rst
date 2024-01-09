@@ -23,9 +23,10 @@ launching capabilities tailored for specific workload managers (WLMs). Each Smar
 After a ``BatchSettings`` instance is created, a user has access to the associated child class attributes and methods that allow a user
 to configure the job batch settings.
 
-In the following :ref:`HPC<HPC>` subsection, we demonstrate initializing and configuring a batch settings object
+In the following :ref:`Examples<batch_settings_ex>` subsection, we demonstrate initializing and configuring a batch settings object
 per supported SmartSim `launcher`.
 
+.. _batch_settings_ex:
 ========
 Examples
 ========
@@ -104,4 +105,4 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
       The initialized ``BsubBatchSettings`` instance can now be pass to a SmartSim entity via the `batch_args` argument.
 
 .. warning::
-      Note that initialization values provided (nodes, time, account) will overwrite the same arguments in `batch_args` if present.
+      Note that initialization values provided (`nodes`, `time`, `account`) will overwrite the same arguments in `batch_args` if present.
