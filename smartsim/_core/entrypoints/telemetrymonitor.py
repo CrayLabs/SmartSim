@@ -667,7 +667,9 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
     log.propagate = False
 
-    log_path = os.path.join(args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log")
+    log_path = os.path.join(
+        args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log"
+    )
     fh = logging.FileHandler(log_path, "a")
     log.addHandler(fh)
 
