@@ -10,9 +10,8 @@ exchange, online interactive visualization, online data analysis, computational 
 
 An ``Orchestrator`` can be thought of as a general feature store
 capable of storing numerical data (Tensors and Datasets), AI Models, and scripts (TorchScripts).
-Combined with the SmartRedis clients, the ``Orchestrator`` is capable of hosting and executing
-AI models written in Python on CPU or GPU. The ``Orchestrator`` supports AI Models written with
-TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (e.g. sci-kit learn).
+In addition to storing data, the ``Orchestrator`` is capable of executing ML models and TorchScripts
+on the stored data using CPUs or GPUs.
 
 .. |orchestrator| image:: images/Orchestrator.png
   :width: 700
@@ -20,14 +19,28 @@ TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (e.g. sc
 
 |orchestrator|
 
-SmartSim ``Models`` or ``Ensemble`` models can be instructed to connect to an ``Orchestrator``
-via the :ref:`SmartRedis<smartredis-api>` client library from within a Python driver script or
-an application script.
+Users can establish a connection to the ``Orchestrator`` from within SmartSim ``Model`` executable code, ``Ensemble``
+model executable code, or driver scripts using the :ref:`SmartRedis<smartredis-api>` client library.
 
-SmartSim offers two types of orchestrator deployment: :ref:`clustered deployment<Clustered Deployment>` and
-:ref:`colocated deployment<Colocated Deployment>`. During clustered deployment, the ``Orchestrator`` is launched
-on separate compute resources than a ``Model``. Clustered deployment is well-suited for throughput
-scenarios. In colocated deployment, an ``Orchestrator`` shares compute resources with a ``Model``. Colocated
+SmartSim offers two types of ``Orchestrator`` deployments:
+
+- :ref:`clustered deployment<clustered_orch_doc>`
+  A clustered ``Orchestrator`` is ideal for systems that have heterogeneous node types
+  (i.e. a mix of CPU-only and GPU-enabled compute nodes) where
+  ML model and TorchScript evaluation is more efficiently performed off-node for a ``Model``. This
+  deployment is also ideal for workflows relying on data exchange between multiple
+  applications (e.g. online analysis, visualization, computational steering, or
+  producer/consumer application couplings). Clustered deployment is also optimal for
+  high data throughput scenarios such as online analysis, training and processing and
+  databases that require a large amount of hardware.
+
+- :ref:`colocated deployment<colocated_orch_doc>`.
+   A colocated ``Orchestrator`` is ideal when the data and hardware accelerator are located on the same compute node.
+   This setup helps reduce latency in ML inference and TorchScript evaluation by eliminating off-node communication.
+
+During clustered deployment, the ``Orchestrator`` is launched
+on separate compute nodes than a ``Model``. Clustered deployment is well-suited for throughput
+scenarios. In colocated deployment, an ``Orchestrator`` shares compute nodes with a ``Model``. Colocated
 deployment is well-suited for inference scenarios.
 
 SmartSim allows users to launch multiple orchestrators during the course of an experiment of
@@ -37,6 +50,7 @@ orchestrators in a parallel database workflow by specifying the respective `db_i
 when initializing a SmartRedis client object. The client can then be used to transmit data,
 execute ML models, and execute scripts on the linked database.
 
+.. _clustered_orch_doc:
 ======================
 Clustered Deployment
 ======================
@@ -44,19 +58,22 @@ Clustered Deployment
 Overview
 --------
 During clustered deployment, a SmartSim ``Orchestrator`` (the database) runs on separate
-compute node(s) from the model node(s). A clustered orchestrator can be deployed on a single
-node or sharded (distributed) over multiple nodes.
-With a sharded orchestrator, available hardware for inference and script
-evaluation increases and overall memory for data storage increases.
+compute node(s) from the ``Model`` node(s). A clustered ``Orchestrator`` can be deployed on a single
+node or sharded (distributed) over multiple nodes. With a sharded ``Orchestrator``, available hardware
+for inference and script evaluation increases and overall memory for data storage increases.
 
 Communication between a clustered Orchestrator and Model
-is initialized in the application script via a SmartRedis client.
+is initialized in the ``Model`` application script via a SmartRedis client.
 Users do not need to know how the data is stored in a clustered configuration and
 can address the cluster with the SmartRedis clients like a single block of memory
-using simple put/get semantics in SmartRedis. The client establishes a
-connection using the database address detected by SmartSim or provided by the user. In multiple
-database experiments, users provide the `db_identifier` used to create the clustered
-database when creating a client.
+using simple put/get semantics in SmartRedis. The client can establish a connection
+with an ``Orchestrator`` through **three** processes:
+
+- SmartSim establishes a connection using the database address provided by SmartSim through ``Model`` environment configuration
+  at runtime.
+- A user provides the database address in the Client constructor.
+- In multiple database experiments, a user provides the `db_identifier` used to create the clustered
+  database when creating a client.
 
 .. |cluster-orc| image:: images/clustered-orc-diagram.png
   :width: 700
@@ -302,6 +319,7 @@ When you run the experiment, the following output will appear::
  again noted to fill in, oops
 
 ====================
+.. _colocated_orch_doc:
 Colocated Deployment
 ====================
 --------
