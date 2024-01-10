@@ -5,14 +5,21 @@ Run Settings
 Overview
 ========
 ``RunSettings`` are used in the SmartSim API to define how ``Model`` and ``Ensemble`` jobs
-should be executed. In general, ``RunSettings`` define the executable,
-the arguments to pass to the executable, necessary environment variables at runtime,
-and the required compute resources. The base ``RunSettings`` class is utilized for local task launches,
+should be executed.
+
+In general, ``RunSettings`` define:
+
+- the executable
+- the arguments to pass to the executable
+- necessary environment variables at runtime
+- the required compute resources
+
+The base ``RunSettings`` class is utilized for local task launches,
 while its derived child classes offer specialized functionality for HPC workload managers (WLMs) task launches.
 Each SmartSim WLM `launcher` interfaces with a specific ``RunSettings`` subclass tailored to an HPC job scheduler.
 
 - Navigate to :ref:`Local<run_settings_local_ex>` section to configure run settings locally
-- Navigate to :ref:`HPC<run_settings_hpc_ex>` section to configure run settings for a HPC
+- Navigate to :ref:`HPC Systems<run_settings_hpc_ex>` section to configure run settings for a HPC
 
 A ``RunSettings`` object is initialized through the ``Experiment.create_run_settings()`` function.
 This function accepts a `run_command` argument: the command to run the executable.
@@ -26,11 +33,12 @@ instance will be a child class such as ``SrunSettings``. You may also specify `m
 `mpiexec`, `aprun`, `jsrun` or `orterun` to the `run_command` argument.
 This will return the associated child class.
 
-If not supported by SmartSim, the base ``RunSettings`` class will be created and returned
+If the run command is not supported by SmartSim, the base ``RunSettings`` class will be created and returned
 with the specified `run_command` and `run_args` evaluated literally.
 
-After initializing a ``RunSettings`` object, you gain access to attributes and methods that allow
-further configuration of the instance.
+After creating a ``RunSettings`` instance, users gain access to the attributes and methods
+of the associated child class, providing them with the ability to further configure the run
+settings for jobs.
 
 ========
 Examples
@@ -63,7 +71,7 @@ upon a call to ``Experiment.create_run_settings()``. Below we demonstrate creati
 object for local launches by specifying the `"local"` launcher during ``Experiment`` creation.
 We show an example for each run command that may be provided: `mpirun` and `mpiexec`.
 
-Initialize and configure a run settings object with no run command specified:
+**Initialize and configure a run settings object with no run command specified:**
 
 .. code-block:: python
 
@@ -75,14 +83,11 @@ Initialize and configure a run settings object with no run command specified:
 
       # Initialize a RunSettings object
       run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command=None)
-      # Set the number of nodes
-      run_settings.set_nodes(2)
-      # Set the number of tasks for this job
-      run_settings.set_tasks(10)
-      # Set the number of tasks for this job
-      run_settings.set_tasks_per_node(5)
 
-Initialize and configure a run settings object with the `mpirun` run command specified:
+**Initialize and configure a run settings object with the `mpirun` run command specified:**
+
+.. note::
+      Please note that to run this you need to have OpenMPI installed.
 
 .. code-block:: python
 
@@ -93,14 +98,11 @@ Initialize and configure a run settings object with the `mpirun` run command spe
 
       # Initialize a RunSettings object
       run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpirun")
-      # Set the number of nodes
-      run_settings.set_nodes(2)
-      # Set the number of tasks for this job
-      run_settings.set_tasks(10)
-      # Set the number of tasks for this job
-      run_settings.set_tasks_per_node(5)
 
-Initialize and configure a run settings object with the `mpiexec` run command specified:
+**Initialize and configure a run settings object with the `mpiexec` run command specified:**
+
+.. note::
+      Please note that to run this you need to have OpenMPI installed.
 
 .. code-block:: python
 
@@ -111,16 +113,10 @@ Initialize and configure a run settings object with the `mpiexec` run command sp
 
       # Initialize a RunSettings object
       run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpiexec")
-      # Set the number of nodes
-      run_settings.set_nodes(2)
-      # Set the number of tasks for this job
-      run_settings.set_tasks(10)
-      # Set the number of tasks for this job
-      run_settings.set_tasks_per_node(5)
 
 .. _run_settings_hpc_ex:
-HPC
-===
+HPC System
+==========
 To configure an entity for launch on an HPC, SmartSim offers ``RunSettings`` child classes.
 Each WLM `launcher` supports different ``RunSettings`` child classes.
 When the user initializes the ``Experiment`` at the beginning of the Python driver script,
@@ -137,12 +133,14 @@ for each run command that may be provided.
 
       The Slurm `launcher` supports the :ref:`SrunSettings API <srun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
-      with launch binaries like `mpirun`, `mpiexec` and `orterun`.
+      with launch binaries like `srun`, `mpirun`, `mpiexec` and `orterun`. Below we step through initializing each child class on a
+      Slurm based machine using the associated `run_command`.
 
       **SrunSettings**
 
-      Run a job with `srun` command on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `srun` arguments and prefixed with `--`.
-      Values of `None` can be provided for arguments that do not have values.
+      Run a job with the `srun` command on a Slurm based system. Any arguments passed in the `run_args` dict will
+      be converted into `srun` arguments and prefixed with `"--"`. Values of `None` can be provided for
+      arguments that do not have values.
 
       .. code-block:: python
 
@@ -164,7 +162,7 @@ for each run command that may be provided.
 
       **OrterunSettings**
 
-      Run a job with `orterun` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `orterun` arguments and prefixed with `--`.
+      Run a job with the `orterun` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `orterun` arguments and prefixed with `"--"`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -176,8 +174,6 @@ for each run command that may be provided.
 
             # Initialize a OrterunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="orterun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -187,7 +183,7 @@ for each run command that may be provided.
 
       **MpirunSettings**
 
-      Run a job with `mpirun` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
+      Run a job with the `mpirun` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `"--"`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -199,8 +195,6 @@ for each run command that may be provided.
 
             # Initialize a MpirunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpirun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -210,7 +204,7 @@ for each run command that may be provided.
 
       **MpiexecSettings**
 
-      Run a job with `mpiexec` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `mpiexec` arguments and prefixed with `--`.
+      Run a job with the `mpiexec` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `mpiexec` arguments and prefixed with `"--"`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -222,8 +216,6 @@ for each run command that may be provided.
 
             # Initialize a MpiexecSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpiexec")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -231,14 +223,14 @@ for each run command that may be provided.
             # Set the number of tasks for this job
             run_settings.set_tasks_per_node(25)
 
-    .. group-tab:: PBSpro
-      The PBSpro `launcher` supports the :ref:`AprunSettings API <aprun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
+    .. group-tab:: PBS Pro
+      The PBS Pro `launcher` supports the :ref:`AprunSettings API <aprun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
       with launch binaries like `mpirun`, `mpiexec` and `orterun`.
 
       **AprunSettings**
 
-      Run a job with `aprun` command on a PBSpro based system. Any arguments passed in the `run_args` dict will be converted into `aprun` arguments and prefixed with `--`.
+      Run a job with `aprun` command on a PBS Pro based system. Any arguments passed in the `run_args` dict will be converted into `aprun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -250,8 +242,6 @@ for each run command that may be provided.
 
             # Initialize a AprunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="aprun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -261,19 +251,18 @@ for each run command that may be provided.
 
       **OrterunSettings**
 
-      Run a job with `orterun` command on a PBSpro based system. Any arguments passed in the `run_args` dict will be converted into `orterun` arguments and prefixed with `--`.
+      Run a job with `orterun` command on a PBS Pro based system. Any arguments passed in the `run_args` dict will be converted into `orterun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
 
+            from smartsim import Experiment
 
             # Initialize the experiment and provide launcher PBS Pro
             exp = Experiment("name-of-experiment", launcher="pbs")
 
             # Initialize a OrterunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="orterun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -283,19 +272,18 @@ for each run command that may be provided.
 
       **MpirunSettings**
 
-      Run a job with `mpirun` command on a PBSpro based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
+      Run a job with `mpirun` command on a PBS Pro based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
 
+            from smartsim import Experiment
 
             # Initialize the experiment and provide launcher PBS Pro
             exp = Experiment("name-of-experiment", launcher="pbs")
 
             # Initialize a MpirunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpirun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -305,19 +293,18 @@ for each run command that may be provided.
 
       **MpiexecSettings**
 
-      Run a job with `mpiexec` command on a PBSpro based system. Any arguments passed in the `run_args` dict will be converted into `mpiexec` arguments and prefixed with `--`.
+      Run a job with `mpiexec` command on a PBS Pro based system. Any arguments passed in the `run_args` dict will be converted into `mpiexec` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
 
+            from smartsim import Experiment
 
             # Initialize the experiment and provide launcher PBS Pro
             exp = Experiment("name-of-experiment", launcher="pbs")
 
             # Initialize a MpiexecSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpiexec")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -336,16 +323,13 @@ for each run command that may be provided.
 
       .. code-block:: python
 
+            from smartsim import Experiment
 
             # Initialize the experiment and provide launcher PALS
             exp = Experiment("name-of-experiment", launcher="pals")
 
             # Initialize a MpiexecSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpiexec")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
-            # Set the number of cpus to use per task
-            run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
             run_settings.set_tasks(100)
             # Set the number of tasks for this job
@@ -363,13 +347,13 @@ for each run command that may be provided.
 
       .. code-block:: python
 
+            from smartsim import Experiment
+
             # Initialize the experiment and provide launcher LSF
             exp = Experiment("name-of-experiment", launcher="lsf")
 
             # Initialize a JsrunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="jsrun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -384,13 +368,13 @@ for each run command that may be provided.
 
       .. code-block:: python
 
+            from smartsim import Experiment
+
             # Initialize the experiment and provide launcher LSF
             exp = Experiment("name-of-experiment", launcher="lsf")
 
             # Initialize a OrterunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="orterun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -405,13 +389,13 @@ for each run command that may be provided.
 
       .. code-block:: python
 
+            from smartsim import Experiment
+
             # Initialize the experiment and provide launcher LSF
             exp = Experiment("name-of-experiment", launcher="lsf")
 
             # Initialize a MpirunSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpirun")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
@@ -426,13 +410,13 @@ for each run command that may be provided.
 
       .. code-block:: python
 
+            from smartsim import Experiment
+
             # Initialize the experiment and provide launcher LSF
             exp = Experiment("name-of-experiment", launcher="lsf")
 
             # Initialize a MpiexecSettings object
             run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command="mpiexec")
-            # Set the number of nodes
-            run_settings.set_nodes(4)
             # Set the number of cpus to use per task
             run_settings.set_cpus_per_task(2)
             # Set the number of tasks for this job
