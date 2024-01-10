@@ -1,12 +1,12 @@
 import argparse
 import importlib.util
 import os
-import sys
 import subprocess as sp
+import sys
 import typing as t
 
 import smartsim.log
-from smartsim._core._cli.utils import MenuItemConfig, SMART_LOGGER_FORMAT
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, MenuItemConfig
 from smartsim.error.errors import SmartSimCLIActionCancelled
 
 _LOGGER = smartsim.log.get_logger("Smart", fmt=SMART_LOGGER_FORMAT)

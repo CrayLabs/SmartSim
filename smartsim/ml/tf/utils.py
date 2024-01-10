@@ -24,11 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 from pathlib import Path
 
-import tensorflow as tf
 import keras
-import typing as t
+import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import (
     convert_variables_to_constants_v2,
 )

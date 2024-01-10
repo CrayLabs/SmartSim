@@ -24,21 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import sys
 
-import os
-
 import pytest
+from smartredis import *
 
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
+from smartsim.entity.dbobject import DBScript
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
-from smartsim.settings import MpirunSettings, MpiexecSettings
-
-from smartsim.entity.dbobject import DBScript
-
-from smartredis import *
+from smartsim.settings import MpiexecSettings, MpirunSettings
 
 logger = get_logger(__name__)
 
@@ -52,6 +49,7 @@ except ImportError:
     should_run = False
 
 should_run &= "torch" in installed_redisai_backends()
+
 
 def timestwo(x):
     return 2 * x
@@ -596,6 +594,7 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
+
 def test_inconsistent_params_db_script(fileutils):
     """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
 
@@ -609,9 +608,9 @@ def test_inconsistent_params_db_script(fileutils):
             first_device=0,
         )
     assert (
-            ex.value.args[0]
-            == "Cannot set devices_per_node>1 if CPU is specified under devices"
-        )
+        ex.value.args[0]
+        == "Cannot set devices_per_node>1 if CPU is specified under devices"
+    )
     with pytest.raises(SSUnsupportedError) as ex:
         _ = DBScript(
             name="test_script_db",
@@ -621,6 +620,6 @@ def test_inconsistent_params_db_script(fileutils):
             first_device=5,
         )
     assert (
-            ex.value.args[0]
-            == "Cannot set first_device>0 if CPU is specified under devices"
-        )
+        ex.value.args[0]
+        == "Cannot set first_device>0 if CPU is specified under devices"
+    )

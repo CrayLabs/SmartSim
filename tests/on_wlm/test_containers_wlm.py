@@ -55,13 +55,14 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
             f"Test only runs on systems with PBS or Slurm as WLM. Current launcher: {launcher}"
         )
 
-
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher=launcher
     )
 
     # create and start a database
-    orc = exp.create_database(port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface())
+    orc = exp.create_database(
+        port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface()
+    )
     exp.generate(orc)
     exp.start(orc, block=False)
 

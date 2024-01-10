@@ -28,9 +28,9 @@ import os
 import shutil
 import typing as t
 
-from .step import Step, proxyable_launch_cmd
-from ....settings.base import RunSettings
 from ....settings import Singularity
+from ....settings.base import RunSettings
+from .step import Step, proxyable_launch_cmd
 
 
 class LocalStep(Step):

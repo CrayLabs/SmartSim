@@ -25,8 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 import typing as t
-
 from os import path
+
 from tabulate import tabulate
 
 

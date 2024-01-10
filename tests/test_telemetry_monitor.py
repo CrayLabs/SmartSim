@@ -27,45 +27,44 @@
 
 import logging
 import pathlib
-import pytest
 import sys
-import typing as t
 import time
+import typing as t
 import uuid
-from conftest import FileUtils, WLMUtils
 
-from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.control.job import Job, JobEntity
-from smartsim._core.launcher.launcher import WLMLauncher
-from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
-from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
-from smartsim._core.launcher.stepInfo import StepInfo
-from smartsim.error.errors import UnproxyableStepError
-from smartsim.settings.base import RunSettings
-from smartsim.status import (
-    STATUS_COMPLETED,
-    STATUS_CANCELLED,
-    STATUS_FAILED,
-    STATUS_NEW,
-    STATUS_PAUSED,
-    STATUS_RUNNING,
-)
+import pytest
+
 import smartsim._core.config.config as cfg
-
+from conftest import FileUtils, WLMUtils
+from smartsim import Experiment
+from smartsim._core.control.job import Job, JobEntity
+from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.entrypoints.telemetrymonitor import (
+    ManifestEventHandler,
     can_shutdown,
     event_loop,
     faux_return_code,
     get_parser,
     get_ts,
-    track_event,
-    load_manifest,
     hydrate_persistable,
-    ManifestEventHandler,
+    load_manifest,
+    track_event,
 )
+from smartsim._core.launcher.launcher import WLMLauncher
+from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
+from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils import serialize
-from smartsim import Experiment
-
+from smartsim.error.errors import UnproxyableStepError
+from smartsim.settings.base import RunSettings
+from smartsim.status import (
+    STATUS_CANCELLED,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_NEW,
+    STATUS_PAUSED,
+    STATUS_RUNNING,
+)
 
 ALL_ARGS = {"-exp_dir", "-frequency"}
 PROXY_ENTRY_POINT = "smartsim._core.entrypoints.indirect"
@@ -78,8 +77,7 @@ for_all_wlm_launchers = pytest.mark.parametrize(
 )
 
 requires_wlm = pytest.mark.skipif(
-    pytest.test_launcher == "local",
-    reason="Test requires WLM"
+    pytest.test_launcher == "local", reason="Test requires WLM"
 )
 
 
@@ -91,10 +89,7 @@ pytestmark = pytest.mark.slow_tests
 
 @pytest.fixture(autouse=True)
 def turn_on_tm(monkeypatch):
-    monkeypatch.setattr(
-        cfg.Config,
-        CFG_TM_ENABLED_ATTR,
-        property(lambda self: True))
+    monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, property(lambda self: True))
     yield
 
 
@@ -219,10 +214,7 @@ def test_load_manifest_colo_model(fileutils: FileUtils):
 
     manifest = load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
-    assert (
-        str(manifest.path)
-        == "/tmp/my-exp"
-    )
+    assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
 
@@ -550,7 +542,9 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch):
         assert len(stop_events) == 5
 
 
-def test_telemetry_serial_models_nonblocking(fileutils, test_dir, wlmutils, monkeypatch):
+def test_telemetry_serial_models_nonblocking(
+    fileutils, test_dir, wlmutils, monkeypatch
+):
     """
     Test telemetry with models being run in serial (one after each other)
     in a non-blocking experiment
@@ -970,9 +964,7 @@ def test_multistart_experiment(
     """
 
     exp_name = "my-exp"
-    exp = Experiment(exp_name,
-                     launcher=wlmutils.get_test_launcher(),
-                     exp_path=test_dir)
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
     rs_e = exp.create_run_settings(
         sys.executable, ["printing_model.py"], run_command=run_command
     )
@@ -1079,10 +1071,10 @@ def test_wlm_completion_handling(
     expected_out: t.Optional[int],
     expected_has_jobs: bool,
 ):
-
     def get_faux_update(status: str) -> t.Callable:
         def _faux_updates(_self: WLMLauncher, _names: t.List[str]) -> t.List[StepInfo]:
             return [("faux-name", StepInfo(status=status))]
+
         return _faux_updates
 
     ts = get_ts()

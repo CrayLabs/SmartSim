@@ -99,9 +99,7 @@ class JsrunSettings(RunSettings):
         if self.colocated_db_settings:
             db_cpus = int(self.colocated_db_settings.get("db_cpus", 0))
             if not db_cpus:
-                raise ValueError(
-                    "db_cpus must be configured on colocated_db_settings"
-                )
+                raise ValueError("db_cpus must be configured on colocated_db_settings")
 
             if cpus_per_rs < db_cpus:
                 raise ValueError(

@@ -24,11 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
 import os
 import signal
 import time
 from threading import Thread
+
+import pytest
 
 from smartsim import Experiment
 from smartsim.settings import RunSettings

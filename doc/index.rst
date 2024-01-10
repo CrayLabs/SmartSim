@@ -33,6 +33,7 @@
    orchestrator
    launchers
    ml_features
+   ss_logger
    api/smartsim_api
 
 .. toctree::

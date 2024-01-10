@@ -26,6 +26,7 @@
 
 import os.path as osp
 import time
+
 import pytest
 
 from smartsim import Experiment, status
@@ -38,6 +39,7 @@ if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
     pytestmark = pytest.mark.skip(
         reason="Launching orchestrators in a batch job is not supported on PBS without ALPS"
     )
+
 
 def test_launch_orc_auto_batch(test_dir, wlmutils):
     """test single node orchestrator"""
@@ -52,7 +54,7 @@ def test_launch_orc_auto_batch(test_dir, wlmutils):
         wlmutils.get_test_port(),
         batch=True,
         interface=network_interface,
-        single_cmd=False
+        single_cmd=False,
     )
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
@@ -88,10 +90,10 @@ def test_launch_cluster_orc_batch_single(test_dir, wlmutils):
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(
         wlmutils.get_test_port(),
-	    db_nodes=3,
-	    batch=True,
-	    interface=network_interface,
-	    single_cmd=True
+        db_nodes=3,
+        batch=True,
+        interface=network_interface,
+        single_cmd=True,
     )
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
@@ -129,7 +131,11 @@ def test_launch_cluster_orc_batch_multi(test_dir, wlmutils):
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(
-        wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface, single_cmd=False
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=True,
+        interface=network_interface,
+        single_cmd=False,
     )
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
@@ -165,10 +171,7 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(
-        wlmutils.get_test_port(),
-        db_nodes=3,
-        batch=True,
-        interface=network_interface
+        wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface
     )
     orc.set_path(test_dir)
 

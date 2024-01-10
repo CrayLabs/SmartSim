@@ -33,17 +33,17 @@ import pytest
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
+from smartsim.log import get_logger
 from smartsim.ml.data import DataInfo, TrainingDataUploader
 from smartsim.status import STATUS_COMPLETED
-from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
 shouldrun_tf = True
 if shouldrun_tf:
     try:
-        from tensorflow import keras
         import tensorflow as tf
+        from tensorflow import keras
 
         from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
         from smartsim.ml.tf import StaticDataGenerator as TFStaticDataGenerator
@@ -52,10 +52,11 @@ if shouldrun_tf:
     else:
         if pytest.test_device == "GPU":
             try:
-                for device in tf.config.list_physical_devices('GPU'):
+                for device in tf.config.list_physical_devices("GPU"):
                     tf.config.set_logical_device_configuration(
                         device,
-                        [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
+                        [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)],
+                    )
             except Exception:
                 logger.warning("Could not set TF max memory limit for GPU")
 
@@ -65,10 +66,8 @@ if shouldrun_torch:
         import torch
 
         from smartsim.ml.torch import DataLoader
-        from smartsim.ml.torch import \
-            DynamicDataGenerator as TorchDataGenerator
-        from smartsim.ml.torch import \
-            StaticDataGenerator as TorchStaticDataGenerator
+        from smartsim.ml.torch import DynamicDataGenerator as TorchDataGenerator
+        from smartsim.ml.torch import StaticDataGenerator as TorchStaticDataGenerator
     except:
         shouldrun_torch = False
 
@@ -169,8 +168,9 @@ def train_tf(generator):
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
 def test_tf_dataloaders(test_dir, wlmutils):
-
-    exp = Experiment("test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher())
+    exp = Experiment(
+        "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
+    )
     orc: Orchestrator = wlmutils.get_orchestrator()
     exp.generate(orc)
     exp.start(orc)
@@ -235,8 +235,9 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
 
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
 def test_torch_dataloaders(fileutils, test_dir, wlmutils):
-
-    exp = Experiment("test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher())
+    exp = Experiment(
+        "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
+    )
     orc: Orchestrator = wlmutils.get_orchestrator()
     config_dir = fileutils.get_test_dir_path("ml")
     exp.generate(orc)
@@ -331,8 +332,11 @@ def test_data_info_repr():
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
 )
 def test_wrong_dataloaders(test_dir, wlmutils):
-
-    exp = Experiment("test-wrong-dataloaders", exp_path=test_dir, launcher=wlmutils.get_test_launcher())
+    exp = Experiment(
+        "test-wrong-dataloaders",
+        exp_path=test_dir,
+        launcher=wlmutils.get_test_launcher(),
+    )
     orc = wlmutils.get_orchestrator()
     exp.generate(orc)
     exp.start(orc)

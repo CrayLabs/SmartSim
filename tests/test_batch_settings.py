@@ -116,6 +116,7 @@ def test_existing_batch_args_mutation():
     assert bsub.batch_args["k1"] == orig_bargs["k1"]
     assert bsub.batch_args["k1"] != batch_args["k1"]
 
+
 def test_direct_set_batch_args_mutation():
     """
     Ensure that if the batch_args dict is set directly, any previously

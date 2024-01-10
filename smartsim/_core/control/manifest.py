@@ -225,7 +225,6 @@ class Manifest:
         return has_db_objects
 
 
-
 class _LaunchedManifestMetadata(t.NamedTuple):
     run_id: str
     exp_name: str
@@ -296,9 +295,9 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
         default_factory=list, init=False
     )
-    _databases: t.List[
-        t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]
-    ] = field(default_factory=list, init=False)
+    _databases: t.List[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]] = (
+        field(default_factory=list, init=False)
+    )
 
     @property
     def exp_telemetry_subdirectory(self) -> pathlib.Path:

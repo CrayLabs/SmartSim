@@ -26,7 +26,7 @@ try:
     import smartsim
     version = smartsim.__version__
 except ImportError:
-    version = "0.5.1"
+    version = "0.6.0"
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -55,6 +55,7 @@ extensions = [
     'sphinx_tabs.tabs'
 ]
 
+suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

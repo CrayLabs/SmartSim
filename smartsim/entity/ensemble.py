@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
-
 from copy import deepcopy
 from os import getcwd
 
@@ -41,9 +40,9 @@ from ..error import (
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
 from .dbobject import DBModel, DBScript
+from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Model
-from .entity import SmartSimEntity
 from .strategies import create_all_permutations, random_permutations, step_values
 
 logger = get_logger(__name__)
@@ -512,8 +511,11 @@ class Ensemble(EntityList[Model]):
         :type first_device: int
         """
         db_script = DBScript(
-            name=name, script=function, device=device,
-            devices_per_node=devices_per_node, first_device=first_device
+            name=name,
+            script=function,
+            device=device,
+            devices_per_node=devices_per_node,
+            first_device=first_device,
         )
         self._db_scripts.append(db_script)
         for entity in self.models:

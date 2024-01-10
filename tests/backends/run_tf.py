@@ -34,7 +34,6 @@ from smartsim.ml.tf import freeze_model, serialize_model
 
 
 def create_tf_mnist_model():
-
     model = keras.Sequential(
         layers=[
             keras.layers.InputLayer(input_shape=(28, 28), name="input"),
@@ -53,7 +52,6 @@ def create_tf_mnist_model():
 
 
 def run(device):
-
     model = create_tf_mnist_model()
 
     client = Client(cluster=False)

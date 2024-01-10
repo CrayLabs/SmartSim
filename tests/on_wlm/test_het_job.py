@@ -29,10 +29,10 @@ import pytest
 from smartsim import Experiment
 from smartsim.settings import SrunSettings
 
-
 # retrieved from pytest fixtures
 if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
+
 
 def test_mpmd_errors(monkeypatch):
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
@@ -50,15 +50,14 @@ def test_mpmd_errors(monkeypatch):
 
 
 def test_set_het_groups(monkeypatch):
-    """Test ability to set one or more het groups to run setting
-    """
+    """Test ability to set one or more het groups to run setting"""
     monkeypatch.setenv("SLURM_HET_SIZE", "4")
     exp_name = "test-set-het-group"
     exp = Experiment(exp_name, launcher="slurm")
     rs: SrunSettings = exp.create_run_settings("sleep", "1", run_command="srun")
     rs.set_het_group([1])
     assert rs.run_args["het-group"] == "1"
-    rs.set_het_group([3,2])
+    rs.set_het_group([3, 2])
     assert rs.run_args["het-group"] == "3,2"
     with pytest.raises(ValueError):
         rs.set_het_group([4])

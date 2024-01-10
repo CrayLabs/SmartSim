@@ -32,7 +32,6 @@ from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
 
-
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 

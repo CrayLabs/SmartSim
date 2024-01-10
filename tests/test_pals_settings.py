@@ -26,16 +26,16 @@
 
 
 import os.path as osp
-import pytest
 import shutil
 import sys
 
-import smartsim._core.config.config
-from smartsim.error import SSUnsupportedError
+import pytest
 
-from smartsim.settings import PalsMpiexecSettings
+import smartsim._core.config.config
 from smartsim._core.launcher import PBSLauncher
 from smartsim._core.launcher.step.mpiStep import MpiexecStep
+from smartsim.error import SSUnsupportedError
+from smartsim.settings import PalsMpiexecSettings
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -47,9 +47,7 @@ default_kwargs = {"fail_if_missing_exec": False}
 
 @pytest.fixture(autouse=True)
 def turn_off_telemetry_indirect(monkeypatch):
-    monkeypatch.setattr(
-        smartsim._core.config.config.Config,
-        "telemetry_enabled", False)
+    monkeypatch.setattr(smartsim._core.config.config.Config, "telemetry_enabled", False)
     yield
 
 

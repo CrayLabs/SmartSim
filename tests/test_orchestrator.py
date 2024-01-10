@@ -227,10 +227,13 @@ def test_slurm_set_batch_arg(wlmutils):
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
 
-@pytest.mark.parametrize("single_cmd", [
-    pytest.param(True, id="Single MPMD `srun`"),
-    pytest.param(False, id="Multiple `srun`s"),
-])
+@pytest.mark.parametrize(
+    "single_cmd",
+    [
+        pytest.param(True, id="Single MPMD `srun`"),
+        pytest.param(False, id="Multiple `srun`s"),
+    ],
+)
 def test_orc_results_in_correct_number_of_shards(single_cmd):
     num_shards = 5
     orc = Orchestrator(
@@ -243,13 +246,14 @@ def test_orc_results_in_correct_number_of_shards(single_cmd):
     )
     if single_cmd:
         assert len(orc.entities) == 1
-        node ,= orc.entities
+        (node,) = orc.entities
         assert len(node.run_settings.mpmd) == num_shards - 1
     else:
         assert len(orc.entities) == num_shards
         assert all(node.run_settings.mpmd == [] for node in orc.entities)
-    assert orc.num_shards == orc.db_nodes == sum(
-            node.num_shards for node in orc.entities)
+    assert (
+        orc.num_shards == orc.db_nodes == sum(node.num_shards for node in orc.entities)
+    )
 
 
 ###### Cobalt ######

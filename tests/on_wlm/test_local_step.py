@@ -26,6 +26,7 @@
 
 import os
 import uuid
+
 import pytest
 
 from smartsim import Experiment, status
@@ -45,7 +46,6 @@ def test_local_env_pass_implicit(fileutils, test_dir) -> None:
     exp_value = str(uuid.uuid4())
     env_key = "test_local_env_pass_implicit"
     os.environ[env_key] = exp_value
-
 
     exp_dir = f"{test_dir}/exp"
     os.makedirs(exp_dir)
@@ -83,7 +83,6 @@ def test_local_env_pass_explicit(fileutils, test_dir) -> None:
     env_key = "test_local_env_pass_explicit"
 
     assert env_key not in os.environ
-
 
     script = fileutils.get_test_conf_path("check_env.py")
 

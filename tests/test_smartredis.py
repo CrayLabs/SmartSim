@@ -65,7 +65,6 @@ def test_exchange(fileutils, test_dir, wlmutils):
     Finally, the tensor is used to run a model.
     """
 
-
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )
