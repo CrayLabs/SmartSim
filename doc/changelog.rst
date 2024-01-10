@@ -17,6 +17,17 @@ Development branch
 
 To be released at some future point in time
 
+- Override the sphinx-tabs extension background color
+
+Detailed Notes
+
+- The sphinx-tabs documentation extension uses a white background for the tabs component.
+  A custom CSS for those components to inherit the overall theme color has
+  been added. (SmartSim-PR453_)
+
+.. _SmartSim-PR453: https://github.com/CrayLabs/SmartSim/pull/453
+
+
 
 0.6.0
 -----
