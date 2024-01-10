@@ -317,6 +317,20 @@ class _RAIBuildDependency(ABC):
     def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
 
 
+def _place_rai_dep_at(
+    target: t.Union[str, "os.PathLike[str]"], verbose: bool
+) -> t.Callable[[_RAIBuildDependency], Path]:
+    def _place(dep: _RAIBuildDependency) -> Path:
+        if verbose:
+            print(f"Placing: '{dep.__rai_dependency_name__}'")
+        path = dep.__place_for_rai__(target)
+        if verbose:
+            print(f"Placed: '{dep.__rai_dependency_name__}' at '{path}'")
+        return path
+
+    return _place
+
+
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
     Supported build method:
@@ -404,6 +418,24 @@ class RedisAIBuilder(Builder):
     def get_deps_dir_path_for(self, device: TDeviceStr) -> Path:
         os_ = "macos" if self._os == "darwin" else self._os
         return self.rai_build_path / f"deps/{os_}-{self._architecture}-{device}"
+
+    def _get_deps_to_fetch_for(
+        self, device: TDeviceStr
+    ) -> t.Tuple[_RAIBuildDependency, ...]:
+        os_ = self._os
+        arch = self._architecture
+        # TODO: It would be nice if the backend version numbers were declared
+        #       alongside the python package version numbers so that all of the
+        #       dependency versions were declared in single location.
+        #       Unfortunately importing into this module is non-trivial as it
+        #       is used as script in the SmartSim `setup.py`.
+        fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
+            (True, _DLPackRepository("v0.5_RAI")),
+            (self.fetch_torch, _PTArchive(os_, device, "2.0.1")),
+            (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
+            (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
+        )
+        return tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
 
     def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
@@ -563,36 +595,14 @@ class RedisAIBuilder(Builder):
         deps_dir.mkdir(parents=True, exist_ok=True)
         if any(deps_dir.iterdir()):
             raise BuildError("RAI build dependency directory is not empty")
-
-        os_ = self._os
-        arch = self._architecture
-        # TODO: It would be nice if the backend version numbers were declared
-        #       alongside the python package version numbers so that all of the
-        #       dependency versions were declared in single location.
-        #       Unfortunately importing declarations into this module would be
-        #       non-trivial as this module is used as script in the SmartSim
-        #       `setup.py`.
-        fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
-            (True, _DLPackRepository("v0.5_RAI")),
-            (self.fetch_torch, _PTArchive(os_, device, "2.0.1")),
-            (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
-            (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
+        to_fetch = self._get_deps_to_fetch_for(device)
+        placed_paths = _threaded_map(
+            _place_rai_dep_at(deps_dir, self.verbose), to_fetch
         )
-        to_fetch = tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
-
-        def _place_dep(dep: _RAIBuildDependency) -> Path:
-            if self.verbose:
-                print(f"Placing: '{dep.__rai_dependency_name__}'")
-            path = dep.__place_for_rai__(deps_dir)
-            if self.verbose:
-                print(f"Placed: '{dep.__rai_dependency_name__}' at '{path}'")
-            return path
-
-        placed_paths = _threaded_map(_place_dep, to_fetch)
         unique_placed_paths = {os.fspath(path.resolve()) for path in placed_paths}
         if len(unique_placed_paths) != len(to_fetch):
             raise BuildError(
-                f"Expected to place {len(to_fetch)} dependnecies, but only "
+                f"Expected to place {len(to_fetch)} dependencies, but only "
                 f"found {len(unique_placed_paths)}"
             )
 
