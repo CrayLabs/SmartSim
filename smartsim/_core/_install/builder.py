@@ -53,7 +53,7 @@ from subprocess import SubprocessError
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 TDeviceStr = t.Literal["cpu", "gpu"]
 TArchitectureStr = t.Literal["x64"]
-TOperatingSystem = t.Literal["linux", "darwin"]
+TOperatingSystemStr = t.Literal["linux", "darwin"]
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -350,7 +350,7 @@ class RedisAIBuilder(Builder):
         #       of this class can configure exactly _what_ they are building.
         os_ = platform.system().lower()
         if "darwin" in os_:
-            self._os: TOperatingSystem = "darwin"
+            self._os: TOperatingSystemStr = "darwin"
         elif "linux" in os_:
             self._os = "linux"
         else:
@@ -728,7 +728,7 @@ class _WebZip(_ExtractableWebArchive):
 @t.final
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
-    os_: TOperatingSystem
+    os_: TOperatingSystemStr
     device: TDeviceStr
     version: str
 
@@ -765,7 +765,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 @t.final
 @dataclass(frozen=True)
 class _TFArchive(_WebTGZ, _RAIBuildDependency):
-    os_: TOperatingSystem
+    os_: TOperatingSystemStr
     architecture: TArchitectureStr
     device: TDeviceStr
     version: str
@@ -808,7 +808,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 @t.final
 @dataclass(frozen=True)
 class _ORTArchive(_WebTGZ, _RAIBuildDependency):
-    os_: TOperatingSystem
+    os_: TOperatingSystemStr
     device: TDeviceStr
     version: str
 
