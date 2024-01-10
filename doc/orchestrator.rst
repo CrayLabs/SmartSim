@@ -198,8 +198,8 @@ setup the SmartSim `logger` to output information from the ``Experiment`` at run
   # Initialize the Experiment
   exp = Experiment("getting-started", launcher="auto")
 
-Launch Standard Orchestrator
-----------------------------
+Orchestrator Deployment
+-----------------------
 In the context of this ``Experiment``, it's essential to create and launch
 the databases as a preliminary step before any other workflow entities. This is because
 the application script requests and sends tensors to and from a launched database.
@@ -257,8 +257,8 @@ send a tensor to the database, use the function ``Client.put_tensor()``:
   # Use the SmartRedis client to place tensor in the standard database
   driver_client_standard_db.put_tensor("tensor_1", array_1)
 
-Model Initialization
---------------------
+Standard Model Initialization
+-----------------------------
 In the next stage of the experiment, we execute the application script by configuring and creating
 a SmartSim ``Model`` and specifying the application script name during ``Model`` creation.
 
@@ -272,6 +272,10 @@ file application_script.py as the exe_args parameter and the executable exe_ex (
 executable on this system) as exe parameter. The Experiment.create_run_settings() function
 will return a RunSettings object that can then be used to initialize the Model object.
 
+.. note::
+  Change the `exe_args` argument to the path of the application script
+  on your file system to run the example.
+
 .. code-block:: python
 
   # Initialize a RunSettings object
@@ -281,8 +285,8 @@ will return a RunSettings object that can then be used to initialize the Model o
 Step 2: Initialization
 ''''''''''''''''''''''
 Next, create a ``Model`` instance using the ``Experiment.create_model()`` factory method.
-Pass the ``model_settings`` object as an argument
-to the ``create_model()`` function and assign to the variable ``model``:
+Pass the ``model_settings`` object as an argument to the ``create_model()`` function and
+store the returned ``Model`` object to the variable `model`:
 
 .. code-block:: python
 
@@ -320,10 +324,10 @@ polling every 100 milliseconds until 10 attempts are completed:
   logger.info(f"The tensor is {value_2}")
 
 The output will be as follows::
-  noted to run and replace asap
+  23:45:46 osprey.us.cray.com SmartSim[87400] INFO The tensor is True
 
-Cleanup Experiment
-------------------
+Cleanup
+-------
 Finally, use the ``Experiment.stop()`` function to stop the database instances. Print the
 workflow summary with ``Experiment.summary()``:
 
@@ -334,11 +338,13 @@ workflow summary with ``Experiment.summary()``:
   logger.info(exp.summary())
 
 When you run the experiment, the following output will appear::
- again noted to fill in, oops
-
-====================
+  |    | Name           | Entity-Type   | JobID       | RunID   | Time    | Status    | Returncode   |
+  |----|----------------|---------------|-------------|---------|---------|-----------|--------------|
+  | 0  | model          | Model         | 1658679.3   | 0       | 1.3342  | Completed | 0            |
+  | 1  | orchestrator_0 | DBNode        | 1658679.2+2 | 0       | 42.8742 | Cancelled | 0            |
 
 .. _colocated_orch_doc:
+====================
 Colocated Deployment
 ====================
 --------
@@ -346,22 +352,23 @@ Overview
 --------
 During colocated deployment, a SmartSim ``Orchestrator`` (the database) is launched on
 the ``Model`` compute node(s).
-The orchestrator is non-clustered and each ``Model`` compute node hosts an instance of the database.
+The ``Orchestrator`` is non-clustered and each ``Model`` compute node hosts an instance of the database.
 Processes on the compute host individually address the database.
 
-Communication between a colocated Orchestrator and Model
+Communication between a colocated ``Orchestrator`` and ``Model``
 is initialized in the application script via a SmartRedis client. Since a colocated Orchestrator is launched when the Model
 is started by the experiment, you may only connect a SmartRedis client to a colocated database from within
-the associated colocated Model script. The client establishes a connection using the database address detected
-by SmartSim or provided by the user. In multiple database experiments, users provide the `db_identifier` used to create the colocated
-Model when creating a client connection.
+the associated colocated ``Model`` application. The client establishes a connection using the database address detected
+by SmartSim or provided by the user. In multiple database experiments, users provide the `db_identifier` that was specified
+during ``Model`` initialization when creating a client connection.
 
-.. |colo-orc| image:: images/co-located-orc-diagram.png
-  :width: 700
-  :alt: Alternative text
+Below is an image illustrating communication within a colocated model spanning multiple compute nodes.
+As demonstrated in the diagram, each process of the application creates its own SmartRedis client
+connection to the orchestrator running on the same host.
 
+.. figure:: images/colocated_orchestrator-1.png
 
-|colo-orc|
+  Sample Colocated Orchestrator Deployment
 
 Colocated deployment is designed for highly performant online inference scenarios where
 a distributed process (likely MPI processes) are performing inference with
@@ -372,10 +379,6 @@ Colocated deployment rather benefits small/medium simulations with low latency r
 By hosting the database and simulation on the same compute node, communication time is reduced which
 contributes to quicker processing speeds.
 
-This method is deemed ``locality based inference`` since data is local to each
-process and the ``Orchestrator`` is deployed locally on each compute host where
-the distributed application is running.
-
 -------
 Example
 -------
@@ -385,19 +388,20 @@ we demonstrate connecting a client to the database from within the application s
 
 The example is comprised of two script files:
 
-- The Application Script
+- :ref:`Application Script<colocated_orch_app_script>`
    The example application script is a Python file that contains
    instructions to create and connect a SmartRedis
    client to the colocated Orchestrator.
-- The Experiment Driver Script
+- :ref:`Experiment Driver Script<colocated_orch_driver_script>`
    The experiment driver script launches and manages
    the example entities with the ``Experiment`` API.
-   In the driver script, we use the ``Experiment``
+   In the driver script, we use the ``Experiment`` API
    to create and launch a colocated ``Model``.
 
-The Application Script
-======================
-To begin writing the application script, provide the imports:
+.. _colocated_orch_app_script:
+Application Script
+==================
+To begin writing the application script, import the necessary SmartRedis packages:
 
 .. code-block:: python
 
@@ -405,8 +409,8 @@ To begin writing the application script, provide the imports:
   from smartredis import *
   import numpy as np
 
-Initialize the Clients
-----------------------
+Client Initialization
+---------------------
 To establish a connection with the colocated database,
 initialize a new SmartRedis client and specify `cluster=False`
 since our database is single-sharded:
@@ -420,15 +424,15 @@ since our database is single-sharded:
     Since there is only one database launched in the Experiment
     (the colocated database), specifying a a database address
     is not required when initializing the client.
-    SmartRedis will handle the connection.
+    SmartRedis will handle the connection configuration.
 
 .. note::
    To create a client connection to the colocated database, the colocated Model must be launched
    from within the driver script. You must execute the Python driver script, otherwise, there will
    be no database to connect the client to.
 
-Store Data
-----------
+Data Storage
+------------
 Next, using the SmartRedis client instance, we create and store a NumPy tensor using
 ``Client.put_tensor()``:
 
@@ -439,8 +443,8 @@ Next, using the SmartRedis client instance, we create and store a NumPy tensor u
     # Store the NumPy tensor
     colo_client.put_tensor("tensor_1", array_1)
 
-Retrieve Data
--------------
+Data Retrieval
+--------------
 Next, retrieve the tensor using ``Client.get_tensor()``:
 
 .. code-block:: python
@@ -453,8 +457,9 @@ Next, retrieve the tensor using ``Client.get_tensor()``:
 When the Experiment completes, you can find the following log message in `colo_model.out`::
     Default@21-48-01:The colocated db tensor is: [1 2 3 4]
 
-The Experiment Driver Script
-============================
+.. _colocated_orch_driver_script:
+Experiment Driver Script
+========================
 To run the application, specify a Model workload from
 within the workflow (Experiment).
 Defining workflow stages requires the utilization of functions associated
@@ -470,20 +475,22 @@ We setup the SmartSim ``logger`` to output information from the Experiment.
     from smartsim.log import get_logger
     import sys
 
+    # returns the executable binary for the Python interpreter
     exe_ex = sys.executable
+    # Initialize a logger object
     logger = get_logger("Example Experiment Log")
     # Initialize the Experiment
     exp = Experiment("getting-started", launcher="auto")
 
-Initialize a Colocated Model
-----------------------------
+Colocated Model Initialization
+------------------------------
 In the next stage of the experiment, we
 create and launch a colocated ``Model`` that
-runs the application script with a database
+runs the application script with a ``Orchestrator``
 on the same compute node.
 
 Step 1: Configure
-"""""""""""""""""
+'''''''''''''''''
 In this experiment, we invoke the Python interpreter to run
 the python script defined in section: The Application Script.
 To configure this into a ``Model``, we use the ``Experiment.create_run_settings()`` function.
@@ -511,17 +518,17 @@ example, we specify to SmartSim that we intend the Model to run on a single comp
     model_settings.set_nodes(1)
 
 Step 2: Initialize
-""""""""""""""""""
+''''''''''''''''''
 Next, create a ``Model`` instance using the ``Experiment.create_model()``.
-Pass the ``model_settings`` object as an argument
-to the ``create_model()`` function and assign to the variable ``model``.
+Pass the ``model_settings`` object as an argument to the ``create_model()``
+function and assign to the variable ``Model`` object to the variable `model`.
 .. code-block:: python
 
     # Initialize a SmartSim Model
     model = exp.create_model("colo_model", model_settings)
 
-Step 2: Colocate
-""""""""""""""""
+Step 3: Colocate
+''''''''''''''''
 To colocate the model, use the ``Model.colocate_db_tcp()`` function.
 This function will colocate an Orchestrator instance with this Model over
 a Unix domain socket connection.
@@ -531,18 +538,16 @@ a Unix domain socket connection.
     # Colocate the Model
     model.colocate_db_tcp()
 
-Step 3: Start
-"""""""""""""
+Step 4: Start
+'''''''''''''
 Next, launch the colocated model instance using the ``Experiment.start()`` function.
 .. code-block:: python
 
     # Launch the colocated Model
     exp.start(model, block=True, summary=True)
 
-test
-
-Cleanup Experiment
-------------------
+Cleanup
+-------
 
 .. code-block:: python
 
