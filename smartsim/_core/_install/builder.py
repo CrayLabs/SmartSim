@@ -53,6 +53,7 @@ from subprocess import SubprocessError
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 TDeviceStr = t.Literal["cpu", "gpu"]
 TArchitectureStr = t.Literal["x64"]
+TOperatingSystem = t.Literal["linux", "darwin"]
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -345,6 +346,27 @@ class RedisAIBuilder(Builder):
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
+        # TODO: It might be worth making these constructor args so that users
+        #       of this class can configure exactly _what_ they are building.
+        os_ = platform.system().lower()
+        if "darwin" in os_:
+            self._os: TOperatingSystem = "darwin"
+        elif "linux" in os_:
+            self._os = "linux"
+        else:
+            raise BuildError(f"Unrecognized or unsupported operating system '{os_}'")
+
+        machine = platform.machine().lower()
+        if machine not in ("amd64", "x86_64") and any(
+            (self.fetch_tf, self.fetch_torch, self.fetch_onnx)
+        ):
+            raise BuildError(
+                "SmartSim currently only supports building ML backends for "
+                "the 'x64' architecture; found unrecognized or unsupported "
+                f"architecture '{machine}'"
+            )
+        self._architecture: TArchitectureStr = "x64"
+
     @property
     def rai_build_path(self) -> Path:
         return Path(self.build_dir, "RedisAI")
@@ -378,6 +400,10 @@ class RedisAIBuilder(Builder):
     @property
     def fetch_onnx(self) -> bool:
         return self.build_onnx
+
+    def get_deps_dir_path_for(self, device: TDeviceStr) -> Path:
+        os_ = "macos" if self._os == "darwin" else self._os
+        return self.rai_build_path / f"deps/{os_}-{self._architecture}-{device}"
 
     def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
@@ -533,34 +559,13 @@ class RedisAIBuilder(Builder):
         if not self.rai_build_path.is_dir():
             raise BuildError("RedisAI build directory not found")
 
-        # TODO: It might be worth making these instance variables so that users
-        #       of this class can configure exactly _what_ they are building.
-        os_ = platform.system().lower()
-        arch: TArchitectureStr = "x64"
-
-        machine = platform.machine().lower()
-        if machine not in ("amd64", "x86_64") and any(
-            (self.fetch_tf, self.fetch_torch, self.fetch_onnx)
-        ):
-            # TODO: It's probably worth trying to fix this as all of our ML
-            #       backends do now offer ARM builds at versions we support
-            raise BuildError(
-                "SmartSim currently only supports building ML backends for "
-                "the 'x64' architecture; found unrecognized or unsupported "
-                f"architecture '{machine}'"
-            )
-
-        if "darwin" in os_:
-            deps_dir = self.rai_build_path / f"deps/macos-{arch}-{device}"
-        elif "linux" in os_:
-            deps_dir = self.rai_build_path / f"deps/linux-{arch}-{device}"
-        else:
-            raise BuildError(f"Unrecognized or unsupported operating system '{os_}'")
-
+        deps_dir = self.get_deps_dir_path_for(device)
         deps_dir.mkdir(parents=True, exist_ok=True)
         if any(deps_dir.iterdir()):
             raise BuildError("RAI build dependency directory is not empty")
 
+        os_ = self._os
+        arch = self._architecture
         # TODO: It would be nice if the backend version numbers were declared
         #       alongside the python package version numbers so that all of the
         #       dependency versions were declared in single location.
@@ -723,7 +728,7 @@ class _WebZip(_ExtractableWebArchive):
 @t.final
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
-    os_: str
+    os_: TOperatingSystem
     device: TDeviceStr
     version: str
 
@@ -760,7 +765,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 @t.final
 @dataclass(frozen=True)
 class _TFArchive(_WebTGZ, _RAIBuildDependency):
-    os_: str
+    os_: TOperatingSystem
     architecture: TArchitectureStr
     device: TDeviceStr
     version: str
@@ -803,7 +808,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 @t.final
 @dataclass(frozen=True)
 class _ORTArchive(_WebTGZ, _RAIBuildDependency):
-    os_: str
+    os_: TOperatingSystem
     device: TDeviceStr
     version: str
 
