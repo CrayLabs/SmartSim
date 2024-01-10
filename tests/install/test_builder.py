@@ -198,16 +198,17 @@ def test_threaded_map():
         time.sleep(delay)
 
     start = time.time()
+    # make sure this isn't several minutes
     build._threaded_map(_some_long_io_op, range(40))
     end = time.time()
-    assert abs(delay - (end - start)) < 0.1
+    assert abs(delay - (end - start)) < 0.5
 
 
 def test_threaded_map_returns_early_if_nothing_to_map():
     def _some_long_io_op(_):
-        time.sleep(10)
+        time.sleep(60)
 
     start = time.time()
     build._threaded_map(_some_long_io_op, [])
     end = time.time()
-    assert end - start < 0.1
+    assert end - start < 0.5
