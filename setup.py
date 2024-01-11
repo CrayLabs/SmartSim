@@ -173,7 +173,7 @@ deps = [
     "filelock>=3.4.2",
     "protobuf~=3.20",
     "watchdog>=3.0.0",
-    "jinja2",
+    "jinja2>=3.1.2",
 ]
 
 # Add SmartRedis at specific version

@@ -25,19 +25,29 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
 import jinja2
+import logging
+from ...log import log_to_file_preview
 
 
-class Viewexp:
-    def __init__(self, exp_entity: t.Any) -> None:
-        self.exp_entity = exp_entity
+def render(
+    entity: t.Any,
+    verbosity_level: t.Optional[t.Literal["info", "debug", "developer"]] = "info",
+) -> str:
+    """
+    Render the template from the supplied entity
+    """
 
-    def render(self) -> str:
-        """
-        Render the template from the supplied entity
-        """
-        loader = jinja2.PackageLoader("templates")
-        env = jinja2.Environment(loader=loader, autoescape=True)
-        tpl = env.get_template("master.pytpl")
-        template = tpl.render(exp_entity=self.exp_entity)
+    loader = jinja2.PackageLoader("templates")
+    env = jinja2.Environment(loader=loader, autoescape=True)
+    tpl = env.get_template("base.texttpl")
 
-        return template
+    rendered_preview = tpl.render(exp_entity=entity, verbosity_level=verbosity_level)
+
+    return rendered_preview
+
+
+def preview_to_file(content: str, file_name: str) -> None:
+    logger = logging.getLogger("preview-logger")
+
+    log_to_file_preview(filename=file_name, logger=logger)
+    logger.info(content)

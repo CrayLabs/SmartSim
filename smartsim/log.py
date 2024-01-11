@@ -32,9 +32,9 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
-)
+DEFAULT_LOG_FORMAT: t.Final[
+    str
+] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
@@ -129,3 +129,23 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
         filename, "w+", encoding="utf-8"
     )
     coloredlogs.install(stream=stream, logger=logger, level=log_level)
+
+
+def log_to_file_preview(
+    filename: t.Union[str, os.PathLike[str]],
+    logger: logging.Logger,
+) -> logging.Handler:
+    """Installs a filestream handler to the root logger,
+    allowing logging calls to be sent to filename for preview.
+    :param filename: the name of the desired preview file.
+    :type filename: str
+    """
+    logger.propagate = False
+    fmt = None
+    formatter = logging.Formatter(fmt)
+    file_handler = logging.FileHandler(filename, mode="w")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    return file_handler

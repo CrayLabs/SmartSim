@@ -30,7 +30,7 @@ import typing as t
 from os import getcwd
 
 from tabulate import tabulate
-from ._core import Controller, Generator, Manifest, Viewexp
+from ._core import Controller, Generator, Manifest, previewrenderer
 from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
@@ -798,52 +798,85 @@ class Experiment:
 
     def preview(
         self,
-        output_format: t.Optional[str] = None,
+        output_format: t.Optional[t.Literal["html"]] = None,
         output_filename: t.Optional[str] = None,
-        verbosity_level: t.Optional[str] = None,
-    ) -> str:
+        verbosity_level: t.Literal["info", "debug", "developer"] = "info",
+    ) -> None:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight
         into what and how entities will be launched.  Any instance of
-        ``Model``, ``Ensemble`` or ``Orchestrator`` created by the
+        ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
-        param output_format: Set output destination. The possible accepted
+        :param output_format: Set output destination. The possible accepted
         output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
         A filename is required if an output format is specified. If no output
         format is set, the preview will be output to stdout. Defaults to None.
-        type output_type: str
-        param output_filename: Specify name of path to write preview data to.
+        :type output_type: str
+        :param output_filename: Specify name of path to write preview data to.
         Only needed when an output format has been specified. Defaults to None.
-        type output_filename: str
-        param verbosity level: the verbosity level.
+        :type output_filename: str
+        :param verbosity level: the verbosity level.
         info: Display User defined fields and entities
         debug: Display user defined field and entities and auto generated
         fields.
         developer: Display user defined field and entities, auto generated
         fields, and run commands.
         Defaults to info.
-        type verbosity_level: str
+        :type verbosity_level: str
         """
 
+        rendered_preview = previewrenderer.render(self, verbosity_level)
+
+        self._check_verbosity_level(verbosity_level)
+
         if output_format:
+            self._check_output_format(output_format)
+        else:
+            if output_filename:
+                raise ValueError(
+                    "Output filename is only a valid parameter when an output \
+format is specified"
+                )
+
+        if output_format == "html":
+            if not output_filename:
+                raise ValueError(
+                    "An output filename is required when an output format is set."
+                )
+            previewrenderer.preview_to_file(rendered_preview, output_filename)
+
+        logger.info(rendered_preview)
+
+    @staticmethod
+    def _check_output_format(output_format: t.Literal["html"]) -> None:
+        if not output_format.startswith("html"):
+            raise ValueError("The only valid currently available is html")
+
+    @staticmethod
+    def _check_verbosity_level(
+        verbosity_level: t.Literal["info", "debug", "developer"]
+    ) -> None:
+        """
+        Check verbosity_level
+        """
+        if verbosity_level == "debug":
             raise NotImplementedError
-        if output_filename:
+        if verbosity_level == "developer":
             raise NotImplementedError
-        if verbosity_level:
-            raise NotImplementedError
+        verbosity_level = t.cast(
+            t.Literal["info", "debug", "developer"], verbosity_level
+        )
+        if (
+            not verbosity_level.startswith("info")
+            and not verbosity_level.startswith("debug")
+            and not verbosity_level.startswith("developer")
+        ):
+            raise ValueError(
+                "The only valid verbosity level currently available is info"
+            )
 
-        return self._preview()
-
-    def _preview(self) -> str:
-        """String formatting"""
-
-        preview = Viewexp(self).render()
-        logger.info(preview)
-
-        return preview
-
-    def get_launcher(self) -> str:
-        """Get launcher"""
+    @property
+    def launcher(self) -> str:
         return self._launcher
 
     def summary(self, style: str = "github") -> str:
