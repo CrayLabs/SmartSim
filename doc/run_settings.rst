@@ -19,7 +19,7 @@ while its derived child classes offer specialized functionality for HPC workload
 Each SmartSim WLM `launcher` interfaces with a specific ``RunSettings`` subclass tailored to an HPC job scheduler.
 
 - Navigate to :ref:`Local<run_settings_local_ex>` section to configure run settings locally
-- Navigate to :ref:`HPC Systems<run_settings_hpc_ex>` section to configure run settings for a HPC
+- Navigate to :ref:`HPC Systems<run_settings_hpc_ex>` section to configure run settings for HPC
 
 A ``RunSettings`` object is initialized through the ``Experiment.create_run_settings()`` function.
 This function accepts a `run_command` argument: the command to run the executable.
@@ -117,7 +117,7 @@ We show an example for each run command that may be provided: `mpirun` and `mpie
 .. _run_settings_hpc_ex:
 HPC System
 ==========
-To configure an entity for launch on an HPC, SmartSim offers ``RunSettings`` child classes.
+To configure an entity for launch on an HPC system, SmartSim offers ``RunSettings`` child classes.
 Each WLM `launcher` supports different ``RunSettings`` child classes.
 When the user initializes the ``Experiment`` at the beginning of the Python driver script,
 a `launcher` argument may be specified. The specified `launcher` will be used by SmartSim to

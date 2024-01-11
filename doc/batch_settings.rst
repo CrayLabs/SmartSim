@@ -8,7 +8,7 @@ SmartSim provides functionality to launch entities (``Model`` or ``Ensemble``)
 as batch jobs supported by the ``BatchSettings`` base class. While the ``BatchSettings`` base
 class is not intended for direct use by users, its derived child classes offer batch
 launching capabilities tailored for specific workload managers (WLMs). Each SmartSim
-`launcher` interfaces with a ``BatchSettings`` subclass specific to a systems WLM:
+`launcher` interfaces with a ``BatchSettings`` subclass specific to a system's WLM:
 
 - The Slurm `launcher` supports:
    - :ref:`SbatchSettings<sbatch_api>`
