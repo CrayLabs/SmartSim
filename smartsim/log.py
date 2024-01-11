@@ -132,7 +132,7 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
 
 
 def log_to_file_preview(
-    filename: t.Union[str, os.PathLike[str]],
+    filename: str,
     logger: logging.Logger,
 ) -> logging.Handler:
     """Installs a filestream handler to the root logger,
