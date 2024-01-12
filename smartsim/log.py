@@ -94,12 +94,17 @@ def _get_log_level() -> str:
 def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.Path]]:
     """Returns the paths to the output and error file where experiment logs should
     be written. If no experiment context is identified, returns None for both"""
+    default_paths = None, None
+
+    if not CONFIG.telemetry_enabled:
+        return default_paths
+
     if _exp_path := ctx_exp_path.get():
         file_out = pathlib.Path(_exp_path) / CONFIG.telemetry_subdir / "smartsim.out"
         file_err = pathlib.Path(_exp_path) / CONFIG.telemetry_subdir / "smartsim.err"
         return file_out, file_err
 
-    return None, None
+    return default_paths
 
 
 class ContextThread(threading.Thread):
@@ -140,9 +145,10 @@ class ContextAwareLogger(logging.Logger):
         file_out, file_err = get_exp_log_paths()
 
         if not all([file_out, file_err]):
-            return super()._log(
+            super()._log(
                 level, msg, args, exc_info, extra, stack_info, stacklevel
             )
+            return
 
         _lvl = logging.getLevelName(self.level)
         fmt = EXPERIMENT_LOG_FORMAT
@@ -221,7 +227,8 @@ class LowPassFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         # If a string representation of the level is passed in,
         # the corresponding numeric value is returned.
-        return record.levelno <= logging.getLevelName(self.max)
+        level_no: int = logging.getLevelName(self.max)
+        return record.levelno <= level_no
 
 
 def log_to_file(
