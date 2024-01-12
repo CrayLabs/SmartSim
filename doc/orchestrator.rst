@@ -11,7 +11,7 @@ exchange, online interactive visualization, online data analysis, computational 
 An orchestrator can be thought of as a general feature store
 capable of storing numerical data (Tensors and Datasets), AI Models (TF, TF-lite, PyTorch, or ONNX),
 and scripts (TorchScripts). In addition to storing data, the orchestrator is capable of
-executing ML models and TorchScripts on the stored data using CPUs or GPUs.
+executing ML Models and TorchScripts on the stored data using CPUs or GPUs.
 
 .. figure:: images/smartsim-arch.png
 
@@ -27,7 +27,7 @@ SmartSim offers **two** types of orchestrator deployments:
 - :ref:`Standalone Deployment<standalone_orch_doc>`
    A standalone orchestrator is ideal for systems that have heterogeneous node types
    (i.e. a mix of CPU-only and GPU-enabled compute nodes) where
-   ML model and TorchScript evaluation is more efficiently performed off-node for a model. This
+   ML Model and TorchScript evaluation is more efficiently performed off-node for a ML Model. This
    deployment is also ideal for workflows relying on data exchange between multiple
    applications (e.g. online analysis, visualization, computational steering, or
    producer/consumer application couplings). Standalone deployment is also optimal for
@@ -42,7 +42,7 @@ either orchestrator deployment type. If a workflow requires a multiple orchestra
 `db_identifier` argument must be specified during ``Orchestrator`` initialization. Users can connect to
 orchestrators in a parallel database workflow by specifying the respective `db_identifier` argument
 within a ``ConfigOptions`` object to pass in to the SmartRedis ``Client`` constructor. The client can then be used to transmit data,
-execute ML models, and execute scripts on the linked orchestrator.
+execute ML Models, and execute scripts on the linked orchestrator.
 
 .. _standalone_orch_doc:
 =====================
@@ -52,7 +52,7 @@ Standalone Deployment
 Overview
 --------
 During standalone orchestrator deployment, a SmartSim orchestrator (the database) runs on separate
-compute node(s) from the model node(s). A standalone orchestrator can be deployed on a single
+compute node(s) from the SmartSim model node(s). A standalone orchestrator can be deployed on a single
 node (standalone) or sharded (distributed) over multiple nodes. With a sharded orchestrator, users can
 scale the number of database nodes for inference and script evaluation, contributing to an
 increased in-memory capacity for data storage in large-scale workflows. Standalone
