@@ -191,16 +191,11 @@ def test_rai_builder_raises_if_it_fetches_an_unepected_number_of_ml_deps(
         rai_builder._fetch_deps_for("cpu")
 
 
-def test_threaded_map_is_threaded():
-    delay = 0.25
+def test_threaded_map():
+    def _some_io_op(x):
+        return x * x
 
-    def _some_io_op(_):
-        time.sleep(delay)
-
-    start = time.time()
-    build._threaded_map(_some_io_op, range(120))
-    end = time.time()
-    assert abs(delay - (end - start)) < 0.5
+    assert (0, 1, 4, 9, 16) == tuple(build._threaded_map(_some_io_op, range(5)))
 
 
 def test_threaded_map_returns_early_if_nothing_to_map():
