@@ -40,7 +40,8 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[str] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+DEFAULT_LOG_FORMAT: t.Final[str] = (
+    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 )
 EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 
@@ -284,6 +285,7 @@ def method_contextualizer(
     Usage Note: the use of `self` below requires that the decorated function is passed
     the object containing a value that will be modified in the context. `ctx_map`
     must accept an instance of matching type.
+    
     :param ctx_var: The ContextVar that will be modified
     :type ctx_var: ContextVar
     :param ctx_map: A function that returns the value to be set to ctx_var
