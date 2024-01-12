@@ -40,9 +40,8 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[
-    str
-] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+DEFAULT_LOG_FORMAT: t.Final[str] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+)
 EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 
 # configure colored loggs
@@ -140,7 +139,9 @@ class ContextAwareLogger(logging.Logger):
         file_out, file_err = get_exp_log_paths()
 
         if not all([file_out, file_err]):
-            return super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+            return super()._log(
+                level, msg, args, exc_info, extra, stack_info, stacklevel
+            )
 
         _lvl = logging.getLevelName(self.level)
         fmt = EXPERIMENT_LOG_FORMAT
