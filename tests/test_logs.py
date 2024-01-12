@@ -127,37 +127,39 @@ def test_exp_logs(test_dir: str):
 
     token = smartsim.log.ctx_exp_path.set(test_dir)
 
-    logger = smartsim.log.get_logger("SmartSimTest", "INFO")
+    try:
+        logger = smartsim.log.get_logger("SmartSimTest", "INFO")
 
-    faux_out_stream = io.StringIO()
-    logger.addHandler(logging.StreamHandler(faux_out_stream))
+        faux_out_stream = io.StringIO()
+        logger.addHandler(logging.StreamHandler(faux_out_stream))
 
-    log_msg = "testing in a test!"
-    err_msg = "erroring in a test!"
-    logger.info(log_msg)
-    logger.error(err_msg)
+        log_msg = "testing in a test!"
+        err_msg = "erroring in a test!"
+        logger.info(log_msg)
+        logger.error(err_msg)
 
-    # ensure that the default stream is written to
-    logged = faux_out_stream.getvalue()
-    assert log_msg in logged
-    assert err_msg in logged
+        # ensure that the default stream is written to
+        logged = faux_out_stream.getvalue()
+    
+        assert log_msg in logged
+        assert err_msg in logged
 
-    out_file, err_file = smartsim.log.get_exp_log_paths()
+        out_file, err_file = smartsim.log.get_exp_log_paths()
 
-    out_content = out_file.read_text()
-    err_content = err_file.read_text()
+        out_content = out_file.read_text()
+        err_content = err_file.read_text()
 
-    # ensure the low-pass filter logs non-errors to out file
-    assert log_msg in out_content
-    assert err_msg not in out_content
-    assert str(test_dir) in out_content
+        # ensure the low-pass filter logs non-errors to out file
+        assert log_msg in out_content
+        assert err_msg not in out_content
+        assert str(test_dir) in out_content
 
-    # ensure the errors are logged to err file
-    assert err_msg in err_content
-    assert log_msg not in err_content
-    assert str(err_msg) in err_content
-
-    smartsim.log.ctx_exp_path.reset(token)
+        # ensure the errors are logged to err file
+        assert err_msg in err_content
+        assert log_msg not in err_content
+        assert str(err_msg) in err_content
+    finally:
+        smartsim.log.ctx_exp_path.reset(token)
 
 
 @pytest.mark.parametrize(
@@ -174,24 +176,25 @@ def test_exp_logs_without_ctx(test_dir: str, ctx_value: t.Optional[str]):
 
     token = smartsim.log.ctx_exp_path.set(ctx_value)
 
-    logger = smartsim.log.get_logger("SmartSimTest", "INFO")
+    try:
+        logger = smartsim.log.get_logger("SmartSimTest", "INFO")
 
-    faux_out_stream = io.StringIO()
-    logger.addHandler(logging.StreamHandler(faux_out_stream))
+        faux_out_stream = io.StringIO()
+        logger.addHandler(logging.StreamHandler(faux_out_stream))
 
-    log_msg = "testing in a test!"
-    err_msg = "erroring in a test!"
-    logger.info(log_msg)
-    logger.error(err_msg)
+        log_msg = "testing in a test!"
+        err_msg = "erroring in a test!"
+        logger.info(log_msg)
+        logger.error(err_msg)
 
-    # ensure that the default stream is written to
-    logged = faux_out_stream.getvalue()
-    assert log_msg in logged
-    assert err_msg in logged
+        # ensure that the default stream is written to
+        logged = faux_out_stream.getvalue()
+        assert log_msg in logged
+        assert err_msg in logged
 
-    out_file, err_file = smartsim.log.get_exp_log_paths()
+        out_file, err_file = smartsim.log.get_exp_log_paths()
 
-    assert not out_file
-    assert not err_file
-
-    smartsim.log.ctx_exp_path.reset(token)
+        assert not out_file
+        assert not err_file
+    finally:
+        smartsim.log.ctx_exp_path.reset(token)
