@@ -48,7 +48,7 @@ def _exp_path_map(exp: "Experiment") -> str:
     the currently-executing experiment into context for log enrichment"""
     return exp.exp_path
 
-_exp_contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
+_contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 
 # pylint: disable=no-self-use
@@ -141,7 +141,7 @@ class Experiment:
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
-    @_exp_contextualize
+    @_contextualize
     def start(
         self,
         *args: t.Any,
@@ -215,7 +215,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
@@ -252,7 +252,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def generate(
         self,
         *args: t.Any,
@@ -290,7 +290,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def poll(
         self, interval: int = 10, verbose: bool = True, kill_on_interrupt: bool = True
     ) -> None:
@@ -334,7 +334,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
@@ -358,7 +358,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def get_status(self, *args: t.Any) -> t.List[str]:
         """Query the status of launched instances
 
@@ -397,7 +397,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def create_ensemble(
         self,
         name: str,
@@ -472,7 +472,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def create_model(
         self,
         name: str,
@@ -586,7 +586,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def create_run_settings(
         self,
         exe: str,
@@ -651,7 +651,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def create_batch_settings(
         self,
         nodes: int = 1,
@@ -712,7 +712,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def create_database(
         self,
         port: int = 6379,
@@ -796,7 +796,7 @@ class Experiment:
             **kwargs,
         )
 
-    @_exp_contextualize
+    @_contextualize
     def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
         """Reconnect to a running ``Orchestrator``
 
@@ -817,7 +817,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    @_exp_contextualize
+    @_contextualize
     def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
