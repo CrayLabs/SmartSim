@@ -825,55 +825,11 @@ class Experiment:
         :type verbosity_level: str
         """
 
-        rendered_preview = previewrenderer.render(self, verbosity_level)
-
-        self._check_verbosity_level(verbosity_level)
-
-        if output_format:
-            self._check_output_format(output_format)
-        else:
-            if output_filename:
-                raise ValueError(
-                    "Output filename is only a valid parameter when an output \
-format is specified"
-                )
-
-        if output_format == "html":
-            if not output_filename:
-                raise ValueError(
-                    "An output filename is required when an output format is set."
-                )
-            previewrenderer.preview_to_file(rendered_preview, output_filename)
+        rendered_preview = previewrenderer.render(
+            self, verbosity_level, output_format, output_filename
+        )
 
         logger.info(rendered_preview)
-
-    @staticmethod
-    def _check_output_format(output_format: t.Literal["html"]) -> None:
-        if not output_format.startswith("html"):
-            raise ValueError("The only valid currently available is html")
-
-    @staticmethod
-    def _check_verbosity_level(
-        verbosity_level: t.Literal["info", "debug", "developer"]
-    ) -> None:
-        """
-        Check verbosity_level
-        """
-        if verbosity_level == "debug":
-            raise NotImplementedError
-        if verbosity_level == "developer":
-            raise NotImplementedError
-        verbosity_level = t.cast(
-            t.Literal["info", "debug", "developer"], verbosity_level
-        )
-        if (
-            not verbosity_level.startswith("info")
-            and not verbosity_level.startswith("debug")
-            and not verbosity_level.startswith("developer")
-        ):
-            raise ValueError(
-                "The only valid verbosity level currently available is info"
-            )
 
     @property
     def launcher(self) -> str:
