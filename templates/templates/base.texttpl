@@ -1,0 +1,7 @@
+
+{% include "experiment.texttpl" %}
+{# if entity is defined and entity #}
+=== Entity Preview ===
+{% include "model.texttpl" -%}
+{# else #}
+{# error message #}
