@@ -111,13 +111,13 @@ def test_rai_builder_raises_if_attempting_to_place_deps_in_nonempty_dir(
 
 
 # fmt: off
-# Hacky nonsense to allow for currying w/ pythons weird lambda binding
 def _confirm_dep_count(t):
+    # Use local defs allow for currying w/ pythons weird lambda binding
     _eager_find_all_instances_of = lambda    t, xs: tuple(filter(lambda x: isinstance(x, t), xs))
     _count_instances_of          = lambda    t, xs: len(_eager_find_all_instances_of(t, xs))
     _is_num_instances_of         = lambda n, t, xs: _count_instances_of(t, xs) == n
-    _is_one_instance_of          = lambda    t, xs: _is_num_instances_of(1, t,xs)
-    _is_no_instance_of           = lambda    t, xs: _is_num_instances_of(0, t,xs)
+    _is_one_instance_of          = lambda    t, xs: _is_num_instances_of(1, t, xs)
+    _is_no_instance_of           = lambda    t, xs: _is_num_instances_of(0, t, xs)
 
     def _partial(should_build):
         def _partial_partial(xs):
@@ -191,15 +191,14 @@ def test_rai_builder_raises_if_it_fetches_an_unepected_number_of_ml_deps(
         rai_builder._fetch_deps_for("cpu")
 
 
-def test_threaded_map():
+def test_threaded_map_is_threaded():
     delay = 0.25
 
-    def _some_long_io_op(_):
+    def _some_io_op(_):
         time.sleep(delay)
 
     start = time.time()
-    # make sure this isn't several minutes
-    build._threaded_map(_some_long_io_op, range(40))
+    build._threaded_map(_some_io_op, range(120))
     end = time.time()
     assert abs(delay - (end - start)) < 0.5
 

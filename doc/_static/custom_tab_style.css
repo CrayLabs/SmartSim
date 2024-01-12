@@ -1,0 +1,7 @@
+.sphinx-tabs-panel {
+    background-color: inherit;
+}
+
+.sphinx-tabs-tab[aria-selected="true"] {
+    background-color: inherit;
+}

@@ -19,11 +19,15 @@ To be released at some future point in time
 
 Description
 
+- Override the sphinx-tabs extension background color
 - Updated SmartSim's machine learning backends
 - Added ONNX support for Python 3.10
 
 Detailed Notes
 
+- The sphinx-tabs documentation extension uses a white background for the tabs component.
+  A custom CSS for those components to inherit the overall theme color has
+  been added. (SmartSim-PR453_)
 - Updated SmartSim's machine learning backends to PyTorch 2.0.1, Tensorflow
   2.13.1, ONNX 1.14.1, and ONNX Runtime 1.16.1. As a result of this change,
   there is now an available ONNX wheel for use with Python 3.10.
@@ -31,6 +35,7 @@ Detailed Notes
 
 
 .. _SmartSim-PR451: https://github.com/CrayLabs/SmartSim/pull/451
+.. _SmartSim-PR453: https://github.com/CrayLabs/SmartSim/pull/453
 
 
 0.6.0
