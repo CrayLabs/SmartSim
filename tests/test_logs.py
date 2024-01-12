@@ -32,8 +32,20 @@ import smartsim.log
 import typing as t
 
 
+_CFG_TM_ENABLED_ATTR = "telemetry_enabled"
+
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
+
+
+@pytest.fixture
+def turn_on_tm(monkeypatch):
+    monkeypatch.setattr(
+        smartsim._core.config.config.Config,
+        _CFG_TM_ENABLED_ATTR,
+        property(lambda self: True),
+    )
+    yield
 
 
 @pytest.mark.parametrize(
@@ -104,7 +116,7 @@ def test_get_logger(test_dir: str):
     assert isinstance(logger, smartsim.log.ContextAwareLogger)
 
 
-def test_exp_logs(test_dir: str):
+def test_exp_logs(test_dir: str, turn_on_tm):
     """Ensure that experiment loggers are added when context info exists"""
     test_dir = pathlib.Path(test_dir)
     test_dir.mkdir(parents=True, exist_ok=True)
