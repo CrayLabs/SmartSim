@@ -60,22 +60,34 @@ increased in-memory capacity for data storage in large-scale workflows. Standalo
 single-node ``Orchestrators`` don't involve communication between nodes.
 
 Communication between a clustered ``Orchestrator`` and ``Model``
-is facilitated by a SmartRedis ``Client`` and initialized in a ``Model`` application script.
+is facilitated by a SmartRedis ``Client`` and initialized in a ``Model`` application.
 
-A SmartRedis ``Client`` can establish a connection with an ``Orchestrator`` through **four** processes:
+When connecting to a clustered ``Orchestrator`` from within a ``Model`` application, the user has
+several options when using the SmartRedis ``Client``:
 
 - In an experiment with a single deployed ``Orchestrator``, users can rely on SmartSim
-  to detect the database address through the ``Model`` environment configuration
-  at runtime.
-- User's can provide the database address in the ``Client`` constructor within the ``Model`` application script.
-- User's can provide the database address in the ``Client`` constructor within the driver script. Users
-  can access an ``Orchestrators`` address through ``Orchestrator.get_address()``.
-- In an experiment with multiple ``Orchestrator`` deployments, a user can connect to an ``Orchestrator`` by
-  first specifying the `db_identifier` to the ``ConfigOptions`` constructor. A user should then pass the ``ConfigOptions``
+  to detect the ``Orchestrator`` address through runtime configuration of the ``Model`` environment.
+  A default ``Client`` constructor, with no user-specified parameters, is sufficient to
+  connect to the ``Orchestrator``. The only exception is for the Python `client`, which requires
+  the `cluster` constructor parameter to differentiate between a multi-node clustered deployment
+  and a single-node clustered deployment.
+- In an experiment with multiple ``Orchestrator`` deployments, users can connect to a specific ``Orchestrator`` by
+  first specifying the `db_identifier` in the ``ConfigOptions`` constructor. Subsequently, users should pass the
+  ``ConfigOptions`` instance to the ``Client`` constructor.
+- Users can specify or override automatically configured connection options by providing the
+  database address in the ``ConfigOptions`` object. Subsequently, users should pass the ``ConfigOptions``
   instance to the ``Client`` constructor.
 
+If connecting to a clustered ``Orchestrator`` from a SmartSim driver script, the user must specify
+the address of the ``Orchestrator`` via the ``Client`` constructor. SmartSim does not automatically
+configure the environment of the driver script to connect to an ``Orchestrator``. Users
+can access an ``Orchestrators`` address through ``Orchestrator.get_address()``.
+
 .. note::
-  The Model application code can remain unchanged as ``Orchestrator`` connection options are varied.
+  In ``Model`` applications, it is advisable to **avoid** specifying addresses directly to the ``Client`` constructor.
+  Utilizing the SmartSim environment configuration for SmartRedis `client` connections
+  allows the ``Model`` application code to remain unchanged even as ``Orchestrator`` deployment
+  options vary.
 
 The following image illustrates
 communication between a clustered ``Orchestrator`` and a
@@ -92,9 +104,9 @@ separate from the ``Orchestrator`` compute nodes. Communication is established b
   can address the cluster with the SmartRedis clients like a single block of memory
   using simple put/get semantics in SmartRedis.
 
-In high data throughput scenarios, such as online analysis, training, and processing, a clustered ``Orchestrator``
-is optimal. The data produced by processes performed in a ``Model`` and stored in the clustered ``Orchestrator`` becomes
-available for consumption by other ``Models``.
+In scenarios with high data throughput, such as online analysis, training, and processing, a clustered ``Orchestrator``
+is optimal. The data produced by multiple processes in a ``Model`` is stored in the clustered
+``Orchestrator`` and is available for consumption by other ``Models``.
 
 If a workflow requires an application to leverage multiple clustered deployments,
 multiple clients can be instantiated within an application,
@@ -106,7 +118,7 @@ Example
 -------
 In the following example, we demonstrate deploying a clustered ``Orchestrator``.
 Once the clustered ``Orchestrator`` is launched from the driver script, we walk through
-connecting a SmartRedis ``Client`` to the database from within the application
+connecting a SmartRedis ``Client`` to the database from within the ``Model``
 script to transmit data then poll for the existence of the data.
 
 The example is comprised of two script files:
@@ -115,10 +127,8 @@ The example is comprised of two script files:
    The application script is a Python file that contains instructions to create a SmartRedis
    client connection to the standard ``Orchestrator`` launched in the driver script.
    To demonstrate the ability of workflow components to access data from
-   other entities, we then retrieve the tensors stored in the driver script using a SmartRedis client in
-   the application script.
-
-   We then instruct the client to send and retrieve data from within the application script.
+   other entities, we then retrieve the tensors set by the driver script using a SmartRedis client in
+   the application script. We then instruct the client to send and retrieve data from within the application script.
 - :ref:`Experiment Driver Script<clustered_orch_driver_script>`
    The experiment driver script is responsible for launching and managing SmartSim entities. Within this script,
    we use the Experiment API to create and launch a standard ``Orchestrator``. To demonstrate the capability of
@@ -146,7 +156,12 @@ Client Initialization
 ---------------------
 To establish a connection with the ``Orchestrator``, we need to initialize a new SmartRedis client.
 Since the ``Orchestrator`` we launch in the driver script is sharded, we specify the
-constructor argument `cluster` as `True`:
+constructor argument `cluster` as `True`.
+
+.. note::
+  Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
+  from the ``Model`` environment and the `cluster` constructor argument does not need to be specified
+  in those client languages.
 
 .. code-block:: python
 
@@ -155,7 +170,7 @@ constructor argument `cluster` as `True`:
 
 .. note::
     Since there is only one database launched in the Experiment
-    (the standard database), specifying a a database address
+    (the standard database), specifying a database address
     is not required when initializing the client.
     SmartRedis will handle the connection configuration.
 
@@ -166,9 +181,9 @@ constructor argument `cluster` as `True`:
 
 Data Retrieval
 --------------
-To confirm a successful connection to the database, we retrieve the tensor we store in the Python driver script.
+To confirm a successful connection to the database, we retrieve the tensor we set from the Python driver script.
 Use the ``Client.get_tensor()`` method to retrieve the tensor by specifying the name `tensor_1` we
-used in the driver script to ``Client.put_tensor()``:
+used in the driver script as input to ``Client.put_tensor()``:
 
 .. code-block:: python
 
@@ -622,8 +637,9 @@ argument used when creating the ``Orchestrator``. Pass the ``ConfigOptions`` obj
 the Client() init call.
 
 .. _mutli_orch:
+-----------------------------
 Multiple Orchestrator Example
-=============================
+-----------------------------
 SmartSim offers functionality to automate the deployment of multiple
 databases, supporting workloads that require multiple
 ``Orchestrators`` for a ``Experiment``. For instance, a workload may consist of a
@@ -678,7 +694,7 @@ runs the application.
 Setup and run instructions can be found :ref:`here<How to Run the Example>`
 
 The Application Script
-----------------------
+======================
 Applications interact with the databases
 through a SmartRedis client.
 In this section, we write an application script
@@ -701,13 +717,13 @@ To begin, import the necessary packages:
   :lines: 1-3
 
 Initialize the Clients
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 To establish a connection with each database,
 we need to initialize a new SmartRedis client for each
 ``Orchestrator``.
 
 Step 1: Initialize ConfigOptions
-""""""""""""""""""""""""""""""""
+''''''''''''''''''''''''''''''''
 Since we are launching multiple databases within the experiment,
 the SmartRedis ``ConfigOptions`` object is required when initializing
 a client in the application.
@@ -740,7 +756,7 @@ For the colocated database:
   :lines: 15-16
 
 Step 2: Initialize the Client Connections
-"""""""""""""""""""""""""""""""""""""""""
+'''''''''''''''''''''''''''''''''''''''''
 Now that we have three ``ConfigOptions`` objects, we have the
 tools necessary to initialize three SmartRedis clients and
 establish a connection with the three databases.
@@ -769,7 +785,7 @@ Colocated database:
   :lines: 17-18
 
 Retrieve Data and Store Using SmartRedis Client Objects
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------------------
 To confirm a successful connection to each database, we will retrieve the tensors
 that we plan to store in the python driver script. After retrieving, we
 store both tensors in the colocated database.
@@ -814,7 +830,7 @@ The output will be as follows::
   Model: colo logger@00-00-00:The colocated db has tensor_2: True
 
 The Experiment Driver Script
-----------------------------
+============================
 To run the previous application, we must define workflow stages within a workload.
 Defining workflow stages requires the utilization of functions associated
 with the ``Experiment`` object. The Experiment object is intended to be instantiated
@@ -828,7 +844,7 @@ We setup the SmartSim ``logger`` to output information from the Experiment.
   :lines: 1-10
 
 Launch Multiple Orchestrators
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 In the context of this ``Experiment``, it's essential to create and launch
 the databases as a preliminary step before any other components since
 the application script requests tensors from the launched databases.
@@ -838,7 +854,7 @@ create two databases in the workflow: a single-sharded database and a
 multi-sharded database.
 
 Step 1: Initialize Orchestrators
-""""""""""""""""""""""""""""""""
+''''''''''''''''''''''''''''''''
 To create an database, utilize the ``Experiment.create_database()`` function.
 The function requires specifying a unique
 database identifier argument named `db_identifier` to launch multiple databases.
@@ -868,7 +884,7 @@ For the multi-sharded database:
   be created, namely ``single_shard_db_identifier/`` and ``multi_shard_db_identifier/``.
 
 Step 2: Start Databases
-"""""""""""""""""""""""
+'''''''''''''''''''''''
 Next, to launch the databases,
 pass the database instances to ``Experiment.start()``.
 
@@ -888,7 +904,7 @@ deploys the databases on the allocated compute resources.
   would be launched immediately with no summary.
 
 Create Client Connections to Orchestrators
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------
 The SmartRedis ``Client`` object contains functions that manipulate, send, and receive
 data within the database. Each database has a single, dedicated SmartRedis ``Client``.
 Begin by initializing a SmartRedis ``Client`` object per launched database.
@@ -911,7 +927,7 @@ For the multi-sharded database:
   :lines: 25-26
 
 Store Data Using Clients
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 In the application script, we retrieved two NumPy tensors.
 To support the apps functionality, we will create two
 NumPy arrays in the python driver script and send them to the a database. To
@@ -945,14 +961,14 @@ When you run the experiment, the following output will appear::
   00:00:00 system.host.com SmartSim[#####] INFO The single shard array key exists in the incorrect database: False
 
 Initialize a Colocated Model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 In the next stage of the experiment, we
 launch the application script with a co-located database
 by configuring and creating
 a SmartSim colocated ``Model``.
 
 Step 1: Configure
-"""""""""""""""""
+'''''''''''''''''
 You can specify the run settings of a model.
 In this experiment, we invoke the Python interpreter to run
 the python script defined in section: :ref:`The Application Script<The Application Script>`.
@@ -983,7 +999,7 @@ example, we specify to SmartSim that we intend to execute the script once on a s
   :lines: 46-48
 
 Step 2: Initialize
-""""""""""""""""""
+''''''''''''''''''
 Next, create a ``Model`` instance using the ``Experiment.create_model()``.
 Pass the ``model_settings`` object as an argument
 to the ``create_model()`` function and assign to the variable ``model``.
@@ -994,7 +1010,7 @@ to the ``create_model()`` function and assign to the variable ``model``.
   :lines: 49-50
 
 Step 2: Colocate
-""""""""""""""""
+''''''''''''''''
 To colocate the model, use the ``Model.colocate_db_uds()`` function to
 Colocate an Orchestrator instance with this Model over
 a Unix domain socket connection.
@@ -1009,7 +1025,7 @@ database to this Model instance. Only this Model will be able
 to communicate with this colocated database by using the loopback TCP interface.
 
 Step 3: Start
-"""""""""""""
+'''''''''''''
 Next, launch the colocated model instance using the ``Experiment.start()`` function.
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
@@ -1024,7 +1040,7 @@ Next, launch the colocated model instance using the ``Experiment.start()`` funct
   if processes run, complete, or fail.
 
 Cleanup Experiment
-^^^^^^^^^^^^^^^^^^
+------------------
 Finally, use the ``Experiment.stop()`` function to stop the database instances. Print the
 workflow summary with ``Experiment.summary()``.
 
@@ -1043,7 +1059,7 @@ When you run the experiment, the following output will appear::
   | 2  | multi_shard_db_identifier_0  | DBNode        | 1556529.4+2 | 0       | 45.5139 | Cancelled | 0            |
 
 How to Run the Example
-----------------------
+======================
 Below are the steps to run the experiment. Find the
 :ref:`experiment source code<Experiment Source Code>`
 and :ref:`application source code<Application Source Code>`
@@ -1083,13 +1099,13 @@ Step 4 : Run the Experiment
 
 
 Application Source Code
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
   :language: python
   :linenos:
 
 Experiment Source Code
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
   :linenos:
