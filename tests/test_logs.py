@@ -101,8 +101,8 @@ def test_add_exp_loggers(test_dir):
 
     filter_fn = lambda x: True
 
-    smartsim.log.log_to_file(str(out_file), logger=logger, log_filter=filter_fn)
-    smartsim.log.log_to_file(str(err_file), "WARN", logger)
+    smartsim.log.log_to_file(str(out_file), logger, log_filter=filter_fn)
+    smartsim.log.log_to_file(str(err_file), logger, "WARN")
 
     logger.debug("debug")
     logger.exception("exception")

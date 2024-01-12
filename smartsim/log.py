@@ -148,8 +148,8 @@ class ContextAwareLogger(logging.Logger):
         fmt = EXPERIMENT_LOG_FORMAT
 
         low_pass = LowPassFilter(_lvl)
-        h_out = log_to_file(str(file_out), _lvl, self, fmt, low_pass)
-        h_err = log_to_file(str(file_err), "WARN", self, fmt)
+        h_out = log_to_file(str(file_out), self, _lvl, fmt, low_pass)
+        h_err = log_to_file(str(file_err), self, "WARN", fmt)
 
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
@@ -226,8 +226,8 @@ class LowPassFilter(logging.Filter):
 
 def log_to_file(
     filename: str,
+    logger: logging.Logger,
     log_level: str = "warn",
-    logger: t.Optional[logging.Logger] = None,
     fmt: t.Optional[str] = EXPERIMENT_LOG_FORMAT,
     log_filter: t.Optional[logging.Filter] = None,
 ) -> logging.Handler:
@@ -285,7 +285,7 @@ def method_contextualizer(
     Usage Note: the use of `self` below requires that the decorated function is passed
     the object containing a value that will be modified in the context. `ctx_map`
     must accept an instance of matching type.
-    
+
     :param ctx_var: The ContextVar that will be modified
     :type ctx_var: ContextVar
     :param ctx_map: A function that returns the value to be set to ctx_var
