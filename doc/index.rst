@@ -32,6 +32,8 @@
    experiment
    orchestrator
    launchers
+   run_settings
+   batch_settings
    ml_features
    ss_logger
    api/smartsim_api
