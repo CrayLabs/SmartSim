@@ -226,7 +226,7 @@ def log_to_file(
     filename: str,
     log_level: str = "warn",
     logger: t.Optional[logging.Logger] = None,
-    fmt: t.Optional[str] = None,
+    fmt: t.Optional[str] = EXPERIMENT_LOG_FORMAT,
     log_filter: t.Optional[logging.Filter] = None,
 ) -> logging.Handler:
     """Installs a second filestream handler to the root logger,
@@ -239,8 +239,14 @@ def log_to_file(
                       to allow the file to store more or less verbose
                       logging information.
     :type log_level: int | str
-    :return: strategy function
-    :rtype: callable
+    :param logger: an existing logger to add the handler to
+    :type logger: (optional) logging.Logger
+    :param fmt: a log format for the handler (otherwise, EXPERIMENT_LOG_FORMAT)
+    :type fmt: (optional) str
+    :param log_filter: log filter to attach to handler
+    :type log_filter: (optional) logging.Filter
+    :return: logging.Handler
+    :rtype: loggin.Handler
     """
     if logger is None:
         logger = logging.getLogger("SmartSim")
@@ -255,7 +261,6 @@ def log_to_file(
     if log_filter:
         handler.addFilter(log_filter)
 
-    fmt = fmt or EXPERIMENT_LOG_FORMAT
     formatter = logging.Formatter(fmt=fmt, datefmt=DEFAULT_DATE_FORMAT)
 
     handler.setFormatter(formatter)
