@@ -139,22 +139,20 @@ class ContextAwareLogger(logging.Logger):
         """Automatically attach file handlers if contextual information is found"""
         file_out, file_err = get_exp_log_paths()
 
-        if file_out and file_err:
-            _lvl = logging.getLevelName(self.level)
-            fmt = EXPERIMENT_LOG_FORMAT
+        if not all([file_out, file_err]):
+            return super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
-            low_pass = LowPassFilter(_lvl)
-            h_out = log_to_file(str(file_out), _lvl, self, fmt, low_pass)
-            h_err = log_to_file(str(file_err), "WARN", self, fmt)
+        _lvl = logging.getLevelName(self.level)
+        fmt = EXPERIMENT_LOG_FORMAT
 
-            super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
-
-            for handler in [h_out, h_err]:
-                self.removeHandler(handler)
-
-            return
+        low_pass = LowPassFilter(_lvl)
+        h_out = log_to_file(str(file_out), _lvl, self, fmt, low_pass)
+        h_err = log_to_file(str(file_err), "WARN", self, fmt)
 
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+
+        for handler in [h_out, h_err]:
+            self.removeHandler(handler)
 
 
 def get_logger(
