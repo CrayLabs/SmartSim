@@ -28,9 +28,11 @@ import io
 import logging
 import pathlib
 import pytest
+import smartsim
 import smartsim.log
-import typing as t
 
+from smartsim import Experiment
+        
 
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 
@@ -156,3 +158,36 @@ def test_exp_logs(test_dir: str, turn_on_tm):
         assert str(err_msg) in err_content
     finally:
         smartsim.log.ctx_exp_path.reset(token)
+
+
+def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
+    """Ensure that exceptions do not leave the context in an invalid state"""
+    test_dir = pathlib.Path(test_dir)
+    test_dir.mkdir(parents=True, exist_ok=True)
+
+    original_ctx_value = "some value"
+    ctx_var = smartsim.log.ctx_exp_path
+    token = ctx_var.set(original_ctx_value)
+
+    err_msg = "some ex occurred in JobManager"
+    def thrower(_self):
+        raise Exception(err_msg)
+
+    try:
+        with monkeypatch.context() as ctx:
+            ctx.setattr(smartsim._core.control.jobmanager.JobManager, "start", thrower)
+            exp = Experiment("MyExperiment", launcher="local", exp_path=str(test_dir))
+            exp.generate()  # did not affect output dirs on step
+
+            sleep_rs = exp.create_run_settings("sleep", ["2"])
+            sleep_rs.set_nodes(1)
+            sleep_rs.set_tasks(1)
+
+            sleep = exp.create_model("SleepModel", sleep_rs)
+            exp.start(sleep, block=True)
+    except Exception as ex:
+        assert err_msg in ex.args
+    finally:
+        assert ctx_var.get() == original_ctx_value
+        ctx_var.reset(token)
+        assert ctx_var.get() == ""
