@@ -221,9 +221,7 @@ class LowPassFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         # If a string representation of the level is passed in,
         # the corresponding numeric value is returned.
-        if record.levelno <= logging.getLevelName(self.max):
-            return True
-        return False
+        return record.levelno <= logging.getLevelName(self.max):
 
 
 def log_to_file(
