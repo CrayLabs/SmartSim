@@ -36,56 +36,40 @@ import typing as t
 pytestmark = pytest.mark.group_b
 
 
-"""
-Test logging features
-"""
-
-
-def test_level_filter_info():
+@pytest.mark.parametrize(
+        "level,expect_d,expect_i,expect_w,expect_e",
+        [
+            pytest.param("DEBUG", True, False, False, False, id="debug-level"),
+            pytest.param("INFO", True, True, False, False, id="info-level"),
+            pytest.param("WARNING", True, True, True, False, id="warn-level"),
+            pytest.param("ERROR", True, True, True, True, id="err-level"),
+        ]
+)
+def test_lowpass_filter(level, expect_d, expect_i, expect_w, expect_e):
     """Ensure that messages above maximum are not logged"""
-    log_filter = smartsim.log.LowPassFilter("INFO")
-    faux_out_stream = io.StringIO()
-
-    logger = logging.getLogger("test_level_filter_info")
-    logger.addHandler(logging.StreamHandler(faux_out_stream))
-    logger.addFilter(log_filter)
-
-    logger.debug("debug")
-    logger.info("info")
-    logger.warning("warn")
-    logger.error("error")
-    logger.exception("exception")
-
-    logged_messages = faux_out_stream.getvalue().split("\n")
-    assert "debug" in logged_messages
-    assert "info" in logged_messages
-    assert "warn" not in logged_messages
-    assert "error" not in logged_messages
-    assert "exception" not in logged_messages
-
-
-def test_level_filter_warn():
-    """Ensure that messages above maximum are not logged"""
-    log_filter = smartsim.log.LowPassFilter("WARN")
+    log_filter = smartsim.log.LowPassFilter(level)
 
     faux_out_stream = io.StringIO()
+    handler = logging.StreamHandler(faux_out_stream)
+    handler.setFormatter(logging.Formatter("%(message)s"))
 
-    logger = logging.getLogger("test_level_filter_warn")
-    logger.addHandler(logging.StreamHandler(faux_out_stream))
+    logger = logging.getLogger(f"test_level_filter_{level}")
+    
+    logger.addHandler(handler)
     logger.addFilter(log_filter)
 
-    logger.debug("debug")
-    logger.info("info")
-    logger.warning("warn")
-    logger.error("error")
-    logger.exception("exception")
+    logger.debug(str(logging.DEBUG))
+    logger.info(str(logging.INFO))
+    logger.warning(str(logging.WARNING))
+    logger.exception(str(logging.ERROR))
+    
+    # faux_out_stream.flush()
 
     logged_messages = faux_out_stream.getvalue().split("\n")
-    assert "debug" in logged_messages
-    assert "info" in logged_messages
-    assert "warn" in logged_messages
-    assert "error" not in logged_messages
-    assert "exception" not in logged_messages
+    assert (str(logging.DEBUG) in logged_messages) == expect_d
+    assert (str(logging.INFO) in logged_messages) == expect_i
+    assert (str(logging.WARN) in logged_messages) == expect_w
+    assert (str(logging.ERROR) in logged_messages) == expect_e
 
 
 def test_add_exp_loggers(test_dir):
