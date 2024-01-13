@@ -5,27 +5,30 @@
         = Model name: {{ model.name }} 
             Executable:  
             {%- for param in model.run_settings.exe %}
-            {{ param }}
+                {{ param }}
             {%- endfor %}
             Executable Arguments:
             {%- for param in model.run_settings.exe_args %}
-            {{ param }}
+                {{ param }}
             {%- endfor %}
-            {% if model.batch_settings -%}
+            {%- if model.batch_settings -%}
             {{ model.batch_settings }}
             {%- endif -%}
             {%- if model.params -%}
-            {% for param in model.params %}
-            {{ param }}
-            {% endfor %}
-            {%- endif -%}
+            {%- for param in model.params -%}
+                {{ param }}
+            {% endfor -%}
+            {% endif -%}
             {%- if model._db_models -%}
             {{ model._db_models|length }}
-            {%- endif -%}
+            {% endif -%}
             {%- if model._db_scripts -%}
             {{ model._db_scripts|length }}
-            {%- endif -%}
-            =
-    {% endif -%}
-    {% endfor -%}
-    {% endif %}
+            {%- endif %}
+        =       
+    {%- endif -%}
+    {%- endfor -%}
+    {%- endif -%}
+
+       
+         

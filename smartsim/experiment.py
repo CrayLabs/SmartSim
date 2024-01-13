@@ -30,7 +30,7 @@ import typing as t
 from os import getcwd
 
 from tabulate import tabulate
-from ._core import Controller, Generator, Manifest, Viewexp
+from ._core import Controller, Generator, Manifest, previewrenderer
 from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
@@ -799,76 +799,70 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: t.Optional[str] = None,
+        output_format: t.Optional[t.Literal["html"]] = None,
         output_filename: t.Optional[str] = None,
-        verbosity_level: t.Optional[str] = None,
+        verbosity_level: t.Literal["info", "debug", "developer"] = "info",
     ) -> None:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight
         into what and how entities will be launched.  Any instance of
-        ``Model``, ``Ensemble`` or ``Orchestrator`` created by the
+        ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
-        param output_format: Set output destination. The possible accepted
+        :param output_format: Set output destination. The possible accepted
         output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
         A filename is required if an output format is specified. If no output
         format is set, the preview will be output to stdout. Defaults to None.
-        type output_type: str
-        param output_filename: Specify name of path to write preview data to.
+        :type output_type: str
+        :param output_filename: Specify name of path to write preview data to.
         Only needed when an output format has been specified. Defaults to None.
-        type output_filename: str
-        param verbosity level: the verbosity level.
+        :type output_filename: str
+        :param verbosity level: the verbosity level.
         info: Display User defined fields and entities
         debug: Display user defined field and entities and auto generated
         fields.
         developer: Display user defined field and entities, auto generated
         fields, and run commands.
         Defaults to info.
-        type verbosity_level: str
+        :type verbosity_level: str
         """
+        # preview_manifest = None
+        # if args:
+        preview_manifest = Manifest(*args)
 
-        if output_format:
-            raise NotImplementedError
-        if output_filename:
-            raise NotImplementedError
-        if verbosity_level:
-            raise NotImplementedError
+        rendered_preview = previewrenderer.render(
+            self, preview_manifest, verbosity_level, output_format, output_filename
+        )
+        logger.info(rendered_preview)
 
         # incoming model entitty
         # models themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
 
-    #    # models = *args
-    #     print(models)
+        #    # models = *args
+        #     print(models)
 
-    #     # make the list of models like they do in manifest
+        #     # make the list of models like they do in manifest
 
-    #     for model in manifest.models:
-    #         model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
-    #         if model.batch_settings:
-    #             anon_entity_list = _AnonymousBatchJob(model)
-    #             batch_step, _ = self._create_batch_job_step(
-    #                 anon_entity_list, model_telem_dir
-    #             )
-    #             manifest_builder.add_model(model, (batch_step.name, batch_step))
-    #             steps.append((batch_step, model))
-    #         else:
-    #             job_step = self._create_job_step(model, model_telem_dir)
-    #             manifest_builder.add_model(model, (job_step.name, job_step))
-    #             steps.append((job_step, model))
+        #     for model in manifest.models:
+        #         model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
+        #         if model.batch_settings:
+        #             anon_entity_list = _AnonymousBatchJob(model)
+        #             batch_step, _ = self._create_batch_job_step(
+        #                 anon_entity_list, model_telem_dir
+        #             )
+        #             manifest_builder.add_model(model, (batch_step.name, batch_step))
+        #             steps.append((batch_step, model))
+        #         else:
+        #             job_step = self._create_job_step(model, model_telem_dir)
+        #             manifest_builder.add_model(model, (job_step.name, job_step))
+        #             steps.append((job_step, model))
 
-    #     # launch steps
-    #     for step, entity in steps:
-    #         self._launch_step(step, entity)
+        #     # launch steps
+        #     for step, entity in steps:
+        #         self._launch_step(step, entity)
 
-        logger.info(self._preview())
-
-    def _preview(self) -> str:
-        """String formatting"""
-        preview = Viewexp(self).to_human_readable()
-        return preview
-
-    def get_launcher(self) -> str:
-        """Get launcher"""
+    @property
+    def launcher(self) -> str:
         return self._launcher
 
     def summary(self, style: str = "github") -> str:
