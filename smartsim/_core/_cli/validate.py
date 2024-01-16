@@ -245,9 +245,9 @@ def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
 
     net = Net()
     forward_input = torch.rand(1, 1, 3, 3)
-    traced = torch.jit.trace(net, forward_input)
+    traced = torch.jit.trace(net, forward_input)  # type: ignore[no-untyped-call]
     buffer = io.BytesIO()
-    torch.jit.save(traced, buffer)
+    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
     model = buffer.getvalue()
 
     client.set_model("torch-nn", model, backend="TORCH", device=device)
