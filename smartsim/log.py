@@ -154,8 +154,8 @@ class ContextAwareLogger(logging.Logger):
         fmt = EXPERIMENT_LOG_FORMAT
 
         low_pass = LowPassFilter(_lvl)
-        h_out = log_to_file(str(file_out), self, _lvl, fmt, low_pass)
-        h_err = log_to_file(str(file_err), self, "WARN", fmt)
+        h_out = log_to_exp_file(str(file_out), self, _lvl, fmt, low_pass)
+        h_err = log_to_exp_file(str(file_err), self, "WARN", fmt)
 
         super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
@@ -231,7 +231,24 @@ class LowPassFilter(logging.Filter):
         return record.levelno <= level_no
 
 
-def log_to_file(
+def log_to_file(filename: str, log_level: str = "debug") -> None:
+    """Installs a second filestream handler to the root logger,
+    allowing subsequent logging calls to be sent to filename.
+    :param filename: the name of the desired log file.
+    :type filename: str
+    :param log_level: as defined in get_logger.  Can be specified
+                      to allow the file to store more or less verbose
+                      logging information.
+    :type log_level: int | str
+    """
+    logger = logging.getLogger("SmartSim")
+    stream = open(  # pylint: disable=consider-using-with
+        filename, "w+", encoding="utf-8"
+    )
+    coloredlogs.install(stream=stream, logger=logger, level=log_level)
+
+
+def log_to_exp_file(
     filename: str,
     logger: logging.Logger,
     log_level: str = "warn",
@@ -243,7 +260,6 @@ def log_to_file(
 
     :param filename: the name of the desired log file.
     :type filename: str
-
     :param log_level: as defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
@@ -305,8 +321,8 @@ def method_contextualizer(
         @functools.wraps(fn)
         def _contextual(
             self: _T,
-            *args: _PR.args,
-            **kwargs: _PR.kwargs,
+            *args: "_PR.args",
+            **kwargs: "_PR.kwargs",
         ) -> _RT:
             """A decorator operator that runs the decorated method in a new
             context with the desired contextual information modified."""
