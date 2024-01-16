@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import concurrent.futures
+import enum
 import os
 import platform
 import re
@@ -52,8 +53,6 @@ from subprocess import SubprocessError
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 TDeviceStr = t.Literal["cpu", "gpu"]
-TArchitectureStr = t.Literal["x64"]
-TOperatingSystemStr = t.Literal["linux", "darwin"]
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -81,6 +80,32 @@ def expand_exe_path(exe: str) -> str:
 
 class BuildError(Exception):
     pass
+
+
+class Architecture(enum.Enum):
+    X64 = ("x86_64", "amd64")
+    ARM64 = ("arm64", "aarch64")
+
+    @classmethod
+    def from_str(cls, string: str, /) -> "Architecture":
+        string = string.lower()
+        for type_ in cls:
+            if string in type_.value:
+                return type_
+        raise BuildError(f"Unrecognized or unsupported architecture: {string}")
+
+
+class OperatingSystem(enum.Enum):
+    LINUX = ("linux", "linux2")
+    DARWIN = ("darwin",)
+
+    @classmethod
+    def from_str(cls, string: str, /) -> "OperatingSystem":
+        string = string.lower()
+        for type_ in cls:
+            if string in type_.value:
+                return type_
+        raise BuildError(f"Unrecognized or unsupported operating system: {string}")
 
 
 class Builder:
@@ -362,24 +387,16 @@ class RedisAIBuilder(Builder):
 
         # TODO: It might be worth making these constructor args so that users
         #       of this class can configure exactly _what_ they are building.
-        os_ = platform.system().lower()
-        if "darwin" in os_:
-            self._os: TOperatingSystemStr = "darwin"
-        elif "linux" in os_:
-            self._os = "linux"
-        else:
-            raise BuildError(f"Unrecognized or unsupported operating system '{os_}'")
-
-        machine = platform.machine().lower()
-        if machine not in ("amd64", "x86_64") and any(
+        self._os = OperatingSystem.from_str(platform.system())
+        self._architecture = Architecture.from_str(platform.machine())
+        if self._architecture == Architecture.ARM64 and any(
             (self.fetch_tf, self.fetch_torch, self.fetch_onnx)
         ):
             raise BuildError(
-                "SmartSim currently only supports building ML backends for "
+                "SmartSim currently only supports fetching ML backends for "
                 "the 'x64' architecture; found unrecognized or unsupported "
-                f"architecture '{machine}'"
+                f"architecture '{platform.system()}'"
             )
-        self._architecture: TArchitectureStr = "x64"
 
     @property
     def rai_build_path(self) -> Path:
@@ -416,8 +433,20 @@ class RedisAIBuilder(Builder):
         return self.build_onnx
 
     def get_deps_dir_path_for(self, device: TDeviceStr) -> Path:
-        os_ = "macos" if self._os == "darwin" else self._os
-        return self.rai_build_path / f"deps/{os_}-{self._architecture}-{device}"
+        def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
+            return BuildError(f"Failed to format RedisAI dependency path: {reason}")
+
+        if self._os == OperatingSystem.DARWIN:
+            os_ = "macos"
+        elif self._os == OperatingSystem.LINUX:
+            os_ = "linux"
+        else:  # pragma: no cover
+            raise fail_to_format(f"Unknown operating system: {self._os}")
+        if self._architecture == Architecture.X64:
+            arch = "x64"
+        else:  # pragma: no cover
+            raise fail_to_format(f"Unknown architecture: {self._architecture}")
+        return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
 
     def _get_deps_to_fetch_for(
         self, device: TDeviceStr
@@ -738,20 +767,20 @@ class _WebZip(_ExtractableWebArchive):
 @t.final
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
-    os_: TOperatingSystemStr
+    os_: OperatingSystem
     device: TDeviceStr
     version: str
 
     @property
     def url(self) -> str:
-        if "linux" in self.os_:
+        if self.os_ == OperatingSystem.LINUX:
             if self.device == "gpu":
                 pt_build = "cu117"
             else:
                 pt_build = "cpu"
             # pylint: disable-next=line-too-long
             libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
-        elif "darwin" in self.os_:
+        elif self.os_ == OperatingSystem.DARWIN:
             if self.device == "gpu":
                 raise BuildError("RedisAI does not currently support GPU on Macos")
             pt_build = "cpu"
@@ -775,24 +804,24 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 @t.final
 @dataclass(frozen=True)
 class _TFArchive(_WebTGZ, _RAIBuildDependency):
-    os_: TOperatingSystemStr
-    architecture: TArchitectureStr
+    os_: OperatingSystem
+    architecture: Architecture
     device: TDeviceStr
     version: str
 
     @property
     def url(self) -> str:
-        if self.architecture == "x64":
+        if self.architecture == Architecture.X64:
             tf_arch = "x86_64"
         else:
             raise BuildError(
                 "Unexpected Architecture for TF Archive: {self.architecture}"
             )
 
-        if "linux" in self.os_:
+        if self.os_ == OperatingSystem.LINUX:
             tf_os = "linux"
             tf_device = self.device
-        elif "darwin" in self.os_:
+        elif self.os_ == OperatingSystem.DARWIN:
             tf_os = "darwin"
             if self.device == "gpu":
                 raise BuildError("RedisAI does not currently support GPU on Macos")
@@ -818,7 +847,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 @t.final
 @dataclass(frozen=True)
 class _ORTArchive(_WebTGZ, _RAIBuildDependency):
-    os_: TOperatingSystemStr
+    os_: OperatingSystem
     device: TDeviceStr
     version: str
 
@@ -828,11 +857,11 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
             "https://github.com/microsoft/onnxruntime/releases/"
             f"download/v{self.version}"
         )
-        if "linux" in self.os_:
+        if self.os_ == OperatingSystem.LINUX:
             ort_os = "linux"
             ort_arch = "x64"
             ort_build = "-gpu" if self.device == "gpu" else ""
-        elif "darwin" in self.os_:
+        elif self.os_ == OperatingSystem.DARWIN:
             ort_os = "osx"
             ort_arch = "x86_64"
             ort_build = ""
