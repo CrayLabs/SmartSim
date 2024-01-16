@@ -7,7 +7,7 @@ Overview
 SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. ``Models`` can be launched with
-other SmartSim entities and :ref:`SmartRedis<dead_link>` to build AI-enabled workflows.
+other SmartSim entities and Orchestrators to build AI-enabled workflows.
 ``Model`` objects can leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
 to transfer data to a standard ``Orchestrator`` to enable other running ``Models`` to access the data.
 Additionally, clients can execute ML models (TF, TF-lite, PyTorch, or ONNX) and TorchScripts stored in the
@@ -22,12 +22,12 @@ compute resource requirements, and application command-line arguments.
 A user can implement the use of an ``Orchestrator`` within a ``Model`` through **two** strategies:
 
 - :ref:`Connect to an Orchestrator launched prior to the Model<std_model_doc>`
-   When a standard the ``Model`` is launched, it does not use or share compute
-   resources on the same host (computer/server) where the SmartSim ``Orchestrator`` is running.
+   When a ``Model`` is launched, it does not use or share compute
+   resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
    Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
-   A standard ``Model`` can connect via a SmartSim client to a launched clustered ``Orchestrator``.
+   The ``Model`` can connect via a SmartSim client to a launched standalone ``Orchestrator``.
 
-- :ref:`Connect to an Orchestrator launched in parallel with the Model<colo_model_doc>`
+- :ref:`Connect to an Orchestrator colocated with the Model<colo_model_doc>`
    When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
    nodes prior to the ``Models`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
    via a SmartSim client.
@@ -36,12 +36,12 @@ Once a ``Model`` instance has been initialized, users have access to
 the :ref:`Model API<model_api>` functions to further configure the ``Model``.
 The Models functions allow users to:
 
-- :ref:`attach files to a SmartSim Model for use within the simulation.<files_doc>`
-- :ref:`launch an Orchestrator on the SmartSim Model compute nodes.<colo_model_doc>`
-- :ref:`attach a ML model to the SmartSim Model instance.<ai_model_doc>`
-- :ref:`attach a TorchScript function to the SmartSim Model instance.<TS_doc>`
-- :ref:`register communication with another SmartSim Model instances.<dead_link>`
-- :ref:`enable SmartSim Model key collision prevention.<dead_link>`
+- :ref:`Attach files to a SmartSim Model for use within the simulation<files_doc>`
+- :ref:`Launch an Orchestrator on the SmartSim Model compute nodes<colo_model_doc>`
+- :ref:`Attach a ML model to the SmartSim Model instance<ai_model_doc>`
+- :ref:`Attach a TorchScript function to the SmartSim Model instance<TS_doc>`
+- :ref:`Register communication with another SmartSim Model instances<dead_link>`
+- :ref:`Enable SmartSim Model key collision prevention<dead_link>`
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications. Additionally, ``Models`` can be launched individually
@@ -86,10 +86,10 @@ is automatically created to store input and output files from the model.
 .. _std_model_doc:
 Standard Model
 ==============
-A standard ``Model`` runs on separate compute nodes from SmartSim ``Orchestrators``.
+By default, a ``Model`` does not share compute resources with other ``Model`` entities or ``Orchestrator`` instances.
 A ``Model`` connects to an ``Orchestrator`` via the SmartSim client (:ref:`SmartRedis<dead_link>`).
-For the client connection to be successful, the SmartSim standard ``Orchestrator`` must be launched
-prior to the start of the standard ``Model``. To create a standard ``Model``, users initialize a
+For the client connection to be successful, the SmartSim standalone ``Orchestrator`` must be launched
+prior to the start of the ``Model``. To create a standard ``Model``, users initialize a
 ``Model`` instance with the ``Experiment.create_model()`` function.
 
 .. note::
@@ -102,7 +102,7 @@ In the proceeding :ref:`Instructions<std_model_init_instruct>` subsection, we pr
 ------------
 Instructions
 ------------
-This example provides a demonstration of how to initialize and launch a standard ``Model``
+This example provides a demonstration of how to initialize and launch a ``Model``
 within an ``Experiment`` workflow. All workflow entities are initialized through the
 :ref:`Experiment API<experiment_api>`. Consequently, initializing
 a SmartSim ``Experiment`` is a prerequisite for ``Model`` initialization.
@@ -168,7 +168,7 @@ node(s) prior to the ``Models`` execution.
 There are **three** different Model API functions to colocate a ``Model``:
 
 - ``Model.colocate_db_tcp()``: Colocate an Orchestrator instance and establish client communication using TCP/IP.
-- ``Model.colocate_db_uds()``: Colocate an Orchestrator instance and establish client communication using UDS.
+- ``Model.colocate_db_uds()``: Colocate an Orchestrator instance and establish client communication using Unix domain sockets (UDS).
 - ``Model.colocate_db()``: (deprecated) An alias for `Model.colocate_db_tcp()`.
 
 Each function initializes an unsharded database accessible only to the model processes on the same compute node. When the model
@@ -298,9 +298,9 @@ The contents of `params_inputs.txt` after Model completion are:
 
    THERMO = 1
 
-=============
-Model Outputs
-=============
+======================
+Output and Error Files
+======================
 By default, SmartSim stores the standard output and error of the ``Model`` in two files:
 
 * `<model_name>.out`
@@ -383,7 +383,7 @@ to load into an ``Orchestrator`` at ``Model`` runtime.
     - an ``Orchestrator`` is launched prior to the ``Models`` execution
     - an initialized ``Model`` named `smartsim_model` exists within the ``Experiment`` workflow
 
-**Define an in-memory a Keras CNN**
+**Define an in-memory Keras CNN**
 
 The ML model must be defined using one of the supported ML frameworks. For the purpose of the example,
 we define a Keras CNN in the same script as the SmartSim ``Experiment``:
@@ -409,7 +409,7 @@ we define a Keras CNN in the same script as the SmartSim ``Experiment``:
 **Attach the ML model to a SmartSim Model**
 
 Assuming an initialized ``Model`` named `smartsim_model` exists, we add the in-memory TensorFlow model using
-the ``Model.add_ml_model()`` function and specify the model path to the parameter `model`:
+the ``Model.add_ml_model()`` function and specify the in-memory model to the parameter `model`:
 
 .. code-block:: python
 
@@ -535,13 +535,11 @@ In environments with multiple devices, specific device numbers can be specified 
 When specifying an in-memory TF function using ``Model.add_function()``, the
 following arguments are offered:
 
-- `name` (str): key to store function under.
+- `name` (str): reference name for the script inside of the ``Orchestrator``.
 - `function` (t.Optional[str] = None): TorchScript function code.
 - `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 - `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-
-Continue to the :ref:`loading an in-memory TorchScript function<in_mem_TF_ex>` example.
 
 .. _in_mem_TF_ex:
 Example: Loading a in-memory TorchScript function
@@ -577,7 +575,7 @@ parameter:
 
 In the above ``smartsim_model.add_function()`` code snippet, we offer the following arguments:
 
--  `name` ("example_func"): A key to uniquely identify the model within the database.
+-  `name` ("example_func"): A name to uniquely identify the model within the database.
 -  `function` (timestwo): Name of the TorchScript function defined in the Python driver script.
 -  `device` ("CPU"): Specifying the device for ML model execution.
 -  `devices_per_node` (2): Use two GPUs per node.
@@ -605,14 +603,12 @@ In environments with multiple devices, specific device numbers can be specified 
 When specifying a TorchScript using ``Model.add_script()``, the
 following arguments are offered:
 
-- `name` (str): key to store script under.
+- `name` (str): Reference name for the script inside of the ``Orchestrator``.
 - `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated orchestrators).
 - `script_path` (t.Optional[str] = None): path to TorchScript code.
 - `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 - `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-
-Continue to the :ref:`Loading a TorchScript from File<TS_from_file_ex>` example.
 
 .. _TS_from_file_ex:
 Example: Loading a TorchScript from File
@@ -628,7 +624,7 @@ to a ``Orchestrator``.
 
 **Define a TorchScript script**
 
-For the example, we create the create the Python script `torchscript.py`. The file contains a
+For the example, we create the Python script `torchscript.py`. The file contains a
 simple torch function shown below:
 
 .. code-block:: python
@@ -647,7 +643,7 @@ the ``Model.add_script()`` function and specify the script path to the parameter
 
 In the above ``smartsim_model.add_script()`` code snippet, we offer the following arguments:
 
--  `name` ("example_script"): key to store script under.
+-  `name` ("example_script"): Reference name for the script inside of the ``Orchestrator``.
 -  `script_path` ("path/to/torchscript.py"): Path to the script file.
 -  `device` ("CPU"): device for script execution.
 -  `devices_per_node` (2): Use two GPUs per node.
@@ -674,14 +670,12 @@ In environments with multiple devices, specific device numbers can be specified 
 When specifying a TorchScript using ``Model.add_script()``, the
 following arguments are offered:
 
-- `name` (str): key to store script under.
+- `name` (str): Reference name for the script inside of the ``Orchestrator``.
 - `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated orchestrators).
 - `script_path` (t.Optional[str] = None): path to TorchScript code.
 - `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 - `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-
-Continue to the :ref:`Loading a TorchScript from string<TS_from_file_ex>` example.
 
 .. _TS_from_file_ex:
 Example: Loading a TorchScript from string
@@ -731,202 +725,187 @@ orchestrator that is launched prior to the start of the model.
 =========================
 Data Collision Prevention
 =========================
+
 --------
-Overview
+Interact
 --------
-SmartSim and SmartRedis can avoid key collision by prepending program-unique
-prefixes to Model workloads launched through SmartSim. For example, if you were
-to have two applications feeding data to a single database, who produced keys
-of the same name, upon requesting this information there would be a key collision
-since there is no yet uniqueness between the same tensor names. By enabling key
-prefixing on a Model, SmartSim will append the model name to each key produced
-by the application and sent to the database as such: `model_name.tensor_name`.
+SmartSim's tensor prefixing simplifies data interaction by allowing users to easily manage
+tensors in the same script that placed them and retrieve tensors placed by other scripts in
+the orchestrator. The following subsections will explore these scenarios, providing guidance
+for efficient tensor handling in a SmartSim workflow.
 
-This is done simply through functions offered by the Model API:
+DataStructures
+==============
+------
+Enable
+------
+.. tabs::
 
-* Model.register_incoming_entity(incoming_entity)
-* Model.enable_key_prefixing()
-* Model.disable_key_prefixing()
-* Model.query_key_prefixing()
+    .. group-tab:: Tensor
+        Tensor prefixing in SmartSim provides an organized way to prevent naming conflicts and differentiate
+        tensors produced by models or ensembles within a SmartSim simulation. It involves prepending the
+        Model `name` to the tensor `name` when sending data to the orchestrator. The activation can
+        be configured in two ways:
 
--------
-Example
--------
-We provide a producer/consumer example that demonstrates
-two producer models, with key prefixing enabled, that
-send tensor of the same name to a standard database. A
-consumer Model requests both tensors and displays the
-information using a SmartRedis logger to demonstrates
-successful use of Model key prefixing.
+        - Activate tensor prefixing in the **driver script**
+        - Activate tensor prefixing in the **application script**
 
-During the example we will be creating four different files:
+        **Activate Tensor Prefixing in the Driver Script**
 
-1. producer_1.py : a Model producer application
-2. producer_2.py : a Model producer application
-3. consumer.py : a Model consumer application
-4. experiment.py : the Experiment driver script
+        Users can enable tensor prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
+        function. This functionality ensures that the ``Model`` `name` is prepended to the tensor `name` when
+        sending data to the orchestrator.
 
-Producer_1 Application
-======================
-Begin by importing the necessary modules and initializing a SmartRedis
-Client:
+        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate tensor
+        prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
 
-.. code-block:: python
+        .. code-block:: python
 
-    from smartredis import Client
-    from smartredis import *
-    import numpy as np
+            # Create the run settings for the model
+            model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application_script.py")
 
-    # Initialize a Client
-    client = Client(cluster=False)
+            # Create a Model instance named 'model'
+            model = exp.create_model("model_name", model_settings)
+            # Enable tensor prefixing
+            model.enable_key_prefixing()
 
-Next, create a NumPy array to place in the database with the key name `tensor`:
+        In application script of `model`, two tensors named `tensor_1` and `tensor_2` are sent to the orchestrator.
+        The contents of the orchestrator are as follows:
 
-.. code-block:: python
+        .. code-block:: bash
 
-    # Create NumPy array
-    array = np.array([5, 6, 7, 8])
-    # Use SmartRedis client to place tensor in single sharded db
-    client.put_tensor("tensor", array)
+            1) model_name.tensor_1
+            2) model_name.tensor_2
 
-With key prefixing enabled, the tensor stored will be under key
-`producer_1.tensor`.
+        **Activate Tensor Prefixing in the Application Script**
 
-Producer_2 Application
-======================
-Begin by importing the necessary modules and initializing a SmartRedis
-Client:
+        Users can enable tensor prefixing on a SmartRedis Client by utilizing the ``Client.use_tensor_ensemble_prefix()``
+        function within the application script. This functionality ensures that the ``Model`` `name`
+        is prepended to the tensor `name` when sending data to the orchestrator using
+        ``Client.put_tensor()``, ``Client.rename_tensor()`` or ``Client.copy_tensor()``.
 
-.. code-block:: python
+        .. warning::
+            SmartSim users do not have access to ``Client.use_tensor_ensemble_prefix()`` unless prefixing is
+            enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
 
-    from smartredis import Client
-    from smartredis import *
-    import numpy as np
+        In the following example, we demonstrate creating a ``Client`` instance named `client` and
+        toggling tensor prefixing between `True` and `False` using the ``use_tensor_ensemble_prefix()`` method.
 
-    # Initialize a Client
-    client = Client(cluster=False)
+        .. code-block:: python
 
-Next, create a NumPy array to place in the database with the key name `tensor`:
+            # Initialize a Client
+            client = Client(cluster=False)
 
-.. code-block:: python
+            # Disable key prefixing
+            client.use_tensor_ensemble_prefix(False)
+            # Place a tensor in the orchestrator
+            client.put_tensor("tensor_1", np.array([5, 6, 7, 8]))
+            # Enable key prefixing
+            client.use_tensor_ensemble_prefix(True)
+            # Copy the tensor to a different tensor
+            client.copy_tensor("tensor_1", "copied_tensor")
 
-    # Create NumPy array
-    array = np.array([1, 2, 3, 4])
-    # Use SmartRedis client to place tensor in single sharded db
-    client.put_tensor("tensor", array)
+        In the above application script, the `client` transmits a tensor named `tensor_1`
+        to the orchestrator. Prefixing is deactivated when sending `tensor_1` and reactivated when copying
+        `tensor_1` to the new data source named `copied_tensor`. The orchestrator's contents are as follows:
 
-With key prefixing enabled, the tensor stored will be under key
-`producer_2.tensor`.
+        .. code-block:: bash
 
-Consumer Application
-====================
-Next, request the inputted tensors from the producer
-applications within the consumer application.
-Begin by importing the necessary modules and initializing a SmartRedis
-Client:
+            1) tensor_1
+            2) model_name.copied_tensor
 
-.. code-block:: python
+    .. group-tab:: DataSet
+        Tensor prefixing in SmartSim provides an organized way to prevent naming conflicts and differentiate
+        tensors produced by models or ensembles within a SmartSim simulation. It involves prepending the
+        Model `name` to the tensor `name` when sending data to the orchestrator. The activation can
+        be configured in two ways:
 
-    from smartredis import Client
-    from smartredis import *
-    import numpy as np
+        - Activate tensor prefixing in the **driver script**
+        - Activate tensor prefixing in the **application script**
 
-    # Initialize a Client
-    client = Client(cluster=False)
+        **Activate Tensor Prefixing in the Driver Script**
 
-SmartRedis offers the function, ``Client.set_data_source()`` that
-will add a prefix to the key name when using ``Client.get_tensor()``.
+        Users can enable tensor prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
+        function. This functionality ensures that the ``Model`` `name` is prepended to the tensor `name` when
+        sending data to the orchestrator.
 
-.. code-block:: python
+        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate tensor
+        prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
 
-    client.set_data_source("producer_1")
-    # Searching for key name: producer_1.tensor
-    client.get_tensor("tensor")
-    client.set_data_source("producer_2")
-    # Searching for key name: producer_2.tensor
-    client.get_tensor("tensor")
+        .. code-block:: python
 
-Next, output the tensor values to validate correctness:
+            # Create the run settings for the model
+            model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application_script.py")
 
-.. code-block:: python
+            # Create a Model instance named 'model'
+            model = exp.create_model("model_name", model_settings)
+            # Enable tensor prefixing
+            model.enable_key_prefixing()
 
-    client.log_data(LLInfo, f"1: {val1}")
-    client.log_data(LLInfo, f"2: {val2}")
+        In application script of `model`, two tensors named `tensor_1` and `tensor_2` are sent to the orchestrator.
+        The contents of the orchestrator are as follows:
 
-The Experiment Driver script
-============================
-Begin by importing the required modules, initializing a SmartSim ``Experiment`` object,
-and launching a standalone database:
+        .. code-block:: bash
 
-.. code-block:: python
+            1) model_name.tensor_1
+            2) model_name.tensor_2
 
-    from smartsim import Experiment
-    from smartsim.log import get_logger
+        **Activate Tensor Prefixing in the Application Script**
 
-    logger = get_logger("Experiment Log")
-    # Initialize the Experiment
-    exp = Experiment("getting-started", launcher="auto")
+        Users can enable tensor prefixing on a SmartRedis Client by utilizing the ``Client.use_tensor_ensemble_prefix()``
+        function within the application script. This functionality ensures that the ``Model`` `name`
+        is prepended to the tensor `name` when sending data to the orchestrator using
+        ``Client.put_tensor()``, ``Client.rename_tensor()`` or ``Client.copy_tensor()``.
 
-    # Initialize a single sharded database
-    single_shard_db = exp.create_database(port=6379, db_nodes=1, interface="ib0")
-    exp.generate(single_shard_db, overwrite=True)
-    exp.start(single_shard_db)
+        .. warning::
+            SmartSim users do not have access to ``Client.use_tensor_ensemble_prefix()`` unless prefixing is
+            enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
 
-Next, let's create each Model with runsettings and key prefixing
-beginning with model 1: `producer_1.py`. Initialize the run
-settings for the Model, then create the Model:
+        In the following example, we demonstrate creating a ``Client`` instance named `client` and
+        toggling tensor prefixing between `True` and `False` using the ``use_tensor_ensemble_prefix()`` method.
 
-.. code-block:: python
+        .. code-block:: python
 
-    # Initialize a RunSettings object
-    producer_settings_1 = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/producer_1.py")
-    producer_settings_1.set_nodes(1)
-    producer_settings_1.set_tasks_per_node(1)
-    producer_1 = exp.create_model("producer_1", producer_settings_1)
+            # Initialize a Client
+            client = Client(cluster=False)
 
-Since this model will be producing and sending tensors to the standard Orchestrator,
-we need to enable key prefixing like below:
+            # Disable key prefixing
+            client.use_tensor_ensemble_prefix(False)
+            # Place a tensor in the orchestrator
+            client.put_tensor("tensor_1", np.array([5, 6, 7, 8]))
+            # Enable key prefixing
+            client.use_tensor_ensemble_prefix(True)
+            # Copy the tensor to a different tensor
+            client.copy_tensor("tensor_1", "copied_tensor")
 
-.. code-block:: python
+        In the above application script, the `client` transmits a tensor named `tensor_1`
+        to the orchestrator. Prefixing is deactivated when sending `tensor_1` and reactivated when copying
+        `tensor_1` to the new data source named `copied_tensor`. The orchestrator's contents are as follows:
 
-    producer_1.enable_key_prefixing()
+        .. code-block:: bash
 
-Now repeat this process for the second producer model:
-.. code-block:: python
+            1) tensor_1
+            2) model_name.copied_tensor
 
-    # Initialize a RunSettings object
-    producer_settings_2 = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/producer_2.py")
-    producer_settings_2.set_nodes(1)
-    producer_settings_2.set_tasks_per_node(1)
-    producer_2 = exp.create_model("producer_2", producer_settings_2)
-    producer_2.enable_key_prefixing()
+    .. group-tab:: Agg List
 
-Next, let's create the consumer model that will be request the
-keys from `producer_1` and `producer_2`:
+    .. group-tab:: ML Model
 
-.. code-block:: python
+    .. group-tab:: Script
 
-    # Initialize a RunSettings object
-    consumer_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/consumer.py")
-    consumer_settings.set_nodes(1)
-    consumer_settings.set_tasks_per_node(1)
-    consumer = exp.create_model("consumer", consumer_settings)
+--------
+Interact
+--------
+.. tabs::
 
-We do not need key prefixing enabled on this model, so we disable:
+    .. group-tab:: Tensor
 
-.. code-block:: python
+        **driver script**
+        **app script**
+    .. group-tab:: DataSet
 
-    consumer.disable_key_prefixing()
+    .. group-tab:: Agg List
 
-Finally, launch the model instances:
+    .. group-tab:: ML Model
 
-.. code-block:: python
-
-    exp.start(model_1, model_2, model_3, block=True, summary=True)
-
-To end, tear down the database:
-
-.. code-block:: python
-
-    exp.stop(single_shard_db)
-    logger.info(exp.summary())
+    .. group-tab:: Script
