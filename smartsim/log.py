@@ -295,10 +295,10 @@ def log_to_exp_file(
 def method_contextualizer(
     ctx_var: ContextVar[_ContextT],
     ctx_map: t.Callable[[_T], _ContextT],
-) -> t.Callable[
-    [t.Callable["Concatenate[_T, _PR]", _RT]],
-    t.Callable["Concatenate[_T, _PR]", _RT],
-]:
+) -> """t.Callable[
+    [t.Callable[Concatenate[_T, _PR], _RT]],
+    t.Callable[Concatenate[_T, _PR], _RT],
+]""":
     """Parameterized-decorator factory that enables a target value
     to be placed into global context prior to execution of the
     decorated method.
@@ -312,8 +312,8 @@ def method_contextualizer(
     :type ctx_map: t.Callable[[_T], _ContextT]"""
 
     def _contextualize(
-        fn: t.Callable["Concatenate[_T, _PR]", _RT], /
-    ) -> t.Callable["Concatenate[_T, _PR]", _RT]:
+        fn: "t.Callable[Concatenate[_T, _PR], _RT]", /
+    ) -> "t.Callable[Concatenate[_T, _PR], _RT]":
         """Executes the decorated method in a cloned context and ensures
         `ctx_var` is updated to the value returned by `ctx_map` prior to
         calling the decorated method"""
