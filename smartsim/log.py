@@ -257,9 +257,6 @@ def log_to_file(
     :return: logging.Handler
     :rtype: loggin.Handler
     """
-    if logger is None:
-        logger = logging.getLogger("SmartSim")
-
     # ensure logs are written even if specified dir doesn't exist
     log_path = pathlib.Path(filename)
     if not log_path.parent.exists():
