@@ -232,8 +232,10 @@ class LowPassFilter(logging.Filter):
 def log_to_file(filename: str, log_level: str = "debug") -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
+    
     :param filename: the name of the desired log file.
     :type filename: str
+
     :param log_level: as defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
