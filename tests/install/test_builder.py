@@ -27,6 +27,7 @@
 
 import pytest
 
+import functools
 import pathlib
 import platform
 import threading
@@ -110,27 +111,21 @@ def test_rai_builder_raises_if_attempting_to_place_deps_in_nonempty_dir(
         rai_builder._fetch_deps_for(device)
 
 
-# fmt: off
-def _confirm_dep_count(t):
-    # Use local defs allow for currying w/ pythons weird lambda binding
-    _eager_find_all_instances_of = lambda    t, xs: tuple(filter(lambda x: isinstance(x, t), xs))
-    _count_instances_of          = lambda    t, xs: len(_eager_find_all_instances_of(t, xs))
-    _is_num_instances_of         = lambda n, t, xs: _count_instances_of(t, xs) == n
-    _is_one_instance_of          = lambda    t, xs: _is_num_instances_of(1, t, xs)
-    _is_no_instance_of           = lambda    t, xs: _is_num_instances_of(0, t, xs)
+def _confirm_inst_presence(type_, should_be_present, seq):
+    expected_num_occurrences = 1 if should_be_present else 0
+    occurrences = filter(lambda item: isinstance(item, type_), seq)
+    return expected_num_occurrences == len(tuple(occurrences))
 
-    def _partial(should_build):
-        def _partial_partial(xs):
-            return (_is_one_instance_of if should_build else _is_no_instance_of)(t, xs)
-        return _partial_partial
-    return _partial
 
-_confirm_optional_dep_count      = lambda t: lambda should_build, xs: _confirm_dep_count(t)(should_build)(xs)
-confirm_dlpack_dep_count         = _confirm_dep_count(build._DLPackRepository)(True)
-confirm_pt_dep_count             = _confirm_optional_dep_count(build._PTArchive)
-confirm_tf_dep_count             = _confirm_optional_dep_count(build._TFArchive)
-confirm_ort_dep_count            = _confirm_optional_dep_count(build._ORTArchive)
-# fmt: on
+# Helper functions to check for the presence (or absence) of a
+# ``_RAIBuildDependency`` dependency in a list of dependencies that need to be
+# fetched by a ``RedisAIBuilder`` instance
+dlpack_dep_presence = functools.partial(
+    _confirm_inst_presence, build._DLPackRepository, True
+)
+pt_dep_presence = functools.partial(_confirm_inst_presence, build._PTArchive)
+tf_dep_presence = functools.partial(_confirm_inst_presence, build._TFArchive)
+ort_dep_presence = functools.partial(_confirm_inst_presence, build._ORTArchive)
 
 
 @for_each_device
@@ -144,10 +139,10 @@ def test_rai_builder_will_add_dep_if_backend_requested_wo_duplicates(
         build_tf=build_tf, build_torch=build_pt, build_onnx=build_ort
     )
     requested_backends = rai_builder._get_deps_to_fetch_for(device)
-    assert confirm_dlpack_dep_count(requested_backends)
-    assert confirm_tf_dep_count(build_tf, requested_backends)
-    assert confirm_pt_dep_count(build_pt, requested_backends)
-    assert confirm_ort_dep_count(build_ort, requested_backends)
+    assert dlpack_dep_presence(requested_backends)
+    assert tf_dep_presence(build_tf, requested_backends)
+    assert pt_dep_presence(build_pt, requested_backends)
+    assert ort_dep_presence(build_ort, requested_backends)
 
 
 @for_each_device
@@ -165,13 +160,15 @@ def test_rai_builder_will_not_add_dep_if_custom_dep_path_provided(
         libtf_dir=str(mock_ml_lib if build_tf else ""),
         torch_dir=str(mock_ml_lib if build_pt else ""),
     )
-    needed_deps = rai_builder._get_deps_to_fetch_for(device)
-    assert len(needed_deps) == 1
-    (dl_pack,) = needed_deps
-    assert isinstance(dl_pack, build._DLPackRepository)
+    requested_backends = rai_builder._get_deps_to_fetch_for(device)
+    assert dlpack_dep_presence(requested_backends)
+    assert tf_dep_presence(False, requested_backends)
+    assert pt_dep_presence(False, requested_backends)
+    assert ort_dep_presence(False, requested_backends)
+    assert len(requested_backends) == 1
 
 
-def test_rai_builder_raises_if_it_fetches_an_unepected_number_of_ml_deps(
+def test_rai_builder_raises_if_it_fetches_an_unexpected_number_of_ml_deps(
     monkeypatch, p_test_dir
 ):
     monkeypatch.setattr(
@@ -199,10 +196,12 @@ def test_threaded_map():
 
 
 def test_threaded_map_returns_early_if_nothing_to_map():
+    sleep_duration = 60
+
     def _some_long_io_op(_):
-        time.sleep(60)
+        time.sleep(sleep_duration)
 
     start = time.time()
     build._threaded_map(_some_long_io_op, [])
     end = time.time()
-    assert end - start < 0.5
+    assert end - start < sleep_duration

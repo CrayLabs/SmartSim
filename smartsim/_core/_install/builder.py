@@ -649,7 +649,7 @@ def _threaded_map(fn: t.Callable[[_T], _U], items: t.Iterable[_T]) -> t.Sequence
     items = tuple(items)
     if not items:  # No items so no work to do
         return ()
-    num_workers = min(len(items), (os.cpu_count() or 8) * 5)
+    num_workers = min(len(items), (os.cpu_count() or 4) * 5)
     with concurrent.futures.ThreadPoolExecutor(num_workers) as pool:
         return tuple(pool.map(fn, items))
 
