@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import annotations  # TODO: rm this
+# from __future__ import annotations  # TODO: rm this
 
 import functools
 import logging
@@ -283,8 +283,8 @@ def method_contextualizer(
     ctx_var: ContextVar[_ContextT],
     ctx_map: t.Callable[[_T], _ContextT],
 ) -> t.Callable[
-    [t.Callable[Concatenate[_T, _PR], _RT]],
-    t.Callable[Concatenate[_T, _PR], _RT],
+    [t.Callable["Concatenate[_T, _PR]", _RT]],
+    t.Callable["Concatenate[_T, _PR]", _RT],
 ]:
     """Parameterized-decorator factory that enables a target value
     to be placed into global context prior to execution of the
@@ -299,8 +299,8 @@ def method_contextualizer(
     :type ctx_map: t.Callable[[_T], _ContextT]"""
 
     def _contextualize(
-        fn: t.Callable[Concatenate[_T, _PR], _RT], /
-    ) -> t.Callable[Concatenate[_T, _PR], _RT]:
+        fn: t.Callable["Concatenate[_T, _PR]", _RT], /
+    ) -> t.Callable["Concatenate[_T, _PR]", _RT]:
         """Executes the decorated method in a cloned context and ensures
         `ctx_var` is updated to the value returned by `ctx_map` prior to
         calling the decorated method"""
