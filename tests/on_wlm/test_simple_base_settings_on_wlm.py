@@ -72,7 +72,7 @@ def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "lsf"]:
         pytest.skip(
-            "Test only runs on systems with LSF, PBSPro, or sSlurm as WLM"
+            "Test only runs on systems with LSF, PBSPro, or Slurm as WLM"
         )
 
     exp_name = "test-simplebase-settings-model-stop"
