@@ -4,11 +4,11 @@ Orchestrator
 ========
 Overview
 ========
-The orchestrator is an in-memory database with features built for
+The Orchestrator is an in-memory database with features built for
 AI-enabled workflows including online training, low-latency inference, cross-application data
 exchange, online interactive visualization, online data analysis, computational steering, and more.
 
-An orchestrator can be thought of as a general feature store
+An Orchestrator can be thought of as a general feature store
 capable of storing numerical data (Tensors and Datasets), AI Models (TF, TF-lite, PyTorch, or ONNX),
 and scripts (TorchScripts). In addition to storing data, the orchestrator is capable of
 executing ML Models and TorchScripts on the stored data using CPUs or GPUs.
@@ -17,32 +17,31 @@ executing ML Models and TorchScripts on the stored data using CPUs or GPUs.
 
   Sample experiment showing a user application leveraging
   machine learning infrastructure launched by SmartSim and connected
-  to online analysis and visualization via the orchestrator.
+  to online analysis and visualization via the Orchestrator.
 
-Users can establish a connection to the orchestrator from within SmartSim ``Model`` executable code, ``Ensemble``
+Users can establish a connection to the ``Orchestrator`` from within SmartSim ``Model`` executable code, ``Ensemble``
 model executable code, or driver scripts using the :ref:`SmartRedis<smartredis-api>` client library.
 
-SmartSim offers **two** types of orchestrator deployments:
+SmartSim offers **two** types of ``Orchestrator`` deployments:
 
 - :ref:`Standalone Deployment<standalone_orch_doc>`
-   A standalone orchestrator is ideal for systems that have heterogeneous node types
+   A standalone ``Orchestrator`` is ideal for systems that have heterogeneous node types
    (i.e. a mix of CPU-only and GPU-enabled compute nodes) where
-   ML Model and TorchScript evaluation is more efficiently performed off-node for a ML Model. This
+   ML Model and TorchScript evaluation is more efficiently performed off-node. This
    deployment is also ideal for workflows relying on data exchange between multiple
    applications (e.g. online analysis, visualization, computational steering, or
    producer/consumer application couplings). Standalone deployment is also optimal for
-   high data throughput scenarios with databases that require a large amount of hardware.
+   high data throughput scenarios where ``Orchestrators`` require large amounts of compute resources.
 
 - :ref:`Colocated Deployment<colocated_orch_doc>`
-    A colocated orchestrator is ideal when the data and hardware accelerator are located on the same compute node.
+    A colocated ``Orchestrator`` is ideal when the data and hardware accelerator are located on the same compute node.
     This setup helps reduce latency in ML inference and TorchScript evaluation by eliminating off-node communication.
 
-SmartSim allows users to launch :ref:`multiple orchestrators<mutli_orch_doc>` during the course of an experiment of
-either orchestrator deployment type. If a workflow requires a multiple orchestrator environment, a
+SmartSim allows users to launch :ref:`multiple Orchestrators<mutli_orch_doc>` of either type during
+the course of an experiment. If a workflow requires a multiple ``Orchestrator`` environment, a
 `db_identifier` argument must be specified during ``Orchestrator`` initialization. Users can connect to
-orchestrators in a parallel database workflow by specifying the respective `db_identifier` argument
-within a ``ConfigOptions`` object to pass in to the SmartRedis ``Client`` constructor. The client can then be used to transmit data,
-execute ML Models, and execute scripts on the linked orchestrator.
+``Orchestrators`` in a multiple ``Orchestrator`` workflow by specifying the respective `db_identifier` argument
+within a ``ConfigOptions`` object that is passed into the SmartRedis ``Client`` constructor.
 
 .. _standalone_orch_doc:
 =====================
@@ -54,13 +53,10 @@ Overview
 During standalone orchestrator deployment, a SmartSim orchestrator (the database) runs on separate
 compute node(s) from the SmartSim model node(s). A standalone orchestrator can be deployed on a single
 node (standalone) or sharded (distributed) over multiple nodes. With a sharded orchestrator, users can
-scale the number of database nodes for inference and script evaluation, contributing to an
+scale the number of database nodes for inference and script evaluation, enabling
 increased in-memory capacity for data storage in large-scale workflows. Standalone
-orchestrators are effective for small-scale workflows and offer lower latency since
+orchestrators are effective for small-scale workflows and offer lower latency for some API calls because
 single-node orchestrators don't involve communication between nodes.
-
-Communication between a standalone orchestrator and SmartSim model
-is facilitated by a SmartRedis client and initialized in a SmartSim model application.
 
 When connecting to a standalone orchestrator from within a model application, the user has
 several options when using the SmartRedis client:
@@ -158,19 +154,19 @@ To establish a connection with the orchestrator, we need to initialize a new Sma
 Since the ``Orchestrator`` we launch in the driver script is sharded, we specify the
 constructor argument `cluster` as `True`.
 
-.. note::
-  Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
-  from the SmartSim model environment and the `cluster` constructor argument does not need to be specified
-  in those client languages.
-
 .. code-block:: python
 
   # Initialize a Client
   application_client = Client(cluster=True)
 
 .. note::
+  Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
+  from the SmartSim model environment and the `cluster` constructor argument does not need to be specified
+  in those client languages.
+
+.. note::
     Since there is only one orchestrator launched in the experiment
-    (the standalone orchestrator), specifying a orchestrator address
+    (the standalone orchestrator), specifying an orchestrator address
     is not required when initializing the SmartRedis client.
     SmartRedis will handle the connection configuration.
 
@@ -192,8 +188,8 @@ used in the driver script as input to ``Client.put_tensor()``:
     # Log tensor
     application_client.log_data(LLInfo, f"The single sharded db tensor is: {driver_script_tensor}")
 
-Later, when you run the driver script the following output will appear in ``model.out``
-located in ``getting-started/tutorial_model/``::
+After the Model is launched by the driver script, the following output will appear in
+`getting-started/tutorial_model/model.out`::
 
   Default@17-11-48:The single sharded db tensor is: [1 2 3 4]
 
@@ -288,7 +284,7 @@ Data Storage
 ------------
 In the application script, we retrieved a NumPy tensor stored from within the driver script.
 To support the application functionality, we create a
-NumPy array in the experiment workflow to send to the orchestrator. To
+NumPy array in the experiment driver script to send to the orchestrator. To
 send a tensor to the orchestrator, use the function ``Client.put_tensor(name, data)``:
 
 .. code-block:: python
@@ -355,7 +351,7 @@ Next, launch the `model` instance using the ``Experiment.start()`` function:
 
 Data Polling
 ------------
-Next, check if the tensor exists in the standalone orchestrator` using ``Client.poll_tensor()``.
+Next, check if the tensor exists in the standalone orchestrator using ``Client.poll_tensor()``.
 This function queries for data in the orchestrator. The function requires the tensor name (`name`),
 how many milliseconds to wait in between queries (`poll_frequency_ms`),
 and the total number of times to query (`num_tries`). Check if the data exists in the orchestrator by
@@ -480,15 +476,15 @@ To establish a connection with the colocated orchestrator, we need to initialize
 new SmartRedis `client` and specify `cluster=False` since colocated deployments are never
 clustered but single-sharded.
 
-.. note::
-  Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
-  from the model environment and the `cluster` constructor argument does not need to be specified
-  in those client languages.
-
 .. code-block:: python
 
   # Initialize a Client
   colo_client = Client(cluster=False)
+
+.. note::
+  Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
+  from the model environment and the `cluster` constructor argument does not need to be specified
+  in those client languages.
 
 .. note::
     Since there is only one orchestrator launched in the Experiment
