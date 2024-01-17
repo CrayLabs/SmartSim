@@ -84,7 +84,6 @@ class BuildError(Exception):
 
 class Architecture(enum.Enum):
     X64 = ("x86_64", "amd64")
-    ARM64 = ("arm64", "aarch64")
 
     @classmethod
     def from_str(cls, string: str, /) -> "Architecture":
@@ -389,14 +388,6 @@ class RedisAIBuilder(Builder):
         #       of this class can configure exactly _what_ they are building.
         self._os = OperatingSystem.from_str(platform.system())
         self._architecture = Architecture.from_str(platform.machine())
-        if self._architecture != Architecture.X64 and any(
-            (self.fetch_tf, self.fetch_torch, self.fetch_onnx)
-        ):
-            raise BuildError(
-                "SmartSim currently only supports fetching ML backends for "
-                "the 'x64' architecture; found unrecognized or unsupported "
-                f"architecture '{platform.machine()}'"
-            )
 
     @property
     def rai_build_path(self) -> Path:
@@ -444,8 +435,6 @@ class RedisAIBuilder(Builder):
             raise fail_to_format(f"Unknown operating system: {self._os}")
         if self._architecture == Architecture.X64:
             arch = "x64"
-        elif self._architecture == Architecture.ARM64:
-            arch = "arm64"
         else:  # pragma: no cover
             raise fail_to_format(f"Unknown architecture: {self._architecture}")
         return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
