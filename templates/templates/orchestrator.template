@@ -1,0 +1,34 @@
+{%- if manifest.dbs -%}
+{%- for db in manifest.dbs %}
+    == Orchestrators == 
+        = Database identifier: {{ db.name }}
+        {{ db.num_shards }}
+        {{ db.db_nodes }}
+
+        {{ db.port }}
+        {{ db.interface }}
+        {{ db.launcher }}
+        {{ db.run_command }}
+       
+        {{ db.batch }}
+
+        {# db.hosts #}
+        {{ db.account }}
+        {{ db.time }}
+        {{ db.alloc }}
+        {{ db.single_cmd }}
+        {{ db.inter_op_threads }}
+        {{ db.intra_op_thread }}
+
+            Shards: 
+            IP address:   
+            TCP/IP port:  
+            Network interface:
+            Type: 
+            Executable:
+            Batch Launch:
+        =
+
+{%- endfor -%}
+{%- endif -%}
+

@@ -798,8 +798,9 @@ class Experiment:
             logger.error(e)
             raise
 
+#from smartsim._core.control.manifest import LaunchedManifest
     def preview(
-        self,
+        *args,
         output_format: _OutputFormatString = None,
         verbosity_level: _VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
@@ -827,8 +828,12 @@ class Experiment:
         :type verbosity_level: str
         """
 
+        preview_manifest= Manifest(args)
+
+        print(preview_manifest)
+
         rendered_preview = previewrenderer.render(
-            self, verbosity_level, output_format, output_filename
+            self, preview_manifest, verbosity_level, output_format, output_filename
         )
 
         logger.info(rendered_preview)

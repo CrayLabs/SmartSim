@@ -26,9 +26,17 @@
 
 import pytest
 
+from smartsim._core import Manifest
 from smartsim import Experiment
 from smartsim._core import previewrenderer
 import pathlib
+
+def choose_host(wlmutils, index=0):
+    hosts = wlmutils.get_test_hostlist()
+    if hosts:
+        return hosts[index]
+    else:
+        return None
 
 
 def test_experiment_preview(test_dir, wlmutils):
@@ -59,6 +67,65 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.name == summary_dict["Experiment"]
     assert exp.exp_path == summary_dict["Experiment Path"]
     assert exp.launcher == summary_dict["Launcher"]
+
+def test_orchestrator_preview_render(test_dir, wlmutils):
+    """Test correct preview output properties for Experiment preview"""
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    
+    exp_name = "test_experiment_preview_properties"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    
+   
+    # create regular database
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+    )
+
+    preview_manifest = Manifest(orc)
+    output = previewrenderer.render(exp,preview_manifest)
+
+   
+
+   
+
+
+def test_orchestrator_preview_preview(test_dir, wlmutils):
+    """Test correct preview output properties for Experiment preview"""
+    test_launcher = wlmutils.get_test_launcher()
+    exp_name = "test_experiment_preview_properties"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    #output = previewrenderer.render(exp)
+    exp.preview(orch)
+
+# should add a test for when experiment is passed into preview as a *args , will is be ignored etc etc. 
+# what happens when an experiment is passed into the manifest? 
+
+#test with multi db
+#   exp_name = "test_db_identifier_standard_then_colo"
+
+#     # Retrieve parameters from testing environment
+#     test_launcher = wlmutils.get_test_launcher()
+#     test_interface = wlmutils.get_test_interface()
+#     test_port = wlmutils.get_test_port()
+
+#     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
+
+#     # Create SmartSim Experiment
+#     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+#     # create regular database
+#     orc = exp.create_database(
+#         port=test_port,
+#         interface=test_interface,
+#         db_identifier="testdb_colo",
+#         hosts=choose_host(wlmutils),
+#     )
+
+
 
 
 def test_preview_output_format_html(test_dir, wlmutils):
