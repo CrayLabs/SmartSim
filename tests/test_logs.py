@@ -112,7 +112,7 @@ def test_add_exp_loggers(test_dir):
     assert err_file.is_file()
 
 
-def test_get_logger(test_dir: str):
+def test_get_logger(test_dir: str, turn_on_tm):
     """Ensure the correct logger type is instantiated"""
     logger = smartsim.log.get_logger("SmartSimTest", "INFO")
     assert isinstance(logger, smartsim.log.ContextAwareLogger)

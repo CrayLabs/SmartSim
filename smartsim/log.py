@@ -128,6 +128,9 @@ class ContextInjectingLogFilter(logging.Filter):
 class ContextAwareLogger(logging.Logger):
     """A logger customized to automatically write experiment logs to a
     dynamic target directory by inspecting the value of a context var"""
+    def __init__(self, name: str, level: t.Union[int, str] = 0) -> None:
+        super().__init__(name, level)
+        self.addFilter(ContextInjectingLogFilter(name="exp-ctx-log-filter"))
 
     def _log(
         self,
@@ -198,8 +201,6 @@ def get_logger(
 
     logging.setLoggerClass(ContextAwareLogger)
     logger = logging.getLogger(name)
-
-    logger.addFilter(ContextInjectingLogFilter())
 
     if log_level:
         logger.setLevel(log_level)
