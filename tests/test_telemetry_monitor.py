@@ -93,7 +93,9 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def snooze_nonblocking(test_dir: pathlib.Path, max_delay: int = 20, post_data_delay: int = 2):
+def snooze_nonblocking(
+    test_dir: pathlib.Path, max_delay: int = 20, post_data_delay: int = 2
+):
     # let the non-blocking experiment complete.
     for _ in range(max_delay):
         time.sleep(1)
@@ -463,7 +465,9 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     assert len(stop_events) == 1
 
 
-def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_single_model_nonblocking(
+    fileutils, test_dir, wlmutils, monkeypatch, config
+):
     """Ensure that the telemetry monitor logs exist when the experiment
     is non-blocking"""
     with monkeypatch.context() as ctx:
@@ -814,7 +818,9 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
         pytest.param(1, 15, id="15s shutdown"),
     ],
 )
-def test_telemetry_autoshutdown(test_dir, wlmutils, monkeypatch, frequency, cooldown, config):
+def test_telemetry_autoshutdown(
+    test_dir, wlmutils, monkeypatch, frequency, cooldown, config
+):
     """
     Ensure that the telemetry monitor process shuts down after the desired
     cooldown period

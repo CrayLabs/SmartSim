@@ -29,9 +29,9 @@ import typing as t
 from dataclasses import dataclass, field
 
 from ...database import Orchestrator
-from ..config import CONFIG
 from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import SmartSimError
+from ..config import CONFIG
 from ..utils import helpers as _helpers
 from ..utils import serialize as _serialize
 

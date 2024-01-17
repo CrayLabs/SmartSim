@@ -48,6 +48,7 @@ def _exp_path_map(exp: "Experiment") -> str:
     the currently-executing experiment into context for log enrichment"""
     return exp.exp_path
 
+
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 

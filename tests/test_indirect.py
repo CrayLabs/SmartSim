@@ -175,7 +175,8 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
-        _ = main("  \n  \t   ", "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
+        status_dir = exp_dir / CONFIG.telemetry_subdir
+        _ = main("  \n  \t   ", "application", exp_dir, status_dir)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]

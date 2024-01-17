@@ -27,12 +27,12 @@
 import io
 import logging
 import pathlib
+
 import pytest
+
 import smartsim
 import smartsim.log
-
 from smartsim import Experiment
-        
 
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 
@@ -51,13 +51,13 @@ def turn_on_tm(monkeypatch):
 
 
 @pytest.mark.parametrize(
-        "level,expect_d,expect_i,expect_w,expect_e",
-        [
-            pytest.param("DEBUG", True, False, False, False, id="debug-level"),
-            pytest.param("INFO", True, True, False, False, id="info-level"),
-            pytest.param("WARNING", True, True, True, False, id="warn-level"),
-            pytest.param("ERROR", True, True, True, True, id="err-level"),
-        ]
+    "level,expect_d,expect_i,expect_w,expect_e",
+    [
+        pytest.param("DEBUG", True, False, False, False, id="debug-level"),
+        pytest.param("INFO", True, True, False, False, id="info-level"),
+        pytest.param("WARNING", True, True, True, False, id="warn-level"),
+        pytest.param("ERROR", True, True, True, True, id="err-level"),
+    ],
 )
 def test_lowpass_filter(level, expect_d, expect_i, expect_w, expect_e):
     """Ensure that messages above maximum are not logged"""
@@ -68,7 +68,6 @@ def test_lowpass_filter(level, expect_d, expect_i, expect_w, expect_e):
     handler.setFormatter(logging.Formatter("%(message)s"))
 
     logger = logging.getLogger(f"test_level_filter_{level}")
-    
     logger.addHandler(handler)
     logger.addFilter(log_filter)
 
@@ -76,8 +75,6 @@ def test_lowpass_filter(level, expect_d, expect_i, expect_w, expect_e):
     logger.info(str(logging.INFO))
     logger.warning(str(logging.WARNING))
     logger.exception(str(logging.ERROR))
-    
-    # faux_out_stream.flush()
 
     logged_messages = faux_out_stream.getvalue().split("\n")
     assert (str(logging.DEBUG) in logged_messages) == expect_d
@@ -138,7 +135,7 @@ def test_exp_logs(test_dir: str, turn_on_tm):
 
         # ensure that the default stream is written to
         logged = faux_out_stream.getvalue()
-    
+
         assert log_msg in logged
         assert err_msg in logged
 
@@ -170,6 +167,7 @@ def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
     token = ctx_var.set(original_ctx_value)
 
     err_msg = "some ex occurred in JobManager"
+
     def thrower(_self):
         raise Exception(err_msg)
 

@@ -32,9 +32,10 @@ import sys
 import threading
 import typing as t
 from contextvars import ContextVar, copy_context
-from smartsim._core.config import CONFIG
 
 import coloredlogs
+
+from smartsim._core.config import CONFIG
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
@@ -73,7 +74,7 @@ def _get_log_level() -> str:
          - developer: Shows everything happening during execution
                       extremely verbose logging.
 
-    :return: Log level for coloredlogs
+    :returns: Log level for coloredlogs
     :rtype: str
     """
     log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info").lower()
@@ -90,8 +91,13 @@ def _get_log_level() -> str:
 
 
 def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.Path]]:
-    """Returns the paths to the output and error file where experiment logs should
-    be written. If no experiment context is identified, returns None for both"""
+    """Returns the output and error file paths to experiment logs.
+    Returns None for both paths if experiment context is unavailable.
+
+    :returns: 2-tuple of paths to experiment logs in form (output_path, error_path)
+    if telemetry is enabled, a 2-tuple of None otherwise
+    :rtype: Tuple[pathlib.Path | None, pathlib.Path | None]
+    """
     default_paths = None, None
 
     if not CONFIG.telemetry_enabled:
@@ -106,14 +112,12 @@ def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.
 
 
 class ContextThread(threading.Thread):
-    """Customized Thread that ensures new threads may change context vars"""
-
-    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-        self.ctx = copy_context()
-        super().__init__(*args, **kwargs)
+    """Thread that ensures the context vars of the caller are available"""
 
     def run(self) -> None:
-        return self.ctx.run(super().run)
+        """Execute a thread on a copy of the current thread context"""
+        ctx = copy_context()
+        return ctx.run(super().run)
 
 
 class ContextInjectingLogFilter(logging.Filter):
@@ -121,6 +125,13 @@ class ContextInjectingLogFilter(logging.Filter):
     information about the experiment being executed"""
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Enrich log records with active experiment context
+
+        :param record: the record to evaluate for filtering
+        :type record: logging.LogRecord
+        :returns: always True
+        :rtype: bool
+        """
         record.exp_path = ctx_exp_path.get()
         return True
 
@@ -128,6 +139,7 @@ class ContextInjectingLogFilter(logging.Filter):
 class ContextAwareLogger(logging.Logger):
     """A logger customized to automatically write experiment logs to a
     dynamic target directory by inspecting the value of a context var"""
+
     def __init__(self, name: str, level: t.Union[int, str] = 0) -> None:
         super().__init__(name, level)
         self.addFilter(ContextInjectingLogFilter(name="exp-ctx-log-filter"))
@@ -146,9 +158,7 @@ class ContextAwareLogger(logging.Logger):
         file_out, file_err = get_exp_log_paths()
 
         if not all([file_out, file_err]):
-            super()._log(
-                level, msg, args, exc_info, extra, stack_info, stacklevel
-            )
+            super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
             return
 
         _lvl = logging.getLevelName(self.level)
@@ -222,6 +232,13 @@ class LowPassFilter(logging.Filter):
         self.max = maximum_level
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Filter log records; pass those less than or equal to the maximum level
+
+        :param record: the record to evaluate for filtering
+        :type record: logging.LogRecord
+        :returns: True if record level passes filter, False otherwise
+        :rtype: bool
+        """
         # If a string representation of the level is passed in,
         # the corresponding numeric value is returned.
         level_no: int = logging.getLevelName(self.max)

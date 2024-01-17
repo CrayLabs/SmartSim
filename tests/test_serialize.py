@@ -37,7 +37,6 @@ from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.utils import serialize
 from smartsim.database.orchestrator import Orchestrator
 
-
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 
 # The tests in this file belong to the group_b group
@@ -62,7 +61,6 @@ def manifest_json(test_dir, config) -> str:
 def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
-    
 
     assert manifest_json.is_file()
     with open(manifest_json, "r") as f:
