@@ -389,13 +389,13 @@ class RedisAIBuilder(Builder):
         #       of this class can configure exactly _what_ they are building.
         self._os = OperatingSystem.from_str(platform.system())
         self._architecture = Architecture.from_str(platform.machine())
-        if self._architecture == Architecture.ARM64 and any(
+        if self._architecture != Architecture.X64 and any(
             (self.fetch_tf, self.fetch_torch, self.fetch_onnx)
         ):
             raise BuildError(
                 "SmartSim currently only supports fetching ML backends for "
                 "the 'x64' architecture; found unrecognized or unsupported "
-                f"architecture '{platform.system()}'"
+                f"architecture '{platform.machine()}'"
             )
 
     @property
