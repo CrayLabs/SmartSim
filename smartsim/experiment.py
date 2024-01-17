@@ -41,6 +41,8 @@ from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
+_OutputFormatString = t.Optional[t.Literal["html"]]
+_VerbosityLevelString = t.Literal["info", "debug", "developer"] 
 
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
@@ -798,9 +800,9 @@ class Experiment:
 
     def preview(
         self,
-        output_format: t.Optional[t.Literal["html"]] = None,
+        output_format: _OutputFormatString = None,
+        verbosity_level: _VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
-        verbosity_level: t.Literal["info", "debug", "developer"] = "info",
     ) -> None:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight

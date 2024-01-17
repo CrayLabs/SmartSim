@@ -135,13 +135,13 @@ def log_to_file_preview(
     filename: str,
     logger: logging.Logger,
 ) -> logging.Handler:
-    """Installs a filestream handler to the root logger,
-    allowing logging calls to be sent to filename for preview.
+    """Use filestream handler allowing logging calls 
+    to be sent to filename for preview.
     :param filename: the name of the desired preview file.
     :type filename: str
     """
     logger.propagate = False
-    fmt = None
+    fmt =  "%(message)s"
     formatter = logging.Formatter(fmt)
     file_handler = logging.FileHandler(filename, mode="w")
     file_handler.setLevel(logging.INFO)

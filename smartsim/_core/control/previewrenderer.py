@@ -29,10 +29,13 @@ import logging
 from ...log import log_to_file_preview
 
 
+_OutputFormatString = t.Optional[t.Literal["html"]]
+_VerbosityLevelString = t.Literal["info", "debug", "developer"] 
+
 def render(
     entity: t.Any,
-    verbosity_level: t.Literal["info", "debug", "developer"] = "info",
-    output_format: t.Optional[t.Literal["html"]] = None,
+    verbosity_level: _VerbosityLevelString = "info",
+    output_format: _OutputFormatString = None,
     output_filename: t.Optional[str] = None,
 ) -> str:
     """
@@ -83,9 +86,8 @@ def _check_output_filename(output_filename: t.Optional[str]) -> str:
 
     return output_filename
 
-
 def _check_verbosity_level(
-    verbosity_level: t.Literal["info", "debug", "developer"]
+    verbosity_level: _VerbosityLevelString
 ) -> None:
     """
     Check verbosity_level
@@ -94,7 +96,7 @@ def _check_verbosity_level(
         raise NotImplementedError
     if verbosity_level == "developer":
         raise NotImplementedError
-    verbosity_level = t.cast(t.Literal["info", "debug", "developer"], verbosity_level)
+    verbosity_level = t.cast(_VerbosityLevelString, verbosity_level)
     if (
         not verbosity_level.startswith("info")
         and not verbosity_level.startswith("debug")
