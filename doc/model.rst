@@ -1141,7 +1141,7 @@ Navigate through the data structure tabs below to learn how to interact for each
 
     .. group-tab:: Agg List
 
-        **Access Datasets from the script they were loaded in**
+        **Access Lists from the script they were loaded in**
 
         When utilizing a ``Client`` method to interact with a prefixed list loaded into
         the orchestrator within the same script, it is required to specify the complete prefixed
@@ -1171,7 +1171,7 @@ Navigate through the data structure tabs below to learn how to interact for each
 
             Default@16-05-25:The list length is 1
 
-        **Access dataset from outside the script they were loaded in**
+        **Access Lists from outside the script they were loaded in**
 
         When utilizing a ``Client`` method to interact with a prefixed list loaded into
         the orchestrator within a different script, it is required to use the ``Client.set_data_source()``
