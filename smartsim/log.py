@@ -201,13 +201,11 @@ def get_logger(
 
     logging.setLoggerClass(ContextAwareLogger)
     logger = logging.getLogger(name)
-
     if log_level:
         logger.setLevel(log_level)
     else:
         log_level = user_log_level
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
-
     return logger
 
 
