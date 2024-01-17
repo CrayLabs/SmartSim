@@ -30,7 +30,7 @@ from ...log import log_to_file_preview
 
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"] 
+_VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 def render(
     entity: t.Any,

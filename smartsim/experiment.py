@@ -42,7 +42,7 @@ from .wlm import detect_launcher
 logger = get_logger(__name__)
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"] 
+_VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
