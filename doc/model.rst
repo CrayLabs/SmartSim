@@ -8,10 +8,10 @@ SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. ``Models`` can be launched with
 other SmartSim entities and Orchestrators to build AI-enabled workflows.
-``Model`` objects can leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
-to transfer data to a standard ``Orchestrator`` to enable other running ``Models`` to access the data.
-Additionally, clients can execute ML models (TF, TF-lite, PyTorch, or ONNX) and TorchScripts stored in the
-``Orchestrator``. SmartRedis is available in Python, C, C++, or Fortran.
+With the SmartSim client (:ref:`SmartRedis<dead_link>`), data can be transferred out of the ``Model``
+into the standalone ``Orchestrator`` for use in an ML model (TF, TF-lite, PyTorch, or ONNX), online
+training process, or additional ``Model`` applications. SmartRedis is available in
+Python, C, C++, or Fortran.
 
 To initialize a SmartSim ``Model``, use the ``Experiment.create_model()`` API function.
 When creating a ``Model``, a :ref:`RunSettings<dead_link>` object must be provided. A ``RunSettings``
@@ -47,9 +47,9 @@ SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment
 launch, monitor, and stop applications. Additionally, ``Models`` can be launched individually
 or as a group via an ``Ensemble``.
 
-====================
-Model Initialization
-====================
+==============
+Initialization
+==============
 Overview
 ========
 The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow entities.
@@ -62,7 +62,7 @@ The key initializer arguments are:
 -  `run_settings` (base.RunSettings): Describe execution settings for a Model.
 -  `params` (t.Optional[t.Dict[str, t.Any]] = None): Provides a dictionary of parameters for Models.
 -  `path` (t.Optional[str] = None): Path to where the model should be executed at runtime.
--  `enable_key_prefixing` (bool = False): Prefix the model name to data sent to the database to prevent key collisions. Default is `True`.
+-  `enable_key_prefixing` (bool = False): Prefix the model name to data sent to the database to prevent key collisions. Default is `False`.
 -  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
 A `name` and :ref:`RunSettings<dead_link>` reference are required to initialize a ``Model``.
@@ -84,8 +84,8 @@ is automatically created to store input and output files from the model.
     is supplied.
 
 .. _std_model_doc:
-Standard Model
-==============
+Instructions
+============
 By default, a ``Model`` does not share compute resources with other ``Model`` entities or ``Orchestrator`` instances.
 A ``Model`` connects to an ``Orchestrator`` via the SmartSim client (:ref:`SmartRedis<dead_link>`).
 For the client connection to be successful, the SmartSim standalone ``Orchestrator`` must be launched
@@ -96,13 +96,7 @@ prior to the start of the ``Model``. To create a standard ``Model``, users initi
     A ``Model`` can be launched without an ``Orchestrator`` if data transfer and ML capabilities are not
     required.
 
-In the proceeding :ref:`Instructions<std_model_init_instruct>` subsection, we provide an example illustrating the deployment of a standard model.
-
-.. _std_model_init_instruct:
-------------
-Instructions
-------------
-This example provides a demonstration of how to initialize and launch a ``Model``
+We provide a demonstration of how to initialize and launch a ``Model``
 within an ``Experiment`` workflow. All workflow entities are initialized through the
 :ref:`Experiment API<experiment_api>`. Consequently, initializing
 a SmartSim ``Experiment`` is a prerequisite for ``Model`` initialization.
@@ -155,15 +149,15 @@ in the Experiment working directory:
 2. `example-model.err` : will hold any errors that occurred during Model execution
 
 .. _colo_model_doc:
-A Colocated Model
-=================
-A colocated ``Model`` runs on the same compute node(s) as a SmartSim ``Orchestrator``.
-With a colocated model, the Model and the Orchestrator share compute resources.
-To create a colocated model,
-users first initialize a ``Model`` instance with the ``Experiment.create_model()`` function.
-A user must then colocate the ``Orchestrator`` and ``Model`` using the function ``Model.colocate_db()``.
-This instructs SmartSim to launch an ``Orchestrator`` on the application compute
-node(s) prior to the ``Models`` execution.
+======================
+Colocated Orchestrator
+======================
+A SmartSim ``Model`` has the capability to share compute node(s) with a SmartSim ``Orchestrator`` in
+a deployment known as a colocated ``Orchestrator``. In this scenario, the ``Orchestrator`` and ``Model`` share
+compute resources. To achieve this, users need to initialize a ``Model`` instance using the
+``Experiment.create_model()`` function, and then use one of the three functions listed below to
+colocate an ``Orchestrator`` with the ``Model``. This ensures that SmartSim launches an ``Orchestrator``
+on the application compute node(s) before the ``Models`` execution.
 
 There are **three** different Model API functions to colocate a ``Model``:
 
@@ -238,9 +232,10 @@ that is required by the application at runtime:
 
 In order to have the tagged parameter `;THERMO;` replaced with a usable value at runtime, two steps are required:
 
-1. The `THERMO` variable must be included in ``Experiment.create_model()`` factory method as part of the `params` parameter.
+1. The `THERMO` variable must be included in ``Experiment.create_model()`` factory method as
+   part of the `params` parameter.
 2. The file containing the tagged parameter `;THERMO;`, `params_inputs.txt`, must be attached to the ``Model``
-via the ``Model.attach_generator_files()`` method as part of the `to_configure` parameter.
+   via the ``Model.attach_generator_files()`` method as part of the `to_configure` parameter.
 
 To encapsulate our application within a ``Model``, we must create an ``Experiment`` instance
 to gain access to the ``Experiment`` factory method that creates the ``Model``.
@@ -321,14 +316,14 @@ ML Models and Scripts
 Overview
 ========
 SmartSim users have the capability to utilize ML runtimes within a ``Model``.
-Functions accessible through a ``Model`` object support the integration of ML
-frameworks such as TensorFlow, TensorFlow-lite, PyTorch, and ONNX. Users can
-load two types of data sources to ``Orchestrator``: ML models and TorchScripts.
+Functions accessible through a ``Model`` object support loading ML models (TensorFlow, TensorFlow-lite,
+PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` at
+application runtime.
 
 Users can follow **two** processes to load a ML model to the ``Orchestrator``:
 
-- :ref:`from memory<ai_model_doc>`
-- :ref:`from file<ai_model_doc>`
+- :ref:`from memory<in_mem_ML_model_ex>`
+- :ref:`from file<from_file_ML_model_ex>`
 
 Users can follow **three** processes to load a TorchScript to the ``Orchestrator``:
 
@@ -366,9 +361,6 @@ following arguments are offered to customize the storage and execution of the ML
 - `tag` (str = ""): additional tag for model information, defaults to “”.
 - `inputs` (t.Optional[t.List[str]] = None): model inputs (TF only), defaults to None.
 - `outputs` (t.Optional[t.List[str]] = None): model outputs (TF only), defaults to None.
-
-Continue for demonstrations on how to :ref:`load an in-memory ML model<in_mem_ML_model_ex>` and
-:ref:`load an ML model from file<from_file_ML_model_ex>`.
 
 .. _in_mem_ML_model_ex:
 -------------------------------------
@@ -725,31 +717,26 @@ orchestrator that is launched prior to the start of the model.
 =========================
 Data Collision Prevention
 =========================
-
---------
-Interact
---------
 SmartSim's tensor prefixing simplifies data interaction by allowing users to easily manage
 tensors in the same script that placed them and retrieve tensors placed by other scripts in
-the orchestrator. The following subsections will explore these scenarios, providing guidance
-for efficient tensor handling in a SmartSim workflow.
+the orchestrator. The following subsections provide for enabling SmartRedis data structure
+prefixing as well as interacting with the prefixed data.
 
-DataStructures
-==============
-------
-Enable
-------
+Enable and Disable
+==================
+Data structure prefixing in SmartSim provides an organized way to prevent naming conflicts and differentiate
+data structures produced by models or ensembles within a SmartSim simulation. It involves prepending the
+Model `name` to the data structure `name` when sending data to the orchestrator. The activation can
+be configured in two ways:
+
+- Activate tensor, dataset and aggregation list prefixing in the **driver script**
+- Activate tensor, dataset, aggregation list, ml model and script prefixing in the **application script**
+
+Navigate through the data structure tabs below to learn how to activate for each.
+
 .. tabs::
 
     .. group-tab:: Tensor
-        Tensor prefixing in SmartSim provides an organized way to prevent naming conflicts and differentiate
-        tensors produced by models or ensembles within a SmartSim simulation. It involves prepending the
-        Model `name` to the tensor `name` when sending data to the orchestrator. The activation can
-        be configured in two ways:
-
-        - Activate tensor prefixing in the **driver script**
-        - Activate tensor prefixing in the **application script**
-
         **Activate Tensor Prefixing in the Driver Script**
 
         Users can enable tensor prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
@@ -788,13 +775,10 @@ Enable
             SmartSim users do not have access to ``Client.use_tensor_ensemble_prefix()`` unless prefixing is
             enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
 
-        In the following example, we demonstrate creating a ``Client`` instance named `client` and
+        In the following example, we demonstrate a ``Client`` instance named `client`
         toggling tensor prefixing between `True` and `False` using the ``use_tensor_ensemble_prefix()`` method.
 
         .. code-block:: python
-
-            # Initialize a Client
-            client = Client(cluster=False)
 
             # Disable key prefixing
             client.use_tensor_ensemble_prefix(False)
@@ -815,21 +799,13 @@ Enable
             2) model_name.copied_tensor
 
     .. group-tab:: DataSet
-        Tensor prefixing in SmartSim provides an organized way to prevent naming conflicts and differentiate
-        tensors produced by models or ensembles within a SmartSim simulation. It involves prepending the
-        Model `name` to the tensor `name` when sending data to the orchestrator. The activation can
-        be configured in two ways:
+        **Activate Dataset Prefixing in the Driver Script**
 
-        - Activate tensor prefixing in the **driver script**
-        - Activate tensor prefixing in the **application script**
+        Users can enable dataset prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
+        function. This functionality ensures that the ``Model`` `name` is prepended to the dataset `name` when sending
+        the dataset to the orchestrator.
 
-        **Activate Tensor Prefixing in the Driver Script**
-
-        Users can enable tensor prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
-        function. This functionality ensures that the ``Model`` `name` is prepended to the tensor `name` when
-        sending data to the orchestrator.
-
-        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate tensor
+        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate dataset
         prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
 
         .. code-block:: python
@@ -842,70 +818,515 @@ Enable
             # Enable tensor prefixing
             model.enable_key_prefixing()
 
-        In application script of `model`, two tensors named `tensor_1` and `tensor_2` are sent to the orchestrator.
-        The contents of the orchestrator are as follows:
+        In application script of `model`, two datasets with data named `dataset_1` and `dataset_2` are sent to the orchestrator.
+        Each contain a unique tensor. The contents of the orchestrator are as follows:
 
         .. code-block:: bash
 
-            1) model_name.tensor_1
-            2) model_name.tensor_2
+            1) "model_name.{dataset_1}.dataset_tensor_1"
+            2) "model_name.{dataset_1}.meta"
+            3) "model_name.{dataset_2}.dataset_tensor_2"
+            4) "model_name.{dataset_2}.meta"
 
-        **Activate Tensor Prefixing in the Application Script**
+        .. note::
+            Notice that the dataset tensors are also prefixed, this is because ``Model.enable_key_prefixing()``
+            enables prefixing for tensors, datasets and lists.
 
-        Users can enable tensor prefixing on a SmartRedis Client by utilizing the ``Client.use_tensor_ensemble_prefix()``
-        function within the application script. This functionality ensures that the ``Model`` `name`
-        is prepended to the tensor `name` when sending data to the orchestrator using
-        ``Client.put_tensor()``, ``Client.rename_tensor()`` or ``Client.copy_tensor()``.
+        **Activate Dataset Prefixing in the Application Script**
+
+        Users can activate dataset prefixing on a SmartRedis ``Client`` by employing the
+        ``Client.use_dataset_ensemble_prefix()`` function in the application script. This feature
+        guarantees that the ``Models`` `name` is added as a prefix to the dataset `name` when transmitting datasets
+        to the orchestrator through functions like ``Client.put_dataset()``, ``Client.rename_dataset()``,
+        or ``Client.copy_dataset()``.
 
         .. warning::
-            SmartSim users do not have access to ``Client.use_tensor_ensemble_prefix()`` unless prefixing is
+            SmartSim users do not have access to ``Client.use_dataset_ensemble_prefix()`` unless prefixing is
             enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
 
-        In the following example, we demonstrate creating a ``Client`` instance named `client` and
-        toggling tensor prefixing between `True` and `False` using the ``use_tensor_ensemble_prefix()`` method.
+        In the following example, we demonstrate using a ``Client`` instance named `client` to
+        toggle dataset prefixing between `True` and `False` using the ``use_dataset_ensemble_prefix()`` method.
 
         .. code-block:: python
 
-            # Initialize a Client
-            client = Client(cluster=False)
-
             # Disable key prefixing
-            client.use_tensor_ensemble_prefix(False)
-            # Place a tensor in the orchestrator
-            client.put_tensor("tensor_1", np.array([5, 6, 7, 8]))
+            client.use_dataset_ensemble_prefix(False)
+            # Build the dataset
+            d = Dataset("dataset_1")
+            d.add_tensor("dataset_tensor_1", np.array([5, 6, 7, 8]))
+            # Place dataset in orchestrator
+            client.put_dataset(d)
             # Enable key prefixing
-            client.use_tensor_ensemble_prefix(True)
-            # Copy the tensor to a different tensor
-            client.copy_tensor("tensor_1", "copied_tensor")
+            client.use_dataset_ensemble_prefix(True)
+            # Copy the dataset to a different location with prefixing enabled
+            client.copy_dataset("test_dataset", "copied_dataset")
 
-        In the above application script, the `client` transmits a tensor named `tensor_1`
-        to the orchestrator. Prefixing is deactivated when sending `tensor_1` and reactivated when copying
-        `tensor_1` to the new data source named `copied_tensor`. The orchestrator's contents are as follows:
+        In the above application script, the `client` transmits a dataset named `dataset_1`
+        to the orchestrator. Prefixing is deactivated when sending `dataset_1` and reactivated when copying
+        `dataset_1` to the new data source named `copied_dataset`. The orchestrator's contents are as follows:
 
         .. code-block:: bash
 
-            1) tensor_1
-            2) model_name.copied_tensor
+            1) "{dataset_1}.dataset_tensor_1"
+            2) "{dataset_1}.meta"
+            3) "model_name.{copied_dataset}.dataset_tensor_1"
+            4) "model_name.{copied_dataset}.meta"
 
     .. group-tab:: Agg List
+        **Activate List Prefixing in the Driver Script**
+
+        Users can enable list prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
+        function. This functionality ensures that the ``Model`` `name` is prepended to the list `name` when
+        creating a list to send to the orchestrator.
+
+        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate list
+        prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
+
+        .. code-block:: python
+
+            # Create the run settings for the model
+            model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application_script.py")
+
+            # Create a Model instance named 'model'
+            model = exp.create_model("model_name", model_settings)
+            # Enable tensor prefixing
+            model.enable_key_prefixing()
+
+        In application script of `model`, a list with an attached dataset is sent to the orchestrator. The dataset
+        is stored in the orchestrator as well. The contents of the orchestrator are as follows:
+
+        .. code-block:: bash
+
+            1) "model_name.dataset_list"
+            2) "model_name.{copied_dataset}.dataset_tensor_1"
+            3) "model_name.{copied_dataset}.meta"
+
+        .. note::
+            The lists contents are also prefixed when sent to the orchestrator since ``Model.enable_key_prefixing()``
+            activates prefixing for tensors, datasets and lists.
+
+        **Activate List Prefixing in the Application Script**
+
+        Users can enable list prefixing on a SmartRedis Client through the ``Client.use_list_ensemble_prefix()``
+        function within the application script. This functionality ensures that the ``Model`` `name`
+        is prepended to the list `name` when using Client methods:
+        ``Client.append_to_list()``, ``Client.rename_list()`` or ``Client.copy_list()``.
+
+        .. warning::
+            SmartSim users do not have access to ``Client.use_list_ensemble_prefix()`` unless prefixing is
+            enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
+
+        In the following example, we demonstrate using a ``Client`` instance named `client` to
+        toggle list prefixing between `True` and `False` using the ``use_list_ensemble_prefix()`` method.
+        To begin, we disable list prefixing and send an aggregation list to the orchestrator:
+
+        .. code-block:: python
+
+            # Disable list prefixing
+            client.use_list_ensemble_prefix(False)
+            # Build the dataset
+            d = Dataset("dataset")
+            d.add_tensor("dataset_tensor", np.array([1, 2, 3, 4]))
+            # Place dataset in orchestrator
+            client.put_dataset(d)
+            # Create list, append dataset and store in orchestrator
+            client.append_to_list("dataset_list", d)
+
+        We retrieve the datasets in the list by specifying the list name `"dataset_list_copied"`
+        to ``Client.get_datasets_from_list()``. We then log the dataset `name` and tensor `name`:
+
+        .. code-block:: python
+
+            dataset_list = client.get_datasets_from_list("dataset_list")
+            client.log_data(LLInfo, f"The dataset name is: {dataset_list[0].get_name()}")
+            client.log_data(LLInfo, f"The dataset tensor name is: {dataset_list[0].get_tensor_names()[0]}")
+
+        The following messages are logged:
+
+        .. code-block:: bash
+
+            Default@16-05-25:The dataset name is: dataset
+            Default@16-05-25:The dataset tensor name is: dataset_tensor
+
+        In the example, we enable list prefixing and use the ``Client.copy_list()`` method to create
+        a prefixed list instance in the orchestrator:
+
+        .. code-block:: python
+
+            client.use_list_ensemble_prefix(True)
+            client.copy_list("dataset_list", "dataset_list_copied")
+
+        We retrieve the datasets in the list by specifying the list name `"model_name.dataset_list_copied"`
+        to ``Client.get_datasets_from_list()``. We then log the dataset name and tensor name:
+
+        .. code-block:: python
+
+            dataset_list_copy = client.get_datasets_from_list("model_name.dataset_list_copied")
+            client.log_data(LLInfo, f"The copied dataset name is: {dataset_list_copy[0].get_name()}")
+            client.log_data(LLInfo, f"The copied dataset tensor name is: {dataset_list_copy[0].get_tensor_names()[0]}")
+
+        The following messages are logged:
+
+        .. code-block:: bash
+
+            Default@16-05-25:The copied dataset name is: dataset
+            Default@16-05-25:The copied dataset tensor name is: dataset_tensor
+
+        From the matching log messages, we can validate that the list was copied to a prefixed list.
+        For further support, the contents of the orchestrator after application execution is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.dataset_list_copied"
+            2) "model_name.{dataset}.meta"
+            3) "dataset_list"
+            4) "model_name.{dataset}.dataset_tensor"
 
     .. group-tab:: ML Model
+        **Activate ML Model Prefixing in the Application Script**
+
+        Users can enable ML Model prefixing on a SmartRedis Client through the ``Client.use_model_ensemble_prefix()``
+        function within the application script. This feature ensures that the ``Models`` name is
+        added as a prefix to the ML Model's name when using the ``Client.set_model()`` method.
+
+        .. note::
+            To use ``Client.use_model_ensemble_prefix()``, prefixing must be enabled on the Model
+            in the driver script via ``Model.enable_key_prefixing()``.
+
+        Here's a small example demonstrating how to enable ML Model prefixing in the SmartRedis
+        client and then send an ML Model to the orchestrator:
+
+        .. code-block:: python
+
+            # Enable ml model prefixing
+            client.use_model_ensemble_prefix(True)
+            # Send ML model to the orchestrator
+            client.set_model(
+                "mnist_cnn", serialized_model, "TF", device="CPU", inputs=inputs, outputs=outputs
+            )
+
+        The contents of the orchestrator after SmartSim Model completion are as follows:
+
+        .. code-block:: bash
+
+            1) "model_name.mnist_cnn"
 
     .. group-tab:: Script
+        **Activate Script Prefixing in the Application Script**
 
---------
+        Users can enable script prefixing on a SmartRedis Client through the ``Client.use_model_ensemble_prefix()``
+        function within the application script. This feature ensures that the ``Models`` name is
+        added as a prefix to the Script's name when using the ``Client.set_function()`` method.
+
+        .. note::
+            To use ``Client.use_model_ensemble_prefix()``, prefixing must be enabled on the Model
+            in the driver script via ``Model.enable_key_prefixing()``.
+
+        Here's a small example demonstrating how to enable script prefixing in the SmartRedis
+        client and then send an script to the orchestrator:
+
+        .. code-block:: python
+
+            # Enable script prefixing
+            client.use_model_ensemble_prefix(True)
+            # Store prefixed script in the orchestrator
+            client.set_function("normalizer", normalize)
+
+        The contents of the orchestrator after SmartSim Model completion are as follows:
+
+        .. code-block:: bash
+
+            1) "model_name.normalizer"
+
 Interact
---------
+========
+In this section we discuss interacting with prefixed SmartRedis data structures to examine
+two separate approaches based on whether the data structure was loaded to the orchestrator
+in the same script or a different script from the SmartRedis client.
+
+Navigate through the data structure tabs below to learn how to interact for each.
+
 .. tabs::
 
     .. group-tab:: Tensor
 
-        **driver script**
-        **app script**
+        **Access tensors from the script they were loaded in**
+
+        When utilizing a ``Client`` method to interact with a prefixed tensor loaded into
+        the orchestrator within the same script, it is required to specify the complete prefixed
+        tensor `name`.
+
+        We provide a demonstration of polling a prefixed tensor loaded into
+        the orchestrator within the same script. To begin, the orchestrators contents after loading
+        the prefixed tensor is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.tensor"
+
+        To poll the tensor, the prefixed tensor name `"model_name.tensor"` must be provided:
+
+        .. code-block:: python
+
+            assert client.tensor_exists("model_name.tensor")
+
+        **Access tensor from outside the script they were loaded in**
+
+        When utilizing a ``Client`` method to interact with a prefixed tensor loaded into
+        the orchestrator within a different script, it is required to use the ``Client.set_data_source()``
+        method. This method instructs SmartRedis to prepend the prefix specified when searching
+        for names in the orchestrator.
+
+        We provide a demonstration of polling a prefixed tensor loaded into
+        the orchestrator within a different script. To begin, the orchestrators contents after loading
+        the prefixed tensor is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.tensor"
+
+        To poll the tensor, first set the key prefix for future operations by specifying `"model_name"`
+        to ``Client.set_data_source()``. Next, the tensor name `"tensor"` must be provided:
+
+        .. code-block:: python
+
+            assert client.tensor_exists("tensor")
+
     .. group-tab:: DataSet
+
+        **Access Datasets from the script they were loaded in**
+
+        When utilizing a ``Client`` method to interact with a prefixed dataset loaded into
+        the orchestrator within the same script, it is required to specify the complete prefixed
+        dataset `name`.
+
+        We provide a demonstration of polling a prefixed dataset loaded into
+        the orchestrator within the same script. To begin, the orchestrators contents after loading
+        the prefixed dataset is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.{dataset_name}.dataset_tensor"
+            2) "model_name.{dataset_name}.meta"
+
+        To poll the dataset, the prefixed dataset name `"model_name.dataset_name"`
+        must be provided, as demonstrated below:
+
+        .. code-block:: python
+
+            assert client.tensor_exists("model_name.dataset_name")
+
+        **Access dataset from outside the script they were loaded in**
+
+        When utilizing a ``Client`` method to interact with a prefixed dataset loaded into
+        the orchestrator within a different script, it is required to use the ``Client.set_data_source()``
+        method. This method instructs SmartRedis to prepend the prefix specified when searching
+        for names in the orchestrator.
+
+        We provide a demonstration of polling a prefixed dataset loaded into
+        the orchestrator within a different script. To begin, the orchestrators contents after loading
+        the prefixed dataset is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.{dataset_name}.dataset_tensor"
+            2) "model_name.{dataset_name}.meta"
+
+        To poll the dataset, first set the key prefix for future operations by specifying `"model_name"`
+        to ``Client.set_data_source()``. Next, the dataset name `"dataset_name"` must be provided:
+
+        .. code-block:: python
+
+            assert client.dataset_exists("dataset_name")
 
     .. group-tab:: Agg List
 
+        **Access Datasets from the script they were loaded in**
+
+        When utilizing a ``Client`` method to interact with a prefixed list loaded into
+        the orchestrator within the same script, it is required to specify the complete prefixed
+        list `name`.
+
+        We provide a demonstration of requesting the length of a prefixed list loaded into
+        the orchestrator within the same script. To begin, the orchestrators contents after loading
+        the prefixed list is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.dataset_list"
+            2) "model_name.{copied_dataset}.dataset_tensor_1"
+            3) "model_name.{copied_dataset}.meta"
+
+        To check the length of the list, the prefixed list name `"model_name.dataset_list"`
+        must be provided:
+
+        .. code-block:: python
+
+            list_length = client.get_list_length("model_name.dataset_list")
+            client.log_data(LLInfo, f"The list length is {list_length}.")
+
+        When the application script is executed, the following log message will appear:
+
+        .. code-block:: bash
+
+            Default@16-05-25:The list length is 1
+
+        **Access dataset from outside the script they were loaded in**
+
+        When utilizing a ``Client`` method to interact with a prefixed list loaded into
+        the orchestrator within a different script, it is required to use the ``Client.set_data_source()``
+        method. This method instructs SmartRedis to prepend the prefix specified when searching
+        for names in the orchestrator.
+
+        We provide a demonstration of requesting the length of a prefixed list loaded into
+        the orchestrator within a different script. To begin, the orchestrators contents after loading
+        the prefixed list is shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.dataset_list"
+            2) "model_name.{copied_dataset}.dataset_tensor_1"
+            3) "model_name.{copied_dataset}.meta"
+
+        To check the list length, first set the key prefix for future operations by specifying `"model_name"`
+        to ``Client.set_data_source()``. Next, the list name `"dataset_list"` must be provided:
+
+        .. code-block:: python
+
+            list_length = client.get_list_length("dataset_list")
+            client.log_data(LLInfo, f"The list length is {list_length}.")
+
+        When the application script is executed, the following log message will appear:
+
+        .. code-block:: bash
+
+            Default@16-05-25:The list length is 1
+
     .. group-tab:: ML Model
 
+        **Access ML Models from the script they were loaded in**
+
+        When utilizing a ``Client`` function to interact with a prefixed ML Model loaded into
+        the orchestrator within the same script, it is required to specify the complete prefixed
+        ML model `name`.
+
+        We provide a demonstration of executing a prefixed ML Model loaded into
+        the orchestrator within the same script. To begin, the orchestrators contents after loading
+        the prefixed ML model, along with input keys, are shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.mnist_cnn"
+            2) "model_name.mnist_images"
+
+        To run the ML Model, the prefixed ML Model name `"model_name.mnist_cnn"` and prefixed
+        input tensors `"model_name.mnist_images"` must be provided, as demonstrated below:
+
+        .. code-block:: python
+            client.run_model(name="model_name.mnist_cnn", inputs=["model_name.mnist_images"], outputs=["Identity"])
+
+        The orchestrator now contains prefixed output tensors:
+
+        .. code-block:: bash
+
+            1) "model_name.Identity"
+            2) "model_name.mnist_cnn"
+            3) "model_name.mnist_images"
+
+        **Access ML Models from outside the script they were loaded in**
+
+        When utilizing a ``Client`` function to interact with a prefixed ML Model loaded into
+        the orchestrator within a different script, it is required to use the ``Client.set_data_source()``
+        function. This function instructs SmartRedis to prepend the prefix specified when searching
+        for names in the orchestrator.
+
+        We provide a demonstration of executing a prefixed ML Model loaded into
+        the orchestrator within a different script. To begin, the orchestrators contents after loading
+        the prefixed ML model, along with input keys, are shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.mnist_cnn"
+            2) "model_name.mnist_images"
+
+        To run the ML Model, first set the key prefix for future operations by specifying `"model_name"`
+        to ``Client.set_data_source()``. Next, the ML Model name `"mnist_cnn"` and
+        input tensors `"mnist_images"` must be provided, as demonstrated below:
+
+        .. code-block:: python
+
+            client.set_data_source("model_name")
+            client.run_model(name="mnist_cnn", inputs=["mnist_images"], outputs=["Identity"])
+
+        The orchestrator now contains prefixed output tensors:
+
+        .. code-block:: bash
+
+            1) "model_name.Identity"
+            2) "model_name.mnist_cnn"
+            3) "model_name.mnist_images"
+
     .. group-tab:: Script
+
+        **Access TorchScripts from the script they were loaded in**
+
+        When utilizing a ``Client`` function to interact with a prefixed TorchScripts loaded into
+        the orchestrator within the same script, it is required to specify the complete prefixed
+        TorchScript `name`.
+
+        We provide a demonstration of executing a prefixed TorchScript loaded into
+        the orchestrator within the same script. To begin, the orchestrators contents after loading
+        the prefixed TorchScript, along with input keys, are shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.normalizer"
+            2) "model_name.X_rand"
+
+        To run the TorchScript, the prefixed TorchScript name `"model_name.normalizer"` and prefixed
+        input tensors `"model_name.X_rand"` must be provided, as demonstrated below:
+
+        .. code-block::
+
+            client.run_script("model_name.normalizer", "normalize", inputs=["model_name.X_rand"], outputs=["X_norm"])
+
+        The orchestrator now contains prefixed output tensors:
+
+        .. code-block:: bash
+
+            1) "model_name.normalizer"
+            2) "model_name.X_rand"
+            3) "model_name.X_norm"
+
+        **Access TorchScripts from outside the script they were loaded in**
+
+        When utilizing a ``Client`` function to interact with a prefixed TorchScript loaded into
+        the orchestrator within a different script, it is required to use the ``Client.set_data_source()``
+        function. This function instructs SmartRedis to prepend the prefix specified when searching
+        for names in the orchestrator.
+
+        We provide a demonstration of executing a prefixed TorchScript loaded into
+        the orchestrator within a different script. To begin, the orchestrators contents after loading
+        the prefixed TorchScript, along with input keys, are shown below:
+
+        .. code-block:: bash
+
+            1) "model_name.normalizer"
+            2) "model_name.X_rand"
+
+        To run the TorchScript, first set the key prefix for future operations by specifying `"model_name"`
+        to ``Client.set_data_source()``. Next, the TorchScript name `"normalizer"` and
+        input tensors `"X_rand"` must be provided, as demonstrated below:
+
+        .. code-block:: python
+
+            client.set_data_source("model_name")
+            client.run_script("normalizer", "normalize", inputs=["X_rand"], outputs=["X_norm"])
+
+        The orchestrator now contains prefixed output tensors:
+
+        .. code-block:: bash
+
+            1) "model_name.normalizer"
+            2) "model_name.X_rand"
+            3) "model_name.X_norm"
