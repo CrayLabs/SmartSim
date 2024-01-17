@@ -7,12 +7,12 @@ Overview
 ========
 An ``Ensemble`` is a SmartSim object comprised of multiple
 :ref:`Model<model_api>` objects, each representing an individual
-simulation. An Ensemble can be be reference as a single instance and
-enables users to launch a group of simulations
+simulation. An Ensemble can be be referenced as a single instance and
+enables users to launch a group of simulations simultaneously
 at runtime. Ensembles can be launched with other SmartSim
 entities and ML infrastructure to build AI-enabled workflows.
 The :ref:`Ensemble API<ensemble_api>` offers key Ensemble features,
-including helper functions to:
+including class methods to:
 
 - :ref:`Ensemble.add_ml_model()<load_ml_model>`: load a TF, TF-lite, PT, or ONNX model into the database at runtime.
 - :ref:`Ensemble.add_function()<load_tf_function>`: load TorchScript functions to launch with each entity belonging to the ensemble.
@@ -21,14 +21,12 @@ including helper functions to:
 - :ref:`Ensemble.attach_generator_files()<attach_file>`: attach configuration files to assign ensemble member parameters or load parameters to file.
 
 An Ensemble is created through the ``Experiment.create_ensemble()`` function.
-There are **three** Ensemble configuration that users can adjust to customize
-Ensemble behavior:
+Ensembles can be customized to exhibit **three** high-level behaviors:
 
-1. :ref:`Manually<append_init>`: Create each Model individually and subsequently append the simulation to the ensemble.
+1. :ref:`Parameter expansion<param_expansion_init>`: Generate a variable-sized set of unique simulation instances
+   configured with user-defined input parameters.
 2. :ref:`Replica creation<replicas_init>`: Generate a specified number of copies or instances of a simulation.
-3. :ref:`Parameter expansion<param_expansion_init>`: Explore a range of simulation variable assignments by
-   specifying values of input parameters and selecting an expansion strategy to rearrange
-   across multiple Models within the ensemble.
+3. :ref:`Manually<append_init>`: Attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
 
 ==============
 Initialization
@@ -36,20 +34,18 @@ Initialization
 --------
 Overview
 --------
-The creation of an Ensemble involves the use of various initializer arguments,
-each serving a specific role in defining the characteristics and behavior of the
-ensemble. These arguments facilitate three distinct methods of ensemble
+These ``Experiment.create_ensemble()`` factory method arguments facilitate three distinct methods of ensemble
 creation: **manual model appending**, **parameter expansion**, and the utilization of **replicas**.
 
 The key initializer arguments are:
 
--  `name` (Type: str): Specify the name of the ensemble, aiding in its unique identification.
--  `params` (Type: dict[str, Any]): Provides a dictionary of parameters:values for expanding into the ``Model`` members within the ensemble. Enables parameter expansion for diverse scenario exploration.
--  `params_as_args` (Type: list[str]): Specify which parameters from the `params` dictionary should be treated as command line arguments when executing the Models.
--  `batch_settings` (Type: BatchSettings, optional): Describes settings for batch workload treatment.
--  `run_settings` (Type: RunSettings, optional): Describes execution settings for individual Model members.
--  `replicas` (Type: int, optional): Declare the number of ``Model`` clones within the ensemble, crucial for the creation of simulation replicas.
--  `perm_strategy` (Type: str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ensemble creation and number of ensemble members.
+-  `name` (str): Specify the name of the ensemble, aiding in its unique identification.
+-  `params` (dict[str, Any]): Provides a dictionary of parameters:values for expanding into the ``Model`` members within the ensemble. Enables parameter expansion for diverse scenario exploration.
+-  `params_as_args` (list[str]): Specify which parameters from the `params` dictionary should be treated as command line arguments when executing the Models.
+-  `batch_settings` (BatchSettings, optional): Describes settings for batch workload treatment.
+-  `run_settings` (RunSettings, optional): Describes execution settings for individual Model members.
+-  `replicas` (int, optional): Declare the number of ``Model`` clones within the ensemble, crucial for the creation of simulation replicas.
+-  `perm_strategy` (str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ensemble creation and number of ensemble members.
     The options are `"all_perm"`, `"step"`, and `"random"`.
 
 -------------------
@@ -262,9 +258,9 @@ SmartSim enables users to attach files to Ensembles for use within the workflow
 through the ``Ensemble.attach_generator_file()`` function. The function
 accepts three input arguments:
 
-1. `to_copy` (list, optional): files to copy, defaults to [].
-2. `to_symlink` (list, optional): files to symlink, defaults to [].
-3. `to_configure` (list, optional): input files with tagged parameters, defaults to [].
+1. `to_copy` (list[str]): files to copy, defaults to `None`.
+2. `to_symlink` (list[str]): files to symlink, defaults to `None`.
+3. `to_configure` (list[str]): input files with tagged parameters, defaults to `None`.
 
 The `to_configure` argument accepts a list of files containing parameters and values
 to use within each member of the Ensemble simulation. The distribution of the parameters
@@ -342,65 +338,77 @@ different Models within the Ensemble.
 =====================
 ML Models and Scripts
 =====================
---------
 Overview
---------
-SmartSim supports sending TorchScript functions, scripts, and
-TF, TF-lite, PT, or ONNX models to the database at runtime
-prior to the execution of ensemble members for use within the workload.
-The ``Ensemble API`` provides a subset of helper functions that support
-these capabilities:
+========
+SmartSim users have the capability to utilize ML runtimes within a ``Ensemble``.
+Functions accessible through a ``Ensemble`` object support loading ML models (TensorFlow, TensorFlow-lite,
+PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` at
+application runtime.
 
-* ``Ensemble.add_ml_model()`` : Load a TF, TF-lite, PT, or ONNX model into the DB at runtime.
-* ``Ensemble.add_function()`` : Launch a TorchScript function with each ensemble member.
-* ``Ensemble.add_script()`` : Launch a TorchScript with each ensemble member.
+Users can follow **two** processes to load a ML model to the ``Orchestrator``:
 
----------
+- :ref:`from memory<in_mem_ML_model_ex_ensemble>`
+- :ref:`from file<from_file_ML_model_ex_ensemble>`
+
+Users can follow **three** processes to load a TorchScript to the ``Orchestrator``:
+
+- :ref:`from memory<in_mem_TF_doc_ensemble>`
+- :ref:`from file<TS_from_file_ensemble>`
+- :ref:`from string<TS_raw_string_ensemble>`
+
+Once a ML model or TorchScript is loaded to the ``Orchestrator``, ``Ensemble`` Model objects can
+leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
+to execute the stored ML models or TorchScripts.
+
+.. _ai_model_doc:
 AI Models
----------
-.. _load_ml_model:
-When configuring an ensemble, users can instruct SmartSim to load
-TensorFlow (TF), TensorFlow Lite (TF-lite), PyTorch (PT), or ONNX
-models dynamically to the database (colocated or standard). Machine Learning (ML) models added
-are loaded prior to the execution of ensemble members and therefore
-ready for use when a ensemble member is invoked. SmartSim users may
-providing the model in memory or specifying its file path via the
-``Ensemble.add_ml_model()`` Ensemble API helper function.
+=========
+When configuring a ``Ensemble``, users can instruct SmartSim to load
+Machine Learning (ML) models dynamically to the ``Orchestrator`` (colocated or standard). ML models added
+are loaded into the ``Orchestrator`` prior to the execution of every ``Ensemble`` member. To load an ML model
+to the orchestrator, SmartSim users can provide the ML model **in-memory** or specify the **file path**
+when using the ``Ensemble.add_ml_model()`` function. The supported ML frameworks are TensorFlow,
+TensorFlow-lite, PyTorch, and ONNX.
 
-When specifying an ML model using ``Ensemble.add_ml_model()``, the
-following arguments are offered:
+When attaching an ML model using ``Ensemble.add_ml_model()``, the
+following arguments are offered to customize the storage and execution of the ML model:
 
--  `name` (str): Key used to store the model within the ensemble.
--  `model` (str | bytes | None): Model name in memory.
--  `model_path` (str): File path to the serialized model.
--  `backend` (str): Name of the model backend (TORCH, TF, TF-LITE, ONNX).
--  `device` (str, optional): Name of the device for execution (defaults to "CPU").
--  `batch_size` (int, optional): Batch size for execution (defaults to 0).
--  `min_batch_size` (int, optional): Minimum batch size for model execution (defaults to 0).
--  `tag` (str, optional): Additional tag for model information (defaults to an empty string).
--  `inputs` (list[str], optional): Names of model inputs (TF only, defaults to None).
--  `outputs` (list[str], optional): Names of model outputs (TF only, defaults to None).
+- `name` (str): name to reference the model in the Orchestrator.
+- `model` (t.Optional[str] = None): A model in memory (only supported for non-colocated orchestrators).
+- `model_path` (t.Optional[str] = None): serialized model.
+- `backend` (str): name of the backend (TORCH, TF, TFLITE, ONNX).
+- `device` (t.Literal["CPU", "GPU"] = "CPU"): name of device for execution, defaults to “CPU”.
+- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- `batch_size` (int = 0): batch size for execution, defaults to 0.
+- `min_batch_size` (int = 0): minimum batch size for model execution, defaults to 0.
+- `min_batch_timeout` (int = 0): time to wait for minimum batch size, defaults to 0.
+- `tag` (str = ""): additional tag for model information, defaults to “”.
+- `inputs` (t.Optional[t.List[str]] = None): model inputs (TF only), defaults to None.
+- `outputs` (t.Optional[t.List[str]] = None): model outputs (TF only), defaults to None.
 
-These arguments provide details to add and configure
-ML models within the ensemble simulation.
+.. _in_mem_ML_ensemble_ex:
+-------------------------------------
+Example: Attach an in-memory ML Model
+-------------------------------------
+This example demonstrates how to attach an in-memory ML model to a SmartSim ``Ensemble``
+to load into an ``Orchestrator`` at ``Ensemble`` runtime.
 
-Example: Loading an In-Memory ML Model to the Ensemble
-------------------------------------------------------
-In this example, we demonstrate how to instruct SmartSim to load
-an in-memory ML model into the database at ensemble runtime. It's
-important to note that in-memory ML models are supported for
-non-colocated deployments, making this example suitable for
-standard orchestrators.
+.. note::
+    This example assumes:
 
-**Python Script: Creating a Keras CNN for Ensemble Purposes**
+    - an ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
 
-To create an in-memory ML model, define the Model within the Python driver script.
-For the purpose of the example, we define a Keras CNN within the experiment.
+**Define an in-memory Keras CNN**
+
+The ML model must be defined using one of the supported ML frameworks. For the purpose of the example,
+we define a Keras CNN in the same script as the SmartSim ``Experiment``:
 
 .. code-block:: python
 
     def create_tf_cnn():
-        """Create a Keras CNN for ensemble purposes
+        """Create an in-memory Keras CNN for example purposes
 
         """
         from smartsim.ml.tf import serialize_model
@@ -415,135 +423,321 @@ For the purpose of the example, we define a Keras CNN within the experiment.
     # Get and save TF model
     model, inputs, outputs = create_tf_cnn()
 
-**SmartSim Ensemble Integration:**
+**Attach the ML model to a SmartSim Ensemble**
 
-Assuming an initialized ``Ensemble`` named `smartsim_ensemble`, we specify the
-following parameters to the ``Ensemble.add_ml_model()`` function:
+Assuming an initialized ``Ensemble`` named `smartsim_ensemble` exists, we add the in-memory TensorFlow model using
+the ``Ensemble.add_ml_model()`` function and specify the in-memory model to the parameter `model`:
 
 .. code-block:: python
 
-    smartsim_ensemble.add_ml_model(name="cnn", backend="TF", model=model, device="CPU", inputs=inputs, outputs=outputs)
+    smartsim_ensemble.add_ml_model(name="cnn", backend="TF", model=model, device="GPU", devices_per_node=2, first_device=0, inputs=inputs, outputs=outputs)
 
-In this integration, we provide the following details:
+In the above ``smartsim_ensemble.add_ml_model()`` code snippet, we offer the following arguments:
 
--  `name`: "cnn" - A key to uniquely identify the model within the database.
--  `backend`: "TF" - Indicating that the model is a TensorFlow model.
--  `model`: model - The in-memory representation of the TensorFlow model.
--  `device`: "CPU" - Specifying the device for ML model execution.
--  `inputs`: inputs - The names of the model inputs.
--  `outputs`: outputs - The names of the model outputs.
+-  `name` ("cnn"): A name to reference the model in the Orchestrator.
+-  `backend` ("TF): Indicating that the model is a TensorFlow model.
+-  `model` (model): The in-memory representation of the TensorFlow model.
+-  `device` ("GPU"): Specifying the device for ML model execution.
+-  `devices_per_node` (2): Use two GPUs per node.
+-  `first_device` (0): Start with 0 index GPU.
+-  `inputs` (inputs): The name of the ML model input nodes (TensorFlow only).
+-  `outputs` (outputs): The name of the ML model output nodes (TensorFlow only).
 
-When the ensemble is started via ``Experiment.start()``, the ML model will be loaded to the
-standard orchestrator that is launched prior to the start of the ensemble.
+.. warning::
+    Calling `exp.start(smartsim_ensemble)` prior to instantiation of an orchestrator will result in
+    a failed attempt to load the ML model to a non-existent database.
 
----------------------
-TorchScript functions
----------------------
-.. _load_tf_function:
-Users can instruct SmartSim to upload TorchScript functions to the database
-at runtime. Script functions are loaded into
-standard orchestrators prior to the execution of ensemble entities. If using a
-colocated orchestrator, use the ``Ensemble.add_script()`` function.
-Users have the flexibility to choose
-between `"GPU"` or `"CPU"` for device selection, and in environments with multiple
-devices, specific device numbers can be specified via `devices_per_node`.
+When the ``Ensemble`` is started via ``Experiment.start()``, the ML model will be loaded to the
+launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
+client (:ref:`SmartRedis<dead_link>`).
 
-When specifying a TF function using ``Ensemble.add_function()``, the
+.. _from_file_ML_ensemble_ex:
+----------------------------------------
+Example: Attaching an ML Model from file
+----------------------------------------
+This example demonstrates how to attach a ML model from file to a SmartSim ``Ensemble``
+to load into an ``Orchestrator`` at ``Ensemble`` runtime.
+
+.. note::
+    This example assumes:
+
+    - a standard ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
+
+**Define a Keras CNN script**
+
+The ML model must be defined using one of the supported ML frameworks. For the purpose of the example,
+we define the function `save_tf_cnn()` that saves a Keras CNN to a file named `model.pb` located in our
+Experiment path:
+
+.. code-block:: python
+
+    def save_tf_cnn(path, file_name):
+        """Create a Keras CNN and save to file for example purposes"""
+        from smartsim.ml.tf import freeze_model
+
+        n = Net()
+        input_shape = (3, 3, 1)
+        n.build(input_shape=(None, *input_shape))
+        inputs = Input(input_shape)
+        outputs = n(inputs)
+        model = keras.Model(inputs=inputs, outputs=outputs, name=n.name)
+
+        return freeze_model(model, path, file_name)
+
+    # Get and save TF model
+    model_file, inputs, outputs = save_tf_cnn(model_dir, "model.pb")
+
+**Attach the ML model to a SmartSim Model**
+
+Assuming an initialized ``Ensemble`` named `smartsim_ensemble` exists, we add a TensorFlow model using
+the ``Ensemble.add_ml_model()`` function and specify the model path to the parameter `model_path`:
+
+.. code-block:: python
+
+    smartsim_ensemble.add_ml_model(name="cnn", backend="TF", model_path=model_file, device="GPU", devices_per_node=2, first_device=0, inputs=inputs, outputs=outputs)
+
+In the above ``smartsim_ensemble.add_ml_model()`` code snippet, we offer the following arguments:
+
+-  `name` ("cnn"): A name to reference the model in the Orchestrator.
+-  `backend` ("TF): Indicating that the model is a TensorFlow model.
+-  `model_path` (model_file): The path to the ML model script.
+-  `device` ("GPU"): Specifying the device for ML model execution.
+-  `devices_per_node` (2): Use two GPUs per node.
+-  `first_device` (0): Start with 0 index GPU.
+-  `inputs` (inputs): The name of the ML model input nodes (TensorFlow only).
+-  `outputs` (outputs): The name of the ML model output nodes (TensorFlow only).
+
+.. warning::
+    Calling `exp.start(smartsim_ensemble)` prior to instantiation of an orchestrator will result in
+    a failed attempt to load the ML model to a non-existent database.
+
+When the ``Ensemble`` is started via ``Experiment.start()``, the ML model will be loaded to the
+launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
+client (:ref:`SmartRedis<dead_link>`) within the application code.
+
+.. _TS_doc:
+TorchScripts
+============
+When configuring a ``Ensemble``, users can instruct SmartSim to load TorchScripts dynamically
+to the ``Orchestrator``. TorchScripts added are loaded into the ``Orchestrator`` prior to
+the execution of the ``Ensemble``. To load a TorchScript to the database, SmartSim users
+can follow one of the processes:
+
+- :ref:`Define a TorchScript function in-memory<in_mem_TF_doc>`
+   Use the ``Ensemble.add_function()`` to instruct SmartSim to load an in-memory TorchScript to the ``Orchestrator``.
+- :ref:`Define a TorchScript function from file<TS_from_file>`
+   Provide file path to ``Ensemble.add_script()`` to instruct SmartSim to load the TorchScript from file to the ``Orchestrator``.
+- :ref:`Define a TorchScript function as string<TS_raw_string>`
+   Provide function string to ``Ensemble.add_script()`` to instruct SmartSim to load a raw string as a TorchScript function to the ``Orchestrator``.
+
+Continue or select the respective process link to learn more on how each function (``Ensemble.add_script()`` and ``Ensemble.add_function()``)
+dynamically loads TorchScripts to the ``Orchestrator``.
+
+.. _in_mem_TF_doc:
+-------------------------------
+Attach an in-memory TorchScript
+-------------------------------
+Users can define TorchScript functions within the Python driver script
+to attach to a ``Ensemble``. This feature is supported by ``Ensemble.add_function()`` which provides flexible
+device selection, allowing users to choose between which device the the TorchScript is executed on, `"GPU"` or `"CPU"`.
+In environments with multiple devices, specific device numbers can be specified using the
+`devices_per_node` parameter.
+
+.. warning::
+    ``Ensemble.add_function()`` does **not** support loading in-memory TorchScript functions to a colocated ``Orchestrator``.
+    If you would like to load a TorchScript function to a colocated ``Orchestrator``, define the function
+    as a :ref:`raw string<TS_raw_string>` or :ref:`load from file<TS_from_file>`.
+
+When specifying an in-memory TF function using ``Ensemble.add_function()``, the
 following arguments are offered:
 
--  `name`  (str) : key to store function under
--  `function` (str, optional) : Name of the TorchScript function
--  `device`  (str, optional) : device for script execution, defaults to “CPU”
--  `devices_per_node` (int) : assign the number of CPU's or GPU's to use on the node
+- `name` (str): reference name for the script inside of the ``Orchestrator``.
+- `function` (t.Optional[str] = None): TorchScript function code.
+- `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
+- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
-Example: Loading an TensorFlow Function to the Ensemble
--------------------------------------------------------
-In this example, we demonstrate how to instruct SmartSim to load
-an TensorFlow function into the database at ensemble runtime. It's
-important to note the function, ``Ensemble.add_function()`` is supported
-for non-colocated deployments and during a colocated deployment, ``Ensemble.add_script()``
-should be used.
+.. _in_mem_TF_ex:
+Example: Loading a in-memory TorchScript function
+-------------------------------------------------
+This example walks through the steps of instructing SmartSim to load an in-memory TorchScript function
+to a standard ``Orchestrator``.
 
-**Python Script: Define a TF Function for Ensemble Purposes**
-To load a TF function, define the function within the Python driver script.
+.. note::
+    The example assumes:
+
+    - a standard ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
+
+**Define an in-memory TF function**
+
+To begin, define an in-memory TorchScript function within the Python driver script.
+For the purpose of the example, we add a simple TorchScript function, `timestwo`:
 
 .. code-block:: python
 
     def timestwo(x):
         return 2*x
 
-**SmartSim Ensemble Integration:**
+**Attach the in-memory TorchScript function to a SmartSim Ensemble**
 
-Assuming an initialized ``Ensemble`` named `smartsim_ensemble`, we specify the
-following parameters to the ``Ensemble.add_function()`` function:
+We use the ``Ensemble.add_function()`` function to instruct SmartSim to load the TorchScript function `timestwo`
+onto the launched standard ``Orchestrator``. Specify the function `timestwo` to the `function`
+parameter:
 
 .. code-block:: python
 
-    smartsim_ensemble.add_function(name="example_func", function=timestwo, device="CPU")
+    smartsim_ensemble.add_function(name="example_func", function=timestwo, device="GPU", devices_per_node=2, first_device=0)
 
-In this integration, we provide the following details:
+In the above ``smartsim_ensemble.add_function()`` code snippet, we offer the following arguments:
 
--  `name`: "example_func" - A key to uniquely identify the model within the database.
--  `function`: timestwo - Name of the TorchScript function defined in the Python driver script.
--  `device`: "CPU" - Specifying the device for ML model execution.
+-  `name` ("example_func"): A name to uniquely identify the model within the database.
+-  `function` (timestwo): Name of the TorchScript function defined in the Python driver script.
+-  `device` ("CPU"): Specifying the device for ML model execution.
+-  `devices_per_node` (2): Use two GPUs per node.
+-  `first_device` (0): Start with 0 index GPU.
 
-When the ensemble is started via ``Experiment.start()``, the TF function will be loaded to the
-standard orchestrator that is launched prior to the start of the ensemble.
+.. warning::
+    Calling `exp.start(smartsim_ensemble)` prior to instantiation of an orchestrator will result in
+    a failed attempt to load the TorchScript to a non-existent database.
 
--------------------
-TorchScript Scripts
--------------------
-.. _load_script:
-SmartSim supports the execution of TorchScripts
-with each entity belonging to the ensemble. Regardless of whether
-the orchestrator is colocated or not, each script added to the ensemble is
-loaded into the orchestrator prior to the execution of any ensemble member.
-The flexibility of device selection further enhances
-adaptability, offering the choice between "GPU" or "CPU." Users have the flexibility to choose
-between `"GPU"` or `"CPU"` for device selection, and in environments with multiple
-devices, specific device numbers can be specified via `devices_per_node` such as `"GPU:1,"`.
+When the ``Ensemble`` is started via ``Experiment.start()``, the TF function will be loaded to the
+standard ``Orchestrator``. The function can then be executed on the ``Orchestrator`` via a SmartSim
+client (:ref:`SmartRedis<dead_link>`) within the application code.
+
+.. _TS_from_file:
+------------------------------
+Attach a TorchScript from file
+------------------------------
+Users can attach TorchScript functions from a file to a ``Ensemble`` and upload them to a
+colocated or standard ``Orchestrator``. This functionality is supported by the ``Ensemble.add_script()``
+function's `script_path` parameter. The function supports
+flexible device selection, allowing users to choose between `"GPU"` or `"CPU"` via the `device` parameter.
+In environments with multiple devices, specific device numbers can be specified using the
+`devices_per_node` parameter.
 
 When specifying a TorchScript using ``Ensemble.add_script()``, the
 following arguments are offered:
 
--  `name`  (str) : key to store script under
--  `script` (str, optional) : TorchScript code
--  `script_path` (str, optional) : file path to TorchScript code
--  `device`  (str, optional) : device for script execution, defaults to “CPU”
--  `devices_per_node` (int) : assign the number of CPU's or GPU's to use on the node
+- `name` (str): Reference name for the script inside of the ``Orchestrator``.
+- `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated orchestrators).
+- `script_path` (t.Optional[str] = None): path to TorchScript code.
+- `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
+- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
-You might use TorchScript scripts to represent individual models within the ensemble:
+.. _TS_from_file_ex:
+Example: Loading a TorchScript from File
+----------------------------------------
+This example walks through the steps of instructing SmartSim to load a TorchScript from file
+to a ``Orchestrator``.
 
-Example: Loading an TorchScript to the Ensemble
------------------------------------------------
-In this example, we demonstrate how to instruct SmartSim to load
-an TorchScript into the database at ensemble runtime.
+.. note::
+    This example assumes:
 
-**Python Script: Define a TorchScript for Ensemble Purposes**
+    - a ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
 
-Define the TorchScript code to a variable in the Python driver script:
+**Define a TorchScript script**
+
+For the example, we create the Python script `torchscript.py`. The file contains a
+simple torch function shown below:
+
+.. code-block:: python
+
+    def negate(x):
+        return torch.neg(x)
+
+**Attach the TorchScript script to a SmartSim Ensemble**
+
+Assuming an initialized ``Ensemble`` named `smartsim_ensemble` exists, we add a TorchScript script using
+the ``Ensemble.add_script()`` function and specify the script path to the parameter `script_path`:
+
+.. code-block:: python
+
+    smartsim_ensemble.add_script(name="example_script", script_path="path/to/torchscript.py", device="GPU", devices_per_node=2, first_device=0)
+
+In the above ``smartsim_ensemble.add_script()`` code snippet, we offer the following arguments:
+
+-  `name` ("example_script"): Reference name for the script inside of the ``Orchestrator``.
+-  `script_path` ("path/to/torchscript.py"): Path to the script file.
+-  `device` ("CPU"): device for script execution.
+-  `devices_per_node` (2): Use two GPUs per node.
+-  `first_device` (0): Start with 0 index GPU.
+
+.. warning::
+    Calling `exp.start(smartsim_ensemble)` prior to instantiation of an orchestrator will result in
+    a failed attempt to load the ML model to a non-existent database.
+
+When `smartsim_ensemble` is started via ``Experiment.start()``, the TorchScript will be loaded from file to the
+orchestrator that is launched prior to the start of the `smartsim_ensemble`.
+
+.. _TS_raw_string_ensemble:
+---------------------------------
+Define TorchScripts as raw string
+---------------------------------
+Users can upload TorchScript functions from string to send to a colocated or
+standard ``Orchestrator``. This feature is supported by the
+``Ensemble.add_script()`` function's `script` parameter. The function supports
+flexible device selection, allowing users to choose between `"GPU"` or `"CPU"` via the `device` parameter.
+In environments with multiple devices, specific device numbers can be specified using the
+`devices_per_node` parameter.
+
+When specifying a TorchScript using ``Ensemble.add_script()``, the
+following arguments are offered:
+
+- `name` (str): Reference name for the script inside of the ``Orchestrator``.
+- `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated orchestrators).
+- `script_path` (t.Optional[str] = None): path to TorchScript code.
+- `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
+- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+
+.. _TS_from_file_ex:
+Example: Loading a TorchScript from string
+------------------------------------------
+This example walks through the steps of instructing SmartSim to load a TorchScript function
+from string to a ``Orchestrator`` before the execution of the associated ``Ensemble``.
+
+.. note::
+    This example assumes:
+
+    - a ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
+
+**Define a string TorchScript**
+
+Define the TorchScript code as a variable in the Python driver script:
 
 .. code-block:: python
 
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
 
-**SmartSim Ensemble Integration:**
+**Attach the TorchScript function to a SmartSim Ensemble**
 
-Assuming an initialized ``Ensemble`` named `smartsim_ensemble`, we specify the
-following parameters to the ``Ensemble.add_script()`` function:
+Assuming an initialized ``Ensemble`` named `smartsim_ensemble` exists, we add a TensorFlow model using
+the ``Ensemble.add_script()`` function and specify the variable `torch_script_str` to the parameter
+`script`:
 
 .. code-block:: python
 
-    smartsim_ensemble.add_script(name="example_script", script=torch_script_str, device="CPU")
+    smartsim_ensemble.add_script(name="example_script", script=torch_script_str, device="GPU", devices_per_node=2, first_device=0)
 
-In this integration, we provide the following details:
+In the above ``smartsim_ensemble.add_script()`` code snippet, we offer the following arguments:
 
--  `name`: "example_script" - key to store script under
--  `script`: torch_script_str - TorchScript code
--  `device`: "CPU" - device for script execution
+-  `name` ("example_script"): key to store script under.
+-  `script` (torch_script_str): TorchScript code.
+-  `device` ("CPU"): device for script execution.
+-  `devices_per_node` (2): Use two GPUs per node.
+-  `first_device` (0): Start with 0 index GPU.
 
-When the ensemble is started via ``Experiment.start()``, the TorchScript will be loaded to the
-orchestrator that is launched prior to the start of the ensemble.
+.. warning::
+    Calling `exp.start(smartsim_ensemble)` prior to instantiation of an orchestrator will result in
+    a failed attempt to load the TorchScript to a non-existent database.
+
+When the ``Ensemble`` is started via ``Experiment.start()``, the TorchScript will be loaded to the
+orchestrator that is launched prior to the start of the ``Ensemble``.
 
 =========================
 Data Collision Prevention
