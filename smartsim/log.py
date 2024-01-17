@@ -238,7 +238,7 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
     :param log_level: as defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
-    :type log_level: int | str
+    :type log_level: str
     """
     logger = logging.getLogger("SmartSim")
     stream = open(  # pylint: disable=consider-using-with
@@ -270,7 +270,7 @@ def log_to_exp_file(
     :param log_filter: log filter to attach to handler
     :type log_filter: (optional) logging.Filter
     :return: logging.Handler
-    :rtype: loggin.Handler
+    :rtype: logging.Handler
     """
     # ensure logs are written even if specified dir doesn't exist
     log_path = pathlib.Path(filename)
