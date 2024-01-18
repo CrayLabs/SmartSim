@@ -75,7 +75,7 @@ format is specified"
             verbosity_level=verbosity_level,
         )
 
-
+    logging.info(rendered_preview)
     return rendered_preview
 
 

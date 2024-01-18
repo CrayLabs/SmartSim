@@ -4,7 +4,9 @@
 {% include "experiment_html.template" %}
 {%- if manifest %}
 === Entity Preview === 
+{% if manifest.dbs %}
 {% include "orchestrator.template" %}
+{%- endif -%}
 {%- endif -%}
 </body>
 </html>

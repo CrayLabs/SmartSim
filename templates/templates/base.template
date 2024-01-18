@@ -3,5 +3,11 @@
 {%- if manifest %}
 
 === Entity Preview === 
+{%- if manifest.dbs %}
 {% include "orchestrator.template" %}
+{%- endif -%}
+{% if manifest.ensembles %}
+{% include "ensemble.template" %}
+
+{%- endif -%}
 {%- endif -%}

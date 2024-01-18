@@ -1,0 +1,30 @@
+    ==Ensembles== 
+        {% for ensemble in manifest.ensembles -%}
+        = Ensemble name: {{ ensemble.name }}
+            Members: {{ ensemble|length }}
+            Ensemble Parameters:  
+                {%- for key, value in ensemble.params.items() %}
+                {{ key }}: {{ value }}
+                    {%- endfor %}
+
+        {% for model in manifest.models %}
+        --- Model name: {{ model.name }} 
+                Executable: {{ model.run_settings.exe[0] }} 
+                Executable Arguments:  
+                {%- for arg in model.run_settings.exe_args %}
+                    {{ arg }}
+                {%- endfor %}
+                Batch Launch: False 
+                Run Command: srun 
+                Run arguments:  
+                Ntasks: 1  
+                Nodes: 1 
+                export ALL 
+                Environment Variables: 
+                    CC: /path/to/compiler 
+
+        ----
+        
+        {%- endfor %}
+        =
+        {% endfor %}
