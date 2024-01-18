@@ -60,14 +60,6 @@ _TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
 
 def check_py_onnx_version(versions: Versioner) -> None:
     """Check Python environment for ONNX installation"""
-    if not versions.ONNX:
-        py_version = sys.version_info
-        msg = (
-            "An onnx wheel is not available for "
-            f"Python {py_version.major}.{py_version.minor}. "
-            "Instead consider using Python 3.8 or 3.9 for ONNX 1.11 support"
-        )
-        raise SetupError(msg)
     _check_packages_in_python_env(
         {
             "onnx": Version_(versions.ONNX),
@@ -153,7 +145,7 @@ def build_redis_ai(
     backends_table = [
         ["PyTorch", versions.TORCH, color_bool(use_torch)],
         ["TensorFlow", versions.TENSORFLOW, color_bool(use_tf)],
-        ["ONNX", versions.ONNX or "Unavailable", color_bool(use_onnx)],
+        ["ONNX", versions.ONNX, color_bool(use_onnx)],
     ]
     print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
     print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
