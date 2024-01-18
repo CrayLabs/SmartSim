@@ -4,23 +4,23 @@ Orchestrator
 ========
 Overview
 ========
-The Orchestrator is an in-memory database with features built for
+The ``Orchestrator`` is an in-memory database with features built for
 AI-enabled workflows including online training, low-latency inference, cross-application data
 exchange, online interactive visualization, online data analysis, computational steering, and more.
 
-An Orchestrator can be thought of as a general feature store
+An ``Orchestrator`` can be thought of as a general feature store
 capable of storing numerical data (Tensors and Datasets), AI Models (TF, TF-lite, PyTorch, or ONNX),
-and scripts (TorchScripts). In addition to storing data, the orchestrator is capable of
+and scripts (TorchScripts). In addition to storing data, the ``Orchestrator`` is capable of
 executing ML Models and TorchScripts on the stored data using CPUs or GPUs.
 
 .. figure:: images/smartsim-arch.png
 
   Sample experiment showing a user application leveraging
   machine learning infrastructure launched by SmartSim and connected
-  to online analysis and visualization via the Orchestrator.
+  to online analysis and visualization via the ``Orchestrator``.
 
 Users can establish a connection to the ``Orchestrator`` from within SmartSim ``Model`` executable code, ``Ensemble``
-model executable code, or driver scripts using the :ref:`SmartRedis<smartredis-api>` client library.
+``Model`` executable code, or driver scripts using the :ref:`SmartRedis<smartredis-api>` client library.
 
 SmartSim offers **two** types of ``Orchestrator`` deployments:
 
@@ -50,59 +50,59 @@ Standalone Deployment
 --------
 Overview
 --------
-During standalone orchestrator deployment, a SmartSim orchestrator (the database) runs on separate
-compute node(s) from the SmartSim model node(s). A standalone orchestrator can be deployed on a single
-node (standalone) or sharded (distributed) over multiple nodes. With a sharded orchestrator, users can
+During standalone ``Orchestrator`` deployment, a SmartSim ``Orchestrator`` (the database) runs on separate
+compute node(s) from the SmartSim ``Model`` node(s). A standalone ``Orchestrator`` can be deployed on a single
+node (standalone) or sharded (distributed) over multiple nodes. With a sharded ``Orchestrator``, users can
 scale the number of database nodes for inference and script evaluation, enabling
 increased in-memory capacity for data storage in large-scale workflows. Standalone
-orchestrators are effective for small-scale workflows and offer lower latency for some API calls because
-single-node orchestrators don't involve communication between nodes.
+``Orchestrators`` are effective for small-scale workflows and offer lower latency for some API calls because
+single-node ``Orchestrators`` don't require communication between ``Orchestrator`` nodes.
 
-When connecting to a standalone orchestrator from within a model application, the user has
+When connecting to a standalone ``Orchestrator`` from within a ``Model`` application, the user has
 several options when using the SmartRedis client:
 
-- In an experiment with a single deployed orchestrator, users can rely on SmartSim
-  to detect the orchestrator address through runtime configuration of the SmartSim model environment.
+- In an experiment with a single deployed ``Orchestrator``, users can rely on SmartSim
+  to detect the ``Orchestrator`` address through runtime configuration of the SmartSim ``Model`` environment.
   A default ``Client`` constructor, with no user-specified parameters, is sufficient to
-  connect to the orchestrator. The only exception is for the Python `client`, which requires
+  connect to the ``Orchestrator``. The only exception is for the Python `client`, which requires
   the `cluster` constructor parameter to differentiate between a multi-node standalone deployment
   and a single-node standalone deployment.
-- In an experiment with multiple orchestrator deployments, users can connect to a specific orchestrator by
+- In an experiment with multiple ``Orchestrator``, users can connect to a specific ``Orchestrator`` by
   first specifying the `db_identifier` in the ``ConfigOptions`` constructor. Subsequently, users should pass the
   ``ConfigOptions`` instance to the ``Client`` constructor.
 - Users can specify or override automatically configured connection options by providing the
-  orchestrator address in the ``ConfigOptions`` object. Subsequently, users should pass the ``ConfigOptions``
+  ``Orchestrator`` address in the ``ConfigOptions`` object. Subsequently, users should pass the ``ConfigOptions``
   instance to the ``Client`` constructor.
 
-If connecting to a standalone orchestrator from a SmartSim driver script, the user must specify
-the address of the orchestrator via the ``Client`` constructor. SmartSim does not automatically
-configure the environment of the driver script to connect to an orchestrator. Users
+If connecting to a standalone ``Orchestrator`` from a SmartSim driver script, the user must specify
+the address of the ``Orchestrator`` via the ``Client`` constructor. SmartSim does not automatically
+configure the environment of the driver script to connect to an ``Orchestrator``. Users
 can access an orchestrators address through ``Orchestrator.get_address()``.
 
 .. note::
-  In SmartSim model applications, it is advisable to **avoid** specifying addresses directly to the ``Client`` constructor.
+  In SmartSim ``Model`` applications, it is advisable to **avoid** specifying addresses directly to the ``Client`` constructor.
   Utilizing the SmartSim environment configuration for SmartRedis client connections
-  allows the SmartSim model application code to remain unchanged even as orchestrator deployment
+  allows the SmartSim ``Model`` application code to remain unchanged even as ``Orchestrator`` deployment
   options vary.
 
 The following image illustrates
-communication between a standalone orchestrator and a
-SmartSim model. In the diagram, the application is running on multiple compute nodes,
-separate from the orchestrator compute nodes. Communication is established between the
-SmartSim model application and the sharded orchestrator using the :ref:`SmartRedis client<dead_link>`.
+communication between a standalone ``Orchestrator`` and a
+SmartSim ``Model``. In the diagram, the application is running on multiple compute nodes,
+separate from the ``Orchestrator`` compute nodes. Communication is established between the
+SmartSim ``Model`` application and the sharded ``Orchestrator`` using the :ref:`SmartRedis client<dead_link>`.
 
 .. figure::  images/clustered_orchestrator-1.png
 
-  Sample Standalone orchestrator Deployment
+  Sample Standalone ``Orchestrator`` Deployment
 
 .. note::
   Users do not need to know how the data is stored in a standalone configuration and
   can address the cluster with the SmartRedis clients like a single block of memory
   using simple put/get semantics in SmartRedis.
 
-In scenarios with high data throughput, such as online analysis, training, and processing, a standalone orchestrator
-is optimal. The data produced by multiple processes in a SmartSim model is stored in the standalone
-orchestrator and is available for consumption by other SmartSim models.
+In scenarios with high data throughput, such as online analysis, training, and processing, a standalone ``Orchestrator``
+is optimal. The data produced by multiple processes in a SmartSim ``Model`` is stored in the standalone
+orchest``Orchestrator``rator and is available for consumption by other SmartSim ``Models``.
 
 If a workflow requires an application to leverage multiple standalone deployments,
 multiple clients can be instantiated within an application,
@@ -112,24 +112,24 @@ with each client connected to a unique deployment. This is accomplished through 
 -------
 Example
 -------
-In the following example, we demonstrate deploying a standalone orchestrator on an HPC System.
-Once the standalone orchestrator is launched from the driver script, we walk through
-connecting a SmartRedis client to the orchestrator from within the SmartSim model
-script to transmit data then poll for the existence of the data.
+In the following example, we demonstrate deploying a standalone ``Orchestrator`` on an HPC System.
+Once the standalone ``Orchestrator`` is launched from the driver script, we walk through
+connecting a SmartRedis client to the ``Orchestrator`` from within the SmartSim ``Model``
+script to transmit and poll for data.
 
 The example is comprised of two script files:
 
 - :ref:`Application Script<standalone_orch_app_script>`
    The application script is a Python file that contains instructions to create a SmartRedis
-   client connection to the standalone orchestrator launched in the driver script.
+   client connection to the standalone ``Orchestrator`` launched in the driver script.
    To demonstrate the ability of workflow components to access data from
    other entities, we then retrieve the tensors set by the driver script using a SmartRedis client in
    the application script. We then instruct the client to send and retrieve data from within the application script.
 - :ref:`Experiment Driver Script<standalone_orch_driver_script>`
    The experiment driver script is responsible for launching and managing SmartSim entities. Within this script,
-   we use the Experiment API to create and launch a standalone orchestrator. To demonstrate the capability of
-   SmartSim model applications to access orchestrator data sent from other sources, we employ the SmartRedis ``Client`` in
-   the driver script to store a tensor in the orchestrator, which is later retrieved by the SmartSim model.
+   we use the Experiment API to create and launch a standalone ``Orchestrator``. To demonstrate the capability of
+   SmartSim ``Model`` applications to access ``Orchestrator`` data sent from other sources, we employ the SmartRedis ``Client`` in
+   the driver script to store a tensor in the ``Orchestrator``, which is later retrieved by the SmartSim ``Model``.
    To employ the application script, we initialize a ``Model`` object with the application script as an executable argument,
    launch the ``Orchestrator``, and then launch the ``Model``.
 
@@ -150,7 +150,7 @@ To begin writing the application script, import the necessary SmartRedis package
 
 Client Initialization
 ---------------------
-To establish a connection with the orchestrator, we need to initialize a new SmartRedis client.
+To establish a connection with the ``Orchestrator``, we need to initialize a new SmartRedis client.
 Since the ``Orchestrator`` we launch in the driver script is sharded, we specify the
 constructor argument `cluster` as `True`.
 
@@ -161,41 +161,41 @@ constructor argument `cluster` as `True`.
 
 .. note::
   Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
-  from the SmartSim model environment and the `cluster` constructor argument does not need to be specified
+  from the SmartSim ``Model`` environment and the `cluster` constructor argument does not need to be specified
   in those client languages.
 
 .. note::
-    Since there is only one orchestrator launched in the experiment
-    (the standalone orchestrator), specifying an orchestrator address
+    Since there is only one ``Orchestrator`` launched in the experiment
+    (the standalone ``Orchestrator``), specifying an ``Orchestrator`` address
     is not required when initializing the SmartRedis client.
     SmartRedis will handle the connection configuration.
 
 .. note::
-   To create a SmartRedis client connection to the standalone orchestrator, the standalone orchestrator must be launched
+   To create a SmartRedis client connection to the standalone ``Orchestrator``, the standalone ``Orchestrator`` must be launched
    from within the driver script. You must execute the Python driver script, otherwise, there will
-   be no orchestrator to connect the client to.
+   be no ``Orchestrator`` to connect the client to.
 
 Data Retrieval
 --------------
-To confirm a successful connection to the orchestrator, we retrieve the tensor we set from the Python driver script.
+To confirm a successful connection to the ``Orchestrator``, we retrieve the tensor we set from the Python driver script.
 Use the ``Client.get_tensor()`` method to retrieve the tensor by specifying the name `tensor_1` we
 used in the driver script as input to ``Client.put_tensor()``:
 
 .. code-block:: python
 
-    # Retrieve tensor from orchestrator
+    # Retrieve tensor from Orchestrator
     driver_script_tensor = application_client.get_tensor("tensor_1")
     # Log tensor
     application_client.log_data(LLInfo, f"The single sharded db tensor is: {driver_script_tensor}")
 
-After the Model is launched by the driver script, the following output will appear in
+After the ``Model`` is launched by the driver script, the following output will appear in
 `getting-started/tutorial_model/model.out`::
 
   Default@17-11-48:The single sharded db tensor is: [1 2 3 4]
 
 Data Storage
 ------------
-Next, create a NumPy tensor to send to the standalone orchestrator using
+Next, create a NumPy tensor to send to the standalone ``Orchestrator`` using
 ``Client.put_tensor(name, data)``:
 
 .. code-block:: python
@@ -239,14 +239,14 @@ We setup the SmartSim `logger` to output information from the ``Experiment`` at 
 Orchestrator Deployment
 -----------------------
 In the context of this experiment, it's essential to create and launch
-the orchestrator as a preliminary step before any other workflow entities. This is because
-in this example the application script requests and sends tensors to and from a launched orchestrator.
+the ``Orchestrator`` as a preliminary step before any other workflow entities. This is because
+in this example the application script requests and sends tensors to and from a launched ``Orchestrator``.
 
-In the next stage of the experiment, we create and launch a standalone orchestrator.
+In the next stage of the experiment, we create and launch a standalone ``Orchestrator``.
 
 Step 1: Initialize
 ''''''''''''''''''
-To create a standalone orchestrator, utilize the ``Experiment.create_database()`` function.
+To create a standalone ``Orchestrator``, utilize the ``Experiment.create_database()`` function.
 
 .. code-block:: python
 
@@ -255,43 +255,43 @@ To create a standalone orchestrator, utilize the ``Experiment.create_database()`
 
 Step 2: Start
 '''''''''''''
-Next, to launch the orchestrator, pass the ``Orchestrator`` instance to ``Experiment.start()``.
+Next, to launch the ``Orchestrator``, pass the ``Orchestrator`` instance to ``Experiment.start()``.
 
 .. code-block:: python
 
   # Launch the multi sharded Orchestrator
   exp.start(standalone_orchestrator)
 
-The ``Experiment.start()`` function launches the orchestrator for use within the workflow.
+The ``Experiment.start()`` function launches the ``Orchestrator`` for use within the workflow.
 In other words, the function deploys the ``Orchestrator`` on the allocated compute resources.
 
 Client Initialization
 ---------------------
 The SmartRedis ``Client`` object contains functions that manipulate, send, and retrieve
-data on the orchestrator. Begin by initializing a SmartRedis ``Client`` object for the standalone orchestrator.
+data on the ``Orchestrator``. Begin by initializing a SmartRedis ``Client`` object for the standalone ``Orchestrator``.
 
 SmartRedis clients in driver scripts do not have the ability to use a `db-identifier` or
-rely on automatic configurations to connect to orchestrators. Therefore, when creating a SmartRedis client
-connection from within a driver script, specify the address of the orchestrator you would like to connect to.
-You can easily retrieve the orchestrator address using the ``Orchestrator.get_address()`` function:
+rely on automatic configurations to connect to ``Orchestrators``. Therefore, when creating a SmartRedis client
+connection from within a driver script, specify the address of the ``Orchestrator`` you would like to connect to.
+You can easily retrieve the ``Orchestrator`` address using the ``Orchestrator.get_address()`` function:
 
 .. code-block:: python
 
-  # Initialize a SmartRedis client for multi sharded orchestrator
+  # Initialize a SmartRedis client for multi sharded Orchestrator
   driver_client = Client(cluster=True, address=standalone_orchestrator.get_address()[0])
 
 Data Storage
 ------------
 In the application script, we retrieved a NumPy tensor stored from within the driver script.
 To support the application functionality, we create a
-NumPy array in the experiment driver script to send to the orchestrator. To
-send a tensor to the orchestrator, use the function ``Client.put_tensor(name, data)``:
+NumPy array in the experiment driver script to send to the ``Orchestrator``. To
+send a tensor to the ``Orchestrator``, use the function ``Client.put_tensor(name, data)``:
 
 .. code-block:: python
 
   # Create NumPy array
   local_array = np.array([1, 2, 3, 4])
-  # Use the SmartRedis client to place tensor in the standalone orchestrator
+  # Use the SmartRedis client to place tensor in the standalone Orchestrator
   driver_client.put_tensor("tensor_1", local_array)
 
 Model Initialization
@@ -301,7 +301,7 @@ a SmartSim ``Model`` and specifying the application script name during ``Model``
 
 Step 1: Configure
 '''''''''''''''''
-In this example experiment, the model application is a Python script as defined in section:
+In this example experiment, the ``Model`` application is a Python script as defined in section:
 :ref:`Application Script<standalone_orch_app_script>`. Before initializing the ``Model`` object, we must use
 ``Experiment.create_run_settings()`` to create a ``RunSettings`` object that defines how to execute
 the ``Model``. To launch the Python script in this example workflow, we specify the path to the application
@@ -315,7 +315,7 @@ will return a ``RunSettings`` object that can then be used to initialize the ``M
 
 Use the ``RunSettings`` helper functions to
 configure the the distribution of computational tasks (``RunSettings.set_nodes()``). In this
-example, we specify to SmartSim that we intend the Model to run on a single compute node.
+example, we specify to SmartSim that we intend the ``Model`` to run on a single compute node.
 
 .. code-block:: python
 
@@ -346,15 +346,15 @@ Next, launch the `model` instance using the ``Experiment.start()`` function:
 .. note::
     We specify `block=True` to ``exp.start()`` because our experiment
     requires that the ``Model`` finish before the experiment continues.
-    This is because we will request tensors from the orchestrator that
+    This is because we will request tensors from the ``Orchestrator`` that
     are inputted by the ``Model`` we launched.
 
 Data Polling
 ------------
-Next, check if the tensor exists in the standalone orchestrator using ``Client.poll_tensor()``.
-This function queries for data in the orchestrator. The function requires the tensor name (`name`),
+Next, check if the tensor exists in the standalone ``Orchestrator`` using ``Client.poll_tensor()``.
+This function queries for data in the ``Orchestrator``. The function requires the tensor name (`name`),
 how many milliseconds to wait in between queries (`poll_frequency_ms`),
-and the total number of times to query (`num_tries`). Check if the data exists in the orchestrator by
+and the total number of times to query (`num_tries`). Check if the data exists in the ``Orchestrator`` by
 polling every 100 milliseconds until 10 attempts have completed:
 
 .. code-block:: python
@@ -393,40 +393,40 @@ Colocated Deployment
 --------
 Overview
 --------
-During colocated orchestrator deployment, a SmartSim orchestrator (the database) runs on
-the models compute node(s). Colocated orchestrators can only be deployed as isolated instances
-on each compute node and cannot be clustered over multiple nodes. The orchestrator on each application node is
-utilized by SmartRedis clients on the same node. With a colocated orchestrator, latency is reduced
-in ML inference and TorchScript evaluation by eliminating off-node communication. A colocated orchestrator
+During colocated ``Orchestrator`` deployment, a SmartSim ``Orchestrator`` (the database) runs on
+the ``Models`` compute node(s). Colocated ``Orchestrators`` can only be deployed as isolated instances
+on each compute node and cannot be clustered over multiple nodes. The ``Orchestrator`` on each application node is
+utilized by SmartRedis clients on the same node. With a colocated ``Orchestrator``, latency is reduced
+in ML inference and TorchScript evaluation by eliminating off-node communication. A colocated ``Orchestrator``
 is ideal when the data and hardware accelerator are located on the same compute node.
 
-Communication between a colocated orchestrator and SmartSim model
-is initiated in the application through a SmartRedis client. Since a colocated orchestrator is launched when the SmartSim model
-is started by the experiment, connecting a SmartRedis client to a colocated orchestrator is only possible from within
-the associated SmartSim model application.
+Communication between a colocated ``Orchestrator`` and SmartSim ``Model``
+is initiated in the application through a SmartRedis client. Since a colocated ``Orchestrator`` is launched when the SmartSim ``Model``
+is started by the experiment, connecting a SmartRedis client to a colocated ``Orchestrator`` is only possible from within
+the associated SmartSim ``Model`` application.
 
-There are **three** methods for connecting the SmartRedis client to the colocated orchestrator:
+There are **three** methods for connecting the SmartRedis client to the colocated ``Orchestrator``:
 
 
-- In an experiment with a single deployed orchestrator, users can rely on SmartSim
-  to detect the orchestrator address through runtime configuration of the SmartSim model environment.
+- In an experiment with a single deployed ``Orchestrator``, users can rely on SmartSim
+  to detect the ``Orchestrator`` address through runtime configuration of the SmartSim ``Model`` environment.
   A default ``Client`` constructor, with no user-specified parameters, is sufficient to
-  connect to the orchestrator. The only exception is for the Python `client`, which requires
-  the `cluster=False` constructor parameter for the colocated orchestrator.
-- In an experiment with multiple orchestrator deployments, users can connect to a specific orchestrator by
+  connect to the ``Orchestrator``. The only exception is for the Python `client`, which requires
+  the `cluster=False` constructor parameter for the colocated ``Orchestrator``.
+- In an experiment with multiple ``Orchestrator`` deployments, users can connect to a specific ``Orchestrator`` by
   first specifying the `db_identifier` in the ``ConfigOptions`` constructor. Subsequently, users should pass the
   ``ConfigOptions`` instance to the ``Client`` constructor.
 - Users can specify or override automatically configured connection options by providing the
-  orchestrator address in the ``ConfigOptions`` object. Subsequently, users should pass the ``ConfigOptions``
+  ``Orchestrator`` address in the ``ConfigOptions`` object. Subsequently, users should pass the ``ConfigOptions``
   instance to the ``Client`` constructor.
 
-Below is an image illustrating communication within a colocated SmartSim model spanning multiple compute nodes.
+Below is an image illustrating communication within a colocated SmartSim ``Model`` spanning multiple compute nodes.
 As demonstrated in the diagram, each process of the application creates its own SmartRedis client
-connection to the orchestrator running on the same host.
+connection to the ``Orchestrator`` running on the same host.
 
 .. figure:: images/colocated_orchestrator-1.png
 
-  Sample Colocated Orchestrator Deployment
+  Sample Colocated ``Orchestrator`` Deployment
 
 Colocated deployment is ideal for highly performant online inference scenarios where
 a distributed application (likely an MPI application) is performing inference with
@@ -442,22 +442,22 @@ with each client connected to a unique deployment. This is accomplished through 
 -------
 Example
 -------
-In the following example, we demonstrate deploying a colocated orchestrator on an HPC System.
-Once the orchestrator is launched, we walk through connecting a SmartRedis client
+In the following example, we demonstrate deploying a colocated ``Orchestrator`` on an HPC System.
+Once the ``Orchestrator`` is launched, we walk through connecting a SmartRedis client
 from within the application script to transmit data then poll for the existence of the data
-on the orchestrator.
+on the ``Orchestrator``.
 
 The example is comprised of two script files:
 
 - :ref:`Application Script<colocated_orch_app_script>`
    The application script is a Python script that connects a SmartRedis
-   client to the colocated orchestrator. From within the application script,
+   client to the colocated ``Orchestrator``. From within the application script,
    the client is utilized to both send and retrieve data.
 - :ref:`Experiment Driver Script<colocated_orch_driver_script>`
    The experiment driver script launches and manages
    the example entities with the Experiment API.
    In the driver script, we use the Experiment API
-   to create and launch a colocated model.
+   to create and launch a colocated ``Model``.
 
 .. _colocated_orch_app_script:
 Application Script
@@ -472,7 +472,7 @@ To begin writing the application script, import the necessary SmartRedis package
 
 Client Initialization
 ---------------------
-To establish a connection with the colocated orchestrator, we need to initialize a
+To establish a connection with the colocated ``Orchestrator``, we need to initialize a
 new SmartRedis `client` and specify `cluster=False` since colocated deployments are never
 clustered but single-sharded.
 
@@ -483,19 +483,19 @@ clustered but single-sharded.
 
 .. note::
   Note that the C/C++/Fortran SmartRedis clients are capable of reading cluster configurations
-  from the model environment and the `cluster` constructor argument does not need to be specified
+  from the ``Model`` environment and the `cluster` constructor argument does not need to be specified
   in those client languages.
 
 .. note::
-    Since there is only one orchestrator launched in the Experiment
-    (the colocated orchestrator), specifying a orchestrator address
+    Since there is only one ``Orchestrator`` launched in the Experiment
+    (the colocated ``Orchestrator``), specifying a ``Orchestrator`` address
     is not required when initializing the client.
     SmartRedis will handle the connection configuration.
 
 .. note::
-   To create a client connection to the colocated orchestrator, the colocated model must be launched
+   To create a client connection to the colocated ``Orchestrator``, the colocated ``Model`` must be launched
    from within the driver script. You must execute the Python driver script, otherwise, there will
-   be no orchestrator to connect the client to.
+   be no ``Orchestrator`` to connect the client to.
 
 Data Storage
 ------------
@@ -513,7 +513,7 @@ We will retrieve `“tensor_1”` in the following section.
 
 Data Retrieval
 --------------
-To confirm a successful connection to the orchestrator, we retrieve the tensor we stored.
+To confirm a successful connection to the ``Orchestrator``, we retrieve the tensor we stored.
 Use the ``Client.get_tensor()`` method to retrieve the tensor by specifying the name
 `“tensor_1”`:
 
@@ -560,13 +560,13 @@ to output information from the experiment at runtime:
 Colocated Model Initialization
 ------------------------------
 In the next stage of the experiment, we
-create and launch a colocated model that
-runs the application script with a orchestrator
+create and launch a colocated ``Model`` that
+runs the application script with a ``Orchestrator``
 on the same compute node.
 
 Step 1: Configure
 '''''''''''''''''
-In this example experiment, the model application is a Python script as defined in section:
+In this example experiment, the ``Model`` application is a Python script as defined in section:
 :ref:`Application Script<colocated_orch_app_script>`. Before initializing the ``Model`` object, we must use
 ``Experiment.create_run_settings()`` to create a ``RunSettings`` object that defines how to execute
 the ``Model``. To launch the Python script in this example workflow, we specify the path to the application
@@ -580,7 +580,7 @@ will return a ``RunSettings`` object that can then be used to initialize the ``M
 
 Use the ``RunSettings`` helper functions to
 configure the the distribution of computational tasks (``RunSettings.set_nodes()``). In this
-example, we specify to SmartSim that we intend the Model to run on a single compute node.
+example, we specify to SmartSim that we intend the ``Model`` to run on a single compute node.
 
 .. code-block:: python
 
@@ -602,7 +602,7 @@ assign the returned ``Model`` instance to the variable `model`:
 
 Step 3: Colocate
 ''''''''''''''''
-To colocate the model, use the ``Model.colocate_db_uds()`` function.
+To colocate the `model`, use the ``Model.colocate_db_uds()`` function.
 This function will colocate an ``Orchestrator`` instance with this ``Model`` over
 a Unix domain socket connection.
 
@@ -623,8 +623,8 @@ Next, launch the colocated ``Model`` instance using the ``Experiment.start()`` f
 Cleanup
 -------
 .. note::
-  Since the colocated orchestrator is automatically torn down by SmartSim once the colocated model
-  has finished, we do not need to `stop` the orchestrator.
+  Since the colocated ``Orchestrator`` is automatically torn down by SmartSim once the colocated ``Model``
+  has finished, we do not need to `stop` the ``Orchestrator``.
 
 .. code-block:: python
 
@@ -640,10 +640,10 @@ When you run the experiment, the following output will appear::
 ======================
 Multiple Orchestrators
 ======================
-SmartSim supports automating the deployment of multiple orchestrators
+SmartSim supports automating the deployment of multiple ``Orchestrators``
 from within an Experiment. Communication with the ``Orchestrator`` via a SmartRedis client is possible with the
-`db_identifier` argument that is required when initializing an orchestrator or
-colocated model during a multiple orchestrator experiment. When initializing a SmartRedis
+`db_identifier` argument that is required when initializing an ``Orchestrator`` or
+colocated ``Model`` during a multiple ``Orchestrator`` experiment. When initializing a SmartRedis
 client during the experiment, create a ``ConfigOptions`` object to specify the `db_identifier`
 argument used when creating the ``Orchestrator``. Pass the ``ConfigOptions`` object to
 the ``Client()`` init call.
@@ -654,10 +654,10 @@ Multiple Orchestrator Example
 -----------------------------
 SmartSim offers functionality to automate the deployment of multiple
 databases, supporting workloads that require multiple
-orchestrators for a ``Experiment``. For instance, a workload may consist of a
+``Orchestrators`` for a ``Experiment``. For instance, a workload may consist of a
 simulation with high inference performance demands (necessitating a co-located deployment),
 along with an analysis and visualization workflow connected to the simulation
-(requiring a standalone orchestrator). In the following example, we simulate a
+(requiring a standalone ``Orchestrator``). In the following example, we simulate a
 simple version of this use case.
 
 The example is comprised of two script files:
@@ -671,16 +671,16 @@ contains instructions to complete computational
 tasks. Applications are not limited to Python
 and can also be written in C, C++ and Fortran.
 This script specifies creating a Python SmartRedis client for each
-standalone orchestrator and a colocated orchestrator. We use the
-clients to request data from both standalone orchestrators, then
-transfer the data to the colocated orchestrator. The application
+standalone ``Orchestrator`` and a colocated ``Orchestrator``. We use the
+clients to request data from both standalone ``Orchestrators``, then
+transfer the data to the colocated ``Orchestrator``. The application
 file is launched by the experiment driver script
 through a ``Model`` stage.
 
 **The Application Script Contents:**
 
 1. Connecting SmartRedis clients within the application to retrieve tensors
-   from the standalone orchestrators to store in a colocated orchestrator. Details in section:
+   from the standalone ``Orchestrators`` to store in a colocated ``Orchestrator``. Details in section:
    :ref:`Initialize the Clients<init_model_client>`.
 
 **The Experiment Driver Script Overview:**
@@ -695,11 +695,11 @@ runs the application.
 
 **The Experiment Driver Script Contents:**
 
-1. Launching two standalone orchestrators with unique identifiers. Details in section:
+1. Launching two standalone ``Orchestrators`` with unique identifiers. Details in section:
    :ref:`Launch Multiple Orchestrators<launch_multiple_orch>`.
-2. Launching the application script with a colocated orchestrator. Details in section:
+2. Launching the application script with a colocated ``Orchestrator``. Details in section:
    :ref:`Initialize a Colocated Model<init_colocated_model>`.
-3. Connecting SmartRedis clients within the driver script to send tensors to standalone orchestrators
+3. Connecting SmartRedis clients within the driver script to send tensors to standalone ``Orchestrators``
    for retrieval within the application. Details in section:
    :ref:`Create Client Connections to Orchestrators<client_connect_orch>`.
 
@@ -708,17 +708,17 @@ Setup and run instructions can be found :ref:`here<run_ex_instruct>`
 .. _app_script_multi_db:
 The Application Script
 ======================
-Applications interact with the orchestrators
+Applications interact with the ``Orchestrators``
 through a SmartRedis client.
 In this section, we write an application script
 to demonstrate how to connect SmartRedis
 clients in the context of multiple
-launched orchestrators. Using the clients, we retrieve tensors
-from two orchestrators launched in the driver script, then store
-the tensors in the colocated orchestrators.
+launched ``Orchestrators``. Using the clients, we retrieve tensors
+from two ``Orchestrators`` launched in the driver script, then store
+the tensors in the colocated ``Orchestrators``.
 
 .. note::
-   The Experiment must be started to use the orchestrators within the
+   The Experiment must be started to use the ``Orchestrators`` within the
    application script.  Otherwise, it will fail to connect.
    Find the instructions on how to launch :ref:`here<run_ex_instruct>`
 
@@ -732,36 +732,36 @@ To begin, import the necessary packages:
 .. _init_model_client:
 Initialize the Clients
 ----------------------
-To establish a connection with each orchestrators,
+To establish a connection with each ``Orchestrators``,
 we need to initialize a new SmartRedis client for each.
 
 Step 1: Initialize ConfigOptions
 ''''''''''''''''''''''''''''''''
-Since we are launching multiple orchestrators within the experiment,
+Since we are launching multiple ``Orchestrators`` within the experiment,
 the SmartRedis ``ConfigOptions`` object is required when initializing
 a client in the application.
 We use the ``ConfigOptions.create_from_environment()``
 function to create three instances of ``ConfigOptions``,
-with one instance associated with each launched orchestrator.
-Most importantly, to associate each launched orchestrator to a ``ConfigOptions`` object,
-the ``create_from_environment()`` function requires specifying the unique orchestrator identifier
+with one instance associated with each launched ``Orchestrator``.
+Most importantly, to associate each launched ``Orchestrator`` to a ``ConfigOptions`` object,
+the ``create_from_environment()`` function requires specifying the unique ``Orchestrator`` identifier
 argument named `db_identifier`.
 
-For the single-sharded orchestrator:
+For the single-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
   :language: python
   :linenos:
   :lines: 5-6
 
-For the multi-sharded orchestrator:
+For the multi-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
   :language: python
   :linenos:
   :lines: 10-11
 
-For the colocated orchestrator:
+For the colocated ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/application_script.py
   :language: python
@@ -817,7 +817,7 @@ located in ``getting-started-multidb/tutorial_model/``::
   Model: single shard logger@00-00-00:The single sharded db tensor is: [1 2 3 4]
   Model: multi shard logger@00-00-00:The multi sharded db tensor is: [5 6 7 8]
 
-This output showcases that we have established a connection with multiple Orchestrators.
+This output showcases that we have established a connection with multiple ``Orchestrators``.
 
 Next, take the tensors retrieved from the standalone deployment ``Orchestrators`` and
 store them in the colocated ``Orchestrator`` using  ``Client.put_tensor(name, data)``.
@@ -860,29 +860,29 @@ We setup the SmartSim ``logger`` to output information from the Experiment.
 Launch Multiple Orchestrators
 -----------------------------
 In the context of this ``Experiment``, it's essential to create and launch
-the orchestrators as a preliminary step before any other components since
-the application script requests tensors from the launched orchestrators.
+the ``Orchestrators`` as a preliminary step before any other components since
+the application script requests tensors from the launched ``Orchestrators``.
 
 We aim to showcase the multi-database automation capabilities of SmartSim, so we
-create two orchestrators in the workflow: a single-sharded ``Orchestrator`` and a
+create two ``Orchestrators`` in the workflow: a single-sharded ``Orchestrator`` and a
 multi-sharded ``Orchestrator``.
 
 Step 1: Initialize Orchestrators
 ''''''''''''''''''''''''''''''''
-To create an orchestrator, utilize the ``Experiment.create_database()`` function.
+To create an ``Orchestrator``, utilize the ``Experiment.create_database()`` function.
 The function requires specifying a unique
-database identifier argument named `db_identifier` to launch multiple orchestrators.
+database identifier argument named `db_identifier` to launch multiple ``Orchestrators``.
 This step is necessary to connect to databases outside of the driver script.
 We will use the `db_identifier` names we specified in the application script.
 
-For the single-sharded orchestrator:
+For the single-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
   :linenos:
   :lines: 12-14
 
-For the multi-sharded orchestrator:
+For the multi-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
@@ -891,15 +891,15 @@ For the multi-sharded orchestrator:
 
 .. note::
   Calling ``exp.generate()`` will create two subfolders
-  (one for each orchestrator created in the previous step)
-  whose names are based on the `db_identifier` of that orchestrator.
+  (one for each ``Orchestrator`` created in the previous step)
+  whose names are based on the `db_identifier` of that ``Orchestrator``.
   In this example, the Experiment folder is
-  named ``getting-started-multidb/``. Within this folder, two orchestrator subfolders will
+  named ``getting-started-multidb/``. Within this folder, two ``Orchestrator`` subfolders will
   be created, namely ``single_shard_db_identifier/`` and ``multi_shard_db_identifier/``.
 
 Step 2: Start
 '''''''''''''
-Next, to launch the orchestrators,
+Next, to launch the ``Orchestrators``,
 pass the ``Orchestrator`` instances to ``Experiment.start()``.
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
@@ -907,8 +907,8 @@ pass the ``Orchestrator`` instances to ``Experiment.start()``.
   :linenos:
   :lines: 20-21
 
-The ``Experiment.start()`` function launches the orchestrators for use within the workflow. In other words, the function
-deploys the orchestrators on the allocated compute resources.
+The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow. In other words, the function
+deploys the ``Orchestrators`` on the allocated compute resources.
 
 .. note::
   By setting `summary=True`, SmartSim will print a summary of the
@@ -921,20 +921,20 @@ deploys the orchestrators on the allocated compute resources.
 Create Client Connections to Orchestrators
 ------------------------------------------
 The SmartRedis ``Client`` object contains functions that manipulate, send, and receive
-data within the orchestrator. Each orchestrator has a single, dedicated SmartRedis ``Client``.
-Begin by initializing a SmartRedis ``Client`` object per launched orchestrator.
+data within the ``Orchestrator``. Each ``Orchestrator`` has a single, dedicated SmartRedis ``Client``.
+Begin by initializing a SmartRedis ``Client`` object per launched ``Orchestrator``.
 
 To create a designated SmartRedis client, you need to specify the address of the target
-running orchestrator. You can easily retrieve this address using the ``Orchestrator.get_address()`` function.
+running ``Orchestrator``. You can easily retrieve this address using the ``Orchestrator.get_address()`` function.
 
-For the single-sharded orchestrator:
+For the single-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
   :linenos:
   :lines: 23-24
 
-For the multi-sharded orchestrator:
+For the multi-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
@@ -945,25 +945,25 @@ Store Data Using Clients
 ------------------------
 In the application script, we retrieved two NumPy tensors.
 To support the apps functionality, we will create two
-NumPy arrays in the python driver script and send them to the a orchestrator. To
+NumPy arrays in the python driver script and send them to the a ``Orchestrator``. To
 accomplish this, we use the ``Client.put_tensor()`` function with the respective
-orchestrator `client` instances.
+``Orchestrator`` `client` instances.
 
-For the single-sharded orchestrator:
+For the single-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
   :linenos:
   :lines: 28-31
 
-For the multi-sharded orchestrator:
+For the multi-sharded ``Orchestrator``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
   :linenos:
   :lines: 33-36
 
-Lets check to make sure the database tensors do not exist in the incorrect orchestrators:
+Lets check to make sure the database tensors do not exist in the incorrect ``Orchestrators``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
@@ -979,16 +979,16 @@ When you run the experiment, the following output will appear::
 Initialize a Colocated Model
 ----------------------------
 In the next stage of the experiment, we
-launch the application script with a co-located orchestrator
+launch the application script with a co-located ``Orchestrator``
 by configuring and creating
 a SmartSim colocated ``Model``.
 
 Step 1: Configure
 '''''''''''''''''
-You can specify the run settings of a model.
+You can specify the run settings of a ``Model``.
 In this experiment, we invoke the Python interpreter to run
 the python script defined in section: :ref:`The Application Script<app_script_multi_db>`.
-To configure this into a SmartSim model, we use the ``Experiment.create_run_settings()`` function.
+To configure this into a SmartSim ``Model``, we use the ``Experiment.create_run_settings()`` function.
 The function returns a ``RunSettings`` object.
 When initializing the RunSettings object,
 we specify the path to the application file,
@@ -1027,8 +1027,8 @@ to the ``create_model()`` function and assign to the variable ``model``.
 
 Step 2: Colocate
 ''''''''''''''''
-To colocate the model, use the ``Model.colocate_db_uds()`` function to
-Colocate an ``Orchestrator`` instance with this Model over
+To colocate the ``Model``, use the ``Model.colocate_db_uds()`` function to
+Colocate an ``Orchestrator`` instance with this ``Model`` over
 a Unix domain socket connection.
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
@@ -1037,12 +1037,12 @@ a Unix domain socket connection.
   :lines: 51-52
 
 This method will initialize settings which add an unsharded
-orchestrator to this ``Model`` instance. Only this Model will be able
-to communicate with this colocated orchestrator by using the loopback TCP interface.
+``Orchestrator`` to this ``Model`` instance. Only this ``Model`` will be able
+to communicate with this colocated ``Orchestrator`` by using the loopback TCP interface.
 
 Step 3: Start
 '''''''''''''
-Next, launch the colocated model instance using the ``Experiment.start()`` function.
+Next, launch the colocated ``Model`` instance using the ``Experiment.start()`` function.
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
@@ -1051,7 +1051,7 @@ Next, launch the colocated model instance using the ``Experiment.start()`` funct
 
 .. note::
   We set `block=True`,
-  so that ``Experiment.start()`` waits until the last Model has finished
+  so that ``Experiment.start()`` waits until the last ``Model`` has finished
   before returning: it will act like a job monitor, letting us know
   if processes run, complete, or fail.
 
