@@ -31,6 +31,8 @@ from os import getcwd
 
 from tabulate import tabulate
 
+from smartsim.error.errors import SSUnsupportedError
+
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
@@ -127,6 +129,8 @@ class Experiment:
 
         if launcher == "auto":
             launcher = detect_launcher()
+        if launcher == "cobalt":
+            raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
