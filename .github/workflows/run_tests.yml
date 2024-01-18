@@ -110,12 +110,7 @@ jobs:
 
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: (matrix.py_v != '3.10')
         run: smart build --device cpu --onnx -v
-
-      - name: Install ML Runtimes with Smart (with pt and tf support)
-        if: (matrix.py_v == '3.10')
-        run: smart build --device cpu -v
 
       - name: Run mypy
         run: |

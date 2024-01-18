@@ -169,7 +169,7 @@ to the DB using the SmartRedis client.
 
     .. group-tab:: PyTorch
 
-        PyTorch requires models to be `jit-traced <https://pytorch.org/docs/1.11/generated/torch.jit.save.html>`__.
+        PyTorch requires models to be `jit-traced <https://pytorch.org/docs/2.0/generated/torch.jit.save.html>`__.
         The method ``torch.jit.save()`` can either store the model in memory or on file. Here,
         we will keep it in memory as a bytestring.
 
@@ -239,7 +239,7 @@ it can be uploaded to the DB using the SmartRedis client.
 
     .. group-tab:: PyTorch
 
-        PyTorch requires models to be `jit-traced <https://pytorch.org/docs/1.11/generated/torch.jit.save.html>`__.
+        PyTorch requires models to be `jit-traced <https://pytorch.org/docs/2.0/generated/torch.jit.save.html>`__.
         The method ``torch.jit.save()`` can either store the model in memory or on file. Here,
         we will save it to a file located at ``./traced_model.pt``.
 

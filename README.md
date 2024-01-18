@@ -100,8 +100,8 @@ before using it on your system. Each tutorial is a Jupyter notebook that can be 
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.1
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.1
+docker pull ghcr.io/craylabs/smartsim-tutorials:latest
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:latest
 # click on link to open jupyter lab
 ```
 
@@ -452,8 +452,8 @@ Each tutorial is a Jupyter notebook that can be run through the
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v1
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.1
+docker pull ghcr.io/craylabs/smartsim-tutorials:latest
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:latest
 ```
 Each of the following examples can be found in the
 [SmartSim documentation](https://www.craylabs.org/docs/tutorials/getting_started/getting_started.html).
@@ -640,15 +640,15 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     <tr>
       <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>1.11.x</td>
+      <td>2.0.1</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.8.x</td>
+      <td>2.13.1</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.11.x</td>
+      <td>1.14.1</td>
     </tr>
   </tbody>
 </table>
