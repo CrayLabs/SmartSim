@@ -27,21 +27,16 @@ import typing as t
 import jinja2
 import logging
 from ...log import log_to_file_preview
-from pathlib import Path
-
-from smartsim._core.control.manifest import LaunchedManifest as _Manifest
-
-TStepLaunchMetaData = t.Tuple[
-    t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
-]
-
+import smartsim._core._cli.utils as _utils
+from ..._core.config import CONFIG
+from ..._core.control import Manifest
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"] 
+_VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 def render(
     experiment,
-    manifest,
+    manifest: t.Optional[Manifest] = None,
     verbosity_level: _VerbosityLevelString = "info",
     output_format: _OutputFormatString = None,
     output_filename: t.Optional[str] = None,
@@ -60,7 +55,10 @@ def render(
 
         tpl = env.get_template(f"base_{output_format}.template")
         rendered_preview = tpl.render(
-            exp_entity=experiment, manifest=manifest, verbosity_level=verbosity_level
+            exp_entity=experiment,
+            manifest=manifest,
+            config=CONFIG,
+            verbosity_level=verbosity_level,
         )
         preview_to_file(rendered_preview, output_filename)
     else:
@@ -71,67 +69,14 @@ format is specified"
             )
         tpl = env.get_template("base.template")
         rendered_preview = tpl.render(
-            exp_entity=experiment, manifest=manifest, verbosity_level=verbosity_level
+            exp_entity=experiment,
+            manifest=manifest,
+            config=CONFIG,
+            verbosity_level=verbosity_level,
         )
 
-    #_Manifest()
 
-    #print(LaunchedManifest[TStepLaunchMetaData].databases)
-
-    logging.info(rendered_preview)
     return rendered_preview
-
-
-
-
-#          for shard in dbnode.get_launched_shard_info()
-#          **shard.to_dict(),
-#      for dbnode, (step_id, task_id, managed, out_file, err_file) in nodes
-#  for shard in dbnode.get_launched_shard_info()
-
-#         "orchestrator": [
-#             _dictify_db(
-#                 db, nodes_info, telemetry_data_root / "database"
-#             )
-#             for db, nodes_info in manifest.databases
-#         ],
-
-#         def _dictify_db(
-#     db: Orchestrator,
-#     nodes: t.Sequence[t.Tuple[DBNode, TStepLaunchMetaData]],
-#     telemetry_data_path: Path,
-# ) -> t.Dict[str, t.Any]:
-#     db_path = _utils.get_db_path()
-#     if db_path:
-#         db_type, _ = db_path.name.split("-", 1)
-#     else:
-#         db_type = "Unknown"
-#     return {
-#         "name": db.name,
-#         "type": db_type,
-#         "interface": db._interfaces,
-#         "shards": [
-#             {
-#                 **shard.to_dict(),
-#                 "conf_file": shard.cluster_conf_file,
-#                 "out_file": out_file,
-#                 "err_file": err_file,
-#                 "telemetry_metadata": {
-#                     "status_dir": str(
-#                         telemetry_data_path / f"{db.name}/{dbnode.name}"
-#                     ),
-#                     "step_id": step_id,
-#                     "task_id": task_id,
-#                     "managed": managed,
-#                 },
-#             }
-#             for dbnode, (step_id, task_id, managed, out_file, err_file) in nodes
-#             for shard in dbnode.get_launched_shard_info()
-#         ],
-#     }
-
-
-
 
 
 

@@ -2,5 +2,9 @@
 <html>
 <body>
 {% include "experiment_html.template" %}
+{%- if manifest %}
+=== Entity Preview === 
+{% include "orchestrator.template" %}
+{%- endif -%}
 </body>
 </html>

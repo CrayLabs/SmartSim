@@ -29,6 +29,8 @@ import pytest
 from smartsim._core import Manifest
 from smartsim import Experiment
 from smartsim._core import previewrenderer
+import smartsim._core._cli.utils as _utils
+from smartsim._core.config import CONFIG
 import pathlib
 
 def choose_host(wlmutils, index=0):
@@ -47,7 +49,7 @@ def test_experiment_preview(test_dir, wlmutils):
     # Call method for string formatting for testing
     output = previewrenderer.render(exp)
     summary_lines = output.split("\n")
-    summary_lines = [item.replace("\t", "") for item in summary_lines[-3:]]
+    summary_lines = [item.replace("\t", "").strip() for item in summary_lines[-3:]]
     assert 3 == len(summary_lines)
     summary_dict = dict(row.split(": ") for row in summary_lines)
     assert set(["Experiment", "Experiment Path", "Launcher"]).issubset(summary_dict)
@@ -61,7 +63,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     # Call method for string formatting for testing
     output = previewrenderer.render(exp)
     summary_lines = output.split("\n")
-    summary_lines = [item.replace("\t", "") for item in summary_lines[-3:]]
+    summary_lines = [item.replace("\t", "").strip() for item in summary_lines[-3:]]
     assert 3 == len(summary_lines)
     summary_dict = dict(row.split(": ") for row in summary_lines)
     assert exp.name == summary_dict["Experiment"]
@@ -69,7 +71,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 def test_orchestrator_preview_render(test_dir, wlmutils):
-    """Test correct preview output properties for Experiment preview"""
+    """Test correct preview output properties for Orchestrator preview"""
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
@@ -77,7 +79,6 @@ def test_orchestrator_preview_render(test_dir, wlmutils):
     exp_name = "test_experiment_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     
-   
     # create regular database
     orc = exp.create_database(
         port=test_port,
@@ -88,50 +89,34 @@ def test_orchestrator_preview_render(test_dir, wlmutils):
     preview_manifest = Manifest(orc)
     output = previewrenderer.render(exp,preview_manifest)
 
-   
+    assert "Database identifier" in output
+    assert "Shards" in output
+    assert "Network interface" in output
+    assert "Type" in output
+    assert "Executable" in output
+    assert "Batch Launch" in output
+    assert "Run command" in output
+    assert "Ntasks" in output
 
-   
-
-
-def test_orchestrator_preview_preview(test_dir, wlmutils):
-    """Test correct preview output properties for Experiment preview"""
-    test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_experiment_preview_properties"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    #output = previewrenderer.render(exp)
-    exp.preview(orch)
-
-# should add a test for when experiment is passed into preview as a *args , will is be ignored etc etc. 
-# what happens when an experiment is passed into the manifest? 
-
-#test with multi db
-#   exp_name = "test_db_identifier_standard_then_colo"
-
-#     # Retrieve parameters from testing environment
-#     test_launcher = wlmutils.get_test_launcher()
-#     test_interface = wlmutils.get_test_interface()
-#     test_port = wlmutils.get_test_port()
-
-#     test_script = fileutils.get_test_conf_path("smartredis/db_id_err.py")
-
-#     # Create SmartSim Experiment
-#     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
-
-#     # create regular database
-#     orc = exp.create_database(
-#         port=test_port,
-#         interface=test_interface,
-#         db_identifier="testdb_colo",
-#         hosts=choose_host(wlmutils),
-#     )
-
+    db_path = _utils.get_db_path()
+    if db_path:
+        db_type, _ = db_path.name.split("-", 1)
+    
+    assert orc.db_identifier in output
+    assert str(orc.num_shards) in output
+    assert orc._interfaces[0] in output
+    assert db_type in output
+    assert CONFIG.database_exe in output
+    assert str(orc.batch) in output
+    assert orc.run_command in output
+    assert str(orc.db_nodes) in output
 
 
 
 def test_preview_output_format_html(test_dir, wlmutils):
     """Test correct preview output items for Experiment preview"""
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test_preview_output_format_html"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     filename = "preview_test.html"
     path = pathlib.Path() / "preview_test.html"
@@ -140,10 +125,34 @@ def test_preview_output_format_html(test_dir, wlmutils):
     assert path.exists()
     assert path.is_file()
 
+def test_orchestrator_preview_output_format_html(test_dir, wlmutils):
+    """Test correct preview output items for  Orchestrator preview"""
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    
+    exp_name = "test_orchestrator_preview_output_format_html"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    
+    # create regular database
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+    )
+    
+    filename = "orch_preview_test.html"
+    path = pathlib.Path() / "orch_preview_test.html"
+    
+    # call preview with output format and output filename
+    exp.preview(orc, output_format="html", output_filename=filename)
+    assert path.exists()
+    assert path.is_file()
+
 
 def test_output_filename_without_format(test_dir, wlmutils):
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test_output_filename_without_format"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     filename = "preview_test.html"
     # call preview with output filename
@@ -157,7 +166,7 @@ def test_output_filename_without_format(test_dir, wlmutils):
 
 def test_output_format_without_filename(test_dir, wlmutils):
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test_output_format_without_filename"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     filename = "preview_test.html"
     # call preview with output filename

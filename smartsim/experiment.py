@@ -42,7 +42,7 @@ from .wlm import detect_launcher
 logger = get_logger(__name__)
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"] 
+_VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
@@ -798,9 +798,10 @@ class Experiment:
             logger.error(e)
             raise
 
-#from smartsim._core.control.manifest import LaunchedManifest
+
     def preview(
-        *args,
+        self,
+        *args: t.Any,
         output_format: _OutputFormatString = None,
         verbosity_level: _VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
@@ -827,10 +828,10 @@ class Experiment:
         Defaults to info.
         :type verbosity_level: str
         """
-
-        preview_manifest= Manifest(args)
-
-        print(preview_manifest)
+        if args:
+            preview_manifest = Manifest(*args)
+        else:
+            preview_manifest = None
 
         rendered_preview = previewrenderer.render(
             self, preview_manifest, verbosity_level, output_format, output_filename
