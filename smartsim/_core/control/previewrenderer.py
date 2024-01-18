@@ -35,7 +35,7 @@ _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 def render(
-    experiment,
+    experiment: t.Any,
     manifest: t.Optional[Manifest] = None,
     verbosity_level: _VerbosityLevelString = "info",
     output_format: _OutputFormatString = None,
