@@ -32,9 +32,9 @@ import coloredlogs
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
-)
+DEFAULT_LOG_FORMAT: t.Final[
+    str
+] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 
 # configure colored loggs
 coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT

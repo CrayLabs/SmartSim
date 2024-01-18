@@ -63,12 +63,7 @@ from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import (
-    LocalLauncher,
-    LSFLauncher,
-    PBSLauncher,
-    SlurmLauncher,
-)
+from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
 from .job import Job
@@ -879,7 +874,8 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.entities = [model]
         self.batch_settings = model.batch_settings
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
+        ...
 
 
 def _look_up_launched_data(
