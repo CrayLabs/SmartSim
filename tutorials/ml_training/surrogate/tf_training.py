@@ -24,7 +24,7 @@ def store_model(model, idx):
     client.set_model(f"{model.name}_{idx}", serialized_model, "TF", "CPU", inputs=inputs, outputs=outputs)
 
 def train_model(model, epochs):
-    training_generator = DynamicDataGenerator(cluster=False, batch_size=50, shuffle=True)
+    training_generator = DynamicDataGenerator(cluster=False, batch_size=50, shuffle=True, data_info_or_list_name="training_data")
     print("Compiling NN")
 
     initial_learning_rate = 0.01

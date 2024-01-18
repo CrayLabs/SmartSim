@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,22 @@
 import logging
 import os
 import sys
+import typing as t
 
 import coloredlogs
 
-# constants for logging
-coloredlogs.DEFAULT_DATE_FORMAT = "%H:%M:%S"
-coloredlogs.DEFAULT_LOG_FORMAT = (
+# constants
+DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
+DEFAULT_LOG_FORMAT: t.Final[str] = (
     "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 )
-# optional thread name logging for debugging
-# coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
+
+# configure colored loggs
+coloredlogs.DEFAULT_DATE_FORMAT = DEFAULT_DATE_FORMAT
+coloredlogs.DEFAULT_LOG_FORMAT = DEFAULT_LOG_FORMAT
 
 
-def _get_log_level():
+def _get_log_level() -> str:
     """Get the logging level based on environment variable
        SMARTSIM_LOG_LEVEL.  If not set, default to info.
 
@@ -65,7 +68,9 @@ def _get_log_level():
     return "info"
 
 
-def get_logger(name, log_level=None, fmt=None):
+def get_logger(
+    name: str, log_level: t.Optional[str] = None, fmt: t.Optional[str] = None
+) -> logging.Logger:
     """Return a logger instance
 
     levels:
@@ -107,7 +112,7 @@ def get_logger(name, log_level=None, fmt=None):
     return logger
 
 
-def log_to_file(filename, log_level="debug"):
+def log_to_file(filename: str, log_level: str = "debug") -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 
@@ -120,4 +125,7 @@ def log_to_file(filename, log_level="debug"):
     :type log_level: int | str
     """
     logger = logging.getLogger("SmartSim")
-    coloredlogs.install(stream=open(filename, "w+"), logger=logger, level=log_level)
+    stream = open(  # pylint: disable=consider-using-with
+        filename, "w+", encoding="utf-8"
+    )
+    coloredlogs.install(stream=stream, logger=logger, level=log_level)

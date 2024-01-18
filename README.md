@@ -6,15 +6,18 @@
     <br />
 <div display="inline-block">
     <a href="https://github.com/CrayLabs/SmartSim"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/docs/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/installation_instructions/basic.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://www.craylabs.org/docs/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Slack Invite</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://github.com/CrayLabs"><b>Cray Labs</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="mailto:craylabs@hpe.com"><b>Contact</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Join us on Slack!</b></a>&nbsp;&nbsp;&nbsp;
   </div>
     <br />
     <br />
 </div>
 
+
+<div align="center">
 
 [![License](https://img.shields.io/github/license/CrayLabs/SmartSim)](https://github.com/CrayLabs/SmartSim/blob/master/LICENSE.md)
 ![GitHub last commit](https://img.shields.io/github/last-commit/CrayLabs/SmartSim)
@@ -26,6 +29,8 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/CrayLabs/SmartSim/branch/develop/graph/badge.svg?token=96HFI2F45E)](https://codecov.io/gh/CrayLabs/SmartSim)
 [![Downloads](https://static.pepy.tech/personalized-badge/smartsim?period=total&units=international_system&left_color=grey&right_color=orange&left_text=Downloads)](https://pepy.tech/project/smartsim)
+
+</div>
 
 ------------
 
@@ -69,8 +74,6 @@ exchanged between applications at runtime without the utilization of MPI.
     - [Local Launch](#local-launch)
     - [Interactive Launch](#interactive-launch)
     - [Batch Launch](#batch-launch)
-  - [Ray](#ray)
-    - [Ray on HPC](#ray-on-hpc)
 - [SmartRedis](#smartredis)
   - [Tensors](#tensors)
   - [Datasets](#datasets)
@@ -97,8 +100,8 @@ before using it on your system. Each tutorial is a Jupyter notebook that can be 
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.0
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.0
+docker pull ghcr.io/craylabs/smartsim-tutorials:latest
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:latest
 # click on link to open jupyter lab
 ```
 
@@ -284,7 +287,6 @@ initialization. Local launching does not support batch workloads.
 
 # Infrastructure Library Applications
  - Orchestrator - In-memory data store and Machine Learning Inference (Redis + RedisAI)
- - Ray - Distributed Reinforcement Learning (RL), Hyperparameter Optimization (HPO)
 
 ## Redis + RedisAI
 
@@ -398,53 +400,6 @@ exp.stop(db_cluster)
 python run_db_batch.py
 ```
 
------
-## Ray
-
-Ray is a distributed computation framework that supports a number of applications
- - RLlib - Distributed Reinforcement Learning (RL)
- - RaySGD - Distributed Training
- - Ray Tune - Hyperparameter Optimization (HPO)
- - Ray Serve - ML/DL inference
-As well as other integrations with frameworks like Modin, Mars, Dask, and Spark.
-
-Historically, Ray has not been well supported on HPC systems. A few examples exist,
-but none are well maintained. Because SmartSim already has launchers for HPC systems,
-launching Ray through SmartSim is a relatively simple task.
-
-### Ray on HPC
-
-Below is an example of how to launch a Ray cluster on an HPC system and connect to it.
-In this example, we set `batch=True`, which means that the cluster will be started
-requesting an allocation through the scheduler (Slurm, PBS, etc). If this code
-is run within a sufficiently large interactive allocation, setting `batch=False`
-will spin the Ray cluster on the allocated nodes.
-
-```Python
-import ray
-
-from smartsim import Experiment
-from smartsim.exp.ray import RayCluster
-
-exp = Experiment("ray-cluster", launcher='auto')
-# 3 workers + 1 head node = 4 node-cluster
-cluster = RayCluster(name="ray-cluster", run_args={},
-                     ray_args={"num-cpus": 24},
-                     launcher='auto', num_nodes=4, batch=True)
-
-exp.generate(cluster, overwrite=True)
-exp.start(cluster, block=False, summary=True)
-
-# Connect to the Ray cluster
-ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
-
-# <run Ray tune, RLlib, HPO...>
-```
-
-*New in 0.4.0* the auto argument enables the Ray Cluster to be launched
-across scheduler types. Both batch launch and interactive launch commands
-will be automatically detected and used by SmartSim.
-
 ------
 # SmartRedis
 
@@ -497,8 +452,8 @@ Each tutorial is a Jupyter notebook that can be run through the
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.0
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.0
+docker pull ghcr.io/craylabs/smartsim-tutorials:latest
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:latest
 ```
 Each of the following examples can be found in the
 [SmartSim documentation](https://www.craylabs.org/docs/tutorials/getting_started/getting_started.html).
@@ -683,29 +638,17 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
   </thead>
   <tbody style="text-align:center">
     <tr>
-      <td rowspan="3">1.2.3-1.2.4</td>
+      <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>1.7.x</td>
+      <td>2.0.1</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.4.x-2.5.x</td>
+      <td>2.13.1</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.9.x</td>
-    </tr>
-      <td rowspan="3">1.2.5</td>
-      <td>PyTorch</td>
-      <td>1.9.x</td>
-    </tr>
-    <tr>
-      <td>TensorFlow\Keras</td>
-      <td>2.6.x</td>
-    </tr>
-    <tr>
-      <td>ONNX</td>
-      <td>1.9.x</td>
+      <td>1.14.1</td>
     </tr>
   </tbody>
 </table>
@@ -787,21 +730,27 @@ The following are public presentations or publications using SmartSim
 --------
 # Cite
 
-Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work.
+Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work:
 
 Partee et al., “Using Machine Learning at Scale in HPC Simulations with SmartSim:
-An Application to Ocean Climate Modeling,” arXiv:2104.09355, Apr. 2021,
-[Online]. Available: http://arxiv.org/abs/2104.09355.
+An Application to Ocean Climate Modeling”, Journal of Computational Science, Volume 62, 2022, 101707, ISSN 1877-7503
+
+Available: https://doi.org/10.1016/j.jocs.2022.101707.
 
 ## bibtex
 
-    ```latex
-    @misc{partee2021using,
-          title={Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling},
-          author={Sam Partee and Matthew Ellis and Alessandro Rigazzi and Scott Bachman and Gustavo Marques and Andrew Shao and Benjamin Robbins},
-          year={2021},
-          eprint={2104.09355},
-          archivePrefix={arXiv},
-          primaryClass={cs.CE}
-    }
-    ```
+
+```latex
+@article{PARTEE2022101707,
+    title = {Using Machine Learning at scale in numerical simulations with SmartSim: An application to ocean climate modeling},
+    journal = {Journal of Computational Science},
+    volume = {62},
+    pages = {101707},
+    year = {2022},
+    issn = {1877-7503},
+    doi = {https://doi.org/10.1016/j.jocs.2022.101707},
+    url = {https://www.sciencedirect.com/science/article/pii/S1877750322001065},
+    author = {Sam Partee and Matthew Ellis and Alessandro Rigazzi and Andrew E. Shao and Scott Bachman and Gustavo Marques and Benjamin Robbins},
+    keywords = {Deep learning, Numerical simulation, Climate modeling, High performance computing, SmartSim},
+}
+```

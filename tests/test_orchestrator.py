@@ -1,9 +1,40 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+import psutil
 import pytest
 
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
+
+# The tests in this file belong to the slow_tests group
+pytestmark = pytest.mark.slow_tests
 
 
 def test_orc_parameters():
@@ -37,12 +68,11 @@ def test_inactive_orc_get_address():
         db.get_address()
 
 
-def test_orc_active_functions(fileutils):
+def test_orc_active_functions(test_dir, wlmutils):
     exp_name = "test_orc_active_functions"
-    exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    db = Orchestrator(port=6780)
+    db = Orchestrator(port=wlmutils.get_test_port())
     db.set_path(test_dir)
 
     exp.start(db)
@@ -51,7 +81,10 @@ def test_orc_active_functions(fileutils):
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    assert db.get_address() == ["127.0.0.1:6780"]
+    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    if not correct_address:
+        exp.stop(db)
+        assert False
 
     exp.stop(db)
 
@@ -62,8 +95,35 @@ def test_orc_active_functions(fileutils):
         db.get_address()
 
 
-def test_catch_local_db_errors():
+def test_multiple_interfaces(test_dir, wlmutils):
+    exp_name = "test_multiple_interfaces"
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
+    net_if_addrs = psutil.net_if_addrs()
+    net_if_addrs = [
+        net_if_addr for net_if_addr in net_if_addrs if not net_if_addr.startswith("lo")
+    ]
+
+    net_if_addrs = ["lo", net_if_addrs[0]]
+
+    db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
+    db.set_path(test_dir)
+
+    exp.start(db)
+
+    # check if the orchestrator is active
+    assert db.is_active()
+
+    # check if the orchestrator can get the address
+    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    if not correct_address:
+        exp.stop(db)
+        assert False
+
+    exp.stop(db)
+
+
+def test_catch_local_db_errors():
     # local database with more than one node not allowed
     with pytest.raises(SSUnsupportedError):
         db = Orchestrator(db_nodes=2)
@@ -80,9 +140,9 @@ def test_catch_local_db_errors():
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg():
+def test_pbs_set_run_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -99,9 +159,9 @@ def test_pbs_set_run_arg():
     )
 
 
-def test_pbs_set_batch_arg():
+def test_pbs_set_batch_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -112,7 +172,7 @@ def test_pbs_set_batch_arg():
         orc.set_batch_arg("account", "ACCOUNT")
 
     orc2 = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         interface="lo",
@@ -128,9 +188,9 @@ def test_pbs_set_batch_arg():
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg():
+def test_slurm_set_run_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -143,9 +203,9 @@ def test_slurm_set_run_arg():
     )
 
 
-def test_slurm_set_batch_arg():
+def test_slurm_set_batch_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -156,7 +216,7 @@ def test_slurm_set_batch_arg():
         orc.set_batch_arg("account", "ACCOUNT")
 
     orc2 = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         interface="lo",
@@ -167,12 +227,41 @@ def test_slurm_set_batch_arg():
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
 
+@pytest.mark.parametrize(
+    "single_cmd",
+    [
+        pytest.param(True, id="Single MPMD `srun`"),
+        pytest.param(False, id="Multiple `srun`s"),
+    ],
+)
+def test_orc_results_in_correct_number_of_shards(single_cmd):
+    num_shards = 5
+    orc = Orchestrator(
+        port=12345,
+        launcher="slurm",
+        run_command="srun",
+        db_nodes=num_shards,
+        batch=False,
+        single_cmd=single_cmd,
+    )
+    if single_cmd:
+        assert len(orc.entities) == 1
+        (node,) = orc.entities
+        assert len(node.run_settings.mpmd) == num_shards - 1
+    else:
+        assert len(orc.entities) == num_shards
+        assert all(node.run_settings.mpmd == [] for node in orc.entities)
+    assert (
+        orc.num_shards == orc.db_nodes == sum(node.num_shards for node in orc.entities)
+    )
+
+
 ###### Cobalt ######
 
 
-def test_cobalt_set_run_arg():
+def test_cobalt_set_run_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -189,9 +278,9 @@ def test_cobalt_set_run_arg():
     )
 
 
-def test_cobalt_set_batch_arg():
+def test_cobalt_set_batch_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -202,7 +291,7 @@ def test_cobalt_set_batch_arg():
         orc.set_batch_arg("account", "ACCOUNT")
 
     orc2 = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         interface="lo",
@@ -218,10 +307,10 @@ def test_cobalt_set_batch_arg():
 ###### LSF ######
 
 
-def test_catch_orc_errors_lsf():
+def test_catch_orc_errors_lsf(wlmutils):
     with pytest.raises(SSUnsupportedError):
         orc = Orchestrator(
-            6780,
+            wlmutils.get_test_port(),
             db_nodes=2,
             db_per_host=2,
             batch=False,
@@ -230,7 +319,7 @@ def test_catch_orc_errors_lsf():
         )
 
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         hosts=["batch", "host1", "host2"],
@@ -241,10 +330,9 @@ def test_catch_orc_errors_lsf():
         orc.set_batch_arg("P", "MYPROJECT")
 
 
-def test_lsf_set_run_args():
-
+def test_lsf_set_run_args(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
@@ -255,10 +343,9 @@ def test_lsf_set_run_args():
     assert all(["l" not in db.run_settings.run_args for db in orc.entities])
 
 
-def test_lsf_set_batch_args():
-
+def test_lsf_set_batch_args(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],

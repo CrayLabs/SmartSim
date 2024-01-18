@@ -1,76 +1,153 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import typing as t
+
 import numpy as np
 import torch
+from smartredis import Client, Dataset
 
-from smartsim.ml.data import DynamicDataDownloader, StaticDataDownloader
+from smartsim.ml.data import DataDownloader
 
 
-class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset):
-    """A class to download a dataset from the DB.
+class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDataset):
+    def __init__(self, **kwargs: t.Any) -> None:
+        init_samples = kwargs.pop("init_samples", False)
+        kwargs["init_samples"] = False
+        super().__init__(**kwargs)
+        if init_samples:
+            self.log(
+                "PyTorch Data Generator has to be created with "
+                "init_samples=False. Setting it to False automatically."
+            )
 
-    Details about parameters and features of this class can be found
-    in the documentation of ``StaticDataDownloader``, of which it is just
-    a PyTorch-specialized sub-class.
-
-    Note that if the ``StaticDataGenerator`` has to be used through a ``DataLoader``,
-    `init_samples` must be set to `False`, as sources and samples will be initialized
-    by the ``DataLoader`` workers.
-    """
-
-    def __init__(self, **kwargs):
-        StaticDataDownloader.__init__(self, **kwargs)
-
-    def _add_samples(self, batch_name, target_name):
-        if self.samples is None:
-            self.samples = torch.tensor(self.client.get_tensor(batch_name))
-            if self.need_targets:
-                self.targets = torch.tensor(self.client.get_tensor(target_name))
+    def _add_samples(self, indices: t.List[int]) -> None:
+        if self.client is None:
+            client = Client(self.cluster, self.address)
         else:
+            client = self.client
+
+        datasets: t.List[Dataset] = []
+        if self.num_replicas == 1:
+            datasets = client.get_dataset_list_range(
+                self.list_name, start_index=indices[0], end_index=indices[-1]
+            )
+        else:
+            for idx in indices:
+                datasets += client.get_dataset_list_range(
+                    self.list_name, start_index=idx, end_index=idx
+                )
+
+        if self.samples is None:
+            self.samples = torch.tensor(datasets[0].get_tensor(self.sample_name))
+            if self.need_targets:
+                self.targets = torch.tensor(datasets[0].get_tensor(self.target_name))
+
+            if len(datasets) > 1:
+                datasets = datasets[1:]
+
+        for dataset in datasets:
             self.samples = torch.cat(
-                (self.samples, torch.tensor(self.client.get_tensor(batch_name)))
+                (self.samples, torch.tensor(dataset.get_tensor(self.sample_name)))
             )
             if self.need_targets:
                 self.targets = torch.cat(
-                    (self.targets, torch.tensor(self.client.get_tensor(target_name)))
+                    (self.targets, torch.tensor(dataset.get_tensor(self.target_name)))
                 )
 
-        self.num_samples = self.samples.shape[0]
+        if self.samples is not None:
+            self.num_samples = self.samples.shape[0]
         self.indices = np.arange(self.num_samples)
-        self.log("Success!")
-        self.log(f"New dataset size: {self.num_samples}")
-
-    def update_data(self):
-        self._update_samples_and_targets()
-        if self.shuffle:
-            np.random.shuffle(self.indices)
+        self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
 
-class DynamicDataGenerator(DynamicDataDownloader, StaticDataGenerator):
+class StaticDataGenerator(_TorchDataGenerationCommon):
+    """A class to download a dataset from the DB.
+
+    Details about parameters and features of this class can be found
+    in the documentation of ``DataDownloader``, of which it is just
+    a PyTorch-specialized sub-class with dynamic=False and init_samples=False.
+
+    When used in the DataLoader defined in this class, samples are initialized
+    automatically before training. Other data loaders using this generator
+    should implement the same behavior.
+
+    """
+
+    def __init__(self, **kwargs: t.Any) -> None:
+        dynamic = kwargs.pop("dynamic", False)
+        kwargs["dynamic"] = False
+        super().__init__(**kwargs)
+        if dynamic:
+            self.log(
+                "Static data generator cannot be started "
+                "with dynamic=True, setting it to False"
+            )
+
+
+class DynamicDataGenerator(_TorchDataGenerationCommon):
     """A class to download batches from the DB.
 
     Details about parameters and features of this class can be found
-    in the documentation of ``DynamicDataDownloader``, of which it is just
-    a PyTorch-specialized sub-class.
+    in the documentation of ``DataDownloader``, of which it is just
+    a PyTorch-specialized sub-class with dynamic=True and init_samples=False.
 
-    Note that if the ``DynamicDataGenerator`` has to be used through a ``DataLoader``,
-    `init_samples` must be set to `False`, as sources and samples will be initialized
-    by the ``DataLoader`` workers.
+    When used in the DataLoader defined in this class, samples are initialized
+    automatically before training. Other data loaders using this generator
+    should implement the same behavior.
     """
 
-    def __init__(self, **kwargs):
-        StaticDataGenerator.__init__(self, **kwargs)
+    def __init__(self, **kwargs: t.Any) -> None:
+        dynamic = kwargs.pop("dynamic", True)
+        kwargs["dynamic"] = True
+        super().__init__(**kwargs)
+        if not dynamic:
+            self.log(
+                "Dynamic data generator cannot be started with dynamic=False, "
+                "setting it to True"
+            )
 
-    def __iter__(self):
-        if self.sources:
-            self.update_data()
-        return super().__iter__()
 
-    def _add_samples(self, batch_name, target_name):
-        StaticDataGenerator._add_samples(self, batch_name, target_name)
+def _worker_init_fn(worker_id: int) -> None:
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset  # the dataset copy in this worker process
 
-    def __iter__(self):
-        if self.sources:
-            self.update_data()
-        return super().__iter__()
+    worker_id = worker_info.id
+    num_workers = worker_info.num_workers
+
+    dataset.set_replica_parameters(
+        replica_rank=dataset.replica_rank * num_workers + worker_id,
+        num_replicas=dataset.num_replicas * num_workers,
+    )
+    dataset.log(
+        f"Worker {worker_id+1}/{num_workers}: dataset replica "
+        f"{dataset.replica_rank+1}/{dataset.num_replicas}"
+    )
+
+    dataset.init_samples()
 
 
 class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
@@ -82,37 +159,10 @@ class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     be set to None.
     """
 
-    def __init__(self, dataset: StaticDataGenerator, **kwargs):
+    def __init__(self, dataset: _TorchDataGenerationCommon, **kwargs: t.Any) -> None:
         super().__init__(
             dataset,
-            worker_init_fn=self.worker_init_fn,
+            worker_init_fn=_worker_init_fn,
             persistent_workers=True,
             **kwargs,
         )
-
-    @staticmethod
-    def worker_init_fn(worker_id):
-        worker_info = torch.utils.data.get_worker_info()
-        dataset = worker_info.dataset  # the dataset copy in this worker process
-        dataset.init_sources()
-        overall_sources = dataset.sources
-
-        worker_id = worker_info.id
-
-        # configure the dataset to only process the split workload
-        per_worker = int((len(overall_sources)) // worker_info.num_workers)
-
-        if per_worker > 0:
-            if worker_id < worker_info.num_workers - 1:
-                sources = overall_sources[
-                    worker_id * per_worker : (worker_id + 1) * per_worker
-                ]
-            else:
-                sources = overall_sources[worker_id * per_worker :]
-        else:
-            if worker_id < len(overall_sources):
-                sources = overall_sources[worker_id]
-            else:
-                sources = []
-
-        dataset.init_samples(sources)

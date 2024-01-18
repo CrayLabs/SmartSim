@@ -1,0 +1,10 @@
+{
+  "host_list": ["nid00000", "nid00001", "nid00002"],
+  "queue": "workq",
+  "num_tasks": 20,
+  "tasks_per_node": {
+    "nid00000": 7,
+    "nid00001": 7,
+    "nid00002": 6
+  }
+}

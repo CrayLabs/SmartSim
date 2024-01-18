@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,15 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import psutil
 import socket
 
+import psutil
 
 """
 A handful of useful functions for dealing with networks
 """
 
-def get_ip_from_host(host):
+
+def get_ip_from_host(host: str) -> str:
     """Return the IP address for the interconnect.
 
     :param host: hostname of the compute node e.g. nid00004
@@ -43,8 +44,9 @@ def get_ip_from_host(host):
     ip_address = socket.gethostbyname(host)
     return ip_address
 
+
 # impossible to cover as it's only used in entrypoints
-def get_ip_from_interface(interface): # pragma: no cover
+def get_ip_from_interface(interface: str) -> str:  # pragma: no cover
     """Get IPV4 address of a network interface
 
     :param interface: interface name
@@ -56,7 +58,6 @@ def get_ip_from_interface(interface): # pragma: no cover
     """
     net_if_addrs = psutil.net_if_addrs()
     if interface not in net_if_addrs:
-
         available = list(net_if_addrs.keys())
         raise ValueError(
             f"{interface} is not a valid network interface. "
@@ -68,8 +69,9 @@ def get_ip_from_interface(interface): # pragma: no cover
             return info.address
     raise ValueError(f"interface {interface} doesn't have an IPv4 address")
 
+
 # impossible to cover as it's only used in entrypoints
-def get_lb_interface_name(): # pragma: no cover
+def get_lb_interface_name() -> str:  # pragma: no cover
     """Use psutil to get loopback interface name"""
     net_if_addrs = list(psutil.net_if_addrs())
     for interface in net_if_addrs:
@@ -78,9 +80,9 @@ def get_lb_interface_name(): # pragma: no cover
     raise OSError("Could not find loopback interface name")
 
 
-def current_ip(interface="lo"): # pragma: no cover
+def current_ip(interface: str = "lo") -> str:  # pragma: no cover
     if interface == "lo":
         loopback = get_lb_interface_name()
         return get_ip_from_interface(loopback)
-    else:
-        return get_ip_from_interface(interface)
+
+    return get_ip_from_interface(interface)

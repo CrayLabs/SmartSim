@@ -1,3 +1,29 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import filecmp
 from distutils import dir_util
 from glob import glob
@@ -6,16 +32,21 @@ from os import path
 import pytest
 
 from smartsim._core.generation.modelwriter import ModelWriter
-from smartsim.error.errors import ParameterWriterError
+from smartsim.error.errors import ParameterWriterError, SmartSimError
 from smartsim.settings import RunSettings
+
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
+
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
 
-def test_write_easy_configs(fileutils):
+def get_gen_file(fileutils, filename):
+    return fileutils.get_test_conf_path(path.join("generator_files", filename))
 
-    test_dir = fileutils.make_test_dir()
 
+def test_write_easy_configs(fileutils, test_dir):
     param_dict = {
         "5": 10,  # MOM_input
         "FIRST": "SECOND",  # example_input.i
@@ -25,8 +56,8 @@ def test_write_easy_configs(fileutils):
         "1200": "120",  # input.nml
     }
 
-    conf_path = fileutils.get_test_dir_path("easy/marked/")
-    correct_path = fileutils.get_test_dir_path("easy/correct/")
+    conf_path = get_gen_file(fileutils, "easy/marked/")
+    correct_path = get_gen_file(fileutils, "easy/correct/")
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
@@ -42,10 +73,7 @@ def test_write_easy_configs(fileutils):
         assert filecmp.cmp(written, correct)
 
 
-def test_write_med_configs(fileutils):
-
-    test_dir = fileutils.make_test_dir()
-
+def test_write_med_configs(fileutils, test_dir):
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
         "'noleap'": "'leap'",  # input.nml
@@ -55,8 +83,8 @@ def test_write_med_configs(fileutils):
         "3*12.0": "3*14.0",  # MOM_input
     }
 
-    conf_path = fileutils.get_test_dir_path("med/marked/")
-    correct_path = fileutils.get_test_dir_path("med/correct/")
+    conf_path = get_gen_file(fileutils, "med/marked/")
+    correct_path = get_gen_file(fileutils, "med/correct/")
 
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
@@ -75,10 +103,8 @@ def test_write_med_configs(fileutils):
         assert filecmp.cmp(written, correct)
 
 
-def test_write_new_tag_configs(fileutils):
+def test_write_new_tag_configs(fileutils, test_dir):
     """sets the tag to the dollar sign"""
-
-    test_dir = fileutils.make_test_dir()
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -89,8 +115,8 @@ def test_write_new_tag_configs(fileutils):
         "3*12.0": "3*14.0",  # MOM_input
     }
 
-    conf_path = fileutils.get_test_dir_path("new-tag/marked/")
-    correct_path = fileutils.get_test_dir_path("new-tag/correct/")
+    conf_path = get_gen_file(fileutils, "new-tag/marked/")
+    correct_path = get_gen_file(fileutils, "new-tag/correct/")
 
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
@@ -118,3 +144,22 @@ def test_mw_error_2():
     writer = ModelWriter()
     with pytest.raises(ParameterWriterError):
         writer._write_changes("[not/a/path]")
+
+
+def test_write_mw_error_3(fileutils, test_dir):
+    param_dict = {
+        "5": 10,  # MOM_input
+    }
+
+    conf_path = get_gen_file(fileutils, "easy/marked/")
+
+    # copy confs to gen directory
+    dir_util.copy_tree(conf_path, test_dir)
+    assert path.isdir(test_dir)
+
+    # init modelwriter
+    writer = ModelWriter()
+    with pytest.raises(SmartSimError):
+        writer.configure_tagged_model_files(
+            glob(test_dir + "/*"), param_dict, make_missing_tags_fatal=True
+        )

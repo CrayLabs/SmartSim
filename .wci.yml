@@ -1,0 +1,48 @@
+---
+    # Metadata parsed by the workflow community initiative, https://workflows.community/systems
+    # Registered at https://github.com/workflowscommunity/workflowscommunity.github.io/blob/main/_data/workflow_systems.yml
+
+    name: SmartSim
+
+    headline: Machine learning workflows with HPC applications (Python, C++, C, and Fortran)
+
+    description: SmartSim is a workflow library that makes it easier to use common
+      Machine Learning (ML) libraries, like PyTorch and TensorFlow,
+      in combination with High Performance Computing (HPC) simulations and applications.
+      SmartSim launches ML infrastructure on HPC systems alongside user workloads
+      and supports most HPC workload managers (e.g. Slurm, PBSPro, LSF, Cobalt).
+      SmartSim also provides a set of client libraries in Python, C++, C, and Fortran.
+      These client libraries allow users to send and receive data between user
+      applications and the machine learning infrastructure.  Moreover, the
+      client APIs enable the execution of machine learning tasks like inference
+      and online training from within user code.  The exchange of data and
+      execution of machine learning tasks is orchestrated by a high performance
+      in-memory database that is launched and managed by SmartSim.
+
+    language: Python
+
+    release:
+      version: 0.6.0
+      date: 2023-12-18
+
+    documentation:
+      general: https://www.craylabs.org/docs/overview.html
+      installation: https://www.craylabs.org/docs/installation.html
+      tutorial: https://www.craylabs.org/docs/tutorials/getting_started/getting_started.html
+
+    execution_environment:
+      interfaces:
+        - Python API
+        - Python Client API
+        - C++ Client API
+        - C Client API
+        - Fortran Client API
+      resource_managers:
+        - Slurm
+        - PBSPro
+        - LSF
+        - Cobalt
+        - Linux/MacOS
+      transfer_protocols:
+        - TCP/IP
+        - Unix Domain Sockets (UDS)
