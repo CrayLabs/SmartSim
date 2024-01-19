@@ -63,7 +63,7 @@ and no requirement for communication between other ``Orchestrator`` nodes.
 When connecting to a standalone ``Orchestrator`` from within a ``Model`` application, the user has
 several options when using the SmartRedis ``Client``:
 
-- In an experiment with a single deployed ``Orchestrator``, users can rely on SmartSim
+- In an experiment with a single deployed ``Orchestrator``, users can rely on SmartRedis
   to detect the ``Orchestrator`` address through runtime configuration of the SmartSim ``Model`` environment.
   A default ``Client`` constructor, with no user-specified parameters, is sufficient to
   connect to the ``Orchestrator``. The only exception is for the Python ``client``, which requires
@@ -146,8 +146,7 @@ To begin writing the application script, import the necessary SmartRedis package
 
 .. code-block:: python
 
-  from smartredis import Client, log_data
-  from smartredis import *
+  from smartredis import Client, log_data, LLInfo
   import numpy as np
 
 Client Initialization
@@ -168,7 +167,7 @@ constructor argument `cluster` as `True`.
 
 .. note::
     Since there is only one ``Orchestrator`` launched in the experiment
-    (the standalone ``Orchestrator``), specifying an ``Orchestrator`` address
+    (the standalone ``Orchestrator``), specifying an ``Orchestrator`` `db_identifier`
     is not required when initializing the SmartRedis client.
     SmartRedis will handle the connection configuration.
 
@@ -369,8 +368,8 @@ Next, launch the `model` instance using the ``Experiment.start()`` function:
   exp.start(model, block=True, summary=True)
 
 .. note::
-    We specify `block=True` to ``exp.start()`` because our experiment
-    requires that the ``Model`` finish before the experiment continues.
+    We specify `block=True` to ``exp.start()`` because our ``Experiment`` driver script
+    requires that the ``Model`` finish before the ``Experiment`` continues.
     This is because we will request tensors from the ``Orchestrator`` that
     are inputted by the ``Model`` we launched.
 
@@ -433,7 +432,7 @@ the associated SmartSim ``Model`` application.
 There are **three** methods for connecting the SmartRedis client to the colocated ``Orchestrator``:
 
 
-- In an experiment with a single deployed ``Orchestrator``, users can rely on SmartSim
+- In an experiment with a single deployed ``Orchestrator``, users can rely on SmartRedis
   to detect the ``Orchestrator`` address through runtime configuration of the SmartSim ``Model`` environment.
   A default ``Client`` constructor, with no user-specified parameters, is sufficient to
   connect to the ``Orchestrator``. The only exception is for the Python ``Client``, which requires
@@ -490,8 +489,7 @@ To begin writing the application script, import the necessary SmartRedis package
 
 .. code-block:: python
 
-  from smartredis import ConfigOptions, Client, log_data
-  from smartredis import *
+  from smartredis import ConfigOptions, Client, log_data, LLInfo
   import numpy as np
 
 Client Initialization
@@ -512,7 +510,7 @@ clustered but only single-sharded.
 
 .. note::
     Since there is only one ``Orchestrator`` launched in the Experiment
-    (the colocated ``Orchestrator``), specifying a ``Orchestrator`` address
+    (the colocated ``Orchestrator``), specifying a ``Orchestrator`` `db_identifier`
     is not required when initializing the client.
     SmartRedis will handle the connection configuration.
 
@@ -637,7 +635,7 @@ a Unix domain socket connection.
 
 Step 4: Generate Files
 ''''''''''''''''''''''
-Next, generate the ``Experiment`` entity output files by passing the ``Model`` instance to
+Next, generate the ``Experiment`` entity directories by passing the ``Model`` instance to
 ``Experiment.generate()``:
 
 .. code-block:: python
