@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from ...database import Orchestrator
 from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import SmartSimError
+from ..config import CONFIG
 from ..utils import helpers as _helpers
 from ..utils import serialize as _serialize
 
@@ -343,7 +344,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
 def _format_exp_telemetry_path(
     exp_path: t.Union[str, "os.PathLike[str]"]
 ) -> pathlib.Path:
-    return pathlib.Path(exp_path, _serialize.TELMON_SUBDIR)
+    return pathlib.Path(exp_path, CONFIG.telemetry_subdir)
 
 
 def _format_run_telemetry_path(

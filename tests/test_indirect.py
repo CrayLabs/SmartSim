@@ -31,9 +31,9 @@ import sys
 import psutil
 import pytest
 
+from smartsim._core.config import CONFIG
 from smartsim._core.entrypoints.indirect import cleanup, get_parser, get_ts, main
 from smartsim._core.utils.helpers import encode_cmd
-from smartsim._core.utils.serialize import MANIFEST_FILENAME, TELMON_SUBDIR
 
 ALL_ARGS = {
     "+command",
@@ -152,7 +152,7 @@ def test_indirect_main_dir_check(test_dir):
     cmd = ["echo", "unit-test"]
     encoded_cmd = encode_cmd(cmd)
 
-    status_path = exp_dir / TELMON_SUBDIR
+    status_path = exp_dir / CONFIG.telemetry_subdir
 
     # show that a missing status_path is created when missing
     main(encoded_cmd, "application", exp_dir, status_path)
@@ -167,7 +167,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
-        _ = main("", "application", exp_dir, exp_dir / TELMON_SUBDIR)
+        _ = main("", "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -175,7 +175,8 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr("smartsim._core.entrypoints.indirect.logger.error", print)
-        _ = main("  \n  \t   ", "application", exp_dir, exp_dir / TELMON_SUBDIR)
+        status_dir = exp_dir / CONFIG.telemetry_subdir
+        _ = main("  \n  \t   ", "application", exp_dir, status_dir)
 
     captured = capsys.readouterr()
     assert "Invalid cmd supplied" in ex.value.args[0]
@@ -190,13 +191,13 @@ def test_complete_process(fileutils, test_dir):
     raw_cmd = f"{sys.executable} {script} --time=1"
     cmd = encode_cmd(raw_cmd.split())
 
-    rc = main(cmd, "application", exp_dir, exp_dir / TELMON_SUBDIR)
+    rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
     assert rc == 0
 
     assert exp_dir.exists()
 
     # NOTE: don't have a manifest so we're falling back to default event path
-    data_dir = exp_dir / TELMON_SUBDIR
+    data_dir = exp_dir / CONFIG.telemetry_subdir
     start_events = list(data_dir.rglob("start.json"))
     stop_events = list(data_dir.rglob("stop.json"))
 
