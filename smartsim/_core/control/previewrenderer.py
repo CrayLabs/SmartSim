@@ -26,7 +26,9 @@
 import typing as t
 import jinja2
 import logging
-from ...log import log_to_file_preview
+from ...log import log_to_file_preview, get_logger
+
+logger = get_logger(__name__)
 
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
@@ -39,13 +41,14 @@ def render(
     output_filename: t.Optional[str] = None,
 ) -> str:
     """
-    Render the template from the supplied entity
+    Render the template from the supplied entity.
     """
 
-    _check_verbosity_level(verbosity_level)
+    verbosity_level = _check_verbosity_level(verbosity_level)
 
     loader = jinja2.PackageLoader("templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
+    
     if output_format:
         _check_output_format(output_format)
         output_filename = _check_output_filename(output_filename)
@@ -55,6 +58,7 @@ def render(
             exp_entity=entity, verbosity_level=verbosity_level
         )
         preview_to_file(rendered_preview, output_filename)
+    
     else:
         if output_filename:
             raise ValueError(
@@ -70,17 +74,28 @@ format is specified"
 
 
 def preview_to_file(content: str, file_name: str) -> None:
+    """
+    Output preview to a file if output format and filename 
+    are specified.
+    """
     logger = logging.getLogger("preview-logger")
     log_to_file_preview(filename=file_name, logger=logger)
     logger.info(content)
 
 
 def _check_output_format(output_format: str) -> None:
+    """
+    Check that the output format given is valid.
+    """
     if not output_format.startswith("html"):
         raise ValueError("The only valid currently available is html")
 
 
 def _check_output_filename(output_filename: t.Optional[str]) -> str:
+    """
+    Check that an output filename has been supplied if output format
+    is specified.
+    """
     if not output_filename:
         raise ValueError("An output filename is required when an output format is set.")
 
@@ -88,14 +103,10 @@ def _check_output_filename(output_filename: t.Optional[str]) -> str:
 
 def _check_verbosity_level(
     verbosity_level: _VerbosityLevelString
-) -> None:
+) -> str:
     """
-    Check verbosity_level
+    Check that the given verbosity level is valid.
     """
-    if verbosity_level == "debug":
-        raise NotImplementedError
-    if verbosity_level == "developer":
-        raise NotImplementedError
     verbosity_level = t.cast(_VerbosityLevelString, verbosity_level)
     if (
         not verbosity_level.startswith("info")
@@ -103,3 +114,12 @@ def _check_verbosity_level(
         and not verbosity_level.startswith("developer")
     ):
         raise ValueError("The only valid verbosity level currently available is info")
+
+    if verbosity_level == "debug" or verbosity_level == "developer":
+        logger.warning(f"Unsupported verbosity level requested. setting to: info")
+        return "info"
+    return "info"
+
+
+    
+     

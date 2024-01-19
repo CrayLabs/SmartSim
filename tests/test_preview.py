@@ -121,15 +121,3 @@ def test_verbosity_level_type_error():
     )
 
 
-def test_verbosity_level_debug_error():
-    exp_name = "test_output_format"
-    exp = Experiment(exp_name)
-    with pytest.raises(NotImplementedError):
-        exp.preview(verbosity_level="debug")
-
-
-def test_verbosity_level_developer_error():
-    exp_name = "test_output_format"
-    exp = Experiment(exp_name)
-    with pytest.raises(NotImplementedError):
-        exp.preview(verbosity_level="developer")

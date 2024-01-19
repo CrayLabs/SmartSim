@@ -814,8 +814,9 @@ class Experiment:
         A filename is required if an output format is specified. If no output
         format is set, the preview will be output to stdout. Defaults to None.
         :type output_type: str
-        :param output_filename: Specify name of path to write preview data to.
-        Only needed when an output format has been specified. Defaults to None.
+        :param output_filename: Specify name of file and extensions to write 
+        preview data to. Only needed when an output format has been specified.
+        Defaults to None.
         :type output_filename: str
         :param verbosity level: the verbosity level.
         info: Display User defined fields and entities
