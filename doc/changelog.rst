@@ -19,13 +19,16 @@ To be released at some future point in time
 
 Description
 
-- Drop Cobalt support
+- Updated GitHub actions to latest versions in CI/CD
+- Dropped Cobalt support
 - Override the sphinx-tabs extension background color
 - Updated SmartSim's machine learning backends
 - Added ONNX support for Python 3.10
 
 Detailed Notes
 
+- Some actions in the current GitHub CI/CD workflows were outdated. They were
+  replaced with their latest versions. (SmartSim-PR446_)
 - As the Cobalt workload manager is not used on any system we are aware of,
   its support in SmartSim was terminated and classes such as `CobaltLauncher` have
   been removed. (SmartSim-PR448_)
@@ -38,6 +41,7 @@ Detailed Notes
   (SmartSim-PR451_)
 
 
+.. _SmartSim-PR446: https://github.com/CrayLabs/SmartSim/pull/446
 .. _SmartSim-PR448: https://github.com/CrayLabs/SmartSim/pull/448
 .. _SmartSim-PR451: https://github.com/CrayLabs/SmartSim/pull/451
 .. _SmartSim-PR453: https://github.com/CrayLabs/SmartSim/pull/453
