@@ -34,6 +34,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
     DbMemoryCollector,
     JobEntity,
+    LogSink,
     redis,
 )
 from smartsim.error import SmartSimError
@@ -82,7 +83,7 @@ async def test_dbmemcollector_prepare(mock_entity):
     """Ensure that collector preparation succeeds when expected"""
     entity = mock_entity()
 
-    collector = DbMemoryCollector(entity)
+    collector = DbMemoryCollector(entity, LogSink())
     await collector.prepare()
     assert collector._client
 
@@ -99,7 +100,7 @@ async def test_dbmemcollector_prepare_fail(
         ctx.setattr(redis, "Redis", lambda host, port: None)
 
         with pytest.raises(SmartSimError) as ex:
-            collector = DbMemoryCollector(entity)
+            collector = DbMemoryCollector(entity, LogSink())
             await collector.prepare()
 
         assert not collector._client
@@ -120,7 +121,7 @@ async def test_dbmemcollector_prepare_fail_dep(
         # mock raising exception on connect attempts to test err handling
         raise redis.ConnectionError("mock connection failure")
 
-    collector = DbMemoryCollector(entity)
+    collector = DbMemoryCollector(entity, LogSink())
     with monkeypatch.context() as ctx:
         ctx.setattr(redis, "Redis", raiser)
         with pytest.raises(SmartSimError) as ex:
@@ -139,7 +140,7 @@ async def test_dbmemcollector_collect(
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
-    collector = DbMemoryCollector(entity)
+    collector = DbMemoryCollector(entity, LogSink())
     with monkeypatch.context() as ctx:
         m1, m2, m3 = 12345, 23456, 34567
         mock_data = {
@@ -162,7 +163,7 @@ async def test_dbmemcollector_integration(mock_entity, local_db):
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])
 
-    collector = DbMemoryCollector(entity)
+    collector = DbMemoryCollector(entity, LogSink())
 
     await collector.prepare()
     await collector.collect()
@@ -181,7 +182,7 @@ async def test_dbconncollector_collect(
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
-    collector = DbConnectionCollector(entity)
+    collector = DbConnectionCollector(entity, LogSink())
     with monkeypatch.context() as ctx:
         a1, a2 = "127.0.0.1:1234", "127.0.0.1:2345"
         mock_data = [
@@ -222,8 +223,8 @@ def test_collector_manager_add(mock_entity):
     """Ensure that collector manager add & clear work as expected"""
     entity1 = mock_entity()
 
-    con_col = DbConnectionCollector(entity1)
-    mem_col = DbMemoryCollector(entity1)
+    con_col = DbConnectionCollector(entity1, LogSink())
+    mem_col = DbMemoryCollector(entity1, LogSink())
 
     manager = CollectorManager()
 
@@ -244,7 +245,7 @@ def test_collector_manager_add(mock_entity):
 
     # create a collector for another entity
     entity2 = mock_entity()
-    con_col2 = DbConnectionCollector(entity2)
+    con_col2 = DbConnectionCollector(entity2, LogSink())
 
     # ensure collectors w/same type for new entities are not treated as dupes
     manager.add(con_col2)
@@ -266,8 +267,8 @@ def test_collector_manager_add_multi(mock_entity):
     """Ensure that collector manager multi-add works as expected"""
     entity = mock_entity()
 
-    con_col = DbConnectionCollector(entity)
-    mem_col = DbMemoryCollector(entity)
+    con_col = DbConnectionCollector(entity, LogSink())
+    mem_col = DbMemoryCollector(entity, LogSink())
     manager = CollectorManager()
 
     # add multiple items at once
@@ -276,8 +277,8 @@ def test_collector_manager_add_multi(mock_entity):
     assert len(manager.all_collectors) == 2
 
     # ensure multi-add does not produce dupes
-    con_col2 = DbConnectionCollector(entity)
-    mem_col2 = DbMemoryCollector(entity)
+    con_col2 = DbConnectionCollector(entity, LogSink())
+    mem_col2 = DbMemoryCollector(entity, LogSink())
 
     manager.add_all([con_col2, mem_col2])
     assert len(manager.all_collectors) == 2
@@ -289,9 +290,9 @@ async def test_collector_manager_collect(mock_entity, local_db):
     entity1 = mock_entity(port=local_db.ports[0])
     entity2 = mock_entity(port=local_db.ports[0])
 
-    con_col1 = DbConnectionCollector(entity1)
-    mem_col1 = DbMemoryCollector(entity1)
-    mem_col2 = DbMemoryCollector(entity2)
+    con_col1 = DbConnectionCollector(entity1, LogSink())
+    mem_col1 = DbMemoryCollector(entity1, LogSink())
+    mem_col2 = DbMemoryCollector(entity2, LogSink())
 
     manager = CollectorManager()
     manager.add_all([con_col1, mem_col1, mem_col2])

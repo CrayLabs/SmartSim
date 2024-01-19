@@ -25,7 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import abc
 import argparse
+import asyncio
 import collections
+import datetime
 import itertools
 import json
 import logging
@@ -75,6 +77,27 @@ _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
 logger = get_logger(__name__)
 
 
+class Sink(abc.ABC):
+    @abc.abstractmethod
+    def save(self, **kwargs: t.Any) -> None:
+        ...
+
+
+class FileSink(Sink):
+    def __init__(self, entity: JobEntity, sub: str) -> None:
+        self._path = pathlib.Path(entity.path) / sub
+
+    def save(self, **kwargs: t.Any) -> None:
+        with open(self._path, "a+", encoding="utf-8") as sink_fp:
+            values = ",".join(kwargs.values()) + "\n"
+            sink_fp.write(values)
+
+
+class LogSink(Sink):
+    def save(self, **kwargs: t.Any) -> None:
+        logger.info(",".join(map(str, kwargs.values())))
+
+
 class Collector(abc.ABC):
     """Base class for metrics collectors"""
 
@@ -98,14 +121,18 @@ class Collector(abc.ABC):
     async def collect(self) -> None:
         """Execute metric collection against a producer"""
 
+    @staticmethod
+    def timestamp() -> int:
+        return int(datetime.datetime.timestamp(datetime.datetime.now()))
 
 class DbCollector(Collector):
     """A base class for collectors that retrieve statistics from an orchestrator"""
 
-    def __init__(self, entity: JobEntity) -> None:
+    def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the collector"""
         super().__init__(entity)
         self._client: t.Optional[redis.Redis[bytes]] = None
+        self._sink = sink
 
     async def _configure_client(self) -> None:
         """Configure and connect to the target database"""
@@ -146,6 +173,8 @@ class DbMemoryCollector(DbCollector):
         db_info = await self._client.info()
         self._value = db_info
 
+        self._sink.save(**db_info, ts=self.timestamp())
+
     @property
     def keys(self) -> t.Iterable[str]:
         return ["used_memory", "used_memory_peak", "total_system_memory"]
@@ -169,7 +198,13 @@ class DbConnectionCollector(DbCollector):
             return
 
         client_list = await self._client.client_list()
-        self._value = [{"addr": item["addr"]} for item in client_list]
+
+        now_ts = self.timestamp()  # ensure all results have the same timestamp
+        addresses = [{"addr": item["addr"]} for item in client_list]
+        self._value = addresses
+
+        for v in addresses:
+            self._sink.save(**v, ts=now_ts)
 
     @property
     def value(self) -> t.List[str]:
@@ -212,6 +247,15 @@ class CollectorManager:
         """Execute collection for all managed collectors"""
         for collector in self.all_collectors:
             await collector.collect()
+
+    @classmethod
+    def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
+        if entity.is_db:
+            return [
+                DbMemoryCollector(entity, FileSink(entity, "mem.csv")),
+                DbConnectionCollector(entity, FileSink(entity, "conn.csv")),
+            ]
+        return []
 
     @property
     def all_collectors(self) -> t.Iterable[Collector]:
@@ -476,6 +520,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "lsf": LSFLauncher,
             "local": LocalLauncher,
         }
+        self._collector = CollectorManager()
 
     def init_launcher(self, launcher: str) -> Launcher:
         """Initialize the controller with a specific type of launcher.
@@ -536,6 +581,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 entity.path = str(exp_dir)
 
                 self._tracked_jobs[entity.key] = entity
+
+                collectors = CollectorManager.find_collectors(entity)
+                self._collector.add_all(collectors)
+
                 track_event(
                     run.timestamp,
                     entity.task_id,
@@ -636,6 +685,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         # consider not using name to avoid collisions
         names = {entity.name: entity for entity in entity_map.values()}
+
+        # trigger all metric collection for the timestep
+        asyncio.run(self._collector.collect())
 
         if names:
             step_updates = self._launcher.get_step_update(list(names.keys()))
