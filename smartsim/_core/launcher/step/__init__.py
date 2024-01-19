@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .alpsStep import AprunStep
-from .cobaltStep import CobaltBatchStep
 from .localStep import LocalStep
 from .lsfStep import BsubBatchStep, JsrunStep
 from .mpiStep import MpiexecStep, MpirunStep, OrterunStep

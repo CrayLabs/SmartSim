@@ -49,9 +49,9 @@ class DBObject:
     ) -> None:
         self.name = name
         self.func = func
-        self.file: t.Optional[Path] = (
-            None  # Need to have this explicitly to check on it
-        )
+        self.file: t.Optional[
+            Path
+        ] = None  # Need to have this explicitly to check on it
         if file_path:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)

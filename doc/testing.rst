@@ -78,9 +78,6 @@ Examples of how to obtain allocations on systems with the launchers:
   # for PBSPro (with aprun)
   qsub -l select=4 -l place=scatter -l walltime=00:10:00 -q queue
 
-  # for Cobalt (with aprun)
-  qsub -n 4 -t 00:10:00 -A account -q queue -I
-
   # for LSF (with jsrun)
   bsub -Is -W 00:30 -nnodes 4 -P project $SHELL
 
@@ -91,7 +88,6 @@ launcher environment variable: ``SMARTSIM_TEST_LAUNCHER`` to one
 of the following values
 
  - slurm
- - cobalt
  - pbs
  - lsf
  - local
@@ -273,4 +269,3 @@ The actions are defined using yaml files are are located in the
 Each pull request, push and merge the test suite for SmartRedis
 and SmartSim are run. For SmartSim, this is the ``local`` test suite
 with the local launcher.
-
