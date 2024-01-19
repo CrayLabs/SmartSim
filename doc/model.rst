@@ -7,10 +7,10 @@ Overview
 SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. ``Models`` can be launched with
-other SmartSim entities and Orchestrators to build AI-enabled workflows.
-With the SmartSim client (:ref:`SmartRedis<dead_link>`), data can be transferred out of the ``Model``
-into the standalone ``Orchestrator`` for use in an ML model (TF, TF-lite, PyTorch, or ONNX), online
-training process, or additional ``Model`` applications. SmartRedis is available in
+other SmartSim ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
+With the SmartSim ``Client`` (:ref:`SmartRedis<dead_link>`), data can be transferred out of the ``Model``
+into the ``Orchestrator`` for use in an ML Model (TF, TF-lite, PyTorch, or ONNX), online
+training process, or additional ``Model`` applications. SmartSim ``Clients`` (SmartRedis) are available in
 Python, C, C++, or Fortran.
 
 To initialize a SmartSim ``Model``, use the ``Experiment.create_model()`` API function.
@@ -21,16 +21,16 @@ compute resource requirements, and application command-line arguments.
 
 A user can implement the use of an ``Orchestrator`` within a ``Model`` through **two** strategies:
 
-- :ref:`Connect to an Orchestrator launched prior to the Model<std_model_doc>`
+- :ref:`Connect to an Orchestrator launched separate to the Model<std_model_doc>`
    When a ``Model`` is launched, it does not use or share compute
    resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
    Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
-   The ``Model`` can connect via a SmartSim client to a launched standalone ``Orchestrator``.
+   The ``Model`` can connect via a SmartSim ``Client`` to a launched standalone ``Orchestrator``.
 
 - :ref:`Connect to an Orchestrator colocated with the Model<colo_model_doc>`
    When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
    nodes prior to the ``Models`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
-   via a SmartSim client.
+   via a SmartSim ``Client``.
 
 Once a ``Model`` instance has been initialized, users have access to
 the :ref:`Model API<model_api>` functions to further configure the ``Model``.
@@ -41,11 +41,11 @@ The Models functions allow users to:
 - :ref:`Attach a ML model to the SmartSim Model instance<ai_model_doc>`
 - :ref:`Attach a TorchScript function to the SmartSim Model instance<TS_doc>`
 - :ref:`Register communication with another SmartSim Model instances<dead_link>`
-- :ref:`Enable SmartSim Model key collision prevention<dead_link>`
+- :ref:`Enable SmartSim Model key collision prevention<model_key_collision>`
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications. Additionally, ``Models`` can be launched individually
-or as a group via an ``Ensemble``.
+or as a group via an :ref:`Ensemble<dead_link>`.
 
 ==============
 Initialization
@@ -714,6 +714,7 @@ In the above ``smartsim_model.add_script()`` code snippet, we offer the followin
 When the model is started via ``Experiment.start()``, the TorchScript will be loaded to the
 orchestrator that is launched prior to the start of the model.
 
+.. _model_key_collision:
 =========================
 Data Collision Prevention
 =========================
@@ -722,29 +723,51 @@ tensors in the same script that placed them and retrieve tensors placed by other
 the orchestrator. The following subsections provide for enabling SmartRedis data structure
 prefixing as well as interacting with the prefixed data.
 
-Enable and Disable
-==================
-Data structure prefixing in SmartSim provides an organized way to prevent naming conflicts and differentiate
-data structures produced by models or ensembles within a SmartSim simulation. It involves prepending the
-Model `name` to the data structure `name` when sending data to the orchestrator. The activation can
-be configured in two ways:
+Enabling and Disabling
+======================
+SmartSim allows users to enable and disable tensor, dataset, and list prefixing on a
+``Model`` from inside the ``Experiment`` driver script and application script. Additionally, ML
+model and script prefixing may be enabled and disabled from within the application script.
+SmartSim also supports toggling between data structure prefixing in the same application script.
 
-- Activate tensor, dataset and aggregation list prefixing in the **driver script**
-- Activate tensor, dataset, aggregation list, ml model and script prefixing in the **application script**
+To enable key prefixing on tensors, datasets, and lists from within the ``Experiment`` driver
+script, the function ``Model.enable_key_prefixing()`` must be used on the designated ``Model``.
+This function will instruct SmartSim to turn on prefixing for tensors, datasets, and lists
+sent to the ``Orchestrator`` from within the application script. Additionally, SmartSim
+provides ``Client`` functions to disable and enable tensors, datasets, and lists prefixing
+within the application script:
 
-Navigate through the data structure tabs below to learn how to activate for each.
+- Tensor: ``Client.use_tensor_ensemble_prefix()``
+- Dataset: ``Client.use_dataset_ensemble_prefix()``
+- Aggregation lists: ``Client.use_list_ensemble_prefix()``
+
+The function above accept a boolean of `True` or `False` and may be enabled and disabled
+throughout the application script. However, when enabled, the ``Model`` `name` is prepended
+to the associated data structure `name` and stored in the ``Orchestrator``.
+
+To enable key prefixing on ML models and scripts from within the ``Model`` application script,
+a user must use the function ``Client.use_model_ensemble_prefix()`` to specify `True` or `False`.
+This will ensure that the ``Model`` `name` is prepended to the ML model or script
+`name` when sent to the ``Orchestrator``.
+
+.. warning::
+    To have access to any of the prefixing ``Client`` functions, prefixing must be enabled on the
+    ``Model`` through ``Model.enable_key_prefixing()`` in the driver script.
+
+In the following tabs we provide snippets of application code to demonstrate activating and
+deactivating prefixing for tensors, datasets, lists, ML models and scripts
 
 .. tabs::
 
     .. group-tab:: Tensor
         **Activate Tensor Prefixing in the Driver Script**
 
-        Users can enable tensor prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
-        function. This functionality ensures that the ``Model`` `name` is prepended to the tensor `name` when
-        sending data to the orchestrator.
+        To activate prefixing on a ``Model`` in the driver script, a user must use the function
+        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
+        is prepended to each tensor `name` sent to the ``Orchestrator`` from within the ``Model``.
 
-        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate tensor
-        prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
+        In the driver script snippet below, we take an initialized ``Model`` and activate tensor
+        prefixing through the ``enable_key_prefixing()`` function:
 
         .. code-block:: python
 
@@ -753,60 +776,62 @@ Navigate through the data structure tabs below to learn how to activate for each
 
             # Create a Model instance named 'model'
             model = exp.create_model("model_name", model_settings)
-            # Enable tensor prefixing
+            # Enable tensor prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In application script of `model`, two tensors named `tensor_1` and `tensor_2` are sent to the orchestrator.
-        The contents of the orchestrator are as follows:
+        In executable application script of `model`, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
+        The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
-            1) model_name.tensor_1
-            2) model_name.tensor_2
+            1) "model_name.tensor_1"
+            2) "model_name.tensor_2"
+
+        You will notice that the ``Model`` name `model_name` has been prefixed to each tensor `name`
+        and stored in the ``Orchestrator``.
 
         **Activate Tensor Prefixing in the Application Script**
 
-        Users can enable tensor prefixing on a SmartRedis Client by utilizing the ``Client.use_tensor_ensemble_prefix()``
-        function within the application script. This functionality ensures that the ``Model`` `name`
-        is prepended to the tensor `name` when sending data to the orchestrator using
-        ``Client.put_tensor()``, ``Client.rename_tensor()`` or ``Client.copy_tensor()``.
+        Users can further configure tensor prefixing in the application script by using
+        the ``Client`` function ``use_tensor_ensemble_prefixing()``. By specifying a boolean
+        value to the function, users can turn prefixing on and off throughout the application
+        code.
 
-        .. warning::
-            SmartSim users do not have access to ``Client.use_tensor_ensemble_prefix()`` unless prefixing is
-            enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
-
-        In the following example, we demonstrate a ``Client`` instance named `client`
-        toggling tensor prefixing between `True` and `False` using the ``use_tensor_ensemble_prefix()`` method.
+        In the application snippet below, we demonstrate enabling and disabling tensor prefixing:
 
         .. code-block:: python
 
             # Disable key prefixing
             client.use_tensor_ensemble_prefix(False)
-            # Place a tensor in the orchestrator
-            client.put_tensor("tensor_1", np.array([5, 6, 7, 8]))
+            # Place a tensor in the Orchestrator
+            client.put_tensor("tensor_1", np.array([1, 2, 3, 4]))
             # Enable key prefixing
             client.use_tensor_ensemble_prefix(True)
-            # Copy the tensor to a different tensor
-            client.copy_tensor("tensor_1", "copied_tensor")
+            # Place a tensor in the Orchestrator
+            client.put_tensor("tensor_2", np.array([5, 6, 7, 8]))
 
-        In the above application script, the `client` transmits a tensor named `tensor_1`
-        to the orchestrator. Prefixing is deactivated when sending `tensor_1` and reactivated when copying
-        `tensor_1` to the new data source named `copied_tensor`. The orchestrator's contents are as follows:
+        In application script, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
+        The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
-            1) tensor_1
-            2) model_name.copied_tensor
+            1) "tensor_1"
+            2) "model_name.tensor_2"
 
-    .. group-tab:: DataSet
+        You will notice that the ``Model`` name `model_name` is **not** prefixed to `tensor_1` since
+        we disabled tensor prefixing before sending the tensor to the ``Orchestrator``. However,
+        when we enabled tensor prefixing and sent the second tensor, the ``Model`` name was prefixed
+        to `tensor_2`.
+
+    .. group-tab:: Dataset
         **Activate Dataset Prefixing in the Driver Script**
 
-        Users can enable dataset prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
-        function. This functionality ensures that the ``Model`` `name` is prepended to the dataset `name` when sending
-        the dataset to the orchestrator.
+        To activate prefixing on a ``Model`` in the driver script, a user must use the function
+        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
+        is prepended to each dataset `name` sent to the ``Orchestrator`` from within the ``Model``.
 
-        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate dataset
-        prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
+        In the driver script snippet below, we take an initialized ``Model`` and activate dataset
+        prefixing through the ``enable_key_prefixing()`` function:
 
         .. code-block:: python
 
@@ -815,11 +840,11 @@ Navigate through the data structure tabs below to learn how to activate for each
 
             # Create a Model instance named 'model'
             model = exp.create_model("model_name", model_settings)
-            # Enable tensor prefixing
+            # Enable tensor prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In application script of `model`, two datasets with data named `dataset_1` and `dataset_2` are sent to the orchestrator.
-        Each contain a unique tensor. The contents of the orchestrator are as follows:
+        In executable application script of `model`, two datasets named `dataset_1` and `dataset_2` are sent to a launched ``Orchestrator``.
+        The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
@@ -828,42 +853,31 @@ Navigate through the data structure tabs below to learn how to activate for each
             3) "model_name.{dataset_2}.dataset_tensor_2"
             4) "model_name.{dataset_2}.meta"
 
-        .. note::
-            Notice that the dataset tensors are also prefixed, this is because ``Model.enable_key_prefixing()``
-            enables prefixing for tensors, datasets and lists.
+        You will notice that the ``Model`` name `model_name` has been prefixed to each dataset `name`
+        and stored in the ``Orchestrator``.
 
         **Activate Dataset Prefixing in the Application Script**
 
-        Users can activate dataset prefixing on a SmartRedis ``Client`` by employing the
-        ``Client.use_dataset_ensemble_prefix()`` function in the application script. This feature
-        guarantees that the ``Models`` `name` is added as a prefix to the dataset `name` when transmitting datasets
-        to the orchestrator through functions like ``Client.put_dataset()``, ``Client.rename_dataset()``,
-        or ``Client.copy_dataset()``.
+        Users can further configure dataset prefixing in the application script by using
+        the ``Client`` function ``use_dataset_ensemble_prefixing()``. By specifying a boolean
+        value to the function, users can turn prefixing on and off throughout the application
+        code.
 
-        .. warning::
-            SmartSim users do not have access to ``Client.use_dataset_ensemble_prefix()`` unless prefixing is
-            enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
-
-        In the following example, we demonstrate using a ``Client`` instance named `client` to
-        toggle dataset prefixing between `True` and `False` using the ``use_dataset_ensemble_prefix()`` method.
+        In the application snippet below, we demonstrate enabling and disabling dataset prefixing:
 
         .. code-block:: python
 
             # Disable key prefixing
             client.use_dataset_ensemble_prefix(False)
-            # Build the dataset
-            d = Dataset("dataset_1")
-            d.add_tensor("dataset_tensor_1", np.array([5, 6, 7, 8]))
-            # Place dataset in orchestrator
-            client.put_dataset(d)
+            # Place a tensor in the Orchestrator
+            client.put_dataset(dataset_1)
             # Enable key prefixing
             client.use_dataset_ensemble_prefix(True)
-            # Copy the dataset to a different location with prefixing enabled
-            client.copy_dataset("test_dataset", "copied_dataset")
+            # Place a tensor in the Orchestrator
+            client.put_dataset(dataset_2)
 
-        In the above application script, the `client` transmits a dataset named `dataset_1`
-        to the orchestrator. Prefixing is deactivated when sending `dataset_1` and reactivated when copying
-        `dataset_1` to the new data source named `copied_dataset`. The orchestrator's contents are as follows:
+        In application script, two datasets named `dataset_1` and `dataset_2`, respective to their object names.
+        We then send them to a launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
@@ -872,15 +886,20 @@ Navigate through the data structure tabs below to learn how to activate for each
             3) "model_name.{copied_dataset}.dataset_tensor_1"
             4) "model_name.{copied_dataset}.meta"
 
+        You will notice that the ``Model`` name `model_name` is **not** prefixed to `dataset_1` since
+        we disabled dataset prefixing before sending the dataset to the ``Orchestrator``. However,
+        when we enabled dataset prefixing and sent the second dataset, the ``Model`` name was prefixed
+        to `dataset_2`.
+
     .. group-tab:: Agg List
-        **Activate List Prefixing in the Driver Script**
+        **Activate Aggregation List Prefixing in the Driver Script**
 
-        Users can enable list prefixing on a SmartSim ``Model`` by utilizing the ``Model.enable_key_prefixing()``
-        function. This functionality ensures that the ``Model`` `name` is prepended to the list `name` when
-        creating a list to send to the orchestrator.
+        To activate prefixing on a ``Model`` in the driver script, a user must use the function
+        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
+        is prepended to each list `name` sent to the ``Orchestrator`` from within the ``Model``.
 
-        In the example below, we illustrate how to create a ``Model`` instance named `model` and activate list
-        prefixing by setting it to `True` using the ``enable_key_prefixing()`` method.
+        In the driver script snippet below, we take an initialized ``Model`` and activate dataset
+        prefixing through the ``enable_key_prefixing()`` function:
 
         .. code-block:: python
 
@@ -889,11 +908,11 @@ Navigate through the data structure tabs below to learn how to activate for each
 
             # Create a Model instance named 'model'
             model = exp.create_model("model_name", model_settings)
-            # Enable tensor prefixing
+            # Enable tensor prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In application script of `model`, a list with an attached dataset is sent to the orchestrator. The dataset
-        is stored in the orchestrator as well. The contents of the orchestrator are as follows:
+        In executable application script of `model`, a list named `dataset_list` is sent to a launched ``Orchestrator``.
+        The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
@@ -901,142 +920,121 @@ Navigate through the data structure tabs below to learn how to activate for each
             2) "model_name.{copied_dataset}.dataset_tensor_1"
             3) "model_name.{copied_dataset}.meta"
 
-        .. note::
-            The lists contents are also prefixed when sent to the orchestrator since ``Model.enable_key_prefixing()``
-            activates prefixing for tensors, datasets and lists.
+        You will notice that the ``Model`` name `model_name` has been prefixed to the list `name`
+        and stored in the ``Orchestrator``.
 
-        **Activate List Prefixing in the Application Script**
+        **Activate List Aggregation Prefixing in the Application Script**
 
-        Users can enable list prefixing on a SmartRedis Client through the ``Client.use_list_ensemble_prefix()``
-        function within the application script. This functionality ensures that the ``Model`` `name`
-        is prepended to the list `name` when using Client methods:
-        ``Client.append_to_list()``, ``Client.rename_list()`` or ``Client.copy_list()``.
+        Users can further configure list prefixing in the application script by using
+        the ``Client`` function ``use_list_ensemble_prefixing()``. By specifying a boolean
+        value to the function, users can turn prefixing on and off throughout the application
+        code.
 
-        .. warning::
-            SmartSim users do not have access to ``Client.use_list_ensemble_prefix()`` unless prefixing is
-            enabled on the ``Model`` via ``Model.enable_key_prefixing()``.
-
-        In the following example, we demonstrate using a ``Client`` instance named `client` to
-        toggle list prefixing between `True` and `False` using the ``use_list_ensemble_prefix()`` method.
-        To begin, we disable list prefixing and send an aggregation list to the orchestrator:
+        In the application snippet below, we demonstrate enabling and disabling dataset prefixing:
 
         .. code-block:: python
 
-            # Disable list prefixing
+            # Disable key prefixing
             client.use_list_ensemble_prefix(False)
-            # Build the dataset
-            d = Dataset("dataset")
-            d.add_tensor("dataset_tensor", np.array([1, 2, 3, 4]))
-            # Place dataset in orchestrator
-            client.put_dataset(d)
-            # Create list, append dataset and store in orchestrator
-            client.append_to_list("dataset_list", d)
+            # Place a tensor in the Orchestrator
+            client.put_dataset(dataset_1)
+            # Place a tensor in the Orchestrator
+            client.append_to_list("list_1", dataset_1)
+            # Enable key prefixing
+            client.use_dataset_ensemble_prefix(True)
+            # Place a tensor in the Orchestrator
+            client.put_dataset(dataset_2)
+            # Place a tensor in the Orchestrator
+            client.append_to_list("list_2", dataset_2)
 
-        We retrieve the datasets in the list by specifying the list name `"dataset_list_copied"`
-        to ``Client.get_datasets_from_list()``. We then log the dataset `name` and tensor `name`:
-
-        .. code-block:: python
-
-            dataset_list = client.get_datasets_from_list("dataset_list")
-            client.log_data(LLInfo, f"The dataset name is: {dataset_list[0].get_name()}")
-            client.log_data(LLInfo, f"The dataset tensor name is: {dataset_list[0].get_tensor_names()[0]}")
-
-        The following messages are logged:
+        In application script, two lists named `list_1` and `list_2`. We then send them to a
+        launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
-            Default@16-05-25:The dataset name is: dataset
-            Default@16-05-25:The dataset tensor name is: dataset_tensor
+            1) "list_1"
+            2) "{dataset_1}.meta"
+            3) "{dataset_1}.dataset_tensor_1"
+            4) "model_name.list_2"
+            5) "model_name.{dataset_2}.meta"
+            6) "model_name.{dataset_2}.dataset_tensor_2"
 
-        In the example, we enable list prefixing and use the ``Client.copy_list()`` method to create
-        a prefixed list instance in the orchestrator:
-
-        .. code-block:: python
-
-            client.use_list_ensemble_prefix(True)
-            client.copy_list("dataset_list", "dataset_list_copied")
-
-        We retrieve the datasets in the list by specifying the list name `"model_name.dataset_list_copied"`
-        to ``Client.get_datasets_from_list()``. We then log the dataset name and tensor name:
-
-        .. code-block:: python
-
-            dataset_list_copy = client.get_datasets_from_list("model_name.dataset_list_copied")
-            client.log_data(LLInfo, f"The copied dataset name is: {dataset_list_copy[0].get_name()}")
-            client.log_data(LLInfo, f"The copied dataset tensor name is: {dataset_list_copy[0].get_tensor_names()[0]}")
-
-        The following messages are logged:
-
-        .. code-block:: bash
-
-            Default@16-05-25:The copied dataset name is: dataset
-            Default@16-05-25:The copied dataset tensor name is: dataset_tensor
-
-        From the matching log messages, we can validate that the list was copied to a prefixed list.
-        For further support, the contents of the orchestrator after application execution is shown below:
-
-        .. code-block:: bash
-
-            1) "model_name.dataset_list_copied"
-            2) "model_name.{dataset}.meta"
-            3) "dataset_list"
-            4) "model_name.{dataset}.dataset_tensor"
+        You will notice that the ``Model`` name `model_name` is **not** prefixed to `list_1` since
+        we disabled list prefixing before sending the list to the ``Orchestrator``. However,
+        when we enabled list prefixing and sent the second list, the ``Model`` name was prefixed
+        to `list_2`.
 
     .. group-tab:: ML Model
-        **Activate ML Model Prefixing in the Application Script**
+        **Activate ML model Prefixing in the Application Script**
 
-        Users can enable ML Model prefixing on a SmartRedis Client through the ``Client.use_model_ensemble_prefix()``
-        function within the application script. This feature ensures that the ``Models`` name is
-        added as a prefix to the ML Model's name when using the ``Client.set_model()`` method.
+        Users can configure ML model prefixing in the application script by using
+        the ``Client`` function ``use_model_ensemble_prefixing()``. By specifying a boolean
+        value to the function, users can turn prefixing on and off throughout the application
+        code.
 
-        .. note::
-            To use ``Client.use_model_ensemble_prefix()``, prefixing must be enabled on the Model
-            in the driver script via ``Model.enable_key_prefixing()``.
-
-        Here's a small example demonstrating how to enable ML Model prefixing in the SmartRedis
-        client and then send an ML Model to the orchestrator:
+        In the application snippet below, we demonstrate enabling and disabling dataset prefixing:
 
         .. code-block:: python
 
             # Enable ml model prefixing
-            client.use_model_ensemble_prefix(True)
+            client.use_model_ensemble_prefix(False)
             # Send ML model to the orchestrator
             client.set_model(
-                "mnist_cnn", serialized_model, "TF", device="CPU", inputs=inputs, outputs=outputs
+                "ml_model_1", serialized_model_1, "TF", device="CPU", inputs=inputs, outputs=outputs
+            )
+            # Enable ml model prefixing
+            client.use_model_ensemble_prefix(True)
+            # Send prefixed ML model to the orchestrator
+            client.set_model(
+                "ml_model_2", serialized_model_2, "TF", device="CPU", inputs=inputs, outputs=outputs
             )
 
-        The contents of the orchestrator after SmartSim Model completion are as follows:
+        In application script, two ML models named `ml_model_1` and `ml_model_2` are sent
+        to a launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
-            1) "model_name.mnist_cnn"
+            1) "ml_model_1"
+            2) "model_name.ml_model_2"
+
+        You will notice that the ``Model`` name `model_name` is **not** prefixed to `ml_model_1` since
+        we disabled ML model prefixing before sending the ML model to the ``Orchestrator``. However,
+        when we enabled ML model prefixing and sent the second ML model, the ``Model`` name was prefixed
+        to `ml_model_2`.
 
     .. group-tab:: Script
         **Activate Script Prefixing in the Application Script**
 
-        Users can enable script prefixing on a SmartRedis Client through the ``Client.use_model_ensemble_prefix()``
-        function within the application script. This feature ensures that the ``Models`` name is
-        added as a prefix to the Script's name when using the ``Client.set_function()`` method.
+        Users can configure script prefixing in the application script by using
+        the ``Client`` function ``use_model_ensemble_prefixing()``. By specifying a boolean
+        value to the function, users can turn prefixing on and off throughout the application
+        code.
 
-        .. note::
-            To use ``Client.use_model_ensemble_prefix()``, prefixing must be enabled on the Model
-            in the driver script via ``Model.enable_key_prefixing()``.
-
-        Here's a small example demonstrating how to enable script prefixing in the SmartRedis
-        client and then send an script to the orchestrator:
+        In the application snippet below, we demonstrate enabling and disabling dataset prefixing:
 
         .. code-block:: python
 
             # Enable script prefixing
+            client.use_model_ensemble_prefix(False)
+            # Store a script in the orchestrator
+            client.set_function("script_1", script_1)
+            # Enable script prefixing
             client.use_model_ensemble_prefix(True)
-            # Store prefixed script in the orchestrator
-            client.set_function("normalizer", normalize)
+            # Store a prefixed script in the orchestrator
+            client.set_function("script_2", script_2)
 
-        The contents of the orchestrator after SmartSim Model completion are as follows:
+        In application script, two ML models named `script_1` and `script_2` are sent
+        to a launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
 
-            1) "model_name.normalizer"
+            1) "script_1"
+            2) "model_name.script_2"
+
+        You will notice that the ``Model`` name `model_name` is **not** prefixed to `script_1` since
+        we disabled script prefixing before sending the script to the ``Orchestrator``. However,
+        when we enabled script prefixing and sent the second script, the ``Model`` name was prefixed
+        to `script_2`.
 
 Interact
 ========
