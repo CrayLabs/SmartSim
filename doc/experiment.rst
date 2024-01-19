@@ -38,8 +38,8 @@ available compute resources on the system.
 Each launcher supports specific types of ``RunSettings``.
 
    - :ref:`SrunSettings <srun_api>` for Slurm
-   - :ref:`AprunSettings <aprun_api>` for PBSPro and Cobalt
-   - :ref:`MpirunSettings <openmpi_run_api>` for OpenMPI with `mpirun` on PBSPro, Cobalt, LSF, and Slurm
+   - :ref:`AprunSettings <aprun_api>` for PBSPro
+   - :ref:`MpirunSettings <openmpi_run_api>` for OpenMPI with `mpirun` on PBSPro, LSF, and Slurm
    - :ref:`JsrunSettings <jsrun_api>` for LSF
 
 These settings can be manually specified by the user, or auto-detected by the
@@ -181,7 +181,6 @@ workload manager and available compute resources.
 
   - :ref:`SbatchSettings <sbatch_api>` for Slurm
   - :ref:`QsubBatchSettings <qsub_api>` for PBSPro
-  - :ref:`CobaltBatchSettings <cqsub_api>` for Cobalt
   - :ref:`BsubBatchSettings <bsub_api>` for LSF
 
 If it only passed ``RunSettings``, ``Ensemble``, objects will require either

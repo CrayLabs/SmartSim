@@ -34,6 +34,10 @@ on:
     branches:
       - develop
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
   HOMEBREW_NO_AUTO_UPDATE: "ON"
@@ -54,7 +58,6 @@ jobs:
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
         py_v: [3.8, 3.9, '3.10'] # Python versions
-
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
@@ -107,12 +110,7 @@ jobs:
 
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: (matrix.py_v != '3.10')
         run: smart build --device cpu --onnx -v
-
-      - name: Install ML Runtimes with Smart (with pt and tf support)
-        if: (matrix.py_v == '3.10')
-        run: smart build --device cpu -v
 
       - name: Run mypy
         run: |

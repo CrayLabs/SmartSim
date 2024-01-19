@@ -93,12 +93,13 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def snooze_nonblocking(test_dir: str, max_delay: int = 20, post_data_delay: int = 2):
-    telmon_subdir = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+def snooze_nonblocking(
+    test_dir: pathlib.Path, max_delay: int = 20, post_data_delay: int = 2
+):
     # let the non-blocking experiment complete.
     for _ in range(max_delay):
         time.sleep(1)
-        if telmon_subdir.exists():
+        if test_dir.exists():
             time.sleep(post_data_delay)
             break
 
@@ -179,7 +180,7 @@ def test_track_event(
     assert expected_output.is_file()
 
 
-def test_load_manifest(fileutils: FileUtils, test_dir: str):
+def test_load_manifest(fileutils: FileUtils, test_dir: str, config: cfg.Config):
     """Ensure that the runtime manifest loads correctly"""
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/telemetry.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -187,7 +188,7 @@ def test_load_manifest(fileutils: FileUtils, test_dir: str):
 
     test_manifest_path = fileutils.make_test_file(
         serialize.MANIFEST_FILENAME,
-        pathlib.Path(test_dir) / serialize.TELMON_SUBDIR,
+        pathlib.Path(test_dir) / config.telemetry_subdir,
         sample_manifest.read_text(),
     )
     test_manifest = pathlib.Path(test_manifest_path)
@@ -431,7 +432,7 @@ def test_auto_shutdown():
     assert observer.stop_count == 1
 
 
-def test_telemetry_single_model(fileutils, test_dir, wlmutils):
+def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
 
@@ -446,7 +447,7 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils):
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # create run settings
-    app_settings = exp.create_run_settings("python", test_script)
+    app_settings = exp.create_run_settings(sys.executable, test_script)
     app_settings.set_nodes(1)
     app_settings.set_tasks_per_node(1)
 
@@ -456,7 +457,7 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils):
     exp.start(smartsim_model, block=True)
     assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
-    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
     start_events = list(telemetry_output_path.rglob("start.json"))
     stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -464,7 +465,9 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils):
     assert len(stop_events) == 1
 
 
-def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monkeypatch):
+def test_telemetry_single_model_nonblocking(
+    fileutils, test_dir, wlmutils, monkeypatch, config
+):
     """Ensure that the telemetry monitor logs exist when the experiment
     is non-blocking"""
     with monkeypatch.context() as ctx:
@@ -481,7 +484,7 @@ def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monke
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create run settings
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -490,11 +493,11 @@ def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monke
         exp.generate(smartsim_model)
         exp.start(smartsim_model)
 
-        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
+        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
 
         assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -502,7 +505,7 @@ def test_telemetry_single_model_nonblocking(fileutils, test_dir, wlmutils, monke
         assert len(stop_events) == 1
 
 
-def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch):
+def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, config):
     """
     Test telemetry with models being run in serial (one after each other)
     """
@@ -520,7 +523,7 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch):
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create run settings
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -534,7 +537,7 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch):
             [status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
         )
 
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -543,7 +546,7 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch):
 
 
 def test_telemetry_serial_models_nonblocking(
-    fileutils, test_dir, wlmutils, monkeypatch
+    fileutils, test_dir, wlmutils, monkeypatch, config
 ):
     """
     Test telemetry with models being run in serial (one after each other)
@@ -563,7 +566,7 @@ def test_telemetry_serial_models_nonblocking(
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create run settings
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -574,13 +577,13 @@ def test_telemetry_serial_models_nonblocking(
         exp.generate(*smartsim_models)
         exp.start(*smartsim_models)
 
-        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
+        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
 
         assert all(
             [status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
         )
 
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -588,7 +591,7 @@ def test_telemetry_serial_models_nonblocking(
         assert len(stop_events) == 5
 
 
-def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch):
+def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config):
     """
     Test telemetry with only a database running
     """
@@ -609,12 +612,14 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch):
         # create regular database
         orc = exp.create_database(port=test_port, interface=test_interface)
         exp.generate(orc)
+
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
+
         try:
             exp.start(orc, block=True)
 
-            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
 
-            telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -622,7 +627,7 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch):
             assert len(stop_events) <= 1
         finally:
             exp.stop(orc)
-            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
@@ -630,7 +635,7 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
+def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, config):
     """
     Test telemetry with only a non-generated database running
     """
@@ -651,13 +656,13 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
         # create regular database
         orc = exp.create_database(port=test_port, interface=test_interface)
         orc.set_path(test_dir)
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
         try:
             exp.start(orc)
 
-            snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
+            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
 
-            telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -666,14 +671,14 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch):
         finally:
             exp.stop(orc)
 
-        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=10)
+        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
+def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, config):
     """
     Test telemetry with only a database and a model running
     """
@@ -700,7 +705,7 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
             exp.start(orc)
 
             # create run settings
-            app_settings = exp.create_run_settings("python", test_script)
+            app_settings = exp.create_run_settings(sys.executable, test_script)
             app_settings.set_nodes(1)
             app_settings.set_tasks_per_node(1)
 
@@ -711,12 +716,11 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
         finally:
             exp.stop(orc)
 
-        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
+        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
         assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
-
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
 
         start_events = list(telemetry_output_path.rglob("database/**/start.json"))
         stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
@@ -730,7 +734,7 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch):
         assert len(stop_events) == 1
 
 
-def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
+def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
     """
     Test telemetry with only an ensemble
     """
@@ -748,7 +752,7 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        app_settings = exp.create_run_settings("python", test_script)
+        app_settings = exp.create_run_settings(sys.executable, test_script)
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
@@ -757,8 +761,8 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
         exp.start(ens, block=True)
         assert all([status == STATUS_COMPLETED for status in exp.get_status(ens)])
 
-        snooze_nonblocking(test_dir, max_delay=60, post_data_delay=30)
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
+        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -766,7 +770,7 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch):
         assert len(stop_events) == 5
 
 
-def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch):
+def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, config):
     """
     Test telemetry with only a colocated model running
     """
@@ -797,7 +801,7 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch):
             [status == STATUS_COMPLETED for status in exp.get_status(smartsim_model)]
         )
 
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -814,7 +818,9 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch):
         pytest.param(1, 15, id="15s shutdown"),
     ],
 )
-def test_telemetry_autoshutdown(test_dir, wlmutils, monkeypatch, frequency, cooldown):
+def test_telemetry_autoshutdown(
+    test_dir, wlmutils, monkeypatch, frequency, cooldown, config
+):
     """
     Ensure that the telemetry monitor process shuts down after the desired
     cooldown period
@@ -837,7 +843,7 @@ def test_telemetry_autoshutdown(test_dir, wlmutils, monkeypatch, frequency, cool
         stop_time = start_time
         exp.start(block=False)
 
-        telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+        telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         empty_mani = list(telemetry_output_path.rglob("manifest.json"))
         assert len(empty_mani) == 1, "an  manifest.json should be created"
 
@@ -867,8 +873,8 @@ class MockStep(Step):
 
 
 @pytest.fixture
-def mock_step_meta_dict(test_dir):
-    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+def mock_step_meta_dict(test_dir, config):
+    telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
     yield {
         "entity_type": "mock",
         "status_dir": telemetry_output_path,
@@ -958,6 +964,7 @@ def test_multistart_experiment(
     test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     run_command: str,
+    config: cfg.Config,
 ):
     """Run an experiment with multiple start calls to ensure that telemetry is
     saved correctly for each run
@@ -1016,7 +1023,7 @@ def test_multistart_experiment(
             assert tm_pid == exp._control._telemetry_monitor.pid
             time.sleep(3)  # time for telmon to write db stop event
 
-    telemetry_output_path = pathlib.Path(test_dir) / serialize.TELMON_SUBDIR
+    telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
     db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
     db_stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))

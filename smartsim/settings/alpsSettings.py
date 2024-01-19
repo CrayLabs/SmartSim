@@ -43,8 +43,7 @@ class AprunSettings(RunSettings):
     ):
         """Settings to run job with ``aprun`` command
 
-        ``AprunSettings`` can be used for both the `pbs` and `cobalt`
-        launchers.
+        ``AprunSettings`` can be used for the `pbs` launcher.
 
         :param exe: executable
         :type exe: str

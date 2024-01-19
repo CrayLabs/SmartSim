@@ -26,7 +26,6 @@
 
 from .alpsSettings import AprunSettings
 from .base import RunSettings, SettingsBase
-from .cobaltSettings import CobaltBatchSettings
 from .containers import Container, Singularity
 from .lsfSettings import BsubBatchSettings, JsrunSettings
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
@@ -36,7 +35,6 @@ from .slurmSettings import SbatchSettings, SrunSettings
 
 __all__ = [
     "AprunSettings",
-    "CobaltBatchSettings",
     "BsubBatchSettings",
     "JsrunSettings",
     "MpirunSettings",

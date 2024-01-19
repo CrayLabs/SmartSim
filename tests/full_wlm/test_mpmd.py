@@ -48,9 +48,9 @@ def test_mpmd(fileutils, test_dir, wlmutils):
     exp_name = "test-mpmd"
     launcher = wlmutils.get_test_launcher()
     # MPMD is supported in LSF, but the test for it is different
-    mpmd_supported = ["slurm", "pbs", "cobalt"]
+    mpmd_supported = ["slurm", "pbs"]
     if launcher not in mpmd_supported:
-        pytest.skip("Test requires Slurm, PBS, or Cobalt to run")
+        pytest.skip("Test requires Slurm, or PBS to run")
 
     # aprun returns an error if the launched app is not an MPI exec
     # as we do not want to add mpi4py as a dependency, we prefer to
@@ -58,7 +58,6 @@ def test_mpmd(fileutils, test_dir, wlmutils):
     by_launcher = {
         "slurm": ["srun", "mpirun"],
         "pbs": ["mpirun"],
-        "cobalt": ["mpirun"],
     }
 
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
