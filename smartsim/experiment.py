@@ -38,13 +38,23 @@ from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
-from .log import get_logger
+from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import Container, base, settings
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
 
+def _exp_path_map(exp: "Experiment") -> str:
+    """Mapping function for use by method contextualizer to place the path of
+    the currently-executing experiment into context for log enrichment"""
+    return exp.exp_path
+
+
+_contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
+
+
+# pylint: disable=no-self-use
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
 
@@ -125,7 +135,7 @@ class Experiment:
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+        self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
 
         if launcher == "auto":
             launcher = detect_launcher()
@@ -136,6 +146,7 @@ class Experiment:
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
+    @_contextualize
     def start(
         self,
         *args: t.Any,
@@ -209,6 +220,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
@@ -245,6 +257,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def generate(
         self,
         *args: t.Any,
@@ -282,6 +295,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def poll(
         self, interval: int = 10, verbose: bool = True, kill_on_interrupt: bool = True
     ) -> None:
@@ -325,6 +339,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
@@ -348,6 +363,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def get_status(self, *args: t.Any) -> t.List[str]:
         """Query the status of launched instances
 
@@ -386,8 +402,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    @staticmethod
+    @_contextualize
     def create_ensemble(
+        self,
         name: str,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
@@ -460,8 +477,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    @staticmethod
+    @_contextualize
     def create_model(
+        self,
         name: str,
         run_settings: base.RunSettings,
         params: t.Optional[t.Dict[str, t.Any]] = None,
@@ -557,7 +575,6 @@ class Experiment:
         """
         path = init_default(getcwd(), path, str)
 
-        # mcb
         if path is None:
             path = getcwd()
         if params is None:
@@ -574,6 +591,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def create_run_settings(
         self,
         exe: str,
@@ -638,6 +656,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def create_batch_settings(
         self,
         nodes: int = 1,
@@ -698,6 +717,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def create_database(
         self,
         port: int = 6379,
@@ -781,6 +801,7 @@ class Experiment:
             **kwargs,
         )
 
+    @_contextualize
     def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
         """Reconnect to a running ``Orchestrator``
 
@@ -801,6 +822,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``
 

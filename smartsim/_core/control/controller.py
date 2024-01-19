@@ -835,11 +835,11 @@ class Controller:
         :param exp_dir: An experiment directory
         :type exp_dir: str
         """
-        logger.debug("Starting telemetry monitor process")
         if (
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+            logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,
                 "-m",
@@ -859,6 +859,7 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
+            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):

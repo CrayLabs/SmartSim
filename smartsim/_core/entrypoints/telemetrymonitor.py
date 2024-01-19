@@ -56,7 +56,7 @@ from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
-from smartsim._core.utils.serialize import MANIFEST_FILENAME, TELMON_SUBDIR
+from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
@@ -580,7 +580,7 @@ def main(
                               poll for new jobs before attempting to shutdown
     :type cooldown_duration: int
     """
-    manifest_relpath = pathlib.Path(TELMON_SUBDIR) / MANIFEST_FILENAME
+    manifest_relpath = pathlib.Path(CONFIG.telemetry_subdir) / MANIFEST_FILENAME
     manifest_path = experiment_dir / manifest_relpath
     monitor_pattern = str(manifest_relpath)
 
@@ -665,7 +665,9 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
     log.propagate = False
 
-    log_path = os.path.join(args.exp_dir, TELMON_SUBDIR, "telemetrymonitor.log")
+    log_path = os.path.join(
+        args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log"
+    )
     fh = logging.FileHandler(log_path, "a")
     log.addHandler(fh)
 
