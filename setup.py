@@ -175,7 +175,7 @@ deps.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
-        "black>=20.8b1",
+        "black==24.1a1",
         "isort>=5.6.4",
         "pylint>=2.10.0,<3",
         "pytest>=6.0.0",
@@ -200,10 +200,6 @@ extras_require = {
 setup(
     version=smartsim_version,
     install_requires=deps,
-    packages=["smartsim"],
-    package_data={"smartsim": [
-        "_core/bin/*",
-    ]},
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,

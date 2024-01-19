@@ -37,13 +37,11 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.info import execute as info_execute
-from smartsim._core._cli.site import execute as site_execute
-from smartsim._core._cli.validate import (
-    execute as validate_execute,
-    configure_parser as validate_parser,
-)
 from smartsim._core._cli.plugin import plugins
+from smartsim._core._cli.site import execute as site_execute
 from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.validate import configure_parser as validate_parser
+from smartsim._core._cli.validate import execute as validate_execute
 
 
 class SmartCli:
@@ -95,9 +93,7 @@ class SmartCli:
             item.configurator(parser)
 
         if item.command in self.menu:
-            raise ValueError(
-                f"{item.command} cannot overwrite existing CLI command"
-            )
+            raise ValueError(f"{item.command} cannot overwrite existing CLI command")
 
         self.menu[item.command] = item
 

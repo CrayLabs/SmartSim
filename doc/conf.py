@@ -26,7 +26,7 @@ try:
     import smartsim
     version = smartsim.__version__
 except ImportError:
-    version = "0.5.1"
+    version = "0.6.0"
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -55,6 +55,7 @@ extensions = [
     'sphinx_tabs.tabs'
 ]
 
+suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -98,6 +99,11 @@ html_theme_options = {
     "use_issues_button": True,
     "extra_footer": extra_footer,
 }
+
+# Use a custom style sheet to avoid the sphinx-tabs extension from using
+# white background with dark themes.  If sphinx-tabs updates its
+# static/tabs.css, this may need to be updated.
+html_css_files = ['custom_tab_style.css']
 
 autoclass_content = 'both'
 add_module_names = False

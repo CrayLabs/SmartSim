@@ -32,10 +32,9 @@ import pytest
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity import Ensemble
+from smartsim.entity.dbobject import DBModel
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
-
-from smartsim.entity.dbobject import DBModel
 
 logger = get_logger(__name__)
 
@@ -44,8 +43,8 @@ should_run_pt = True
 
 # Check TensorFlow is available for tests
 try:
-    from tensorflow import keras
     import tensorflow as tf
+    from tensorflow import keras
     from tensorflow.keras.layers import Conv2D, Input
 
 except ImportError:
@@ -60,12 +59,13 @@ else:
         def call(self, x):
             y = self.conv(x)
             return y
+
     if pytest.test_device == "GPU":
         try:
-            for device in tf.config.list_physical_devices('GPU'):
+            for device in tf.config.list_physical_devices("GPU"):
                 tf.config.set_logical_device_configuration(
-                    device,
-                    [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
+                    device, [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)]
+                )
         except:
             logger.warning("Could not set TF max memory limit for GPU")
 
@@ -107,6 +107,7 @@ else:
 
 
 should_run_pt &= "torch" in installed_redisai_backends()
+
 
 def save_tf_cnn(path, file_name):
     """Create a Keras CNN for testing purposes"""
@@ -215,7 +216,9 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
 
@@ -271,7 +274,6 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     for db_model in smartsim_model._db_models:
         logger.debug(db_model)
 
-
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 1
 
@@ -281,7 +283,9 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
 
@@ -336,7 +340,7 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
         devices_per_node=test_num_gpus,
         first_device=0,
         inputs=inputs,
-        outputs=outputs
+        outputs=outputs,
     )
 
     # Add the second ML model individually to each SmartSim model
@@ -380,7 +384,9 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_ensemble, block=True)
         statuses = exp.get_status(smartsim_ensemble)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
 
@@ -412,10 +418,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
     # Create colocated Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
 
     # Create and save ML model to filesystem
@@ -431,7 +434,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
         devices_per_node=test_num_gpus,
         first_device=0,
         inputs=inputs,
-        outputs=outputs
+        outputs=outputs,
     )
     colo_model.add_ml_model(
         "cnn2",
@@ -453,9 +456,12 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
+
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
 def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
@@ -484,24 +490,22 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
-
 
     # Create and save ML model to filesystem
     save_torch_cnn(test_dir, "model1.pt")
     model_file = test_dir + "/model1.pt"
 
     # Add the ML model to the SmartSim Model
-    colo_model.add_ml_model("cnn",
-                            "TORCH",
-                            model_path=model_file,
-                            device=test_device,
-                            devices_per_node=test_num_gpus,
-                            first_device=0)
+    colo_model.add_ml_model(
+        "cnn",
+        "TORCH",
+        model_path=model_file,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
 
     # Assert we have added both models
     assert len(colo_model._db_models) == 1
@@ -512,7 +516,9 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
 
@@ -552,10 +558,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
 
     # Create and save the ML models to the filesystem
@@ -565,10 +568,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     # Colocate a database with the ensemble with two ensemble members
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db_tcp(
-            port=test_port + i + 1,
-            db_cpus=1,
-            debug=True,
-            ifname=test_interface
+            port=test_port + i + 1, db_cpus=1, debug=True, ifname=test_interface
         )
         # Add ML model to each ensemble member individual to test that they
         # do not conflict with models add to the Ensemble object
@@ -618,7 +618,9 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
 
@@ -670,16 +672,13 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         devices_per_node=test_num_gpus,
         first_device=0,
         inputs=inputs,
-        outputs=outputs
+        outputs=outputs,
     )
 
     # Colocate a database with the first ensemble members
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db_tcp(
-            port = test_port + i,
-            db_cpus=1,
-            debug=True,
-            ifname=test_interface
+            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
         )
         # Add ML models to each ensemble member to make sure they
         # do not conflict with other ML models
@@ -703,7 +702,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         port=test_port + len(colo_ensemble) - 1,
         db_cpus=1,
         debug=True,
-        ifname=test_interface
+        ifname=test_interface,
     )
     # Add a ML model to the new ensemble member
     colo_model.add_ml_model(
@@ -723,7 +722,9 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all(stat == status.STATUS_COMPLETED for stat in statuses), f"Statuses: {statuses}"
+        assert all(
+            stat == status.STATUS_COMPLETED for stat in statuses
+        ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
 
@@ -756,10 +757,7 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
 
     # Get and save TF model
@@ -769,9 +767,14 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     # are only supported for non-colocated deployments
     with pytest.raises(SSUnsupportedError):
         colo_model.add_ml_model(
-            "cnn", "TF", model=model, device=test_device,
-            devices_per_node=test_num_gpus, first_device=0,
-            inputs=inputs, outputs=outputs
+            "cnn",
+            "TF",
+            model=model,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+            inputs=inputs,
+            outputs=outputs,
         )
 
     # Create an ensemble with two identical replicas
@@ -782,28 +785,28 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     # Colocate a db with each ensemble member
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db_tcp(
-            port=test_port + i,
-            db_cpus=1,
-            debug=True,
-            ifname=test_interface
+            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
         )
 
     # Check that an error is raised because in-memory models
     # are only supported for non-colocated deployments
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_ml_model(
-            "cnn", "TF", model=model, device=test_device,
-            devices_per_node=test_num_gpus, first_device=0,
-            inputs=inputs, outputs=outputs
+            "cnn",
+            "TF",
+            model=model,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+            inputs=inputs,
+            outputs=outputs,
         )
 
     # Check error is still thrown if an in-memory model is used
     # with a colocated deployment.  This test varies by adding
     # the SmartSIm model with a colocated database to the ensemble
     # after the ML model was been added to the ensemble.
-    colo_settings2 = exp.create_run_settings(
-        exe=sys.executable, exe_args=test_script
-    )
+    colo_settings2 = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
 
     # Reverse order of DBModel and model
     colo_ensemble2 = exp.create_ensemble(
@@ -811,9 +814,14 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     )
     colo_ensemble2.set_path(test_dir)
     colo_ensemble2.add_ml_model(
-        "cnn", "TF", model=model, device=test_device,
-            devices_per_node=test_num_gpus, first_device=0,
-            inputs=inputs, outputs=outputs
+        "cnn",
+        "TF",
+        model=model,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs,
+        outputs=outputs,
     )
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
@@ -847,6 +855,6 @@ def test_inconsistent_params_db_model():
             outputs=outputs,
         )
     assert (
-            ex.value.args[0]
-            == "Cannot set devices_per_node>1 if CPU is specified under devices"
-        )
+        ex.value.args[0]
+        == "Cannot set devices_per_node>1 if CPU is specified under devices"
+    )

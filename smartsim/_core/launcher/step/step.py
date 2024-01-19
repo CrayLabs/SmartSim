@@ -33,13 +33,13 @@ import time
 import typing as t
 from os import makedirs
 
-from smartsim.error.errors import SmartSimError, UnproxyableStepError
 from smartsim._core.config import CONFIG
+from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
 from ....log import get_logger
-from ...utils.helpers import get_base_36_repr, encode_cmd
-from ..colocated import write_colocated_launch_script
 from ....settings.base import RunSettings, SettingsBase
+from ...utils.helpers import encode_cmd, get_base_36_repr
+from ..colocated import write_colocated_launch_script
 
 logger = get_logger(__name__)
 

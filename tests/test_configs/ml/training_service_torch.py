@@ -68,7 +68,6 @@ if __name__ == "__main__":
     print("Started training")
 
     for epoch in range(1):  # loop over the dataset multiple times
-
         running_loss = 0.0
         epoch_running_loss = 0.0
         output_period = 1

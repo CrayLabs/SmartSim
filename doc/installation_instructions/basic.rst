@@ -33,7 +33,6 @@ The base prerequisites to install SmartSim and SmartRedis are:
 
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
 
-.. _GPU Support:
 
 GPU Support
 ===========
@@ -85,15 +84,14 @@ versions is dictated by our dependency on RedisAI_ 1.2.7.
 +------------------+----------+-------------+---------------+
 | RedisAI          | PyTorch  | Tensorflow  | ONNX Runtime  |
 +==================+==========+=============+===============+
-| 1.2.7 (default)  | 1.11.0   | 2.8.0       | 1.11.1        |
+| 1.2.7 (default)  | 2.0.1    | 2.13.1      | 1.16.3        |
 +------------------+----------+-------------+---------------+
 
 TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
 
 ScikitLearn_ and Spark_ models are supported by SmartSim as well
 through the use of the ONNX_ runtime (which is not built by
-default due to issues with glibc on a variety of Linux
-platforms and lack of support for Mac OS X).
+default due to issues with glibc on a variety of Linux platforms).
 
 .. _Spark: https://spark.apache.org/mllib/
 .. _Keras: https://keras.io
@@ -243,9 +241,9 @@ SmartSim does.
    * - Platform
      - Python Versions
    * - MacOS
-     - 3.7 - 3.10
+     - 3.8 - 3.10
    * - Linux
-     - 3.7 - 3.10
+     - 3.8 - 3.10
 
 The Python client for SmartRedis is installed through ``pip`` as follows:
 

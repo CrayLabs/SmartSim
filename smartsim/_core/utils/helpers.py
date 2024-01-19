@@ -29,8 +29,8 @@ A file of helper functions for SmartSim
 """
 import base64
 import os
-import uuid
 import typing as t
+import uuid
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path

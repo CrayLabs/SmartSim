@@ -27,8 +27,7 @@
 import argparse
 import os
 
-from smartredis import ConfigOptions, Client
-
+from smartredis import Client, ConfigOptions
 
 if __name__ == "__main__":
     """For inclusion in test with two unique database identifiers with multiple databases"""

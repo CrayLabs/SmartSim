@@ -26,7 +26,7 @@
 import itertools
 import sys
 import typing as t
-from os import getcwd, getenv, environ
+from os import environ, getcwd, getenv
 from shlex import split as sh_split
 
 import psutil
@@ -40,6 +40,7 @@ from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
+from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
     AprunSettings,
     BsubBatchSettings,
@@ -56,7 +57,6 @@ from ..settings import (
 from ..settings.base import BatchSettings, RunSettings
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
-from ..servertype import STANDALONE, CLUSTERED
 
 logger = get_logger(__name__)
 
@@ -68,6 +68,7 @@ by_launcher: t.Dict[str, t.List[str]] = {
     "lsf": ["jsrun"],
     "local": [""],
 }
+
 
 def _detect_command(launcher: str) -> str:
     if launcher in by_launcher:
@@ -83,6 +84,7 @@ def _detect_command(launcher: str) -> str:
     )
     raise SmartSimError(msg)
 
+
 def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
     """Automatically detect the launcher and run command to use"""
     if launcher == "auto":
@@ -93,6 +95,7 @@ def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
 
     return launcher, run_command
 
+
 def _check_run_command(launcher: str, run_command: str) -> None:
     """Check that the run command is supported by the launcher"""
     if run_command not in by_launcher[launcher]:
@@ -102,6 +105,7 @@ def _check_run_command(launcher: str, run_command: str) -> None:
             + f"{by_launcher[launcher]}"
         )
         raise SmartSimError(msg)
+
 
 def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
     if not single_cmd:
@@ -127,6 +131,7 @@ def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool
         return False
 
     return single_cmd
+
 
 def _check_local_constraints(launcher: str, batch: bool) -> None:
     """Check that the local launcher is not launched with invalid batch config"""
@@ -690,7 +695,7 @@ class Orchestrator(EntityList[DBNode]):
         run_args: t.Optional[t.Dict[str, t.Any]] = None,
         cpus_per_shard: t.Optional[int] = None,
         gpus_per_shard: t.Optional[int] = None,
-        **_kwargs: t.Any  # Needed to ensure no API break and do not want to
+        **_kwargs: t.Any,  # Needed to ensure no API break and do not want to
         # introduce that possibility, even if this method is
         # protected, without running the test suite.
     ) -> t.Optional[JsrunSettings]:

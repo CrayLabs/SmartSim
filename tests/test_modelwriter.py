@@ -24,11 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
 import filecmp
 from distutils import dir_util
 from glob import glob
 from os import path
+
+import pytest
 
 from smartsim._core.generation.modelwriter import ModelWriter
 from smartsim.error.errors import ParameterWriterError, SmartSimError
@@ -40,12 +41,12 @@ pytestmark = pytest.mark.group_b
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
+
 def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(path.join("generator_files", filename))
 
+
 def test_write_easy_configs(fileutils, test_dir):
-
-
     param_dict = {
         "5": 10,  # MOM_input
         "FIRST": "SECOND",  # example_input.i
@@ -73,8 +74,6 @@ def test_write_easy_configs(fileutils, test_dir):
 
 
 def test_write_med_configs(fileutils, test_dir):
-
-
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
         "'noleap'": "'leap'",  # input.nml
@@ -106,8 +105,6 @@ def test_write_med_configs(fileutils, test_dir):
 
 def test_write_new_tag_configs(fileutils, test_dir):
     """sets the tag to the dollar sign"""
-
-
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -150,8 +147,6 @@ def test_mw_error_2():
 
 
 def test_write_mw_error_3(fileutils, test_dir):
-
-
     param_dict = {
         "5": 10,  # MOM_input
     }

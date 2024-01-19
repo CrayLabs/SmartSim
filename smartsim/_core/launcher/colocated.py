@@ -27,11 +27,10 @@
 import sys
 import typing as t
 
-
+from ...entity.dbobject import DBModel, DBScript
 from ...error import SSInternalError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
-from ...entity.dbobject import DBModel, DBScript
 
 
 def write_colocated_launch_script(
@@ -119,14 +118,14 @@ def _build_colocated_wrapper_cmd(
     # up the backgrounded db process
 
     cmd = [
-            sys.executable,
-            "-m",
-            "smartsim._core.entrypoints.colocated",
-            "+lockfile",
-            lockfile,
-            "+db_cpus",
-            str(cpus),
-        ]
+        sys.executable,
+        "-m",
+        "smartsim._core.entrypoints.colocated",
+        "+lockfile",
+        lockfile,
+        "+db_cpus",
+        str(cpus),
+    ]
     # Add in the interface if using TCP/IP
     if ifname:
         if isinstance(ifname, str):
@@ -137,16 +136,9 @@ def _build_colocated_wrapper_cmd(
 
     db_cmd = []
     if custom_pinning:
-        db_cmd.extend([
-            'taskset', '-c', custom_pinning
-        ])
+        db_cmd.extend(["taskset", "-c", custom_pinning])
     db_cmd.extend(
-        [
-            CONFIG.database_exe,
-            CONFIG.database_conf,
-            "--loadmodule",
-            CONFIG.redisai
-        ]
+        [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
     )
 
     # add extra redisAI configurations

@@ -34,33 +34,32 @@ import sys
 import threading
 import time
 import typing as t
-
 from dataclasses import dataclass, field
 from types import FrameType
 
+from watchdog.events import (
+    FileCreatedEvent,
+    FileModifiedEvent,
+    LoggingEventHandler,
+    PatternMatchingEventHandler,
+)
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
-from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
-from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.launcher.stepInfo import StepInfo
-
-
 from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
-from smartsim._core.utils.serialize import TELMON_SUBDIR, MANIFEST_FILENAME
-
+from smartsim._core.utils.serialize import MANIFEST_FILENAME, TELMON_SUBDIR
 from smartsim.error.errors import SmartSimError
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
-
 
 """Telemetry Monitor entrypoint"""
 

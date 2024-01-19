@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+
 from smartsim import Experiment, status
 
 # The tests in this file belong to the group_a group

@@ -65,7 +65,6 @@ def test_node_formatting():
 
 
 def test_select_nodes_error():
-
     # # Test failure on initialization
     with pytest.raises(SSConfigError):
         QsubBatchSettings(nodes=10, resources={"select": 10})
@@ -88,10 +87,12 @@ def test_select_nodes_error():
     with pytest.raises(SSConfigError):
         settings.set_nodes(10)
 
+
 def test_resources_is_a_copy():
     settings = QsubBatchSettings()
     resources = settings.resources
     assert resources is not settings._resources
+
 
 def test_nodes_and_select_not_ints_error():
     expected_error = TypeError
@@ -100,27 +101,28 @@ def test_nodes_and_select_not_ints_error():
         settings.set_nodes("10")
     with pytest.raises(expected_error):
         settings = QsubBatchSettings()
-        settings.set_resource("nodes","10")
+        settings.set_resource("nodes", "10")
     with pytest.raises(expected_error):
         settings = QsubBatchSettings()
-        settings.set_resource("select","10")
+        settings.set_resource("select", "10")
     with pytest.raises(expected_error):
         settings = QsubBatchSettings()
-        settings.resources = {"nodes":"10"}
+        settings.resources = {"nodes": "10"}
     with pytest.raises(expected_error):
         settings = QsubBatchSettings()
-        settings.resources = {"select":"10"}
+        settings.resources = {"select": "10"}
+
 
 def test_resources_not_set_on_error():
     settings = QsubBatchSettings(nodes=10)
     unaltered_resources = settings.resources
     with pytest.raises(SSConfigError):
-        settings.resources = {"nodes":10, "select":10}
+        settings.resources = {"nodes": 10, "select": 10}
 
     assert unaltered_resources == settings.resources
+
 
 def test_valid_types_in_resources():
     settings = QsubBatchSettings(nodes=10)
     with pytest.raises(TypeError):
         settings.set_resource("foo", None)
-

@@ -250,7 +250,6 @@ class QsubBatchSettings(BatchSettings):
                 )
 
     def _create_resource_list(self) -> t.List[str]:
-
         self._sanity_check_resources()
         res = []
 

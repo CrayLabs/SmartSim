@@ -46,8 +46,11 @@ from typing import Iterable
 #       to remove
 # https://setuptools.pypa.io/en/latest/pkg_resources.html
 
+# isort: off
 import pkg_resources
 from pkg_resources import packaging  # type: ignore
+
+# isort: on
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
@@ -190,23 +193,17 @@ class RedisAIVersion(Version_):
 
     defaults = {
         "1.2.7": {
-            "tensorflow": "2.8.0",
-            "onnx": "1.11.0",
-            "skl2onnx": "1.11.1",
-            "onnxmltools": "1.11.1",
-            "scikit-learn": "1.1.1",
-            "torch": "1.11.0",
+            "tensorflow": "2.13.1",
+            "onnx": "1.14.1",
+            "skl2onnx": "1.16.0",
+            "onnxmltools": "1.12.0",
+            "scikit-learn": "1.3.2",
+            "torch": "2.0.1",
             "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu113",
-            "torchvision": "0.12.0",
+            "torch_cuda_suffix": "+cu117",
+            "torchvision": "0.15.2",
         },
     }
-    # Remove options with unsported wheels for python>=3.10
-    if sys.version_info >= (3, 10):
-        defaults["1.2.7"].pop("onnx")
-        defaults["1.2.7"].pop("skl2onnx")
-        defaults["1.2.7"].pop("onnxmltools")
-        defaults["1.2.7"].pop("scikit-learn")
 
     def __init__(self, vers: str) -> None:  # pylint: disable=super-init-not-called
         min_rai_version = min(Version_(ver) for ver in self.defaults)
@@ -273,8 +270,8 @@ class Versioner:
     PYTHON_MIN = Version_("3.8.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.5.1"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.4.2"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.0"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
@@ -301,33 +298,19 @@ class Versioner:
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
-    try:
-        ONNX = Version_(REDISAI.onnx)
-    except AttributeError:
-        ONNX = None
+    ONNX = Version_(REDISAI.onnx)
 
-    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Any]:
-        packages = [
-            "SMARTSIM",
-            "SMARTREDIS",
-            db_name,
-            "REDISAI",
-            "TORCH",
-            "TENSORFLOW",
-        ]
-        versions = [
-            self.SMARTSIM,
-            self.SMARTREDIS,
-            self.REDIS,
-            self.REDISAI,
-            self.TORCH,
-            self.TENSORFLOW,
-        ]
-        if self.ONNX:
-            packages.append("ONNX")
-            versions.append(self.ONNX)
-        vers = {"Packages": packages, "Versions": versions}
-        return vers
+    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Tuple[str, ...]]:
+        pkg_map = {
+            "SMARTSIM": self.SMARTSIM,
+            "SMARTREDIS": self.SMARTREDIS,
+            db_name: self.REDIS,
+            "REDISAI": self.REDISAI,
+            "TORCH": self.TORCH,
+            "TENSORFLOW": self.TENSORFLOW,
+            "ONNX": self.ONNX,
+        }
+        return {"Packages": tuple(pkg_map), "Versions": tuple(pkg_map.values())}
 
     def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
         """Optional ML/DL dependencies we suggest for the user.
@@ -347,9 +330,7 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        return {
-            "ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
-        }
+        return {"ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]}
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:

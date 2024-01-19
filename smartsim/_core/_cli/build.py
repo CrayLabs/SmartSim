@@ -60,14 +60,6 @@ _TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
 
 def check_py_onnx_version(versions: Versioner) -> None:
     """Check Python environment for ONNX installation"""
-    if not versions.ONNX:
-        py_version = sys.version_info
-        msg = (
-            "An onnx wheel is not available for "
-            f"Python {py_version.major}.{py_version.minor}. "
-            "Instead consider using Python 3.8 or 3.9 for ONNX 1.11 support"
-        )
-        raise SetupError(msg)
     _check_packages_in_python_env(
         {
             "onnx": Version_(versions.ONNX),
@@ -153,7 +145,7 @@ def build_redis_ai(
     backends_table = [
         ["PyTorch", versions.TORCH, color_bool(use_torch)],
         ["TensorFlow", versions.TENSORFLOW, color_bool(use_tf)],
-        ["ONNX", versions.ONNX or "Unavailable", color_bool(use_onnx)],
+        ["ONNX", versions.ONNX, color_bool(use_onnx)],
     ]
     print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
     print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
@@ -226,9 +218,10 @@ def build_redis_ai(
         logger.info("ML Backends and RedisAI build complete!")
 
 
-def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> None:
+def check_py_torch_version(versions: Versioner, device_in: _TDeviceStr = "cpu") -> None:
     """Check Python environment for TensorFlow installation"""
 
+    device = device_in.lower()
     if BuildEnv.is_macos():
         if device == "gpu":
             raise BuildError("SmartSim does not support GPU on MacOS")
@@ -260,10 +253,11 @@ def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> 
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
+        wheel_device = device if device == "cpu" else device_suffix.replace("+","")
         pip(
             "install",
-            "-f",
-            "https://download.pytorch.org/whl/torch_stable.html",
+            "--extra-index-url",
+            f"https://download.pytorch.org/whl/{wheel_device}",
             *(f"{package}=={version}" for package, version in torch_deps.items()),
         )
     elif missing or conflicts:
@@ -340,8 +334,8 @@ def _format_incompatible_python_env_message(
     missing: t.Iterable[str], conflicting: t.Iterable[str]
 ) -> str:
     indent = "\n\t"
-    fmt_list: t.Callable[[str, t.Iterable[str]], str] = (
-        lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+    fmt_list: t.Callable[[str, t.Iterable[str]], str] = lambda n, l: (
+        f"{n}:{indent}{indent.join(l)}" if l else ""
     )
     missing_str = fmt_list("Missing", missing)
     conflict_str = fmt_list("Conflicting", conflicting)

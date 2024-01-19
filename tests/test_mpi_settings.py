@@ -27,9 +27,10 @@
 import logging
 import os
 import os.path as osp
-import pytest
 import stat
 import sys
+
+import pytest
 
 from smartsim.error import LauncherError, SSUnsupportedError
 from smartsim.settings.mpiSettings import (
@@ -118,7 +119,6 @@ def test_expected_openmpi_instance_without_warning(
 
 
 def test_error_if_slurm_mpiexec(fileutils):
-
     stubs_path = osp.join("mpi_impl_stubs", "slurm")
     stubs_path = fileutils.get_test_dir_path(stubs_path)
     stub_exe = osp.join(stubs_path, "mpiexec")

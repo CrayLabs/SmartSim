@@ -80,6 +80,7 @@ class ParameterWriterError(SmartSimError):
 class SSReservedKeywordError(SmartSimError):
     """Raised when a Reserved Keyword is used incorrectly"""
 
+
 class SSDBIDConflictError(SmartSimError):
     """Raised in the event that a database identifier
     is not unique when multiple databases are created
@@ -139,10 +140,12 @@ class TelemetryError(SSInternalError):
     telemetry information
     """
 
+
 class UnproxyableStepError(TelemetryError):
     """Raised when a user attempts to proxy a managed ``Step`` through the
     unmanaged step proxy entry point
     """
+
 
 class SmartSimCLIActionCancelled(SmartSimError):
     """Raised when a `smart` CLI command is terminated"""
