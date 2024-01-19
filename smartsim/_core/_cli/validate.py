@@ -88,21 +88,23 @@ def execute(
     simple experiment
     """
     backends = installed_redisai_backends()
+    device: _TCapitalDeviceStr = args.device.upper()
     try:
         with contextlib.ExitStack() as ctx:
             temp_dir = ctx.enter_context(_VerificationTempDir(dir=os.getcwd()))
             validate_env = {
-                "CUDA_VISIBLE_DEVICES": "0",
                 "SR_LOG_LEVEL": os.environ.get("SR_LOG_LEVEL", "INFO"),
                 "SR_LOG_FILE": os.environ.get(
                     "SR_LOG_FILE", os.path.join(temp_dir, "smartredis.log")
                 ),
             }
+            if device == "GPU":
+                validate_env["CUDA_VISIBLE_DEVICES"] = "0"
             ctx.enter_context(_env_vars_set_to(validate_env))
             test_install(
                 location=temp_dir,
                 port=args.port,
-                device=args.device.upper(),
+                device=device,
                 with_tf="tensorflow" in backends,
                 with_pt="torch" in backends,
                 with_onnx="onnxruntime" in backends,
@@ -155,12 +157,12 @@ def test_install(
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
-        if with_tf:
-            logger.info("Verifying TensorFlow Backend")
-            _test_tf_install(client, location, device)
         if with_pt:
             logger.info("Verifying Torch Backend")
             _test_torch_install(client, device)
+        if with_tf:
+            logger.info("Verifying TensorFlow Backend")
+            _test_tf_install(client, location, device)
         if with_onnx:
             logger.info("Verifying ONNX Backend")
             _test_onnx_install(client, device)
