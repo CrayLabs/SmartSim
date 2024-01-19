@@ -160,12 +160,12 @@ def test_install(
         if with_pt:
             logger.info("Verifying Torch Backend")
             _test_torch_install(client, device)
-        if with_tf:
-            logger.info("Verifying TensorFlow Backend")
-            _test_tf_install(client, location, device)
         if with_onnx:
             logger.info("Verifying ONNX Backend")
             _test_onnx_install(client, device)
+        if with_tf:  # Run last in case TF locks an entire GPU
+            logger.info("Verifying TensorFlow Backend")
+            _test_tf_install(client, location, device)
         logger.info("Success!")
 
 
