@@ -23,8 +23,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import abc
 import argparse
+import collections
+import itertools
 import json
 import logging
 import os
@@ -37,6 +39,7 @@ import typing as t
 from dataclasses import dataclass, field
 from types import FrameType
 
+import redis.asyncio as redis
 from watchdog.events import (
     FileCreatedEvent,
     FileModifiedEvent,
@@ -58,6 +61,7 @@ from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
+from smartsim.log import get_logger
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
 """Telemetry Monitor entrypoint"""
@@ -66,6 +70,154 @@ from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
+
+
+logger = get_logger(__name__)
+
+
+class Collector(abc.ABC):
+    """Base class for metrics collectors"""
+
+    def __init__(self, entity: JobEntity) -> None:
+        """Initialize the collector
+
+        :param entity: The entity to collect metrics on
+        :type entity: JobEntity"""
+        self._entity = entity
+        self._value: t.Any = None
+
+    @property
+    def owner(self) -> str:
+        return self._entity.name
+
+    @abc.abstractmethod
+    async def prepare(self) -> None:
+        """Initialization logic for a collector"""
+
+    @abc.abstractmethod
+    async def collect(self) -> None:
+        """Execute metric collection against a producer"""
+
+
+class DbCollector(Collector):
+    """A base class for collectors that retrieve statistics from an orchestrator"""
+
+    def __init__(self, entity: JobEntity) -> None:
+        """Initialize the collector"""
+        super().__init__(entity)
+        self._client: t.Optional[redis.Redis] = None
+
+    async def _configure_client(self) -> None:
+        """Configure and connect to the target database"""
+        try:
+            db_host = self._entity.meta.get("host", "localhost")
+            db_port = int(self._entity.meta.get("port", 6379))
+
+            if not self._client:
+                self._client = redis.Redis(host=db_host, port=db_port)
+
+        except Exception as e:
+            logger.exception(e)
+            raise SmartSimError(
+                "Collector failed to communicate with metric producer"
+            ) from e
+
+        if not self._client:  #  or not self._client.is_connected:
+            raise SmartSimError("Collector failed to connect to metric producer")
+
+    async def prepare(self) -> None:
+        """Initialization logic for a DB collector"""
+        if self._client:
+            return
+
+        await self._configure_client()
+
+
+class DbMemoryCollector(DbCollector):
+    """A collector that collects memory usage information from
+    an orchestrator instance"""
+
+    async def collect(self) -> None:
+        await self.prepare()
+        if not self._client:
+            logger.warning("DbMemoryCollector is not connected and cannot collect")
+            return
+
+        db_info = await self._client.info()
+        self._value = db_info
+
+    @property
+    def keys(self) -> t.Iterable[str]:
+        return ["used_memory", "used_memory_peak", "total_system_memory"]
+
+    @property
+    def value(self) -> t.Dict[str, int]:
+        watch_list = ["used_memory", "used_memory_peak", "total_system_memory"]
+        filtered = {k: v for k, v in self._value.items() if k in watch_list}
+        self._value = None
+        return filtered
+
+
+class DbConnectionCollector(DbCollector):
+    """A collector that collects client connection information from
+    an orchestrator instance"""
+
+    async def collect(self) -> None:
+        await self.prepare()
+        if not self._client:
+            logger.warning("DbConnectionCollector is not connected and cannot collect")
+            return
+
+        client_list = await self._client.client_list()
+        self._value = [{"addr": item["addr"]} for item in client_list]
+
+    @property
+    def value(self) -> t.Dict[str, int]:
+        filtered = [x["addr"] for x in self._value]
+        self._value = None
+        return filtered
+
+
+class CollectorManager:
+    def __init__(self):
+        """Initialize the collector manager with an empty set of collectors"""
+        self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(
+            lambda: []
+        )
+
+    def clear(self):
+        """Remove all collectors from the managed set"""
+        self._collectors = collections.defaultdict(lambda: [])
+
+    def add(self, col: Collector):
+        """Add a new collector to the managed set"""
+        self.add_all([col])
+
+    def add_all(self, clist: t.Iterable[Collector]):
+        """Add multiple collectors to the managed set"""
+        for col in clist:
+            owner_list = self._collectors[col.owner]
+            dupes = next((x for x in owner_list if type(x) is type(col)), None)
+            if dupes:
+                continue
+
+            self._collectors[col.owner].append(col)
+
+    async def prepare(self):
+        """Ensure all managed collectors have prepared for collection"""
+        for collector in self.all_collectors:
+            await collector.prepare()
+
+    async def collect(self):
+        """Execute collection for all managed collectors"""
+        for collector in self.all_collectors:
+            await collector.collect()
+
+    @property
+    def all_collectors(self) -> t.Iterable[Collector]:
+        """Get a list of all managed collectors"""
+        chain = itertools.chain(*self._collectors.values())
+        return list(chain)
 
 
 @dataclass
@@ -242,7 +394,6 @@ def track_event(
     etype: str,
     action: _EventClass,
     status_dir: pathlib.Path,
-    logger: logging.Logger,
     detail: str = "",
     return_code: t.Optional[int] = None,
 ) -> None:
@@ -307,7 +458,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def __init__(
         self,
         pattern: str,
-        logger: logging.Logger,
         ignore_patterns: t.Any = None,
         ignore_directories: bool = True,
         case_sensitive: bool = False,
@@ -315,7 +465,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         super().__init__(
             [pattern], ignore_patterns, ignore_directories, case_sensitive
         )  # type: ignore
-        self._logger = logger
         self._tracked_runs: t.Dict[int, Run] = {}
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
@@ -364,10 +513,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             if not manifest:
                 return
         except json.JSONDecodeError:
-            self._logger.error(f"Malformed manifest encountered: {manifest_path}")
+            logger.error(f"Malformed manifest encountered: {manifest_path}")
             return
         except ValueError:
-            self._logger.error("Manifest content error", exc_info=True)
+            logger.error("Manifest content error", exc_info=True)
             return
 
         if self._launcher is None:
@@ -394,7 +543,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity.type,
                     "start",
                     pathlib.Path(entity.status_dir),
-                    self._logger,
                 )
 
                 if entity.is_managed:
@@ -416,7 +564,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type event: FileModifiedEvent
         """
         super().on_modified(event)  # type: ignore
-        self._logger.info(f"processing manifest modified @ {event.src_path}")
+        logger.info(f"processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -426,7 +574,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type event: FileCreatedEvent
         """
         super().on_created(event)  # type: ignore
-        self._logger.info(f"processing manifest created @ {event.src_path}")
+        logger.info(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def _to_completed(
@@ -468,7 +616,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             entity.type,
             "stop",
             write_path,
-            self._logger,
             detail=detail,
             return_code=faux_return_code(step_info),
         )
@@ -499,7 +646,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._to_completed(timestamp, completed_entity, step_info)
 
 
-def can_shutdown(action_handler: ManifestEventHandler, logger: logging.Logger) -> bool:
+def can_shutdown(action_handler: ManifestEventHandler) -> bool:
     jobs = action_handler.job_manager.jobs
     db_jobs = action_handler.job_manager.db_jobs
 
@@ -519,7 +666,6 @@ def event_loop(
     observer: BaseObserver,
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
-    logger: logging.Logger,
     cooldown_duration: int,
 ) -> None:
     """Executes all attached timestep handlers every <frequency> seconds
@@ -547,7 +693,7 @@ def event_loop(
         elapsed += timestamp - last_ts
         last_ts = timestamp
 
-        if can_shutdown(action_handler, logger):
+        if can_shutdown(action_handler):
             if elapsed >= cooldown_duration:
                 logger.info("beginning telemetry manager shutdown")
                 observer.stop()  # type: ignore
@@ -561,7 +707,6 @@ def event_loop(
 def main(
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
-    logger: logging.Logger,
     observer: t.Optional[BaseObserver] = None,
     cooldown_duration: t.Optional[int] = 0,
 ) -> int:
@@ -592,7 +737,7 @@ def main(
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
-    action_handler = ManifestEventHandler(monitor_pattern, logger)
+    action_handler = ManifestEventHandler(monitor_pattern)
 
     if observer is None:
         observer = Observer()
@@ -606,7 +751,7 @@ def main(
         observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
-        event_loop(observer, action_handler, frequency, logger, cooldown_duration)
+        event_loop(observer, action_handler, frequency, cooldown_duration)
         return os.EX_OK
     except Exception as ex:
         logger.error(ex)
@@ -621,7 +766,6 @@ def main(
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     """Helper function to ensure clean process termination"""
     if not signo:
-        logger = logging.getLogger()
         logger.warning("Received signal with no signo")
 
 
@@ -661,15 +805,15 @@ if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
 
-    log = logging.getLogger(f"{__name__}.TelemetryMonitor")
-    log.setLevel(logging.DEBUG)
-    log.propagate = False
+    # log = logging.getLogger(f"{__name__}.TelemetryMonitor")
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
 
     log_path = os.path.join(
         args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log"
     )
     fh = logging.FileHandler(log_path, "a")
-    log.addHandler(fh)
+    logger.addHandler(fh)
 
     # Must register cleanup before the main loop is running
     register_signal_handlers()
@@ -678,12 +822,11 @@ if __name__ == "__main__":
         main(
             int(args.frequency),
             pathlib.Path(args.exp_dir),
-            log,
             cooldown_duration=args.cooldown,
         )
         sys.exit(0)
     except Exception:
-        log.exception(
+        logger.exception(
             "Shutting down telemetry monitor due to unexpected error", exc_info=True
         )
 

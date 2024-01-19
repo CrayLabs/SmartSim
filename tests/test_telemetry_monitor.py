@@ -172,7 +172,7 @@ def test_track_event(
 ):
     """Ensure that track event writes a file to the expected location"""
     exp_path = pathlib.Path(test_dir)
-    track_event(timestamp, task_id, step_id, etype, evt_type, exp_path, logger)
+    track_event(timestamp, task_id, step_id, etype, evt_type, exp_path)
 
     expected_output = exp_path / f"{evt_type}.json"
 
@@ -331,28 +331,26 @@ def test_shutdown_conditions():
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
 
-    logger = logging.getLogger()
-
     # show that an event handler w/no monitored jobs can shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
-    assert can_shutdown(mani_handler, logger)
+    mani_handler = ManifestEventHandler("xyz")
+    assert can_shutdown(mani_handler)
 
     # show that an event handler w/a monitored job cannot shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
+    mani_handler = ManifestEventHandler("xyz")
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
     )
-    assert not can_shutdown(mani_handler, logger)
+    assert not can_shutdown(mani_handler)
     assert not bool(mani_handler.job_manager.db_jobs)
     assert bool(mani_handler.job_manager.jobs)
 
     # show that an event handler w/a monitored db cannot shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
+    mani_handler = ManifestEventHandler("xyz")
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
     )
-    assert not can_shutdown(mani_handler, logger)
+    assert not can_shutdown(mani_handler)
     assert bool(mani_handler.job_manager.db_jobs)
     assert not bool(mani_handler.job_manager.jobs)
 
@@ -362,7 +360,7 @@ def test_shutdown_conditions():
     job_entity2.step_id = "123"
     job_entity2.task_id = ""
 
-    mani_handler = ManifestEventHandler("xyz", logger)
+    mani_handler = ManifestEventHandler("xyz")
     job_entity1.type = "orchestrator"
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
@@ -371,17 +369,17 @@ def test_shutdown_conditions():
     mani_handler.job_manager.add_job(
         job_entity2.name, job_entity2.step_id, job_entity2, False
     )
-    assert not can_shutdown(mani_handler, logger)
+    assert not can_shutdown(mani_handler)
     assert bool(mani_handler.job_manager.db_jobs)
     assert bool(mani_handler.job_manager.jobs)
 
     # ... now, show that removing 1 of 2 jobs still doesn't shutdown
     mani_handler.job_manager.db_jobs.popitem()
-    assert not can_shutdown(mani_handler, logger)
+    assert not can_shutdown(mani_handler)
 
     # ... now, show that removing final job will allow shutdown
     mani_handler.job_manager.jobs.popitem()
-    assert can_shutdown(mani_handler, logger)
+    assert can_shutdown(mani_handler)
 
 
 def test_auto_shutdown():

@@ -51,6 +51,7 @@ class JobEntity:
         self.type: str = ""
         self.timestamp: int = 0
         self.status_dir: str = ""
+        self.meta: t.Dict[str, str] = {}
 
     @property
     def is_db(self) -> bool:

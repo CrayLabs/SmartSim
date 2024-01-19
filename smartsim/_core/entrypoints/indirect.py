@@ -101,7 +101,6 @@ def main(
             etype,
             "start",
             status_path,
-            logger,
             detail=start_detail,
             return_code=start_rc,
         )
@@ -121,7 +120,6 @@ def main(
         etype,
         "stop",
         status_path,
-        logger,
         detail=msg,
         return_code=ret_code,
     )

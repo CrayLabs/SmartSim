@@ -181,6 +181,7 @@ extras_require = {
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
+        "pytest-asyncio>=0.23.3",
     ],
     "mypy": [
         "mypy>=1.3.0",
