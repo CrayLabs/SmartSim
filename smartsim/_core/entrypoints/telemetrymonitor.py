@@ -105,7 +105,7 @@ class DbCollector(Collector):
     def __init__(self, entity: JobEntity) -> None:
         """Initialize the collector"""
         super().__init__(entity)
-        self._client: t.Optional[redis.Redis] = None
+        self._client: t.Optional[redis.Redis[bytes]] = None
 
     async def _configure_client(self) -> None:
         """Configure and connect to the target database"""
@@ -172,28 +172,28 @@ class DbConnectionCollector(DbCollector):
         self._value = [{"addr": item["addr"]} for item in client_list]
 
     @property
-    def value(self) -> t.Dict[str, int]:
+    def value(self) -> t.List[str]:
         filtered = [x["addr"] for x in self._value]
         self._value = None
         return filtered
 
 
 class CollectorManager:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the collector manager with an empty set of collectors"""
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(
             lambda: []
         )
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all collectors from the managed set"""
         self._collectors = collections.defaultdict(lambda: [])
 
-    def add(self, col: Collector):
+    def add(self, col: Collector) -> None:
         """Add a new collector to the managed set"""
         self.add_all([col])
 
-    def add_all(self, clist: t.Iterable[Collector]):
+    def add_all(self, clist: t.Iterable[Collector]) -> None:
         """Add multiple collectors to the managed set"""
         for col in clist:
             owner_list = self._collectors[col.owner]
@@ -203,12 +203,12 @@ class CollectorManager:
 
             self._collectors[col.owner].append(col)
 
-    async def prepare(self):
+    async def prepare(self) -> None:
         """Ensure all managed collectors have prepared for collection"""
         for collector in self.all_collectors:
             await collector.prepare()
 
-    async def collect(self):
+    async def collect(self) -> None:
         """Execute collection for all managed collectors"""
         for collector in self.all_collectors:
             await collector.collect()
