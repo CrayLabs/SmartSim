@@ -34,14 +34,14 @@ A user can implement the use of an ``Orchestrator`` within a ``Model`` through *
 
 Once a ``Model`` instance has been initialized, users have access to
 the :ref:`Model API<model_api>` functions to further configure the ``Model``.
-The Models functions allow users to:
+The Model API functions allow users to:
 
 - :ref:`Attach files to a SmartSim Model for use within the simulation<files_doc>`
-- :ref:`Launch an Orchestrator on the SmartSim Model compute nodes<colo_model_doc>`
+- :ref:`Colocate an Orchestrator on the SmartSim Model compute nodes<colo_model_doc>`
 - :ref:`Attach a ML model to the SmartSim Model instance<ai_model_doc>`
 - :ref:`Attach a TorchScript function to the SmartSim Model instance<TS_doc>`
 - :ref:`Register communication with another SmartSim Model instances<dead_link>`
-- :ref:`Enable SmartSim Model key collision prevention<model_key_collision>`
+- :ref:`Enable SmartSim Model data collision prevention<model_key_collision>`
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications. Additionally, ``Models`` can be launched individually
@@ -80,8 +80,12 @@ directory within the Experiment directory
 is automatically created to store input and output files from the model.
 
 .. note::
-    Model instances will be executed in the current working directory by default if no `path` argument
-    is supplied.
+    It is strongly recommended to invoke ``Experiment.generate()`` with the ``Model``
+    instance before launching the ``Model``. If a path is not specified during
+    ``Experiment.create_model()``, calling ``Experiment.generate()`` with the ``Model``
+    instance will result in SmartSim generating a ``Model`` directory within the
+    ``Experiment`` directory. This directory will be used to store the ``Model`` outputs
+    and attached files.
 
 .. _std_model_doc:
 Instructions
@@ -101,7 +105,7 @@ within an ``Experiment`` workflow. All workflow entities are initialized through
 :ref:`Experiment API<experiment_api>`. Consequently, initializing
 a SmartSim ``Experiment`` is a prerequisite for ``Model`` initialization.
 
-To initialize an instance of the ``Experiment`` class, import the SmartSim Experiment module and invoke the ``Experiment`` constructor
+To initialize an instance of the ``Experiment`` class, import the SmartSim ``Experiment`` module and invoke the ``Experiment`` constructor
 with a `name` and `launcher`:
 
 .. code-block:: python
@@ -127,7 +131,7 @@ a ``Model`` instance that contains all of the information required to launch our
 
     model = exp.create_model(name="example-model", run_settings=settings)
 
-To created an isolated output directory for the ``Model``, invoke ``Experiment.generate()`` via the
+To create an isolated output directory for the ``Model``, invoke ``Experiment.generate()`` via the
 ``Experiment`` instance `exp` with `model` as an input parameter:
 
 .. code-block:: python
@@ -142,7 +146,7 @@ input parameter:
 
     exp.start(model)
 
-When the Experiment Python driver script is executed, two files from the standard model will be created
+When the ``Experiment`` Python driver script is executed, two files from the ``Model`` will be created
 in the Experiment working directory:
 
 1. `example-model.out` : this file will hold outputs produced by the Model workload
@@ -180,7 +184,7 @@ via `kwargs`.
         "intra_op_threads": 1
     }
 
-For a walkthrough of how to colocate a Model, navigate to the :ref:`Colocated Orchestrator<dead_link>` for
+For a walkthrough of how to colocate a ``Model``, navigate to the :ref:`Colocated Orchestrator<dead_link>` for
 instructions.
 
 .. _files_doc:
@@ -284,8 +288,8 @@ To created an isolated directory for the ``Model`` outputs and configuration fil
 
     model = exp.generate(model)
 
-Launching the model with ``exp.start(example_model)`` processes attached generator files. `configure_inputs.txt` will be
-available in the model working directory and SmartSim will assign `example_model` `params` to the text file.
+After invoking ``Experiment.generate()``, the attached generator files will be available for the
+application when ``exp.start(example_model)`` is called.
 
 The contents of `params_inputs.txt` after Model completion are:
 
@@ -331,7 +335,7 @@ Users can follow **three** processes to load a TorchScript to the ``Orchestrator
 - :ref:`from file<TS_from_file>`
 - :ref:`from string<TS_raw_string>`
 
-Once a ML model or TorchScript is loaded to the ``Orchestrator``, ``Model`` objects can
+Once a ML model or TorchScript is loaded into the ``Orchestrator``, ``Model`` objects can
 leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
 to execute the stored ML models or TorchScripts.
 
@@ -725,8 +729,8 @@ data in the ``Orchestrator``, the names used to reference data, models, and scri
 identical, and without the use of SmartSim and SmartRedis helper methods, ``Models``
 will end up inadvertently accessing or overwriting each other’s data. To prevent this
 situation, the SmartSim ``Model`` object supports key prefixing, which automatically prepends
-the name of the ``Model`` to the keys by which it is accessed. With this enabled, collision is
-resolved and ``Models`` can use the same code.
+the name of the ``Model`` to the keys it uses to access data. With this enabled, collision is
+avoided and ``Models`` can use the same code.
 
 For example, assume you have two ``Models`` in an ``Experiment``, named `bar_0` and `bar_1`. In each
 application code you use the function ``Client.put_tensor("foo")``. With ``Model`` key prefixing
@@ -735,16 +739,15 @@ overwriting or accessing the other ``Model`` `"foo"` tensor.
 
 Enabling and Disabling
 ======================
-SmartSim allows users to enable and disable tensor, dataset, and list prefixing on a
+SmartSim allows users to enable and disable tensor, Dataset, and list prefixing on a
 ``Model`` from inside the ``Experiment`` driver script and application script. Additionally, ML
 model and script prefixing may be enabled and disabled from within the application script.
-SmartSim also supports toggling between data structure prefixing in the application script.
 
-To enable key prefixing on tensors, datasets, and lists from within the ``Experiment`` driver
+To enable key prefixing on tensors, Datasets, and lists from within the ``Experiment`` driver
 script, the function ``Model.enable_key_prefixing()`` must be used on the designated ``Model``.
-This function will instruct SmartSim to turn on prefixing for tensors, datasets, and lists
+This function will instruct SmartSim to turn on prefixing for tensors, Datasets, and lists
 sent to the ``Orchestrator`` from within the application script. Additionally, SmartSim
-provides ``Client`` functions to disable and enable tensor, dataset, and list prefixing
+provides ``Client`` functions to disable and enable tensor, Dataset, and list prefixing
 within the application script:
 
 - Tensor: ``Client.use_tensor_ensemble_prefix()``
@@ -768,7 +771,7 @@ This will ensure that the ``Model`` `name` is prepended to the ML model or scrip
 Put/Set Operations
 ==================
 In the following tabs we provide snippets of driver script and application code to demonstrate
-activating and deactivating prefixing for tensors, datasets, lists, ML models and scripts using
+activating and deactivating prefixing for tensors, Datasets, lists, ML models and scripts using
 SmartRedis put/get semantics.
 
 .. tabs::
@@ -843,9 +846,9 @@ SmartRedis put/get semantics.
 
         To activate prefixing on a ``Model`` in the driver script, a user must use the function
         ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
-        is prepended to each dataset `name` sent to the ``Orchestrator`` from within the ``Model``.
+        is prepended to each Dataset `name` sent to the ``Orchestrator`` from within the ``Model``.
 
-        In the driver script snippet below, we take an initialized ``Model`` and activate dataset
+        In the driver script snippet below, we take an initialized ``Model`` and activate Dataset
         prefixing through the ``enable_key_prefixing()`` function:
 
         .. code-block:: python
@@ -855,10 +858,10 @@ SmartRedis put/get semantics.
 
             # Create a Model instance named 'model'
             model = exp.create_model("model_name", model_settings)
-            # Enable dataset prefixing on the 'model' instance
+            # Enable Dataset prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In executable application script of `model`, two datasets named `dataset_1` and `dataset_2` are sent to a launched ``Orchestrator``.
+        In executable application script of `model`, two Datasets named `dataset_1` and `dataset_2` are sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -868,17 +871,17 @@ SmartRedis put/get semantics.
             3) "model_name.{dataset_2}.dataset_tensor_2"
             4) "model_name.{dataset_2}.meta"
 
-        You will notice that the ``Model`` name `model_name` has been prefixed to each dataset `name`
+        You will notice that the ``Model`` name `model_name` has been prefixed to each Dataset `name`
         and stored in the ``Orchestrator``.
 
         **Activate Dataset Prefixing in the Application Script**
 
-        Users can further configure dataset prefixing in the application script by using
+        Users can further configure Dataset prefixing in the application script by using
         the ``Client`` function ``use_dataset_ensemble_prefixing()``. By specifying a boolean
         value to the function, users can turn prefixing on and off throughout the application
         code.
 
-        In the application snippet below, we demonstrate enabling and disabling dataset prefixing:
+        In the application snippet below, we demonstrate enabling and disabling Dataset prefixing:
 
         .. code-block:: python
 
@@ -898,8 +901,8 @@ SmartRedis put/get semantics.
 
             1) "{dataset_1}.dataset_tensor_1"
             2) "{dataset_1}.meta"
-            3) "model_name.{copied_dataset}.dataset_tensor_1"
-            4) "model_name.{copied_dataset}.meta"
+            3) "model_name.{dataset_2}.dataset_tensor_1"
+            4) "model_name.{dataset_2}.meta"
 
         You will notice that the ``Model`` name `model_name` is **not** prefixed to `dataset_1` since
         we disabled dataset prefixing before sending the dataset to the ``Orchestrator``. However,
@@ -1053,9 +1056,9 @@ Get Operations
 ==============
 In the following sections, we walk through snippets of application code to demonstrate the retrieval
 of prefixed tensors, datasets, lists, ML models, and scripts using SmartRedis put/get
-semantics. The examples demonstrate retrieval within the same script where the data
+semantics. The examples demonstrate retrieval within the same application script where the data
 structures were placed, as well as scenarios where data structures are placed by separate
-scripts.
+application scripts.
 
 .. tabs::
 
