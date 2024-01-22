@@ -61,7 +61,7 @@ The key initializer arguments are:
 -  `run_settings` (base.RunSettings): Describe execution settings for a ``Model``.
 -  `params` (t.Optional[t.Dict[str, t.Any]] = None): Provides a dictionary of parameters for ``Models``.
 -  `path` (t.Optional[str] = None): Path to where the ``Model`` should be executed at runtime.
--  `enable_key_prefixing` (bool = False): Prefix the ``Model`` name to data sent to the database to prevent key collisions. Default is `False`.
+-  `enable_key_prefixing` (bool = False): Prefix the ``Model`` name to data sent to the ``Orchestrator`` to prevent key collisions. Default is `False`.
 -  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
 A `name` and :ref:`RunSettings<dead_link>` reference are required to initialize a ``Model``.
@@ -168,10 +168,10 @@ There are **three** different Model API functions to colocate a ``Model``:
 - ``Model.colocate_db_uds()``: Colocate an ``Orchestrator`` instance and establish client communication using Unix domain sockets (UDS).
 - ``Model.colocate_db()``: (deprecated) An alias for `Model.colocate_db_tcp()`.
 
-Each function initializes an unsharded database accessible only to the ``Model`` processes on the same compute node. When the ``Model``
+Each function initializes an unsharded ``Orchestrator`` accessible only to the ``Model`` processes on the same compute node. When the ``Model``
 is started, the ``Orchestrator`` will be launched on the same compute resource as the ``Model``. Only the colocated ``Model``
 may communicate with the ``Orchestrator`` via a SmartRedis client by using the loopback TCP interface or
-Unix Domain sockets. Extra parameters for the database can be passed into the functions above
+Unix Domain sockets. Extra parameters for the ``Orchestrator`` can be passed into the functions above
 via `kwargs`.
 
 .. code-block:: python
@@ -344,7 +344,7 @@ AI Models
 When configuring a ``Model``, users can instruct SmartSim to load
 Machine Learning (ML) models dynamically to the ``Orchestrator`` (colocated or standalone). ML models added
 are loaded into the ``Orchestrator`` prior to the execution of the ``Model``. To load an ML model
-to the database, SmartSim users can provide the ML model **in-memory** or specify the **file path**
+to the ``Orchestrator``, SmartSim users can provide the ML model **in-memory** or specify the **file path**
 when using the ``Model.add_ml_model()`` function. The supported ML frameworks are TensorFlow,
 TensorFlow-lite, PyTorch, and ONNX.
 
@@ -423,7 +423,7 @@ In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the follow
 
 .. warning::
     Calling `exp.start(smartsim_model)` prior to instantiation of an ``Orchestrator`` will result in
-    a failed attempt to load the ML model to a non-existent database.
+    a failed attempt to load the ML model to a non-existent ``Orchestrator``.
 
 When the ``Model`` is started via ``Experiment.start()``, the ML model will be loaded to the
 launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
@@ -488,7 +488,7 @@ In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the follow
 
 .. warning::
     Calling `exp.start(smartsim_model)` prior to instantiation of an ``Orchestrator`` will result in
-    a failed attempt to load the ML model to a non-existent database.
+    a failed attempt to load the ML model to a non-existent ``Orchestrator``.
 
 When the ``Model`` is started via ``Experiment.start()``, the ML model will be loaded to the
 launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
@@ -499,7 +499,7 @@ TorchScripts
 ============
 When configuring a ``Model``, users can instruct SmartSim to load TorchScripts dynamically
 to the ``Orchestrator``. TorchScripts added are loaded into the ``Orchestrator`` prior to
-the execution of the ``Model``. To load a TorchScript to the database, SmartSim users
+the execution of the ``Model``. To load a TorchScript to the ``Orchestrator``, SmartSim users
 can follow one of the processes:
 
 - :ref:`Define a TorchScript function in-memory<in_mem_TF_doc>`
@@ -570,7 +570,7 @@ parameter:
 
 In the above ``smartsim_model.add_function()`` code snippet, we offer the following arguments:
 
--  `name` ("example_func"): A name to uniquely identify the ML model within the database.
+-  `name` ("example_func"): A name to uniquely identify the ML model within the ``Orchestrator``.
 -  `function` (timestwo): Name of the TorchScript function defined in the Python driver script.
 -  `device` ("CPU"): Specifying the device for ML model execution.
 -  `devices_per_node` (2): Use two GPUs per node.
@@ -578,7 +578,7 @@ In the above ``smartsim_model.add_function()`` code snippet, we offer the follow
 
 .. warning::
     Calling `exp.start(smartsim_model)` prior to instantiation of an ``Orchestrator`` will result in
-    a failed attempt to load the ML model to a non-existent database.
+    a failed attempt to load the ML model to a non-existent ``Orchestrator``.
 
 When the ``Model`` is started via ``Experiment.start()``, the TF function will be loaded to the
 standalone ``Orchestrator``. The function can then be executed on the ``Orchestrator`` via a SmartSim
@@ -646,7 +646,7 @@ In the above ``smartsim_model.add_script()`` code snippet, we offer the followin
 
 .. warning::
     Calling `exp.start(smartsim_model)` prior to instantiation of an ``Orchestrator`` will result in
-    a failed attempt to load the ML model to a non-existent database.
+    a failed attempt to load the ML model to a non-existent ``Orchestrator``.
 
 When `smartsim_model` is started via ``Experiment.start()``, the TorchScript will be loaded from file to the
 ``Orchestrator`` that is launched prior to the start of the `smartsim_model`.
@@ -712,7 +712,7 @@ In the above ``smartsim_model.add_script()`` code snippet, we offer the followin
 
 .. warning::
     Calling `exp.start(smartsim_model)` prior to instantiation of an ``Orchestrator`` will result in
-    a failed attempt to load the ML model to a non-existent database.
+    a failed attempt to load the ML model to a non-existent ``Orchestrator``.
 
 When the ``Model`` is started via ``Experiment.start()``, the TorchScript will be loaded to the
 ``Orchestrator`` that is launched prior to the start of the ``Model``.
