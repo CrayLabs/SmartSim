@@ -78,23 +78,31 @@ logger = get_logger(__name__)
 
 
 class Sink(abc.ABC):
+    """Base class for telemetry output sinks"""
     @abc.abstractmethod
     def save(self, **kwargs: t.Any) -> None:
         ...
 
 
 class FileSink(Sink):
+    """Telemetry sink that writes to a file"""
     def __init__(self, entity: JobEntity, sub: str) -> None:
-        self._path = pathlib.Path(entity.path) / sub
+        # todo: consider renaming sub (it's the sub-path under entity.status_dir)
+        # todo: consider specifying sub & file name separately?
+        #   - might let me configure outputs better instead of hardcoded "mem.csv"?
+        self._path = pathlib.Path(entity.status_dir) / sub
 
     def save(self, **kwargs: t.Any) -> None:
+        """Save all arguments to a file as specified by the associated JobEntity"""
         with open(self._path, "a+", encoding="utf-8") as sink_fp:
-            values = ",".join(kwargs.values()) + "\n"
+            values = ",".join(list(map(str, kwargs.values()))) + "\n"
             sink_fp.write(values)
 
 
 class LogSink(Sink):
+    """Telemetry sink that writes console output for testing purposes"""
     def save(self, **kwargs: t.Any) -> None:
+        """Save all arguments as console logged messages"""
         logger.info(",".join(map(str, kwargs.values())))
 
 
@@ -125,6 +133,7 @@ class Collector(abc.ABC):
     def timestamp() -> int:
         return int(datetime.datetime.timestamp(datetime.datetime.now()))
 
+
 class DbCollector(Collector):
     """A base class for collectors that retrieve statistics from an orchestrator"""
 
@@ -138,10 +147,10 @@ class DbCollector(Collector):
         """Configure and connect to the target database"""
         try:
             db_host = self._entity.meta.get("host", "localhost")
-            db_port = int(self._entity.meta.get("port", 6379))
+            db_port = self._entity.meta.get("port", "6379")
 
             if not self._client:
-                self._client = redis.Redis(host=db_host, port=db_port)
+                self._client = redis.Redis(host=db_host, port=int(db_port))
 
         except Exception as e:
             logger.exception(e)
@@ -173,7 +182,7 @@ class DbMemoryCollector(DbCollector):
         db_info = await self._client.info()
         self._value = db_info
 
-        self._sink.save(**db_info, ts=self.timestamp())
+        self._sink.save(ts=self.timestamp(), **db_info)
 
     @property
     def keys(self) -> t.Iterable[str]:
@@ -204,7 +213,7 @@ class DbConnectionCollector(DbCollector):
         self._value = addresses
 
         for v in addresses:
-            self._sink.save(**v, ts=now_ts)
+            self._sink.save(ts=now_ts, **v)
 
     @property
     def value(self) -> t.List[str]:
@@ -245,8 +254,13 @@ class CollectorManager:
 
     async def collect(self) -> None:
         """Execute collection for all managed collectors"""
-        for collector in self.all_collectors:
-            await collector.collect()
+        logger.debug("Executing all telemetry collectors")
+
+        if collectors := self.all_collectors:
+            results = await asyncio.wait(
+                list(collector.collect() for collector in collectors)
+            )
+            print(f"collector.collect() results:\n{results}")
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
@@ -313,6 +327,12 @@ def _hydrate_persistable(
     entity.timestamp = int(persistable_entity.get("timestamp", "0"))
     entity.path = str(exp_dir)
     entity.status_dir = str(status_dir)
+
+    if entity.is_db:
+        print("nice db you got there... shame to lose it!")
+        # db shards are hydrated individually
+        entity.meta["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
+        entity.meta["port"] = persistable_entity.get("port", "NO-DB-PORT")
 
     return entity
 
@@ -576,7 +596,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         for run in runs:
             for entity in run.flatten(
-                filter_fn=lambda e: e.key not in self._tracked_jobs and e.is_managed
+                filter_fn=lambda e: e.key not in self._tracked_jobs
             ):
                 entity.path = str(exp_dir)
 
@@ -669,7 +689,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             return_code=faux_return_code(step_info),
         )
 
-    def on_timestep(self, timestamp: int) -> None:
+    async def on_timestep(self, timestamp: int) -> None:
         """Called at polling frequency to request status updates on
         monitored entities
 
@@ -687,7 +707,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         names = {entity.name: entity for entity in entity_map.values()}
 
         # trigger all metric collection for the timestep
-        asyncio.run(self._collector.collect())
+        # asyncio.run(self._collector.collect())
+        await self._collector.collect()
 
         if names:
             step_updates = self._launcher.get_step_update(list(names.keys()))
@@ -698,23 +719,24 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._to_completed(timestamp, completed_entity, step_info)
 
 
-def can_shutdown(action_handler: ManifestEventHandler) -> bool:
-    jobs = action_handler.job_manager.jobs
-    db_jobs = action_handler.job_manager.db_jobs
+def can_shutdown(_action_handler: ManifestEventHandler) -> bool:
+    return False
+    # jobs = action_handler.job_manager.jobs
+    # db_jobs = action_handler.job_manager.db_jobs
 
-    has_jobs = bool(jobs)
-    has_dbs = bool(db_jobs)
-    has_running_jobs = has_jobs or has_dbs
+    # has_jobs = bool(jobs)
+    # has_dbs = bool(db_jobs)
+    # has_running_jobs = has_jobs or has_dbs
 
-    if has_jobs:
-        logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
-    if has_dbs:
-        logger.debug(f"telemetry monitor is monitoring {len(db_jobs)} dbs")
+    # if has_jobs:
+    #     logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
+    # if has_dbs:
+    #     logger.debug(f"telemetry monitor is monitoring {len(db_jobs)} dbs")
 
-    return not has_running_jobs
+    # return not has_running_jobs
 
 
-def event_loop(
+async def event_loop(
     observer: BaseObserver,
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
@@ -740,7 +762,7 @@ def event_loop(
     while observer.is_alive():
         timestamp = get_ts()
         logger.debug(f"Telemetry timestep: {timestamp}")
-        action_handler.on_timestep(timestamp)
+        await action_handler.on_timestep(timestamp)
 
         elapsed += timestamp - last_ts
         last_ts = timestamp
@@ -756,7 +778,7 @@ def event_loop(
         time.sleep(frequency)
 
 
-def main(
+async def main(
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
     observer: t.Optional[BaseObserver] = None,
@@ -803,7 +825,7 @@ def main(
         observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
-        event_loop(observer, action_handler, frequency, cooldown_duration)
+        await event_loop(observer, action_handler, frequency, cooldown_duration)
         return os.EX_OK
     except Exception as ex:
         logger.error(ex)
@@ -870,10 +892,12 @@ if __name__ == "__main__":
     register_signal_handlers()
 
     try:
-        main(
-            int(args.frequency),
-            pathlib.Path(args.exp_dir),
-            cooldown_duration=args.cooldown,
+        asyncio.run(
+            main(
+                int(args.frequency),
+                pathlib.Path(args.exp_dir),
+                cooldown_duration=args.cooldown,
+            )
         )
         sys.exit(0)
     except Exception:
