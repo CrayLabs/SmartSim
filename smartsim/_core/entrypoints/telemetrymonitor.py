@@ -281,7 +281,7 @@ class CollectorManager:
         if collectors := self.all_collectors:
             tasks = [collector.collect() for collector in collectors]
             results = await asyncio.gather(*tasks)
-            print(f"collector.collect() results:\n{results}")
+            logger.debug(f"collector.collect() results: {results}")
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
@@ -654,7 +654,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type event: FileModifiedEvent
         """
         super().on_modified(event)  # type: ignore
-        logger.info(f"processing manifest modified @ {event.src_path}")
+        logger.debug(f"processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -664,7 +664,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type event: FileCreatedEvent
         """
         super().on_created(event)  # type: ignore
-        logger.info(f"processing manifest created @ {event.src_path}")
+        logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def _to_completed(
