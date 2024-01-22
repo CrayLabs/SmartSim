@@ -382,7 +382,8 @@ def test_shutdown_conditions():
     assert can_shutdown(mani_handler)
 
 
-def test_auto_shutdown():
+@pytest.mark.asyncio
+async def test_auto_shutdown():
     """Ensure that the cooldown timer is respected"""
 
     class FauxObserver:
@@ -411,7 +412,7 @@ def test_auto_shutdown():
     duration = 2
 
     ts0 = get_ts()
-    event_loop(observer, mani_handler, frequency, duration)
+    await event_loop(observer, mani_handler, frequency, duration)
     ts1 = get_ts()
 
     assert ts1 - ts0 >= duration
@@ -423,7 +424,7 @@ def test_auto_shutdown():
     duration = 5
 
     ts0 = get_ts()
-    event_loop(observer, mani_handler, frequency,  duration)
+    await event_loop(observer, mani_handler, frequency,  duration)
     ts1 = get_ts()
 
     assert ts1 - ts0 >= duration
