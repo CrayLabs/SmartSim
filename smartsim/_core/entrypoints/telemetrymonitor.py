@@ -739,21 +739,21 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._to_completed(timestamp, completed_entity, step_info)
 
 
-def can_shutdown(_action_handler: ManifestEventHandler) -> bool:
-    return False
-    # jobs = action_handler.job_manager.jobs
-    # db_jobs = action_handler.job_manager.db_jobs
+def can_shutdown(action_handler: ManifestEventHandler) -> bool:
+    # return False
+    jobs = action_handler.job_manager.jobs
+    db_jobs = action_handler.job_manager.db_jobs
 
-    # has_jobs = bool(jobs)
-    # has_dbs = bool(db_jobs)
-    # has_running_jobs = has_jobs or has_dbs
+    has_jobs = bool(jobs)
+    has_dbs = bool(db_jobs)
+    has_running_jobs = has_jobs or has_dbs
 
-    # if has_jobs:
-    #     logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
-    # if has_dbs:
-    #     logger.debug(f"telemetry monitor is monitoring {len(db_jobs)} dbs")
+    if has_jobs:
+        logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
+    if has_dbs:
+        logger.debug(f"telemetry monitor is monitoring {len(db_jobs)} dbs")
 
-    # return not has_running_jobs
+    return not has_running_jobs
 
 
 async def event_loop(
