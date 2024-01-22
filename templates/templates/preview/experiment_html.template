@@ -1,0 +1,6 @@
+<p>=== Experiment Overview ===</p>
+<ul style="list-style-type:none;">
+  <li>Experiment: {{ exp_entity.name }}</li>
+  <li>Experiment Path: {{ exp_entity.exp_path }}</li>
+  <li> Launcher: {{ exp_entity.launcher }}</li>
+</ul>  

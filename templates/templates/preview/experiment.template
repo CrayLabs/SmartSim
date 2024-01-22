@@ -1,4 +1,3 @@
-
 === Experiment Overview ===
 {%- if verbosity_level == "info" %}
     Experiment: {{ exp_entity.name }}

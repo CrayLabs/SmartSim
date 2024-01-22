@@ -129,23 +129,3 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
         filename, "w+", encoding="utf-8"
     )
     coloredlogs.install(stream=stream, logger=logger, level=log_level)
-
-
-def log_to_file_preview(
-    filename: str,
-    logger: logging.Logger,
-) -> logging.Handler:
-    """Use filestream handler allowing logging calls 
-    to be sent to filename for preview.
-    :param filename: the name of the desired preview file.
-    :type filename: str
-    """
-    logger.propagate = False
-    fmt =  "%(message)s"
-    formatter = logging.Formatter(fmt)
-    file_handler = logging.FileHandler(filename, mode="w")
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-
-    return file_handler

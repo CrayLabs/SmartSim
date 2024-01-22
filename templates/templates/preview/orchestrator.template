@@ -1,22 +1,13 @@
-{%- if manifest.dbs %}
+
     == Orchestrators == 
 {%- for db in manifest.dbs %}
         = Database identifier: {{ db.name }}
             Shards: {{ db.num_shards }}
-            IP address:
-            TCP/IP port: 
             Network interface: {{ db._interfaces[0] }}
             Type: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
             Executable: {{ config.database_exe }}
             Batch Launch: {{ db.batch }}
-            Is MPMD:
             Run command: {{ db.run_command }}
-            Run arguments:
             Ntasks: {{ db.db_nodes }}
-            Environment variables:
-            Error File:
-            Output File:
         =
 {% endfor -%}
-{%- endif -%}
-

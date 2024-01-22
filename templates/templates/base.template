@@ -1,7 +1,0 @@
-
-{% include "experiment.template" %}
-{%- if manifest %}
-
-=== Entity Preview === 
-{% include "orchestrator.template" %}
-{%- endif -%}
