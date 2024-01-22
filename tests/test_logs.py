@@ -175,13 +175,13 @@ def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
         with monkeypatch.context() as ctx:
             ctx.setattr(smartsim._core.control.jobmanager.JobManager, "start", thrower)
             exp = Experiment("MyExperiment", launcher="local", exp_path=str(test_dir))
-            exp.generate()  # did not affect output dirs on step
 
             sleep_rs = exp.create_run_settings("sleep", ["2"])
             sleep_rs.set_nodes(1)
             sleep_rs.set_tasks(1)
 
             sleep = exp.create_model("SleepModel", sleep_rs)
+            exp.generate(sleep)
             exp.start(sleep, block=True)
     except Exception as ex:
         assert err_msg in ex.args
