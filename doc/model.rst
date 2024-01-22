@@ -270,7 +270,7 @@ and pass in the `model_settings` instance:
     # Initialize a Model object
     example_model = exp.create_model("model", model_settings, params={"THERMO":1})
 
-We now have a ``Model`` instance named `model`. Attach the above text file
+We now have a ``Model`` instance named `example_model`. Attach the above text file
 to the ``Model`` for use at entity runtime. To do so, we use the
 ``Model.attach_generator_files()`` function and specify the `to_configure`
 parameter with the path to the text file, `params_inputs.txt`:
@@ -281,11 +281,11 @@ parameter with the path to the text file, `params_inputs.txt`:
     example_model.attach_generator_files(to_configure="path/to/params_inputs.txt")
 
 To created an isolated directory for the ``Model`` outputs and configuration files, invoke ``Experiment.generate()`` via the
-``Experiment`` instance `exp` with `model` as an input parameter:
+``Experiment`` instance `exp` with `example_model` as an input parameter:
 
 .. code-block:: python
 
-    model = exp.generate(model)
+    exp.generate(example_model)
 
 After invoking ``Experiment.generate()``, the attached generator files will be available for the
 application when ``exp.start(example_model)`` is called.
