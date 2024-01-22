@@ -84,6 +84,7 @@ class BuildError(Exception):
 
 class Architecture(enum.Enum):
     X64 = ("x86_64", "amd64")
+    ARM64 = ("arm64",)
 
     @classmethod
     def from_str(cls, string: str, /) -> "Architecture":
@@ -438,6 +439,8 @@ class RedisAIBuilder(Builder):
             raise fail_to_format(f"Unknown operating system: {self._os}")
         if self._architecture == Architecture.X64:
             arch = "x64"
+        elif self._architecture == Architecture.ARM64:
+            arch = "arm64v8"
         else:  # pragma: no cover
             raise fail_to_format(f"Unknown architecture: {self._architecture}")
         return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
