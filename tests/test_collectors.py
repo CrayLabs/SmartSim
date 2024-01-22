@@ -293,7 +293,44 @@ def test_collector_manager_add_multi(mock_entity):
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_collect(mock_entity, local_db):
+async def test_collector_manager_collect(mock_entity, mock_redis, monkeypatch):
+    """Ensure that all collectors are executed and some metric is retrieved
+    NOTE: responses & producer are mocked"""
+    entity1 = mock_entity(port=1234)
+    entity2 = mock_entity(port=2345)
+
+    sinks = [MockSink(), MockSink(), MockSink()]
+    con_col1 = DbConnectionCollector(entity1, sinks[0])
+    mem_col1 = DbMemoryCollector(entity1, sinks[1])
+    mem_col2 = DbMemoryCollector(entity2, sinks[2])
+
+    manager = CollectorManager()
+    manager.add_all([con_col1, mem_col1, mem_col2])
+
+    # Execute collection
+    with monkeypatch.context() as ctx:
+        a1, a2 = "127.0.0.1:1234", "127.0.0.1:2345"
+        mock_conns = [
+            {
+                "addr": a1,
+            },
+            {
+                "addr": a2,
+            },
+        ]
+        mock_mem = {"total_system_memory": 1111}
+        
+        ctx.setattr(redis, "Redis", mock_redis(client_stats=mock_conns, mem_stats=mock_mem))
+        await manager.collect()
+
+    # verify each collector retrieved some metric & sent it to the sink
+    for sink in sinks:
+        value = sink.args
+        assert value is not None and value
+
+
+@pytest.mark.asyncio
+async def test_collector_manager_collect_integration(mock_entity, local_db):
     """Ensure that all collectors are executed and some metric is retrieved"""
     entity1 = mock_entity(port=local_db.ports[0])
     entity2 = mock_entity(port=local_db.ports[0])
