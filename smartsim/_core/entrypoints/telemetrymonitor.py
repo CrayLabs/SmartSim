@@ -27,6 +27,7 @@ import abc
 import argparse
 import asyncio
 import collections
+import dataclasses
 import datetime
 import itertools
 import json
@@ -79,6 +80,7 @@ logger = get_logger(__name__)
 
 class Sink(abc.ABC):
     """Base class for telemetry output sinks"""
+
     @abc.abstractmethod
     def save(self, **kwargs: t.Any) -> None:
         ...
@@ -86,6 +88,7 @@ class Sink(abc.ABC):
 
 class FileSink(Sink):
     """Telemetry sink that writes to a file"""
+
     def __init__(self, entity: JobEntity, sub: str) -> None:
         # todo: consider renaming sub (it's the sub-path under entity.status_dir)
         # todo: consider specifying sub & file name separately?
@@ -101,6 +104,7 @@ class FileSink(Sink):
 
 class LogSink(Sink):
     """Telemetry sink that writes console output for testing purposes"""
+
     def save(self, **kwargs: t.Any) -> None:
         """Save all arguments as console logged messages"""
         logger.info(",".join(map(str, kwargs.values())))
@@ -109,17 +113,22 @@ class LogSink(Sink):
 class Collector(abc.ABC):
     """Base class for metrics collectors"""
 
-    def __init__(self, entity: JobEntity) -> None:
+    def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the collector
 
         :param entity: The entity to collect metrics on
         :type entity: JobEntity"""
         self._entity = entity
+        self._sink = sink
         self._value: t.Any = None
 
     @property
     def owner(self) -> str:
         return self._entity.name
+
+    @property
+    def sink(self) -> Sink:
+        return self._sink
 
     @abc.abstractmethod
     async def prepare(self) -> None:
@@ -134,32 +143,45 @@ class Collector(abc.ABC):
         return int(datetime.datetime.timestamp(datetime.datetime.now()))
 
 
+@dataclasses.dataclass
+class _Address:
+    """Helper class to hold and pretty-print connection details"""
+
+    host: str
+    port: int
+
+    def __str__(self) -> str:
+        return f"{self.host}:{self.port}"
+
+
 class DbCollector(Collector):
     """A base class for collectors that retrieve statistics from an orchestrator"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the collector"""
-        super().__init__(entity)
+        super().__init__(entity, sink)
         self._client: t.Optional[redis.Redis[bytes]] = None
-        self._sink = sink
+        self._address = _Address(
+            self._entity.meta.get("host", "127.0.0.1"),
+            int(self._entity.meta.get("port", 6379)),
+        )
 
     async def _configure_client(self) -> None:
         """Configure and connect to the target database"""
         try:
-            db_host = self._entity.meta.get("host", "localhost")
-            db_port = self._entity.meta.get("port", "6379")
-
             if not self._client:
-                self._client = redis.Redis(host=db_host, port=int(db_port))
+                self._client = redis.Redis(
+                    host=self._address.host, port=self._address.port
+                )
 
         except Exception as e:
             logger.exception(e)
-            raise SmartSimError(
-                "Collector failed to communicate with metric producer"
-            ) from e
+            msg = f"DbCollector failed to communicate with {self._address}"
+            raise SmartSimError(msg) from e
 
         if not self._client:  #  or not self._client.is_connected:
-            raise SmartSimError("Collector failed to connect to metric producer")
+            msg = f"DbCollector failed to connect to {self._address}"
+            raise SmartSimError(msg)
 
     async def prepare(self) -> None:
         """Initialization logic for a DB collector"""
@@ -176,7 +198,7 @@ class DbMemoryCollector(DbCollector):
     async def collect(self) -> None:
         await self.prepare()
         if not self._client:
-            logger.warning("DbMemoryCollector is not connected and cannot collect")
+            logger.warning("DbMemoryCollector cannot collect")
             return
 
         db_info = await self._client.info()
@@ -257,9 +279,8 @@ class CollectorManager:
         logger.debug("Executing all telemetry collectors")
 
         if collectors := self.all_collectors:
-            results = await asyncio.wait(
-                list(collector.collect() for collector in collectors)
-            )
+            tasks = [collector.collect() for collector in collectors]
+            results = await asyncio.gather(*tasks)
             print(f"collector.collect() results:\n{results}")
 
     @classmethod
@@ -707,7 +728,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         names = {entity.name: entity for entity in entity_map.values()}
 
         # trigger all metric collection for the timestep
-        # asyncio.run(self._collector.collect())
         await self._collector.collect()
 
         if names:
