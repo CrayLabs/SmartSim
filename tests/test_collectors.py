@@ -299,10 +299,10 @@ async def test_collector_manager_collect(mock_entity, local_db):
     entity2 = mock_entity(port=local_db.ports[0])
 
     # todo: consider a MockSink so i don't have to save the last value in the collector
-    s1, s2, s3 = MockSink(), MockSink(), MockSink()
-    con_col1 = DbConnectionCollector(entity1, s1)
-    mem_col1 = DbMemoryCollector(entity1, s2)
-    mem_col2 = DbMemoryCollector(entity2, s3)
+    sinks = [MockSink(), MockSink(), MockSink()]
+    con_col1 = DbConnectionCollector(entity1, sinks[0])
+    mem_col1 = DbMemoryCollector(entity1, sinks[1])
+    mem_col2 = DbMemoryCollector(entity2, sinks[2])
 
     manager = CollectorManager()
     manager.add_all([con_col1, mem_col1, mem_col2])
@@ -311,6 +311,6 @@ async def test_collector_manager_collect(mock_entity, local_db):
     await manager.collect()
 
     # verify each collector retrieved some metric & sent it to the sink
-    for collector in manager.all_collectors:
-        value = t.cast(MockSink, collector.sink).args
+    for sink in sinks:
+        value = sink.args
         assert value is not None and value
