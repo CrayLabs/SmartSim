@@ -426,7 +426,7 @@ In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the follow
     a failed attempt to load the ML model to a non-existent database.
 
 When the ``Model`` is started via ``Experiment.start()``, the ML model will be loaded to the
-launched ``Orchestrator``. The ML model can then be executed on the ``Orhcestrator`` via a SmartSim
+launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
 client (:ref:`SmartRedis<dead_link>`) within the application code.
 
 .. _from_file_ML_model_ex:
@@ -491,7 +491,7 @@ In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the follow
     a failed attempt to load the ML model to a non-existent database.
 
 When the ``Model`` is started via ``Experiment.start()``, the ML model will be loaded to the
-launched ``Orchestrator``. The ML model can then be executed on the ``Orhcestrator`` via a SmartSim
+launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
 client (:ref:`SmartRedis<dead_link>`) within the application code.
 
 .. _TS_doc:
