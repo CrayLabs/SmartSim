@@ -857,7 +857,6 @@ if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
 
-    # log = logging.getLogger(f"{__name__}.TelemetryMonitor")
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
 

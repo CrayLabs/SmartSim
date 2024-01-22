@@ -209,7 +209,7 @@ async def test_dbconncollector_integration(mock_entity, local_db):
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])
 
-    collector = DbConnectionCollector(entity)
+    collector = DbConnectionCollector(entity, LogSink())
 
     await collector.prepare()
     await collector.collect()

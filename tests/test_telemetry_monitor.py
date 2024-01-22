@@ -411,7 +411,7 @@ def test_auto_shutdown():
     duration = 2
 
     ts0 = get_ts()
-    event_loop(observer, mani_handler, frequency, logger, cooldown_duration=duration)
+    event_loop(observer, mani_handler, frequency, duration)
     ts1 = get_ts()
 
     assert ts1 - ts0 >= duration
@@ -423,7 +423,7 @@ def test_auto_shutdown():
     duration = 5
 
     ts0 = get_ts()
-    event_loop(observer, mani_handler, frequency, logger, cooldown_duration=duration)
+    event_loop(observer, mani_handler, frequency,  duration)
     ts1 = get_ts()
 
     assert ts1 - ts0 >= duration
