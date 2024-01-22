@@ -31,6 +31,7 @@ from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
+from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
 from smartsim.status import STATUS_NEVER_STARTED
 
@@ -178,3 +179,8 @@ def test_enable_disable_telemtery(monkeypatch):
     assert CONFIG.telemetry_enabled
     exp.disable_telemetry()
     assert not CONFIG.telemetry_enabled
+
+
+def test_error_on_cobalt():
+    with pytest.raises(SSUnsupportedError):
+        exp = Experiment("cobalt_exp", launcher="cobalt")

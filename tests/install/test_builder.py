@@ -25,13 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import pytest
-
 import functools
 import pathlib
 import platform
 import threading
 import time
+
+import pytest
 
 import smartsim._core._install.builder as build
 

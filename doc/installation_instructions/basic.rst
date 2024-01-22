@@ -18,7 +18,7 @@ Basic
 
 The base prerequisites to install SmartSim and SmartRedis are:
 
-  - Python 3.8-3.10
+  - Python 3.8-3.11
   - Pip
   - Cmake 3.13.x (or later)
   - C compiler
@@ -65,11 +65,11 @@ Supported Versions
    * - MacOS
      - x86_64
      - Not supported
-     - 3.8 - 3.10
+     - 3.8 - 3.11
    * - Linux
      - x86_64
      - Nvidia
-     - 3.8 - 3.10
+     - 3.8 - 3.11
 
 
 .. note::
@@ -241,9 +241,9 @@ SmartSim does.
    * - Platform
      - Python Versions
    * - MacOS
-     - 3.8 - 3.10
+     - 3.8 - 3.11
    * - Linux
-     - 3.8 - 3.10
+     - 3.8 - 3.11
 
 The Python client for SmartRedis is installed through ``pip`` as follows:
 
