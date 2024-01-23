@@ -82,8 +82,11 @@ class Sink(abc.ABC):
     """Base class for telemetry output sinks"""
 
     @abc.abstractmethod
-    def save(self, **kwargs: t.Any) -> None:
+    async def save(self, **kwargs: t.Any) -> None:
         ...
+
+
+from anyio import sleep, run, open_file
 
 
 class FileSink(Sink):
@@ -95,17 +98,21 @@ class FileSink(Sink):
         #   - might let me configure outputs better instead of hardcoded "mem.csv"?
         self._path = pathlib.Path(entity.status_dir) / sub
 
-    def save(self, **kwargs: t.Any) -> None:
+    @property
+    def path(self) -> pathlib.Path:
+        return self._path
+
+    async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments to a file as specified by the associated JobEntity"""
-        with open(self._path, "a+", encoding="utf-8") as sink_fp:
+        async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
             values = ",".join(list(map(str, kwargs.values()))) + "\n"
-            sink_fp.write(values)
+            await sink_fp.write(values)
 
 
 class LogSink(Sink):
     """Telemetry sink that writes console output for testing purposes"""
 
-    def save(self, **kwargs: t.Any) -> None:
+    async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments as console logged messages"""
         logger.info(",".join(map(str, kwargs.values())))
 
@@ -235,7 +242,7 @@ class DbConnectionCollector(DbCollector):
         self._value = addresses
 
         for v in addresses:
-            self._sink.save(ts=now_ts, **v)
+            await self._sink.save(ts=now_ts, **v)
 
     @property
     def value(self) -> t.List[str]:
@@ -245,11 +252,15 @@ class DbConnectionCollector(DbCollector):
 
 
 class CollectorManager:
-    def __init__(self) -> None:
-        """Initialize the collector manager with an empty set of collectors"""
+    def __init__(self, timeout_ms: int = 1000) -> None:
+        """Initialize the collector manager with an empty set of collectors
+        :param timeout_ms: Timout (in ms) for telemetry collection
+        :type timeout_ms: int
+        """
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(
             lambda: []
         )
+        self._timeout_ms = timeout_ms
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
@@ -279,8 +290,10 @@ class CollectorManager:
         logger.debug("Executing all telemetry collectors")
 
         if collectors := self.all_collectors:
-            tasks = [collector.collect() for collector in collectors]
-            results = await asyncio.gather(*tasks)
+            tasks = [
+                asyncio.create_task(collector.collect()) for collector in collectors
+            ]
+            results = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
             logger.debug(f"collector.collect() results: {results}")
 
     @classmethod
@@ -546,6 +559,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         ignore_patterns: t.Any = None,
         ignore_directories: bool = True,
         case_sensitive: bool = False,
+        timeout_ms: int = 1000,
     ) -> None:
         super().__init__(
             [pattern], ignore_patterns, ignore_directories, case_sensitive
@@ -561,7 +575,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "lsf": LSFLauncher,
             "local": LocalLauncher,
         }
-        self._collector = CollectorManager()
+        self._timeout_ms = timeout_ms
+        self._collector = CollectorManager(timeout_ms)
+
+    @property
+    def timeout_ms(self):
+        return self._timeout_ms
 
     def init_launcher(self, launcher: str) -> Launcher:
         """Initialize the controller with a specific type of launcher.
@@ -778,6 +797,7 @@ async def event_loop(
     """
     elapsed: int = 0
     last_ts: int = get_ts()
+    action_duration_ms: int = 0
 
     while observer.is_alive():
         timestamp = get_ts()
@@ -795,7 +815,20 @@ async def event_loop(
             # reset cooldown any time there are still jobs running
             elapsed = 0
 
-        time.sleep(frequency)
+        # track time elapsed to execute metric collection
+        action_duration_ms += timestamp - get_ts()
+        wait_time_ms = action_handler.timeout_ms - action_duration_ms
+        logger.debug(
+            "Collectors consumed {0}ms of {1}ms loop frequency. Sleeping {2}ms",
+            action_duration_ms,
+            action_handler.timeout_ms,
+            wait_time_ms if wait_time_ms > 0 else 0,
+        )
+
+        # delay loop if collection time didn't exceed loop frequency
+        if wait_time_ms > 0:
+            await sleep(wait_time_ms / 1000)  # convert to seconds for sleep
+            action_duration_ms = 0
 
 
 async def main(
@@ -831,7 +864,8 @@ async def main(
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
-    action_handler = ManifestEventHandler(monitor_pattern)
+    telemetry_timeout = int(frequency * 950)  # limit collector execution time
+    action_handler = ManifestEventHandler(monitor_pattern, timeout_ms=telemetry_timeout)
 
     if observer is None:
         observer = Observer()
