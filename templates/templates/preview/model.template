@@ -1,4 +1,4 @@
-    {% if verbosity_level == "info" -%}
+
     == Models ==  
     {%- for model in manifest.models %}
     {%- if model is defined %}
@@ -28,7 +28,7 @@
         =       
     {%- endif -%}
     {%- endfor -%}
-    {%- endif -%}
+
 
        
          

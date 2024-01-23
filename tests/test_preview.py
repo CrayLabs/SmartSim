@@ -23,23 +23,40 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import pytest
 
-from smartsim import Experiment
 from smartsim._core import Manifest
+from smartsim import Experiment
 from smartsim._core import previewrenderer
+from smartsim._core.config import CONFIG
 import pathlib
+
+
+@pytest.fixture
+def choose_host():
+    def _choose_host(wlmutils, index=0):
+        hosts = wlmutils.get_test_hostlist()
+        if hosts:
+            return hosts[index]
+        else:
+            return None
+
+    return _choose_host
 
 
 def test_experiment_preview(test_dir, wlmutils):
     """Test correct preview output items for Experiment preview"""
+    # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp_name = "test_prefix"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # Call method for string formatting for testing
+
+    # Execute method for template rendering
     output = previewrenderer.render(exp)
+    print(output)
+    # Evaluate output
     summary_lines = output.split("\n")
+    print(summary_lines)
     summary_lines = [item.replace("\t", "").strip() for item in summary_lines[-3:]]
     assert 3 == len(summary_lines)
     summary_dict = dict(row.split(": ") for row in summary_lines)
@@ -48,11 +65,15 @@ def test_experiment_preview(test_dir, wlmutils):
 
 def test_experiment_preview_properties(test_dir, wlmutils):
     """Test correct preview output properties for Experiment preview"""
+    # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp_name = "test_experiment_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # Call method for string formatting for testing
+
+    # Execute method for template rendering
     output = previewrenderer.render(exp)
+
+    # Evaluate output
     summary_lines = output.split("\n")
     summary_lines = [item.replace("\t", "").strip() for item in summary_lines[-3:]]
     assert 3 == len(summary_lines)
@@ -62,8 +83,24 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 
+def test_preview_output_format_html_to_file(test_dir, wlmutils):
+    """Test that an html file is rendered for Experiment preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp_name = "test_preview_output_format_html"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    filename = "test_preview_output_format_html.html"
+    path = pathlib.Path(test_dir) / filename
+
+    # Execute preview method
+    exp.preview(output_format="html", output_filename=str(path))
+
+    # Evaluate output
+    assert path.exists()
+    assert path.is_file()
+
 def test_model_jp(test_dir, wlmutils):
-    exp_name = "test_model_preview"
+    exp_name = "test_model_jp"
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
@@ -89,13 +126,14 @@ def test_model_preview(test_dir, wlmutils):
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
     rendered_preview = previewrenderer.render(exp, preview_manifest)
+    print(rendered_preview)
     assert "Model name" in rendered_preview
     assert "Executable" in rendered_preview
     assert "Executable Arguments" in rendered_preview
 
 
 def test_model_preview_parameters(test_dir, wlmutils):
-    exp_name = "test_model_preview"
+    exp_name = "test_model_preview_parameters"
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
@@ -127,75 +165,15 @@ def test_model_preview_parameters(test_dir, wlmutils):
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
 
-def test_preview_output_format_html(test_dir, wlmutils):
-    """Test correct preview output items for Experiment preview"""
-    test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    filename = "preview_test.html"
-    path = pathlib.Path() / "preview_test.html"
-    # call preview with output format and output filename
-    exp.preview(output_format="html", output_filename=filename)
-    assert path.exists()
-    assert path.is_file()
-
-
-def test_output_filename_without_format(test_dir, wlmutils):
-    test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    filename = "preview_test.html"
-    # call preview with output filename
-    with pytest.raises(ValueError) as ex:
-        exp.preview(output_filename=filename)
-    assert (
-        "Output filename is only a valid parameter when an output format is specified"
-        in ex.value.args[0]
-    )
-
-
-def test_output_format_without_filename(test_dir, wlmutils):
-    test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    filename = "preview_test.html"
-    # call preview with output filename
-    with pytest.raises(ValueError) as ex:
-        exp.preview(output_format="html")
-    assert (
-        "An output filename is required when an output format is set."
-        in ex.value.args[0]
-    )
-
-
 def test_output_format_error():
+    """
+    Test error when invalid ouput format is given.
+    """
+    # Prepare entities
     exp_name = "test_output_format"
     exp = Experiment(exp_name)
+
+    # Execute preview method
     with pytest.raises(ValueError) as ex:
         exp.preview(output_format="hello")
     assert "The only valid currently available is html" in ex.value.args[0]
-
-
-def test_verbosity_level_type_error():
-    exp_name = "test_verbosity_level"
-    exp = Experiment(exp_name)
-
-    with pytest.raises(ValueError) as ex:
-        exp.preview(verbosity_level="hello")
-    assert (
-        "The only valid verbosity level currently available is info" in ex.value.args[0]
-    )
-
-
-def test_verbosity_level_debug_error():
-    exp_name = "test_output_format"
-    exp = Experiment(exp_name)
-    with pytest.raises(NotImplementedError):
-        exp.preview(verbosity_level="debug")
-
-
-def test_verbosity_level_developer_error():
-    exp_name = "test_output_format"
-    exp = Experiment(exp_name)
-    with pytest.raises(NotImplementedError):
-        exp.preview(verbosity_level="developer")

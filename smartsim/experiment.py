@@ -41,6 +41,9 @@ from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
+_OutputFormatString = t.Optional[t.Literal["html"]]
+_VerbosityLevelString = t.Literal["info", "debug", "developer"]
+
 
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
@@ -799,40 +802,41 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: t.Optional[t.Literal["html"]] = None,
+        output_format: _OutputFormatString = None,
+        verbosity_level: _VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
-        verbosity_level: t.Literal["info", "debug", "developer"] = "info",
     ) -> None:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight
         into what and how entities will be launched.  Any instance of
         ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
-        :param output_format: Set output destination. The possible accepted
-        output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
-        A filename is required if an output format is specified. If no output
-        format is set, the preview will be output to stdout. Defaults to None.
-        :type output_type: str
-        :param output_filename: Specify name of path to write preview data to.
-        Only needed when an output format has been specified. Defaults to None.
+        :param output_filename: Specify name of file and extension to write
+        preview data to. Defaults to None.
         :type output_filename: str
-        :param verbosity level: the verbosity level.
-        info: Display User defined fields and entities
-        debug: Display user defined field and entities and auto generated
-        fields.
-        developer: Display user defined field and entities, auto generated
-        fields, and run commands.
-        Defaults to info.
+        :param output_format: Set output format. The possible accepted
+        output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
+        If no output format is set, the preview will be output to stdout.
+        Defaults to None.
+        :type output_type: str
+        :param verbosity_level: Specify the verbosity level:
+            info: Display User defined fields and entities
+            debug: Display user defined field and entities and auto generated
+            fields.
+            developer: Display user defined field and entities, auto generated
+            fields, and run commands.
+            Defaults to info.
         :type verbosity_level: str
         """
-        # preview_manifest = None
-        # if args:
         preview_manifest = Manifest(*args)
 
         rendered_preview = previewrenderer.render(
-            self, preview_manifest, verbosity_level, output_format, output_filename
+            self, preview_manifest, verbosity_level, output_format
         )
-        logger.info(rendered_preview)
+        if output_filename:
+            previewrenderer.preview_to_file(rendered_preview, output_filename)
+        else:
+            logger.info(rendered_preview)
 
         # incoming model entitty
         # models themselves cannot be batch steps. If batch settings are
