@@ -15,22 +15,9 @@ Python, C, C++, or Fortran.
 
 To initialize a SmartSim ``Model``, use the ``Experiment.create_model()`` API function.
 When creating a ``Model``, a :ref:`RunSettings<dead_link>` object must be provided. A ``RunSettings``
-object specifies the ``Models`` executable simulation code (e.g. the full path to a compiled binary) as well as
-application execution specifications. These specifications include :ref:`launch<dead_link>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
+object specifies the ``Models`` executable (e.g. the full path to a compiled binary) as well as
+executable arguments and launch parameters. These specifications include :ref:`launch<dead_link>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
 compute resource requirements, and application command-line arguments.
-
-A user can implement the use of an ``Orchestrator`` within a ``Model`` through **two** strategies:
-
-- :ref:`Connect to an Orchestrator launched separate to the Model<std_model_doc>`
-   When a ``Model`` is launched, it does not use or share compute
-   resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
-   Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
-   The ``Model`` can connect via a SmartSim ``Client`` to a launched standalone ``Orchestrator``.
-
-- :ref:`Connect to an Orchestrator colocated with the Model<colo_model_doc>`
-   When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
-   nodes prior to the ``Models`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
-   via a SmartSim ``Client``.
 
 Once a ``Model`` instance has been initialized, users have access to
 the :ref:`Model API<model_api>` functions to further configure the ``Model``.
@@ -41,6 +28,20 @@ The Model API functions allow users to:
 - :ref:`Attach a ML model to the SmartSim Model<ai_model_doc>`
 - :ref:`Attach a TorchScript function to the SmartSim Model<TS_doc>`
 - :ref:`Enable SmartSim Model data collision prevention<model_key_collision>`
+
+Once the ``Model`` has been launched, a user can leverage an ``Orchestrator`` within a ``Model``
+through **two** strategies:
+
+- :ref:`Connect to a standalone Orchestrator<std_model_doc>`
+   When a ``Model`` is launched, it does not use or share compute
+   resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
+   Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
+   The ``Model`` can connect via a SmartSim ``Client`` to a launched standalone ``Orchestrator``.
+
+- :ref:`Connect to an colocated Orchestrator<colo_model_doc>`
+   When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
+   nodes prior to the ``Models`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
+   via a SmartSim ``Client``.
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications. Additionally, ``Models`` can be launched individually
