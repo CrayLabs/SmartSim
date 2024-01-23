@@ -25,101 +25,93 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
 import jinja2
-import logging
-from ...log import log_to_file_preview, get_logger
+from ...log import get_logger
+from ..._core.config import CONFIG
+from ..._core.control import Manifest
 
 logger = get_logger(__name__)
+
+if t.TYPE_CHECKING:
+    from smartsim import Experiment
 
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
+
 def render(
-    entity: t.Any,
+    exp: "Experiment",
+    manifest: t.Optional[Manifest] = None,
     verbosity_level: _VerbosityLevelString = "info",
     output_format: _OutputFormatString = None,
-    output_filename: t.Optional[str] = None,
 ) -> str:
     """
-    Render the template from the supplied entity.
+    Render the template from the supplied entities.
+    :param experiment: the experiment to be previewed.
+    :type experiment: Experiment
+    :param manifest: the manifest to be previewed.
+    :type manifest: Manifest
+    :param verbosity_level: the verbosity level
+    :type verbosity_level: _VerbosityLevelString
+    :param output_format: the output destination.
+    If no output format is set, the preview will be output to stdout
+    :type output_format: _OutputFormatString
     """
 
     verbosity_level = _check_verbosity_level(verbosity_level)
 
     loader = jinja2.PackageLoader("templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
-    
+
+    version = f"_{output_format}" if output_format else ""
+    tpl_path = f"preview/base{version}.template"
+
     if output_format:
         _check_output_format(output_format)
-        output_filename = _check_output_filename(output_filename)
 
-        tpl = env.get_template(f"base_{output_format}.template")
-        rendered_preview = tpl.render(
-            exp_entity=entity, verbosity_level=verbosity_level
-        )
-        preview_to_file(rendered_preview, output_filename)
-    
-    else:
-        if output_filename:
-            raise ValueError(
-                "Output filename is only a valid parameter when an output \
-format is specified"
-            )
-        tpl = env.get_template("base.template")
-        rendered_preview = tpl.render(
-            exp_entity=entity, verbosity_level=verbosity_level
-        )
+    tpl = env.get_template(tpl_path)
+
+    rendered_preview = tpl.render(
+        exp_entity=exp,
+        manifest=manifest,
+        config=CONFIG,
+        verbosity_level=verbosity_level,
+    )
 
     return rendered_preview
 
 
-def preview_to_file(content: str, file_name: str) -> None:
+def preview_to_file(content: str, filename: str) -> None:
     """
-    Output preview to a file if output format and filename 
+    Output preview to a file if output format and filename
     are specified.
     """
-    logger = logging.getLogger("preview-logger")
-    log_to_file_preview(filename=file_name, logger=logger)
-    logger.info(content)
+
+    with open(filename, "w", encoding="utf-8") as prev_file:
+        prev_file.write(content)
 
 
 def _check_output_format(output_format: str) -> None:
     """
     Check that the output format given is valid.
     """
-    if not output_format.startswith("html"):
+    if not output_format == "html":
         raise ValueError("The only valid currently available is html")
 
 
-def _check_output_filename(output_filename: t.Optional[str]) -> str:
-    """
-    Check that an output filename has been supplied if output format
-    is specified.
-    """
-    if not output_filename:
-        raise ValueError("An output filename is required when an output format is set.")
-
-    return output_filename
-
 def _check_verbosity_level(
-    verbosity_level: _VerbosityLevelString
-) -> str:
+    verbosity_level: _VerbosityLevelString,
+) -> _VerbosityLevelString:
     """
     Check that the given verbosity level is valid.
     """
-    verbosity_level = t.cast(_VerbosityLevelString, verbosity_level)
-    if (
-        not verbosity_level.startswith("info")
-        and not verbosity_level.startswith("debug")
-        and not verbosity_level.startswith("developer")
-    ):
+    if verbosity_level not in ["info", "debug", "developer"]:
         raise ValueError("The only valid verbosity level currently available is info")
 
-    if verbosity_level == "debug" or verbosity_level == "developer":
-        logger.warning(f"Unsupported verbosity level requested. setting to: info")
+    if verbosity_level in ("debug", "developer"):
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level requested.\
+Setting verbosity to: info"
+        )
         return "info"
     return "info"
-
-
-    
-     
