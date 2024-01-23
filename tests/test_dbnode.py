@@ -93,7 +93,9 @@ def test_launched_shard_info_can_be_serialized():
 @pytest.mark.parametrize("limit", [None, 1])
 def test_db_node_can_parse_launched_shard_info(limit):
     rand_shards = [_random_shard_info() for _ in range(3)]
-    with io.StringIO(textwrap.dedent("""\
+    with io.StringIO(
+        textwrap.dedent(
+            """\
             This is some file like str
             --------------------------
 
@@ -108,7 +110,9 @@ def test_db_node_can_parse_launched_shard_info(limit):
             SMARTSIM_ORC_SHARD_INFO: {}
 
             All other lines should be ignored.
-            """).format(*(json.dumps(s.to_dict()) for s in rand_shards))) as stream:
+            """
+        ).format(*(json.dumps(s.to_dict()) for s in rand_shards))
+    ) as stream:
         parsed_shards = DBNode._parse_launched_shard_info_from_iterable(stream, limit)
     if limit is not None:
         rand_shards = rand_shards[:limit]

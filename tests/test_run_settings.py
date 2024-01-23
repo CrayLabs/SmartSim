@@ -97,7 +97,7 @@ def test_create_run_settings_local():
                         id=f"{l}/orterun",
                     ),
                 )
-                for l in ("local", "pbs", "slurm", "lsf", "cobalt")
+                for l in ("local", "pbs", "slurm", "lsf")
             )
         ),
         # Except for launchers that implement their own MPI settings

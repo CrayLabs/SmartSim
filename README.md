@@ -179,7 +179,6 @@ launch capabilities for all applications.
  - Slurm
  - LSF
  - PBSPro
- - Cobalt
  - Local (for laptops/single node, no batch)
 
 
@@ -198,7 +197,7 @@ qsub -l select=3:ncpus=20 -l walltime=00:10:00 -l place=scatter -I -q <queue>
 bsub -Is -W 00:10 -nnodes 3 -P <project> $SHELL
 ```
 
-This same script will run on a SLURM, PBS, LSF, or Cobalt system as the ``launcher``
+This same script will run on a SLURM, PBS, or LSF system as the ``launcher``
 is set to `auto` in the [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. The run command like ``mpirun``,
 ``aprun`` or ``srun`` will be automatically detected from what is available on the
@@ -277,8 +276,8 @@ print(exp.get_status(ensemble))
 python hello_ensemble.py
 ```
 
-Similar to the interactive example, this same script will run on a SLURM, PBS, LSF,
-or Cobalt system as the ``launcher`` is set to `auto` in the
+Similar to the interactive example, this same script will run on a SLURM, PBS,
+or LSF system as the ``launcher`` is set to `auto` in the
 [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. Local launching does not support batch workloads.
 

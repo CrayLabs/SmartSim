@@ -256,54 +256,6 @@ def test_orc_results_in_correct_number_of_shards(single_cmd):
     )
 
 
-###### Cobalt ######
-
-
-def test_cobalt_set_run_arg(wlmutils):
-    orc = Orchestrator(
-        wlmutils.get_test_port(),
-        db_nodes=3,
-        batch=False,
-        interface="lo",
-        launcher="cobalt",
-        run_command="aprun",
-    )
-    orc.set_run_arg("account", "ACCOUNT")
-    assert all(
-        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
-    )
-    orc.set_run_arg("pes-per-numa-node", "2")
-    assert all(
-        ["pes-per-numa-node" not in db.run_settings.run_args for db in orc.entities]
-    )
-
-
-def test_cobalt_set_batch_arg(wlmutils):
-    orc = Orchestrator(
-        wlmutils.get_test_port(),
-        db_nodes=3,
-        batch=False,
-        interface="lo",
-        launcher="cobalt",
-        run_command="aprun",
-    )
-    with pytest.raises(SmartSimError):
-        orc.set_batch_arg("account", "ACCOUNT")
-
-    orc2 = Orchestrator(
-        wlmutils.get_test_port(),
-        db_nodes=3,
-        batch=True,
-        interface="lo",
-        launcher="cobalt",
-        run_command="aprun",
-    )
-    orc2.set_batch_arg("account", "ACCOUNT")
-    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
-    orc2.set_batch_arg("outputprefix", "new_output/")
-    assert "outputprefix" not in orc2.batch_settings.batch_args
-
-
 ###### LSF ######
 
 

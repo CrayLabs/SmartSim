@@ -47,7 +47,7 @@ if t.TYPE_CHECKING:
 TStepLaunchMetaData = t.Tuple[
     t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
 ]
-TELMON_SUBDIR: t.Final[str] = ".smartsim/telemetry"
+
 MANIFEST_FILENAME: t.Final[str] = "manifest.json"
 
 _LOGGER = smartsim.log.get_logger(__name__)
@@ -58,6 +58,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         return
 
     manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
+    exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
     new_run = {
         "run_id": manifest.metadata.run_id,
@@ -87,6 +88,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
                 "name": manifest.metadata.exp_name,
                 "path": manifest.metadata.exp_path,
                 "launcher": manifest.metadata.launcher_name,
+                "out_file": str(exp_out),
+                "err_file": str(exp_err),
             },
             "runs": [new_run],
         }
