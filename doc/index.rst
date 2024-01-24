@@ -32,6 +32,7 @@
    experiment
    orchestrator
    launchers
+   ensemble
    ml_features
    api/smartsim_api
 

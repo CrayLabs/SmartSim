@@ -6,13 +6,13 @@ Overview
 ========
 SmartSim ``Ensemble`` objects enable users to execute a **group** of computational tasks in an
 ``Experiment`` workflow. ``Ensembles`` are comprised of multiple ``Model`` objects,
-each representing an individual simulation. An ``Ensemble`` can be be referenced as a single instance and
+each representing an individual application. An ``Ensemble`` can be be referenced as a single instance and
 can be launched with other ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
 The :ref:`Ensemble API<ensemble_api>` offers key ``Ensemble`` features, including class methods to:
 
 - :ref:`Load TF, TF-lite, PT, or ONNX models<ai_model_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
 - :ref:`Load TorchScripts<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Prevent data collisions<prefix_ensemble>` and enable ``Ensemble`` members to run the same code.
+- :ref:`Mitigate data collisions<prefix_ensemble>` within the ``Ensemble`` to enable the reuse of application code.
 - :ref:`Attach configuration files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
 
 To initialize a SmartSim ``Ensemble``, use the ``Experiment.create_ensemble()`` API function.
@@ -33,8 +33,8 @@ Initialization
 Overview
 --------
 The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow entities.
-A ``Ensemble`` is created using the ``Experiment.create_ensemble()`` factory method, and users can customize the
-``Ensembles`` creation via the factory method parameters.
+An ``Ensemble`` is created using the ``Experiment.create_ensemble()`` factory method, and users can customize the
+``Ensemble`` creation via the factory method parameters.
 
 The key initializer arguments of ``Experiment.create_ensemble()`` are:
 
@@ -58,7 +58,7 @@ the creation of an ``Ensemble`` to match one of the following creation strategie
 Parameter Expansion
 -------------------
 In ``Ensemble`` simulations, parameter expansion is a technique that
-allows users to set parameter values using the `params` key initializer argument
+allows users to set parameter values using the `params` initializer argument
 in ``Experiment.create_ensemble()``. User's may control how the parameter values
 spread across the ``Ensemble`` members by using the `perm_strategy` key initializer argument.
 The `perm_strategy` argument accepts three values listed below.
@@ -79,14 +79,14 @@ Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strateg
     To do so, we specify the parameter expansion strategy via the `perm_strategy` initializer
     argument.
 
-    Begin by initializing a ``RunSettings`` object to expand to
+    Begin by initializing a ``RunSettings`` object to apply to
     all ``Models``:
 
     .. code-block:: python
 
         rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
 
-    Next, define the parameters to expand to all ``Ensemble`` members:
+    Next, define the parameters that will be applied into ``Ensemble`` members:
 
     .. code-block:: python
 
@@ -101,13 +101,13 @@ Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strateg
 
         ensemble = exp.create_ensemble("ensemble", params=params, run_settings=rs, perm_strategy="all_perm")
 
-    By specifying `perm_strategy="all_perm"`, all permutations of the `params` key values will
+    By specifying `perm_strategy="all_perm"`, all permutations of the `params` will
     be calculated and distributed across ``Ensemble`` members. Here there are four permutations of the `params` values. Therefore,
     SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation set to each.
 
 Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params` and `perm_strategy`
     Submit the ``Ensemble`` as a batch job.
-    Expand identical run settings and parameters to ``Ensemble`` members.
+    Apply identical run settings and parameters to ``Ensemble`` members.
     Declare the parameter expansion strategy via `perm_strategy`.
 
     Begin by initializing and configuring a ``BatchSettings`` object to
@@ -126,7 +126,7 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params
     The above ``BatchSettings`` object will instruct SmartSim to run the ``Ensemble`` on two
     nodes with a timeout of `10 hours`.
 
-    Next initialize a ``RunSettings`` object to expand to all ``Ensemble`` members:
+    Next initialize a ``RunSettings`` object to apply to all ``Ensemble`` members:
 
     .. code-block:: python
 
@@ -202,7 +202,7 @@ Example 2 : Replica Creation with ``RunSettings``, ``BatchSettings`` and `replic
     The above ``BatchSettings`` object will instruct SmartSim to run the ``Ensemble`` on four
     nodes with a timeout of `10 hours`.
 
-    Next, create a ``RunSettings`` object to expand to all ``Model`` replicas:
+    Next, create a ``RunSettings`` object to apply to all ``Model`` replicas:
 
     .. code-block:: python
 
@@ -275,7 +275,7 @@ prior to the ``Ensemble`` launch via the ``Ensemble.attach_generator_files()`` f
     Multiple calls to ``Ensemble.attach_generator_files()`` will overwrite previous file configurations
     in the ``Ensemble``.
 
-To attach a file to a ``Ensemble`` for use at runtime, provide one of the following arguments to the
+To attach a file to an ``Ensemble`` for use at runtime, provide one of the following arguments to the
 ``Ensemble.attach_generator_files()`` function:
 
 * `to_copy` (t.Optional[t.List[str]] = None): Files that are copied into the path of the entity.
@@ -296,7 +296,7 @@ within ``Ensemble.attach_generator_files()``.
 .. _files_example_doc_ensem:
 Example
 =======
-This example demonstrates how to attach a file to a ``Ensemble`` for parameter replacement at time
+This example demonstrates how to attach a file to an ``Ensemble`` for parameter replacement at time
 of ``Ensemble`` member directory generation. This is accomplished using the `params` function parameter in
 the ``Experiment.create_ensemble()`` factory function and the `to_configure` function parameter
 in ``Ensemble.attach_generator_files()``.
@@ -315,7 +315,7 @@ In order to have the tagged parameter `;THERMO;` replaced with a usable value at
 2. The file containing the tagged parameter `;THERMO;`, `params_inputs.txt`, must be attached to the ``Ensemble``
    via the ``Ensemble.attach_generator_files()`` method as part of the `to_configure` parameter.
 
-To encapsulate our application within a ``Ensemble``, we must create an ``Experiment`` instance
+To encapsulate our application within an ``Ensemble``, we must create an ``Experiment`` instance
 to gain access to the ``Experiment`` factory method that creates the ``Ensemble``.
 Begin by importing the ``Experiment`` module, importing SmartSim `log` module and initializing
 an ``Experiment``:
@@ -338,15 +338,15 @@ our application script as an executable argument and the executable to run the s
     # Initialize a RunSettings object
     ensemble_settings = exp.create_run_settings(exe="python", exe_args="/path/to/application.py")
 
-Next, initialize a ``Ensemble`` object with ``Experiment.create_ensemble()``
+Next, initialize an ``Ensemble`` object with ``Experiment.create_ensemble()``
 and pass in the `ensemble_settings` instance and specify `replicas=2`:
 
 .. code-block:: python
 
-    # Initialize a Ensemble object
+    # Initialize an Ensemble object
     example_ensemble = exp.create_ensemble("ensemble", model_settings, replicas=2, params={"THERMO":1})
 
-We now have a ``Ensemble`` instance named `example_ensemble`. Attach the above text file
+We now have an ``Ensemble`` instance named `example_ensemble`. Attach the above text file
 to the ``Ensemble`` for use at entity runtime. To do so, we use the
 ``Ensemble.attach_generator_files()`` function and specify the `to_configure`
 parameter with the path to the text file, `params_inputs.txt`:
@@ -378,8 +378,8 @@ ML Models and Scripts
 --------
 Overview
 --------
-SmartSim users have the capability to utilize ML runtimes within a ``Ensemble``.
-Functions accessible through a ``Ensemble`` object support loading ML models (TensorFlow, TensorFlow-lite,
+SmartSim users have the capability to utilize ML runtimes within an ``Ensemble``.
+Functions accessible through an ``Ensemble`` object support loading ML models (TensorFlow, TensorFlow-lite,
 PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` at
 application runtime.
 
@@ -557,7 +557,7 @@ client (:ref:`SmartRedis<dead_link>`) within the application code.
 ------------
 TorchScripts
 ------------
-When configuring a ``Ensemble``, users can instruct SmartSim to load TorchScripts dynamically
+When configuring an ``Ensemble``, users can instruct SmartSim to load TorchScripts dynamically
 to the ``Orchestrator``. TorchScripts added are loaded into the ``Orchestrator`` prior to
 the execution of the ``Ensemble``. To load a TorchScript to the ``Orchestrator``, SmartSim users
 can follow one of the processes:
@@ -576,7 +576,7 @@ dynamically loads TorchScripts to the ``Orchestrator``.
 Attach an in-memory TorchScript
 -------------------------------
 Users can define TorchScript functions within the Python driver script
-to attach to a ``Ensemble``. This feature is supported by ``Ensemble.add_function()`` which provides flexible
+to attach to an ``Ensemble``. This feature is supported by ``Ensemble.add_function()`` which provides flexible
 device selection, allowing users to choose between which device the the TorchScript is executed on, `"GPU"` or `"CPU"`.
 In environments with multiple devices, specific device numbers can be specified using the
 `devices_per_node` parameter.
@@ -646,7 +646,7 @@ client (:ref:`SmartRedis<dead_link>`) within the application code.
 .. _TS_from_file_ensemble:
 Attach a TorchScript from file
 ------------------------------
-Users can attach TorchScript functions from a file to a ``Ensemble`` and upload them to a
+Users can attach TorchScript functions from a file to an ``Ensemble`` and upload them to a
 colocated or standalone ``Orchestrator``. This functionality is supported by the ``Ensemble.add_script()``
 function's `script_path` parameter. The function supports
 flexible device selection, allowing users to choose between `"GPU"` or `"CPU"` via the `device` parameter.
@@ -809,7 +809,7 @@ tensor to the ``Orchestrator``. Since both ``Ensemble`` ``Models`` use the same 
 two identical tensors are placed on the ``Orchestrator`` which could cause a key collision.
 To prevent this case, we enable key prefixing on the ``Ensemble`` in the driver script
 via ``Ensemble.enable_key_prefixing()``.
-This means that when a ``Ensemble`` member places a tensor on the ``Orchestrator``, SmartSim will prepend
+This means that when an ``Ensemble`` member places a tensor on the ``Orchestrator``, SmartSim will prepend
 the ``Ensemble`` member `name` to the tensor `name`.
 
 Here we provide the application script for the ``Ensemble``:
@@ -839,7 +839,7 @@ The Application Consumer Script
 In the Python driver script, we initialize a consumer ``Model`` that requests
 the tensors produced from the ``Ensemble``. To do so, we use SmartRedis
 key prefixing functionality to instruct the SmartRedis ``Client`` to append
-the name of a ``Ensemble`` member to the key `name`.
+the name of an ``Ensemble`` member to the key `name`.
 
 First specify the imports and initialize a SmartRedis ``Client``:
 
@@ -898,7 +898,7 @@ The Experiment Script
 In the ``Experiment`` driver script we initialize:
 
 - a standalone ``Orchestrator``
-- a ``Ensemble`` via the replicas initialization strategy
+- an ``Ensemble`` via the replicas initialization strategy
 - a consumer ``Model``
 
 In the example it is essential to launch the ``Orchestrator`` before any other SmartSim entity since each simulation
@@ -927,7 +927,7 @@ To setup for the example in the Python driver script, we begin by
 
 We are now setup to discuss key prefixing within the ``Experiment`` driver script.
 To create an ``Ensemble`` using the replicas strategy, begin by initializing a ``RunSettings``
-object to expand to all ``Ensemble`` members. Specify the path to the application
+object to apply to all ``Ensemble`` members. Specify the path to the application
 producer script:
 
 .. code-block:: python
