@@ -24,19 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .launcher import Launcher
-from .dragon.dragonLauncher import DragonLauncher
-from .local.local import LocalLauncher
-from .lsf.lsfLauncher import LSFLauncher
-from .pbs.pbsLauncher import PBSLauncher
-from .slurm.slurmLauncher import SlurmLauncher
+import typing as t
 
+from pydantic import BaseModel, constr, PositiveInt
 
-__all__ = [
-    "Launcher",
-    "DragonLauncher",
-    "LocalLauncher",
-    "LSFLauncher",
-    "PBSLauncher",
-    "SlurmLauncher",
-]
+class DragonResponse(BaseModel):
+    response_type: constr(min_length=1)
+    error_message: t.Optional[str] = None
+
+class DragonRunResponse(DragonResponse):
+    response_type: constr(min_length=1) = "run"
+    step_id: constr(min_length=1)
+
+class DragonUpdateStatusResponse(DragonResponse):
+    response_type: constr(min_length=1) = "status_update"
+    # status is a dict: {step_id: (is_alive, returncode)}
+    statuses: t.Dict[constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[int]]] = {}
+
+class DragonStopResponse(DragonResponse):
+    response_type: constr(min_length=1) = "stop"

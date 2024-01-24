@@ -32,13 +32,14 @@ import typing as t
 
 import json
 import zmq
-from smartsim._core.launcher.dragon.dragonRequests import DragonUpdateStatusRequest
-from smartsim._core.launcher.dragon.dragonResponses import (
+from ...schemas.dragonRequests import DragonRequest, DragonStopRequest, DragonUpdateStatusRequest
+from ...schemas.dragonResponses import (
     DragonRunResponse,
     DragonUpdateStatusResponse,
+    DragonStopResponse,
 )
 
-from smartsim._core.utils.network import get_best_interface_and_address
+from ...utils.network import get_best_interface_and_address
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -143,8 +144,8 @@ class DragonLauncher(WLMLauncher):
 
         # Launch a in-allocation or on-allocation (if srun) command
         if isinstance(step, DragonStep):
-            req = step.get_launch_cmd()[0]
-            self._dragon_head_socket.send_json(req)
+            req = step.get_launch_request()
+            self._send_request_as_json(req)
             response = DragonRunResponse.model_validate(
                 json.loads(self._dragon_head_socket.recv_json())
             )
@@ -167,39 +168,14 @@ class DragonLauncher(WLMLauncher):
         :rtype: StepInfo
         """
         stepmap = self.step_mapping[step_name]
-        if stepmap.managed:
-            step_id = str(stepmap.step_id)
-            # Check if step_id is part of colon-separated run,
-            # this is reflected in a '+' in the step id,
-            # so that the format becomes 12345+1.0.
-            # If we find it it can mean two things:
-            # a MPMD srun command, or a heterogeneous job.
-            # If it is a MPMD srun, then stop parent step because
-            # sub-steps cannot be stopped singularly.
-            sub_step = "+" in step_id
-            het_job = os.getenv("SLURM_HET_SIZE") is not None
-            # If it is a het job, we can stop
-            # them like this. Slurm will throw an error, but
-            # will actually kill steps correctly.
-            if sub_step and not het_job:
-                step_id = step_id.split("+", maxsplit=1)[0]
-            scancel_rc, _, err = scancel([step_id])
-            if scancel_rc != 0:
-                if het_job:
-                    msg = (
-                        "SmartSim received a non-zero exit code while canceling"
-                        f" a heterogeneous job step {step_name}!\n"
-                        "The following error might be internal to Slurm\n"
-                        "and the heterogeneous job step could have been correctly"
-                        " canceled.\nSmartSim will consider it canceled.\n"
-                    )
-                else:
-                    msg = f"Unable to cancel job step {step_name}\n{err}"
-                logger.warning(msg)
-            if stepmap.task_id:
-                self.task_manager.remove_task(str(stepmap.task_id))
-        else:
-            self.task_manager.remove_task(str(stepmap.task_id))
+
+        step_id = str(stepmap.step_id)
+        request = DragonStopRequest(step_id=step_id)
+        self._send_request_as_json(request)
+
+        response = DragonStopResponse.model_validate(
+                json.loads(self._dragon_head_socket.recv_json())
+            )
 
         _, step_info = self.get_step_update([step_name])[0]
         if not step_info:
@@ -218,10 +194,7 @@ class DragonLauncher(WLMLauncher):
         """
 
         request = DragonUpdateStatusRequest(step_ids=step_ids)
-
-        req_json = request.model_dump_json()
-        logger.debug(f"Sending request: {req_json}")
-        self._dragon_head_socket.send_json(req_json)
+        self._send_request_as_json(request)
 
         response = DragonUpdateStatusResponse.model_validate(
             json.loads(self._dragon_head_socket.recv_json())
@@ -241,6 +214,11 @@ class DragonLauncher(WLMLauncher):
 
             updates.append(info)
         return updates
+
+    def _send_request_as_json(self, request: DragonRequest):
+        req_json = request.model_dump_json()
+        logger.debug(f"Sending request: {req_json}")
+        self._dragon_head_socket.send_json(req_json)
 
     def __str__(self) -> str:
         return "Dragon"

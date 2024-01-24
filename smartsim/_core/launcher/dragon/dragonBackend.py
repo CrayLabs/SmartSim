@@ -27,17 +27,19 @@
 import typing as t
 
 from smartsim.status import STATUS_RUNNING, STATUS_COMPLETED, STATUS_FAILED, STATUS_NEVER_STARTED
-from dragon.native.process import Process, current as current_proc
+from dragon.native.process import Process
 
 
-from smartsim._core.launcher.dragon.dragonRequests import (
+from smartsim._core.schemas.dragonRequests import (
     DragonRequest,
     DragonRunRequest,
+    DragonStopRequest,
     DragonUpdateStatusRequest,
 )
-from smartsim._core.launcher.dragon.dragonResponses import (
+from smartsim._core.schemas.dragonResponses import (
     DragonResponse,
     DragonRunResponse,
+    DragonStopResponse,
     DragonUpdateStatusResponse,
 )
 
@@ -53,11 +55,11 @@ class DragonBackend:
         self._request_to_function = {
             "run": self.run,
             "update_status": self.update_status,
+            "stop": self.stop,
         }
-        self.procs = []
+        self.procs: dict[str, Process] = {}
 
     def process_request(self, request: DragonRequest) -> DragonResponse:
-
         req_type = request["request_type"]
         if not req_type:
             raise ValueError("Malformed request contains empty ``request_type`` field.")
@@ -66,7 +68,6 @@ class DragonBackend:
         return self._request_to_function[req_type](request)
 
     def run(self, request: DragonRunRequest) -> DragonRunResponse:
-
         run_request = DragonRunRequest.model_validate(request)
 
         proc = Process(
@@ -77,28 +78,36 @@ class DragonBackend:
             stdout=run_request.output_file,
             stderr=run_request.error_file,
         )
-
-        self.procs.append(proc)
-
         proc.start()
+        self.procs[str(proc.puid)] = proc
 
         return DragonRunResponse(step_id=str(proc.puid))
 
     def update_status(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
-
         update_status_request = DragonUpdateStatusRequest.model_validate(request)
-
 
         # Avoid missing entries
         updated_statuses = {step_id: (STATUS_NEVER_STARTED, None) for step_id in update_status_request.step_ids}
-        for proc in self.procs:
-            puid = str(proc.puid)
-            if puid in update_status_request.step_ids:
+        for step_id in update_status_request.step_ids:
+            if step_id in self.procs:
+                proc = self.procs[step_id]
                 if proc.is_alive:
-                    updated_statuses[puid] = (STATUS_RUNNING, None)
+                    updated_statuses[step_id] = (STATUS_RUNNING, None)
                 else:
                     return_code = proc.returncode
                     status = STATUS_FAILED if return_code != 0 else STATUS_COMPLETED
-                    updated_statuses[puid] = (status, return_code)
+                    updated_statuses[step_id] = (status, return_code)
+            else:
+                updated_statuses[step_id] = (STATUS_NEVER_STARTED, None)
 
         return DragonUpdateStatusResponse(statuses = updated_statuses)
+
+    def stop(self, request: DragonStopRequest):
+        stop_request = DragonStopRequest.model_validate(request)
+
+        if stop_request.step_id in self.procs:
+            # Technically we could just terminate, but what if
+            # the application intercepts that and ignores it?
+            self.procs[stop_request.step_id].kill()
+
+        return DragonStopResponse()

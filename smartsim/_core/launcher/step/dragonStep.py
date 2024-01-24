@@ -29,7 +29,7 @@ import shlex
 import shutil
 import typing as t
 
-from ..dragon.dragonRequests import DragonRunRequest
+from ...schemas.dragonRequests import DragonRunRequest
 
 from ....log import get_logger
 from ....settings import DragonRunSettings, Singularity
@@ -54,11 +54,11 @@ class DragonStep(Step):
         self.managed = True
         self.run_settings = run_settings
 
-    def get_launch_cmd(self) -> t.List[str]:
+    def get_launch_request(self) -> DragonRunRequest:
         """Get the command to launch this step
 
-        :return: launch command
-        :rtype: list[str]
+        :return: launch request
+        :rtype: DragonRunRequest
         """
 
         output, error = self.get_output_files()
@@ -97,7 +97,7 @@ class DragonStep(Step):
                                 env=rs.env_vars,
                                 name=self.name)
 
-        return [run_request.model_dump_json()]
+        return run_request
 
 
     @staticmethod

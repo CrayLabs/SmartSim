@@ -23,25 +23,3 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-import typing as t
-
-from pydantic import BaseModel, constr, PositiveInt
-
-class DragonRequest(BaseModel):
-    request_type: constr(min_length=1)
-
-class DragonRunRequest(DragonRequest):
-    request_type: constr(min_length=1) = "run"
-    exe: t.List[constr(min_length=1)]
-    exe_args: t.Optional[t.List[constr(min_length=1)]]
-    path: constr(min_length=1)
-    nodes: PositiveInt = 1
-    output_file: constr(min_length=1)
-    error_file: constr(min_length=1)
-    env: t.Dict[str, t.Optional[str]]
-    name: t.Optional[constr(min_length=1)]
-
-class DragonUpdateStatusRequest(DragonRequest):
-    request_type: constr(min_length=1) = "update_status"
-    step_ids: t.List[constr(min_length=1)]
