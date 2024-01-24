@@ -54,9 +54,6 @@ _LOGGER = smartsim.log.get_logger(__name__)
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
-    if not CONFIG.telemetry_enabled:
-        return
-
     manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
     exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
