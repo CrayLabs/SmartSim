@@ -695,3 +695,74 @@ class MockSink:
 @pytest.fixture
 def mock_sink() -> t.Type[MockSink]:
     return MockSink
+
+
+@pytest.fixture
+def mock_con():
+    """Generates mock db connection telemetry"""
+    def _mock_con(min=1, max=1000):
+        i = min
+        while True:
+            yield [{"addr": f"127.0.0.{i}:1234"}, {"addr": f"127.0.0.{i}:2345"}]
+            i += 1
+            if i > max:
+                return None
+
+    return _mock_con
+
+
+@pytest.fixture
+def mock_mem():
+    """Generates mock db memory usage telemetry"""
+    def _mock_mem(min=1, max=1000):
+        i = min
+        while True:
+            yield {
+                "total_system_memory": 1000 * i,
+                "used_memory": 1111 * i,
+                "used_memory_peak": 1234 * i,
+            }
+            i += 1
+            if i > max:
+                return None
+
+    return _mock_mem
+
+
+@pytest.fixture
+def mock_redis():
+    def _mock_redis(
+        is_conn: bool = True,
+        conn_side_effect=None,
+        mem_stats=None,
+        client_stats=None,
+        coll_side_effect=None,
+    ):
+        """Generate a mock object for the redis.Redis contract"""
+        class MockConn:
+            def __init__(self, *args, **kwargs) -> None:
+                if conn_side_effect is not None:
+                    conn_side_effect()
+
+            async def info(self) -> t.Dict[str, t.Any]:
+                if coll_side_effect:
+                    await coll_side_effect()
+
+                if mem_stats:
+                    return next(mem_stats)
+                return {
+                    "ts": 111,
+                    "total_system_memory": "111",
+                    "used_memory": "222",
+                    "used_memory_peak": "333",
+                }
+
+            async def client_list(self) -> t.Dict[str, t.Any]:
+                if coll_side_effect:
+                    await coll_side_effect()
+
+                if client_stats:
+                    return next(client_stats)
+                return {"ts": 111, "addr": "127.0.0.1"}
+        return MockConn
+    return _mock_redis
