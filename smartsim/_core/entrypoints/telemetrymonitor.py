@@ -90,15 +90,18 @@ class Sink(abc.ABC):
 
 class FileSink(Sink):
     """Telemetry sink that writes to a file"""
-    def _gen_entity_path(self, entity: JobEntity) -> str:
+
+    @staticmethod
+    def _gen_entity_path(entity: JobEntity) -> str:
         """Generate a unique path to write logs to"""
         filename = f"{uuid.uuid4()}.csv"
         if entity.type:
-            type_fmt = entity.type.lower().replace(' ', '')
+            type_fmt = entity.type.lower().replace(" ", "")
             filename = f"{type_fmt}/{filename}"
         return filename
 
-    def _check_init(self, entity: JobEntity, filename: str) -> str:
+    @staticmethod
+    def _check_init(entity: JobEntity, filename: str) -> str:
         """Validate initialization arguments.
         Raise ValueError if an invalid entity is passed
         Raise ValueError if an invalid filename is passed"""
@@ -108,7 +111,7 @@ class FileSink(Sink):
         if not filename:
             # work even if filenames are missing but notify user
             logger.warning(f"No filename provided to FileSink for entity: {entity}")
-            filename = self._gen_entity_path(entity)
+            filename = FileSink._gen_entity_path(entity)
 
         return filename
 
@@ -118,7 +121,7 @@ class FileSink(Sink):
         :type entity: JobEntity
         :param filename: The relative path and filename of the file to be written
         :type filename: str"""
-        filename = self._check_init(entity, filename)
+        filename = FileSink._check_init(entity, filename)
         self._path = pathlib.Path(entity.status_dir) / filename
 
     @property
@@ -133,14 +136,6 @@ class FileSink(Sink):
         async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
             values = ",".join(list(map(str, kwargs.values()))) + "\n"
             await sink_fp.write(values)
-
-
-class LogSink(Sink):
-    """Telemetry sink that writes console output for testing purposes"""
-
-    async def save(self, **kwargs: t.Any) -> None:
-        """Save all arguments as console logged messages"""
-        logger.info(",".join(map(str, kwargs.values())))
 
 
 class Collector(abc.ABC):
@@ -175,6 +170,10 @@ class Collector(abc.ABC):
     def timestamp() -> int:
         return int(datetime.datetime.timestamp(datetime.datetime.now()))
 
+    @abc.abstractmethod
+    async def shutdown(self) -> None:
+        """Execute any cleanup of resources for the collector"""
+
 
 @dataclasses.dataclass
 class _Address:
@@ -206,15 +205,13 @@ class DbCollector(Collector):
                 self._client = redis.Redis(
                     host=self._address.host, port=self._address.port
                 )
-
         except Exception as e:
             logger.exception(e)
             msg = f"DbCollector failed to communicate with {self._address}"
             raise SmartSimError(msg) from e
 
         if not self._client:  #  or not self._client.is_connected:
-            msg = f"DbCollector failed to connect to {self._address}"
-            raise SmartSimError(msg)
+            raise SmartSimError(f"DbCollector failed to connect to {self._address}")
 
     async def prepare(self) -> None:
         """Initialization logic for a DB collector"""
@@ -222,6 +219,14 @@ class DbCollector(Collector):
             return
 
         await self._configure_client()
+
+    async def shutdown(self) -> None:
+        """Release any resources held by the collector"""
+        try:
+            if self._client:
+                await self._client.close()
+        except Exception as ex:
+            logger.error("An error occurred during DbCollector shutdown", exc_info=ex)
 
 
 class DbMemoryCollector(DbCollector):
@@ -321,6 +326,12 @@ class CollectorManager:
             ]
             results = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
             logger.debug(f"collector.collect() results: {results}")
+
+    async def shutdown(self) -> None:
+        """Release resources"""
+        if collectors := self.all_collectors:
+            for collector in collectors:
+                await collector.shutdown()
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
@@ -783,21 +794,20 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     completed_entity = names[step_name]
                     self._to_completed(timestamp, completed_entity, step_info)
 
+    async def shutdown(self) -> None:
+        await self._collector.shutdown()
+
 
 def can_shutdown(action_handler: ManifestEventHandler) -> bool:
-    # return False
     jobs = action_handler.job_manager.jobs
     db_jobs = action_handler.job_manager.db_jobs
 
-    has_jobs = bool(jobs)
-    has_dbs = bool(db_jobs)
-    has_running_jobs = has_jobs or has_dbs
-
-    if has_jobs:
+    if has_jobs := bool(jobs):
         logger.debug(f"telemetry monitor is monitoring {len(jobs)} jobs")
-    if has_dbs:
+    if has_dbs := bool(db_jobs):
         logger.debug(f"telemetry monitor is monitoring {len(db_jobs)} dbs")
 
+    has_running_jobs = has_jobs or has_dbs
     return not has_running_jobs
 
 
@@ -913,6 +923,7 @@ async def main(
         if observer.is_alive():
             observer.stop()  # type: ignore
             observer.join()
+        await action_handler.shutdown()
 
     return os.EX_SOFTWARE
 
