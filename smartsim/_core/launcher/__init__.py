@@ -25,15 +25,20 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .launcher import Launcher
+from .dragon.dragonLauncher import DragonLauncher
+from .dragon.dragonRequests import DragonRunRequest
 from .local.local import LocalLauncher
 from .lsf.lsfLauncher import LSFLauncher
 from .pbs.pbsLauncher import PBSLauncher
 from .slurm.slurmLauncher import SlurmLauncher
 
+
 __all__ = [
+    "DragonLauncher",
     "Launcher",
     "LocalLauncher",
     "LSFLauncher",
     "PBSLauncher",
     "SlurmLauncher",
+    "DragonRunRequest"
 ]

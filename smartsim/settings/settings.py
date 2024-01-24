@@ -32,6 +32,7 @@ from ..settings import (
     AprunSettings,
     BsubBatchSettings,
     Container,
+    DragonRunSettings,
     JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
@@ -159,6 +160,7 @@ def create_run_settings(
     # run commands supported by each launcher
     # in order of suspected user preference
     by_launcher = {
+        "dragon": [""],
         "slurm": ["srun", "mpirun", "mpiexec"],
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "pals": ["mpiexec"],
@@ -171,7 +173,7 @@ def create_run_settings(
 
     def _detect_command(launcher: str) -> str:
         if launcher in by_launcher:
-            if launcher == "local":
+            if launcher in ["local", "dragon"]:
                 return ""
 
             for cmd in by_launcher[launcher]:
@@ -198,6 +200,9 @@ def create_run_settings(
         return supported[run_command](launcher)(
             exe, exe_args, run_args, env_vars, container=container, **kwargs
         )
+
+    if launcher == "dragon":
+        return DragonRunSettings(exe, exe_args, run_args, env_vars, container=container, **kwargs)
 
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None

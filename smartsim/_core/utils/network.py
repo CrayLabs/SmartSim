@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import socket
-
+import typing as t
 import psutil
 
 """
@@ -86,3 +86,13 @@ def current_ip(interface: str = "lo") -> str:  # pragma: no cover
         return get_ip_from_interface(loopback)
 
     return get_ip_from_interface(interface)
+
+
+def get_best_interface_and_address() -> tuple[t.Optional[str], t.Optional[str]]:
+    available_ifs = psutil.net_if_addrs()
+    # TODO make this a CONFIG-time parameter
+    known_ifs = ["hsn", "ipogif", "ib"]
+    for interface in available_ifs:
+        if any(interface.startswith(if_prefix) for if_prefix in known_ifs):
+            return interface, get_ip_from_interface(interface)
+    return None, None
