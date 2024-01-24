@@ -597,7 +597,7 @@ When specifying a TorchScript using ``Model.add_script()``, the
 following arguments are offered:
 
 - `name` (str): Reference name for the script inside of the ``Orchestrator``.
-- `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated ``Orchestrators``).
+- `script` (t.Optional[str] = None): String of function code (e.g. TorchScript code string).
 - `script_path` (t.Optional[str] = None): path to TorchScript code.
 - `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
@@ -664,7 +664,7 @@ When specifying a TorchScript using ``Model.add_script()``, the
 following arguments are offered:
 
 - `name` (str): Reference name for the script inside of the ``Orchestrator``.
-- `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated ``Orchestrators``).
+- `script` (t.Optional[str] = None): String of function code (e.g. TorchScript code string).
 - `script_path` (t.Optional[str] = None): path to TorchScript code.
 - `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
