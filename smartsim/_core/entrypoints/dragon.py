@@ -27,15 +27,26 @@
 import argparse
 import json
 import os
+import signal
 import textwrap
 import typing as t
 import zmq
+
 from subprocess import PIPE, STDOUT
 from smartsim._core.utils.network import get_best_interface_and_address
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
+from types import FrameType
 
 from smartsim.log import get_logger
 
+# kill is not catchable
+SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+
+
+def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+    if not signo:
+        logger.warning("Received signal with no signo")
+    cleanup()
 
 context = zmq.Context()
 logger = get_logger(__name__)
@@ -50,11 +61,15 @@ DBPID: t.Optional[int] = None
 def print_summary(
     network_interface: str, ip_address: str
 ) -> None:
+
+    zmq_config = {"interface": network_interface, "address": ip_address}
+
     print(
         textwrap.dedent(f"""\
             -------- Dragon Configuration --------
             IPADDRESS: {ip_address}
             NETWORK: {network_interface}
+            DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
             --------------------------------------
 
             --------------- Output ---------------
@@ -76,6 +91,8 @@ def run(dragon_head_address: str) -> None:
         json_req = json.loads(req)
         resp = dragon_backend.process_request(json_req)
         dragon_head_socket.send_json(resp.model_dump_json())
+
+
 
 def main(args: argparse.Namespace) -> int:
 
@@ -103,6 +120,8 @@ def main(args: argparse.Namespace) -> int:
 
     return 0
 
+def cleanup() -> None:
+    logger.debug("Cleaning up")
 
 
 if __name__ == "__main__":
@@ -119,5 +138,11 @@ if __name__ == "__main__":
     )
     args_ = parser.parse_args()
 
+
+    # make sure to register the cleanup before the start
+    # the process so our signaller will be able to stop
+    # the database process.
+    for sig in SIGNALS:
+        signal.signal(sig, handle_signal)
 
     raise SystemExit(main(args_))

@@ -43,3 +43,6 @@ class DragonUpdateStatusResponse(DragonResponse):
 
 class DragonStopResponse(DragonResponse):
     response_type: constr(min_length=1) = "stop"
+
+class DragonReadyResponse(DragonResponse):
+    response_type: constr(min_length=1) = "ready"

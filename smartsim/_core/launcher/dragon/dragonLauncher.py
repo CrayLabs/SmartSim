@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import fileinput
+import itertools
 import subprocess
 import sys
 import time
@@ -38,6 +40,8 @@ from ...schemas.dragonResponses import (
     DragonUpdateStatusResponse,
     DragonStopResponse,
 )
+
+from pathlib import Path
 
 from ...utils.network import get_best_interface_and_address
 
@@ -73,6 +77,19 @@ class DragonLauncher(WLMLauncher):
             return
 
         dragon_path = os.path.join(path, ".smartsim", "dragon")
+
+        context = zmq.Context()
+        # First look if there is an old server up and running
+        # TODO WARNING: this now results in an error if the file is there
+        # but the server is not. Fixing this tomorrow
+        dragon_out = os.path.join(dragon_path, "dragon_head.out")
+        if Path.is_file(Path(dragon_out)):
+            dragon_conf = DragonLauncher._parse_launched_dragon_server_info_from_files([dragon_out])
+            logger.debug(dragon_conf)
+            self._dragon_head_socket = context.socket(zmq.REQ)
+            self._dragon_head_socket.connect(dragon_conf[0]["address"])
+            return
+
         os.makedirs(dragon_path, exist_ok=True)
 
         cmd = [
@@ -83,7 +100,6 @@ class DragonLauncher(WLMLauncher):
         ]
 
         _, address = get_best_interface_and_address()
-        context = zmq.Context()
         if address is not None:
             launcher_socket = context.socket(zmq.REP)
             # TODO find first available port >= 5995
@@ -142,7 +158,6 @@ class DragonLauncher(WLMLauncher):
         step_id = None
         task_id = None
 
-        # Launch a in-allocation or on-allocation (if srun) command
         if isinstance(step, DragonStep):
             req = step.get_launch_request()
             self._send_request_as_json(req)
@@ -152,10 +167,6 @@ class DragonLauncher(WLMLauncher):
             step_id = response.step_id
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
-
-        # give slurm a rest
-        # TODO make this configurable
-        time.sleep(1)
 
         return step_id
 
@@ -215,10 +226,34 @@ class DragonLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def _send_request_as_json(self, request: DragonRequest):
+    def _send_request_as_json(self, request: DragonRequest) -> None:
         req_json = request.model_dump_json()
         logger.debug(f"Sending request: {req_json}")
         self._dragon_head_socket.send_json(req_json)
 
     def __str__(self) -> str:
         return "Dragon"
+
+    @staticmethod
+    def _parse_launched_dragon_server_info_from_iterable(
+        stream: t.Iterable[str], num_dragon_envs: t.Optional[int] = None
+    ) -> t.List[t.Dict[str, t.Any]]:
+        lines = (line.strip() for line in stream)
+        lines = (line for line in lines if line)
+        tokenized = (line.split(maxsplit=1) for line in lines)
+        tokenized = (tokens for tokens in tokenized if len(tokens) > 1)
+        dragon_env_jsons = (
+            config_dict for first, config_dict in tokenized if "DRAGON_SERVER_CONFIG" in first
+        )
+        dragon_envs = (json.loads(config_dict) for config_dict in dragon_env_jsons)
+
+        if num_dragon_envs:
+            dragon_envs = itertools.islice(dragon_envs, num_dragon_envs)
+        return list(dragon_envs)
+
+    @classmethod
+    def _parse_launched_dragon_server_info_from_files(
+        cls, file_paths: t.List[str], num_dragon_envs: t.Optional[int] = None
+    ) -> t.List[t.Dict[str, t.Any]]:
+        with fileinput.FileInput(file_paths) as ifstream:
+            return cls._parse_launched_dragon_server_info_from_iterable(ifstream, num_dragon_envs)

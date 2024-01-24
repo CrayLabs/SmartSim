@@ -52,3 +52,6 @@ class DragonUpdateStatusRequest(DragonRequest):
 class DragonStopRequest(DragonRequest):
     request_type: constr(min_length=1) = "stop"
     step_id: constr(min_length=1)
+
+class DragonReadyRequest(DragonRequest):
+    request_type: constr(min_length=1) = "ready"
