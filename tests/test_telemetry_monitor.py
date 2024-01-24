@@ -179,7 +179,7 @@ def test_valid_frequencies(freq: t.Union[int, float]):
         pytest.param("0", "greater than", id="0s freq"),
         pytest.param("0.9", "greater than", id="0.9s freq"),
         pytest.param("0.9999", "greater than", id="lower bound"),
-        pytest.param("60.0001", "less than", id="just over upper"),
+        pytest.param("600.0001", "less than", id="just over upper"),
         pytest.param("3600", "less than", id="too high"),
         pytest.param("100000", "less than", id="bonkers high"),
     ],

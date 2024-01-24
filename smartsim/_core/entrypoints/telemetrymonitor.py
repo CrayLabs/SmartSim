@@ -75,7 +75,7 @@ from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
-F_MIN, F_MAX = 1.0, 60.0
+F_MIN, F_MAX = 1.0, 600.0
 
 logger = get_logger(__name__)
 
@@ -949,7 +949,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def check_frequency(frequency: t.Union[int, float]) -> None:
-    freq_tpl = f"Telemetry collection frequency must be {0} {1}s"
+    freq_tpl = "Telemetry collection frequency must be {0} {1}s"
     if frequency < F_MIN:
         raise ValueError(freq_tpl.format("greater than", F_MIN))
     if frequency > F_MAX:
