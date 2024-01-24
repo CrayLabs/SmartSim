@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import pytest
@@ -669,6 +670,28 @@ class ColoUtils:
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
 
+
 @pytest.fixture
 def config() -> smartsim._core.config.Config:
     return CONFIG
+
+
+class MockSink:
+    """Telemetry sink that writes console output for testing purposes"""
+
+    def __init__(self, delay_ms: int = 0):
+        self._delay_ms = delay_ms
+
+    async def save(self, **kwargs: t.Any) -> None:
+        """Save all arguments as console logged messages"""
+        print(f"MockSink received args: {kwargs}")
+        if self._delay_ms:
+            # mimic slow collection....
+            delay_s = self._delay_ms / 1000
+            await asyncio.sleep(delay_s)
+        self.args = kwargs
+
+
+@pytest.fixture
+def mock_sink() -> t.Type[MockSink]:
+    return MockSink

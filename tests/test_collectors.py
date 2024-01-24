@@ -23,42 +23,21 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import asyncio
-import datetime
 import typing as t
 import uuid
 
 import pytest
 
 from smartsim._core.entrypoints.telemetrymonitor import (
-    CollectorManager,
     DbConnectionCollector,
     DbMemoryCollector,
     JobEntity,
     redis,
-    Sink,
-    FileSink,
 )
 from smartsim.error import SmartSimError
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.group_a
-
-
-class MockSink(Sink):
-    """Telemetry sink that writes console output for testing purposes"""
-
-    def __init__(self, delay_ms: int = 0):
-        self._delay_ms = delay_ms
-
-    async def save(self, **kwargs: t.Any) -> None:
-        """Save all arguments as console logged messages"""
-        print(f"MockSink received args: {kwargs}")
-        if self._delay_ms:
-            # mimic slow collection....
-            delay_s = self._delay_ms / 1000
-            await asyncio.sleep(delay_s)
-        self.args = kwargs
 
 
 @pytest.fixture
@@ -133,10 +112,13 @@ def mock_redis():
 
 @pytest.fixture
 def mock_entity(test_dir):
-    def _mock_entity(host: str = "127.0.0.1", port: str = "6379", name: str = ""):
+    def _mock_entity(
+        host: str = "127.0.0.1", port: str = "6379", name: str = "", type: str = ""
+    ):
         entity = JobEntity()
         entity.name = name if name else str(uuid.uuid4())
         entity.status_dir = test_dir
+        entity.type = type
         entity.meta = {
             "host": host,
             "port": port,
@@ -147,18 +129,18 @@ def mock_entity(test_dir):
 
 
 @pytest.mark.asyncio
-async def test_dbmemcollector_prepare(mock_entity):
+async def test_dbmemcollector_prepare(mock_entity, mock_sink):
     """Ensure that collector preparation succeeds when expected"""
     entity = mock_entity()
 
-    collector = DbMemoryCollector(entity, MockSink())
+    collector = DbMemoryCollector(entity, mock_sink())
     await collector.prepare()
     assert collector._client
 
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail(
-    mock_entity, monkeypatch: pytest.MonkeyPatch
+    mock_entity, mock_sink, monkeypatch: pytest.MonkeyPatch
 ):
     """Ensure that collector preparation reports a failure to connect"""
     entity = mock_entity()
@@ -168,7 +150,7 @@ async def test_dbmemcollector_prepare_fail(
         ctx.setattr(redis, "Redis", lambda host, port: None)
 
         with pytest.raises(SmartSimError) as ex:
-            collector = DbMemoryCollector(entity, MockSink())
+            collector = DbMemoryCollector(entity, mock_sink())
             await collector.prepare()
 
         assert not collector._client
@@ -179,7 +161,7 @@ async def test_dbmemcollector_prepare_fail(
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail_dep(
-    mock_entity, monkeypatch: pytest.MonkeyPatch
+    mock_entity, mock_sink, monkeypatch: pytest.MonkeyPatch
 ):
     """Ensure that collector preparation attempts to connect, ensure it
     reports a failure if the db conn bombs"""
@@ -189,7 +171,7 @@ async def test_dbmemcollector_prepare_fail_dep(
         # mock raising exception on connect attempts to test err handling
         raise redis.ConnectionError("mock connection failure")
 
-    collector = DbMemoryCollector(entity, MockSink())
+    collector = DbMemoryCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
         ctx.setattr(redis, "Redis", raiser)
         with pytest.raises(SmartSimError) as ex:
@@ -203,12 +185,12 @@ async def test_dbmemcollector_prepare_fail_dep(
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_collect(
-    mock_entity, mock_redis, mock_mem, monkeypatch: pytest.MonkeyPatch
+    mock_entity, mock_redis, mock_mem, mock_sink, monkeypatch: pytest.MonkeyPatch
 ):
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
-    sink = MockSink()
+    sink = mock_sink()
     collector = DbMemoryCollector(entity, sink)
     with monkeypatch.context() as ctx:
         ctx.setattr(redis, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
@@ -224,12 +206,12 @@ async def test_dbmemcollector_collect(
 
 
 @pytest.mark.asyncio
-async def test_dbmemcollector_integration(mock_entity, local_db):
+async def test_dbmemcollector_integration(mock_entity, mock_sink, local_db):
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])
 
-    collector = DbMemoryCollector(entity, MockSink())
+    collector = DbMemoryCollector(entity, mock_sink())
 
     await collector.prepare()
     await collector.collect()
@@ -243,12 +225,12 @@ async def test_dbmemcollector_integration(mock_entity, local_db):
 
 @pytest.mark.asyncio
 async def test_dbconncollector_collect(
-    mock_entity, mock_redis, mock_con, monkeypatch: pytest.MonkeyPatch
+    mock_entity, mock_sink, mock_redis, mock_con, monkeypatch: pytest.MonkeyPatch
 ):
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
-    collector = DbConnectionCollector(entity, MockSink())
+    collector = DbConnectionCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
         ctx.setattr(redis, "Redis", mock_redis(client_stats=mock_con(1, 2)))
 
@@ -261,12 +243,12 @@ async def test_dbconncollector_collect(
 
 
 @pytest.mark.asyncio
-async def test_dbconncollector_integration(mock_entity, local_db):
+async def test_dbconncollector_integration(mock_entity, mock_sink, local_db):
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])
 
-    collector = DbConnectionCollector(entity, MockSink())
+    collector = DbConnectionCollector(entity, mock_sink())
 
     await collector.prepare()
     await collector.collect()
@@ -274,226 +256,3 @@ async def test_dbconncollector_integration(mock_entity, local_db):
 
     assert len(stats) == 1
     assert stats[0]
-
-
-def test_collector_manager_add(mock_entity):
-    """Ensure that collector manager add & clear work as expected"""
-    entity1 = mock_entity()
-
-    con_col = DbConnectionCollector(entity1, MockSink())
-    mem_col = DbMemoryCollector(entity1, MockSink())
-
-    manager = CollectorManager()
-
-    # ensure manager starts empty
-    assert len(manager.all_collectors) == 0
-
-    # ensure added item is in the collector list
-    manager.add(con_col)
-    assert len(manager.all_collectors) == 1
-
-    # ensure a duplicate isn't added
-    manager.add(con_col)
-    assert len(manager.all_collectors) == 1
-
-    # ensure another collector for the same entity is added
-    manager.add(mem_col)
-    assert len(manager.all_collectors) == 2
-
-    # create a collector for another entity
-    entity2 = mock_entity()
-    con_col2 = DbConnectionCollector(entity2, MockSink())
-
-    # ensure collectors w/same type for new entities are not treated as dupes
-    manager.add(con_col2)
-    assert len(manager.all_collectors) == 3
-
-    # verify no dupe on second entity
-    manager.add(con_col2)
-    assert len(manager.all_collectors) == 3
-
-    manager.clear()
-    assert len(manager.all_collectors) == 0
-
-    # ensure post-clear adding still works
-    manager.add(con_col2)
-    assert len(manager.all_collectors) == 1
-
-
-def test_collector_manager_add_multi(mock_entity):
-    """Ensure that collector manager multi-add works as expected"""
-    entity = mock_entity()
-
-    con_col = DbConnectionCollector(entity, MockSink())
-    mem_col = DbMemoryCollector(entity, MockSink())
-    manager = CollectorManager()
-
-    # add multiple items at once
-    manager.add_all([con_col, mem_col])
-
-    assert len(manager.all_collectors) == 2
-
-    # ensure multi-add does not produce dupes
-    con_col2 = DbConnectionCollector(entity, MockSink())
-    mem_col2 = DbMemoryCollector(entity, MockSink())
-
-    manager.add_all([con_col2, mem_col2])
-    assert len(manager.all_collectors) == 2
-
-
-@pytest.mark.asyncio
-async def test_collector_manager_collect(
-    mock_entity, mock_redis, monkeypatch, mock_con, mock_mem
-):
-    """Ensure that all collectors are executed and some metric is retrieved
-    NOTE: responses & producer are mocked"""
-    entity1 = mock_entity(port=1234, name="entity1")
-    entity2 = mock_entity(port=2345, name="entity2")
-
-    sinks = [MockSink(), MockSink(), MockSink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
-
-    manager = CollectorManager()
-    manager.add_all([con_col1, mem_col1, mem_col2])
-
-    # Execute collection
-    with monkeypatch.context() as ctx:
-        ctx.setattr(
-            redis,
-            "Redis",
-            mock_redis(client_stats=mock_con(1, 10), mem_stats=mock_mem(1, 10)),
-        )
-        await manager.collect()
-
-    # verify each collector retrieved some metric & sent it to the sink
-    for sink in sinks:
-        value = sink.args
-        assert value is not None and value
-
-
-@pytest.mark.asyncio
-async def test_collector_manager_collect_filesink(
-    mock_entity, mock_redis, monkeypatch, mock_mem, mock_con
-):
-    """Ensure that all collectors are executed and some metric is retrieved
-    and the FileSink is written to as expected"""
-    entity1 = mock_entity(port=1234, name="entity1")
-    entity2 = mock_entity(port=2345, name="entity2")
-
-    sinks = [
-        FileSink(entity1, "1_con.csv"),
-        FileSink(entity1, "1_mem.csv"),
-        FileSink(entity2, "2_mem.csv"),
-    ]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
-
-    manager = CollectorManager()
-    manager.add_all([con_col1, mem_col1, mem_col2])
-
-    # Execute collection
-    with monkeypatch.context() as ctx:
-        ctx.setattr(
-            redis,
-            "Redis",
-            mock_redis(client_stats=mock_con(1, 10), mem_stats=mock_mem(1, 10)),
-        )
-        await manager.collect()
-
-    # verify each collector retrieved some metric & sent it to the sink
-    for sink in sinks:
-        save_to = sink.path
-        assert save_to.exists()
-        if "con" in str(save_to):
-            assert "127.0.0." in save_to.read_text()
-        else:
-            # look for something multiplied by 1000
-            assert "000" in save_to.read_text()
-
-
-@pytest.mark.asyncio
-async def test_collector_manager_collect_integration(mock_entity, local_db):
-    """Ensure that all collectors are executed and some metric is retrieved"""
-    entity1 = mock_entity(port=local_db.ports[0], name="e1")
-    entity2 = mock_entity(port=local_db.ports[0], name="e2")
-
-    # todo: consider a MockSink so i don't have to save the last value in the collector
-    sinks = [MockSink(), MockSink(), MockSink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
-
-    manager = CollectorManager()
-    manager.add_all([con_col1, mem_col1, mem_col2])
-
-    # Execute collection
-    await manager.collect()
-
-    # verify each collector retrieved some metric & sent it to the sink
-    for sink in sinks:
-        value = sink.args
-        assert value is not None and value
-
-
-@pytest.mark.parametrize(
-    "timeout_at,delay_for,expect_fail",
-    [
-        pytest.param(1000, 5000, True, id="1s timeout"),
-        pytest.param(2000, 5000, True, id="2s timeout"),
-        pytest.param(3000, 5000, True, id="3s timeout"),
-        pytest.param(4000, 5000, True, id="4s timeout"),
-        pytest.param(2000, 1000, False, id="under timeout"),
-    ],
-)
-@pytest.mark.asyncio
-async def test_collector_timeout(
-    mock_entity,
-    mock_redis,
-    monkeypatch: pytest.MonkeyPatch,
-    mock_mem,
-    mock_con,
-    timeout_at,
-    delay_for,
-    expect_fail,
-):
-    """Ensure that the collector timeout is honored"""
-    entity1 = mock_entity(port=1234, name="e1")
-    entity2 = mock_entity(port=2345, name="e2")
-
-    sinks = [MockSink(), MockSink(), MockSink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
-
-    manager = CollectorManager(timeout_ms=timeout_at)
-    manager.add_all([con_col1, mem_col1, mem_col2])
-
-    async def snooze():
-        await asyncio.sleep(delay_for / 1000)
-
-    # Execute collection
-    with monkeypatch.context() as ctx:
-        ctx.setattr(
-            redis,
-            "Redis",
-            mock_redis(
-                client_stats=mock_con(1, 10),
-                mem_stats=mock_mem(1, 10),
-                coll_side_effect=snooze,
-            ),
-        )
-
-        ts0 = datetime.datetime.utcnow()
-        await manager.collect()
-        ts1 = datetime.datetime.utcnow()
-
-        t_diff = ts1 - ts0
-        actual_delay = 1000 * t_diff.seconds
-
-        if expect_fail:    
-            assert timeout_at <= actual_delay < delay_for
-        else:
-            assert delay_for <= actual_delay < timeout_at

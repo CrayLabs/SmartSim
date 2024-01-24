@@ -39,6 +39,7 @@ import sys
 import threading
 import time
 import typing as t
+import uuid
 from dataclasses import dataclass, field
 from types import FrameType
 
@@ -87,23 +88,48 @@ class Sink(abc.ABC):
         ...
 
 
-
-
 class FileSink(Sink):
     """Telemetry sink that writes to a file"""
+    def _gen_entity_path(self, entity: JobEntity) -> str:
+        """Generate a unique path to write logs to"""
+        filename = f"{uuid.uuid4()}.csv"
+        if entity.type:
+            type_fmt = entity.type.lower().replace(' ', '')
+            filename = f"{type_fmt}/{filename}"
+        return filename
 
-    def __init__(self, entity: JobEntity, sub: str) -> None:
-        # todo: consider renaming sub (it's the sub-path under entity.status_dir)
-        # todo: consider specifying sub & file name separately?
-        #   - might let me configure outputs better instead of hardcoded "mem.csv"?
-        self._path = pathlib.Path(entity.status_dir) / sub
+    def _check_init(self, entity: JobEntity, filename: str) -> str:
+        """Validate initialization arguments.
+        Raise ValueError if an invalid entity is passed
+        Raise ValueError if an invalid filename is passed"""
+        if not entity:
+            raise ValueError("An entity must be supplied")
+
+        if not filename:
+            # work even if filenames are missing but notify user
+            logger.warning(f"No filename provided to FileSink for entity: {entity}")
+            filename = self._gen_entity_path(entity)
+
+        return filename
+
+    def __init__(self, entity: JobEntity, filename: str) -> None:
+        """Initialize the FileSink
+        :param entity: The JobEntity producing log data
+        :type entity: JobEntity
+        :param filename: The relative path and filename of the file to be written
+        :type filename: str"""
+        filename = self._check_init(entity, filename)
+        self._path = pathlib.Path(entity.status_dir) / filename
 
     @property
     def path(self) -> pathlib.Path:
+        """Returns the path to the underlying file the FileSink will write to"""
         return self._path
 
     async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments to a file as specified by the associated JobEntity"""
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+
         async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
             values = ",".join(list(map(str, kwargs.values()))) + "\n"
             await sink_fp.write(values)
