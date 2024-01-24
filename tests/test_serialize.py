@@ -71,9 +71,10 @@ def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
         assert len(manifest["runs"]) == 1
 
 
-def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
+def test_serialize_does_write_manifest_json_if_telemetry_monitor_is_off(
     test_dir, monkeypatch, manifest_json
 ):
+    """Ensure that the manifest is written even if telemetry is not collected"""
     monkeypatch.setattr(
         smartsim._core.config.config.Config,
         _CFG_TM_ENABLED_ATTR,
@@ -81,7 +82,7 @@ def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
     )
     lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
     serialize.save_launch_manifest(lmb.finalize())
-    assert not manifest_json.exists()
+    assert manifest_json.exists()
 
 
 def test_serialize_appends_a_manifest_json_exists(test_dir, manifest_json):
