@@ -773,7 +773,7 @@ application. To implement this functionality:
 
 1. Use ``Model.register_incoming_entity()`` on the ``Model`` intending to search for data in the ``Orchestrator``.
 2. Pass the SmartSim entity (e.g., another ``Model``) to ``Model.register_incoming_entity()`` in order to
-   reference the ``Model`` prefix in application code.
+   reference the ``Model`` prefix in the application code.
 3. In the application, instruct the ``Client`` to prepend the specified ``Model`` `name` during key searches
    using ``Client.set_data_source("model_name")``.
 
@@ -811,7 +811,7 @@ SmartRedis put/get semantics.
             # Enable tensor prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In executable application of `model`, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
+        In the `model` application, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -845,7 +845,7 @@ SmartRedis put/get semantics.
             # Place a tensor in the Orchestrator
             client.put_tensor("tensor_2", np.array([5, 6, 7, 8]))
 
-        In application, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
+        In the application, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -878,7 +878,7 @@ SmartRedis put/get semantics.
             # Enable Dataset prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In executable application of `model`, two Datasets named `dataset_1` and `dataset_2` are sent to a launched ``Orchestrator``.
+        In the `model` application, two Datasets named `dataset_1` and `dataset_2` are sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -914,7 +914,7 @@ SmartRedis put/get semantics.
             # Place a Dataset in the Orchestrator
             client.put_dataset(dataset_2)
 
-        In application, we have two ``Datasets`` named `dataset_1` and `dataset_2`.
+        In the application, we have two ``Datasets`` named `dataset_1` and `dataset_2`.
         We then send them to a launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -949,7 +949,7 @@ SmartRedis put/get semantics.
             # Enable list prefixing on the 'model' instance
             model.enable_key_prefixing()
 
-        In executable application of `model`, a list named `dataset_list` is sent to a launched ``Orchestrator``.
+        In the `model` application, a list named `dataset_list` is sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -986,7 +986,7 @@ SmartRedis put/get semantics.
             # Append Dataset to list in the Orchestrator
             client.append_to_list("list_2", dataset_2)
 
-        In application, two lists named `list_1` and `list_2` are sent to the ``Orchestrator``.
+        In the application, two lists named `list_1` and `list_2` are sent to the ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -1035,7 +1035,7 @@ SmartRedis put/get semantics.
                 "ml_model_2", serialized_model_2, "TF", device="CPU", inputs=inputs, outputs=outputs
             )
 
-        In application, two ML models named `ml_model_1` and `ml_model_2` are sent
+        In the application, two ML models named `ml_model_1` and `ml_model_2` are sent
         to a launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
@@ -1072,7 +1072,7 @@ SmartRedis put/get semantics.
             # Store a prefixed script in the Orchestrator
             client.set_function("script_2", script_2)
 
-        In application, two ML models named `script_1` and `script_2` are sent
+        In the application, two ML models named `script_1` and `script_2` are sent
         to a launched ``Orchestrator``. The contents of the ``Orchestrator`` after ``Model`` completion are:
 
         .. code-block:: bash
