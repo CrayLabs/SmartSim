@@ -4,8 +4,8 @@ Ensemble
 ========
 Overview
 ========
-SmartSim ``Ensemble`` objects enable users to execute a **group** of computational tasks in an
-``Experiment`` workflow. ``Ensembles`` are comprised of multiple ``Model`` objects,
+A SmartSim ``Ensemble`` enables users to execute a **group** of computational tasks in an
+``Experiment`` workflow. An ``Ensemble`` is comprised of multiple ``Model`` objects,
 each representing an individual application. An ``Ensemble`` can be be referenced as a single instance and
 can be launched with other ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
 The :ref:`Ensemble API<ensemble_api>` offers key ``Ensemble`` features, including class methods to:
@@ -36,7 +36,7 @@ The :ref:`Experiment API<experiment_api>` is responsible for initializing all wo
 An ``Ensemble`` is created using the ``Experiment.create_ensemble()`` factory method, and users can customize the
 ``Ensemble`` creation via the factory method parameters.
 
-The key initializer arguments of ``Experiment.create_ensemble()`` are:
+The factory method arguments of ``Experiment.create_ensemble()`` are:
 
 -  `name` (str): Specify the name of the ensemble, aiding in its unique identification.
 -  `params` (dict[str, Any]): Provides a dictionary of parameters:values for expanding into the ``Model`` members within the ensemble. Enables parameter expansion for diverse scenario exploration.
@@ -46,47 +46,50 @@ The key initializer arguments of ``Experiment.create_ensemble()`` are:
 -  `replicas` (int, optional): Declare the number of ``Model`` clones within the ensemble, crucial for the creation of simulation replicas.
 -  `perm_strategy` (str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ensemble creation and number of ensemble members. The options are `"all_perm"`, `"step"`, and `"random"`.
 
-By using certain combinations of initializer arguments from above, users may customize
-the creation of an ``Ensemble`` to match one of the following creation strategies:
+By using specific combinations of factory method arguments mentioned above, users can tailor
+the creation of an ``Ensemble`` to align with one of the following creation strategies:
 
 - :ref:`Parameter expansion<param_expansion_init>`
-- :ref:`Manually Append<replicas_init>`
-- :ref:`Replicas<append_init>`
+- :ref:`Manually Append<append_init>`
+- :ref:`Replicas<replicas_init>`
 
 .. _param_expansion_init:
 -------------------
 Parameter Expansion
 -------------------
 In ``Ensemble`` simulations, parameter expansion is a technique that
-allows users to set parameter values using the `params` initializer argument
-in ``Experiment.create_ensemble()``. User's may control how the parameter values
-spread across the ``Ensemble`` members by using the `perm_strategy` key initializer argument.
+allows users to set parameter values per ``Ensemble`` member. This is done
+by specifying input to the `params` and `perm_strategy`
+factory method arguments during ``Ensemble`` creation.
+User's may control how the `params` values
+are applied to the ``Ensemble`` through the `perm_strategy` argument.
 The `perm_strategy` argument accepts three values listed below.
 
 **Parameter Expansion Strategy Options:**
 
--  `"all_perm"`: Generates all possible parameter permutations for an exhaustive exploration.
--  `"step"`: Creates sets for each element in n arrays, providing a systematic exploration.
--  `"random"`: Allows random selection from predefined parameter spaces, offering a stochastic approach.
+-  `"all_perm"`: Generate all possible parameter permutations for an exhaustive exploration.
+-  `"step"`: Create sets for each element in n arrays, providing a systematic exploration.
+-  `"random"`: Enable random selection from predefined parameter spaces, offering a stochastic approach.
 
 Examples
 --------
 We provide two parameter expansion examples by using the `params` and `perm_strategy`
-initializer arguments when creating an ``Ensemble``.
+factory method arguments to create an ``Ensemble``.
 
 Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strategy`
-    This example expands the same run settings and parameters to ``Ensemble`` members.
-    To do so, we specify the parameter expansion strategy via the `perm_strategy` initializer
-    argument.
+    This example extends the same run settings with sampled grouped parameters to each ``Ensemble`` member.
+    The ``Ensemble`` encompasses all grouped permutations of the specified `params` by creating a ``Model`` member for each
+    permutation. To achieve this, we specify the parameter expansion strategy, `"all_perm"`, to the `perm_strategy`
+    factory method argument.
 
     Begin by initializing a ``RunSettings`` object to apply to
-    all ``Models``:
+    all ``Ensemble`` members:
 
     .. code-block:: python
 
         rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
 
-    Next, define the parameters that will be applied into ``Ensemble`` members:
+    Next, define the parameters that will be applied to the ``Ensemble``:
 
     .. code-block:: python
 
@@ -95,20 +98,28 @@ Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strateg
             "parameter": [2, 11]
         }
 
-    Finally, initialize an ``Ensemble`` by passing in the ``RunSettings``, `params` and `perm_strategy`:
+    Finally, initialize an ``Ensemble`` by specifying the ``RunSettings``, `params` and `perm_strategy="all_perm"`:
 
     .. code-block:: python
 
-        ensemble = exp.create_ensemble("ensemble", params=params, run_settings=rs, perm_strategy="all_perm")
+        ensemble = exp.create_ensemble("ensemble", run_settings=rs, params=params, perm_strategy="all_perm")
 
     By specifying `perm_strategy="all_perm"`, all permutations of the `params` will
-    be calculated and distributed across ``Ensemble`` members. Here there are four permutations of the `params` values. Therefore,
-    SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation set to each.
+    be calculated and distributed across ``Ensemble`` members. Here there are four permutations of the `params` values:
+
+    .. code-block:: bash
+
+        group 1: ["Ellie", 2]
+        group 2: ["Ellie", 11]
+        group 3: ["John", 2]
+        group 4: ["John", 11]
+
+    Therefore, SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation group to each.
 
 Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params` and `perm_strategy`
-    Submit the ``Ensemble`` as a batch job.
-    Apply identical run settings and parameters to ``Ensemble`` members.
-    Declare the parameter expansion strategy via `perm_strategy`.
+    In this example, the ``Ensemble`` will be submitted as a batch job. An identical set of
+    ``RunSettings`` will be applied to all ``Ensemble`` member and parameters will be
+    applied in a `step` strategy to create the ``Ensemble`` members.
 
     Begin by initializing and configuring a ``BatchSettings`` object to
     run the ``Ensemble`` instance:
@@ -133,7 +144,7 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params
         rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
         rs.set_nodes(1)
 
-    Next, define the parameters to include in ``Ensemble`` members:
+    Next, define the parameters to include in ``Ensemble``:
 
     .. code-block:: python
 
@@ -142,15 +153,21 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params
             "parameter": [2, 11]
         }
 
-    Finally, initialize an ``Ensemble`` by passing in the ``RunSettings``, `params` and `perm_strategy`:
+    Finally, initialize an ``Ensemble`` by passing in the ``RunSettings``, `params` and `perm_strategy="step"`:
 
     .. code-block:: python
 
-        ensemble = exp.create_ensemble("ensemble", params=params, run_settings=rs, batch_settings=bs, perm_strategy="step")
+        ensemble = exp.create_ensemble("ensemble", run_settings=rs, batch_settings=bs, params=params, perm_strategy="step")
 
     By specifying `perm_strategy="step"`, the values of the `params` key will be
-    grouped into intervals and distributed across ``Ensemble`` members. Here there are two groups. Therefore,
-    the Ensemble will have two ``Model`` members each assigned a group.
+    grouped into intervals and distributed across ``Ensemble`` members. Here, there are two groups:
+
+    .. code-block:: bash
+
+        group 1: ["Ellie", 2]
+        group 2: ["John", 11]
+
+    Therefore, the ``Ensemble`` will have two ``Model`` members each assigned a group.
 
 .. _replicas_init:
 --------
@@ -159,12 +176,12 @@ Replicas
 In ``Ensemble`` simulations, a replica strategy involves the creation of
 identical or closely related ``Models`` within an ``Ensemble``, allowing for the
 assessment of how a system responds to the same set of parameters under
-multiple instances. Users may use the `replicas` initializer argument
+multiple ``Model`` instances. Users may use the `replicas` factory method argument
 to create a specified number of identical ``Model`` members.
 
 Examples
 --------
-We demonstrate two examples for initializing an ``Ensemble`` using the replicas
+We provide two examples for initializing an ``Ensemble`` using the replicas creation
 strategy.
 
 Example 1 : Replica Creation with ``RunSettings`` and `replicas`
@@ -498,7 +515,7 @@ to load into an ``Orchestrator`` at ``Ensemble`` runtime.
 .. note::
     This example assumes:
 
-    - a standalone ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - a standalone ``Orchestrator`` is launched prior to ``Ensemble`` execution
     - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
 
 **Define a Keras CNN script**
@@ -604,7 +621,7 @@ to a standalone ``Orchestrator``.
 .. note::
     The example assumes:
 
-    - a standalone ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - a standalone ``Orchestrator`` is launched prior to ``Ensemble`` execution
     - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
 
 **Define an in-memory TF function**
@@ -672,7 +689,7 @@ to a ``Orchestrator``.
 .. note::
     This example assumes:
 
-    - a ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - a ``Orchestrator`` is launched prior to ``Ensemble`` execution
     - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
 
 **Define a TorchScript script**
@@ -723,7 +740,7 @@ When specifying a TorchScript using ``Ensemble.add_script()``, the
 following arguments are offered:
 
 - `name` (str): Reference name for the script inside of the ``Orchestrator``.
-- `script` (t.Optional[str] = None): TorchScript code (only supported for non-colocated ``Orchestrators``).
+- `script` (t.Optional[str] = None): String of function code (e.g. TorchScript code string).
 - `script_path` (t.Optional[str] = None): path to TorchScript code.
 - `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
@@ -738,7 +755,7 @@ from string to a ``Orchestrator`` before the execution of the associated ``Model
 .. note::
     This example assumes:
 
-    - a ``Orchestrator`` is launched prior to the ``Ensembles`` execution
+    - a ``Orchestrator`` is launched prior to ``Ensemble`` execution
     - an initialized ``Ensemble`` named `smartsim_ensemble` exists within the ``Experiment`` workflow
 
 **Define a string TorchScript**
@@ -784,7 +801,7 @@ Overview
 --------
 When multiple ``Ensemble`` members use the same code to access their respective data
 in the ``Orchestrator``, key overlapping can occur, leading to inadvertent data access
-between ``Ensemble`` members. To address this, SmartSim ``Ensembles`` supports key prefixing
+between ``Ensemble`` members. To address this, a SmartSim ``Ensemble`` supports key prefixing
 via the ``Ensemble.enable_key_prefixing()`` function,
 which automatically adds the ``Ensemble`` member `name` as a prefix to the keys sent to the ``Orchestrator``.
 Enabling key prefixing eliminates issues related to key overlapping, allowing ``Ensemble``
