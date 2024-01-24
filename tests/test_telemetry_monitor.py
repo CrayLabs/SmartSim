@@ -1070,7 +1070,8 @@ def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
         pytest.param(STATUS_RUNNING, None, True, id="failure on running"),
     ],
 )
-def test_wlm_completion_handling(
+@pytest.mark.asyncio
+async def test_wlm_completion_handling(
     test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     status_in: str,
@@ -1106,7 +1107,7 @@ def test_wlm_completion_handling(
         mani_handler._tracked_jobs = {job_entity.key: job_entity}
         mani_handler.job_manager.jobs[job.name] = job
 
-        mani_handler.on_timestep(ts)
+        await mani_handler.on_timestep(ts)
 
         # see that the job queue was properly manipulated
         has_jobs = bool(mani_handler._tracked_jobs)
