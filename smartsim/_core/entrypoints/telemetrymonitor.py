@@ -194,8 +194,8 @@ class DbCollector(Collector):
         super().__init__(entity, sink)
         self._client: t.Optional[redis.Redis[bytes]] = None
         self._address = _Address(
-            self._entity.meta.get("host", "127.0.0.1"),
-            int(self._entity.meta.get("port", 6379)),
+            self._entity.config.get("host", "127.0.0.1"),
+            int(self._entity.config.get("port", 6379)),
         )
 
     async def _configure_client(self) -> None:
@@ -345,8 +345,7 @@ class CollectorManager:
     @property
     def all_collectors(self) -> t.Iterable[Collector]:
         """Get a list of all managed collectors"""
-        chain = itertools.chain(*self._collectors.values())
-        return list(chain)
+        return list(itertools.chain(*self._collectors.values()))
 
 
 @dataclass
@@ -402,8 +401,8 @@ def _hydrate_persistable(
     if entity.is_db:
         print("nice db you got there... shame to lose it!")
         # db shards are hydrated individually
-        entity.meta["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
-        entity.meta["port"] = persistable_entity.get("port", "NO-DB-PORT")
+        entity.config["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
+        entity.config["port"] = persistable_entity.get("port", "NO-DB-PORT")
 
     return entity
 
@@ -775,18 +774,13 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param experiment_dir: the experiement directory to monitor for changes
         :type experiment_dir: pathlib.Path
         """
-        entity_map = self._tracked_jobs
-
         if not self._launcher:
             return
 
-        # consider not using name to avoid collisions
-        names = {entity.name: entity for entity in entity_map.values()}
-
-        # trigger all metric collection for the timestep
         await self._collector.collect()
 
-        if names:
+        # consider not using name to avoid collisions
+        if names := {entity.name: entity for entity in self._tracked_jobs.values()}:
             step_updates = self._launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:

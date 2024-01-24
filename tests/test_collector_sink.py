@@ -46,7 +46,7 @@ def mock_entity(test_dir):
         entity.name = name if name else str(uuid.uuid4())
         entity.status_dir = test_dir
         entity.type = type
-        entity.meta = {
+        entity.config = {
             "host": host,
             "port": port,
         }
