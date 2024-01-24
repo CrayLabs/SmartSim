@@ -43,6 +43,7 @@ from dataclasses import dataclass, field
 from types import FrameType
 
 import redis.asyncio as redis
+from anyio import open_file, sleep
 from watchdog.events import (
     FileCreatedEvent,
     FileModifiedEvent,
@@ -86,7 +87,6 @@ class Sink(abc.ABC):
         ...
 
 
-from anyio import open_file, sleep
 
 
 class FileSink(Sink):
