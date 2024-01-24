@@ -211,7 +211,7 @@ class DbMemoryCollector(DbCollector):
         db_info = await self._client.info()
         self._value = db_info
 
-        self._sink.save(ts=self.timestamp(), **db_info)
+        await self._sink.save(ts=self.timestamp(), **db_info)
 
     @property
     def keys(self) -> t.Iterable[str]:
@@ -579,7 +579,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._collector = CollectorManager(timeout_ms)
 
     @property
-    def timeout_ms(self):
+    def timeout_ms(self) -> int:
         return self._timeout_ms
 
     def init_launcher(self, launcher: str) -> Launcher:
