@@ -49,6 +49,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     hydrate_persistable,
     load_manifest,
     track_event,
+    check_frequency,
 )
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
@@ -153,6 +154,41 @@ def test_ts():
     """Ensure expected output type"""
     ts = get_ts()
     assert isinstance(ts, int)
+
+
+@pytest.mark.parametrize(
+    ["freq"],
+    [
+        pytest.param("1", id="1s delay"),
+        pytest.param("1.0", id="1s (float) freq"),
+        pytest.param("1.0", id="1.5s (float) freq"),
+        pytest.param("60", id="upper bound freq"),
+        pytest.param("60.0", id="upper bound (float) freq"),
+    ],
+)
+def test_valid_frequencies(freq: t.Union[int, float]):
+    """Ensure validation does not raise an exception on values in valid range"""
+    check_frequency(float(freq))
+    assert True
+
+
+@pytest.mark.parametrize(
+    ["freq", "exp_err_msg"],
+    [
+        pytest.param("-1", "greater than", id="negative freq"),
+        pytest.param("0", "greater than", id="0s freq"),
+        pytest.param("0.9", "greater than", id="0.9s freq"),
+        pytest.param("0.9999", "greater than", id="lower bound"),
+        pytest.param("60.0001", "less than", id="just over upper"),
+        pytest.param("3600", "less than", id="too high"),
+        pytest.param("100000", "less than", id="bonkers high"),
+    ],
+)
+def test_invalid_frequencies(freq: t.Union[int, float], exp_err_msg: str):
+    """Ensure validation raises an exception on values outside valid range"""
+    with pytest.raises(ValueError) as ex:
+        check_frequency(float(freq))
+    assert exp_err_msg in "".join(ex.value.args)
 
 
 @pytest.mark.parametrize(
@@ -424,7 +460,7 @@ async def test_auto_shutdown():
     duration = 5
 
     ts0 = get_ts()
-    await event_loop(observer, mani_handler, frequency,  duration)
+    await event_loop(observer, mani_handler, frequency, duration)
     ts1 = get_ts()
 
     assert ts1 - ts0 >= duration

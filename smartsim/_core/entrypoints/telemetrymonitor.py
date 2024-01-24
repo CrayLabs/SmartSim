@@ -75,7 +75,7 @@ from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
-
+F_MIN, F_MAX = 1.0, 60.0
 
 logger = get_logger(__name__)
 
@@ -321,17 +321,13 @@ class CollectorManager:
         logger.debug("Executing all telemetry collectors")
 
         if collectors := self.all_collectors:
-            tasks = [
-                asyncio.create_task(collector.collect()) for collector in collectors
-            ]
+            tasks = [asyncio.create_task(item.collect()) for item in collectors]
             results = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
             logger.debug(f"collector.collect() results: {results}")
 
     async def shutdown(self) -> None:
         """Release resources"""
-        if collectors := self.all_collectors:
-            for collector in collectors:
-                await collector.shutdown()
+        asyncio.gather(collector.shutdown() for collector in self.all_collectors)
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
@@ -386,7 +382,6 @@ def _hydrate_persistable(
 ) -> JobEntity:
     """Populate JobEntity instance with supplied metdata and instance details"""
     entity = JobEntity()
-
     metadata = persistable_entity["telemetry_metadata"]
     status_dir = pathlib.Path(metadata.get("status_dir"))
 
@@ -399,7 +394,6 @@ def _hydrate_persistable(
     entity.status_dir = str(status_dir)
 
     if entity.is_db:
-        print("nice db you got there... shame to lose it!")
         # db shards are hydrated individually
         entity.config["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
         entity.config["port"] = persistable_entity.get("port", "NO-DB-PORT")
@@ -568,13 +562,10 @@ def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
     """Create a faux return code for a task run by the WLM. Must not be
     called with non-terminal statuses or results may be confusing
     """
-    if step_info.status not in TERMINAL_STATUSES:
-        return None
+    rc_map = {s: 1 for s in TERMINAL_STATUSES}  # return `1` for all terminal statuses
+    rc_map.update({STATUS_COMPLETED: os.EX_OK})  # return `0` for full success
 
-    if step_info.status == STATUS_COMPLETED:
-        return os.EX_OK
-
-    return 1
+    return rc_map.get(step_info.status, None)  # return `None` when in-progress
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -667,7 +658,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
-
         exp_dir = pathlib.Path(manifest_path).parent.parent.parent
 
         for run in runs:
@@ -749,7 +739,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         status_clause = f"status: {step_info.status}"
         error_clause = f", error: {step_info.error}" if step_info.error else ""
-        detail = f"{status_clause}{error_clause}"
 
         if hasattr(job.entity, "status_dir"):
             write_path = pathlib.Path(job.entity.status_dir)
@@ -761,7 +750,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             entity.type,
             "stop",
             write_path,
-            detail=detail,
+            detail=f"{status_clause}{error_clause}",
             return_code=faux_return_code(step_info),
         )
 
@@ -941,6 +930,7 @@ def get_parser() -> argparse.ArgumentParser:
         "-frequency",
         type=int,
         help="Frequency of telemetry updates (in seconds))",
+        min=1.0,
         required=True,
     )
     arg_parser.add_argument(
@@ -958,6 +948,14 @@ def get_parser() -> argparse.ArgumentParser:
     return arg_parser
 
 
+def check_frequency(frequency: t.Union[int, float]) -> None:
+    freq_tpl = f"Telemetry collection frequency must be {0} {1}s"
+    if frequency < F_MIN:
+        raise ValueError(freq_tpl.format("greater than", F_MIN))
+    if frequency > F_MAX:
+        raise ValueError(freq_tpl.format("less than", F_MAX))
+
+
 if __name__ == "__main__":
     os.environ["PYTHONUNBUFFERED"] = "1"
 
@@ -966,7 +964,6 @@ if __name__ == "__main__":
 
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
-
     log_path = os.path.join(
         args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log"
     )
@@ -975,6 +972,7 @@ if __name__ == "__main__":
 
     # Must register cleanup before the main loop is running
     register_signal_handlers()
+    check_frequency(float(args.frequency))
 
     try:
         asyncio.run(
