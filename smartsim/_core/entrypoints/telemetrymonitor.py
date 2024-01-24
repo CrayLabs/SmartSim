@@ -86,7 +86,7 @@ class Sink(abc.ABC):
         ...
 
 
-from anyio import sleep, open_file
+from anyio import open_file, sleep
 
 
 class FileSink(Sink):
