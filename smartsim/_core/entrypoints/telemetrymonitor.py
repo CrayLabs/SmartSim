@@ -86,7 +86,7 @@ class Sink(abc.ABC):
         ...
 
 
-from anyio import sleep, run, open_file
+from anyio import sleep, open_file
 
 
 class FileSink(Sink):
@@ -817,7 +817,7 @@ async def event_loop(
 
         # track time elapsed to execute metric collection
         action_duration_ms += timestamp - get_ts()
-        wait_time_ms = action_handler.timeout_ms - action_duration_ms
+        wait_time_ms = (1000 * frequency) - action_duration_ms
         logger.debug(
             "Collectors consumed {0}ms of {1}ms loop frequency. Sleeping {2}ms",
             action_duration_ms,
