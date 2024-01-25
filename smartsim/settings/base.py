@@ -117,7 +117,7 @@ class RunSettings(SettingsBase):
                                                                   int,
                                                                   None]],
                                                           t.Dict[
-                                                              str, 
+                                                              str,
                                                               str]]]] = None
 
     @property
