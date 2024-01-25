@@ -269,7 +269,7 @@ class Model(SmartSimEntity):
         }
         assert isinstance(uds_options.get("port"), int)
         assert isinstance(uds_options.get("port"), object)
-        
+
         common_options = {
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
@@ -334,7 +334,7 @@ class Model(SmartSimEntity):
             "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
-    
+
     def _set_colocated_db_settings(
         self,
         connection_options: t.Dict[str,
@@ -398,7 +398,7 @@ class Model(SmartSimEntity):
                                     ]]= {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
-        
+
         redis_ai_temp = {
             "threads_per_queue": kwargs.get("threads_per_queue", None),
             "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),

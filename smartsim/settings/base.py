@@ -97,18 +97,28 @@ class RunSettings(SettingsBase):
         self.container = container
         self._run_command = run_command
         self.in_batch = False
-        self.colocated_db_settings: t.Optional[t.Dict[str, 
+        self.colocated_db_settings: t.Optional[t.Dict[str,
                                                       t.Union[
                                                           bool,
                                                           int,
                                                           str,
                                                           None,
                                                           list[str],
-                                                          t.Iterable[t.Union[int, t.Iterable[int]]],
+                                                          t.Iterable[
+                                                              t.Union[
+                                                                  int,
+                                                                  t.Iterable[
+                                                                      int]]],
                                                           list[DBModel],
                                                           list[DBScript],
-                                                          t.Dict[str, t.Union[int, None]],
-                                                          t.Dict[str, str]]]] = None
+                                                          t.Dict[
+                                                              str,
+                                                              t.Union[
+                                                                  int,
+                                                                  None]],
+                                                          t.Dict[
+                                                              str, 
+                                                              str]]]] = None
 
     @property
     def exe_args(self) -> t.Union[str, t.List[str]]:
