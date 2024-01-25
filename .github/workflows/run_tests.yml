@@ -125,8 +125,7 @@ jobs:
       # Run isort/black style check
       - name: Run black
         run: |
-          black ./smartsim/version.py
-          black --check ./smartsim ./tests
+          black --exclude smartsim/version.py --check ./smartsim ./tests
 
       # Run pytest (backends subdirectory)
       - name: Run Pytest
