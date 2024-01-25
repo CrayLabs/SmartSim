@@ -24,31 +24,34 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import fileinput
 import itertools
+import json
+import os
+import shutil
 import subprocess
 import sys
 import time
 import typing as t
-
-import json
-import zmq
-from ...schemas.dragonRequests import DragonRequest, DragonStopRequest, DragonUpdateStatusRequest
-from ...schemas.dragonResponses import (
-    DragonRunResponse,
-    DragonUpdateStatusResponse,
-    DragonStopResponse,
-)
-
 from pathlib import Path
 
-from ...utils.network import get_best_interface_and_address
+import zmq
 
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import DragonRunSettings, SettingsBase
 from ....status import STATUS_CANCELLED
+from ...schemas import (
+    DragonHandshakeRequest,
+    DragonHandshakeResponse,
+    DragonRequest,
+    DragonRunResponse,
+    DragonStopRequest,
+    DragonStopResponse,
+    DragonUpdateStatusRequest,
+    DragonUpdateStatusResponse,
+)
+from ...utils.network import get_best_interface_and_address
 from ..launcher import WLMLauncher
 from ..step import DragonStep, Step
 from ..stepInfo import StepInfo
@@ -69,7 +72,26 @@ class DragonLauncher(WLMLauncher):
 
     def __init__(self) -> None:
         super().__init__()
+        self.context = zmq.Context()
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
+
+    def _handsake(self, address: str) -> None:
+
+        self._dragon_head_socket = self.context.socket(zmq.REQ)
+        self._dragon_head_socket.connect(address)
+        request = DragonHandshakeRequest()
+        try:
+            self._send_request_as_json(request)
+            response = self._dragon_head_socket.recv_json()
+            if response is not None:
+                response = t.cast(str, response)
+                DragonHandshakeResponse.model_validate(t.cast(str, json.loads(response)))
+            return
+        except (zmq.ZMQError, zmq.Again) as e:
+            logger.debug(e)
+            self._dragon_head_socket.close()
+            self._dragon_head_socket = None
+            logger.debug(f"Unsuccessful handshake with Dragon server at address {address}")
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
@@ -77,18 +99,17 @@ class DragonLauncher(WLMLauncher):
             return
 
         dragon_path = os.path.join(path, ".smartsim", "dragon")
+        dragon_config_log = os.path.join(dragon_path, "dragon_config.log")
 
-        context = zmq.Context()
-        # First look if there is an old server up and running
-        # TODO WARNING: this now results in an error if the file is there
-        # but the server is not. Fixing this tomorrow
-        dragon_out = os.path.join(dragon_path, "dragon_head.out")
-        if Path.is_file(Path(dragon_out)):
-            dragon_conf = DragonLauncher._parse_launched_dragon_server_info_from_files([dragon_out])
-            logger.debug(dragon_conf)
-            self._dragon_head_socket = context.socket(zmq.REQ)
-            self._dragon_head_socket.connect(dragon_conf[0]["address"])
-            return
+        if Path.is_file(Path(dragon_config_log)):
+            dragon_confs = DragonLauncher._parse_launched_dragon_server_info_from_files(
+                [dragon_config_log]
+            )
+            logger.debug(dragon_confs)
+            for dragon_conf in dragon_confs:
+                self._handsake(dragon_conf["address"])
+                if self._dragon_head_socket is not None:
+                    return
 
         os.makedirs(dragon_path, exist_ok=True)
 
@@ -101,25 +122,29 @@ class DragonLauncher(WLMLauncher):
 
         _, address = get_best_interface_and_address()
         if address is not None:
-            launcher_socket = context.socket(zmq.REP)
+            launcher_socket = self.context.socket(zmq.REP)
             # TODO find first available port >= 5995
             socket_addr = f"tcp://{address}:5995"
             logger.debug(f"Binding launcher to {socket_addr}")
             launcher_socket.bind(socket_addr)
             cmd += ["+launching_address", socket_addr]
 
-        dragon_out = open(os.path.join(dragon_path, "dragon_head.out"), "w")
-        dragon_err = open(os.path.join(dragon_path, "dragon_hear.err"), "w")
-        current_env = os.environ.copy()
-        current_env.update({"PYTHONUNBUFFERED": "1"})
-        self._dragon_head_process = subprocess.Popen(
-            cmd,
-            stderr=dragon_err,
-            stdout=dragon_out,
-            cwd=dragon_path,
-            shell=False,
-            env=current_env,
-        )
+        dragon_out_file = os.path.join(dragon_path, "dragon_head.out")
+        dragon_err_file = os.path.join(dragon_path, "dragon_hear.err")
+
+        with open(dragon_out_file, "w") as dragon_out, open(dragon_err_file, "w") as dragon_err:
+            current_env = os.environ.copy()
+            current_env.update({"PYTHONUNBUFFERED": "1"})
+            self._dragon_head_process = subprocess.Popen(
+                args = cmd,
+                bufsize = 0,
+                stderr=dragon_err.fileno(),
+                stdout=dragon_out.fileno(),
+                cwd=dragon_path,
+                shell=False,
+                env=current_env,
+                start_new_session=True
+            )
 
         if address is not None:
             logger.debug(f"Listening to {socket_addr}")
@@ -127,8 +152,7 @@ class DragonLauncher(WLMLauncher):
             logger.debug(f"Connecting launcher to {dragon_head_address}")
             launcher_socket.send(b"ACK")
             launcher_socket.close()
-            self._dragon_head_socket = context.socket(zmq.REQ)
-            self._dragon_head_socket.connect(dragon_head_address)
+            self._handsake(dragon_head_address)
         else:
             # TODO parse output file
             raise LauncherError("Could not receive address of Dragon head process")
@@ -162,7 +186,7 @@ class DragonLauncher(WLMLauncher):
             req = step.get_launch_request()
             self._send_request_as_json(req)
             response = DragonRunResponse.model_validate(
-                json.loads(self._dragon_head_socket.recv_json())
+                json.loads(t.cast(str, self._dragon_head_socket.recv_json()))
             )
             step_id = response.step_id
 
@@ -178,15 +202,20 @@ class DragonLauncher(WLMLauncher):
         :return: update for job due to cancel
         :rtype: StepInfo
         """
+
+        if self._dragon_head_socket is None:
+            raise LauncherError("Launcher is not connected to Dragon.")
+
         stepmap = self.step_mapping[step_name]
 
         step_id = str(stepmap.step_id)
         request = DragonStopRequest(step_id=step_id)
         self._send_request_as_json(request)
 
-        response = DragonStopResponse.model_validate(
-                json.loads(self._dragon_head_socket.recv_json())
-            )
+
+        DragonStopResponse.model_validate(
+            json.loads(t.cast(str, self._dragon_head_socket.recv_json()))
+        )
 
         _, step_info = self.get_step_update([step_name])[0]
         if not step_info:
@@ -204,11 +233,14 @@ class DragonLauncher(WLMLauncher):
         :rtype: list[StepInfo]
         """
 
+        if self._dragon_head_socket is None:
+            raise LauncherError("Launcher is not connected to Dragon.")
+
         request = DragonUpdateStatusRequest(step_ids=step_ids)
         self._send_request_as_json(request)
 
         response = DragonUpdateStatusResponse.model_validate(
-            json.loads(self._dragon_head_socket.recv_json())
+            json.loads(t.cast(str,self._dragon_head_socket.recv_json()))
         )
 
         # create SlurmStepInfo objects to return
@@ -226,10 +258,12 @@ class DragonLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def _send_request_as_json(self, request: DragonRequest) -> None:
+    def _send_request_as_json(self, request: DragonRequest, **kwargs) -> None:
+        if self._dragon_head_socket is None:
+            raise LauncherError("Launcher is not connected to Dragon")
         req_json = request.model_dump_json()
         logger.debug(f"Sending request: {req_json}")
-        self._dragon_head_socket.send_json(req_json)
+        self._dragon_head_socket.send_json(req_json, **kwargs)
 
     def __str__(self) -> str:
         return "Dragon"
@@ -237,23 +271,34 @@ class DragonLauncher(WLMLauncher):
     @staticmethod
     def _parse_launched_dragon_server_info_from_iterable(
         stream: t.Iterable[str], num_dragon_envs: t.Optional[int] = None
-    ) -> t.List[t.Dict[str, t.Any]]:
+    ) -> t.List[t.Dict[str, str]]:
         lines = (line.strip() for line in stream)
         lines = (line for line in lines if line)
         tokenized = (line.split(maxsplit=1) for line in lines)
         tokenized = (tokens for tokens in tokenized if len(tokens) > 1)
         dragon_env_jsons = (
-            config_dict for first, config_dict in tokenized if "DRAGON_SERVER_CONFIG" in first
+            config_dict
+            for first, config_dict in tokenized
+            if "DRAGON_SERVER_CONFIG" in first
         )
-        dragon_envs = (json.loads(config_dict) for config_dict in dragon_env_jsons)
+        dragon_envs = [json.loads(config_dict) for config_dict in dragon_env_jsons]
 
         if num_dragon_envs:
-            dragon_envs = itertools.islice(dragon_envs, num_dragon_envs)
-        return list(dragon_envs)
+            sliced_dragon_envs = itertools.islice(dragon_envs, num_dragon_envs)
+            return list(sliced_dragon_envs)
+        return dragon_envs
 
     @classmethod
     def _parse_launched_dragon_server_info_from_files(
         cls, file_paths: t.List[str], num_dragon_envs: t.Optional[int] = None
-    ) -> t.List[t.Dict[str, t.Any]]:
-        with fileinput.FileInput(file_paths) as ifstream:
-            return cls._parse_launched_dragon_server_info_from_iterable(ifstream, num_dragon_envs)
+    ) -> t.List[t.Dict[str, str]]:
+        file_copies = [(Path(file).parent / (Path(file).name+".copy")) for file in file_paths]
+        for file, file_copy in zip(file_paths, file_copies):
+            shutil.copyfile(file, file_copy)
+        with fileinput.FileInput(file_copies) as ifstream:
+            dragon_envs = cls._parse_launched_dragon_server_info_from_iterable(
+                ifstream, num_dragon_envs
+            )
+            for file_copy in file_copies:
+                os.remove(file_copy)
+            return dragon_envs

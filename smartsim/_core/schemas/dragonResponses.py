@@ -24,9 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# type: ignore
+
 import typing as t
 
-from pydantic import BaseModel, constr, PositiveInt
+from pydantic import BaseModel, constr
+
+
+__all__ = ["DragonResponse", "DragonRunResponse", "DragonHandshakeResponse", "DragonUpdateStatusResponse", "DragonStopResponse"]
 
 class DragonResponse(BaseModel):
     response_type: constr(min_length=1)
@@ -44,5 +49,5 @@ class DragonUpdateStatusResponse(DragonResponse):
 class DragonStopResponse(DragonResponse):
     response_type: constr(min_length=1) = "stop"
 
-class DragonReadyResponse(DragonResponse):
-    response_type: constr(min_length=1) = "ready"
+class DragonHandshakeResponse(DragonResponse):
+    response_type: constr(min_length=1) = "handshake"

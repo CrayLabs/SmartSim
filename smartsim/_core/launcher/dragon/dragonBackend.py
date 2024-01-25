@@ -30,17 +30,19 @@ from smartsim.status import STATUS_RUNNING, STATUS_COMPLETED, STATUS_FAILED, STA
 from dragon.native.process import Process
 
 
-from smartsim._core.schemas.dragonRequests import (
+from smartsim._core.schemas import (
     DragonRequest,
     DragonRunRequest,
     DragonStopRequest,
     DragonUpdateStatusRequest,
+    DragonHandshakeRequest
 )
-from smartsim._core.schemas.dragonResponses import (
+from smartsim._core.schemas import (
     DragonResponse,
     DragonRunResponse,
     DragonStopResponse,
     DragonUpdateStatusResponse,
+    DragonHandshakeResponse
 )
 
 
@@ -51,11 +53,12 @@ class DragonBackend:
     by threads spawned by it.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._request_to_function = {
             "run": self.run,
             "update_status": self.update_status,
             "stop": self.stop,
+            "handshake": self.handshake,
         }
         self.procs: dict[str, Process] = {}
 
@@ -86,8 +89,7 @@ class DragonBackend:
     def update_status(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
         update_status_request = DragonUpdateStatusRequest.model_validate(request)
 
-        # Avoid missing entries
-        updated_statuses = {step_id: (STATUS_NEVER_STARTED, None) for step_id in update_status_request.step_ids}
+        updated_statuses = {}
         for step_id in update_status_request.step_ids:
             if step_id in self.procs:
                 proc = self.procs[step_id]
@@ -102,7 +104,7 @@ class DragonBackend:
 
         return DragonUpdateStatusResponse(statuses = updated_statuses)
 
-    def stop(self, request: DragonStopRequest):
+    def stop(self, request: DragonStopRequest) -> DragonStopResponse:
         stop_request = DragonStopRequest.model_validate(request)
 
         if stop_request.step_id in self.procs:
@@ -111,3 +113,8 @@ class DragonBackend:
             self.procs[stop_request.step_id].kill()
 
         return DragonStopResponse()
+
+    def handshake(self, request: DragonHandshakeRequest) -> DragonHandshakeResponse:
+        DragonHandshakeRequest.model_validate(request)
+
+        return DragonHandshakeResponse()

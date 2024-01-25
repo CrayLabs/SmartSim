@@ -29,7 +29,7 @@ import shlex
 import shutil
 import typing as t
 
-from ...schemas.dragonRequests import DragonRunRequest
+from ...schemas import DragonRunRequest
 
 from ....log import get_logger
 from ....settings import DragonRunSettings, Singularity

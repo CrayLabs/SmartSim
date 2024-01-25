@@ -29,6 +29,7 @@ import json
 import os
 import signal
 import textwrap
+import time
 import typing as t
 import zmq
 
@@ -37,19 +38,16 @@ from smartsim._core.utils.network import get_best_interface_and_address
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from types import FrameType
 
-from smartsim.log import get_logger
-
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     if not signo:
-        logger.warning("Received signal with no signo")
+        print("Received signal with no signo")
     cleanup()
 
 context = zmq.Context()
-logger = get_logger(__name__)
 
 """
 Redis/KeyDB entrypoint script
@@ -64,19 +62,19 @@ def print_summary(
 
     zmq_config = {"interface": network_interface, "address": ip_address}
 
-    print(
-        textwrap.dedent(f"""\
-            -------- Dragon Configuration --------
-            IPADDRESS: {ip_address}
-            NETWORK: {network_interface}
-            DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
-            --------------------------------------
+    with open("dragon_config.log", "w") as dragon_config_log:
+        dragon_config_log.write(
+            textwrap.dedent(f"""\
+                -------- Dragon Configuration --------
+                IPADDRESS: {ip_address}
+                NETWORK: {network_interface}
+                DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
+                --------------------------------------
 
-            --------------- Output ---------------
+                --------------- Output ---------------
 
-            """),
-        flush=True,
-    )
+                """),
+        )
 
 def run(dragon_head_address: str) -> None:
     print(f"Opening socket {dragon_head_address}")
@@ -87,10 +85,14 @@ def run(dragon_head_address: str) -> None:
 
     while True:
         print(f"Listening to {dragon_head_address}")
-        req = t.cast(str, dragon_head_socket.recv_json())
-        json_req = json.loads(req)
-        resp = dragon_backend.process_request(json_req)
-        dragon_head_socket.send_json(resp.model_dump_json())
+        try:
+            req = t.cast(str, dragon_head_socket.recv_json(zmq.NOBLOCK))
+            json_req = json.loads(req)
+            resp = dragon_backend.process_request(json_req)
+            dragon_head_socket.send_json(resp.model_dump_json())
+        except (zmq.ZMQError, zmq.Again):
+            time.sleep(5)
+            print(f"Listening to {dragon_head_address}")
 
 
 
@@ -121,7 +123,7 @@ def main(args: argparse.Namespace) -> int:
     return 0
 
 def cleanup() -> None:
-    logger.debug("Cleaning up")
+    print("Cleaning up", flush=True)
 
 
 if __name__ == "__main__":

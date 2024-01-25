@@ -30,6 +30,7 @@ import typing as t
 
 from pydantic import BaseModel, constr, PositiveInt
 
+__all__ = ["DragonRequest", "DragonRunRequest", "DragonHandshakeRequest", "DragonUpdateStatusRequest", "DragonStopRequest"]
 
 class DragonRequest(BaseModel):
     request_type: constr(min_length=1)
@@ -53,5 +54,5 @@ class DragonStopRequest(DragonRequest):
     request_type: constr(min_length=1) = "stop"
     step_id: constr(min_length=1)
 
-class DragonReadyRequest(DragonRequest):
-    request_type: constr(min_length=1) = "ready"
+class DragonHandshakeRequest(DragonRequest):
+    request_type: constr(min_length=1) = "handshake"
