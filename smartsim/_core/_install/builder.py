@@ -337,12 +337,10 @@ class _RAIBuildDependency(ABC):
 
     @property
     @abstractmethod
-    def __rai_dependency_name__(self) -> str:
-        ...
+    def __rai_dependency_name__(self) -> str: ...
 
     @abstractmethod
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
-        ...
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
 
 
 def _place_rai_dep_at(
@@ -707,8 +705,7 @@ def _threaded_map(fn: t.Callable[[_T], _U], items: t.Iterable[_T]) -> t.Sequence
 class _WebLocation(ABC):
     @property
     @abstractmethod
-    def url(self) -> str:
-        ...
+    def url(self) -> str: ...
 
 
 class _WebGitRepository(_WebLocation):
@@ -762,8 +759,7 @@ class _ExtractableWebArchive(_WebArchive, ABC):
     @abstractmethod
     def _extract_download(
         self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def extract(self, target: t.Union[str, "os.PathLike[str]"]) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
