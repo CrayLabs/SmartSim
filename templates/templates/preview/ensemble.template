@@ -4,8 +4,10 @@
             Members: {{ ensemble|length }}
             Ensemble Parameters:  
                 {%- for key, value in ensemble.params.items() %}
-                {{ key }}: {{ value }}
+                {{ key }}: {{ '{:^9}'.format(value|string)|truncate(81,true,'...')}}
                     {%- endfor %}
+
+                
 
         {% for model in manifest.models %}
         --- Model name: {{ model.name }} 

@@ -30,9 +30,11 @@ from ...log import log_to_file_preview
 import smartsim._core._cli.utils as _utils
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
+from smartredis import Client
 
 _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
+
 
 def render(
     experiment: t.Any,
@@ -53,7 +55,7 @@ def render(
         _check_output_format(output_format)
         output_filename = _check_output_filename(output_filename)
 
-        tpl = env.get_template(f"base_{output_format}.template")
+        tpl = env.get_template(f"preview/base_{output_format}.template")
         rendered_preview = tpl.render(
             exp_entity=experiment,
             manifest=manifest,
@@ -67,7 +69,7 @@ def render(
                 "Output filename is only a valid parameter when an output \
 format is specified"
             )
-        tpl = env.get_template("base.template")
+        tpl = env.get_template("preview/base.template")
         rendered_preview = tpl.render(
             exp_entity=experiment,
             manifest=manifest,
@@ -75,9 +77,9 @@ format is specified"
             verbosity_level=verbosity_level,
         )
 
+    # print(Client.)
     logging.info(rendered_preview)
     return rendered_preview
-
 
 
 def preview_to_file(content: str, file_name: str) -> None:
@@ -97,9 +99,8 @@ def _check_output_filename(output_filename: t.Optional[str]) -> str:
 
     return output_filename
 
-def _check_verbosity_level(
-    verbosity_level: _VerbosityLevelString
-) -> None:
+
+def _check_verbosity_level(verbosity_level: _VerbosityLevelString) -> None:
     """
     Check verbosity_level
     """

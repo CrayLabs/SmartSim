@@ -1,13 +1,13 @@
 
-{% include "experiment.template" %}
+{% include "preview/experiment.template" %}
 {%- if manifest %}
 
 === Entity Preview === 
 {%- if manifest.dbs %}
-{% include "orchestrator.template" %}
+{% include "preview/orchestrator.template" %}
 {%- endif -%}
 {% if manifest.ensembles %}
-{% include "ensemble.template" %}
+{% include "preview/ensemble.template" %}
 
 {%- endif -%}
 {%- endif -%}
