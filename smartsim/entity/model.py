@@ -258,13 +258,15 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-
+        assert isinstance(unix_socket, str) and not isinstance(unix_socket, object)
+        assert isinstance(socket_permissions, int) and not isinstance(socket_permissions, object)
         uds_options = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
             "port": 0,  # This is hardcoded to 0 as recommended by redis for UDS
         }
-
+        assert isinstance(uds_options.get("port"), int) and not isinstance(uds_options.get("port"), object)
+        
         common_options = {
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
@@ -329,12 +331,23 @@ class Model(SmartSimEntity):
             "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
-
+    
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Dict[str, t.Any],
-        common_options: t.Dict[str, t.Any],
-        **kwargs: t.Any,
+        connection_options: t.Dict[str, 
+                                   t.Union[
+                                        int, 
+                                        list[str], 
+                                        str]],
+        common_options: t.Dict[str,
+                               t.Union[
+                                   t.Iterable[
+                                       t.Union[int, t.Iterable[int]]], 
+                                   bool, 
+                                   int, 
+                                   str, 
+                                   None]],
+        **kwargs: t.Union[int, None],
     ) -> None:
         """
         Ingest the connection-specific options (UDS/TCP) and set the final settings
@@ -357,21 +370,43 @@ class Model(SmartSimEntity):
             )
 
         # TODO list which db settings can be extras
+        x = common_options.get("custom_pinning")
+        assert isinstance(x, t.Iterable) and not isinstance(x, str)
+        e = common_options.get("cpus")
+        assert isinstance(e, int)
         common_options["custom_pinning"] = self._create_pinning_string(
-            common_options["custom_pinning"], common_options["cpus"]
+            x, e
         )
 
-        colo_db_config = {}
+        # set this to the type of colocated_db_settings
+        # colo_db_config : t.Dict[str,str] = {}
+        colo_db_config : t.Dict[str, 
+                                t.Union[
+                                    bool, 
+                                    int, 
+                                    str, 
+                                    None,
+                                    list[str],
+                                    t.Iterable[
+                                        t.Union[int, t.Iterable[int]]],
+                                    list[DBModel],
+                                    list[DBScript],
+                                    t.Dict[str, 
+                                           t.Union[int, None]],
+                                    t.Dict[str, str]
+                                    ]]= {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
-        # redisai arguments for inference settings
-        colo_db_config["rai_args"] = {
+        
+        redis_ai_temp = {
             "threads_per_queue": kwargs.get("threads_per_queue", None),
             "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
             "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
         }
+        # redisai arguments for inference settings
+        colo_db_config["rai_args"] = redis_ai_temp
         colo_db_config["extra_db_args"] = {
-            k: str(v) for k, v in kwargs.items() if k not in colo_db_config["rai_args"]
+            k: str(v) for k, v in kwargs.items() if k not in redis_ai_temp
         }
 
         self._check_db_objects_colo()

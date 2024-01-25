@@ -31,6 +31,7 @@ from smartsim.settings.containers import Container
 
 from .._core.utils.helpers import expand_exe_path, fmt_dict, is_valid_cmd
 from ..log import get_logger
+from ..entity.dbobject import DBModel, DBScript
 
 logger = get_logger(__name__)
 
@@ -96,7 +97,18 @@ class RunSettings(SettingsBase):
         self.container = container
         self._run_command = run_command
         self.in_batch = False
-        self.colocated_db_settings: t.Optional[t.Dict[str, str]] = None
+        self.colocated_db_settings: t.Optional[t.Dict[str, 
+                                                      t.Union[
+                                                          bool,
+                                                          int,
+                                                          str,
+                                                          None,
+                                                          list[str],
+                                                          t.Iterable[t.Union[int, t.Iterable[int]]],
+                                                          list[DBModel],
+                                                          list[DBScript],
+                                                          t.Dict[str, t.Union[int, None]],
+                                                          t.Dict[str, str]]]] = None
 
     @property
     def exe_args(self) -> t.Union[str, t.List[str]]:
