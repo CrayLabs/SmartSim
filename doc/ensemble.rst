@@ -1,3 +1,4 @@
+.. _ensemble_doc:
 ********
 Ensemble
 ********
@@ -412,7 +413,7 @@ Users can follow **three** processes to load a TorchScript to the ``Orchestrator
 - :ref:`from string<TS_raw_string_ensemble>`
 
 Once a ML model or TorchScript is loaded into the ``Orchestrator``, ``Ensemble`` ``Model`` members can
-leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
+leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<smartredis-api>`)
 to execute the stored ML models or TorchScripts.
 
 .. _ai_model_ensemble_doc:
@@ -504,7 +505,7 @@ In the above ``smartsim_ensemble.add_ml_model()`` code snippet, we offer the fol
 
 When the ``Ensemble`` is started via ``Experiment.start()``, the ML model will be loaded to the
 launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
-client (:ref:`SmartRedis<dead_link>`) within the application code.
+client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _from_file_ML_model_ensemble_ex:
 Example: Attaching an ML Model from file
@@ -568,7 +569,7 @@ In the above ``smartsim_ensemble.add_ml_model()`` code snippet, we offer the fol
 
 When the ``Ensemble`` is started via ``Experiment.start()``, the ML model will be loaded to the
 launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
-client (:ref:`SmartRedis<dead_link>`) within the application code.
+client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_ensemble_doc:
 ------------
@@ -658,7 +659,7 @@ In the above ``smartsim_ensemble.add_function()`` code snippet, we offer the fol
 
 When the ``Ensemble`` is started via ``Experiment.start()``, the TF function will be loaded to the
 standalone ``Orchestrator``. The function can then be executed on the ``Orchestrator`` via a SmartSim
-client (:ref:`SmartRedis<dead_link>`) within the application code.
+client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_from_file_ensemble:
 Attach a TorchScript from file

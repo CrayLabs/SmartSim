@@ -30,12 +30,11 @@
    :caption: SmartSim
 
    experiment
-   launchers
-   orchestrator
-   model
-   ensemble
    run_settings
    batch_settings
+   model
+   ensemble
+   orchestrator
    ss_logger
    ml_features
    api/smartsim_api

@@ -8,15 +8,15 @@ SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. A ``Model`` can be launched with
 other SmartSim ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
-With the SmartSim ``Client`` (:ref:`SmartRedis<dead_link>`), data can be transferred out of the ``Model``
+With the SmartSim ``Client`` (:ref:`SmartRedis<smartredis-api>`), data can be transferred out of the ``Model``
 into the ``Orchestrator`` for use in an ML Model (TF, TF-lite, PyTorch, or ONNX), online
 training process, or additional ``Model`` applications. SmartSim ``Clients`` (SmartRedis) are available in
 Python, C, C++, or Fortran.
 
 To initialize a SmartSim ``Model``, use the ``Experiment.create_model()`` API function.
-When creating a ``Model``, a :ref:`RunSettings<dead_link>` object must be provided. A ``RunSettings``
+When creating a ``Model``, a :ref:`RunSettings<run_settings_doc>` object must be provided. A ``RunSettings``
 object specifies the ``Model`` executable (e.g. the full path to a compiled binary) as well as
-executable arguments and launch parameters. These specifications include :ref:`launch<dead_link>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
+executable arguments and launch parameters. These specifications include :ref:`launch<smartredis-api>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
 compute resource requirements, and application command-line arguments.
 
 Once a ``Model`` instance has been initialized, users have access to
@@ -52,7 +52,7 @@ prior to the start of the ``Model``.
 
 SmartSim manages ``Model`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications. Additionally, a ``Model`` can be launched individually
-or as a group via an :ref:`Ensemble<dead_link>`.
+or as a group via an :ref:`Ensemble<ensemble_doc>`.
 
 ==============
 Initialization
@@ -72,8 +72,8 @@ The key initializer arguments are:
 -  `enable_key_prefixing` (bool = False): Prefix the ``Model`` name to data sent to the ``Orchestrator`` to prevent key collisions. Default is `False`.
 -  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
-A `name` and :ref:`RunSettings<dead_link>` reference are required to initialize a ``Model``.
-Optionally, include a :ref:`BatchSettings<dead_link>` object to specify workload manager batch launching.
+A `name` and :ref:`RunSettings<run_settings_doc>` reference are required to initialize a ``Model``.
+Optionally, include a :ref:`BatchSettings<batch_settings_doc>` object to specify workload manager batch launching.
 
 .. note::
     ``BatchSettings`` attached to a ``Model`` are ignored when the ``Model`` is executed as part of an ensemble.
@@ -181,7 +181,7 @@ via `kwargs`.
         "intra_op_threads": 1
     }
 
-For a walkthrough of how to colocate a ``Model``, navigate to the :ref:`Colocated Orchestrator<dead_link>` for
+For a walkthrough of how to colocate a ``Model``, navigate to the :ref:`Colocated Orchestrator<colocated_orch_doc>` for
 instructions.
 
 .. _files_doc:
@@ -333,7 +333,7 @@ Users can follow **three** processes to load a TorchScript to the ``Orchestrator
 - :ref:`from string<TS_raw_string>`
 
 Once a ML model or TorchScript is loaded into the ``Orchestrator``, ``Model`` objects can
-leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<dead_link>`)
+leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<smartredis-api>`)
 to execute the stored ML models or TorchScripts.
 
 .. _ai_model_doc:
@@ -425,7 +425,7 @@ In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the follow
 
 When the ``Model`` is started via ``Experiment.start()``, the ML model will be loaded to the
 launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
-client (:ref:`SmartRedis<dead_link>`) within the application code.
+client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _from_file_ML_model_ex:
 ----------------------------------------
@@ -490,7 +490,7 @@ In the above ``smartsim_model.add_ml_model()`` code snippet, we offer the follow
 
 When the ``Model`` is started via ``Experiment.start()``, the ML model will be loaded to the
 launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrator`` via a SmartSim
-client (:ref:`SmartRedis<dead_link>`) within the application code.
+client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_doc:
 TorchScripts
@@ -580,7 +580,7 @@ In the above ``smartsim_model.add_function()`` code snippet, we offer the follow
 
 When the ``Model`` is started via ``Experiment.start()``, the TF function will be loaded to the
 standalone ``Orchestrator``. The function can then be executed on the ``Orchestrator`` via a SmartSim
-client (:ref:`SmartRedis<dead_link>`) within the application code.
+client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_from_file:
 ------------------------------

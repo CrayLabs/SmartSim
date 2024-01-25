@@ -1,3 +1,4 @@
+.. _orch_docs:
 ************
 Orchestrator
 ************
@@ -91,7 +92,7 @@ The following image illustrates
 communication between a standalone ``Orchestrator`` and a
 SmartSim ``Model``. In the diagram, the application is running on multiple compute nodes,
 separate from the ``Orchestrator`` compute nodes. Communication is established between the
-SmartSim ``Model`` application and the sharded ``Orchestrator`` using the :ref:`SmartRedis client<dead_link>`.
+SmartSim ``Model`` application and the sharded ``Orchestrator`` using the :ref:`SmartRedis client<smartredis-api>`.
 
 .. figure::  images/clustered_orchestrator-1.png
 
@@ -895,7 +896,7 @@ In the context of this ``Experiment``, it's essential to create and launch
 the ``Orchestrators`` as a preliminary step before any other components since
 the application script requests tensors from the launched ``Orchestrators``.
 
-We aim to showcase the multi-database automation capabilities of SmartSim, so we
+We aim to showcase the multi-Orchestrator automation capabilities of SmartSim, so we
 create two ``Orchestrators`` in the workflow: a single-sharded ``Orchestrator`` and a
 multi-sharded ``Orchestrator``.
 
@@ -903,8 +904,8 @@ Step 1: Initialize Orchestrators
 ''''''''''''''''''''''''''''''''
 To create an ``Orchestrator``, utilize the ``Experiment.create_database()`` function.
 The function requires specifying a unique
-database identifier argument named `db_identifier` to launch multiple ``Orchestrators``.
-This step is necessary to connect to databases outside of the driver script.
+``Orchestrator`` identifier argument named `db_identifier` to launch multiple ``Orchestrators``.
+This step is necessary to connect to ``Orchestrators`` outside of the driver script.
 We will use the `db_identifier` names we specified in the application script.
 
 For the single-sharded ``Orchestrator``:
@@ -995,7 +996,7 @@ For the multi-sharded ``Orchestrator``:
   :linenos:
   :lines: 33-36
 
-Lets check to make sure the database tensors do not exist in the incorrect ``Orchestrators``:
+Lets check to make sure the ``Orchestrator`` tensors do not exist in the incorrect ``Orchestrators``:
 
 .. literalinclude:: ../tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python

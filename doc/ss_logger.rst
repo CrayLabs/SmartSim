@@ -4,7 +4,7 @@ Logger
 ========
 Overview
 ========
-SmartSim supports logging experiment activity through a :ref:`logging API<dead_link>` accessible via
+SmartSim supports logging experiment activity through a logging API accessible via
 the SmartSim `log` module. The SmartSim logger, backed by Python logging, enables
 real-time logging of experiment activity **to stdout** and/or **to file**, with
 multiple verbosity levels for categorizing log messages.

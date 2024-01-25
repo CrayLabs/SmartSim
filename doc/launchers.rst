@@ -36,8 +36,6 @@ to the ``Experiment`` initialization.
 
 Local
 =====
-
-
 The local launcher can be used on laptops, workstations and single
 nodes of supercomputer and cluster systems. Through
 launching locally, users can prototype workflows and quickly scale

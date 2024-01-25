@@ -424,8 +424,6 @@ Model
 Model
 -----
 
-.. _model_api:
-
 .. autoclass:: Model
    :members:
    :show-inheritance:

@@ -1,3 +1,4 @@
+.. _run_settings_doc:
 ************
 Run Settings
 ************
@@ -59,7 +60,7 @@ To use a specific parallel launch binary, such as `mpirun` or `mpiexec`, users n
 specify this via the `run_command` parameter.
 
 Once the RunSettings object is initialized using the ``Experiment.create_run_settings()`` factory
-method, the :ref:`RunSettings API<dead_link>` can be used to further configure the
+method, the :ref:`RunSettings API<rs-api>` can be used to further configure the
 ``RunSettings`` object prior to execution.
 
 .. note::

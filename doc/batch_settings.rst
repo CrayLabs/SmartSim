@@ -1,3 +1,4 @@
+.. _batch_settings_doc:
 **************
 Batch Settings
 **************
