@@ -30,6 +30,7 @@
    :caption: SmartSim
 
    experiment
+   model
    orchestrator
    launchers
    run_settings

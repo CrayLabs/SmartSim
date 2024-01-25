@@ -24,13 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import concurrent.futures
+import enum
 import os
+import platform
 import re
 import shutil
 import stat
 import subprocess
 import sys
+import tarfile
+import tempfile
 import typing as t
+import urllib.request
+import zipfile
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
@@ -43,6 +52,10 @@ from subprocess import SubprocessError
 #   - check cmake version and use system if possible to avoid conflicts
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
+TDeviceStr = t.Literal["cpu", "gpu"]
+
+_T = t.TypeVar("_T")
+_U = t.TypeVar("_U")
 
 
 def expand_exe_path(exe: str) -> str:
@@ -67,6 +80,31 @@ def expand_exe_path(exe: str) -> str:
 
 class BuildError(Exception):
     pass
+
+
+class Architecture(enum.Enum):
+    X64 = ("x86_64", "amd64")
+
+    @classmethod
+    def from_str(cls, string: str, /) -> "Architecture":
+        string = string.lower()
+        for type_ in cls:
+            if string in type_.value:
+                return type_
+        raise BuildError(f"Unrecognized or unsupported architecture: {string}")
+
+
+class OperatingSystem(enum.Enum):
+    LINUX = ("linux", "linux2")
+    DARWIN = ("darwin",)
+
+    @classmethod
+    def from_str(cls, string: str, /) -> "OperatingSystem":
+        string = string.lower()
+        for type_ in cls:
+            if string in type_.value:
+                return type_
+        raise BuildError(f"Unrecognized or unsupported operating system: {string}")
 
 
 class Builder:
@@ -99,12 +137,7 @@ class Builder:
 
         self.bin_path = dependency_path / "bin"
         self.lib_path = dependency_path / "lib"
-
-        # Set wether build process will output to std output
-        self.out: t.Optional[int] = subprocess.DEVNULL
         self.verbose = verbose
-        if self.verbose:
-            self.out = None
 
         # make build directory "SmartSim/smartsim/_core/.third-party"
         if not self.build_dir.is_dir():
@@ -117,12 +150,18 @@ class Builder:
 
         self.jobs = jobs
 
+    @property
+    def out(self) -> t.Optional[int]:
+        return None if self.verbose else subprocess.DEVNULL
+
     # implemented in base classes
     @property
     def is_built(self) -> bool:
         raise NotImplementedError
 
-    def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
+    def build_from_git(
+        self, git_url: str, branch: str, device: TDeviceStr = "cpu"
+    ) -> None:
         raise NotImplementedError
 
     @staticmethod
@@ -213,7 +252,9 @@ class DatabaseBuilder(Builder):
         keydb_files = {"keydb-server", "keydb-cli"}
         return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
 
-    def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
+    def build_from_git(
+        self, git_url: str, branch: str, device: TDeviceStr = "cpu"
+    ) -> None:
         """Build Redis from git
         :param git_url: url from which to retrieve Redis
         :type git_url: str
@@ -288,6 +329,32 @@ class DatabaseBuilder(Builder):
             raise BuildError("Installation of redis-cli failed!") from e
 
 
+class _RAIBuildDependency(ABC):
+    """An interface with a collection of magic methods so that
+    ``RedisAIBuilder`` can fetch and place its own dependencies
+    """
+
+    @property
+    @abstractmethod
+    def __rai_dependency_name__(self) -> str: ...
+    @abstractmethod
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
+
+
+def _place_rai_dep_at(
+    target: t.Union[str, "os.PathLike[str]"], verbose: bool
+) -> t.Callable[[_RAIBuildDependency], Path]:
+    def _place(dep: _RAIBuildDependency) -> Path:
+        if verbose:
+            print(f"Placing: '{dep.__rai_dependency_name__}'")
+        path = dep.__place_for_rai__(target)
+        if verbose:
+            print(f"Placed: '{dep.__rai_dependency_name__}' at '{path}'")
+        return path
+
+    return _place
+
+
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
     Supported build method:
@@ -316,6 +383,11 @@ class RedisAIBuilder(Builder):
         self._onnx = build_onnx
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
+
+        # TODO: It might be worth making these constructor args so that users
+        #       of this class can configure exactly _what_ they are building.
+        self._os = OperatingSystem.from_str(platform.system())
+        self._architecture = Architecture.from_str(platform.machine())
 
     @property
     def rai_build_path(self) -> Path:
@@ -350,6 +422,40 @@ class RedisAIBuilder(Builder):
     @property
     def fetch_onnx(self) -> bool:
         return self.build_onnx
+
+    def get_deps_dir_path_for(self, device: TDeviceStr) -> Path:
+        def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
+            return BuildError(f"Failed to format RedisAI dependency path: {reason}")
+
+        if self._os == OperatingSystem.DARWIN:
+            os_ = "macos"
+        elif self._os == OperatingSystem.LINUX:
+            os_ = "linux"
+        else:  # pragma: no cover
+            raise fail_to_format(f"Unknown operating system: {self._os}")
+        if self._architecture == Architecture.X64:
+            arch = "x64"
+        else:  # pragma: no cover
+            raise fail_to_format(f"Unknown architecture: {self._architecture}")
+        return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
+
+    def _get_deps_to_fetch_for(
+        self, device: TDeviceStr
+    ) -> t.Tuple[_RAIBuildDependency, ...]:
+        os_ = self._os
+        arch = self._architecture
+        # TODO: It would be nice if the backend version numbers were declared
+        #       alongside the python package version numbers so that all of the
+        #       dependency versions were declared in single location.
+        #       Unfortunately importing into this module is non-trivial as it
+        #       is used as script in the SmartSim `setup.py`.
+        fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
+            (True, _DLPackRepository("v0.5_RAI")),
+            (self.fetch_torch, _PTArchive(os_, device, "2.0.1")),
+            (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
+            (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
+        )
+        return tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
 
     def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
@@ -406,7 +512,9 @@ class RedisAIBuilder(Builder):
             if not dst_file.is_file():
                 os.symlink(src_file, dst_file)
 
-    def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
+    def build_from_git(
+        self, git_url: str, branch: str, device: TDeviceStr = "cpu"
+    ) -> None:
         """Build RedisAI from git
 
         :param git_url: url from which to retrieve RedisAI
@@ -432,56 +540,14 @@ class RedisAIBuilder(Builder):
             "clone",
             "--recursive",
             git_url,
+            "--branch",
+            branch,
+            "--depth=1",
+            os.fspath(self.rai_build_path),
         ]
 
-        checkout_osx_fix: t.List[str] = []
-
-        # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
-        # TODO: Look for a better way to do this or wait for RAI patch
-        if branch == "v1.2.7":
-            # Clone RAI patch commit for OSX
-            clone_cmd += ["RedisAI"]
-            checkout_osx_fix = [
-                "git",
-                "checkout",
-                "634916c722e718cc6ea3fad46e63f7d798f9adc2",
-            ]
-        else:
-            # Clone RAI release commit for versions > 1.2.7
-            clone_cmd += [
-                "--branch",
-                branch,
-                "--depth=1",
-                "RedisAI",
-            ]
-
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
-        if checkout_osx_fix:
-            self.run_command(
-                checkout_osx_fix, out=subprocess.DEVNULL, cwd=self.rai_build_path
-            )
-
-        # get RedisAI dependencies
-        dep_cmd = self._rai_build_env_prefix(
-            with_pt=self.build_torch,
-            with_tf=self.build_tf,
-            with_ort=self.build_onnx,
-            extra_env={"VERBOSE": "1"},
-        )
-
-        dep_cmd.extend(
-            [
-                self.binary_path("bash"),
-                str(self.rai_build_path / "get_deps.sh"),
-                str(device),
-            ]
-        )
-
-        self.run_command(
-            dep_cmd,
-            out=subprocess.DEVNULL,  # suppress this as it's not useful
-            cwd=self.rai_build_path,
-        )
+        self._fetch_deps_for(device)
 
         if self.libtf_dir and device:
             self.symlink_libtf(device)
@@ -541,6 +607,25 @@ class RedisAIBuilder(Builder):
             *(f"{key}={val}" for key, val in extra_env.items()),
         ]
 
+    def _fetch_deps_for(self, device: TDeviceStr) -> None:
+        if not self.rai_build_path.is_dir():
+            raise BuildError("RedisAI build directory not found")
+
+        deps_dir = self.get_deps_dir_path_for(device)
+        deps_dir.mkdir(parents=True, exist_ok=True)
+        if any(deps_dir.iterdir()):
+            raise BuildError("RAI build dependency directory is not empty")
+        to_fetch = self._get_deps_to_fetch_for(device)
+        placed_paths = _threaded_map(
+            _place_rai_dep_at(deps_dir, self.verbose), to_fetch
+        )
+        unique_placed_paths = {os.fspath(path.resolve()) for path in placed_paths}
+        if len(unique_placed_paths) != len(to_fetch):
+            raise BuildError(
+                f"Expected to place {len(to_fetch)} dependencies, but only "
+                f"found {len(unique_placed_paths)}"
+            )
+
     def _install_backends(self, device: str) -> None:
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
@@ -578,3 +663,231 @@ class RedisAIBuilder(Builder):
         if sys.platform == "darwin":
             dylibs = pip_torch_path / ".dylibs"
             self.copy_dir(dylibs, ss_rai_torch_path / ".dylibs", set_exe=True)
+
+
+def _threaded_map(fn: t.Callable[[_T], _U], items: t.Iterable[_T]) -> t.Sequence[_U]:
+    items = tuple(items)
+    if not items:  # No items so no work to do
+        return ()
+    num_workers = min(len(items), (os.cpu_count() or 4) * 5)
+    with concurrent.futures.ThreadPoolExecutor(num_workers) as pool:
+        return tuple(pool.map(fn, items))
+
+
+class _WebLocation(ABC):
+    @property
+    @abstractmethod
+    def url(self) -> str: ...
+
+
+class _WebGitRepository(_WebLocation):
+    def clone(
+        self,
+        target: t.Union[str, "os.PathLike[str]"],
+        depth: t.Optional[int] = None,
+        branch: t.Optional[str] = None,
+    ) -> None:
+        depth_ = ("--depth", str(depth)) if depth is not None else ()
+        branch_ = ("--branch", branch) if branch is not None else ()
+        _git("clone", "-q", *depth_, *branch_, self.url, os.fspath(target))
+
+
+@t.final
+@dataclass(frozen=True)
+class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
+    version: str
+
+    @property
+    def url(self) -> str:
+        return "https://github.com/RedisAI/dlpack.git"
+
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"dlpack@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+        target = Path(target) / "dlpack"
+        self.clone(target, branch=self.version, depth=1)
+        if not target.is_dir():
+            raise BuildError("Failed to place dlpack")
+        return target
+
+
+class _WebArchive(_WebLocation):
+    @property
+    def name(self) -> str:
+        _, name = self.url.rsplit("/", 1)
+        return name
+
+    def download(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+        target = Path(target)
+        if target.is_dir():
+            target = target / self.name
+        file, _ = urllib.request.urlretrieve(self.url, target)
+        return Path(file).resolve()
+
+
+class _ExtractableWebArchive(_WebArchive, ABC):
+    @abstractmethod
+    def _extract_download(
+        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
+    ) -> None: ...
+
+    def extract(self, target: t.Union[str, "os.PathLike[str]"]) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            arch_path = self.download(tmp_dir)
+            self._extract_download(arch_path, target)
+
+
+class _WebTGZ(_ExtractableWebArchive):
+    def _extract_download(
+        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
+    ) -> None:
+        with tarfile.open(download_path, "r") as tgz_file:
+            tgz_file.extractall(target)
+
+
+class _WebZip(_ExtractableWebArchive):
+    def _extract_download(
+        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
+    ) -> None:
+        with zipfile.ZipFile(download_path, "r") as zip_file:
+            zip_file.extractall(target)
+
+
+@t.final
+@dataclass(frozen=True)
+class _PTArchive(_WebZip, _RAIBuildDependency):
+    os_: OperatingSystem
+    device: TDeviceStr
+    version: str
+
+    @property
+    def url(self) -> str:
+        if self.os_ == OperatingSystem.LINUX:
+            if self.device == "gpu":
+                pt_build = "cu117"
+            else:
+                pt_build = "cpu"
+            # pylint: disable-next=line-too-long
+            libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
+        elif self.os_ == OperatingSystem.DARWIN:
+            if self.device == "gpu":
+                raise BuildError("RedisAI does not currently support GPU on Macos")
+            pt_build = "cpu"
+            libtorch_arch = f"libtorch-macos-{self.version}.zip"
+        else:
+            raise BuildError(f"Unexpected OS for the PT Archive: {self.os_}")
+        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
+
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"libtorch@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+        self.extract(target)
+        target = Path(target) / "libtorch"
+        if not target.is_dir():
+            raise BuildError("Failed to place RAI dependency: `libtorch`")
+        return target
+
+
+@t.final
+@dataclass(frozen=True)
+class _TFArchive(_WebTGZ, _RAIBuildDependency):
+    os_: OperatingSystem
+    architecture: Architecture
+    device: TDeviceStr
+    version: str
+
+    @property
+    def url(self) -> str:
+        if self.architecture == Architecture.X64:
+            tf_arch = "x86_64"
+        else:
+            raise BuildError(
+                "Unexpected Architecture for TF Archive: {self.architecture}"
+            )
+
+        if self.os_ == OperatingSystem.LINUX:
+            tf_os = "linux"
+            tf_device = self.device
+        elif self.os_ == OperatingSystem.DARWIN:
+            tf_os = "darwin"
+            if self.device == "gpu":
+                raise BuildError("RedisAI does not currently support GPU on Macos")
+            tf_device = "cpu"
+        else:
+            raise BuildError("Unexpected OS for TF Archive: {self.os_}")
+        return (
+            "https://storage.googleapis.com/tensorflow/libtensorflow/"
+            f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
+        )
+
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"libtensorflow@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+        target = Path(target) / "libtensorflow"
+        target.mkdir()
+        self.extract(target)
+        return target
+
+
+@t.final
+@dataclass(frozen=True)
+class _ORTArchive(_WebTGZ, _RAIBuildDependency):
+    os_: OperatingSystem
+    device: TDeviceStr
+    version: str
+
+    @property
+    def url(self) -> str:
+        ort_url_base = (
+            "https://github.com/microsoft/onnxruntime/releases/"
+            f"download/v{self.version}"
+        )
+        if self.os_ == OperatingSystem.LINUX:
+            ort_os = "linux"
+            ort_arch = "x64"
+            ort_build = "-gpu" if self.device == "gpu" else ""
+        elif self.os_ == OperatingSystem.DARWIN:
+            ort_os = "osx"
+            ort_arch = "x86_64"
+            ort_build = ""
+            if self.device == "gpu":
+                raise BuildError("RedisAI does not currently support GPU on Macos")
+        else:
+            raise BuildError("Unexpected OS for TF Archive: {self.os_}")
+        ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
+        return f"{ort_url_base}/{ort_archive}"
+
+    @property
+    def __rai_dependency_name__(self) -> str:
+        return f"onnxruntime@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+        target = Path(target).resolve() / "onnxruntime"
+        self.extract(target)
+        try:
+            (extracted_dir,) = target.iterdir()
+        except ValueError:
+            raise BuildError(
+                "Unexpected number of files extracted from ORT archive"
+            ) from None
+        for file in extracted_dir.iterdir():
+            file.rename(target / file.name)
+        extracted_dir.rmdir()
+        return target
+
+
+def _git(*args: str) -> None:
+    git = Builder.binary_path("git")
+    cmd = (git,) + args
+    with subprocess.Popen(cmd) as proc:
+        proc.wait()
+        if proc.returncode != 0:
+            raise BuildError(
+                f"Command `{' '.join(cmd)}` failed with exit code {proc.returncode}"
+            )

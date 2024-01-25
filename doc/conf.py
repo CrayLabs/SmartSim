@@ -100,6 +100,11 @@ html_theme_options = {
     "extra_footer": extra_footer,
 }
 
+# Use a custom style sheet to avoid the sphinx-tabs extension from using
+# white background with dark themes.  If sphinx-tabs updates its
+# static/tabs.css, this may need to be updated.
+html_css_files = ['custom_tab_style.css']
+
 autoclass_content = 'both'
 add_module_names = False
 
