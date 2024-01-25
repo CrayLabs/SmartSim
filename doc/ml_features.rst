@@ -303,7 +303,7 @@ with TensorFlow or PyTorch backends.
 
 .. code-block:: python
 
-    client.run_model(model_key, inputs=["mnist_imagse"], outputs=["mnist_output"])
+    client.run_model(model_key, inputs=["mnist_images"], outputs=["mnist_output"])
     output = client.get_tensor("mnist_output")
 
 
