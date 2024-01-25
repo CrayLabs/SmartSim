@@ -258,14 +258,17 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-        assert isinstance(unix_socket, str) and not isinstance(unix_socket, object)
-        assert isinstance(socket_permissions, int) and not isinstance(socket_permissions, object)
+        assert isinstance(unix_socket, str)
+        assert not isinstance(unix_socket, object)
+        assert isinstance(socket_permissions, int)
+        assert not isinstance(socket_permissions, object)
         uds_options = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
-            "port": 0,  # This is hardcoded to 0 as recommended by redis for UDS
+            "port": 0,  # 0 as recommended by redis for UDS
         }
-        assert isinstance(uds_options.get("port"), int) and not isinstance(uds_options.get("port"), object)
+        assert isinstance(uds_options.get("port"), int)
+        assert isinstance(uds_options.get("port"), object)
         
         common_options = {
             "cpus": db_cpus,
@@ -334,18 +337,18 @@ class Model(SmartSimEntity):
     
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Dict[str, 
+        connection_options: t.Dict[str,
                                    t.Union[
-                                        int, 
-                                        list[str], 
+                                        int,
+                                        list[str],
                                         str]],
         common_options: t.Dict[str,
                                t.Union[
                                    t.Iterable[
-                                       t.Union[int, t.Iterable[int]]], 
-                                   bool, 
-                                   int, 
-                                   str, 
+                                       t.Union[int, t.Iterable[int]]],
+                                   bool,
+                                   int,
+                                   str,
                                    None]],
         **kwargs: t.Union[int, None],
     ) -> None:
@@ -378,20 +381,18 @@ class Model(SmartSimEntity):
             x, e
         )
 
-        # set this to the type of colocated_db_settings
-        # colo_db_config : t.Dict[str,str] = {}
-        colo_db_config : t.Dict[str, 
+        colo_db_config : t.Dict[str,
                                 t.Union[
-                                    bool, 
-                                    int, 
-                                    str, 
+                                    bool,
+                                    int,
+                                    str,
                                     None,
                                     list[str],
                                     t.Iterable[
                                         t.Union[int, t.Iterable[int]]],
                                     list[DBModel],
                                     list[DBScript],
-                                    t.Dict[str, 
+                                    t.Dict[str,
                                            t.Union[int, None]],
                                     t.Dict[str, str]
                                     ]]= {}
