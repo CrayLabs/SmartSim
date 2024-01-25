@@ -101,7 +101,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf", "pals"]
+    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals"]
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
@@ -153,12 +153,7 @@ def kill_all_test_spawned_processes() -> None:
 def get_hostlist() -> t.Optional[t.List[str]]:
     global test_hostlist
     if not test_hostlist:
-        if "COBALT_NODEFILE" in os.environ:
-            try:
-                return _parse_hostlist_file(os.environ["COBALT_NODEFILE"])
-            except FileNotFoundError:
-                return None
-        elif "PBS_NODEFILE" in os.environ and test_launcher == "pals":
+        if "PBS_NODEFILE" in os.environ and test_launcher == "pals":
             # with PALS, we need a hostfile even if `aprun` is available
             try:
                 return _parse_hostlist_file(os.environ["PBS_NODEFILE"])
@@ -269,19 +264,6 @@ class WLMUtils:
             run_args = {"--np": ntasks, "--hostfile": host_file}
             run_args.update(kwargs)
             return RunSettings(exe, args, run_command="mpiexec", run_args=run_args)
-        if test_launcher == "cobalt":
-            if shutil.which("aprun"):
-                run_command = "aprun"
-                run_args = {"--pes": ntasks}
-            else:
-                run_command = "mpirun"
-                host_file = os.environ["COBALT_NODEFILE"]
-                run_args = {"-n": ntasks, "--hostfile": host_file}
-            run_args.update(kwargs)
-            settings = RunSettings(
-                exe, args, run_command=run_command, run_args=run_args
-            )
-            return settings
         if test_launcher == "lsf":
             run_args = {"--np": ntasks, "--nrs": nodes}
             run_args.update(kwargs)
@@ -289,7 +271,7 @@ class WLMUtils:
             return settings
         if test_launcher != "local":
             raise SSConfigError(
-                "Base run settings are available for Slurm, PBS, Cobalt, "
+                "Base run settings are available for Slurm, PBS, "
                 f"and LSF, but launcher was {test_launcher}"
             )
         # TODO allow user to pick aprun vs MPIrun
@@ -320,18 +302,6 @@ class WLMUtils:
             run_args = {"np": ntasks, "hostfile": host_file}
             run_args.update(kwargs)
             return PalsMpiexecSettings(exe, args, run_args=run_args)
-        # TODO allow user to pick aprun vs MPIrun
-        if test_launcher == "cobalt":
-            if shutil.which("aprun"):
-                run_args = {"pes": ntasks}
-                run_args.update(kwargs)
-                return AprunSettings(exe, args, run_args=run_args)
-
-            host_file = os.environ["COBALT_NODEFILE"]
-            run_args = {"n": ntasks, "hostfile": host_file}
-            run_args.update(kwargs)
-            return MpirunSettings(exe, args, run_args=run_args)
-
         if test_launcher == "lsf":
             run_args = {
                 "nrs": nodes,
@@ -344,7 +314,7 @@ class WLMUtils:
 
     @staticmethod
     def get_orchestrator(nodes: int = 1, batch: bool = False) -> Orchestrator:
-        if test_launcher in ["pbs", "cobalt"]:
+        if test_launcher == "pbs":
             if not shutil.which("aprun"):
                 hostlist = get_hostlist()
             else:
@@ -698,3 +668,7 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
+
+@pytest.fixture
+def config() -> smartsim._core.config.Config:
+    return CONFIG

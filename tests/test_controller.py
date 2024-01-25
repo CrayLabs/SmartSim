@@ -48,7 +48,8 @@ class MockStep(Step):
     def _create_unique_name(name):
         return name
 
-    def add_to_batch(self, step): ...
+    def add_to_batch(self, step):
+        ...
 
     def get_launch_cmd(self):
         return []

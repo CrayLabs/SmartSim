@@ -30,13 +30,16 @@ import typing as t
 from os import getcwd
 
 from tabulate import tabulate
+
+from smartsim.error.errors import SSUnsupportedError
+
 from ._core import Controller, Generator, Manifest, previewrenderer
 from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
-from .log import get_logger
-from .settings import settings, base, Container
+from .log import ctx_exp_path, get_logger, method_contextualizer
+from .settings import Container, base, settings
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -44,6 +47,17 @@ logger = get_logger(__name__)
 _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
+
+def _exp_path_map(exp: "Experiment") -> str:
+    """Mapping function for use by method contextualizer to place the path of
+    the currently-executing experiment into context for log enrichment"""
+    return exp.exp_path
+
+
+_contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
+
+
+# pylint: disable=no-self-use
 class Experiment:
     """Experiments are the Python user interface for SmartSim.
 
@@ -111,7 +125,7 @@ class Experiment:
         :param exp_path: path to location of ``Experiment`` directory if generated
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "cobalt", "lsf", or "local". If set to "auto",
+                         "lsf", or "local". If set to "auto",
                          an attempt will be made to find an available launcher
                          on the system.
                          Defaults to "local"
@@ -124,15 +138,18 @@ class Experiment:
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+        self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
 
         if launcher == "auto":
             launcher = detect_launcher()
+        if launcher == "cobalt":
+            raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
 
+    @_contextualize
     def start(
         self,
         *args: t.Any,
@@ -206,6 +223,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
@@ -242,6 +260,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def generate(
         self,
         *args: t.Any,
@@ -279,6 +298,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def poll(
         self, interval: int = 10, verbose: bool = True, kill_on_interrupt: bool = True
     ) -> None:
@@ -322,6 +342,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
@@ -345,6 +366,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def get_status(self, *args: t.Any) -> t.List[str]:
         """Query the status of launched instances
 
@@ -383,8 +405,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    @staticmethod
+    @_contextualize
     def create_ensemble(
+        self,
         name: str,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
@@ -457,8 +480,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    @staticmethod
+    @_contextualize
     def create_model(
+        self,
         name: str,
         run_settings: base.RunSettings,
         params: t.Optional[t.Dict[str, t.Any]] = None,
@@ -554,7 +578,6 @@ class Experiment:
         """
         path = init_default(getcwd(), path, str)
 
-        # mcb
         if path is None:
             path = getcwd()
         if params is None:
@@ -571,6 +594,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def create_run_settings(
         self,
         exe: str,
@@ -635,6 +659,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def create_batch_settings(
         self,
         nodes: int = 1,
@@ -695,6 +720,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    @_contextualize
     def create_database(
         self,
         port: int = 6379,
@@ -778,6 +804,7 @@ class Experiment:
             **kwargs,
         )
 
+    @_contextualize
     def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
         """Reconnect to a running ``Orchestrator``
 
@@ -798,7 +825,6 @@ class Experiment:
             logger.error(e)
             raise
 
-
     def preview(
         self,
         *args: t.Any,
@@ -811,38 +837,65 @@ class Experiment:
         into what and how entities will be launched.  Any instance of
         ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
-        :param output_format: Set output destination. The possible accepted
-        output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
-        A filename is required if an output format is specified. If no output
-        format is set, the preview will be output to stdout. Defaults to None.
-        :type output_type: str
-        :param output_filename: Specify name of path to write preview data to.
-        Only needed when an output format has been specified. Defaults to None.
+        :param output_filename: Specify name of file and extension to write
+        preview data to. Defaults to None.
         :type output_filename: str
-        :param verbosity level: the verbosity level.
-        info: Display User defined fields and entities
-        debug: Display user defined field and entities and auto generated
-        fields.
-        developer: Display user defined field and entities, auto generated
-        fields, and run commands.
-        Defaults to info.
+        :param output_format: Set output format. The possible accepted
+        output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
+        If no output format is set, the preview will be output to stdout.
+        Defaults to None.
+        :type output_type: str
+        :param verbosity_level: Specify the verbosity level:
+            info: Display User defined fields and entities
+            debug: Display user defined field and entities and auto generated
+            fields.
+            developer: Display user defined field and entities, auto generated
+            fields, and run commands.
+            Defaults to info.
         :type verbosity_level: str
         """
-        if args:
-            preview_manifest = Manifest(*args)
-        else:
-            preview_manifest = None
+        preview_manifest = Manifest(*args)
 
         rendered_preview = previewrenderer.render(
-            self, preview_manifest, verbosity_level, output_format, output_filename
+            self, preview_manifest, verbosity_level, output_format
         )
+        if output_filename:
+            previewrenderer.preview_to_file(rendered_preview, output_filename)
+        else:
+            logger.info(rendered_preview)
 
-        logger.info(rendered_preview)
+        # incoming model entitty
+        # models themselves cannot be batch steps. If batch settings are
+        # attached, wrap them in an anonymous batch job step
+
+        #    # models = *args
+        #     print(models)
+
+        #     # make the list of models like they do in manifest
+
+        #     for model in manifest.models:
+        #         model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
+        #         if model.batch_settings:
+        #             anon_entity_list = _AnonymousBatchJob(model)
+        #             batch_step, _ = self._create_batch_job_step(
+        #                 anon_entity_list, model_telem_dir
+        #             )
+        #             manifest_builder.add_model(model, (batch_step.name, batch_step))
+        #             steps.append((batch_step, model))
+        #         else:
+        #             job_step = self._create_job_step(model, model_telem_dir)
+        #             manifest_builder.add_model(model, (job_step.name, job_step))
+        #             steps.append((job_step, model))
+
+        #     # launch steps
+        #     for step, entity in steps:
+        #         self._launch_step(step, entity)
 
     @property
     def launcher(self) -> str:
         return self._launcher
 
+    @_contextualize
     def summary(self, style: str = "github") -> str:
         """Return a summary of the ``Experiment``
 

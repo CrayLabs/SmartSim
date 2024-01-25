@@ -1,0 +1,131 @@
+
+    == Models ==  
+    {%- for model in manifest.models %}
+    {%- if model is defined %}
+
+        = Model name: {{ model.name }}
+            Executable:  
+            {%- for param in model.run_settings.exe %}
+                {{ param }}
+            {%- endfor %}
+            Executable Arguments:
+            {%- for param in model.run_settings.exe_args %}
+                {{ param }}
+            {%- endfor %}
+            {%- if model.batch_settings -%}
+            Batch Launch: True
+            {% else %}
+            Batch Launch: False
+            {%- endif -%} 
+            {% if model.params -%}
+            Model parameters: 
+            {%- for param, value in model.params.items() %}
+                {{ param }}: {{ value }}
+            {%- endfor -%}
+            {% endif %}
+            {%- if model.files %}
+            {%- if model.files.tagged %}
+            Tagged Files for model configuration: 
+                {{ model.files.tagged[0] }} -> 
+                {{ model.path }}
+            {%- endif -%}
+            {%- if model.files.copy %}
+            Copy files: {{ model.files.copy[0] }} ->
+            {{ model.path }}
+            {%- endif %}
+            {%- if model.files.link %}
+            Symlink: {{ model.files.link[0] }} ->
+            {{ model.path }}
+            {%- endif %}
+            {%- endif %}
+            {%- if model.run_settings.colocated_db_settings %}
+            Colocated: 
+                Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier}}
+                {%- if model.run_settings.colocated_db_settings.port %}
+                Connection Type: TCP
+                TCP/IP Port:
+                    {{ model.run_settings.colocated_db_settings.port }}
+                {% endif -%}
+                {%- if model.run_settings.colocated_db_settings.unix_socket %}
+                Connection Type: UDS
+                Unix socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+                {%- endif -%}
+                Ifname: {{ model.run_settings.colocated_db_settings.ifname }}
+                Cpus: {{ model.run_settings.colocated_db_settings.cpus }}
+                Custom pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
+            {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+            {%- for script in db_scripts %}
+            Scripts:   
+                Script name: {{ script.name }}
+                Script path: {{ script.script_path }}
+                Backend: {{ script.backend }}   
+                Devices per node: {{ script.device }} 
+            {%- endfor %}
+            {%- endif %}
+            {%- if model.run_settings.colocated_db_settings['db_models'] %}
+            {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
+            Models:   
+                Model name: {{ mlmodel.name }}
+                Backend: {{ mlmodel.backend }} 
+                Model path: {{ mlmodel.model_path }} 
+                Device: {{ mlmodel.device }}  
+                Devices per node: 1  
+                {{ mlmodel.devices_per_node }}
+                First device: 0
+                {{ mlmodel.first_device }}
+                {%- for input in mlmodel.inputs %}
+                Inputs: {{ input }} 
+                {% endfor %}
+                {%- for output in mlmodel.outputs %}
+                Outputs: {{ output }}
+                {%- endfor %}
+            {%- endfor %}
+            {%- endif %}
+            {%- endif %}
+        =       
+    
+        Client Configuration: 
+            {%- if manifest.dbs %}
+            Database identifier: {{ manifest.dbs[0].name }}
+            {%- endif %}
+            {%- if model.run_settings.colocated_db_settings %}
+            Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier}}
+            {% endif %}
+            Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
+            {%- if model.run_settings.colocated_db_settings %}
+                {%- if model.run_settings.colocated_db_settings.port %}
+            TCP/IP Port:
+                {{ model.run_settings.colocated_db_settings.port }}
+                {% endif -%}
+                {%- if model.run_settings.colocated_db_settings.unix_socket %}
+            Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
+                {%- endif -%}
+            {% endif %}
+            {%- if model.run_settings.colocated_db_settings %}
+            Type: Colocated
+            {% endif %}
+            {%- if manifest.dbs %}
+            {%- if manifest.dbs[0].num_shards > 2 %}
+            Type: Clustered
+            {% else %}
+            Type: Standalone
+            {%- endif %}
+            {%- endif %}
+            Incoming entities (available data sources): 
+            {%- for incoming in model.incoming_entities %}
+                {{ incoming.name }}
+            {%- endfor %}
+            Outgoing key collision prevention (key prefixing):  
+
+                {{ model.query_key_prefixing() }}
+                
+                Tensors: On 
+                DataSets: On 
+                Models/Scripts: 
+            Aggregation Lists: On
+    
+    {% endif %}
+    {%- endfor -%}
+
+
+         
