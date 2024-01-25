@@ -1,0 +1,9 @@
+
+{% include "preview/experiment.template" %}
+{%- if manifest %}
+
+=== Entity Preview === 
+{%- if manifest.models %}
+{% include "preview/model.template" %}
+{%- endif -%}
+{%- endif -%}

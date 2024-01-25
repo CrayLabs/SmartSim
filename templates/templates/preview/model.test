@@ -1,0 +1,112 @@
+
+== Models ==  
+    = Model name: {{ model.name }} 
+    {{ model.type }}
+    Executable: on run settings
+    Executable args: on run settings
+    {{ model.run_settings }}
+    if model.batch_settings:
+                    output += f"{model.batch_settings}\n"
+    {{ model.params }}
+    
+    {{ model._db_models|length }}
+    {{ model._db_scripts|length }}
+
+
+    _gen_orc_dir
+    --> 
+
+
+    === Entity Preview ===  
+
+== Models ==    
+= Model name: smartsim_model  
+
+Executable: /Users/putko/miniconda3/envs/test_env/bin/python  
+
+Executable Arguments: { model.run_settings.exe_args } 
+run_torch.py  
+
+Batch Launch: False 
+
+Run Command: srun 
+
+Run arguments:  
+Ntasks: 1  
+Nodes: 1 
+export ALL 
+
+Environment Variables: 
+CC: /path/to/compiler 
+
+Error File:  
+/lus/cls01029/smartsim-dev/SmartSim/tests/test_output/test_multidb/test_launch_cluster_orc_single_dbid.tcp/colocated_model/colocated_model.err  
+
+Output File:   
+/lus/cls01029/smartsim-dev/SmartSim/tests/test_output/test_multidb/test_launch_cluster_orc_single_dbid.tcp/colocated_model/colocated_model.out 
+
+Model parameters: { model.params }
+batch: 32  
+epoch: 10  
+lr: 0.001   
+
+{# if model.files #}
+Tagged Files for model configuration:  
+      "Configure": model.files.tagged,
+
+
+
+path/to/src  ->Path/to/dest/  
+path/to/src  ->Path/to/dest/  
+
+Copy files: 
+         "Copy": model.files.copy,
+path/to/src  ->Path/to/dest/  
+path/to/src  ->Path/to/dest/  
+
+Symlink: 
+{model.files.link }
+path/to/src  ->Path/to/dest/  
+path/to/src  ->Path/to/dest/  
+
+jinja template - how to make sure that there are 
+
+ 
+
+
+
+if  Colocated database 
+----------------
+Colocated:	 
+Database identifier: name_test 
+Connection Type: TCP/UDS 
+(If uds) 
+Unix socket: tmp/colo_name.socket  
+(if tcp) 
+IP address:   
+10.2.0.42	 
+TCP/IP port:  
+8750 
+Ifname: lo 
+Cpus: 1  
+Custom pinning: “123” 
+
+if Attached script 
+ Scripts:   
+Script name: test_script_1  
+Script path: /lus/cls01029/putko/smartsim/tests/test_configs/torchscript.py  
+Backend: CPU  
+Devices per node: 1  
+
+
+if Attached ml model  
+ Models:   
+Model name: cnn  
+Backend: TF  
+Model path: /lus/cls01029/putko/smartsim/tests/test_configs/run_pt_dbmodel_smartredis.py  
+Device: CPU  
+Devices per node: 1  
+First device: 0  
+Inputs: [‘args_0’]  
+Outputs: [“identity’] = 
+Launch command: 
