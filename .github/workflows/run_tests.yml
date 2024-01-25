@@ -118,6 +118,10 @@ jobs:
       - name: Run Pylint
         run: make check-lint
 
+      # Run isort/black style check
+      - name: Run isort/black
+        run: isort --check-only --profile black ./smartsim ./tests && black --check ./smartsim ./tests
+
       # Run pytest (backends subdirectory)
       - name: Run Pytest
         if: (matrix.subset == 'backends')
