@@ -120,7 +120,7 @@ jobs:
 
       # Run isort/black style check
       - name: Run isort
-        run: isort --check-only --profile black ./smartsim ./tests && black --check ./smartsim ./tests
+        run: isort --check-only --profile black ./smartsim ./tests
 
       # Run isort/black style check
       - name: Run black
