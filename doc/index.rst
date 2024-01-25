@@ -30,13 +30,14 @@
    :caption: SmartSim
 
    experiment
-   model
-   orchestrator
    launchers
+   orchestrator
+   model
+   ensemble
    run_settings
    batch_settings
-   ml_features
    ss_logger
+   ml_features
    api/smartsim_api
 
 .. toctree::
