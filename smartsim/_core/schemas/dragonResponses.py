@@ -24,14 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# type: ignore
+# mypy: disable-error-code="valid-type"
 
 import typing as t
 
 from pydantic import BaseModel, constr
 
 
-__all__ = ["DragonResponse", "DragonRunResponse", "DragonHandshakeResponse", "DragonUpdateStatusResponse", "DragonStopResponse"]
 
 class DragonResponse(BaseModel):
     response_type: constr(min_length=1)
@@ -44,7 +43,7 @@ class DragonRunResponse(DragonResponse):
 class DragonUpdateStatusResponse(DragonResponse):
     response_type: constr(min_length=1) = "status_update"
     # status is a dict: {step_id: (is_alive, returncode)}
-    statuses: t.Dict[constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[int]]] = {}
+    statuses: t.Mapping[constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[int]]] = {}
 
 class DragonStopResponse(DragonResponse):
     response_type: constr(min_length=1) = "stop"

@@ -54,7 +54,7 @@ class DragonBackend:
     """
 
     def __init__(self) -> None:
-        self._request_to_function = {
+        self._request_to_function: t.Mapping[str, t.Callable[[t.Any], DragonResponse]] = {
             "run": self.run,
             "update_status": self.update_status,
             "stop": self.stop,
@@ -63,19 +63,21 @@ class DragonBackend:
         self.procs: dict[str, Process] = {}
 
     def process_request(self, request: DragonRequest) -> DragonResponse:
-        req_type = request["request_type"]
+        req_type = DragonRequest.model_validate(request).request_type
         if not req_type:
             raise ValueError("Malformed request contains empty ``request_type`` field.")
         if req_type not in self._request_to_function:
             raise ValueError(f"Unknown request type {req_type}.")
+
         return self._request_to_function[req_type](request)
 
     def run(self, request: DragonRunRequest) -> DragonRunResponse:
         run_request = DragonRunRequest.model_validate(request)
 
+        run_args = tuple(run_request.exe_args) if run_request.exe_args is not None else None
         proc = Process(
             target=" ".join(run_request.exe),
-            args=tuple(run_request.exe_args),
+            args=run_args,
             cwd=run_request.path,
             env=run_request.env,
             stdout=run_request.output_file,

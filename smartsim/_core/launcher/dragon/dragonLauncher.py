@@ -73,6 +73,9 @@ class DragonLauncher(WLMLauncher):
     def __init__(self) -> None:
         super().__init__()
         self.context = zmq.Context()
+
+        self.context.setsockopt(zmq.SNDTIMEO, value=5000)
+        self.context.setsockopt(zmq.RCVTIMEO, value=5000)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
 
     def _handsake(self, address: str) -> None:
@@ -86,12 +89,18 @@ class DragonLauncher(WLMLauncher):
             if response is not None:
                 response = t.cast(str, response)
                 DragonHandshakeResponse.model_validate(t.cast(str, json.loads(response)))
+                logger.debug(f"Successful handshake with Dragon server at address {address}")
+
             return
         except (zmq.ZMQError, zmq.Again) as e:
             logger.debug(e)
             self._dragon_head_socket.close()
             self._dragon_head_socket = None
             logger.debug(f"Unsuccessful handshake with Dragon server at address {address}")
+
+            self.context.setsockopt(zmq.SNDTIMEO, value=-1)
+            self.context.setsockopt(zmq.RCVTIMEO, value=-1)
+
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
@@ -258,12 +267,12 @@ class DragonLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def _send_request_as_json(self, request: DragonRequest, **kwargs) -> None:
+    def _send_request_as_json(self, request: DragonRequest, flags: int=0) -> None:
         if self._dragon_head_socket is None:
             raise LauncherError("Launcher is not connected to Dragon")
         req_json = request.model_dump_json()
         logger.debug(f"Sending request: {req_json}")
-        self._dragon_head_socket.send_json(req_json, **kwargs)
+        self._dragon_head_socket.send_json(req_json, flags)
 
     def __str__(self) -> str:
         return "Dragon"

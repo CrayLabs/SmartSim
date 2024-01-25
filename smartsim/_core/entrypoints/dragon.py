@@ -85,14 +85,13 @@ def run(dragon_head_address: str) -> None:
 
     while True:
         print(f"Listening to {dragon_head_address}")
-        try:
-            req = t.cast(str, dragon_head_socket.recv_json(zmq.NOBLOCK))
-            json_req = json.loads(req)
-            resp = dragon_backend.process_request(json_req)
-            dragon_head_socket.send_json(resp.model_dump_json())
-        except (zmq.ZMQError, zmq.Again):
-            time.sleep(5)
-            print(f"Listening to {dragon_head_address}")
+        req = t.cast(str, dragon_head_socket.recv_json())
+        print(req)
+        json_req = json.loads(req)
+        resp = dragon_backend.process_request(json_req)
+        print(resp.model_dump_json(), flush=True)
+        dragon_head_socket.send_json(resp.model_dump_json())
+
 
 
 

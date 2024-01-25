@@ -24,13 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# type: ignore
-
+# mypy: disable-error-code="valid-type"
 import typing as t
 
 from pydantic import BaseModel, constr, PositiveInt
-
-__all__ = ["DragonRequest", "DragonRunRequest", "DragonHandshakeRequest", "DragonUpdateStatusRequest", "DragonStopRequest"]
 
 class DragonRequest(BaseModel):
     request_type: constr(min_length=1)
