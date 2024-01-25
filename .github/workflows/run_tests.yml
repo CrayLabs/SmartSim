@@ -119,8 +119,12 @@ jobs:
         run: make check-lint
 
       # Run isort/black style check
-      - name: Run isort/black
+      - name: Run isort
         run: isort --check-only --profile black ./smartsim ./tests && black --check ./smartsim ./tests
+
+      # Run isort/black style check
+      - name: Run black
+        run: black --check ./smartsim ./tests
 
       # Run pytest (backends subdirectory)
       - name: Run Pytest
