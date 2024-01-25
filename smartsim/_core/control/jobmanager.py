@@ -34,7 +34,7 @@ from types import FrameType
 
 from ...database import Orchestrator
 from ...entity import DBNode, EntitySequence, SmartSimEntity
-from ...log import get_logger
+from ...log import ContextThread, get_logger
 from ...status import STATUS_NEVER_STARTED, TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
@@ -80,7 +80,7 @@ class JobManager:
 
     def start(self) -> None:
         """Start a thread for the job manager"""
-        self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
+        self.monitor = ContextThread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
 
     def run(self) -> None:

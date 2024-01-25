@@ -828,3 +828,33 @@ def test_cli_validation_test_execute(
 
     assert expected_stdout in caplog.text
     assert actual_retval == expected_retval
+
+
+def test_validate_correctly_sets_and_restores_env(monkeypatch):
+    monkeypatch.setenv("FOO", "BAR")
+    monkeypatch.setenv("SPAM", "EGGS")
+    monkeypatch.delenv("TICK", raising=False)
+    monkeypatch.delenv("DNE", raising=False)
+
+    assert os.environ["FOO"] == "BAR"
+    assert os.environ["SPAM"] == "EGGS"
+    assert "TICK" not in os.environ
+    assert "DNE" not in os.environ
+
+    with smartsim._core._cli.validate._env_vars_set_to(
+        {
+            "FOO": "BAZ",  # Redefine
+            "SPAM": None,  # Delete
+            "TICK": "TOCK",  # Add
+            "DNE": None,  # Delete already missing
+        }
+    ):
+        assert os.environ["FOO"] == "BAZ"
+        assert "SPAM" not in os.environ
+        assert os.environ["TICK"] == "TOCK"
+        assert "DNE" not in os.environ
+
+    assert os.environ["FOO"] == "BAR"
+    assert os.environ["SPAM"] == "EGGS"
+    assert "TICK" not in os.environ
+    assert "DNE" not in os.environ

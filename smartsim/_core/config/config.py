@@ -231,6 +231,10 @@ class Config:
     def telemetry_cooldown(self) -> int:
         return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
 
+    @property
+    def telemetry_subdir(self) -> str:
+        return ".smartsim/telemetry"
+
 
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:

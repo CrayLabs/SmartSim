@@ -253,7 +253,7 @@ def check_py_torch_version(versions: Versioner, device_in: _TDeviceStr = "cpu") 
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
-        wheel_device = device if device == "cpu" else device_suffix.replace("+","")
+        wheel_device = device if device == "cpu" else device_suffix.replace("+", "")
         pip(
             "install",
             "--extra-index-url",

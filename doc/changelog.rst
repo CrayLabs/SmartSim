@@ -19,23 +19,35 @@ To be released at some future point in time
 
 Description
 
+- Updated GitHub actions to latest versions in CI/CD
+- Dropped Cobalt support
 - Override the sphinx-tabs extension background color
 - Updated SmartSim's machine learning backends
 - Added ONNX support for Python 3.10
+- Added support for Python 3.11
 
 Detailed Notes
 
+- Some actions in the current GitHub CI/CD workflows were outdated. They were
+  replaced with their latest versions. (SmartSim-PR446_)
+- As the Cobalt workload manager is not used on any system we are aware of,
+  its support in SmartSim was terminated and classes such as `CobaltLauncher` have
+  been removed. (SmartSim-PR448_)
 - The sphinx-tabs documentation extension uses a white background for the tabs component.
   A custom CSS for those components to inherit the overall theme color has
   been added. (SmartSim-PR453_)
 - Updated SmartSim's machine learning backends to PyTorch 2.0.1, Tensorflow
   2.13.1, ONNX 1.14.1, and ONNX Runtime 1.16.1. As a result of this change,
-  there is now an available ONNX wheel for use with Python 3.10.
-  (SmartSim-PR451_)
+  there is now an available ONNX wheel for use with Python 3.10, and wheels for
+  all of SmartSim's machine learning backends with Python 3.11.
+  (SmartSim-PR451_) (SmartSim-PR461_)
 
 
+.. _SmartSim-PR446: https://github.com/CrayLabs/SmartSim/pull/446
+.. _SmartSim-PR448: https://github.com/CrayLabs/SmartSim/pull/448
 .. _SmartSim-PR451: https://github.com/CrayLabs/SmartSim/pull/451
 .. _SmartSim-PR453: https://github.com/CrayLabs/SmartSim/pull/453
+.. _SmartSim-PR461: https://github.com/CrayLabs/SmartSim/pull/461
 
 
 0.6.0
@@ -454,7 +466,7 @@ Expand Machine Learning Library Support:
 
 Expand Launcher Setting Options:
 
- - Add ability to use base ``RunSettings`` on a Slurm, PBS, or Cobalt launchers (SmartSim-PR90_)
+ - Add ability to use base ``RunSettings`` on a Slurm, or PBS launchers (SmartSim-PR90_)
  - Add ability to use base ``RunSettings`` on LFS launcher (SmartSim-PR108_)
 
 Deprecations and Breaking Changes

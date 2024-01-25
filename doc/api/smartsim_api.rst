@@ -45,8 +45,8 @@ Settings are provided to ``Model`` and ``Ensemble`` objects
 to provide parameters for how a job should be executed. Some
 are specifically meant for certain launchers like ``SbatchSettings``
 is solely meant for system using Slurm as a workload manager.
-``MpirunSettings`` for OpenMPI based jobs is supported by Slurm,
-PBSPro, and Cobalt.
+``MpirunSettings`` for OpenMPI based jobs is supported by Slurm
+and PBSPro.
 
 
 Types of Settings:
@@ -62,7 +62,6 @@ Types of Settings:
     JsrunSettings
     SbatchSettings
     QsubBatchSettings
-    CobaltBatchSettings
     BsubBatchSettings
 
 Settings objects can accept a container object that defines a container
@@ -139,7 +138,7 @@ AprunSettings
 
 ``AprunSettings`` can be used on any system that supports the
 Cray ALPS layer. SmartSim supports using ``AprunSettings``
-on PBSPro and Cobalt WLM systems.
+on PBSPro WLM systems.
 
 ``AprunSettings`` can be used in interactive session (on allocation)
 and within batch launches (e.g., ``QsubBatchSettings``)
@@ -206,7 +205,7 @@ MpirunSettings
 
 
 ``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
-supported on Slurm, PBSpro, and Cobalt.
+supported on Slurm and PBSpro.
 
 
 .. autosummary::
@@ -233,7 +232,7 @@ MpiexecSettings
 
 
 ``MpiexecSettings`` are for launching with OpenMPI's ``mpiexec``. ``MpirunSettings`` are
-supported on Slurm, PBSpro, and Cobalt.
+supported on Slurm and PBSpro.
 
 
 .. autosummary::
@@ -260,7 +259,7 @@ OrterunSettings
 
 
 ``OrterunSettings`` are for launching with OpenMPI's ``orterun``. ``OrterunSettings`` are
-supported on Slurm, PBSpro, and Cobalt.
+supported on Slurm and PBSpro.
 
 
 .. autosummary::
@@ -333,32 +332,6 @@ be launched as a batch on PBSPro systems.
 
 
 .. autoclass:: QsubBatchSettings
-    :inherited-members:
-    :undoc-members:
-    :members:
-
-
-.. _cqsub_api:
-
-
-CobaltBatchSettings
--------------------
-
-``CobaltBatchSettings`` are used to configure jobs that should
-be launched as a batch on Cobalt Systems. They closely mimic
-that of the ``QsubBatchSettings`` for PBSPro.
-
-
-.. autosummary::
-
-    CobaltBatchSettings.set_account
-    CobaltBatchSettings.set_batch_command
-    CobaltBatchSettings.set_nodes
-    CobaltBatchSettings.set_queue
-    CobaltBatchSettings.set_walltime
-    CobaltBatchSettings.format_batch_args
-
-.. autoclass:: CobaltBatchSettings
     :inherited-members:
     :undoc-members:
     :members:

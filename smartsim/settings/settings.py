@@ -31,7 +31,6 @@ from ..error import SmartSimError
 from ..settings import (
     AprunSettings,
     BsubBatchSettings,
-    CobaltBatchSettings,
     Container,
     JsrunSettings,
     MpiexecSettings,
@@ -81,7 +80,6 @@ def create_batch_settings(
     """
     # all supported batch class implementations
     by_launcher: t.Dict[str, t.Callable[..., base.BatchSettings]] = {
-        "cobalt": CobaltBatchSettings,
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
         "lsf": BsubBatchSettings,
@@ -164,7 +162,6 @@ def create_run_settings(
         "slurm": ["srun", "mpirun", "mpiexec"],
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "pals": ["mpiexec"],
-        "cobalt": ["aprun", "mpirun", "mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
         "local": [""],
     }
