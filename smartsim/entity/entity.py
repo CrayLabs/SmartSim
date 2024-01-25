@@ -31,6 +31,21 @@ if t.TYPE_CHECKING:
     import smartsim.settings.base
 
 
+class TelemetryProducer:
+    def __init__(self) -> None:
+        self._is_on = False
+
+    @property
+    def is_telemetry_on(self) -> bool:
+        return self._is_on
+
+    def telemetry_on(self) -> None:
+        self._is_on = True
+
+    def telemetry_off(self) -> None:
+        self._is_on = False
+
+
 class SmartSimEntity:
     def __init__(
         self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"

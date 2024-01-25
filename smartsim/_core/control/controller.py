@@ -225,7 +225,7 @@ class Controller:
 
     def stop_db(self, db: Orchestrator) -> None:
         """Stop an orchestrator
-        :param db: orchestrator to be stopped
+        :param db: orchestrator to be stopped`
         :type db: Orchestrator
         """
         if db.batch:

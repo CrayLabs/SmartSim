@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path as osp
 import typing as t
 from os import getcwd
@@ -908,34 +907,10 @@ class Experiment:
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
 
-    def enable_telemetry(self) -> None:
-        """Experiments will start producing telemetry for all entities run
-        through ``Experiment.start``
-
-        .. warning::
-
-            This method is currently implemented so that ALL ``Experiment``
-            instances will begin producing telemetry data. In the future it
-            is planned to have this method work on a "per instance" basis!
-        """
-        self._set_telemetry(True)
-
-    def disable_telemetry(self) -> None:
-        """Experiments will stop producing telemetry for all entities run
-        through ``Experiment.start``
-
-        .. warning::
-
-            This method is currently implemented so that ALL ``Experiment``
-            instances will stop producing telemetry data. In the future it
-            is planned to have this method work on a "per instance" basis!
-        """
-        self._set_telemetry(False)
-
-    @staticmethod
-    def _set_telemetry(switch: bool, /) -> None:
-        tm_key = "SMARTSIM_FLAG_TELEMETRY"
-        if switch:
-            os.environ[tm_key] = "1"
-        else:
-            os.environ[tm_key] = "0"
+    # @staticmethod
+    # def _set_telemetry(switch: bool, /) -> None:
+    #     tm_key = "SMARTSIM_FLAG_TELEMETRY"
+    #     if switch:
+    #         os.environ[tm_key] = "1"
+    #     else:
+    #         os.environ[tm_key] = "0"

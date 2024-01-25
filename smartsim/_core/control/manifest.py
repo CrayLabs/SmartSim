@@ -192,6 +192,7 @@ class _LaunchedManifestMetadata(t.NamedTuple):
     exp_name: str
     exp_path: str
     launcher_name: str
+    # telemetry_on: bool
 
     @property
     def exp_telemetry_subdirectory(self) -> pathlib.Path:

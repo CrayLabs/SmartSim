@@ -29,6 +29,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
+from smartsim._core.utils import serialize
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
@@ -168,17 +169,22 @@ def test_launcher_detection(wlmutils, monkeypatch):
     assert exp._launcher == wlmutils.get_test_launcher()
 
 
-def test_enable_disable_telemtery(monkeypatch):
-    # TODO: Currently these are implemented by setting an environment variable
-    #       so that ALL experiments instanced in a driver script will begin
-    #       producing telemetry data. In the future it is planned to have this
-    #       work on a "per-instance" basis
+def test_enable_disable_telemetry(monkeypatch, test_dir, config):
+    # Global telemetry defaults to `on` and can be modified by
+    # setting the value of env var SMARTSIM_FLAG_TELEMETRY to 0/1
     monkeypatch.setattr(os, "environ", {})
-    exp = Experiment("my-exp")
-    exp.enable_telemetry()
-    assert CONFIG.telemetry_enabled
-    exp.disable_telemetry()
-    assert not CONFIG.telemetry_enabled
+    exp = Experiment("my-exp", exp_path=test_dir)
+    exp.telemetry_on()
+    assert exp.is_telemetry_on
+
+    exp.telemetry_off()
+    assert not exp.is_telemetry_on
+
+    exp.start()
+    import pathlib
+
+    mani_path = pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
+    assert mani_path.exists()
 
 
 def test_error_on_cobalt():

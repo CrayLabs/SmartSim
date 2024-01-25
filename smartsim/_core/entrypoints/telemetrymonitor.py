@@ -69,6 +69,8 @@ from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
+# pylint: disable=too-many-lines
+
 """Telemetry Monitor entrypoint"""
 
 # kill is not catchable
@@ -83,9 +85,17 @@ logger = get_logger(__name__)
 class Sink(abc.ABC):
     """Base class for telemetry output sinks"""
 
+    def __init__(self) -> None:
+        self._header = False
+
     @abc.abstractmethod
     async def save(self, **kwargs: t.Any) -> None:
         ...
+
+    @property
+    @abc.abstractmethod
+    def header(self) -> bool:
+        return self._header
 
 
 class FileSink(Sink):
@@ -121,21 +131,32 @@ class FileSink(Sink):
         :type entity: JobEntity
         :param filename: The relative path and filename of the file to be written
         :type filename: str"""
+        super().__init__()
         filename = FileSink._check_init(entity, filename)
         self._path = pathlib.Path(entity.status_dir) / filename
+        self._header = False
 
     @property
     def path(self) -> pathlib.Path:
         """Returns the path to the underlying file the FileSink will write to"""
         return self._path
 
+    @property
+    def header(self) -> bool:
+        return self._header
+
     async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments to a file as specified by the associated JobEntity"""
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
+        if kwargs.get("header", False):
+            self._header = True
+            kwargs.pop("header")
+
         async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
             values = ",".join(list(map(str, kwargs.values()))) + "\n"
             await sink_fp.write(values)
+
 
 
 class Collector(abc.ABC):
@@ -174,6 +195,11 @@ class Collector(abc.ABC):
     async def shutdown(self) -> None:
         """Execute any cleanup of resources for the collector"""
 
+    @staticmethod
+    @abc.abstractmethod
+    def columns() -> t.Dict[str, str]:
+        """Return a list of column names to output"""
+
 
 @dataclasses.dataclass
 class _Address:
@@ -205,13 +231,16 @@ class DbCollector(Collector):
                 self._client = redis.Redis(
                     host=self._address.host, port=self._address.port
                 )
+        except ConnectionRefusedError as cre:
+            logger.exception(cre)
         except Exception as e:
             logger.exception(e)
-            msg = f"DbCollector failed to communicate with {self._address}"
-            raise SmartSimError(msg) from e
+            # msg = f"DbCollector failed to communicate with {self._address}"
+            # raise SmartSimError(msg) from e
 
-        if not self._client:  #  or not self._client.is_connected:
-            raise SmartSimError(f"DbCollector failed to connect to {self._address}")
+        if not self._client:
+            # raise SmartSimError(f"DbCollector failed to connect to {self._address}")
+            logger.warning("DbCollector unable to connect to database")
 
     async def prepare(self) -> None:
         """Initialization logic for a DB collector"""
@@ -222,9 +251,12 @@ class DbCollector(Collector):
 
     async def shutdown(self) -> None:
         """Release any resources held by the collector"""
+        logger.debug(f"Shutting down DbCollector for {self._entity.name}")
+
         try:
             if self._client:
                 await self._client.close()
+                self._client = None
         except Exception as ex:
             logger.error("An error occurred during DbCollector shutdown", exc_info=ex)
 
@@ -239,14 +271,19 @@ class DbMemoryCollector(DbCollector):
             logger.warning("DbMemoryCollector cannot collect")
             return
 
-        db_info = await self._client.info()
-        self._value = db_info
+        self._value = {}
 
-        await self._sink.save(ts=self.timestamp(), **db_info)
+        try:
+            if not self._sink.header:
+                await self._sink.save(**DbMemoryCollector.columns(), header=True)
 
-    @property
-    def keys(self) -> t.Iterable[str]:
-        return ["used_memory", "used_memory_peak", "total_system_memory"]
+            db_info = await self._client.info()
+            for key in [k for k in self.columns().values() if k != "timestamp"]:
+                self._value[key] = db_info[key]
+
+            await self._sink.save(timestamp=self.timestamp(), **self._value)
+        except Exception as ex:
+            logger.warning("collect failed for DbMemoryCollector", exc_info=ex)
 
     @property
     def value(self) -> t.Dict[str, int]:
@@ -254,6 +291,15 @@ class DbMemoryCollector(DbCollector):
         filtered = {k: v for k, v in self._value.items() if k in watch_list}
         self._value = None
         return filtered
+
+    @staticmethod
+    def columns() -> t.Dict[str, str]:
+        return {
+            "0": "timestamp",
+            "1": "used_memory",
+            "2": "used_memory_peak",
+            "3": "total_system_memory",
+        }
 
 
 class DbConnectionCollector(DbCollector):
@@ -266,20 +312,69 @@ class DbConnectionCollector(DbCollector):
             logger.warning("DbConnectionCollector is not connected and cannot collect")
             return
 
-        client_list = await self._client.client_list()
-
         now_ts = self.timestamp()  # ensure all results have the same timestamp
-        addresses = [{"addr": item["addr"]} for item in client_list]
-        self._value = addresses
 
-        for v in addresses:
-            await self._sink.save(ts=now_ts, **v)
+        try:
+            if not self._sink.header:
+                await self._sink.save(**DbConnectionCollector.columns(), header=True)
+
+            client_list = await self._client.client_list()
+            addresses = [{"address": item["addr"]} for item in client_list]
+            self._value = addresses
+
+            for v in addresses:
+                await self._sink.save(timestamp=now_ts, **v)
+        except Exception as ex:
+            logger.warning("collect failed for DbMemoryCollector", exc_info=ex)
 
     @property
     def value(self) -> t.List[str]:
         filtered = [x["addr"] for x in self._value]
         self._value = None
         return filtered
+
+    @staticmethod
+    def columns() -> t.Dict[str, str]:
+        return {"0": "timestamp", "1": "address"}
+
+
+class DbConnectionCountCollector(DbCollector):
+    """A collector that collects client connection information from
+    an orchestrator instance and records aggregated counts"""
+
+    async def collect(self) -> None:
+        await self.prepare()
+        if not self._client:
+            logger.warning(
+                "DbConnectionCountCollector is not connected and cannot collect"
+            )
+            return
+
+        try:
+            if not self._sink.header:
+                await self._sink.save(
+                    **DbConnectionCountCollector.columns(), header=True
+                )
+
+            client_list = await self._client.client_list()
+
+            now_ts = self.timestamp()  # ensure all results have the same timestamp
+            addresses = {item["addr"] for item in client_list}
+            self._value = str(len(addresses))
+
+            await self._sink.save(timestamp=now_ts, count=self._value)
+        except Exception as ex:
+            logger.warning("collect failed for DbConnectionCountCollector", exc_info=ex)
+
+    @property
+    def value(self) -> str:
+        filtered = str(self._value)
+        self._value = None
+        return filtered
+
+    @staticmethod
+    def columns() -> t.Dict[str, str]:
+        return {"0": "timestamp", "1": "num_clients"}
 
 
 class CollectorManager:
@@ -292,6 +387,7 @@ class CollectorManager:
             lambda: []
         )
         self._timeout_ms = timeout_ms
+        self._tasks: t.List[asyncio.Task[None]] = []
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
@@ -311,6 +407,14 @@ class CollectorManager:
 
             self._collectors[col.owner].append(col)
 
+    def remove(self, entity: JobEntity) -> None:
+        registered = self._collectors.pop(entity.name, None)
+        if registered:
+            # shutdown this set of collectors
+            # todo: move shutdown logic into static so i can pass a collection instead
+            # of always shutting down everything...
+            logger.debug(f"removing collectors registered for {entity.name}")
+
     async def prepare(self) -> None:
         """Ensure all managed collectors have prepared for collection"""
         for collector in self.all_collectors:
@@ -321,20 +425,41 @@ class CollectorManager:
         logger.debug("Executing all telemetry collectors")
 
         if collectors := self.all_collectors:
-            tasks = [asyncio.create_task(item.collect()) for item in collectors]
-            results = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
+            if self._tasks:  # tasks still in progress
+                return
+
+            self._tasks = [asyncio.create_task(item.collect()) for item in collectors]
+            results = await asyncio.wait(self._tasks, timeout=self._timeout_ms / 1000.0)
             logger.debug(f"collector.collect() results: {results}")
+            self._tasks.clear()
 
     async def shutdown(self) -> None:
         """Release resources"""
-        asyncio.gather(collector.shutdown() for collector in self.all_collectors)
+        logger.debug("CollectorManager cancelling tasks...")
+        for task in self._tasks:
+            if not task.done():
+                task.cancel()
+
+        logger.debug("CollectorManager shutting down collectors...")
+        shutdown_tasks = [
+            asyncio.create_task(item.shutdown()) for item in self.all_collectors
+        ]
+        await asyncio.wait(shutdown_tasks)
+        logger.debug("Collector shutdown complete...")
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
-        if entity.is_db:
+        if entity.is_db:  # and entity.config.get("collectors", False):
+            if not entity.config.get("collectors", False):
+                logger.debug(f"collectors disabled for db {entity.name}")
+                return []
+
             return [
-                DbMemoryCollector(entity, FileSink(entity, "mem.csv")),
-                DbConnectionCollector(entity, FileSink(entity, "conn.csv")),
+                DbMemoryCollector(entity, FileSink(entity, "memory.csv")),
+                DbConnectionCollector(entity, FileSink(entity, "client.csv")),
+                DbConnectionCountCollector(
+                    entity, FileSink(entity, "client_count.csv")
+                ),
             ]
         return []
 
@@ -395,6 +520,7 @@ def _hydrate_persistable(
 
     if entity.is_db:
         # db shards are hydrated individually
+        entity.config["collectors"] = str(metadata.get("collectors", False))
         entity.config["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
         entity.config["port"] = persistable_entity.get("port", "NO-DB-PORT")
 
@@ -754,6 +880,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             return_code=faux_return_code(step_info),
         )
 
+        # NOTE: this doesn't work because databases aren't in the tracked jobs?
+        # todo: make sure we have a tracking mechanism for stop events for unmanaged
+        # items so we can unregister...
+        self._collector.remove(entity)
+
     async def on_timestep(self, timestamp: int) -> None:
         """Called at polling frequency to request status updates on
         monitored entities
@@ -778,7 +909,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._to_completed(timestamp, completed_entity, step_info)
 
     async def shutdown(self) -> None:
+        logger.debug("ManifestEventHandler shutting down...")
         await self._collector.shutdown()
+        logger.debug("ManifestEventHandler shutdown complete...")
 
 
 def can_shutdown(action_handler: ManifestEventHandler) -> bool:
@@ -816,38 +949,45 @@ async def event_loop(
     """
     elapsed: int = 0
     last_ts: int = get_ts()
-    action_duration_ms: int = 0
+    shutdown_in_progress = False
 
-    while observer.is_alive():
-        timestamp = get_ts()
-        logger.debug(f"Telemetry timestep: {timestamp}")
-        await action_handler.on_timestep(timestamp)
+    while observer.is_alive() and not shutdown_in_progress:
+        action_duration_ms = 0
+        start_ts = get_ts()
+        logger.debug(f"Telemetry timestep: {start_ts}")
+        await action_handler.on_timestep(start_ts)
 
-        elapsed += timestamp - last_ts
-        last_ts = timestamp
+        elapsed += start_ts - last_ts
+        last_ts = start_ts
 
         if can_shutdown(action_handler):
             if elapsed >= cooldown_duration:
-                logger.info("beginning telemetry manager shutdown")
+                shutdown_in_progress = True
+                logger.debug("beginning telemetry manager shutdown")
+                await action_handler.shutdown()
+                logger.debug("beginning file monitor shutdown")
                 observer.stop()  # type: ignore
+                logger.debug("Event loop shutdown complete")
+                break
         else:
             # reset cooldown any time there are still jobs running
             elapsed = 0
 
         # track time elapsed to execute metric collection
-        action_duration_ms += timestamp - get_ts()
-        wait_time_ms = (1000 * frequency) - action_duration_ms
+        action_duration_ms = get_ts() - start_ts
+        wait_time_ms = max(frequency - action_duration_ms, 0)
         logger.debug(
-            "Collectors consumed {0}ms of {1}ms loop frequency. Sleeping {2}ms",
-            action_duration_ms,
-            action_handler.timeout_ms,
-            wait_time_ms if wait_time_ms > 0 else 0,
+            "Collectors consumed %i ms of %i ms loop frequency. Sleeping %i ms",
+                action_duration_ms,
+                action_handler.timeout_ms,
+                wait_time_ms,
         )
 
-        # delay loop if collection time didn't exceed loop frequency
+        # delay next loop if collection time didn't exceed loop frequency
         if wait_time_ms > 0:
             await sleep(wait_time_ms / 1000)  # convert to seconds for sleep
-            action_duration_ms = 0
+
+    logger.debug("Exiting telemetry monitor event loop")
 
 
 async def main(
@@ -883,8 +1023,8 @@ async def main(
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
-    telemetry_timeout = int(frequency * 950)  # limit collector execution time
-    action_handler = ManifestEventHandler(monitor_pattern, timeout_ms=telemetry_timeout)
+    frequency_ms = int(frequency * 1000)  # limit collector execution time
+    action_handler = ManifestEventHandler(monitor_pattern, timeout_ms=frequency_ms)
 
     if observer is None:
         observer = Observer()
@@ -898,7 +1038,7 @@ async def main(
         observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
         observer.start()  # type: ignore
 
-        await event_loop(observer, action_handler, frequency, cooldown_duration)
+        await event_loop(observer, action_handler, frequency_ms, cooldown_duration)
         return os.EX_OK
     except Exception as ex:
         logger.error(ex)
@@ -907,6 +1047,7 @@ async def main(
             observer.stop()  # type: ignore
             observer.join()
         await action_handler.shutdown()
+        logger.debug("final telemetry monitor shutdown complete")
 
     return os.EX_SOFTWARE
 
@@ -928,9 +1069,8 @@ def get_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     arg_parser.add_argument(
         "-frequency",
-        type=int,
+        type=float,
         help="Frequency of telemetry updates (in seconds))",
-        min=1.0,
         required=True,
     )
     arg_parser.add_argument(

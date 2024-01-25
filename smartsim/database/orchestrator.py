@@ -37,7 +37,7 @@ from .._core.config import CONFIG
 from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
-from ..entity import DBNode, EntityList
+from ..entity import DBNode, EntityList, TelemetryProducer
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
@@ -138,7 +138,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
         raise SmartSimError(msg)
 
 
-class Orchestrator(EntityList[DBNode]):
+class Orchestrator(EntityList[DBNode], TelemetryProducer):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
     entities by using one of the Python, C, C++ or Fortran clients
@@ -222,6 +222,9 @@ class Orchestrator(EntityList[DBNode]):
             intra_op_threads=intra_op_threads,
             **kwargs,
         )
+
+        # # init our telemetry producer parent
+        # super(TelemetryProducer, self).__init__()
 
         # detect if we can find at least the redis binaries. We
         # don't want to force the user to launch with RedisAI so
