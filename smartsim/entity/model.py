@@ -333,6 +333,7 @@ class Model(SmartSimEntity):
             "debug": debug,
             "db_identifier": db_identifier,
         }
+        #test
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
     def _set_colocated_db_settings(
