@@ -34,11 +34,10 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     CollectorManager,
     DbConnectionCollector,
     DbMemoryCollector,
+    FileSink,
     JobEntity,
     redis,
-    FileSink,
 )
-
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.group_a

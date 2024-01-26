@@ -29,31 +29,32 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import pytest
-import psutil
 import shutil
-import smartsim
-from smartsim import Experiment
-from smartsim.entity import Model
-from smartsim.database import Orchestrator
-from smartsim.settings import (
-    SrunSettings,
-    AprunSettings,
-    JsrunSettings,
-    MpirunSettings,
-    MpiexecSettings,
-    PalsMpiexecSettings,
-    RunSettings,
-)
-from smartsim._core.config import CONFIG
-from smartsim.error import SSConfigError
-from subprocess import run
 import sys
 import tempfile
 import typing as t
 import uuid
 import warnings
+from subprocess import run
 
+import psutil
+import pytest
+
+import smartsim
+from smartsim import Experiment
+from smartsim._core.config import CONFIG
+from smartsim.database import Orchestrator
+from smartsim.entity import Model
+from smartsim.error import SSConfigError
+from smartsim.settings import (
+    AprunSettings,
+    JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    PalsMpiexecSettings,
+    RunSettings,
+    SrunSettings,
+)
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
 

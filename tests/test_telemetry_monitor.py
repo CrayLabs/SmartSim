@@ -42,6 +42,7 @@ from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.entrypoints.telemetrymonitor import (
     ManifestEventHandler,
     can_shutdown,
+    check_frequency,
     event_loop,
     faux_return_code,
     get_parser,
@@ -49,7 +50,6 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     hydrate_persistable,
     load_manifest,
     track_event,
-    check_frequency,
 )
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher

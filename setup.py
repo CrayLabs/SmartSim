@@ -64,6 +64,7 @@
 #
 # This future is needed to print Python2 EOL message
 from __future__ import print_function
+
 import sys
 
 if sys.version_info < (3,):
@@ -71,14 +72,14 @@ if sys.version_info < (3,):
     sys.exit(-1)
 
 
-import os
 import importlib.util
+import os
 from pathlib import Path
 
 from setuptools import setup
-from setuptools.dist import Distribution
-from setuptools.command.install import install
 from setuptools.command.build_py import build_py
+from setuptools.command.install import install
+from setuptools.dist import Distribution
 
 # Some necessary evils we have to do to be able to use
 # the _install tools in smartsim/smartsim/_core/_install

@@ -28,10 +28,7 @@ import uuid
 
 import pytest
 
-from smartsim._core.entrypoints.telemetrymonitor import (
-    JobEntity,
-    FileSink,
-)
+from smartsim._core.entrypoints.telemetrymonitor import FileSink, JobEntity
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.group_a
