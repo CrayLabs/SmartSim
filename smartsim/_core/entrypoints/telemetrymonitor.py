@@ -158,7 +158,6 @@ class FileSink(Sink):
             await sink_fp.write(values)
 
 
-
 class Collector(abc.ABC):
     """Base class for metrics collectors"""
 
@@ -952,7 +951,7 @@ async def event_loop(
     shutdown_in_progress = False
 
     while observer.is_alive() and not shutdown_in_progress:
-        action_duration_ms = 0
+        duration_ms = 0
         start_ts = get_ts()
         logger.debug(f"Telemetry timestep: {start_ts}")
         await action_handler.on_timestep(start_ts)
@@ -974,18 +973,16 @@ async def event_loop(
             elapsed = 0
 
         # track time elapsed to execute metric collection
-        action_duration_ms = get_ts() - start_ts
-        wait_time_ms = max(frequency - action_duration_ms, 0)
+        duration_ms = get_ts() - start_ts
+        wait_ms = max(frequency - duration_ms, 0)
         logger.debug(
-            "Collectors consumed %i ms of %i ms loop frequency. Sleeping %i ms",
-                action_duration_ms,
-                action_handler.timeout_ms,
-                wait_time_ms,
+            f"Collectors consumed {duration_ms} ms of {action_handler.timeout_ms}"
+            f" ms loop frequency. Sleeping {wait_ms} ms",
         )
 
         # delay next loop if collection time didn't exceed loop frequency
-        if wait_time_ms > 0:
-            await sleep(wait_time_ms / 1000)  # convert to seconds for sleep
+        if wait_ms > 0:
+            await sleep(wait_ms / 1000)  # convert to seconds for sleep
 
     logger.debug("Exiting telemetry monitor event loop")
 
