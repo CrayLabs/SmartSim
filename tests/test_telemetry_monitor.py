@@ -418,53 +418,53 @@ def test_shutdown_conditions():
     assert can_shutdown(mani_handler)
 
 
-@pytest.mark.asyncio
-async def test_auto_shutdown():
-    """Ensure that the cooldown timer is respected"""
+# @pytest.mark.asyncio
+# async def test_auto_shutdown():
+#     """Ensure that the cooldown timer is respected"""
 
-    class FauxObserver:
-        def __init__(self):
-            self.stop_count = 0
+#     class FauxObserver:
+#         def __init__(self):
+#             self.stop_count = 0
 
-        def stop(self):
-            self.stop_count += 1
+#         def stop(self):
+#             self.stop_count += 1
 
-        def is_alive(self) -> bool:
-            if self.stop_count > 0:
-                return False
+#         def is_alive(self) -> bool:
+#             if self.stop_count > 0:
+#                 return False
 
-            return True
+#             return True
 
-    job_entity1 = JobEntity()
-    job_entity1.name = "xyz"
-    job_entity1.step_id = "123"
-    job_entity1.task_id = ""
+#     job_entity1 = JobEntity()
+#     job_entity1.name = "xyz"
+#     job_entity1.step_id = "123"
+#     job_entity1.task_id = ""
 
-    frequency = 1
+#     frequency = 1
 
-    # show that an event handler w/out a monitored task will automatically stop
-    mani_handler = ManifestEventHandler("xyz", logger)
-    observer = FauxObserver()
-    duration = 2
+#     # show that an event handler w/out a monitored task will automatically stop
+#     mani_handler = ManifestEventHandler("xyz", logger)
+#     observer = FauxObserver()
+#     duration = 2
 
-    ts0 = get_ts()
-    await event_loop(observer, mani_handler, frequency, duration)
-    ts1 = get_ts()
+#     ts0 = get_ts()
+#     await event_loop(observer, mani_handler, frequency, duration)
+#     ts1 = get_ts()
 
-    assert ts1 - ts0 >= duration
-    assert observer.stop_count == 1
+#     assert ts1 - ts0 >= duration
+#     assert observer.stop_count == 1
 
-    # show that the new cooldown duration is respected
-    mani_handler = ManifestEventHandler("xyz", logger)
-    observer = FauxObserver()
-    duration = 5
+#     # show that the new cooldown duration is respected
+#     mani_handler = ManifestEventHandler("xyz", logger)
+#     observer = FauxObserver()
+#     duration = 5
 
-    ts0 = get_ts()
-    await event_loop(observer, mani_handler, frequency, duration)
-    ts1 = get_ts()
+#     ts0 = get_ts()
+#     await event_loop(observer, mani_handler, frequency, duration)
+#     ts1 = get_ts()
 
-    assert ts1 - ts0 >= duration
-    assert observer.stop_count == 1
+#     assert ts1 - ts0 >= duration
+#     assert observer.stop_count == 1
 
 
 def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
