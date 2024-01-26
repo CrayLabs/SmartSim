@@ -906,11 +906,3 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
-
-    # @staticmethod
-    # def _set_telemetry(switch: bool, /) -> None:
-    #     tm_key = "SMARTSIM_FLAG_TELEMETRY"
-    #     if switch:
-    #         os.environ[tm_key] = "1"
-    #     else:
-    #         os.environ[tm_key] = "0"

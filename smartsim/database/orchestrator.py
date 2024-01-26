@@ -223,9 +223,6 @@ class Orchestrator(EntityList[DBNode], TelemetryProducer):
             **kwargs,
         )
 
-        # # init our telemetry producer parent
-        # super(TelemetryProducer, self).__init__()
-
         # detect if we can find at least the redis binaries. We
         # don't want to force the user to launch with RedisAI so
         # it's ok if that isn't present.
