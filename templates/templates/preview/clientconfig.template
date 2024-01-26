@@ -1,0 +1,47 @@
+
+        Client Configuration
+            {%- if manifest.dbs %}
+            Database identifier: {{ manifest.dbs[0].name }}
+            {%- endif %}
+            {%- if model.run_settings.colocated_db_settings %}
+            Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier}}
+            {% endif %}
+            Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
+            {%- if model.run_settings.colocated_db_settings %}
+                {%- if model.run_settings.colocated_db_settings.port %}
+            TCP/IP Port:
+                {{ model.run_settings.colocated_db_settings.port }}
+                {% endif -%}
+                {%- if model.run_settings.colocated_db_settings.unix_socket %}
+            Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
+                {%- endif -%}
+            {% endif %}
+            {%- if model.run_settings.colocated_db_settings %}
+            Type: Colocated
+            {% endif %}
+            {%- if manifest.dbs %}
+            {%- if manifest.dbs[0].num_shards > 2 %}
+            Type: Clustered
+            {% else %}
+            Type: Standalone
+            {%- endif %}
+            {%- endif %}
+            {%- if incoming in model.incoming_entities %}
+            Incoming entities (available data sources): 
+            {%- for incoming in model.incoming_entities %}
+                {{ incoming.name }}
+            {%- endfor %}
+            {%- endif %}
+            Outgoing key collision prevention (key prefixing): 
+            {%- if model.query_key_prefixing() == True %}
+                Tensors: On 
+                DataSets: On 
+                Models/Scripts: Off
+                Aggregation Lists: On
+            {%- endif %}
+            {%- if model.query_key_prefixing() == False %}
+                Tensors: Off 
+                DataSets: Off
+                Models/Scripts: Off
+                Aggregation Lists: Off
+            {%- endif %}

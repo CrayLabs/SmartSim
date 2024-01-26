@@ -1,194 +1,87 @@
-
-    == Models ==  
-    {%- for model in manifest.models %}
-    {%- if model is defined %}
-
-        = Model name: {{ model.name }}
-            Executable:  
-            {%- for param in model.run_settings.exe %}
-                {{ param }}
-            {%- endfor %}
-            Executable Arguments:
-            {%- for param in model.run_settings.exe_args %}
-                {{ param }}
-            {%- endfor %}
-            {%- if model.batch_settings -%}
-            Batch Launch: True
-            {% else %}
-            Batch Launch: False
-            {%- endif -%} 
-            {% if model.params -%}
-            Model parameters: 
-            {%- for param, value in model.params.items() %}
-                {{ param }}: {{ value }}
-            {%- endfor -%}
-            {% endif %}
-            {%- if model.files %}
-            {%- if model.files.tagged %}
-            Tagged Files for model configuration: 
-                {{ model.files.tagged[0] }} -> 
-                {{ model.path }}
-            {%- endif -%}
-            {%- if model.files.copy %}
-            Copy files: {{ model.files.copy[0] }} ->
+{%- if model is defined -%}Model name: {{ model.name }}
+        Executable:  
+        {%- for param in model.run_settings.exe %}
+            {{ param }}
+        {%- endfor %}
+        Executable Arguments:
+        {%- for param in model.run_settings.exe_args %}
+            {{ param }}
+        {%- endfor %}
+        {%- if model.batch_settings -%}
+        Batch Launch: True
+        {% else %}
+        Batch Launch: False
+        {%- endif -%} 
+        {% if model.params -%}
+        Model parameters: 
+        {%- for param, value in model.params.items() %}
+            {{ param }}: {{ value }}
+        {%- endfor -%}
+        {% endif %}
+        {%- if model.files %}
+        {%- if model.files.tagged %}
+        Tagged Files for model configuration: 
+            {{ model.files.tagged[0] }} -> 
             {{ model.path }}
-            {%- endif %}
-            {%- if model.files.link %}
-            Symlink: {{ model.files.link[0] }} ->
+        {%- endif -%}
+        {%- if model.files.copy %}
+        Copy files: 
+            {{ model.files.copy[0] }} ->
             {{ model.path }}
-            {%- endif %}
-            {%- endif %}
-            {%- if model.run_settings.colocated_db_settings %}
-            Colocated: 
-                Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier}}
-                {%- if model.run_settings.colocated_db_settings.port %}
-                Connection Type: TCP
-                TCP/IP Port:
-                    {{ model.run_settings.colocated_db_settings.port }}
-                {% endif -%}
-                {%- if model.run_settings.colocated_db_settings.unix_socket %}
-                Connection Type: UDS
-                Unix socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
-                {%- endif -%}
-                Ifname: {{ model.run_settings.colocated_db_settings.ifname }}
-                Cpus: {{ model.run_settings.colocated_db_settings.cpus }}
-                Custom pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
-            {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
-            {%- for script in db_scripts %}
-            Scripts:   
-                Script name: {{ script.name }}
-                Script path: {{ script.script_path }}
-                Backend: {{ script.backend }}   
-                Devices per node: {{ script.device }} 
-            {%- endfor %}
-            {%- endif %}
-            {%- if model.run_settings.colocated_db_settings['db_models'] %}
-            {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
-            Models:   
-                Model name: {{ mlmodel.name }}
-                Backend: {{ mlmodel.backend }} 
-                Model path: {{ mlmodel.model_path }} 
-                Device: {{ mlmodel.device }}  
-                Devices per node: 1  
-                {{ mlmodel.devices_per_node }}
-                First device: 0
-                {{ mlmodel.first_device }}
-                {%- for input in mlmodel.inputs %}
-                Inputs: {{ input }} 
-                {% endfor %}
-                {%- for output in mlmodel.outputs %}
-                Outputs: {{ output }}
-                {%- endfor %}
-            {%- endfor %}
-            {%- endif %}
-            {%- endif %}
-        =       
-    
-        Client Configuration: 
-            {%- if manifest.dbs %}
-            Database identifier: {{ manifest.dbs[0].name }}
-            {%- endif %}
-            {%- if model.run_settings.colocated_db_settings %}
+        {%- endif %}
+        {%- if model.files.link %}
+        Symlink: 
+            {{ model.files.link[0] }} ->
+            {{ model.path }}
+        {%- endif %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings %}
+        Colocated: 
             Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier}}
-            {% endif %}
-            Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
-            {%- if model.run_settings.colocated_db_settings %}
-                {%- if model.run_settings.colocated_db_settings.port %}
+            {%- if model.run_settings.colocated_db_settings.port %}
+            Connection Type: TCP
             TCP/IP Port:
                 {{ model.run_settings.colocated_db_settings.port }}
-                {% endif -%}
-                {%- if model.run_settings.colocated_db_settings.unix_socket %}
-            Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
-                {%- endif -%}
-            {% endif %}
-            {%- if model.run_settings.colocated_db_settings %}
-            Type: Colocated
-            {% endif %}
-            {%- if manifest.dbs %}
-            {%- if manifest.dbs[0].num_shards > 2 %}
-            Type: Clustered
-            {% else %}
-            Type: Standalone
-            {%- endif %}
-            {%- endif %}
-            Incoming entities (available data sources): 
-            {%- for incoming in model.incoming_entities %}
-                {{ incoming.name }}
+            {% endif -%}
+            {%- if model.run_settings.colocated_db_settings.unix_socket %}
+            Connection Type: UDS
+            Unix socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+            {%- endif -%}
+            Ifname: {{ model.run_settings.colocated_db_settings.ifname }}
+            Cpus: {{ model.run_settings.colocated_db_settings.cpus }}
+            Custom pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
+        {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+        {%- for script in db_scripts %}
+        Scripts:   
+            Script name: {{ script.name }}
+            Script path: {{ script.script_path }}
+            Backend: {{ script.backend }}   
+            Devices per node: {{ script.device }} 
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings['db_models'] %}
+        {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
+        Models:   
+            Model name: {{ mlmodel.name }}
+            Backend: {{ mlmodel.backend }} 
+            Model path: {{ mlmodel.model_path }} 
+            Device: {{ mlmodel.device }}  
+            Devices per node: 1  
+            {{ mlmodel.devices_per_node }}
+            First device: 0
+            {{ mlmodel.first_device }}
+            {%- for input in mlmodel.inputs %}
+            Inputs: {{ input }} 
+            {% endfor %}
+            {%- for output in mlmodel.outputs %}
+            Outputs: {{ output }}
             {%- endfor %}
-            Outgoing key collision prevention (key prefixing):  
-            {%- if manifest.ensembles[0].query_key_prefixing() == True %}  ## do the check for ensemble and model - because it can be set for both
-                Tensors: On
-                Datasets: On
-                Aggregation Lists: On
-            {% else %}
-                Tensors: Off
-                Datasets: Off
-                Aggregation Lists: Off
-            {% endif %}
-            Models/Scripts: Off
-
-
-               
-                
-                Tensors:  {{ model.query_key_prefixing() }} ## This function automatically activates prefixing for tensors, ``Datasets``,
-and lists.
-                DataSets:  {{ model.query_key_prefixing() }}
-                Models/Scripts: ``Client.enable_model_ensemble_prefix()``
-
-                Aggregation Lists:  if `Client.use_list_ensemble_prefix()`` 
-                else 
-                {{ model.query_key_prefixing() }}
-
-
-            - Tensor: ``Client.use_tensor_ensemble_prefix()``
-            - ``Dataset``: ``Client.use_dataset_ensemble_prefix()``
-            - Aggregation lists: ``Client.use_list_ensemble_prefix()``
-
-
-            ML model and script prefixing is not automatically enabled through ``Model.enable_key_prefixing()``.
-
-             # Enable ML model prefixing
-            client.use_model_ensemble_prefix(True)
-            # Send prefixed ML model to the Orchestrator
-            client.set_model(
-                "ml_model_2", serialized_model_2, "TF", device="CPU", inputs=inputs, outputs=outputs
-            )
-
-            # Enable script prefixing
-            client.use_model_ensemble_prefix(True)
-            # Store a prefixed script in the Orchestrator
-            client.set_function("script_2", script_2)
-    
-    {% endif %}
-    {%- endfor -%}
-
-
-    Outgoing key collision prevention (key prefixing defaults):  True
-        Tensors: On 
-        DataSets: On 
-        Models/Scripts: 
-        Aggregation Lists: On
-
-default value 
-ensemble.query_key_prefixing() --> false 
-       Tensors: off
-        DataSets: off
-        Aggregation Lists: off
-         Models/Scripts: off
-
-
-query_key_prefixing() --> true 
-    Tensors: On 
-    DataSets: On 
-    Aggregation Lists: On
-    Models/Scripts: Off
-
-
-
-
-ensemble.use_tensor_ensemble_prefix(false)
-
-ensemble.query_key_prefixing() --> true 
-
-
-         
+        {%- endfor %}
+        {%- endif %}
+        {%- endif %}
+        {%- if manifest.models %}
+        {%- if manifest.models[0].query_key_prefixing() == True %}  
+        Key prefix: {{ model.name }}
+        {%- endif %}
+        {%- endif %}
+{%- endif %}

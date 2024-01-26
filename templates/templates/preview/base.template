@@ -3,7 +3,15 @@
 {%- if manifest %}
 
 === Entity Preview === 
+
 {%- if manifest.models %}
-{% include "preview/model.template" %}
+    == Models == 
+{%- for model in manifest.models %}   
+    = {% include "preview/model.template" %}
+    {% if manifest.dbs or model.run_settings.colocated_db_settings %}
+    {% include "preview/clientconfig.template" %}
+    {%- endif %}
+    =
+{%- endfor %}
 {%- endif -%}
 {%- endif -%}
