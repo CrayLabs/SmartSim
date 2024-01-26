@@ -31,9 +31,11 @@ import signal
 import textwrap
 import time
 import typing as t
+from pydantic import ValidationError
 import zmq
 
 from subprocess import PIPE, STDOUT
+from smartsim._core.schemas import DragonSelfAddressRequest, DragonSelfAddressResponse
 from smartsim._core.utils.network import get_best_interface_and_address
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from types import FrameType
@@ -92,9 +94,6 @@ def run(dragon_head_address: str) -> None:
         print(resp.model_dump_json(), flush=True)
         dragon_head_socket.send_json(resp.model_dump_json())
 
-
-
-
 def main(args: argparse.Namespace) -> int:
 
     interface, address = get_best_interface_and_address()
@@ -111,9 +110,13 @@ def main(args: argparse.Namespace) -> int:
 
         launcher_socket = context.socket(zmq.REQ)
         launcher_socket.connect(args.launching_address)
-        launcher_socket.send_string(dragon_head_address)
-        message = launcher_socket.recv()
-        assert message == b"ACK"
+        request = DragonSelfAddressRequest(address=dragon_head_address)
+        launcher_socket.send_json(request.model_dump_json())
+        message = t.cast(str, launcher_socket.recv_json())
+        try:
+            DragonSelfAddressResponse.model_validate_json(message)
+        except ValidationError as e:
+            raise ValueError("Could not receive connection confirmation from launcher. Aborting.") from e
 
     print_summary(interface, dragon_head_address)
 

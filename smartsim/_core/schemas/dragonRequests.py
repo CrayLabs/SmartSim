@@ -53,3 +53,7 @@ class DragonStopRequest(DragonRequest):
 
 class DragonHandshakeRequest(DragonRequest):
     request_type: constr(min_length=1) = "handshake"
+
+class DragonSelfAddressRequest(DragonRequest):
+    request_type: constr(min_length=1) = "self_address"
+    address: constr(min_length=1)

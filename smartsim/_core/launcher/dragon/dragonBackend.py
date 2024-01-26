@@ -26,7 +26,12 @@
 
 import typing as t
 
-from smartsim.status import STATUS_RUNNING, STATUS_COMPLETED, STATUS_FAILED, STATUS_NEVER_STARTED
+from smartsim.status import (
+    STATUS_RUNNING,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_NEVER_STARTED,
+)
 from dragon.native.process import Process
 
 
@@ -35,14 +40,14 @@ from smartsim._core.schemas import (
     DragonRunRequest,
     DragonStopRequest,
     DragonUpdateStatusRequest,
-    DragonHandshakeRequest
+    DragonHandshakeRequest,
 )
 from smartsim._core.schemas import (
     DragonResponse,
     DragonRunResponse,
     DragonStopResponse,
     DragonUpdateStatusResponse,
-    DragonHandshakeResponse
+    DragonHandshakeResponse,
 )
 
 
@@ -54,7 +59,9 @@ class DragonBackend:
     """
 
     def __init__(self) -> None:
-        self._request_to_function: t.Mapping[str, t.Callable[[t.Any], DragonResponse]] = {
+        self._request_to_function: t.Mapping[
+            str, t.Callable[[t.Any], DragonResponse]
+        ] = {
             "run": self.run,
             "update_status": self.update_status,
             "stop": self.stop,
@@ -74,7 +81,9 @@ class DragonBackend:
     def run(self, request: DragonRunRequest) -> DragonRunResponse:
         run_request = DragonRunRequest.model_validate(request)
 
-        run_args = tuple(run_request.exe_args) if run_request.exe_args is not None else None
+        run_args = (
+            tuple(run_request.exe_args) if run_request.exe_args is not None else None
+        )
         proc = Process(
             target=" ".join(run_request.exe),
             args=run_args,
@@ -88,7 +97,9 @@ class DragonBackend:
 
         return DragonRunResponse(step_id=str(proc.puid))
 
-    def update_status(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
+    def update_status(
+        self, request: DragonUpdateStatusRequest
+    ) -> DragonUpdateStatusResponse:
         update_status_request = DragonUpdateStatusRequest.model_validate(request)
 
         updated_statuses = {}
@@ -104,7 +115,7 @@ class DragonBackend:
             else:
                 updated_statuses[step_id] = (STATUS_NEVER_STARTED, None)
 
-        return DragonUpdateStatusResponse(statuses = updated_statuses)
+        return DragonUpdateStatusResponse(statuses=updated_statuses)
 
     def stop(self, request: DragonStopRequest) -> DragonStopResponse:
         stop_request = DragonStopRequest.model_validate(request)

@@ -46,6 +46,8 @@ from ...schemas import (
     DragonHandshakeResponse,
     DragonRequest,
     DragonRunResponse,
+    DragonSelfAddressRequest,
+    DragonSelfAddressResponse,
     DragonStopRequest,
     DragonStopResponse,
     DragonUpdateStatusRequest,
@@ -74,8 +76,8 @@ class DragonLauncher(WLMLauncher):
         super().__init__()
         self.context = zmq.Context()
 
-        self.context.setsockopt(zmq.SNDTIMEO, value=5000)
-        self.context.setsockopt(zmq.RCVTIMEO, value=5000)
+        self.context.setsockopt(zmq.SNDTIMEO, value=10000)
+        self.context.setsockopt(zmq.RCVTIMEO, value=10000)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
 
     def _handsake(self, address: str) -> None:
@@ -84,23 +86,22 @@ class DragonLauncher(WLMLauncher):
         self._dragon_head_socket.connect(address)
         request = DragonHandshakeRequest()
         try:
-            self._send_request_as_json(request)
-            response = self._dragon_head_socket.recv_json()
-            if response is not None:
-                response = t.cast(str, response)
-                DragonHandshakeResponse.model_validate(t.cast(str, json.loads(response)))
-                logger.debug(f"Successful handshake with Dragon server at address {address}")
-
+            response = self._send_request_as_json(request)
+            DragonHandshakeResponse.model_validate(response)
+            logger.debug(
+                f"Successful handshake with Dragon server at address {address}"
+            )
             return
         except (zmq.ZMQError, zmq.Again) as e:
             logger.debug(e)
             self._dragon_head_socket.close()
             self._dragon_head_socket = None
-            logger.debug(f"Unsuccessful handshake with Dragon server at address {address}")
+            logger.debug(
+                f"Unsuccessful handshake with Dragon server at address {address}"
+            )
 
             self.context.setsockopt(zmq.SNDTIMEO, value=-1)
             self.context.setsockopt(zmq.RCVTIMEO, value=-1)
-
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
@@ -116,6 +117,11 @@ class DragonLauncher(WLMLauncher):
             )
             logger.debug(dragon_confs)
             for dragon_conf in dragon_confs:
+                if not "address" in dragon_conf:
+                    continue
+                msg = "Found dragon server configuration logfile. "
+                msg += f"Checking if the server is still up at address {dragon_conf['address']}."
+                logger.debug(msg)
                 self._handsake(dragon_conf["address"])
                 if self._dragon_head_socket is not None:
                     return
@@ -139,27 +145,32 @@ class DragonLauncher(WLMLauncher):
             cmd += ["+launching_address", socket_addr]
 
         dragon_out_file = os.path.join(dragon_path, "dragon_head.out")
-        dragon_err_file = os.path.join(dragon_path, "dragon_hear.err")
+        dragon_err_file = os.path.join(dragon_path, "dragon_head.err")
 
-        with open(dragon_out_file, "w") as dragon_out, open(dragon_err_file, "w") as dragon_err:
+        with open(dragon_out_file, "w") as dragon_out, open(
+            dragon_err_file, "w"
+        ) as dragon_err:
             current_env = os.environ.copy()
             current_env.update({"PYTHONUNBUFFERED": "1"})
             self._dragon_head_process = subprocess.Popen(
-                args = cmd,
-                bufsize = 0,
+                args=cmd,
+                bufsize=0,
                 stderr=dragon_err.fileno(),
                 stdout=dragon_out.fileno(),
                 cwd=dragon_path,
                 shell=False,
                 env=current_env,
-                start_new_session=True
+                start_new_session=True,
             )
 
         if address is not None:
             logger.debug(f"Listening to {socket_addr}")
-            dragon_head_address = launcher_socket.recv_string()
+            dragon_address_request = DragonSelfAddressRequest.model_validate(
+                json.loads(t.cast(str, launcher_socket.recv_json()))
+                )
+            dragon_head_address = dragon_address_request.address
             logger.debug(f"Connecting launcher to {dragon_head_address}")
-            launcher_socket.send(b"ACK")
+            launcher_socket.send_json(DragonSelfAddressResponse().model_dump_json())
             launcher_socket.close()
             self._handsake(dragon_head_address)
         else:
@@ -193,11 +204,9 @@ class DragonLauncher(WLMLauncher):
 
         if isinstance(step, DragonStep):
             req = step.get_launch_request()
-            self._send_request_as_json(req)
-            response = DragonRunResponse.model_validate(
-                json.loads(t.cast(str, self._dragon_head_socket.recv_json()))
-            )
-            step_id = response.step_id
+            response = self._send_request_as_json(req)
+            run_response = DragonRunResponse.model_validate(response)
+            step_id = run_response.step_id
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -219,12 +228,9 @@ class DragonLauncher(WLMLauncher):
 
         step_id = str(stepmap.step_id)
         request = DragonStopRequest(step_id=step_id)
-        self._send_request_as_json(request)
+        response = self._send_request_as_json(request)
 
-
-        DragonStopResponse.model_validate(
-            json.loads(t.cast(str, self._dragon_head_socket.recv_json()))
-        )
+        DragonStopResponse.model_validate(response)
 
         _, step_info = self.get_step_update([step_name])[0]
         if not step_info:
@@ -246,33 +252,32 @@ class DragonLauncher(WLMLauncher):
             raise LauncherError("Launcher is not connected to Dragon.")
 
         request = DragonUpdateStatusRequest(step_ids=step_ids)
-        self._send_request_as_json(request)
+        response = self._send_request_as_json(request)
 
-        response = DragonUpdateStatusResponse.model_validate(
-            json.loads(t.cast(str,self._dragon_head_socket.recv_json()))
-        )
-
+        update_response = DragonUpdateStatusResponse.model_validate(response)
         # create SlurmStepInfo objects to return
         updates: t.List[StepInfo] = []
         # Order matters as we return an ordered list of StepInfo objects
         for step_id in step_ids:
-            if step_id not in response.statuses:
-                msg = "Missing step id update from Dragon launcher"
-                if response.error_message is not None:
-                    msg += f"Dragon backend reported following error: {response.error_message}"
+            if step_id not in update_response.statuses:
+                msg = "Missing step id update from Dragon launcher."
+                if update_response.error_message is not None:
+                    msg += f"\nDragon backend reported following error: {update_response.error_message}"
                 raise LauncherError(msg)
-            stat_tuple = response.statuses[step_id]
+            stat_tuple = update_response.statuses[step_id]
             info = StepInfo(stat_tuple[0], stat_tuple[0], stat_tuple[1])
 
             updates.append(info)
         return updates
 
-    def _send_request_as_json(self, request: DragonRequest, flags: int=0) -> None:
+    def _send_request_as_json(self, request: DragonRequest, flags: int = 0) -> t.Mapping[str, t.Any]:
         if self._dragon_head_socket is None:
             raise LauncherError("Launcher is not connected to Dragon")
         req_json = request.model_dump_json()
         logger.debug(f"Sending request: {req_json}")
         self._dragon_head_socket.send_json(req_json, flags)
+        response = str(self._dragon_head_socket.recv_json())
+        return t.cast(t.Mapping[str, t.Any], json.loads(response))
 
     def __str__(self) -> str:
         return "Dragon"
@@ -301,7 +306,9 @@ class DragonLauncher(WLMLauncher):
     def _parse_launched_dragon_server_info_from_files(
         cls, file_paths: t.List[str], num_dragon_envs: t.Optional[int] = None
     ) -> t.List[t.Dict[str, str]]:
-        file_copies = [(Path(file).parent / (Path(file).name+".copy")) for file in file_paths]
+        file_copies = [
+            (Path(file).parent / (Path(file).name + ".copy")) for file in file_paths
+        ]
         for file, file_copy in zip(file_paths, file_copies):
             shutil.copyfile(file, file_copy)
         with fileinput.FileInput(file_copies) as ifstream:

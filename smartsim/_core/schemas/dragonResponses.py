@@ -50,3 +50,6 @@ class DragonStopResponse(DragonResponse):
 
 class DragonHandshakeResponse(DragonResponse):
     response_type: constr(min_length=1) = "handshake"
+
+class DragonSelfAddressResponse(DragonResponse):
+    response_type: constr(min_length=1) = "self_address"
