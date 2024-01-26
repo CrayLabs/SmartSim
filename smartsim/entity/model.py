@@ -371,9 +371,11 @@ class Model(SmartSimEntity):
             )
 
         # TODO list which db settings can be extras
-        x = t.cast(t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
-                   common_options.get("custom_pinning"))
-        #assert isinstance(x, t.Iterable) and not isinstance(x, str)
+        x = t.cast(
+            t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
+            common_options.get("custom_pinning"),
+        )
+        # assert isinstance(x, t.Iterable) and not isinstance(x, str)
         e = common_options.get("cpus")
         assert isinstance(e, int)
         common_options["custom_pinning"] = self._create_pinning_string(x, e)
