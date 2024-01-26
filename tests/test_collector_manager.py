@@ -52,9 +52,13 @@ def mock_entity(test_dir):
         entity.name = name if name else str(uuid.uuid4())
         entity.status_dir = test_dir
         entity.type = type
-        entity.config = {
+        entity.telemetry_on = True
+        entity.collectors = {
             "host": host,
             "port": port,
+            "client": "",
+            "client_count": "",
+            "memory": "",
         }
         return entity
 
@@ -168,9 +172,9 @@ async def test_collector_manager_collect_filesink(
     entity2 = mock_entity(port=2345, name="entity2")
 
     sinks = [
-        FileSink(entity1, "1_con.csv"),
-        FileSink(entity1, "1_mem.csv"),
-        FileSink(entity2, "2_mem.csv"),
+        FileSink(entity1.status_dir + "/1_con.csv"),
+        FileSink(entity1.status_dir + "/1_mem.csv"),
+        FileSink(entity2.status_dir + "/2_mem.csv"),
     ]
     con_col1 = DbConnectionCollector(entity1, sinks[0])
     mem_col1 = DbMemoryCollector(entity1, sinks[1])

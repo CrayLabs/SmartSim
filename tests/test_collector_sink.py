@@ -43,9 +43,13 @@ def mock_entity(test_dir):
         entity.name = name if name else str(uuid.uuid4())
         entity.status_dir = test_dir
         entity.type = type
-        entity.config = {
+        entity.telemetry_on = True
+        entity.collectors = {
             "host": host,
             "port": port,
+            "client": "",
+            "client_count": "",
+            "memory": "",
         }
         return entity
 
@@ -53,52 +57,20 @@ def mock_entity(test_dir):
 
 
 @pytest.mark.asyncio
-async def test_sink_null_entity() -> None:
-    """Ensure the filesink handles a null entity as expected"""
-    # entity = mock_entity(port=1234, name="e1")
-    entity: t.Optional[JobEntity] = None
-
-    with pytest.raises(ValueError) as ex:
-        _ = FileSink(entity, "test.csv")
-
-    assert "entity" in "".join(ex.value.args)
-
-
-@pytest.mark.parametrize(
-    "name,type",
-    [
-        pytest.param("e1", "", id="No entity type"),
-        pytest.param("e2", "ensemble", id="Has entity type"),
-    ],
-)
-@pytest.mark.asyncio
-async def test_sink_null_filename(mock_entity, name, type) -> None:
+async def test_sink_null_filename(mock_entity) -> None:
     """Ensure the filesink handles a null filename as expected"""
-    entity = mock_entity(port=1234, name=name, type=type)
+    entity = mock_entity(port=1234, type="orchestrator")
 
-    # pass null file path
-    sink = FileSink(entity, None)
-    await sink.save(key="value1")
-    await sink.save(key="value2")
-    await sink.save(key="value3")
-
-    # show that logs are still written
-    assert sink.path.exists()
-
-    if type:
-        assert type in str(sink.path)
-
-    # show that the same file is written to
-    content = sink.path.read_text()
-    assert len(content.splitlines()) == 3
+    with pytest.raises(ValueError):
+        # pass null file path
+        sink = FileSink(None)
 
 
 @pytest.mark.asyncio
 async def test_sink_write(mock_entity) -> None:
     """Ensure the FileSink writes values to the output file as expected"""
     entity = mock_entity(port=1234, name="e1")
-
-    sink = FileSink(entity, "test.csv")
+    sink = FileSink(entity.status_dir + "/test.csv")
 
     # all values are converted to strings before saving
     v1, v2, v3 = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
@@ -119,8 +91,7 @@ async def test_sink_write_nonstring_input(mock_entity) -> None:
     """Ensure the FileSink writes values to the output file as expected
     when inputs are non-strings"""
     entity = mock_entity(port=1234, name="e1")
-
-    sink = FileSink(entity, "test.csv")
+    sink = FileSink(entity.status_dir + "/test.csv")
 
     # v1, v2 are not converted to strings
     v1, v2 = 1, uuid.uuid4()
@@ -145,7 +116,7 @@ async def test_sink_write_no_inputs(mock_entity) -> None:
     """Ensure the FileSink writes to an output file without error if no
     values are supplied"""
     entity = mock_entity(port=1234, name="e1")
-    sink = FileSink(entity, "test.csv")
+    sink = FileSink(entity.status_dir + "/test.csv")
 
     num_saves = 5
     for i in range(num_saves):
@@ -166,7 +137,7 @@ async def test_sink_write_null_entity(mock_entity) -> None:
     """Ensure the FileSink writes to an output file without error if no
     values are supplied"""
     entity = mock_entity(port=1234, name="e1")
-    sink = FileSink(entity, "test.csv")
+    sink = FileSink(entity.status_dir + "/test.csv")
 
     num_saves = 5
     for i in range(num_saves):

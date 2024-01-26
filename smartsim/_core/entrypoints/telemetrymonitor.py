@@ -39,7 +39,6 @@ import sys
 import threading
 import time
 import typing as t
-import uuid
 from dataclasses import dataclass, field
 from types import FrameType
 
@@ -92,37 +91,23 @@ class Sink(abc.ABC):
 class FileSink(Sink):
     """Telemetry sink that writes to a file"""
 
-    def __init__(self, entity: JobEntity, filename: str) -> None:
+    def __init__(self, filename: str) -> None:
         """Initialize the FileSink
         :param entity: The JobEntity producing log data
         :type entity: JobEntity
         :param filename: The relative path and filename of the file to be written
         :type filename: str"""
         super().__init__()
-        filename = FileSink._check_init(entity, filename)
-        self._path = pathlib.Path(entity.status_dir) / filename
+        filename = FileSink._check_init(filename)
+        self._path = pathlib.Path(filename)
 
     @staticmethod
-    def _gen_entity_path(entity: JobEntity) -> str:
-        """Generate a unique path to write logs to"""
-        filename = f"{uuid.uuid4()}.csv"
-        if entity.type:
-            type_fmt = entity.type.lower().replace(" ", "")
-            filename = f"{type_fmt}/{filename}"
-        return filename
-
-    @staticmethod
-    def _check_init(entity: JobEntity, filename: str) -> str:
+    def _check_init(filename: str) -> str:
         """Validate initialization arguments.
-        raise ValueError if an invalid entity is passed
         raise ValueError if an invalid filename is passed"""
-        if not entity:
-            raise ValueError("An entity must be supplied")
 
         if not filename:
-            # work even if filenames are missing but notify user
-            logger.warning(f"No filename provided to FileSink for entity: {entity}")
-            filename = FileSink._gen_entity_path(entity)
+            raise ValueError("No filename provided to FileSink")
 
         return filename
 
@@ -200,8 +185,8 @@ class DbCollector(Collector):
         super().__init__(entity, sink)
         self._client: t.Optional[redis.Redis[bytes]] = None
         self._address = _Address(
-            self._entity.config.get("host", "127.0.0.1"),
-            int(self._entity.config.get("port", 6379)),
+            self._entity.collectors.get("host", "127.0.0.1"),
+            int(self._entity.collectors.get("port", 6379)),
         )
 
     async def _configure_client(self) -> None:
@@ -424,18 +409,16 @@ class CollectorManager:
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
-        if entity.is_db:
-            if not int(entity.config.get("collectors", "0")):
-                logger.debug(f"collectors disabled for db {entity.name}")
-                return []
-
+        if entity.is_db and entity.telemetry_on:
             return [
-                DbMemoryCollector(entity, FileSink(entity, "memory.csv")),
-                DbConnectionCollector(entity, FileSink(entity, "client.csv")),
+                DbMemoryCollector(entity, FileSink(entity.collectors["memory"])),
+                DbConnectionCollector(entity, FileSink(entity.collectors["client"])),
                 DbConnectionCountCollector(
-                    entity, FileSink(entity, "client_count.csv")
+                    entity, FileSink(entity.collectors["client_count"])
                 ),
             ]
+
+        logger.debug(f"collectors disabled for db {entity.name}")
         return []
 
     @property
@@ -495,9 +478,14 @@ def _hydrate_persistable(
 
     if entity.is_db:
         # db shards are hydrated individually
-        entity.config["collectors"] = str(metadata.get("collectors", "0"))
-        entity.config["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
-        entity.config["port"] = persistable_entity.get("port", "NO-DB-PORT")
+        entity.telemetry_on = int(persistable_entity.get("collectors", "0")) > 0
+        cfg = entity.collectors
+        if entity.telemetry_on:
+            cfg["host"] = persistable_entity.get("hostname", "NOT-SET")
+            cfg["port"] = persistable_entity.get("port", "NOT-SET")
+            cfg["client"] = persistable_entity.get("client_file", "NOT-SET")
+            cfg["client_count"] = persistable_entity.get("client_count_file", "NOT-SET")
+            cfg["memory"] = persistable_entity.get("memory_file", "NOT-SET")
 
     return entity
 
@@ -769,7 +757,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
                 self._tracked_jobs[entity.key] = entity
 
-                if int(entity.config.get("collectors", "0")):
+                if entity.telemetry_on:
                     collectors = CollectorManager.find_collectors(entity)
                     self._collector.add_all(collectors)
 

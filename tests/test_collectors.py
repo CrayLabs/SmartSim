@@ -48,9 +48,13 @@ def mock_entity(test_dir):
         entity.name = name if name else str(uuid.uuid4())
         entity.status_dir = test_dir
         entity.type = type
-        entity.config = {
+        entity.telemetry_on = True
+        entity.collectors = {
             "host": host,
             "port": port,
+            "client": "",
+            "client_count": "",
+            "memory": "",
         }
         return entity
 
