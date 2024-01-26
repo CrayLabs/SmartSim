@@ -66,7 +66,7 @@ def test_rai_builder_raises_on_unsupported_op_sys(monkeypatch, mock_os):
     "mock_arch",
     [
         pytest.param(arch_, id=f"arch='{arch_}'")
-        for arch_ in ("i386", "i686", "i86pc", "aarch64", "arm64", "armv7l", "")
+        for arch_ in ("i386", "i686", "i86pc", "aarch64", "armv7l", "")
     ],
 )
 def test_rai_builder_raises_on_unsupported_architecture(monkeypatch, mock_arch):

@@ -765,16 +765,44 @@ class _WebZip(_ExtractableWebArchive):
 
 @t.final
 @dataclass(frozen=True)
-class _PTArchive(_WebZip, _RAIBuildDependency):
+class _PTArchiveBase(_WebZip, _RAIBuildDependency):
     os_: OperatingSystem
     device: TDeviceStr
     version: str
 
     @property
+    def __rai_dependency_name__(self) -> str:
+        return f"libtorch@{self.url}"
+
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+        self.extract(target)
+        target = Path(target) / "libtorch"
+        if not target.is_dir():
+            raise BuildError("Failed to place RAI dependency: `libtorch`")
+        return target
+
+
+class _PTArchive_Linux(_PTArchiveBase):
+    @property
     def url(self) -> str:
         if self.os_ == OperatingSystem.LINUX:
             if self.device == "gpu":
                 pt_build = "cu117"
+            else:
+                pt_build = "cpu"
+            # pylint: disable-next=line-too-long
+            libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
+        else:
+            raise BuildError(f"Unexpected OS for the PT Archive Linux: {self.os_}")
+        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
+
+
+class _PTArchive_MacOSX(_PTArchiveBase):
+    @property
+    def url(self) -> str:
+        if self.os_ == OperatingSystem.DARWIN:
+            if self.device == "gpu":
+                pt_build = "cu118"
             else:
                 pt_build = "cpu"
             # pylint: disable-next=line-too-long
@@ -787,17 +815,6 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
         else:
             raise BuildError(f"Unexpected OS for the PT Archive: {self.os_}")
         return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
-
-    @property
-    def __rai_dependency_name__(self) -> str:
-        return f"libtorch@{self.url}"
-
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
-        self.extract(target)
-        target = Path(target) / "libtorch"
-        if not target.is_dir():
-            raise BuildError("Failed to place RAI dependency: `libtorch`")
-        return target
 
 
 @t.final
