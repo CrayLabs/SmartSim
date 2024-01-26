@@ -46,8 +46,8 @@ from ...schemas import (
     DragonHandshakeResponse,
     DragonRequest,
     DragonRunResponse,
-    DragonSelfAddressRequest,
-    DragonSelfAddressResponse,
+    DragonBootstrapRequest,
+    DragonBootstrapResponse,
     DragonStopRequest,
     DragonStopResponse,
     DragonUpdateStatusRequest,
@@ -165,12 +165,12 @@ class DragonLauncher(WLMLauncher):
 
         if address is not None:
             logger.debug(f"Listening to {socket_addr}")
-            dragon_address_request = DragonSelfAddressRequest.model_validate(
+            dragon_address_request = DragonBootstrapRequest.model_validate(
                 json.loads(t.cast(str, launcher_socket.recv_json()))
                 )
             dragon_head_address = dragon_address_request.address
             logger.debug(f"Connecting launcher to {dragon_head_address}")
-            launcher_socket.send_json(DragonSelfAddressResponse().model_dump_json())
+            launcher_socket.send_json(DragonBootstrapResponse().model_dump_json())
             launcher_socket.close()
             self._handsake(dragon_head_address)
         else:

@@ -35,7 +35,7 @@ from pydantic import ValidationError
 import zmq
 
 from subprocess import PIPE, STDOUT
-from smartsim._core.schemas import DragonSelfAddressRequest, DragonSelfAddressResponse
+from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
 from smartsim._core.utils.network import get_best_interface_and_address
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from types import FrameType
@@ -110,11 +110,11 @@ def main(args: argparse.Namespace) -> int:
 
         launcher_socket = context.socket(zmq.REQ)
         launcher_socket.connect(args.launching_address)
-        request = DragonSelfAddressRequest(address=dragon_head_address)
+        request = DragonBootstrapRequest(address=dragon_head_address)
         launcher_socket.send_json(request.model_dump_json())
         message = t.cast(str, launcher_socket.recv_json())
         try:
-            DragonSelfAddressResponse.model_validate_json(message)
+            DragonBootstrapResponse.model_validate_json(message)
         except ValidationError as e:
             raise ValueError("Could not receive connection confirmation from launcher. Aborting.") from e
 
