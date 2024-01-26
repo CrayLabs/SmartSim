@@ -78,8 +78,6 @@ def render(
         verbosity_level=verbosity_level,
     )
 
-    # print(Client.)
-    logging.info(rendered_preview)
     return rendered_preview
 
 

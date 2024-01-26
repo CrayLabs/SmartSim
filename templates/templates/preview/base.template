@@ -3,13 +3,26 @@
 {%- if manifest %}
 
 === Entity Preview === 
-{%- if manifest.dbs %}
-{% include "preview/orchestrator.template" %}
-{%- endif -%}
-{% if manifest.ensembles %}
-{% include "preview/ensemble.template" %}
 
+{%- if manifest.dbs %}
+{% for db in manifest.dbs %}
+{% include "preview/orchestrator.template" %}
+{% endfor %}
 {%- endif -%}
+
+{%- if manifest.models %}
+    == Models == 
+{%- for model in manifest.models %}   
+    = {% include "preview/model.template" %}
+    {% include "preview/clientconfig.template" %}
+    =
+{% endfor %}
+{%- endif -%}
+
+{% if manifest.ensembles %}
+{% for ensemble in manifest.ensembles %}
+{% include "preview/ensemble.template" %}
+{% endfor %}
 {%- endif -%}
 
 {%- endif -%}

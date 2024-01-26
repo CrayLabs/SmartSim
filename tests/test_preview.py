@@ -34,14 +34,6 @@ import pathlib
 import numpy as np
 
 
-def choose_host(wlmutils, index=0):
-    hosts = wlmutils.get_test_hostlist()
-    if hosts:
-        return hosts[index]
-    else:
-        return None
-
-
 @pytest.fixture
 def choose_host():
     def _choose_host(wlmutils, index=0):
@@ -90,32 +82,6 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.name == summary_dict["Experiment"]
     assert exp.exp_path == summary_dict["Experiment Path"]
     assert exp.launcher == summary_dict["Launcher"]
-
-
-def test_ensemble_preview_render(test_dir, wlmutils):
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-
-    exp_name = "test_experiment_preview_properties"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
-    ens_settings = exp.create_run_settings(exe="sleep", exe_args="3")
-    ensemble = exp.create_ensemble(
-        "ensemble-replica", replicas=4, run_settings=ens_settings
-    )
-
-    params = {"tutorial_name": ["Ellie", "John"], "tutorial_parameter": [2, 11]}
-    ensemble = exp.create_ensemble(
-        "ensemble", params=params, run_settings=rs, perm_strategy="all_perm"
-    )
-
-    # to_configure specifies that the files attached should be read and tags should be looked for
-    config_file = "./output_my_parameter.py"
-    ensemble.attach_generator_files(to_configure=config_file)
-
-    exp.generate(ensemble, overwrite=True)
-    exp.start(ensemble)
 
 
 def test_ensembles_jp(test_dir, wlmutils):
@@ -235,36 +201,6 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
     assert path.is_file()
 
 
-# def test_orchestrator_preview_output_format_html(test_dir, wlmutils):
-#     """Test correct preview output items for  Orchestrator preview"""
-#     test_launcher = wlmutils.get_test_launcher()
-#     test_interface = wlmutils.get_test_interface()
-#     test_port = wlmutils.get_test_port()
-
-#     exp_name = "test_orchestrator_preview_output_format_html"
-#     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
-#     # create regular database
-#     orc = exp.create_database(
-#         port=test_port,
-#         interface=test_interface,
-#         hosts=choose_host(wlmutils),
-#     )
-
-#     filename = "orch_preview_test.html"
-#     path = pathlib.Path() / "orch_preview_test.html"
-
-#     # call preview with output format and output filename
-#     exp.preview(orc, output_format="html", output_filename=filename)
-#     assert path.exists()
-#     assert path.is_file()
-
-
-# def test_output_filename_without_format(test_dir, wlmutils):
-#     test_launcher = wlmutils.get_test_launcher()
-#     exp_name = "test_output_filename_without_format"
-
-
 def test_model_jp(test_dir, wlmutils):
     exp_name = "test_model_jp"
     test_launcher = wlmutils.get_test_launcher()
@@ -277,7 +213,6 @@ def test_model_jp(test_dir, wlmutils):
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
     rendered_preview = previewrenderer.render(exp, preview_manifest)
-    print(rendered_preview)
 
 
 def test_model_preview(test_dir, wlmutils):
@@ -292,7 +227,6 @@ def test_model_preview(test_dir, wlmutils):
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
     rendered_preview = previewrenderer.render(exp, preview_manifest)
-    print(rendered_preview)
     assert "Model name" in rendered_preview
     assert "Executable" in rendered_preview
     assert "Executable Arguments" in rendered_preview
@@ -329,6 +263,33 @@ def test_model_preview_parameters(test_dir, wlmutils):
     assert "/usr/bin/echo" == spam_eggs_model.run_settings.exe[0]
     assert "spam" == spam_eggs_model.run_settings.exe_args[0]
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
+
+    # def test_ensemble_preview_render(test_dir, wlmutils):
+
+
+#     test_launcher = wlmutils.get_test_launcher()
+#     test_interface = wlmutils.get_test_interface()
+#     test_port = wlmutils.get_test_port()
+
+#     exp_name = "test_experiment_preview_properties"
+#     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+#     ens_settings = exp.create_run_settings(exe="sleep", exe_args="3")
+#     ensemble = exp.create_ensemble(
+#         "ensemble-replica", replicas=4, run_settings=ens_settings
+#     )
+
+#     params = {"tutorial_name": ["Ellie", "John"], "tutorial_parameter": [2, 11]}
+#     ensemble = exp.create_ensemble(
+#         "ensemble", params=params, run_settings=rs, perm_strategy="all_perm"
+#     )
+
+#     # to_configure specifies that the files attached should be read and tags should be looked for
+#     config_file = "./output_my_parameter.py"
+#     ensemble.attach_generator_files(to_configure=config_file)
+
+#     exp.generate(ensemble, overwrite=True)
+#     exp.start(ensemble)
 
 
 def test_output_format_error():
