@@ -70,7 +70,6 @@ from smartsim.log import get_logger
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
 # pylint: disable=too-many-lines
-
 """Telemetry Monitor entrypoint"""
 
 # kill is not catchable
