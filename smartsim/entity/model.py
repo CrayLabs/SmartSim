@@ -260,14 +260,14 @@ class Model(SmartSimEntity):
             )
         assert isinstance(unix_socket, str)
         assert isinstance(socket_permissions, int)
-        assert not isinstance(socket_permissions, object)
-        uds_options = {
+        uds_options: t.Dict[str, t.Union[int, str]] = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
             "port": 0,  # 0 as recommended by redis for UDS
         }
-        assert isinstance(uds_options.get("port"), int)
-        assert isinstance(uds_options.get("port"), object)
+        # assert isinstance(uds_options.get("port"), int)
+        # assert isinstance(uds_options.get("socket_permissions"), int)
+        # assert isinstance(uds_options.get("unix_socket"), str)
 
         common_options = {
             "cpus": db_cpus,
@@ -337,7 +337,7 @@ class Model(SmartSimEntity):
 
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Dict[str, t.Union[int, list[str], str]],
+        connection_options: t.Mapping[str, t.Union[int, list[str], str]],
         common_options: t.Dict[
             str,
             t.Union[
