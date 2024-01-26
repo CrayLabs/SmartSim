@@ -457,7 +457,7 @@ class RedisAIBuilder(Builder):
         #       is used as script in the SmartSim `setup.py`.
         fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
             (True, _DLPackRepository("v0.5_RAI")),
-            (self.fetch_torch, _PTArchive(os_, device, "2.0.1")),
+            (self.fetch_torch, choose_PT_variant(os_, arch, device, "2.0.1")),
             (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
             (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
         )
@@ -762,11 +762,20 @@ class _WebZip(_ExtractableWebArchive):
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
 
+def choose_pt_variant(os_, device, arch, version):
+    if os_ == OperatingSystem.DARWIN:
+        variant = _PTArchive_MacOSX
+    elif os_ == OperatingSystem.LINUX:
+        variant = _PTArchive_Linux
+    else:
+        BuildError(f"Unsupported OS for pyTorch: {os}")
+    return variant(*args)
 
-@t.final
+
 @dataclass(frozen=True)
-class _PTArchiveBase(_WebZip, _RAIBuildDependency):
+class _PTArchive(_WebZip, _RAIBuildDependency):
     os_: OperatingSystem
+    architecture: Architecture
     device: TDeviceStr
     version: str
 
@@ -782,39 +791,36 @@ class _PTArchiveBase(_WebZip, _RAIBuildDependency):
         return target
 
 
+@t.final
 class _PTArchive_Linux(_PTArchiveBase):
     @property
     def url(self) -> str:
-        if self.os_ == OperatingSystem.LINUX:
-            if self.device == "gpu":
-                pt_build = "cu117"
-            else:
-                pt_build = "cpu"
-            # pylint: disable-next=line-too-long
-            libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
+        if self.device == "gpu":
+            pt_build = "cu117"
+        else:
+            pt_build = "cpu"
+        # pylint: disable-next=line-too-long
+        libtorch_archive= f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
         else:
             raise BuildError(f"Unexpected OS for the PT Archive Linux: {self.os_}")
-        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
+        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
 
 
+@t.final
 class _PTArchive_MacOSX(_PTArchiveBase):
     @property
     def url(self) -> str:
-        if self.os_ == OperatingSystem.DARWIN:
-            if self.device == "gpu":
-                pt_build = "cu118"
-            else:
-                pt_build = "cpu"
-            # pylint: disable-next=line-too-long
-            libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
-        elif self.os_ == OperatingSystem.DARWIN:
-            if self.device == "gpu":
-                raise BuildError("RedisAI does not currently support GPU on Macos")
-            pt_build = "cpu"
-            libtorch_arch = f"libtorch-macos-{self.version}.zip"
-        else:
-            raise BuildError(f"Unexpected OS for the PT Archive: {self.os_}")
-        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
+        if self.device == "gpu":
+            raise BuildError("RedisAI does not currently support GPU on Macos")
+
+        pt_build = "cpu"
+        if self.architecture == Architecture.X64:
+            libtorch_archive= f"libtorch-macos-{self.version}.zip"
+            return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
+        elif self.architecture == Architecture.ARM64:
+            libtorch_archive = f"libtorch-macos-{self.architecture}-{self.version}.tgz"
+            root_url = "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
+            return f"{root_url}/{libtorch_archive}"
 
 
 @t.final
