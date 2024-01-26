@@ -86,16 +86,20 @@ class Sink(abc.ABC):
     """Base class for telemetry output sinks"""
 
     def __init__(self) -> None:
-        self._header = False
+        self._header_written = False
+
+    @property
+    def header_written(self) -> bool:
+        return self._header_written
 
     @abc.abstractmethod
     async def save(self, **kwargs: t.Any) -> None:
         ...
 
-    @property
-    @abc.abstractmethod
-    def header(self) -> bool:
-        return self._header
+    async def save_header(self, **kwargs: t.Any) -> None:
+        if not self._header_written:
+            await self.save(**kwargs)
+            self._header_written = True
 
 
 class FileSink(Sink):
@@ -134,24 +138,15 @@ class FileSink(Sink):
         super().__init__()
         filename = FileSink._check_init(entity, filename)
         self._path = pathlib.Path(entity.status_dir) / filename
-        self._header = False
 
     @property
     def path(self) -> pathlib.Path:
         """Returns the path to the underlying file the FileSink will write to"""
         return self._path
 
-    @property
-    def header(self) -> bool:
-        return self._header
-
     async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments to a file as specified by the associated JobEntity"""
         self._path.parent.mkdir(parents=True, exist_ok=True)
-
-        if kwargs.get("header", False):
-            self._header = True
-            kwargs.pop("header")
 
         async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
             values = ",".join(list(map(str, kwargs.values()))) + "\n"
@@ -273,10 +268,10 @@ class DbMemoryCollector(DbCollector):
         self._value = {}
 
         try:
-            if not self._sink.header:
-                await self._sink.save(**DbMemoryCollector.columns(), header=True)
+            if not self._sink.header_written:
+                await self._sink.save_header(**DbMemoryCollector.columns())
 
-            db_info = await self._client.info()
+            db_info = await self._client.info("memory")
             for key in [k for k in self.columns().values() if k != "timestamp"]:
                 self._value[key] = db_info[key]
 
@@ -314,10 +309,10 @@ class DbConnectionCollector(DbCollector):
         now_ts = self.timestamp()  # ensure all results have the same timestamp
 
         try:
-            if not self._sink.header:
-                await self._sink.save(**DbConnectionCollector.columns(), header=True)
-
+            if not self._sink.header_written:
+                await self._sink.save_header(**DbConnectionCollector.columns())
             client_list = await self._client.client_list()
+            
             addresses = [{"address": item["addr"]} for item in client_list]
             self._value = addresses
 
@@ -350,11 +345,8 @@ class DbConnectionCountCollector(DbCollector):
             return
 
         try:
-            if not self._sink.header:
-                await self._sink.save(
-                    **DbConnectionCountCollector.columns(), header=True
-                )
-
+            if not self._sink.header_written:
+                await self._sink.save_header(**DbConnectionCountCollector.columns())
             client_list = await self._client.client_list()
 
             now_ts = self.timestamp()  # ensure all results have the same timestamp
