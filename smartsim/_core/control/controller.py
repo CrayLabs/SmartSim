@@ -631,7 +631,7 @@ class Controller:
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
-            assert isinstance(db_name_colo, str)
+            t.cast(str, db_name_colo)
             for key in address_dict:
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
