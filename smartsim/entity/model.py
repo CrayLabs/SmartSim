@@ -258,16 +258,13 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-        assert isinstance(unix_socket, str)
-        assert isinstance(socket_permissions, int)
+        t.cast(str, unix_socket)
+        t.cast(int, socket_permissions)
         uds_options: t.Dict[str, t.Union[int, str]] = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
             "port": 0,  # 0 as recommended by redis for UDS
         }
-        # assert isinstance(uds_options.get("port"), int)
-        # assert isinstance(uds_options.get("socket_permissions"), int)
-        # assert isinstance(uds_options.get("unix_socket"), str)
 
         common_options = {
             "cpus": db_cpus,
@@ -375,9 +372,7 @@ class Model(SmartSimEntity):
             t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
             common_options.get("custom_pinning"),
         )
-        # assert isinstance(x, t.Iterable) and not isinstance(x, str)
-        e = common_options.get("cpus")
-        assert isinstance(e, int)
+        e = t.cast(int, common_options.get("cpus"))
         common_options["custom_pinning"] = self._create_pinning_string(x, e)
 
         colo_db_config: t.Dict[
