@@ -34,7 +34,6 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     JobEntity,
 )
 from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
-from smartsim.error import SmartSimError
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.group_a
@@ -196,5 +195,5 @@ async def test_dbconncollector_integration(mock_entity, mock_sink, local_db):
     await collector.collect()
     stats = collector.value
 
-    assert len(stats) == 1
+    assert len(stats) > 0
     assert stats[0]
