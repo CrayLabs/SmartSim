@@ -312,7 +312,7 @@ class DbConnectionCollector(DbCollector):
             if not self._sink.header_written:
                 await self._sink.save_header(**DbConnectionCollector.columns())
             client_list = await self._client.client_list()
-            
+
             addresses = [{"address": item["addr"]} for item in client_list]
             self._value = addresses
 
