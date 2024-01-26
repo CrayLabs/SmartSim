@@ -335,7 +335,7 @@ class Model(SmartSimEntity):
     def _set_colocated_db_settings(
         self,
         connection_options: t.Mapping[str, t.Union[int, list[str], str]],
-        common_options: t.Dict[
+        common_options: t.Mapping[
             str,
             t.Union[
                 t.Union[t.Iterable[t.Union[int, t.Iterable[int]]], None],
