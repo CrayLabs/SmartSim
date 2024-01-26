@@ -65,11 +65,11 @@ async def test_sink_null_entity() -> None:
 
 
 @pytest.mark.parametrize(
-        "name,type",
-        [
-            pytest.param("e1", "", id="No entity type"),
-            pytest.param("e2", "ensemble", id="Has entity type"),
-        ]
+    "name,type",
+    [
+        pytest.param("e1", "", id="No entity type"),
+        pytest.param("e2", "ensemble", id="Has entity type"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_sink_null_filename(mock_entity, name, type) -> None:

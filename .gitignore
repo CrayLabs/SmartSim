@@ -36,3 +36,6 @@ smartsim/_core/lib
 **/*.err
 **/*.out
 **/.smartsim/*
+
+# optional dev tools
+.pre-commit-config.yaml

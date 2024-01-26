@@ -183,7 +183,9 @@ def test_enable_disable_telemetry(monkeypatch, test_dir, config):
     exp.start()
     import pathlib
 
-    mani_path = pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
+    mani_path = (
+        pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
+    )
     assert mani_path.exists()
 
 
