@@ -68,11 +68,12 @@ test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
-test_batch_resources: t.Dict[t.Any,t.Any] = CONFIG.test_batch_resources
+test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
 
 # Fill this at runtime if needed
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
+
 
 def get_account() -> str:
     return test_account
@@ -370,6 +371,7 @@ class WLMUtils:
 
         return None
 
+
 @pytest.fixture
 def local_db(
     request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
@@ -526,7 +528,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
     # We split at the opening bracket, sanitize the string
     # to its right and then merge the function name and
     # the sanitized list with a dot.
-    caller_function = caller_function.replace("]","")
+    caller_function = caller_function.replace("]", "")
     caller_function_list = caller_function.split("[", maxsplit=1)
 
     def is_accepted_char(char: str) -> bool:
@@ -561,7 +563,9 @@ class FileUtils:
     @staticmethod
     def get_test_output_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
-        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_output_root))
+        rel_path = os.path.relpath(
+            caller_file_to_dir, os.path.dirname(test_output_root)
+        )
         dir_path = os.path.join(test_output_root, rel_path, caller_function)
         return dir_path
 
@@ -576,7 +580,9 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_file(file_name: str, file_dir: str, file_content: t.Optional[str] = None) -> str:
+    def make_test_file(
+        file_name: str, file_dir: str, file_content: t.Optional[str] = None
+    ) -> str:
         """Create a dummy file in the test output directory.
 
         :param file_name: name of file to create, e.g. "file.txt"
@@ -651,8 +657,9 @@ class ColoUtils:
         if db_type == "uds" and colo_model_name is not None:
             tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
-            db_args["unix_socket"] = os.path.join(tmp_dir,
-                f"{colo_model_name}_{socket_suffix}.socket")
+            db_args["unix_socket"] = os.path.join(
+                tmp_dir, f"{colo_model_name}_{socket_suffix}.socket"
+            )
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,
@@ -662,8 +669,7 @@ class ColoUtils:
         with warnings.catch_warnings():
             if db_type == "deprecated":
                 warnings.filterwarnings(
-                    "ignore",
-                    message="`colocate_db` has been deprecated"
+                    "ignore", message="`colocate_db` has been deprecated"
                 )
             colocate_fun[db_type](**db_args)
         # assert model will launch with colocated db
@@ -685,7 +691,6 @@ class MockSink:
 
     async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments as console logged messages"""
-        print(f"MockSink received args: {kwargs}")
         if self._delay_ms:
             # mimic slow collection....
             delay_s = self._delay_ms / 1000
@@ -701,6 +706,7 @@ def mock_sink() -> t.Type[MockSink]:
 @pytest.fixture
 def mock_con():
     """Generates mock db connection telemetry"""
+
     def _mock_con(min=1, max=1000):
         i = min
         while True:
@@ -715,6 +721,7 @@ def mock_con():
 @pytest.fixture
 def mock_mem():
     """Generates mock db memory usage telemetry"""
+
     def _mock_mem(min=1, max=1000):
         i = min
         while True:
@@ -740,12 +747,13 @@ def mock_redis():
         coll_side_effect=None,
     ):
         """Generate a mock object for the redis.Redis contract"""
+
         class MockConn:
-            def __init__(self, *args, **kwargs) -> None:
+            def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
                 if conn_side_effect is not None:
                     conn_side_effect()
 
-            async def info(self) -> t.Dict[str, t.Any]:
+            async def info(self, *args: t.Any, **kwargs: t.Any) -> t.Dict[str, t.Any]:
                 if coll_side_effect:
                     await coll_side_effect()
 
@@ -758,12 +766,16 @@ def mock_redis():
                     "used_memory_peak": "333",
                 }
 
-            async def client_list(self) -> t.Dict[str, t.Any]:
+            async def client_list(
+                self, *args: t.Any, **kwargs: t.Any
+            ) -> t.Dict[str, t.Any]:
                 if coll_side_effect:
                     await coll_side_effect()
 
                 if client_stats:
                     return next(client_stats)
                 return {"ts": 111, "addr": "127.0.0.1"}
+
         return MockConn
+
     return _mock_redis

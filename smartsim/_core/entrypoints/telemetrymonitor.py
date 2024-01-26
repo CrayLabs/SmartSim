@@ -114,8 +114,8 @@ class FileSink(Sink):
     @staticmethod
     def _check_init(entity: JobEntity, filename: str) -> str:
         """Validate initialization arguments.
-        Raise ValueError if an invalid entity is passed
-        Raise ValueError if an invalid filename is passed"""
+        raise ValueError if an invalid entity is passed
+        raise ValueError if an invalid filename is passed"""
         if not entity:
             raise ValueError("An entity must be supplied")
 
@@ -154,10 +154,12 @@ class Collector(abc.ABC):
 
     @property
     def owner(self) -> str:
+        """The name of the SmartSim entity the collector is attached to"""
         return self._entity.name
 
     @property
     def sink(self) -> Sink:
+        """The sink where collected data is written"""
         return self._sink
 
     @abc.abstractmethod
@@ -213,12 +215,9 @@ class DbCollector(Collector):
             logger.exception(cre)
         except Exception as e:
             logger.exception(e)
-            # msg = f"DbCollector failed to communicate with {self._address}"
-            # raise SmartSimError(msg) from e
-
-        if not self._client:
-            # raise SmartSimError(f"DbCollector failed to connect to {self._address}")
-            logger.warning("DbCollector unable to connect to database")
+        finally:
+            if not self._client:
+                logger.error(f"DbCollector failed to connect to {self._address}")
 
     async def prepare(self) -> None:
         """Initialization logic for a DB collector"""

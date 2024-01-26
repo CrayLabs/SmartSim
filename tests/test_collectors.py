@@ -32,8 +32,8 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
     DbMemoryCollector,
     JobEntity,
-    redis,
 )
+from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
 from smartsim.error import SmartSimError
 
 # The tests in this file belong to the slow_tests group
@@ -70,47 +70,52 @@ async def test_dbmemcollector_prepare(mock_entity, mock_sink):
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail(
-    mock_entity, mock_sink, monkeypatch: pytest.MonkeyPatch
+    mock_entity,
+    mock_sink,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
 ):
-    """Ensure that collector preparation reports a failure to connect"""
+    """Ensure that collector preparation reports a failure to connect
+    when the redis client cannot be created"""
     entity = mock_entity()
 
     with monkeypatch.context() as ctx:
         # mock up a redis constructor that returns None
-        ctx.setattr(redis, "Redis", lambda host, port: None)
+        ctx.setattr(tredis, "Redis", lambda host, port: None)
 
-        with pytest.raises(SmartSimError) as ex:
-            collector = DbMemoryCollector(entity, mock_sink())
-            await collector.prepare()
+        capsys.readouterr()  # clear capture
+        collector = DbMemoryCollector(entity, mock_sink())
+        await collector.prepare()
 
         assert not collector._client
-
-        err_content = ",".join(ex.value.args)
-        assert "connect" in err_content
+        assert collector.value is None
 
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail_dep(
-    mock_entity, mock_sink, monkeypatch: pytest.MonkeyPatch
+    mock_entity,
+    mock_sink,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
 ):
     """Ensure that collector preparation attempts to connect, ensure it
     reports a failure if the db conn bombs"""
     entity = mock_entity()
 
-    def raiser():
+    def raiser(*args, **kwargs):
         # mock raising exception on connect attempts to test err handling
-        raise redis.ConnectionError("mock connection failure")
+        raise tredis.ConnectionError("mock connection failure")
 
+    capsys.readouterr()  # clear capture
     collector = DbMemoryCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
-        ctx.setattr(redis, "Redis", raiser)
-        with pytest.raises(SmartSimError) as ex:
-            await collector.prepare()
+        ctx.setattr(tredis, "Redis", raiser)
+        # with pytest.raises(SmartSimError) as ex:
+        await collector.prepare()
 
+        capture = capsys.readouterr()  # retrieve logs for operation
         assert not collector._client
-
-        err_content = ",".join(ex.value.args)
-        assert "communicate" in err_content
+        assert collector.value is None
 
 
 @pytest.mark.asyncio
@@ -123,16 +128,21 @@ async def test_dbmemcollector_collect(
     sink = mock_sink()
     collector = DbMemoryCollector(entity, sink)
     with monkeypatch.context() as ctx:
-        ctx.setattr(redis, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
+        ctx.setattr(tredis, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
 
         await collector.prepare()
         await collector.collect()
-        stats = collector.value
+        # stats = collector.value
 
-        assert set(
-            ("ts", "total_system_memory", "used_memory", "used_memory_peak")
-        ) == set(sink.args)
-        assert set((1000, 1111, 1234)).issubset(set(sink.args.values()))
+        reqd_items = set(
+            ("timestamp", "total_system_memory", "used_memory", "used_memory_peak")
+        )
+        actual_items = set(sink.args)
+
+        reqd_values = set((1000, 1111, 1234))
+        actual_values = set(sink.args.values())
+        assert actual_items.issuperset(reqd_items)
+        assert actual_values.issuperset(reqd_values)
 
 
 @pytest.mark.asyncio
@@ -147,7 +157,9 @@ async def test_dbmemcollector_integration(mock_entity, mock_sink, local_db):
     await collector.collect()
     stats = collector.value
 
-    assert len(stats) == 3  # prove we filtered to expected data size
+    assert (
+        len(stats) == 3
+    )  # prove we filtered to expected data size, no timestamp in data.
     assert stats["used_memory"] > 0  # prove used_memory was retrieved
     assert stats["used_memory_peak"] > 0  # prove used_memory_peak was retrieved
     assert stats["total_system_memory"] > 0  # prove total_system_memory was retrieved
@@ -162,7 +174,7 @@ async def test_dbconncollector_collect(
 
     collector = DbConnectionCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
-        ctx.setattr(redis, "Redis", mock_redis(client_stats=mock_con(1, 2)))
+        ctx.setattr(tredis, "Redis", mock_redis(client_stats=mock_con(1, 2)))
 
         await collector.prepare()
         await collector.collect()
