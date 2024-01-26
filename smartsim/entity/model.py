@@ -259,7 +259,6 @@ class Model(SmartSimEntity):
                 "contain alphanumeric characters or . : _ - /"
             )
         assert isinstance(unix_socket, str)
-        assert not isinstance(unix_socket, object)
         assert isinstance(socket_permissions, int)
         assert not isinstance(socket_permissions, object)
         uds_options = {
