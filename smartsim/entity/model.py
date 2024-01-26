@@ -333,24 +333,22 @@ class Model(SmartSimEntity):
             "debug": debug,
             "db_identifier": db_identifier,
         }
-        #test
+        # test
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Dict[str,
-                                   t.Union[
-                                        int,
-                                        list[str],
-                                        str]],
-        common_options: t.Dict[str,
-                               t.Union[
-                                   t.Union[t.Iterable[
-                                       t.Union[int, t.Iterable[int]]], None],
-                                   bool,
-                                   int,
-                                   str,
-                                   None]],
+        connection_options: t.Dict[str, t.Union[int, list[str], str]],
+        common_options: t.Dict[
+            str,
+            t.Union[
+                t.Union[t.Iterable[t.Union[int, t.Iterable[int]]], None],
+                bool,
+                int,
+                str,
+                None,
+            ],
+        ],
         **kwargs: t.Union[int, None],
     ) -> None:
         """
@@ -378,25 +376,23 @@ class Model(SmartSimEntity):
         assert isinstance(x, t.Iterable) and not isinstance(x, str)
         e = common_options.get("cpus")
         assert isinstance(e, int)
-        common_options["custom_pinning"] = self._create_pinning_string(
-            x, e
-        )
+        common_options["custom_pinning"] = self._create_pinning_string(x, e)
 
-        colo_db_config : t.Dict[str,
-                                t.Union[
-                                    bool,
-                                    int,
-                                    str,
-                                    None,
-                                    list[str],
-                                    t.Iterable[
-                                        t.Union[int, t.Iterable[int]]],
-                                    list[DBModel],
-                                    list[DBScript],
-                                    t.Dict[str,
-                                           t.Union[int, None]],
-                                    t.Dict[str, str]
-                                    ]]= {}
+        colo_db_config: t.Dict[
+            str,
+            t.Union[
+                bool,
+                int,
+                str,
+                None,
+                list[str],
+                t.Iterable[t.Union[int, t.Iterable[int]]],
+                list[DBModel],
+                list[DBScript],
+                t.Dict[str, t.Union[int, None]],
+                t.Dict[str, str],
+            ],
+        ] = {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
 
