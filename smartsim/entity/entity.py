@@ -46,7 +46,6 @@ class TelemetryProducer:
         self._is_on = False
 
 
-
 class SmartSimEntity:
     def __init__(
         self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"
