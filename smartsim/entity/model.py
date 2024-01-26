@@ -258,8 +258,8 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-        t.cast(str, unix_socket)
-        t.cast(int, socket_permissions)
+        assert isinstance(unix_socket, str)
+        assert isinstance(socket_permissions, int)
         uds_options: t.Dict[str, t.Union[int, str]] = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
@@ -335,7 +335,7 @@ class Model(SmartSimEntity):
     def _set_colocated_db_settings(
         self,
         connection_options: t.Mapping[str, t.Union[int, list[str], str]],
-        common_options: t.Mapping[
+        common_options: t.Dict[
             str,
             t.Union[
                 t.Union[t.Iterable[t.Union[int, t.Iterable[int]]], None],

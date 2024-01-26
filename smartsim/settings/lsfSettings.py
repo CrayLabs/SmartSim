@@ -98,7 +98,7 @@ class JsrunSettings(RunSettings):
         """
         if self.colocated_db_settings:
             db_cpus = self.colocated_db_settings.get("db_cpus", 0)
-            t.cast(int, db_cpus)
+            assert isinstance(db_cpus, int)
             if not db_cpus:
                 raise ValueError("db_cpus must be configured on colocated_db_settings")
 
