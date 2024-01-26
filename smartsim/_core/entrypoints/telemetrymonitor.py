@@ -84,25 +84,23 @@ logger = get_logger(__name__)
 class Sink(abc.ABC):
     """Base class for telemetry output sinks"""
 
-    def __init__(self) -> None:
-        self._header_written = False
-
-    @property
-    def header_written(self) -> bool:
-        return self._header_written
-
     @abc.abstractmethod
     async def save(self, **kwargs: t.Any) -> None:
-        ...
-
-    async def save_header(self, **kwargs: t.Any) -> None:
-        if not self._header_written:
-            await self.save(**kwargs)
-            self._header_written = True
+        """Save the passed data to the underlying sink"""
 
 
 class FileSink(Sink):
     """Telemetry sink that writes to a file"""
+
+    def __init__(self, entity: JobEntity, filename: str) -> None:
+        """Initialize the FileSink
+        :param entity: The JobEntity producing log data
+        :type entity: JobEntity
+        :param filename: The relative path and filename of the file to be written
+        :type filename: str"""
+        super().__init__()
+        filename = FileSink._check_init(entity, filename)
+        self._path = pathlib.Path(entity.status_dir) / filename
 
     @staticmethod
     def _gen_entity_path(entity: JobEntity) -> str:
@@ -127,16 +125,6 @@ class FileSink(Sink):
             filename = FileSink._gen_entity_path(entity)
 
         return filename
-
-    def __init__(self, entity: JobEntity, filename: str) -> None:
-        """Initialize the FileSink
-        :param entity: The JobEntity producing log data
-        :type entity: JobEntity
-        :param filename: The relative path and filename of the file to be written
-        :type filename: str"""
-        super().__init__()
-        filename = FileSink._check_init(entity, filename)
-        self._path = pathlib.Path(entity.status_dir) / filename
 
     @property
     def path(self) -> pathlib.Path:
@@ -182,16 +170,12 @@ class Collector(abc.ABC):
 
     @staticmethod
     def timestamp() -> int:
+        """Return an integer timestamp"""
         return int(datetime.datetime.timestamp(datetime.datetime.now()))
 
     @abc.abstractmethod
     async def shutdown(self) -> None:
         """Execute any cleanup of resources for the collector"""
-
-    @staticmethod
-    @abc.abstractmethod
-    def columns() -> t.Dict[str, str]:
-        """Return a list of column names to output"""
 
 
 @dataclasses.dataclass
@@ -202,6 +186,7 @@ class _Address:
     port: int
 
     def __str__(self) -> str:
+        """Pretty-print the address"""
         return f"{self.host}:{self.port}"
 
 
@@ -241,6 +226,11 @@ class DbCollector(Collector):
             return
 
         await self._configure_client()
+        await self.post_prepare()
+
+    @abc.abstractmethod
+    async def post_prepare(self) -> None:
+        """Hook called after the db connection is established"""
 
     async def shutdown(self) -> None:
         """Release any resources held by the collector"""
@@ -258,6 +248,19 @@ class DbMemoryCollector(DbCollector):
     """A collector that collects memory usage information from
     an orchestrator instance"""
 
+    def __init__(self, entity: JobEntity, sink: Sink) -> None:
+        super().__init__(entity, sink)
+        self._columns = ["used_memory", "used_memory_peak", "total_system_memory"]
+
+    async def post_prepare(self) -> None:
+        """Hook called after the db connection is established"""
+        await self._sink.save(
+            col0="timestamp",
+            col1=self._columns[0],
+            col2=self._columns[1],
+            col3=self._columns[2],
+        )
+
     async def collect(self) -> None:
         await self.prepare()
         if not self._client:
@@ -267,11 +270,8 @@ class DbMemoryCollector(DbCollector):
         self._value = {}
 
         try:
-            if not self._sink.header_written:
-                await self._sink.save_header(**DbMemoryCollector.columns())
-
             db_info = await self._client.info("memory")
-            for key in [k for k in self.columns().values() if k != "timestamp"]:
+            for key in self._columns:
                 self._value[key] = db_info[key]
 
             await self._sink.save(timestamp=self.timestamp(), **self._value)
@@ -280,24 +280,18 @@ class DbMemoryCollector(DbCollector):
 
     @property
     def value(self) -> t.Dict[str, int]:
-        watch_list = ["used_memory", "used_memory_peak", "total_system_memory"]
-        filtered = {k: v for k, v in self._value.items() if k in watch_list}
+        filtered: t.Dict[str, int] = self._value
         self._value = None
         return filtered
-
-    @staticmethod
-    def columns() -> t.Dict[str, str]:
-        return {
-            "0": "timestamp",
-            "1": "used_memory",
-            "2": "used_memory_peak",
-            "3": "total_system_memory",
-        }
 
 
 class DbConnectionCollector(DbCollector):
     """A collector that collects client connection information from
     an orchestrator instance"""
+
+    async def post_prepare(self) -> None:
+        """Hook called after the db connection is established"""
+        await self._sink.save(col0="timestamp", col1="address")
 
     async def collect(self) -> None:
         await self.prepare()
@@ -308,32 +302,29 @@ class DbConnectionCollector(DbCollector):
         now_ts = self.timestamp()  # ensure all results have the same timestamp
 
         try:
-            if not self._sink.header_written:
-                await self._sink.save_header(**DbConnectionCollector.columns())
             client_list = await self._client.client_list()
 
-            addresses = [{"address": item["addr"]} for item in client_list]
-            self._value = addresses
+            self._value = [item["addr"] for item in client_list]
 
-            for v in addresses:
-                await self._sink.save(timestamp=now_ts, **v)
+            for address in self._value:
+                await self._sink.save(timestamp=now_ts, address=address)
         except Exception as ex:
             logger.warning("collect failed for DbMemoryCollector", exc_info=ex)
 
     @property
     def value(self) -> t.List[str]:
-        filtered = [x["addr"] for x in self._value]
+        filtered: t.List[str] = self._value
         self._value = None
         return filtered
-
-    @staticmethod
-    def columns() -> t.Dict[str, str]:
-        return {"0": "timestamp", "1": "address"}
 
 
 class DbConnectionCountCollector(DbCollector):
     """A collector that collects client connection information from
     an orchestrator instance and records aggregated counts"""
+
+    async def post_prepare(self) -> None:
+        """Hook called after the db connection is established"""
+        await self._sink.save(col0="timestamp", col1="num_clients")
 
     async def collect(self) -> None:
         await self.prepare()
@@ -344,15 +335,13 @@ class DbConnectionCountCollector(DbCollector):
             return
 
         try:
-            if not self._sink.header_written:
-                await self._sink.save_header(**DbConnectionCountCollector.columns())
             client_list = await self._client.client_list()
 
             now_ts = self.timestamp()  # ensure all results have the same timestamp
             addresses = {item["addr"] for item in client_list}
             self._value = str(len(addresses))
 
-            await self._sink.save(timestamp=now_ts, count=self._value)
+            await self._sink.save(timestamp=now_ts, num_clients=self._value)
         except Exception as ex:
             logger.warning("collect failed for DbConnectionCountCollector", exc_info=ex)
 
@@ -361,10 +350,6 @@ class DbConnectionCountCollector(DbCollector):
         filtered = str(self._value)
         self._value = None
         return filtered
-
-    @staticmethod
-    def columns() -> t.Dict[str, str]:
-        return {"0": "timestamp", "1": "num_clients"}
 
 
 class CollectorManager:
