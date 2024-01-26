@@ -116,16 +116,79 @@
                 {{ incoming.name }}
             {%- endfor %}
             Outgoing key collision prevention (key prefixing):  
+            {%- if manifest.ensembles[0].query_key_prefixing() == True %}  ## do the check for ensemble and model - because it can be set for both
+                Tensors: On
+                Datasets: On
+                Aggregation Lists: On
+            {% else %}
+                Tensors: Off
+                Datasets: Off
+                Aggregation Lists: Off
+            {% endif %}
+            Models/Scripts: Off
 
-                {{ model.query_key_prefixing() }}
+
+               
                 
-                Tensors: On 
-                DataSets: On 
-                Models/Scripts: 
-            Aggregation Lists: On
+                Tensors:  {{ model.query_key_prefixing() }} ## This function automatically activates prefixing for tensors, ``Datasets``,
+and lists.
+                DataSets:  {{ model.query_key_prefixing() }}
+                Models/Scripts: ``Client.enable_model_ensemble_prefix()``
+
+                Aggregation Lists:  if `Client.use_list_ensemble_prefix()`` 
+                else 
+                {{ model.query_key_prefixing() }}
+
+
+            - Tensor: ``Client.use_tensor_ensemble_prefix()``
+            - ``Dataset``: ``Client.use_dataset_ensemble_prefix()``
+            - Aggregation lists: ``Client.use_list_ensemble_prefix()``
+
+
+            ML model and script prefixing is not automatically enabled through ``Model.enable_key_prefixing()``.
+
+             # Enable ML model prefixing
+            client.use_model_ensemble_prefix(True)
+            # Send prefixed ML model to the Orchestrator
+            client.set_model(
+                "ml_model_2", serialized_model_2, "TF", device="CPU", inputs=inputs, outputs=outputs
+            )
+
+            # Enable script prefixing
+            client.use_model_ensemble_prefix(True)
+            # Store a prefixed script in the Orchestrator
+            client.set_function("script_2", script_2)
     
     {% endif %}
     {%- endfor -%}
+
+
+    Outgoing key collision prevention (key prefixing defaults):  True
+        Tensors: On 
+        DataSets: On 
+        Models/Scripts: 
+        Aggregation Lists: On
+
+default value 
+ensemble.query_key_prefixing() --> false 
+       Tensors: off
+        DataSets: off
+        Aggregation Lists: off
+         Models/Scripts: off
+
+
+query_key_prefixing() --> true 
+    Tensors: On 
+    DataSets: On 
+    Aggregation Lists: On
+    Models/Scripts: Off
+
+
+
+
+ensemble.use_tensor_ensemble_prefix(false)
+
+ensemble.query_key_prefixing() --> true 
 
 
          
