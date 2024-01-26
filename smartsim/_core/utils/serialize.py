@@ -239,7 +239,7 @@ def _dictify_db(
                     "step_id": step_id,
                     "task_id": task_id,
                     "managed": managed,
-                    "collectors": db.is_telemetry_on,
+                    "collectors": "1" if db.is_telemetry_on else "0",
                 },
             }
             for dbnode, (

@@ -415,16 +415,17 @@ class CollectorManager:
                 task.cancel()
 
         logger.debug("CollectorManager shutting down collectors...")
-        shutdown_tasks = [
-            asyncio.create_task(item.shutdown()) for item in self.all_collectors
-        ]
-        await asyncio.wait(shutdown_tasks)
+        if list(self.all_collectors):
+            shutdown_tasks = [
+                asyncio.create_task(item.shutdown()) for item in self.all_collectors
+            ]
+            await asyncio.wait(shutdown_tasks)
         logger.debug("Collector shutdown complete...")
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
-        if entity.is_db:  # and entity.config.get("collectors", False):
-            if not entity.config.get("collectors", False):
+        if entity.is_db:
+            if not int(entity.config.get("collectors", "0")):
                 logger.debug(f"collectors disabled for db {entity.name}")
                 return []
 
@@ -494,7 +495,7 @@ def _hydrate_persistable(
 
     if entity.is_db:
         # db shards are hydrated individually
-        entity.config["collectors"] = str(metadata.get("collectors", False))
+        entity.config["collectors"] = str(metadata.get("collectors", "0"))
         entity.config["host"] = persistable_entity.get("hostname", "NO-DB-HOSTNAME")
         entity.config["port"] = persistable_entity.get("port", "NO-DB-PORT")
 
@@ -768,8 +769,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
                 self._tracked_jobs[entity.key] = entity
 
-                collectors = CollectorManager.find_collectors(entity)
-                self._collector.add_all(collectors)
+                if int(entity.config.get("collectors", "0")):
+                    collectors = CollectorManager.find_collectors(entity)
+                    self._collector.add_all(collectors)
 
                 track_event(
                     run.timestamp,
