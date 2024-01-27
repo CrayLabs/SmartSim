@@ -762,7 +762,12 @@ class _WebZip(_ExtractableWebArchive):
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
 
-def choose_PT_variant(os_, device, arch, version):
+def choose_PT_variant(
+    os_: OperatingSystem,
+    device: TDeviceStr,
+    arch: Architecture,
+    version: str
+) -> _PTArchive_Linux | _PTArchive_MacOSX:
     if os_ == OperatingSystem.DARWIN:
         return _PTArchive_MacOSX(os_, device, arch, version)
     elif os_ == OperatingSystem.LINUX:
