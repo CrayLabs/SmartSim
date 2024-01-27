@@ -762,14 +762,13 @@ class _WebZip(_ExtractableWebArchive):
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
 
-def choose_pt_variant(os_, device, arch, version):
+def choose_PT_variant(os_, device, arch, version):
     if os_ == OperatingSystem.DARWIN:
-        variant = _PTArchive_MacOSX
+        return _PTArchive_MacOSX(os_, device, arch, version)
     elif os_ == OperatingSystem.LINUX:
-        variant = _PTArchive_Linux
+        return _PTArchive_Linux(os_, device, arch, version)
     else:
-        BuildError(f"Unsupported OS for pyTorch: {os}")
-    return variant(*args)
+        raise BuildError(f"Unsupported OS for pyTorch: {os_}")
 
 
 @dataclass(frozen=True)
@@ -792,7 +791,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 
 
 @t.final
-class _PTArchive_Linux(_PTArchiveBase):
+class _PTArchive_Linux(_PTArchive):
     @property
     def url(self) -> str:
         if self.device == "gpu":
@@ -801,26 +800,23 @@ class _PTArchive_Linux(_PTArchiveBase):
             pt_build = "cpu"
         # pylint: disable-next=line-too-long
         libtorch_archive= f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
-        else:
-            raise BuildError(f"Unexpected OS for the PT Archive Linux: {self.os_}")
         return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
 
 
 @t.final
-class _PTArchive_MacOSX(_PTArchiveBase):
+class _PTArchive_MacOSX(_PTArchive):
     @property
     def url(self) -> str:
         if self.device == "gpu":
-            raise BuildError("RedisAI does not currently support GPU on Macos")
-
-        pt_build = "cpu"
+            raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
             libtorch_archive= f"libtorch-macos-{self.version}.zip"
             return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
         elif self.architecture == Architecture.ARM64:
-            libtorch_archive = f"libtorch-macos-{self.architecture}-{self.version}.tgz"
+            libtorch_archive = f"libtorch-macos-arm64-{self.version}.zip"
             root_url = "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
-            return f"{root_url}/{libtorch_archive}"
+            out = f"{root_url}/{libtorch_archive}"
+            return out
 
 
 @t.final

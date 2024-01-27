@@ -34,10 +34,12 @@ import time
 import pytest
 
 import smartsim._core._install.builder as build
+from smartsim._core._install.buildenv import RedisAIVersion
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+RAI_versions = RedisAIVersion("1.2.7")
 
 for_each_device = pytest.mark.parametrize("device", ["cpu", "gpu"])
 
@@ -205,3 +207,52 @@ def test_threaded_map_returns_early_if_nothing_to_map():
     build._threaded_map(_some_long_io_op, [])
     end = time.time()
     assert end - start < sleep_duration
+
+def test_correct_pt_variant_os():
+    # Check that all Linux variants return Linux
+    for linux_variant in build.OperatingSystem.LINUX.value:
+        os_ = build.OperatingSystem.from_str(linux_variant)
+        assert isinstance(
+            build.choose_PT_variant(os_, "x86_64", "cpu", RAI_versions.torch),
+            build._PTArchive_Linux
+        )
+    # Check that ARM64 and X86_64 Mac OSX return the Mac variant
+    all_archs = (build.Architecture.ARM64, build.Architecture.X64)
+    for arch in all_archs:
+        os_ = build.OperatingSystem.DARWIN
+        assert isinstance(
+            build.choose_PT_variant(os_, arch, "cpu", RAI_versions.torch),
+            build._PTArchive_MacOSX
+        )
+
+def test_PTArchive_MacOSX_url():
+    os_ = build.OperatingSystem.DARWIN
+    arch = build.Architecture.X64
+    pt_version = RAI_versions.torch
+
+    pt_linux_cpu = build._PTArchive_Linux(
+        os_,
+        build.Architecture.X64,
+        "cpu",
+        pt_version
+    )
+    x64_prefix = "https://download.pytorch.org/libtorch/"
+    assert x64_prefix in pt_linux_cpu.url
+
+    pt_macosx_cpu = build._PTArchive_MacOSX(
+        os_,
+        build.Architecture.ARM64,
+        "cpu",
+        pt_version
+    )
+    arm64_prefix = "https://github.com/CrayLabs/ml_lib_builder/releases/download/"
+    assert arm64_prefix in pt_macosx_cpu.url
+
+def test_PTArchive_MacOSX_gpu_error():
+    with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
+        build._PTArchive_MacOSX(
+            build.OperatingSystem.DARWIN,
+            build.Architecture.ARM64,
+            "gpu",
+            RAI_versions.torch
+        ).url
