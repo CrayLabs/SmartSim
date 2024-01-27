@@ -25,12 +25,14 @@
                 {{ model.path }}
             {%- endif -%}
             {%- if model.files.copy %}
-            Copy files: {{ model.files.copy[0] }} ->
-            {{ model.path }}
+            Copy files: 
+                {{ model.files.copy[0] }} ->
+                {{ model.path }}
             {%- endif %}
             {%- if model.files.link %}
-            Symlink: {{ model.files.link[0] }} ->
-            {{ model.path }}
+            Symlink: 
+                {{ model.files.link[0] }} ->
+                {{ model.path }}
             {%- endif %}
             {%- endif %}
             {%- if model.run_settings.colocated_db_settings %}

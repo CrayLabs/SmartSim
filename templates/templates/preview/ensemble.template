@@ -12,5 +12,7 @@
         {%- endfor %}
         {% endfor -%}
         {%- set model = ensemble.models[0] -%}
+        {% if manifest.dbs or model.run_settings.colocated_db_settings %}
         {%- include "preview/clientconfig.template" %}
+        {% endif %}
         =
