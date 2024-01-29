@@ -23,15 +23,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pytest
-
-from smartsim._core import Manifest
-from smartsim.settings import RunSettings
-from smartsim import Experiment
-from smartsim._core import previewrenderer
-from smartsim._core.config import CONFIG
 import pathlib
 from os import path as osp
+
+import pytest
+
+from smartsim import Experiment
+from smartsim._core import Manifest, previewrenderer
+from smartsim._core.config import CONFIG
+from smartsim.settings import RunSettings
 
 
 @pytest.fixture
@@ -42,6 +42,7 @@ def choose_host():
             return hosts[index]
         else:
             return None
+
     return _choose_host
 
 
@@ -135,7 +136,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
-    
+
     # Execute preview method
     rendered_preview = previewrenderer.render(exp, preview_manifest)
 
@@ -159,31 +160,35 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
 
-def test_model_with_tagged_files(fileutils, test_dir,wlmutils):
+def test_model_with_tagged_files(fileutils, test_dir, wlmutils):
     """
     Test multiple models and tagged files for Model configuration in preview.
     """
     # Prepare entities
     exp_name = "test_model_preview_parameters"
     test_launcher = wlmutils.get_test_launcher()
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)    
-    
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
     model_params = {"port": 6379, "password": "unbreakable_password"}
     model_settings = RunSettings("bash", "multi_tags_template.sh")
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-    
-    hello_world_model = exp.create_model("echo-hello", run_settings=model_settings, params=model_params)
+
+    hello_world_model = exp.create_model(
+        "echo-hello", run_settings=model_settings, params=model_params
+    )
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-    
-    config = fileutils.get_test_conf_path(osp.join("generator_files", "multi_tags_template.sh"))
+
+    config = fileutils.get_test_conf_path(
+        osp.join("generator_files", "multi_tags_template.sh")
+    )
     hello_world_model.attach_generator_files(to_configure=[config])
     exp.generate(hello_world_model, overwrite=True)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
-    
+
     # Execute preview method
     rendered_preview = previewrenderer.render(exp, preview_manifest)
-    
+
     # Evaluate output for hello_world_model
     assert "Model name" in rendered_preview
     assert "Executable" in rendered_preview
@@ -201,7 +206,7 @@ def test_model_with_tagged_files(fileutils, test_dir,wlmutils):
     assert "6379" in rendered_preview
     assert "unbreakable_password" in rendered_preview
     assert "generator_files/multi_tags_template.sh" in rendered_preview
-    
+
     assert "echo-hello" == hello_world_model.name
     assert "/usr/bin/bash" == hello_world_model.run_settings.exe[0]
     assert "multi_tags_template.sh" == hello_world_model.run_settings.exe_args[0]
