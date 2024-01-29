@@ -43,6 +43,7 @@ import pytest
 import smartsim
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
+from smartsim._core.config.config import Config
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SSConfigError
@@ -679,14 +680,14 @@ class ColoUtils:
 
 
 @pytest.fixture
-def config() -> smartsim._core.config.Config:
+def config() -> Config:
     return CONFIG
 
 
 class MockSink:
     """Telemetry sink that writes console output for testing purposes"""
 
-    def __init__(self, delay_ms: int = 0):
+    def __init__(self, delay_ms: int = 0) -> None:
         self._delay_ms = delay_ms
 
     async def save(self, **kwargs: t.Any) -> None:
@@ -704,10 +705,10 @@ def mock_sink() -> t.Type[MockSink]:
 
 
 @pytest.fixture
-def mock_con():
+def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
     """Generates mock db connection telemetry"""
 
-    def _mock_con(min=1, max=1000):
+    def _mock_con(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
         i = min
         while True:
             yield [
@@ -722,10 +723,10 @@ def mock_con():
 
 
 @pytest.fixture
-def mock_mem():
+def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
     """Generates mock db memory usage telemetry"""
 
-    def _mock_mem(min=1, max=1000):
+    def _mock_mem(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
         i = min
         while True:
             yield {
@@ -741,7 +742,7 @@ def mock_mem():
 
 
 @pytest.fixture
-def mock_redis():
+def mock_redis() -> t.Callable[[t.Any], t.Any]:
     def _mock_redis(
         is_conn: bool = True,
         conn_side_effect=None,
