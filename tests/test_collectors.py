@@ -32,6 +32,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
     DbMemoryCollector,
     JobEntity,
+    Sink
 )
 from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
 
@@ -184,7 +185,16 @@ async def test_dbconncollector_collect(
 
         stats = collector.value
 
-        assert set(["127.0.0.1:1234", "127.0.0.1:2345"]) == set(stats)
+        idx = 1
+        id0, ip0 = f"ABC{idx}", f"127.0.0.{idx}:1234"
+        id1, ip1 = f"XYZ{idx}", f"127.0.0.{idx}:2345"
+        exp_clients = [{"id": id0, "addr": ip0}, {"id": id1, "addr": ip1}]
+
+        assert len(exp_clients) == len(stats)
+        assert id0 in set(client["id"] for client in exp_clients)
+        assert id1 in set(client["id"] for client in exp_clients)
+        assert ip0 in set(client["addr"] for client in exp_clients)
+        assert ip1 in set(client["addr"] for client in exp_clients)
 
 
 @pytest.mark.asyncio

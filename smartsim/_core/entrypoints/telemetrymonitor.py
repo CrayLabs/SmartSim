@@ -275,7 +275,7 @@ class DbConnectionCollector(DbCollector):
 
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save(col0="timestamp", col1="address")
+        await self._sink.save(col0="timestamp", col1="client_id", col2="address")
 
     async def collect(self) -> None:
         await self.prepare()
@@ -286,12 +286,13 @@ class DbConnectionCollector(DbCollector):
         now_ts = self.timestamp()  # ensure all results have the same timestamp
 
         try:
-            client_list = await self._client.client_list()
+            clients = await self._client.client_list()
 
-            self._value = [item["addr"] for item in client_list]
+            self._value = [{"addr": item["addr"], "id": item["id"]} for item in clients]
 
-            for address in self._value:
-                await self._sink.save(timestamp=now_ts, address=address)
+            for client_info in self._value:
+                _id, _ip = client_info["id"], client_info["addr"]
+                await self._sink.save(timestamp=now_ts, client_id=_id, address=_ip)
         except Exception as ex:
             logger.warning("collect failed for DbMemoryCollector", exc_info=ex)
 

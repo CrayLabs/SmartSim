@@ -710,7 +710,10 @@ def mock_con():
     def _mock_con(min=1, max=1000):
         i = min
         while True:
-            yield [{"addr": f"127.0.0.{i}:1234"}, {"addr": f"127.0.0.{i}:2345"}]
+            yield [
+                {"addr": f"127.0.0.{i}:1234", "id": "ABC{i}"},
+                {"addr": f"127.0.0.{i}:2345", "id": "XYZ{i}"},
+            ]
             i += 1
             if i > max:
                 return None
