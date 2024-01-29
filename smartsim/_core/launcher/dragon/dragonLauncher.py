@@ -39,15 +39,15 @@ import zmq
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import DragonRunSettings, SettingsBase
+from ....settings import DragonRunSettings, RunSettings, SettingsBase
 from ....status import STATUS_CANCELLED
 from ...schemas import (
+    DragonBootstrapRequest,
+    DragonBootstrapResponse,
     DragonHandshakeRequest,
     DragonHandshakeResponse,
     DragonRequest,
     DragonRunResponse,
-    DragonBootstrapRequest,
-    DragonBootstrapResponse,
     DragonStopRequest,
     DragonStopResponse,
     DragonUpdateStatusRequest,
@@ -74,15 +74,17 @@ class DragonLauncher(WLMLauncher):
 
     def __init__(self) -> None:
         super().__init__()
-        self.context = zmq.Context()
+        self._context = zmq.Context()
 
-        self.context.setsockopt(zmq.SNDTIMEO, value=10000)
-        self.context.setsockopt(zmq.RCVTIMEO, value=10000)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
+
+    @property
+    def is_connected(self):
+        return self._dragon_head_socket is not None
 
     def _handsake(self, address: str) -> None:
 
-        self._dragon_head_socket = self.context.socket(zmq.REQ)
+        self._dragon_head_socket = self._context.socket(zmq.REQ)
         self._dragon_head_socket.connect(address)
         request = DragonHandshakeRequest()
         try:
@@ -96,22 +98,22 @@ class DragonLauncher(WLMLauncher):
             logger.debug(e)
             self._dragon_head_socket.close()
             self._dragon_head_socket = None
-            logger.debug(
+            raise LauncherError(
                 f"Unsuccessful handshake with Dragon server at address {address}"
-            )
+            ) from e
 
-            self.context.setsockopt(zmq.SNDTIMEO, value=-1)
-            self.context.setsockopt(zmq.RCVTIMEO, value=-1)
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
-        if self._dragon_head_socket is not None:
+        if self.is_connected:
             return
 
-        dragon_path = os.path.join(path, ".smartsim", "dragon")
-        dragon_config_log = os.path.join(dragon_path, "dragon_config.log")
+        dragon_config_log = os.path.join(path, "dragon_config.log")
 
         if Path.is_file(Path(dragon_config_log)):
+
+            self._context.setsockopt(zmq.SNDTIMEO, value=10000)
+            self._context.setsockopt(zmq.RCVTIMEO, value=10000)
             dragon_confs = DragonLauncher._parse_launched_dragon_server_info_from_files(
                 [dragon_config_log]
             )
@@ -122,11 +124,17 @@ class DragonLauncher(WLMLauncher):
                 msg = "Found dragon server configuration logfile. "
                 msg += f"Checking if the server is still up at address {dragon_conf['address']}."
                 logger.debug(msg)
-                self._handsake(dragon_conf["address"])
-                if self._dragon_head_socket is not None:
+                try:
+                    self._handsake(dragon_conf["address"])
+                except LauncherError as e:
+                    logger.warning(e)
+                finally:
+                    self._context.setsockopt(zmq.SNDTIMEO, value=-1)
+                    self._context.setsockopt(zmq.RCVTIMEO, value=-1)
+                if self.is_connected:
                     return
 
-        os.makedirs(dragon_path, exist_ok=True)
+        os.makedirs(path, exist_ok=True)
 
         cmd = [
             "dragon",
@@ -137,15 +145,15 @@ class DragonLauncher(WLMLauncher):
 
         _, address = get_best_interface_and_address()
         if address is not None:
-            launcher_socket = self.context.socket(zmq.REP)
+            launcher_socket = self._context.socket(zmq.REP)
             # TODO find first available port >= 5995
             socket_addr = f"tcp://{address}:5995"
             logger.debug(f"Binding launcher to {socket_addr}")
             launcher_socket.bind(socket_addr)
             cmd += ["+launching_address", socket_addr]
 
-        dragon_out_file = os.path.join(dragon_path, "dragon_head.out")
-        dragon_err_file = os.path.join(dragon_path, "dragon_head.err")
+        dragon_out_file = os.path.join(path, "dragon_head.out")
+        dragon_err_file = os.path.join(path, "dragon_head.err")
 
         with open(dragon_out_file, "w") as dragon_out, open(
             dragon_err_file, "w"
@@ -157,7 +165,7 @@ class DragonLauncher(WLMLauncher):
                 bufsize=0,
                 stderr=dragon_err.fileno(),
                 stdout=dragon_out.fileno(),
-                cwd=dragon_path,
+                cwd=path,
                 shell=False,
                 env=current_env,
                 start_new_session=True,
@@ -167,7 +175,7 @@ class DragonLauncher(WLMLauncher):
             logger.debug(f"Listening to {socket_addr}")
             dragon_address_request = DragonBootstrapRequest.model_validate(
                 json.loads(t.cast(str, launcher_socket.recv_json()))
-                )
+            )
             dragon_head_address = dragon_address_request.address
             logger.debug(f"Connecting launcher to {dragon_head_address}")
             launcher_socket.send_json(DragonBootstrapResponse().model_dump_json())
@@ -181,7 +189,7 @@ class DragonLauncher(WLMLauncher):
     @property
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
-        return {DragonRunSettings: DragonStep}
+        return {DragonRunSettings: DragonStep, RunSettings: DragonStep}
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
@@ -270,7 +278,9 @@ class DragonLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def _send_request_as_json(self, request: DragonRequest, flags: int = 0) -> t.Mapping[str, t.Any]:
+    def _send_request_as_json(
+        self, request: DragonRequest, flags: int = 0
+    ) -> t.Mapping[str, t.Any]:
         if self._dragon_head_socket is None:
             raise LauncherError("Launcher is not connected to Dragon")
         req_json = request.model_dump_json()

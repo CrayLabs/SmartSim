@@ -60,6 +60,7 @@ from ..wlm import detect_launcher
 logger = get_logger(__name__)
 
 by_launcher: t.Dict[str, t.List[str]] = {
+    "dragon": [""],
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
     "pals": ["mpiexec"],
@@ -71,7 +72,7 @@ by_launcher: t.Dict[str, t.List[str]] = {
 def _detect_command(launcher: str) -> str:
     if launcher in by_launcher:
         for cmd in by_launcher[launcher]:
-            if launcher == "local":
+            if launcher in ["local", "dragon"]:
                 return cmd
             if is_valid_cmd(cmd):
                 return cmd
@@ -105,9 +106,14 @@ def _check_run_command(launcher: str, run_command: str) -> None:
         raise SmartSimError(msg)
 
 
-def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
+def _get_single_command(
+    run_command: str, launcher: str, batch: bool, single_cmd: bool
+) -> bool:
     if not single_cmd:
         return single_cmd
+
+    if launcher == "dragon":
+        return False
 
     if run_command == "srun" and getenv("SLURM_HET_SIZE") is not None:
         msg = (
@@ -186,7 +192,9 @@ class Orchestrator(EntityList[DBNode]):
         self.launcher, self.run_command = _autodetect(launcher, run_command)
         _check_run_command(self.launcher, self.run_command)
         _check_local_constraints(self.launcher, batch)
-        single_cmd = _get_single_command(self.run_command, batch, single_cmd)
+        single_cmd = _get_single_command(
+            self.run_command, self.launcher, batch, single_cmd
+        )
         self.ports: t.List[int] = []
         self._hosts: t.List[str] = []
         self._user_hostlist: t.List[str] = []

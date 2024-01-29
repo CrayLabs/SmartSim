@@ -28,17 +28,19 @@ import argparse
 import json
 import os
 import signal
+import sys
 import textwrap
 import time
 import typing as t
-from pydantic import ValidationError
-import zmq
-
 from subprocess import PIPE, STDOUT
+from types import FrameType
+
+import zmq
+from pydantic import ValidationError
+
+from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
 from smartsim._core.utils.network import get_best_interface_and_address
-from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
-from types import FrameType
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
@@ -47,7 +49,10 @@ SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     if not signo:
         print("Received signal with no signo")
+    else:
+        print(f"Received {signo}")
     cleanup()
+
 
 context = zmq.Context()
 
@@ -58,9 +63,7 @@ Redis/KeyDB entrypoint script
 DBPID: t.Optional[int] = None
 
 
-def print_summary(
-    network_interface: str, ip_address: str
-) -> None:
+def print_summary(network_interface: str, ip_address: str) -> None:
 
     zmq_config = {"interface": network_interface, "address": ip_address}
 
@@ -78,6 +81,7 @@ def print_summary(
                 """),
         )
 
+
 def run(dragon_head_address: str) -> None:
     print(f"Opening socket {dragon_head_address}")
     dragon_head_socket = context.socket(zmq.REP)
@@ -93,6 +97,7 @@ def run(dragon_head_address: str) -> None:
         resp = dragon_backend.process_request(json_req)
         print(resp.model_dump_json(), flush=True)
         dragon_head_socket.send_json(resp.model_dump_json())
+
 
 def main(args: argparse.Namespace) -> int:
 
@@ -116,13 +121,16 @@ def main(args: argparse.Namespace) -> int:
         try:
             DragonBootstrapResponse.model_validate_json(message)
         except ValidationError as e:
-            raise ValueError("Could not receive connection confirmation from launcher. Aborting.") from e
+            raise ValueError(
+                "Could not receive connection confirmation from launcher. Aborting."
+            ) from e
 
     print_summary(interface, dragon_head_address)
 
     run(dragon_head_address=dragon_head_address)
 
     return 0
+
 
 def cleanup() -> None:
     print("Cleaning up", flush=True)
@@ -135,13 +143,17 @@ if __name__ == "__main__":
         prefix_chars="+", description="SmartSim Dragon Head Process"
     )
     parser.add_argument(
-        "+launching_address", type=str, help="Address of launching process if a ZMQ connection can be established", required=False
+        "+launching_address",
+        type=str,
+        help="Address of launching process if a ZMQ connection can be established",
+        required=False,
     )
     parser.add_argument(
         "+interface", type=str, help="Network Interface name", required=False
     )
     args_ = parser.parse_args()
 
+    print(args_)
 
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop

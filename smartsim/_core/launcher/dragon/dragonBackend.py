@@ -24,30 +24,28 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import typing as t
 
+from dragon.native.process import Popen, Process
+
+from smartsim._core.schemas import (
+    DragonHandshakeRequest,
+    DragonHandshakeResponse,
+    DragonRequest,
+    DragonResponse,
+    DragonRunRequest,
+    DragonRunResponse,
+    DragonStopRequest,
+    DragonStopResponse,
+    DragonUpdateStatusRequest,
+    DragonUpdateStatusResponse,
+)
 from smartsim.status import (
-    STATUS_RUNNING,
     STATUS_COMPLETED,
     STATUS_FAILED,
     STATUS_NEVER_STARTED,
-)
-from dragon.native.process import Process
-
-
-from smartsim._core.schemas import (
-    DragonRequest,
-    DragonRunRequest,
-    DragonStopRequest,
-    DragonUpdateStatusRequest,
-    DragonHandshakeRequest,
-)
-from smartsim._core.schemas import (
-    DragonResponse,
-    DragonRunResponse,
-    DragonStopResponse,
-    DragonUpdateStatusResponse,
-    DragonHandshakeResponse,
+    STATUS_RUNNING,
 )
 
 
@@ -81,16 +79,22 @@ class DragonBackend:
     def run(self, request: DragonRunRequest) -> DragonRunResponse:
         run_request = DragonRunRequest.model_validate(request)
 
-        run_args = (
-            tuple(run_request.exe_args) if run_request.exe_args is not None else None
-        )
+        exe = run_request.exe[0]
+        if len(run_request.exe) > 1:
+            exe_tail = run_request.exe[1:]
+        else:
+            exe_tail = []
+
+        run_args = run_request.exe_args if run_request.exe_args is not None else []
+        exe_args = tuple(exe_tail + run_args)
+
         proc = Process(
-            target=" ".join(run_request.exe),
-            args=run_args,
+            target=exe,
+            args=exe_args,
             cwd=run_request.path,
             env=run_request.env,
-            stdout=run_request.output_file,
-            stderr=run_request.error_file,
+            stdout=Popen.PIPE,
+            stderr=Popen.PIPE,
         )
         proc.start()
         self.procs[str(proc.puid)] = proc

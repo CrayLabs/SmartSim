@@ -147,7 +147,6 @@ class Experiment:
 
         self._control = Controller(launcher=self._launcher)
 
-
         self.db_identifiers: t.Set[str] = set()
 
     @_contextualize
@@ -208,7 +207,6 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
-
 
         start_manifest = Manifest(*args)
         try:

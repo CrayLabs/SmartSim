@@ -27,10 +27,12 @@
 # mypy: disable-error-code="valid-type"
 import typing as t
 
-from pydantic import BaseModel, constr, PositiveInt
+from pydantic import BaseModel, PositiveInt, constr
+
 
 class DragonRequest(BaseModel):
     request_type: constr(min_length=1)
+
 
 class DragonRunRequest(DragonRequest):
     request_type: constr(min_length=1) = "run"
@@ -43,16 +45,20 @@ class DragonRunRequest(DragonRequest):
     env: t.Dict[str, t.Optional[str]]
     name: t.Optional[constr(min_length=1)]
 
+
 class DragonUpdateStatusRequest(DragonRequest):
     request_type: constr(min_length=1) = "update_status"
     step_ids: t.List[constr(min_length=1)]
+
 
 class DragonStopRequest(DragonRequest):
     request_type: constr(min_length=1) = "stop"
     step_id: constr(min_length=1)
 
+
 class DragonHandshakeRequest(DragonRequest):
     request_type: constr(min_length=1) = "handshake"
+
 
 class DragonBootstrapRequest(DragonRequest):
     request_type: constr(min_length=1) = "bootstrap"

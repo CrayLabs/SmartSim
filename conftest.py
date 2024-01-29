@@ -38,6 +38,7 @@ from smartsim.database import Orchestrator
 from smartsim.settings import (
     SrunSettings,
     AprunSettings,
+    DragonRunSettings,
     JsrunSettings,
     MpirunSettings,
     MpiexecSettings,
@@ -101,7 +102,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals"]
+    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals", "dragon"]
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
@@ -246,6 +247,11 @@ class WLMUtils:
             run_args.update(kwargs)
             settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
             return settings
+        if test_launcher == "dragon":
+            run_args = {"nodes": nodes}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="", run_args=run_args)
+            return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
                 run_command = "aprun"
@@ -287,6 +293,11 @@ class WLMUtils:
             run_args = {"nodes": nodes, "ntasks": ntasks, "time": "00:10:00"}
             run_args.update(kwargs)
             return SrunSettings(exe, args, run_args=run_args)
+        if test_launcher == "dragon":
+            run_args = {"nodes": nodes}
+            run_args.update(kwargs)
+            settings = DragonRunSettings(exe, args, run_command="", run_args=run_args)
+            return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
                 run_args = {"pes": ntasks}
@@ -338,6 +349,14 @@ class WLMUtils:
                 hosts=hostlist,
             )
         if test_launcher == "slurm":
+            return Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                interface=test_nic,
+                launcher=test_launcher,
+            )
+        if test_launcher == "dragon":
             return Orchestrator(
                 db_nodes=nodes,
                 port=test_port,

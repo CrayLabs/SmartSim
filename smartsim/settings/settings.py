@@ -155,6 +155,7 @@ def create_run_settings(
         ),
         "orterun": lambda launcher: OrterunSettings,
         "jsrun": lambda launcher: JsrunSettings,
+        "dragon": lambda launcher: DragonRunSettings,
     }
 
     # run commands supported by each launcher
@@ -200,9 +201,6 @@ def create_run_settings(
         return supported[run_command](launcher)(
             exe, exe_args, run_args, env_vars, container=container, **kwargs
         )
-
-    if launcher == "dragon":
-        return DragonRunSettings(exe, exe_args, run_args, env_vars, container=container, **kwargs)
 
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None

@@ -31,25 +31,31 @@ import typing as t
 from pydantic import BaseModel, constr
 
 
-
 class DragonResponse(BaseModel):
     response_type: constr(min_length=1)
     error_message: t.Optional[str] = None
+
 
 class DragonRunResponse(DragonResponse):
     response_type: constr(min_length=1) = "run"
     step_id: constr(min_length=1)
 
+
 class DragonUpdateStatusResponse(DragonResponse):
     response_type: constr(min_length=1) = "status_update"
     # status is a dict: {step_id: (is_alive, returncode)}
-    statuses: t.Mapping[constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[int]]] = {}
+    statuses: t.Mapping[
+        constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[int]]
+    ] = {}
+
 
 class DragonStopResponse(DragonResponse):
     response_type: constr(min_length=1) = "stop"
 
+
 class DragonHandshakeResponse(DragonResponse):
     response_type: constr(min_length=1) = "handshake"
+
 
 class DragonBootstrapResponse(DragonResponse):
     response_type: constr(min_length=1) = "bootstrap"

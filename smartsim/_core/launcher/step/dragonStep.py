@@ -29,10 +29,9 @@ import shlex
 import shutil
 import typing as t
 
-from ...schemas import DragonRunRequest
-
 from ....log import get_logger
 from ....settings import DragonRunSettings, Singularity
+from ...schemas import DragonRunRequest
 from .step import Step
 
 logger = get_logger(__name__)
@@ -88,17 +87,18 @@ class DragonStep(Step):
 
         exe_args = self._get_exe_args_list(rs)
 
-        run_request = DragonRunRequest(exe=exe_cmd,
-                                exe_args=exe_args,
-                                path=self.cwd,
-                                nodes=nodes,
-                                output_file=output,
-                                error_file=error,
-                                env=rs.env_vars,
-                                name=self.name)
+        run_request = DragonRunRequest(
+            exe=exe_cmd,
+            exe_args=exe_args,
+            path=self.cwd,
+            nodes=nodes,
+            output_file=output,
+            error_file=error,
+            env=rs.env_vars,
+            name=self.name,
+        )
 
         return run_request
-
 
     @staticmethod
     def _get_exe_args_list(run_setting: DragonRunSettings) -> t.List[str]:
