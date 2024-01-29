@@ -258,12 +258,11 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-        assert isinstance(unix_socket, str)
-        assert isinstance(socket_permissions, int)
         uds_options: t.Dict[str, t.Union[int, str]] = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
-            "port": 0,  # 0 as recommended by redis for UDS
+            # This is hardcoded to 0 as recommended by redis for UDS
+            "port": 0,
         }
 
         common_options = {
@@ -329,12 +328,11 @@ class Model(SmartSimEntity):
             "debug": debug,
             "db_identifier": db_identifier,
         }
-        # test
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Mapping[str, t.Union[int, list[str], str]],
+        connection_options: t.Mapping[str, t.Union[int, t.List[str], str]],
         common_options: t.Dict[
             str,
             t.Union[
@@ -368,12 +366,14 @@ class Model(SmartSimEntity):
             )
 
         # TODO list which db settings can be extras
-        x = t.cast(
+        custom_pinning_ = t.cast(
             t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
             common_options.get("custom_pinning"),
         )
-        e = t.cast(int, common_options.get("cpus"))
-        common_options["custom_pinning"] = self._create_pinning_string(x, e)
+        cpus_ = t.cast(int, common_options.get("cpus"))
+        common_options["custom_pinning"] = self._create_pinning_string(
+            custom_pinning_, cpus_
+        )
 
         colo_db_config: t.Dict[
             str,
@@ -382,10 +382,10 @@ class Model(SmartSimEntity):
                 int,
                 str,
                 None,
-                list[str],
+                t.List[str],
                 t.Iterable[t.Union[int, t.Iterable[int]]],
-                list[DBModel],
-                list[DBScript],
+                t.List[DBModel],
+                t.List[DBScript],
                 t.Dict[str, t.Union[int, None]],
                 t.Dict[str, str],
             ],
