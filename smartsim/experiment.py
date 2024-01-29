@@ -838,33 +838,6 @@ class Experiment:
         else:
             logger.info(rendered_preview)
 
-        # incoming model entitty
-        # models themselves cannot be batch steps. If batch settings are
-        # attached, wrap them in an anonymous batch job step
-
-        #    # models = *args
-        #     print(models)
-
-        #     # make the list of models like they do in manifest
-
-        #     for model in manifest.models:
-        #         model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
-        #         if model.batch_settings:
-        #             anon_entity_list = _AnonymousBatchJob(model)
-        #             batch_step, _ = self._create_batch_job_step(
-        #                 anon_entity_list, model_telem_dir
-        #             )
-        #             manifest_builder.add_model(model, (batch_step.name, batch_step))
-        #             steps.append((batch_step, model))
-        #         else:
-        #             job_step = self._create_job_step(model, model_telem_dir)
-        #             manifest_builder.add_model(model, (job_step.name, job_step))
-        #             steps.append((job_step, model))
-
-        #     # launch steps
-        #     for step, entity in steps:
-        #         self._launch_step(step, entity)
-
     @property
     def launcher(self) -> str:
         return self._launcher

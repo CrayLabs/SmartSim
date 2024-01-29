@@ -32,8 +32,6 @@ from smartsim._core import previewrenderer
 from smartsim._core.config import CONFIG
 import pathlib
 from os import path as osp
-from smartredis import Client
-
 
 
 @pytest.fixture
@@ -48,7 +46,7 @@ def choose_host():
 
 
 def test_experiment_preview(test_dir, wlmutils):
-    """Test correct preview output items for Experiment preview"""
+    """Test correct preview output fields for Experiment preview"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp_name = "test_prefix"
@@ -59,7 +57,6 @@ def test_experiment_preview(test_dir, wlmutils):
 
     # Evaluate output
     summary_lines = output.split("\n")
-    print(summary_lines)
     summary_lines = [item.replace("\t", "").strip() for item in summary_lines[-3:]]
     assert 3 == len(summary_lines)
     summary_dict = dict(row.split(": ") for row in summary_lines)
@@ -104,6 +101,9 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
 
 
 def test_model_preview(test_dir, wlmutils):
+    """
+    Test correct preview output fields for Model preview
+    """
     # Prepare entities
     exp_name = "test_model_preview"
     test_launcher = wlmutils.get_test_launcher()
@@ -116,23 +116,24 @@ def test_model_preview(test_dir, wlmutils):
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
     rendered_preview = previewrenderer.render(exp, preview_manifest)
-    print(rendered_preview)
     assert "Model name" in rendered_preview
     assert "Executable" in rendered_preview
     assert "Executable Arguments" in rendered_preview
+    assert "Batch Launch" in rendered_preview
 
 
 def test_model_preview_properties(test_dir, wlmutils):
+    """
+    Test correct preview output properties for Model preview
+    """
     # Prepare entities
     exp_name = "test_model_preview_parameters"
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-
     hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
     
     # Execute preview method
@@ -158,33 +159,9 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
 
-def test_model_with_tagged_files_jp(fileutils, test_dir):
-    """Test substitution of multiple tagged parameters on same line"""
-    # Prepare entities
-    exp = Experiment("test-multiple-tags", test_dir)
-    model_params = {"port": 6379, "password": "unbreakable_password"}
-    model_settings = RunSettings("bash", "multi_tags_template.sh")
-
-    parameterized_model = exp.create_model(
-        "multi-tags", run_settings=model_settings, params=model_params
-    )
-    config = fileutils.get_test_conf_path(osp.join("generator_files", "multi_tags_template.sh"))
-    parameterized_model.attach_generator_files(to_configure=[config])
-    exp.generate(parameterized_model, overwrite=True)
-    
-    # Execute preview method
-    exp.preview(parameterized_model)
-
-    # Evaluate output
-    #assert "/generator_files/multi_tags_template.sh" == parameterized_model.files.tagged[0] 
-    #assert parameterized_model.files.tagged[0] in parameterized_model
-
-
-
-
 def test_model_with_tagged_files(fileutils, test_dir,wlmutils):
     """
-    Test multiple models and Tagged files for model configuration in preview.
+    Test multiple models and tagged files for Model configuration in preview.
     """
     # Prepare entities
     exp_name = "test_model_preview_parameters"
@@ -206,7 +183,6 @@ def test_model_with_tagged_files(fileutils, test_dir,wlmutils):
     
     # Execute preview method
     rendered_preview = previewrenderer.render(exp, preview_manifest)
-    #print(rendered_preview)
     
     # Evaluate output for hello_world_model
     assert "Model name" in rendered_preview
@@ -236,7 +212,6 @@ def test_model_with_tagged_files(fileutils, test_dir,wlmutils):
     assert "unbreakable_password" in list(hello_world_model.params.items())[1]
     assert "generator_files/multi_tags_template.sh" in hello_world_model.files.tagged[0]
 
-
     # Evaluate output for spam eggs model
     assert "echo-spam" in rendered_preview
     assert "/usr/bin/echo" in rendered_preview
@@ -248,100 +223,33 @@ def test_model_with_tagged_files(fileutils, test_dir,wlmutils):
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
 
-    
-
-def test_incoming(fileutils, test_dir, wlmutils):
-
-    from smartsim import Experiment
-    # Initialize an Experiment with the local launcher
-    # This will be the name of the output directory that holds
-    # the output from our simulation and SmartSim
-    exp = Experiment("surrogate_training", launcher="local")
-    # create an Orchestrator database reference, 
-    # generate its output directory, and launch it locally
-    db = exp.create_database(port=6780, interface="lo")
-    exp.generate(db, overwrite=True)
-    #exp.start(db)
-    #print(f"Database started at address: {db.get_address()}")
-    # set simulation parameters we can pass as executable arguments
-    # Number of simulations to run in each replica
-    steps = 100
-    size = 64
-
-    # create "run settings" for the simulation which define how
-    # the simulation will be executed when passed to Experiment.start()
-    settings = exp.create_run_settings("python",
-                                    exe_args=["fd_sim.py",
-                                                f"--steps={steps}",
-                                                f"--size={size}"],
-                                    env_vars={"OMP_NUM_THREADS": "8"})
-
-    # Create the ensemble reference to our simulation and
-    # attach needed files to be copied, configured, or symlinked into
-    # the ensemble directories at runtime. 
-    ensemble = exp.create_ensemble("fd_simulation", run_settings=settings, replicas=2)
-    ensemble.attach_generator_files(to_copy=[f"{test_dir}/test_output/test_preview/test_incoming/fd_sim.py", f"{test_dir}/test_output/test_preview/test_incoming/steady_state.py"])
-    
-    
-    ensemble.enable_key_prefixing()
-
-    exp.generate(ensemble, overwrite=True)
-    nn_depth = 4
-    epochs = 40
-
-
-
-    ml_settings = exp.create_run_settings("python",
-                                    exe_args=["tf_training.py", 
-                                                f"--depth={nn_depth}", 
-                                                f"--epochs={epochs}", 
-                                                f"--size={size}"],
-                                    env_vars={"OMP_NUM_THREADS": "16"})
-
-    ml_model = exp.create_model("tf_training", ml_settings)
-    ml_model.attach_generator_files(to_copy=[f"{test_dir}tf_training.py", f"{test_dir}/tf_model.py"])
-    for sim in ensemble.entities:
-        ml_model.register_incoming_entity(sim)
-
-    exp.generate(ml_model, overwrite=True)
-
-    exp.preview(db,ml_model,ensemble)
-
-
 def test_model_key_prefixing(fileutils, test_dir, wlmutils):
     """
-    Test key prefixing preview
+    Test preview for enabling key prefixing for a Model
     """
-
-    from smartsim import Experiment
-    exp = Experiment("model_prefix_test", launcher="local")
-    # create an Orchestrator database reference, 
-    # generate its output directory, and launch it locally
+    # Prepare entities
+    exp = Experiment("key_prefix_test", launcher="local")
     db = exp.create_database(port=6780, interface="lo")
     exp.generate(db, overwrite=True)
-
-    # create run settings 
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
- 
-    # Create the ensemble and
-    # attach needed files to be copied, configured, or symlinked into
-    # the ensemble directories at runtime. 
-    ensemble = exp.create_ensemble("fd_simulation", run_settings=rs1, replicas=2)
-    ensemble.attach_generator_files(to_copy=["/lus/cls01029/putko/test/smartsim/tests/fd_sim.py", "/lus/cls01029/putko/test/smartsim/tests/steady_state.py"])
-    ensemble.enable_key_prefixing()
-    exp.generate(ensemble, overwrite=True)
+    model = exp.create_model("model_test", run_settings=rs1)
+    # enable key prefixing on ensemble
+    model.enable_key_prefixing()
+    exp.generate(model, overwrite=True)
 
-    # create run settings
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-    ml_model = exp.create_model("tf_training", rs2)
-    ml_model.attach_generator_files(to_copy=["/lus/cls01029/putko/test/smartsim/tests/tf_training.py", "/lus/cls01029/putko/test/smartsim/tests/tf_model.py"])
-    for sim in ensemble.entities:
-        ml_model.register_incoming_entity(sim)
+    # Run preview render
+    preview_manifest = Manifest(db, model)
+    output = previewrenderer.render(exp, preview_manifest)
 
-    exp.generate(ml_model, overwrite=True)
-
-    exp.preview(db,ml_model,ensemble)
-
+    assert "Client Configuration" in output
+    assert "Database identifier" in output
+    assert "Database backend" in output
+    assert "Type" in output
+    assert "Outgoing key collision prevention (key prefixing)" in output
+    assert "Tensors: On" in output
+    assert "DataSets: On" in output
+    assert "Models/Scripts: Off" in output
+    assert "Aggregation Lists: On" in output
 
 
 def test_output_format_error():

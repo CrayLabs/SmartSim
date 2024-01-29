@@ -129,4 +129,3 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
         filename, "w+", encoding="utf-8"
     )
     coloredlogs.install(stream=stream, logger=logger, level=log_level)
-
