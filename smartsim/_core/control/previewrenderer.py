@@ -28,7 +28,6 @@ import jinja2
 from ...log import get_logger
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
-import logging
 
 logger = get_logger(__name__)
 
@@ -99,11 +98,12 @@ def _check_output_format(output_format: str) -> None:
         raise ValueError("The only valid currently available is html")
 
 
-def _check_verbosity_level(verbosity_level: _VerbosityLevelString) -> str:
+def _check_verbosity_level(
+    verbosity_level: _VerbosityLevelString,
+) -> _VerbosityLevelString:
     """
     Check that the given verbosity level is valid.
     """
-    verbosity_level = t.cast(_VerbosityLevelString, verbosity_level)
 
     if verbosity_level not in ["info", "debug", "developer"]:
         raise ValueError("The only valid verbosity level currently available is info")

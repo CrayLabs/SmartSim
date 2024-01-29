@@ -23,15 +23,16 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import pathlib
+from os import path as osp
+
+import numpy as np
 import pytest
 
-from smartsim._core import Manifest
 from smartsim import Experiment
-from smartsim._core import previewrenderer
-import smartsim._core._cli.utils as _utils
+from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
-import pathlib
-import numpy as np
+from smartsim.settings import RunSettings
 
 
 @pytest.fixture
@@ -47,15 +48,15 @@ def choose_host():
 
 
 def test_experiment_preview(test_dir, wlmutils):
-    """Test correct preview output items for Experiment preview"""
+    """Test correct preview output fields for Experiment preview"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test_experiment_preview"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
     output = previewrenderer.render(exp)
-    print(output)
+
     # Evaluate output
     summary_lines = output.split("\n")
     summary_lines = [item.replace("\t", "").strip() for item in summary_lines[-3:]]
@@ -84,137 +85,6 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 
-def test_ensembles_jp(test_dir, wlmutils):
-    exp_name = "test-exp"
-    test_dir = pathlib.Path(test_dir) / exp_name
-    test_dir.mkdir(parents=True)
-    exp = Experiment(exp_name, exp_path=str(test_dir), launcher="local")
-
-    rs1 = exp.create_run_settings("echo", ["hello", "world"])
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-
-    hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-    hello_ensemble = exp.create_ensemble("echo-ensemble", run_settings=rs1, replicas=3)
-
-    exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
-
-    preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
-    output = previewrenderer.render(exp, preview_manifest)
-
-    # print(spam_eggs_model.run_settings.exe[0])
-    # print(spam_eggs_model.run_settings.exe_args)
-    # for arg in model.run_settings.exe_arg
-
-
-def test_ensembles_params(test_dir, wlmutils):
-    exp = Experiment("Training-Run", launcher="auto")
-
-    # setup ensemble parameter space
-    learning_rate = list(np.linspace(0.01, 0.5))
-    train_params = {"LR": learning_rate}
-
-    # define how each member should run
-    run = exp.create_run_settings(exe="python", exe_args="./train-model.py")
-
-    ensemble = exp.create_ensemble(
-        "Training-Ensemble",
-        params=train_params,
-        params_as_args=["LR"],
-        run_settings=run,
-        perm_strategy="random",
-        n_models=4,
-    )
-    # exp.start(ensemble, summary=True)
-
-    # exp.generate(ensemble)
-
-    # print(ensemble.params.keys())
-
-    for key, value in ensemble.params.items():
-        print(key, value)
-
-    preview_manifest = Manifest(ensemble)
-    output = previewrenderer.render(exp, preview_manifest)
-
-    # logger.info(output)
-
-    # exp.summary()
-
-
-# def test_orchestrator_preview_render(test_dir, wlmutils):
-#     """Test correct preview output properties for Orchestrator preview"""
-#     test_launcher = wlmutils.get_test_launcher()
-#     test_interface = wlmutils.get_test_interface()
-#     test_port = wlmutils.get_test_port()
-
-#     exp_name = "test_experiment_preview_properties"
-#     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
-#     # create regular database
-#     orc = exp.create_database(
-#         port=test_port,
-#         interface=test_interface,
-#         hosts=choose_host(wlmutils),
-#     )
-
-#     preview_manifest = Manifest(orc)
-#     output = previewrenderer.render(exp,preview_manifest)
-
-#     assert "Database identifier" in output
-#     assert "Shards" in output
-#     assert "Network interface" in output
-#     assert "Type" in output
-#     assert "Executable" in output
-#     assert "Batch Launch" in output
-#     assert "Run command" in output
-#     assert "Ntasks" in output
-
-#     db_path = _utils.get_db_path()
-#     if db_path:
-#         db_type, _ = db_path.name.split("-", 1)
-
-#     assert orc.db_identifier in output
-#     assert str(orc.num_shards) in output
-#     assert orc._interfaces[0] in output
-#     assert db_type in output
-#     assert CONFIG.database_exe in output
-#     assert str(orc.batch) in output
-#     assert orc.run_command in output
-#     assert str(orc.db_nodes) in output
-
-
-def test_preview_output_format_html_to_file(test_dir, wlmutils):
-    """Test that an html file is rendered for Experiment preview"""
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_preview_output_format_html"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    filename = "test_preview_output_format_html.html"
-    path = pathlib.Path(test_dir) / filename
-
-    # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
-
-    # Evaluate output
-    assert path.exists()
-    assert path.is_file()
-
-
-def test_model_jp(test_dir, wlmutils):
-    exp_name = "test_model_jp"
-    test_launcher = wlmutils.get_test_launcher()
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    rs1 = exp.create_run_settings("echo", ["hello", "world"])
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-
-    hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-
-    preview_manifest = Manifest(hello_world_model, spam_eggs_model)
-    rendered_preview = previewrenderer.render(exp, preview_manifest)
-
-
 def test_model_preview(test_dir, wlmutils):
     exp_name = "test_model_preview"
     test_launcher = wlmutils.get_test_launcher()
@@ -232,8 +102,8 @@ def test_model_preview(test_dir, wlmutils):
     assert "Executable Arguments" in rendered_preview
 
 
-def test_model_preview_parameters(test_dir, wlmutils):
-    exp_name = "test_model_preview_parameters"
+def test_model_preview_properties(test_dir, wlmutils):
+    exp_name = "test_model_preview_properties"
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
@@ -264,32 +134,176 @@ def test_model_preview_parameters(test_dir, wlmutils):
     assert "spam" == spam_eggs_model.run_settings.exe_args[0]
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
-    # def test_ensemble_preview_render(test_dir, wlmutils):
+
+def test_ensembles_preview(test_dir, wlmutils):
+    """
+    Test ensemble preview fields
+    """
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(
+        "test-ensembles-preview", exp_path=test_dir, launcher=test_launcher
+    )
+
+    # setup ensemble parameter space
+    learning_rate = list(np.linspace(0.01, 0.5))
+    train_params = {"LR": learning_rate}
+
+    # define how each member should run
+    run = exp.create_run_settings(exe="python", exe_args="./train-model.py")
+
+    ensemble = exp.create_ensemble(
+        "Training-Ensemble",
+        params=train_params,
+        params_as_args=["LR"],
+        run_settings=run,
+        perm_strategy="random",
+        n_models=4,
+    )
+
+    preview_manifest = Manifest(ensemble)
+    output = previewrenderer.render(exp, preview_manifest)
+
+    assert "Ensemble name" in output
+    assert "Members" in output
+    assert "Ensemble parameters" in output
 
 
-#     test_launcher = wlmutils.get_test_launcher()
-#     test_interface = wlmutils.get_test_interface()
-#     test_port = wlmutils.get_test_port()
+def test_preview_models_and_ensembles(test_dir, wlmutils):
+    """
+    Test preview of model entity and ensemble with models
+    """
+    exp_name = "test-model-and-ensemble"
+    test_dir = pathlib.Path(test_dir) / exp_name
+    test_dir.mkdir(parents=True)
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=str(test_dir), launcher=test_launcher)
 
-#     exp_name = "test_experiment_preview_properties"
-#     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
 
-#     ens_settings = exp.create_run_settings(exe="sleep", exe_args="3")
-#     ensemble = exp.create_ensemble(
-#         "ensemble-replica", replicas=4, run_settings=ens_settings
-#     )
+    hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
+    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+    hello_ensemble = exp.create_ensemble("echo-ensemble", run_settings=rs1, replicas=3)
 
-#     params = {"tutorial_name": ["Ellie", "John"], "tutorial_parameter": [2, 11]}
-#     ensemble = exp.create_ensemble(
-#         "ensemble", params=params, run_settings=rs, perm_strategy="all_perm"
-#     )
+    exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
 
-#     # to_configure specifies that the files attached should be read and tags should be looked for
-#     config_file = "./output_my_parameter.py"
-#     ensemble.attach_generator_files(to_configure=config_file)
+    preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
+    output = previewrenderer.render(exp, preview_manifest)
 
-#     exp.generate(ensemble, overwrite=True)
-#     exp.start(ensemble)
+    assert "Models" in output
+    assert "echo-hello" in output
+    assert "echo-spam" in output
+
+    assert "Ensembles" in output
+    assert "echo-ensemble_1" in output
+    assert "echo-ensemble_2" in output
+
+
+def test_ensemble_preview_client_configuration(test_dir, wlmutils):
+    """
+    Test client configuration and key prefixing in Ensemble preview
+    """
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment("key_prefix_test", exp_path=test_dir, launcher=test_launcher)
+    # Create Orchestrator
+    db = exp.create_database(port=6780, interface="lo")
+    exp.generate(db, overwrite=True)
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    # Create ensemble
+    ensemble = exp.create_ensemble("fd_simulation", run_settings=rs1, replicas=2)
+    # enable key prefixing on ensemble
+    ensemble.enable_key_prefixing()
+    exp.generate(ensemble, overwrite=True)
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+    # Create model
+    ml_model = exp.create_model("tf_training", rs2)
+
+    for sim in ensemble.entities:
+        ml_model.register_incoming_entity(sim)
+
+    exp.generate(ml_model, overwrite=True)
+    preview_manifest = Manifest(db, ml_model, ensemble)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest)
+
+    assert "Client Configuration" in output
+    assert "Database identifier" in output
+    assert "Database backend" in output
+    assert "Type" in output
+    assert "Outgoing key collision prevention (key prefixing)" in output
+    assert "Tensors: On" in output
+    assert "DataSets: On" in output
+    assert "Models/Scripts: Off" in output
+    assert "Aggregation Lists: On" in output
+
+
+def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
+    """
+    Test the preview of tagged, copy, and symlink files attached
+    to an ensemble
+    """
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment("attached-files-test", exp_path=test_dir, launcher=test_launcher)
+    ensemble = exp.create_ensemble(
+        "dir_test", replicas=1, run_settings=RunSettings("python", exe_args="sleep.py")
+    )
+    ensemble.entities = []
+    params = {"THERMO": [10, 20], "STEPS": [20, 30]}
+    ensemble = exp.create_ensemble(
+        "dir_test",
+        params=params,
+        run_settings=RunSettings("python", exe_args="sleep.py"),
+    )
+    gen_dir = fileutils.get_test_conf_path(osp.join("generator_files", "test_dir"))
+    symlink_dir = fileutils.get_test_conf_path(
+        osp.join("generator_files", "to_symlink_dir")
+    )
+    copy_dir = fileutils.get_test_conf_path(osp.join("generator_files", "to_copy_dir"))
+
+    ensemble.attach_generator_files()
+    ensemble.attach_generator_files(
+        to_configure=[gen_dir, copy_dir], to_copy=copy_dir, to_symlink=symlink_dir
+    )
+    preview_manifest = Manifest(ensemble)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Tagged Files for model configuration" in output
+    assert "Copy files" in output
+    assert "Symlink" in output
+    assert "Ensemble parameters" in output
+    assert "Model parameters" in output
+
+    assert "generator_files/test_dir" in output
+    assert "generator_files/to_copy_dir" in output
+    assert "generator_files/to_symlink_dir" in output
+    assert "/SmartSim" in output
+    for model in ensemble:
+        assert "generator_files/test_dir" in model.files.tagged[0]
+        assert "generator_files/to_copy_dir" in model.files.copy[0]
+        assert "generator_files/to_symlink_dir" in model.files.link[0]
+
+
+def test_preview_output_format_html_to_file(test_dir, wlmutils):
+    """Test that an html file is rendered for Experiment preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp_name = "test_preview_output_format_html"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    filename = "test_preview_output_format_html.html"
+    path = pathlib.Path(test_dir) / filename
+
+    # Execute preview method
+    exp.preview(output_format="html", output_filename=str(path))
+
+    # Evaluate output
+    assert path.exists()
+    assert path.is_file()
 
 
 def test_output_format_error():
