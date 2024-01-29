@@ -169,24 +169,30 @@ def test_launcher_detection(wlmutils, monkeypatch):
     assert exp._launcher == wlmutils.get_test_launcher()
 
 
-# def test_enable_disable_telemetry(monkeypatch, test_dir, config):
-#     # Global telemetry defaults to `on` and can be modified by
-#     # setting the value of env var SMARTSIM_FLAG_TELEMETRY to 0/1
-#     monkeypatch.setattr(os, "environ", {})
-#     exp = Experiment("my-exp", exp_path=test_dir)
-#     exp.telemetry_on()
-#     assert exp.is_telemetry_on
+def test_enable_disable_telemetry(monkeypatch, test_dir, config):
+    # Global telemetry defaults to `on` and can be modified by
+    # setting the value of env var SMARTSIM_FLAG_TELEMETRY to 0/1
+    monkeypatch.setattr(os, "environ", {})
+    exp = Experiment("my-exp", exp_path=test_dir)
+    exp.telemetry.enable()
+    assert exp.telemetry.is_enabled
 
-#     exp.telemetry_off()
-#     assert not exp.is_telemetry_on
+    exp.telemetry.disable()
+    assert not exp.telemetry.is_enabled
 
-#     exp.start()
-#     import pathlib
+    exp.telemetry.enable()
+    assert exp.telemetry.is_enabled
 
-#     mani_path = (
-#         pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
-#     )
-#     assert mani_path.exists()
+    exp.telemetry.disable()
+    assert not exp.telemetry.is_enabled
+    
+    exp.start()
+    import pathlib
+
+    mani_path = (
+        pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
+    )
+    assert mani_path.exists()
 
 
 def test_error_on_cobalt():

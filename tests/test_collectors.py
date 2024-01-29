@@ -32,7 +32,6 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
     DbMemoryCollector,
     JobEntity,
-    Sink
 )
 from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
 

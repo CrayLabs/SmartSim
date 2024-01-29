@@ -138,7 +138,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
         raise SmartSimError(msg)
 
 
-class Orchestrator(EntityList[DBNode], TelemetryProducer):
+class Orchestrator(EntityList[DBNode]):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
     entities by using one of the Python, C, C++ or Fortran clients
@@ -197,6 +197,7 @@ class Orchestrator(EntityList[DBNode], TelemetryProducer):
         self.queue_threads = threads_per_queue
         self.inter_threads = inter_op_threads
         self.intra_threads = intra_op_threads
+        self._telemetry_cfg = TelemetryProducer()
 
         gpus_per_shard: t.Optional[int] = None
         cpus_per_shard: t.Optional[int] = None
@@ -305,6 +306,10 @@ class Orchestrator(EntityList[DBNode], TelemetryProducer):
         if not self._hosts:
             self._hosts = self._get_db_hosts()
         return self._hosts
+
+    @property
+    def telemetry(self) -> TelemetryProducer:
+        return self._telemetry_cfg
 
     def reset_hosts(self) -> None:
         """Clear hosts or reset them to last user choice"""

@@ -33,17 +33,29 @@ if t.TYPE_CHECKING:
 
 class TelemetryProducer:
     def __init__(self) -> None:
+        """Initialize the telemetry producer"""
         self._is_on = False
 
     @property
-    def is_telemetry_on(self) -> bool:
+    def is_enabled(self) -> bool:
+        """Return boolean indicating if telemetry is currently enabled"""
         return self._is_on
 
-    def telemetry_on(self) -> None:
+    def enable(self) -> None:
+        """Enable telemetry for this producer"""
         self._is_on = True
+        self.on_enable()
 
-    def telemetry_off(self) -> None:
+    def disable(self) -> None:
+        """Disable telemetry for this producer"""
         self._is_on = False
+        self.on_disable()
+
+    def on_enable(self) -> None:
+        """Overridable hook called when telemetry is enabled."""
+
+    def on_disable(self) -> None:
+        """Overridable hook called when telemetry is disabled"""
 
 
 class SmartSimEntity:

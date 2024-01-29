@@ -26,7 +26,7 @@
 
 import os.path as osp
 import typing as t
-from os import getcwd
+from os import getcwd, environ
 
 from tabulate import tabulate
 
@@ -35,7 +35,7 @@ from smartsim.error.errors import SSUnsupportedError
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
-from .entity import Ensemble, Model, SmartSimEntity
+from .entity import Ensemble, Model, SmartSimEntity, TelemetryProducer
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import Container, base, settings
@@ -51,6 +51,15 @@ def _exp_path_map(exp: "Experiment") -> str:
 
 
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
+
+
+class ExperimentTelemetry(TelemetryProducer):
+
+    def on_enable(self) -> None:
+        environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
+
+    def on_disable(self) -> None:
+        environ["SMARTSIM_FLAG_TELEMETRY"] = "0"
 
 
 # pylint: disable=no-self-use
@@ -144,6 +153,7 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
+        self._telemetry_cfg = ExperimentTelemetry()
 
     @_contextualize
     def start(
@@ -906,3 +916,7 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
+
+    @property
+    def telemetry(self) -> TelemetryProducer:
+        return self._telemetry_cfg

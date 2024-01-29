@@ -235,15 +235,17 @@ def _dictify_db(
                 "out_file": out_file,
                 "err_file": err_file,
                 "memory_file": (
-                    str(status_dir / "memory.csv") if db.is_telemetry_on else ""
+                    str(status_dir / "memory.csv") if db.telemetry.is_enabled else ""
                 ),
                 "client_file": (
-                    str(status_dir / "client.csv") if db.is_telemetry_on else ""
+                    str(status_dir / "client.csv") if db.telemetry.is_enabled else ""
                 ),
                 "client_count_file": (
-                    str(status_dir / "client_count.csv") if db.is_telemetry_on else ""
+                    str(status_dir / "client_count.csv")
+                    if db.telemetry.is_enabled
+                    else ""
                 ),
-                "collectors": "1" if db.is_telemetry_on else "0",
+                "collectors": "1" if db.telemetry.is_enabled else "0",
                 "telemetry_metadata": {
                     "status_dir": str(status_dir),
                     "step_id": step_id,
