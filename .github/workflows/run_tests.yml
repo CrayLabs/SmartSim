@@ -57,7 +57,7 @@ jobs:
         os: [macos-12, ubuntu-20.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
-        py_v: [3.8, 3.9, '3.10'] # Python versions
+        py_v: ['3.8', '3.9', '3.10', '3.11'] # Python versions
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
@@ -104,10 +104,8 @@ jobs:
       # on developments of the client are brought in.
       - name: Install SmartSim (with ML backends)
         run: |
-
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
           python -m pip install .[dev,ml]
-
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
         run: smart build --device cpu --onnx -v
@@ -119,6 +117,15 @@ jobs:
 
       - name: Run Pylint
         run: make check-lint
+
+      # Run isort/black style check
+      - name: Run isort
+        run: isort --check-only --profile black ./smartsim ./tests
+
+      # Run isort/black style check
+      - name: Run black
+        run: |
+          black --exclude smartsim/version.py --check ./smartsim ./tests
 
       # Run pytest (backends subdirectory)
       - name: Run Pytest
