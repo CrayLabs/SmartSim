@@ -26,7 +26,7 @@
 
 import os.path as osp
 import typing as t
-from os import getcwd, environ
+from os import environ, getcwd
 
 from tabulate import tabulate
 
@@ -54,7 +54,6 @@ _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 
 class ExperimentTelemetry(TelemetryProducer):
-
     def on_enable(self) -> None:
         environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
 

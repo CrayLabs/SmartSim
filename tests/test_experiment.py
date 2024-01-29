@@ -185,7 +185,7 @@ def test_enable_disable_telemetry(monkeypatch, test_dir, config):
 
     exp.telemetry.disable()
     assert not exp.telemetry.is_enabled
-    
+
     exp.start()
     import pathlib
 
