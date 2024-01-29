@@ -10,7 +10,7 @@
       Machine Learning (ML) libraries, like PyTorch and TensorFlow,
       in combination with High Performance Computing (HPC) simulations and applications.
       SmartSim launches ML infrastructure on HPC systems alongside user workloads
-      and supports most HPC workload managers (e.g. Slurm, PBSPro, LSF, Cobalt).
+      and supports most HPC workload managers (e.g. Slurm, PBSPro, LSF).
       SmartSim also provides a set of client libraries in Python, C++, C, and Fortran.
       These client libraries allow users to send and receive data between user
       applications and the machine learning infrastructure.  Moreover, the
@@ -41,7 +41,6 @@
         - Slurm
         - PBSPro
         - LSF
-        - Cobalt
         - Linux/MacOS
       transfer_protocols:
         - TCP/IP

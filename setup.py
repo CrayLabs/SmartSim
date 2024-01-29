@@ -196,6 +196,7 @@ extras_require = {
         "types-tqdm",
         "types-tensorflow==2.12.0.9",
         "types-setuptools",
+        "typing_extensions>=4.1.0",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     **versions.ml_extras_required(),

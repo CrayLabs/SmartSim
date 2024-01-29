@@ -44,7 +44,6 @@ from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
     AprunSettings,
     BsubBatchSettings,
-    CobaltBatchSettings,
     JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
@@ -64,7 +63,6 @@ by_launcher: t.Dict[str, t.List[str]] = {
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
     "pals": ["mpiexec"],
-    "cobalt": ["aprun", "mpirun", "mpiexec"],
     "lsf": ["jsrun"],
     "local": [""],
 }
@@ -389,7 +387,7 @@ class Orchestrator(EntityList[DBNode]):
         :type num_cpus: int
         """
         if self.batch:
-            if self.launcher in ["pbs", "cobalt"]:
+            if self.launcher == "pbs":
                 if hasattr(self, "batch_settings") and self.batch_settings:
                     if hasattr(self.batch_settings, "set_ncpus"):
                         self.batch_settings.set_ncpus(num_cpus)
@@ -937,17 +935,6 @@ class Orchestrator(EntityList[DBNode]):
             "w",
             "chdir",
             "D",
-        ]
-        self._reserved_batch_args[CobaltBatchSettings] = [
-            "cwd",
-            "error",
-            "e",
-            "output",
-            "o",
-            "outputprefix",
-            "N",
-            "l",
-            "jobname",
         ]
         self._reserved_batch_args[QsubBatchSettings] = ["e", "o", "N", "l"]
         self._reserved_run_args[JsrunSettings] = [

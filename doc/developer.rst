@@ -84,14 +84,14 @@ Local
 =====
 
 There are two levels of testing in SmartSim. The first runs by default and does
-not launch any jobs out onto a system through a workload manager like Cobalt.
+not launch any jobs out onto a system through a workload manager like Slurm.
 
 If any of the above commands are used, the test suite will run the "light" test
 suite by default.
 
 
-PBSPro, Slurm, Cobalt, LSF
-==========================
+PBSPro, Slurm, LSF
+==================
 
 To run the full test suite, users will have to be on a system with one of the
 above workload managers. Additionally, users will need to obtain an allocation
@@ -105,9 +105,6 @@ of at least 3 nodes.
   # for PBSPro (with aprun)
   qsub -l select=3 -l place=scatter -l walltime=00:10:00 -q queue
 
-  # for Cobalt (with aprun)
-  qsub -n 3 -t 00:10:00 -A account -q queue -I
-
   # for LSF (with jsrun)
   bsub -Is -W 00:30 -nnodes 3 -P project $SHELL
 
@@ -117,7 +114,6 @@ Once in an iterative allocation, users will need to set the test launcher
 environment variable: ``SMARTSIM_TEST_LAUNCHER`` to one of the following values
 
  - slurm
- - cobalt
  - pbs
  - lsf
  - local
