@@ -762,19 +762,6 @@ class _WebZip(_ExtractableWebArchive):
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
 
-def choose_PT_variant(
-    os_: OperatingSystem,
-    device: TDeviceStr,
-    arch: Architecture,
-    version: str
-) -> _PTArchive_Linux | _PTArchive_MacOSX:
-    if os_ == OperatingSystem.DARWIN:
-        return _PTArchive_MacOSX(os_, device, arch, version)
-    elif os_ == OperatingSystem.LINUX:
-        return _PTArchive_Linux(os_, device, arch, version)
-    else:
-        raise BuildError(f"Unsupported OS for pyTorch: {os_}")
-
 
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
@@ -822,6 +809,20 @@ class _PTArchive_MacOSX(_PTArchive):
             root_url = "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
             out = f"{root_url}/{libtorch_archive}"
             return out
+
+
+def choose_PT_variant(
+    os_: OperatingSystem,
+    device: TDeviceStr,
+    arch: Architecture,
+    version: str
+) -> t.Union[_PTArchive_Linux, _PTArchive_MacOSX]:
+    if os_ == OperatingSystem.DARWIN:
+        return _PTArchive_MacOSX(os_, device, arch, version)
+    elif os_ == OperatingSystem.LINUX:
+        return _PTArchive_Linux(os_, device, arch, version)
+    else:
+        raise BuildError(f"Unsupported OS for pyTorch: {os_}")
 
 
 @t.final
