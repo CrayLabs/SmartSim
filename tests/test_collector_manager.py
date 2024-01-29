@@ -33,6 +33,7 @@ import pytest
 from smartsim._core.entrypoints.telemetrymonitor import (
     CollectorManager,
     DbConnectionCollector,
+    DbConnectionCountCollector,
     DbMemoryCollector,
     FileSink,
     JobEntity,
@@ -287,3 +288,93 @@ async def test_collector_manager_timeout(
             assert timeout_at <= actual_delay < delay_for
         else:
             assert delay_for <= actual_delay < timeout_at
+
+
+@pytest.mark.asyncio
+async def test_collector_manager_find(mock_entity):
+    """Ensure that the manifest allows individually enabling a given collector"""
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    manager = CollectorManager()
+
+    # 0. popping all should result in no collectors mapping to the entity
+    found = manager.find_collectors(entity)
+    assert len(found) == 0
+
+    # 1. ensure DbConnectionCollector is mapped
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity.collectors["client"] = "mock/path.csv"
+    manager = CollectorManager()
+
+    # 2. client count collector should be mapped
+    found = manager.find_collectors(entity)
+    assert len(found) == 1
+    assert isinstance(found[0], DbConnectionCollector)
+
+    # 3. ensure DbConnectionCountCollector is mapped
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity.collectors["client_count"] = "mock/path.csv"
+    manager = CollectorManager()
+
+    # 3. client count collector should be mapped
+    found = manager.find_collectors(entity)
+    assert len(found) == 1
+    assert isinstance(found[0], DbConnectionCountCollector)
+
+    # ensure DbMemoryCollector is mapped
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity.collectors["memory"] = "mock/path.csv"
+    manager = CollectorManager()
+
+    # client count collector should be mapped
+    found = manager.find_collectors(entity)
+    assert len(found) == 1
+    assert isinstance(found[0], DbMemoryCollector)
+
+
+@pytest.mark.asyncio
+async def test_collector_manager_find_entity_disabled(mock_entity):
+    """Ensure that disabling telemetry on the entity results in no collectors"""
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    manager = CollectorManager()
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+
+    # set paths for all known collectors
+    entity.collectors["client"] = "mock/path.csv"
+    entity.collectors["client_count"] = "mock/path.csv"
+    entity.collectors["memory"] = "mock/path.csv"
+
+    manager = CollectorManager()
+
+    # ON behavior should locate multiple collectors
+    entity.telemetry_on = True
+    found = manager.find_collectors(entity)
+    assert len(found) > 0
+
+    # OFF behavior should locate ZERO collectors
+    entity.telemetry_on = False
+    found = manager.find_collectors(entity)
+    assert len(found) == 0
+
+
+@pytest.mark.asyncio
+async def test_collector_manager_find_entity_unmapped(mock_entity):
+    """Ensure that an entity type that is not mapped results in no collectors"""
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="model")
+    manager = CollectorManager()
+
+    # set paths for all known collectors
+    entity.collectors["client"] = "mock/path.csv"
+    entity.collectors["client_count"] = "mock/path.csv"
+    entity.collectors["memory"] = "mock/path.csv"
+
+    manager = CollectorManager()
+
+    # ON behavior should locate ZERO collectors
+    entity.telemetry_on = True
+    found = manager.find_collectors(entity)
+    assert len(found) == 0
+
+    # OFF behavior should locate ZERO collectors
+    entity.telemetry_on = False
+    found = manager.find_collectors(entity)
+    assert len(found) == 0

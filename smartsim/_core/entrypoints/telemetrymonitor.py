@@ -410,17 +410,22 @@ class CollectorManager:
 
     @classmethod
     def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
-        if entity.is_db and entity.telemetry_on:
-            return [
-                DbMemoryCollector(entity, FileSink(entity.collectors["memory"])),
-                DbConnectionCollector(entity, FileSink(entity.collectors["client"])),
-                DbConnectionCountCollector(
-                    entity, FileSink(entity.collectors["client_count"])
-                ),
-            ]
+        """Map from manifest configuration to a set of possible collectors."""
+        collectors: t.List[Collector] = []
 
-        logger.debug(f"collectors disabled for db {entity.name}")
-        return []
+        if entity.is_db and entity.telemetry_on:
+            if mem_out := entity.collectors.get("memory", None):
+                collectors.append(DbMemoryCollector(entity, FileSink(mem_out)))
+
+            if con_out := entity.collectors.get("client", None):
+                collectors.append(DbConnectionCollector(entity, FileSink(con_out)))
+
+            if num_out := entity.collectors.get("client_count", None):
+                collectors.append(DbConnectionCountCollector(entity, FileSink(num_out)))
+        else:
+            logger.debug(f"collectors disabled for db {entity.name}")
+
+        return collectors
 
     @property
     def all_collectors(self) -> t.Iterable[Collector]:
@@ -484,9 +489,9 @@ def _hydrate_persistable(
         if entity.telemetry_on:
             cfg["host"] = persistable_entity.get("hostname", "NOT-SET")
             cfg["port"] = persistable_entity.get("port", "NOT-SET")
-            cfg["client"] = persistable_entity.get("client_file", "NOT-SET")
-            cfg["client_count"] = persistable_entity.get("client_count_file", "NOT-SET")
-            cfg["memory"] = persistable_entity.get("memory_file", "NOT-SET")
+            cfg["client"] = persistable_entity.get("client_file", "")
+            cfg["client_count"] = persistable_entity.get("client_count_file", "")
+            cfg["memory"] = persistable_entity.get("memory_file", "")
 
     return entity
 

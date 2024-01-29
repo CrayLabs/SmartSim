@@ -52,13 +52,7 @@ class JobEntity:
         self.timestamp: int = 0
         self.status_dir: str = ""
         self.telemetry_on: bool = False
-        self.collectors: t.Dict[str, str] = {
-            "memory": "",
-            "client": "",
-            "client_count": "",
-            "host": "",
-            "port": "",
-        }
+        self.collectors: t.Dict[str, str] = {}
 
     @property
     def is_db(self) -> bool:
