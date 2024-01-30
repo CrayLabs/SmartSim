@@ -34,7 +34,6 @@ logger = get_logger(__name__)
 if t.TYPE_CHECKING:
     from smartsim import Experiment
 
-
 _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
