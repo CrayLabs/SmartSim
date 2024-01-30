@@ -37,12 +37,12 @@ class DragonRequest(BaseModel):
 class DragonRunRequest(DragonRequest):
     request_type: constr(min_length=1) = "run"
     exe: t.List[constr(min_length=1)]
-    exe_args: t.Optional[t.List[constr(min_length=1)]]
+    exe_args: t.Optional[t.List[constr(min_length=1)]] = []
     path: constr(min_length=1)
     nodes: PositiveInt = 1
-    output_file: constr(min_length=1)
-    error_file: constr(min_length=1)
-    env: t.Dict[str, t.Optional[str]]
+    output_file: t.Optional[constr(min_length=1)] = None
+    error_file: t.Optional[constr(min_length=1)] = None
+    env: t.Dict[str, t.Optional[str]] = {}
     name: t.Optional[constr(min_length=1)]
 
 

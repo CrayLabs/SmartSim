@@ -34,6 +34,7 @@ import typing as t
 from os import makedirs
 
 from smartsim._core.config import CONFIG
+from smartsim._core.schemas import DragonRunRequest
 from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
 from ....log import get_logger
@@ -132,34 +133,67 @@ def proxyable_launch_cmd(
         if not CONFIG.telemetry_enabled:
             return original_cmd_list
 
-        if self.managed:
-            raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)}"
-                "through the unmanaged step proxy entry point"
-            )
+        from .dragonStep import DragonStep
+        if isinstance(self, DragonStep):
+            proxy_module = "smartsim._core.entrypoints.indirect"
+            etype = self.meta["entity_type"]
+            status_dir = self.meta["status_dir"]
+            run_req = DragonRunRequest.model_validate_json(original_cmd_list[-1])
 
-        proxy_module = "smartsim._core.entrypoints.indirect"
-        etype = self.meta["entity_type"]
-        status_dir = self.meta["status_dir"]
-        encoded_cmd = encode_cmd(original_cmd_list)
+            encoded_cmd = encode_cmd(run_req.exe + run_req.exe_args)
 
-        # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
-        #       serialize step and let the indirect entrypoint rebuild the
-        #       cmd... for now, test away...
-        return [
-            sys.executable,
-            "-m",
-            proxy_module,
-            "+name",
-            self.name,
-            "+command",
-            encoded_cmd,
-            "+entity_type",
-            etype,
-            "+telemetry_dir",
-            status_dir,
-            "+working_dir",
-            self.cwd,
-        ]
+            # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
+            #       serialize step and let the indirect entrypoint rebuild the
+            #       cmd... for now, test away...
+            new_cmd = [
+                sys.executable,
+                "-m",
+                proxy_module,
+                "+name",
+                self.name,
+                "+command",
+                encoded_cmd,
+                "+entity_type",
+                etype,
+                "+telemetry_dir",
+                status_dir,
+                "+working_dir",
+                self.cwd,
+            ]
+            run_req.exe = new_cmd[0:1]
+            run_req.exe_args = new_cmd[1:]
+
+            return [run_req.model_dump_json()]
+
+        else:
+            if self.managed:
+                raise UnproxyableStepError(
+                    f"Attempting to proxy managed step of type {type(self)} "
+                    "through the unmanaged step proxy entry point"
+                )
+
+            proxy_module = "smartsim._core.entrypoints.indirect"
+            etype = self.meta["entity_type"]
+            status_dir = self.meta["status_dir"]
+            encoded_cmd = encode_cmd(original_cmd_list)
+
+            # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
+            #       serialize step and let the indirect entrypoint rebuild the
+            #       cmd... for now, test away...
+            return [
+                sys.executable,
+                "-m",
+                proxy_module,
+                "+name",
+                self.name,
+                "+command",
+                encoded_cmd,
+                "+entity_type",
+                etype,
+                "+telemetry_dir",
+                status_dir,
+                "+working_dir",
+                self.cwd,
+            ]
 
     return _get_launch_cmd

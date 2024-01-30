@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import fileinput
 import itertools
 import json
@@ -31,7 +32,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
 import typing as t
 from pathlib import Path
 
@@ -47,6 +47,7 @@ from ...schemas import (
     DragonHandshakeRequest,
     DragonHandshakeResponse,
     DragonRequest,
+    DragonRunRequest,
     DragonRunResponse,
     DragonStopRequest,
     DragonStopResponse,
@@ -55,8 +56,9 @@ from ...schemas import (
 )
 from ...utils.network import get_best_interface_and_address
 from ..launcher import WLMLauncher
-from ..step import DragonStep, Step
+from ..step import DragonStep, LocalStep, Step
 from ..stepInfo import StepInfo
+from ...config import CONFIG
 
 logger = get_logger(__name__)
 
@@ -75,8 +77,11 @@ class DragonLauncher(WLMLauncher):
     def __init__(self) -> None:
         super().__init__()
         self._context = zmq.Context()
-        self._context.setsockopt(zmq.SNDTIMEO, value=30_000)
-        self._context.setsockopt(zmq.RCVTIMEO, value=30_000)
+        self._timeout = CONFIG.dragon_server_timeout
+        self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
+        self._startup_timeout = CONFIG.dragon_server_startup_timeout
+        self._context.setsockopt(zmq.SNDTIMEO, value=self._timeout)
+        self._context.setsockopt(zmq.RCVTIMEO, value=self._timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
 
     @property
@@ -103,6 +108,11 @@ class DragonLauncher(WLMLauncher):
                 f"Unsuccessful handshake with Dragon server at address {address}"
             ) from e
 
+    def _set_timeout(self, timeout: int) -> None:
+        self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
+        self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
+        return
+
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
@@ -123,9 +133,12 @@ class DragonLauncher(WLMLauncher):
                 msg += f"Checking if the server is still up at address {dragon_conf['address']}."
                 logger.debug(msg)
                 try:
+                    self._set_timeout(self._reconnect_timeout)
                     self._handsake(dragon_conf["address"])
                 except LauncherError as e:
                     logger.warning(e)
+                finally:
+                    self._set_timeout(self._timeout)
                 if self.is_connected:
                     return
 
@@ -140,6 +153,7 @@ class DragonLauncher(WLMLauncher):
 
         _, address = get_best_interface_and_address()
         if address is not None:
+            self._set_timeout(self._startup_timeout)
             launcher_socket = self._context.socket(zmq.REP)
             # TODO find first available port >= 5995
             socket_addr = f"tcp://{address}:5995"
@@ -175,6 +189,7 @@ class DragonLauncher(WLMLauncher):
             logger.debug(f"Connecting launcher to {dragon_head_address}")
             launcher_socket.send_json(DragonBootstrapResponse().model_dump_json())
             launcher_socket.close()
+            self._set_timeout(self._timeout)
             self._handsake(dragon_head_address)
         else:
             # TODO parse output file
@@ -186,6 +201,11 @@ class DragonLauncher(WLMLauncher):
         # RunSettings types supported by this launcher
         return {DragonRunSettings: DragonStep, RunSettings: DragonStep}
 
+    @staticmethod
+    def _unpack_launch_cmd(cmd: t.List[str]) -> DragonRunRequest:
+        req = DragonRunRequest.model_validate_json(cmd[-1])
+        return req
+
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
 
@@ -196,7 +216,8 @@ class DragonLauncher(WLMLauncher):
         :rtype: str
         """
 
-        if self._dragon_head_socket is None:
+        if not self.is_connected:
+            print(self)
             raise LauncherError("Dragon environment not connected")
 
         if not self.task_manager.actively_monitoring:
@@ -206,10 +227,17 @@ class DragonLauncher(WLMLauncher):
         task_id = None
 
         if isinstance(step, DragonStep):
-            req = step.get_launch_request()
-            response = self._send_request_as_json(req)
-            run_response = DragonRunResponse.model_validate(response)
-            step_id = run_response.step_id
+            logger.info("Received DragonStep")
+            req = DragonLauncher._unpack_launch_cmd(step.get_launch_cmd())
+        elif isinstance(step, LocalStep):
+            logger.warning("Received LocalStep")
+            cmd = step.get_launch_cmd()
+            req = DragonRunRequest(exe=cmd[0:1], exe_args=cmd[1:], path=step.cwd, name=step.entity_name)
+
+        response = self._send_request_as_json(req)
+        run_response = DragonRunResponse.model_validate(response)
+        step_id = str(run_response.step_id)
+        task_id = step_id
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -224,7 +252,7 @@ class DragonLauncher(WLMLauncher):
         :rtype: StepInfo
         """
 
-        if self._dragon_head_socket is None:
+        if not self.is_connected:
             raise LauncherError("Launcher is not connected to Dragon.")
 
         stepmap = self.step_mapping[step_name]

@@ -157,6 +157,18 @@ class Config:
         return os.getenv("SMARTSIM_DRAGON_SERVER_PATH")
 
     @property
+    def dragon_server_reconnect_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", 5_000))
+
+    @property
+    def dragon_server_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", 5_000))
+
+    @property
+    def dragon_server_startup_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", -1))
+
+    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 

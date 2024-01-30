@@ -32,7 +32,7 @@ import typing as t
 from ....log import get_logger
 from ....settings import DragonRunSettings, Singularity
 from ...schemas import DragonRunRequest
-from .step import Step
+from .step import Step, proxyable_launch_cmd
 
 logger = get_logger(__name__)
 
@@ -53,11 +53,13 @@ class DragonStep(Step):
         self.managed = True
         self.run_settings = run_settings
 
-    def get_launch_request(self) -> DragonRunRequest:
-        """Get the command to launch this step
+    @proxyable_launch_cmd
+    def get_launch_cmd(self) -> t.List[str]:
+        """Get stringified version of request
+         needed to launch this step
 
-        :return: launch request
-        :rtype: DragonRunRequest
+        :return: launch command
+        :rtype: str
         """
 
         output, error = self.get_output_files()
@@ -98,7 +100,7 @@ class DragonStep(Step):
             name=self.name,
         )
 
-        return run_request
+        return [run_request.model_dump_json()]
 
     @staticmethod
     def _get_exe_args_list(run_setting: DragonRunSettings) -> t.List[str]:
