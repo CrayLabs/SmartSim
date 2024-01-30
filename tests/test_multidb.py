@@ -227,7 +227,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    with make_entity_context(exp, orc), make_entity_context(exp, orc2):
+    with make_entity_context(exp, orc2), make_entity_context(exp, orc):
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(orc2)

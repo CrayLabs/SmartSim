@@ -114,8 +114,10 @@ def main(args: argparse.Namespace) -> int:
     ]
 
     # Prevent redirection of stdout and stderr
-    with open(shard_data.name + ".out", "w") as sys.stdout, open(
-        shard_data.name + ".err", "w"
+    with (
+        open(shard_data.name + ".out", "w") if args.redirect_output else sys.stdout
+    ) as sys.stdout, (
+        open(shard_data.name + ".err", "w") if args.redirect_output else sys.stderr
     ) as sys.stderr:
         print_summary(cmd, args.ifname, shard_data)
 
@@ -184,6 +186,11 @@ if __name__ == "__main__":
         "+cluster",
         action="store_true",
         help="Specify if this orchestrator shard is part of a cluster",
+    )
+    parser.add_argument(
+        "+redirect_output",
+        action="store_true",
+        help="Specify if stdout and stder of this script should be redirected. Only needed for dragon launcher.",
     )
     args_ = parser.parse_args()
 
