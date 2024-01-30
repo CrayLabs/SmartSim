@@ -53,6 +53,7 @@ class JobEntity:
         self.status_dir: str = ""
         self.telemetry_on: bool = False
         self.collectors: t.Dict[str, str] = {}
+        self.config: t.Dict[str, str] = {}
 
     @property
     def is_db(self) -> bool:

@@ -55,11 +55,13 @@ def mock_entity(test_dir):
         entity.type = type
         entity.telemetry_on = True
         entity.collectors = {
-            "host": host,
-            "port": port,
             "client": "",
             "client_count": "",
             "memory": "",
+        }
+        entity.config = {
+            "host": host,
+            "port": port,
         }
         return entity
 

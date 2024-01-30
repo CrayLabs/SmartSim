@@ -50,11 +50,13 @@ def mock_entity(test_dir):
         entity.type = type
         entity.telemetry_on = True
         entity.collectors = {
-            "host": host,
-            "port": port,
             "client": "",
             "client_count": "",
             "memory": "",
+        }
+        entity.config = {
+            "host": host,
+            "port": port,
         }
         return entity
 
@@ -92,6 +94,29 @@ async def test_dbmemcollector_prepare_fail(
 
         assert not collector._client
         assert collector.value is None
+
+
+@pytest.mark.asyncio
+async def test_dbcollector_config(
+    mock_entity,
+    mock_sink,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Ensure that missing required db collector config causes an exception"""
+    
+    # Check that a bad host causes exception
+    entity = mock_entity(host="")
+    with pytest.raises(ValueError):
+        DbMemoryCollector(entity, mock_sink())
+
+    entity = mock_entity(host="   ")
+    with pytest.raises(ValueError):
+        DbMemoryCollector(entity, mock_sink())
+
+    # Check that a bad port causes exception
+    entity = mock_entity(port="")
+    with pytest.raises(ValueError):
+        DbMemoryCollector(entity, mock_sink())
 
 
 @pytest.mark.asyncio

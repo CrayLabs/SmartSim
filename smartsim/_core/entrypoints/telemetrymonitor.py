@@ -172,8 +172,23 @@ class _Address:
     host: str
     port: int
 
+    def __init__(self, host: str, port: int) -> None:
+        """Initialize the instance"""
+        self.host = host.strip() if host else ""
+        self.port = port
+        _Address._check(self.host, self.port)
+
+
+    @staticmethod
+    def _check(host: str, port: int) -> None:
+        """Validate input arguments"""
+        if not host:
+            raise ValueError("Address requires host")
+        if not port:
+            raise ValueError("Address requires port")
+
     def __str__(self) -> str:
-        """Pretty-print the address"""
+        """Pretty-print the instance"""
         return f"{self.host}:{self.port}"
 
 
@@ -185,8 +200,8 @@ class DbCollector(Collector):
         super().__init__(entity, sink)
         self._client: t.Optional[redis.Redis[bytes]] = None
         self._address = _Address(
-            self._entity.collectors.get("host", "127.0.0.1"),
-            int(self._entity.collectors.get("port", 6379)),
+            self._entity.config.get("host", ""),
+            int(self._entity.config.get("port", 0)),
         )
 
     async def _configure_client(self) -> None:
@@ -485,13 +500,15 @@ def _hydrate_persistable(
     if entity.is_db:
         # db shards are hydrated individually
         entity.telemetry_on = int(persistable_entity.get("collectors", "0")) > 0
-        cfg = entity.collectors
+        col_cfg = entity.collectors
+
         if entity.telemetry_on:
-            cfg["host"] = persistable_entity.get("hostname", "NOT-SET")
-            cfg["port"] = persistable_entity.get("port", "NOT-SET")
-            cfg["client"] = persistable_entity.get("client_file", "")
-            cfg["client_count"] = persistable_entity.get("client_count_file", "")
-            cfg["memory"] = persistable_entity.get("memory_file", "")
+            col_cfg["client"] = persistable_entity.get("client_file", "")
+            col_cfg["client_count"] = persistable_entity.get("client_count_file", "")
+            col_cfg["memory"] = persistable_entity.get("memory_file", "")
+
+        entity.config["host"] = persistable_entity.get("hostname", "")
+        entity.config["port"] = persistable_entity.get("port", "")
 
     return entity
 
