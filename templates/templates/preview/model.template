@@ -12,7 +12,7 @@
         {% else %}
         Batch Launch: False
         {%- endif -%} 
-        {% if model.params -%}
+        {%- if model.params %}
         Model parameters: 
         {%- for param, value in model.params.items() %}
             {{ param }}: {{ value }}
@@ -21,18 +21,24 @@
         {%- if model.files %}
         {%- if model.files.tagged %}
         Tagged Files for model configuration: 
-            {{ model.files.tagged[0] }} -> 
+            {%- for tagged in model.files.tagged %}
+            {{ tagged }} -> 
             {{ model.path }}
+            {%- endfor %}
         {%- endif -%}
         {%- if model.files.copy %}
         Copy files: 
-            {{ model.files.copy[0] }} ->
+            {%- for copy in model.files.copy %}
+            {{ copy }} ->
             {{ model.path }}
+            {% endfor %}
         {%- endif %}
         {%- if model.files.link %}
         Symlink: 
-            {{ model.files.link[0] }} ->
+            {%- for link in model.files.link %}
+            {{ link }} ->
             {{ model.path }}
+            {% endfor %}
         {%- endif %}
         {%- endif %}
         {%- if model.run_settings.colocated_db_settings %}
