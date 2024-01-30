@@ -810,7 +810,9 @@ class _PTArchiveLinux(_PTArchive):
         else:
             pt_build = "cpu"
         # pylint: disable-next=line-too-long
-        libtorch_archive= f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
+        libtorch_archive = (
+            f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
+        )
         return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
 
 
@@ -822,23 +824,22 @@ class _PTArchiveMacOSX(_PTArchive):
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
             pt_build = "cpu"
-            libtorch_archive= f"libtorch-macos-{self.version}.zip"
+            libtorch_archive = f"libtorch-macos-{self.version}.zip"
             root_url = "https://download.pytorch.org/libtorch"
             return f"{root_url}/{pt_build}/{libtorch_archive}"
         if self.architecture == Architecture.ARM64:
             libtorch_archive = f"libtorch-macos-arm64-{self.version}.zip"
             # pylint: disable-next=line-too-long
-            root_url = "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
+            root_url = (
+                "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
+            )
             return f"{root_url}/{libtorch_archive}"
 
         raise BuildError("Unsupported architecture for Pytorch: {self.architecture}")
 
 
 def choose_pt_variant(
-    os_: OperatingSystem,
-    arch: Architecture,
-    device: TDeviceStr,
-    version: str
+    os_: OperatingSystem, arch: Architecture, device: TDeviceStr, version: str
 ) -> t.Union[_PTArchiveLinux, _PTArchiveMacOSX]:
     if os_ == OperatingSystem.DARWIN:
         return _PTArchiveMacOSX(arch, device, version)
