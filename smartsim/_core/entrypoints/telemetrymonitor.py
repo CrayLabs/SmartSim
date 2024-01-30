@@ -137,6 +137,18 @@ class Collector(abc.ABC):
         self._entity = entity
         self._sink = sink
         self._value: t.Any = None
+        self._enabled = True
+
+    def disable(self) -> None:
+        self._enabled = False
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @property
+    def entity(self) -> JobEntity:
+        return self._entity
 
     @property
     def owner(self) -> str:
@@ -164,6 +176,54 @@ class Collector(abc.ABC):
     @abc.abstractmethod
     async def shutdown(self) -> None:
         """Execute any cleanup of resources for the collector"""
+
+
+class CollectorStopHandler(PatternMatchingEventHandler):
+    """A file listener that will notify a set of collectors when an
+    unmanaged entity has completed"""
+
+    def __init__(
+        self,
+        collector: Collector,
+        patterns: t.Optional[t.List[str]] = None,
+        ignore_patterns: t.Optional[t.List[str]] = None,
+        ignore_directories: bool = False,
+        case_sensitive: bool = False,
+    ):
+        self._collectors = [collector]
+        super().__init__(
+            patterns, ignore_patterns, ignore_directories, case_sensitive
+        )  # type: ignore
+
+    def add(self, collector: Collector) -> None:
+        self._collectors.append(collector)
+
+    def on_modified(self, event: FileModifiedEvent) -> None:
+        """Event handler for when a file or directory is modified.
+
+        :param event: Event representing file/directory modification.
+        :type event: FileModifiedEvent
+        """
+        super().on_modified(event)  # type: ignore
+        self._notify(event.src_path)
+
+    def on_created(self, event: FileCreatedEvent) -> None:
+        """Event handler for when a file or directory is created.
+
+        :param event: Event representing file/directory creation.
+        :type event: FileCreatedEvent
+        """
+        super().on_created(event)  # type: ignore
+        self._notify(event.src_path)
+
+    def _notify(self, event_src: str) -> None:
+        """Notify the collector that the entity has stopped"""
+        logger.debug(f"Processing stop event created @ {event_src}")
+
+        working_set = [item for item in self._collectors if item.enabled]
+        for col in working_set:
+            logger.debug(f"Disabling {col.entity.name}::{type(col).__name__}")
+            col.disable()
 
 
 @dataclasses.dataclass
@@ -233,10 +293,11 @@ class DbCollector(Collector):
 
     async def shutdown(self) -> None:
         """Release any resources held by the collector"""
-        logger.debug(f"Shutting down DbCollector for {self._entity.name}")
-
         try:
             if self._client:
+                logger.info(
+                    f"Shutting down {self._entity.name}::{self.__class__.__name__}"
+                )
                 await self._client.close()
                 self._client = None
         except Exception as ex:
@@ -261,6 +322,10 @@ class DbMemoryCollector(DbCollector):
         )
 
     async def collect(self) -> None:
+        if not self.enabled:
+            logger.debug("DbMemoryCollector is not enabled")
+            return
+
         await self.prepare()
         if not self._client:
             logger.warning("DbMemoryCollector cannot collect")
@@ -275,7 +340,7 @@ class DbMemoryCollector(DbCollector):
 
             await self._sink.save(timestamp=self.timestamp(), **self._value)
         except Exception as ex:
-            logger.warning("collect failed for DbMemoryCollector", exc_info=ex)
+            logger.warning("Collect failed for DbMemoryCollector", exc_info=ex)
 
     @property
     def value(self) -> t.Dict[str, int]:
@@ -293,6 +358,10 @@ class DbConnectionCollector(DbCollector):
         await self._sink.save(col0="timestamp", col1="client_id", col2="address")
 
     async def collect(self) -> None:
+        if not self.enabled:
+            logger.debug("DbConnectionCollector is not enabled")
+            return
+
         await self.prepare()
         if not self._client:
             logger.warning("DbConnectionCollector is not connected and cannot collect")
@@ -309,7 +378,7 @@ class DbConnectionCollector(DbCollector):
                 _id, _ip = client_info["id"], client_info["addr"]
                 await self._sink.save(timestamp=now_ts, client_id=_id, address=_ip)
         except Exception as ex:
-            logger.warning("collect failed for DbMemoryCollector", exc_info=ex)
+            logger.warning("Collect failed for DbMemoryCollector", exc_info=ex)
 
     @property
     def value(self) -> t.List[str]:
@@ -327,6 +396,10 @@ class DbConnectionCountCollector(DbCollector):
         await self._sink.save(col0="timestamp", col1="num_clients")
 
     async def collect(self) -> None:
+        if not self.enabled:
+            logger.debug("DbConnectionCountCollector is not enabled")
+            return
+
         await self.prepare()
         if not self._client:
             logger.warning(
@@ -343,7 +416,7 @@ class DbConnectionCountCollector(DbCollector):
 
             await self._sink.save(timestamp=now_ts, num_clients=self._value)
         except Exception as ex:
-            logger.warning("collect failed for DbConnectionCountCollector", exc_info=ex)
+            logger.warning("Collect failed for DbConnectionCountCollector", exc_info=ex)
 
     @property
     def value(self) -> str:
@@ -363,6 +436,9 @@ class CollectorManager:
         )
         self._timeout_ms = timeout_ms
         self._tasks: t.List[asyncio.Task[None]] = []
+        self._stoppers: t.Dict[
+            str, t.List[CollectorStopHandler]
+        ] = collections.defaultdict(lambda: [])
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
@@ -372,23 +448,53 @@ class CollectorManager:
         """Add a new collector to the managed set"""
         self.add_all([col])
 
+    def _create_stop_listener(self, collector: Collector) -> None:
+        """Create a file system listener to trigger a shutdown callback
+        when an entity has completed processing"""
+        if self._stoppers[collector.owner]:
+            # listener already registered, add collector to it
+            stopper = self._stoppers[collector.owner][0]
+            stopper.add(collector)
+            return
+
+        stopper = CollectorStopHandler(collector, patterns=["stop.json"])
+        observer = Observer()
+        observer.schedule(stopper, collector.entity.status_dir)  # type: ignore
+        observer.start()  # type: ignore
+
+        self._stoppers[collector.owner].append(stopper)
+
     def add_all(self, clist: t.Iterable[Collector]) -> None:
         """Add multiple collectors to the managed set"""
         for col in clist:
             owner_list = self._collectors[col.owner]
+            # ensure we can't add multiple collectors of the same type for an entity
             dupes = next((x for x in owner_list if type(x) is type(col)), None)
             if dupes:
                 continue
-
+            logger.debug(f"Adding collector: {col.owner}::{type(col).__name__}")
             self._collectors[col.owner].append(col)
 
-    def remove(self, entity: JobEntity) -> None:
-        registered = self._collectors.pop(entity.name, None)
+            self._create_stop_listener(col)
+
+    async def remove_all(self, entities: t.Iterable[JobEntity]) -> None:
+        """Remove all collectors for the supplied entities"""
+        if collectors := entities:
+            for collector in collectors:
+                await self.remove(collector)
+
+    async def remove(self, entity: JobEntity) -> None:
+        """Remove all collectors for the supplied entity"""
+        registered = self._collectors.pop(entity.name, [])
+        stoppers = self._stoppers.pop(entity.name, [])
+
         if registered:
-            # shutdown this set of collectors
-            # todo: move shutdown logic into static so i can pass a collection instead
-            # of always shutting down everything...
             logger.debug(f"removing collectors registered for {entity.name}")
+
+        await asyncio.gather(col.shutdown() for col in registered)
+        for stopper in stoppers:
+            stopper.stop()  # type: ignore
+            stopper.join()  # type: ignore
 
     async def prepare(self) -> None:
         """Ensure all managed collectors have prepared for collection"""
@@ -397,15 +503,17 @@ class CollectorManager:
 
     async def collect(self) -> None:
         """Execute collection for all managed collectors"""
-        logger.debug("Executing all telemetry collectors")
-
         if collectors := self.all_collectors:
             if self._tasks:  # tasks still in progress
                 return
 
             self._tasks = [asyncio.create_task(item.collect()) for item in collectors]
             results = await asyncio.wait(self._tasks, timeout=self._timeout_ms / 1000.0)
-            logger.debug(f"collector.collect() results: {results}")
+
+            work = set(results[1])
+            if work:
+                logger.debug(f"Execution of {len(work)} collectors timed out.")
+
             self._tasks.clear()
 
     async def shutdown(self) -> None:
@@ -445,7 +553,13 @@ class CollectorManager:
     @property
     def all_collectors(self) -> t.Iterable[Collector]:
         """Get a list of all managed collectors"""
-        return list(itertools.chain(*self._collectors.values()))
+        collectors = list(itertools.chain(*self._collectors.values()))
+        return [col for col in collectors if col.enabled]
+
+    @property
+    def dead_collectors(self) -> t.Iterable[Collector]:
+        collectors = list(itertools.chain(*self._collectors.values()))
+        return [col for col in collectors if not col.enabled]
 
 
 @dataclass
@@ -777,7 +891,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 filter_fn=lambda e: e.key not in self._tracked_jobs
             ):
                 entity.path = str(exp_dir)
-
                 self._tracked_jobs[entity.key] = entity
 
                 if entity.telemetry_on:
@@ -812,7 +925,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type event: FileModifiedEvent
         """
         super().on_modified(event)  # type: ignore
-        logger.debug(f"processing manifest modified @ {event.src_path}")
+        logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -825,7 +938,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
-    def _to_completed(
+    async def _to_completed(
         self,
         timestamp: int,
         entity: JobEntity,
@@ -847,6 +960,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if entity.key not in self._completed_jobs:
             self._completed_jobs[entity.key] = inactive_entity
 
+        await self._collector.remove(entity)
+
         job = self.job_manager[entity.name]
         self.job_manager.move_to_completed(job)
 
@@ -866,11 +981,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             detail=f"{status_clause}{error_clause}",
             return_code=faux_return_code(step_info),
         )
-
-        # NOTE: this doesn't work because databases aren't in the tracked jobs?
-        # todo: make sure we have a tracking mechanism for stop events for unmanaged
-        # items so we can unregister...
-        self._collector.remove(entity)
 
     async def on_timestep(self, timestamp: int) -> None:
         """Called at polling frequency to request status updates on
@@ -893,7 +1003,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             for step_name, step_info in step_updates:
                 if step_info and step_info.status in TERMINAL_STATUSES:
                     completed_entity = names[step_name]
-                    self._to_completed(timestamp, completed_entity, step_info)
+                    await self._to_completed(timestamp, completed_entity, step_info)
 
     async def shutdown(self) -> None:
         logger.debug("ManifestEventHandler shutting down...")
@@ -941,7 +1051,7 @@ async def event_loop(
     while observer.is_alive() and not shutdown_in_progress:
         duration_ms = 0
         start_ts = get_ts()
-        logger.debug(f"Telemetry timestep: {start_ts}")
+        logger.debug(f"Timestep: {start_ts}")
         await action_handler.on_timestep(start_ts)
 
         elapsed += start_ts - last_ts
@@ -950,11 +1060,11 @@ async def event_loop(
         if can_shutdown(action_handler):
             if elapsed >= cooldown_duration:
                 shutdown_in_progress = True
-                logger.debug("beginning telemetry manager shutdown")
+                logger.info("Beginning telemetry manager shutdown")
                 await action_handler.shutdown()
-                logger.debug("beginning file monitor shutdown")
+                logger.info("Beginning file monitor shutdown")
                 observer.stop()  # type: ignore
-                logger.debug("Event loop shutdown complete")
+                logger.info("Event loop shutdown complete")
                 break
         else:
             # reset cooldown any time there are still jobs running
@@ -963,16 +1073,12 @@ async def event_loop(
         # track time elapsed to execute metric collection
         duration_ms = get_ts() - start_ts
         wait_ms = max(frequency - duration_ms, 0)
-        logger.debug(
-            f"Collectors consumed {duration_ms} ms of {action_handler.timeout_ms}"
-            f" ms loop frequency. Sleeping {wait_ms} ms",
-        )
 
         # delay next loop if collection time didn't exceed loop frequency
         if wait_ms > 0:
             await sleep(wait_ms / 1000)  # convert to seconds for sleep
 
-    logger.debug("Exiting telemetry monitor event loop")
+    logger.info("Exiting telemetry monitor event loop")
 
 
 async def main(
@@ -996,20 +1102,23 @@ async def main(
                               poll for new jobs before attempting to shutdown
     :type cooldown_duration: int
     """
-    manifest_relpath = pathlib.Path(CONFIG.telemetry_subdir) / MANIFEST_FILENAME
-    manifest_path = experiment_dir / manifest_relpath
-    monitor_pattern = str(manifest_relpath)
+    telemetry_path = experiment_dir / pathlib.Path(CONFIG.telemetry_subdir)
+    manifest_path = telemetry_path / MANIFEST_FILENAME
 
     logger.info(
-        f"Executing telemetry monitor with frequency: {frequency}s"
-        f", on target directory: {experiment_dir}"
-        f" matching pattern: {monitor_pattern}"
+        f"Executing telemetry monitor - frequency: {frequency}s"
+        f", target directory: {experiment_dir}"
+        f", telemetry path: {telemetry_path}"
     )
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
     log_handler = LoggingEventHandler(logger)  # type: ignore
     frequency_ms = int(frequency * 1000)  # limit collector execution time
-    action_handler = ManifestEventHandler(monitor_pattern, timeout_ms=frequency_ms)
+    action_handler = ManifestEventHandler(
+        str(MANIFEST_FILENAME),
+        timeout_ms=frequency_ms,
+        ignore_patterns=["*.out", "*.err"],
+    )
 
     if observer is None:
         observer = Observer()
@@ -1019,8 +1128,10 @@ async def main(
             # a manifest may not exist depending on startup timing
             action_handler.process_manifest(str(manifest_path))
 
-        observer.schedule(log_handler, experiment_dir, recursive=True)  # type:ignore
-        observer.schedule(action_handler, experiment_dir, recursive=True)  # type:ignore
+        observer.schedule(log_handler, telemetry_path, recursive=False)  # type:ignore
+        observer.schedule(
+            action_handler, telemetry_path, recursive=False
+        )  # type:ignore
         observer.start()  # type: ignore
 
         await event_loop(observer, action_handler, frequency_ms, cooldown_duration)
@@ -1032,7 +1143,7 @@ async def main(
             observer.stop()  # type: ignore
             observer.join()
         await action_handler.shutdown()
-        logger.debug("final telemetry monitor shutdown complete")
+        logger.debug("Telemetry monitor shutdown complete")
 
     return os.EX_SOFTWARE
 
