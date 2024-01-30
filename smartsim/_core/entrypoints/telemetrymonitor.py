@@ -178,7 +178,6 @@ class _Address:
         self.port = port
         _Address._check(self.host, self.port)
 
-
     @staticmethod
     def _check(host: str, port: int) -> None:
         """Validate input arguments"""
