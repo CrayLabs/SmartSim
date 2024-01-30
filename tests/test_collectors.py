@@ -103,7 +103,7 @@ async def test_dbcollector_config(
     monkeypatch: pytest.MonkeyPatch,
 ):
     """Ensure that missing required db collector config causes an exception"""
-    
+
     # Check that a bad host causes exception
     entity = mock_entity(host="")
     with pytest.raises(ValueError):
@@ -202,23 +202,23 @@ async def test_dbconncollector_collect(
 
     collector = DbConnectionCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
-        ctx.setattr(tredis, "Redis", mock_redis(client_stats=mock_con(1, 2)))
+                        ctx.setattr(tredis, "Redis", mock_redis(client_stats=mock_con(1, 2)))
 
-        await collector.prepare()
-        await collector.collect()
+                        await collector.prepare()
+                        await collector.collect()
 
-        stats = collector.value
+                        stats = collector.value
 
-        idx = 1
-        id0, ip0 = f"ABC{idx}", f"127.0.0.{idx}:1234"
-        id1, ip1 = f"XYZ{idx}", f"127.0.0.{idx}:2345"
-        exp_clients = [{"id": id0, "addr": ip0}, {"id": id1, "addr": ip1}]
+                        idx = 1
+                        id0, ip0 = f"ABC{idx}", f"127.0.0.{idx}:1234"
+                        id1, ip1 = f"XYZ{idx}", f"127.0.0.{idx}:2345"
+                        exp_clients = [{"id": id0, "addr": ip0}, {"id": id1, "addr": ip1}]
 
-        assert len(exp_clients) == len(stats)
-        assert id0 in set(client["id"] for client in exp_clients)
-        assert id1 in set(client["id"] for client in exp_clients)
-        assert ip0 in set(client["addr"] for client in exp_clients)
-        assert ip1 in set(client["addr"] for client in exp_clients)
+                        assert len(exp_clients) == len(stats)
+                        assert id0 in set(client["id"] for client in exp_clients)
+                        assert id1 in set(client["id"] for client in exp_clients)
+                        assert ip0 in set(client["addr"] for client in exp_clients)
+                        assert ip1 in set(client["addr"] for client in exp_clients)
 
 
 @pytest.mark.asyncio
