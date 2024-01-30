@@ -54,6 +54,7 @@ from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
@@ -326,6 +327,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "pbs": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
 
     def init_launcher(self, launcher: str) -> Launcher:
@@ -591,6 +593,7 @@ def main(
     )
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
+    logger.warning(cooldown_duration)
     log_handler = LoggingEventHandler(logger)  # type: ignore
     action_handler = ManifestEventHandler(monitor_pattern, logger)
 

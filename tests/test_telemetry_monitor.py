@@ -83,7 +83,7 @@ requires_wlm = pytest.mark.skipif(
 )
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -857,7 +857,7 @@ def test_telemetry_autoshutdown(
         for i in range(10):
             if popen.poll() is not None:
                 stop_time = get_ts()
-                print(f"Completed polling for telemetry shutdown after {i} attempts")
+                logger.info(f"Completed polling for telemetry shutdown after {i} attempts")
                 break
             time.sleep(3)
 
