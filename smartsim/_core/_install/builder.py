@@ -369,6 +369,8 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
+        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
+        architecture: Architecture = Architecture.from_str(platform.machine()),
         build_env: t.Optional[t.Dict[str, t.Any]] = None,
         torch_dir: str = "",
         libtf_dir: str = "",
@@ -379,7 +381,14 @@ class RedisAIBuilder(Builder):
         verbose: bool = False,
     ) -> None:
         super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
+
         self.rai_install_path: t.Optional[Path] = None
+        if _os not in OperatingSystem:
+            raise BuildError(f"Unsupported operating system: {_os}")
+        self._os = _os
+        if architecture not in Architecture:
+            raise BuildError(f"Unsupported architecture: {architecture}")
+        self._architecture = architecture
 
         # convert to int for RAI build script
         self._torch = build_torch
@@ -388,10 +397,21 @@ class RedisAIBuilder(Builder):
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
-        # TODO: It might be worth making these constructor args so that users
-        #       of this class can configure exactly _what_ they are building.
-        self._os = OperatingSystem.from_str(platform.system())
-        self._architecture = Architecture.from_str(platform.machine())
+        # Sanity checks
+        self._check_backends_arm64()
+
+    def _check_backends_arm64(self) -> None:
+        if self._architecture == Architecture.ARM64:
+            unsupported = []
+            if self.build_tf:
+                unsupported.append("Tensorflow")
+            if self.build_onnx:
+                unsupported.append("ONNX")
+            if unsupported:
+                raise BuildError(
+                    f"The {'.'.join(unsupported)} backends are not "
+                    "supported on ARM64. Run with `smart build --no_tf`"
+                )
 
     @property
     def rai_build_path(self) -> Path:
@@ -455,13 +475,17 @@ class RedisAIBuilder(Builder):
         #       dependency versions were declared in single location.
         #       Unfortunately importing into this module is non-trivial as it
         #       is used as script in the SmartSim `setup.py`.
-        fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
-            (True, _DLPackRepository("v0.5_RAI")),
-            (self.fetch_torch, choose_PT_variant(os_, arch, device, "2.0.1")),
-            (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
-            (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
-        )
-        return tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
+
+        # DLPack is always required
+        fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
+        if self.fetch_torch:
+            fetchable_deps.append(choose_pt_variant(os_, arch, device, "2.0.1"))
+        if self.fetch_tf:
+            fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
+        if self.fetch_onnx:
+            fetchable_deps.append(_ORTArchive(os_, device, "1.16.3"))
+
+        return tuple(fetchable_deps)
 
     def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
@@ -765,7 +789,6 @@ class _WebZip(_ExtractableWebArchive):
 
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
-    os_: OperatingSystem
     architecture: Architecture
     device: TDeviceStr
     version: str
@@ -783,7 +806,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 
 
 @t.final
-class _PTArchive_Linux(_PTArchive):
+class _PTArchiveLinux(_PTArchive):
     @property
     def url(self) -> str:
         if self.device == "gpu":
@@ -796,33 +819,37 @@ class _PTArchive_Linux(_PTArchive):
 
 
 @t.final
-class _PTArchive_MacOSX(_PTArchive):
+class _PTArchiveMacOSX(_PTArchive):
     @property
     def url(self) -> str:
         if self.device == "gpu":
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
+            pt_build = "cpu"
             libtorch_archive= f"libtorch-macos-{self.version}.zip"
-            return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
-        elif self.architecture == Architecture.ARM64:
+            root_url = "https://download.pytorch.org/libtorch"
+            return f"{root_url}/{pt_build}/{libtorch_archive}"
+        if self.architecture == Architecture.ARM64:
             libtorch_archive = f"libtorch-macos-arm64-{self.version}.zip"
+            # pylint: disable-next=line-too-long
             root_url = "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
-            out = f"{root_url}/{libtorch_archive}"
-            return out
+            return f"{root_url}/{libtorch_archive}"
+
+        raise BuildError("Unsupported architecture for Pytorch: {self.architecture}")
 
 
-def choose_PT_variant(
+def choose_pt_variant(
     os_: OperatingSystem,
-    device: TDeviceStr,
     arch: Architecture,
+    device: TDeviceStr,
     version: str
-) -> t.Union[_PTArchive_Linux, _PTArchive_MacOSX]:
+) -> t.Union[_PTArchiveLinux, _PTArchiveMacOSX]:
     if os_ == OperatingSystem.DARWIN:
-        return _PTArchive_MacOSX(os_, device, arch, version)
-    elif os_ == OperatingSystem.LINUX:
-        return _PTArchive_Linux(os_, device, arch, version)
-    else:
-        raise BuildError(f"Unsupported OS for pyTorch: {os_}")
+        return _PTArchiveMacOSX(arch, device, version)
+    if os_ == OperatingSystem.LINUX:
+        return _PTArchiveLinux(arch, device, version)
+
+    raise BuildError(f"Unsupported OS for pyTorch: {os_}")
 
 
 @t.final
