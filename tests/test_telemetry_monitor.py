@@ -82,7 +82,6 @@ requires_wlm = pytest.mark.skipif(
     pytest.test_launcher == "local", reason="Test requires WLM"
 )
 
-
 logger = logging.getLogger(__name__)
 
 # The tests in this file belong to the slow_tests group
