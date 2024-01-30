@@ -75,11 +75,12 @@ class DragonLauncher(WLMLauncher):
     def __init__(self) -> None:
         super().__init__()
         self._context = zmq.Context()
-
+        self._context.setsockopt(zmq.SNDTIMEO, value=30_000)
+        self._context.setsockopt(zmq.RCVTIMEO, value=30_000)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
 
     @property
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return self._dragon_head_socket is not None
 
     def _handsake(self, address: str) -> None:
@@ -111,9 +112,6 @@ class DragonLauncher(WLMLauncher):
         dragon_config_log = os.path.join(path, "dragon_config.log")
 
         if Path.is_file(Path(dragon_config_log)):
-
-            self._context.setsockopt(zmq.SNDTIMEO, value=10000)
-            self._context.setsockopt(zmq.RCVTIMEO, value=10000)
             dragon_confs = DragonLauncher._parse_launched_dragon_server_info_from_files(
                 [dragon_config_log]
             )
@@ -128,9 +126,6 @@ class DragonLauncher(WLMLauncher):
                     self._handsake(dragon_conf["address"])
                 except LauncherError as e:
                     logger.warning(e)
-                finally:
-                    self._context.setsockopt(zmq.SNDTIMEO, value=-1)
-                    self._context.setsockopt(zmq.RCVTIMEO, value=-1)
                 if self.is_connected:
                     return
 

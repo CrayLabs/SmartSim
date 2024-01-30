@@ -238,7 +238,8 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
 
     if returncode != 0:
         logger.error(out)
-        logger.error(err)
+        if err:
+            logger.error(err)
     elif out:
         logger.debug(out)
 
