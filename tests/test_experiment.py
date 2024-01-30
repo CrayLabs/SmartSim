@@ -211,7 +211,7 @@ def test_telemetry_default(
     """Ensure the default values for telemetry configuration match expectation
     that experiment telemetry is on, all other telemetry is off"""
 
-    # NO env var related to telemetry should get default (True)
+    # If env var related to telemetry doesn't exist, experiment should default to True
     monkeypatch.setattr(os, "environ", {})
     exp = Experiment("my-exp", exp_path=test_dir)
     assert exp.telemetry.is_enabled
@@ -221,7 +221,7 @@ def test_telemetry_default(
     exp = Experiment("my-exp", exp_path=test_dir)
     assert not exp.telemetry.is_enabled
 
-    # If telemetry disabled in env, should get True
+    # If telemetry enabled in env, should get True
     monkeypatch.setattr(os, "environ", {"SMARTSIM_FLAG_TELEMETRY": "1"})
     exp = Experiment("my-exp", exp_path=test_dir)
     assert exp.telemetry.is_enabled
