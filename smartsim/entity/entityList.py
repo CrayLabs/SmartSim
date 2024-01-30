@@ -74,7 +74,6 @@ class EntitySequence(t.Generic[_T_co]):
         # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         self._initialize_entities(**kwargs)
-        super().__init__()
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize the SmartSimEntity objects in the container"""
