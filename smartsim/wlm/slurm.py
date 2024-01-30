@@ -284,14 +284,12 @@ def _validate_time_format(time: str) -> str:
     :returns: Formatted walltime
     :rtype: str
     """
-    if ":" not in time:
-        raise ValueError("Input time must be formatted as `HH:MM:SS`")
     try:
         hours, minutes, seconds = map(int, time.split(":"))
-    except ValueError:
+    except ValueError as e:
         raise ValueError(
-            "Invalid time format. Hours, minutes, and seconds must be integers."
-        )
+            "Input time must be formatted as `HH:MM:SS` with valid Integers."
+        ) from e
     delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
     fmt_str = str(delta)
     if delta.seconds // 3600 < 10:
