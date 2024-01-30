@@ -153,7 +153,7 @@ class Config:
         return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
 
     @property
-    def dragon_server_path(self) -> str:
+    def dragon_server_path(self) -> t.Optional[str]:
         return os.getenv("SMARTSIM_DRAGON_SERVER_PATH")
 
     @property

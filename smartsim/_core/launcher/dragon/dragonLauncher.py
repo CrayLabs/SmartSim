@@ -89,13 +89,12 @@ class DragonLauncher(WLMLauncher):
         return self._dragon_head_socket is not None
 
     def _handsake(self, address: str) -> None:
-
         self._dragon_head_socket = self._context.socket(zmq.REQ)
         self._dragon_head_socket.connect(address)
         request = DragonHandshakeRequest()
         try:
             response = self._send_request_as_json(request)
-            DragonHandshakeResponse.model_validate(response)
+            DragonHandshakeResponse.parse_obj(response)
             logger.debug(
                 f"Successful handshake with Dragon server at address {address}"
             )
@@ -181,12 +180,12 @@ class DragonLauncher(WLMLauncher):
 
         if address is not None:
             logger.debug(f"Listening to {socket_addr}")
-            dragon_address_request = DragonBootstrapRequest.model_validate(
+            dragon_address_request = DragonBootstrapRequest.parse_obj(
                 json.loads(t.cast(str, launcher_socket.recv_json()))
             )
             dragon_head_address = dragon_address_request.address
             logger.debug(f"Connecting launcher to {dragon_head_address}")
-            launcher_socket.send_json(DragonBootstrapResponse().model_dump_json())
+            launcher_socket.send_json(DragonBootstrapResponse().json())
             launcher_socket.close()
             self._set_timeout(self._timeout)
             self._handsake(dragon_head_address)
@@ -202,7 +201,7 @@ class DragonLauncher(WLMLauncher):
 
     @staticmethod
     def _unpack_launch_cmd(cmd: t.List[str]) -> DragonRunRequest:
-        req = DragonRunRequest.model_validate_json(cmd[-1])
+        req = DragonRunRequest.parse_obj(json.loads(cmd[-1]))
         return req
 
     def run(self, step: Step) -> t.Optional[str]:
@@ -236,7 +235,7 @@ class DragonLauncher(WLMLauncher):
             )
 
         response = self._send_request_as_json(req)
-        run_response = DragonRunResponse.model_validate(response)
+        run_response = DragonRunResponse.parse_obj(response)
         step_id = str(run_response.step_id)
         task_id = step_id
 
@@ -262,7 +261,7 @@ class DragonLauncher(WLMLauncher):
         request = DragonStopRequest(step_id=step_id)
         response = self._send_request_as_json(request)
 
-        DragonStopResponse.model_validate(response)
+        DragonStopResponse.parse_obj(response)
 
         _, step_info = self.get_step_update([step_name])[0]
         if not step_info:
@@ -286,7 +285,7 @@ class DragonLauncher(WLMLauncher):
         request = DragonUpdateStatusRequest(step_ids=step_ids)
         response = self._send_request_as_json(request)
 
-        update_response = DragonUpdateStatusResponse.model_validate(response)
+        update_response = DragonUpdateStatusResponse.parse_obj(response)
         # create SlurmStepInfo objects to return
         updates: t.List[StepInfo] = []
         # Order matters as we return an ordered list of StepInfo objects
@@ -307,7 +306,7 @@ class DragonLauncher(WLMLauncher):
     ) -> t.Mapping[str, t.Any]:
         if self._dragon_head_socket is None:
             raise LauncherError("Launcher is not connected to Dragon")
-        req_json = request.model_dump_json()
+        req_json = request.json()
         logger.debug(f"Sending request: {req_json}")
         self._dragon_head_socket.send_json(req_json, flags)
         response = str(self._dragon_head_socket.recv_json())

@@ -139,9 +139,10 @@ def proxyable_launch_cmd(
             proxy_module = "smartsim._core.entrypoints.indirect"
             etype = self.meta["entity_type"]
             status_dir = self.meta["status_dir"]
-            run_req = DragonRunRequest.model_validate_json(original_cmd_list[-1])
+            run_req = DragonRunRequest.parse_obj(original_cmd_list[-1])
 
-            encoded_cmd = encode_cmd(run_req.exe + run_req.exe_args)
+            exe_args = run_req.exe_args or []
+            encoded_cmd = encode_cmd(run_req.exe + exe_args)
 
             # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
             #       serialize step and let the indirect entrypoint rebuild the
@@ -164,7 +165,7 @@ def proxyable_launch_cmd(
             run_req.exe = new_cmd[0:1]
             run_req.exe_args = new_cmd[1:]
 
-            return [run_req.model_dump_json()]
+            return [run_req.json()]
 
         else:
             if self.managed:

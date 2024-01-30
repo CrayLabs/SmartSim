@@ -78,7 +78,7 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = ["pydantic.mypy"]
+plugins = []
 ignore_errors = false
 
 # Dynamic typing
@@ -96,16 +96,6 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
 show_error_codes = true
-
-# mypy
-follow_imports = "silent"
-check_untyped_defs = true
-# no_implicit_reexport = true
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
 
 [[tool.mypy.overrides]]
 # Ignore packages that are not used or not typed

@@ -89,7 +89,7 @@ def current_ip(interface: str = "lo") -> str:  # pragma: no cover
     return get_ip_from_interface(interface)
 
 
-def get_best_interface_and_address() -> tuple[t.Optional[str], t.Optional[str]]:
+def get_best_interface_and_address() -> t.Tuple[t.Optional[str], t.Optional[str]]:
     available_ifs = psutil.net_if_addrs()
     # TODO make this a CONFIG-time parameter
     known_ifs = ["hsn", "ipogif", "ib"]

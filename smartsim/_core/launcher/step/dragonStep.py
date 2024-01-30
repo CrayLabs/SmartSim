@@ -100,7 +100,7 @@ class DragonStep(Step):
             name=self.name,
         )
 
-        return [run_request.model_dump_json()]
+        return [run_request.json()]
 
     @staticmethod
     def _get_exe_args_list(run_setting: DragonRunSettings) -> t.List[str]:

@@ -68,7 +68,7 @@ class DragonBackend:
         self.procs: dict[str, Process] = {}
 
     def process_request(self, request: DragonRequest) -> DragonResponse:
-        req_type = DragonRequest.model_validate(request).request_type
+        req_type = DragonRequest.parse_obj(request).request_type
         if not req_type:
             raise ValueError("Malformed request contains empty ``request_type`` field.")
         if req_type not in self._request_to_function:
@@ -77,7 +77,7 @@ class DragonBackend:
         return self._request_to_function[req_type](request)
 
     def run(self, request: DragonRunRequest) -> DragonRunResponse:
-        run_request = DragonRunRequest.model_validate(request)
+        run_request = DragonRunRequest.parse_obj(request)
 
         exe = run_request.exe[0]
         if len(run_request.exe) > 1:
@@ -104,7 +104,7 @@ class DragonBackend:
     def update_status(
         self, request: DragonUpdateStatusRequest
     ) -> DragonUpdateStatusResponse:
-        update_status_request = DragonUpdateStatusRequest.model_validate(request)
+        update_status_request = DragonUpdateStatusRequest.parse_obj(request)
 
         updated_statuses = {}
         for step_id in update_status_request.step_ids:
@@ -122,7 +122,7 @@ class DragonBackend:
         return DragonUpdateStatusResponse(statuses=updated_statuses)
 
     def stop(self, request: DragonStopRequest) -> DragonStopResponse:
-        stop_request = DragonStopRequest.model_validate(request)
+        stop_request = DragonStopRequest.parse_obj(request)
 
         if stop_request.step_id in self.procs:
             # Technically we could just terminate, but what if
@@ -132,6 +132,6 @@ class DragonBackend:
         return DragonStopResponse()
 
     def handshake(self, request: DragonHandshakeRequest) -> DragonHandshakeResponse:
-        DragonHandshakeRequest.model_validate(request)
+        DragonHandshakeRequest.parse_obj(request)
 
         return DragonHandshakeResponse()

@@ -64,12 +64,12 @@ DBPID: t.Optional[int] = None
 
 
 def print_summary(network_interface: str, ip_address: str) -> None:
-
     zmq_config = {"interface": network_interface, "address": ip_address}
 
     with open("dragon_config.log", "w") as dragon_config_log:
         dragon_config_log.write(
-            textwrap.dedent(f"""\
+            textwrap.dedent(
+                f"""\
                 -------- Dragon Configuration --------
                 IPADDRESS: {ip_address}
                 NETWORK: {network_interface}
@@ -78,7 +78,8 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
                 --------------- Output ---------------
 
-                """),
+                """
+            ),
         )
 
 
@@ -95,12 +96,11 @@ def run(dragon_head_address: str) -> None:
         print(req)
         json_req = json.loads(req)
         resp = dragon_backend.process_request(json_req)
-        print(resp.model_dump_json(), flush=True)
-        dragon_head_socket.send_json(resp.model_dump_json())
+        print(resp, flush=True)
+        dragon_head_socket.send_json(resp.json())
 
 
 def main(args: argparse.Namespace) -> int:
-
     interface, address = get_best_interface_and_address()
     if not interface:
         raise ValueError("Net interface could not be determined")
@@ -116,10 +116,10 @@ def main(args: argparse.Namespace) -> int:
         launcher_socket = context.socket(zmq.REQ)
         launcher_socket.connect(args.launching_address)
         request = DragonBootstrapRequest(address=dragon_head_address)
-        launcher_socket.send_json(request.model_dump_json())
+        launcher_socket.send_json(request.json())
         message = t.cast(str, launcher_socket.recv_json())
         try:
-            DragonBootstrapResponse.model_validate_json(message)
+            DragonBootstrapResponse.parse_obj(json.loads(message))
         except ValidationError as e:
             raise ValueError(
                 "Could not receive connection confirmation from launcher. Aborting."
