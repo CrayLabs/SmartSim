@@ -27,6 +27,7 @@ Description
 - Added support for Python 3.11
 - Added support for SmartSim with Torch on Apple Silicon
 
+
 Detailed Notes
 
 - Some actions in the current GitHub CI/CD workflows were outdated. They were
@@ -45,6 +46,7 @@ Detailed Notes
 - SmartSim can now be built and used on platforms using Apple Silicon
   (ARM64). Currently, only the pyTorch backend is supported. Note that libtorch
   will be downloaded from a CrayLabs github repo. (SmartSim-PR465_)
+
 
 .. _SmartSim-PR446: https://github.com/CrayLabs/SmartSim/pull/446
 .. _SmartSim-PR448: https://github.com/CrayLabs/SmartSim/pull/448
