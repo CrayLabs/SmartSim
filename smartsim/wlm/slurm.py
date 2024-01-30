@@ -24,10 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import os
 import typing as t
 from shutil import which
-import datetime
 
 from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
@@ -277,19 +277,21 @@ def _get_alloc_cmd(
 def _validate_time_format(time: str) -> str:
     """Convert time into valid walltime format
 
-        By defualt the formatted wall time is the total number of seconds.
+    By defualt the formatted wall time is the total number of seconds.
 
-        :param time: number of hours to run job
-        :type time: str
-        :returns: Formatted walltime
-        :rtype: str
-        """
-    if ':' not in time:
+    :param time: number of hours to run job
+    :type time: str
+    :returns: Formatted walltime
+    :rtype: str
+    """
+    if ":" not in time:
         raise ValueError("Input time must be formatted as `HH:MM:SS`")
     try:
-        hours, minutes, seconds = map(int, time.split(':'))
+        hours, minutes, seconds = map(int, time.split(":"))
     except ValueError:
-        raise ValueError("Invalid time format. Hours, minutes, and seconds must be integers.")
+        raise ValueError(
+            "Invalid time format. Hours, minutes, and seconds must be integers."
+        )
     delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
     fmt_str = str(delta)
     if delta.seconds // 3600 < 10:

@@ -35,6 +35,7 @@ from smartsim.wlm import slurm
 if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
+
 def test_invalid_time_format(wlmutils):
     """test slurm interface for obtaining allocations"""
     account = wlmutils.get_test_account()
@@ -43,7 +44,7 @@ def test_invalid_time_format(wlmutils):
     with pytest.raises(ValueError):
         alloc = slurm.get_allocation(nodes=1, time="00-05-00", account=account)
     with pytest.raises(ValueError):
-        alloc = slurm.get_allocation(nodes=1, time="TE:HE:HE", account=account)   
+        alloc = slurm.get_allocation(nodes=1, time="TE:HE:HE", account=account)
 
 
 def test_get_release_allocation(wlmutils):
