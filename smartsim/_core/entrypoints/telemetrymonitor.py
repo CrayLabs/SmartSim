@@ -76,6 +76,7 @@ SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
 F_MIN, F_MAX = 1.0, 600.0
+_LOG_FILE_NAME = "logs/telemetrymonitor.out"
 
 logger = get_logger(__name__)
 
@@ -1069,6 +1070,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Default lifetime of telemetry monitor (in seconds) before auto-shutdown",
         default=CONFIG.telemetry_cooldown,
     )
+    arg_parser.add_argument(
+        "-loglevel",
+        type=int,
+        help="Logging level",
+        default=logging.DEBUG,
+    )
     return arg_parser
 
 
@@ -1086,11 +1093,18 @@ if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
 
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = False
-    log_path = os.path.join(
-        args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log"
+    log_level = (
+        args.loglevel
+        if args.loglevel
+        in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
+        else logging.DEBUG
     )
+    logger.setLevel(log_level)
+    logger.propagate = False
+
+    telem_dir = pathlib.Path(args.exp_dir) / CONFIG.telemetry_subdir
+    log_path = telem_dir / _LOG_FILE_NAME
+
     fh = logging.FileHandler(log_path, "a")
     logger.addHandler(fh)
 

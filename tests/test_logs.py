@@ -91,8 +91,8 @@ def test_add_exp_loggers(test_dir):
     logger = logging.getLogger("smartsim_test_add_exp_loggers")
     logger.addHandler(logging.StreamHandler(faux_out_stream))
 
-    out_file = pathlib.Path(test_dir) / "smartsim.out"
-    err_file = pathlib.Path(test_dir) / "smartsim.err"
+    out_file = pathlib.Path(test_dir) / "logs/smartsim.out"
+    err_file = pathlib.Path(test_dir) / "logs/smartsim.err"
 
     filter_fn = lambda x: True
 
