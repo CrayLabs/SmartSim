@@ -50,11 +50,11 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     load_manifest,
     track_event,
 )
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
-from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
 from smartsim._core.launcher.step.dragonStep import DragonStep
+from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils import serialize
 from smartsim.error.errors import UnproxyableStepError
@@ -857,7 +857,9 @@ def test_telemetry_autoshutdown(
         for i in range(10):
             if popen.poll() is not None:
                 stop_time = get_ts()
-                logger.info(f"Completed polling for telemetry shutdown after {i} attempts")
+                logger.info(
+                    f"Completed polling for telemetry shutdown after {i} attempts"
+                )
                 break
             time.sleep(3)
 

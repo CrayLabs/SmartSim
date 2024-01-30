@@ -134,6 +134,7 @@ def proxyable_launch_cmd(
             return original_cmd_list
 
         from .dragonStep import DragonStep
+
         if isinstance(self, DragonStep):
             proxy_module = "smartsim._core.entrypoints.indirect"
             etype = self.meta["entity_type"]

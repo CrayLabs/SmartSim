@@ -41,6 +41,7 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import DragonRunSettings, RunSettings, SettingsBase
 from ....status import STATUS_CANCELLED
+from ...config import CONFIG
 from ...schemas import (
     DragonBootstrapRequest,
     DragonBootstrapResponse,
@@ -58,7 +59,6 @@ from ...utils.network import get_best_interface_and_address
 from ..launcher import WLMLauncher
 from ..step import DragonStep, LocalStep, Step
 from ..stepInfo import StepInfo
-from ...config import CONFIG
 
 logger = get_logger(__name__)
 
@@ -112,7 +112,6 @@ class DragonLauncher(WLMLauncher):
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
         return
-
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
@@ -232,7 +231,9 @@ class DragonLauncher(WLMLauncher):
         elif isinstance(step, LocalStep):
             logger.warning("Received LocalStep")
             cmd = step.get_launch_cmd()
-            req = DragonRunRequest(exe=cmd[0:1], exe_args=cmd[1:], path=step.cwd, name=step.entity_name)
+            req = DragonRunRequest(
+                exe=cmd[0:1], exe_args=cmd[1:], path=step.cwd, name=step.entity_name
+            )
 
         response = self._send_request_as_json(req)
         run_response = DragonRunResponse.model_validate(response)
