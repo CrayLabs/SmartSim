@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import datetime
 import os
 import typing as t
 from shutil import which
@@ -40,6 +39,7 @@ from ..error import (
     SSReservedKeywordError,
 )
 from ..log import get_logger
+from ..settings.slurmSettings import SrunSettings
 
 logger = get_logger(__name__)
 
@@ -290,11 +290,7 @@ def _validate_time_format(time: str) -> str:
         raise ValueError(
             "Input time must be formatted as `HH:MM:SS` with valid Integers."
         ) from e
-    delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    fmt_str = str(delta)
-    if delta.seconds // 3600 < 10:
-        fmt_str = "0" + fmt_str
-    return fmt_str
+    return SrunSettings.fmt_walltime(hours, minutes, seconds)
 
 
 def get_hosts() -> t.List[str]:

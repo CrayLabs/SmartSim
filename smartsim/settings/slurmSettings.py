@@ -244,7 +244,7 @@ class SrunSettings(RunSettings):
         self.run_args["bcast"] = dest_path
 
     @staticmethod
-    def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
+    def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
 
         Converts time to format HH:MM:SS

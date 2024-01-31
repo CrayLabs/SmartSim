@@ -37,7 +37,7 @@ if pytest.test_launcher != "slurm":
 
 
 def test_invalid_time_format(wlmutils):
-    """test slurm interface for obtaining allocations"""
+    """test slurm interface for formatting walltimes"""
     account = wlmutils.get_test_account()
     with pytest.raises(ValueError) as e:
         alloc = slurm.get_allocation(nodes=1, time="000500", account=account)
