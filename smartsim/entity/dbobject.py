@@ -196,7 +196,7 @@ class DBScript(DBObject):
             raise ValueError("Either script or script_path must be provided")
 
     @property
-    def script(self) -> t.Optional[t.Union[bytes,str]]:
+    def script(self) -> t.Optional[t.Union[bytes, str]]:
         return self.func
 
     def __str__(self) -> str:
