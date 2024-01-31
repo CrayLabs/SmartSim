@@ -31,7 +31,6 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
-from smartsim._core.config import CONFIG
 from smartsim.settings import RunSettings
 
 
@@ -117,20 +116,20 @@ def test_model_preview_properties(test_dir, wlmutils):
 
     # for hello world model
     assert "echo-hello" in rendered_preview
-    assert "/usr/bin/echo" in rendered_preview
+    assert "/bin/echo" in rendered_preview
     assert "hello" in rendered_preview
     assert "world" in rendered_preview
     assert "echo-hello" == hello_world_model.name
-    assert "/usr/bin/echo" == hello_world_model.run_settings.exe[0]
+    assert "/bin/echo" == hello_world_model.run_settings.exe[0]
     assert "hello" == hello_world_model.run_settings.exe_args[0]
     assert "world" == hello_world_model.run_settings.exe_args[1]
     # for spam eggs model
     assert "echo-spam" in rendered_preview
-    assert "/usr/bin/echo" in rendered_preview
+    assert "/bin/echo" in rendered_preview
     assert "spam" in rendered_preview
     assert "eggs" in rendered_preview
     assert "echo-spam" == spam_eggs_model.name
-    assert "/usr/bin/echo" == spam_eggs_model.run_settings.exe[0]
+    assert "/bin/echo" == spam_eggs_model.run_settings.exe[0]
     assert "spam" == spam_eggs_model.run_settings.exe_args[0]
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
