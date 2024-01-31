@@ -177,9 +177,12 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
                     outputs=db_model.outputs,
                 )
             elif db_model.model is not None:
+                # db_model.model is guaranteed to be bytes
+                # because it is serialized
+                model = t.cast(bytes, db_model.model)
                 client.set_model(
                     name=db_model.name,
-                    model=db_model.model,
+                    model=model,
                     backend=db_model.backend,
                     device=device,
                     batch_size=db_model.batch_size,
