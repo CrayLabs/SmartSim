@@ -43,6 +43,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
+from typing import Sequence
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -342,6 +343,10 @@ class _RAIBuildDependency(ABC):
     @abstractmethod
     def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
 
+    @staticmethod
+    @abstractmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]: ...
+
 
 def _place_rai_dep_at(
     target: t.Union[str, "os.PathLike[str]"], verbose: bool
@@ -396,20 +401,24 @@ class RedisAIBuilder(Builder):
         self.torch_dir = torch_dir
 
         # Sanity checks
-        self._check_backends_arm64()
+        self._validate_platform()
 
-    def _check_backends_arm64(self) -> None:
-        if self._architecture == Architecture.ARM64:
-            unsupported = []
-            if self.build_tf:
-                unsupported.append("Tensorflow")
-            if self.build_onnx:
-                unsupported.append("ONNX")
-            if unsupported:
-                raise BuildError(
-                    f"The {'.'.join(unsupported)} backends are not "
-                    "supported on ARM64. Run with `smart build --no_tf`"
-                )
+    def _validate_platform(self) -> None:
+        platform_ = (self._os, self._architecture)
+        unsupported = []
+        if platform_ not in _DLPackRepository.supported_platforms():
+            unsupported.append("DLPack")
+        if self.fetch_tf and (platform_ not in _TFArchive.supported_platforms()):
+            unsupported.append("Tensorflow")
+        if self.fetch_onnx and (platform_ not in _ORTArchive.supported_platforms()):
+            unsupported.append("ONNX")
+        if self.fetch_torch and (platform_ not in _PTArchive.supported_platforms()):
+            unsupported.append("PyTorch")
+        if unsupported:
+            raise BuildError(
+                f"The {', '.join(unsupported)} backend(s) are not "
+                "supported on ARM64."
+            )
 
     @property
     def rai_build_path(self) -> Path:
@@ -477,7 +486,8 @@ class RedisAIBuilder(Builder):
         # DLPack is always required
         fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
         if self.fetch_torch:
-            fetchable_deps.append(choose_pt_variant(os_, arch, device, "2.0.1"))
+            pt_dep = _choose_pt_variant(os_)
+            fetchable_deps.append(pt_dep(arch, device, "2.0.1"))
         if self.fetch_tf:
             fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
         if self.fetch_onnx:
@@ -725,6 +735,14 @@ class _WebGitRepository(_WebLocation):
 class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
     version: str
 
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return (
+            (OperatingSystem.LINUX, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.ARM64),
+        )
+
     @property
     def url(self) -> str:
         return "https://github.com/RedisAI/dlpack.git"
@@ -789,6 +807,14 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     device: TDeviceStr
     version: str
 
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        # TODO: Rework this to do a recursive search
+        platforms = ()
+        for variant in _PTArchive.__subclasses__():
+            platforms += variant.supported_platforms()
+        return platforms
+
     @property
     def __rai_dependency_name__(self) -> str:
         return f"libtorch@{self.url}"
@@ -803,6 +829,10 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 
 @t.final
 class _PTArchiveLinux(_PTArchive):
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return ((OperatingSystem.LINUX, Architecture.X64),)
+
     @property
     def url(self) -> str:
         if self.device == "gpu":
@@ -818,6 +848,13 @@ class _PTArchiveLinux(_PTArchive):
 
 @t.final
 class _PTArchiveMacOSX(_PTArchive):
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return (
+            (OperatingSystem.DARWIN, Architecture.ARM64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+        )
+
     @property
     def url(self) -> str:
         if self.device == "gpu":
@@ -838,15 +875,16 @@ class _PTArchiveMacOSX(_PTArchive):
         raise BuildError("Unsupported architecture for Pytorch: {self.architecture}")
 
 
-def choose_pt_variant(
-    os_: OperatingSystem, arch: Architecture, device: TDeviceStr, version: str
-) -> t.Union[_PTArchiveLinux, _PTArchiveMacOSX]:
-    if os_ == OperatingSystem.DARWIN:
-        return _PTArchiveMacOSX(arch, device, version)
-    if os_ == OperatingSystem.LINUX:
-        return _PTArchiveLinux(arch, device, version)
+def _choose_pt_variant(
+    os_: OperatingSystem,
+) -> t.Union[t.Type[_PTArchiveLinux], t.Type[_PTArchiveMacOSX]]:
 
-    raise BuildError(f"Unsupported OS for pyTorch: {os_}")
+    if os_ == OperatingSystem.DARWIN:
+        return _PTArchiveMacOSX
+    if os_ == OperatingSystem.LINUX:
+        return _PTArchiveLinux
+
+    raise BuildError(f"Unsupported OS for PyTorch: {os_}")
 
 
 @t.final
@@ -856,6 +894,10 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
     architecture: Architecture
     device: TDeviceStr
     version: str
+
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return ((OperatingSystem.LINUX, Architecture.X64),)
 
     @property
     def url(self) -> str:
@@ -898,6 +940,10 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
     device: TDeviceStr
     version: str
+
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return ((OperatingSystem.LINUX, Architecture.X64),)
 
     @property
     def url(self) -> str:

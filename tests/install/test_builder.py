@@ -40,16 +40,6 @@ from smartsim._core._install.buildenv import RedisAIVersion
 pytestmark = pytest.mark.group_a
 
 RAI_VERSIONS = RedisAIVersion("1.2.7")
-valid_platforms = (
-    dict(_os=build.OperatingSystem.DARWIN, architecture=build.Architecture.X64),
-    dict(_os=build.OperatingSystem.DARWIN, architecture=build.Architecture.ARM64),
-    dict(_os=build.OperatingSystem.LINUX, architecture=build.Architecture.X64),
-)
-extract_names = lambda a, b: ".".join((a.name, b.name)).lower()
-platform_ids = (extract_names(*platform.values()) for platform in valid_platforms)
-for_each_platform = pytest.mark.parametrize(
-    "platform", valid_platforms, ids=platform_ids
-)
 
 for_each_device = pytest.mark.parametrize("device", ["cpu", "gpu"])
 
@@ -68,7 +58,7 @@ toggle_build_ort = _toggle_build_optional_backend("ort")
 @pytest.mark.parametrize(
     "mock_os", [pytest.param(os_, id=f"os='{os_}'") for os_ in ("Windows", "Java", "")]
 )
-def test_os_enum_raises_on_unsupported(monkeypatch, mock_os):
+def test_os_enum_raises_on_unsupported(mock_os):
     with pytest.raises(build.BuildError, match="operating system") as err_info:
         build.OperatingSystem.from_str(mock_os)
 
@@ -80,7 +70,7 @@ def test_os_enum_raises_on_unsupported(monkeypatch, mock_os):
         for arch_ in ("i386", "i686", "i86pc", "aarch64", "armv7l", "")
     ],
 )
-def test_arch_enum_raises_on_unsupported(monkeypatch, mock_arch):
+def test_arch_enum_raises_on_unsupported(mock_arch):
     with pytest.raises(build.BuildError, match="architecture"):
         build.Architecture.from_str(mock_arch)
 
@@ -94,7 +84,7 @@ def p_test_dir(test_dir):
 def test_rai_builder_raises_if_attempting_to_place_deps_when_build_dir_dne(
     monkeypatch, p_test_dir, device
 ):
-    monkeypatch.setattr(build.RedisAIBuilder, "_check_backends_arm64", lambda a: None)
+    monkeypatch.setattr(build.RedisAIBuilder, "_validate_platform", lambda a: None)
     monkeypatch.setattr(
         build.RedisAIBuilder,
         "rai_build_path",
@@ -110,7 +100,7 @@ def test_rai_builder_raises_if_attempting_to_place_deps_in_nonempty_dir(
     monkeypatch, p_test_dir, device
 ):
     (p_test_dir / "some_file.txt").touch()
-    monkeypatch.setattr(build.RedisAIBuilder, "_check_backends_arm64", lambda a: None)
+    monkeypatch.setattr(build.RedisAIBuilder, "_validate_platform", lambda a: None)
     monkeypatch.setattr(
         build.RedisAIBuilder, "rai_build_path", property(lambda self: p_test_dir)
     )
@@ -135,8 +125,8 @@ invalid_build_ids = [
 
 
 @pytest.mark.parametrize("build_options", invalid_build_arm64, ids=invalid_build_ids)
-def test_rai_builder_raises_if_unsupported_deps_on_arm64(monkeypatch, build_options):
-    with pytest.raises(build.BuildError, match=r"backends are not supported on ARM64"):
+def test_rai_builder_raises_if_unsupported_deps_on_arm64(build_options):
+    with pytest.raises(build.BuildError, match=r"are not supported on ARM64"):
         build.RedisAIBuilder(
             _os=build.OperatingSystem.DARWIN,
             architecture=build.Architecture.ARM64,
@@ -168,7 +158,7 @@ ort_dep_presence = functools.partial(_confirm_inst_presence, build._ORTArchive)
 def test_rai_builder_will_add_dep_if_backend_requested_wo_duplicates(
     monkeypatch, device, build_tf, build_pt, build_ort
 ):
-    monkeypatch.setattr(build.RedisAIBuilder, "_check_backends_arm64", lambda a: None)
+    monkeypatch.setattr(build.RedisAIBuilder, "_validate_platform", lambda a: None)
 
     rai_builder = build.RedisAIBuilder(
         build_tf=build_tf, build_torch=build_pt, build_onnx=build_ort
@@ -186,7 +176,7 @@ def test_rai_builder_will_add_dep_if_backend_requested_wo_duplicates(
 def test_rai_builder_will_not_add_dep_if_custom_dep_path_provided(
     monkeypatch, device, p_test_dir, build_tf, build_pt
 ):
-    monkeypatch.setattr(build.RedisAIBuilder, "_check_backends_arm64", lambda a: None)
+    monkeypatch.setattr(build.RedisAIBuilder, "_validate_platform", lambda a: None)
     mock_ml_lib = p_test_dir / "some/ml/lib"
     mock_ml_lib.mkdir(parents=True)
     rai_builder = build.RedisAIBuilder(
@@ -207,7 +197,7 @@ def test_rai_builder_will_not_add_dep_if_custom_dep_path_provided(
 def test_rai_builder_raises_if_it_fetches_an_unexpected_number_of_ml_deps(
     monkeypatch, p_test_dir
 ):
-    monkeypatch.setattr(build.RedisAIBuilder, "_check_backends_arm64", lambda a: None)
+    monkeypatch.setattr(build.RedisAIBuilder, "_validate_platform", lambda a: None)
     monkeypatch.setattr(
         build.RedisAIBuilder, "rai_build_path", property(lambda self: p_test_dir)
     )
@@ -248,22 +238,16 @@ def test_correct_pt_variant_os():
     # Check that all Linux variants return Linux
     for linux_variant in build.OperatingSystem.LINUX.value:
         os_ = build.OperatingSystem.from_str(linux_variant)
-        assert isinstance(
-            build.choose_pt_variant(os_, "x86_64", "cpu", RAI_VERSIONS.torch),
-            build._PTArchiveLinux,
-        )
+        assert build._choose_pt_variant(os_) == build._PTArchiveLinux
+
     # Check that ARM64 and X86_64 Mac OSX return the Mac variant
     all_archs = (build.Architecture.ARM64, build.Architecture.X64)
     for arch in all_archs:
         os_ = build.OperatingSystem.DARWIN
-        assert isinstance(
-            build.choose_pt_variant(os_, arch, "cpu", RAI_VERSIONS.torch),
-            build._PTArchiveMacOSX,
-        )
+        assert build._choose_pt_variant(os_) == build._PTArchiveMacOSX
 
 
-def test_PTArchive_MacOSX_url():
-    os_ = build.OperatingSystem.DARWIN
+def test_PTArchiveMacOSX_url():
     arch = build.Architecture.X64
     pt_version = RAI_VERSIONS.torch
 
@@ -276,6 +260,6 @@ def test_PTArchive_MacOSX_url():
     assert arm64_prefix in pt_macosx_cpu.url
 
 
-def test_PTArchive_MacOSX_gpu_error():
+def test_PTArchiveMacOSX_gpu_error():
     with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
         build._PTArchiveMacOSX(build.Architecture.ARM64, "gpu", RAI_VERSIONS.torch).url
