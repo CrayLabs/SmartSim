@@ -24,6 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=too-many-lines
+
+
 import concurrent.futures
 import enum
 import itertools
@@ -44,14 +47,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
-from typing import Sequence
 
-# NOTE: This will be imported by setup.py and hence no
-#       smartsim related items should be imported into
-#       this file.
+# NOTE: This will be imported by setup.py and hence no smartsim related
+# items should be imported into this file.
 
-# TODO:
-#   - check cmake version and use system if possible to avoid conflicts
+# TODO: check cmake version and use system if possible to avoid conflicts
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 TDeviceStr = t.Literal["cpu", "gpu"]
