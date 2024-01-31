@@ -39,6 +39,7 @@ from ..error import (
     SSReservedKeywordError,
 )
 from ..log import get_logger
+from ..settings.slurmSettings import fmt_walltime
 
 logger = get_logger(__name__)
 
@@ -248,7 +249,7 @@ def _get_alloc_cmd(
         "SmartSim",
     ]
     if time:
-        salloc_args.extend(["-t", time])
+        salloc_args.extend(["-t", _validate_time_format(time)])
     if account:
         salloc_args.extend(["-A", str(account)])
 
@@ -271,6 +272,25 @@ def _get_alloc_cmd(
             else:
                 salloc_args += ["=".join((prefix + opt, str(val)))]
     return salloc_args
+
+
+def _validate_time_format(time: str) -> str:
+    """Convert time into valid walltime format
+
+    By defualt the formatted wall time is the total number of seconds.
+
+    :param time: number of hours to run job
+    :type time: str
+    :returns: Formatted walltime
+    :rtype: str
+    """
+    try:
+        hours, minutes, seconds = map(int, time.split(":"))
+    except ValueError as e:
+        raise ValueError(
+            "Input time must be formatted as `HH:MM:SS` with valid Integers."
+        ) from e
+    return fmt_walltime(hours, minutes, seconds)
 
 
 def get_hosts() -> t.List[str]:
