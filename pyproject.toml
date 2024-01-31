@@ -91,18 +91,32 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 
+# Probably Unintended Branches/Blocks
+# warn_unreachable = true
+
 # Safety/Upgrading Mypy
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
 show_error_codes = true
 
+# Misc Strictness Settings
+strict_concatenate = false
+strict_equality = true
+
+# Additional Error Codes
+enable_error_code = [
+    # "redundant-expr",
+    # "possibly-undefined",
+    # "unused-awaitable",
+    # "ignore-without-code",
+    # "mutable-override",
+]
+
 [[tool.mypy.overrides]]
 # Ignore packages that are not used or not typed
 module = [
   "coloredlogs",
-  "smartredis",
-  "smartredis.error",
   "redis.cluster",
   "keras",
   "torch",
