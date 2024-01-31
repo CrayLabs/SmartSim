@@ -1,0 +1,18 @@
+    == Ensembles == 
+        {% for ensemble in manifest.ensembles -%}
+        = Ensemble name: {{ ensemble.name }}
+            Members: {{ ensemble|length }}
+            Ensemble parameters:  
+                {%- for key, value in ensemble.params.items() %}
+                {{ key }}: {{ '{:^9}'.format(value|string)|truncate(81,true,'...')}}
+                    {%- endfor %}      
+        {%- for model in ensemble %}
+        -- {% include 'preview/model.template' %}
+        --
+        {%- endfor %}
+        {% endfor -%}
+        {%- set model = ensemble.models[0] -%}
+        {% if manifest.dbs or model.run_settings.colocated_db_settings %}
+        {%- include "preview/clientconfig.template" %}
+        {% endif -%}
+        =
