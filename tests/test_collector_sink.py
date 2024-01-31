@@ -23,53 +23,31 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import pathlib
 import typing as t
 import uuid
 
 import pytest
 
-from smartsim._core.entrypoints.telemetrymonitor import FileSink, JobEntity
+from conftest import MockCollectorEntityFunc
+from smartsim._core.entrypoints.telemetrymonitor import FileSink
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.group_a
 
 
-@pytest.fixture
-def mock_entity(test_dir):
-    def _mock_entity(
-        host: str = "127.0.0.1", port: str = "6379", name: str = "", type: str = ""
-    ):
-        entity = JobEntity()
-        entity.name = name if name else str(uuid.uuid4())
-        entity.status_dir = test_dir
-        entity.type = type
-        entity.telemetry_on = True
-        entity.collectors = {
-            "client": "",
-            "client_count": "",
-            "memory": "",
-        }
-        entity.config = {
-            "host": host,
-            "port": port,
-        }
-        return entity
-
-    return _mock_entity
-
-
 @pytest.mark.asyncio
-async def test_sink_null_filename(mock_entity) -> None:
+async def test_sink_null_filename(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure the filesink handles a null filename as expected"""
     entity = mock_entity(port=1234, type="orchestrator")
 
     with pytest.raises(ValueError):
         # pass null file path
-        sink = FileSink(None)
+        sink = FileSink(None)  # type: ignore
 
 
 @pytest.mark.asyncio
-async def test_sink_write(mock_entity) -> None:
+async def test_sink_write(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure the FileSink writes values to the output file as expected"""
     entity = mock_entity(port=1234, name="e1")
     sink = FileSink(entity.status_dir + "/test.csv")
@@ -89,7 +67,9 @@ async def test_sink_write(mock_entity) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sink_write_nonstring_input(mock_entity) -> None:
+async def test_sink_write_nonstring_input(
+    mock_entity: MockCollectorEntityFunc
+) -> None:
     """Ensure the FileSink writes values to the output file as expected
     when inputs are non-strings"""
     entity = mock_entity(port=1234, name="e1")
@@ -114,7 +94,9 @@ async def test_sink_write_nonstring_input(mock_entity) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sink_write_no_inputs(mock_entity) -> None:
+async def test_sink_write_no_inputs(
+    mock_entity: MockCollectorEntityFunc
+) -> None:
     """Ensure the FileSink writes to an output file without error if no
     values are supplied"""
     entity = mock_entity(port=1234, name="e1")
@@ -135,7 +117,9 @@ async def test_sink_write_no_inputs(mock_entity) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sink_write_null_entity(mock_entity) -> None:
+async def test_sink_write_null_entity(
+    mock_entity: MockCollectorEntityFunc
+) -> None:
     """Ensure the FileSink writes to an output file without error if no
     values are supplied"""
     entity = mock_entity(port=1234, name="e1")

@@ -26,10 +26,10 @@
 import asyncio
 import datetime
 import typing as t
-import uuid
 
 import pytest
 
+from conftest import MockCollectorEntityFunc
 from smartsim._core.entrypoints.telemetrymonitor import (
     CollectorManager,
     DbConnectionCollector,
@@ -44,31 +44,9 @@ from smartsim._core.entrypoints.telemetrymonitor import (
 pytestmark = pytest.mark.group_a
 
 
-@pytest.fixture
-def mock_entity(test_dir):
-    def _mock_entity(
-        host: str = "127.0.0.1", port: str = "6379", name: str = "", type: str = ""
-    ):
-        entity = JobEntity()
-        entity.name = name if name else str(uuid.uuid4())
-        entity.status_dir = test_dir
-        entity.type = type
-        entity.telemetry_on = True
-        entity.collectors = {
-            "client": "",
-            "client_count": "",
-            "memory": "",
-        }
-        entity.config = {
-            "host": host,
-            "port": port,
-        }
-        return entity
-
-    return _mock_entity
-
-
-def test_collector_manager_add(mock_entity, mock_sink):
+def test_collector_manager_add(
+    mock_entity: MockCollectorEntityFunc, mock_sink
+) -> None:
     """Ensure that collector manager add & clear work as expected"""
     entity1 = mock_entity()
 
@@ -78,19 +56,19 @@ def test_collector_manager_add(mock_entity, mock_sink):
     manager = CollectorManager()
 
     # ensure manager starts empty
-    assert len(manager.all_collectors) == 0
+    assert len(list(manager.all_collectors)) == 0
 
     # ensure added item is in the collector list
     manager.add(con_col)
-    assert len(manager.all_collectors) == 1
+    assert len(list(manager.all_collectors)) == 1
 
     # ensure a duplicate isn't added
     manager.add(con_col)
-    assert len(manager.all_collectors) == 1
+    assert len(list(manager.all_collectors)) == 1
 
     # ensure another collector for the same entity is added
     manager.add(mem_col)
-    assert len(manager.all_collectors) == 2
+    assert len(list(manager.all_collectors)) == 2
 
     # create a collector for another entity
     entity2 = mock_entity()
@@ -98,21 +76,23 @@ def test_collector_manager_add(mock_entity, mock_sink):
 
     # ensure collectors w/same type for new entities are not treated as dupes
     manager.add(con_col2)
-    assert len(manager.all_collectors) == 3
+    assert len(list(manager.all_collectors)) == 3
 
     # verify no dupe on second entity
     manager.add(con_col2)
-    assert len(manager.all_collectors) == 3
+    assert len(list(manager.all_collectors)) == 3
 
     manager.clear()
-    assert len(manager.all_collectors) == 0
+    assert len(list(manager.all_collectors)) == 0
 
     # ensure post-clear adding still works
     manager.add(con_col2)
-    assert len(manager.all_collectors) == 1
+    assert len(list(manager.all_collectors)) == 1
 
 
-def test_collector_manager_add_multi(mock_entity, mock_sink):
+def test_collector_manager_add_multi(
+    mock_entity: MockCollectorEntityFunc, mock_sink
+) -> None:
     """Ensure that collector manager multi-add works as expected"""
     entity = mock_entity()
 
@@ -123,20 +103,25 @@ def test_collector_manager_add_multi(mock_entity, mock_sink):
     # add multiple items at once
     manager.add_all([con_col, mem_col])
 
-    assert len(manager.all_collectors) == 2
+    assert len(list(manager.all_collectors)) == 2
 
     # ensure multi-add does not produce dupes
     con_col2 = DbConnectionCollector(entity, mock_sink())
     mem_col2 = DbMemoryCollector(entity, mock_sink())
 
     manager.add_all([con_col2, mem_col2])
-    assert len(manager.all_collectors) == 2
+    assert len(list(manager.all_collectors)) == 2
 
 
 @pytest.mark.asyncio
 async def test_collector_manager_collect(
-    mock_entity, mock_redis, monkeypatch, mock_con, mock_mem, mock_sink
-):
+    mock_entity: MockCollectorEntityFunc,
+    mock_redis,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_con,
+    mock_mem,
+    mock_sink,
+) -> None:
     """Ensure that all collectors are executed and some metric is retrieved
     NOTE: responses & producer are mocked"""
     entity1 = mock_entity(port=1234, name="entity1")
@@ -167,8 +152,12 @@ async def test_collector_manager_collect(
 
 @pytest.mark.asyncio
 async def test_collector_manager_collect_filesink(
-    mock_entity, mock_redis, monkeypatch, mock_mem, mock_con
-):
+    mock_entity: MockCollectorEntityFunc,
+    mock_redis,
+    monkeypatch,
+    mock_mem,
+    mock_con,
+) -> None:
     """Ensure that all collectors are executed and some metric is retrieved
     and the FileSink is written to as expected"""
     entity1 = mock_entity(port=1234, name="entity1")
@@ -207,7 +196,9 @@ async def test_collector_manager_collect_filesink(
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_collect_integration(mock_entity, local_db, mock_sink):
+async def test_collector_manager_collect_integration(
+    test_dir: str, mock_entity: MockCollectorEntityFunc, local_db, mock_sink
+) -> None:
     """Ensure that all collectors are executed and some metric is retrieved"""
     entity1 = mock_entity(port=local_db.ports[0], name="e1")
     entity2 = mock_entity(port=local_db.ports[0], name="e2")
@@ -242,16 +233,16 @@ async def test_collector_manager_collect_integration(mock_entity, local_db, mock
 )
 @pytest.mark.asyncio
 async def test_collector_manager_timeout(
-    mock_entity,
+    mock_entity: MockCollectorEntityFunc,
     mock_redis,
     monkeypatch: pytest.MonkeyPatch,
     mock_mem,
     mock_con,
-    timeout_at,
-    delay_for,
-    expect_fail,
+    timeout_at: int,
+    delay_for: int,
+    expect_fail: bool,
     mock_sink,
-):
+) -> None:
     """Ensure that the collector timeout is honored"""
     entity1 = mock_entity(port=1234, name="e1")
     entity2 = mock_entity(port=2345, name="e2")
@@ -264,7 +255,7 @@ async def test_collector_manager_timeout(
     manager = CollectorManager(timeout_ms=timeout_at)
     manager.add_all([con_col1, mem_col1, mem_col2])
 
-    async def snooze():
+    async def snooze() -> None:
         await asyncio.sleep(delay_for / 1000)
 
     # Execute collection
@@ -293,7 +284,9 @@ async def test_collector_manager_timeout(
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_find(mock_entity):
+async def test_collector_manager_find(
+    mock_entity: MockCollectorEntityFunc
+) -> None:
     """Ensure that the manifest allows individually enabling a given collector"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
     manager = CollectorManager()
@@ -303,7 +296,7 @@ async def test_collector_manager_find(mock_entity):
     assert len(found) == 0
 
     # 1. ensure DbConnectionCollector is mapped
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity = mock_entity(port=1234, name="entity1", type="orchestrator")
     entity.collectors["client"] = "mock/path.csv"
     manager = CollectorManager()
 
@@ -313,7 +306,7 @@ async def test_collector_manager_find(mock_entity):
     assert isinstance(found[0], DbConnectionCollector)
 
     # 3. ensure DbConnectionCountCollector is mapped
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity = mock_entity(port=1234, name="entity1", type="orchestrator")
     entity.collectors["client_count"] = "mock/path.csv"
     manager = CollectorManager()
 
@@ -323,7 +316,7 @@ async def test_collector_manager_find(mock_entity):
     assert isinstance(found[0], DbConnectionCountCollector)
 
     # ensure DbMemoryCollector is mapped
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity = mock_entity(port=1234, name="entity1", type="orchestrator")
     entity.collectors["memory"] = "mock/path.csv"
     manager = CollectorManager()
 
@@ -334,11 +327,12 @@ async def test_collector_manager_find(mock_entity):
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_find_entity_disabled(mock_entity):
+async def test_collector_manager_find_entity_disabled(
+    mock_entity: MockCollectorEntityFunc
+) -> None:
     """Ensure that disabling telemetry on the entity results in no collectors"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
     manager = CollectorManager()
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
 
     # set paths for all known collectors
     entity.collectors["client"] = "mock/path.csv"
@@ -359,7 +353,9 @@ async def test_collector_manager_find_entity_disabled(mock_entity):
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_find_entity_unmapped(mock_entity):
+async def test_collector_manager_find_entity_unmapped(
+    mock_entity: MockCollectorEntityFunc
+) -> None:
     """Ensure that an entity type that is not mapped results in no collectors"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="model")
     manager = CollectorManager()

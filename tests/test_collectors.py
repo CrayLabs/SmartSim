@@ -23,15 +23,16 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import pathlib
 import typing as t
 import uuid
 
 import pytest
 
+from conftest import MockCollectorEntityFunc
 from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
     DbMemoryCollector,
-    JobEntity,
 )
 from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
 
@@ -39,32 +40,10 @@ from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
 pytestmark = pytest.mark.group_a
 
 
-@pytest.fixture
-def mock_entity(test_dir):
-    def _mock_entity(
-        host: str = "127.0.0.1", port: str = "6379", name: str = "", type: str = ""
-    ):
-        entity = JobEntity()
-        entity.name = name if name else str(uuid.uuid4())
-        entity.status_dir = test_dir
-        entity.type = type
-        entity.telemetry_on = True
-        entity.collectors = {
-            "client": "",
-            "client_count": "",
-            "memory": "",
-        }
-        entity.config = {
-            "host": host,
-            "port": port,
-        }
-        return entity
-
-    return _mock_entity
-
-
 @pytest.mark.asyncio
-async def test_dbmemcollector_prepare(mock_entity, mock_sink):
+async def test_dbmemcollector_prepare(
+    mock_entity: MockCollectorEntityFunc, mock_sink
+) -> None:
     """Ensure that collector preparation succeeds when expected"""
     entity = mock_entity()
 
@@ -75,11 +54,11 @@ async def test_dbmemcollector_prepare(mock_entity, mock_sink):
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail(
-    mock_entity,
+    mock_entity: MockCollectorEntityFunc,
     mock_sink,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture,
-):
+    capsys: pytest.CaptureFixture[t.Any],
+) -> None:
     """Ensure that collector preparation reports a failure to connect
     when the redis client cannot be created"""
     entity = mock_entity()
@@ -98,10 +77,10 @@ async def test_dbmemcollector_prepare_fail(
 
 @pytest.mark.asyncio
 async def test_dbcollector_config(
-    mock_entity,
+    mock_entity: MockCollectorEntityFunc,
     mock_sink,
     monkeypatch: pytest.MonkeyPatch,
-):
+) -> None:
     """Ensure that missing required db collector config causes an exception"""
 
     # Check that a bad host causes exception
@@ -114,23 +93,23 @@ async def test_dbcollector_config(
         DbMemoryCollector(entity, mock_sink())
 
     # Check that a bad port causes exception
-    entity = mock_entity(port="")
+    entity = mock_entity(port="")  # type: ignore
     with pytest.raises(ValueError):
         DbMemoryCollector(entity, mock_sink())
 
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail_dep(
-    mock_entity,
+    mock_entity: MockCollectorEntityFunc,
     mock_sink,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture,
-):
+    capsys: pytest.CaptureFixture[t.Any],
+) -> None:
     """Ensure that collector preparation attempts to connect, ensure it
     reports a failure if the db conn bombs"""
     entity = mock_entity()
 
-    def raiser(*args, **kwargs):
+    def raiser(*args: t.Any, **kwargs: t.Any) -> None:
         # mock raising exception on connect attempts to test err handling
         raise tredis.ConnectionError("mock connection failure")
 
@@ -148,8 +127,12 @@ async def test_dbmemcollector_prepare_fail_dep(
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_collect(
-    mock_entity, mock_redis, mock_mem, mock_sink, monkeypatch: pytest.MonkeyPatch
-):
+    mock_entity: MockCollectorEntityFunc,
+    mock_redis,
+    mock_mem,
+    mock_sink,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
@@ -174,7 +157,9 @@ async def test_dbmemcollector_collect(
 
 
 @pytest.mark.asyncio
-async def test_dbmemcollector_integration(mock_entity, mock_sink, local_db):
+async def test_dbmemcollector_integration(
+    mock_entity: MockCollectorEntityFunc, mock_sink, local_db
+) -> None:
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])
@@ -195,8 +180,12 @@ async def test_dbmemcollector_integration(mock_entity, mock_sink, local_db):
 
 @pytest.mark.asyncio
 async def test_dbconncollector_collect(
-    mock_entity, mock_sink, mock_redis, mock_con, monkeypatch: pytest.MonkeyPatch
-):
+    mock_entity: MockCollectorEntityFunc,
+    mock_sink,
+    mock_redis,
+    mock_con,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
@@ -222,7 +211,9 @@ async def test_dbconncollector_collect(
 
 
 @pytest.mark.asyncio
-async def test_dbconncollector_integration(mock_entity, mock_sink, local_db):
+async def test_dbconncollector_integration(
+    mock_entity: MockCollectorEntityFunc, mock_sink, local_db
+) -> None:
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])

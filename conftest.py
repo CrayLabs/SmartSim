@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import pathlib
 import shutil
 import sys
 import tempfile
@@ -44,6 +45,7 @@ import smartsim
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
+from smartsim._core.entrypoints.telemetrymonitor import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SSConfigError
@@ -783,3 +785,37 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
         return MockConn
 
     return _mock_redis
+
+
+class MockCollectorEntityFunc(t.Protocol):
+    @staticmethod
+    def __call__(
+        host: str = "127.0.0.1", port: int = 6379, name: str = "", type: str = ""
+    ) -> "JobEntity":
+        ...
+
+
+@pytest.fixture
+def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
+    def _mock_entity(
+        host: str = "127.0.0.1", port: int = 6379, name: str = "", type: str = ""
+    ) -> "JobEntity":
+        test_path = pathlib.Path(test_dir)
+
+        entity = JobEntity()
+        entity.name = name if name else str(uuid.uuid4())
+        entity.status_dir = str(test_path / entity.name)
+        entity.type = type
+        entity.telemetry_on = True
+        entity.collectors = {
+            "client": "",
+            "client_count": "",
+            "memory": "",
+        }
+        entity.config = {
+            "host": host,
+            "port": str(port),
+        }
+        return entity
+
+    return _mock_entity
