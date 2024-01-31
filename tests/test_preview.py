@@ -24,14 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
+
 import pytest
 
-from smartsim._core import Manifest
-from smartsim import Experiment
-from smartsim._core import previewrenderer
 import smartsim._core._cli.utils as _utils
+from smartsim import Experiment
+from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
-import pathlib
 
 
 @pytest.fixture
