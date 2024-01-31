@@ -306,7 +306,7 @@ class DbCollector(Collector):
             logger.error("An error occurred during DbCollector shutdown", exc_info=ex)
 
     async def _check_db(self) -> bool:
-        """Check if a database is reachable. 
+        """Check if a database is reachable.
 
         :returns: True if connection succeeds, False otherwise."""
         try:
