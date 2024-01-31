@@ -1,12 +1,48 @@
 <!DOCTYPE html>
 <html>
+<title>Preview</title>
+<style>
+.entityList {
+  list-style-type: none;
+}
+.inline {
+  display: inline-block;
+}
+</style>
 <body>
-{% include "preview/experiment_html.template" %}
-{%- if manifest.all_entity_lists|length > 0 %}
-<p>=== Entity Preview ===<p/>
-{%- if manifest.dbs %} # change to ensemble
-{% include "preview/orchestrator_html.template" %}
-{%- endif -%}
-{% endif %}
+<div class='preview'> 
+    <div class='experiment'>
+        {% include 'preview/experiment_html.template' %}
+    </div>
+    {%- if manifest %}
+    <div class='header'>=== Entity Preview ===</div>
+        <div class='childContainer'> 
+            {%- if manifest.models %}
+                <div class='header'>== Models ==</div>
+                {%- for model in manifest.models %}
+                <div class='childEntity model'> 
+                <ul class="entityList">
+                <li class="inline">=&nbsp;</li>{% include 'preview/model_html.template' %}
+                </ul> 
+                {% if manifest.dbs or model.run_settings.colocated_db_settings %}
+                <div class='childEntity clientconfig'>
+                    {% include 'preview/clientconfig_html.template' %}
+                </div> 
+                {% endif %}
+                {%- endfor %}
+            {%- endif %} 
+        </div>     
+        {%- if manifest.ensembles %}
+            <div class='header'>== Ensembles ==</div> 
+            {%- for ensemble in manifest.ensembles %}
+            <div class='childEntity ensemble'>
+                {% include 'preview/ensemble_html.template' %}
+            </div> 
+            {%- endfor %}
+            {%- endif %}  
+            </div> 
+    {%- endif %}
+</div>
+</div>
 </body>
 </html>

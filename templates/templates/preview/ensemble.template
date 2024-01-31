@@ -1,4 +1,3 @@
-    == Ensembles == 
         {% for ensemble in manifest.ensembles -%}
         = Ensemble name: {{ ensemble.name }}
             Members: {{ ensemble|length }}

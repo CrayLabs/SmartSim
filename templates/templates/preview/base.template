@@ -6,7 +6,7 @@
 
 {%- if manifest.models %}
     == Models == 
-{%- for model in manifest.models %}   
+{% for model in manifest.models %}   
     = {% include "preview/model.template" %}
     {%- if manifest.dbs or model.run_settings.colocated_db_settings %}
     {% include "preview/clientconfig.template" %}
@@ -15,8 +15,9 @@
 {% endfor %}
 {%- endif -%}
 {%- if manifest.ensembles %}
-{% for ensemble in manifest.ensembles %}
-{% include "preview/ensemble.template" %}
-{%- endfor %}
+    == Ensembles ==
+    {% for ensemble in manifest.ensembles %}
+        {% include "preview/ensemble.template" %}
+    {%- endfor %}
 {%- endif -%}
 {%- endif -%}
