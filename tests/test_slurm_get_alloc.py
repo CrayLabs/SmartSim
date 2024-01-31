@@ -33,7 +33,7 @@ pytestmark = pytest.mark.group_b
 
 
 def test_get_alloc_format():
-    time = "10:00:00"
+    time = "10:00:70"
     nodes = 5
     account = "A35311"
     options = {"ntasks-per-node": 5}
@@ -45,7 +45,7 @@ def test_get_alloc_format():
         "-J",
         "SmartSim",
         "-t",
-        "10:00:00",
+        "10:01:10",
         "-A",
         "A35311",
         "--ntasks-per-node=5",
