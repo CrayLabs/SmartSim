@@ -144,7 +144,7 @@ def proxyable_launch_cmd(
             run_req = DragonRunRequest.parse_obj(json.loads(original_cmd_list[-1]))
 
             exe_args = run_req.exe_args or []
-            encoded_cmd = encode_cmd(run_req.exe + exe_args)
+            encoded_cmd = encode_cmd([run_req.exe] + exe_args)
 
             # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
             #       serialize step and let the indirect entrypoint rebuild the
@@ -164,7 +164,7 @@ def proxyable_launch_cmd(
                 "+working_dir",
                 self.cwd,
             ]
-            run_req.exe = new_cmd[0:1]
+            run_req.exe = new_cmd[0]
             run_req.exe_args = new_cmd[1:]
 
             return [run_req.json()]
