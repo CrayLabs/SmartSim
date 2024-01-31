@@ -36,6 +36,29 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 
+def test_invalid_time_format(wlmutils):
+    """test slurm interface for formatting walltimes"""
+    account = wlmutils.get_test_account()
+    with pytest.raises(ValueError) as e:
+        alloc = slurm.get_allocation(nodes=1, time="000500", account=account)
+    assert (
+        "Input time must be formatted as `HH:MM:SS` with valid Integers."
+        in e.value.args[0]
+    )
+    with pytest.raises(ValueError) as e:
+        alloc = slurm.get_allocation(nodes=1, time="00-05-00", account=account)
+    assert (
+        "Input time must be formatted as `HH:MM:SS` with valid Integers."
+        in e.value.args[0]
+    )
+    with pytest.raises(ValueError) as e:
+        alloc = slurm.get_allocation(nodes=1, time="TE:HE:HE", account=account)
+    assert (
+        "Input time must be formatted as `HH:MM:SS` with valid Integers."
+        in e.value.args[0]
+    )
+
+
 def test_get_release_allocation(wlmutils):
     """test slurm interface for obtaining allocations"""
     account = wlmutils.get_test_account()

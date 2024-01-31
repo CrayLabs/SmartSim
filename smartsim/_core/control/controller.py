@@ -624,7 +624,7 @@ class Controller:
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
-
+            assert isinstance(db_name_colo, str)
             for key in address_dict:
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
@@ -875,8 +875,7 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.entities = [model]
         self.batch_settings = model.batch_settings
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None:
-        ...
+    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
 
 
 def _look_up_launched_data(
