@@ -26,8 +26,9 @@
 import pathlib
 from os import path as osp
 
-import pytest
 import numpy as np
+import pytest
+
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim.error.errors import PreviewFormatError
