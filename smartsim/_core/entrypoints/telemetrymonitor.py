@@ -1154,10 +1154,8 @@ async def main(
             # a manifest may not exist depending on startup timing
             action_handler.process_manifest(str(manifest_path))
 
-        observer.schedule(log_handler, telemetry_path, recursive=False)  # type:ignore
-        observer.schedule(
-            action_handler, telemetry_path, recursive=False
-        )  # type:ignore
+        observer.schedule(log_handler, telemetry_path)  # type:ignore
+        observer.schedule(action_handler, telemetry_path)  # type:ignore
         observer.start()  # type: ignore
 
         await event_loop(observer, action_handler, frequency_ms, cooldown_duration)
