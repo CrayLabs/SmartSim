@@ -54,6 +54,7 @@ class JobEntity:
         self.telemetry_on: bool = False
         self.collectors: t.Dict[str, str] = {}
         self.config: t.Dict[str, str] = {}
+        self._is_complete: bool = False
 
     @property
     def is_db(self) -> bool:
@@ -66,6 +67,13 @@ class JobEntity:
     @property
     def key(self) -> _JobKey:
         return _JobKey(self.step_id, self.task_id)
+
+    @property
+    def is_complete(self) -> bool:
+        return self._is_complete
+
+    def set_complete(self) -> None:
+        self._is_complete = True
 
 
 class Job:
