@@ -65,7 +65,7 @@ class DragonBackend:
             "stop": self.stop,
             "handshake": self.handshake,
         }
-        self.procs: dict[str, Process] = {}
+        self.procs: t.Dict[str, Process] = {}
 
     def process_request(self, request: DragonRequest) -> DragonResponse:
         req_type = DragonRequest.parse_obj(request).request_type
