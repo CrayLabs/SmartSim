@@ -80,8 +80,7 @@ def print_summary(
     cmd: t.List[str], network_interface: str, shard_data: LaunchedShardData
 ) -> None:
     print(
-        textwrap.dedent(
-            f"""\
+        textwrap.dedent(f"""\
             ----------- Running Command ----------
             COMMAND: {' '.join(cmd)}
             IPADDRESS: {shard_data.hostname}
@@ -91,8 +90,7 @@ def print_summary(
 
             --------------- Output ---------------
 
-            """
-        ),
+            """),
         flush=True,
     )
 

@@ -65,8 +65,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
     with open("dragon_config.log", "w", encoding="utf-8") as dragon_config_log:
         dragon_config_log.write(
-            textwrap.dedent(
-                f"""\
+            textwrap.dedent(f"""\
                 -------- Dragon Configuration --------
                 IPADDRESS: {ip_address}
                 NETWORK: {network_interface}
@@ -75,8 +74,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
                 --------------- Output ---------------
 
-                """
-            ),
+                """),
         )
 
 
