@@ -44,7 +44,7 @@ Detailed Notes
   all of SmartSim's machine learning backends with Python 3.11.
   (SmartSim-PR451_) (SmartSim-PR461_)
 - SmartSim can now be built and used on platforms using Apple Silicon
-  (ARM64). Currently, only the pyTorch backend is supported. Note that libtorch
+  (ARM64). Currently, only the PyTorch backend is supported. Note that libtorch
   will be downloaded from a CrayLabs github repo. (SmartSim-PR465_)
 
 

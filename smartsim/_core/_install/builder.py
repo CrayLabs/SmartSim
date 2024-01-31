@@ -803,7 +803,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 
     @staticmethod
     def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
-        # TODO: Rework this to do a recursive search
+        # TODO: This will need to be revisited if the inheritance tree gets deeper
         return tuple(
             itertools.chain.from_iterable(
                 var.supported_platforms() for var in _PTArchive.__subclasses__()
