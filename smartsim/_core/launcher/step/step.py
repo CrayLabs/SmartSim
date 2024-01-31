@@ -41,7 +41,6 @@ from ....log import get_logger
 from ....settings.base import RunSettings, SettingsBase
 from ...utils.helpers import encode_cmd, get_base_36_repr
 from ..colocated import write_colocated_launch_script
-from .dragonStep import DragonStep
 
 logger = get_logger(__name__)
 
@@ -133,6 +132,9 @@ def proxyable_launch_cmd(
 
         if not CONFIG.telemetry_enabled:
             return original_cmd_list
+
+        # pylint: disable-next=import-outside-toplevel
+        from .dragonStep import DragonStep
 
         if isinstance(self, DragonStep):
             proxy_module = "smartsim._core.entrypoints.indirect"
