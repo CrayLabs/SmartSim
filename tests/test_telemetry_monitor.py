@@ -397,7 +397,7 @@ def test_shutdown_conditions():
     job_entity2.task_id = ""
 
     job_entity3 = JobEntity()
-    job_entity3.name = job_entity2.name,
+    job_entity3.name = (job_entity2.name,)
     job_entity3.step_id = job_entity2.step_id
     job_entity3.task_id = job_entity2.task_id
     job_entity3.type = "orchestrator"
@@ -410,7 +410,7 @@ def test_shutdown_conditions():
     assert not can_shutdown(mani_handler)
     assert not bool(mani_handler.job_manager.db_jobs)  # db isn't run by job mgr
     assert bool(list(mani_handler._tracked_jobs.values()))  # mani handler tracks db
-    assert bool(mani_handler.job_manager.jobs) # job mgr does normal tasks
+    assert bool(mani_handler.job_manager.jobs)  # job mgr does normal tasks
 
     # ... now, show that removing 1 of 2 jobs still doesn't shutdown
     job_entity3.set_complete()
