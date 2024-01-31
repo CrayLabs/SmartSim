@@ -108,6 +108,7 @@ module = [
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
   "watchdog",
+  "dragon.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true
