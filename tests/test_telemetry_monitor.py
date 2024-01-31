@@ -383,34 +383,37 @@ def test_shutdown_conditions():
     # show that an event handler w/a monitored db cannot shutdown
     mani_handler = ManifestEventHandler("xyz")
     job_entity1.type = "orchestrator"
-    mani_handler.job_manager.add_job(
-        job_entity1.name, job_entity1.step_id, job_entity1, False
-    )
+    mani_handler._tracked_jobs[job_entity1.key] = job_entity1
     assert not can_shutdown(mani_handler)
-    assert bool(mani_handler.job_manager.db_jobs)
+    assert bool([j for j in mani_handler._tracked_jobs.values() if j.is_db])
     assert not bool(mani_handler.job_manager.jobs)
 
-    # show that an event handler w/a dbs & tasks cannot shutdown
+    # show that an event handler w/dbs & tasks cannot shutdown
+    mani_handler = ManifestEventHandler("xyz")
+
     job_entity2 = JobEntity()
     job_entity2.name = "xyz"
     job_entity2.step_id = "123"
     job_entity2.task_id = ""
 
-    mani_handler = ManifestEventHandler("xyz")
-    job_entity1.type = "orchestrator"
-    mani_handler.job_manager.add_job(
-        job_entity1.name, job_entity1.step_id, job_entity1, False
-    )
+    job_entity3 = JobEntity()
+    job_entity3.name = job_entity2.name,
+    job_entity3.step_id = job_entity2.step_id
+    job_entity3.task_id = job_entity2.task_id
+    job_entity3.type = "orchestrator"
 
     mani_handler.job_manager.add_job(
         job_entity2.name, job_entity2.step_id, job_entity2, False
     )
+    mani_handler._tracked_jobs[JobEntity.key] = job_entity3
+
     assert not can_shutdown(mani_handler)
-    assert bool(mani_handler.job_manager.db_jobs)
-    assert bool(mani_handler.job_manager.jobs)
+    assert not bool(mani_handler.job_manager.db_jobs)  # db isn't run by job mgr
+    assert bool(list(mani_handler._tracked_jobs.values()))  # mani handler tracks db
+    assert bool(mani_handler.job_manager.jobs) # job mgr does normal tasks
 
     # ... now, show that removing 1 of 2 jobs still doesn't shutdown
-    mani_handler.job_manager.db_jobs.popitem()
+    job_entity3.set_complete()
     assert not can_shutdown(mani_handler)
 
     # ... now, show that removing final job will allow shutdown
