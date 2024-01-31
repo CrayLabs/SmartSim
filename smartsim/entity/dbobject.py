@@ -33,7 +33,10 @@ from ..error import SSUnsupportedError
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
 
-class DBObject:
+_DBObjectFuncT = t.TypeVar("_DBObjectFuncT", str, bytes)
+
+
+class DBObject(t.Generic[_DBObjectFuncT]):
     """Base class for ML objects residing on DB. Should not
     be instantiated.
     """
@@ -41,14 +44,14 @@ class DBObject:
     def __init__(
         self,
         name: str,
-        func: t.Optional[t.Union[str, bytes]],
+        func: t.Optional[_DBObjectFuncT],
         file_path: t.Optional[str],
         device: t.Literal["CPU", "GPU"],
         devices_per_node: int,
         first_device: int,
     ) -> None:
         self.name = name
-        self.func = func
+        self.func: t.Optional[_DBObjectFuncT] = func
         self.file: t.Optional[Path] = (
             None  # Need to have this explicitly to check on it
         )
@@ -65,9 +68,7 @@ class DBObject:
 
     @property
     def is_file(self) -> bool:
-        if self.func:
-            return False
-        return True
+        return not self.func
 
     @staticmethod
     def _check_tensor_args(
@@ -153,7 +154,7 @@ class DBObject:
             raise ValueError(msg)
 
 
-class DBScript(DBObject):
+class DBScript(DBObject[str]):
     def __init__(
         self,
         name: str,
@@ -214,7 +215,7 @@ class DBScript(DBObject):
         return desc_str
 
 
-class DBModel(DBObject):
+class DBModel(DBObject[bytes]):
     def __init__(
         self,
         name: str,
@@ -276,7 +277,7 @@ class DBModel(DBObject):
         self.inputs, self.outputs = self._check_tensor_args(inputs, outputs)
 
     @property
-    def model(self) -> t.Optional[t.Union[str, bytes]]:
+    def model(self) -> t.Optional[bytes]:
         return self.func
 
     def __str__(self) -> str:

@@ -176,10 +176,9 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
                     inputs=db_model.inputs,
                     outputs=db_model.outputs,
                 )
-            elif db_model.model is not None:
-                # db_model.model is guaranteed to be bytes
-                # because it is serialized
-                model = t.cast(bytes, db_model.model)
+            else:
+                if db_model.model is None:
+                    raise ValueError(f"No model attacted to {db_model.name}")
                 client.set_model(
                     name=db_model.name,
                     model=model,
@@ -206,7 +205,7 @@ def set_script(db_script: DBScript, client: Client) -> None:
                 client.set_script_from_file(
                     name=db_script.name, file=str(db_script.file), device=device
                 )
-            else:
+            elif db_script.script:
                 if isinstance(db_script.script, str):
                     client.set_script(
                         name=db_script.name, script=db_script.script, device=device
@@ -215,7 +214,8 @@ def set_script(db_script: DBScript, client: Client) -> None:
                     client.set_function(
                         name=db_script.name, function=db_script.script, device=device
                     )
-
+            else:
+                raise ValueError(f"No script or file attached to {db_script.name}")
         except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error
