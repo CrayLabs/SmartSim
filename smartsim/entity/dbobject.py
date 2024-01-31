@@ -41,7 +41,7 @@ class DBObject:
     def __init__(
         self,
         name: str,
-        func: t.Optional[str],
+        func: t.Optional[t.Union[str, bytes]],
         file_path: t.Optional[str],
         device: t.Literal["CPU", "GPU"],
         devices_per_node: int,
@@ -196,13 +196,13 @@ class DBScript(DBObject):
             raise ValueError("Either script or script_path must be provided")
 
     @property
-    def script(self) -> t.Optional[str]:
+    def script(self) -> t.Optional[t.Union[bytes,str]]:
         return self.func
 
     def __str__(self) -> str:
         desc_str = "Name: " + self.name + "\n"
         if self.func:
-            desc_str += "Func: " + self.func + "\n"
+            desc_str += "Func: " + str(self.func) + "\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
         devices_str = self.device + (
@@ -219,7 +219,7 @@ class DBModel(DBObject):
         self,
         name: str,
         backend: str,
-        model: t.Optional[str] = None,
+        model: t.Optional[bytes] = None,
         model_file: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
@@ -239,7 +239,7 @@ class DBModel(DBObject):
         :param name: key to store model under
         :type name: str
         :param model: model in memory
-        :type model: str, optional
+        :type model: bytes, optional
         :param model_file: serialized model
         :type model_file: file path to model, optional
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
@@ -276,7 +276,7 @@ class DBModel(DBObject):
         self.inputs, self.outputs = self._check_tensor_args(inputs, outputs)
 
     @property
-    def model(self) -> t.Union[str, None]:
+    def model(self) -> t.Optional[t.Union[str, bytes]]:
         return self.func
 
     def __str__(self) -> str:

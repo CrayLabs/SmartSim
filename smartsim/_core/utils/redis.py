@@ -179,7 +179,7 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
             elif db_model.model is not None:
                 client.set_model(
                     name=db_model.name,
-                    model=bytes(db_model.model, encoding="utf-8"),
+                    model=db_model.model,
                     backend=db_model.backend,
                     device=device,
                     batch_size=db_model.batch_size,
