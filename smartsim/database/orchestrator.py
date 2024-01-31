@@ -610,7 +610,7 @@ class Orchestrator(EntityList[DBNode]):
 
             try:
                 for address in addresses:
-                    client.config_set(key, value, address)
+                    client.config_set(key, str(value), address)
 
             except RedisReplyError:
                 raise SmartSimError(

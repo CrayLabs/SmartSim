@@ -176,10 +176,10 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
                     inputs=db_model.inputs,
                     outputs=db_model.outputs,
                 )
-            else:
+            elif db_model.model is not None:
                 client.set_model(
                     name=db_model.name,
-                    model=db_model.model,
+                    model=bytes(db_model.model, encoding="utf-8"),
                     backend=db_model.backend,
                     device=device,
                     batch_size=db_model.batch_size,
@@ -208,7 +208,7 @@ def set_script(db_script: DBScript, client: Client) -> None:
                     client.set_script(
                         name=db_script.name, script=db_script.script, device=device
                     )
-                else:
+                elif callable(db_script.script):
                     client.set_function(
                         name=db_script.name, function=db_script.script, device=device
                     )

@@ -78,7 +78,7 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = []
+plugins = ["pydantic.mypy"]
 ignore_errors = false
 
 # Dynamic typing
