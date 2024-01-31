@@ -357,7 +357,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         backend: str,
-        model: t.Optional[str] = None,
+        model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
