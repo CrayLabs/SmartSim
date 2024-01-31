@@ -32,7 +32,7 @@ import psutil
 import pytest
 
 from smartsim._core.config import CONFIG
-from smartsim._core.entrypoints.indirect import cleanup, get_parser, get_ts, main
+from smartsim._core.entrypoints.indirect import cleanup, get_parser, get_ts_ms, main
 from smartsim._core.utils.helpers import encode_cmd
 
 ALL_ARGS = {
@@ -141,7 +141,7 @@ def test_cleanup_late(capsys, monkeypatch):
 
 def test_ts():
     """Ensure expected output type"""
-    ts = get_ts()
+    ts = get_ts_ms()
     assert isinstance(ts, int)
 
 

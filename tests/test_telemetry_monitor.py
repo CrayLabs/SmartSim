@@ -46,7 +46,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     event_loop,
     faux_return_code,
     get_parser,
-    get_ts,
+    get_ts_ms,
     hydrate_persistable,
     load_manifest,
     track_event,
@@ -152,7 +152,7 @@ def test_parser():
 
 def test_ts():
     """Ensure expected output type"""
-    ts = get_ts()
+    ts = get_ts_ms()
     assert isinstance(ts, int)
 
 
@@ -194,8 +194,8 @@ def test_invalid_frequencies(freq: t.Union[int, float], exp_err_msg: str):
 @pytest.mark.parametrize(
     ["etype", "task_id", "step_id", "timestamp", "evt_type"],
     [
-        pytest.param("ensemble", "", "123", get_ts(), "start", id="start event"),
-        pytest.param("ensemble", "", "123", get_ts(), "stop", id="stop event"),
+        pytest.param("ensemble", "", "123", get_ts_ms(), "start", id="start event"),
+        pytest.param("ensemble", "", "123", get_ts_ms(), "stop", id="stop event"),
     ],
 )
 def test_track_event(
@@ -325,7 +325,7 @@ def test_persistable_computed_properties(
     task_id: str, step_id: str, etype: str, exp_isorch: bool, exp_ismanaged: bool
 ):
     name = f"test-{etype}-{uuid.uuid4()}"
-    timestamp = get_ts()
+    timestamp = get_ts_ms()
     exp_dir = pathlib.Path("/foo/bar")
     stored = {
         "name": name,
@@ -444,9 +444,9 @@ async def test_auto_shutdown(test_dir: str):
     observer = FauxObserver()
     duration = 2
 
-    ts0 = get_ts()
+    ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
-    ts1 = get_ts()
+    ts1 = get_ts_ms()
 
     assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
@@ -456,9 +456,9 @@ async def test_auto_shutdown(test_dir: str):
     observer = FauxObserver()
     duration = 5
 
-    ts0 = get_ts()
+    ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
-    ts1 = get_ts()
+    ts1 = get_ts_ms()
 
     assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
@@ -496,9 +496,9 @@ async def test_auto_shutdown_db():
     observer = FauxObserver()
     duration = 2
 
-    ts0 = get_ts()
+    ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
-    ts1 = get_ts()
+    ts1 = get_ts_ms()
 
     assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
@@ -508,9 +508,9 @@ async def test_auto_shutdown_db():
     observer = FauxObserver()
     duration = 5
 
-    ts0 = get_ts()
+    ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
-    ts1 = get_ts()
+    ts1 = get_ts_ms()
 
     assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
@@ -922,7 +922,7 @@ def test_telemetry_autoshutdown(
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        start_time = get_ts()
+        start_time = get_ts_ms()
         stop_time = start_time
         exp.start(block=False)
 
@@ -937,7 +937,7 @@ def test_telemetry_autoshutdown(
         # give some leeway during testing for the cooldown to get hit
         for i in range(10):
             if popen.poll() is not None:
-                stop_time = get_ts()
+                stop_time = get_ts_ms()
                 print(f"Completed polling for telemetry shutdown after {i} attempts")
                 break
             time.sleep(3)
@@ -1168,7 +1168,7 @@ async def test_wlm_completion_handling(
 
         return _faux_updates
 
-    ts = get_ts()
+    ts = get_ts_ms()
     with monkeypatch.context() as ctx:
         # don't actually start a job manager
         ctx.setattr(JobManager, "start", lambda x: ...)

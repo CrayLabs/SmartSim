@@ -62,7 +62,7 @@ from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.stepInfo import StepInfo
-from smartsim._core.utils.helpers import get_ts
+from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
 from smartsim.log import get_logger
@@ -1045,12 +1045,12 @@ async def event_loop(
     :type cooldown_duration: int
     """
     elapsed: int = 0
-    last_ts: int = get_ts()
+    last_ts: int = get_ts_ms()
     shutdown_in_progress = False
 
     while observer.is_alive() and not shutdown_in_progress:
         duration_ms = 0
-        start_ts = get_ts()
+        start_ts = get_ts_ms()
         logger.debug(f"Timestep: {start_ts}")
         await action_handler.on_timestep(start_ts)
 
@@ -1071,7 +1071,7 @@ async def event_loop(
             elapsed = 0
 
         # track time elapsed to execute metric collection
-        duration_ms = get_ts() - start_ts
+        duration_ms = get_ts_ms() - start_ts
         wait_ms = max(frequency - duration_ms, 0)
 
         # delay next loop if collection time didn't exceed loop frequency

@@ -38,7 +38,7 @@ import psutil
 
 import smartsim.log
 from smartsim._core.entrypoints.telemetrymonitor import track_event
-from smartsim._core.utils.helpers import decode_cmd, get_ts
+from smartsim._core.utils.helpers import decode_cmd, get_ts_ms
 
 STEP_PID: t.Optional[int] = None
 logger = smartsim.log.get_logger(__name__)
@@ -95,7 +95,7 @@ def main(
         return 1
     finally:
         track_event(
-            get_ts(),
+            get_ts_ms(),
             proxy_pid,
             "",  # step_id for unmanaged task is always empty
             etype,
@@ -114,7 +114,7 @@ def main(
     )
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
     track_event(
-        get_ts(),
+        get_ts_ms(),
         proxy_pid,
         "",  # step_id for unmanaged task is always empty
         etype,
