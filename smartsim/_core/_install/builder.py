@@ -26,6 +26,7 @@
 
 import concurrent.futures
 import enum
+import itertools
 import os
 import platform
 import re
@@ -417,7 +418,7 @@ class RedisAIBuilder(Builder):
         if unsupported:
             raise BuildError(
                 f"The {', '.join(unsupported)} backend(s) are not "
-                "supported on ARM64."
+                f"supported on {self._os} with {self._architecture}"
             )
 
     @property
@@ -810,10 +811,11 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     @staticmethod
     def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
         # TODO: Rework this to do a recursive search
-        platforms = ()
-        for variant in _PTArchive.__subclasses__():
-            platforms += variant.supported_platforms()
-        return platforms
+        return tuple(
+            itertools.chain.from_iterable(
+                var.supported_platforms() for var in _PTArchive.__subclasses__()
+            )
+        )
 
     @property
     def __rai_dependency_name__(self) -> str:
@@ -897,7 +899,10 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 
     @staticmethod
     def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
-        return ((OperatingSystem.LINUX, Architecture.X64),)
+        return (
+            (OperatingSystem.LINUX, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+        )
 
     @property
     def url(self) -> str:
@@ -943,7 +948,10 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
 
     @staticmethod
     def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
-        return ((OperatingSystem.LINUX, Architecture.X64),)
+        return (
+            (OperatingSystem.LINUX, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+        )
 
     @property
     def url(self) -> str:

@@ -126,7 +126,7 @@ invalid_build_ids = [
 
 @pytest.mark.parametrize("build_options", invalid_build_arm64, ids=invalid_build_ids)
 def test_rai_builder_raises_if_unsupported_deps_on_arm64(build_options):
-    with pytest.raises(build.BuildError, match=r"are not supported on ARM64"):
+    with pytest.raises(build.BuildError, match=r"are not supported on.*ARM64"):
         build.RedisAIBuilder(
             _os=build.OperatingSystem.DARWIN,
             architecture=build.Architecture.ARM64,
@@ -263,3 +263,27 @@ def test_PTArchiveMacOSX_url():
 def test_PTArchiveMacOSX_gpu_error():
     with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
         build._PTArchiveMacOSX(build.Architecture.ARM64, "gpu", RAI_VERSIONS.torch).url
+
+
+def test_valid_platforms():
+    assert build.RedisAIBuilder(
+        _os=build.OperatingSystem.LINUX,
+        architecture=build.Architecture.X64,
+        build_tf=True,
+        build_torch=True,
+        build_onnx=True,
+    )
+    assert build.RedisAIBuilder(
+        _os=build.OperatingSystem.DARWIN,
+        architecture=build.Architecture.X64,
+        build_tf=True,
+        build_torch=True,
+        build_onnx=False,
+    )
+    assert build.RedisAIBuilder(
+        _os=build.OperatingSystem.DARWIN,
+        architecture=build.Architecture.X64,
+        build_tf=False,
+        build_torch=True,
+        build_onnx=False,
+    )
