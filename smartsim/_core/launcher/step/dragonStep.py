@@ -90,9 +90,11 @@ class DragonStep(Step):
 
         exe_args = self._get_exe_args_list(run_settings)
 
+        exe_cmd_and_args = exe_cmd + exe_args
+
         run_request = DragonRunRequest(
-            exe=exe_cmd,
-            exe_args=exe_args,
+            exe=exe_cmd_and_args[0],
+            exe_args=exe_cmd_and_args[1:],
             path=self.cwd,
             nodes=nodes,
             output_file=output,

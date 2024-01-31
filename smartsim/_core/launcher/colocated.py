@@ -235,7 +235,7 @@ def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
         if db_script.func:
             # Notice that here db_script.func is guaranteed to be a str
             # because we don't allow the user to pass a serialized function
-            func = t.cast(str, db_script.func)
+            func = db_script.func
             sanitized_func = func.replace("\n", "\\n")
             if not (
                 sanitized_func.startswith("'")

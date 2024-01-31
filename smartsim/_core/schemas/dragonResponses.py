@@ -45,7 +45,7 @@ class DragonUpdateStatusResponse(DragonResponse):
     response_type: constr(min_length=1) = "status_update"
     # status is a dict: {step_id: (is_alive, returncode)}
     statuses: t.Mapping[
-        constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[int]]
+        constr(min_length=1), t.Tuple[constr(min_length=1), t.Optional[t.List[int]]]
     ] = {}
 
 

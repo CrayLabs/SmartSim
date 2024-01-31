@@ -181,7 +181,7 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
                     raise ValueError(f"No model attacted to {db_model.name}")
                 client.set_model(
                     name=db_model.name,
-                    model=model,
+                    model=db_model.model,
                     backend=db_model.backend,
                     device=device,
                     batch_size=db_model.batch_size,
