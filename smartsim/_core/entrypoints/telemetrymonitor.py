@@ -459,9 +459,9 @@ class CollectorManager:
         )
         self._timeout_ms = timeout_ms
         self._tasks: t.List[asyncio.Task[None]] = []
-        self._stoppers: t.Dict[
-            str, t.List[TaskStatusHandler]
-        ] = collections.defaultdict(lambda: [])
+        self._stoppers: t.Dict[str, t.List[TaskStatusHandler]] = (
+            collections.defaultdict(lambda: [])
+        )
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
