@@ -33,10 +33,10 @@ from ..error import SSUnsupportedError
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
 
-_TDBObjectFunc = t.TypeVar("_TDBObjectFunc", str, bytes)
+_DBObjectFuncT = t.TypeVar("_DBObjectFuncT", str, bytes)
 
 
-class DBObject(t.Generic[_TDBObjectFunc]):
+class DBObject(t.Generic[_DBObjectFuncT]):
     """Base class for ML objects residing on DB. Should not
     be instantiated.
     """
@@ -44,14 +44,14 @@ class DBObject(t.Generic[_TDBObjectFunc]):
     def __init__(
         self,
         name: str,
-        func: t.Optional[_TDBObjectFunc],
+        func: t.Optional[_DBObjectFuncT],
         file_path: t.Optional[str],
         device: t.Literal["CPU", "GPU"],
         devices_per_node: int,
         first_device: int,
     ) -> None:
         self.name = name
-        self.func: t.Optional[_TDBObjectFunc] = func
+        self.func: t.Optional[_DBObjectFuncT] = func
         self.file: t.Optional[Path] = (
             None  # Need to have this explicitly to check on it
         )
