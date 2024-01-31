@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import functools
+import json
 import os.path as osp
 import sys
 import time
@@ -140,7 +141,7 @@ def proxyable_launch_cmd(
             proxy_module = "smartsim._core.entrypoints.indirect"
             etype = self.meta["entity_type"]
             status_dir = self.meta["status_dir"]
-            run_req = DragonRunRequest.parse_obj(original_cmd_list[-1])
+            run_req = DragonRunRequest.parse_obj(json.loads(original_cmd_list[-1]))
 
             exe_args = run_req.exe_args or []
             encoded_cmd = encode_cmd(run_req.exe + exe_args)
