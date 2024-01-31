@@ -162,7 +162,7 @@ def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
     test_dir = pathlib.Path(test_dir)
     test_dir.mkdir(parents=True, exist_ok=True)
 
-    original_ctx_value = "some value"
+    original_ctx_value = test_dir / pathlib.Path("some value")
     ctx_var = smartsim.log.ctx_exp_path
     token = ctx_var.set(original_ctx_value)
 

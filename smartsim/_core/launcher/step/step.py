@@ -94,7 +94,7 @@ class Step:
         )
         makedirs(osp.dirname(script_path), exist_ok=True)
 
-        db_settings: t.Dict[str, str] = {}
+        db_settings = {}
         if isinstance(self.step_settings, RunSettings):
             db_settings = self.step_settings.colocated_db_settings or {}
 
