@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import typing as t
 
+# pylint: disable-next=import-error
 from dragon.native.process import Popen, Process
 
 from smartsim._core.schemas import (
@@ -63,7 +63,7 @@ class DragonBackend:
             "run": self.run,
             "update_status": self.update_status,
             "stop": self.stop,
-            "handshake": self.handshake,
+            "handshake": DragonBackend.handshake,
         }
         self.procs: t.Dict[str, Process] = {}
 
@@ -131,7 +131,8 @@ class DragonBackend:
 
         return DragonStopResponse()
 
-    def handshake(self, request: DragonHandshakeRequest) -> DragonHandshakeResponse:
+    @staticmethod
+    def handshake(request: DragonHandshakeRequest) -> DragonHandshakeResponse:
         DragonHandshakeRequest.parse_obj(request)
 
         return DragonHandshakeResponse()

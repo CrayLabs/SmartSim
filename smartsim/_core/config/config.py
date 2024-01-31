@@ -89,6 +89,7 @@ from ..utils.helpers import expand_exe_path
 #  - Default: None
 
 
+# pylint: disable-next=too-many-public-methods
 class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
@@ -158,15 +159,15 @@ class Config:
 
     @property
     def dragon_server_reconnect_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", 5_000))
+        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", "5000"))
 
     @property
     def dragon_server_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", 5_000))
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "5000"))
 
     @property
     def dragon_server_startup_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", -1))
+        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", "-1"))
 
     @property
     def log_level(self) -> str:

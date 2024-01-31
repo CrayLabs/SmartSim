@@ -24,7 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import argparse
+from __future__ import annotations
+
 import fileinput
 import itertools
 import json
@@ -83,6 +84,7 @@ class DragonLauncher(WLMLauncher):
         self._context.setsockopt(zmq.SNDTIMEO, value=self._timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=self._timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
+        self._dragon_head_process: t.Optional[subprocess.Popen[bytes]]
 
     @property
     def is_connected(self) -> bool:
@@ -110,7 +112,6 @@ class DragonLauncher(WLMLauncher):
     def _set_timeout(self, timeout: int) -> None:
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
-        return
 
     def connect_to_dragon(self, path: str) -> None:
         # TODO use manager instead
@@ -127,8 +128,10 @@ class DragonLauncher(WLMLauncher):
             for dragon_conf in dragon_confs:
                 if not "address" in dragon_conf:
                     continue
-                msg = "Found dragon server configuration logfile. "
-                msg += f"Checking if the server is still up at address {dragon_conf['address']}."
+                msg = (
+                    "Found dragon server configuration logfile. Checking if the server"
+                )
+                msg += f" is still up at address {dragon_conf['address']}."
                 logger.debug(msg)
                 try:
                     self._set_timeout(self._reconnect_timeout)
@@ -162,11 +165,12 @@ class DragonLauncher(WLMLauncher):
         dragon_out_file = os.path.join(path, "dragon_head.out")
         dragon_err_file = os.path.join(path, "dragon_head.err")
 
-        with open(dragon_out_file, "w") as dragon_out, open(
-            dragon_err_file, "w"
+        with open(dragon_out_file, "w", encoding="utf-8") as dragon_out, open(
+            dragon_err_file, "w", encoding="utf-8"
         ) as dragon_err:
             current_env = os.environ.copy()
             current_env.update({"PYTHONUNBUFFERED": "1"})
+            # pylint: disable-next=consider-using-with
             self._dragon_head_process = subprocess.Popen(
                 args=cmd,
                 bufsize=0,
@@ -293,7 +297,8 @@ class DragonLauncher(WLMLauncher):
             if step_id not in update_response.statuses:
                 msg = "Missing step id update from Dragon launcher."
                 if update_response.error_message is not None:
-                    msg += f"\nDragon backend reported following error: {update_response.error_message}"
+                    msg += "\nDragon backend reported following error: "
+                    msg += update_response.error_message
                 raise LauncherError(msg)
             stat_tuple = update_response.statuses[step_id]
             info = StepInfo(stat_tuple[0], stat_tuple[0], stat_tuple[1])

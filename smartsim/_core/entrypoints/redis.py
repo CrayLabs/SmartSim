@@ -80,7 +80,8 @@ def print_summary(
     cmd: t.List[str], network_interface: str, shard_data: LaunchedShardData
 ) -> None:
     print(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
             ----------- Running Command ----------
             COMMAND: {' '.join(cmd)}
             IPADDRESS: {shard_data.hostname}
@@ -90,7 +91,8 @@ def print_summary(
 
             --------------- Output ---------------
 
-            """),
+            """
+        ),
         flush=True,
     )
 
@@ -115,9 +117,13 @@ def main(args: argparse.Namespace) -> int:
 
     # Prevent redirection of stdout and stderr
     with (
-        open(shard_data.name + ".out", "w") if args.redirect_output else sys.stdout
+        open(shard_data.name + ".out", "w", encoding="utf-8")
+        if args.redirect_output
+        else sys.stdout
     ) as sys.stdout, (
-        open(shard_data.name + ".err", "w") if args.redirect_output else sys.stderr
+        open(shard_data.name + ".err", "w", encoding="utf-8")
+        if args.redirect_output
+        else sys.stderr
     ) as sys.stderr:
         print_summary(cmd, args.ifname, shard_data)
 
@@ -190,7 +196,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "+redirect_output",
         action="store_true",
-        help="Specify if stdout and stder of this script should be redirected. Only needed for dragon launcher.",
+        help=(
+            "Specify if stdout and stder of this script should be redirected. "
+            + "Only needed for dragon launcher."
+        ),
     )
     args_ = parser.parse_args()
 

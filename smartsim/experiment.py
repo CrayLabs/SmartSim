@@ -31,7 +31,6 @@ from os import getcwd
 
 from tabulate import tabulate
 
-from smartsim._core.launcher import DragonLauncher
 from smartsim.error.errors import SSUnsupportedError
 
 from ._core import Controller, Generator, Manifest

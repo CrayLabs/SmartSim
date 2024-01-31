@@ -28,11 +28,8 @@ import argparse
 import json
 import os
 import signal
-import sys
 import textwrap
-import time
 import typing as t
-from subprocess import PIPE, STDOUT
 from types import FrameType
 
 import zmq
@@ -66,7 +63,7 @@ DBPID: t.Optional[int] = None
 def print_summary(network_interface: str, ip_address: str) -> None:
     zmq_config = {"interface": network_interface, "address": ip_address}
 
-    with open("dragon_config.log", "w") as dragon_config_log:
+    with open("dragon_config.log", "w", encoding="utf-8") as dragon_config_log:
         dragon_config_log.write(
             textwrap.dedent(
                 f"""\
@@ -107,7 +104,7 @@ def main(args: argparse.Namespace) -> int:
     dragon_head_address = f"tcp://{address}"
 
     if args.launching_address:
-        if str(args.launching_address).split(":")[0] == dragon_head_address:
+        if str(args.launching_address).split(":", maxsplit=1)[0] == dragon_head_address:
             address = "localhost"
             dragon_head_address = "tcp://localhost:5555"
         else:

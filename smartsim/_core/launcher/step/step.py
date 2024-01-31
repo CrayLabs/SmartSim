@@ -41,6 +41,7 @@ from ....log import get_logger
 from ....settings.base import RunSettings, SettingsBase
 from ...utils.helpers import encode_cmd, get_base_36_repr
 from ..colocated import write_colocated_launch_script
+from .dragonStep import DragonStep
 
 logger = get_logger(__name__)
 
@@ -133,8 +134,6 @@ def proxyable_launch_cmd(
         if not CONFIG.telemetry_enabled:
             return original_cmd_list
 
-        from .dragonStep import DragonStep
-
         if isinstance(self, DragonStep):
             proxy_module = "smartsim._core.entrypoints.indirect"
             etype = self.meta["entity_type"]
@@ -167,35 +166,34 @@ def proxyable_launch_cmd(
 
             return [run_req.json()]
 
-        else:
-            if self.managed:
-                raise UnproxyableStepError(
-                    f"Attempting to proxy managed step of type {type(self)} "
-                    "through the unmanaged step proxy entry point"
-                )
+        if self.managed:
+            raise UnproxyableStepError(
+                f"Attempting to proxy managed step of type {type(self)} "
+                "through the unmanaged step proxy entry point"
+            )
 
-            proxy_module = "smartsim._core.entrypoints.indirect"
-            etype = self.meta["entity_type"]
-            status_dir = self.meta["status_dir"]
-            encoded_cmd = encode_cmd(original_cmd_list)
+        proxy_module = "smartsim._core.entrypoints.indirect"
+        etype = self.meta["entity_type"]
+        status_dir = self.meta["status_dir"]
+        encoded_cmd = encode_cmd(original_cmd_list)
 
-            # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
-            #       serialize step and let the indirect entrypoint rebuild the
-            #       cmd... for now, test away...
-            return [
-                sys.executable,
-                "-m",
-                proxy_module,
-                "+name",
-                self.name,
-                "+command",
-                encoded_cmd,
-                "+entity_type",
-                etype,
-                "+telemetry_dir",
-                status_dir,
-                "+working_dir",
-                self.cwd,
-            ]
+        # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
+        #       serialize step and let the indirect entrypoint rebuild the
+        #       cmd... for now, test away...
+        return [
+            sys.executable,
+            "-m",
+            proxy_module,
+            "+name",
+            self.name,
+            "+command",
+            encoded_cmd,
+            "+entity_type",
+            etype,
+            "+telemetry_dir",
+            status_dir,
+            "+working_dir",
+            self.cwd,
+        ]
 
     return _get_launch_cmd

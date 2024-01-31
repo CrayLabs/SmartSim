@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import shlex
 import shutil
 import typing as t
 
@@ -64,10 +62,13 @@ class DragonStep(Step):
 
         output, error = self.get_output_files()
 
-        rs = self.run_settings
+        run_settings = self.run_settings
 
-        if "nodes" in rs._run_args:
-            nodes = t.cast(int, rs._run_args["nodes"])
+        # pylint: disable=protected-access
+        run_args = run_settings._run_args
+
+        if "nodes" in run_args:
+            nodes = t.cast(int, run_args["nodes"])
         else:
             nodes = 1
 
@@ -85,9 +86,9 @@ class DragonStep(Step):
             # pylint: disable-next=protected-access
             exe_cmd += self.run_settings.container._container_cmds(self.cwd)
 
-        exe_cmd += rs.exe
+        exe_cmd += run_settings.exe
 
-        exe_args = self._get_exe_args_list(rs)
+        exe_args = self._get_exe_args_list(run_settings)
 
         run_request = DragonRunRequest(
             exe=exe_cmd,
@@ -96,7 +97,7 @@ class DragonStep(Step):
             nodes=nodes,
             output_file=output,
             error_file=error,
-            env=rs.env_vars,
+            env=run_settings.env_vars,
             name=self.name,
         )
 
