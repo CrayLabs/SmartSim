@@ -322,11 +322,11 @@ class RunSettings(SettingsBase):
         :type seconds: int
         """
         return self.set_walltime(
-            self.fmt_walltime(int(hours), int(minutes), int(seconds))
+            self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
 
     @staticmethod
-    def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
+    def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
 
         By defualt the formatted wall time is the total number of seconds.

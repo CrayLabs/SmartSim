@@ -39,7 +39,7 @@ from ..error import (
     SSReservedKeywordError,
 )
 from ..log import get_logger
-from ..settings.slurmSettings import SrunSettings
+from ..settings.slurmSettings import fmt_walltime
 
 logger = get_logger(__name__)
 
@@ -290,7 +290,7 @@ def _validate_time_format(time: str) -> str:
         raise ValueError(
             "Input time must be formatted as `HH:MM:SS` with valid Integers."
         ) from e
-    return SrunSettings.fmt_walltime(hours, minutes, seconds)
+    return fmt_walltime(hours, minutes, seconds)
 
 
 def get_hosts() -> t.List[str]:
