@@ -67,9 +67,7 @@ async def test_sink_write(mock_entity: MockCollectorEntityFunc) -> None:
 
 
 @pytest.mark.asyncio
-async def test_sink_write_nonstring_input(
-    mock_entity: MockCollectorEntityFunc
-) -> None:
+async def test_sink_write_nonstring_input(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure the FileSink writes values to the output file as expected
     when inputs are non-strings"""
     entity = mock_entity(port=1234, name="e1")
@@ -94,9 +92,7 @@ async def test_sink_write_nonstring_input(
 
 
 @pytest.mark.asyncio
-async def test_sink_write_no_inputs(
-    mock_entity: MockCollectorEntityFunc
-) -> None:
+async def test_sink_write_no_inputs(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure the FileSink writes to an output file without error if no
     values are supplied"""
     entity = mock_entity(port=1234, name="e1")
@@ -117,9 +113,7 @@ async def test_sink_write_no_inputs(
 
 
 @pytest.mark.asyncio
-async def test_sink_write_null_entity(
-    mock_entity: MockCollectorEntityFunc
-) -> None:
+async def test_sink_write_null_entity(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure the FileSink writes to an output file without error if no
     values are supplied"""
     entity = mock_entity(port=1234, name="e1")

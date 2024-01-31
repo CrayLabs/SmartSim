@@ -44,9 +44,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
 pytestmark = pytest.mark.group_a
 
 
-def test_collector_manager_add(
-    mock_entity: MockCollectorEntityFunc, mock_sink
-) -> None:
+def test_collector_manager_add(mock_entity: MockCollectorEntityFunc, mock_sink) -> None:
     """Ensure that collector manager add & clear work as expected"""
     entity1 = mock_entity()
 
@@ -284,9 +282,7 @@ async def test_collector_manager_timeout(
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_find(
-    mock_entity: MockCollectorEntityFunc
-) -> None:
+async def test_collector_manager_find(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure that the manifest allows individually enabling a given collector"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
     manager = CollectorManager()
@@ -328,7 +324,7 @@ async def test_collector_manager_find(
 
 @pytest.mark.asyncio
 async def test_collector_manager_find_entity_disabled(
-    mock_entity: MockCollectorEntityFunc
+    mock_entity: MockCollectorEntityFunc,
 ) -> None:
     """Ensure that disabling telemetry on the entity results in no collectors"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
@@ -354,7 +350,7 @@ async def test_collector_manager_find_entity_disabled(
 
 @pytest.mark.asyncio
 async def test_collector_manager_find_entity_unmapped(
-    mock_entity: MockCollectorEntityFunc
+    mock_entity: MockCollectorEntityFunc,
 ) -> None:
     """Ensure that an entity type that is not mapped results in no collectors"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="model")

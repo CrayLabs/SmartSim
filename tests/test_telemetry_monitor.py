@@ -424,6 +424,7 @@ async def test_auto_shutdown(test_dir: str):
 
     class FauxObserver:
         """Mock for the watchdog file system event listener"""
+
         def __init__(self):
             self.stop_count = 0
 
@@ -470,6 +471,7 @@ async def test_auto_shutdown_db():
 
     class FauxObserver:
         """Mock for the watchdog file system event listener"""
+
         def __init__(self):
             self.stop_count = 0
 
@@ -514,6 +516,7 @@ async def test_auto_shutdown_db():
 
     assert ts1 - ts0 >= duration
     assert observer.stop_count == 1
+
 
 def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
