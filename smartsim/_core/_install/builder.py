@@ -24,9 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=too-many-lines
-
-
 import concurrent.futures
 import enum
 import itertools
@@ -387,11 +384,7 @@ class RedisAIBuilder(Builder):
         super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
 
         self.rai_install_path: t.Optional[Path] = None
-        if _os not in OperatingSystem:
-            raise BuildError(f"Unsupported operating system: {_os}")
         self._os = _os
-        if architecture not in Architecture:
-            raise BuildError(f"Unsupported architecture: {architecture}")
         self._architecture = architecture
 
         # convert to int for RAI build script
