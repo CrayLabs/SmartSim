@@ -44,9 +44,6 @@ from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
-_OutputFormatString = t.Optional[t.Literal["html"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"]
-
 
 def _exp_path_map(exp: "Experiment") -> str:
     """Mapping function for use by method contextualizer to place the path of
@@ -828,8 +825,8 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: _OutputFormatString = None,
-        verbosity_level: _VerbosityLevelString = "info",
+        output_format: previewrenderer._OutputFormatString = None,
+        verbosity_level: previewrenderer._VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
     ) -> None:
         """Preview entity information prior to launch. This method
@@ -863,33 +860,6 @@ class Experiment:
             previewrenderer.preview_to_file(rendered_preview, output_filename)
         else:
             logger.info(rendered_preview)
-
-        # incoming model entitty
-        # models themselves cannot be batch steps. If batch settings are
-        # attached, wrap them in an anonymous batch job step
-
-        #    # models = *args
-        #     print(models)
-
-        #     # make the list of models like they do in manifest
-
-        #     for model in manifest.models:
-        #         model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
-        #         if model.batch_settings:
-        #             anon_entity_list = _AnonymousBatchJob(model)
-        #             batch_step, _ = self._create_batch_job_step(
-        #                 anon_entity_list, model_telem_dir
-        #             )
-        #             manifest_builder.add_model(model, (batch_step.name, batch_step))
-        #             steps.append((batch_step, model))
-        #         else:
-        #             job_step = self._create_job_step(model, model_telem_dir)
-        #             manifest_builder.add_model(model, (job_step.name, job_step))
-        #             steps.append((job_step, model))
-
-        #     # launch steps
-        #     for step, entity in steps:
-        #         self._launch_step(step, entity)
 
     @property
     def launcher(self) -> str:

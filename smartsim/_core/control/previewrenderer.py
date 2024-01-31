@@ -23,19 +23,31 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import typing as t
+from enum import Enum
+
 import jinja2
-from ...log import get_logger
+
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
+from ...error.errors import PreviewFormatError
+from ...log import get_logger
 
 logger = get_logger(__name__)
 
 if t.TYPE_CHECKING:
     from smartsim import Experiment
 
+
 _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
+
+
+class Verbosity(str, Enum):
+    INFO = "info"
+    DEBUG = "debug"
+    DEVELOPER = "developer"
 
 
 def render(
@@ -66,7 +78,7 @@ def render(
     tpl_path = f"preview/base{version}.template"
 
     if output_format:
-        _check_output_format(output_format)
+        _check_file_output_format(output_format)
 
     tpl = env.get_template(tpl_path)
 
@@ -76,26 +88,26 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-
     return rendered_preview
 
 
 def preview_to_file(content: str, filename: str) -> None:
     """
-    Output preview to a file if output format and filename
-    are specified.
+    Output preview to file.
     """
 
     with open(filename, "w", encoding="utf-8") as prev_file:
         prev_file.write(content)
 
 
-def _check_output_format(output_format: str) -> None:
+def _check_file_output_format(output_format: str) -> None:
     """
-    Check that the output format given is valid.
+    Check that a valid file output format is given.
     """
     if not output_format == "html":
-        raise ValueError("The only valid currently available is html")
+        raise PreviewFormatError(
+            "The only valid output format currently available is html"
+        )
 
 
 def _check_verbosity_level(
@@ -105,10 +117,10 @@ def _check_verbosity_level(
     Check that the given verbosity level is valid.
     """
 
-    if verbosity_level not in ["info", "debug", "developer"]:
+    if not verbosity_level == Verbosity.INFO:
         raise ValueError("The only valid verbosity level currently available is info")
 
-    if verbosity_level in ("debug", "developer"):
+    if verbosity_level in (Verbosity.DEBUG, Verbosity.DEVELOPER):
         logger.warning(
             f"'{verbosity_level}' is an unsupported verbosity level requested.\
 Setting verbosity to: info"

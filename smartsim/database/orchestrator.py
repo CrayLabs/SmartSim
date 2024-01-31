@@ -573,7 +573,7 @@ class Orchestrator(EntityList[DBNode]):
         """
         self.set_db_conf("proto-max-bulk-len", str(size))
 
-    def set_db_conf(self, key: str, value: t.Union[int, str]) -> None:
+    def set_db_conf(self, key: str, value: str) -> None:
         """Set any valid configuration at runtime without the need
         to restart the database. All configuration parameters
         that are set are immediately loaded by the database and
