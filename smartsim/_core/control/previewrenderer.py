@@ -117,7 +117,7 @@ def _check_verbosity_level(
     Check that the given verbosity level is valid.
     """
 
-    if not verbosity_level == Verbosity.INFO:
+    if not verbosity_level == "info":
         raise ValueError("The only valid verbosity level currently available is info")
 
     if verbosity_level in (Verbosity.DEBUG, Verbosity.DEVELOPER):
