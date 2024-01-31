@@ -1,6 +1,5 @@
-<p style="margin-left: 25px;">== Orchestrators ==</p>
 {%- for db in manifest.dbs %}
-<ul style="list-style-type:none;margin-left: 25px;">
+<ul class="entityList">
     <li>= Database identifier: {{ db.name }}</li>
     <li>Shards: {{ db.num_shards }}</li>
     <li>Network interface: {{ db._interfaces[0] }}</li>
