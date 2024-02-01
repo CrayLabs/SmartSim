@@ -107,6 +107,7 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     # Evaluate output
     assert "Database identifier" in output
     assert "Shards" in output
+    assert "TCP/IP port" in output
     assert "Network interface" in output
     assert "Type" in output
     assert "Executable" in output
