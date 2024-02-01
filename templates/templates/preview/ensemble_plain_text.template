@@ -6,12 +6,12 @@
                 {{ key }}: {{ '{:^9}'.format(value|string)|truncate(81,true,'...')}}
                     {%- endfor %}      
         {%- for model in ensemble %}
-        -- {% include 'preview/model.template' %}
+        -- {% include 'preview/model_plain_text.template' %}
         --
         {%- endfor %}
         {% endfor -%}
         {%- set model = ensemble.models[0] -%}
         {% if manifest.dbs or model.run_settings.colocated_db_settings %}
-        {%- include "preview/clientconfig.template" %}
+        {%- include "preview/clientconfig_plain_text.template" %}
         {% endif -%}
         =

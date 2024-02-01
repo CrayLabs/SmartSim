@@ -1,5 +1,5 @@
 
-{% include "preview/experiment.template" %}
+{% include "preview/experiment_plain_text.template" %}
 {%- if manifest %}
 
 === Entity Preview === 
@@ -7,9 +7,9 @@
 {%- if manifest.models %}
     == Models == 
 {% for model in manifest.models %}   
-    = {% include "preview/model.template" %}
+    = {% include "preview/model_plain_text.template" %}
     {%- if manifest.dbs or model.run_settings.colocated_db_settings %}
-    {% include "preview/clientconfig.template" %}
+    {% include "preview/clientconfig_plain_text.template" %}
     {%- endif %}
     =
 {% endfor %}
@@ -17,7 +17,7 @@
 {%- if manifest.ensembles %}
     == Ensembles ==
     {% for ensemble in manifest.ensembles %}
-        {% include "preview/ensemble.template" %}
+        {% include "preview/ensemble_plain_text.template" %}
     {%- endfor %}
 {%- endif -%}
 {%- endif -%}

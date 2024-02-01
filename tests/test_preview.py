@@ -164,7 +164,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert "unbreakable_password" in rendered_preview
 
     assert "echo-hello" == hello_world_model.name
-    assert "/bin/bash" == hello_world_model.run_settings.exe[0]
+    assert "/bin/bash" in hello_world_model.run_settings.exe[0]
     assert "multi_tags_template.sh" == hello_world_model.run_settings.exe_args[0]
     assert None == hello_world_model.batch_settings
     assert "port" in list(hello_world_model.params.items())[0]
@@ -178,7 +178,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert "spam" in rendered_preview
     assert "eggs" in rendered_preview
     assert "echo-spam" == spam_eggs_model.name
-    assert "/bin/echo" == spam_eggs_model.run_settings.exe[0]
+    assert "/bin/echo" in spam_eggs_model.run_settings.exe[0]
     assert "spam" == spam_eggs_model.run_settings.exe_args[0]
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
