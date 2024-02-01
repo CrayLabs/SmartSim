@@ -47,6 +47,7 @@ logger = get_logger(__name__)
 _OutputFormatString = t.Optional[t.Literal["html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
+
 def _exp_path_map(exp: "Experiment") -> str:
     """Mapping function for use by method contextualizer to place the path of
     the currently-executing experiment into context for log enrichment"""
