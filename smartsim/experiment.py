@@ -44,9 +44,6 @@ from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
-_OutputFormatString = t.Optional[t.Literal["html"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"]
-
 
 def _exp_path_map(exp: "Experiment") -> str:
     """Mapping function for use by method contextualizer to place the path of
@@ -828,8 +825,8 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: _OutputFormatString = 'plain_text',
-        verbosity_level: _VerbosityLevelString = "info",
+        output_format: previewrenderer._OutputFormatString = "plain_text",
+        verbosity_level: previewrenderer._VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
     ) -> None:
         """Preview entity information prior to launch. This method
