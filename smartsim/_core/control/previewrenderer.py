@@ -64,7 +64,7 @@ def render(
     :type manifest: Manifest
     :param verbosity_level: the verbosity level
     :type verbosity_level: _VerbosityLevelString
-    :param output_format: the output destination.
+    :param output_format: the output format.
     If no output format is set, the preview will be output to stdout
     :type output_format: _OutputFormatString
     """
@@ -74,11 +74,10 @@ def render(
     loader = jinja2.PackageLoader("templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
 
-    version = f"_{output_format}" if output_format else ""
+    version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
 
-    if output_format:
-        _check_file_output_format(output_format)
+    _check_file_output_format(output_format)
 
     tpl = env.get_template(tpl_path)
 
