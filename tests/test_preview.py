@@ -30,6 +30,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core import previewrenderer
+from smartsim.error.errors import PreviewFormatError
 
 
 def test_experiment_preview(test_dir, wlmutils):
@@ -96,6 +97,8 @@ def test_output_format_error():
     exp = Experiment(exp_name)
 
     # Execute preview method
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(PreviewFormatError) as ex:
         exp.preview(output_format="hello")
-    assert "The only valid currently available is html" in ex.value.args[0]
+    assert (
+        "The only valid output format currently available is html" in ex.value.args[0]
+    )
