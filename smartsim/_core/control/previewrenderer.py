@@ -99,7 +99,7 @@ def preview_to_file(content: str, filename: str) -> None:
         prev_file.write(content)
 
 
-def _check_file_output_format(output_format: str) -> None:
+def _check_file_output_format(output_format: _OutputFormatString) -> None:
     """
     Check that a valid file output format is given.
     """
