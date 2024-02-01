@@ -933,7 +933,7 @@ def test_unmanaged_steps_are_proxyed_through_indirect(
     cmd = step.get_launch_cmd()
     if isinstance(wlm_launcher, DragonLauncher):
         req = wlm_launcher._unpack_launch_cmd(cmd)
-        cmd = req.exe + req.exe_args
+        cmd = [req.exe] + req.exe_args
     assert sys.executable in cmd
     assert PROXY_ENTRY_POINT in cmd
     assert "hello" not in cmd
@@ -953,7 +953,7 @@ def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
     cmd = step.get_launch_cmd()
     if isinstance(wlm_launcher, DragonLauncher):
         req = wlm_launcher._unpack_launch_cmd(cmd)
-        cmd = req.exe + req.exe_args
+        cmd = [req.exe] + req.exe_args
     assert PROXY_ENTRY_POINT not in cmd
     assert "hello" in cmd
     assert "world" in cmd
