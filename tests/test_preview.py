@@ -182,26 +182,6 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
 
 
-# consider splitting tests per above logic:
-
-# this named test would only look for key prefixing outputs
-# I think ONLY line 253 w/ ... (key prefixing) looks at prefix related output
-# is there anything else it can lok for?
-# should we check that the prefix is in the output?
-# maybe the only thing you care about is that the substring key prefixing was added?
-
-# Consider separate tests or renaming test.
-
-# test named "test w/tagged files" but also validates model params, batch args, password, etc
-# split test so asserts for model params don't cloud tests for outputs related to files
-
-
-# Consider separate tests or renaming test.
-
-# test named "test w/tagged files" but also validates model params, batch args, password, etc
-# split test so asserts for model params don't cloud tests for outputs related to files
-
-
 def test_model_with_tagged_files(fileutils, test_dir, wlmutils):
     """
     Test model with tagged files in preview.
