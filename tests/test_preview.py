@@ -24,11 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
+
 import pytest
 
 from smartsim import Experiment
 from smartsim._core import previewrenderer
-import pathlib
 
 
 def test_experiment_preview(test_dir, wlmutils):

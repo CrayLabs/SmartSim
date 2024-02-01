@@ -24,10 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
+
 import jinja2
-from ...log import get_logger
+
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
+from ...log import get_logger
 
 logger = get_logger(__name__)
 
