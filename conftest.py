@@ -296,7 +296,7 @@ class WLMUtils:
         if test_launcher == "dragon":
             run_args = {"nodes": nodes}
             run_args.update(kwargs)
-            settings = DragonRunSettings(exe, args, run_command="", run_args=run_args)
+            settings = DragonRunSettings(exe, args, run_args=run_args)
             return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):

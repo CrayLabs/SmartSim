@@ -322,7 +322,7 @@ class DragonLauncher(WLMLauncher):
 
         with self._comm_lock:
             req_json = request.json()
-            logger.debug(f"Sending request: {req_json}")
+            logger.debug(f"Sending request: {request}")
             self._dragon_head_socket.send_json(req_json, flags)
             response = str(self._dragon_head_socket.recv_json())
             return t.cast(t.Mapping[str, t.Any], json.loads(response))

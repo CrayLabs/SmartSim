@@ -43,9 +43,13 @@ class DragonRunRequest(DragonRequest):
     tasks: PositiveInt = 1
     output_file: t.Optional[constr(min_length=1)] = None
     error_file: t.Optional[constr(min_length=1)] = None
+    current_env: t.Dict[str, t.Optional[str]] = {}
     env: t.Dict[str, t.Optional[str]] = {}
     name: t.Optional[constr(min_length=1)]
     pmi_enabled: t.Optional[bool] = True
+
+    def __str__(self) -> str:
+        return str(self.dict(exclude={"current_env"}))
 
 
 class DragonUpdateStatusRequest(DragonRequest):

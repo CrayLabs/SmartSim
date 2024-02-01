@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import shutil
 import typing as t
 
@@ -100,6 +101,7 @@ class DragonStep(Step):
             output_file=output,
             error_file=error,
             env=run_settings.env_vars,
+            current_env=os.environ,
             name=self.name,
         )
 

@@ -94,7 +94,7 @@ class DragonBackend:
             target=run_request.exe,
             args=run_request.exe_args,
             cwd=run_request.path,
-            env=run_request.env,
+            env={**run_request.current_env, **run_request.env},
             # stdout=Popen.PIPE,
             # stderr=Popen.PIPE,
         )
