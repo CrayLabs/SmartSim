@@ -45,12 +45,12 @@ Detailed Notes
   all of SmartSim's machine learning backends with Python 3.11.
   (SmartSim-PR451_) (SmartSim-PR461_)
 
-.. _SmartSim-PR472: https://github.com/CrayLabs/SmartSim/pull/472
 .. _SmartSim-PR446: https://github.com/CrayLabs/SmartSim/pull/446
 .. _SmartSim-PR448: https://github.com/CrayLabs/SmartSim/pull/448
 .. _SmartSim-PR451: https://github.com/CrayLabs/SmartSim/pull/451
 .. _SmartSim-PR453: https://github.com/CrayLabs/SmartSim/pull/453
 .. _SmartSim-PR461: https://github.com/CrayLabs/SmartSim/pull/461
+.. _SmartSim-PR472: https://github.com/CrayLabs/SmartSim/pull/472
 
 
 0.6.0
