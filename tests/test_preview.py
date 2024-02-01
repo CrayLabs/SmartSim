@@ -32,6 +32,7 @@ import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
+from smartsim.settings import RunSettings
 
 
 @pytest.fixture
@@ -166,6 +167,57 @@ def test_orchestrator_preview_output_format_html(test_dir, wlmutils, choose_host
     # Evaluate output
     assert path.exists()
     assert path.is_file()
+
+
+def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
+    """Test correct preview output properties for active infrastructure preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_experiment_preview_properties"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    # create regular database
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+    )
+    preview_manifest = Manifest(orc)
+
+    print(orc.ports)
+    print(orc.is_active())
+
+    exp.start(orc)
+
+    print(orc.is_active())
+    # print(exp.summary())
+
+    # Execute method for template rendering
+    output = previewrenderer.render(exp, preview_manifest)
+
+    print(output)
+
+
+## how to get job id??
+# def test_preview_jobid(test_dir, wlmutils, choose_host):
+#     test_launcher = wlmutils.get_test_launcher()
+#     test_interface = wlmutils.get_test_interface()
+#     test_port = wlmutils.get_test_port()
+#     exp_name = "test_exp_summary"
+#     exp = Experiment(exp_name, exp_path=test_dir)
+#     orc = exp.create_database(
+#         port=test_port,
+#         interface=test_interface,
+#         hosts=choose_host(wlmutils),
+#     )
+
+#     m = exp.create_model(
+#         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
+#     )
+#     exp.start(m, orc)
+#     summary_str = exp.summary(style="plain")
+#     print(summary_str)
 
 
 def test_output_format_error():

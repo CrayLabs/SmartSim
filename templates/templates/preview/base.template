@@ -2,12 +2,18 @@
 {%- if manifest %}
 
 === Entity Preview === 
-
+{%- if manifest.dbs %}
+{% for db in manifest.dbs %}
+    {%- if db.is_active() %}
+    == Active Infrastructure ==   ## if else ... ## 
+    {% include "preview/activeinfra.template" %}
+    {% endif %}
+{%- endfor %}
+{%- endif -%}
 {%- if manifest.dbs %}
     == Orchestrators == 
-{% for db in manifest.dbs %}   
-    = {% include "preview/orchestrator.template" %}
-    =
-{%- endfor %}
+{%- for db in manifest.dbs %}
+    {% include "preview/orchestrator.template" %}
+{% endfor %}
 {%- endif -%}
 {%- endif -%}
