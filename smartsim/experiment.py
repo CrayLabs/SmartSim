@@ -828,7 +828,7 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: _OutputFormatString = None,
+        output_format: _OutputFormatString = "plain_text",
         verbosity_level: _VerbosityLevelString = "info",
         output_filename: t.Optional[str] = None,
     ) -> None:
@@ -838,12 +838,12 @@ class Experiment:
         ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
         :param output_filename: Specify name of file and extension to write
-        preview data to. Defaults to None.
+        preview data to. If no output filename is set, the preview will be
+        output to stdout. Defaults to None.
         :type output_filename: str
         :param output_format: Set output format. The possible accepted
         output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
-        If no output format is set, the preview will be output to stdout.
-        Defaults to None.
+        Defaults to 'plain_text'.
         :type output_type: str
         :param verbosity_level: Specify the verbosity level:
             info: Display User defined fields and entities

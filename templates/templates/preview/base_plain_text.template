@@ -1,0 +1,11 @@
+{% include "preview/experiment_plain_text.template" %}
+{%- if manifest %}
+=== Entity Preview === 
+
+{%- if manifest.dbs %}
+    == Orchestrators == 
+{%- for db in manifest.dbs %}   
+    {% include "preview/orchestrator_plain_text.template" %}
+{%- endfor %}
+{%- endif -%}
+{%- endif -%}

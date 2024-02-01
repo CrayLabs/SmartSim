@@ -1,5 +1,5 @@
-<p>=== Experiment Overview ===</p>
-<ul style="list-style-type:none;">
+<div class='experiment header'>=== Experiment Overview ===</div>
+<ul class="entityList">
   <li>Experiment: {{ exp_entity.name }}</li>
   <li>Experiment Path: {{ exp_entity.exp_path }}</li>
   <li> Launcher: {{ exp_entity.launcher }}</li>

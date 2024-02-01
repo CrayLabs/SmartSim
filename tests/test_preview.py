@@ -32,6 +32,7 @@ import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
+from smartsim.error.errors import PreviewFormatError
 
 
 @pytest.fixture
@@ -143,6 +144,9 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
     assert path.exists()
     assert path.is_file()
 
+    # Execute preview method
+    exp.preview(output_format="html", output_filename=str(path))
+
 
 def test_orchestrator_preview_output_format_html(test_dir, wlmutils, choose_host):
     """Test that an html file is rendered for Orchestrator preview"""
@@ -177,6 +181,8 @@ def test_output_format_error():
     exp = Experiment(exp_name)
 
     # Execute preview method
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(PreviewFormatError) as ex:
         exp.preview(output_format="hello")
-    assert "The only valid currently available is html" in ex.value.args[0]
+    assert (
+        "The only valid output format currently available is html" in ex.value.args[0]
+    )

@@ -1,5 +1,4 @@
-
-    == Orchestrators == 
+ 
 {%- for db in manifest.dbs %}
         = Database identifier: {{ db.name }}
             Shards: {{ db.num_shards }}
