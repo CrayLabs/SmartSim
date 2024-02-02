@@ -228,25 +228,20 @@ class TaskStatusHandler(PatternMatchingEventHandler):
             col.entity.set_complete()
 
 
-@dataclasses.dataclass
 class _Address:
     """Helper class to hold and pretty-print connection details"""
-
-    host: str
-    port: int
 
     def __init__(self, host: str, port: int) -> None:
         """Initialize the instance"""
         self.host = host.strip() if host else ""
         self.port = port
-        self._check(self.host, self.port)
+        self._check()
 
-    @staticmethod
-    def _check(host: str, port: int) -> None:
+    def _check(self) -> None:
         """Validate input arguments"""
-        if not host:
+        if not self.host:
             raise ValueError("Address requires host")
-        if not port:
+        if not self.port:
             raise ValueError("Address requires port")
 
     def __str__(self) -> str:
@@ -415,7 +410,7 @@ class DbConnectionCountCollector(DbCollector):
 
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save(col0="timestamp", col1="num_clients")
+        await self._sink.save(timestamp="timestamp", num_clients="num_clients")
 
     async def collect(self) -> None:
         if not self.enabled:
