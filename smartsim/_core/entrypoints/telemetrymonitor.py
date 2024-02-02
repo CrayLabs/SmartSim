@@ -329,10 +329,10 @@ class DbMemoryCollector(DbCollector):
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
         await self._sink.save(
-            col0="timestamp",
-            col1=self._columns[0],
-            col2=self._columns[1],
-            col3=self._columns[2],
+            timestamp="timestamp",
+            total_system_memory=self._columns[0],
+            used_memory=self._columns[1],
+            used_memory_peak=self._columns[2],
         )
 
     async def collect(self) -> None:
@@ -372,7 +372,9 @@ class DbConnectionCollector(DbCollector):
 
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save(col0="timestamp", col1="client_id", col2="address")
+        await self._sink.save(
+            timestamp="timestamp", client_id="client_id", address="address"
+        )
 
     async def collect(self) -> None:
         if not self.enabled:

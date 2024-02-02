@@ -763,7 +763,7 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
                 if mem_stats:
                     return next(mem_stats)
                 return {
-                    "ts": 111,
+                    "timestamp": 111,
                     "total_system_memory": "111",
                     "used_memory": "222",
                     "used_memory_peak": "333",
@@ -777,7 +777,7 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
 
                 if client_stats:
                     return next(client_stats)
-                return {"ts": 111, "addr": "127.0.0.1"}
+                return {"timestamp": 111, "addr": "127.0.0.1", "id": "111"}
 
             async def ping(self):
                 return True

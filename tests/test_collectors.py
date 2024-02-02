@@ -117,7 +117,7 @@ async def test_dbmemcollector_prepare_fail_dep(
     collector = DbMemoryCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
         ctx.setattr(tredis, "Redis", raiser)
-        # with pytest.raises(SmartSimError) as ex:
+
         await collector.prepare()
 
         capture = capsys.readouterr()  # retrieve logs for operation
