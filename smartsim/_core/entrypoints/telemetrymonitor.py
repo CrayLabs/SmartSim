@@ -123,7 +123,7 @@ class FileSink(Sink):
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
         async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
-            values = ",".join(list(map(str, kwargs.values()))) + "\n"
+            values = ",".join(map(str, kwargs.values())) + "\n"
             await sink_fp.write(values)
 
 
