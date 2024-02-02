@@ -19,6 +19,7 @@ To be released at some future point in time
 
 Description
 
+- Updated tests to address Torch warning
 - Updated GitHub actions to latest versions in CI/CD
 - Dropped Cobalt support
 - Override the sphinx-tabs extension background color
@@ -28,6 +29,8 @@ Description
 
 Detailed Notes
 
+- Tests that were saving Torch models were emitting warnings.  These warnings
+  were addressed by updating the model save test function. (SmartSim-PR472_)
 - Some actions in the current GitHub CI/CD workflows were outdated. They were
   replaced with their latest versions. (SmartSim-PR446_)
 - As the Cobalt workload manager is not used on any system we are aware of,
@@ -42,12 +45,12 @@ Detailed Notes
   all of SmartSim's machine learning backends with Python 3.11.
   (SmartSim-PR451_) (SmartSim-PR461_)
 
-
 .. _SmartSim-PR446: https://github.com/CrayLabs/SmartSim/pull/446
 .. _SmartSim-PR448: https://github.com/CrayLabs/SmartSim/pull/448
 .. _SmartSim-PR451: https://github.com/CrayLabs/SmartSim/pull/451
 .. _SmartSim-PR453: https://github.com/CrayLabs/SmartSim/pull/453
 .. _SmartSim-PR461: https://github.com/CrayLabs/SmartSim/pull/461
+.. _SmartSim-PR472: https://github.com/CrayLabs/SmartSim/pull/472
 
 
 0.6.0
