@@ -782,6 +782,9 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
                     return next(client_stats)
                 return {"ts": 111, "addr": "127.0.0.1"}
 
+            async def ping(self):
+                return True
+
         return MockConn
 
     return _mock_redis
