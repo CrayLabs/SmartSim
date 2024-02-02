@@ -239,7 +239,7 @@ class _Address:
         """Initialize the instance"""
         self.host = host.strip() if host else ""
         self.port = port
-        _Address._check(self.host, self.port)
+        self._check(self.host, self.port)
 
     @staticmethod
     def _check(host: str, port: int) -> None:
