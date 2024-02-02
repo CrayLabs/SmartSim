@@ -928,7 +928,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 self._tracked_jobs[entity.key] = entity
 
                 if entity.telemetry_on:
-                    collectors = CollectorManager.find_collectors(entity)
+                    collectors = self.find_collectors(entity)
                     self._collector.add_all(collectors)
 
                 track_event(
