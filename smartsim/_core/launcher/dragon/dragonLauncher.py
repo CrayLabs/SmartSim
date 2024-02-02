@@ -187,7 +187,7 @@ class DragonLauncher(WLMLauncher):
             if address is not None:
                 logger.debug(f"Listening to {socket_addr}")
                 dragon_address_request = DragonBootstrapRequest.parse_obj(
-                    json.loads(t.cast(str, launcher_socket.recv_json()))
+                    json.loads(str(launcher_socket.recv_json()))
                 )
                 dragon_head_address = dragon_address_request.address
                 logger.debug(f"Connecting launcher to {dragon_head_address}")

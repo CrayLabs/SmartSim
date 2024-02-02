@@ -87,11 +87,11 @@ def run(dragon_head_address: str) -> None:
 
     while True:
         print(f"Listening to {dragon_head_address}")
-        req = t.cast(str, dragon_head_socket.recv_json())
-        print(req)
-        json_req = json.loads(req)
+        req = dragon_head_socket.recv_json()
+        print(f"Received request: {req}")
+        json_req = json.loads(str(req))
         resp = dragon_backend.process_request(json_req)
-        print(resp, flush=True)
+        print(f"Sending response {resp}", flush=True)
         dragon_head_socket.send_json(resp.json())
 
 
