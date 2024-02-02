@@ -315,16 +315,19 @@ async def test_collector_manager_find_nondb(
 @pytest.mark.asyncio
 async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure that the manifest allows individually enabling a given collector"""
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="model", telemetry_on=True)
+    entity: JobEntity = mock_entity(
+        port=1234, name="entity1", type="model", telemetry_on=True
+    )
     manager = CollectorManager()
 
     # 0. popping all should result in no collectors mapping to the entity
     found = manager.find_collectors(entity)
     assert len(found) == 0
 
-
     # 1. ensure DbConnectionCollector is mapped
-    entity = mock_entity(port=1234, name="entity1", type="orchestrator", telemetry_on=True)
+    entity = mock_entity(
+        port=1234, name="entity1", type="orchestrator", telemetry_on=True
+    )
     entity.collectors["client"] = "mock/path.csv"
     manager = CollectorManager()
 
@@ -334,7 +337,9 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     assert isinstance(found[0], DbConnectionCollector)
 
     # 3. ensure DbConnectionCountCollector is mapped
-    entity = mock_entity(port=1234, name="entity1", type="orchestrator", telemetry_on=True)
+    entity = mock_entity(
+        port=1234, name="entity1", type="orchestrator", telemetry_on=True
+    )
     entity.collectors["client_count"] = "mock/path.csv"
     manager = CollectorManager()
 
@@ -344,7 +349,9 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     assert isinstance(found[0], DbConnectionCountCollector)
 
     # ensure DbMemoryCollector is mapped
-    entity = mock_entity(port=1234, name="entity1", type="orchestrator", telemetry_on=True)
+    entity = mock_entity(
+        port=1234, name="entity1", type="orchestrator", telemetry_on=True
+    )
     entity.collectors["memory"] = "mock/path.csv"
     manager = CollectorManager()
 
