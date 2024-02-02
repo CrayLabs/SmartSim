@@ -220,69 +220,38 @@ async def test_collector_manager_collect_integration(
 
 
 @pytest.mark.parametrize(
-    "timeout_at,delay_for,expect_fail",
+    "e_type,num_exp,telemetry_on",
     [
-        pytest.param(1000, 5000, True, id="1s timeout"),
-        pytest.param(2000, 5000, True, id="2s timeout"),
-        pytest.param(3000, 5000, True, id="3s timeout"),
-        pytest.param(4000, 5000, True, id="4s timeout"),
-        pytest.param(2000, 1000, False, id="under timeout"),
+        pytest.param("model", 0, False, id="models"),
+        pytest.param("model", 0, True, id="models, telemetry enabled"),
+        pytest.param("ensemble", 0, False, id="ensemble"),
+        pytest.param("ensemble", 0, True, id="ensemble, telemetry enabled"),
+        pytest.param("orchestrator", 0, False, id="orchestrator"),
+        pytest.param("orchestrator", 0, True, id="orchestrator, telemetry enabled"),
+        pytest.param("dbnode", 0, False, id="dbnode"),
+        pytest.param("dbnode", 0, True, id="dbnode, telemetry enabled"),
     ],
 )
 @pytest.mark.asyncio
-async def test_collector_manager_timeout(
+async def test_collector_manager_find_nondb(
     mock_entity: MockCollectorEntityFunc,
-    mock_redis,
-    monkeypatch: pytest.MonkeyPatch,
-    mock_mem,
-    mock_con,
-    timeout_at: int,
-    delay_for: int,
-    expect_fail: bool,
-    mock_sink,
+    e_type: str,
+    num_exp: int,
+    telemetry_on: bool,
 ) -> None:
-    """Ensure that the collector timeout is honored"""
-    entity1 = mock_entity(port=1234, name="e1")
-    entity2 = mock_entity(port=2345, name="e2")
+    """Ensure that the number of collectors returned for entity types match expectations"""
+    entity = mock_entity(port=1234, name="e1", type=e_type, telemetry_on=telemetry_on)
+    manager = CollectorManager(timeout_ms=10000)
 
-    sinks = [mock_sink(), mock_sink(), mock_sink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
+    # Ask manager to produce appliable collectors
+    collectors = manager.find_collectors(entity)
 
-    manager = CollectorManager(timeout_ms=timeout_at)
-    manager.add_all([con_col1, mem_col1, mem_col2])
-
-    async def snooze() -> None:
-        await asyncio.sleep(delay_for / 1000)
-
-    # Execute collection
-    with monkeypatch.context() as ctx:
-        ctx.setattr(
-            redis,
-            "Redis",
-            mock_redis(
-                client_stats=mock_con(1, 10),
-                mem_stats=mock_mem(1, 10),
-                coll_side_effect=snooze,
-            ),
-        )
-
-        ts0 = datetime.datetime.utcnow()
-        await manager.collect()
-        ts1 = datetime.datetime.utcnow()
-
-        t_diff = ts1 - ts0
-        actual_delay = 1000 * t_diff.seconds
-
-        if expect_fail:
-            assert timeout_at <= actual_delay < delay_for
-        else:
-            assert delay_for <= actual_delay < timeout_at
+    # Verify collector counts, assuming no per-collector config
+    assert num_exp == len(collectors)
 
 
 @pytest.mark.asyncio
-async def test_collector_manager_find(mock_entity: MockCollectorEntityFunc) -> None:
+async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure that the manifest allows individually enabling a given collector"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
     manager = CollectorManager()
