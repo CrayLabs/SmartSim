@@ -483,6 +483,11 @@ class CollectorManager:
             return
 
         stopper = TaskStatusHandler(collector, patterns=["stop.json"])
+
+        # if dir DNE, the observer may fail to start correctly.
+        entity_dir = pathlib.Path(collector.entity.status_dir)
+        entity_dir.mkdir(parents=True, exist_ok=True)
+
         observer = Observer()
         observer.schedule(stopper, collector.entity.status_dir)  # type: ignore
         observer.start()  # type: ignore
@@ -1241,6 +1246,7 @@ if __name__ == "__main__":
 
     telem_dir = pathlib.Path(args.exp_dir) / CONFIG.telemetry_subdir
     log_path = telem_dir / _LOG_FILE_NAME
+    log_path.parent.mkdir(parents=True, exist_ok=True)
 
     fh = logging.FileHandler(log_path, "a")
     logger.addHandler(fh)
