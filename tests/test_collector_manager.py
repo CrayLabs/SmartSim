@@ -158,8 +158,8 @@ async def test_collector_manager_collect_filesink(
 ) -> None:
     """Ensure that all collectors are executed and some metric is retrieved
     and the FileSink is written to as expected"""
-    entity1 = mock_entity(port=1234, name="entity1")
-    entity2 = mock_entity(port=2345, name="entity2")
+    entity1 = mock_entity(port=1234, name="entity1", telemetry_on=True)
+    entity2 = mock_entity(port=2345, name="entity2", telemetry_on=True)
 
     sinks = [
         FileSink(entity1.status_dir + "/1_con.csv"),

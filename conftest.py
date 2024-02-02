@@ -793,15 +793,22 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
 class MockCollectorEntityFunc(t.Protocol):
     @staticmethod
     def __call__(
-        host: str = "127.0.0.1", port: int = 6379, name: str = "", type: str = ""
-    ) -> "JobEntity":
-        ...
+        host: str = "127.0.0.1",
+        port: int = 6379,
+        name: str = "",
+        type: str = "",
+        telemetry_on: bool = False,
+    ) -> "JobEntity": ...
 
 
 @pytest.fixture
 def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
     def _mock_entity(
-        host: str = "127.0.0.1", port: int = 6379, name: str = "", type: str = ""
+        host: str = "127.0.0.1",
+        port: int = 6379,
+        name: str = "",
+        type: str = "",
+        telemetry_on: bool = False,
     ) -> "JobEntity":
         test_path = pathlib.Path(test_dir)
 
@@ -819,6 +826,7 @@ def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
             "host": host,
             "port": str(port),
         }
+        entity.telemetry_on = telemetry_on
         return entity
 
     return _mock_entity
