@@ -100,7 +100,7 @@ class FileSink(Sink):
         :param filename: The relative path and filename of the file to be written
         :type filename: str"""
         super().__init__()
-        filename = FileSink._check_init(filename)
+        filename = self._check_init(filename)
         self._path = pathlib.Path(filename)
 
     @staticmethod
