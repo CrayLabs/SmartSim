@@ -23,8 +23,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import pathlib
+from os import path as osp
 
 import pytest
 
@@ -32,26 +32,25 @@ import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
-from smartsim.settings import RunSettings
+from smartsim.error.errors import PreviewFormatError
 
 
 @pytest.fixture
 def choose_host():
-    def _choose_host(wlmutils, index=0):
+    def _choose_host(wlmutils, index: int = 0):
         hosts = wlmutils.get_test_hostlist()
         if hosts:
             return hosts[index]
-        else:
-            return None
+        return None
 
     return _choose_host
 
 
 def test_experiment_preview(test_dir, wlmutils):
-    """Test correct preview output items for Experiment preview"""
+    """Test correct preview output fields for Experiment preview"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test_experiment_preview"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
@@ -107,6 +106,7 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     # Evaluate output
     assert "Database identifier" in output
     assert "Shards" in output
+    assert "TCP/IP port" in output
     assert "Network interface" in output
     assert "Type" in output
     assert "Executable" in output
@@ -175,49 +175,91 @@ def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    exp_name = "test_experiment_preview_properties"
+    exp_name = "test_active_infrastructure_preview"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # create regular database
+
     orc = exp.create_database(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
+        db_identifier="orc_1",
     )
-    preview_manifest = Manifest(orc)
-
-    print(orc.ports)
-    print(orc.is_active())
 
     exp.start(orc)
 
-    print(orc.is_active())
-    # print(exp.summary())
+    assert orc.is_active() == True
+
+    orc2 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_2",
+    )
+
+    orc3 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_3",
+    )
+
+    preview_manifest = Manifest(orc, orc2, orc3)
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, preview_manifest)
-
     print(output)
 
+    assert "Active Infrastructure" in output
+    assert "Database identifier" in output
+    assert "Shards" in output
+    assert "Network interface" in output
+    assert "Type" in output
+    assert "TCP/IP" in output
+    assert "Orchestrators" in output
 
-## how to get job id??
-# def test_preview_jobid(test_dir, wlmutils, choose_host):
-#     test_launcher = wlmutils.get_test_launcher()
-#     test_interface = wlmutils.get_test_interface()
-#     test_port = wlmutils.get_test_port()
-#     exp_name = "test_exp_summary"
-#     exp = Experiment(exp_name, exp_path=test_dir)
-#     orc = exp.create_database(
-#         port=test_port,
-#         interface=test_interface,
-#         hosts=choose_host(wlmutils),
-#     )
+    exp.stop(orc)
 
-#     m = exp.create_model(
-#         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
-#     )
-#     exp.start(m, orc)
-#     summary_str = exp.summary(style="plain")
-#     print(summary_str)
+
+def test_active_infrastructure_preview_output_format_html(
+    test_dir, wlmutils, choose_host
+):
+    """Test that an html file is rendered for active infrastructure preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_orchestrator_preview_output_format_html"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_1",
+    )
+    exp.start(orc)
+    assert orc.is_active() == True
+
+    orc2 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_2",
+    )
+
+    assert orc2.is_active() == False
+
+    filename = "test_active_infrastructure_preview_output_format_html.html"
+    path = pathlib.Path(test_dir) / filename
+
+    # Execute preview method
+    exp.preview(orc, orc2, output_format="html", output_filename=str(path))
+
+    # Evaluate output
+    assert path.exists()
+    assert path.is_file()
+
+    exp.stop(orc)
 
 
 def test_output_format_error():
@@ -229,6 +271,8 @@ def test_output_format_error():
     exp = Experiment(exp_name)
 
     # Execute preview method
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(PreviewFormatError) as ex:
         exp.preview(output_format="hello")
-    assert "The only valid currently available is html" in ex.value.args[0]
+    assert (
+        "The only valid output format currently available is html" in ex.value.args[0]
+    )

@@ -29,6 +29,7 @@ import jinja2
 
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
+from ...error.errors import PreviewFormatError
 from ...log import get_logger
 
 logger = get_logger(__name__)
@@ -36,8 +37,7 @@ logger = get_logger(__name__)
 if t.TYPE_CHECKING:
     from smartsim import Experiment
 
-
-_OutputFormatString = t.Optional[t.Literal["html"]]
+_OutputFormatString = t.Optional[t.Literal["html", "plain_text"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 
@@ -45,7 +45,7 @@ def render(
     exp: "Experiment",
     manifest: t.Optional[Manifest] = None,
     verbosity_level: _VerbosityLevelString = "info",
-    output_format: _OutputFormatString = None,
+    output_format: _OutputFormatString = "plain_text",
 ) -> str:
     """
     Render the template from the supplied entities.
@@ -55,8 +55,7 @@ def render(
     :type manifest: Manifest
     :param verbosity_level: the verbosity level
     :type verbosity_level: _VerbosityLevelString
-    :param output_format: the output destination.
-    If no output format is set, the preview will be output to stdout
+    :param output_format: the output format.
     :type output_format: _OutputFormatString
     """
 
@@ -65,11 +64,10 @@ def render(
     loader = jinja2.PackageLoader("templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
 
-    version = f"_{output_format}" if output_format else ""
+    version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
 
-    if output_format:
-        _check_output_format(output_format)
+    _check_output_format(output_format)
 
     tpl = env.get_template(tpl_path)
 
@@ -79,7 +77,7 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-
+    # print(rendered_preview)
     return rendered_preview
 
 
@@ -93,12 +91,14 @@ def preview_to_file(content: str, filename: str) -> None:
         prev_file.write(content)
 
 
-def _check_output_format(output_format: str) -> None:
+def _check_output_format(output_format: _OutputFormatString) -> None:
     """
     Check that the output format given is valid.
     """
-    if not output_format == "html":
-        raise ValueError("The only valid currently available is html")
+    if not output_format in ("html", "plain_text"):
+        raise PreviewFormatError(
+            "The only valid output format currently available is html"
+        )
 
 
 def _check_verbosity_level(

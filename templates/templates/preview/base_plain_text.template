@@ -1,0 +1,25 @@
+
+{% include "preview/experiment_plain_text.template" %}
+{%- if manifest %}
+{% set foobar = {'activetitle': True,'orchtitle': True} %}
+=== Entity Preview === 
+{%- if manifest.dbs %}
+{%- for db in manifest.dbs %}
+    {%- if db.is_active() == True %}
+        {%- if foobar['activetitle'] == True %}
+        == Active Infrastructure == 
+        {%- endif %}
+        {% include "preview/activeinfra_plain_text.template" %}
+        {%- if foobar.update({'activetitle': False}) %}
+        {% endif %}
+    {% else %}
+        {%-if foobar['orchtitle'] == True %}
+        == Orchestrators == 
+        {%- endif %}
+        {% include "preview/orchestrator_plain_text.template" %}
+        {%- if foobar.update({'orchtitle': False}) %}
+        {% endif %}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- endif %}

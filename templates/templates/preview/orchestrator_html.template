@@ -1,7 +1,13 @@
-{%- for db in manifest.dbs %}
 <ul class="entityList">
     <li>= Database identifier: {{ db.name }}</li>
     <li>Shards: {{ db.num_shards }}</li>
+    <li>TCP/IP port:
+    <ul class="entityList">
+    {%- for port in db.ports %}
+        <li>{{ port }}</li>
+        {%- endfor %}
+    </ul>
+    </li>
     <li>Network interface: {{ db._interfaces[0] }}</li>
     <li>Type: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}</li>
     <li>Executable: {{ config.database_exe }}</li>
@@ -10,4 +16,3 @@
     <li>Ntasks: {{ db.db_nodes }}</li>
     <li>=</li>
  </ul>    
- {% endfor -%}

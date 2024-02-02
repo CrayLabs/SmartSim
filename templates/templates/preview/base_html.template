@@ -16,19 +16,40 @@
         {% include 'preview/experiment_html.template' %}
     </div>
     {%- if manifest %}
-
+    {% set foobar = {'activetitle': True,'orchtitle': True} %}
     <div class='header'>=== Entity Preview ===</div>
-        <div class='childContainer'> 
+        
             {%- if manifest.dbs %}
-            <div class='header orchestrators'>== Orchestrators ==</div> 
+            {%- for db in manifest.dbs %} 
+            <div class='childContainer'>  
+
+        {%- if db.is_active() == True %}
+            {%- if foobar['activetitle'] == True %}
+            <div class='header orchestrators'>== Active Infrastructure ==</div> 
+            {%- endif %}
+            <div class='childEntity activeinfrastructure'> 
+            {% include "preview/activeinfra_html.template" %}
+            </div> 
+            {%- if foobar.update({'activetitle': False}) %}
+            {% endif %}
+        {% else %}
+            {%-if foobar['orchtitle'] == True %}
+            <div class='header orchestrators'>== Orchestrators ==</div>  
+            {%- endif %}
             <div class='childEntity orchestrator'> 
-                {%- for db in manifest.dbs %}   
-                    {% include "preview/orchestrator_html.template" %}
-                {%- endfor %}
+            {% include "preview/orchestrator_html.template" %}
+            </div>
+            {%- if foobar.update({'orchtitle': False}) %}
+            {% endif %}
+            
+
         </div>
-    </div>
-            {%- endif %}  
+         {% endif %}
+        {%- endfor %}
+         {%- endif %}  
+   
     {%- endif %}
+</div>
 </div>
 </body>
 </html>
