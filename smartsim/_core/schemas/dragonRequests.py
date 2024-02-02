@@ -34,7 +34,7 @@ class DragonRequest(BaseModel):
     request_type: constr(min_length=1)
 
 
-class DragonRunRequestView(BaseModel):
+class DragonRunRequestView(DragonRequest):
     request_type: constr(min_length=1) = "run"
     exe: constr(min_length=1)
     exe_args: t.Optional[t.List[constr(min_length=1)]] = []
