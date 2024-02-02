@@ -714,8 +714,8 @@ def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
         i = min
         while True:
             yield [
-                {"addr": f"127.0.0.{i}:1234", "id": "ABC{i}"},
-                {"addr": f"127.0.0.{i}:2345", "id": "XYZ{i}"},
+                {"addr": f"127.0.0.{i}:1234", "id": f"ABC{i}"},
+                {"addr": f"127.0.0.{i}:2345", "id": f"XYZ{i}"},
             ]
             i += 1
             if i > max:
