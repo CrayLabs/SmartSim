@@ -278,7 +278,6 @@ def installed_redisai_backends(
 
 def get_ts_ms() -> int:
     """Return the current timestamp (accurate to milliseconds) cast to an integer"""
-    # return int(datetime.timestamp(datetime.now()))
     return int(datetime.now().timestamp() * 1000)
 
 

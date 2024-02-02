@@ -566,9 +566,8 @@ class FileUtils:
     @staticmethod
     def get_test_output_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
-        rel_path = os.path.relpath(
-            caller_file_to_dir, os.path.dirname(test_output_root)
-        )
+        dir_name = os.path.dirname(test_output_root)
+        rel_path = os.path.relpath(caller_file_to_dir, dir_name)
         dir_path = os.path.join(test_output_root, rel_path, caller_function)
         return dir_path
 
@@ -660,9 +659,8 @@ class ColoUtils:
         if db_type == "uds" and colo_model_name is not None:
             tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
-            db_args["unix_socket"] = os.path.join(
-                tmp_dir, f"{colo_model_name}_{socket_suffix}.socket"
-            )
+            socket_name = f"{colo_model_name}_{socket_suffix}.socket"
+            db_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,
@@ -671,9 +669,8 @@ class ColoUtils:
         }
         with warnings.catch_warnings():
             if db_type == "deprecated":
-                warnings.filterwarnings(
-                    "ignore", message="`colocate_db` has been deprecated"
-                )
+                message = "`colocate_db` has been deprecated"
+                warnings.filterwarnings("ignore", message=message)
             colocate_fun[db_type](**db_args)
         # assert model will launch with colocated db
         assert colo_model.colocated
