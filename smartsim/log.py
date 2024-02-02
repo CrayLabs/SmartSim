@@ -63,7 +63,7 @@ if t.TYPE_CHECKING:
     _PR = ParamSpec("_PR")
 
 
-def _get_log_level() -> str:
+def _translate_log_level(user_log_level: t.Optional[str] = "info") -> str:
     """Get the logging level based on environment variable
        SMARTSIM_LOG_LEVEL.  If not set, default to info.
 
@@ -77,15 +77,14 @@ def _get_log_level() -> str:
     :returns: Log level for coloredlogs
     :rtype: str
     """
-    log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info").lower()
-    if log_level == "quiet":
+    if user_log_level == "quiet":
         return "warning"
-    if log_level == "info":
+    if user_log_level == "info":
         return "info"
-    if log_level == "debug":
+    if user_log_level == "debug":
         return "debug"
     # extremely verbose logging used internally
-    if log_level == "developer":
+    if user_log_level == "developer":
         return "debug"
     return "info"
 
@@ -205,7 +204,7 @@ def get_logger(
     """
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file without prefix.
-    user_log_level = _get_log_level()
+    user_log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info")
     if user_log_level != "developer":
         name = "SmartSim"
 
@@ -214,7 +213,7 @@ def get_logger(
     if log_level:
         logger.setLevel(log_level)
     else:
-        log_level = user_log_level
+        log_level = _translate_log_level(user_log_level)
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
     return logger
 
