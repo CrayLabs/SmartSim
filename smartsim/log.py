@@ -63,7 +63,7 @@ if t.TYPE_CHECKING:
     _PR = ParamSpec("_PR")
 
 
-def _get_log_level() -> str:
+def _get_log_level() -> t.Tuple[str, str]:
     """Get the logging level based on environment variable
        SMARTSIM_LOG_LEVEL.  If not set, default to info.
 
@@ -74,20 +74,20 @@ def _get_log_level() -> str:
          - developer: Shows everything happening during execution
                       extremely verbose logging.
 
-    :returns: Log level for coloredlogs
-    :rtype: str
+    :returns: Log level for coloredlogs and value of SMARTSIM_LOG_LEVEL
+    :rtype: tuple[str,str]
     """
     log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info").lower()
     if log_level == "quiet":
-        return "warning"
+        return "warning", log_level
     if log_level == "info":
-        return "info"
+        return "info", log_level
     if log_level == "debug":
-        return "debug"
+        return "debug", log_level
     # extremely verbose logging used internally
     if log_level == "developer":
-        return "debug"
-    return "info"
+        return "debug", log_level
+    return "info", log_level
 
 
 def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.Path]]:
@@ -205,16 +205,17 @@ def get_logger(
     """
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file without prefix.
-    user_log_level = _get_log_level()
-    if user_log_level != "developer":
+    user_log_level, env_log_level = _get_log_level()
+
+    if env_log_level != "developer":
         name = "SmartSim"
 
     logging.setLoggerClass(ContextAwareLogger)
     logger = logging.getLogger(name)
-    if log_level:
-        logger.setLevel(log_level)
-    else:
+    if not log_level:
         log_level = user_log_level
+    if isinstance(log_level, str):
+        logger.setLevel(log_level.upper())
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
     return logger
 

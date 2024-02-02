@@ -109,14 +109,16 @@ def test_add_exp_loggers(test_dir):
     assert err_file.is_file()
 
 
-def test_get_logger(test_dir: str, turn_on_tm):
+def test_get_logger(test_dir: str, turn_on_tm, monkeypatch):
     """Ensure the correct logger type is instantiated"""
+    monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
     logger = smartsim.log.get_logger("SmartSimTest", "INFO")
     assert isinstance(logger, smartsim.log.ContextAwareLogger)
 
 
-def test_exp_logs(test_dir: str, turn_on_tm):
+def test_exp_logs(test_dir: str, turn_on_tm, monkeypatch):
     """Ensure that experiment loggers are added when context info exists"""
+    monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
     test_dir = pathlib.Path(test_dir)
     test_dir.mkdir(parents=True, exist_ok=True)
 
