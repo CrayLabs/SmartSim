@@ -37,7 +37,8 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     DbMemoryCollector,
     FileSink,
     JobEntity,
-    redis,
+    find_collectors,
+    redisa,
 )
 
 # The tests in this file belong to the slow_tests group
@@ -306,7 +307,7 @@ async def test_collector_manager_find_nondb(
     manager = CollectorManager(timeout_ms=10000)
 
     # Ask manager to produce appliable collectors
-    collectors = manager.find_collectors(entity)
+    collectors = find_collectors(entity)
 
     # Verify collector counts, assuming no per-collector config
     assert num_exp == len(collectors)
@@ -321,7 +322,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 0. popping all should result in no collectors mapping to the entity
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 0
 
     # 1. ensure DbConnectionCollector is mapped
@@ -332,7 +333,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 2. client count collector should be mapped
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 1
     assert isinstance(found[0], DbConnectionCollector)
 
@@ -344,7 +345,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 4. client count collector should be mapped
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 1
     assert isinstance(found[0], DbConnectionCountCollector)
 
@@ -356,7 +357,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 5. memory collector should be mapped
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 1
     assert isinstance(found[0], DbMemoryCollector)
 
@@ -378,12 +379,12 @@ async def test_collector_manager_find_entity_disabled(
 
     # ON behavior should locate multiple collectors
     entity.telemetry_on = True
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) > 0
 
     # OFF behavior should locate ZERO collectors
     entity.telemetry_on = False
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 0
 
 
@@ -404,10 +405,10 @@ async def test_collector_manager_find_entity_unmapped(
 
     # ON behavior should locate ZERO collectors
     entity.telemetry_on = True
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 0
 
     # OFF behavior should locate ZERO collectors
     entity.telemetry_on = False
-    found = manager.find_collectors(entity)
+    found = find_collectors(entity)
     assert len(found) == 0

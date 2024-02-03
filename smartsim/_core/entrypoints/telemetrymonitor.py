@@ -27,7 +27,6 @@ import abc
 import argparse
 import asyncio
 import collections
-import dataclasses
 import datetime
 import itertools
 import json
@@ -42,7 +41,7 @@ import typing as t
 from dataclasses import dataclass, field
 from types import FrameType
 
-import redis.asyncio as redis
+import redis.asyncio as redisa
 import redis.exceptions as redisex
 from anyio import open_file, sleep
 from watchdog.events import (
@@ -179,6 +178,25 @@ class Collector(abc.ABC):
         """Execute any cleanup of resources for the collector"""
 
 
+def find_collectors(entity: JobEntity) -> t.List[Collector]:
+    """Map from manifest configuration to a set of possible collectors."""
+    collectors: t.List[Collector] = []
+
+    if entity.is_db and entity.telemetry_on:
+        if mem_out := entity.collectors.get("memory", None):
+            collectors.append(DbMemoryCollector(entity, FileSink(mem_out)))
+
+        if con_out := entity.collectors.get("client", None):
+            collectors.append(DbConnectionCollector(entity, FileSink(con_out)))
+
+        if num_out := entity.collectors.get("client_count", None):
+            collectors.append(DbConnectionCountCollector(entity, FileSink(num_out)))
+    else:
+        logger.debug(f"collectors disabled for db {entity.name}")
+
+    return collectors
+
+
 class TaskStatusHandler(PatternMatchingEventHandler):
     """A file listener that will notify a set of collectors when an
     unmanaged entity has completed"""
@@ -255,7 +273,7 @@ class DbCollector(Collector):
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the collector"""
         super().__init__(entity, sink)
-        self._client: t.Optional[redis.Redis[bytes]] = None
+        self._client: t.Optional[redisa.Redis[bytes]] = None
         self._address = _Address(
             self._entity.config.get("host", ""),
             int(self._entity.config.get("port", 0)),
@@ -265,7 +283,7 @@ class DbCollector(Collector):
         """Configure and connect to the target database"""
         try:
             if not self._client:
-                self._client = redis.Redis(
+                self._client = redisa.Redis(
                     host=self._address.host, port=self._address.port
                 )
         except ConnectionRefusedError as cre:
@@ -451,13 +469,11 @@ class CollectorManager:
         :param timeout_ms: Timout (in ms) for telemetry collection
         :type timeout_ms: int
         """
-        self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(
-            lambda: []
-        )
+        self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(list)
         self._timeout_ms = timeout_ms
         self._tasks: t.List[asyncio.Task[None]] = []
         self._stoppers: t.Dict[str, t.List[TaskStatusHandler]] = (
-            collections.defaultdict(lambda: [])
+            collections.defaultdict(list)
         )
 
     def clear(self) -> None:
@@ -555,25 +571,6 @@ class CollectorManager:
             ]
             await asyncio.wait(shutdown_tasks)
         logger.debug("Collector shutdown complete...")
-
-    @classmethod
-    def find_collectors(cls, entity: JobEntity) -> t.List[Collector]:
-        """Map from manifest configuration to a set of possible collectors."""
-        collectors: t.List[Collector] = []
-
-        if entity.is_db and entity.telemetry_on:
-            if mem_out := entity.collectors.get("memory", None):
-                collectors.append(DbMemoryCollector(entity, FileSink(mem_out)))
-
-            if con_out := entity.collectors.get("client", None):
-                collectors.append(DbConnectionCollector(entity, FileSink(con_out)))
-
-            if num_out := entity.collectors.get("client_count", None):
-                collectors.append(DbConnectionCountCollector(entity, FileSink(num_out)))
-        else:
-            logger.debug(f"collectors disabled for db {entity.name}")
-
-        return collectors
 
     @property
     def all_collectors(self) -> t.Iterable[Collector]:
@@ -923,7 +920,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 self._tracked_jobs[entity.key] = entity
 
                 if entity.telemetry_on:
-                    collectors = self.find_collectors(entity)
+                    collectors = find_collectors(entity)
                     self._collector.add_all(collectors)
 
                 track_event(
@@ -1041,11 +1038,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
 
 def can_shutdown(action_handler: ManifestEventHandler) -> bool:
-    jobs = action_handler.job_manager.jobs  # managed jobs from job manager
-    all_jobs = action_handler.tracked_jobs  # unmanaged jobs tracked locally
-    db_jobs = list(filter(lambda j: j.is_db and not j.is_complete, all_jobs))
+    managed_jobs = action_handler.job_manager.jobs
+    unmanaged_jobs = action_handler.tracked_jobs
+    db_jobs = list(filter(lambda j: j.is_db and not j.is_complete, unmanaged_jobs))
 
-    n_jobs, n_dbs = len(jobs), len(db_jobs)
+    n_jobs, n_dbs = len(managed_jobs), len(db_jobs)
     shutdown_ok = n_jobs + n_dbs == 0
 
     logger.debug(f"{n_jobs} active job(s), {n_dbs} active db(s)")

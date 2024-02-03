@@ -33,8 +33,8 @@ from conftest import MockCollectorEntityFunc
 from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
     DbMemoryCollector,
+    redisa,
 )
-from smartsim._core.entrypoints.telemetrymonitor import redis as tredis
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.group_a
@@ -65,7 +65,7 @@ async def test_dbmemcollector_prepare_fail(
 
     with monkeypatch.context() as ctx:
         # mock up a redis constructor that returns None
-        ctx.setattr(tredis, "Redis", lambda host, port: None)
+        ctx.setattr(redisa, "Redis", lambda host, port: None)
 
         capsys.readouterr()  # clear capture
         collector = DbMemoryCollector(entity, mock_sink())
@@ -111,12 +111,12 @@ async def test_dbmemcollector_prepare_fail_dep(
 
     def raiser(*args: t.Any, **kwargs: t.Any) -> None:
         # mock raising exception on connect attempts to test err handling
-        raise tredis.ConnectionError("mock connection failure")
+        raise redisa.ConnectionError("mock connection failure")
 
     capsys.readouterr()  # clear capture
     collector = DbMemoryCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
-        ctx.setattr(tredis, "Redis", raiser)
+        ctx.setattr(redisa, "Redis", raiser)
 
         await collector.prepare()
 
@@ -139,7 +139,7 @@ async def test_dbmemcollector_collect(
     sink = mock_sink()
     collector = DbMemoryCollector(entity, sink)
     with monkeypatch.context() as ctx:
-        ctx.setattr(tredis, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
+        ctx.setattr(redisa, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
 
         await collector.prepare()
         await collector.collect()
@@ -191,7 +191,7 @@ async def test_dbconncollector_collect(
 
     collector = DbConnectionCollector(entity, mock_sink())
     with monkeypatch.context() as ctx:
-        ctx.setattr(tredis, "Redis", mock_redis(client_stats=mock_con(1, 2)))
+        ctx.setattr(redisa, "Redis", mock_redis(client_stats=mock_con(1, 2)))
 
         await collector.prepare()
         await collector.collect()
