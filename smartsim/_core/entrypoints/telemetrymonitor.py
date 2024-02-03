@@ -190,7 +190,7 @@ def find_collectors(entity: JobEntity) -> t.List[Collector]:
             collectors.append(DbConnectionCollector(entity, FileSink(con_out)))
 
         if num_out := entity.collectors.get("client_count", None):
-            collectors.append(DbConnectionCountCollector(entity, FileSink(num_out)))
+            collectors.append(DBConnectionCountCollector(entity, FileSink(num_out)))
     else:
         logger.debug(f"collectors disabled for db {entity.name}")
 
@@ -267,7 +267,7 @@ class _Address:
         return f"{self.host}:{self.port}"
 
 
-class DbCollector(Collector):
+class DBCollector(Collector):
     """A base class for collectors that retrieve statistics from an orchestrator"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
@@ -292,7 +292,7 @@ class DbCollector(Collector):
             logger.exception(e)
         finally:
             if not self._client:
-                logger.error(f"DbCollector failed to connect to {self._address}")
+                logger.error(f"DBCollector failed to connect to {self._address}")
 
     async def prepare(self) -> None:
         """Initialization logic for a DB collector"""
@@ -316,7 +316,7 @@ class DbCollector(Collector):
                 await self._client.close()
                 self._client = None
         except Exception as ex:
-            logger.error("An error occurred during DbCollector shutdown", exc_info=ex)
+            logger.error("An error occurred during DBCollector shutdown", exc_info=ex)
 
     async def _check_db(self) -> bool:
         """Check if a database is reachable.
@@ -331,7 +331,7 @@ class DbCollector(Collector):
         return False
 
 
-class DbMemoryCollector(DbCollector):
+class DbMemoryCollector(DBCollector):
     """A collector that collects memory usage information from
     an orchestrator instance"""
 
@@ -379,7 +379,7 @@ class DbMemoryCollector(DbCollector):
         return filtered
 
 
-class DbConnectionCollector(DbCollector):
+class DbConnectionCollector(DBCollector):
     """A collector that collects client connection information from
     an orchestrator instance"""
 
@@ -422,7 +422,7 @@ class DbConnectionCollector(DbCollector):
         return filtered
 
 
-class DbConnectionCountCollector(DbCollector):
+class DBConnectionCountCollector(DBCollector):
     """A collector that collects client connection information from
     an orchestrator instance and records aggregated counts"""
 
@@ -432,13 +432,13 @@ class DbConnectionCountCollector(DbCollector):
 
     async def collect(self) -> None:
         if not self.enabled:
-            logger.debug("DbConnectionCountCollector is not enabled")
+            logger.debug("DBConnectionCountCollector is not enabled")
             return
 
         await self.prepare()
         if not self._client:
             logger.warning(
-                "DbConnectionCountCollector is not connected and cannot collect"
+                "DBConnectionCountCollector is not connected and cannot collect"
             )
             return
 
@@ -454,7 +454,7 @@ class DbConnectionCountCollector(DbCollector):
 
             await self._sink.save(timestamp=now_ts, num_clients=self._value)
         except Exception as ex:
-            logger.warning("Collect failed for DbConnectionCountCollector", exc_info=ex)
+            logger.warning("Collect failed for DBConnectionCountCollector", exc_info=ex)
 
     @property
     def value(self) -> str:

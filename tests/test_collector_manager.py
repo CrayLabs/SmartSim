@@ -33,7 +33,7 @@ from conftest import MockCollectorEntityFunc
 from smartsim._core.entrypoints.telemetrymonitor import (
     CollectorManager,
     DbConnectionCollector,
-    DbConnectionCountCollector,
+    DBConnectionCountCollector,
     DbMemoryCollector,
     FileSink,
     JobEntity,
@@ -325,7 +325,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     found = find_collectors(entity)
     assert len(found) == 0
 
-    # 1. ensure DbConnectionCollector is mapped
+    # 1. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
         port=1234, name="entity1", type="orchestrator", telemetry_on=True
     )
@@ -337,7 +337,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     assert len(found) == 1
     assert isinstance(found[0], DbConnectionCollector)
 
-    # 3. ensure DbConnectionCountCollector is mapped
+    # 3. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
         port=1234, name="entity1", type="orchestrator", telemetry_on=True
     )
@@ -347,7 +347,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     # 4. client count collector should be mapped
     found = find_collectors(entity)
     assert len(found) == 1
-    assert isinstance(found[0], DbConnectionCountCollector)
+    assert isinstance(found[0], DBConnectionCountCollector)
 
     # ensure DbMemoryCollector is mapped
     entity = mock_entity(
