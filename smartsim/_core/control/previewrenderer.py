@@ -115,14 +115,10 @@ def _check_verbosity_level(
     """
     Check that the given verbosity level is valid.
     """
-
-    if not verbosity_level == "info":
-        raise ValueError("The only valid verbosity level currently available is info")
-
-    if verbosity_level in (Verbosity.DEBUG, Verbosity.DEVELOPER):
+    if verbosity_level not in (Verbosity.INFO, Verbosity.DEBUG, Verbosity.DEVELOPER):
         logger.warning(
             f"'{verbosity_level}' is an unsupported verbosity level requested.\
-Setting verbosity to: info"
+ Setting verbosity to: info"
         )
         return "info"
-    return "info"
+    return verbosity_level
