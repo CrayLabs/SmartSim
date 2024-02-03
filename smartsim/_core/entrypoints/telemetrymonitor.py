@@ -490,8 +490,7 @@ class CollectorManager:
         for col in clist:
             owner_list = self._collectors[col.owner]
             # ensure we can't add multiple collectors of the same type for an entity
-            dupes = next((x for x in owner_list if type(x) is type(col)), None)
-            if dupes:
+            if any(x for x in owner_list if type(x) is type(col)):
                 continue
             logger.debug(f"Adding collector: {col.owner}::{type(col).__name__}")
             self._collectors[col.owner].append(col)
