@@ -526,8 +526,8 @@ class CollectorManager:
 
     async def prepare(self) -> None:
         """Ensure all managed collectors have prepared for collection"""
-        for collector in self.all_collectors:
-            await collector.prepare()
+
+        await asyncio.gather(*(col.prepare() for col in self.all_collectors))
 
     async def collect(self) -> None:
         """Execute collection for all managed collectors"""
