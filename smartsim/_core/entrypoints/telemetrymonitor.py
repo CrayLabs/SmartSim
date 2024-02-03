@@ -458,7 +458,7 @@ class CollectorManager:
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
-        self._collectors = collections.defaultdict(lambda: [])
+        self._collectors = collections.defaultdict(list)
 
     def add(self, col: Collector) -> None:
         """Add a new collector to the managed set"""
