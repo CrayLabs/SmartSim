@@ -137,7 +137,7 @@ async def test_collector_manager_collect(
     # Execute collection
     with monkeypatch.context() as ctx:
         ctx.setattr(
-            redis,
+            redisa,
             "Redis",
             mock_redis(client_stats=mock_con(1, 10), mem_stats=mock_mem(1, 10)),
         )
@@ -177,7 +177,7 @@ async def test_collector_manager_collect_filesink(
     # Execute collection
     with monkeypatch.context() as ctx:
         ctx.setattr(
-            redis,
+            redisa,
             "Redis",
             mock_redis(client_stats=mock_con(1, 10), mem_stats=mock_mem(1, 10)),
         )
@@ -260,7 +260,7 @@ async def test_collector_manager_timeout_db(
     # Execute collection
     with monkeypatch.context() as ctx:
         ctx.setattr(
-            redis,
+            redisa,
             "Redis",
             mock_redis(
                 client_stats=mock_con(1, 10),
