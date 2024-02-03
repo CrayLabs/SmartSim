@@ -457,7 +457,7 @@ class CollectorManager:
         self._stoppers: t.Dict[str, t.List[TaskStatusHandler]] = (
             collections.defaultdict(list)
         )
-        self._observers: t.Dict[str, t.List[Observer]] = collections.defaultdict(list)
+        self._observers: t.Dict[str, t.List[BaseObserver]] = collections.defaultdict(list)
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
