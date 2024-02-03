@@ -564,12 +564,12 @@ class CollectorManager:
     @property
     def all_collectors(self) -> t.Iterable[Collector]:
         """Get a list of all managed collectors"""
-        collectors = list(itertools.chain(*self._collectors.values()))
+        collectors = itertools.chain.from_iterable(self._collectors.values())
         return [col for col in collectors if col.enabled]
 
     @property
     def dead_collectors(self) -> t.Iterable[Collector]:
-        collectors = list(itertools.chain(*self._collectors.values()))
+        collectors = itertools.chain.from_iterable(self._collectors.values())
         return [col for col in collectors if not col.enabled]
 
 
