@@ -525,7 +525,7 @@ class CollectorManager:
 
         for observer in itertools.chain(observers):
             observer.stop()  # type: ignore
-            observer.join()  # type: ignore
+            observer.join()
 
     async def prepare(self) -> None:
         """Ensure all managed collectors have prepared for collection"""
