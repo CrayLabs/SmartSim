@@ -164,7 +164,6 @@ async def test_collector_manager_remove_all(
     assert len(manager.all_collectors) == 0
 
 
-
 @pytest.mark.asyncio
 async def test_collector_manager_collect(
     mock_entity: MockCollectorEntityFunc,
