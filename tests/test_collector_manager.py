@@ -113,6 +113,59 @@ def test_collector_manager_add_multi(
 
 
 @pytest.mark.asyncio
+async def test_collector_manager_remove(
+    mock_entity: MockCollectorEntityFunc, mock_sink
+) -> None:
+    """Ensure that collector manager solo remove works as expected"""
+    entity1 = mock_entity()
+    entity2 = mock_entity()
+
+    con_col1 = DbConnectionCollector(entity1, mock_sink())
+    mem_col1 = DBMemoryCollector(entity1, mock_sink())
+    manager = CollectorManager()
+
+    # ensure multi-add does not produce dupes
+    con_col2 = DbConnectionCollector(entity2, mock_sink())
+    mem_col2 = DBMemoryCollector(entity2, mock_sink())
+
+    manager.add_all([con_col1, mem_col1, con_col2, mem_col2])
+    assert len(manager.all_collectors) == 4
+
+    await manager.remove(entity1)
+    assert len(manager.all_collectors) == 2
+
+    await manager.remove(entity1)
+    assert len(manager.all_collectors) == 2
+
+    await manager.remove(entity2)
+    assert len(manager.all_collectors) == 0
+
+
+@pytest.mark.asyncio
+async def test_collector_manager_remove_all(
+    mock_entity: MockCollectorEntityFunc, mock_sink
+) -> None:
+    """Ensure that collector manager multi-remove works as expected"""
+    entity1 = mock_entity()
+    entity2 = mock_entity()
+
+    con_col1 = DbConnectionCollector(entity1, mock_sink())
+    mem_col1 = DBMemoryCollector(entity1, mock_sink())
+    manager = CollectorManager()
+
+    # ensure multi-add does not produce dupes
+    con_col2 = DbConnectionCollector(entity2, mock_sink())
+    mem_col2 = DBMemoryCollector(entity2, mock_sink())
+
+    manager.add_all([con_col1, mem_col1, con_col2, mem_col2])
+    assert len(manager.all_collectors) == 4
+
+    await manager.remove_all([entity1, entity2])
+    assert len(manager.all_collectors) == 0
+
+
+
+@pytest.mark.asyncio
 async def test_collector_manager_collect(
     mock_entity: MockCollectorEntityFunc,
     mock_redis,

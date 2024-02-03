@@ -455,6 +455,7 @@ class CollectorManager:
         self._stoppers: t.Dict[str, t.List[TaskStatusHandler]] = (
             collections.defaultdict(list)
         )
+        self._observers: t.Dict[str, t.List[Observer]] = collections.defaultdict(list)
 
     def clear(self) -> None:
         """Remove all collectors from the managed set"""
@@ -484,6 +485,7 @@ class CollectorManager:
         observer.start()  # type: ignore
 
         self._stoppers[collector.owner].append(stopper)
+        self._observers[collector.owner].append(observer)
 
     def add_all(self, clist: t.Iterable[Collector]) -> None:
         """Add multiple collectors to the managed set"""
@@ -499,22 +501,29 @@ class CollectorManager:
 
     async def remove_all(self, entities: t.Iterable[JobEntity]) -> None:
         """Remove all collectors for the supplied entities"""
-        if collectors := entities:
-            for collector in collectors:
-                await self.remove(collector)
+        if not entities:
+            return
+
+        await asyncio.gather(*(self.remove(entity) for entity in entities))
 
     async def remove(self, entity: JobEntity) -> None:
         """Remove all collectors for the supplied entity"""
         registered = self._collectors.pop(entity.name, [])
-        stoppers = self._stoppers.pop(entity.name, [])
+        _ = self._stoppers.pop(entity.name, [])
+        observers = self._observers.pop(entity.name, [])
+
+        if not registered:
+            return
 
         if registered:
             logger.debug(f"removing collectors registered for {entity.name}")
 
-        await asyncio.gather(col.shutdown() for col in registered)
-        for stopper in stoppers:
-            stopper.stop()  # type: ignore
-            stopper.join()  # type: ignore
+        shutdown_tasks = [asyncio.create_task(col.shutdown()) for col in registered]
+        await asyncio.wait(shutdown_tasks)
+
+        for observer in itertools.chain(observers):
+            observer.stop()  # type: ignore
+            observer.join()  # type: ignore
 
     async def prepare(self) -> None:
         """Ensure all managed collectors have prepared for collection"""
