@@ -170,7 +170,7 @@ class Collector(abc.ABC):
     @staticmethod
     def timestamp() -> int:
         """Return an integer timestamp"""
-        return int(datetime.datetime.timestamp(datetime.datetime.now()))
+        return get_ts_ms() // 1000
 
     @abc.abstractmethod
     async def shutdown(self) -> None:
