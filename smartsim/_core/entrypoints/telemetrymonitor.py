@@ -136,7 +136,6 @@ class Collector(abc.ABC):
         :type entity: JobEntity"""
         self._entity = entity
         self._sink = sink
-        self._value: t.Any = None
         self._enabled = True
 
     def disable(self) -> None:
@@ -358,17 +357,16 @@ class DBMemoryCollector(DBCollector):
             logger.warning("DBMemoryCollector cannot collect")
             return
 
-        self._value = {}
-
         try:
             if not await self._check_db():
                 return
 
             db_info = await self._client.info("memory")
+            value = {}
             for key in self._columns:
-                self._value[key] = db_info[key]
+                value[key] = db_info[key]
 
-            await self._sink.save(timestamp=self.timestamp(), **self._value)
+            await self._sink.save(timestamp=self.timestamp(), **value)
         except Exception as ex:
             logger.warning("Collect failed for DBMemoryCollector", exc_info=ex)
 
@@ -401,9 +399,9 @@ class DbConnectionCollector(DBCollector):
 
             clients = await self._client.client_list()
 
-            self._value = [{"addr": item["addr"], "id": item["id"]} for item in clients]
+            value = [{"addr": item["addr"], "id": item["id"]} for item in clients]
 
-            for client_info in self._value:
+            for client_info in value:
                 _id, _ip = client_info["id"], client_info["addr"]
                 await self._sink.save(timestamp=now_ts, client_id=_id, address=_ip)
         except Exception as ex:
@@ -438,9 +436,9 @@ class DBConnectionCountCollector(DBCollector):
 
             now_ts = self.timestamp()  # ensure all results have the same timestamp
             addresses = {item["addr"] for item in client_list}
-            self._value = str(len(addresses))
+            value = str(len(addresses))
 
-            await self._sink.save(timestamp=now_ts, num_clients=self._value)
+            await self._sink.save(timestamp=now_ts, num_clients=value)
         except Exception as ex:
             logger.warning("Collect failed for DBConnectionCountCollector", exc_info=ex)
 
