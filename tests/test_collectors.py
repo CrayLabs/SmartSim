@@ -214,7 +214,7 @@ async def test_dbconncollector_collect(
         id1, ip1 = f"XYZ{idx}", f"127.0.0.{idx}:2345"
         exp_clients = [{"id": id0, "addr": ip0}, {"id": id1, "addr": ip1}]
 
-        assert len(exp_clients) + 1 == len(stats) # output includes timestamp
+        assert len(exp_clients) + 1 == len(stats)  # output includes timestamp
         assert id0 in set(client["id"] for client in exp_clients)
         assert id1 in set(client["id"] for client in exp_clients)
         assert ip0 in set(client["addr"] for client in exp_clients)
@@ -246,7 +246,8 @@ async def test_dbconn_count_collector_collect(
         stats = sink.args
         exp_counts = [{"num_clients": 1}]
 
-        assert len(exp_counts) + 1 == len(stats) # output includes timestamp
+        assert len(exp_counts) + 1 == len(stats)  # output includes timestamp
+
 
 @pytest.mark.asyncio
 async def test_dbconncollector_integration(

@@ -191,7 +191,7 @@ def find_collectors(entity: JobEntity) -> t.List[Collector]:
         if num_out := entity.collectors.get("client_count", None):
             collectors.append(DBConnectionCountCollector(entity, FileSink(num_out)))
     else:
-        logger.debug(f"collectors disabled for db {entity.name}")
+        logger.debug(f"Collectors disabled for db {entity.name}")
 
     return collectors
 
@@ -291,7 +291,9 @@ class DBCollector(Collector):
             logger.exception(e)
         finally:
             if not self._client:
-                logger.error(f"DBCollector failed to connect to {self._address}")
+                logger.error(
+                    f"{type(self).__name__} failed to connect to {self._address}"
+                )
 
     async def prepare(self) -> None:
         """Initialization logic for a DB collector"""
@@ -315,7 +317,9 @@ class DBCollector(Collector):
                 await self._client.close()
                 self._client = None
         except Exception as ex:
-            logger.error("An error occurred during DBCollector shutdown", exc_info=ex)
+            logger.error(
+                f"An error occurred during {type(self).__name__} shutdown", exc_info=ex
+            )
 
     async def _check_db(self) -> bool:
         """Check if a database is reachable.
@@ -349,12 +353,12 @@ class DBMemoryCollector(DBCollector):
 
     async def collect(self) -> None:
         if not self.enabled:
-            logger.debug("DBMemoryCollector is not enabled")
+            logger.debug(f"{type(self).__name__} is not enabled")
             return
 
         await self.prepare()
         if not self._client:
-            logger.warning("DBMemoryCollector cannot collect")
+            logger.warning(f"{type(self).__name__} cannot collect")
             return
 
         try:
@@ -368,7 +372,7 @@ class DBMemoryCollector(DBCollector):
 
             await self._sink.save(timestamp=self.timestamp(), **value)
         except Exception as ex:
-            logger.warning("Collect failed for DBMemoryCollector", exc_info=ex)
+            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
 
 class DbConnectionCollector(DBCollector):
@@ -383,12 +387,12 @@ class DbConnectionCollector(DBCollector):
 
     async def collect(self) -> None:
         if not self.enabled:
-            logger.debug("DbConnectionCollector is not enabled")
+            logger.debug(f"{type(self).__name__} is not enabled")
             return
 
         await self.prepare()
         if not self._client:
-            logger.warning("DbConnectionCollector is not connected and cannot collect")
+            logger.warning(f"{type(self).__name__} is not connected and cannot collect")
             return
 
         now_ts = self.timestamp()  # ensure all results have the same timestamp
@@ -405,7 +409,7 @@ class DbConnectionCollector(DBCollector):
                 _id, _ip = client_info["id"], client_info["addr"]
                 await self._sink.save(timestamp=now_ts, client_id=_id, address=_ip)
         except Exception as ex:
-            logger.warning("Collect failed for DBMemoryCollector", exc_info=ex)
+            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
 
 class DBConnectionCountCollector(DBCollector):
@@ -418,14 +422,12 @@ class DBConnectionCountCollector(DBCollector):
 
     async def collect(self) -> None:
         if not self.enabled:
-            logger.debug("DBConnectionCountCollector is not enabled")
+            logger.debug(f"{type(self).__name__} is not enabled")
             return
 
         await self.prepare()
         if not self._client:
-            logger.warning(
-                "DBConnectionCountCollector is not connected and cannot collect"
-            )
+            logger.warning(f"{type(self).__name__} is not connected and cannot collect")
             return
 
         try:
@@ -440,7 +442,7 @@ class DBConnectionCountCollector(DBCollector):
 
             await self._sink.save(timestamp=now_ts, num_clients=value)
         except Exception as ex:
-            logger.warning("Collect failed for DBConnectionCountCollector", exc_info=ex)
+            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
 
 class CollectorManager:
@@ -516,7 +518,7 @@ class CollectorManager:
             return
 
         if registered:
-            logger.debug(f"removing collectors registered for {entity.name}")
+            logger.debug(f"Removing collectors registered for {entity.name}")
 
         asyncio.gather(*(col.shutdown() for col in registered))
 
@@ -546,12 +548,12 @@ class CollectorManager:
 
     async def shutdown(self) -> None:
         """Release resources"""
-        logger.debug("CollectorManager cancelling tasks...")
+        logger.debug(f"{type(self).__name__} cancelling tasks...")
         for task in self._tasks:
             if not task.done():
                 task.cancel()
 
-        logger.debug("CollectorManager shutting down collectors...")
+        logger.debug(f"{type(self).__name__} shutting down collectors...")
         if list(self.all_collectors):
             shutdown_tasks = [
                 asyncio.create_task(item.shutdown()) for item in self.all_collectors
@@ -1019,9 +1021,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     await self._to_completed(timestamp, completed_entity, step_info)
 
     async def shutdown(self) -> None:
-        logger.debug("ManifestEventHandler shutting down...")
+        logger.debug(f"{type(self).__name__} shutting down...")
         await self._collector.shutdown()
-        logger.debug("ManifestEventHandler shutdown complete...")
+        logger.debug(f"{type(self).__name__} shutdown complete...")
 
 
 def can_shutdown(action_handler: ManifestEventHandler) -> bool:
