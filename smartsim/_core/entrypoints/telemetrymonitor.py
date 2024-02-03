@@ -518,8 +518,7 @@ class CollectorManager:
         if registered:
             logger.debug(f"removing collectors registered for {entity.name}")
 
-        shutdown_tasks = [asyncio.create_task(col.shutdown()) for col in registered]
-        await asyncio.wait(shutdown_tasks)
+        asyncio.gather(*(col.shutdown() for col in registered))
 
         for observer in itertools.chain(observers):
             observer.stop()  # type: ignore
