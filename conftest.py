@@ -688,9 +688,12 @@ class MockSink:
 
     def __init__(self, delay_ms: int = 0) -> None:
         self._delay_ms = delay_ms
+        self.num_saves = 0
+        self.args: t.Any = None
 
     async def save(self, **kwargs: t.Any) -> None:
         """Save all arguments as console logged messages"""
+        self.num_saves += 1
         if self._delay_ms:
             # mimic slow collection....
             delay_s = self._delay_ms / 1000
@@ -763,7 +766,6 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
                 if mem_stats:
                     return next(mem_stats)
                 return {
-                    "timestamp": 111,
                     "total_system_memory": "111",
                     "used_memory": "222",
                     "used_memory_peak": "333",
@@ -777,7 +779,7 @@ def mock_redis() -> t.Callable[[t.Any], t.Any]:
 
                 if client_stats:
                     return next(client_stats)
-                return {"timestamp": 111, "addr": "127.0.0.1", "id": "111"}
+                return {"addr": "127.0.0.1", "id": "111"}
 
             async def ping(self):
                 return True

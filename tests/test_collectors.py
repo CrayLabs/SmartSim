@@ -29,10 +29,11 @@ import uuid
 
 import pytest
 
-from conftest import MockCollectorEntityFunc
+from conftest import MockCollectorEntityFunc, MockSink
 from smartsim._core.entrypoints.telemetrymonitor import (
     DbConnectionCollector,
-    DbMemoryCollector,
+    DBConnectionCountCollector,
+    DBMemoryCollector,
     redisa,
 )
 
@@ -47,7 +48,7 @@ async def test_dbmemcollector_prepare(
     """Ensure that collector preparation succeeds when expected"""
     entity = mock_entity()
 
-    collector = DbMemoryCollector(entity, mock_sink())
+    collector = DBMemoryCollector(entity, mock_sink())
     await collector.prepare()
     assert collector._client
 
@@ -55,9 +56,8 @@ async def test_dbmemcollector_prepare(
 @pytest.mark.asyncio
 async def test_dbmemcollector_prepare_fail(
     mock_entity: MockCollectorEntityFunc,
-    mock_sink,
+    mock_sink: MockSink,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[t.Any],
 ) -> None:
     """Ensure that collector preparation reports a failure to connect
     when the redis client cannot be created"""
@@ -67,12 +67,15 @@ async def test_dbmemcollector_prepare_fail(
         # mock up a redis constructor that returns None
         ctx.setattr(redisa, "Redis", lambda host, port: None)
 
-        capsys.readouterr()  # clear capture
-        collector = DbMemoryCollector(entity, mock_sink())
+        sink = mock_sink()
+        collector = DBMemoryCollector(entity, sink)
+        assert sink.num_saves == 0
+
         await collector.prepare()
 
+        # Attempt to save header when preparing...
         assert not collector._client
-        assert collector.value is None
+        assert sink.num_saves == 1
 
 
 @pytest.mark.asyncio
@@ -86,16 +89,16 @@ async def test_dbcollector_config(
     # Check that a bad host causes exception
     entity = mock_entity(host="")
     with pytest.raises(ValueError):
-        DbMemoryCollector(entity, mock_sink())
+        DBMemoryCollector(entity, mock_sink())
 
     entity = mock_entity(host="   ")
     with pytest.raises(ValueError):
-        DbMemoryCollector(entity, mock_sink())
+        DBMemoryCollector(entity, mock_sink())
 
     # Check that a bad port causes exception
     entity = mock_entity(port="")  # type: ignore
     with pytest.raises(ValueError):
-        DbMemoryCollector(entity, mock_sink())
+        DBMemoryCollector(entity, mock_sink())
 
 
 @pytest.mark.asyncio
@@ -113,16 +116,16 @@ async def test_dbmemcollector_prepare_fail_dep(
         # mock raising exception on connect attempts to test err handling
         raise redisa.ConnectionError("mock connection failure")
 
-    capsys.readouterr()  # clear capture
-    collector = DbMemoryCollector(entity, mock_sink())
+    sink = mock_sink()
+    collector = DBMemoryCollector(entity, sink)
     with monkeypatch.context() as ctx:
         ctx.setattr(redisa, "Redis", raiser)
 
+        assert sink.num_saves == 0
         await collector.prepare()
 
-        capture = capsys.readouterr()  # retrieve logs for operation
+        assert sink.num_saves == 1
         assert not collector._client
-        assert collector.value is None
 
 
 @pytest.mark.asyncio
@@ -137,7 +140,7 @@ async def test_dbmemcollector_collect(
     entity = mock_entity()
 
     sink = mock_sink()
-    collector = DbMemoryCollector(entity, sink)
+    collector = DBMemoryCollector(entity, sink)
     with monkeypatch.context() as ctx:
         ctx.setattr(redisa, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
 
@@ -164,14 +167,18 @@ async def test_dbmemcollector_integration(
     output data matches expectations and proper db client API uage"""
     entity = mock_entity(port=local_db.ports[0])
 
-    collector = DbMemoryCollector(entity, mock_sink())
+    sink = mock_sink()
+    collector = DBMemoryCollector(entity, sink)
 
+    assert sink.num_saves == 0
     await collector.prepare()
+    assert sink.num_saves == 1
     await collector.collect()
-    stats = collector.value
+    assert sink.num_saves == 2
 
+    stats = sink.args
     assert (
-        len(stats) == 3
+        len(stats) == 4
     )  # prove we filtered to expected data size, no timestamp in data.
     assert stats["used_memory"] > 0  # prove used_memory was retrieved
     assert stats["used_memory_peak"] > 0  # prove used_memory_peak was retrieved
@@ -189,26 +196,57 @@ async def test_dbconncollector_collect(
     """Ensure that a valid response is returned as expected"""
     entity = mock_entity()
 
-    collector = DbConnectionCollector(entity, mock_sink())
+    sink = mock_sink()
+    collector = DbConnectionCollector(entity, sink)
     with monkeypatch.context() as ctx:
         ctx.setattr(redisa, "Redis", mock_redis(client_stats=mock_con(1, 2)))
 
+        assert sink.num_saves == 0
         await collector.prepare()
+        assert sink.num_saves == 1
         await collector.collect()
+        assert sink.num_saves == 3  # save twice w/two datapoints
 
-        stats = collector.value
+        stats = sink.args
 
         idx = 1
         id0, ip0 = f"ABC{idx}", f"127.0.0.{idx}:1234"
         id1, ip1 = f"XYZ{idx}", f"127.0.0.{idx}:2345"
         exp_clients = [{"id": id0, "addr": ip0}, {"id": id1, "addr": ip1}]
 
-        assert len(exp_clients) == len(stats)
+        assert len(exp_clients) + 1 == len(stats) # output includes timestamp
         assert id0 in set(client["id"] for client in exp_clients)
         assert id1 in set(client["id"] for client in exp_clients)
         assert ip0 in set(client["addr"] for client in exp_clients)
         assert ip1 in set(client["addr"] for client in exp_clients)
 
+
+@pytest.mark.asyncio
+async def test_dbconn_count_collector_collect(
+    mock_entity: MockCollectorEntityFunc,
+    mock_sink,
+    mock_redis,
+    mock_con,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure that a valid response is returned as expected"""
+    entity = mock_entity()
+
+    sink = mock_sink()
+    collector = DBConnectionCountCollector(entity, sink)
+    with monkeypatch.context() as ctx:
+        ctx.setattr(redisa, "Redis", mock_redis(client_stats=mock_con(1, 2)))
+
+        assert sink.num_saves == 0
+        await collector.prepare()
+        assert sink.num_saves == 1
+        await collector.collect()
+        assert sink.num_saves == 2
+
+        stats = sink.args
+        exp_counts = [{"num_clients": 1}]
+
+        assert len(exp_counts) + 1 == len(stats) # output includes timestamp
 
 @pytest.mark.asyncio
 async def test_dbconncollector_integration(

@@ -39,8 +39,6 @@ pytestmark = pytest.mark.group_a
 @pytest.mark.asyncio
 async def test_sink_null_filename(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure the filesink handles a null filename as expected"""
-    entity = mock_entity(port=1234, type="orchestrator")
-
     with pytest.raises(ValueError):
         # pass null file path
         sink = FileSink(None)  # type: ignore
@@ -99,7 +97,7 @@ async def test_sink_write_no_inputs(mock_entity: MockCollectorEntityFunc) -> Non
     sink = FileSink(entity.status_dir + "/test.csv")
 
     num_saves = 5
-    for i in range(num_saves):
+    for _ in range(num_saves):
         await sink.save()
 
     path = sink.path

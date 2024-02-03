@@ -34,7 +34,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     CollectorManager,
     DbConnectionCollector,
     DBConnectionCountCollector,
-    DbMemoryCollector,
+    DBMemoryCollector,
     FileSink,
     JobEntity,
     find_collectors,
@@ -50,7 +50,7 @@ def test_collector_manager_add(mock_entity: MockCollectorEntityFunc, mock_sink) 
     entity1 = mock_entity()
 
     con_col = DbConnectionCollector(entity1, mock_sink())
-    mem_col = DbMemoryCollector(entity1, mock_sink())
+    mem_col = DBMemoryCollector(entity1, mock_sink())
 
     manager = CollectorManager()
 
@@ -96,7 +96,7 @@ def test_collector_manager_add_multi(
     entity = mock_entity()
 
     con_col = DbConnectionCollector(entity, mock_sink())
-    mem_col = DbMemoryCollector(entity, mock_sink())
+    mem_col = DBMemoryCollector(entity, mock_sink())
     manager = CollectorManager()
 
     # add multiple items at once
@@ -106,7 +106,7 @@ def test_collector_manager_add_multi(
 
     # ensure multi-add does not produce dupes
     con_col2 = DbConnectionCollector(entity, mock_sink())
-    mem_col2 = DbMemoryCollector(entity, mock_sink())
+    mem_col2 = DBMemoryCollector(entity, mock_sink())
 
     manager.add_all([con_col2, mem_col2])
     assert len(list(manager.all_collectors)) == 2
@@ -128,8 +128,8 @@ async def test_collector_manager_collect(
 
     sinks = [mock_sink(), mock_sink(), mock_sink()]
     con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
+    mem_col1 = DBMemoryCollector(entity1, sinks[1])
+    mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
     manager = CollectorManager()
     manager.add_all([con_col1, mem_col1, mem_col2])
@@ -168,8 +168,8 @@ async def test_collector_manager_collect_filesink(
         FileSink(entity2.status_dir + "/2_mem.csv"),
     ]
     con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
+    mem_col1 = DBMemoryCollector(entity1, sinks[1])
+    mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
     manager = CollectorManager()
     manager.add_all([con_col1, mem_col1, mem_col2])
@@ -205,8 +205,8 @@ async def test_collector_manager_collect_integration(
     # todo: consider a MockSink so i don't have to save the last value in the collector
     sinks = [mock_sink(), mock_sink(), mock_sink()]
     con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
+    mem_col1 = DBMemoryCollector(entity1, sinks[1])
+    mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
     manager = CollectorManager()
     manager.add_all([con_col1, mem_col1, mem_col2])
@@ -248,8 +248,8 @@ async def test_collector_manager_timeout_db(
 
     sinks = [mock_sink(), mock_sink(), mock_sink()]
     con_col1 = DbConnectionCollector(entity1, sinks[0])
-    mem_col1 = DbMemoryCollector(entity1, sinks[1])
-    mem_col2 = DbMemoryCollector(entity2, sinks[2])
+    mem_col1 = DBMemoryCollector(entity1, sinks[1])
+    mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
     manager = CollectorManager(timeout_ms=timeout_at)
     manager.add_all([con_col1, mem_col1, mem_col2])
@@ -359,7 +359,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     # 5. memory collector should be mapped
     found = find_collectors(entity)
     assert len(found) == 1
-    assert isinstance(found[0], DbMemoryCollector)
+    assert isinstance(found[0], DBMemoryCollector)
 
 
 @pytest.mark.asyncio

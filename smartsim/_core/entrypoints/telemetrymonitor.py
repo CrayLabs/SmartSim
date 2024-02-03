@@ -184,7 +184,7 @@ def find_collectors(entity: JobEntity) -> t.List[Collector]:
 
     if entity.is_db and entity.telemetry_on:
         if mem_out := entity.collectors.get("memory", None):
-            collectors.append(DbMemoryCollector(entity, FileSink(mem_out)))
+            collectors.append(DBMemoryCollector(entity, FileSink(mem_out)))
 
         if con_out := entity.collectors.get("client", None):
             collectors.append(DbConnectionCollector(entity, FileSink(con_out)))
@@ -331,7 +331,7 @@ class DBCollector(Collector):
         return False
 
 
-class DbMemoryCollector(DBCollector):
+class DBMemoryCollector(DBCollector):
     """A collector that collects memory usage information from
     an orchestrator instance"""
 
@@ -343,19 +343,19 @@ class DbMemoryCollector(DBCollector):
         """Hook called after the db connection is established"""
         await self._sink.save(
             timestamp="timestamp",
-            total_system_memory=self._columns[0],
-            used_memory=self._columns[1],
-            used_memory_peak=self._columns[2],
+            total_system_memory="used_memory",
+            used_memory="used_memory_peak",
+            used_memory_peak="total_system_memory",
         )
 
     async def collect(self) -> None:
         if not self.enabled:
-            logger.debug("DbMemoryCollector is not enabled")
+            logger.debug("DBMemoryCollector is not enabled")
             return
 
         await self.prepare()
         if not self._client:
-            logger.warning("DbMemoryCollector cannot collect")
+            logger.warning("DBMemoryCollector cannot collect")
             return
 
         self._value = {}
@@ -370,13 +370,7 @@ class DbMemoryCollector(DBCollector):
 
             await self._sink.save(timestamp=self.timestamp(), **self._value)
         except Exception as ex:
-            logger.warning("Collect failed for DbMemoryCollector", exc_info=ex)
-
-    @property
-    def value(self) -> t.Dict[str, int]:
-        filtered: t.Dict[str, int] = self._value
-        self._value = None
-        return filtered
+            logger.warning("Collect failed for DBMemoryCollector", exc_info=ex)
 
 
 class DbConnectionCollector(DBCollector):
@@ -413,13 +407,7 @@ class DbConnectionCollector(DBCollector):
                 _id, _ip = client_info["id"], client_info["addr"]
                 await self._sink.save(timestamp=now_ts, client_id=_id, address=_ip)
         except Exception as ex:
-            logger.warning("Collect failed for DbMemoryCollector", exc_info=ex)
-
-    @property
-    def value(self) -> t.List[str]:
-        filtered: t.List[str] = self._value
-        self._value = None
-        return filtered
+            logger.warning("Collect failed for DBMemoryCollector", exc_info=ex)
 
 
 class DBConnectionCountCollector(DBCollector):
@@ -455,12 +443,6 @@ class DBConnectionCountCollector(DBCollector):
             await self._sink.save(timestamp=now_ts, num_clients=self._value)
         except Exception as ex:
             logger.warning("Collect failed for DBConnectionCountCollector", exc_info=ex)
-
-    @property
-    def value(self) -> str:
-        filtered = str(self._value)
-        self._value = None
-        return filtered
 
 
 class CollectorManager:
