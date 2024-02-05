@@ -284,8 +284,6 @@ class DBCollector(Collector):
                 self._client = redisa.Redis(
                     host=self._address.host, port=self._address.port
                 )
-        except ConnectionRefusedError as cre:
-            logger.exception(cre)
         except Exception as e:
             logger.exception(e)
         finally:
