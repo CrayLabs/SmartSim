@@ -5,6 +5,9 @@
 .entityList {
   list-style-type: none;
 }
+.inline {
+  display: inline-block;
+}
 </style>
 <body>
 
@@ -17,18 +20,22 @@
     <div class='header'>=== Entity Preview ===</div>
         <div class='childContainer'> 
             {%- if manifest.models %}
-            <div class='header'>== Models ==</div> 
-            <div class='childEntity model'> 
-                {%- for model in manifest.models %}   
+                <div class='header'>== Models ==</div>
+                {%- for model in manifest.models %}
+                <div class='childEntity model'> 
+                <ul class="entityList">
+                    <li class="inline">=&nbsp;</li>
                     {% include 'preview/model_html.template' %}
-                    {% if manifest.dbs or model.run_settings.colocated_db_settings %}
-                    <div class='childEntity clientconfig'>
-                        {% include 'preview/clientconfig_html.template' %}
-                    </div>
-                    {%- endif %}
+                    <li>=</li>
+                </ul> 
+                {% if manifest.dbs or model.run_settings.colocated_db_settings %}
+                <div class='childEntity clientconfig'>
+                    {% include 'preview/clientconfig_html.template' %}
+                </div> 
+                {%- endif %}
                 {%- endfor %}
-        </div>
-    </div>
+            </div>
+        </div>  
             {%- endif %}  
     {%- endif %}
 </div>

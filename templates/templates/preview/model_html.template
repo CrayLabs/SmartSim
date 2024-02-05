@@ -1,7 +1,5 @@
-
 {%- if model is defined -%}
-<ul class="entityList" >
-        <li>= Model name: {{ model.name }}</li>  
+        <li class="inline">Model name: {{ model.name }}</li>
         <li>Executable:  
         <ul class="entityList">
             {%- for param in model.run_settings.exe %}
@@ -11,9 +9,9 @@
         </li>
         <li>Executable Arguments:
         <ul class="entityList">
-        {%- for param in model.run_settings.exe_args %}
+            {%- for param in model.run_settings.exe_args %}
             <li>{{ param }}</li>
-        {%- endfor %}
+            {%- endfor %}
         </ul>
         </li>
         {%- if model.batch_settings -%}
@@ -26,8 +24,8 @@
         <ul class="entityList">
             {%- for param, value in model.params.items() %}
             <li>{{ param }}: {{ value }}</li>
+            {%- endfor -%}
         </ul>
-        {%- endfor -%}
         </li>
         {% endif %}
         {%- if model.files %}
@@ -62,7 +60,6 @@
         </li>
         {%- endif %}
         {%- endif %}
-        
         {%- if model.run_settings.colocated_db_settings %}
         <li>Colocated: 
         <ul class="entityList">
@@ -75,7 +72,7 @@
             </ul>
             </li>
             {% endif -%}
-            
+
             {%- if model.run_settings.colocated_db_settings.unix_socket %}
             <li>Connection Type: UDS</li>
             <li>Unix socket: {{ model.run_settings.colocated_db_settings.unix_socket }}</li>
@@ -125,7 +122,4 @@
         <li>Key prefix: {{ model.name }}</li>
         {%- endif %}
         {%- endif %}
-
 {%- endif %}
-<li>=</li>
-</ul>
