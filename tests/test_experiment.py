@@ -208,7 +208,7 @@ def test_telemetry_default(
     monkeypatch: pytest.MonkeyPatch, test_dir: str, config: Config
 ) -> None:
     """Ensure the default values for telemetry configuration match expectation
-    that experiment telemetry is on, all other telemetry is off"""
+    that experiment telemetry is on"""
 
     # If env var related to telemetry doesn't exist, experiment should default to True
     monkeypatch.setattr(os, "environ", {})
