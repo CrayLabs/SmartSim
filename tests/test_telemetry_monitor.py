@@ -161,7 +161,7 @@ def test_ts():
     [
         pytest.param("1", id="1s delay"),
         pytest.param("1.0", id="1s (float) freq"),
-        pytest.param("1.0", id="1.5s (float) freq"),
+        pytest.param("1.5", id="1.5s (float) freq"),
         pytest.param("60", id="upper bound freq"),
         pytest.param("60.0", id="upper bound (float) freq"),
     ],
