@@ -146,11 +146,13 @@ async def test_dbmemcollector_collect(
 
         await collector.prepare()
         await collector.collect()
-        # stats = collector.value
 
-        reqd_items = set(
-            ("timestamp", "total_system_memory", "used_memory", "used_memory_peak")
-        )
+        reqd_items = {
+            "timestamp",
+            "total_system_memory",
+            "used_memory",
+            "used_memory_peak",
+        }
         actual_items = set(sink.args)
 
         reqd_values = set((1000, 1111, 1234))
