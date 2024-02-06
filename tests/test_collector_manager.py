@@ -269,7 +269,7 @@ async def test_collector_manager_collect_integration(
     # verify each collector retrieved some metric & sent it to the sink
     for sink in sinks:
         value = sink.args
-        assert value is not None and value
+        assert value
 
 
 @pytest.mark.parametrize(
