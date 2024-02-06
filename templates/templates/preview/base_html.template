@@ -15,7 +15,7 @@
     <div class='experiment'>
         {% include 'preview/experiment_html.template' %}
     </div>
-    {%- if manifest %}
+    {%- if manifest.all_entities %}
     {% set foobar = {'activetitle': True,'orchtitle': True} %}
     <div class='header'>=== Entity Preview ===</div>
         

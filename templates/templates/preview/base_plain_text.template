@@ -1,7 +1,8 @@
 
 {% include "preview/experiment_plain_text.template" %}
-{%- if manifest %}
+{%- if manifest.all_entities %}
 {% set foobar = {'activetitle': True,'orchtitle': True} %}
+
 === Entity Preview === 
 {%- if manifest.dbs %}
 {%- for db in manifest.dbs %}
