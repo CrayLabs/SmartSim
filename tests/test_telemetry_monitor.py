@@ -169,7 +169,6 @@ def test_ts():
 def test_valid_frequencies(freq: t.Union[int, float]):
     """Ensure validation does not raise an exception on values in valid range"""
     check_frequency(float(freq))
-    assert True
 
 
 @pytest.mark.parametrize(
