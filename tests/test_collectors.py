@@ -258,9 +258,9 @@ async def test_dbconn_count_collector_collect(
         assert sink.num_saves == 2
 
         stats = sink.args
-        exp_counts = [{"num_clients": 1}]
+        exp_counts = 2
 
-        assert len(exp_counts) + 1 == len(stats)  # output includes timestamp
+        assert exp_counts == len(stats)  # output includes timestamp
 
 
 @pytest.mark.asyncio
