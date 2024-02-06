@@ -31,7 +31,7 @@ import pytest
 
 from conftest import MockCollectorEntityFunc, MockSink
 from smartsim._core.entrypoints.telemetrymonitor import (
-    DbConnectionCollector,
+    DBConnectionCollector,
     DBConnectionCountCollector,
     DBMemoryCollector,
     redisa,
@@ -197,7 +197,7 @@ async def test_dbconncollector_collect(
     entity = mock_entity()
 
     sink = mock_sink()
-    collector = DbConnectionCollector(entity, sink)
+    collector = DBConnectionCollector(entity, sink)
     with monkeypatch.context() as ctx:
         ctx.setattr(redisa, "Redis", mock_redis(client_stats=mock_con(1, 2)))
 
@@ -258,7 +258,7 @@ async def test_dbconncollector_integration(
     entity = mock_entity(port=local_db.ports[0])
 
     sink = mock_sink()
-    collector = DbConnectionCollector(entity, sink)
+    collector = DBConnectionCollector(entity, sink)
 
     await collector.prepare()
     await collector.collect()

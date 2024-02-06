@@ -185,7 +185,7 @@ def find_collectors(entity: JobEntity) -> t.List[Collector]:
             collectors.append(DBMemoryCollector(entity, FileSink(mem_out)))
 
         if con_out := entity.collectors.get("client", None):
-            collectors.append(DbConnectionCollector(entity, FileSink(con_out)))
+            collectors.append(DBConnectionCollector(entity, FileSink(con_out)))
 
         if num_out := entity.collectors.get("client_count", None):
             collectors.append(DBConnectionCountCollector(entity, FileSink(num_out)))
@@ -372,7 +372,7 @@ class DBMemoryCollector(DBCollector):
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
 
-class DbConnectionCollector(DBCollector):
+class DBConnectionCollector(DBCollector):
     """A collector that collects client connection information from
     an orchestrator instance"""
 

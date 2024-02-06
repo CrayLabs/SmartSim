@@ -32,7 +32,7 @@ import pytest
 from conftest import MockCollectorEntityFunc
 from smartsim._core.entrypoints.telemetrymonitor import (
     CollectorManager,
-    DbConnectionCollector,
+    DBConnectionCollector,
     DBConnectionCountCollector,
     DBMemoryCollector,
     FileSink,
@@ -49,7 +49,7 @@ def test_collector_manager_add(mock_entity: MockCollectorEntityFunc, mock_sink) 
     """Ensure that collector manager add & clear work as expected"""
     entity1 = mock_entity()
 
-    con_col = DbConnectionCollector(entity1, mock_sink())
+    con_col = DBConnectionCollector(entity1, mock_sink())
     mem_col = DBMemoryCollector(entity1, mock_sink())
 
     manager = CollectorManager()
@@ -71,7 +71,7 @@ def test_collector_manager_add(mock_entity: MockCollectorEntityFunc, mock_sink) 
 
     # create a collector for another entity
     entity2 = mock_entity()
-    con_col2 = DbConnectionCollector(entity2, mock_sink())
+    con_col2 = DBConnectionCollector(entity2, mock_sink())
 
     # ensure collectors w/same type for new entities are not treated as dupes
     manager.add(con_col2)
@@ -95,7 +95,7 @@ def test_collector_manager_add_multi(
     """Ensure that collector manager multi-add works as expected"""
     entity = mock_entity()
 
-    con_col = DbConnectionCollector(entity, mock_sink())
+    con_col = DBConnectionCollector(entity, mock_sink())
     mem_col = DBMemoryCollector(entity, mock_sink())
     manager = CollectorManager()
 
@@ -105,7 +105,7 @@ def test_collector_manager_add_multi(
     assert len(list(manager.all_collectors)) == 2
 
     # ensure multi-add does not produce dupes
-    con_col2 = DbConnectionCollector(entity, mock_sink())
+    con_col2 = DBConnectionCollector(entity, mock_sink())
     mem_col2 = DBMemoryCollector(entity, mock_sink())
 
     manager.add_all([con_col2, mem_col2])
@@ -120,12 +120,12 @@ async def test_collector_manager_remove(
     entity1 = mock_entity()
     entity2 = mock_entity()
 
-    con_col1 = DbConnectionCollector(entity1, mock_sink())
+    con_col1 = DBConnectionCollector(entity1, mock_sink())
     mem_col1 = DBMemoryCollector(entity1, mock_sink())
     manager = CollectorManager()
 
     # ensure multi-add does not produce dupes
-    con_col2 = DbConnectionCollector(entity2, mock_sink())
+    con_col2 = DBConnectionCollector(entity2, mock_sink())
     mem_col2 = DBMemoryCollector(entity2, mock_sink())
 
     manager.add_all([con_col1, mem_col1, con_col2, mem_col2])
@@ -149,12 +149,12 @@ async def test_collector_manager_remove_all(
     entity1 = mock_entity()
     entity2 = mock_entity()
 
-    con_col1 = DbConnectionCollector(entity1, mock_sink())
+    con_col1 = DBConnectionCollector(entity1, mock_sink())
     mem_col1 = DBMemoryCollector(entity1, mock_sink())
     manager = CollectorManager()
 
     # ensure multi-add does not produce dupes
-    con_col2 = DbConnectionCollector(entity2, mock_sink())
+    con_col2 = DBConnectionCollector(entity2, mock_sink())
     mem_col2 = DBMemoryCollector(entity2, mock_sink())
 
     manager.add_all([con_col1, mem_col1, con_col2, mem_col2])
@@ -179,7 +179,7 @@ async def test_collector_manager_collect(
     entity2 = mock_entity(port=2345, name="entity2")
 
     sinks = [mock_sink(), mock_sink(), mock_sink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
+    con_col1 = DBConnectionCollector(entity1, sinks[0])
     mem_col1 = DBMemoryCollector(entity1, sinks[1])
     mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
@@ -219,7 +219,7 @@ async def test_collector_manager_collect_filesink(
         FileSink(entity1.status_dir + "/1_mem.csv"),
         FileSink(entity2.status_dir + "/2_mem.csv"),
     ]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
+    con_col1 = DBConnectionCollector(entity1, sinks[0])
     mem_col1 = DBMemoryCollector(entity1, sinks[1])
     mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
@@ -256,7 +256,7 @@ async def test_collector_manager_collect_integration(
 
     # todo: consider a MockSink so i don't have to save the last value in the collector
     sinks = [mock_sink(), mock_sink(), mock_sink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
+    con_col1 = DBConnectionCollector(entity1, sinks[0])
     mem_col1 = DBMemoryCollector(entity1, sinks[1])
     mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
@@ -299,7 +299,7 @@ async def test_collector_manager_timeout_db(
     entity2 = mock_entity(port=2345, name="e2")
 
     sinks = [mock_sink(), mock_sink(), mock_sink()]
-    con_col1 = DbConnectionCollector(entity1, sinks[0])
+    con_col1 = DBConnectionCollector(entity1, sinks[0])
     mem_col1 = DBMemoryCollector(entity1, sinks[1])
     mem_col2 = DBMemoryCollector(entity2, sinks[2])
 
@@ -387,7 +387,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     # 2. client count collector should be mapped
     found = find_collectors(entity)
     assert len(found) == 1
-    assert isinstance(found[0], DbConnectionCollector)
+    assert isinstance(found[0], DBConnectionCollector)
 
     # 3. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
