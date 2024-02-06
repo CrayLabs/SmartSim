@@ -85,8 +85,7 @@ async def test_sink_write_nonstring_input(mock_entity: MockCollectorEntityFunc) 
     line = lines[0].split(",")
 
     # show each value can be found
-    for value in [v1, v2]:
-        assert str(value) in line
+    assert [str(v1), str(v2)] == line
 
 
 @pytest.mark.asyncio
