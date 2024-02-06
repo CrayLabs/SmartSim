@@ -746,7 +746,6 @@ def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
 @pytest.fixture
 def mock_redis() -> t.Callable[[t.Any], t.Any]:
     def _mock_redis(
-        is_conn: bool = True,
         conn_side_effect=None,
         mem_stats=None,
         client_stats=None,
