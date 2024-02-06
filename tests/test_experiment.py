@@ -99,23 +99,23 @@ def test_status_pre_launch() -> None:
     assert exp.get_status(model)[0] == STATUS_NEVER_STARTED
 
 
-def test_bad_ensemble_init_no_rs() -> None:
+def test_bad_ensemble_init_no_rs(test_dir: str) -> None:
     """params supplied without run settings"""
-    exp = Experiment("test")
+    exp = Experiment("test", exp_path=test_dir)
     with pytest.raises(SmartSimError):
         exp.create_ensemble("name", {"param1": 1})
 
 
-def test_bad_ensemble_init_no_params() -> None:
+def test_bad_ensemble_init_no_params(test_dir: str) -> None:
     """params supplied without run settings"""
-    exp = Experiment("test")
+    exp = Experiment("test", exp_path=test_dir)
     with pytest.raises(SmartSimError):
         exp.create_ensemble("name", run_settings=RunSettings("python"))
 
 
-def test_bad_ensemble_init_no_rs_bs() -> None:
+def test_bad_ensemble_init_no_rs_bs(test_dir: str) -> None:
     """ensemble init without run settings or batch settings"""
-    exp = Experiment("test")
+    exp = Experiment("test", exp_path=test_dir)
     with pytest.raises(SmartSimError):
         exp.create_ensemble("name")
 
