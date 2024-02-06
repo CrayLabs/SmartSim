@@ -33,6 +33,7 @@ import typing as t
 import uuid
 
 import pytest
+from watchdog.observers import Observer
 
 import smartsim._core.config.config as cfg
 from conftest import FileUtils, WLMUtils
@@ -40,7 +41,11 @@ from smartsim import Experiment
 from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.entrypoints.telemetrymonitor import (
+    DBCollector,
+    DBConnectionCollector,
+    DBMemoryCollector,
     ManifestEventHandler,
+    TaskCompleteHandler,
     can_shutdown,
     check_frequency,
     event_loop,
@@ -1208,3 +1213,63 @@ async def test_wlm_completion_handling(
         # if a status wasn't terminal, no stop event should have been written
         should_have_stop_event = False if expected_out is None else True
         assert should_have_stop_event == stop_event_path.exists()
+
+
+def test_task_status_collector_mgmt(
+    test_dir: str, mock_entity: t.Callable[[], JobEntity], mock_sink
+):
+    """Ensure collectors are retained by a TaskStatusHandler"""
+    file_name = "test.json"
+    test_path = pathlib.Path(test_dir)
+    entity = mock_entity()
+
+    sink = mock_sink()
+    collector1 = DBConnectionCollector(entity, sink)
+    collector2 = DBMemoryCollector(entity, sink)
+
+    stopper = TaskCompleteHandler(collector1, [file_name])
+
+    assert len(stopper._collectors) == 1
+    stopper.add(collector2)
+    assert len(stopper._collectors) == 2
+
+
+def test_task_complete_handler(
+    test_dir: str, mock_entity: t.Callable[[], JobEntity], mock_sink
+):
+    """Ensure that the TaskCompleteHandler is triggered by the expected file create
+    or file modified event"""
+    file_name = "test.json"
+    test_path = pathlib.Path(test_dir)
+    entity = mock_entity()
+
+    sink = mock_sink()
+    collector = DBConnectionCollector(entity, sink)
+    collector._enabled = True
+
+    stopper = TaskCompleteHandler(collector, [file_name])
+
+    observer = Observer()
+    observer.schedule(stopper, test_dir)  # type: ignore
+    observer.start()  # type: ignore
+
+    # Collector starts as enabled
+    assert collector.enabled
+
+    # Create a new file and verify the event is propagated to the collector
+    test_file = test_path / file_name
+    test_file.write_text("mock-file-event")
+    time.sleep(0.25)
+    # Verify the collector was disabled when the event was raised
+    assert not collector.enabled
+
+
+    # Reset collector, then verify file update is propagated the same as create
+    collector._enabled = True
+    test_file.write_text("mock-file-event")
+    time.sleep(0.25)
+    # Verify the collector was disabled when the event was raised
+    assert not collector.enabled
+
+    observer.stop()
+    observer.join()

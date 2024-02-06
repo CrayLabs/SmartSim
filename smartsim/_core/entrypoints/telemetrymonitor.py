@@ -235,6 +235,13 @@ class TaskStatusHandler(PatternMatchingEventHandler):
 
     def _notify(self, event_src: str) -> None:
         """Notify the collector that the entity has stopped"""
+        raise NotImplementedError("_notify is not implemented")
+
+
+class TaskCompleteHandler(TaskStatusHandler):
+
+    def _notify(self, event_src: str) -> None:
+        """Notify the collector that the entity has stopped"""
         logger.debug(f"Processing stop event created @ {event_src}")
 
         working_set = [item for item in self._collectors if item.enabled]
@@ -451,7 +458,7 @@ class CollectorManager:
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(list)
         self._timeout_ms = timeout_ms
         self._tasks: t.List[asyncio.Task[None]] = []
-        self._stoppers: t.Dict[str, t.List[TaskStatusHandler]] = (
+        self._stoppers: t.Dict[str, t.List[TaskCompleteHandler]] = (
             collections.defaultdict(list)
         )
         self._observers: t.Dict[str, t.List[BaseObserver]] = collections.defaultdict(
@@ -475,7 +482,7 @@ class CollectorManager:
             stopper.add(collector)
             return
 
-        stopper = TaskStatusHandler(collector, patterns=["stop.json"])
+        stopper = TaskCompleteHandler(collector, patterns=["stop.json"])
 
         # if dir DNE, the observer may fail to start correctly.
         entity_dir = pathlib.Path(collector.entity.status_dir)
