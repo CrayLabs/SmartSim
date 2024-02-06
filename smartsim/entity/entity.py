@@ -45,23 +45,23 @@ class TelemetryProducer:
     def enable(self) -> None:
         """Enable telemetry for this producer"""
         self._is_on = True
-        self.on_enable()
+        self._on_enable()
 
     def disable(self) -> None:
         """Disable telemetry for this producer"""
         self._is_on = False
-        self.on_disable()
+        self._on_disable()
 
     def on_init(self) -> None:
         if self._is_on:
-            self.on_enable()
+            self._on_enable()
         else:
-            self.on_disable()
+            self._on_disable()
 
-    def on_enable(self) -> None:
+    def _on_enable(self) -> None:
         """Overridable hook called after telemetry is enabled."""
 
-    def on_disable(self) -> None:
+    def _on_disable(self) -> None:
         """Overridable hook called after telemetry is disabled"""
 
 

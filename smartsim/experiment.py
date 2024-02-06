@@ -58,10 +58,10 @@ class ExperimentTelemetry(TelemetryProducer):
     def __init__(self) -> None:
         super().__init__(enabled=CONFIG.telemetry_enabled)
 
-    def on_enable(self) -> None:
+    def _on_enable(self) -> None:
         environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
 
-    def on_disable(self) -> None:
+    def _on_disable(self) -> None:
         environ["SMARTSIM_FLAG_TELEMETRY"] = "0"
 
 
