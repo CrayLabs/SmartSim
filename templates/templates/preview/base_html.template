@@ -12,7 +12,7 @@
     <div class='experiment'>
         {% include 'preview/experiment_html.template' %}
     </div>
-    {%- if manifest %}
+    {%- if manifest.all_entities %}
     <div class='header'>=== Entity Preview ===</div>
     {%- endif %}
 </div>
