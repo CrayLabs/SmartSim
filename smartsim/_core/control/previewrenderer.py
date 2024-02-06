@@ -88,8 +88,6 @@ def render(
     )
     return rendered_preview
 
-    return rendered_preview
-
 
 def preview_to_file(content: str, filename: str) -> None:
     """
