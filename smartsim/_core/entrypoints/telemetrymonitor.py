@@ -44,8 +44,7 @@ import redis.asyncio as redisa
 import redis.exceptions as redisex
 from anyio import open_file, sleep
 from watchdog.events import (
-    FileCreatedEvent,
-    FileModifiedEvent,
+    FileSystemEvent,
     LoggingEventHandler,
     PatternMatchingEventHandler,
 )
@@ -215,7 +214,7 @@ class TaskStatusHandler(PatternMatchingEventHandler):
     def add(self, collector: Collector) -> None:
         self._collectors.append(collector)
 
-    def on_modified(self, event: FileModifiedEvent) -> None:
+    def on_modified(self, event: FileSystemEvent) -> None:
         """Event handler for when a file or directory is modified.
 
         :param event: Event representing file/directory modification.
@@ -224,7 +223,7 @@ class TaskStatusHandler(PatternMatchingEventHandler):
         super().on_modified(event)  # type: ignore
         self._notify(event.src_path)
 
-    def on_created(self, event: FileCreatedEvent) -> None:
+    def on_created(self, event: FileSystemEvent) -> None:
         """Event handler for when a file or directory is created.
 
         :param event: Event representing file/directory creation.
@@ -938,7 +937,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     )
             self._tracked_runs[run.timestamp] = run
 
-    def on_modified(self, event: FileModifiedEvent) -> None:
+    def on_modified(self, event: FileSystemEvent) -> None:
         """Event handler for when a file or directory is modified.
 
         :param event: Event representing file/directory modification.
@@ -948,7 +947,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
-    def on_created(self, event: FileCreatedEvent) -> None:
+    def on_created(self, event: FileSystemEvent) -> None:
         """Event handler for when a file or directory is created.
 
         :param event: Event representing file/directory creation.
