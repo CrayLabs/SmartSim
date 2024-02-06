@@ -691,14 +691,14 @@ class MockSink:
         self.num_saves = 0
         self.args: t.Any = None
 
-    async def save(self, **kwargs: t.Any) -> None:
+    async def save(self, *args: t.Any) -> None:
         """Save all arguments as console logged messages"""
         self.num_saves += 1
         if self._delay_ms:
             # mimic slow collection....
             delay_s = self._delay_ms / 1000
             await asyncio.sleep(delay_s)
-        self.args = kwargs
+        self.args = args
 
 
 @pytest.fixture

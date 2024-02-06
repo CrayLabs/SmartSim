@@ -52,7 +52,7 @@ async def test_sink_write(mock_entity: MockCollectorEntityFunc) -> None:
 
     # all values are converted to strings before saving
     v1, v2, v3 = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
-    await sink.save(key1=v1, key2=v2, key3=v3)
+    await sink.save(v1, v2, v3)
 
     # show file was written
     path = sink.path
@@ -73,7 +73,7 @@ async def test_sink_write_nonstring_input(mock_entity: MockCollectorEntityFunc) 
 
     # v1, v2 are not converted to strings
     v1, v2 = 1, uuid.uuid4()
-    await sink.save(key1=v1, key2=v2)
+    await sink.save(v1, v2)
 
     # show file was written
     path = sink.path

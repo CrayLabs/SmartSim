@@ -84,7 +84,7 @@ class Sink(abc.ABC):
     """Base class for telemetry output sinks"""
 
     @abc.abstractmethod
-    async def save(self, **kwargs: t.Any) -> None:
+    async def save(self, *args: t.Any) -> None:
         """Save the passed data to the underlying sink"""
 
 
@@ -116,12 +116,12 @@ class FileSink(Sink):
         """Returns the path to the underlying file the FileSink will write to"""
         return self._path
 
-    async def save(self, **kwargs: t.Any) -> None:
+    async def save(self, *args: t.Any) -> None:
         """Save all arguments to a file as specified by the associated JobEntity"""
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
         async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
-            values = ",".join(map(str, kwargs.values())) + "\n"
+            values = ",".join(map(str, args)) + "\n"
             await sink_fp.write(values)
 
 
@@ -342,10 +342,10 @@ class DBMemoryCollector(DBCollector):
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
         await self._sink.save(
-            timestamp="timestamp",
-            total_system_memory="used_memory",
-            used_memory="used_memory_peak",
-            used_memory_peak="total_system_memory",
+            "timestamp",
+            "used_memory",
+            "used_memory_peak",
+            "total_system_memory",
         )
 
     async def collect(self) -> None:
@@ -363,11 +363,11 @@ class DBMemoryCollector(DBCollector):
                 return
 
             db_info = await self._client.info("memory")
-            value = {}
+            value = []
             for key in self._columns:
-                value[key] = db_info[key]
+                value.append(db_info[key])
 
-            await self._sink.save(timestamp=self.timestamp(), **value)
+            await self._sink.save(self.timestamp(), *value)
         except Exception as ex:
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
@@ -378,9 +378,7 @@ class DBConnectionCollector(DBCollector):
 
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save(
-            timestamp="timestamp", client_id="client_id", address="address"
-        )
+        await self._sink.save("timestamp", "client_id", "address")
 
     async def collect(self) -> None:
         if not self.enabled:
@@ -400,11 +398,11 @@ class DBConnectionCollector(DBCollector):
 
             clients = await self._client.client_list()
 
-            value = [{"addr": item["addr"], "id": item["id"]} for item in clients]
+            value = [(now_ts, item["id"], item["addr"]) for item in clients]
 
             for client_info in value:
-                _id, _ip = client_info["id"], client_info["addr"]
-                await self._sink.save(timestamp=now_ts, client_id=_id, address=_ip)
+                ts, _id, _ip = client_info
+                await self._sink.save(ts, _id, _ip)
         except Exception as ex:
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
@@ -415,7 +413,7 @@ class DBConnectionCountCollector(DBCollector):
 
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save(timestamp="timestamp", num_clients="num_clients")
+        await self._sink.save("timestamp", "num_clients")
 
     async def collect(self) -> None:
         if not self.enabled:
@@ -437,7 +435,7 @@ class DBConnectionCountCollector(DBCollector):
             addresses = {item["addr"] for item in client_list}
             value = str(len(addresses))
 
-            await self._sink.save(timestamp=now_ts, num_clients=value)
+            await self._sink.save(now_ts, value)
         except Exception as ex:
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 

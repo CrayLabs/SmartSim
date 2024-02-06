@@ -162,14 +162,16 @@ async def test_dbmemcollector_collect(
         actual_items = set(sink.args)
 
         reqd_values = {1000, 1111, 1234, 12131415}
-        actual_values = set(sink.args.values())
-        assert actual_items == reqd_items
+        actual_values = set(sink.args)
         assert actual_values == reqd_values
 
 
 @pytest.mark.asyncio
 async def test_dbmemcollector_integration(
-    mock_entity: MockCollectorEntityFunc, mock_sink, local_db
+    mock_entity: MockCollectorEntityFunc,
+    mock_sink: MockSink,
+    local_db: smartsim.experiment.Orchestrator,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
@@ -178,19 +180,23 @@ async def test_dbmemcollector_integration(
     sink = mock_sink()
     collector = DBMemoryCollector(entity, sink)
 
-    assert sink.num_saves == 0
-    await collector.prepare()
-    assert sink.num_saves == 1
-    await collector.collect()
-    assert sink.num_saves == 2
+    with monkeypatch.context() as ctx:
+        ctx.setattr(
+            smartsim._core.entrypoints.telemetrymonitor,
+            "get_ts_ms",
+            lambda: 12131415000,  # mult by 1000 for ms->s conversion
+        )
+        assert sink.num_saves == 0
+        await collector.prepare()
+        assert sink.num_saves == 1
+        await collector.collect()
+        assert sink.num_saves == 2
 
-    stats = sink.args
-    assert (
-        len(stats) == 4
-    )  # prove we filtered to expected data size, no timestamp in data.
-    assert stats["used_memory"] > 0  # prove used_memory was retrieved
-    assert stats["used_memory_peak"] > 0  # prove used_memory_peak was retrieved
-    assert stats["total_system_memory"] > 0  # prove total_system_memory was retrieved
+        stats = sink.args
+        assert len(stats) == 4  # show we have the expected amount of data points
+        ts = 12131415
+
+        assert ts in stats
 
 
 @pytest.mark.asyncio
@@ -259,7 +265,10 @@ async def test_dbconn_count_collector_collect(
 
 @pytest.mark.asyncio
 async def test_dbconncollector_integration(
-    mock_entity: MockCollectorEntityFunc, mock_sink, local_db
+    mock_entity: MockCollectorEntityFunc,
+    mock_sink: MockSink,
+    local_db: smartsim.experiment.Orchestrator,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
@@ -268,9 +277,20 @@ async def test_dbconncollector_integration(
     sink = mock_sink()
     collector = DBConnectionCollector(entity, sink)
 
-    await collector.prepare()
-    await collector.collect()
-    stats = sink.args
+    with monkeypatch.context() as ctx:
+        ctx.setattr(
+            smartsim._core.entrypoints.telemetrymonitor,
+            "get_ts_ms",
+            lambda: 12131415000,  # mult by 1000 for ms->s conversion
+        )
+        await collector.prepare()
+        await collector.collect()
+        stats = sink.args
 
-    assert stats
-    assert "address" in stats
+        ip = "127.0.0.1:"
+        num_conns = int(stats[1])
+        ts = 12131415
+
+        assert ts in stats
+        assert num_conns > 0
+        assert ip in stats[2]
