@@ -238,7 +238,6 @@ class TaskStatusHandler(PatternMatchingEventHandler):
 
 
 class TaskCompleteHandler(TaskStatusHandler):
-
     def _notify(self, event_src: str) -> None:
         """Notify the collector that the entity has stopped"""
         logger.debug(f"Processing stop event created @ {event_src}")

@@ -1263,7 +1263,6 @@ def test_task_complete_handler(
     # Verify the collector was disabled when the event was raised
     assert not collector.enabled
 
-
     # Reset collector, then verify file update is propagated the same as create
     collector._enabled = True
     test_file.write_text("mock-file-event")
