@@ -14,7 +14,8 @@
     <div class='experiment'>
         {% include 'preview/experiment_html.template' %}
     </div>
-    {%- if manifest %}
+
+    {%- if manifest.all_entities %}
     <div class='header'>=== Entity Preview ===</div>
         <div class='childContainer'> 
             {%- if manifest.models %}
@@ -22,12 +23,15 @@
                 {%- for model in manifest.models %}
                 <div class='childEntity model'> 
                 <ul class="entityList">
+
                 <li class="inline">=&nbsp;</li>{% include 'preview/model_html.template' %}
+
                 </ul> 
                 {% if manifest.dbs or model.run_settings.colocated_db_settings %}
                 <div class='childEntity clientconfig'>
                     {% include 'preview/clientconfig_html.template' %}
                 </div> 
+
                 {% endif %}
                 {%- endfor %}
             {%- endif %} 
@@ -39,6 +43,7 @@
                 {% include 'preview/ensemble_html.template' %}
             </div> 
             {%- endfor %}
+
             {%- endif %}  
             </div> 
     {%- endif %}

@@ -65,7 +65,6 @@ def render(
     :param verbosity_level: the verbosity level
     :type verbosity_level: _VerbosityLevelString
     :param output_format: the output format.
-    If no output format is set, the preview will be output to stdout
     :type output_format: _OutputFormatString
     """
 
@@ -87,6 +86,8 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
+    return rendered_preview
+
     return rendered_preview
 
 

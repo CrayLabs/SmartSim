@@ -26,7 +26,9 @@
 import pathlib
 from os import path as osp
 
+
 import numpy as np
+
 import pytest
 
 from smartsim import Experiment
@@ -95,6 +97,40 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
 
     # Execute preview method
     exp.preview(output_format="html", output_filename=str(path))
+
+    # Evaluate output
+    assert path.exists()
+    assert path.is_file()
+
+    # Execute preview method
+    exp.preview(output_format="html", output_filename=str(path))
+
+
+def test_preview_model_output_format(test_dir, wlmutils):
+    """
+    Test that an html file is rendered for Model preview
+    """
+    # Prepare entities
+    exp_name = "test_model_preview-html"
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    model_params = {"port": 6379, "password": "unbreakable_password"}
+    rs1 = RunSettings("bash", "multi_tags_template.sh")
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+
+    hello_world_model = exp.create_model(
+        "echo-hello", run_settings=rs1, params=model_params
+    )
+    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+
+    filename = "test_model_preview_output_format.html"
+    path = pathlib.Path(test_dir) / filename
+    exp.preview(
+        hello_world_model,
+        spam_eggs_model,
+        output_format="html",
+        output_filename=str(path),
+    )
 
     # Evaluate output
     assert path.exists()

@@ -109,6 +109,10 @@ class Manifest:
 
         return _all_entity_lists
 
+    @property
+    def all_entities(self):
+        return tuple(self._deployables)
+
     @staticmethod
     def _check_names(deployables: t.List[t.Any]) -> None:
         used = []

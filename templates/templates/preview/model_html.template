@@ -1,4 +1,3 @@
-
 {%- if model is defined -%}
         <li class="inline">Model name: {{ model.name }}</li>
         <li>Executable:  
@@ -73,7 +72,7 @@
             </ul>
             </li>
             {% endif -%}
-            
+
             {%- if model.run_settings.colocated_db_settings.unix_socket %}
             <li>Connection Type: UDS</li>
             <li>Unix socket: {{ model.run_settings.colocated_db_settings.unix_socket }}</li>
