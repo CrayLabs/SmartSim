@@ -107,24 +107,3 @@ async def test_sink_write_no_inputs(mock_entity: MockCollectorEntityFunc) -> Non
 
     # show a line was written for each call to save
     assert len(content.splitlines()) == num_saves
-
-
-@pytest.mark.asyncio
-async def test_sink_write_null_entity(mock_entity: MockCollectorEntityFunc) -> None:
-    """Ensure the FileSink writes to an output file without error if no
-    values are supplied"""
-    entity = mock_entity(port=1234, name="e1")
-    sink = FileSink(entity.status_dir + "/test.csv")
-
-    num_saves = 5
-    for i in range(num_saves):
-        await sink.save()
-
-    path = sink.path
-    assert path.exists()
-
-    # show file was written
-    content = path.read_text()
-
-    # show a line was written for each call to save
-    assert len(content.splitlines()) == num_saves
