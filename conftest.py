@@ -711,15 +711,11 @@ def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
     """Generates mock db connection telemetry"""
 
     def _mock_con(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
-        i = min
-        while True:
+        for i in range(min, max):
             yield [
                 {"addr": f"127.0.0.{i}:1234", "id": f"ABC{i}"},
                 {"addr": f"127.0.0.{i}:2345", "id": f"XYZ{i}"},
             ]
-            i += 1
-            if i > max:
-                return None
 
     return _mock_con
 
@@ -729,16 +725,12 @@ def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
     """Generates mock db memory usage telemetry"""
 
     def _mock_mem(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
-        i = min
-        while True:
+        for i in range(min, max):
             yield {
                 "total_system_memory": 1000 * i,
                 "used_memory": 1111 * i,
                 "used_memory_peak": 1234 * i,
             }
-            i += 1
-            if i > max:
-                return None
 
     return _mock_mem
 
