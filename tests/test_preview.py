@@ -26,8 +26,6 @@
 import pathlib
 from os import path as osp
 
-import pathlib
-
 import pytest
 
 from smartsim import Experiment
