@@ -29,6 +29,7 @@ import uuid
 
 import pytest
 
+import smartsim._core.entrypoints.telemetrymonitor
 from conftest import MockCollectorEntityFunc, MockSink
 from smartsim._core.entrypoints.telemetrymonitor import (
     DBConnectionCollector,
@@ -143,6 +144,11 @@ async def test_dbmemcollector_collect(
     collector = DBMemoryCollector(entity, sink)
     with monkeypatch.context() as ctx:
         ctx.setattr(redisa, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
+        ctx.setattr(
+            smartsim._core.entrypoints.telemetrymonitor,
+            "get_ts_ms",
+            lambda: 12131415000,  # mult by 1000 for ms->s conversion
+        )
 
         await collector.prepare()
         await collector.collect()
@@ -155,10 +161,10 @@ async def test_dbmemcollector_collect(
         }
         actual_items = set(sink.args)
 
-        reqd_values = set((1000, 1111, 1234))
+        reqd_values = {1000, 1111, 1234, 12131415}
         actual_values = set(sink.args.values())
-        assert actual_items.issuperset(reqd_items)
-        assert actual_values.issuperset(reqd_values)
+        assert actual_items == reqd_items
+        assert actual_values == reqd_values
 
 
 @pytest.mark.asyncio
