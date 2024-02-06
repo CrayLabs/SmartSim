@@ -94,7 +94,6 @@ def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.
     Returns None for both paths if experiment context is unavailable.
 
     :returns: 2-tuple of paths to experiment logs in form (output_path, error_path)
-    if telemetry is enabled, a 2-tuple of None otherwise
     :rtype: Tuple[pathlib.Path | None, pathlib.Path | None]
     """
     default_paths = None, None
