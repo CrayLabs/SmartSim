@@ -109,7 +109,9 @@ class Manifest:
         return _all_entity_lists
 
     @property
-    def all_entities(self):
+    def all_entities(
+        self,
+    ) -> t.List(t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]):
         return tuple(self._deployables)
 
     @staticmethod
