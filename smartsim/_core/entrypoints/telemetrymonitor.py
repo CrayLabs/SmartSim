@@ -363,11 +363,14 @@ class DBMemoryCollector(DBCollector):
                 return
 
             db_info = await self._client.info("memory")
-            value = []
-            for key in self._columns:
-                value.append(db_info[key])
+            value = (
+                self.timestamp(),
+                float(db_info["used_memory"]),
+                float(db_info["used_memory_peak"]),
+                float(db_info["total_system_memory"]),
+            )
 
-            await self._sink.save(self.timestamp(), *value)
+            await self._sink.save(*value)
         except Exception as ex:
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
@@ -401,8 +404,7 @@ class DBConnectionCollector(DBCollector):
             value = [(now_ts, item["id"], item["addr"]) for item in clients]
 
             for client_info in value:
-                ts, _id, _ip = client_info
-                await self._sink.save(ts, _id, _ip)
+                await self._sink.save(*client_info)
         except Exception as ex:
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
@@ -1210,18 +1212,18 @@ if __name__ == "__main__":
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     parser = get_parser()
-    args = parser.parse_args()
+    run_args = parser.parse_args()
 
     log_level = (
-        args.loglevel
-        if args.loglevel
+        run_args.loglevel
+        if run_args.loglevel
         in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
         else logging.DEBUG
     )
     logger.setLevel(log_level)
     logger.propagate = False
 
-    telem_dir = pathlib.Path(args.exp_dir) / CONFIG.telemetry_subdir
+    telem_dir = pathlib.Path(run_args.exp_dir) / CONFIG.telemetry_subdir
     log_path = telem_dir / _LOG_FILE_NAME
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1230,14 +1232,14 @@ if __name__ == "__main__":
 
     # Must register cleanup before the main loop is running
     register_signal_handlers()
-    check_frequency(float(args.frequency))
+    check_frequency(float(run_args.frequency))
 
     try:
         asyncio.run(
             main(
-                int(args.frequency),
-                pathlib.Path(args.exp_dir),
-                cooldown_duration=args.cooldown,
+                int(run_args.frequency),
+                pathlib.Path(run_args.exp_dir),
+                cooldown_duration=run_args.cooldown,
             )
         )
         sys.exit(0)
