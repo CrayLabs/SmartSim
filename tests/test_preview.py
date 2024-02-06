@@ -26,6 +26,8 @@
 import pathlib
 from os import path as osp
 
+import pathlib
+
 import pytest
 
 from smartsim import Experiment
@@ -98,6 +100,9 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
     # Evaluate output
     assert path.exists()
     assert path.is_file()
+
+    # Execute preview method
+    exp.preview(output_format="html", output_filename=str(path))
 
 
 def test_preview_model_output_format(test_dir, wlmutils):

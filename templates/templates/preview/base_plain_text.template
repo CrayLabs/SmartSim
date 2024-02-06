@@ -1,6 +1,6 @@
 
 {% include "preview/experiment_plain_text.template" %}
-{%- if manifest %}
+{%- manifest.all_entities %}
 
 === Entity Preview === 
 
