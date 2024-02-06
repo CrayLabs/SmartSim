@@ -335,26 +335,27 @@ async def test_collector_manager_timeout_db(
 
 
 @pytest.mark.parametrize(
-    "e_type,num_exp,telemetry_on",
+    "e_type,telemetry_on",
     [
-        pytest.param("model", 0, False, id="models"),
-        pytest.param("model", 0, True, id="models, telemetry enabled"),
-        pytest.param("ensemble", 0, False, id="ensemble"),
-        pytest.param("ensemble", 0, True, id="ensemble, telemetry enabled"),
-        pytest.param("orchestrator", 0, False, id="orchestrator"),
-        pytest.param("orchestrator", 0, True, id="orchestrator, telemetry enabled"),
-        pytest.param("dbnode", 0, False, id="dbnode"),
-        pytest.param("dbnode", 0, True, id="dbnode, telemetry enabled"),
+        pytest.param("model", False, id="models"),
+        pytest.param("model", True, id="models, telemetry enabled"),
+        pytest.param("ensemble", False, id="ensemble"),
+        pytest.param("ensemble", True, id="ensemble, telemetry enabled"),
+        pytest.param("orchestrator", False, id="orchestrator"),
+        pytest.param("orchestrator", True, id="orchestrator, telemetry enabled"),
+        pytest.param("dbnode", False, id="dbnode"),
+        pytest.param("dbnode", True, id="dbnode, telemetry enabled"),
     ],
 )
 @pytest.mark.asyncio
 async def test_collector_manager_find_nondb(
     mock_entity: MockCollectorEntityFunc,
     e_type: str,
-    num_exp: int,
     telemetry_on: bool,
 ) -> None:
-    """Ensure that the number of collectors returned for entity types match expectations"""
+    """Ensure that the number of collectors returned for entity types match expectations
+    NOTE: even orchestrator returns 0 mapped collectors because no collector output
+    paths are set on the entity"""
     entity = mock_entity(port=1234, name="e1", type=e_type, telemetry_on=telemetry_on)
     manager = CollectorManager(timeout_ms=10000)
 
@@ -362,7 +363,7 @@ async def test_collector_manager_find_nondb(
     collectors = find_collectors(entity)
 
     # Verify collector counts, assuming no per-collector config
-    assert num_exp == len(collectors)
+    assert 0 == len(collectors)
 
 
 @pytest.mark.asyncio
