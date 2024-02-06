@@ -533,17 +533,16 @@ class CollectorManager:
     async def collect(self) -> None:
         """Execute collection for all managed collectors"""
         if collectors := self.all_collectors:
-            if self._tasks:  # tasks still in progress
-                return
+            if self._tasks:
+                tasks = self._tasks  # tasks still in progress
+            else:
+                tasks = [asyncio.create_task(item.collect()) for item in collectors]
 
-            self._tasks = [asyncio.create_task(item.collect()) for item in collectors]
-            results = await asyncio.wait(self._tasks, timeout=self._timeout_ms / 1000.0)
+            _, pending = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
+            if pending:
+                logger.debug(f"Execution of {len(pending)} collectors timed out.")
 
-            work = set(results[1])
-            if work:
-                logger.debug(f"Execution of {len(work)} collectors timed out.")
-
-            self._tasks.clear()
+            self._tasks = list(pending)
 
     async def shutdown(self) -> None:
         """Release resources"""
