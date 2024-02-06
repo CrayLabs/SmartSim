@@ -32,7 +32,7 @@ import pytest
 from conftest import MockCollectorEntityFunc
 from smartsim._core.entrypoints.telemetrymonitor import FileSink
 
-# The tests in this file belong to the slow_tests group
+# The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
 

@@ -37,7 +37,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     redisa,
 )
 
-# The tests in this file belong to the slow_tests group
+# The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
 
