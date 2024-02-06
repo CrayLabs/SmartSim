@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+import pathlib
 import typing as t
 
 import pytest
@@ -197,8 +198,6 @@ def test_enable_disable_telemetry(
     assert not exp.telemetry.is_enabled
 
     exp.start()
-    import pathlib
-
     mani_path = (
         pathlib.Path(test_dir) / config.telemetry_subdir / serialize.MANIFEST_FILENAME
     )
