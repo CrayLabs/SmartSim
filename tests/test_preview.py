@@ -28,6 +28,7 @@ import sys
 from os import path as osp
 
 import numpy as np
+
 import pytest
 
 from smartsim import Experiment
