@@ -710,7 +710,7 @@ def mock_sink() -> t.Type[MockSink]:
 def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
     """Generates mock db connection telemetry"""
 
-    def _mock_con(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
+    def _mock_con(min: int = 1, max: int = 254) -> t.Iterable[t.Any]:
         for i in range(min, max):
             yield [
                 {"addr": f"127.0.0.{i}:1234", "id": f"ABC{i}"},
