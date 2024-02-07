@@ -27,7 +27,6 @@
 
 import pytest
 
-from smartsim import Experiment
 from smartsim._core.control import Controller, Manifest
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
@@ -35,7 +34,6 @@ from smartsim.entity.ensemble import Ensemble
 from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
-from smartsim.settings.slurmSettings import SrunSettings
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -121,10 +119,10 @@ def test_bad_orc_checkpoint():
 @pytest.mark.parametrize(
     "collection,duplicate_name,completed",
     [
-        pytest.param(ens, "ensemble_name", True, id="Ensemble"),
-        pytest.param(ens, "ensemble_name", False, id="Ensemble"),
-        pytest.param(model, "model_name", True, id="Model"),
-        pytest.param(model, "model_name", False, id="Model"),
+        pytest.param(ens, "ensemble_name", True, id="Ensemble_completed"),
+        pytest.param(ens, "ensemble_name", False, id="Ensemble_running"),
+        pytest.param(model, "model_name", True, id="Model_completed"),
+        pytest.param(model, "model_name", False, id="Model_running"),
     ],
 )
 def test_duplicate_model_ensemble_name(wlmutils, collection, duplicate_name, completed):
@@ -141,8 +139,8 @@ def test_duplicate_model_ensemble_name(wlmutils, collection, duplicate_name, com
 @pytest.mark.parametrize(
     "collection,duplicate_name,completed",
     [
-        pytest.param(orc, "orchestrator", True, id="Ensemble"),
-        pytest.param(orc, "orchestrator", False, id="Ensemble"),
+        pytest.param(orc, "orchestrator", True, id="Database_completed"),
+        pytest.param(orc, "orchestrator", False, id="Database_running"),
     ],
 )
 def test_duplicate_orchestrator_name(wlmutils, collection, duplicate_name, completed):
