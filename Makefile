@@ -66,6 +66,10 @@ clobber: clean
 # help:
 # help: Style
 # help: -------
+# help: check-all                      - Performs all the style-related checks
+.PHONY: check-all
+check-all: check-style check-format check-sort-imports check-lint check-mypy
+	$(info All style checks PASSED)
 
 # help: style                          - Sort imports and format with black
 .PHONY: style

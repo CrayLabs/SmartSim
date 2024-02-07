@@ -138,6 +138,7 @@ def create_tf_cnn():
 
 def save_torch_cnn(path, file_name):
     n = PyTorchNet()
+    n.eval()
     example_forward_input = torch.rand(1, 1, 28, 28)
     module = torch.jit.trace(n, example_forward_input)
     torch.jit.save(module, path + "/" + file_name)
