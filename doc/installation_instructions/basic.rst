@@ -62,7 +62,7 @@ Supported Versions
      - CPU
      - GPU
      - Python Versions
-   * - Mac OSX
+   * - MacOS
      - x86_64, aarch64
      - Not supported
      - 3.8 - 3.11
@@ -110,7 +110,7 @@ default due to issues with glibc on a variety of Linux platforms).
 
 ------------------------------------------------------------
 
-Mac OSX-only
+MacOS-only
 ============
 
 We recommend users and contributors install brew_ for managing installed
@@ -246,7 +246,7 @@ SmartSim does.
 
    * - Platform
      - Python Versions
-   * - Mac OSX
+   * - MacOS
      - 3.8 - 3.11
    * - Linux
      - 3.8 - 3.11
@@ -284,13 +284,13 @@ First, clone SmartSim.
 
       git clone https://github.com/CrayLabs/SmartSim smartsim
 
-  .. tab:: Mac OSX (Intel x64)
+  .. tab:: MacOS (Intel x64)
 
     .. code-block:: bash
 
       git clone https://github.com/CrayLabs/SmartSim smartsim
 
-  .. tab:: Mac OSX (Apple Silicon)
+  .. tab:: MacOS (Apple Silicon)
 
     .. code-block:: bash
 
@@ -319,14 +319,14 @@ Use the now installed ``smart`` cli to install the machine learning runtimes.
       smart build --device gpu --onnx  # install with both cpu and gpu support
 
 
-  .. tab:: Mac OSX (Intel x64)
+  .. tab:: MacOS (Intel x64)
 
     .. code-block:: bash
 
       smart build --device cpu --onnx  # install all backends (PT, TF, ONNX) on gpu
 
 
-  .. tab:: Mac OSX (Apple Silicon)
+  .. tab:: MacOS (Apple Silicon)
 
     .. code-block:: bash
 
