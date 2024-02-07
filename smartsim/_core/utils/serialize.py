@@ -245,7 +245,6 @@ def _dictify_db(
                     if db.telemetry.is_enabled
                     else ""
                 ),
-                "collectors": "1" if db.telemetry.is_enabled else "0",
                 "telemetry_metadata": {
                     "status_dir": str(status_dir),
                     "step_id": step_id,

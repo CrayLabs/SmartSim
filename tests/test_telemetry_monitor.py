@@ -295,6 +295,12 @@ def test_load_manifest_db_and_models(fileutils: FileUtils):
     assert len(manifest.runs[0].orchestrators) == 1
     assert len(manifest.runs[1].models) == 1
 
+    # verify collector paths from manifest are deserialized to collector config
+    assert manifest.runs[0].orchestrators[0].collectors["client"]
+    assert manifest.runs[0].orchestrators[0].collectors["memory"]
+    # verify collector paths missing from manifest are empty
+    assert not manifest.runs[0].orchestrators[0].collectors["client_count"]
+
 
 def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
     """Ensure that the runtime manifest loads correctly when containing models &

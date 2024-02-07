@@ -627,14 +627,19 @@ def _hydrate_persistable(
 
     if entity.is_db:
         # db shards are hydrated individually
-        entity.telemetry_on = int(persistable_entity.get("collectors", "0")) > 0
-        col_cfg = entity.collectors
+        entity.collectors = {
+            "client": persistable_entity.get("client_file", ""),
+            "client_count": persistable_entity.get("client_count_file", ""),
+            "memory": persistable_entity.get("memory_file", ""),
+        }
 
-        if entity.telemetry_on:
-            col_cfg["client"] = persistable_entity.get("client_file", "")
-            col_cfg["client_count"] = persistable_entity.get("client_count_file", "")
-            col_cfg["memory"] = persistable_entity.get("memory_file", "")
-
+        entity.telemetry_on = any(
+            (
+                entity.collectors["client"],
+                entity.collectors["client_count"],
+                entity.collectors["memory"],
+            )
+        )
         entity.config["host"] = persistable_entity.get("hostname", "")
         entity.config["port"] = persistable_entity.get("port", "")
 
