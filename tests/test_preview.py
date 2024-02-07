@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pathlib
+import sys
 from os import path as osp
 
 import numpy as np
@@ -100,9 +101,6 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
     assert path.exists()
     assert path.is_file()
 
-    # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
-
 
 def test_preview_model_output_format(test_dir, wlmutils):
     """
@@ -123,6 +121,8 @@ def test_preview_model_output_format(test_dir, wlmutils):
 
     filename = "test_model_preview_output_format.html"
     path = pathlib.Path(test_dir) / filename
+
+    # Execute preview method
     exp.preview(
         hello_world_model,
         spam_eggs_model,
@@ -153,7 +153,11 @@ def test_model_preview(test_dir, wlmutils):
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
+
+    # Execute preview method
     rendered_preview = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
     assert "Model name" in rendered_preview
     assert "Executable" in rendered_preview
     assert "Executable Arguments" in rendered_preview
@@ -173,13 +177,11 @@ def test_model_preview_properties(test_dir, wlmutils):
     model_params = {"port": 6379, "password": "unbreakable_password"}
     rs1 = RunSettings("bash", "multi_tags_template.sh")
 
-    # rs1 = exp.create_run_settings("echo", ["hello", "world"])
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
 
     hello_world_model = exp.create_model(
         "echo-hello", run_settings=rs1, params=model_params
     )
-    # hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
 
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
@@ -268,17 +270,19 @@ def test_model_key_prefixing(test_dir, wlmutils):
     model.enable_key_prefixing()
     exp.generate(model, overwrite=True)
 
-    # Run preview render
     preview_manifest = Manifest(db, model)
+
+    # Execute preview method
     output = previewrenderer.render(exp, preview_manifest)
 
+    # Evaluate output
     assert "Key prefix" in output
     assert "model_test" in output
 
 
 def test_ensembles_preview(test_dir, wlmutils):
     """
-    Test ensemble preview fields
+    Test ensemble preview fields are correct in template render
     """
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(
@@ -430,6 +434,223 @@ def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
             assert "generator_files/to_copy_dir" in copy
         for link in model.files.link:
             assert "generator_files/to_symlink_dir" in link
+
+
+def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
+    """Test preview of DBModel on colocated ensembles, first adding the DBModel to the
+    ensemble, then colocating DB.
+    """
+
+    exp_name = "test-colocated-db-model-ensemble-reordered"
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = 1
+
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks(1)
+
+    # Create the ensemble of two identical SmartSim Model
+    colo_ensemble = exp.create_ensemble(
+        "colocated_ens", run_settings=colo_settings, replicas=2
+    )
+
+    # Create colocated SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+
+    # Create and save ML model to filesystem
+    content = "empty test"
+    path = pathlib.Path(test_dir) / "model1.pt"
+    with open(path, "w", encoding="utf-8") as prev_file:
+        prev_file.write(content)
+
+    model_path = test_dir + "/model1.pt"
+
+    # Test adding a model from ensemble
+    colo_ensemble.add_ml_model(
+        "cnn",
+        "TF",
+        model_path=model_path,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs="args_0",
+        outputs="Identity",
+    )
+
+    # Colocate a database with the first ensemble members
+    for i, entity in enumerate(colo_ensemble):
+        entity.colocate_db_tcp(
+            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
+        )
+        # Add ML models to each ensemble member to make sure they
+        # do not conflict with other ML models
+        entity.add_ml_model(
+            "cnn2",
+            "TF",
+            model_path=model_path,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+            inputs="args_0",
+            outputs="Identity",
+        )
+        entity.disable_key_prefixing()
+
+    # Add another ensemble member
+    colo_ensemble.add_model(colo_model)
+
+    # Colocate a database with the new ensemble member
+    colo_model.colocate_db_tcp(
+        port=test_port + len(colo_ensemble) - 1,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+    )
+    # Add a ML model to the new ensemble member
+    colo_model.add_ml_model(
+        "cnn2",
+        "TF",
+        model_path=model_path,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs="args_0",
+        outputs="Identity",
+    )
+
+    exp.generate(colo_ensemble)
+
+    preview_manifest = Manifest(colo_ensemble)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Models" in output
+    assert "Model name" in output
+    assert "Backend" in output
+    assert "Model path" in output
+    assert "Device" in output
+    assert "Devices per node" in output
+    assert "First device" in output
+    assert "Inputs" in output
+    assert "Outputs" in output
+
+    assert "cnn" in output
+    assert "Model path" in output
+    assert "/model1.pt" in output
+    assert "CPU" in output
+    assert "args_0" in output
+    assert "Identity" in output
+
+
+def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
+    """
+    Test preview of DB Scripts on colocated DB from ensemble
+    """
+
+    exp_name = "test-colocated-db-script"
+
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks(1)
+
+    # Create SmartSim Ensemble with two identical models
+    colo_ensemble = exp.create_ensemble(
+        "colocated_ensemble", run_settings=colo_settings, replicas=2
+    )
+
+    # Create a SmartSim model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+
+    # Colocate a db with each ensemble entity and add a script
+    # to each entity via file
+    for i, entity in enumerate(colo_ensemble):
+        entity.disable_key_prefixing()
+        entity.colocate_db_tcp(
+            port=test_port + i,
+            db_cpus=1,
+            debug=True,
+            ifname=test_interface,
+        )
+
+        entity.add_script(
+            "test_script1",
+            script_path=torch_script,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+        )
+
+    # Colocate a db with the non-ensemble Model
+    colo_model.colocate_db_tcp(
+        port=test_port + len(colo_ensemble),
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+    )
+
+    # Add a script to the non-ensemble model
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+    colo_ensemble.add_script(
+        "test_script2",
+        script=torch_script_str,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
+
+    # Add the third SmartSim model to the ensemble
+    colo_ensemble.add_model(colo_model)
+
+    # Add another script via file to the entire ensemble
+    colo_model.add_script(
+        "test_script1",
+        script_path=torch_script,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
+
+    # Assert we have added one model to the ensemble
+    assert len(colo_ensemble._db_scripts) == 1
+    # Assert we have added both models to each entity
+    assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
+
+    exp.generate(colo_ensemble)
+
+    preview_manifest = Manifest(colo_ensemble)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Scripts" in output
+    assert "Script name" in output
+    assert "Script path" in output
+    assert "Devices per node" in output
+
+    assert "test_script2" in output
+    assert "/torchscript.py" in output
+    assert "CPU " in output
 
 
 def test_preview_models_and_ensembles_html_format(test_dir, wlmutils):
