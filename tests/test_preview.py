@@ -185,6 +185,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     )
 
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+    
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
     # Execute preview method
@@ -279,8 +280,13 @@ def test_model_key_prefixing(test_dir, wlmutils):
     # Evaluate output
     assert "Key prefix" in output
     assert "model_test" in output
-
-
+    assert "Outgoing key collision prevention (key prefixing)" in output
+    assert "Tensors: On" in output
+    assert "DataSets: On" in output
+    assert "Models/Scripts: Off" in output
+    assert "Aggregation Lists: On" in output
+    
+    
 def test_ensembles_preview(test_dir, wlmutils):
     """
     Test ensemble preview fields are correct in template render
@@ -378,11 +384,6 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
     assert "Database identifier" in output
     assert "Database backend" in output
     assert "Type" in output
-    assert "Outgoing key collision prevention (key prefixing)" in output
-    assert "Tensors: On" in output
-    assert "DataSets: On" in output
-    assert "Models/Scripts: Off" in output
-    assert "Aggregation Lists: On" in output
 
 
 def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
