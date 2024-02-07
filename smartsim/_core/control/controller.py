@@ -518,7 +518,7 @@ class Controller:
             # in the current running orch - fail
             if entity.name in self._jobs.completed or self._jobs.jobs or self._jobs.db_jobs:
                 raise SSUnsupportedError(
-                    "Naur"
+                    f"this entity {entity.name}"
                 )
             job_id = self._launcher.run(job_step)
         except LauncherError as e:

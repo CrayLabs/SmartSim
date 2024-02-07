@@ -27,12 +27,15 @@
 
 import pytest
 
+from smartsim import Experiment
+from smartsim.settings.slurmSettings import SrunSettings
 from smartsim._core.control import Controller, Manifest
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
+from smartsim.entity.ensemble import Ensemble
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -108,3 +111,31 @@ def test_bad_orc_checkpoint():
     cont = Controller(launcher="local")
     with pytest.raises(FileNotFoundError):
         cont.reload_saved_db(checkpoint)
+
+controller = Controller()
+rs = SrunSettings("echo", ["spam", "eggs"])
+model = Model("duplicate", run_settings=rs, params={}, path="")
+ens = Ensemble("duplicate", params={}, run_settings=rs, replicas=2)
+orc = Orchestrator("duplicate", db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+
+@pytest.mark.parametrize(
+    "collection",
+    [
+        pytest.param(ens, id="Ensemble"),
+        pytest.param(orc, id="Database"),
+        pytest.param(model, id="Model"),
+    ],
+)
+def test_duplicate_entity(wlmutils, collection):
+    test_launcher = wlmutils.get_test_launcher()
+    controller = Controller(test_launcher)
+    controller._jobs.add_job("duplicate", job_id="1234", entity=collection)
+    print(f"after: {controller._jobs.jobs}")
+    controller._jobs.move_to_completed(controller._jobs.jobs.get("duplicate"))
+    print(f"this is printed: {controller._jobs.completed}")
+    #controller._launch_step("model_1", entity=model)
+
+# so I need to test local and WLM launchers
+# I need to test model, ensemble and orch
+# I need to test running model, ensemble and orch
+# I need to test completed model, emsemble and orch
