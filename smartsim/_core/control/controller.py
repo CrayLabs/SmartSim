@@ -512,13 +512,13 @@ class Controller:
         :raises SmartSimError: if launch fails
         """
         try:
-            # print(f"entity name: {entity.name}")
-            # print(f"list of completed jobs: {self._jobs.completed}")
-            # if the entity name is in the pat completed jobs, in the current running entities or
-            # in the current running orch - fail
-            if entity.name in self._jobs.completed or self._jobs.jobs or self._jobs.db_jobs:
+            if (
+                entity.name in self._jobs.completed
+                or self._jobs.jobs
+                or self._jobs.db_jobs
+            ):
                 raise SSUnsupportedError(
-                    f"this entity {entity.name}"
+                    "SmartSim entities cannot have duplicate names."
                 )
             job_id = self._launcher.run(job_step)
         except LauncherError as e:

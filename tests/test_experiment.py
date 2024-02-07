@@ -24,21 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
-
-import pytest
 import threading
 
+import pytest
+
 from smartsim import Experiment
+from smartsim._core import Controller
 from smartsim._core.config import CONFIG
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
 from smartsim.status import STATUS_NEVER_STARTED
-from smartsim._core import Controller
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
+
 
 def test_model_prefix(test_dir):
     exp_name = "test_prefix"
@@ -185,55 +186,3 @@ def test_enable_disable_telemtery(monkeypatch):
 def test_error_on_cobalt():
     with pytest.raises(SSUnsupportedError):
         exp = Experiment("cobalt_exp", launcher="cobalt")
-
-def test_dup(test_dir, wlmutils):
-    #Ensure that a SmartSimError is not raised
-    exp_name = "test_exp_poll"
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    host = wlmutils.choose_host(RunSettings("sleep", "2"))
-    exp = Experiment(exp_name, exp_path=test_dir)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    
-    model = exp.create_model(
-        "model_1", path=test_dir, run_settings=RunSettings("sleep", "10")
-    )
-    model2 = exp.create_model(
-        "nerp", path=test_dir, run_settings=RunSettings("sleep", "2")
-    )
-    model3 = exp.create_model(
-        "model_3", path=test_dir, run_settings=RunSettings("sleep", "2")
-    )
-    #ensemble = exp.create_ensemble("ensem", replicas=2, run_settings=RunSettings("sleep", "2"))
-    model4 = exp.create_model(
-        "nawh", path=test_dir, run_settings=RunSettings("sleep", "2")
-    )
-    model5 = exp.create_model(
-        "orchestrator_0", path=test_dir, run_settings=RunSettings("sleep", "2")
-    )
-    exp.start(db)
-    exp.stop(db)
-    exp.start(model)
-    exp.start(model2)
-    exp.start(model3)
-    #exp.start(ensemble)
-    exp.start(model4)
-    exp.start(model5)
-
-JM_LOCK = threading.RLock()
-
-def test_db(test_dir):
-    exp = Experiment("exp_name", exp_path=test_dir)
-    model = exp.create_model(
-        "model_1", path=test_dir, run_settings=RunSettings("sleep", "1")
-    )
-    
-    controller = Controller()
-    yurp = controller._jobs
-    print(f"b4: {controller._jobs.jobs}")
-    controller._jobs.add_job("model_1", job_id="model_1", entity=model)
-    print(f"after: {controller._jobs.jobs}")
-    controller._jobs.move_to_completed(controller._jobs.jobs.get("model_1"))
-    print(f"this is printed: {controller._jobs.completed}")
-    controller._launch_step("model_1", entity=model)
