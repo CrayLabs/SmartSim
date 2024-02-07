@@ -99,9 +99,6 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
     assert path.exists()
     assert path.is_file()
 
-    # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
-
 
 def test_preview_model_output_format(test_dir, wlmutils):
     """
@@ -122,6 +119,8 @@ def test_preview_model_output_format(test_dir, wlmutils):
 
     filename = "test_model_preview_output_format.html"
     path = pathlib.Path(test_dir) / filename
+
+    # Execute preview method
     exp.preview(
         hello_world_model,
         spam_eggs_model,
@@ -152,7 +151,10 @@ def test_model_preview(test_dir, wlmutils):
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
+    # Execute preview method
     rendered_preview = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
     assert "Model name" in rendered_preview
     assert "Executable" in rendered_preview
     assert "Executable Arguments" in rendered_preview
@@ -172,14 +174,11 @@ def test_model_preview_properties(test_dir, wlmutils):
     model_params = {"port": 6379, "password": "unbreakable_password"}
     rs1 = RunSettings("bash", "multi_tags_template.sh")
 
-    # rs1 = exp.create_run_settings("echo", ["hello", "world"])
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
 
     hello_world_model = exp.create_model(
         "echo-hello", run_settings=rs1, params=model_params
     )
-    # hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
-
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
@@ -264,13 +263,14 @@ def test_model_key_prefixing(test_dir, wlmutils):
     model.enable_key_prefixing()
     exp.generate(model, overwrite=True)
 
-    # Run preview render
     preview_manifest = Manifest(db, model)
+
+    # Execute preview method
     output = previewrenderer.render(exp, preview_manifest)
 
+    # Evaluate output
     assert "Key prefix" in output
     assert "model_test" in output
-
     assert "Outgoing key collision prevention (key prefixing)" in output
     assert "Tensors: On" in output
     assert "DataSets: On" in output

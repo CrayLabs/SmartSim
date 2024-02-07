@@ -1,24 +1,28 @@
-
-        Client Configuration
+   
+        Client Configuration:
             {%- if manifest.dbs %}
+            {%- if manifest.dbs[0].name %}
             Database identifier: {{ manifest.dbs[0].name }}
             {%- endif %}
+            {%- endif %}
             {%- if model.run_settings.colocated_db_settings %}
-            Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier}}
-            {% endif %}
+            {%- if model.run_settings.colocated_db_settings.db_identifier %}
+            Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+            {%- endif %}
+            {%- endif %}
             Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
             {%- if model.run_settings.colocated_db_settings %}
                 {%- if model.run_settings.colocated_db_settings.port %}
             TCP/IP Port:
                 {{ model.run_settings.colocated_db_settings.port }}
-                {% endif -%}
+                {%- endif -%}
                 {%- if model.run_settings.colocated_db_settings.unix_socket %}
             Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
                 {%- endif -%}
-            {% endif %}
+            {%- endif %}
             {%- if model.run_settings.colocated_db_settings %}
             Type: Colocated
-            {% endif %}
+            {%- endif %}
             {%- if manifest.dbs %}
             {%- if manifest.dbs[0].num_shards > 2 %}
             Type: Clustered
@@ -44,4 +48,4 @@
                 DataSets: Off
                 Models/Scripts: Off
                 Aggregation Lists: Off
-            {%- endif %}
+            {%- endif -%}
