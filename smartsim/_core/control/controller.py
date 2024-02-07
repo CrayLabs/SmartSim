@@ -511,15 +511,15 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-        try:
-            if (
-                entity.name in self._jobs.completed
-                or self._jobs.jobs
-                or self._jobs.db_jobs
+        if (
+            entity.name in self._jobs.completed
+            or entity.name in self._jobs.jobs
+            or entity.name in self._jobs.db_jobs
             ):
-                raise SSUnsupportedError(
-                    "SmartSim entities cannot have duplicate names."
-                )
+            raise SSUnsupportedError(
+                "SmartSim entities cannot have duplicate names."
+            )
+        try:
             job_id = self._launcher.run(job_step)
         except LauncherError as e:
             msg = f"An error occurred when launching {entity.name} \n"
