@@ -282,6 +282,8 @@ class DatabaseBuilder(Builder):
         clone_cmd = [
             self.binary_path("git"),
             "clone",
+            "--config",
+            "core.autocrlf=true",
             git_url,
             "--branch",
             branch,
@@ -570,6 +572,8 @@ class RedisAIBuilder(Builder):
             "GIT_LFS_SKIP_SMUDGE=1",
             "git",
             "clone",
+            "--config",
+            "core.autocrlf=true",
             "--recursive",
             git_url,
             "--branch",
