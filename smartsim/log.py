@@ -26,7 +26,6 @@
 
 import functools
 import logging
-import os
 import pathlib
 import sys
 import threading
@@ -63,9 +62,9 @@ if t.TYPE_CHECKING:
     _PR = ParamSpec("_PR")
 
 
-def _translate_log_level(user_log_level: t.Optional[str] = "info") -> str:
-    """Get the logging level based on environment variable
-       SMARTSIM_LOG_LEVEL.  If not set, default to info.
+def _translate_log_level(user_log_level: str = "info") -> str:
+    """Translate value of CONFIG.log_level to one
+    accepted as ``level`` option by Python's logging module.
 
        Logging levels
          - quiet: Just shows errors and warnings
@@ -74,15 +73,16 @@ def _translate_log_level(user_log_level: t.Optional[str] = "info") -> str:
          - developer: Shows everything happening during execution
                       extremely verbose logging.
 
+    :param user_log_level: log level specified by user, defaults to info
+    :type user_log_level: str
     :returns: Log level for coloredlogs
     :rtype: str
     """
+    user_log_level = user_log_level.lower()
+    if user_log_level in ["info", "debug", "warning"]:
+        return user_log_level
     if user_log_level == "quiet":
         return "warning"
-    if user_log_level == "info":
-        return "info"
-    if user_log_level == "debug":
-        return "debug"
     # extremely verbose logging used internally
     if user_log_level == "developer":
         return "debug"
@@ -204,7 +204,7 @@ def get_logger(
     """
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file without prefix.
-    user_log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info")
+    user_log_level = CONFIG.log_level
     if user_log_level != "developer":
         name = "SmartSim"
 

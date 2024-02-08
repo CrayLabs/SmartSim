@@ -116,6 +116,25 @@ def test_get_logger(test_dir: str, turn_on_tm, monkeypatch):
     assert isinstance(logger, smartsim.log.ContextAwareLogger)
 
 
+@pytest.mark.parametrize(
+    "input_level,exp_level",
+    [
+        pytest.param("INFO", "info", id="lowercasing only, INFO"),
+        pytest.param("info", "info", id="input back, info"),
+        pytest.param("WARNING", "warning", id="lowercasing only, WARNING"),
+        pytest.param("warning", "warning", id="input back, warning"),
+        pytest.param("QUIET", "warning", id="lowercasing only, QUIET"),
+        pytest.param("quiet", "warning", id="translation back, quiet"),
+        pytest.param("DEVELOPER", "debug", id="lowercasing only, DEVELOPER"),
+        pytest.param("developer", "debug", id="translation back, developer"),
+    ],
+)
+def test_translate_log_level(input_level: str, exp_level: str, turn_on_tm):
+    """Ensure the correct logger type is instantiated"""
+    translated_level = smartsim.log._translate_log_level(input_level)
+    assert exp_level == translated_level
+
+
 def test_exp_logs(test_dir: str, turn_on_tm, monkeypatch):
     """Ensure that experiment loggers are added when context info exists"""
     monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
