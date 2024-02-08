@@ -155,7 +155,6 @@ def create_run_settings(
         ),
         "orterun": lambda launcher: OrterunSettings,
         "jsrun": lambda launcher: JsrunSettings,
-        "dragon": lambda launcher: DragonRunSettings,
     }
 
     # run commands supported by each launcher
@@ -195,6 +194,11 @@ def create_run_settings(
     if run_command == "auto":
         # no auto detection for local, revert to false
         run_command = _detect_command(launcher)
+
+    if launcher == "dragon":
+        return DragonRunSettings(
+            exe, exe_args, run_args, env_vars, container=container, **kwargs
+        )
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
