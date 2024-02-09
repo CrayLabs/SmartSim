@@ -33,6 +33,10 @@ The base prerequisites to install SmartSim and SmartRedis are:
 
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
 
+.. warning::
+  Apple Clang 15 seems to have issues on MacOS with Apple Silicon. Please modify
+  your path to ensure that a version of GCC installed by brew has priority.
+
 
 GPU Support
 ===========
@@ -276,25 +280,10 @@ Install SmartSim from Source
 
 First, clone SmartSim.
 
-.. tabs::
+.. code-block:: bash
 
-  .. tab:: Linux
+  git clone https://github.com/CrayLabs/SmartSim smartsim
 
-    .. code-block:: bash
-
-      git clone https://github.com/CrayLabs/SmartSim smartsim
-
-  .. tab:: MacOS (Intel x64)
-
-    .. code-block:: bash
-
-      git clone https://github.com/CrayLabs/SmartSim smartsim
-
-  .. tab:: MacOS (Apple Silicon)
-
-    .. code-block:: bash
-
-      git clone --config core.autocrlf=true https://github.com/CrayLabs/SmartSim smartsim
 
 And then install SmartSim with pip in *editable* mode. This way, SmartSim is
 installed in your virtual environment and available on `sys.path`, but the
