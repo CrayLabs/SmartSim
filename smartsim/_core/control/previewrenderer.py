@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
+from enum import Enum
 
 import jinja2
 
@@ -37,8 +38,14 @@ logger = get_logger(__name__)
 if t.TYPE_CHECKING:
     from smartsim import Experiment
 
-_OutputFormatString = t.Optional[t.Literal["html", "plain_text"]]
+_OutputFormatString = t.Optional[t.Literal["plain_text", "html"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
+
+
+class Verbosity(str, Enum):
+    INFO = "info"
+    DEBUG = "debug"
+    DEVELOPER = "developer"
 
 
 def render(
@@ -106,13 +113,10 @@ def _check_verbosity_level(
     """
     Check that the given verbosity level is valid.
     """
-    if verbosity_level not in ["info", "debug", "developer"]:
-        raise ValueError("The only valid verbosity level currently available is info")
-
-    if verbosity_level in ("debug", "developer"):
+    if verbosity_level not in (Verbosity.INFO, Verbosity.DEBUG, Verbosity.DEVELOPER):
         logger.warning(
             f"'{verbosity_level}' is an unsupported verbosity level requested.\
-Setting verbosity to: info"
+ Setting verbosity to: info"
         )
         return "info"
-    return "info"
+    return verbosity_level

@@ -51,11 +51,11 @@ def test_experiment_preview(test_dir, wlmutils):
     """Test correct preview output items for Experiment preview"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test-experiment-preview-output"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp)
+    output = previewrenderer.render(exp, verbosity_level="developer")
 
     # Evaluate output
     summary_lines = output.split("\n")
@@ -73,7 +73,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp)
+    output = previewrenderer.render(exp, verbosity_level="developer")
 
     # Evaluate output
     summary_lines = output.split("\n")
@@ -91,7 +91,7 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    exp_name = "test_experiment_preview_properties"
+    exp_name = "test_orchestrator_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     # create regular database
     orc = exp.create_database(
@@ -102,7 +102,7 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     preview_manifest = Manifest(orc)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     # Evaluate output
     assert "Database identifier" in output
@@ -129,6 +129,41 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     assert str(orc.db_nodes) in output
 
 
+def test_orchestrator_preview_verbosity_level(test_dir, wlmutils, choose_host):
+    """
+    Test correct preview output properties for Orchestrator preview
+    when verbosity level is set to info
+    """
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_orchestrator_preview_verbosity"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    # create regular database
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="test1",
+    )
+
+    preview_manifest = Manifest(orc)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+
+    # Evaluate output
+    assert "Experiment Path" not in output
+    assert "Launcher" not in output
+
+    assert "Shards" not in output
+    assert "Type" not in output
+    assert "Executable" not in output
+    assert "Batch Launch" not in output
+    assert "Run command" not in output
+
+
 def test_preview_output_format_html_to_file(test_dir, wlmutils):
     """Test that an html file is rendered for Experiment preview"""
     # Prepare entities
@@ -144,9 +179,6 @@ def test_preview_output_format_html_to_file(test_dir, wlmutils):
     # Evaluate output
     assert path.exists()
     assert path.is_file()
-
-    # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
 
 
 def test_orchestrator_preview_output_format_html(test_dir, wlmutils, choose_host):

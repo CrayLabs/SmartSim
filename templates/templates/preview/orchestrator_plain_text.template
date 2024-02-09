@@ -1,16 +1,17 @@
- 
-{%- for db in manifest.dbs %}
-        = Database identifier: {{ db.name }}
+    = Database identifier: {{ db.name }}
+        {%- if verbosity_level == "debug" or verbosity_level == "developer" %}
             Shards: {{ db.num_shards }}
+            {%- endif %}
             TCP/IP port: 
                 {%- for port in db.ports %}
                 {{ port }}
                 {%- endfor %}
             Network interface: {{ db._interfaces[0] }}
+            {%- if verbosity_level == "debug" or verbosity_level == "developer" %}
             Type: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
             Executable: {{ config.database_exe }}
             Batch Launch: {{ db.batch }}
             Run command: {{ db.run_command }}
+            {%- endif %}
             Ntasks: {{ db.db_nodes }}
         =
-{% endfor -%}
