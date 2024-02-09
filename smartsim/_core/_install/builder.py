@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=too-many-lines
+
 import concurrent.futures
 import enum
 import itertools
@@ -121,10 +123,18 @@ class Builder:
     )
 
     def __init__(
-        self, env: t.Dict[str, t.Any], jobs: t.Optional[int] = 1, verbose: bool = False
+        self,
+        env: t.Dict[str, t.Any],
+        jobs: t.Optional[int] = 1,
+        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
+        architecture: Architecture = Architecture.from_str(platform.machine()),
+        verbose: bool = False,
     ) -> None:
         # build environment from buildenv
         self.env = env
+        self._os = _os
+        self._architecture = architecture
+        self._platform = (self._os, self._architecture)
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
@@ -237,11 +247,19 @@ class DatabaseBuilder(Builder):
     def __init__(
         self,
         build_env: t.Optional[t.Dict[str, t.Any]] = None,
-        malloc: str = "libc",
         jobs: t.Optional[int] = None,
+        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
+        architecture: Architecture = Architecture.from_str(platform.machine()),
+        malloc: str = "libc",
         verbose: bool = False,
     ) -> None:
-        super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
+        super().__init__(
+            build_env or {},
+            jobs=jobs,
+            _os=_os,
+            architecture=architecture,
+            verbose=verbose,
+        )
         self.malloc = malloc
 
     @property
@@ -278,19 +296,21 @@ class DatabaseBuilder(Builder):
         if not self.is_valid_url(git_url):
             raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
+        clone_cmd = [self.binary_path("git"), "clone"]
+        if self._platform == (OperatingSystem.DARWIN, Architecture.ARM64):
+            clone_cmd.extend(["--config", "core.autocrlf=true"])
+        clone_cmd.extend(
+            [
+                git_url,
+                "--branch",
+                branch,
+                "--depth",
+                "1",
+                database_name,
+            ]
+        )
+
         # clone Redis
-        clone_cmd = [
-            self.binary_path("git"),
-            "clone",
-            "--config",
-            "core.autocrlf=true",
-            git_url,
-            "--branch",
-            branch,
-            "--depth",
-            "1",
-            database_name,
-        ]
         self.run_command(clone_cmd, cwd=self.build_dir)
 
         # build Redis
@@ -372,22 +392,26 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
+        build_env: t.Optional[t.Dict[str, t.Any]] = None,
+        jobs: t.Optional[int] = None,
         _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
         architecture: Architecture = Architecture.from_str(platform.machine()),
-        build_env: t.Optional[t.Dict[str, t.Any]] = None,
         torch_dir: str = "",
         libtf_dir: str = "",
         build_torch: bool = True,
         build_tf: bool = True,
         build_onnx: bool = False,
-        jobs: t.Optional[int] = None,
         verbose: bool = False,
     ) -> None:
-        super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
+        super().__init__(
+            build_env or {},
+            jobs=jobs,
+            _os=_os,
+            architecture=architecture,
+            verbose=verbose,
+        )
 
         self.rai_install_path: t.Optional[Path] = None
-        self._os = _os
-        self._architecture = architecture
 
         # convert to int for RAI build script
         self._torch = build_torch
@@ -400,15 +424,18 @@ class RedisAIBuilder(Builder):
         self._validate_platform()
 
     def _validate_platform(self) -> None:
-        platform_ = (self._os, self._architecture)
         unsupported = []
-        if platform_ not in _DLPackRepository.supported_platforms():
+        if self._platform not in _DLPackRepository.supported_platforms():
             unsupported.append("DLPack")
-        if self.fetch_tf and (platform_ not in _TFArchive.supported_platforms()):
+        if self.fetch_tf and (self._platform not in _TFArchive.supported_platforms()):
             unsupported.append("Tensorflow")
-        if self.fetch_onnx and (platform_ not in _ORTArchive.supported_platforms()):
+        if self.fetch_onnx and (
+            self._platform not in _ORTArchive.supported_platforms()
+        ):
             unsupported.append("ONNX")
-        if self.fetch_torch and (platform_ not in _PTArchive.supported_platforms()):
+        if self.fetch_torch and (
+            self._platform not in _PTArchive.supported_platforms()
+        ):
             unsupported.append("PyTorch")
         if unsupported:
             raise BuildError(
@@ -572,15 +599,19 @@ class RedisAIBuilder(Builder):
             "GIT_LFS_SKIP_SMUDGE=1",
             "git",
             "clone",
-            "--config",
-            "core.autocrlf=true",
-            "--recursive",
-            git_url,
-            "--branch",
-            branch,
-            "--depth=1",
-            os.fspath(self.rai_build_path),
         ]
+        if self._platform == (OperatingSystem.DARWIN, Architecture.ARM64):
+            clone_cmd.extend(["--config", "core.autocrlf=true"])
+        clone_cmd.extend(
+            [
+                "--recursive",
+                git_url,
+                "--branch",
+                branch,
+                "--depth=1",
+                os.fspath(self.rai_build_path),
+            ]
+        )
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
         self._fetch_deps_for(device)
@@ -877,7 +908,6 @@ class _PTArchiveMacOSX(_PTArchive):
 def _choose_pt_variant(
     os_: OperatingSystem,
 ) -> t.Union[t.Type[_PTArchiveLinux], t.Type[_PTArchiveMacOSX]]:
-
     if os_ == OperatingSystem.DARWIN:
         return _PTArchiveMacOSX
     if os_ == OperatingSystem.LINUX:
