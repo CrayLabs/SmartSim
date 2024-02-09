@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
 import pathlib
 import typing as t
 from dataclasses import dataclass, field
@@ -184,52 +185,12 @@ class Manifest:
     @property
     def has_db_objects(self) -> bool:
         """Check if any entity has DBObjects to set"""
-
-        def has_db_models(
-            entity: t.Union[EntitySequence[SmartSimEntity], Model]
-        ) -> bool:
-            return len(list(entity.db_models)) > 0
-
-        def has_db_scripts(
-            entity: t.Union[EntitySequence[SmartSimEntity], Model]
-        ) -> bool:
-            return len(list(entity.db_scripts)) > 0
-
-        has_db_objects = False
-
-        # Check if any model has either a DBModel or a DBScript
-        # we update has_db_objects so that as soon as one check
-        # returns True, we can exit
-        has_db_objects |= any(
-            has_db_models(model) | has_db_scripts(model) for model in self.models
+        ents: t.Iterable[t.Union[Model, Ensemble]] = itertools.chain(
+            self.models,
+            self.ensembles,
+            (member for ens in self.ensembles for member in ens.entities),
         )
-        if has_db_objects:
-            return True
-
-        # If there are no ensembles, there can be no outstanding model
-        # to check for DBObjects, return current value of DBObjects, which
-        # should be False
-        ensembles = self.ensembles
-        if not ensembles:
-            return has_db_objects
-
-        # First check if there is any ensemble DBObject, if so, return True
-        has_db_objects |= any(
-            has_db_models(ensemble) | has_db_scripts(ensemble) for ensemble in ensembles
-        )
-        if has_db_objects:
-            return True
-        for ensemble in ensembles:
-            # Last case, check if any model within an ensemble has DBObjects attached
-            has_db_objects |= any(
-                has_db_models(model) | has_db_scripts(model)
-                for model in ensemble.models
-            )
-            if has_db_objects:
-                return True
-
-        # `has_db_objects` should be False here
-        return has_db_objects
+        return any(any(ent.db_models) or any(ent.db_scripts) for ent in ents)
 
 
 class _LaunchedManifestMetadata(t.NamedTuple):

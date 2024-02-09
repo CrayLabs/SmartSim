@@ -205,7 +205,7 @@ def test_redis_cli():
         pytest.param("0", False, id="letter zero"),
         pytest.param("1", True, id="letter one"),
         pytest.param("-1", False, id="letter negative one"),
-        pytest.param(None, False, id="not in env"),
+        pytest.param(None, True, id="not in env"),
     ],
 )
 def test_telemetry_flag(
