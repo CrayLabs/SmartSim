@@ -219,7 +219,7 @@ class TaskStatusHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory modification.
         :type event: FileModifiedEvent
         """
-        super().on_modified(event)
+        super().on_modified(event)  # type: ignore
         self._notify(event.src_path)
 
     def on_created(self, event: FileSystemEvent) -> None:
@@ -228,7 +228,7 @@ class TaskStatusHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory creation.
         :type event: FileCreatedEvent
         """
-        super().on_created(event)
+        super().on_created(event)  # type: ignore
         self._notify(event.src_path)
 
     def _notify(self, event_src: str) -> None:
@@ -946,7 +946,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory modification.
         :type event: FileModifiedEvent
         """
-        super().on_modified(event)
+        super().on_modified(event)  # type: ignore
         logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
@@ -956,7 +956,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :param event: Event representing file/directory creation.
         :type event: FileCreatedEvent
         """
-        super().on_created(event)
+        super().on_created(event)  # type: ignore
         logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
@@ -1133,7 +1133,7 @@ async def main(
     )
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
-    log_handler = LoggingEventHandler(logger)
+    log_handler = LoggingEventHandler(logger)  # type: ignore
     frequency_ms = int(frequency * 1000)  # limit collector execution time
     action_handler = ManifestEventHandler(
         str(MANIFEST_FILENAME),
