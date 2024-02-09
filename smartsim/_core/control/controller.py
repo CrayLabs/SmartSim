@@ -511,22 +511,38 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-        if (
-            entity.name in self._jobs.completed
-            or entity.name in self._jobs.jobs
-            or entity.name in self._jobs.db_jobs
-            ):
-            raise SSUnsupportedError(
-                "SmartSim entities cannot have duplicate names."
-            )
-        try:
-            job_id = self._launcher.run(job_step)
-        except LauncherError as e:
-            msg = f"An error occurred when launching {entity.name} \n"
-            msg += "Check error and output files for details.\n"
-            msg += f"{entity}"
-            logger.error(msg)
-            raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # attempt to retrieve entity name in JobManager.completed
+        completed_job = self._jobs.completed.get(entity.name, None)
+
+        # if completed job DNE and is the entity name is not
+        # running in JobManager.jobs or JobManager.db_jobs,
+        # launch the job
+        if completed_job is None and (
+            entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
+        ):
+            try:
+                job_id = self._launcher.run(job_step)
+            except LauncherError as e:
+                msg = f"An error occurred when launching {entity.name} \n"
+                msg += "Check error and output files for details.\n"
+                msg += f"{entity}"
+                logger.error(msg)
+                raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # if the completed job does exist and the entity passed in is the same
+        # that has ran and completed, relaunch the entity.
+        elif completed_job is not None and completed_job.entity is entity:
+            try:
+                job_id = self._launcher.run(job_step)
+            except LauncherError as e:
+                msg = f"An error occurred when launching {entity.name} \n"
+                msg += "Check error and output files for details.\n"
+                msg += f"{entity}"
+                logger.error(msg)
+                raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # the entity is using a duplicate name of an existing entity in
+        # the experiment, throw an error
+        else:
+            raise SSUnsupportedError("SmartSim entities cannot have duplicate names.")
 
         # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
         # but is rather started, monitored, and exited through the Popen interface
