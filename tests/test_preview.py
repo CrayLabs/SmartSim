@@ -28,7 +28,6 @@ import sys
 from os import path as osp
 
 import numpy as np
-
 import pytest
 
 from smartsim import Experiment
@@ -185,7 +184,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     )
 
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-    
+
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
     # Execute preview method
@@ -285,8 +284,8 @@ def test_model_key_prefixing(test_dir, wlmutils):
     assert "DataSets: On" in output
     assert "Models/Scripts: Off" in output
     assert "Aggregation Lists: On" in output
-    
-    
+
+
 def test_ensembles_preview(test_dir, wlmutils):
     """
     Test ensemble preview fields are correct in template render
