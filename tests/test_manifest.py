@@ -40,6 +40,7 @@ from smartsim._core.control.manifest import (
     _LaunchedManifestMetadata as LaunchedManifestMetadata,
 )
 from smartsim.database import Orchestrator
+from smartsim.entity.dbobject import DBModel, DBScript
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 
@@ -60,6 +61,9 @@ orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
 model_no_name = exp.create_model(name=None, run_settings=rs)
+
+db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
+db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
 
 
 def test_separate():
@@ -104,6 +108,38 @@ def test_corner_case():
     p = Person()
     with pytest.raises(TypeError):
         _ = Manifest(p)
+
+
+@pytest.mark.parametrize(
+    "patch, has_db_objects",
+    [
+        pytest.param((), False, id="No DB Objects"),
+        pytest.param((model, "_db_models", [db_model]), True, id="Model w/ DB Model"),
+        pytest.param(
+            (model, "_db_scripts", [db_script]), True, id="Model w/ DB Script"
+        ),
+        pytest.param(
+            (ensemble, "_db_models", [db_model]), True, id="Ensemble w/ DB Model"
+        ),
+        pytest.param(
+            (ensemble, "_db_scripts", [db_script]), True, id="Ensemble w/ DB Script"
+        ),
+        pytest.param(
+            (ensemble.entities[0], "_db_models", [db_model]),
+            True,
+            id="Ensemble Member w/ DB Model",
+        ),
+        pytest.param(
+            (ensemble.entities[0], "_db_scripts", [db_script]),
+            True,
+            id="Ensemble Member w/ DB Script",
+        ),
+    ],
+)
+def test_manifest_detects_db_objects(monkeypatch, patch, has_db_objects):
+    if patch:
+        monkeypatch.setattr(*patch)
+    assert Manifest(model, ensemble).has_db_objects == has_db_objects
 
 
 def test_launched_manifest_transform_data():
