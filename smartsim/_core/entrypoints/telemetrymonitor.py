@@ -42,7 +42,6 @@ from types import FrameType
 
 import redis.asyncio as redisa
 import redis.exceptions as redisex
-from anyio import open_file, sleep
 from watchdog.events import (
     FileSystemEvent,
     LoggingEventHandler,
@@ -119,9 +118,9 @@ class FileSink(Sink):
         """Save all arguments to a file as specified by the associated JobEntity"""
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
-        async with await open_file(self._path, "a+", encoding="utf-8") as sink_fp:
+        with open(self._path, "a+", encoding="utf-8") as sink_fp:
             values = ",".join(map(str, args)) + "\n"
-            await sink_fp.write(values)
+            sink_fp.write(values)
 
 
 class Collector(abc.ABC):
@@ -1098,7 +1097,7 @@ async def event_loop(
 
         # delay next loop if collection time didn't exceed loop frequency
         if wait_ms > 0:
-            await sleep(wait_ms / 1000)  # convert to seconds for sleep
+            await asyncio.sleep(wait_ms / 1000)  # convert to seconds for sleep
 
     logger.info("Exiting telemetry monitor event loop")
 
