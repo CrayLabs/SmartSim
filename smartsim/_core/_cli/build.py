@@ -26,10 +26,10 @@
 
 import argparse
 import os
+import platform
 import sys
 import typing as t
 from pathlib import Path
-import platform
 
 from tabulate import tabulate
 
