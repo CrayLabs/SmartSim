@@ -310,7 +310,7 @@ class DatabaseBuilder(Builder):
                 "--depth",
                 "1",
                 database_name,
-            ]
+            ],
         )
 
         # clone Redis
@@ -610,7 +610,7 @@ class RedisAIBuilder(Builder):
                 branch,
                 "--depth=1",
                 os.fspath(self.rai_build_path),
-            ]
+            ],
         )
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
@@ -1035,14 +1035,9 @@ def config_git_command(platform: Platform, cmd: t.Sequence[str]) -> t.List[str]:
     """Modify git commands to include autocrlf when on a platform that needs
     autocrlf enabled to behave correctly
     """
-    fail_to_find = ValueError(f"Failed to locate git command in {cmd}")
-    cmd = list(cmd)
-    try:
-        at = cmd.index("git") + 1
-    except ValueError as e:
-        raise fail_to_find from e
-    if at >= len(cmd):
-        raise fail_to_find
+    where = next((i for i, tok in enumerate(cmd) if tok.endswith("git")), len(cmd)) + 1
+    if where >= len(cmd):
+        raise ValueError(f"Failed to locate git command in '{' '.join(cmd)}'")
     if platform == Platform(OperatingSystem.DARWIN, Architecture.ARM64):
-        cmd = cmd[:at] + ["--config", "core.autocrlf=true"] + cmd[at:]
+        cmd = cmd[:where] + ["--config", "core.autocrlf=true"] + cmd[where:]
     return cmd
