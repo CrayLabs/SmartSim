@@ -442,7 +442,7 @@ class RedisAIBuilder(Builder):
             unsupported.append("PyTorch")
         if unsupported:
             raise BuildError(
-                f"The {', '.join(unsupported)} backend(s) are not supported"
+                f"The {', '.join(unsupported)} backend(s) are not supported "
                 f"on {self._platform.os} with {self._platform.architecture}"
             )
 
@@ -1031,13 +1031,14 @@ def _git(*args: str) -> None:
             )
 
 
-def config_git_command(platform: Platform, cmd: t.Sequence[str]) -> t.List[str]:
+def config_git_command(plat: Platform, cmd: t.Sequence[str]) -> t.List[str]:
     """Modify git commands to include autocrlf when on a platform that needs
     autocrlf enabled to behave correctly
     """
-    where = next((i for i, tok in enumerate(cmd) if tok.endswith("git")), len(cmd)) + 1
+    cmd = list(cmd)
+    where = next((i for i, tok in enumerate(cmd) if tok.endswith("git")), len(cmd)) + 2
     if where >= len(cmd):
         raise ValueError(f"Failed to locate git command in '{' '.join(cmd)}'")
-    if platform == Platform(OperatingSystem.DARWIN, Architecture.ARM64):
+    if plat == Platform(OperatingSystem.DARWIN, Architecture.ARM64):
         cmd = cmd[:where] + ["--config", "core.autocrlf=true"] + cmd[where:]
     return cmd

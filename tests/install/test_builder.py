@@ -287,3 +287,62 @@ def test_valid_platforms():
         build_torch=True,
         build_onnx=False,
     )
+
+
+@pytest.mark.parametrize(
+    "plat,cmd,expected_cmd",
+    [
+        # Bare Word
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.X64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "my-repo"],
+            id="git-Linux-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.ARM64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "my-repo"],
+            id="git-Linux-Arm64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.X64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "my-repo"],
+            id="git-Darwin-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.ARM64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "--config", "core.autocrlf=true", "my-repo"],
+            id="git-Darwin-Arm64",
+        ),
+        # Abs path
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.X64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "my-repo"],
+            id="Abs-Linux-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.ARM64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "my-repo"],
+            id="Abs-Linux-Arm64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.X64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "my-repo"],
+            id="Abs-Darwin-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.ARM64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "--config", "core.autocrlf=true", "my-repo"],
+            id="Abs-Darwin-Arm64",
+        ),
+    ],
+)
+def test_git_commands_are_configered_correctly_for_platforms(plat, cmd, expected_cmd):
+    assert build.config_git_command(plat, cmd) == expected_cmd
