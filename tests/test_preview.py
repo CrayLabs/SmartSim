@@ -150,6 +150,7 @@ def test_model_preview(test_dir, wlmutils):
     hello_world_model = exp.create_model(
         "echo-hello", run_settings=rs1, params=model_params
     )
+
     spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
@@ -174,16 +175,22 @@ def test_model_preview_properties(test_dir, wlmutils):
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
-    model_params = {"port": 6379, "password": "unbreakable_password"}
-    rs1 = RunSettings("bash", "multi_tags_template.sh")
+    hw_name = "echo-hello"
+    hw_port = 6379
+    hw_password = "unbreakable_password"
+    hw_rs = "multi_tags_template.sh"
+    model_params = {"port": hw_port, "password": hw_password}
+    hw_param1 = "bash"
+    rs1 = RunSettings(hw_param1, hw_rs)
 
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+    se_name = "echo-spam"
+    se_param1 = "echo"
+    se_param2 = "spam"
+    se_param3 = "eggs"
+    rs2 = exp.create_run_settings(se_param1, [se_param2, se_param3])
 
-    hello_world_model = exp.create_model(
-        "echo-hello", run_settings=rs1, params=model_params
-    )
-
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+    hello_world_model = exp.create_model(hw_name, run_settings=rs1, params=model_params)
+    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
@@ -191,33 +198,34 @@ def test_model_preview_properties(test_dir, wlmutils):
     rendered_preview = previewrenderer.render(exp, preview_manifest)
 
     # Evaluate output for hello world model
-    assert "echo-hello" in rendered_preview
-    assert "/bin/bash" in rendered_preview
-    assert "multi_tags_template.sh" in rendered_preview
+    assert hw_name in rendered_preview
+    assert hw_param1 in rendered_preview
+    assert hw_rs in rendered_preview
     assert "False" in rendered_preview
     assert "port" in rendered_preview
     assert "password" in rendered_preview
-    assert "6379" in rendered_preview
-    assert "unbreakable_password" in rendered_preview
+    assert str(hw_port) in rendered_preview
+    assert hw_password in rendered_preview
 
-    assert "echo-hello" == hello_world_model.name
-    assert "/bin/bash" in hello_world_model.run_settings.exe[0]
-    assert "multi_tags_template.sh" == hello_world_model.run_settings.exe_args[0]
+    assert hw_name == hello_world_model.name
+    assert hw_param1 in hello_world_model.run_settings.exe[0]
+    assert hw_rs == hello_world_model.run_settings.exe_args[0]
     assert None == hello_world_model.batch_settings
     assert "port" in list(hello_world_model.params.items())[0]
-    assert 6379 in list(hello_world_model.params.items())[0]
+    assert hw_port in list(hello_world_model.params.items())[0]
     assert "password" in list(hello_world_model.params.items())[1]
-    assert "unbreakable_password" in list(hello_world_model.params.items())[1]
+    assert hw_password in list(hello_world_model.params.items())[1]
 
     # Evaluate outputfor spam eggs model
-    assert "echo-spam" in rendered_preview
-    assert "/bin/echo" in rendered_preview
-    assert "spam" in rendered_preview
-    assert "eggs" in rendered_preview
-    assert "echo-spam" == spam_eggs_model.name
-    assert "/bin/echo" in spam_eggs_model.run_settings.exe[0]
-    assert "spam" == spam_eggs_model.run_settings.exe_args[0]
-    assert "eggs" == spam_eggs_model.run_settings.exe_args[1]
+    assert se_name in rendered_preview
+    assert se_param1 in rendered_preview
+    assert se_param2 in rendered_preview
+    assert se_param3 in rendered_preview
+
+    assert se_name == spam_eggs_model.name
+    assert se_param1 in spam_eggs_model.run_settings.exe[0]
+    assert se_param2 == spam_eggs_model.run_settings.exe_args[0]
+    assert se_param3 == spam_eggs_model.run_settings.exe_args[1]
 
 
 def test_model_with_tagged_files(fileutils, test_dir, wlmutils):
@@ -332,9 +340,12 @@ def test_preview_models_and_ensembles(test_dir, wlmutils):
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
 
-    hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-    hello_ensemble = exp.create_ensemble("echo-ensemble", run_settings=rs1, replicas=3)
+    hw_name = "echo-hello"
+    se_name = "echo-spam"
+    ens_name = "echo-ensemble"
+    hello_world_model = exp.create_model(hw_name, run_settings=rs1)
+    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
+    hello_ensemble = exp.create_ensemble(ens_name, run_settings=rs1, replicas=3)
 
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
 
@@ -342,12 +353,12 @@ def test_preview_models_and_ensembles(test_dir, wlmutils):
     output = previewrenderer.render(exp, preview_manifest)
 
     assert "Models" in output
-    assert "echo-hello" in output
-    assert "echo-spam" in output
+    assert hw_name in output
+    assert se_name in output
 
     assert "Ensembles" in output
-    assert "echo-ensemble_1" in output
-    assert "echo-ensemble_2" in output
+    assert ens_name + "_1" in output
+    assert ens_name + "_2" in output
 
 
 def test_ensemble_preview_client_configuration(test_dir, wlmutils):
@@ -466,11 +477,8 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
 
     # Create and save ML model to filesystem
     content = "empty test"
-    path = pathlib.Path(test_dir) / "model1.pt"
-    with open(path, "w", encoding="utf-8") as prev_file:
-        prev_file.write(content)
-
-    model_path = test_dir + "/model1.pt"
+    model_path = pathlib.Path(test_dir) / "model1.pt"
+    model_path.write_text(content)
 
     # Test adding a model from ensemble
     colo_ensemble.add_ml_model(
@@ -514,15 +522,19 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
         ifname=test_interface,
     )
     # Add a ML model to the new ensemble member
+    model_inputs = "args_0"
+    model_outputs = "Identity"
+    model_name = "cnn2"
+    model_backend = "TF"
     colo_model.add_ml_model(
-        "cnn2",
-        "TF",
+        model_name,
+        model_backend,
         model_path=model_path,
         device=test_device,
         devices_per_node=test_num_gpus,
         first_device=0,
-        inputs="args_0",
-        outputs="Identity",
+        inputs=model_inputs,
+        outputs=model_outputs,
     )
 
     exp.generate(colo_ensemble)
@@ -543,12 +555,13 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
     assert "Inputs" in output
     assert "Outputs" in output
 
-    assert "cnn" in output
+    assert model_name in output
+    assert model_backend in output
     assert "Model path" in output
     assert "/model1.pt" in output
     assert "CPU" in output
-    assert "args_0" in output
-    assert "Identity" in output
+    assert model_inputs in output
+    assert model_outputs in output
 
 
 def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
@@ -611,8 +624,9 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
 
     # Add a script to the non-ensemble model
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+    cm_name2 = "test_script2"
     colo_ensemble.add_script(
-        "test_script2",
+        cm_name2,
         script=torch_script_str,
         device=test_device,
         devices_per_node=test_num_gpus,
@@ -623,8 +637,9 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     colo_ensemble.add_model(colo_model)
 
     # Add another script via file to the entire ensemble
+    cm_name1 = "test_script1"
     colo_model.add_script(
-        "test_script1",
+        cm_name1,
         script_path=torch_script,
         device=test_device,
         devices_per_node=test_num_gpus,
@@ -649,9 +664,10 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert "Script path" in output
     assert "Devices per node" in output
 
-    assert "test_script2" in output
-    assert "/torchscript.py" in output
-    assert "CPU " in output
+    assert cm_name2 in output
+    assert torch_script in output
+    assert test_device in output
+    assert cm_name1 in output
 
 
 def test_preview_models_and_ensembles_html_format(test_dir, wlmutils):

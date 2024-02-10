@@ -61,17 +61,16 @@
             {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
             Scripts:
             {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}   
-                
                 Script name: {{ script.name }}
                 Script path: {{ script.script_path }}
                 Backend: {{ script.device }}   
                 Devices per node: {{ script.devices_per_node }} 
+
             {%- endfor %}
             {%- endif %}
             {%- if model.run_settings.colocated_db_settings['db_models'] %}
             Models: 
             {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
-                
                 Model name: {{ mlmodel.name }}
                 Backend: {{ mlmodel.backend }} 
                 Model path: {{ mlmodel.model_file }} 
@@ -86,7 +85,7 @@
                 Outputs: 
                     {{ output }}
                 {%- endfor %}
-            {%- endfor %}
+            {% endfor %}
             {%- endif %}
             {%- endif %}
             {%- if manifest.models %}
