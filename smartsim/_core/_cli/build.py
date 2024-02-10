@@ -115,11 +115,11 @@ def build_database(
     database_name = "KeyDB" if keydb else "Redis"
     database_builder = builder.DatabaseBuilder(
         build_env(),
-        jobs = build_env.JOBS,
-        _os = builder.OperatingSystem.from_str(platform.system()),
-        architecture = builder.Architecture.from_str(platform.machine()),
-        malloc = build_env.MALLOC,
-        verbose = verbose
+        jobs=build_env.JOBS,
+        _os=builder.OperatingSystem.from_str(platform.system()),
+        architecture=builder.Architecture.from_str(platform.machine()),
+        malloc=build_env.MALLOC,
+        verbose=verbose,
     )
     if not database_builder.is_built:
         logger.info(
@@ -180,8 +180,8 @@ def build_redis_ai(
     rai_builder = builder.RedisAIBuilder(
         build_env=build_env_dict,
         jobs=build_env.JOBS,
-        _os = builder.OperatingSystem.from_str(platform.system()),
-        architecture = builder.Architecture.from_str(platform.machine()),
+        _os=builder.OperatingSystem.from_str(platform.system()),
+        architecture=builder.Architecture.from_str(platform.machine()),
         torch_dir=str(torch_dir) if torch_dir else "",
         libtf_dir=str(libtf_dir) if libtf_dir else "",
         build_torch=use_torch,

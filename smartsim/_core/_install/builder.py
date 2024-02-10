@@ -109,6 +109,11 @@ class OperatingSystem(enum.Enum):
         raise BuildError(f"Unrecognized or unsupported operating system: {string}")
 
 
+class Platform(t.NamedTuple):
+    os: OperatingSystem
+    architecture: Architecture
+
+
 class Builder:
     """Base class for building third-party libraries"""
 
@@ -124,17 +129,15 @@ class Builder:
 
     def __init__(
         self,
-        env: t.Dict[str, t.Any],
-        jobs: t.Optional[int] = 1,
+        env: t.Dict[str, str],
+        jobs: int = 1,
         _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
         architecture: Architecture = Architecture.from_str(platform.machine()),
         verbose: bool = False,
     ) -> None:
         # build environment from buildenv
         self.env = env
-        self._os = _os
-        self._architecture = architecture
-        self._platform = (self._os, self._architecture)
+        self._platform = Platform(_os, architecture)
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
@@ -246,11 +249,11 @@ class DatabaseBuilder(Builder):
 
     def __init__(
         self,
-        build_env: t.Optional[t.Dict[str, t.Any]] = None,
-        jobs: t.Optional[int] = None,
+        build_env: t.Optional[t.Dict[str, str]] = None,
+        malloc: str = "libc",
+        jobs: int = 1,
         _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
         architecture: Architecture = Architecture.from_str(platform.machine()),
-        malloc: str = "libc",
         verbose: bool = False,
     ) -> None:
         super().__init__(
@@ -296,11 +299,11 @@ class DatabaseBuilder(Builder):
         if not self.is_valid_url(git_url):
             raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
-        clone_cmd = [self.binary_path("git"), "clone"]
-        if self._platform == (OperatingSystem.DARWIN, Architecture.ARM64):
-            clone_cmd.extend(["--config", "core.autocrlf=true"])
-        clone_cmd.extend(
+        clone_cmd = config_git_command(
+            self._platform,
             [
+                self.binary_path("git"),
+                "clone",
                 git_url,
                 "--branch",
                 branch,
@@ -392,15 +395,15 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
-        build_env: t.Optional[t.Dict[str, t.Any]] = None,
-        jobs: t.Optional[int] = None,
         _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
         architecture: Architecture = Architecture.from_str(platform.machine()),
+        build_env: t.Optional[t.Dict[str, str]] = None,
         torch_dir: str = "",
         libtf_dir: str = "",
         build_torch: bool = True,
         build_tf: bool = True,
         build_onnx: bool = False,
+        jobs: int = 1,
         verbose: bool = False,
     ) -> None:
         super().__init__(
@@ -439,8 +442,8 @@ class RedisAIBuilder(Builder):
             unsupported.append("PyTorch")
         if unsupported:
             raise BuildError(
-                f"The {', '.join(unsupported)} backend(s) are not "
-                f"supported on {self._os} with {self._architecture}"
+                f"The {', '.join(unsupported)} backend(s) are not supported"
+                f"on {self._platform.os} with {self._platform.architecture}"
             )
 
     @property
@@ -481,25 +484,25 @@ class RedisAIBuilder(Builder):
         def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
             return BuildError(f"Failed to format RedisAI dependency path: {reason}")
 
-        if self._os == OperatingSystem.DARWIN:
+        _os, architecture = self._platform
+        if _os == OperatingSystem.DARWIN:
             os_ = "macos"
-        elif self._os == OperatingSystem.LINUX:
+        elif _os == OperatingSystem.LINUX:
             os_ = "linux"
         else:  # pragma: no cover
-            raise fail_to_format(f"Unknown operating system: {self._os}")
-        if self._architecture == Architecture.X64:
+            raise fail_to_format(f"Unknown operating system: {_os}")
+        if architecture == Architecture.X64:
             arch = "x64"
-        elif self._architecture == Architecture.ARM64:
+        elif architecture == Architecture.ARM64:
             arch = "arm64v8"
         else:  # pragma: no cover
-            raise fail_to_format(f"Unknown architecture: {self._architecture}")
+            raise fail_to_format(f"Unknown architecture: {architecture}")
         return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
 
     def _get_deps_to_fetch_for(
         self, device: TDeviceStr
     ) -> t.Tuple[_RAIBuildDependency, ...]:
-        os_ = self._os
-        arch = self._architecture
+        os_, arch = self._platform
         # TODO: It would be nice if the backend version numbers were declared
         #       alongside the python package version numbers so that all of the
         #       dependency versions were declared in single location.
@@ -594,16 +597,13 @@ class RedisAIBuilder(Builder):
             raise BuildError(f"Malformed RedisAI URL: {git_url}")
 
         # clone RedisAI
-        clone_cmd = [
-            self.binary_path("env"),
-            "GIT_LFS_SKIP_SMUDGE=1",
-            "git",
-            "clone",
-        ]
-        if self._platform == (OperatingSystem.DARWIN, Architecture.ARM64):
-            clone_cmd.extend(["--config", "core.autocrlf=true"])
-        clone_cmd.extend(
+        clone_cmd = config_git_command(
+            self._platform,
             [
+                self.binary_path("env"),
+                "GIT_LFS_SKIP_SMUDGE=1",
+                "git",
+                "clone",
                 "--recursive",
                 git_url,
                 "--branch",
@@ -1029,3 +1029,20 @@ def _git(*args: str) -> None:
             raise BuildError(
                 f"Command `{' '.join(cmd)}` failed with exit code {proc.returncode}"
             )
+
+
+def config_git_command(platform: Platform, cmd: t.Sequence[str]) -> t.List[str]:
+    """Modify git commands to include autocrlf when on a platform that needs
+    autocrlf enabled to behave correctly
+    """
+    fail_to_find = ValueError(f"Failed to locate git command in {cmd}")
+    cmd = list(cmd)
+    try:
+        at = cmd.index("git") + 1
+    except ValueError as e:
+        raise fail_to_find from e
+    if at >= len(cmd):
+        raise fail_to_find
+    if platform == Platform(OperatingSystem.DARWIN, Architecture.ARM64):
+        cmd = cmd[:at] + ["--config", "core.autocrlf=true"] + cmd[at:]
+    return cmd
