@@ -114,12 +114,14 @@ with a `name` and `launcher`:
 
 A ``Model`` requires ``RunSettings`` objects. We use the `exp` instance to
 call the factory method ``Experiment.create_run_settings()`` to initialize a ``RunSettings``
-object. Finally, we specify the Python executable to run the script named
-`script.py`:
+object. Finally, we specify the executable `"echo"` to run the executable argument `"Hello World"`:
 
 .. code-block:: python
 
-    settings = exp.create_run_settings(exe="python", exe_args="script.py")
+    settings = exp.create_run_settings(exe="echo", exe_args="Hello World")
+
+.. note::
+    To read more on SmartSim ``RunSettings`` objects, reference the :ref:`RunSettings<run_settings_doc>` documentation.
 
 We now have a ``RunSettings`` instance named `settings` that we can use to create
 a ``Model`` instance that contains all of the information required to launch our application:
@@ -134,6 +136,11 @@ To create an isolated output directory for the ``Model``, invoke ``Experiment.ge
 .. code-block:: python
 
     model = exp.generate(model)
+
+.. note::
+    The ``Experiment.generate()`` step is optional; however, this step organizes the ``Experiment``
+    entity output files into individual entity folders within the ``Experiment`` folder. Continue
+    in the example for information on ``Model`` output generation.
 
 Recall that all entities are launched, monitored and stopped by the ``Experiment`` instance.
 To start ``Model``, invoke ``Experiment.start()`` via the ``Experiment`` instance `exp` with `model` as an
@@ -184,6 +191,13 @@ via `kwargs`.
 For a walkthrough of how to colocate a ``Model``, navigate to the :ref:`Colocated Orchestrator<colocated_orch_doc>` for
 instructions.
 
+For users aiming to **optimize performance**, SmartSim offers the flexibility to specify the
+number of CPUs to which the colocated ``Orchestrator`` should be pinned. This can be achieved using
+the `custom_pinning` argument, which is recognized by both ``Model.colocate_db_uds()`` and
+``Model.colocate_db_tcp()``. The `custom_pinning` argument accepts either a single integer or a
+list of integers. If users want to explore different pinning scenarios, specify a list of integers
+to the `custom_pinning` argument.
+
 .. _files_doc:
 =====
 Files
@@ -198,23 +212,25 @@ prior to the ``Model`` launch via the ``Model.attach_generator_files()`` functio
     Multiple calls to ``Model.attach_generator_files()`` will overwrite previous file configurations
     in the ``Model``.
 
-To attach a file to a ``Model`` for use at runtime, provide one of the following arguments to the
-``Model.attach_generator_files()`` function:
+To setup the run directory for the ``Model``, users should pass the list of files to
+``Model.attach_generator_files()`` using the following arguments:
 
 * `to_copy` (t.Optional[t.List[str]] = None): Files that are copied into the path of the entity.
 * `to_symlink` (t.Optional[t.List[str]] = None): Files that are symlinked into the path of the entity.
 
-To specify a template file in order to programmatically replace specified parameters during generation
-of the ``Model`` directory, pass the following value to the ``Model.attach_generator_files()`` function:
+User-formatted files can be attached using the `to_configure` argument. These files will be modified
+during ``Model`` generation to replace tagged sections in the formatted files with
+values from the `params` initializer argument of the ``Model``:
 
 * `to_configure` (t.Optional[t.List[str]] = None): Designed for text-based ``Model`` input files,
-  "to_configure" is exclusive to the ``Model``. During ``Model`` directory generation, the attached
+  `"to_configure"` is exclusive to the ``Model``. During ``Model`` directory generation, the attached
   files are parsed and specified tagged parameters are replaced with the `params` values that were
   specified in the ``Experiment.create_model()`` factory method of the ``Model``. The default tag is a semicolon
   (e.g., THERMO = ;THERMO;).
 
-In the :ref:`Example<files_example_doc>` subsection, we provide an example using the value `to_configure`
-within ``attach_generator_files()``.
+.. note::
+    In the :ref:`Example<files_example_doc>` subsection, we provide an example using the value `to_configure`
+    within ``attach_generator_files()``.
 
 .. _files_example_doc:
 Example
@@ -224,7 +240,7 @@ of ``Model`` directory generation. This is accomplished using the `params` funct
 the ``Experiment.create_model()`` factory function and the `to_configure` function parameter
 in ``Model.attach_generator_files()``.
 
-In this example, we have a text file named `params_inputs.txt`. Within the text, is the parameter `THERMO`
+In this example, we have a text file named `params_inputs.txt`. Within the text file, is the parameter `THERMO`
 that is required by the application at runtime:
 
 .. code-block:: bash
@@ -240,19 +256,20 @@ In order to have the tagged parameter `;THERMO;` replaced with a usable value at
 
 To encapsulate our application within a ``Model``, we must create an ``Experiment`` instance
 to gain access to the ``Experiment`` factory method that creates the ``Model``.
-Begin by importing the ``Experiment`` module, importing SmartSim `log` module and initializing
+Begin by importing the ``Experiment`` module and initializing
 an ``Experiment``:
 
 .. code-block:: python
 
     from smartsim import Experiment
-    from smartsim.log import get_logger
 
     logger = get_logger("Experiment Log")
     # Initialize the Experiment
     exp = Experiment("getting-started", launcher="auto")
 
-A ``Model`` requires run settings. Create a simple ``RunSettings`` object to specify the path to
+A ``Model`` requires a SmartSim ``RunSettings`` object. A ``RunSettings``
+object specifies the ``Model`` executable (e.g. the full path to a compiled binary) as well as
+executable arguments and launch parameters. Create a simple ``RunSettings`` object to specify the path to
 our application script as an executable argument and the executable to run the script:
 
 .. code-block:: python
@@ -260,13 +277,16 @@ our application script as an executable argument and the executable to run the s
     # Initialize a RunSettings object
     model_settings = exp.create_run_settings(exe="python", exe_args="/path/to/application.py")
 
-Next, initialize a ``Model`` object with ``Experiment.create_model()``
-and pass in the `model_settings` instance:
+.. note::
+    To read more on SmartSim ``RunSettings`` objects, reference the :ref:`RunSettings<run_settings_doc>` documentation.
+
+Next, initialize a ``Model`` object with ``Experiment.create_model()``. Pass in the `model_settings` instance
+and the `params` value:
 
 .. code-block:: python
 
     # Initialize a Model object
-    example_model = exp.create_model("model", model_settings, params={"THERMO":1})
+    example_model = exp.create_model("model_name", model_settings, params={"THERMO":1})
 
 We now have a ``Model`` instance named `example_model`. Attach the above text file
 to the ``Model`` for use at entity runtime. To do so, we use the
@@ -285,10 +305,7 @@ To created an isolated directory for the ``Model`` outputs and configuration fil
 
     exp.generate(example_model)
 
-After invoking ``Experiment.generate()``, the attached generator files will be available for the
-application when ``exp.start(example_model)`` is called.
-
-The contents of `params_inputs.txt` after ``Model`` completion are:
+The contents of `getting-started/model_name/params_inputs.txt` after ``Model`` completion are:
 
 .. code-block:: bash
 
