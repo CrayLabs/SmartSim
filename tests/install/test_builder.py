@@ -314,7 +314,15 @@ def test_valid_platforms():
         pytest.param(
             build.Platform(build.OperatingSystem.DARWIN, build.Architecture.ARM64),
             ["git", "clone", "my-repo"],
-            ["git", "clone", "--config", "core.autocrlf=true", "my-repo"],
+            [
+                "git",
+                "clone",
+                "--config",
+                "core.autocrlf=false",
+                "--config",
+                "core.eol=lf",
+                "my-repo",
+            ],
             id="git-Darwin-Arm64",
         ),
         # Abs path
@@ -339,7 +347,15 @@ def test_valid_platforms():
         pytest.param(
             build.Platform(build.OperatingSystem.DARWIN, build.Architecture.ARM64),
             ["/path/to/git", "clone", "my-repo"],
-            ["/path/to/git", "clone", "--config", "core.autocrlf=true", "my-repo"],
+            [
+                "/path/to/git",
+                "clone",
+                "--config",
+                "core.autocrlf=false",
+                "--config",
+                "core.eol=lf",
+                "my-repo",
+            ],
             id="Abs-Darwin-Arm64",
         ),
     ],

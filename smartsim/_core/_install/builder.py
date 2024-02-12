@@ -1040,5 +1040,9 @@ def config_git_command(plat: Platform, cmd: t.Sequence[str]) -> t.List[str]:
     if where >= len(cmd):
         raise ValueError(f"Failed to locate git command in '{' '.join(cmd)}'")
     if plat == Platform(OperatingSystem.DARWIN, Architecture.ARM64):
-        cmd = cmd[:where] + ["--config", "core.autocrlf=true"] + cmd[where:]
+        cmd = (
+            cmd[:where]
+            + ["--config", "core.autocrlf=false", "--config", "core.eol=lf"]
+            + cmd[where:]
+        )
     return cmd
