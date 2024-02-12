@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
+from enum import Enum
 
 import jinja2
 
@@ -38,13 +39,18 @@ if t.TYPE_CHECKING:
     from smartsim import Experiment
 
 _OutputFormatString = t.Optional[t.Literal["plain_text"]]
-_VerbosityLevelString = t.Literal["info", "debug", "developer"]
+
+
+class Verbosity(str, Enum):
+    INFO = "info"
+    DEBUG = "debug"
+    DEVELOPER = "developer"
 
 
 def render(
     exp: "Experiment",
     manifest: t.Optional[Manifest] = None,
-    verbosity_level: _VerbosityLevelString = "info",
+    verbosity_level: Verbosity = Verbosity.INFO,
     output_format: _OutputFormatString = "plain_text",
 ) -> str:
     """
@@ -54,7 +60,7 @@ def render(
     :param manifest: the manifest to be previewed.
     :type manifest: Manifest
     :param verbosity_level: the verbosity level
-    :type verbosity_level: _VerbosityLevelString
+    :type verbosity_level: Verbosity
     :param output_format: the output format.
     :type output_format: _OutputFormatString
     """
@@ -102,18 +108,15 @@ def _check_output_format(output_format: _OutputFormatString) -> None:
 
 
 def _check_verbosity_level(
-    verbosity_level: _VerbosityLevelString,
-) -> _VerbosityLevelString:
+    verbosity_level: Verbosity,
+) -> Verbosity:
     """
     Check that the given verbosity level is valid.
     """
-    if verbosity_level not in ["info", "debug", "developer"]:
-        raise ValueError("The only valid verbosity level currently available is info")
-
-    if verbosity_level in ("debug", "developer"):
+    if verbosity_level not in (Verbosity.INFO, Verbosity.DEBUG, Verbosity.DEVELOPER):
         logger.warning(
             f"'{verbosity_level}' is an unsupported verbosity level requested.\
-Setting verbosity to: info"
+ Setting verbosity to: {Verbosity.INFO}"
         )
-        return "info"
-    return "info"
+        return Verbosity.INFO
+    return verbosity_level

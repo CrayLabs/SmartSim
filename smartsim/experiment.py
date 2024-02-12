@@ -826,7 +826,7 @@ class Experiment:
         self,
         *args: t.Any,
         output_format: previewrenderer._OutputFormatString = "plain_text",
-        verbosity_level: previewrenderer._VerbosityLevelString = "info",
+        verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
         output_filename: t.Optional[str] = None,
     ) -> None:
         """Preview entity information prior to launch. This method
