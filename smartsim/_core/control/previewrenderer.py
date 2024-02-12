@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 if t.TYPE_CHECKING:
     from smartsim import Experiment
 
-_OutputFormatString = t.Optional[t.Literal["html", "plain_text"]]
+_OutputFormatString = t.Optional[t.Literal["plain_text"]]
 _VerbosityLevelString = t.Literal["info", "debug", "developer"]
 
 
@@ -94,9 +94,9 @@ def _check_output_format(output_format: _OutputFormatString) -> None:
     """
     Check that the output format given is valid.
     """
-    if not output_format in ("html", "plain_text"):
+    if not output_format == "plain_text":
         raise PreviewFormatError(
-            "The only valid output format currently available is html"
+            "The only valid output format currently available is plain_text"
         )
 
 
