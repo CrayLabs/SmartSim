@@ -48,12 +48,6 @@ class Verbosity(str, Enum):
     DEVELOPER = "developer"
 
 
-class Verbosity(str, Enum):
-    INFO = "info"
-    DEBUG = "debug"
-    DEVELOPER = "developer"
-
-
 def render(
     exp: "Experiment",
     manifest: t.Optional[Manifest] = None,
