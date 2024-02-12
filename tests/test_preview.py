@@ -85,50 +85,19 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 
-def test_preview_output_format_html_to_file(test_dir, wlmutils):
-    """Test that an html file is rendered for Experiment preview"""
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_preview_output_format_html"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    filename = "test_preview_output_format_html.html"
-    path = pathlib.Path(test_dir) / filename
-
-    # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
-
-    # Evaluate output
-    assert path.exists()
-    assert path.is_file()
-
-
-def test_preview_model_output_format(test_dir, wlmutils):
+def test_preview_to_file(test_dir, wlmutils, fileutils):
     """
-    Test that an html file is rendered for Model preview
+    Test that if an output_filename is given, a file
+    is rendered for Experiment preview"
     """
     # Prepare entities
-    exp_name = "test_model_preview-html"
     test_launcher = wlmutils.get_test_launcher()
+    exp_name = "test_preview_output_filename"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    model_params = {"port": 6379, "password": "unbreakable_password"}
-    rs1 = RunSettings("bash", "multi_tags_template.sh")
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-
-    hello_world_model = exp.create_model(
-        "echo-hello", run_settings=rs1, params=model_params
-    )
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-
-    filename = "test_model_preview_output_format.html"
+    filename = "test_preview_output_filename.txt"
     path = pathlib.Path(test_dir) / filename
-
     # Execute preview method
-    exp.preview(
-        hello_world_model,
-        spam_eggs_model,
-        output_format="html",
-        output_filename=str(path),
-    )
+    exp.preview(output_format="plain_text", output_filename=str(path))
 
     # Evaluate output
     assert path.exists()
@@ -670,41 +639,6 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert cm_name1 in output
 
 
-def test_preview_models_and_ensembles_html_format(test_dir, wlmutils):
-    """
-    Test preview of ensmebels and models in html format
-    """
-    # Prepare entities
-    exp_name = "test-model-and-ensemble"
-    test_dir = pathlib.Path(test_dir) / exp_name
-    test_dir.mkdir(parents=True)
-    test_launcher = wlmutils.get_test_launcher()
-    exp = Experiment(exp_name, exp_path=str(test_dir), launcher=test_launcher)
-
-    rs1 = exp.create_run_settings("echo", ["hello", "world"])
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-
-    hello_world_model = exp.create_model("echo-hello", run_settings=rs1)
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-    hello_ensemble = exp.create_ensemble("echo-ensemble", run_settings=rs1, replicas=3)
-
-    exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
-
-    preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
-
-    # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, output_format="html")
-
-    # Evaluate output
-    assert "Models" in output
-    assert "echo-hello" in output
-    assert "echo-spam" in output
-
-    assert "Ensembles" in output
-    assert "echo-ensemble_1" in output
-    assert "echo-ensemble_2" in output
-
-
 def test_output_format_error():
     """
     Test error when invalid ouput format is given.
@@ -717,5 +651,6 @@ def test_output_format_error():
     with pytest.raises(PreviewFormatError) as ex:
         exp.preview(output_format="hello")
     assert (
-        "The only valid output format currently available is html" in ex.value.args[0]
+        "The only valid output format currently available is plain_text"
+        in ex.value.args[0]
     )
