@@ -58,6 +58,11 @@ jobs:
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
         py_v: ['3.8', '3.9', '3.10', '3.11'] # Python versions
+        exclude:
+          - os: macos-14
+            py_v: 3.8
+          - os: macos-14
+            py_v: 3.9
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
