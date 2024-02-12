@@ -95,7 +95,7 @@ def _check_output_format(output_format: _OutputFormatString) -> None:
     """
     Check that the output format given is valid.
     """
-    if not output_format in ("plain_text"):
+    if not output_format == "plain_text":
         raise PreviewFormatError(
             "The only valid output format currently available is plain_text"
         )
