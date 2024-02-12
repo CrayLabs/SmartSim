@@ -658,7 +658,7 @@ def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
     # Create SmartSim model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
     # Create 2nd SmartSim model
-    smartsim_model_2 = exp.create_model("smartsim_model", run_settings)
+    smartsim_model_2 = exp.create_model("smartsim_model_2", run_settings)
     # Create the script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
 
@@ -670,7 +670,7 @@ def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
         devices_per_node=test_num_gpus,
         first_device=0,
     )
-
+    
     # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_script()
     with pytest.raises(SSUnsupportedError) as ex:
         ensemble.add_script(
@@ -691,7 +691,7 @@ def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
         first_device=0,
     )
 
-    # # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_function()
+    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_function()
     with pytest.raises(SSUnsupportedError) as ex:
         ensemble.add_function(
             "test_func",

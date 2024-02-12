@@ -887,7 +887,7 @@ def test_db_model_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
 
     # Create ensemble
     smartsim_ensemble = exp.create_ensemble(
-        "smartsim_model", run_settings=run_settings, replicas=2
+        "smartsim_ensemble", run_settings=run_settings, replicas=2
     )
 
     # Create Model
