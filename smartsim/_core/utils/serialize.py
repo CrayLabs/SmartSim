@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -82,7 +82,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         manifest_dict = {
             "schema info": {
                 "schema_name": "entity manifest",
-                "version": "0.0.2",
+                "version": "0.0.3",
             },
             "experiment": {
                 "name": manifest.metadata.exp_name,

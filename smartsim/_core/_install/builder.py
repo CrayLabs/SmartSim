@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@
 
 import concurrent.futures
 import enum
+import itertools
 import os
 import platform
 import re
@@ -44,12 +45,10 @@ from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
 
-# NOTE: This will be imported by setup.py and hence no
-#       smartsim related items should be imported into
-#       this file.
+# NOTE: This will be imported by setup.py and hence no smartsim related
+# items should be imported into this file.
 
-# TODO:
-#   - check cmake version and use system if possible to avoid conflicts
+# TODO: check cmake version and use system if possible to avoid conflicts
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 TDeviceStr = t.Literal["cpu", "gpu"]
@@ -84,6 +83,7 @@ class BuildError(Exception):
 
 class Architecture(enum.Enum):
     X64 = ("x86_64", "amd64")
+    ARM64 = ("arm64",)
 
     @classmethod
     def from_str(cls, string: str, /) -> "Architecture":
@@ -336,12 +336,14 @@ class _RAIBuildDependency(ABC):
 
     @property
     @abstractmethod
-    def __rai_dependency_name__(self) -> str:
-        ...
+    def __rai_dependency_name__(self) -> str: ...
 
     @abstractmethod
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
-        ...
+    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
+
+    @staticmethod
+    @abstractmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]: ...
 
 
 def _place_rai_dep_at(
@@ -368,6 +370,8 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
+        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
+        architecture: Architecture = Architecture.from_str(platform.machine()),
         build_env: t.Optional[t.Dict[str, t.Any]] = None,
         torch_dir: str = "",
         libtf_dir: str = "",
@@ -378,7 +382,10 @@ class RedisAIBuilder(Builder):
         verbose: bool = False,
     ) -> None:
         super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
+
         self.rai_install_path: t.Optional[Path] = None
+        self._os = _os
+        self._architecture = architecture
 
         # convert to int for RAI build script
         self._torch = build_torch
@@ -387,10 +394,25 @@ class RedisAIBuilder(Builder):
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
-        # TODO: It might be worth making these constructor args so that users
-        #       of this class can configure exactly _what_ they are building.
-        self._os = OperatingSystem.from_str(platform.system())
-        self._architecture = Architecture.from_str(platform.machine())
+        # Sanity checks
+        self._validate_platform()
+
+    def _validate_platform(self) -> None:
+        platform_ = (self._os, self._architecture)
+        unsupported = []
+        if platform_ not in _DLPackRepository.supported_platforms():
+            unsupported.append("DLPack")
+        if self.fetch_tf and (platform_ not in _TFArchive.supported_platforms()):
+            unsupported.append("Tensorflow")
+        if self.fetch_onnx and (platform_ not in _ORTArchive.supported_platforms()):
+            unsupported.append("ONNX")
+        if self.fetch_torch and (platform_ not in _PTArchive.supported_platforms()):
+            unsupported.append("PyTorch")
+        if unsupported:
+            raise BuildError(
+                f"The {', '.join(unsupported)} backend(s) are not "
+                f"supported on {self._os} with {self._architecture}"
+            )
 
     @property
     def rai_build_path(self) -> Path:
@@ -438,6 +460,8 @@ class RedisAIBuilder(Builder):
             raise fail_to_format(f"Unknown operating system: {self._os}")
         if self._architecture == Architecture.X64:
             arch = "x64"
+        elif self._architecture == Architecture.ARM64:
+            arch = "arm64v8"
         else:  # pragma: no cover
             raise fail_to_format(f"Unknown architecture: {self._architecture}")
         return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
@@ -452,13 +476,18 @@ class RedisAIBuilder(Builder):
         #       dependency versions were declared in single location.
         #       Unfortunately importing into this module is non-trivial as it
         #       is used as script in the SmartSim `setup.py`.
-        fetchable_deps: t.Sequence[t.Tuple[bool, _RAIBuildDependency]] = (
-            (True, _DLPackRepository("v0.5_RAI")),
-            (self.fetch_torch, _PTArchive(os_, device, "2.0.1")),
-            (self.fetch_tf, _TFArchive(os_, arch, device, "2.13.1")),
-            (self.fetch_onnx, _ORTArchive(os_, device, "1.16.3")),
-        )
-        return tuple(dep for should_fetch, dep in fetchable_deps if should_fetch)
+
+        # DLPack is always required
+        fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
+        if self.fetch_torch:
+            pt_dep = _choose_pt_variant(os_)
+            fetchable_deps.append(pt_dep(arch, device, "2.0.1"))
+        if self.fetch_tf:
+            fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
+        if self.fetch_onnx:
+            fetchable_deps.append(_ORTArchive(os_, device, "1.16.3"))
+
+        return tuple(fetchable_deps)
 
     def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
@@ -680,8 +709,7 @@ def _threaded_map(fn: t.Callable[[_T], _U], items: t.Iterable[_T]) -> t.Sequence
 class _WebLocation(ABC):
     @property
     @abstractmethod
-    def url(self) -> str:
-        ...
+    def url(self) -> str: ...
 
 
 class _WebGitRepository(_WebLocation):
@@ -700,6 +728,14 @@ class _WebGitRepository(_WebLocation):
 @dataclass(frozen=True)
 class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
     version: str
+
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return (
+            (OperatingSystem.LINUX, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.ARM64),
+        )
 
     @property
     def url(self) -> str:
@@ -735,8 +771,7 @@ class _ExtractableWebArchive(_WebArchive, ABC):
     @abstractmethod
     def _extract_download(
         self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def extract(self, target: t.Union[str, "os.PathLike[str]"]) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -760,30 +795,20 @@ class _WebZip(_ExtractableWebArchive):
             zip_file.extractall(target)
 
 
-@t.final
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
-    os_: OperatingSystem
+    architecture: Architecture
     device: TDeviceStr
     version: str
 
-    @property
-    def url(self) -> str:
-        if self.os_ == OperatingSystem.LINUX:
-            if self.device == "gpu":
-                pt_build = "cu117"
-            else:
-                pt_build = "cpu"
-            # pylint: disable-next=line-too-long
-            libtorch_arch = f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
-        elif self.os_ == OperatingSystem.DARWIN:
-            if self.device == "gpu":
-                raise BuildError("RedisAI does not currently support GPU on Macos")
-            pt_build = "cpu"
-            libtorch_arch = f"libtorch-macos-{self.version}.zip"
-        else:
-            raise BuildError(f"Unexpected OS for the PT Archive: {self.os_}")
-        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_arch}"
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        # TODO: This will need to be revisited if the inheritance tree gets deeper
+        return tuple(
+            itertools.chain.from_iterable(
+                var.supported_platforms() for var in _PTArchive.__subclasses__()
+            )
+        )
 
     @property
     def __rai_dependency_name__(self) -> str:
@@ -798,12 +823,79 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
 
 
 @t.final
+class _PTArchiveLinux(_PTArchive):
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return ((OperatingSystem.LINUX, Architecture.X64),)
+
+    @property
+    def url(self) -> str:
+        if self.device == "gpu":
+            pt_build = "cu117"
+        else:
+            pt_build = "cpu"
+        # pylint: disable-next=line-too-long
+        libtorch_archive = (
+            f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
+        )
+        return f"https://download.pytorch.org/libtorch/{pt_build}/{libtorch_archive}"
+
+
+@t.final
+class _PTArchiveMacOSX(_PTArchive):
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return (
+            (OperatingSystem.DARWIN, Architecture.ARM64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+        )
+
+    @property
+    def url(self) -> str:
+        if self.device == "gpu":
+            raise BuildError("RedisAI does not currently support GPU on Mac OSX")
+        if self.architecture == Architecture.X64:
+            pt_build = "cpu"
+            libtorch_archive = f"libtorch-macos-{self.version}.zip"
+            root_url = "https://download.pytorch.org/libtorch"
+            return f"{root_url}/{pt_build}/{libtorch_archive}"
+        if self.architecture == Architecture.ARM64:
+            libtorch_archive = f"libtorch-macos-arm64-{self.version}.zip"
+            # pylint: disable-next=line-too-long
+            root_url = (
+                "https://github.com/CrayLabs/ml_lib_builder/releases/download/v0.1/"
+            )
+            return f"{root_url}/{libtorch_archive}"
+
+        raise BuildError("Unsupported architecture for Pytorch: {self.architecture}")
+
+
+def _choose_pt_variant(
+    os_: OperatingSystem,
+) -> t.Union[t.Type[_PTArchiveLinux], t.Type[_PTArchiveMacOSX]]:
+
+    if os_ == OperatingSystem.DARWIN:
+        return _PTArchiveMacOSX
+    if os_ == OperatingSystem.LINUX:
+        return _PTArchiveLinux
+
+    raise BuildError(f"Unsupported OS for PyTorch: {os_}")
+
+
+@t.final
 @dataclass(frozen=True)
 class _TFArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
     architecture: Architecture
     device: TDeviceStr
     version: str
+
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return (
+            (OperatingSystem.LINUX, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+        )
 
     @property
     def url(self) -> str:
@@ -846,6 +938,13 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
     device: TDeviceStr
     version: str
+
+    @staticmethod
+    def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
+        return (
+            (OperatingSystem.LINUX, Architecture.X64),
+            (OperatingSystem.DARWIN, Architecture.X64),
+        )
 
     @property
     def url(self) -> str:

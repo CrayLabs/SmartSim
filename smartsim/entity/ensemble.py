@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -357,7 +357,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         backend: str,
-        model: t.Optional[str] = None,
+        model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,

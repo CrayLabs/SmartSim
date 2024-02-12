@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@
 
 import functools
 import logging
-import os
 import pathlib
 import sys
 import threading
@@ -39,9 +38,9 @@ from smartsim._core.config import CONFIG
 
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
-DEFAULT_LOG_FORMAT: t.Final[
-    str
-] = "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+DEFAULT_LOG_FORMAT: t.Final[str] = (
+    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+)
 EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 
 # configure colored loggs
@@ -63,9 +62,9 @@ if t.TYPE_CHECKING:
     _PR = ParamSpec("_PR")
 
 
-def _get_log_level() -> str:
-    """Get the logging level based on environment variable
-       SMARTSIM_LOG_LEVEL.  If not set, default to info.
+def _translate_log_level(user_log_level: str = "info") -> str:
+    """Translate value of CONFIG.log_level to one
+    accepted as ``level`` option by Python's logging module.
 
        Logging levels
          - quiet: Just shows errors and warnings
@@ -74,18 +73,18 @@ def _get_log_level() -> str:
          - developer: Shows everything happening during execution
                       extremely verbose logging.
 
+    :param user_log_level: log level specified by user, defaults to info
+    :type user_log_level: str
     :returns: Log level for coloredlogs
     :rtype: str
     """
-    log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info").lower()
-    if log_level == "quiet":
+    user_log_level = user_log_level.lower()
+    if user_log_level in ["info", "debug", "warning"]:
+        return user_log_level
+    if user_log_level == "quiet":
         return "warning"
-    if log_level == "info":
-        return "info"
-    if log_level == "debug":
-        return "debug"
     # extremely verbose logging used internally
-    if log_level == "developer":
+    if user_log_level == "developer":
         return "debug"
     return "info"
 
@@ -205,7 +204,7 @@ def get_logger(
     """
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file without prefix.
-    user_log_level = _get_log_level()
+    user_log_level = CONFIG.log_level
     if user_log_level != "developer":
         name = "SmartSim"
 
@@ -214,7 +213,7 @@ def get_logger(
     if log_level:
         logger.setLevel(log_level)
     else:
-        log_level = user_log_level
+        log_level = _translate_log_level(user_log_level)
     coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
     return logger
 

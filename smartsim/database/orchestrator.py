@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -573,7 +573,7 @@ class Orchestrator(EntityList[DBNode]):
         """
         self.set_db_conf("proto-max-bulk-len", str(size))
 
-    def set_db_conf(self, key: str, value: t.Union[int, str]) -> None:
+    def set_db_conf(self, key: str, value: str) -> None:
         """Set any valid configuration at runtime without the need
         to restart the database. All configuration parameters
         that are set are immediately loaded by the database and

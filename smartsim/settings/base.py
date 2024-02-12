@@ -1,5 +1,5 @@
 # BSD 2-Clause License #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@ import typing as t
 from smartsim.settings.containers import Container
 
 from .._core.utils.helpers import expand_exe_path, fmt_dict, is_valid_cmd
+from ..entity.dbobject import DBModel, DBScript
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -96,7 +97,23 @@ class RunSettings(SettingsBase):
         self.container = container
         self._run_command = run_command
         self.in_batch = False
-        self.colocated_db_settings: t.Optional[t.Dict[str, str]] = None
+        self.colocated_db_settings: t.Optional[
+            t.Dict[
+                str,
+                t.Union[
+                    bool,
+                    int,
+                    str,
+                    None,
+                    t.List[str],
+                    t.Iterable[t.Union[int, t.Iterable[int]]],
+                    t.List[DBModel],
+                    t.List[DBScript],
+                    t.Dict[str, t.Union[int, None]],
+                    t.Dict[str, str],
+                ],
+            ]
+        ] = None
 
     @property
     def exe_args(self) -> t.Union[str, t.List[str]]:

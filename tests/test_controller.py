@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,7 @@ class MockStep(Step):
     def _create_unique_name(name):
         return name
 
-    def add_to_batch(self, step):
-        ...
+    def add_to_batch(self, step): ...
 
     def get_launch_cmd(self):
         return []

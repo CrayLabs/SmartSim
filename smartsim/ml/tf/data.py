@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,9 @@ from tensorflow import keras
 
 from smartsim.ml import DataDownloader
 
+if t.TYPE_CHECKING:
+    import numpy.typing as npt
+
 
 class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
     def __getitem__(
@@ -60,7 +63,9 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
+    def _data_generation(
+        self, indices: "npt.NDArray[t.Any]"
+    ) -> t.Tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
         # Initialization
         if self.samples is None:
             raise ValueError("No samples loaded for data generation")
@@ -68,13 +73,13 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         xval = self.samples[indices]
 
         if self.need_targets:
-            yval = self.targets[indices]
+            yval = t.cast("npt.NDArray[t.Any]", self.targets)[indices]
             if self.num_classes is not None:
                 yval = keras.utils.to_categorical(yval, num_classes=self.num_classes)
         elif self.autoencoding:
             yval = xval
         else:
-            return xval
+            return xval  # type: ignore[no-any-return]
 
         return xval, yval
 

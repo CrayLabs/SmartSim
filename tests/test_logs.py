@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -109,14 +109,35 @@ def test_add_exp_loggers(test_dir):
     assert err_file.is_file()
 
 
-def test_get_logger(test_dir: str, turn_on_tm):
+def test_get_logger(test_dir: str, turn_on_tm, monkeypatch):
     """Ensure the correct logger type is instantiated"""
+    monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
     logger = smartsim.log.get_logger("SmartSimTest", "INFO")
     assert isinstance(logger, smartsim.log.ContextAwareLogger)
 
 
-def test_exp_logs(test_dir: str, turn_on_tm):
+@pytest.mark.parametrize(
+    "input_level,exp_level",
+    [
+        pytest.param("INFO", "info", id="lowercasing only, INFO"),
+        pytest.param("info", "info", id="input back, info"),
+        pytest.param("WARNING", "warning", id="lowercasing only, WARNING"),
+        pytest.param("warning", "warning", id="input back, warning"),
+        pytest.param("QUIET", "warning", id="lowercasing only, QUIET"),
+        pytest.param("quiet", "warning", id="translation back, quiet"),
+        pytest.param("DEVELOPER", "debug", id="lowercasing only, DEVELOPER"),
+        pytest.param("developer", "debug", id="translation back, developer"),
+    ],
+)
+def test_translate_log_level(input_level: str, exp_level: str, turn_on_tm):
+    """Ensure the correct logger type is instantiated"""
+    translated_level = smartsim.log._translate_log_level(input_level)
+    assert exp_level == translated_level
+
+
+def test_exp_logs(test_dir: str, turn_on_tm, monkeypatch):
     """Ensure that experiment loggers are added when context info exists"""
+    monkeypatch.setenv("SMARTSIM_LOG_LEVEL", "developer")
     test_dir = pathlib.Path(test_dir)
     test_dir.mkdir(parents=True, exist_ok=True)
 
@@ -162,7 +183,7 @@ def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
     test_dir = pathlib.Path(test_dir)
     test_dir.mkdir(parents=True, exist_ok=True)
 
-    original_ctx_value = "some value"
+    original_ctx_value = test_dir / pathlib.Path("some value")
     ctx_var = smartsim.log.ctx_exp_path
     token = ctx_var.set(original_ctx_value)
 

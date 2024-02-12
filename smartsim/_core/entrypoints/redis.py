@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023 Hewlett Packard Enterprise
+# Copyright (c) 2021-2024 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -79,8 +79,7 @@ def print_summary(
     cmd: t.List[str], network_interface: str, shard_data: LaunchedShardData
 ) -> None:
     print(
-        textwrap.dedent(
-            f"""\
+        textwrap.dedent(f"""\
             ----------- Running Command ----------
             COMMAND: {' '.join(cmd)}
             IPADDRESS: {shard_data.hostname}
@@ -90,8 +89,7 @@ def print_summary(
 
             --------------- Output ---------------
 
-            """
-        ),
+            """),
         flush=True,
     )
 

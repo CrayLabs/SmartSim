@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -138,6 +138,7 @@ def create_tf_cnn():
 
 def save_torch_cnn(path, file_name):
     n = PyTorchNet()
+    n.eval()
     example_forward_input = torch.rand(1, 1, 28, 28)
     module = torch.jit.trace(n, example_forward_input)
     torch.jit.save(module, path + "/" + file_name)
