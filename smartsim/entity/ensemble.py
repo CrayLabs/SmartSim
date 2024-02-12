@@ -432,7 +432,7 @@ class Ensemble(EntityList[Model]):
         )
         if dupe:
             raise SSUnsupportedError(
-                f'An ML model with name "{db_model.name}" already exists'
+                f'An ML Model with name "{db_model.name}" already exists'
             )
         self._db_models.append(db_model)
         for entity in self.models:
