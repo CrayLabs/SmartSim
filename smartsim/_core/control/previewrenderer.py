@@ -114,7 +114,7 @@ def _check_verbosity_level(
     """
     if verbosity_level not in (Verbosity.INFO, Verbosity.DEBUG, Verbosity.DEVELOPER):
         logger.warning(
-            f"'{verbosity_level}' is an unsupported verbosity level requested.\
+            f"'{verbosity_level}' is an unsupported verbosity level.\
  Setting verbosity to: {Verbosity.INFO}"
         )
         return Verbosity.INFO
