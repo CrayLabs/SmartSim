@@ -129,44 +129,19 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     assert str(orc.db_nodes) in output
 
 
-def test_preview_output_format_html_to_file(test_dir, wlmutils):
-    """Test that an html file is rendered for Experiment preview"""
+def test_preview_to_file(test_dir, wlmutils, fileutils):
+    """
+    Test that if an output_filename is given, a file
+    is rendered for Experiment preview"
+    """
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_preview_output_format_html"
+    exp_name = "test_preview_output_filename"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    filename = "test_preview_output_format_html.html"
+    filename = "test_preview_output_filename.txt"
     path = pathlib.Path(test_dir) / filename
-
     # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
-
-    # Evaluate output
-    assert path.exists()
-    assert path.is_file()
-
-    # Execute preview method
-    exp.preview(output_format="html", output_filename=str(path))
-
-
-def test_orchestrator_preview_output_format_html(test_dir, wlmutils, choose_host):
-    """Test that an html file is rendered for Orchestrator preview"""
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    exp_name = "test_orchestrator_preview_output_format_html"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    orc = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-    )
-    filename = "test_orchestrator_preview_output_format_html.html"
-    path = pathlib.Path(test_dir) / filename
-
-    # Execute preview method
-    exp.preview(orc, output_format="html", output_filename=str(path))
+    exp.preview(output_format="plain_text", output_filename=str(path))
 
     # Evaluate output
     assert path.exists()
@@ -185,5 +160,6 @@ def test_output_format_error():
     with pytest.raises(PreviewFormatError) as ex:
         exp.preview(output_format="hello")
     assert (
-        "The only valid output format currently available is html" in ex.value.args[0]
+        "The only valid output format currently available is plain_text"
+        in ex.value.args[0]
     )
