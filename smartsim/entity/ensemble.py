@@ -422,7 +422,14 @@ class Ensemble(EntityList[Model]):
             inputs=inputs,
             outputs=outputs,
         )
-        dupe = next((db_model.name for ensemble_ml_model in self._db_models if ensemble_ml_model.name == db_model.name), None)
+        dupe = next(
+            (
+                db_model.name
+                for ensemble_ml_model in self._db_models
+                if ensemble_ml_model.name == db_model.name
+            ),
+            None,
+        )
         if dupe:
             raise SSUnsupportedError(
                 f'A ML model with name "{db_model.name}" already exists'
@@ -476,7 +483,14 @@ class Ensemble(EntityList[Model]):
             devices_per_node=devices_per_node,
             first_device=first_device,
         )
-        dupe = next((db_script.name for ensemble_script in self._db_scripts if ensemble_script.name == db_script.name), None)
+        dupe = next(
+            (
+                db_script.name
+                for ensemble_script in self._db_scripts
+                if ensemble_script.name == db_script.name
+            ),
+            None,
+        )
         if dupe:
             raise SSUnsupportedError(
                 f'A Script with name "{db_script.name}" already exists'
@@ -527,7 +541,14 @@ class Ensemble(EntityList[Model]):
             devices_per_node=devices_per_node,
             first_device=first_device,
         )
-        dupe = next((db_script.name for ensemble_script in self._db_scripts if ensemble_script.name == db_script.name), None)
+        dupe = next(
+            (
+                db_script.name
+                for ensemble_script in self._db_scripts
+                if ensemble_script.name == db_script.name
+            ),
+            None,
+        )
         if dupe:
             raise SSUnsupportedError(
                 f'A Script with name "{db_script.name}" already exists'
@@ -552,7 +573,14 @@ class Ensemble(EntityList[Model]):
         :type db_models: t.List[DBModel]
         """
         for add_ml_model in db_models:
-            dupe = next((db_model.name for db_model in model.db_models if db_model.name == add_ml_model.name), None)
+            dupe = next(
+                (
+                    db_model.name
+                    for db_model in model.db_models
+                    if db_model.name == add_ml_model.name
+                ),
+                None,
+            )
             if dupe:
                 raise SSUnsupportedError(
                     f'An ML Model with name "{add_ml_model.name}" already exists'
@@ -575,7 +603,14 @@ class Ensemble(EntityList[Model]):
         :type db_scripts: t.List[DBScript]
         """
         for add_script in db_scripts:
-            dupe = next((add_script.name for db_script in model._db_scripts if db_script.name == add_script.name), None)
+            dupe = next(
+                (
+                    add_script.name
+                    for db_script in model.db_scripts
+                    if db_script.name == add_script.name
+                ),
+                None,
+            )
             if dupe:
                 raise SSUnsupportedError(
                     f'A Script with name "{add_script.name}" already exists'

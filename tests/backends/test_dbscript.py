@@ -670,7 +670,7 @@ def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
         devices_per_node=test_num_gpus,
         first_device=0,
     )
-    
+
     # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_script()
     with pytest.raises(SSUnsupportedError) as ex:
         ensemble.add_script(
