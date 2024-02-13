@@ -108,7 +108,6 @@ jobs:
           python -m pip install .[dev,ml]
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: matrix.os != 'macos-14'
         run: smart build --device cpu --onnx -v
 
       - name: Run mypy
