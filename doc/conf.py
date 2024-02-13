@@ -52,7 +52,8 @@ extensions = [
     'breathe',
     'nbsphinx',
     'sphinx_copybutton',
-    'sphinx_tabs.tabs'
+    'sphinx_tabs.tabs',
+    'sphinx_panels'
 ]
 
 suppress_warnings = ['autosectionlabel']

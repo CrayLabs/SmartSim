@@ -101,6 +101,10 @@ Example
 In this example, we provide a demonstration of how to initialize and launch a ``Model``
 within an ``Experiment`` workflow.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+
 All workflow entities are initialized through the :ref:`Experiment API<experiment_api>`.
 Consequently, initializing a SmartSim ``Experiment`` is a prerequisite for ``Model``
 initialization.
@@ -109,21 +113,20 @@ To initialize an instance of the ``Experiment`` class, import the SmartSim
 ``Experiment`` module and invoke the ``Experiment`` constructor
 with a `name` and `launcher`:
 
-.. code-block:: python
-
-    from smartsim import Experiment
-
-    # Init Experiment and specify to launch locally in this example
-    exp = Experiment(name="getting-started", launcher="local")
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+  :language: python
+  :linenos:
+  :lines: 1-4
 
 A ``Model`` requires ``RunSettings`` objects to specify how the ``Model`` should be
 executed within the workflow. We use the ``Experiment`` instance `exp` to
 call the factory method ``Experiment.create_run_settings()`` to initialize a ``RunSettings``
 object. Finally, we specify the executable `"echo"` to run the executable argument `"Hello World"`:
 
-.. code-block:: python
-
-    model_settings = exp.create_run_settings(exe="echo", exe_args="Hello World")
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+    :language: python
+    :linenos:
+    :lines: 6-7
 
 .. note::
     For more information on ``RunSettings`` objects, reference the :ref:`RunSettings<run_settings_doc>` documentation.
@@ -132,16 +135,18 @@ We now have a ``RunSettings`` instance named `model_settings` that contains all 
 information required to launch our application. Pass a `name` and the run settings instance
 to the ``create_model`` factory method:
 
-.. code-block:: python
-
-    model_instance = exp.create_model(name="example-model", run_settings=settings)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+  :language: python
+  :linenos:
+  :lines: 9-10
 
 To create an isolated output directory for the ``Model``, invoke ``Experiment.generate()`` on the
 ``Model`` `model_instance`:
 
-.. code-block:: python
-
-    exp.generate(model_instance)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+  :language: python
+  :linenos:
+  :lines: 12-13
 
 .. note::
     The ``Experiment.generate()`` step is optional; however, this step organizes the ``Experiment``
@@ -152,9 +157,10 @@ To create an isolated output directory for the ``Model``, invoke ``Experiment.ge
 All entities are launched, monitored and stopped by the ``Experiment`` instance.
 To start the ``Model``, invoke ``Experiment.start()`` on `model_instance`:
 
-.. code-block:: python
-
-    exp.start(model_instance)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+  :language: python
+  :linenos:
+  :lines: 15-16
 
 When the ``Experiment`` Python driver script is executed, two files from the `model_instance` will be created
 in the Experiment working directory:
@@ -246,6 +252,10 @@ of ``Model`` directory generation. This is accomplished using the `params` funct
 ``Experiment.create_model()`` and the `to_configure` function parameter
 in ``Model.attach_generator_files()``.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+
 In this example, we have a text file named `params_inputs.txt`. Within the text file, is the parameter `THERMO`
 that is required by the ``Model`` application at runtime:
 
@@ -263,23 +273,20 @@ In order to have the tagged parameter `;THERMO;` replaced with a usable value at
 To encapsulate our application within a ``Model``, we must first create an ``Experiment`` instance.
 Begin by importing the ``Experiment`` module and initializing an ``Experiment``:
 
-.. code-block:: python
-
-    from smartsim import Experiment
-
-    # Initialize the Experiment and set the launcher to auto
-    exp = Experiment("getting-started", launcher="auto")
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+  :language: python
+  :linenos:
+  :lines: 1-4
 
 A SmartSim ``Model`` requires a ``RunSettings`` object to
 specify the ``Model`` executable (e.g. the full path to a compiled binary) as well as
 executable arguments and launch parameters. Create a simple ``RunSettings`` object
-and specify the path to the application script as an executable argument (`exe_args`) and the
-executable (`exe`) to run the script:
+and specify the path to the executable script as an executable argument (`exe_args`):
 
-.. code-block:: python
-
-    # Initialize a RunSettings object
-    model_settings = exp.create_run_settings(exe="python", exe_args="/path/to/application.py")
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+  :language: python
+  :linenos:
+  :lines: 6-7
 
 .. note::
     To read more on SmartSim ``RunSettings`` objects, reference the :ref:`RunSettings<run_settings_doc>` documentation.
@@ -287,28 +294,28 @@ executable (`exe`) to run the script:
 Next, initialize a ``Model`` object via ``Experiment.create_model()``. Pass in the `model_settings` instance
 and the `params` value:
 
-.. code-block:: python
-
-    # Initialize a Model object
-    model_instance = exp.create_model("model_name", model_settings, params={"THERMO":1})
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+  :language: python
+  :linenos:
+  :lines: 9-10
 
 We now have a ``Model`` instance named `model_instance`. Attach the text file, `params_inputs.txt`,
 to the ``Model`` for use at entity runtime. To do so, use the
 ``Model.attach_generator_files()`` function and specify the `to_configure`
 parameter with the path to the text file, `params_inputs.txt`:
 
-.. code-block:: python
-
-    # Attach the file to the Model instance
-    model_instance.attach_generator_files(to_configure="path/to/params_inputs.txt")
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+  :language: python
+  :linenos:
+  :lines: 12-13
 
 To created an isolated directory for the ``Model`` outputs and configuration files, invoke ``Experiment.generate()``
 on `model_instance` as an input parameter:
 
-.. code-block:: python
-
-    # Store model_instance outputs within the Experiment directory named getting-started
-    exp.generate(model_instance)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+  :language: python
+  :linenos:
+  :lines: 15-16
 
 The contents of `getting-started/model_name/params_inputs.txt` at runtime are:
 
@@ -394,6 +401,10 @@ Example: Attach an in-memory ML Model
 This example demonstrates how to attach an in-memory ML model to a SmartSim ``Model``
 to load into an ``Orchestrator`` at ``Model`` runtime.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
+
 .. note::
     This example assumes:
 
@@ -405,32 +416,20 @@ to load into an ``Orchestrator`` at ``Model`` runtime.
 The ML model must be defined using one of the supported ML frameworks. For the purpose of the example,
 we define a Keras CNN in the ``Experiment`` driver script:
 
-.. code-block:: python
-
-    def create_tf_cnn():
-        """Create an in-memory Keras CNN for example purposes
-
-        """
-        from smartsim.ml.tf import serialize_model
-        n = Net()
-        input_shape = (3,3,1)
-        inputs = Input(input_shape)
-        outputs = n(inputs)
-        model = keras.Model(inputs=inputs, outputs=outputs, name=n.name)
-
-        return serialize_model(model)
-
-    # Get and save TF model
-    model, inputs, outputs = create_tf_cnn()
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
+  :language: python
+  :linenos:
+  :lines: 14-28
 
 **Attach the ML model to a SmartSim Model**
 
 Assuming an initialized ``Model`` named `smartsim_model` exists, we add the in-memory TensorFlow model using
 the ``Model.add_ml_model()`` function and specify the in-memory ML model to the function parameter `model`:
 
-.. code-block:: python
-
-    smartsim_model.add_ml_model(name="cnn", backend="TF", model=model, device="GPU", devices_per_node=2, first_device=0, inputs=inputs, outputs=outputs)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
+  :language: python
+  :linenos:
+  :lines: 39-40
 
 In the above ``smartsim_model.add_ml_model()`` code snippet, we pass in the following arguments:
 
@@ -462,6 +461,10 @@ to load into an ``Orchestrator`` at ``Model`` runtime.
     SmartSim supports loading ML models from file to standalone ``Orchestrators``.
     This feature is **not** supported for colocated ``Orchestrators``.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
+
 .. note::
     This example assumes:
 
@@ -474,32 +477,20 @@ The ML model must be defined using one of the supported ML frameworks. For the p
 we define the function `save_tf_cnn()` that saves a Keras CNN to a file named `model.pb` located in our
 ``Experiment`` path:
 
-.. code-block:: python
-
-    def save_tf_cnn(path, file_name):
-        """Create a Keras CNN and save to file for example purposes"""
-        from smartsim.ml.tf import freeze_model
-
-        n = Net()
-        input_shape = (3, 3, 1)
-        n.build(input_shape=(None, *input_shape))
-        inputs = Input(input_shape)
-        outputs = n(inputs)
-        model = keras.Model(inputs=inputs, outputs=outputs, name=n.name)
-
-        return freeze_model(model, path, file_name)
-
-    # Get and save TF model
-    model_file, inputs, outputs = save_tf_cnn(model_dir, "model.pb")
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
+  :language: python
+  :linenos:
+  :lines: 14-25, 35-37
 
 **Attach the ML model to a SmartSim Model**
 
 Assuming an initialized ``Model`` named `smartsim_model` exists, we add the TensorFlow model using
 the ``Model.add_ml_model()`` function and specify the TensorFlow model path to the parameter `model_path`:
 
-.. code-block:: python
-
-    smartsim_model.add_ml_model(name="cnn", backend="TF", model_path=model_file, device="GPU", devices_per_node=2, first_device=0, inputs=inputs, outputs=outputs)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
+  :language: python
+  :linenos:
+  :lines: 39-40
 
 In the above ``smartsim_model.add_ml_model()`` code snippet, we pass in the following arguments:
 
@@ -572,6 +563,10 @@ Example: Loading a in-memory TorchScript function
 This example walks through the steps of instructing SmartSim to load an in-memory TorchScript function
 to a standalone ``Orchestrator``.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_script.py
+
 .. note::
     The example assumes:
 
@@ -583,10 +578,10 @@ to a standalone ``Orchestrator``.
 To begin, define an in-memory TorchScript function within the ``Experiment`` driver script.
 For the purpose of the example, we add a simple TorchScript function named `timestwo`:
 
-.. code-block:: python
-
-    def timestwo(x):
-        return 2*x
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_script.py
+  :language: python
+  :linenos:
+  :lines: 3-4
 
 **Attach the in-memory TorchScript function to a SmartSim Model**
 
@@ -594,9 +589,10 @@ We use the ``Model.add_function()`` function to instruct SmartSim to load the To
 onto the launched standalone ``Orchestrator``. Specify the function `timestwo` to the `function`
 parameter:
 
-.. code-block:: python
-
-    smartsim_model.add_function(name="example_func", function=timestwo, device="GPU", devices_per_node=2, first_device=0)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_script.py
+  :language: python
+  :linenos:
+  :lines: 15-16
 
 In the above ``smartsim_model.add_function()`` code snippet, we input the following arguments:
 
@@ -641,6 +637,10 @@ Example: Loading a TorchScript from File
 This example walks through the steps of instructing SmartSim to load a TorchScript from file
 to a launched ``Orchestrator``.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_script.py
+
 .. note::
     This example assumes:
 
@@ -662,9 +662,10 @@ simple torch function shown below:
 Assuming an initialized ``Model`` named `smartsim_model` exists, we add the TorchScript script using
 ``Model.add_script()`` by specifying the script path to the `script_path` parameter:
 
-.. code-block:: python
-
-    smartsim_model.add_script(name="example_script", script_path="path/to/torchscript.py", device="GPU", devices_per_node=2, first_device=0)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_script.py
+  :language: python
+  :linenos:
+  :lines: 13-14
 
 In the above ``smartsim_model.add_script()`` code snippet, we include the following arguments:
 
@@ -709,6 +710,10 @@ Example: Loading a TorchScript from string
 This example walks through the steps of instructing SmartSim to load a TorchScript
 from string to a ``Orchestrator``.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/string_script.py
+
 .. note::
     This example assumes:
 
@@ -719,9 +724,10 @@ from string to a ``Orchestrator``.
 
 Define the TorchScript code as a variable in the ``Experiment`` driver script:
 
-.. code-block:: python
-
-    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/string_script.py
+  :language: python
+  :linenos:
+  :lines: 12-13
 
 **Attach the TorchScript function to a SmartSim Model**
 
@@ -729,9 +735,10 @@ Assuming an initialized ``Model`` named `smartsim_model` exists, we add a Tensor
 the ``Model.add_script()`` function and specify the variable `torch_script_str` to the parameter
 `script`:
 
-.. code-block:: python
-
-    smartsim_model.add_script(name="example_script", script=torch_script_str, device="GPU", devices_per_node=2, first_device=0)
+.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/string_script.py
+  :language: python
+  :linenos:
+  :lines: 15-16
 
 In the above ``smartsim_model.add_script()`` code snippet, we offer the following arguments:
 
@@ -762,14 +769,14 @@ situation, the SmartSim ``Model`` object supports key prefixing, which prepends
 the name of the ``Model`` to the keys sent to the ``Orchestrator`` to create unique key names.
 With this enabled, collision is avoided and ``Models`` can use same names within their applications.
 
-The key components of prefixing functionality include:
+The key components of SmartSim prefixing functionality include:
 
 1. **Sending Data to the Orchestrator**: Users can send data to an ``Orchestrator``
-   with the ``Model`` name prepended to the data name through :ref:`Model functions<model_prefix_func>` and
-   :ref:`Client functions<client_prefix_func>`.
+   with the ``Model`` name prepended to the data name through SmartSim :ref:`Model functions<model_prefix_func>` and
+   SmartRedis :ref:`Client functions<client_prefix_func>`.
 2. **Retrieving Data from the Orchestrator**: Users can instruct a ``Client`` to prepend a
    ``Model`` name to a key during data retrieval, polling, or check for existence on the ``Orchestrator``
-   through :ref:`Client functions<client_prefix_func>`.
+   through SmartRedis :ref:`Client functions<client_prefix_func>`.
 
 For example, assume you have two ``Models`` in an ``Experiment``, named `model_0` and `model_1`. In each
 application code you use the function ``Client.put_tensor("tensor_0", data)`` to send a tensor named `"tensor_0"`
@@ -781,70 +788,79 @@ the other ``Models`` `"tensor_0"` tensor. In this scenario, the two tensors plac
 Enabling and Disabling
 ======================
 SmartSim provides support for toggling prefixing on a ``Model`` for tensors, ``Datasets``,
-lists, ML models, and scripts. Prefixing functions from the :ref:`Model API<model_api>` and :ref:`Client API<smartredis-api>` rely on
+lists, ML models, and scripts. Prefixing functions from the SmartSim :ref:`Model API<model_api>` and SmartRedis :ref:`Client API<smartredis-api>` rely on
 each other to fully support SmartSim key prefixing. For example, to use the ``Client`` prefixing
 functions, a user must enable prefixing on the ``Model`` through ``Model.enable_key_prefixing()``.
-This functions enables prefixing for tensors, ``Datasets`` and lists placed in an ``Orchestrator``
+This function enables prefixing for tensors, ``Datasets`` and lists placed in an ``Orchestrator``
 by the ``Model``. This configuration can be toggled within the ``Model`` application through
 ``Client`` functions, such as disabling tensor prefixing via ``Client.use_tensor_ensemble_prefix(False)``.
+
+The interaction between the prefix SmartSim `Model functions<model_prefix_func>` and SmartRedis
+`Client functions<client_prefix_func>` are documentation below.
 
 .. _model_prefix_func:
 ---------------
 Model functions
 ---------------
-A ``Model`` object offers two prefixing functions: ``Model.enable_key_prefixing()`` and
+A ``Model`` object supports two prefixing functions: ``Model.enable_key_prefixing()`` and
 ``Model.register_incoming_entity()``.
 
 To enable prefixing on a ``Model``, users must use the ``Model.enable_key_prefixing()``
-function in the ``Experiment`` driver script. The key component of this function include:
+function in the ``Experiment`` driver script. The key components of this function include:
 
-- Activating prefixing for tensors, ``Datasets``, and lists sent to a ``Orchestrator`` from within
+- Activates prefixing for tensors, ``Datasets``, and lists sent to a ``Orchestrator`` from within
   the ``Model`` application.
-- Enabling access to prefixing ``Client`` functions within the ``Model`` application. This excludes
-  the ``Client.set_data_source()`` function, where ``enable_key_prefixing()`` is not require for its use.
+- Enables access to prefixing ``Client`` functions within the ``Model`` application. This excludes
+  the ``Client.set_data_source()`` function, where ``enable_key_prefixing()`` is not require access.
 
 .. note::
     ML model and script prefixing is not automatically enabled through ``Model.enable_key_prefixing()``
-    and rather must be enabled within the ``Model`` application via ``Client.use_model_ensemble_prefix()``.
+    and rather must be enabled within the ``Model`` application using ``Client.use_model_ensemble_prefix()``.
 
-To enable a SmartRedis ``Client`` to search a number of ``Model`` name prefixes when requesting data from the ``Orchestrator``,
-execute ``Model.register_incoming_entity()``. The key component of this function include:
+To enable a SmartRedis ``Client`` to search a number of ``Model`` prefixes when requesting data from the ``Orchestrator``,
+execute ``Model.register_incoming_entity()`` on the designated ``Model``. The key components of this function include:
 
 - If a ``Model`` application requests prefixed tensors placed by another ``Model``, the interaction
   between the two entities must be registered in the ``Experiment`` driver script. If the interaction is not
   properly registered, ``Client.set_data_source()`` will not be able to find the ``Models`` prefix
   that placed the tensors in the ``Orchestrator``.
+- This function enables users to execute ``Client`` functions such as ``Client.delete_tensor(tensor_name)`` on
+  prefixed tensors without having to specify the prefix. The prefix is instead set via ``Client.set_data_source(model_name)``
+  in the application and registered via ``Model.register_incoming_entity()`` in the ``Experiment`` driver script.
 
 .. _client_prefix_func:
 ----------------
 Client functions
 ----------------
-Additionally, users can control prefixing for each data structure through ``Client``
-functions in the ``Model`` script:
+A ``Client`` object supports five prefixing functions: ``Client.use_tensor_ensemble_prefix()``,
+``Client.use_dataset_ensemble_prefix()``,  ``Client.use_list_ensemble_prefix()``,
+``Client.use_model_ensemble_prefix()`` and ``Client.set_data_source()``.
+
+To enable or disable SmartRedis data structure prefixing for tensors, ``Datasets``, aggregation lists, ML models
+and scripts, SmartRedis ``Client`` offers functions per data structure:
 
 - Tensor: ``Client.use_tensor_ensemble_prefix()``
 - ``Dataset``: ``Client.use_dataset_ensemble_prefix()``
 - Aggregation lists: ``Client.use_list_ensemble_prefix()``
+- ML models/scripts: ``Client.use_model_ensemble_prefix()``
 
 .. warning::
-    To access the ``Client`` prefixing functions (e.g. ``Client.use_tensor_ensemble_prefix()``,
-    etc.), prefixing must be enabled on the ``Model`` through ``Model.enable_key_prefixing()``.
+    To access the ``Client`` prefixing functions, prefixing must be enabled on the
+    ``Model`` through ``Model.enable_key_prefixing()``. This function activates prefixing
+    for tensors, ``Datasets`` and lists.
 
-Users can manage prefixing for ML models and scripts using the ``Client.enable_model_ensemble_prefix()``
-function in the application. However, prior to using this function, users must enable prefixing on the ``Model`` through
-``Model.enable_key_prefixing()``.
-
-For examples on sending prefixed data to the ``Orchestrator``, read the
+For examples on instructing SmartSim to send prefixed data to the ``Orchestrator``, navigate to the
 :ref:`put/set operations<put_set_prefix>` section.
 
 Users can instruct the SmartRedis ``Client`` to search a number of prefixes when requesting data from the ``Orchestrator``.
-This is achieved through the ``Client.set_data_source()`` function in the ``Model``
+This is achieved through the ``Client.set_data_source()`` function used within the ``Model``
 application. To implement this functionality:
 
-1. Use ``Model.register_incoming_entity()`` on the ``Model`` intending to search for data in the ``Orchestrator``.
+1. Use ``Model.register_incoming_entity()`` on the ``Model`` intending to search for data in the ``Orchestrator``
+   placed by a separate ``Model``.
 2. Pass the SmartSim entity (e.g., another ``Model``) to ``Model.register_incoming_entity()`` in order to
    reference the ``Model`` prefix in the application code.
-3. In the application, instruct the ``Client`` to prepend the specified ``Model`` name during key searches
+3. In the ``Model`` application, instruct the ``Client`` to prepend the specified ``Model`` name during key searches
    using ``Client.set_data_source("model_name")``.
 
 For examples on instructing a ``Client`` to append a ``Model`` name to a key when searching for data, read the
@@ -868,18 +884,17 @@ SmartRedis put/get semantics.
         is prepended to each tensor name sent to the ``Orchestrator`` from within the ``Model``
         executable code.
 
+        .. dropdown:: Example Driver Script source code
+
+            .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+
         In the driver script snippet below, we take an initialized ``Model`` and activate tensor
         prefixing through the ``enable_key_prefixing()`` function:
 
-        .. code-block:: python
-
-            # Create the run settings for the Model
-            model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application_script.py")
-
-            # Create a Model instance named 'model'
-            model = exp.create_model("model_name", model_settings)
-            # Enable tensor prefixing on the 'model' instance
-            model.enable_key_prefixing()
+        .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+            :language: python
+            :linenos:
+            :lines: 6-12
 
         In the `model` application, two tensors named `tensor_1` and `tensor_2` are sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
@@ -935,18 +950,17 @@ SmartRedis put/get semantics.
         ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` name
         is prepended to each ``Dataset`` name sent to the ``Orchestrator`` from within the ``Model``.
 
+        .. dropdown:: Example Driver Script source code
+
+            .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+
         In the driver script snippet below, we take an initialized ``Model`` and activate ``Dataset``
         prefixing through the ``enable_key_prefixing()`` function:
 
-        .. code-block:: python
-
-            # Create the run settings for the Model
-            model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application_script.py")
-
-            # Create a Model instance named 'model'
-            model = exp.create_model("model_name", model_settings)
-            # Enable Dataset prefixing on the 'model' instance
-            model.enable_key_prefixing()
+        .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+            :language: python
+            :linenos:
+            :lines: 6-12
 
         In the `model` application, two Datasets named `dataset_1` and `dataset_2` are sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
@@ -1006,18 +1020,17 @@ SmartRedis put/get semantics.
         ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` name
         is prepended to each list name sent to the ``Orchestrator`` from within the ``Model``.
 
+        .. dropdown:: Example Driver Script source code
+
+            .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+
         In the driver script snippet below, we take an initialized ``Model`` and activate list
         prefixing through the ``enable_key_prefixing()`` function:
 
-        .. code-block:: python
-
-            # Create the run settings for the Model
-            model_settings = exp.create_run_settings(exe=exe_ex, exe_args="/path/to/application_script.py")
-
-            # Create a Model instance named 'model'
-            model = exp.create_model("model_name", model_settings)
-            # Enable list prefixing on the 'model' instance
-            model.enable_key_prefixing()
+        .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+            :language: python
+            :linenos:
+            :lines: 6-12
 
         In the `model` application, a list named `dataset_list` is sent to a launched ``Orchestrator``.
         The contents of the ``Orchestrator`` after ``Model`` completion are:
