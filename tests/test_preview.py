@@ -83,7 +83,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 
-def test_preview_to_file(test_dir, wlmutils, fileutils):
+def test_preview_to_file(test_dir, wlmutils):
     """
     Test that if an output_filename is given, a file
     is rendered for Experiment preview"
