@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 import typing as t
 from enum import Enum
 
@@ -74,7 +75,7 @@ def render(
     version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
 
-    _check_file_output_format(output_format)
+    _check_output_format(output_format)
 
     tpl = env.get_template(tpl_path)
 
@@ -84,21 +85,24 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
+
     return rendered_preview
 
 
 def preview_to_file(content: str, filename: str) -> None:
     """
-    Output preview to file.
+    Output preview to a file if an output filename
+    is specified.
     """
 
     with open(filename, "w", encoding="utf-8") as prev_file:
         prev_file.write(content)
 
 
-def _check_file_output_format(output_format: _OutputFormatString) -> None:
+
+def _check_output_format(output_format: _OutputFormatString) -> None:
     """
-    Check that a valid file output format is given.
+    Check that the output format given is valid.
     """
     if not output_format == "plain_text":
         raise PreviewFormatError(
