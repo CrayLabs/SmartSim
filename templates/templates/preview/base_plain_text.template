@@ -1,6 +1,6 @@
 
 {% include "preview/experiment_plain_text.template" %}
-{%- if manifest.all_entities %}
+{%- if manifest.has_deployable %}
 
 === Entity Preview === 
 
@@ -20,4 +20,5 @@
         {% include "preview/ensemble_plain_text.template" %}
     {%- endfor %}
 {%- endif -%}
+
 {%- endif -%}

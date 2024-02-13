@@ -37,15 +37,7 @@
             {%- endfor %}
             {%- endif %}
             Outgoing key collision prevention (key prefixing): 
-            {%- if model.query_key_prefixing() == True %}
-                Tensors: On 
-                DataSets: On 
-                Models/Scripts: Off
-                Aggregation Lists: On
-            {%- endif %}
-            {%- if model.query_key_prefixing() == False %}
-                Tensors: Off 
-                DataSets: Off
-                Models/Scripts: Off
-                Aggregation Lists: Off
-            {%- endif -%}
+                Tensors: {{ model.query_key_prefixing | as_toggle }}
+                DataSets: {{ model.query_key_prefixing | as_toggle }}
+                Models/Scripts: {{ False | as_toggle }}
+                Aggregation Lists: {{ model.query_key_prefixing | as_toggle }}

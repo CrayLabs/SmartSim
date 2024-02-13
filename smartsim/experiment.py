@@ -825,7 +825,7 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: previewrenderer._OutputFormatString = "plain_text",
+        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
         verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
         output_filename: t.Optional[str] = None,
     ) -> None:
@@ -851,6 +851,7 @@ class Experiment:
             Defaults to info.
         :type verbosity_level: str
         """
+
         preview_manifest = Manifest(*args)
 
         rendered_preview = previewrenderer.render(

@@ -1,4 +1,5 @@
-{%- if model is defined -%}Model name: {{ model.name }}
+            {%- if model is defined -%}
+            Model name: {{ model.name }}
             Executable:  
             {%- for param in model.run_settings.exe %}
                 {{ param }}
@@ -89,8 +90,8 @@
             {%- endif %}
             {%- endif %}
             {%- if manifest.models %}
-            {%- if manifest.models[0].query_key_prefixing() == True %}  
+            {%- if manifest.models[0].query_key_prefixing()%}  
             Key prefix: {{ model.name }}
             {%- endif %}
             {%- endif %}
-    {%- endif -%}
+            {%- endif -%}

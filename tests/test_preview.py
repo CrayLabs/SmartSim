@@ -23,6 +23,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import pathlib
 import sys
 from os import path as osp
@@ -49,6 +50,7 @@ def choose_host():
 
 def test_experiment_preview(test_dir, wlmutils):
     """Test correct preview output fields for Experiment preview"""
+
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp_name = "test_experiment_preview"
@@ -85,7 +87,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 
-def test_preview_to_file(test_dir, wlmutils, fileutils):
+def test_preview_to_file(test_dir, wlmutils):
     """
     Test that if an output_filename is given, a file
     is rendered for Experiment preview"
