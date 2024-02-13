@@ -1,6 +1,4 @@
 #
-# BSD 2-Clause License
-#
 # Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
@@ -100,6 +98,9 @@ jobs:
           echo $GITHUB_PATH
           echo $PATH
           which gcc
+          echo "Calling /usr/local/bin/gcc"
+          /usr/local/bin/gcc --version
+
           gcc --version
           which g++
           g++ --version
