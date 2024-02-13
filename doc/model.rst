@@ -84,7 +84,7 @@ a file in the ``Model`` working directory.
 
 When a ``Model`` instance is passed to ``Experiment.generate()``, a
 directory within the Experiment directory
-is automatically created to store input and output files from the ``Model``.
+is created to store input and output files from the ``Model``.
 
 .. note::
     It is strongly recommended to invoke ``Experiment.generate()`` with the ``Model``
@@ -360,7 +360,8 @@ When configuring a ``Model``, users can instruct SmartSim to load
 Machine Learning (ML) models dynamically to the ``Orchestrator`` (colocated or standalone). ML models added
 are loaded into the ``Orchestrator`` prior to the execution of the ``Model``. To load an ML model
 to the ``Orchestrator``, SmartSim users can provide the ML model **in-memory** or specify the **file path**
-when using the ``Model.add_ml_model()`` function. The supported ML frameworks are TensorFlow,
+when using the ``Model.add_ml_model()`` function. SmartSim supports specifying the file path of a ML model
+for use within standalone ``Orchestrators``. The supported ML frameworks are TensorFlow,
 TensorFlow-lite, PyTorch, and ONNX.
 
 When attaching an ML model using ``Model.add_ml_model()``, the
@@ -450,6 +451,10 @@ Example: Attaching an ML Model from file
 ----------------------------------------
 This example demonstrates how to attach a ML model from file to a SmartSim ``Model``
 to load into an ``Orchestrator`` at ``Model`` runtime.
+
+.. note::
+    SmartSim supports loading ML models from file to standalone ``Orchestrators``.
+    This feature is **not** supported for colocated ``Orchestrators``.
 
 .. note::
     This example assumes:
@@ -742,7 +747,7 @@ If an ``Experiment`` consists of multiple ``Models`` that attempt to use the sam
 data in the ``Orchestrator``, the names used to reference data, ML models, and scripts will be
 identical, and without the use of SmartSim and SmartRedis helper methods, ``Models``
 will end up inadvertently accessing or overwriting each other’s data. To prevent this
-situation, the SmartSim ``Model`` object supports key prefixing, which automatically prepends
+situation, the SmartSim ``Model`` object supports key prefixing, which prepends
 the name of the ``Model`` to the keys it uses to access data. With this enabled, collision is
 avoided and ``Models`` can use the same code.
 
@@ -753,16 +758,16 @@ overwriting or accessing the other ``Model`` `"tensor_0"` tensor.
 
 Enabling and Disabling
 ======================
-SmartSim provides support for prefixing on a ``Model`` for tensors, ``Datasets``, lists, ML models, and scripts.
+SmartSim provides support for toggling prefixing on a ``Model`` for tensors, ``Datasets``, lists, ML models, and scripts.
 The key components of prefixing functionality include:
 
 1. **Sending Data to the Orchestrator**: Users can send data to an ``Orchestrator``
-   with the ``Model`` `name` prepended to the data `name`.
+   with the ``Model`` name prepended to the data name.
 2. **Retrieving Data from the Orchestrator**: Users can instruct a ``Client`` to prepend a
-   ``Model`` `name` to a key during data retrieval, polling, or check for existence on the ``Orchestrator``.
+   ``Model`` name to a key during data retrieval, polling, or check for existence on the ``Orchestrator``.
 
 To enable prefixing on the ``Model``, users should utilize the ``Model.enable_key_prefixing()`` function
-in the driver script. This function automatically activates prefixing for tensors, ``Datasets``,
+in the driver script. This function activates prefixing for tensors, ``Datasets``,
 and lists. Additionally, users can control prefixing for each data structure through ``Client``
 functions in the ``Model`` script:
 
@@ -784,17 +789,17 @@ function in the application. However, prior to using this function, users must e
 For examples on sending prefixed data to the ``Orchestrator``, read the
 :ref:`put/set operations<put_set_prefix>` section.
 
-Users can instruct SmartSim to prepend a ``Model`` `name` when searching for data in the
+Users can instruct SmartSim to prepend a ``Model`` name when searching for data in the
 ``Orchestrator``. This is achieved through the ``Client.set_data_source()`` function in the ``Model``
 application. To implement this functionality:
 
 1. Use ``Model.register_incoming_entity()`` on the ``Model`` intending to search for data in the ``Orchestrator``.
 2. Pass the SmartSim entity (e.g., another ``Model``) to ``Model.register_incoming_entity()`` in order to
    reference the ``Model`` prefix in the application code.
-3. In the application, instruct the ``Client`` to prepend the specified ``Model`` `name` during key searches
+3. In the application, instruct the ``Client`` to prepend the specified ``Model`` name during key searches
    using ``Client.set_data_source("model_name")``.
 
-For examples on instructing a ``Client`` to append a ``Model`` `name` to a key when searching for data, read the
+For examples on instructing a ``Client`` to append a ``Model`` name to a key when searching for data, read the
 :ref:`get operations<get_prefix>` section, :ref:`run operations<run_prefix>` section, or :ref:`copy/rename/delete
 operations<copy_rename_del_prefix>` section.
 
@@ -811,8 +816,8 @@ SmartRedis put/get semantics.
         **Activate Tensor Prefixing in the Driver Script**
 
         To activate prefixing on a ``Model`` in the driver script, a user must use the function
-        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
-        is prepended to each tensor `name` sent to the ``Orchestrator`` from within the ``Model``
+        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` name
+        is prepended to each tensor name sent to the ``Orchestrator`` from within the ``Model``
         executable code.
 
         In the driver script snippet below, we take an initialized ``Model`` and activate tensor
@@ -836,7 +841,7 @@ SmartRedis put/get semantics.
             1) "model_name.tensor_1"
             2) "model_name.tensor_2"
 
-        You will notice that the ``Model`` name `model_name` has been prepended to each tensor `name`
+        You will notice that the ``Model`` name `model_name` has been prepended to each tensor name
         and stored in the ``Orchestrator``.
 
         **Activate Tensor Prefixing in the Application**
@@ -879,8 +884,8 @@ SmartRedis put/get semantics.
         **Activate Dataset Prefixing in the Driver Script**
 
         To activate prefixing on a ``Model`` in the driver script, a user must use the function
-        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
-        is prepended to each ``Dataset`` `name` sent to the ``Orchestrator`` from within the ``Model``.
+        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` name
+        is prepended to each ``Dataset`` name sent to the ``Orchestrator`` from within the ``Model``.
 
         In the driver script snippet below, we take an initialized ``Model`` and activate ``Dataset``
         prefixing through the ``enable_key_prefixing()`` function:
@@ -905,7 +910,7 @@ SmartRedis put/get semantics.
             3) "model_name.{dataset_2}.dataset_tensor_2"
             4) "model_name.{dataset_2}.meta"
 
-        You will notice that the ``Model`` name `model_name` has been prefixed to each ``Dataset`` `name`
+        You will notice that the ``Model`` name `model_name` has been prefixed to each ``Dataset`` name
         and stored in the ``Orchestrator``.
 
         **Activate Dataset Prefixing in the Application**
@@ -950,8 +955,8 @@ SmartRedis put/get semantics.
         **Activate Aggregation List Prefixing in the Driver Script**
 
         To activate prefixing on a ``Model`` in the driver script, a user must use the function
-        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` `name`
-        is prepended to each list `name` sent to the ``Orchestrator`` from within the ``Model``.
+        ``Model.enable_key_prefixing()``. This functionality ensures that the ``Model`` name
+        is prepended to each list name sent to the ``Orchestrator`` from within the ``Model``.
 
         In the driver script snippet below, we take an initialized ``Model`` and activate list
         prefixing through the ``enable_key_prefixing()`` function:
@@ -973,7 +978,7 @@ SmartRedis put/get semantics.
 
             1) "model_name.dataset_list"
 
-        You will notice that the ``Model`` name `model_name` has been prefixed to the list `name`
+        You will notice that the ``Model`` name `model_name` has been prefixed to the list name
         and stored in the ``Orchestrator``.
 
         **Activate Aggregation List Prefixing in the Application**
@@ -1119,10 +1124,10 @@ applications.
 
         SmartSim supports retrieving prefixed tensors sent to the ``Orchestrator`` from within the
         same application where the tensor was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the tensor to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the tensor to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key searches. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name
         in the driver script.
 
         As an example, we placed a prefixed tensor on the ``Orchestrator`` within a ``Model`` named
@@ -1155,9 +1160,9 @@ applications.
         **Retrieve A Tensor Placed By An Alternate Application**
 
         SmartSim supports retrieving prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the tensor
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the tensor
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data in the
         driver script.
@@ -1197,10 +1202,10 @@ applications.
 
         SmartSim supports retrieving prefixed ``Datasets`` sent to the ``Orchestrator`` from within the
         same application where the ``Dataset`` was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the ``Dataset`` to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the ``Dataset`` to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key searches. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed ``Dataset`` on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1245,9 +1250,9 @@ applications.
         **Retrieve A Dataset Placed By An Alternate Application**
 
         SmartSim supports retrieving prefixed ``Datasets`` sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the ``Dataset``
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1299,10 +1304,10 @@ applications.
 
         SmartSim supports retrieving prefixed lists sent to the ``Orchestrator`` from within the
         same application where the list was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the list to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the list to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key searches. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed list on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1334,9 +1339,9 @@ applications.
         **Retrieve A Aggregation List Placed By An Alternate Application**
 
         SmartSim supports retrieving prefixed lists sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the list
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the list
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1375,10 +1380,10 @@ applications.
 
         SmartSim supports retrieving prefixed ML models sent to the ``Orchestrator`` from within the
         same application where the ML model was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the ML model to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the ML model to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key searches. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed ML model on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1405,9 +1410,9 @@ applications.
         **Retrieve A ML Model Placed By An Alternate Application**
 
         SmartSim supports retrieving prefixed ML model sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the ML model
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ML model
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1441,10 +1446,10 @@ applications.
 
         SmartSim supports retrieving prefixed scripts sent to the ``Orchestrator`` from within the
         same application where the script was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the script to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the script to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key searches. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed script on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1484,9 +1489,9 @@ applications.
         **Retrieve A Script Placed By An Alternate Application**
 
         SmartSim supports retrieving prefixed scripts sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the script
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the script
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1543,10 +1548,10 @@ where ML Model and Script are placed by separate applications.
 
         SmartSim supports executing prefixed ML models with prefixed tensors sent to the ``Orchestrator`` from within
         the same application that the ML model was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the ML model and input tensors to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the ML model and input tensors to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed ML model and tensor on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1586,9 +1591,9 @@ where ML Model and Script are placed by separate applications.
         **Access ML Models From Outside The Application They Were Loaded In**
 
         SmartSim supports executing prefixed ML models with prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the ML model and tensor
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ML model and tensor
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1636,10 +1641,10 @@ where ML Model and Script are placed by separate applications.
 
         SmartSim supports executing prefixed scripts with prefixed tensors sent to the ``Orchestrator`` from within
         the same application that the script was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the script and input tensors to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the script and input tensors to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed script and tensor on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1674,9 +1679,9 @@ where ML Model and Script are placed by separate applications.
         **Access Scripts From Outside The Application They Were Loaded In**
 
         SmartSim supports executing prefixed scripts with prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the script and tensor
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the script and tensor
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1734,10 +1739,10 @@ scripts.
 
         SmartSim supports copy/rename/delete operations on prefixed tensors sent to the ``Orchestrator`` from within
         the same application that the tensor was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the tensor to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the tensor to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed tensor on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1752,7 +1757,7 @@ scripts.
             instance to itself, we instruct SmartSim to recognize the name of `model_1` as a valid data
             source for subsequent use in ``Client.set_data_source()``.
 
-        To rename the tensor in the ``Orchestrator``, we provide self ``Model`` `name`
+        To rename the tensor in the ``Orchestrator``, we provide self ``Model`` name
         to ``Client.set_data_source()`` then execute the function ``rename_tensor()``:
 
         .. code-block:: python
@@ -1797,9 +1802,9 @@ scripts.
         **Copy/Rename/Delete Operations On Tensors Placed By An Alternate Application**
 
         SmartSim supports copy/rename/delete operations on prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the tensor
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the tensor
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -1826,7 +1831,7 @@ scripts.
             # Set the Model source name
             client.set_data_source("model_1")
 
-        To rename the tensor in the ``Orchestrator``, we provide the tensor `name`:
+        To rename the tensor in the ``Orchestrator``, we provide the tensor name:
 
         .. code-block:: python
 
@@ -1876,10 +1881,10 @@ scripts.
 
         SmartSim supports copy/rename/delete operations on prefixed ``Datasets`` sent to the ``Orchestrator`` from within
         the same application that the ``Dataset`` was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the ``Dataset`` to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the ``Dataset`` to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed ``Dataset`` on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -1895,7 +1900,7 @@ scripts.
             instance to itself, we instruct SmartSim to recognize the name of `model_1` as a valid data
             source for subsequent use in ``Client.set_data_source()``.
 
-        To rename the ``Dataset`` in the ``Orchestrator``, we provide self ``Model`` `name`
+        To rename the ``Dataset`` in the ``Orchestrator``, we provide self ``Model`` name
         to ``Client.set_data_source()`` then execute the function ``rename_tensor()``:
 
         .. code-block:: python
@@ -1944,9 +1949,9 @@ scripts.
         **Copy/Rename/Delete Operations On Datasets Placed By An Alternate Application**
 
         SmartSim supports copy/rename/delete operations on prefixed ``Datasets`` sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the ``Dataset``
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -2028,10 +2033,10 @@ scripts.
 
         SmartSim supports copy/rename/delete operations on prefixed lists sent to the ``Orchestrator`` from within
         the same application that the list was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the list to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the list to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed list on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -2046,7 +2051,7 @@ scripts.
             instance to itself, we instruct SmartSim to recognize the name of `model_1` as a valid data
             source for subsequent use in ``Client.set_data_source()``.
 
-        To rename the list in the ``Orchestrator``, we provide self ``Model`` `name`
+        To rename the list in the ``Orchestrator``, we provide self ``Model`` name
         to ``Client.set_data_source()`` then execute the function ``rename_list()``:
 
         .. code-block:: python
@@ -2091,9 +2096,9 @@ scripts.
         **Copy/Rename/Delete Operations On Aggregation Lists Placed By An Alternate Application**
 
         SmartSim supports copy/rename/delete operations on prefixed lists sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` `name` that stored the list
+        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the list
         to ``Client.set_data_source()``. This action instructs the ``Client`` to prepend the ``Model``
-        `name` to all key searches. For SmartSim to recognize the ``Model`` `name` as a data source,
+        name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity()`` function on the ``Model``
         responsible for the search and pass the ``Model`` instance that stored the data.
 
@@ -2119,7 +2124,7 @@ scripts.
 
             client.set_data_source("model_1")
 
-        To rename the list in the ``Orchestrator``, we provide the list `name`:
+        To rename the list in the ``Orchestrator``, we provide the list name:
 
         .. code-block:: python
 
@@ -2169,10 +2174,10 @@ scripts.
 
         SmartSim supports delete operations on prefixed ML models sent to the ``Orchestrator`` from within
         the same application that the ML model was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the ML model to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the ML model to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed ML model on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -2187,7 +2192,7 @@ scripts.
 
             1) "model_1.ml_model"
 
-        To delete the ML model in the ``Orchestrator``, we provide self ``Model`` `name`
+        To delete the ML model in the ``Orchestrator``, we provide self ``Model`` name
         to ``Client.set_data_source()`` then execute the function ``delete_model()``:
 
         .. code-block:: python
@@ -2200,8 +2205,8 @@ scripts.
         **Delete A ML Model Placed By An Alternate Application**
 
         SmartSim supports delete operations on prefixed ML models sent to the ``Orchestrator`` by separate ``Models``.
-        To do so, users must provide the ``Model`` `name` that stored the ML model to ``Client.set_data_source()``.
-        This will instruct the ``Client`` to prepend the ``Model`` `name` input to all key searches.
+        To do so, users must provide the ``Model`` name that stored the ML model to ``Client.set_data_source()``.
+        This will instruct the ``Client`` to prepend the ``Model`` name input to all key searches.
 
         In the example, a ``Model`` named `model_1` has placed a ML model in a standalone ``Orchestrator`` with prefixing enabled
         on the ``Client``. The ``Orchestrator`` contents are:
@@ -2211,7 +2216,7 @@ scripts.
             1) "model_1.ml_model"
 
         From within a separate ``Model`` named `model_2`, we perform a basic delete operation.
-        To instruct the ``Client`` to prepend a ``Model`` `name` to all key searches, use the
+        To instruct the ``Client`` to prepend a ``Model`` name to all key searches, use the
         ``Client.set_data_source()`` function. Specify the ``Model`` name `model_1`
         that placed the list in the ``Orchestrator``:
 
@@ -2219,7 +2224,7 @@ scripts.
 
             client.set_data_source("model_1")
 
-        To delete the ML model in the ``Orchestrator``, we provide the ML model `name`:
+        To delete the ML model in the ``Orchestrator``, we provide the ML model name:
 
         .. code-block:: python
 
@@ -2231,10 +2236,10 @@ scripts.
 
         SmartSim supports delete operations on prefixed scripts sent to the ``Orchestrator`` from within
         the same application that the script was placed. To achieve this, users must
-        provide the ``Model`` `name` that stored the script to ``Client.set_data_source()``. This action
+        provide the ``Model`` name that stored the script to ``Client.set_data_source()``. This action
         instructs the ``Client`` to prepend the ``Model`` name to all key names. For SmartSim to
-        recognize the ``Model`` `name` as a data source, users must execute the
-        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` `name`.
+        recognize the ``Model`` name as a data source, users must execute the
+        ``Model.register_incoming_entity()`` function on the ``Model`` and pass the self ``Model`` name.
 
         As an example, we placed a prefixed script on the ``Orchestrator`` within a ``Model`` named
         `model_1`. The ``Orchestrator`` contents are:
@@ -2249,7 +2254,7 @@ scripts.
             instance to itself, we instruct SmartSim to recognize the name of `model_1` as a valid data
             source for subsequent use in ``Client.set_data_source()``.
 
-        To delete the script in the ``Orchestrator``, we provide the full list `name`:
+        To delete the script in the ``Orchestrator``, we provide the full list name:
 
         .. code-block:: python
 
@@ -2280,7 +2285,7 @@ scripts.
 
             client.set_data_source("model_1")
 
-        To delete the script in the ``Orchestrator``, we provide the script `name`:
+        To delete the script in the ``Orchestrator``, we provide the script name:
 
         .. code-block:: python
 
