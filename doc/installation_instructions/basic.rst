@@ -34,8 +34,11 @@ The base prerequisites to install SmartSim and SmartRedis are:
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
 
 .. warning::
+
   Apple Clang 15 seems to have issues on MacOS with Apple Silicon. Please modify
-  your path to ensure that a version of GCC installed by brew has priority.
+  your path to ensure that a version of GCC installed by brew has priority. Note
+  this seems to be hardcoded to `gcc` and `g++` in the Redis build so ensure that
+  `which gcc g++` do not point to Apple Clang.
 
 
 GPU Support
