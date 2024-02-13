@@ -87,6 +87,14 @@ jobs:
           brew install make || true
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
 
+      - name: Setup GCC on MacOS ARM64
+        if: contains( matrix.os, 'macos-14' )
+        run: |
+          brew install gcc@12
+          sudo ln -s /usr/local/bin/gcc-12 /usr/local/bin/gcc
+          sudo ln -s /usr/local/bin/g++-12 /usr/local/bin/g++
+          echo /usr/local/bin:$PATH >> $GITHUB_PATH
+
       - name: Build Singularity from source
         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
         run: |
