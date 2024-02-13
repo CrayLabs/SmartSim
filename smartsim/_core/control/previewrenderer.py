@@ -33,7 +33,6 @@ from jinja2 import pass_eval_context
 
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
-from ...entity import Model
 from ...error.errors import PreviewFormatError
 from ...log import get_logger
 
@@ -95,8 +94,7 @@ def render(
 
 
 @pass_eval_context
-def as_toggle(eval_ctx: Model, value: bool) -> str:
-    value = eval_ctx
+def as_toggle(eval_ctx, value: bool) -> str:
     return "On" if value else "Off"
 
 
@@ -122,7 +120,7 @@ def find_available_filename(filename: str) -> str:
     while candidate_path.exists():
         candidate_path = path.with_stem(f"{path.stem}_{index}")
         index += 1
-    return candidate_path
+    return str(candidate_path)
 
 
 def _check_output_format(output_format: Format) -> None:
