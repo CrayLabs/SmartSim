@@ -95,7 +95,7 @@ jobs:
           sudo ln -s /usr/local/bin/g++-12 /usr/local/bin/g++
           echo /usr/local/bin:$PATH >> $GITHUB_PATH
 
-      - name: DEBUG - RM THIS: Which compiler?
+      - name: (DEBUG RM THIS) Which compiler
         run: |
           which gcc
           gcc --version
