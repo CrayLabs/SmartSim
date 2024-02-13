@@ -54,34 +54,16 @@ jobs:
       fail-fast: false
       matrix:
         subset: [backends, slow_tests, group_a, group_b]
-          #os: [macos-12, macos-14, ubuntu-20.04] # Operating systems
-        os: [macos-12, macos-14] # Operating systems
+        os: [macos-12, ubuntu-20.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
-        py_v: ['3.11'] # Python versions
-          #py_v: ['3.8', '3.9', '3.10', '3.11'] # Python versions
-        exclude:
-          - os: macos-14
-            py_v: 3.8
-          - os: macos-14
-            py_v: 3.9
+        py_v: ['3.8', '3.9', '3.10', '3.11'] # Python versions
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup GCC on MacOS ARM64
-        if: matrix.os == 'macos-14'
-        run: |
-          brew install gcc@12
-          sudo ln -s /opt/homebrew/bin/gcc-12 /usr/local/bin/gcc
-          sudo ln -s /opt/homebrew/bin/g++-12 /usr/local/bin/g++
-          echo "/usr/local/bin" >> $GITHUB_PATH
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py_v }}
@@ -99,23 +81,6 @@ jobs:
         run: |
           brew install make || true
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
-
-      - name: (DEBUG RM THIS) Which compiler
-        run: |
-          echo $GITHUB_PATH
-          echo $PATH
-
-          # echo "Calling /usr/local/bin/gcc"
-          # /usr/local/bin/gcc --version
-          echo "Calling gcc-12"
-          which gcc-12
-          gcc-12 --version
-
-          echo "Calling gcc/g++"
-          which gcc
-          gcc --version
-          which g++
-          g++ --version
 
       - name: Build Singularity from source
         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
@@ -142,13 +107,9 @@ jobs:
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
           python -m pip install .[dev,ml]
 
-      - name: Install ML Runtimes with Smart on X64 (with pt, tf, and onnx support)
+      - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
         if: matrix.os != 'macos-14'
         run: smart build --device cpu --onnx -v
-
-      - name: Install ML Runtimes with Smart on ARM64 (with pt support)
-        if: matrix.os == 'macos-14'
-        run: smart build --device cpu --no_tf -v
 
       - name: Run mypy
         run: |

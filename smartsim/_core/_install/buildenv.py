@@ -422,7 +422,6 @@ class BuildEnv:
                 "CXXFLAGS": self.CXXFLAGS,
             }
         )
-        print(self.CC, self.CXX)
         return env
 
     def as_dict(self) -> t.Dict[str, t.List[str]]:
