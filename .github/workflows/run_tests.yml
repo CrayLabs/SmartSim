@@ -93,7 +93,7 @@ jobs:
           brew install gcc@12
           sudo ln -s /usr/local/bin/gcc-12 /usr/local/bin/gcc
           sudo ln -s /usr/local/bin/g++-12 /usr/local/bin/g++
-          echo /usr/local/bin:$PATH >> $GITHUB_PATH
+          echo /usr/local/bin:$PATH > $GITHUB_PATH
 
       - name: (DEBUG RM THIS) Which compiler
         run: |
