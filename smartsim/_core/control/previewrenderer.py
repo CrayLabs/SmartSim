@@ -81,7 +81,7 @@ def render(
     version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
 
-    _check_file_output_format(output_format)
+    _check_output_format(output_format)
 
     tpl = env.get_template(tpl_path)
 
@@ -91,7 +91,6 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-    print(rendered_preview)
     return rendered_preview
 
 
@@ -103,7 +102,8 @@ def as_toggle(eval_ctx: Model, value: bool) -> str:
 
 def preview_to_file(content: str, filename: str) -> None:
     """
-    Output preview to file.
+    Output preview to a file if an output filename
+    is specified.
     """
     filename = find_available_filename(filename)
 
@@ -114,6 +114,7 @@ def preview_to_file(content: str, filename: str) -> None:
 def find_available_filename(filename: str) -> str:
     """Iterate through potentially unique names until one is found that does
     not already exist. Return an unused name variation"""
+
     path = pathlib.Path(filename)
     candidate_path = pathlib.Path(filename)
     index = 1
@@ -121,13 +122,12 @@ def find_available_filename(filename: str) -> str:
     while candidate_path.exists():
         candidate_path = path.with_stem(f"{path.stem}_{index}")
         index += 1
+    return candidate_path
 
-    return candidate_path.name
 
-
-def _check_file_output_format(output_format: Format) -> None:
+def _check_output_format(output_format: Format) -> None:
     """
-    Check that a valid file output format is given.
+    Check that the output format given is valid.
     """
     if not output_format == Format.PLAINTEXT:
         raise PreviewFormatError(
