@@ -8,15 +8,15 @@ SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. A ``Model`` can be launched with
 other SmartSim ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
-With the SmartSim ``Client`` (:ref:`SmartRedis<smartredis-api>`), data can be transferred out of the ``Model``
-into the ``Orchestrator`` for use in an ML Model (TF, TF-lite, PyTorch, or ONNX), online
+With the SmartSim ``Client`` (:ref:`SmartRedis<smartredis-api>`), data can be transferred from a ``Model``
+to the ``Orchestrator`` for use in an ML Model (TF, TF-lite, PyTorch, or ONNX), online
 training process, or additional ``Model`` applications. SmartSim ``Clients`` (SmartRedis) are available in
 Python, C, C++, or Fortran.
 
 To initialize a SmartSim ``Model``, use the ``Experiment.create_model()`` API function.
 When creating a ``Model``, a :ref:`RunSettings<run_settings_doc>` object must be provided. A ``RunSettings``
 object specifies the ``Model`` executable (e.g. the full path to a compiled binary) as well as
-executable arguments and launch parameters. These specifications include :ref:`launch<smartredis-api>` commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
+executable arguments and launch parameters. These specifications include launch commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
 compute resource requirements, and application command-line arguments.
 
 Once a ``Model`` instance has been initialized, users have access to
@@ -32,19 +32,20 @@ The Model API functions provide users with the following capabilities:
 Once the ``Model`` has been configured and launched, a user can leverage an ``Orchestrator`` within a ``Model``
 through **two** strategies:
 
-- :ref:`Connect to a standalone Orchestrator<std_model_doc>`
+- :ref:`Connect to a standalone Orchestrator<standalone_orch_doc>`
    When a ``Model`` is launched, it does not use or share compute
    resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
    Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
-   The ``Model`` can connect via a SmartSim ``Client`` to a launched standalone ``Orchestrator``.
+   The ``Model`` can connect via a SmartRedis ``Client`` to a launched standalone ``Orchestrator``.
 
-- :ref:`Connect to an colocated Orchestrator<colo_model_doc>`
+- :ref:`Connect to an colocated Orchestrator<colocated_orch_doc>`
    When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
    nodes prior to the ``Model`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
-   via a SmartSim ``Client``.
+   via a SmartRedis ``Client``.
 
-For the client connection to be successful, the SmartSim ``Orchestrator`` must be launched
-prior to the start of the ``Model``.
+.. note::
+    For the ``Client`` connection to be successful from within the ``Model`` application,
+    the SmartSim ``Orchestrator`` must be launched prior to the start of the ``Model``.
 
 .. note::
     A ``Model`` can be launched without an ``Orchestrator`` if data transfer and ML capabilities are not
@@ -59,17 +60,17 @@ Initialization
 ==============
 Overview
 ========
-The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow entities.
+The :ref:`Experiment API<experiment_api>` is responsible for initializing all SmartSim entities.
 A ``Model`` is created using the ``Experiment.create_model()`` factory method, and users can customize the
 ``Model`` via the factory method parameters.
 
-The key initializer arguments are:
+The key initializer arguments of ``create_model()`` are:
 
 -  `name` (str): Specify the name of the ``Model`` for unique identification.
 -  `run_settings` (base.RunSettings): Describe execution settings for a ``Model``.
 -  `params` (t.Optional[t.Dict[str, t.Any]] = None): Provides a dictionary of parameters for ``Model``.
 -  `path` (t.Optional[str] = None): Path to where the ``Model`` should be executed at runtime.
--  `enable_key_prefixing` (bool = False): Prefix the ``Model`` name to data sent to the ``Orchestrator`` to prevent key collisions. Default is `False`.
+-  `params_as_args` (bool = False): Prefix the ``Model`` name to data sent to the ``Orchestrator`` to prevent key collisions. Default is `False`.
 -  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
 
 A `name` and :ref:`RunSettings<run_settings_doc>` reference are required to initialize a ``Model``.
@@ -743,18 +744,19 @@ Data Collision Prevention
 =========================
 Overview
 ========
-If an ``Experiment`` consists of multiple ``Models`` that attempt to use the same code to access their respective
-data in the ``Orchestrator``, the names used to reference data, ML models, and scripts will be
+If an ``Experiment`` consists of multiple ``Models`` that use the same key names,
+the names used to reference data, ML models, and scripts will be
 identical, and without the use of SmartSim and SmartRedis helper methods, ``Models``
 will end up inadvertently accessing or overwriting each other’s data. To prevent this
 situation, the SmartSim ``Model`` object supports key prefixing, which prepends
-the name of the ``Model`` to the keys it uses to access data. With this enabled, collision is
-avoided and ``Models`` can use the same code.
+the name of the ``Model`` to the keys sent to the ``Orchestrator`` to create unique key names.
+With this enabled, collision is avoided and ``Models`` can use same names within their applications.
 
 For example, assume you have two ``Models`` in an ``Experiment``, named `model_0` and `model_1`. In each
-application code you use the function ``Client.put_tensor("tensor_0")``. With ``Model`` key prefixing
-turned on, the `model_0` and `model_1` ``Model`` applications can access the tensor `"tensor_0"` by name without
-overwriting or accessing the other ``Model`` `"tensor_0"` tensor.
+application code you use the function ``Client.put_tensor("tensor_0", data)`` to send a tensor named `"tensor_0"`
+to the same ``Orchestrator``. With ``Model`` key prefixing turned on, the `model_0` and `model_1` ``Model``
+applications can access the tensor `"tensor_0"` by name without overwriting or accessing the other ``Model`` `"tensor_0"` tensor.
+In this scenario, the two tensors placed in the ``Orchestrator`` are `model_0.tensor_0` and `model_1.tensor_0`.
 
 Enabling and Disabling
 ======================
@@ -789,8 +791,8 @@ function in the application. However, prior to using this function, users must e
 For examples on sending prefixed data to the ``Orchestrator``, read the
 :ref:`put/set operations<put_set_prefix>` section.
 
-Users can instruct SmartSim to prepend a ``Model`` name when searching for data in the
-``Orchestrator``. This is achieved through the ``Client.set_data_source()`` function in the ``Model``
+Users can instruct the SmartRedis ``Client`` to search a number of prefixes when requesting data from the ``Orchestrator``.
+This is achieved through the ``Client.set_data_source()`` function in the ``Model``
 application. To implement this functionality:
 
 1. Use ``Model.register_incoming_entity()`` on the ``Model`` intending to search for data in the ``Orchestrator``.
