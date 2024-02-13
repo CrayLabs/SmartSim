@@ -756,39 +756,75 @@ Overview
 ========
 If an ``Experiment`` consists of multiple ``Models`` that use the same key names,
 the names used to reference data, ML models, and scripts will be
-identical, and without the use of SmartSim and SmartRedis helper methods, ``Models``
+identical, and without the use of SmartSim and SmartRedis prefix methods, ``Models``
 will end up inadvertently accessing or overwriting each other’s data. To prevent this
 situation, the SmartSim ``Model`` object supports key prefixing, which prepends
 the name of the ``Model`` to the keys sent to the ``Orchestrator`` to create unique key names.
 With this enabled, collision is avoided and ``Models`` can use same names within their applications.
 
-For example, assume you have two ``Models`` in an ``Experiment``, named `model_0` and `model_1`. In each
-application code you use the function ``Client.put_tensor("tensor_0", data)`` to send a tensor named `"tensor_0"`
-to the same ``Orchestrator``. With ``Model`` key prefixing turned on, the `model_0` and `model_1` ``Model``
-applications can access the tensor `"tensor_0"` by name without overwriting or accessing the other ``Model`` `"tensor_0"` tensor.
-In this scenario, the two tensors placed in the ``Orchestrator`` are `model_0.tensor_0` and `model_1.tensor_0`.
-
-Enabling and Disabling
-======================
-SmartSim provides support for toggling prefixing on a ``Model`` for tensors, ``Datasets``, lists, ML models, and scripts.
 The key components of prefixing functionality include:
 
 1. **Sending Data to the Orchestrator**: Users can send data to an ``Orchestrator``
-   with the ``Model`` name prepended to the data name.
+   with the ``Model`` name prepended to the data name through :ref:`Model functions<model_prefix_func>` and
+   :ref:`Client functions<client_prefix_func>`.
 2. **Retrieving Data from the Orchestrator**: Users can instruct a ``Client`` to prepend a
-   ``Model`` name to a key during data retrieval, polling, or check for existence on the ``Orchestrator``.
+   ``Model`` name to a key during data retrieval, polling, or check for existence on the ``Orchestrator``
+   through :ref:`Client functions<client_prefix_func>`.
 
-To enable prefixing on the ``Model``, users should utilize the ``Model.enable_key_prefixing()`` function
-in the driver script. This function activates prefixing for tensors, ``Datasets``,
-and lists. Additionally, users can control prefixing for each data structure through ``Client``
+For example, assume you have two ``Models`` in an ``Experiment``, named `model_0` and `model_1`. In each
+application code you use the function ``Client.put_tensor("tensor_0", data)`` to send a tensor named `"tensor_0"`
+to the same ``Orchestrator``. With ``Model`` key prefixing turned on, the `model_0` and `model_1`
+applications can access their respective tensor `"tensor_0"` by name without overwriting or accessing
+the other ``Models`` `"tensor_0"` tensor. In this scenario, the two tensors placed in the
+``Orchestrator`` are `model_0.tensor_0` and `model_1.tensor_0`.
+
+Enabling and Disabling
+======================
+SmartSim provides support for toggling prefixing on a ``Model`` for tensors, ``Datasets``,
+lists, ML models, and scripts. Prefixing functions from the :ref:`Model API<model_api>` and :ref:`Client API<smartredis-api>` rely on
+each other to fully support SmartSim key prefixing. For example, to use the ``Client`` prefixing
+functions, a user must enable prefixing on the ``Model`` through ``Model.enable_key_prefixing()``.
+This functions enables prefixing for tensors, ``Datasets`` and lists placed in an ``Orchestrator``
+by the ``Model``. This configuration can be toggled within the ``Model`` application through
+``Client`` functions, such as disabling tensor prefixing via ``Client.use_tensor_ensemble_prefix(False)``.
+
+.. _model_prefix_func:
+---------------
+Model functions
+---------------
+A ``Model`` object offers two prefixing functions: ``Model.enable_key_prefixing()`` and
+``Model.register_incoming_entity()``.
+
+To enable prefixing on a ``Model``, users must use the ``Model.enable_key_prefixing()``
+function in the ``Experiment`` driver script. The key component of this function include:
+
+- Activating prefixing for tensors, ``Datasets``, and lists sent to a ``Orchestrator`` from within
+  the ``Model`` application.
+- Enabling access to prefixing ``Client`` functions within the ``Model`` application. This excludes
+  the ``Client.set_data_source()`` function, where ``enable_key_prefixing()`` is not require for its use.
+
+.. note::
+    ML model and script prefixing is not automatically enabled through ``Model.enable_key_prefixing()``
+    and rather must be enabled within the ``Model`` application via ``Client.use_model_ensemble_prefix()``.
+
+To enable a SmartRedis ``Client`` to search a number of ``Model`` name prefixes when requesting data from the ``Orchestrator``,
+execute ``Model.register_incoming_entity()``. The key component of this function include:
+
+- If a ``Model`` application requests prefixed tensors placed by another ``Model``, the interaction
+  between the two entities must be registered in the ``Experiment`` driver script. If the interaction is not
+  properly registered, ``Client.set_data_source()`` will not be able to find the ``Models`` prefix
+  that placed the tensors in the ``Orchestrator``.
+
+.. _client_prefix_func:
+----------------
+Client functions
+----------------
+Additionally, users can control prefixing for each data structure through ``Client``
 functions in the ``Model`` script:
 
 - Tensor: ``Client.use_tensor_ensemble_prefix()``
 - ``Dataset``: ``Client.use_dataset_ensemble_prefix()``
 - Aggregation lists: ``Client.use_list_ensemble_prefix()``
-
-.. note::
-    ML model and script prefixing is not automatically enabled through ``Model.enable_key_prefixing()``.
 
 .. warning::
     To access the ``Client`` prefixing functions (e.g. ``Client.use_tensor_ensemble_prefix()``,
