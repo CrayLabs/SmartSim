@@ -77,6 +77,8 @@ jobs:
           sudo ln -s /opt/homebrew/bin/gcc-12 /usr/local/bin/gcc
           sudo ln -s /opt/homebrew/bin/g++-12 /usr/local/bin/g++
           echo "/usr/local/bin" >> $GITHUB_PATH
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v5
         with:
