@@ -102,7 +102,10 @@ jobs:
           which gcc
           echo "Calling /usr/local/bin/gcc"
           /usr/local/bin/gcc --version
+          echo "Calling /usr/local/bin/gcc-12"
+          /usr/local/bin/gcc-12 --version
 
+          echo "Calling gcc/g++"
           gcc --version
           which g++
           g++ --version
