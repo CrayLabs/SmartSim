@@ -39,5 +39,5 @@
             Outgoing key collision prevention (key prefixing): 
                 Tensors: {{ model.query_key_prefixing | as_toggle }}
                 DataSets: {{ model.query_key_prefixing | as_toggle }}
-                Models/Scripts: Off
+                Models/Scripts: {{ False | as_toggle }}
                 Aggregation Lists: {{ model.query_key_prefixing | as_toggle }}

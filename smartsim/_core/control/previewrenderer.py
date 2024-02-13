@@ -30,7 +30,7 @@ from enum import Enum
 
 import jinja2
 from jinja2 import pass_eval_context
-
+import jinja2.utils as u
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
 from ...error.errors import PreviewFormatError
@@ -94,7 +94,7 @@ def render(
 
 
 @pass_eval_context
-def as_toggle(eval_ctx, value: bool) -> str:
+def as_toggle(_eval_ctx: u.F, value: bool) -> str:
     return "On" if value else "Off"
 
 
@@ -140,7 +140,9 @@ def _check_verbosity_level(
     Check that the given verbosity level is valid.
     """
     if not isinstance(verbosity_level, Verbosity):
-        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}")
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}"
+        )
         return Verbosity.INFO
     return verbosity_level
