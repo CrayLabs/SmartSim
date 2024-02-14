@@ -14,7 +14,7 @@ SmartSim
 0.6.1
 -----
 
-To be released at some future point in time
+Released on 15 February, 2024
 
 Description
 
