@@ -119,7 +119,7 @@ def find_available_filename(filename: str) -> str:
     index = 1
 
     while candidate_path.exists():
-        candidate_path = path.with_stem(f"{path.stem}_{index}")
+        candidate_path = path.with_name(f"{path.stem}_{index}.txt")
         index += 1
     return str(candidate_path)
 
@@ -141,7 +141,9 @@ def _check_verbosity_level(
     Check that the given verbosity level is valid.
     """
     if not isinstance(verbosity_level, Verbosity):
-        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}")
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}"
+        )
         return Verbosity.INFO
     return verbosity_level
