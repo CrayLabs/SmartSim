@@ -367,6 +367,50 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
     assert "Type" in output
 
 
+def test_ensemble_preview_client_configuration_multidb(test_dir, wlmutils):
+    """
+    Test client configuration and key prefixing in Ensemble preview
+    with multiple databses
+    """
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment("key_prefix_test", exp_path=test_dir, launcher=test_launcher)
+    # Create Orchestrator
+    db1_dbid = "db_1"
+    db1 = exp.create_database(port=6780, interface="lo", db_identifier=db1_dbid)
+    exp.generate(db1, overwrite=True)
+    # Create another Orchestrator
+    db2_dbid = "db_2"
+    db2 = exp.create_database(port=6784, interface="lo", db_identifier=db2_dbid)
+    exp.generate(db2, overwrite=True)
+
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    # Create ensemble
+    ensemble = exp.create_ensemble("fd_simulation", run_settings=rs1, replicas=2)
+    # enable key prefixing on ensemble
+    ensemble.enable_key_prefixing()
+    exp.generate(ensemble, overwrite=True)
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+    # Create model
+    ml_model = exp.create_model("tf_training", rs2)
+    for sim in ensemble.entities:
+        ml_model.register_incoming_entity(sim)
+    exp.generate(ml_model, overwrite=True)
+    preview_manifest = Manifest(db1, db2, ml_model, ensemble)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest)
+
+    assert "Client Configuration" in output
+    assert "Database identifier" in output
+    assert "Database backend" in output
+    assert "TCP/IP port" in output
+    assert "Type" in output
+
+    assert db1_dbid in output
+    assert db2_dbid in output
+
+
 def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
     """
     Test the preview of tagged, copy, and symlink files attached

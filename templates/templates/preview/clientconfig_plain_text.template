@@ -1,43 +1,16 @@
-
-        Client Configuration:
-            {%- if manifest.dbs %}
-            {%- if manifest.dbs[0].name %}
-            Database identifier: {{ manifest.dbs[0].name }}
-            {%- endif %}
-            {%- endif %}
-            {%- if model.run_settings.colocated_db_settings %}
-            {%- if model.run_settings.colocated_db_settings.db_identifier %}
-            Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
-            {%- endif %}
-            {%- endif %}
-            Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
-            {%- if model.run_settings.colocated_db_settings %}
-                {%- if model.run_settings.colocated_db_settings.port %}
-            TCP/IP Port:
-                {{ model.run_settings.colocated_db_settings.port }}
-                {%- endif -%}
-                {%- if model.run_settings.colocated_db_settings.unix_socket %}
-            Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
-                {%- endif -%}
-            {%- endif %}
-            {%- if model.run_settings.colocated_db_settings %}
-            Type: Colocated
-            {%- endif %}
-            {%- if manifest.dbs %}
-            {%- if manifest.dbs[0].num_shards > 2 %}
-            Type: Clustered
-            {% else %}
-            Type: Standalone
-            {%- endif %}
-            {%- endif %}
-            {%- if incoming in model.incoming_entities %}
-            Incoming entities (available data sources): 
-            {%- for incoming in model.incoming_entities %}
-                {{ incoming.name }}
+    Client Configuration:
+        {%- for db in manifest.dbs %}
+        {%- if db.name %}
+        Database identifier: {{ db.name }}
+        {%- endif %}
+        Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
+        TCP/IP port:  
+            {%- for port in db.ports %}
+            {{ port }}
             {%- endfor %}
-            {%- endif %}
-            Outgoing key collision prevention (key prefixing): 
-                Tensors: {{ model.query_key_prefixing | as_toggle }}
-                DataSets: {{ model.query_key_prefixing | as_toggle }}
-                Models/Scripts: {{ False | as_toggle }}
-                Aggregation Lists: {{ model.query_key_prefixing | as_toggle }}
+        {%- if db.num_shards > 2 %}
+        Type: Clustered
+        {%- else %}
+        Type: Standalone
+        {% endif %}
+        {%- endfor %}
