@@ -271,7 +271,7 @@ class Versioner:
 
     # Versions
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.1"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.0"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.1"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
