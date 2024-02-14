@@ -52,7 +52,6 @@ def choose_host():
 
 def test_experiment_preview(test_dir, wlmutils):
     """Test correct preview output fields for Experiment preview"""
-
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp_name = "test_experiment_preview"
@@ -150,6 +149,98 @@ def test_preview_to_file(test_dir, wlmutils):
     # Evaluate output
     assert path.exists()
     assert path.is_file()
+
+
+def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
+    """Test correct preview output properties for active infrastructure preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_active_infrastructure_preview"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_1",
+    )
+
+    exp.start(orc)
+
+    assert orc.is_active() == True
+
+    orc2 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_2",
+    )
+
+    orc3 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_3",
+    )
+
+    preview_manifest = Manifest(orc, orc2, orc3)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(exp, preview_manifest)
+
+    assert "Active Infrastructure" in output
+    assert "Database identifier" in output
+    assert "Shards" in output
+    assert "Network interface" in output
+    assert "Type" in output
+    assert "TCP/IP" in output
+    assert "Orchestrators" in output
+
+    exp.stop(orc)
+
+
+def test_active_infrastructure_preview_output_format_html(
+    test_dir, wlmutils, choose_host
+):
+    """Test that an html file is rendered for active infrastructure preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_orchestrator_preview_output_format_html"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_1",
+    )
+    exp.start(orc)
+    assert orc.is_active() == True
+
+    orc2 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_2",
+    )
+
+    assert orc2.is_active() == False
+
+    filename = "test_active_infrastructure_preview_output_format_html.html"
+    path = pathlib.Path(test_dir) / filename
+
+    # Execute preview method
+    exp.preview(orc, orc2, output_format="html", output_filename=str(path))
+
+    # Evaluate output
+    assert path.exists()
+    assert path.is_file()
+
+    exp.stop(orc)
 
 
 def test_model_preview(test_dir, wlmutils):

@@ -1,5 +1,3 @@
- 
-{%- for db in manifest.dbs %}
         = Database identifier: {{ db.name }}
             Shards: {{ db.num_shards }}
             TCP/IP port: 
@@ -13,4 +11,3 @@
             Run command: {{ db.run_command }}
             Ntasks: {{ db.db_nodes }}
         =
-{% endfor -%}

@@ -1,8 +1,31 @@
 
 {% include "preview/experiment_plain_text.template" %}
+
 {%- if manifest.has_deployable %}
+{% set settitle = {'activetitle': True,'orchtitle': True} %}
 
 === Entity Preview === 
+
+   {%- if manifest.dbs %}
+    {%- for db in manifest.dbs %}
+    {%- if db.is_active() == True %}
+        {%- if settitle['activetitle'] == True %}
+     == Active Infrastructure == 
+        {%- endif %}
+        {% include "preview/activeinfra_plain_text.template" %}
+        {%- if settitle.update({'activetitle': False}) %}
+        {% endif %}
+    {% else %}
+        {%-if settitle['orchtitle'] == True %}
+     == Orchestrators == 
+        {%- endif %}
+        {% include "preview/orchestrator_plain_text.template" %}
+        {%- if settitle.update({'orchtitle': False}) %}
+        {% endif %}
+    {%- endif %}
+    {%- endfor %}
+        {% include "preview/clientconfig_plain_text.template" %}
+    {%- endif %}
 
     {%- if manifest.models %}
     == Models == 
@@ -20,14 +43,6 @@
     {%- for ensemble in manifest.ensembles %}
         {% include "preview/ensemble_plain_text.template" %}
     {%- endfor %}
-    {%- endif -%}
-
-    {%- if manifest.dbs %}
-    == Orchestrators == 
-    {%- for db in manifest.dbs %}   
-    {% include "preview/orchestrator_plain_text.template" %}
-    {%- endfor %}
-    {% include "preview/clientconfig_plain_text.template" %}
     {%- endif -%}
 
 {%- endif -%}
