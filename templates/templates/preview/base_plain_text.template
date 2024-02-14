@@ -24,7 +24,7 @@
         {% endif %}
     {%- endif %}
     {%- endfor %}
-        {% include "preview/clientconfig_plain_text.template" %}
+    {% include "preview/clientconfig_plain_text.template" %}
     {%- endif %}
 
     {%- if manifest.models %}
@@ -32,7 +32,7 @@
      {% for model in manifest.models %}   
         = {% include "preview/model_plain_text.template" %}
         {%- if model.run_settings.colocated_db_settings %}
-        {% include "preview/clientconfigcolo_plain_text.template" %}
+            {% include "preview/clientconfigcolo_plain_text.template" %}
         {%- endif %}
         =
      {% endfor %}
