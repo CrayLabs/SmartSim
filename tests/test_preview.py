@@ -36,7 +36,6 @@ from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import PreviewFormatError
-
 from smartsim.settings import RunSettings
 
 
@@ -243,7 +242,7 @@ def test_active_infrastructure_preview_output_format_html(
 
     exp.stop(orc)
 
-   
+
 def test_model_preview(test_dir, wlmutils):
     """
     Test correct preview output fields for Model preview
