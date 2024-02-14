@@ -1,7 +1,5 @@
 from smartsim import Experiment
-from smartsim.log import get_logger
 
-logger = get_logger("Experiment Log")
 # Initialize the Experiment
 exp = Experiment("getting-started", launcher="auto")
 

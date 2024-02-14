@@ -32,9 +32,8 @@ launch, monitor, and stop applications.
 ==============
 Initialization
 ==============
---------
 Overview
---------
+========
 The :ref:`Experiment API<experiment_api>` is responsible for initializing all workflow entities.
 An ``Ensemble`` is created using the ``Experiment.create_ensemble()`` factory method, and users can customize the
 ``Ensemble`` creation via the factory method parameters.
@@ -49,7 +48,7 @@ The factory method arguments of ``Experiment.create_ensemble()`` are:
 -  `replicas` (int, optional): Declare the number of ``Model`` clones within the ``Ensemble``, crucial for the creation of simulation replicas.
 -  `perm_strategy` (str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ``Ensemble`` creation and number of ``Ensemble`` members. The options are `"all_perm"`, `"step"`, and `"random"`.
 
-By using specific combinations of factory method arguments mentioned above, users can tailor
+By using specific combinations of the factory method arguments mentioned above, users can tailor
 the creation of an ``Ensemble`` to align with one of the following creation strategies:
 
 - :ref:`Parameter expansion<param_expansion_init>` allows for diverse scenario exploration by expanding a dictionary of parameters into the ``Ensemble`` ``Model`` members.
@@ -57,9 +56,8 @@ the creation of an ``Ensemble`` to align with one of the following creation stra
 - :ref:`Replicas<replicas_init>` enables the creation of a specified number of ``Model`` clones within the ``Ensemble``.
 
 .. _param_expansion_init:
--------------------
 Parameter Expansion
--------------------
+===================
 In ``Ensemble`` simulations, parameter expansion is a technique that
 allows users to set parameter values per ``Ensemble`` member. This is done
 by specifying input to the `params` and `perm_strategy` factory method arguments during ``Ensemble`` creation (``Experiment.create_ensemble()``).
@@ -68,10 +66,16 @@ The `perm_strategy` argument accepts three values listed below.
 
 **Parameter Expansion Strategy Options:**
 
--  `"all_perm"`: Generate all possible parameter permutations for an exhaustive exploration.
--  `"step"`: Create sets for each element in n arrays, providing a systematic exploration.
+-  `"all_perm"`: Generate all possible parameter permutations for an exhaustive exploration. This
+  means that every possible combination of parameters will be used in the ``Ensemble``.
+-  `"step"`: Create sets for each element in n arrays, providing a systematic exploration. This
+  means that the parameters will be changed in a step-by-step manner, allowing you to see the
+  effect of each parameter individually.
 -  `"random"`: Enable random selection from predefined parameter spaces, offering a stochastic approach.
+  This means that the parameters will be chosen randomly for each ``Model``, which can be useful
+  for exploring a wide range of possibilities.
 
+--------
 Examples
 --------
 We provide two parameter expansion examples by using the `params` and `perm_strategy`
@@ -120,7 +124,8 @@ Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strateg
         ensemble member 3: ["John", 2]
         ensemble member 4: ["John", 11]
 
-    Therefore, SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation group to each.
+    Therefore, SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation group to each
+    ``Model``.
 
 Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params` and `perm_strategy`
 
@@ -175,14 +180,14 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params
     Therefore, the ``Ensemble`` will have two ``Model`` members each assigned a group.
 
 .. _replicas_init:
---------
 Replicas
---------
+========
 In ``Ensemble`` simulations, a replica strategy involves the creation of
 identical ``Models`` within an ``Ensemble``. This strategy is particularly useful for
 applications that have some inherent randomness. Users may use the `replicas` factory method argument
 to create a specified number of identical ``Model`` members during ``Ensemble`` creation (``Experiment.create_ensemble()``).
 
+--------
 Examples
 --------
 We provide two examples for initializing an ``Ensemble`` using the replicas creation
@@ -243,7 +248,8 @@ Example 2 : Replica Creation with ``RunSettings``, ``BatchSettings`` and `replic
         :linenos:
         :lines: 10-12
 
-    Initialize the ``Ensemble`` by specifying the ``RunSettings`` object and number of clones to `replicas`:
+    Initialize the ``Ensemble`` by specifying the ``RunSettings`` object, ``BatchSettings`` object
+    and number of clones to `replicas`:
 
     .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
         :language: python
@@ -253,22 +259,21 @@ Example 2 : Replica Creation with ``RunSettings``, ``BatchSettings`` and `replic
     By passing in `replicas=4`, four identical ``Ensemble`` members will be initialized.
 
 .. _append_init:
----------------
 Manually Append
----------------
-Manually appending ``Models`` involves the addition of user created ``Model`` instance to an ``Ensemble``,
-offering an in-depth level of customization in ``Ensemble`` design. This approach is favorable when users
-have distinct requirements for individual ``Models``, such as variations in parameters, run settings,
-or ``Model`` architectures.
+===============
+Manually appending ``Models`` to an ``Ensemble`` offers an in-depth level of customization in ``Ensemble`` design.
+This approach is favorable when users have distinct requirements for individual ``Models``, such as variations
+in parameters, run settings, or different types of simulations.
 
+--------
 Examples
 --------
-We provide an example for initializing an ``Ensemble`` and manually appending ``Models`` to
-the ``Ensemble``.
+We provide an example for manually appending ``Models`` to an ``Ensemble``.
 
-Example 1 : Append ``Models`` with ``BatchSettings``
-    This example appends ``Models`` to an ``Ensemble``. To achieve this, manually create ``Models``
-    and and execute the function ``Ensemble.add_model()``.
+Example 1 : Append ``Models`` to launch as a batch job
+    In this example, we append ``Models`` to an ``Ensemble`` for batch job execution. To do
+    this, we first initialize an Ensemble with a ``BatchSettings`` object. Then, manually
+    create ``Models`` and add each to the ``Ensemble`` using the ``Ensemble.add_model()`` function.
 
     .. dropdown:: Example Driver Script source code
 
@@ -289,7 +294,7 @@ Example 1 : Append ``Models`` with ``BatchSettings``
         :linenos:
         :lines: 13-20
 
-    Finally, append the ``Model`` object to the ``Ensemble``:
+    Finally, append the ``Model`` objects to the ``Ensemble``:
 
     .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
         :language: python
@@ -304,27 +309,32 @@ Files
 =====
 Overview
 ========
-Applications often depend on external files (e.g. training datasets, evaluation datasets, etc)
+``Ensemble`` members often depend on external files (e.g. training datasets, evaluation datasets, etc)
 to operate as intended. Users can instruct SmartSim to copy, symlink, or manipulate external files
-prior to the ``Ensemble`` launch via the ``Ensemble.attach_generator_files()`` function.
+prior to an ``Ensemble`` launch via the ``Ensemble.attach_generator_files()`` function so that the
+files are available for use by ``Models`` referenced by an ``Ensemble``.
 
 .. note::
     Multiple calls to ``Ensemble.attach_generator_files()`` will overwrite previous file configurations
-    in the ``Ensemble``.
+    on the ``Ensemble``.
 
 To attach a file to an ``Ensemble`` for use at runtime, provide one of the following arguments to the
 ``Ensemble.attach_generator_files()`` function:
 
-* `to_copy` (t.Optional[t.List[str]] = None): Files that are copied into the path of the entity.
-* `to_symlink` (t.Optional[t.List[str]] = None): Files that are symlinked into the path of the entity.
+* `to_copy` (t.Optional[t.List[str]] = None): Files that are copied into the path of the ``Ensemble`` members.
+* `to_symlink` (t.Optional[t.List[str]] = None): Files that are symlinked into the path of the ``Ensemble`` members.
+  A symlink, or symbolic link, is a file that points to another file or directory, allowing you to access that file
+  as if it were located in the same directory as the symlink.
 
 To specify a template file in order to programmatically replace specified parameters during generation
-of the ``Ensemble`` member directories, pass the following value to the ``Ensemble.attach_generator_files()`` function:
+of ``Ensemble`` member directories, pass the following value to the ``Ensemble.attach_generator_files()`` function:
 
-* `to_configure` (t.Optional[t.List[str]] = None): Designed for text-based ``Ensemble`` input files,
-  "to_configure" is exclusive to the ``Ensemble``. During ``Ensemble`` member directory generation, the attached
-  files are parsed and specified tagged parameters are replaced with the `params` values that were
-  specified in the ``Experiment.create_ensemble()`` factory method of the ``Ensemble``. The default tag is a semicolon
+* `to_configure` (t.Optional[t.List[str]] = None): This parameter is designed for text-based ``Ensemble``
+  member input files. During directory generation for ``Ensemble`` members, the linked files are parsed and replaced with
+  the `params` values applied to each ``Ensemble`` member. To further explain, the ``Ensemble``
+  creation strategy is considered when replacing the tagged parameters in the input files.
+  These tagged parameters are placeholders in the text that are replaced with the actual
+  parameter values during the directory generation process. The default tag is a semicolon
   (e.g., THERMO = ;THERMO;).
 
 In the :ref:`Example<files_example_doc_ensem>` subsection, we provide an example using the value `to_configure`
@@ -333,8 +343,8 @@ within ``Ensemble.attach_generator_files()``.
 .. _files_example_doc_ensem:
 Example
 =======
-This example demonstrates how to attach a file to an ``Ensemble`` for parameter replacement at time
-of ``Ensemble`` member directory generation. This is accomplished using the `params` function parameter in
+This example demonstrates how to attach a text file to an ``Ensemble`` for parameter replacement.
+This is accomplished using the `params` function parameter in
 the ``Experiment.create_ensemble()`` factory function and the `to_configure` function parameter
 in ``Ensemble.attach_generator_files()``.
 
@@ -343,7 +353,7 @@ in ``Ensemble.attach_generator_files()``.
     .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
 
 In this example, we have a text file named `params_inputs.txt`. Within the text, is the parameter `THERMO`
-that is required by the application at runtime:
+that is required by each ``Ensemble`` member at runtime:
 
 .. code-block:: txt
 
@@ -358,22 +368,22 @@ In order to have the tagged parameter `;THERMO;` replaced with a usable value at
 
 To encapsulate our application within an ``Ensemble``, we must create an ``Experiment`` instance
 to gain access to the ``Experiment`` factory method that creates the ``Ensemble``.
-Begin by importing the ``Experiment`` module, importing SmartSim `log` module and initializing
+Begin by importing the ``Experiment`` module and initializing
 an ``Experiment``:
 
 .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
     :language: python
     :linenos:
-    :lines: 1-6
+    :lines: 1-4
 
 To create our ``Ensemble``, we are using the `replicas` initialization strategy.
 Begin by creating a simple ``RunSettings`` object to specify the path to
-our application script as an executable argument and the executable to run the script:
+the executable simulation as an executable:
 
 .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
     :language: python
     :linenos:
-    :lines: 8-9
+    :lines: 6-7
 
 Next, initialize an ``Ensemble`` object with ``Experiment.create_ensemble()``
 and pass in the `ensemble_settings` instance and specify `replicas=2`:
@@ -381,7 +391,7 @@ and pass in the `ensemble_settings` instance and specify `replicas=2`:
 .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
     :language: python
     :linenos:
-    :lines: 11-12
+    :lines: 9-10
 
 We now have an ``Ensemble`` instance named `example_ensemble`. Attach the above text file
 to the ``Ensemble`` for use at entity runtime. To do so, we use the
@@ -391,7 +401,7 @@ parameter with the path to the text file, `params_inputs.txt`:
 .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
     :language: python
     :linenos:
-    :lines: 14-15
+    :lines: 12-13
 
 To created an isolated directory for the ``Ensemble`` member outputs and configuration files, invoke ``Experiment.generate()`` via the
 ``Experiment`` instance `exp` with `example_ensemble` as an input parameter:
@@ -420,12 +430,12 @@ Functions accessible through an ``Ensemble`` object support loading ML models (T
 PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` at
 application runtime.
 
-Users can follow **two** processes to load a ML model to the ``Orchestrator``:
+Depending on the storage method of the ML model, there are **two** distinct approaches to load it into the ``Orchestrator``:
 
 - :ref:`from memory<in_mem_ML_model_ensemble_ex>`
 - :ref:`from file<from_file_ML_model_ensemble_ex>`
 
-Users can follow **three** processes to load a TorchScript to the ``Orchestrator``:
+Depending on the storage method of the TorchScript, there are **three** distinct approaches to load it into the ``Orchestrator``:
 
 - :ref:`from memory<in_mem_TF_ensemble_doc>`
 - :ref:`from file<TS_from_file_ensemble>`
@@ -478,7 +488,7 @@ to load into an ``Orchestrator`` at ``Ensemble`` runtime.
 **Define an in-memory Keras CNN**
 
 The ML model must be defined using one of the supported ML frameworks. For the purpose of the example,
-we define a Keras CNN in the same script as the SmartSim ``Experiment``:
+we define a Keras CNN, which is based on Tensorflow, in the same script as the SmartSim ``Experiment``:
 
 .. code-block:: python
 
