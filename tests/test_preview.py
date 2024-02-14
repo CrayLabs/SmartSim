@@ -31,8 +31,12 @@ from os import path as osp
 import numpy as np
 import pytest
 
+import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
+
+from smartsim._core.config import CONFIG
+
 from smartsim.error.errors import PreviewFormatError
 from smartsim.settings import RunSettings
 
@@ -85,6 +89,50 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.name == summary_dict["Experiment"]
     assert exp.exp_path == summary_dict["Experiment Path"]
     assert exp.launcher == summary_dict["Launcher"]
+
+
+def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
+    """Test correct preview output properties for Orchestrator preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_experiment_preview_properties"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    # create regular database
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+    )
+    preview_manifest = Manifest(orc)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Database identifier" in output
+    assert "Shards" in output
+    assert "TCP/IP port" in output
+    assert "Network interface" in output
+    assert "Type" in output
+    assert "Executable" in output
+    assert "Batch Launch" in output
+    assert "Run command" in output
+    assert "Ntasks" in output
+
+    db_path = _utils.get_db_path()
+    if db_path:
+        db_type, _ = db_path.name.split("-", 1)
+
+    assert orc.db_identifier in output
+    assert str(orc.num_shards) in output
+    assert orc._interfaces[0] in output
+    assert db_type in output
+    assert CONFIG.database_exe in output
+    assert str(orc.batch) in output
+    assert orc.run_command in output
+    assert str(orc.db_nodes) in output
 
 
 def test_preview_to_file(test_dir, wlmutils):
@@ -246,7 +294,8 @@ def test_model_key_prefixing(test_dir, wlmutils):
     exp.generate(db, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     model = exp.create_model("model_test", run_settings=rs1)
-    # enable key prefixing on ensemble
+
+    # enable key prefixing on model
     model.enable_key_prefixing()
     exp.generate(model, overwrite=True)
 

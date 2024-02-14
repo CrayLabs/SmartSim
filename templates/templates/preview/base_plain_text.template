@@ -4,26 +4,30 @@
 
 === Entity Preview === 
 
-{%- if manifest.models %}
+    {%- if manifest.models %}
     == Models == 
-{% for model in manifest.models %}   
+     {% for model in manifest.models %}   
         = {% include "preview/model_plain_text.template" %}
         {%- if model.run_settings.colocated_db_settings %}
         {% include "preview/clientconfigcolo_plain_text.template" %}
         {%- endif %}
         =
-{% endfor %}
+     {% endfor %}
+     {%- endif -%}
 
-{%- endif -%}
-{%- if manifest.ensembles %}
+    {%- if manifest.ensembles %}
     == Ensembles ==
     {%- for ensemble in manifest.ensembles %}
         {% include "preview/ensemble_plain_text.template" %}
     {%- endfor %}
-{%- endif -%}
+    {%- endif -%}
 
-{% if manifest.dbs %}
-{% include "preview/clientconfig_plain_text.template" %}
-{%- endif -%}
+    {%- if manifest.dbs %}
+    == Orchestrators == 
+    {%- for db in manifest.dbs %}   
+    {% include "preview/orchestrator_plain_text.template" %}
+    {%- endfor %}
+    {% include "preview/clientconfig_plain_text.template" %}
+    {%- endif -%}
 
 {%- endif -%}
