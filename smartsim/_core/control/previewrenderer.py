@@ -83,7 +83,6 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-
     return rendered_preview
 
 
