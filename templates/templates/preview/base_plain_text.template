@@ -4,6 +4,7 @@
 
 === Entity Preview === 
 
+
 {%- if manifest.models %}
     == Models == 
 {% for model in manifest.models %}   
@@ -13,11 +14,15 @@
         {%- endif %}
         =
 {% endfor %}
-
 {%- endif -%}
 
-{% if manifest.dbs %}
-{% include "preview/clientconfig_plain_text.template" %}
+
+{%- if manifest.dbs %}
+    == Orchestrators == 
+{%- for db in manifest.dbs %}   
+    {% include "preview/orchestrator_plain_text.template" %}
+{%- endfor %}
+  {% include "preview/clientconfig_plain_text.template" %}
 {%- endif -%}
 
 {%- endif -%}
