@@ -1,7 +1,20 @@
+
 {% include "preview/experiment_plain_text.template" %}
-{%- if manifest.all_entities %}
+{%- if manifest.has_deployable %}
 
 === Entity Preview === 
+
+
+{%- if manifest.models %}
+    == Models == 
+{% for model in manifest.models %}   
+        = {% include "preview/model_plain_text.template" %}
+        {%- if model.run_settings.colocated_db_settings %}
+        {% include "preview/clientconfigcolo_plain_text.template" %}
+        {%- endif %}
+        =
+{% endfor %}
+{%- endif -%}
 
 
 {%- if manifest.dbs %}
@@ -9,5 +22,7 @@
 {%- for db in manifest.dbs %}   
     {% include "preview/orchestrator_plain_text.template" %}
 {%- endfor %}
+  {% include "preview/clientconfig_plain_text.template" %}
 {%- endif -%}
+
 {%- endif -%}

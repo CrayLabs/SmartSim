@@ -23,10 +23,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import pathlib
 import typing as t
 from enum import Enum
 
 import jinja2
+import jinja2.utils as u
+from jinja2 import pass_eval_context
 
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
@@ -38,7 +42,9 @@ logger = get_logger(__name__)
 if t.TYPE_CHECKING:
     from smartsim import Experiment
 
-_OutputFormatString = t.Optional[t.Literal["plain_text"]]
+
+class Format(str, Enum):
+    PLAINTEXT = "plain_text"
 
 
 class Verbosity(str, Enum):
@@ -51,7 +57,7 @@ def render(
     exp: "Experiment",
     manifest: t.Optional[Manifest] = None,
     verbosity_level: Verbosity = Verbosity.INFO,
-    output_format: _OutputFormatString = "plain_text",
+    output_format: Format = Format.PLAINTEXT,
 ) -> str:
     """
     Render the template from the supplied entities.
@@ -70,6 +76,8 @@ def render(
     loader = jinja2.PackageLoader("templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
 
+    env.filters["as_toggle"] = as_toggle
+
     version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
 
@@ -86,23 +94,43 @@ def render(
     return rendered_preview
 
 
+@pass_eval_context
+def as_toggle(_eval_ctx: u.F, value: bool) -> str:
+    return "On" if value else "Off"
+
+
 def preview_to_file(content: str, filename: str) -> None:
     """
-    Output preview to a file if output format and filename
-    are specified.
+    Output preview to a file if an output filename
+    is specified.
     """
+    filename = find_available_filename(filename)
 
     with open(filename, "w", encoding="utf-8") as prev_file:
         prev_file.write(content)
 
 
-def _check_output_format(output_format: _OutputFormatString) -> None:
+def find_available_filename(filename: str) -> str:
+    """Iterate through potentially unique names until one is found that does
+    not already exist. Return an unused name variation"""
+
+    path = pathlib.Path(filename)
+    candidate_path = pathlib.Path(filename)
+    index = 1
+
+    while candidate_path.exists():
+        candidate_path = path.with_name(f"{path.stem}_{index}.txt")
+        index += 1
+    return str(candidate_path)
+
+
+def _check_output_format(output_format: Format) -> None:
     """
     Check that the output format given is valid.
     """
-    if not output_format == "plain_text":
+    if not output_format == Format.PLAINTEXT:
         raise PreviewFormatError(
-            "The only valid output format currently available is plain_text"
+            f"The only valid output format currently available is {Format.PLAINTEXT}"
         )
 
 
@@ -112,7 +140,7 @@ def _check_verbosity_level(
     """
     Check that the given verbosity level is valid.
     """
-    if verbosity_level not in (Verbosity.INFO, Verbosity.DEBUG, Verbosity.DEVELOPER):
+    if not isinstance(verbosity_level, Verbosity):
         logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
  Setting verbosity to: {Verbosity.INFO}")
         return Verbosity.INFO

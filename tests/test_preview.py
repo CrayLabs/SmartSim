@@ -25,7 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
+import sys
+from os import path as osp
 
+import numpy as np
 import pytest
 
 import smartsim._core._cli.utils as _utils
@@ -33,6 +36,18 @@ from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import PreviewFormatError
+from smartsim.settings import RunSettings
+
+
+@pytest.fixture
+def choose_host():
+    def _choose_host(wlmutils, index: int = 0):
+        hosts = wlmutils.get_test_hostlist()
+        if hosts:
+            return hosts[index]
+        return None
+
+    return _choose_host
 
 
 @pytest.fixture
@@ -48,10 +63,11 @@ def choose_host():
 
 
 def test_experiment_preview(test_dir, wlmutils):
-    """Test correct preview output items for Experiment preview"""
+    """Test correct preview output fields for Experiment preview"""
+
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
-    exp_name = "test_prefix"
+    exp_name = "test_experiment_preview"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
@@ -129,7 +145,7 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     assert str(orc.db_nodes) in output
 
 
-def test_preview_to_file(test_dir, wlmutils, fileutils):
+def test_preview_to_file(test_dir, wlmutils):
     """
     Test that if an output_filename is given, a file
     is rendered for Experiment preview"
@@ -146,6 +162,165 @@ def test_preview_to_file(test_dir, wlmutils, fileutils):
     # Evaluate output
     assert path.exists()
     assert path.is_file()
+
+
+def test_model_preview(test_dir, wlmutils):
+    """
+    Test correct preview output fields for Model preview
+    """
+    # Prepare entities
+    exp_name = "test_model_preview"
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    model_params = {"port": 6379, "password": "unbreakable_password"}
+    rs1 = RunSettings("bash", "multi_tags_template.sh")
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+
+    hello_world_model = exp.create_model(
+        "echo-hello", run_settings=rs1, params=model_params
+    )
+
+    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+
+    preview_manifest = Manifest(hello_world_model, spam_eggs_model)
+
+    # Execute preview method
+    rendered_preview = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Model name" in rendered_preview
+    assert "Executable" in rendered_preview
+    assert "Executable Arguments" in rendered_preview
+    assert "Batch Launch" in rendered_preview
+    assert "Model parameters" in rendered_preview
+
+
+def test_model_preview_properties(test_dir, wlmutils):
+    """
+    Test correct preview output properties for Model preview
+    """
+    # Prepare entities
+    exp_name = "test_model_preview_parameters"
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    hw_name = "echo-hello"
+    hw_port = 6379
+    hw_password = "unbreakable_password"
+    hw_rs = "multi_tags_template.sh"
+    model_params = {"port": hw_port, "password": hw_password}
+    hw_param1 = "bash"
+    rs1 = RunSettings(hw_param1, hw_rs)
+
+    se_name = "echo-spam"
+    se_param1 = "echo"
+    se_param2 = "spam"
+    se_param3 = "eggs"
+    rs2 = exp.create_run_settings(se_param1, [se_param2, se_param3])
+
+    hello_world_model = exp.create_model(hw_name, run_settings=rs1, params=model_params)
+    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
+
+    preview_manifest = Manifest(hello_world_model, spam_eggs_model)
+
+    # Execute preview method
+    rendered_preview = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output for hello world model
+    assert hw_name in rendered_preview
+    assert hw_param1 in rendered_preview
+    assert hw_rs in rendered_preview
+    assert "False" in rendered_preview
+    assert "port" in rendered_preview
+    assert "password" in rendered_preview
+    assert str(hw_port) in rendered_preview
+    assert hw_password in rendered_preview
+
+    assert hw_name == hello_world_model.name
+    assert hw_param1 in hello_world_model.run_settings.exe[0]
+    assert hw_rs == hello_world_model.run_settings.exe_args[0]
+    assert None == hello_world_model.batch_settings
+    assert "port" in list(hello_world_model.params.items())[0]
+    assert hw_port in list(hello_world_model.params.items())[0]
+    assert "password" in list(hello_world_model.params.items())[1]
+    assert hw_password in list(hello_world_model.params.items())[1]
+
+    # Evaluate outputfor spam eggs model
+    assert se_name in rendered_preview
+    assert se_param1 in rendered_preview
+    assert se_param2 in rendered_preview
+    assert se_param3 in rendered_preview
+
+    assert se_name == spam_eggs_model.name
+    assert se_param1 in spam_eggs_model.run_settings.exe[0]
+    assert se_param2 == spam_eggs_model.run_settings.exe_args[0]
+    assert se_param3 == spam_eggs_model.run_settings.exe_args[1]
+
+
+def test_model_with_tagged_files(fileutils, test_dir, wlmutils):
+    """
+    Test model with tagged files in preview.
+    """
+    # Prepare entities
+    exp_name = "test_model_preview_parameters"
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    model_params = {"port": 6379, "password": "unbreakable_password"}
+    model_settings = RunSettings("bash", "multi_tags_template.sh")
+
+    hello_world_model = exp.create_model(
+        "echo-hello", run_settings=model_settings, params=model_params
+    )
+
+    config = fileutils.get_test_conf_path(
+        osp.join("generator_files", "multi_tags_template.sh")
+    )
+    hello_world_model.attach_generator_files(to_configure=[config])
+    exp.generate(hello_world_model, overwrite=True)
+
+    preview_manifest = Manifest(hello_world_model)
+
+    # Execute preview method
+    rendered_preview = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Tagged Files for model configuration" in rendered_preview
+    assert "generator_files/multi_tags_template.sh" in rendered_preview
+    assert "generator_files/multi_tags_template.sh" in hello_world_model.files.tagged[0]
+
+
+def test_model_key_prefixing(test_dir, wlmutils):
+    """
+    Test preview for enabling key prefixing for a Model
+    """
+
+    # Prepare entities
+    exp_name = "test_model_key_prefixing"
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    db = exp.create_database(port=6780, interface="lo")
+    exp.generate(db, overwrite=True)
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    model = exp.create_model("model_test", run_settings=rs1)
+    # enable key prefixing on model
+    model.enable_key_prefixing()
+    exp.generate(model, overwrite=True)
+
+    preview_manifest = Manifest(db, model)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest)
+
+    # Evaluate output
+    assert "Key prefix" in output
+    assert "model_test" in output
+    assert "Outgoing key collision prevention (key prefixing)" in output
+    assert "Tensors: On" in output
+    assert "DataSets: On" in output
+    assert "Models/Scripts: Off" in output
+    assert "Aggregation Lists: On" in output
 
 
 def test_output_format_error():
