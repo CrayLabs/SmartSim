@@ -1,4 +1,3 @@
-       
         = Database identifier: {{ db.name }}
             Shards: {{ db.num_shards }}
             TCP/IP port: 
@@ -7,10 +6,6 @@
                 {%- endfor %}
             Network interface: {{ db._interfaces[0] }}
             Type: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
-            TCP/IP port: 
-                {%- for port in db.ports %}
-                {{ port }}
-                {%- endfor %}
             Executable: {{ config.database_exe }}
             Batch Launch: {{ db.batch }}
             Run command: {{ db.run_command }}

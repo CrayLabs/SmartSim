@@ -1,0 +1,106 @@
+            {%- if model is defined -%}
+            Model name: {{ model.name }}
+                Executable:  
+                {%- for param in model.run_settings.exe %}
+                    {{ param }}
+                {%- endfor %}
+                Executable Arguments:
+                {%- for param in model.run_settings.exe_args %}
+                    {{ param }}
+                {%- endfor %}
+                {%- if model.batch_settings -%}
+                Batch Launch: True
+                {% else %}
+                Batch Launch: False
+                {%- endif -%} 
+                {%- if model.params %}
+                Model parameters: 
+                {%- for param, value in model.params.items() %}
+                    {{ param }}: {{ value }}
+                {%- endfor -%}
+                {% endif %}
+                {%- if model.files %}
+                {%- if model.files.tagged %}
+                Tagged Files for model configuration: 
+                    {%- for tagged in model.files.tagged %}
+                    {{ tagged }} -> 
+                    {{ model.path }}
+                    {%- endfor %}
+                {%- endif -%}
+                {%- if model.files.copy %}
+                Copy files: 
+                    {%- for copy in model.files.copy %}
+                    {{ copy }} ->
+                    {{ model.path }}
+                    {% endfor %}
+                {%- endif %}
+                {%- if model.files.link %}
+                Symlink: 
+                    {%- for link in model.files.link %}
+                    {{ link }} ->
+                    {{ model.path }}
+                    {% endfor %}
+                {%- endif %}
+                {%- endif %}
+                {%- if model.run_settings.colocated_db_settings %}
+                Colocated:
+                {%- if model.run_settings.colocated_db_settings.db_identifier %}
+                    Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+                {% endif %}
+                    {%- if model.run_settings.colocated_db_settings.port %}
+                    Connection Type: TCP
+                    TCP/IP Port:
+                        {{ model.run_settings.colocated_db_settings.port }}
+                    {% endif -%}
+                    {%- if model.run_settings.colocated_db_settings.unix_socket %}
+                    Connection Type: UDS
+                    Unix socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+                    {%- endif -%}
+                    Ifname: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+                    Cpus: {{ model.run_settings.colocated_db_settings.cpus }}
+                    Custom pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
+                {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+                Scripts:
+                {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}   
+                    Script name: {{ script.name }}
+                    Script path: {{ script.script_path }}
+                    Backend: {{ script.device }}   
+                    Devices per node: {{ script.devices_per_node }} 
+
+                {%- endfor %}
+                {%- endif %}
+                {%- if model.run_settings.colocated_db_settings['db_models'] %}
+                Models: 
+                {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
+                    Model name: {{ mlmodel.name }}
+                    Backend: {{ mlmodel.backend }} 
+                    Model path: {{ mlmodel.model_file }} 
+                    Device: {{ mlmodel.device }}  
+                    Devices per node: {{ mlmodel.devices_per_node }}
+                    First device:{{ mlmodel.first_device }}
+                    {%- for input in mlmodel.inputs %}
+                    Inputs: 
+                        {{ input }} 
+                    {%- endfor %}
+                    {%- for output in mlmodel.outputs %}
+                    Outputs: 
+                        {{ output }}
+                    {%- endfor %}
+                {% endfor %}
+                {%- endif %}
+                {%- endif %}
+                {%- if model.incoming_entities %}
+                Incoming entities (available data sources): 
+                {%- for incoming in model.incoming_entities %}
+                    {{ incoming.name }}
+                {%- endfor %}
+                {%- endif %}
+                {%- if model.query_key_prefixing()%}  
+                Key prefix: {{ model.name }}
+                {%- endif %}
+                Outgoing key collision prevention (key prefixing): 
+                    Tensors: {{ model.query_key_prefixing | as_toggle }}
+                    DataSets: {{ model.query_key_prefixing | as_toggle }}
+                    Models/Scripts: {{ False | as_toggle }}
+                    Aggregation Lists: {{ model.query_key_prefixing | as_toggle }}
+                {%- endif -%}

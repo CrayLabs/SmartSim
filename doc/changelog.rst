@@ -27,6 +27,7 @@ Description
 - Added ONNX support for Python 3.10
 - Added support for Python 3.11
 - Added support for SmartSim with Torch on Apple Silicon
+- Updated install instructions for Apple Silicon
 
 
 Detailed Notes
@@ -49,6 +50,7 @@ Detailed Notes
 - SmartSim can now be built and used on platforms using Apple Silicon
   (ARM64). Currently, only the PyTorch backend is supported. Note that libtorch
   will be downloaded from a CrayLabs github repo. (SmartSim-PR465_)
+- Separate install instructions are now provided for Mac OSX on x64 vs ARM64 (SmartSim-PR478_)
 
 .. _SmartSim-PR446: https://github.com/CrayLabs/SmartSim/pull/446
 .. _SmartSim-PR448: https://github.com/CrayLabs/SmartSim/pull/448
@@ -57,6 +59,7 @@ Detailed Notes
 .. _SmartSim-PR461: https://github.com/CrayLabs/SmartSim/pull/461
 .. _SmartSim-PR465: https://github.com/CrayLabs/SmartSim/pull/465
 .. _SmartSim-PR472: https://github.com/CrayLabs/SmartSim/pull/472
+.. _SmartSim-PR478: https://github.com/CrayLabs/SmartSim/pull/478
 
 
 0.6.0
