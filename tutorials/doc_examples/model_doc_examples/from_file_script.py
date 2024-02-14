@@ -5,7 +5,7 @@ from smartsim import Experiment
 exp = Experiment("getting-started", launcher="auto")
 
 # Initialize a RunSettings object
-model_settings = exp.create_run_settings(exe="path/to/executable/simulation")
+model_settings = exp.create_run_settings(exe="path/to/example_simulation_program")
 
 # Initialize a Model object
 model_instance = exp.create_model("model_name", model_settings)

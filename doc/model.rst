@@ -1,3 +1,4 @@
+.. _model_object_doc:
 *****
 Model
 *****

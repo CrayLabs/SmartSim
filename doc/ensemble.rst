@@ -5,19 +5,21 @@ Ensemble
 ========
 Overview
 ========
-A SmartSim ``Ensemble`` enables users to execute a **group** of computational tasks in an
+A SmartSim ``Ensemble`` enables users to run a **group** of computational tasks together in an
 ``Experiment`` workflow. An ``Ensemble`` is comprised of multiple ``Model`` objects,
-each representing an individual application. An ``Ensemble`` can be be referenced as a single instance and
-can be launched with other ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
-The :ref:`Ensemble API<ensemble_api>` offers key ``Ensemble`` features, including class methods to:
+where each ``Ensemble`` member (SmartSim ``Model``) represents an individual application.
+An ``Ensemble`` can be managed as a single entity and
+launched with other :ref:`Model<model_object_doc>` and :ref:`Orchestrators<orch_docs:>` to construct AI-enabled workflows.
 
-- :ref:`Load TF, TF-lite, PT, or ONNX models<ai_model_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Load TorchScripts<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Mitigate data collisions<prefix_ensemble>` within the ``Ensemble`` to enable the reuse of application code.
+The :ref:`Ensemble API<ensemble_api>` offers key features, including methods to:
+
 - :ref:`Attach configuration files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
+- :ref:`Load AI models<ai_model_ensemble_doc>` (TF, TF-lite, PT, or ONNX) into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Load TorchScripts<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Prevent data collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
 
-To initialize a SmartSim ``Ensemble``, use the ``Experiment.create_ensemble()`` API function.
-When creating an ``Ensemble``, a user must consider one of the **three** ``Ensemble`` creation strategies:
+To create a SmartSim ``Ensemble``, use the ``Experiment.create_ensemble()`` API function.
+When creating an ``Ensemble``, it is important to consider one of the **three** ``Ensemble`` creation strategies:
 
 1. :ref:`Parameter expansion<param_expansion_init>`: Generate a variable-sized set of unique simulation instances
    configured with user-defined input parameters.
@@ -39,20 +41,20 @@ An ``Ensemble`` is created using the ``Experiment.create_ensemble()`` factory me
 
 The factory method arguments of ``Experiment.create_ensemble()`` are:
 
--  `name` (str): Specify the name of the ensemble, aiding in its unique identification.
--  `params` (dict[str, Any]): Provides a dictionary of parameters:values for expanding into the ``Model`` members within the ensemble. Enables parameter expansion for diverse scenario exploration.
--  `params_as_args` (list[str]): Specify which parameters from the `params` dictionary should be treated as command line arguments when executing the Models.
+-  `name` (str): Specify the name of the ``Ensemble``, aiding in its unique identification.
+-  `params` (dict[str, Any]): Provides a dictionary of {parameters:values} for expanding into the ``Model`` members within the ``Ensemble``. Enables parameter expansion for diverse scenario exploration.
+-  `params_as_args` (list[str]): Specify which parameters from the `params` dictionary should be treated as command line arguments when executing the ``Models``.
 -  `batch_settings` (BatchSettings, optional): Describes settings for batch workload treatment.
--  `run_settings` (RunSettings, optional): Describes execution settings for individual Model members.
--  `replicas` (int, optional): Declare the number of ``Model`` clones within the ensemble, crucial for the creation of simulation replicas.
--  `perm_strategy` (str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ensemble creation and number of ensemble members. The options are `"all_perm"`, `"step"`, and `"random"`.
+-  `run_settings` (RunSettings, optional): Describes execution settings for individual ``Model`` members.
+-  `replicas` (int, optional): Declare the number of ``Model`` clones within the ``Ensemble``, crucial for the creation of simulation replicas.
+-  `perm_strategy` (str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ``Ensemble`` creation and number of ``Ensemble`` members. The options are `"all_perm"`, `"step"`, and `"random"`.
 
 By using specific combinations of factory method arguments mentioned above, users can tailor
 the creation of an ``Ensemble`` to align with one of the following creation strategies:
 
-- :ref:`Parameter expansion<param_expansion_init>`
-- :ref:`Manually Append<append_init>`
-- :ref:`Replicas<replicas_init>`
+- :ref:`Parameter expansion<param_expansion_init>` allows for diverse scenario exploration by expanding a dictionary of parameters into the ``Ensemble`` ``Model`` members.
+- :ref:`Manually Append<append_init>` allows users to attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
+- :ref:`Replicas<replicas_init>` enables the creation of a specified number of ``Model`` clones within the ``Ensemble``.
 
 .. _param_expansion_init:
 -------------------
@@ -60,10 +62,8 @@ Parameter Expansion
 -------------------
 In ``Ensemble`` simulations, parameter expansion is a technique that
 allows users to set parameter values per ``Ensemble`` member. This is done
-by specifying input to the `params` and `perm_strategy`
-factory method arguments during ``Ensemble`` creation.
-User's may control how the `params` values
-are applied to the ``Ensemble`` through the `perm_strategy` argument.
+by specifying input to the `params` and `perm_strategy` factory method arguments during ``Ensemble`` creation (``Experiment.create_ensemble()``).
+User's may control how the `params` values are applied to the ``Ensemble`` through the `perm_strategy` argument.
 The `perm_strategy` argument accepts three values listed below.
 
 **Parameter Expansion Strategy Options:**
@@ -78,95 +78,99 @@ We provide two parameter expansion examples by using the `params` and `perm_stra
 factory method arguments to create an ``Ensemble``.
 
 Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strategy`
+
     This example extends the same run settings with sampled grouped parameters to each ``Ensemble`` member.
     The ``Ensemble`` encompasses all grouped permutations of the specified `params` by creating a ``Model`` member for each
     permutation. To achieve this, we specify the parameter expansion strategy, `"all_perm"`, to the `perm_strategy`
     factory method argument.
 
+    .. dropdown:: Example Driver Script source code
+
+        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+
     Begin by initializing a ``RunSettings`` object to apply to
     all ``Ensemble`` members:
 
-    .. code-block:: python
-
-        rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+        :language: python
+        :linenos:
+        :lines: 6-7
 
     Next, define the parameters that will be applied to the ``Ensemble``:
 
-    .. code-block:: python
-
-        params = {
-            "name": ["Ellie", "John"],
-            "parameter": [2, 11]
-        }
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+        :language: python
+        :linenos:
+        :lines: 9-13
 
     Finally, initialize an ``Ensemble`` by specifying the ``RunSettings``, `params` and `perm_strategy="all_perm"`:
 
-    .. code-block:: python
-
-        ensemble = exp.create_ensemble("ensemble", run_settings=rs, params=params, perm_strategy="all_perm")
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+        :language: python
+        :linenos:
+        :lines: 15-16
 
     By specifying `perm_strategy="all_perm"`, all permutations of the `params` will
     be calculated and distributed across ``Ensemble`` members. Here there are four permutations of the `params` values:
 
     .. code-block:: bash
 
-        group 1: ["Ellie", 2]
-        group 2: ["Ellie", 11]
-        group 3: ["John", 2]
-        group 4: ["John", 11]
+        ensemble member 1: ["Ellie", 2]
+        ensemble member 2: ["Ellie", 11]
+        ensemble member 3: ["John", 2]
+        ensemble member 4: ["John", 11]
 
     Therefore, SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation group to each.
 
 Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params` and `perm_strategy`
+
     In this example, the ``Ensemble`` will be submitted as a batch job. An identical set of
     ``RunSettings`` will be applied to all ``Ensemble`` member and parameters will be
     applied in a `step` strategy to create the ``Ensemble`` members.
 
+    .. dropdown:: Example Driver Script source code
+
+        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+
     Begin by initializing and configuring a ``BatchSettings`` object to
     run the ``Ensemble`` instance:
 
-    .. code-block:: python
-
-        batch_args = {
-            "distribution": "block"
-            "exclusive": None
-        }
-        bs = exp.create_batch_settings(nodes=2,
-                               time="10:00:00",
-                               batch_args=batch_args)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+        :language: python
+        :linenos:
+        :lines: 6-8
 
     The above ``BatchSettings`` object will instruct SmartSim to run the ``Ensemble`` on two
     nodes with a timeout of `10 hours`.
 
     Next initialize a ``RunSettings`` object to apply to all ``Ensemble`` members:
 
-    .. code-block:: python
-
-        rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
-        rs.set_nodes(1)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+        :language: python
+        :linenos:
+        :lines: 10-12
 
     Next, define the parameters to include in ``Ensemble``:
 
-    .. code-block:: python
-
-        params = {
-            "name": ["Ellie", "John"],
-            "parameter": [2, 11]
-        }
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+        :language: python
+        :linenos:
+        :lines: 14-18
 
     Finally, initialize an ``Ensemble`` by passing in the ``RunSettings``, `params` and `perm_strategy="step"`:
 
-    .. code-block:: python
-
-        ensemble = exp.create_ensemble("ensemble", run_settings=rs, batch_settings=bs, params=params, perm_strategy="step")
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+        :language: python
+        :linenos:
+        :lines: 20-21
 
     By specifying `perm_strategy="step"`, the values of the `params` key will be
     grouped into intervals and distributed across ``Ensemble`` members. Here, there are two groups:
 
     .. code-block:: bash
 
-        group 1: ["Ellie", 2]
-        group 2: ["John", 11]
+        ensemble member 1: ["Ellie", 2]
+        ensemble member 2: ["John", 11]
 
     Therefore, the ``Ensemble`` will have two ``Model`` members each assigned a group.
 
@@ -175,10 +179,9 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params
 Replicas
 --------
 In ``Ensemble`` simulations, a replica strategy involves the creation of
-identical or closely related ``Models`` within an ``Ensemble``, allowing for the
-assessment of how a system responds to the same set of parameters under
-multiple ``Model`` instances. Users may use the `replicas` factory method argument
-to create a specified number of identical ``Model`` members.
+identical ``Models`` within an ``Ensemble``. This strategy is particularly useful for
+applications that have some inherent randomness. Users may use the `replicas` factory method argument
+to create a specified number of identical ``Model`` members during ``Ensemble`` creation (``Experiment.create_ensemble()``).
 
 Examples
 --------
@@ -186,54 +189,66 @@ We provide two examples for initializing an ``Ensemble`` using the replicas crea
 strategy.
 
 Example 1 : Replica Creation with ``RunSettings`` and `replicas`
+
+    This example extends the same run settings to ``Ensemble`` member clones. To achieve this, we specify the number
+    of clones to create via the `replicas` argument and pass a ``RunSettings`` object to the `run_settings`
+    argument.
+
+    .. dropdown:: Example Driver Script source code
+
+        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
+
     To create an ``Ensemble`` of identical ``Models``, begin by initializing a ``RunSettings``
     object:
 
-    .. code-block:: python
-
-        rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
+        :language: python
+        :linenos:
+        :lines: 6-7
 
     Initialize the ``Ensemble`` by specifying the ``RunSettings`` object and number of clones to `replicas`:
 
-    .. code-block:: python
-
-        ensemble = exp.create_ensemble("ensemble-replica",
-                               replicas=4,
-                               run_settings=rs)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
+        :language: python
+        :linenos:
+        :lines: 9-10
 
     By passing in `replicas=4`, four identical ``Ensemble`` members will be initialized.
 
 Example 2 : Replica Creation with ``RunSettings``, ``BatchSettings`` and `replicas`
+
+    This example extends the same run settings and batch settings to ``Ensemble`` member clones. To achieve this, we specify the number
+    of clones to create via the `replicas` argument, passing a ``RunSettings`` object to the `run_settings`
+    argument and passing a ``BatchSettings`` argument to `batch_settings`.
+
+    .. dropdown:: Example Driver Script source code
+
+        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+
     To launch the ``Ensemble`` of identical ``Models`` as a batch job, begin by initializing a ``BatchSettings``
     object:
 
-    .. code-block:: python
-
-        batch_args = {
-            "distribution": "block"
-            "exclusive": None
-        }
-        bs = exp.create_batch_settings(nodes=4,
-                               time="10:00:00",
-                               batch_args=batch_args)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+        :language: python
+        :linenos:
+        :lines: 6-9
 
     The above ``BatchSettings`` object will instruct SmartSim to run the ``Ensemble`` on four
     nodes with a timeout of `10 hours`.
 
     Next, create a ``RunSettings`` object to apply to all ``Model`` replicas:
 
-    .. code-block:: python
-
-        rs = exp.create_run_settings(exe="python", exe_args="path/to/application_script.py")
-        rs.set_nodes(4)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+        :language: python
+        :linenos:
+        :lines: 10-12
 
     Initialize the ``Ensemble`` by specifying the ``RunSettings`` object and number of clones to `replicas`:
 
-    .. code-block:: python
-
-        ensemble = exp.create_ensemble("ensemble-replica",
-                               replicas=4,
-                               run_settings=rs)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+        :language: python
+        :linenos:
+        :lines: 14-15
 
     By passing in `replicas=4`, four identical ``Ensemble`` members will be initialized.
 
@@ -252,30 +267,34 @@ We provide an example for initializing an ``Ensemble`` and manually appending ``
 the ``Ensemble``.
 
 Example 1 : Append ``Models`` with ``BatchSettings``
+    This example appends ``Models`` to an ``Ensemble``. To achieve this, manually create ``Models``
+    and and execute the function ``Ensemble.add_model()``.
+
+    .. dropdown:: Example Driver Script source code
+
+        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+
     To create an empty ``Ensemble`` to append ``Models``, initialize the ``Ensemble`` with
     a batch settings object:
 
-    .. code-block:: python
-
-        bs = exp.create_batch_settings(nodes=10,
-                               time="01:00:00")
-        ensemble = exp.create_ensemble("ensemble-append", batch_settings=bs)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+        :language: python
+        :linenos:
+        :lines: 6-11
 
     Next, create the ``Models`` to append to the ``Ensemble``:
 
-    .. code-block:: python
-
-        srun_settings_1 = exp.create_run_settings(exe=exe, exe_args="path/to/application_script_1.py")
-        srun_settings_2 = exp.create_run_settings(exe=exe, exe_args="path/to/application_script_2.py")
-        model_1 = exp.create_model(name="model_1", run_settings=srun_settings_1)
-        model_2 = exp.create_model(name="model_2", run_settings=srun_settings_2)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+        :language: python
+        :linenos:
+        :lines: 13-20
 
     Finally, append the ``Model`` object to the ``Ensemble``:
 
-    .. code-block:: python
-
-        ensemble.add_model(model_1)
-        ensemble.add_model(model_2)
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+        :language: python
+        :linenos:
+        :lines: 22-25
 
     The new ``Ensemble`` is comprised of two appended ``Model`` members.
 
@@ -319,6 +338,10 @@ of ``Ensemble`` member directory generation. This is accomplished using the `par
 the ``Experiment.create_ensemble()`` factory function and the `to_configure` function parameter
 in ``Ensemble.attach_generator_files()``.
 
+.. dropdown:: Example Driver Script source code
+
+    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+
 In this example, we have a text file named `params_inputs.txt`. Within the text, is the parameter `THERMO`
 that is required by the application at runtime:
 
@@ -338,48 +361,45 @@ to gain access to the ``Experiment`` factory method that creates the ``Ensemble`
 Begin by importing the ``Experiment`` module, importing SmartSim `log` module and initializing
 an ``Experiment``:
 
-.. code-block:: python
-
-    from smartsim import Experiment
-    from smartsim.log import get_logger
-
-    logger = get_logger("Experiment Log")
-    # Initialize the Experiment
-    exp = Experiment("getting-started", launcher="auto")
+.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    :language: python
+    :linenos:
+    :lines: 1-6
 
 To create our ``Ensemble``, we are using the `replicas` initialization strategy.
 Begin by creating a simple ``RunSettings`` object to specify the path to
 our application script as an executable argument and the executable to run the script:
 
-.. code-block:: python
-
-    # Initialize a RunSettings object
-    ensemble_settings = exp.create_run_settings(exe="python", exe_args="/path/to/application.py")
+.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    :language: python
+    :linenos:
+    :lines: 8-9
 
 Next, initialize an ``Ensemble`` object with ``Experiment.create_ensemble()``
 and pass in the `ensemble_settings` instance and specify `replicas=2`:
 
-.. code-block:: python
-
-    # Initialize an Ensemble object
-    example_ensemble = exp.create_ensemble("ensemble", model_settings, replicas=2, params={"THERMO":1})
+.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    :language: python
+    :linenos:
+    :lines: 11-12
 
 We now have an ``Ensemble`` instance named `example_ensemble`. Attach the above text file
 to the ``Ensemble`` for use at entity runtime. To do so, we use the
 ``Ensemble.attach_generator_files()`` function and specify the `to_configure`
 parameter with the path to the text file, `params_inputs.txt`:
 
-.. code-block:: python
-
-    # Attach the file to the Ensemble instance
-    example_ensemble.attach_generator_files(to_configure="path/to/params_inputs.txt")
+.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    :language: python
+    :linenos:
+    :lines: 14-15
 
 To created an isolated directory for the ``Ensemble`` member outputs and configuration files, invoke ``Experiment.generate()`` via the
 ``Experiment`` instance `exp` with `example_ensemble` as an input parameter:
 
-.. code-block:: python
-
-    exp.generate(example_ensemble)
+.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    :language: python
+    :linenos:
+    :lines: 17-18
 
 After invoking ``Experiment.generate()``, the attached generator files will be available for the
 application when ``exp.start(example_ensemble)`` is called.
@@ -393,9 +413,8 @@ The contents of `params_inputs.txt` after ``Ensemble`` completion are:
 =====================
 ML Models and Scripts
 =====================
---------
 Overview
---------
+========
 SmartSim users have the capability to utilize ML runtimes within an ``Ensemble``.
 Functions accessible through an ``Ensemble`` object support loading ML models (TensorFlow, TensorFlow-lite,
 PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` at
