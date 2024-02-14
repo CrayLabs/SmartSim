@@ -141,9 +141,7 @@ def _check_verbosity_level(
     Check that the given verbosity level is valid.
     """
     if not isinstance(verbosity_level, Verbosity):
-        logger.warning(
-            f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}"
-        )
+        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}")
         return Verbosity.INFO
     return verbosity_level
