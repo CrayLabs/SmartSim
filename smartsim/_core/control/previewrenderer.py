@@ -92,7 +92,6 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-    print(rendered_preview)
     return rendered_preview
 
 
@@ -144,7 +143,9 @@ def _check_verbosity_level(
     """
     if not isinstance(verbosity_level, Verbosity):
 
-        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}")
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}"
+        )
         return Verbosity.INFO
     return verbosity_level
