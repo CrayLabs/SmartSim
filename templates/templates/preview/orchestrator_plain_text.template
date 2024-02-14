@@ -1,3 +1,4 @@
+        
         = Database identifier: {{ db.name }}
             Shards: {{ db.num_shards }}
             TCP/IP port: 
