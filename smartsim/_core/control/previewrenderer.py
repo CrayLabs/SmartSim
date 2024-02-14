@@ -29,8 +29,9 @@ import typing as t
 from enum import Enum
 
 import jinja2
-from jinja2 import pass_eval_context
 import jinja2.utils as u
+from jinja2 import pass_eval_context
+
 from ..._core.config import CONFIG
 from ..._core.control import Manifest
 from ...error.errors import PreviewFormatError
