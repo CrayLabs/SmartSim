@@ -342,6 +342,7 @@ The files are created in the working directory of the ``Model``, and the filenam
     the two files within that directory. You can also specify a path for these files using the
     `path` parameter when invoking ``Experiment.create_model()``.
 
+.. _ml_script_model_doc:
 =====================
 ML Models and Scripts
 =====================
