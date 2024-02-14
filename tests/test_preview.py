@@ -34,9 +34,7 @@ import pytest
 import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
-
 from smartsim._core.config import CONFIG
-
 from smartsim.error.errors import PreviewFormatError
 from smartsim.settings import RunSettings
 
