@@ -436,9 +436,8 @@ leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<smar
 to execute the stored ML models or TorchScripts.
 
 .. _ai_model_ensemble_doc:
----------
 AI Models
----------
+=========
 When configuring an ``Ensemble``, users can instruct SmartSim to load
 Machine Learning (ML) models dynamically to the ``Orchestrator`` (colocated or standalone). ML models added
 are loaded into the ``Orchestrator`` prior to the execution of the ``Ensemble``. To load an ML model
@@ -464,6 +463,7 @@ following arguments are offered to customize the storage and execution of the ML
 - `outputs` (t.Optional[t.List[str]] = None): ML model outputs (TF only), defaults to None.
 
 .. _in_mem_ML_model_ensemble_ex:
+-------------------------------------
 Example: Attach an in-memory ML Model
 -------------------------------------
 This example demonstrates how to attach an in-memory ML model to a SmartSim ``Ensemble``
@@ -527,6 +527,7 @@ launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrat
 client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _from_file_ML_model_ensemble_ex:
+----------------------------------------
 Example: Attaching an ML Model from file
 ----------------------------------------
 This example demonstrates how to attach a ML model from file to a SmartSim ``Ensemble``
@@ -591,9 +592,8 @@ launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrat
 client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_ensemble_doc:
-------------
 TorchScripts
-------------
+============
 When configuring an ``Ensemble``, users can instruct SmartSim to load TorchScripts dynamically
 to the ``Orchestrator``. TorchScripts added are loaded into the ``Orchestrator`` prior to
 the execution of the ``Ensemble``. To load a TorchScript to the ``Orchestrator``, SmartSim users
@@ -610,6 +610,7 @@ Continue or select the respective process link to learn more on how each functio
 dynamically loads TorchScripts to the ``Orchestrator``.
 
 .. _in_mem_TF_ensemble_doc:
+-------------------------------
 Attach an in-memory TorchScript
 -------------------------------
 Users can define TorchScript functions within the Python driver script
@@ -634,7 +635,7 @@ following arguments are offered:
 
 .. _in_mem_TF_ex:
 Example: Loading a in-memory TorchScript function
-'''''''''''''''''''''''''''''''''''''''''''''''''
+-------------------------------------------------
 This example walks through the steps of instructing SmartSim to load an in-memory TorchScript function
 to a standalone ``Orchestrator``.
 
@@ -681,6 +682,7 @@ standalone ``Orchestrator``. The function can then be executed on the ``Orchestr
 client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_from_file_ensemble:
+------------------------------
 Attach a TorchScript from file
 ------------------------------
 Users can attach TorchScript functions from a file to an ``Ensemble`` and upload them to a
@@ -702,7 +704,7 @@ following arguments are offered:
 
 .. _TS_from_file_ex:
 Example: Loading a TorchScript from File
-''''''''''''''''''''''''''''''''''''''''
+----------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript from file
 to a ``Orchestrator``.
 
@@ -747,6 +749,7 @@ When `smartsim_ensemble` is started via ``Experiment.start()``, the TorchScript 
 ``Orchestrator`` that is launched prior to the start of the `smartsim_ensemble`.
 
 .. _TS_raw_string_ensemble:
+---------------------------------
 Define TorchScripts as raw string
 ---------------------------------
 Users can upload TorchScript functions from string to send to a colocated or
@@ -768,7 +771,7 @@ following arguments are offered:
 
 .. _TS_from_file_ex:
 Example: Loading a TorchScript from string
-''''''''''''''''''''''''''''''''''''''''''
+------------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript function
 from string to a ``Orchestrator`` before the execution of the associated ``Model``.
 
@@ -816,9 +819,8 @@ When the ``Ensemble`` is started via ``Experiment.start()``, the TorchScript wil
 =========================
 Data Collision Prevention
 =========================
---------
 Overview
---------
+========
 When multiple ``Ensemble`` members use the same code to access their respective data
 in the ``Orchestrator``, key overlapping can occur, leading to inadvertent data access
 between ``Ensemble`` members. To address this, a SmartSim ``Ensemble`` supports key prefixing
@@ -827,9 +829,8 @@ which automatically adds the ``Ensemble`` member `name` as a prefix to the keys 
 Enabling key prefixing eliminates issues related to key overlapping, allowing ``Ensemble``
 members to use the same code without issue.
 
--------------------------------
 Example: Ensemble Key Prefixing
--------------------------------
+===============================
 In this example, we create an ``Ensemble`` comprised of two ``Models`` that use identical code
 to send data to a standalone ``Orchestrator``. To prevent key collisions and ensure data
 integrity, we enable key prefixing on the ``Ensemble`` which automatically
@@ -837,6 +838,7 @@ appends the ``Ensemble`` member `name` to the data sent to the ``Orchestrator``.
 ``Ensemble`` completes, we launch a consumer ``Model`` within the Python driver script
 to demonstrate accessing prefixed data sent to the ``Orchestrator`` by ``Ensemble`` members.
 
+-------------------------------
 The Application Producer Script
 -------------------------------
 In the Python driver script, we instruct SmartSim to create an ``Ensemble`` comprised of
@@ -871,6 +873,7 @@ After the completion of the ``Ensemble`` using the application script, the conte
     1) "producer_0.tensor"
     2) "producer_1.tensor"
 
+-------------------------------
 The Application Consumer Script
 -------------------------------
 In the Python driver script, we initialize a consumer ``Model`` that requests
@@ -930,6 +933,7 @@ When the ``Experiment`` driver script is executed, the following output will app
     on the consumer ``Model`` in the driver script via ``Model.register_incoming_entity()``.
     We demonstrate this in the ``Experiment`` driver script section of the example.
 
+---------------------
 The Experiment Script
 ---------------------
 In the ``Experiment`` driver script we initialize:
