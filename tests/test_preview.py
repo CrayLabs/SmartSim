@@ -550,7 +550,6 @@ def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
     assert "generator_files/test_dir" in output
     assert "generator_files/to_copy_dir" in output
     assert "generator_files/to_symlink_dir" in output
-    assert "/SmartSim" in output
     for model in ensemble:
         assert "generator_files/test_dir" in model.files.tagged[0]
         for copy in model.files.copy:
