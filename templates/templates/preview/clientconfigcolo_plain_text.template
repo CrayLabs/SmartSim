@@ -1,13 +1,14 @@
-                Client Configuration:
-                    {%- if model.run_settings.colocated_db_settings.db_identifier %}
-                    Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
-                    {%- endif %}
-                    Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
-                    {%- if model.run_settings.colocated_db_settings.port %}
-                    TCP/IP Port:
-                        {{ model.run_settings.colocated_db_settings.port }}
-                    {%- endif -%}
-                        {%- if model.run_settings.colocated_db_settings.unix_socket %}
-                    Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
-                        {%- endif %}
-                    Type: Colocated
+
+            Client Configuration:
+                {%- if model.run_settings.colocated_db_settings.db_identifier %}
+                Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+                {%- endif %}
+                Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
+                {%- if model.run_settings.colocated_db_settings.port %}
+                TCP/IP Port:
+                    {{ model.run_settings.colocated_db_settings.port }}
+                {%- endif -%}
+                {%- if model.run_settings.colocated_db_settings.unix_socket %}
+                Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
+                {%- endif %}
+                Type: Colocated
