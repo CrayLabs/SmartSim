@@ -100,8 +100,8 @@
             Key prefix: {{ model.name }}
             {%- endif %}
             Outgoing key collision prevention (key prefixing): 
-                Tensors: {{ model.query_key_prefixing | as_toggle }}
-                DataSets: {{ model.query_key_prefixing | as_toggle }}
+                Tensors: {{ model.query_key_prefixing() | as_toggle }}
+                DataSets: {{ model.query_key_prefixing() | as_toggle }}
                 Models/Scripts: {{ False | as_toggle }}
-                Aggregation Lists: {{ model.query_key_prefixing | as_toggle }}
+                Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}
             {%- endif %}
