@@ -107,8 +107,11 @@ versions = buildenv.Versioner()
 
 # check for compatible python versions
 if not build_env.is_compatible_python(versions.PYTHON_MIN):
-    print("You are using Python {}. Python >={} is required.".format(build_env.python_version,
-                                                                     ".".join((versions.PYTHON_MIN))))
+    print(
+        "You are using Python {}. Python >={} is required.".format(
+            build_env.python_version, ".".join((versions.PYTHON_MIN))
+        )
+    )
     sys.exit(-1)
 
 if build_env.is_windows():
@@ -120,8 +123,10 @@ if build_env.is_windows():
 # __version__ in smartsim/__init__.py
 smartsim_version = versions.write_version(setup_path)
 
+
 class BuildError(Exception):
     pass
+
 
 # Hacky workaround for solving CI build "purelib" issue
 # see https://github.com/google/or-tools/issues/616
@@ -131,15 +136,14 @@ class InstallPlatlib(install):
         if self.distribution.has_ext_modules():
             self.install_lib = self.install_platlib
 
-class SmartSimBuild(build_py):
 
+class SmartSimBuild(build_py):
     def run(self):
-        database_builder = builder.DatabaseBuilder(build_env(),
-                                             build_env.MALLOC,
-                                             build_env.JOBS)
+        database_builder = builder.DatabaseBuilder(
+            build_env(), build_env.MALLOC, build_env.JOBS
+        )
         if not database_builder.is_built:
-            database_builder.build_from_git(versions.REDIS_URL,
-                                         versions.REDIS)
+            database_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
 
             database_builder.cleanup()
 
@@ -151,9 +155,10 @@ class SmartSimBuild(build_py):
 class BinaryDistribution(Distribution):
     """Distribution which always forces a binary package with platform name
 
-       We use this because we want to pre-package Redis for certain
-       platforms to use.
+    We use this because we want to pre-package Redis for certain
+    platforms to use.
     """
+
     def has_ext_modules(_placeholder):
         return True
 
@@ -167,6 +172,7 @@ deps = [
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
+    "jinja2>=3.1.2",
     "watchdog>=3.0.0,<4.0.0",
 ]
 
@@ -193,7 +199,7 @@ extras_require = {
         "typing_extensions>=4.1.0",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
-    **versions.ml_extras_required()
+    **versions.ml_extras_required(),
 }
 
 
@@ -212,5 +218,5 @@ setup(
         "console_scripts": [
             "smart = smartsim._core._cli.__main__:main",
         ]
-    }
+    },
 )
