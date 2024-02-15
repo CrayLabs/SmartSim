@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,8 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 def test_simple_model_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
-        pytest.skip(
-            "Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM"
-        )
+    if launcher not in ["pbs", "slurm", "lsf"]:
+        pytest.skip("Test only runs on systems with LSF, PBSPro, or Slurm as WLM")
 
     exp_name = "test-simplebase-settings-model-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
@@ -70,10 +68,8 @@ def test_simple_model_on_wlm(fileutils, test_dir, wlmutils):
 
 def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
-        pytest.skip(
-            "Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM"
-        )
+    if launcher not in ["pbs", "slurm", "lsf"]:
+        pytest.skip("Test only runs on systems with LSF, PBSPro, or Slurm as WLM")
 
     exp_name = "test-simplebase-settings-model-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)

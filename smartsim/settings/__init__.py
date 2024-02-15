@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@
 
 from .alpsSettings import AprunSettings
 from .base import RunSettings, SettingsBase
-from .cobaltSettings import CobaltBatchSettings
 from .containers import Container, Singularity
 from .lsfSettings import BsubBatchSettings, JsrunSettings
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
@@ -36,7 +35,6 @@ from .slurmSettings import SbatchSettings, SrunSettings
 
 __all__ = [
     "AprunSettings",
-    "CobaltBatchSettings",
     "BsubBatchSettings",
     "JsrunSettings",
     "MpirunSettings",

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,9 @@ from smartredis.error import RedisReplyError
 
 from ..error import SSInternalError
 from ..log import get_logger
+
+if t.TYPE_CHECKING:
+    import numpy.typing as npt
 
 logger = get_logger(__name__)
 
@@ -118,7 +121,7 @@ class DataInfo:
         if "target_name" in field_names:
             self.target_name = info_ds.get_meta_strings("target_name")[0]
         if "num_classes" in field_names:
-            self.num_classes = info_ds.get_meta_scalars("num_classes")[0]
+            self.num_classes = int(info_ds.get_meta_scalars("num_classes")[0])
 
     def __repr__(self) -> str:
         strings = ["DataInfo object"]
@@ -311,8 +314,8 @@ class DataDownloader:
         self.address = address
         self.cluster = cluster
         self.verbose = verbose
-        self.samples = None
-        self.targets = None
+        self.samples: t.Optional["npt.NDArray[t.Any]"] = None
+        self.targets: t.Optional["npt.NDArray[t.Any]"] = None
         self.num_samples = 0
         self.indices = np.arange(0)
         self.shuffle = shuffle
@@ -460,14 +463,20 @@ class DataDownloader:
         if self.samples is not None:
             for dataset in datasets:
                 self.samples = np.concatenate(
-                    (self.samples, dataset.get_tensor(self.sample_name))
+                    (
+                        t.cast("npt.NDArray[t.Any]", self.samples),
+                        dataset.get_tensor(self.sample_name),
+                    )
                 )
                 if self.need_targets:
                     self.targets = np.concatenate(
-                        (self.targets, dataset.get_tensor(self.target_name))
+                        (
+                            t.cast("npt.NDArray[t.Any]", self.targets),
+                            dataset.get_tensor(self.target_name),
+                        )
                     )
 
-            self.num_samples = self.samples.shape[0]
+            self.num_samples = t.cast("npt.NDArray[t.Any]", self.samples).shape[0]
             self.indices = np.arange(self.num_samples)
 
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
@@ -496,8 +505,8 @@ class DataDownloader:
             np.random.shuffle(self.indices)
 
     def _data_generation(
-        self, indices: np.ndarray  # type: ignore[type-arg]
-    ) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
+        self, indices: "npt.NDArray[t.Any]"
+    ) -> t.Tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
         # Initialization
         if self.samples is None:
             raise ValueError("Samples have not been initialized")
@@ -505,10 +514,10 @@ class DataDownloader:
         xval = self.samples[indices]
 
         if self.need_targets:
-            yval = self.targets[indices]
+            yval = t.cast("npt.NDArray[t.Any]", self.targets)[indices]
         elif self.autoencoding:
             yval = xval
         else:
-            return xval
+            return xval  # type: ignore[no-any-return]
 
         return xval, yval

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ class _BaseMPIStep(Step):
             self._set_alloc()
         self.run_settings = run_settings
 
-    _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
+    _supported_launchers = ["PBS", "SLURM", "LSB"]
 
     @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:

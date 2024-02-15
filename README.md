@@ -100,8 +100,8 @@ before using it on your system. Each tutorial is a Jupyter notebook that can be 
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.1
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.1
+docker pull ghcr.io/craylabs/smartsim-tutorials:latest
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:latest
 # click on link to open jupyter lab
 ```
 
@@ -179,7 +179,6 @@ launch capabilities for all applications.
  - Slurm
  - LSF
  - PBSPro
- - Cobalt
  - Local (for laptops/single node, no batch)
 
 
@@ -198,7 +197,7 @@ qsub -l select=3:ncpus=20 -l walltime=00:10:00 -l place=scatter -I -q <queue>
 bsub -Is -W 00:10 -nnodes 3 -P <project> $SHELL
 ```
 
-This same script will run on a SLURM, PBS, LSF, or Cobalt system as the ``launcher``
+This same script will run on a SLURM, PBS, or LSF system as the ``launcher``
 is set to `auto` in the [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. The run command like ``mpirun``,
 ``aprun`` or ``srun`` will be automatically detected from what is available on the
@@ -277,8 +276,8 @@ print(exp.get_status(ensemble))
 python hello_ensemble.py
 ```
 
-Similar to the interactive example, this same script will run on a SLURM, PBS, LSF,
-or Cobalt system as the ``launcher`` is set to `auto` in the
+Similar to the interactive example, this same script will run on a SLURM, PBS,
+or LSF system as the ``launcher`` is set to `auto` in the
 [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. Local launching does not support batch workloads.
 
@@ -452,8 +451,8 @@ Each tutorial is a Jupyter notebook that can be run through the
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v1
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.1
+docker pull ghcr.io/craylabs/smartsim-tutorials:latest
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:latest
 ```
 Each of the following examples can be found in the
 [SmartSim documentation](https://www.craylabs.org/docs/tutorials/getting_started/getting_started.html).
@@ -640,15 +639,15 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
     <tr>
       <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>1.11.x</td>
+      <td>2.0.1</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.8.x</td>
+      <td>2.13.1</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.11.x</td>
+      <td>1.14.1</td>
     </tr>
   </tbody>
 </table>

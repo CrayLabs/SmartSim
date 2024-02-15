@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,7 @@ class Step:
         )
         makedirs(osp.dirname(script_path), exist_ok=True)
 
-        db_settings: t.Dict[str, str] = {}
+        db_settings = {}
         if isinstance(self.step_settings, RunSettings):
             db_settings = self.step_settings.colocated_db_settings or {}
 

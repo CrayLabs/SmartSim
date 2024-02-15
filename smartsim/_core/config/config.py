@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -225,11 +225,15 @@ class Config:
 
     @property
     def telemetry_enabled(self) -> bool:
-        return int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", "0")) > 0
+        return int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", "1")) > 0
 
     @property
     def telemetry_cooldown(self) -> int:
         return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
+
+    @property
+    def telemetry_subdir(self) -> str:
+        return ".smartsim/telemetry"
 
 
 @lru_cache(maxsize=128, typed=False)

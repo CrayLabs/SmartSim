@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,13 +63,7 @@ from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import (
-    CobaltLauncher,
-    LocalLauncher,
-    LSFLauncher,
-    PBSLauncher,
-    SlurmLauncher,
-)
+from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
 from .job import Job
@@ -318,7 +312,7 @@ class Controller:
 
     def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        SmartSim currently supports slurm, pbs(pro), lsf,
         and local launching
 
         :param launcher: which launcher to initialize
@@ -331,7 +325,6 @@ class Controller:
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
             "pals": PBSLauncher,
-            "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
         }
@@ -631,7 +624,7 @@ class Controller:
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
-
+            assert isinstance(db_name_colo, str)
             for key in address_dict:
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
@@ -842,11 +835,11 @@ class Controller:
         :param exp_dir: An experiment directory
         :type exp_dir: str
         """
-        logger.debug("Starting telemetry monitor process")
         if (
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+            logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,
                 "-m",
@@ -866,6 +859,7 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
+            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):

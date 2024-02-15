@@ -16,9 +16,8 @@ SmartSim currently supports 5 `launchers`:
   1. ``local``: for single-node, workstation, or laptop
   2. ``slurm``: for systems using the Slurm scheduler
   3. ``pbs``: for systems using the PBSpro scheduler
-  4. ``cobalt``: for systems using the Cobalt scheduler
-  5. ``lsf``: for systems using the LSF scheduler
-  6. ``auto``: have SmartSim auto-detect the launcher to use.
+  4. ``lsf``: for systems using the LSF scheduler
+  5. ``auto``: have SmartSim auto-detect the launcher to use.
 
 To specify a specific launcher, one argument needs to be provided
 to the ``Experiment`` initialization.
@@ -30,7 +29,6 @@ to the ``Experiment`` initialization.
     exp = Experiment("name-of-experiment", launcher="local")  # local launcher
     exp = Experiment("name-of-experiment", launcher="slurm")  # Slurm launcher
     exp = Experiment("name-of-experiment", launcher="pbs")    # PBSpro launcher
-    exp = Experiment("name-of-experiment", launcher="cobalt") # Cobalt launcher
     exp = Experiment("name-of-experiment", launcher="lsf")    # LSF launcher
     exp = Experiment("name-of-experiment", launcher="auto")   # auto-detect launcher
 
@@ -219,42 +217,10 @@ creation.
 
 ---------------------------------------------------------------------
 
-Cobalt
-======
-
-The Cobalt Launcher works just like the PBSPro launcher and
-is compatible with ALPS and OpenMPI workloads as well.
-
-To use the Cobalt launcher, specify at ``Experiment`` initialization:
-
-.. code-block:: python
-
-    from smartsim import Experiment
-
-    exp = Experiment("MOM6-double-gyre", launcher="cobalt")
-
-
-Running on Cobalt
------------------
-
-The Cobalt launcher supports three types of ``RunSettings``:
-  1. :ref:`AprunSettings <aprun_api>`
-  2. :ref:`MpirunSettings <openmpi_run_api>`
-  3. :ref:`MpiexecSettings <openmpi_exec_api>`
-
-As well as batch settings for ``qsub`` through:
-  1. :ref:`CobaltBatchSettings <cqsub_api>`
-
-Both supported ``RunSettings`` types above can be added
-to a ``CobaltBatchSettings`` batch workload through ``Ensemble``
-creation.
-
----------------------------------------------------------------------
-
 LSF
 ===
 
-The LSF Launcher works like the PBSPro and Cobalt launchers and
+The LSF Launcher works like the PBSPro launcher and
 is compatible with LSF and OpenMPI workloads.
 
 To use the LSF launcher, specify at ``Experiment`` initialization:

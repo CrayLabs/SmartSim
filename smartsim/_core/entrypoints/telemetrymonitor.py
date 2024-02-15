@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023 Hewlett Packard Enterprise
+# Copyright (c) 2021-2024 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,6 @@ from watchdog.observers.api import BaseObserver
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
@@ -57,7 +56,7 @@ from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
-from smartsim._core.utils.serialize import MANIFEST_FILENAME, TELMON_SUBDIR
+from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
@@ -325,14 +324,13 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
-            "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
         }
 
     def init_launcher(self, launcher: str) -> Launcher:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        SmartSim currently supports slurm, pbs(pro), lsf,
         and local launching
 
         :param launcher: which launcher to initialize
@@ -582,7 +580,7 @@ def main(
                               poll for new jobs before attempting to shutdown
     :type cooldown_duration: int
     """
-    manifest_relpath = pathlib.Path(TELMON_SUBDIR) / MANIFEST_FILENAME
+    manifest_relpath = pathlib.Path(CONFIG.telemetry_subdir) / MANIFEST_FILENAME
     manifest_path = experiment_dir / manifest_relpath
     monitor_pattern = str(manifest_relpath)
 
@@ -667,7 +665,9 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
     log.propagate = False
 
-    log_path = os.path.join(args.exp_dir, TELMON_SUBDIR, "telemetrymonitor.log")
+    log_path = os.path.join(
+        args.exp_dir, CONFIG.telemetry_subdir, "telemetrymonitor.log"
+    )
     fh = logging.FileHandler(log_path, "a")
     log.addHandler(fh)
 

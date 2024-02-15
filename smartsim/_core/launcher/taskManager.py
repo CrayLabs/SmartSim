@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@ from __future__ import annotations
 import time
 import typing as t
 from subprocess import PIPE
-from threading import RLock, Thread
+from threading import RLock
 
 import psutil
 
 from ...error import LauncherError
-from ...log import get_logger
+from ...log import ContextThread, get_logger
 from ..utils.helpers import check_dev_log_level
 from .util.shell import execute_async_cmd, execute_cmd
 
@@ -74,7 +74,7 @@ class TaskManager:
         The TaskManager is run as a daemon thread meaning
         that it will die when the main thread dies.
         """
-        monitor = Thread(name="TaskManager", daemon=True, target=self.run)
+        monitor = ContextThread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
     def run(self) -> None:

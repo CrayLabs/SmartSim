@@ -1,7 +1,7 @@
 #
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           ref: doc
           path: doc-branch

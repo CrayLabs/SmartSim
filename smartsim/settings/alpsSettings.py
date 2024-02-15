@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,7 @@ class AprunSettings(RunSettings):
     ):
         """Settings to run job with ``aprun`` command
 
-        ``AprunSettings`` can be used for both the `pbs` and `cobalt`
-        launchers.
+        ``AprunSettings`` can be used for the `pbs` launcher.
 
         :param exe: executable
         :type exe: str

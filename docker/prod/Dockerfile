@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
 USER craylabs
 RUN export PATH=/home/craylabs/.local/bin:$PATH && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
-    python -m pip install smartsim[ml]==0.6.0 jupyter jupyterlab matplotlib && \
+    python -m pip install smartsim[ml]==0.6.1 jupyter jupyterlab matplotlib && \
     smart build --device cpu -v && \
     chown craylabs:root -R /home/craylabs/.local && \
     rm -rf ~/.cache/pip

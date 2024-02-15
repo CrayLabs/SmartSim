@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -188,42 +188,6 @@ class PBSStepInfo(StepInfo):  # cov-pbs
                 # if PBS job history isnt available, and job isnt in queue
                 smartsim_status = "Completed"
                 returncode = 0
-        else:
-            smartsim_status = self._get_smartsim_status(status)
-        super().__init__(
-            smartsim_status, status, returncode, output=output, error=error
-        )
-
-
-class CobaltStepInfo(StepInfo):  # cov-cobalt
-    @property
-    def mapping(self) -> t.Dict[str, str]:
-        return {
-            "running": STATUS_RUNNING,
-            "queued": STATUS_PAUSED,
-            "starting": STATUS_PAUSED,
-            "dep_hold": STATUS_PAUSED,
-            "user_hold": STATUS_PAUSED,
-            "admin_hold": STATUS_PAUSED,
-            "dep_fail": STATUS_FAILED,  # unsure of this one
-            "terminating": STATUS_COMPLETED,
-            "killing": STATUS_COMPLETED,
-            "exiting": STATUS_COMPLETED,
-        }
-
-    def __init__(
-        self,
-        status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
-    ) -> None:
-        if status == "NOTFOUND":
-            # returncode not logged by Cobalt
-            # if job has exited the queue then we consider it "completed"
-            # this should only be hit in the case when job exits abnormally fast
-            smartsim_status = "Completed"
-            returncode = 0
         else:
             smartsim_status = self._get_smartsim_status(status)
         super().__init__(

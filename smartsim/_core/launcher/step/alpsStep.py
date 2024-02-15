@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -112,12 +112,6 @@ class AprunStep(Step):
             self.alloc = os.environ["PBS_JOBID"]
             logger.debug(
                 f"Running on PBS allocation {self.alloc} gleaned from user environment"
-            )
-        elif "COBALT_JOBID" in os.environ:
-            self.alloc = os.environ["COBALT_JOBID"]
-            logger.debug(
-                f"Running on Cobalt allocation {self.alloc} gleaned "
-                "from user environment"
             )
         else:
             raise AllocationError(
