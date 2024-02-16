@@ -13,14 +13,14 @@ SmartSim
 
 
 
-develop
--------
+0.6.2
+-----
 
 Released on 16 February, 2024
 
 Description
 
-- Patch of SmartSim Dependency
+- Patch SmartSim dependency version
 
 
 Detailed Notes
