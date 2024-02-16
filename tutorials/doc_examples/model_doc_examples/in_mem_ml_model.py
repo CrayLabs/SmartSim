@@ -24,7 +24,7 @@ def create_tf_cnn():
 
     return serialize_model(model)
 
-# Get and save TF model
+# Serialize and save TF model
 model, inputs, outputs = create_tf_cnn()
 
 # Initialize the Experiment and set the launcher to auto

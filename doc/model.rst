@@ -771,7 +771,7 @@ situation, the SmartSim ``Model`` object supports key prefixing, which prepends
 the name of the ``Model`` to the keys sent to the ``Orchestrator`` to create unique key names.
 With this enabled, collision is avoided and ``Models`` can use same names within their applications.
 
-The key components of SmartSim prefixing functionality include:
+The key components of SmartSim ``Model`` prefixing functionality include:
 
 1. **Sending Data to the Orchestrator**: Users can send data to an ``Orchestrator``
    with the ``Model`` name prepended to the data name through SmartSim :ref:`Model functions<model_prefix_func>` and
