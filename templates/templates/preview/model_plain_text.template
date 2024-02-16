@@ -33,7 +33,7 @@
                 {%- for copy in model.files.copy %}
                 {{ copy }} ->
                 {{ model.path }}
-                {% endfor %}
+                {%- endfor %}
             {%- endif %}
             {%- if model.files.link %}
             Symlink: 
