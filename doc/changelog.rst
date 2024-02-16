@@ -11,6 +11,28 @@ Jump to :ref:`SmartRedis Changelog <sr_changelog>`
 SmartSim
 ========
 
+
+
+develop
+-------
+
+Released on 16 February, 2024
+
+Description
+
+- Patch of SmartSim Dependency
+
+
+Detailed Notes
+
+- A critical performance concern was identified and addressed in SmartRedis. A
+  patch fix was deployed, and SmartSim was updated to ensure users do not
+  inadvertently pull the unpatched version of SmartRedis. (SmartSim-PR493_)
+
+
+.. _SmartSim-PR493: https://github.com/CrayLabs/SmartSim/pull/493
+
+
 0.6.1
 -----
 
