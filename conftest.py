@@ -205,6 +205,11 @@ def alloc_specs() -> t.Dict[str, t.Any]:
 def wlmutils() -> t.Type[WLMUtils]:
     return WLMUtils
 
+#jpnote
+def test_preview_run_settings():
+
+    rs = RunSettings(...)
+
 
 class WLMUtils:
     @staticmethod
@@ -674,6 +679,7 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
+
 
 @pytest.fixture
 def config() -> smartsim._core.config.Config:

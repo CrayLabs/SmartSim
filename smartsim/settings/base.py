@@ -139,6 +139,22 @@ class RunSettings(SettingsBase):
     def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
         self._env_vars = copy.deepcopy(value)
 
+    # jpnote
+    def format_run_args_for_preview(self):  # -> t.List[str]:
+        """
+        Format the run argument for this run settings class.
+        Should return the run settings in a form easily readable by the preview method.
+        """
+        print(self._exe_args.extend(self.args))
+
+        ## how to detect for every launch which run settings it is using
+        ## how do I test this?
+
+    # for arg, value in self.run_args.items():
+    # …
+    # # return values already formatted
+    # return f“{arg}: value”
+
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
 
@@ -553,6 +569,11 @@ class RunSettings(SettingsBase):
                 return exe_args
             raise TypeError("Executable arguments were not list of str or str")
         return []
+
+    ## where is this used
+    # jpnote
+    # def preview():
+    #     ...
 
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments

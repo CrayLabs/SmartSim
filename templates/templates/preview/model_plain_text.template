@@ -9,6 +9,13 @@
             {%- for param in model.run_settings.exe_args %}
                 {{ param }}
             {%- endfor %}
+
+#jpnote
+            {%- for run_arg, value in model.run_settings.run_args.items() -%}
+                {{ run_arg }} : {{ value }}
+            {%- endfor %}
+
+
             {%- if model.batch_settings -%}
             Batch Launch: True
             {% else %}
