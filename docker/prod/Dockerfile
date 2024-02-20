@@ -36,9 +36,9 @@ RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs &&
     apt-get update \
     && apt-get install --no-install-recommends -y build-essential \
     git gcc make git-lfs wget libopenmpi-dev openmpi-bin unzip \
-    python3-pip python3 python3-dev cmake \
+    python3.9 python3.9-dev python3-pip cmake \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/python3 /usr/bin/python
+    && ln -s /usr/bin/python3.9 /usr/bin/python
 
 WORKDIR /home/craylabs
 COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
