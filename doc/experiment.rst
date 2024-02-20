@@ -66,14 +66,8 @@ If the systems `launcher` cannot be found or no `launcher` argument is provided,
 `launcher="local"` will be used which will start all ``Experiment`` launched entities on the
 localhost.
 
-For examples specifying a `launcher` during ``Experiment`` initialization, select the
-``Experiment`` init function below:
-
-.. currentmodule:: smartsim.Experiment
-
-.. autosummary::
-
-   __init__
+For examples specifying a `launcher` during ``Experiment`` initialization, navigate to the
+:ref:`Experiment __init__ function<exp_init>` in the ``Experiment`` API docstring.
 
 .. _entities_exp_docs:
 ========

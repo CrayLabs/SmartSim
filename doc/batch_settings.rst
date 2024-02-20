@@ -48,6 +48,10 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
       `launcher="slurm"` when initializing the ``Experiment``. Upon calling ``create_batch_settings()``,
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
+      .. note::
+        If `launcher="auto"`, SmartSim will detect that the ``Experiment`` is running on a Slurm based
+        machine and set the launcher to `"slurm"`.
+
         .. code-block:: python
 
             from smartsim import Experiment
@@ -56,7 +60,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
             exp = Experiment("name-of-experiment", launcher="slurm")
 
             # Initialize a SbatchSettings object
-            sbatch_settings = exp.create_batch_settings(nodes=1, time="10:00:00", batch_args={"ntasks": 1})
+            sbatch_settings = exp.create_batch_settings(nodes=1, time="10:00:00")
             # Set the account for the slurm batch job
             sbatch_settings.set_account("12345-Cray")
             # Set the partition for the slurm batch job
@@ -78,7 +82,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
             exp = Experiment("name-of-experiment", launcher="pbs")
 
             # Initialize a QsubBatchSettings object
-            qsub_batch_settings = exp.create_batch_settings(nodes=1, time="10:00:00", batch_args={"ntasks": 1})
+            qsub_batch_settings = exp.create_batch_settings(nodes=1, time="10:00:00")
             # Set the account for the PBS Pro batch job
             qsub_batch_settings.set_account("12345-Cray")
             # Set the partition for the PBS Pro batch job

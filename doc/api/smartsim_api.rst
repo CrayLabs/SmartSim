@@ -1,531 +1,529 @@
+*************
+SmartSim API
+*************
 
-.. *************
-.. SmartSim API
-.. *************
+.. _experiment_api:
 
+Experiment
+==========
 
-.. .. _experiment_api:
+.. currentmodule:: smartsim.experiment
 
-.. Experiment
-.. ==========
+.. _exp_init:
+.. autosummary::
 
+   Experiment.__init__
+   experiment.start
+   Experiment.stop
+   Experiment.create_ensemble
+   Experiment.create_model
+   Experiment.create_database
+   Experiment.create_run_settings
+   Experiment.create_batch_settings
+   Experiment.generate
+   Experiment.poll
+   Experiment.finished
+   Experiment.get_status
+   Experiment.reconnect_orchestrator
+   Experiment.summary
 
-.. .. currentmodule:: smartsim.experiment
+.. autoclass:: Experiment
+   :show-inheritance:
+   :members:
 
-.. .. autosummary::
 
-..    Experiment.__init__
-..    experiment.start
-..    Experiment.stop
-..    Experiment.create_ensemble
-..    Experiment.create_model
-..    Experiment.create_database
-..    Experiment.create_run_settings
-..    Experiment.create_batch_settings
-..    Experiment.generate
-..    Experiment.poll
-..    Experiment.finished
-..    Experiment.get_status
-..    Experiment.reconnect_orchestrator
-..    Experiment.summary
+.. _settings-info:
 
-.. .. autoclass:: Experiment
-..    :show-inheritance:
-..    :members:
+Settings
+========
 
+.. currentmodule:: smartsim.settings
 
-.. .. _settings-info:
+Settings are provided to ``Model`` and ``Ensemble`` objects
+to provide parameters for how a job should be executed. Some
+are specifically meant for certain launchers like ``SbatchSettings``
+is solely meant for system using Slurm as a workload manager.
+``MpirunSettings`` for OpenMPI based jobs is supported by Slurm
+and PBSPro.
 
-.. Settings
-.. ========
 
-.. .. currentmodule:: smartsim.settings
+Types of Settings:
 
-.. Settings are provided to ``Model`` and ``Ensemble`` objects
-.. to provide parameters for how a job should be executed. Some
-.. are specifically meant for certain launchers like ``SbatchSettings``
-.. is solely meant for system using Slurm as a workload manager.
-.. ``MpirunSettings`` for OpenMPI based jobs is supported by Slurm
-.. and PBSPro.
+.. autosummary::
 
+    RunSettings
+    SrunSettings
+    AprunSettings
+    MpirunSettings
+    MpiexecSettings
+    OrterunSettings
+    JsrunSettings
+    SbatchSettings
+    QsubBatchSettings
+    BsubBatchSettings
 
-.. Types of Settings:
+Settings objects can accept a container object that defines a container
+runtime, image, and arguments to use for the workload. Below is a list of
+supported container runtimes.
 
-.. .. autosummary::
+Types of Containers:
 
-..     RunSettings
-..     SrunSettings
-..     AprunSettings
-..     MpirunSettings
-..     MpiexecSettings
-..     OrterunSettings
-..     JsrunSettings
-..     SbatchSettings
-..     QsubBatchSettings
-..     BsubBatchSettings
+.. autosummary::
 
-.. Settings objects can accept a container object that defines a container
-.. runtime, image, and arguments to use for the workload. Below is a list of
-.. supported container runtimes.
+    Singularity
 
-.. Types of Containers:
 
-.. .. autosummary::
+.. _rs-api:
 
-..     Singularity
+RunSettings
+-----------
 
 
-.. .. _rs-api:
+When running SmartSim on laptops and single node workstations,
+the base ``RunSettings`` object is used to parameterize jobs.
+``RunSettings`` include a ``run_command`` parameter for local
+launches that utilize a parallel launch binary like
+``mpirun``, ``mpiexec``, and others.
 
-.. RunSettings
-.. -----------
 
+.. autosummary::
 
-.. When running SmartSim on laptops and single node workstations,
-.. the base ``RunSettings`` object is used to parameterize jobs.
-.. ``RunSettings`` include a ``run_command`` parameter for local
-.. launches that utilize a parallel launch binary like
-.. ``mpirun``, ``mpiexec``, and others.
+    RunSettings.add_exe_args
+    RunSettings.update_env
 
+.. autoclass:: RunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
 
-..     RunSettings.add_exe_args
-..     RunSettings.update_env
+.. _srun_api:
 
-.. .. autoclass:: RunSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
+SrunSettings
+------------
 
 
-.. .. _srun_api:
+``SrunSettings`` can be used for running on existing allocations,
+running jobs in interactive allocations, and for adding srun
+steps to a batch.
 
-.. SrunSettings
-.. ------------
 
+.. autosummary::
 
-.. ``SrunSettings`` can be used for running on existing allocations,
-.. running jobs in interactive allocations, and for adding srun
-.. steps to a batch.
+    SrunSettings.set_nodes
+    SrunSettings.set_tasks
+    SrunSettings.set_tasks_per_node
+    SrunSettings.set_walltime
+    SrunSettings.set_hostlist
+    SrunSettings.set_excluded_hosts
+    SrunSettings.set_cpus_per_task
+    SrunSettings.add_exe_args
+    SrunSettings.format_run_args
+    SrunSettings.format_env_vars
+    SrunSettings.update_env
 
+.. autoclass:: SrunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
 
-..     SrunSettings.set_nodes
-..     SrunSettings.set_tasks
-..     SrunSettings.set_tasks_per_node
-..     SrunSettings.set_walltime
-..     SrunSettings.set_hostlist
-..     SrunSettings.set_excluded_hosts
-..     SrunSettings.set_cpus_per_task
-..     SrunSettings.add_exe_args
-..     SrunSettings.format_run_args
-..     SrunSettings.format_env_vars
-..     SrunSettings.update_env
+.. _aprun_api:
 
-.. .. autoclass:: SrunSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
+AprunSettings
+-------------
 
 
-.. .. _aprun_api:
+``AprunSettings`` can be used on any system that supports the
+Cray ALPS layer. SmartSim supports using ``AprunSettings``
+on PBSPro WLM systems.
 
-.. AprunSettings
-.. -------------
+``AprunSettings`` can be used in interactive session (on allocation)
+and within batch launches (e.g., ``QsubBatchSettings``)
 
 
-.. ``AprunSettings`` can be used on any system that supports the
-.. Cray ALPS layer. SmartSim supports using ``AprunSettings``
-.. on PBSPro WLM systems.
+.. autosummary::
 
-.. ``AprunSettings`` can be used in interactive session (on allocation)
-.. and within batch launches (e.g., ``QsubBatchSettings``)
+    AprunSettings.set_cpus_per_task
+    AprunSettings.set_hostlist
+    AprunSettings.set_tasks
+    AprunSettings.set_tasks_per_node
+    AprunSettings.make_mpmd
+    AprunSettings.add_exe_args
+    AprunSettings.format_run_args
+    AprunSettings.format_env_vars
+    AprunSettings.update_env
 
+.. autoclass:: AprunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
 
-..     AprunSettings.set_cpus_per_task
-..     AprunSettings.set_hostlist
-..     AprunSettings.set_tasks
-..     AprunSettings.set_tasks_per_node
-..     AprunSettings.make_mpmd
-..     AprunSettings.add_exe_args
-..     AprunSettings.format_run_args
-..     AprunSettings.format_env_vars
-..     AprunSettings.update_env
 
-.. .. autoclass:: AprunSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
+.. _jsrun_api:
 
+JsrunSettings
+-------------
 
 
-.. .. _jsrun_api:
+``JsrunSettings`` can be used on any system that supports the
+IBM LSF launcher.
 
-.. JsrunSettings
-.. -------------
+``JsrunSettings`` can be used in interactive session (on allocation)
+and within batch launches (i.e. ``BsubBatchSettings``)
 
 
-.. ``JsrunSettings`` can be used on any system that supports the
-.. IBM LSF launcher.
+.. autosummary::
 
-.. ``JsrunSettings`` can be used in interactive session (on allocation)
-.. and within batch launches (i.e. ``BsubBatchSettings``)
+    JsrunSettings.set_num_rs
+    JsrunSettings.set_cpus_per_rs
+    JsrunSettings.set_gpus_per_rs
+    JsrunSettings.set_rs_per_host
+    JsrunSettings.set_tasks
+    JsrunSettings.set_tasks_per_rs
+    JsrunSettings.set_binding
+    JsrunSettings.make_mpmd
+    JsrunSettings.set_mpmd_preamble
+    JsrunSettings.update_env
+    JsrunSettings.set_erf_sets
+    JsrunSettings.format_env_vars
+    JsrunSettings.format_run_args
 
 
-.. .. autosummary::
+.. autoclass:: JsrunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-..     JsrunSettings.set_num_rs
-..     JsrunSettings.set_cpus_per_rs
-..     JsrunSettings.set_gpus_per_rs
-..     JsrunSettings.set_rs_per_host
-..     JsrunSettings.set_tasks
-..     JsrunSettings.set_tasks_per_rs
-..     JsrunSettings.set_binding
-..     JsrunSettings.make_mpmd
-..     JsrunSettings.set_mpmd_preamble
-..     JsrunSettings.update_env
-..     JsrunSettings.set_erf_sets
-..     JsrunSettings.format_env_vars
-..     JsrunSettings.format_run_args
+.. _openmpi_run_api:
 
+MpirunSettings
+--------------
 
-.. .. autoclass:: JsrunSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
 
-.. .. _openmpi_run_api:
+``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
+supported on Slurm and PBSpro.
 
-.. MpirunSettings
-.. --------------
 
+.. autosummary::
 
-.. ``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
-.. supported on Slurm and PBSpro.
+    MpirunSettings.set_cpus_per_task
+    MpirunSettings.set_hostlist
+    MpirunSettings.set_tasks
+    MpirunSettings.set_task_map
+    MpirunSettings.make_mpmd
+    MpirunSettings.add_exe_args
+    MpirunSettings.format_run_args
+    MpirunSettings.format_env_vars
+    MpirunSettings.update_env
 
+.. autoclass:: MpirunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
+.. _openmpi_exec_api:
 
-..     MpirunSettings.set_cpus_per_task
-..     MpirunSettings.set_hostlist
-..     MpirunSettings.set_tasks
-..     MpirunSettings.set_task_map
-..     MpirunSettings.make_mpmd
-..     MpirunSettings.add_exe_args
-..     MpirunSettings.format_run_args
-..     MpirunSettings.format_env_vars
-..     MpirunSettings.update_env
+MpiexecSettings
+---------------
 
-.. .. autoclass:: MpirunSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
 
-.. .. _openmpi_exec_api:
+``MpiexecSettings`` are for launching with OpenMPI's ``mpiexec``. ``MpirunSettings`` are
+supported on Slurm and PBSpro.
 
-.. MpiexecSettings
-.. ---------------
 
+.. autosummary::
 
-.. ``MpiexecSettings`` are for launching with OpenMPI's ``mpiexec``. ``MpirunSettings`` are
-.. supported on Slurm and PBSpro.
+    MpiexecSettings.set_cpus_per_task
+    MpiexecSettings.set_hostlist
+    MpiexecSettings.set_tasks
+    MpiexecSettings.set_task_map
+    MpiexecSettings.make_mpmd
+    MpiexecSettings.add_exe_args
+    MpiexecSettings.format_run_args
+    MpiexecSettings.format_env_vars
+    MpiexecSettings.update_env
 
+.. autoclass:: MpiexecSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
+.. _openmpi_orte_api:
 
-..     MpiexecSettings.set_cpus_per_task
-..     MpiexecSettings.set_hostlist
-..     MpiexecSettings.set_tasks
-..     MpiexecSettings.set_task_map
-..     MpiexecSettings.make_mpmd
-..     MpiexecSettings.add_exe_args
-..     MpiexecSettings.format_run_args
-..     MpiexecSettings.format_env_vars
-..     MpiexecSettings.update_env
+OrterunSettings
+---------------
 
-.. .. autoclass:: MpiexecSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
 
-.. .. _openmpi_orte_api:
+``OrterunSettings`` are for launching with OpenMPI's ``orterun``. ``OrterunSettings`` are
+supported on Slurm and PBSpro.
 
-.. OrterunSettings
-.. ---------------
 
+.. autosummary::
 
-.. ``OrterunSettings`` are for launching with OpenMPI's ``orterun``. ``OrterunSettings`` are
-.. supported on Slurm and PBSpro.
+    OrterunSettings.set_cpus_per_task
+    OrterunSettings.set_hostlist
+    OrterunSettings.set_tasks
+    OrterunSettings.set_task_map
+    OrterunSettings.make_mpmd
+    OrterunSettings.add_exe_args
+    OrterunSettings.format_run_args
+    OrterunSettings.format_env_vars
+    OrterunSettings.update_env
 
+.. autoclass:: OrterunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
 
-..     OrterunSettings.set_cpus_per_task
-..     OrterunSettings.set_hostlist
-..     OrterunSettings.set_tasks
-..     OrterunSettings.set_task_map
-..     OrterunSettings.make_mpmd
-..     OrterunSettings.add_exe_args
-..     OrterunSettings.format_run_args
-..     OrterunSettings.format_env_vars
-..     OrterunSettings.update_env
+------------------------------------------
 
-.. .. autoclass:: OrterunSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
 
+.. _sbatch_api:
 
-.. ------------------------------------------
+SbatchSettings
+--------------
 
 
-.. .. _sbatch_api:
+``SbatchSettings`` are used for launching batches onto Slurm
+WLM systems.
 
-.. SbatchSettings
-.. --------------
 
+.. autosummary::
 
-.. ``SbatchSettings`` are used for launching batches onto Slurm
-.. WLM systems.
+    SbatchSettings.set_account
+    SbatchSettings.set_batch_command
+    SbatchSettings.set_nodes
+    SbatchSettings.set_hostlist
+    SbatchSettings.set_partition
+    SbatchSettings.set_queue
+    SbatchSettings.set_walltime
+    SbatchSettings.format_batch_args
 
+.. autoclass:: SbatchSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-.. .. autosummary::
+.. _qsub_api:
 
-..     SbatchSettings.set_account
-..     SbatchSettings.set_batch_command
-..     SbatchSettings.set_nodes
-..     SbatchSettings.set_hostlist
-..     SbatchSettings.set_partition
-..     SbatchSettings.set_queue
-..     SbatchSettings.set_walltime
-..     SbatchSettings.format_batch_args
+QsubBatchSettings
+-----------------
 
-.. .. autoclass:: SbatchSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
 
-.. .. _qsub_api:
+``QsubBatchSettings`` are used to configure jobs that should
+be launched as a batch on PBSPro systems.
 
-.. QsubBatchSettings
-.. -----------------
 
+.. autosummary::
 
-.. ``QsubBatchSettings`` are used to configure jobs that should
-.. be launched as a batch on PBSPro systems.
+    QsubBatchSettings.set_account
+    QsubBatchSettings.set_batch_command
+    QsubBatchSettings.set_nodes
+    QsubBatchSettings.set_ncpus
+    QsubBatchSettings.set_queue
+    QsubBatchSettings.set_resource
+    QsubBatchSettings.set_walltime
+    QsubBatchSettings.format_batch_args
 
 
-.. .. autosummary::
+.. autoclass:: QsubBatchSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-..     QsubBatchSettings.set_account
-..     QsubBatchSettings.set_batch_command
-..     QsubBatchSettings.set_nodes
-..     QsubBatchSettings.set_ncpus
-..     QsubBatchSettings.set_queue
-..     QsubBatchSettings.set_resource
-..     QsubBatchSettings.set_walltime
-..     QsubBatchSettings.format_batch_args
 
+.. _bsub_api:
 
-.. .. autoclass:: QsubBatchSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
+BsubBatchSettings
+-----------------
 
 
-.. .. _bsub_api:
+``BsubBatchSettings`` are used to configure jobs that should
+be launched as a batch on LSF systems.
 
-.. BsubBatchSettings
-.. -----------------
 
+.. autosummary::
 
-.. ``BsubBatchSettings`` are used to configure jobs that should
-.. be launched as a batch on LSF systems.
+    BsubBatchSettings.set_walltime
+    BsubBatchSettings.set_smts
+    BsubBatchSettings.set_project
+    BsubBatchSettings.set_nodes
+    BsubBatchSettings.set_expert_mode_req
+    BsubBatchSettings.set_hostlist
+    BsubBatchSettings.set_tasks
+    BsubBatchSettings.format_batch_args
 
 
-.. .. autosummary::
+.. autoclass:: BsubBatchSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
-..     BsubBatchSettings.set_walltime
-..     BsubBatchSettings.set_smts
-..     BsubBatchSettings.set_project
-..     BsubBatchSettings.set_nodes
-..     BsubBatchSettings.set_expert_mode_req
-..     BsubBatchSettings.set_hostlist
-..     BsubBatchSettings.set_tasks
-..     BsubBatchSettings.format_batch_args
+.. _singularity_api:
 
+Singularity
+-----------
 
-.. .. autoclass:: BsubBatchSettings
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
 
-.. .. _singularity_api:
+``Singularity`` is a type of ``Container`` that can be passed to a
+``RunSettings`` class or child class to enable running the workload in a
+container.
 
-.. Singularity
-.. -----------
+.. autoclass:: Singularity
+    :inherited-members:
+    :undoc-members:
+    :members:
 
 
-.. ``Singularity`` is a type of ``Container`` that can be passed to a
-.. ``RunSettings`` class or child class to enable running the workload in a
-.. container.
+Orchestrator
+============
 
-.. .. autoclass:: Singularity
-..     :inherited-members:
-..     :undoc-members:
-..     :members:
+.. currentmodule:: smartsim.database
 
+.. _orc_api:
 
-.. Orchestrator
-.. ============
+Orchestrator
+------------
 
-.. .. currentmodule:: smartsim.database
+.. _orchestrator_api:
 
-.. .. _orc_api:
+.. autoclass:: Orchestrator
+   :members:
+   :inherited-members:
+   :undoc-members:
 
-.. Orchestrator
-.. ------------
+.. _model_api:
 
-.. .. _orchestrator_api:
+Model
+=====
 
-.. .. autoclass:: Orchestrator
-..    :members:
-..    :inherited-members:
-..    :undoc-members:
+.. currentmodule:: smartsim.entity.model
 
-.. .. _model_api:
+.. autosummary::
 
-.. Model
-.. =====
+   Model.__init__
+   Model.attach_generator_files
+   Model.colocate_db
+   Model.colocate_db_tcp
+   Model.colocate_db_uds
+   Model.colocated
+   Model.add_ml_model
+   Model.add_script
+   Model.add_function
+   Model.params_to_args
+   Model.register_incoming_entity
+   Model.enable_key_prefixing
+   Model.disable_key_prefixing
+   Model.query_key_prefixing
 
-.. .. currentmodule:: smartsim.entity.model
+Model
+-----
 
-.. .. autosummary::
+.. autoclass:: Model
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
-..    Model.__init__
-..    Model.attach_generator_files
-..    Model.colocate_db
-..    Model.colocate_db_tcp
-..    Model.colocate_db_uds
-..    Model.colocated
-..    Model.add_ml_model
-..    Model.add_script
-..    Model.add_function
-..    Model.params_to_args
-..    Model.register_incoming_entity
-..    Model.enable_key_prefixing
-..    Model.disable_key_prefixing
-..    Model.query_key_prefixing
+Ensemble
+========
 
-.. Model
-.. -----
+.. currentmodule:: smartsim.entity.ensemble
 
-.. .. autoclass:: Model
-..    :members:
-..    :show-inheritance:
-..    :inherited-members:
+.. autosummary::
 
-.. Ensemble
-.. ========
+   Ensemble.__init__
+   Ensemble.add_model
+   Ensemble.add_ml_model
+   Ensemble.add_script
+   Ensemble.add_function
+   Ensemble.attach_generator_files
+   Ensemble.enable_key_prefixing
+   Ensemble.models
+   Ensemble.query_key_prefixing
+   Ensemble.register_incoming_entity
 
-.. .. currentmodule:: smartsim.entity.ensemble
+Ensemble
+--------
 
-.. .. autosummary::
+.. _ensemble_api:
 
-..    Ensemble.__init__
-..    Ensemble.add_model
-..    Ensemble.add_ml_model
-..    Ensemble.add_script
-..    Ensemble.add_function
-..    Ensemble.attach_generator_files
-..    Ensemble.enable_key_prefixing
-..    Ensemble.models
-..    Ensemble.query_key_prefixing
-..    Ensemble.register_incoming_entity
+.. autoclass:: Ensemble
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
-.. Ensemble
-.. --------
+.. _ml_api:
 
-.. .. _ensemble_api:
+Machine Learning
+================
 
-.. .. autoclass:: Ensemble
-..    :members:
-..    :show-inheritance:
-..    :inherited-members:
 
-.. .. _ml_api:
+SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytorch.
 
-.. Machine Learning
-.. ================
+.. _smartsim_tf_api:
 
+TensorFlow
+----------
 
-.. SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytorch.
 
-.. .. _smartsim_tf_api:
+SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
 
-.. TensorFlow
-.. ----------
+.. currentmodule:: smartsim.ml.tf.utils
 
+.. automodule:: smartsim.ml.tf.utils
+    :members:
 
-.. SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
+.. currentmodule:: smartsim.ml.tf
 
-.. .. currentmodule:: smartsim.ml.tf.utils
+.. autoclass:: StaticDataGenerator
+   :show-inheritance:
+   :inherited-members:
+   :members:
 
-.. .. automodule:: smartsim.ml.tf.utils
-..     :members:
+.. autoclass:: DynamicDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
-.. .. currentmodule:: smartsim.ml.tf
+.. _smartsim_torch_api:
 
-.. .. autoclass:: StaticDataGenerator
-..    :show-inheritance:
-..    :inherited-members:
-..    :members:
+PyTorch
+----------
 
-.. .. autoclass:: DynamicDataGenerator
-..    :members:
-..    :show-inheritance:
-..    :inherited-members:
+SmartSim includes built-in utilities for supporting PyTorch in training and inference.
 
-.. .. _smartsim_torch_api:
+.. currentmodule:: smartsim.ml.torch
 
-.. PyTorch
-.. ----------
+.. autoclass:: StaticDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
-.. SmartSim includes built-in utilities for supporting PyTorch in training and inference.
+.. autoclass:: DynamicDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
-.. .. currentmodule:: smartsim.ml.torch
+.. autoclass:: DataLoader
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
-.. .. autoclass:: StaticDataGenerator
-..    :members:
-..    :show-inheritance:
-..    :inherited-members:
+.. _slurm_module_api:
 
-.. .. autoclass:: DynamicDataGenerator
-..    :members:
-..    :show-inheritance:
-..    :inherited-members:
+Slurm
+=====
 
-.. .. autoclass:: DataLoader
-..    :members:
-..    :show-inheritance:
-..    :inherited-members:
 
-.. .. _slurm_module_api:
+.. currentmodule:: smartsim.slurm
 
-.. Slurm
-.. =====
+.. autosummary::
 
+    get_allocation
+    release_allocation
 
-.. .. currentmodule:: smartsim.slurm
-
-.. .. autosummary::
-
-..     get_allocation
-..     release_allocation
-
-.. .. automodule:: smartsim.slurm
-..     :members:
+.. automodule:: smartsim.slurm
+    :members:
