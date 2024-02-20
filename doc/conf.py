@@ -53,8 +53,10 @@ extensions = [
     'nbsphinx',
     'sphinx_copybutton',
     'sphinx_tabs.tabs',
-    'sphinx_panels'
+    'sphinx_design'
 ]
+
+autodoc_mock_imports = ["smartredis.smartredisPy"]
 
 suppress_warnings = ['autosectionlabel']
 

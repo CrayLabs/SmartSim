@@ -42,6 +42,8 @@ initialize within an experiment.
   machine learning infrastructure launched by SmartSim and connected
   to online analysis and visualization via the in-memory ``Orchestrator``.
 
+A ``Experiment`` example is offered in the :ref:`Example<exp_example>` section of this page.
+
 .. _launcher_exp_docs:
 =========
 Launchers
@@ -52,7 +54,7 @@ Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS, and LSF)
 `Launcher` selection determines how SmartSim translates SmartSim entity configurations into system calls to launch,
 manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
 
-1. ``local``: for single-node, workstation, or laptop
+1. ``local`` **[default]**: for single-node, workstation, or laptop
 2. ``slurm``: for systems using the Slurm scheduler
 3. ``pbs``: for systems using the PBSpro scheduler
 4. ``pals``: for systems using the PALS scheduler
@@ -60,25 +62,18 @@ manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
 6. ``lsf``: for systems using the LSF scheduler
 7. ``auto``: have SmartSim auto-detect the launcher to use
 
-If a `launcher` is not specified, SmartSim will default to `"local"` which will start all ``Experiment`` launched
-entities on the localhost.
+If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
+`launcher="local"` will be used which will start all ``Experiment`` launched entities on the
+localhost.
 
-.. compound::
-  For example, to set up a slurm `launcher`, the workflow should be initialized as follows:
+For examples specifying a `launcher` during ``Experiment`` initialization, select the
+``Experiment`` init function below:
 
-  .. code-block:: python
+.. currentmodule:: smartsim.Experiment
 
-      exp = Experiment("name-of-experiment", launcher="slurm")  # slurm launcher
+.. autosummary::
 
-  To instruct SmartSim to search for a `launcher` on your machine, set the `launcher`
-  argument to `"auto"` during ``Experiment`` initialization as shown below:
-
-  .. code-block:: python
-
-      exp = Experiment("name-of-experiment", launcher="auto")  # auto-detect launcher
-
-  If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
-  `launcher="local"` will be used.
+   __init__
 
 .. _entities_exp_docs:
 ========
@@ -139,180 +134,90 @@ using the :ref:`Experiment API<experiment_api>`.
 .. _orchestrator_exp_docs:
 Orchestrator
 ============
-The ``Orchestrator`` is an in-memory database with features built for
-a wide variety of AI-enabled workflows, including features
-for online training, low-latency inference, cross-application data
-exchange, online interactive visualization, online data analysis, computational
-steering, and more. The ``Orchestrator`` can be thought of as a general
+The :ref:`Orchestrator<orch_docs>` is an in-memory database built for
+a wide variety of AI-enabled workflows. The ``Orchestrator`` can be thought of as a general
 feature store capable of storing numerical data, ML models, and scripts.
 The ``Orchestrator`` is capable of performing inference and script evaluation using data in the feature store.
-Any SmartSim ``Model`` or ``Ensemble`` model can connect to the
+Any SmartSim ``Model`` or ``Ensemble`` member can connect to the
 ``Orchestrator`` via the :ref:`SmartRedis<smartredis-api>`
 client library to transmit data, execute ML models, and execute scripts.
 
 **SmartSim offers two types Orchestrator deployments:**
 
-* :ref:`Standalone Orchestrator Deployment<standalone_deployment_exp_docs>`
-* :ref:`Colocated Orchestrator Deployment<colocated_deployment_exp_docs>`
+* :ref:`Standalone Orchestrator Deployment<standalone_orch_doc>`
+* :ref:`Colocated Orchestrator Deployment<colocated_orch_doc>`
 
-.. _standalone_deployment_exp_docs:
-Standalone Deployment
----------------------
-The standard ``Orchestrator`` can be deployed on a single compute
-node or can be sharded (distributed) over multiple compute nodes.
-With multiple nodes, available hardware for inference and script
-evaluation increases and overall memory for data storage increases.
-Users do not need to know the number of compute nodes (shards) used for the
-``Orchestrator`` when interacting via the SmartRedis Client API;
-SmartRedis Client API functions are designed to work with both single and multi-node
-configurations.
-
-During standalone deployment, a SmartSim ``Model`` (the application) runs on separate
-compute node(s) from the ``Orchestrator`` node(s).
-A standalone ``Orchestrator`` is optimal for high data throughput scenarios
-such as online analysis, training and processing.
-
-The following image illustrates communication between a standalone ``Orchestrator`` and a
-model. In the diagram, the application is running on multiple compute nodes,
-separate from the ``Orchestrator`` compute nodes. Connections are established between the
-Model application and the standalone deployment using the SmartRedis ``Client``.
-
-.. figure::  images/clustered_orchestrator-1.png
-
-  Sample Standalone Orchestrator Deployment
-
-To create an ``Orchestrator`` that does not share compute resources with other
-SmartSim entities, use the ``Experiment.create_database()`` factory method.
-Specifying 1 for the `db_nodes` parameter causes the ``Orchestrator`` to
-be single-sharded; otherwise it is multi-shard.
-This factory method returns an initialized ``Orchestrator`` object that
-gives you access to functions associated with the :ref:`Orchestrator API<orchestrator_api>`.
-
-.. _colocated_deployment_exp_docs:
-Colocated Deployment
---------------------
-A colocated ``Orchestrator`` shares compute resources with a ``Model`` instance defined by the user.
-In this deployment, the ``Orchestrator`` is not connected
-together as a single cluster, and the ``Orchestrator`` on each
-application node is utilized by SmartRedis
-clients on the same node.
-Essentially, this means that you have N independent ``Orchestrators``,
-where N is the number of compute nodes assigned to the application.
-The colocated deployment strategy for the ``Orchestrator``
-is ideal for use cases where a SmartSim ``Model`` is run on a compute node
-that has hardware accelerators (e.g. GPUs) and low-latency inference is
-a critical component of the workflow.
-
-Below is an image illustrating communication within a colocated ``Model`` spanning multiple compute nodes.
-As demonstrated in the diagram, each process of the application creates its own SmartRedis client
-connection to the orchestrator running on the same host.
-
-.. figure:: images/colocated_orchestrator-1.png
-
-  Sample Colocated Orchestrator Deployment
-
-To create an ``Orchestrator`` that shares compute resources with a ``Model``
-SmartSim entity, use the ``model.colocate_db()`` helper method accessible after a
+To create a standalone ``Orchestrator`` that does not share compute resources with other
+SmartSim entities, use the ``Experiment.create_database()`` factory method which
+returns an ``Orchestrator`` object. To create a colocated ``Orchestrator`` that
+shares compute resources with a ``Model`` entity, use the ``Model.colocate_db_tcp()``
+or ``Model.colocate_db_uds()`` helper methods accessible after a
 ``Model`` object has been initialized. This function instructs
 SmartSim to launch a ``Orchestrator`` on the application compute nodes. A ``Orchestrator`` object is not
-returned from a ``model.colocate_db()`` instruction, and subsequent interactions with the
+returned from a ``Model.colocate_db()`` instruction, and subsequent interactions with the
 colocated ``Orchestrator`` are handled through the :ref:`Model API<model_api>`.
 
-Multiple Orchestrator support
------------------------------
-SmartSim supports multi-database functionality, enabling an experiment
-to have several concurrently launched ``Orchestrator(s)``. If there is
-a need to launch more than one ``Orchestrator``, the ``Experiment.create_database()``
-function mandates the specification of a unique ``Orchestrator`` identifier,
-denoted by the `db_identifier` argument, per created ``Orchestrator``.
-
-The `db-identifier` is used to reference SmartSim
-``Orchestrators`` from application client code. This is particularly
-useful in instances where an ``Orchestrator`` is colocated with a SmartSim
-model for low-latency inference and another ``Orchestrator`` is launched to
-handle other aspects of the workflow such as visualization and ML model
-training. More detailed information on the ideal use cases for standalone ``Orchestrator(s)``
-and co-located ``Orchestrator(s)`` is available in the :ref:`Orchestrator documentation
-page<orch_docs>`.
+SmartSim supports :ref:`multi-database<mutli_orch_doc>` functionality, enabling an ``Experiment`` to have
+several concurrently launched ``Orchestrator(s)``. If there is a need to launch more than
+one ``Orchestrator``, the ``Experiment.create_database()`` and ``Model.colocate..()``
+functions mandate the specification of a unique ``Orchestrator`` identifier, denoted
+by the `db_identifier` argument, per created ``Orchestrator``. The `db_identifier` is used
+in an application script by a SmartRedis ``Client`` to connect to a specific ``Orchestrator``.
 
 .. _model_exp_docs:
 Model
 =====
-``Model(s)`` represent a simulation model or any
-computational kernel, including applications,
-scripts, or generally, a program.
-They can interact with other
-SmartSim entities via data transmitted to/from SmartSim ``Orchestrators``
-using a SmartRedis client.
+:ref:`Model(s)<model_object_doc>` represent a simulation model or any computational kernel,
+including applications, scripts, or generally, a program. They can
+interact with other SmartSim entities via data transmitted to/from
+SmartSim ``Orchestrators`` using a SmartRedis ``Client``.
 
 A ``Model`` is created through the factory method: ``Experiment.create_model()``.
-Models are initialized with ``RunSettings`` objects that specify
+``Models`` are initialized with ``RunSettings`` objects that specify
 how a ``Model`` should be launched via a workload manager
 (e.g., Slurm) and the compute resources required.
 Optionally, the user may also specify a ``BatchSettings`` object if
 the model should be launched as a batch job on the WLM system.
-The ``create_model()`` factory method returns an initialized Model object that
+The ``create_model()`` factory method returns an initialized ``Model`` object that
 gives you access to functions associated with the :ref:`Model API<model_api>`.
+
+A ``Model`` supports key features, including methods to:
+
+- :ref:`Attach configuration files<files_doc>` for use at ``Model`` runtime.
+- :ref:`Colocate an Orchestrator<colo_model_doc>` to a SmartSim ``Model``.
+- :ref:`Attach a ML model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Attach a TorchScript function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Enable SmartSim Model data collision prevention<model_key_collision>`, which allows for reuse of key names.
+
+Visit the respective links for more information on each topic.
 
 .. _ensemble_exp_docs:
 Ensemble
 ========
 In addition to a single ``Model``, SmartSim allows users to create,
-configure, and launch an ``Ensemble`` of ``Model`` objects.
+configure, and launch an :ref:`Ensemble<ensemble_doc>` of ``Model`` objects.
 ``Ensembles`` can be given parameters and permutation strategies that define how the
 ``Ensemble`` will create the underlying ``Model`` objects. Users may also
-manually create and append ``Model(s)`` to an ``Ensemble``.
-Lastly, the :ref:`Ensemble API<ensemble_api>` supports launching Machine Learning models, TensorFlow
-scripts and functions at runtime to enable AI and ML within an ``Ensemble``
-Workload.
+manually create and append ``Model(s)`` to an ``Ensemble``. For information
+and examples on ``Ensemble`` creation strategies, visit the :ref:`Initialization<init_ensemble_strategies>`
+section within the :ref:`Ensemble<ensemble_doc>` documentation.
 
-Ensemble Prefixing
-------------------
-If each of the ``Ensemble`` members attempt to use the
-same code to access their respective data in the Orchestrator,
-the names used to reference data, models, and scripts will be identical,
-and without the use of SmartSim and SmartRedis helper methods, ``Ensemble`` members
-will end up inadvertently accessing or overwriting each other’s data. To prevent
-this situation, the SmartSim ``Ensemble`` object supports
-key prefixing, which automatically prepends the name
-of the model to the keys by which it is accessed. With
-this enabled, collision is resolved and
-``Ensemble`` members can use the same code.
+An ``Ensemble`` supports key features, including methods to:
 
-For example, assume you have two models in the ``Ensemble`` object,
-named `model_0` and `model_1`. In the application code you
-use the function ``Client.put_tensor("tensor")``. With
-``Ensemble`` key prefixing turned on, the `model_0` and `model_1` ``Model`` applications
-can access the tensor `"tensor"` by name without overwriting or accessing the other
-``Ensemble`` member's `"tensor"` tensor.
+- :ref:`Attach configuration files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
+- :ref:`Load AI models<ai_model_ensemble_doc>` (TF, TF-lite, PT, or ONNX) into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Load TorchScripts<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Prevent data collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
 
-Ensemble Creation
------------------
-An ``Ensemble`` is created through the factory method: ``Experiment.create_ensemble()``.
-The ``create_ensemble()`` factory method returns an initialized ``Ensemble`` object that
-gives you access to functions associated with the :ref:`Ensemble API<ensemble_api>`.
-To initialize an ``Ensemble``, a user must follow one of the three methods of ensemble
-creation:
+Visit the respective links for more information on each topic.
 
-1. Manual ``Model`` Appending
-     A technique that allows users to create and add model instances to an ensemble, offering a level
-     of customization in `Ensemble`` design.
-2. Parameter Expansion
-     A technique that allows users to set parameter values and control how the parameter values
-     spread across the `Ensemble`` members by specifying a permutation strategy.
-3. The Utilization of Replicas
-     A technique that allows users to create identical or closely related models within an ensemble. Users can assess
-     how a system responds to the same set of parameters under multiple instances.
-
-.. note::
-  For more information and instruction on `Ensemble`` creation methods, navigate to the :ref:`Ensemble documentation page<ensemble_doc>`.
-
+.. _exp_example:
 =======
 Example
 =======
 .. compound::
   In the following subsections, we provide an example of using SmartSim to automate the
-  deployment of an HPC workflow consisting of a ``Model`` and standard ``Orchestrator``.
+  deployment of an HPC workflow consisting of a ``Model`` and standalone ``Orchestrator``.
   The example demonstrates:
 
   *Initializing*
@@ -328,6 +233,13 @@ Example
   *Stopping*
    - an in-memory database (standalone ``Orchestrator``)
 
+  The source code example is available in the dropdown below for convenient execution
+  and customization.
+
+  .. dropdown:: Example Driver Script source code
+
+      .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+
 Initializing
 ============
 .. compound::
@@ -335,33 +247,30 @@ Initializing
   once at the beginning of the Python driver script.
   To create an ``Experiment``, we specify a name
   and the system launcher with which all entities will be executed.
-  Here, we are running the example on a Slurm machine and as such will
-  set the `launcher` argument to `slurm`.
+  Here, we are running the example on a Slurm machine and will
+  set the `launcher` argument to `auto` to instruct SmartSim to
+  attempt to find the WLM.
 
-  .. code-block:: python
+  .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 1-7
 
-      from smartsim import Experiment
-      from smartsim.log import get_logger
-
-      # Initialize an Experiment
-      exp = Experiment("name-of-experiment", launcher="slurm")
-      # Initialize a SmartSim logger
-      smartsim_logger = get_logger("tutorial-experiment")
-
-  We also initialize a SmartSim logger. We will use the logger throughout the ``Experiment``
-  to monitor the entities.
+  We also initialize a SmartSim logger. We will use the logger to log the ``Experiment``
+  summary.
 
 .. compound::
   Next, we will launch a SmartSim in-memory database called an ``Orchestrator``.
   To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database()``
-  function. We will create a single-sharded ``Orchestrator`` and therefore will set
-  the argument `db_nodes` to 1. SmartSim will assign a `port` to the ``Orchestrator``
-  and attempt to detect your machine's interface if values are not provided to the ``Experiment.create_database()`` factory method.
+  function. We will create a multi-sharded ``Orchestrator`` and therefore will set
+  the argument `db_nodes` to 3. SmartSim will assign a `port` to the ``Orchestrator``
+  and attempt to detect your machine's interface if values are not provided to the
+  ``Experiment.create_database()`` factory method.
 
-  .. code-block:: python
-
-      # Initialize an Orchestrator
-      database = exp.create_database(db_nodes=1)
+  .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 9-10
 
 .. compound::
   Before invoking the factory method to create a ``Model``, we must
@@ -374,10 +283,10 @@ Initializing
   The example ``Model`` is a simple `Hello World` program
   that echos `Hello World` to stdout.
 
-  .. code-block:: python
-
-      settings = exp.create_run_settings("echo", exe_args="Hello World")
-      model = exp.create_model("hello_world", settings)
+  .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 12-15
 
   After creating the ``RunSettings`` object, the ``Model`` object can be created and initialized using
   the ``RunSettings`` object via the ``Experiment.create_model()`` function. In the ``Model`` factory method,
@@ -391,10 +300,13 @@ Generating
   We plan to organize the ``Orchestrator`` and ``Model`` output files within the ``Experiment`` folder and
   therefore pass the ``Orchestrator`` and ``Model`` instances to ``exp.generate()``:
 
-  .. code-block:: python
+  .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 17-18
 
-    # Create an output directory
-    exp.generate(database, model)
+  `Overwrite=True` instructs SmartSim to overwrite each file contents if the ``Experiment`` is
+  executed again.
 
   .. note::
     If files or folders are attached to a ``Model`` or ``Ensemble`` members through ``Model.attach_generator_files()``
@@ -409,28 +321,34 @@ Starting
   the ``Experiment.start()`` function and pass in the ``Orchestrator``
   and ``Model`` instances previously created.
 
-  .. code-block:: python
-
-    # Launch the Orchestrator and Model instance
-    exp.start(database, model)
+  .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 20-21
 
   We use the ``Experiment.generate()`` function to create an
-  output directory for the ``Orchestrator`` log files.
+  output directory for the ``Orchestrator`` `.err` and `.out` log files.
 
 Stopping
 ========
 .. compound::
-  Lastly, to clean up the experiment, we need to tear down the launched ``Orchestrators``.
+  Lastly, to clean up the ``Experiment``, we need to tear down the launched ``Orchestrators``.
   We do this by stopping the ``Orchestrator`` using the ``Experiment.stop()`` function.
 
-  .. code-block:: python
-
-    exp.stop(db)
-    # log the summary of the Experiment
-    exp.summary()
+  .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 23-26
 
   Notice that we use the ``Experiment.summary()`` function to print
   the summary of the workflow.
+
+When you run the experiment, the following output will appear::
+
+  |    | Name           | Entity-Type   | JobID       | RunID   | Time    | Status    | Returncode   |
+  |----|----------------|---------------|-------------|---------|---------|-----------|--------------|
+  | 0  | hello_world    | Model         | 1778304.4   | 0       | 10.0657 | Completed | 0            |
+  | 1  | orchestrator_0 | DBNode        | 1778304.3+2 | 0       | 43.4797 | Cancelled | 0            |
 
 .. note::
   Failure to tear down the ``Orchestrator`` at the end of an ``Experiment``

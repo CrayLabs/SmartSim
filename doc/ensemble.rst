@@ -9,7 +9,7 @@ A SmartSim ``Ensemble`` enables users to run a **group** of computational tasks 
 ``Experiment`` workflow. An ``Ensemble`` is comprised of multiple ``Model`` objects,
 where each ``Ensemble`` member (SmartSim ``Model``) represents an individual application.
 An ``Ensemble`` can be managed as a single entity and
-launched with other :ref:`Model<model_object_doc>` and :ref:`Orchestrators<orch_docs>` to construct AI-enabled workflows.
+launched with other :ref:`Models<model_object_doc>` and :ref:`Orchestrators<orch_docs>` to construct AI-enabled workflows.
 
 The :ref:`Ensemble API<ensemble_api>` offers key features, including methods to:
 
@@ -29,6 +29,7 @@ When creating an ``Ensemble``, it is important to consider one of the **three** 
 SmartSim manages ``Ensemble`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications.
 
+.. _init_ensemble_strategies:
 ==============
 Initialization
 ==============
@@ -431,6 +432,7 @@ The contents of `params_inputs.txt` after ``Ensemble`` completion are:
 
    THERMO = 1
 
+.. _ensemble_ml_model_script:
 =====================
 ML Models and Scripts
 =====================
@@ -446,30 +448,25 @@ application runtime.
     ``Ensemble``, refer to the :ref:`ML Models and Scripts<ml_script_model_doc>`
     section of the ``Model`` documentation.
 
-Depending on the planned storage method of the ML model, there are **two** distinct
+Depending on the planned storage method of the **ML model**, there are **two** distinct
 approaches to load it into the ``Orchestrator``:
 
 - :ref:`from memory<in_mem_ML_model_ensemble_ex>`
 - :ref:`from file<from_file_ML_model_ensemble_ex>`
 
-.. note::
+.. warning::
     Uploading an ML model :ref:`from memory<in_mem_ML_model_ensemble_ex>` is solely supported for
     standalone ``Orchestrators``. To upload an ML model to a colocated ``Orchestrator``, users
     must save the ML model to disk and upload :ref:`from file<from_file_ML_model_ensemble_ex>`.
 
-.. note::
-    To upload an ML model to the ``Orchestrator``, users must first serialize the ML model.
-    For information on serializing ML models, visit the Ensemble :ref:`AI Models<ai_model_ensemble_doc>`
-    section or the :ref:`ML Features<ml_features_docs>` Section.
-
-Depending on the planned storage method of the TorchScript, there are **three** distinct
+Depending on the planned storage method of the **TorchScript**, there are **three** distinct
 approaches to load it into the ``Orchestrator``:
 
 - :ref:`from memory<in_mem_TF_ensemble_doc>`
 - :ref:`from file<TS_from_file_ensemble>`
 - :ref:`from string<TS_raw_string_ensemble>`
 
-.. note::
+.. warning::
     Uploading a TorchScript :ref:`from memory<in_mem_TF_ensemble_doc>` is solely supported for
     standalone ``Orchestrators``. To upload a TorchScript to a colocated ``Orchestrator``, users
     upload :ref:`from file<TS_from_file_ensemble>` or :ref:`from string<TS_raw_string_ensemble>`.
@@ -941,7 +938,7 @@ the ``Client.set_data_source()`` function, where ``enable_key_prefixing()`` is n
     and rather must be enabled within the ``Ensemble`` member application using
     ``Client.use_model_ensemble_prefix()``.
 
-Users can enable the SmartRedis ``Client`` to interact with prefixed data, ML models and scripts
+Users can enable the SmartRedis ``Client`` to interact with prefixed data, ML models and TorchScripts
 using the ``Client.set_data_source()``. However, for SmartSim to recognize the producer entity name
 passed to the function within an application, the producer entity must be registered on the consumer
 entity using ``Ensemble.register_incoming_entity()``.
