@@ -65,14 +65,8 @@ The :ref:`Experiment API<experiment_api>` is responsible for initializing all Sm
 A ``Model`` is created using the ``Experiment.create_model()`` factory method, and users can customize the
 ``Model`` via the factory method parameters.
 
-The key initializer arguments of ``create_model()`` are:
-
--  `name` (str): Specify the name of the ``Model`` for unique identification.
--  `run_settings` (base.RunSettings): Describe execution settings for a ``Model``.
--  `params` (t.Optional[t.Dict[str, t.Any]] = None): Provides a dictionary of parameters for ``Model``.
--  `path` (t.Optional[str] = None): Path to where the ``Model`` should be executed at runtime.
--  `enable_key_prefixing` (bool = False): Prefix the ``Model`` name to data sent to the ``Orchestrator`` to prevent key collisions. Default is `False`.
--  `batch_settings` (t.Optional[base.BatchSettings] = None): Describes settings for batch workload treatment.
+The key initializer arguments for ``Model`` creation can be found in the :ref:`Experiment API<exp_init>`
+under the ``create_model()`` docstring.
 
 A `name` and :ref:`RunSettings<run_settings_doc>` reference are required to initialize a ``Model``.
 Optionally, include a :ref:`BatchSettings<batch_settings_doc>` object to specify workload manager batch launching.
@@ -383,22 +377,8 @@ when using the ``Model.add_ml_model()`` function. SmartSim solely supports loadi
 for use within standalone ``Orchestrators``. The supported ML frameworks are TensorFlow,
 TensorFlow-lite, PyTorch, and ONNX.
 
-When attaching an ML model using ``Model.add_ml_model()``, the
-following arguments are offered to customize the storage and execution of the ML model:
-
-- `name` (str): name to reference the model in the ``Orchestrator``.
-- `backend` (str): name of the backend (TORCH, TF, TFLITE, ONNX).
-- `model` (t.Optional[str] = None): A ML model in memory (only supported for non-colocated ``Orchestrators``).
-- `model_path` (t.Optional[str] = None): serialized ML model.
-- `device` (t.Literal["CPU", "GPU"] = "CPU"): name of device for execution, defaults to “CPU”.
-- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- `batch_size` (int = 0): batch size for execution, defaults to 0.
-- `min_batch_size` (int = 0): minimum batch size for ML model execution, defaults to 0.
-- `min_batch_timeout` (int = 0): time to wait for minimum batch size, defaults to 0.
-- `tag` (str = ""): additional tag for ML model information, defaults to “”.
-- `inputs` (t.Optional[t.List[str]] = None): ML model inputs (TF only), defaults to None.
-- `outputs` (t.Optional[t.List[str]] = None): ML model outputs (TF only), defaults to None.
+The arguments that customize the storage and execution of an ML model can be found in the
+:ref:`Model API<model_api>` under the ``add_ml_model()`` docstring.
 
 .. _in_mem_ML_model_ex:
 -------------------------------------
@@ -544,14 +524,8 @@ In environments with multiple devices, specific device numbers can be specified 
     If you would like to load a TorchScript function to a colocated ``Orchestrator``, define the function
     as a :ref:`raw string<TS_raw_string>` or :ref:`load from file<TS_from_file>`.
 
-When specifying an in-memory TF function using ``Model.add_function()``, the
-following arguments are offered:
-
-- `name` (str): reference name for the script inside of the ``Orchestrator``.
-- `function` (t.Optional[str] = None): TorchScript function code.
-- `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
-- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+The arguments that customize the execution of an in-memory TorchScript function can be found in the
+:ref:`Model API<model_api>` under the ``add_function()`` docstring.
 
 .. _in_mem_TF_ex:
 Example: Loading a in-memory TorchScript function
@@ -618,15 +592,8 @@ flexible device selection, allowing users to choose between `"GPU"` or `"CPU"` v
 In environments with multiple devices, specific device numbers can be specified using the
 `devices_per_node` parameter.
 
-When specifying a TorchScript using ``Model.add_script()``, the
-following arguments are offered:
-
-- `name` (str): Reference name for the script inside of the ``Orchestrator``.
-- `script` (t.Optional[str] = None): String of function code (e.g. TorchScript code string).
-- `script_path` (t.Optional[str] = None): path to TorchScript code.
-- `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
-- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+The arguments that customize the storage and execution of a TorchScript script can be found in the
+:ref:`Model API<model_api>` under the ``add_script()`` docstring.
 
 .. _TS_from_file_ex:
 Example: Loading a TorchScript from File
@@ -692,15 +659,8 @@ flexible device selection, allowing users to choose between `"GPU"` or `"CPU"` v
 In environments with multiple devices, specific device numbers can be specified using the
 `devices_per_node` parameter.
 
-When specifying a TorchScript using ``Model.add_script()``, the
-following arguments are offered:
-
-- `name` (str): Reference name for the script inside of the ``Orchestrator``.
-- `script` (t.Optional[str] = None): String of function code (e.g. TorchScript code string).
-- `script_path` (t.Optional[str] = None): path to TorchScript code.
-- `device` (t.Literal["CPU", "GPU"] = "CPU"): device for script execution, defaults to “CPU”.
-- `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
-- `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
+The arguments that customize the storage and execution of a TorchScript script can be found in the
+:ref:`Model API<model_api>` under the ``add_script()`` docstring.
 
 .. _TS_from_file_ex:
 Example: Loading a TorchScript from string
@@ -760,13 +720,13 @@ Data Collision Prevention
 =========================
 Overview
 ========
-If an ``Experiment`` consists of multiple ``Models`` that use the same key names,
-the names used to reference data, ML models, and scripts will be
+If an ``Experiment`` consists of multiple ``Models`` that use the same key names to reference
+information in the ``Orchestrator``, the names used to reference data, ML models, and scripts will be
 identical, and without the use of SmartSim and SmartRedis prefix methods, ``Models``
 will end up inadvertently accessing or overwriting each other’s data. To prevent this
 situation, the SmartSim ``Model`` object supports key prefixing, which prepends
 the name of the ``Model`` to the keys sent to the ``Orchestrator`` to create unique key names.
-With this enabled, collision is avoided and ``Models`` can use same names within their applications.
+With this enabled, collision is avoided and ``Models`` can use the same key names within their applications.
 
 The key components of SmartSim ``Model`` prefixing functionality include:
 
@@ -790,7 +750,7 @@ SmartSim provides support for toggling prefixing on a ``Model`` for tensors, ``D
 lists, ML models, and scripts. Prefixing functions from the SmartSim :ref:`Model API<model_api>` and SmartRedis :ref:`Client API<smartredis-api>` rely on
 each other to fully support SmartSim key prefixing. For example, to use the ``Client`` prefixing
 functions, a user must enable prefixing on the ``Model`` through ``Model.enable_key_prefixing()``.
-This function enables prefixing for tensors, ``Datasets`` and lists placed in an ``Orchestrator``
+This function enables and activates prefixing for tensors, ``Datasets`` and lists placed in an ``Orchestrator``
 by the ``Model``. This configuration can be toggled within the ``Model`` application through
 ``Client`` functions, such as disabling tensor prefixing via ``Client.use_tensor_ensemble_prefix(False)``.
 
@@ -815,7 +775,6 @@ function in the ``Experiment`` driver script. The key components of this functio
 .. note::
     ML model and script prefixing is not automatically enabled through ``Model.enable_key_prefixing()``
     and rather must be enabled within the ``Model`` application using ``Client.use_model_ensemble_prefix()``.
-
 
 Users can enable a SmartRedis ``Client`` to interact with prefixed data, ML models and TorchScripts
 within a ``Model`` application by specifying the producer entity name to ``Client.set_data_source()``.
@@ -1647,7 +1606,8 @@ where ML Model and Script are placed by separate applications.
 
         .. note::
             The output tensors are prefixed because we executed ``model_1.enable_key_prefixing()``
-            in the driver script which enables prefixing for tensors, ``Datasets`` and lists.
+            in the driver script which enables and activates prefixing for tensors, ``Datasets``
+            and lists.
 
         **Access ML Models From Outside The Application They Were Loaded In**
 
@@ -1694,7 +1654,8 @@ where ML Model and Script are placed by separate applications.
 
         .. note::
             The output tensors are prefixed because we executed ``model_2.enable_key_prefixing()``
-            in the driver script which enables prefixing for tensors, ``Datasets`` and lists.
+            in the driver script which enables and activates prefixing for tensors, ``Datasets``
+            and lists.
 
     .. group-tab:: Script
 
@@ -1735,7 +1696,8 @@ where ML Model and Script are placed by separate applications.
 
         .. note::
             The output tensors are prefixed because we executed ``model_1.enable_key_prefixing()``
-            in the driver script which enables prefixing for tensors, ``Datasets`` and lists.
+            in the driver script which enables and activates prefixing for tensors, ``Datasets``
+            and lists.
 
         **Access Scripts From Outside The Application They Were Loaded In**
 
@@ -1782,7 +1744,8 @@ where ML Model and Script are placed by separate applications.
 
         .. note::
             The output tensors are prefixed because we executed ``model_2.enable_key_prefixing()``
-            in the driver script which enables prefixing for tensors, ``Datasets`` and lists.
+            in the driver script which enables and activates prefixing for tensors, ``Datasets``
+            and lists.
 
 .. _copy_rename_del_prefix:
 Copy/Rename/Delete Operations
