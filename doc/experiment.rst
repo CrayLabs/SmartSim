@@ -52,15 +52,14 @@ SmartSim supports launching AI-enabled workflows on a wide variety of systems, i
 Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS, and LSF). When creating a SmartSim
 ``Experiment``, the user has the opportunity to specify the `launcher` type or defer to automatic `launcher` selection.
 `Launcher` selection determines how SmartSim translates SmartSim entity configurations into system calls to launch,
-manage, and monitor entities. Currently, SmartSim supports 6 `launchers`:
+manage, and monitor entities. Currently, SmartSim supports 5 `launchers`:
 
 1. ``local`` **[default]**: for single-node, workstation, or laptop
 2. ``slurm``: for systems using the Slurm scheduler
 3. ``pbs``: for systems using the PBSpro scheduler
 4. ``pals``: for systems using the PALS scheduler
-5. ``cobalt``: for systems using the Cobalt scheduler
-6. ``lsf``: for systems using the LSF scheduler
-7. ``auto``: have SmartSim auto-detect the launcher to use
+5. ``lsf``: for systems using the LSF scheduler
+6. ``auto``: have SmartSim auto-detect the launcher to use
 
 If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
 `launcher="local"` will be used which will start all ``Experiment`` launched entities on the
@@ -147,7 +146,7 @@ returns an ``Orchestrator`` object. To create a colocated ``Orchestrator`` that
 shares compute resources with a ``Model`` entity, use the ``Model.colocate_db_tcp()``
 or ``Model.colocate_db_uds()`` helper methods accessible after a
 ``Model`` object has been initialized. This function instructs
-SmartSim to launch a ``Orchestrator`` on the application compute nodes. A ``Orchestrator`` object is not
+SmartSim to launch an ``Orchestrator`` on the application compute nodes. An ``Orchestrator`` object is not
 returned from a ``Model.colocate_db()`` instruction, and subsequent interactions with the
 colocated ``Orchestrator`` are handled through the :ref:`Model API<model_api>`.
 
@@ -179,9 +178,10 @@ A ``Model`` supports key features, including methods to:
 
 - :ref:`Attach configuration files<files_doc>` for use at ``Model`` runtime.
 - :ref:`Colocate an Orchestrator<colo_model_doc>` to a SmartSim ``Model``.
-- :ref:`Attach a ML model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
-- :ref:`Attach a TorchScript function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
-- :ref:`Enable SmartSim Model data collision prevention<model_key_collision>`, which allows for reuse of key names.
+- :ref:`Load a ML model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Load a TorchScript function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Enable SmartSim Model data collision prevention<model_key_collision>`, which allows
+  for reuse of key names in different ``Model`` applications.
 
 Visit the respective links for more information on each topic.
 
@@ -258,7 +258,7 @@ Initializing
   To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database()``
   function. We will create a multi-sharded ``Orchestrator`` and therefore will set
   the argument `db_nodes` to 3. SmartSim will assign a `port` to the ``Orchestrator``
-  and attempt to detect your machine's interface if values are not provided to the
+  and attempt to detect your machine's network interface if values are not provided to the
   ``Experiment.create_database()`` factory method.
 
   .. literalinclude:: ../tutorials/doc_examples/experiment_doc_examples/exp.py
@@ -299,13 +299,17 @@ Generating
     :linenos:
     :lines: 17-18
 
-  `Overwrite=True` instructs SmartSim to overwrite each file contents if the ``Experiment`` is
-  executed again.
+  `Overwrite=True` instructs SmartSim to overwrite entity contents if entity files and subdirectories
+  already exist within the ``Experiment`` directory.
 
   .. note::
     If files or folders are attached to a ``Model`` or ``Ensemble`` members through ``Model.attach_generator_files()``
     or ``Ensemble.attach_generator_files()``, the attached files or directories will be symlinked, copied, or configured and
     written into the created directory for that instance.
+
+  Since we utilized the ``Experiment.generate()`` function to create an output directory for the ``Experiment``
+  entities, namely the ``Model`` and ``Orchestrator``, the `.err` and `.out` log files will be placed in individual
+  entity subdirectories within the main ``Experiment`` directory.
 
 Starting
 ========
@@ -319,9 +323,6 @@ Starting
     :language: python
     :linenos:
     :lines: 20-21
-
-  We use the ``Experiment.generate()`` function to create an
-  output directory for the ``Orchestrator`` `.err` and `.out` log files.
 
 Stopping
 ========
