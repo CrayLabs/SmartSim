@@ -16,7 +16,7 @@ In general, ``RunSettings`` define:
 - the required compute resources
 
 The base ``RunSettings`` class is utilized for local task launches,
-while its derived child classes offer specialized functionality for HPC workload managers (WLMs) task launches.
+while its derived child classes offer specialized functionality for HPC workload managers (WLMs).
 Each SmartSim WLM `launcher` interfaces with a specific ``RunSettings`` subclass tailored to an HPC job scheduler.
 
 - Navigate to :ref:`Local<run_settings_local_ex>` section to configure run settings locally
