@@ -1068,6 +1068,7 @@ async def event_loop(
     elapsed: int = 0
     last_ts: int = get_ts_ms()
     shutdown_in_progress = False
+    cooldown_duration = 1000 * cooldown_duration  # convert to milliseconds
 
     while observer.is_alive() and not shutdown_in_progress:
         duration_ms = 0
