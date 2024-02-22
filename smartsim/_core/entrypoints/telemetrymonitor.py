@@ -455,9 +455,9 @@ class CollectorManager:
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(list)
         self._timeout_ms = timeout_ms
         self._tasks: t.List[asyncio.Task[None]] = []
-        self._stoppers: t.Dict[str, t.List[TaskCompleteHandler]] = (
-            collections.defaultdict(list)
-        )
+        self._stoppers: t.Dict[
+            str, t.List[TaskCompleteHandler]
+        ] = collections.defaultdict(list)
         self._observers: t.Dict[str, t.List[BaseObserver]] = collections.defaultdict(
             list
         )
@@ -579,6 +579,7 @@ class CollectorManager:
 class Run:
     """Model containing entities of an individual start call for an experiment"""
 
+    exp_id: str
     timestamp: int
     models: t.List[JobEntity]
     orchestrators: t.List[JobEntity]
@@ -707,6 +708,7 @@ def hydrate_runs(
                     run_entities[entity_type].extend(new_entities)
 
         run = Run(
+            run_instance["exp_id"],
             run_instance["timestamp"],
             run_entities["model"],
             run_entities["orchestrator"],
@@ -826,6 +828,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def __init__(
         self,
+        exp_id: str,
         pattern: str,
         ignore_patterns: t.Any = None,
         ignore_directories: bool = True,
@@ -835,6 +838,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         super().__init__(
             [pattern], ignore_patterns, ignore_directories, case_sensitive
         )  # type: ignore
+        self._exp_id: str = exp_id
         self._tracked_runs: t.Dict[int, Run] = {}
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
@@ -905,7 +909,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
 
-        runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
+        # filter out items previously tracked and anything from separate experiments
+        runs = [
+            run
+            for run in manifest.runs
+            if run.timestamp not in self._tracked_runs and run.exp_id == self._exp_id
+        ]
         exp_dir = pathlib.Path(manifest_path).parent.parent.parent
 
         for run in runs:
@@ -1104,6 +1113,7 @@ async def event_loop(
 
 
 async def main(
+    exp_id: str,
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
     observer: t.Optional[BaseObserver] = None,
@@ -1137,6 +1147,7 @@ async def main(
     log_handler = LoggingEventHandler(logger)  # type: ignore
     frequency_ms = int(frequency * 1000)  # limit collector execution time
     action_handler = ManifestEventHandler(
+        exp_id,
         str(MANIFEST_FILENAME),
         timeout_ms=frequency_ms,
         ignore_patterns=["*.out", "*.err"],
@@ -1207,6 +1218,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Logging level",
         default=logging.DEBUG,
     )
+    arg_parser.add_argument(
+        "-exp_id",
+        type=str,
+        help="Unique ID of the parent experiment executing a run",
+        required=True,
+    )
     return arg_parser
 
 
@@ -1247,6 +1264,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(
             main(
+                run_args.exp_id,
                 int(run_args.frequency),
                 pathlib.Path(run_args.exp_dir),
                 cooldown_duration=run_args.cooldown,

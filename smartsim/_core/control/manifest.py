@@ -188,6 +188,7 @@ class Manifest:
 
 
 class _LaunchedManifestMetadata(t.NamedTuple):
+    exp_id: str
     run_id: str
     exp_name: str
     exp_path: str
@@ -251,15 +252,16 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     exp_name: str
     exp_path: str
     launcher_name: str
+    exp_id: str
     run_id: str = field(default_factory=_helpers.create_short_id_str)
 
     _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list, init=False)
     _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
         default_factory=list, init=False
     )
-    _databases: t.List[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]] = (
-        field(default_factory=list, init=False)
-    )
+    _databases: t.List[
+        t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]
+    ] = field(default_factory=list, init=False)
 
     @property
     def exp_telemetry_subdirectory(self) -> pathlib.Path:
@@ -294,7 +296,11 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
             metadata=_LaunchedManifestMetadata(
-                self.run_id, self.exp_name, self.exp_path, self.launcher_name
+                self.exp_id,
+                self.run_id,
+                self.exp_name,
+                self.exp_path,
+                self.launcher_name,
             ),
             models=tuple(self._models),
             ensembles=tuple(self._ensembles),

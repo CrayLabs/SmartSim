@@ -36,6 +36,7 @@ import sys
 import threading
 import time
 import typing as t
+import uuid
 from os import environ
 
 from smartredis import Client, ConfigOptions
@@ -95,6 +96,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
         self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
+        self._exp_id = str(uuid.uuid4())
 
     def start(
         self,
@@ -357,7 +359,10 @@ class Controller:
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
-            exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
+            exp_name=exp_name,
+            exp_path=exp_path,
+            launcher_name=str(self._launcher),
+            exp_id=self._exp_id,
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -850,6 +855,8 @@ class Controller:
                 str(CONFIG.telemetry_frequency),
                 "-cooldown",
                 str(CONFIG.telemetry_cooldown),
+                "-exp_id",
+                self._exp_id,
             ]
             # pylint: disable-next=consider-using-with
             self._telemetry_monitor = subprocess.Popen(
@@ -875,7 +882,8 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.entities = [model]
         self.batch_settings = model.batch_settings
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
+        ...
 
 
 def _look_up_launched_data(
