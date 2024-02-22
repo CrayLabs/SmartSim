@@ -168,19 +168,15 @@ def test_restarting_entity(test_dir, wlmutils, entity):
     controller._launch_step(step, entity=entity)
 
 
-@pytest.mark.parametrize(
-    "entity",
-    [pytest.param(orc, id="Ensemble_running")],
-)
-def test_restarting_orch(test_dir, wlmutils, entity):
+def test_restarting_orch(test_dir, wlmutils):
     """Validate restarting a completed Orchestrator job"""
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
     test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
-    controller._jobs.add_job(entity.name, job_id="1234", entity=entity)
-    controller._jobs.move_to_completed(controller._jobs.db_jobs.get(entity.name))
-    controller._launch_step(step, entity=entity)
+    controller._jobs.add_job(orc.name, job_id="1234", entity=orc)
+    controller._jobs.move_to_completed(controller._jobs.db_jobs.get(orc.name))
+    controller._launch_step(step, entity=orc)
 
 
 @pytest.mark.parametrize(
