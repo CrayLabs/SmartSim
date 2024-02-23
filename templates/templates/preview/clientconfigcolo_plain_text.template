@@ -7,7 +7,7 @@
           {%- if model.run_settings.colocated_db_settings %}
           {%- if model.run_settings.colocated_db_settings.port %}
           Connection Type: TCP
-          TCP/IP Port:
+          TCP/IP Port(s):
             {{ model.run_settings.colocated_db_settings.port }}
           {% endif -%}
           {%- if model.run_settings.colocated_db_settings.unix_socket %}
@@ -29,5 +29,5 @@
           Outgoing Key Collision Prevention (Key Prefixing): 
             Tensors: {{ model.query_key_prefixing() | as_toggle }}
             Datasets: {{ model.query_key_prefixing() | as_toggle }}
-            ML Models/Scripts: {{ False | as_toggle }}
+            ML Models/Torch Scripts: {{ False | as_toggle }}
             Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}

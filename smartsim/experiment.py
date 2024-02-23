@@ -851,8 +851,6 @@ class Experiment:
             Defaults to info.
         :type verbosity_level: str
         """
-        # Retreive any active jobs
-        active_jobs = self._control.active_entity_list
 
         # Retrive any active db jobs
         active_dbjobs = self._control.active_orch_list
@@ -861,11 +859,10 @@ class Experiment:
 
         rendered_preview = previewrenderer.render(
             self,
-            active_dbjobs,
-            active_jobs,
             preview_manifest,
             verbosity_level,
             output_format,
+            active_dbjobs,
         )
         if output_filename:
             previewrenderer.preview_to_file(rendered_preview, output_filename)

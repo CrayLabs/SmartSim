@@ -3,6 +3,7 @@
 {%- if manifest.has_deployable or active_dbjobs %}
 
 === Entity Preview ===   
+  
   {%- if active_dbjobs %}
 
   == Active Infrastructure == 
@@ -10,8 +11,9 @@
       {% include "preview/activeinfra_plain_text.template" %}
   {%- endfor %}
   {%- endif %}
+  
   {%- if manifest.dbs %}
-
+  
   == Orchestrators == 
     {%- for db in manifest.dbs %}
     {%- if db.is_active() %}
@@ -24,19 +26,16 @@
   {%- endif %}
   {% if manifest.models %}
   == Models == 
-
     {% for model in manifest.models %}   
-    check that it is not active, otherwise throw warning
-
     = Model Name: {{ model.name }} =
     {%- include "preview/model_plain_text.template" %}
         {%- if model.run_settings.colocated_db_settings %}
         {% include "preview/clientconfigcolo_plain_text.template" %}
         {%- endif %}
-        {% if manifest.dbs -%}
+        {%- if manifest.dbs %}
         {% include "preview/clientconfig_plain_text.template" %}
-        {%- endif %}
-    {%- endfor %}
+        {% endif %}
+    {% endfor %}
     {%- endif %}
 
   {%- if manifest.ensembles %}

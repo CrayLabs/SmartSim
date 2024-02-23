@@ -37,6 +37,7 @@ from ..._core.config import CONFIG
 from ..._core.control import Manifest
 from ...error.errors import PreviewFormatError
 from ...log import get_logger
+from .job import Job
 
 logger = get_logger(__name__)
 
@@ -56,11 +57,10 @@ class Verbosity(str, Enum):
 
 def render(
     exp: "Experiment",
-    active_dbjobs,
-    active_jobs,
     manifest: t.Optional[Manifest] = None,
     verbosity_level: Verbosity = Verbosity.INFO,
     output_format: Format = Format.PLAINTEXT,
+    active_dbjobs: t.Optional[t.Dict[str, Job]] = None,
 ) -> str:
     """
     Render the template from the supplied entities.
@@ -93,11 +93,11 @@ def render(
     rendered_preview = tpl.render(
         exp_entity=exp,
         active_dbjobs=active_dbjobs,
-        active_jobs=active_jobs,
         manifest=manifest,
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
+
     return rendered_preview
 
 
@@ -107,12 +107,12 @@ def as_toggle(_eval_ctx: u.F, value: bool) -> str:
 
 
 @pass_eval_context
-def get_ifname(_eval_ctx: u.F, value: list) -> str:
-    return next((item for item in value if "ifname" in item), None).split("=")[-1]
+def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
+    return next((item for item in value if "ifname" in item), str).split("=")[-1]
 
 
 @pass_eval_context
-def get_dbtype(_eval_ctx: u.F, value: list) -> str:
+def get_dbtype(_eval_ctx: u.F, value: str) -> t.Any:
     db_type, _ = value.split("/")[-1].split("-", 1)
     return db_type
 
@@ -160,9 +160,7 @@ def _check_verbosity_level(
     """
     if not isinstance(verbosity_level, Verbosity):
 
-        logger.warning(
-            f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}"
-        )
+        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}")
         return Verbosity.INFO
     return verbosity_level
