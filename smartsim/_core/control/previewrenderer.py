@@ -56,6 +56,8 @@ class Verbosity(str, Enum):
 
 def render(
     exp: "Experiment",
+    active_dbjobs,
+    active_jobs,
     manifest: t.Optional[Manifest] = None,
     verbosity_level: Verbosity = Verbosity.INFO,
     output_format: Format = Format.PLAINTEXT,
@@ -78,6 +80,8 @@ def render(
     env = jinja2.Environment(loader=loader, autoescape=True)
 
     env.filters["as_toggle"] = as_toggle
+    env.filters["get_ifname"] = get_ifname
+    env.filters["get_dbtype"] = get_dbtype
 
     version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
@@ -88,6 +92,8 @@ def render(
 
     rendered_preview = tpl.render(
         exp_entity=exp,
+        active_dbjobs=active_dbjobs,
+        active_jobs=active_jobs,
         manifest=manifest,
         config=CONFIG,
         verbosity_level=verbosity_level,
@@ -98,6 +104,17 @@ def render(
 @pass_eval_context
 def as_toggle(_eval_ctx: u.F, value: bool) -> str:
     return "On" if value else "Off"
+
+
+@pass_eval_context
+def get_ifname(_eval_ctx: u.F, value: list) -> str:
+    return next((item for item in value if "ifname" in item), None).split("=")[-1]
+
+
+@pass_eval_context
+def get_dbtype(_eval_ctx: u.F, value: list) -> str:
+    db_type, _ = value.split("/")[-1].split("-", 1)
+    return db_type
 
 
 def preview_to_file(content: str, filename: str) -> None:
@@ -143,7 +160,9 @@ def _check_verbosity_level(
     """
     if not isinstance(verbosity_level, Verbosity):
 
-        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}")
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}"
+        )
         return Verbosity.INFO
     return verbosity_level

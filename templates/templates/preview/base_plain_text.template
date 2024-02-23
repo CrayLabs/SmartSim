@@ -1,48 +1,53 @@
 
 {% include "preview/experiment_plain_text.template" %}
+{%- if manifest.has_deployable or active_dbjobs %}
 
-{%- if manifest.has_deployable %}
-{% set settitle = {'activetitle': True,'orchtitle': True} %}
+=== Entity Preview ===   
+  {%- if active_dbjobs %}
 
-=== Entity Preview === 
+  == Active Infrastructure == 
+  {%- for name, db in active_dbjobs.items() %}
+      {% include "preview/activeinfra_plain_text.template" %}
+  {%- endfor %}
+  {%- endif %}
+  {%- if manifest.dbs %}
 
-   {%- if manifest.dbs %}
+  == Orchestrators == 
     {%- for db in manifest.dbs %}
-    {%- if db.is_active() == True %}
-        {%- if settitle['activetitle'] == True %}
-     == Active Infrastructure == 
-        {%- endif %}
-        {% include "preview/activeinfra_plain_text.template" %}
-        {%- if settitle.update({'activetitle': False}) %}
-        {% endif %}
-    {% else %}
-        {%-if settitle['orchtitle'] == True %}
-     == Orchestrators == 
-        {%- endif %}
+    {%- if db.is_active() %}
+    
+    WARNING: Cannot preview a started entity.
+    {%- else %}
         {% include "preview/orchestrator_plain_text.template" %}
-        {%- if settitle.update({'orchtitle': False}) %}
-        {% endif %}
     {%- endif %}
     {%- endfor %}
-    {% include "preview/clientconfig_plain_text.template" %}
+  {%- endif %}
+  {% if manifest.models %}
+  == Models == 
+
+    {% for model in manifest.models %}   
+    check that it is not active, otherwise throw warning
+
+    = Model Name: {{ model.name }} =
+    {%- include "preview/model_plain_text.template" %}
+        {%- if model.run_settings.colocated_db_settings %}
+        {% include "preview/clientconfigcolo_plain_text.template" %}
+        {%- endif %}
+        {% if manifest.dbs -%}
+        {% include "preview/clientconfig_plain_text.template" %}
+        {%- endif %}
+    {%- endfor %}
     {%- endif %}
 
-    {%- if manifest.models %}
-    == Models == 
-     {% for model in manifest.models %}   
-        = {% include "preview/model_plain_text.template" %}
-        {%- if model.run_settings.colocated_db_settings %}
-            {% include "preview/clientconfigcolo_plain_text.template" %}
-        {%- endif %}
-        =
-     {% endfor %}
-     {%- endif -%}
-
-    {%- if manifest.ensembles %}
-    == Ensembles ==
+  {%- if manifest.ensembles %}
+  == Ensembles ==
+  {%- if active_jobs %}
+    WARNING: Cannot preview a started entity.
+  {% else %}
     {%- for ensemble in manifest.ensembles %}
-        {% include "preview/ensemble_plain_text.template" %}
+    {% include "preview/ensemble_plain_text.template" %}
     {%- endfor %}
     {%- endif -%}
+   {%- endif -%}
 
 {%- endif -%}

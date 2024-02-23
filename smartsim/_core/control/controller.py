@@ -136,6 +136,15 @@ class Controller:
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
+    def active_orch_list(self):
+        return self._jobs.db_jobs
+
+    @property
+    def active_entity_list(self):
+        print(self._jobs.jobs)
+        return self._jobs.jobs
+
+    @property
     def orchestrator_active(self) -> bool:
         with JM_LOCK:
             if len(self._jobs.db_jobs) > 0:
