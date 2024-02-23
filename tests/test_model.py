@@ -24,8 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
