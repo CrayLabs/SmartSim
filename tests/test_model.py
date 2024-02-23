@@ -96,7 +96,9 @@ def monkeypatch_exp_controller(monkeypatch):
             self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
         ):
             self._launch(exp_name, exp_path, manifest)
-            return LaunchedManifestBuilder("name", "path", "launcher", exp_id).finalize()
+            return LaunchedManifestBuilder(
+                "name", "path", "launcher", exp_id
+            ).finalize()
 
         def launch_step_nop(self, step, entity):
             entity_steps.append((step, entity))
