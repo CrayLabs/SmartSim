@@ -882,8 +882,7 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.entities = [model]
         self.batch_settings = model.batch_settings
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None:
-        ...
+    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
 
 
 def _look_up_launched_data(

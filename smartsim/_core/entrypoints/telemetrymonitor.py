@@ -455,9 +455,9 @@ class CollectorManager:
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(list)
         self._timeout_ms = timeout_ms
         self._tasks: t.List[asyncio.Task[None]] = []
-        self._stoppers: t.Dict[
-            str, t.List[TaskCompleteHandler]
-        ] = collections.defaultdict(list)
+        self._stoppers: t.Dict[str, t.List[TaskCompleteHandler]] = (
+            collections.defaultdict(list)
+        )
         self._observers: t.Dict[str, t.List[BaseObserver]] = collections.defaultdict(
             list
         )
