@@ -53,7 +53,9 @@
           Connection Type: UDS
           Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
           {%- endif -%}
+          {%- if model.run_settings.colocated_db_settings.ifname %}
           Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+          {%- endif %}
           CPUs: {{ model.run_settings.colocated_db_settings.cpus }}
           Custom Pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
           {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
