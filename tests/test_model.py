@@ -90,7 +90,7 @@ def test_attach_batch_settings_to_model():
 def monkeypatch_exp_controller(monkeypatch):
     def _monkeypatch_exp_controller(exp):
         entity_steps = []
-        exp_id = str(uuid.uuid4())
+        exp_id = str(uuid4())
 
         def start_wo_job_manager(
             self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
