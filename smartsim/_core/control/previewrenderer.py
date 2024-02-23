@@ -106,6 +106,7 @@ def as_toggle(_eval_ctx: u.F, value: bool) -> str:
     return "On" if value else "Off"
 
 
+
 @pass_eval_context
 def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
     return next((item for item in value if "ifname" in item), str).split("=")[-1]

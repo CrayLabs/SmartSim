@@ -1,4 +1,4 @@
-        
+       
     {%- for ensemble in manifest.ensembles %}
     = Ensemble Name: {{ ensemble.name }} =
         Members: {{ ensemble|length }}

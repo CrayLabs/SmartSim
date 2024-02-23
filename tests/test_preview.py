@@ -153,6 +153,7 @@ def test_preview_to_file(test_dir, wlmutils):
 
 def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     """Test active infrastructure without other orchestrators"""
+
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
@@ -166,6 +167,7 @@ def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
         hosts=choose_host(wlmutils),
         db_identifier="orc_1",
     )
+
     # Start the orchestrator
     exp.start(orc)
 
@@ -676,6 +678,7 @@ def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
     assert "generator_files/test_dir" in output
     assert "generator_files/to_copy_dir" in output
     assert "generator_files/to_symlink_dir" in output
+
     for model in ensemble:
         assert "generator_files/test_dir" in model.files.tagged[0]
         for copy in model.files.copy:
