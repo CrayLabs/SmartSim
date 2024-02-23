@@ -146,7 +146,7 @@ def test_parser():
     test_dir = "/foo/bar"
     test_freq = 123
 
-    cmd = f"-exp_dir {test_dir} -frequency {test_freq}"
+    cmd = f"-exp_dir {test_dir} -frequency {test_freq} -exp_id {uuid.uuid4()}"
     args = cmd.split()
 
     ns = parser.parse_args(args)
@@ -378,11 +378,11 @@ def test_shutdown_conditions():
     job_entity1.task_id = ""
 
     # show that an event handler w/no monitored jobs can shutdown
-    mani_handler = ManifestEventHandler("xyz")
+    mani_handler = ManifestEventHandler(str(uuid.uuid4()), "xyz")
     assert can_shutdown(mani_handler)
 
     # show that an event handler w/a monitored job cannot shutdown
-    mani_handler = ManifestEventHandler("xyz")
+    mani_handler = ManifestEventHandler(str(uuid.uuid4()), "xyz")
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
     )
@@ -391,7 +391,7 @@ def test_shutdown_conditions():
     assert bool(mani_handler.job_manager.jobs)
 
     # show that an event handler w/a monitored db cannot shutdown
-    mani_handler = ManifestEventHandler("xyz")
+    mani_handler = ManifestEventHandler(str(uuid.uuid4()), "xyz")
     job_entity1.type = "orchestrator"
     mani_handler._tracked_jobs[job_entity1.key] = job_entity1
     assert not can_shutdown(mani_handler)
@@ -399,7 +399,7 @@ def test_shutdown_conditions():
     assert not bool(mani_handler.job_manager.jobs)
 
     # show that an event handler w/dbs & tasks cannot shutdown
-    mani_handler = ManifestEventHandler("xyz")
+    mani_handler = ManifestEventHandler(str(uuid.uuid4()), "xyz")
 
     job_entity2 = JobEntity()
     job_entity2.name = "xyz"
