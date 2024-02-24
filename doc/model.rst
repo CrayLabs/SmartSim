@@ -124,7 +124,7 @@ object. Finally, we specify the executable `"echo"` to run the executable argume
     :linenos:
     :lines: 6-7
 
-.. note::
+.. seealso::
     For more information on ``RunSettings`` objects, reference the :ref:`RunSettings<run_settings_doc>` documentation.
 
 We now have a ``RunSettings`` instance named `model_settings` that contains all of the
@@ -287,7 +287,7 @@ and specify the path to the executable script as an executable argument (`exe_ar
   :linenos:
   :lines: 6-7
 
-.. note::
+.. seealso::
     To read more on SmartSim ``RunSettings`` objects, reference the :ref:`RunSettings<run_settings_doc>` documentation.
 
 Next, initialize a ``Model`` object via ``Experiment.create_model()``. Pass in the `model_settings` instance
@@ -1374,13 +1374,13 @@ applications.
             1) "model_name.dataset_list"
 
         We create a separate ``Model``, named `model_2`, with the executable application code below.
-        
+
         .. note::
             In the driver script, after initializing the ``Model`` instance named `model_2`,
             we execute ``model_2.register_incoming_entity(model_1)``. By passing the producer ``Model``
             instance to the consumer ``Model``, we instruct SmartSim to recognize the name of `model_1` as a valid data
             source for subsequent use in ``Client.set_data_source()``.
-        
+
         Here we check the length of the list named `dataset_list`:
 
         .. code-block:: python

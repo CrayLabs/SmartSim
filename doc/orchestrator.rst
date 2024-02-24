@@ -289,7 +289,7 @@ a SmartSim ``Model`` and specify the executable path during ``Model`` creation:
 
 File Generation
 ---------------
-To created an isolated output directory for the ``Orchestrator`` and ``Model``, invoke ``Experiment.generate()`` via the
+To create an isolated output directory for the ``Orchestrator`` and ``Model``, invoke ``Experiment.generate()`` via the
 ``Experiment`` instance `exp` with `standalone_orchestrator` and `model` as input parameters:
 
 .. literalinclude:: ../tutorials/doc_examples/orch_examples/std_driver.py
@@ -303,10 +303,9 @@ To created an isolated output directory for the ``Orchestrator`` and ``Model``, 
   two output files: a `.out` file and a `.err` file.
 
 .. note::
-  It is important to invoke ``Experiment.generate()`` with all ``Experiment`` entity instances as input
-  as well as before any entities have been launched. This will ensure that the output files are
-  organized in the main ``experiment-name/`` folder. In this example, the ``Experiment`` folder is named
-  `getting-started/`.
+  It is important to invoke ``Experiment.generate()`` with all ``Experiment`` entity instances
+  before launching. This will ensure that the output files are organized in the main ``experiment-name/``
+  folder. In this example, the ``Experiment`` folder is named `getting-started/`.
 
 Entity Deployment
 -----------------

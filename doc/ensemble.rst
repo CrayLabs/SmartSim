@@ -18,13 +18,9 @@ The :ref:`Ensemble API<ensemble_api>` offers key features, including methods to:
 - :ref:`Load TorchScripts<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
 - :ref:`Prevent data collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
 
-To create a SmartSim ``Ensemble``, use the ``Experiment.create_ensemble()`` API function.
-When creating an ``Ensemble``, it is important to consider one of the **three** ``Ensemble`` creation strategies:
-
-1. :ref:`Parameter expansion<param_expansion_init>`: Generate a variable-sized set of unique simulation instances
-   configured with user-defined input parameters.
-2. :ref:`Replica creation<replicas_init>`: Generate a specified number of copies or instances of a simulation.
-3. :ref:`Manually<append_init>`: Attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
+To create a SmartSim ``Ensemble``, use the ``Experiment.create_ensemble()`` API function. When
+initializing an ``Ensemble``, consider one of the **three** creation strategies explained
+in the :ref:`Initialization<init_ensemble_strategies>` section.
 
 SmartSim manages ``Ensemble`` instances through the :ref:`Experiment API<experiment_api>` by providing functions to
 launch, monitor, and stop applications.
@@ -39,39 +35,32 @@ The :ref:`Experiment API<experiment_api>` is responsible for initializing all wo
 An ``Ensemble`` is created using the ``Experiment.create_ensemble()`` factory method, and users can customize the
 ``Ensemble`` creation via the factory method parameters.
 
-The factory method arguments of ``Experiment.create_ensemble()`` are:
+The factory method arguments for ``Ensemble`` creation can be found in the :ref:`Experiment API<exp_init>`
+under the ``create_ensemble()`` docstring.
 
--  `name` (str): Specify the name of the ``Ensemble``, aiding in its unique identification.
--  `params` (dict[str, Any]): Provides a dictionary of {parameters:values} for expanding into the ``Model`` members within the ``Ensemble``. Enables parameter expansion for diverse scenario exploration.
--  `params_as_args` (list[str]): Specify which parameters from the `params` dictionary should be treated as command line arguments when executing the ``Models``.
--  `batch_settings` (BatchSettings, optional): Describes settings for batch workload treatment.
--  `run_settings` (RunSettings, optional): Describes execution settings for individual ``Model`` members.
--  `replicas` (int, optional): Declare the number of ``Model`` clones within the ``Ensemble``, crucial for the creation of simulation replicas.
--  `perm_strategy` (str): Specifies a strategy for parameter expansion into ``Model`` instances, influencing the method of ``Ensemble`` creation and number of ``Ensemble`` members. The options are `"all_perm"`, `"step"`, and `"random"`.
-
-By using specific combinations of the factory method arguments mentioned above, users can tailor
+By using specific combinations of the factory method arguments, users can tailor
 the creation of an ``Ensemble`` to align with one of the following creation strategies:
 
-- :ref:`Parameter expansion<param_expansion_init>` allows for diverse scenario exploration by expanding a dictionary of parameters into the ``Ensemble`` ``Model`` members.
-- :ref:`Manually Append<append_init>` allows users to attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
-- :ref:`Replicas<replicas_init>` enables the creation of a specified number of ``Model`` clones within the ``Ensemble``.
+1. :ref:`Parameter expansion<param_expansion_init>`: Generate a variable-sized set of unique simulation instances
+   configured with user-defined input parameters.
+2. :ref:`Replica creation<replicas_init>`: Generate a specified number of ``Model`` replicas.
+3. :ref:`Manually<append_init>`: Attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
 
 .. _param_expansion_init:
 Parameter Expansion
 ===================
-In ``Ensemble`` simulations, parameter expansion is a technique that
-allows users to set parameter values per ``Ensemble`` member. This is done
-by specifying input to the `params` and `perm_strategy` factory method arguments during ``Ensemble`` creation (``Experiment.create_ensemble()``).
-User's may control how the `params` values are applied to the ``Ensemble`` through the `perm_strategy` argument.
-The `perm_strategy` argument accepts three values listed below.
+Parameter expansion is a technique that allows users to set parameter values per ``Ensemble`` member.
+This is done by specifying input to the `params` and `perm_strategy` factory method arguments during
+``Ensemble`` creation (``Experiment.create_ensemble()``). Users may control how the `params` values
+are applied to the ``Ensemble`` through the `perm_strategy` argument. The `perm_strategy` argument
+accepts three values listed below.
 
 **Parameter Expansion Strategy Options:**
 
 -  `"all_perm"`: Generate all possible parameter permutations for an exhaustive exploration. This
    means that every possible combination of parameters will be used in the ``Ensemble``.
--  `"step"`: Create sets for each element in n arrays, providing a systematic exploration. This
-   means that the parameters will be changed in a step-by-step manner, allowing you to see the
-   effect of each parameter individually.
+-  `"step"`: Create parameter sets by collecting identically indexed values across parameter lists.
+   This allows for discrete combinations of parameters for ``Models``.
 -  `"random"`: Enable random selection from predefined parameter spaces, offering a stochastic approach.
    This means that the parameters will be chosen randomly for each ``Model``, which can be useful
    for exploring a wide range of possibilities.
@@ -79,16 +68,18 @@ The `perm_strategy` argument accepts three values listed below.
 --------
 Examples
 --------
-We provide two parameter expansion examples by using the `params` and `perm_strategy`
-factory method arguments to create an ``Ensemble``.
+This subsection contains two examples of ``Ensemble`` parameter expansion. The
+:ref:`first example<param_first_ex>` illustrates parameter expansion using two parameters
+while the :ref:`second example<param_second_ex>` demonstrates parameter expansion with two
+parameters along with the launch of the ``Ensemble`` as a batch workload.
 
-Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strategy`
+.. _param_first_ex:
+Example 1 : Parameter Expansion using `all_perm` strategy
 
-    This example extends the same run settings with sampled grouped parameters to each ``Ensemble`` member.
-    The ``Ensemble`` encompasses all grouped permutations of the specified `params` by creating a ``Model`` member for each
-    permutation. To achieve this, we specify the parameter expansion strategy, `"all_perm"`, to the `perm_strategy`
-    factory method argument. The source code example is available in the dropdown below for
-    convenient execution and customization.
+    In this example an ``Ensemble`` of four ``Model`` entities is created by expanding two parameters
+    using the `all_perm` strategy. All of the ``Models`` in the ``Ensemble`` share the same ``RunSettings``
+    and only differ in the value of the `params` assigned to each member. The source code example
+    is available in the dropdown below for convenient execution and customization.
 
     .. dropdown:: Example Driver Script source code
 
@@ -126,14 +117,13 @@ Example 1 : Parameter Expansion with ``RunSettings``, `params` and `perm_strateg
         ensemble member 3: ["John", 2]
         ensemble member 4: ["John", 11]
 
-    Therefore, SmartSim will create four ``Model`` ``Ensemble`` members and assign a permutation group to each
-    ``Model``.
+.. _param_second_ex:
+Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` configured for batch launching
 
-Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params` and `perm_strategy`
-
-    In this example, the ``Ensemble`` will be submitted as a batch job. An identical set of
-    ``RunSettings`` will be applied to all ``Ensemble`` member and parameters will be
-    applied in a `step` strategy to create the ``Ensemble`` members. The source code example is available in the dropdown below for
+    In this example an ``Ensemble`` of two ``Model`` entities is created by expanding two parameters
+    using the `step` strategy. All of the ``Models`` in the ``Ensemble`` share the same ``RunSettings``
+    and only differ in the value of the `params` assigned to each member. Lastly, the ``Ensemble`` is
+    submitted as a batch workload. The source code example is available in the dropdown below for
     convenient execution and customization.
 
     .. dropdown:: Example Driver Script source code
@@ -172,36 +162,38 @@ Example 2 : Parameter Expansion with ``RunSettings``, ``BatchSettings``, `params
         :linenos:
         :lines: 20-21
 
-    By specifying `perm_strategy="step"`, the values of the `params` key will be
-    grouped into intervals and distributed across ``Ensemble`` members. Here, there are two groups:
+    When specifying `perm_strategy="step"`, the `params` sets are created by collecting identically
+    indexed values across the `param` value lists.
 
     .. code-block:: bash
 
         ensemble member 1: ["Ellie", 2]
         ensemble member 2: ["John", 11]
 
-    Therefore, the ``Ensemble`` will have two ``Model`` members each assigned a group.
-
 .. _replicas_init:
 Replicas
 ========
-In ``Ensemble`` simulations, a replica strategy involves the creation of
-identical ``Models`` within an ``Ensemble``. This strategy is particularly useful for
-applications that have some inherent randomness. Users may use the `replicas` factory method argument
-to create a specified number of identical ``Model`` members during ``Ensemble`` creation (``Experiment.create_ensemble()``).
+A replica strategy involves the creation of identical ``Models`` within an ``Ensemble``.
+This strategy is particularly useful for applications that have some inherent randomness.
+Users may use the `replicas` factory method argument to create a specified number of identical
+``Model`` members during ``Ensemble`` creation (``Experiment.create_ensemble()``).
 
 --------
 Examples
 --------
-We provide two examples for initializing an ``Ensemble`` using the replicas creation
-strategy.
+This subsection contains two examples of using the replicas creation strategy. The
+:ref:`first example<replicas_first_ex>` illustrates creating four ``Ensemble`` member clones
+while the :ref:`second example<replicas_second_ex>` demonstrates creating four ``Ensemble``
+member clones along with the launch of the ``Ensemble`` as a batch workload.
 
-Example 1 : Replica Creation with ``RunSettings`` and `replicas`
+.. _replicas_first_ex:
+Example 1 : ``Ensemble`` creation with replicas strategy
 
-    This example extends the same run settings to ``Ensemble`` member clones. To achieve this, we specify the number
-    of clones to create via the `replicas` argument and pass a ``RunSettings`` object to the `run_settings`
-    argument. The source code example is available in the dropdown below for
-    convenient execution and customization.
+    In this example an ``Ensemble`` of four identical ``Model`` members is created by
+    specifying the number of clones to create via the `replicas` argument.
+    All of the ``Models`` in the ``Ensemble`` share the same ``RunSettings``.
+    The source code example is available in the dropdown below for convenient execution
+    and customization.
 
     .. dropdown:: Example Driver Script source code
 
@@ -224,11 +216,13 @@ Example 1 : Replica Creation with ``RunSettings`` and `replicas`
 
     By passing in `replicas=4`, four identical ``Ensemble`` members will be initialized.
 
-Example 2 : Replica Creation with ``RunSettings``, ``BatchSettings`` and `replicas`
+.. _replicas_second_ex:
+Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch launching
 
-    This example extends the same run settings and batch settings to ``Ensemble`` member clones. To achieve this, we specify the number
-    of clones to create via the `replicas` argument, passing a ``RunSettings`` object to the `run_settings`
-    argument and passing a ``BatchSettings`` argument to `batch_settings`. The source code example is available in the dropdown below for
+    In this example an ``Ensemble`` of four ``Model`` entities is created by specifying
+    the number of clones to create via the `replicas` argument. All of the ``Models`` in
+    the ``Ensemble`` share the same ``RunSettings`` and the ``Ensemble`` is
+    submitted as a batch workload. The source code example is available in the dropdown below for
     convenient execution and customization.
 
     .. dropdown:: Example Driver Script source code
@@ -273,9 +267,11 @@ in parameters, run settings, or different types of simulations.
 --------
 Examples
 --------
-We provide an example for manually appending ``Models`` to an ``Ensemble``.
+This subsection contains an example of creating an ``Ensemble`` by manually appending ``Models``.
+The example illustrates attaching two SmartSim ``Models`` to the ``Ensemble``.
+The ``Ensemble`` is submitted as a batch workload.
 
-Example 1 : Append ``Models`` to launch as a batch job
+Example 1 : Append ``Models`` to an ``Ensemble`` and launch as a batch job
 
     In this example, we append ``Models`` to an ``Ensemble`` for batch job execution. To do
     this, we first initialize an Ensemble with a ``BatchSettings`` object. Then, manually
@@ -398,7 +394,7 @@ the executable simulation as an executable:
     :lines: 6-7
 
 Next, initialize an ``Ensemble`` object with ``Experiment.create_ensemble()``
-and pass in the `ensemble_settings` instance and specify `replicas=2`:
+by passing in `ensemble_settings`, `params={"THERMO":1}` and `replicas=2`:
 
 .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
@@ -415,16 +411,21 @@ parameter with the path to the text file, `params_inputs.txt`:
     :linenos:
     :lines: 12-13
 
-To created an isolated directory for the ``Ensemble`` member outputs and configuration files, invoke ``Experiment.generate()`` via the
+To create an isolated directory for the ``Ensemble`` member outputs and configuration files, invoke ``Experiment.generate()`` via the
 ``Experiment`` instance `exp` with `example_ensemble` as an input parameter:
 
 .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
-    :lines: 18-19
+    :lines: 15-16
 
 After invoking ``Experiment.generate()``, the attached generator files will be available for the
 application when ``exp.start(example_ensemble)`` is called.
+
+.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+    :language: python
+    :linenos:
+    :lines: 18-19
 
 The contents of `params_inputs.txt` after ``Ensemble`` completion are:
 
@@ -438,10 +439,10 @@ ML Models and Scripts
 =====================
 Overview
 ========
-SmartSim users have the capability to apply ML runtimes to an ``Ensemble`` for use within ``Model`` members.
-Functions accessible through an ``Ensemble`` object support loading ML models (TensorFlow, TensorFlow-lite,
-PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` before
-application runtime.
+SmartSim users have the capability to load ML models and TorchScripts into an ``Orchestrator`` for
+use within ``Ensemble`` members. Functions accessible through an ``Ensemble`` object support loading
+ML models (TensorFlow, TensorFlow-lite, PyTorch, and ONNX) and TorchScripts into standalone
+``Orchestrators`` or colocated ``Orchestrators`` before application runtime.
 
 .. seealso::
     To add an ML model or TorchScript to a single ``Model`` that will be appended to an
@@ -485,16 +486,16 @@ to the ``Orchestrator``, SmartSim users can serialize and provide the ML model *
 via the ``Ensemble.add_ml_model()`` function. The supported ML frameworks are TensorFlow,
 TensorFlow-lite, PyTorch, and ONNX.
 
-Users must **serialize ML models** before sending to an ``Orchestrator`` from memory
-or from file. To save a ML model to memory, SmartSim offers the ``serialize_model()`` function. This function
-returns the ML model as a byte string with the names of the input and output layers, which will be required
-upon uploading. To save a ML model to disk, SmartSim offers the ``freeze_model()`` function which
-returns the path to the serialized model file with the names of the input and output layers.
-Additional ML model serialization information and examples can be found in the
-:ref:`ML Features<ml_features_docs>` section of SmartSim.
+Users must **serialize TensorFlow ML models** before sending to an ``Orchestrator`` from memory
+or from file. To save a TensorFlow model to memory, SmartSim offers the ``serialize_model()``
+function. This function returns the TF model as a byte string with the names of the
+input and output layers, which will be required upon uploading. To save a TF model to disk,
+SmartSim offers the ``freeze_model()`` function which returns the path to the serialized
+TF model file with the names of the input and output layers. Additional TF model serialization
+information and examples can be found in the :ref:`ML Features<ml_features_docs>` section of SmartSim.
 
 .. note::
-    Uploading an ML model from memory is supported for standalone ``Orchestrators``.
+    Uploading an ML model from memory is only supported for standalone ``Orchestrators``.
 
 When attaching an ML model using ``Ensemble.add_ml_model()``, the
 following arguments are offered to customize storage and execution:
@@ -536,7 +537,7 @@ available in the dropdown below for convenient execution and customization.
     - an ``Orchestrator`` is launched prior to the ``Ensemble`` execution
     - an initialized ``Ensemble`` named `ensemble_instance` exists within the ``Experiment`` workflow
     - a Tensorflow-based ML model was serialized using ``serialize_model()`` which returns the
-      the ML model as a byte string with the names of the input and output layers
+      ML model as a byte string with the names of the input and output layers
 
 **Attach the ML model to a SmartSim Ensemble**
 
@@ -628,7 +629,7 @@ to the ``Orchestrator``. The TorchScripts become available for each ``Ensemble``
 into the ``Orchestrator`` prior to the execution of the ``Ensemble``. SmartSim users may upload
 a single TorchScript function via ``Ensemble.add_function()`` or alternatively upload a script
 containing multiple functions via ``Ensemble.add_script()``. To load a TorchScript to the
-``Orchestrator``, SmartSim users can follow one of the processes:
+``Orchestrator``, SmartSim users can follow one of the following processes:
 
 - :ref:`Define a TorchScript function in-memory<in_mem_TF_doc>`
    Use the ``Ensemble.add_function()`` to instruct SmartSim to load an in-memory TorchScript to the ``Orchestrator``.
@@ -639,7 +640,7 @@ containing multiple functions via ``Ensemble.add_script()``. To load a TorchScri
 
 .. note::
     Uploading a TorchScript :ref:`from memory<in_mem_TF_doc>` using ``Ensemble.add_function()``
-    is supported for standalone ``Orchestrators``. Users uploading
+    is only supported for standalone ``Orchestrators``. Users uploading
     TorchScripts to colocated ``Orchestrators`` should instead use the function ``Ensemble.add_script()``
     to upload :ref:`from file<TS_from_file>` or as a :ref:`string<TS_raw_string>`.
 
@@ -656,7 +657,7 @@ In environments with multiple devices, specific device numbers can be specified 
     the TorchScript will not run on GPU nodes as advised.
 
 Continue or select the respective process link to learn more on how each function (``Ensemble.add_script()`` and ``Ensemble.add_function()``)
-dynamically load TorchScripts to the ``Orchestrator``.
+dynamically loads TorchScripts to the ``Orchestrator``.
 
 .. seealso::
     To add a TorchScript to a single ``Model`` that will be appended to an
@@ -760,7 +761,7 @@ following arguments are offered:
 Example: Loading a TorchScript from File
 ----------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript from file
-to a ``Orchestrator``. The source code example is available in the dropdown below for
+to an ``Orchestrator``. The source code example is available in the dropdown below for
 convenient execution and customization.
 
 .. dropdown:: Experiment Driver Script source code
@@ -770,7 +771,7 @@ convenient execution and customization.
 .. note::
     This example assumes:
 
-    - a ``Orchestrator`` is launched prior to ``Ensemble`` execution
+    - an ``Orchestrator`` is launched prior to ``Ensemble`` execution
     - an initialized ``Ensemble`` named `ensemble_instance` exists within the ``Experiment`` workflow
 
 **Define a TorchScript script**
@@ -836,7 +837,7 @@ following arguments are offered:
 Example: Loading a TorchScript from string
 ------------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript function
-from string to a ``Orchestrator`` before the execution of the associated ``Ensemble``.
+from string to an ``Orchestrator`` before the execution of the associated ``Ensemble``.
 The source code example is available in the dropdown below for convenient execution and customization.
 
 .. dropdown:: Experiment Driver Script source code
@@ -846,7 +847,7 @@ The source code example is available in the dropdown below for convenient execut
 .. note::
     This example assumes:
 
-    - a ``Orchestrator`` is launched prior to ``Ensemble`` execution
+    - an ``Orchestrator`` is launched prior to ``Ensemble`` execution
     - an initialized ``Ensemble`` named `ensemble_instance` exists within the ``Experiment`` workflow
 
 **Define a string TorchScript**
@@ -924,12 +925,12 @@ In this scenario, the two tensors placed in the ``Orchestrator`` are named `ense
 ------------------
 Ensemble functions
 ------------------
-A ``Ensemble`` object supports two prefixing functions: ``Ensemble.enable_key_prefixing()`` and
+An ``Ensemble`` object supports two prefixing functions: ``Ensemble.enable_key_prefixing()`` and
 ``Ensemble.register_incoming_entity()``.
 
 To enable prefixing on a ``Ensemble``, users must use the ``Ensemble.enable_key_prefixing()``
 function in the ``Experiment`` driver script. This function activates prefixing for tensors,
-``Datasets``, and lists sent to a ``Orchestrator`` for all ``Ensemble`` members. This function
+``Datasets``, and lists sent to an ``Orchestrator`` for all ``Ensemble`` members. This function
 also enables access to prefixing ``Client`` functions within the ``Ensemble`` members. This excludes
 the ``Client.set_data_source()`` function, where ``enable_key_prefixing()`` is not require for access.
 
@@ -986,7 +987,7 @@ This example consists of **three** Python scripts:
 
 1. :ref:`Application Consumer Script<app_con_prefix_ensemble>`: This script is encapsulated
    within a SmartSim ``Model`` in the ``Experiment`` driver script. The script requests the
-   prefixed tensors placed by the consumer script. The source code example is available in
+   prefixed tensors placed by the producer script. The source code example is available in
    the dropdown below for convenient customization.
 
 .. dropdown:: Application Consumer Script source code
