@@ -954,7 +954,11 @@ def test_preview_wlm_run_commands_cluster_orc_model(
         fileutils, "uds", exp, test_script, db_args, on_wlm=on_wlm
     )
 
-    exp.preview(orc, smartsim_model)
+    preview_manifest = Manifest(orc, smartsim_model)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest)
+    # assert
 
 
 @pytest.mark.skipif(
@@ -972,7 +976,17 @@ def test_preview_model_on_wlm(fileutils, test_dir, wlmutils):
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings2)
 
     # launch models twice to show that they can also be restarted
-    exp.preview(M1, M2)
+    # exp.preview(M1, M2)
+    preview_manifest = Manifest(M1, M2)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest)
+
+    assert "Run Command" in output
+    assert "Run Arguments" in output
+    assert "nodes" in output
+    assert "ntasks" in output
+    assert "time" in output
 
 
 def add_batch_resources(wlmutils, batch_settings):
@@ -998,7 +1012,16 @@ def test_preview_batch_model(fileutils, test_dir, wlmutils):
     )
     model.set_path(test_dir)
 
-    exp.preview(model)
+    preview_manifest = Manifest(model)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest)
+
+    assert "Batch Launch: True" in output
+    assert "Batch Commands" in output
+    assert "Batch Arguments" in output
+    assert "nodes" in output
+    assert "time" in output
 
 
 def test_output_format_error():

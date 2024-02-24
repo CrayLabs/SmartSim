@@ -12,7 +12,7 @@
           {{ key }}: {{ value }}
         {%- endfor %}
         {%- endif %}
-        {%- if model.batch_settings -%}
+        {%- if model.batch_settings %}
         Batch Launch: True
         Batch Commands: {{ model.batch_settings.batch_cmd }}
         Batch Arguments: 
@@ -55,12 +55,12 @@
         Colocated:
         {%- if model.run_settings.colocated_db_settings.db_identifier %}
           Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
-          {% endif %}
+          {%- endif %}
           {%- if model.run_settings.colocated_db_settings.port %}
           Connection Type: TCP
           TCP/IP Port:
             {{ model.run_settings.colocated_db_settings.port }}
-          {% endif -%}
+          {%- endif %}
           {%- if model.run_settings.colocated_db_settings.unix_socket %}
           Connection Type: UDS
           Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
