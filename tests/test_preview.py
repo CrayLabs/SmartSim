@@ -37,6 +37,9 @@ from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import PreviewFormatError
 from smartsim.settings import RunSettings
+from smartsim.settings import QsubBatchSettings
+
+on_wlm = (pytest.test_launcher in pytest.wlm_options,)
 
 
 @pytest.fixture
@@ -223,6 +226,8 @@ def test_model_preview(test_dir, wlmutils):
 
     # Execute preview method
     rendered_preview = previewrenderer.render(exp, preview_manifest)
+
+    print(rendered_preview)
 
     # Evaluate output
     assert "Model name" in rendered_preview
@@ -779,6 +784,94 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert torch_script in output
     assert test_device in output
     assert cm_name1 in output
+
+
+@pytest.mark.skipif(
+    pytest.test_launcher not in pytest.wlm_options,
+    reason="Not testing WLM integrations",
+)
+def test_preview_wlm_run_commands_cluster_orc_model(
+    test_dir, coloutils, fileutils, wlmutils
+):
+    """
+    Test preview of srun run command and run aruguments on a
+    clustered 3-node orchestrator and model
+    """
+
+    exp_name = "test_preview_launch_cluster_orc"
+    launcher = wlmutils.get_test_launcher()
+    test_port = wlmutils.get_test_port()
+    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
+
+    network_interface = wlmutils.get_test_interface()
+    orc = exp.create_database(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface=network_interface,
+        single_cmd=True,
+        hosts=wlmutils.get_test_hostlist(),
+        db_identifier="testdb_reg",
+    )
+
+    db_args = {
+        "port": test_port,
+        "db_cpus": 1,
+        "debug": True,
+        "db_identifier": "testdb_colo",
+    }
+
+    # Create model with colocated database
+    smartsim_model = coloutils.setup_test_colo(
+        fileutils, "uds", exp, test_script, db_args, on_wlm=on_wlm
+    )
+
+    exp.preview(orc, smartsim_model)
+
+
+@pytest.mark.skipif(
+    pytest.test_launcher not in pytest.wlm_options,
+    reason="Not testing WLM integrations",
+)
+def test_preview_model_on_wlm(fileutils, test_dir, wlmutils):
+    exp_name = "test-base-settings-model-launch"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+
+    script = fileutils.get_test_conf_path("sleep.py")
+    settings1 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
+    settings2 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
+    M1 = exp.create_model("m1", path=test_dir, run_settings=settings1)
+    M2 = exp.create_model("m2", path=test_dir, run_settings=settings2)
+
+    # launch models twice to show that they can also be restarted
+    exp.preview(M1, M2)
+
+
+def add_batch_resources(wlmutils, batch_settings):
+    if isinstance(batch_settings, QsubBatchSettings):
+        for key, value in wlmutils.get_batch_resources().items():
+            batch_settings.set_resource(key, value)
+
+
+def test_preview_batch_model(fileutils, test_dir, wlmutils):
+    """Test the preview of a model with batch settings"""
+
+    exp_name = "test-batch-model"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+
+    script = fileutils.get_test_conf_path("sleep.py")
+    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
+
+    batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, batch_settings)
+    run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
+    model = exp.create_model(
+        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
+    )
+    model.set_path(test_dir)
+
+    exp.preview(model)
 
 
 def test_output_format_error():

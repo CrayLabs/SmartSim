@@ -120,23 +120,6 @@ def test_create_run_settings_returns_expected_settings_subclass_for_mpi_variants
     assert isinstance(settings, type_mpi_settings)
 
 
-# jpnote
-def test_preview_rs():
-    settings = RunSettings("python")
-
-    settings.preview()
-
-
-# call the superand then add something... if needed
-
-
-# all gets added to run_args dictionary <---
-
-# key
-# Value
-# env varialbes?
-
-
 def test_create_run_settings_raise_if_slurm_mpiexec_wrapper_detected(
     monkeypatch, fileutils
 ):
@@ -177,7 +160,6 @@ def test_create_run_settings_input_mutation():
 
 
 ####### Base Run Settings tests #######
-# jpnote
 
 
 def test_format_run_settings():
@@ -186,15 +168,12 @@ def test_format_run_settings():
     settings.add_exe_args(["--add", "--list"])
     print(settings.exe_args)
 
+
 def test_format_run_settings():
     settings = RunSettings("python")
     settings.add_exe_args("--time 5")
     settings.add_exe_args(["--add", "--list"])
     print(settings.exe_args)
-
-
-
-
 
 
 def test_add_exe_args():

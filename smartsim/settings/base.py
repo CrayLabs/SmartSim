@@ -554,11 +554,6 @@ class RunSettings(SettingsBase):
             raise TypeError("Executable arguments were not list of str or str")
         return []
 
-    ## where is this used
-    # jpnote
-    # def preview():
-    #     ...
-
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments
 

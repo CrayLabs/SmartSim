@@ -205,11 +205,6 @@ def alloc_specs() -> t.Dict[str, t.Any]:
 def wlmutils() -> t.Type[WLMUtils]:
     return WLMUtils
 
-#jpnote
-def test_preview_run_settings():
-
-    rs = RunSettings(...)
-
 
 class WLMUtils:
     @staticmethod
