@@ -852,10 +852,17 @@ class Experiment:
         :type verbosity_level: str
         """
 
+        # Retrive any active db jobs
+        active_dbjobs = self._control.active_orch_list
+
         preview_manifest = Manifest(*args)
 
         rendered_preview = previewrenderer.render(
-            self, preview_manifest, verbosity_level, output_format
+            self,
+            preview_manifest,
+            verbosity_level,
+            output_format,
+            active_dbjobs,
         )
         if output_filename:
             previewrenderer.preview_to_file(rendered_preview, output_filename)

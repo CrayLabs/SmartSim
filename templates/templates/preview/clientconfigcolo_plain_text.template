@@ -1,14 +1,33 @@
-
-            Client Configuration:
-                {%- if model.run_settings.colocated_db_settings.db_identifier %}
-                Database identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
-                {%- endif %}
-                Database backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
-                {%- if model.run_settings.colocated_db_settings.port %}
-                TCP/IP Port:
-                    {{ model.run_settings.colocated_db_settings.port }}
-                {%- endif -%}
-                {%- if model.run_settings.colocated_db_settings.unix_socket %}
-                Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
-                {%- endif %}
-                Type: Colocated
+            
+        Client Configuration:
+          {%- if model.run_settings.colocated_db_settings.db_identifier %}
+          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+          {%- endif %}
+          Database Backend: {% set db_type, _ = config.database_cli.split("/")[-1].split("-",1) %}{{ db_type }}
+          {%- if model.run_settings.colocated_db_settings %}
+          {%- if model.run_settings.colocated_db_settings.port %}
+          Connection Type: TCP
+          TCP/IP Port(s):
+            {{ model.run_settings.colocated_db_settings.port }}
+          {% endif -%}
+          {%- if model.run_settings.colocated_db_settings.unix_socket %}
+          Connection Type: UDS
+          Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+          {%- endif -%}
+          Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+          {%- endif %} 
+          {%- if model.run_settings.colocated_db_settings.unix_socket %}
+          Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
+          {%- endif %}
+          Type: Colocated
+          {%- if model.incoming_entities %}
+          Incoming Entities (Available Data Sources): 
+          {%- for incoming in model.incoming_entities %}
+            {{ incoming.name }}
+            {%- endfor %}
+            {%- endif %}
+          Outgoing Key Collision Prevention (Key Prefixing): 
+            Tensors: {{ model.query_key_prefixing() | as_toggle }}
+            Datasets: {{ model.query_key_prefixing() | as_toggle }}
+            ML Models/Torch Scripts: {{ False | as_toggle }}
+            Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}
