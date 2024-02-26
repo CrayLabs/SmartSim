@@ -12,6 +12,23 @@ SmartSim
 ========
 
 
+Development branch
+------------------
+
+To be released at some future point in time
+
+Description
+
+- Update Experiment API typing
+
+
+Detailed Notes
+
+- Update the generic t.any typehints in Experiment API. (SmartSim-PR501_)
+
+
+.. _SmartSim-PR493: https://github.com/CrayLabs/SmartSim/pull/493
+
 
 0.6.2
 -----
