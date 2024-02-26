@@ -30,8 +30,6 @@ name: deploy_dev_docs
 
 on:
   push:
-    branches:
-      - develop
 
 jobs:
   build_docs:
@@ -42,7 +40,7 @@ jobs:
       
       # Maximize the space in this image
       - name: Maximize build space
-        uses: easimon/maximize-build-space@master
+        uses: easimon/maximize-build-space@v10
         with:
           root-reserve-mb: 30720
           remove-dotnet: true
