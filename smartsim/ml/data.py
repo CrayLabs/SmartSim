@@ -29,6 +29,7 @@ import typing as t
 from os import environ
 
 import numpy as np
+
 from smartredis import Client, Dataset
 from smartredis.error import RedisReplyError
 
