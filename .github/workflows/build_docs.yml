@@ -30,6 +30,8 @@ name: deploy_dev_docs
 
 on:
   push:
+    branches:
+      - develop
 
 jobs:
   build_docs:
