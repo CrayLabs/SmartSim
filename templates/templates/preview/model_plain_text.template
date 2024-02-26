@@ -7,6 +7,8 @@
         {%- endfor %}
         {%- if model.run_settings.run_command %}
         Run Command: {{ model.run_settings.run_command }}
+        {%- endif %}
+        {%- if model.run_settings.run_args %}
         Run Arguments: 
         {%- for key, value in model.run_settings.run_args.items() %}
           {{ key }}: {{ value }}
@@ -18,9 +20,7 @@
         Batch Arguments: 
         {%- for key, value in model.batch_settings.batch_args.items() %}
           {{ key }}: {{ value }}
-        {%- endfor %}
-        {% else %}
-        Batch Launch: False        
+        {%- endfor %}       
         {%- endif -%} 
         {%- if model.params %}        
         Model Parameters: 
