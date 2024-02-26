@@ -24,7 +24,7 @@ Description
 
 Detailed Notes
 
-- Update the generic t.any typehints in Experiment API. (SmartSim-PR501_)
+- Update the generic t.Any typehints in Experiment API. (SmartSim-PR501_)
 
 
 .. _SmartSim-PR493: https://github.com/CrayLabs/SmartSim/pull/493
