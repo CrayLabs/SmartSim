@@ -58,7 +58,7 @@ def test_experiment_preview(test_dir, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp)
+    output = previewrenderer.render(exp, verbosity_level="developer")
 
     # Evaluate output
     summary_lines = output.split("\n")
@@ -78,7 +78,7 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp)
+    output = previewrenderer.render(exp, verbosity_level="developer")
 
     # Evaluate output
     summary_lines = output.split("\n")
@@ -107,7 +107,7 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     preview_manifest = Manifest(orc)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     # Evaluate output
     assert "Database Identifier" in output
@@ -177,7 +177,9 @@ def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     active_dbjobs = exp._control.active_orch_list
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, active_dbjobs=active_dbjobs)
+    output = previewrenderer.render(
+        exp, active_dbjobs=active_dbjobs, verbosity_level="developer"
+    )
 
     assert "Active Infrastructure" in output
     assert "Database Identifier" in output
@@ -232,7 +234,9 @@ def test_preview_orch_active_infrastructure(wlmutils, test_dir, choose_host):
     preview_manifest = Manifest(orc2, orc3)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, preview_manifest, active_dbjobs=active_dbjobs)
+    output = previewrenderer.render(
+        exp, preview_manifest, active_dbjobs=active_dbjobs, verbosity_level="developer"
+    )
 
     assert "Active Infrastructure" in output
     assert "Database Identifier" in output
@@ -278,7 +282,9 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     active_dbjobs = exp._control.active_orch_list
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, active_dbjobs=active_dbjobs)
+    output = previewrenderer.render(
+        exp, active_dbjobs=active_dbjobs, verbosity_level="developer"
+    )
 
     assert "Active Infrastructure" in output
     assert "Database Identifier" in output
@@ -322,7 +328,9 @@ def test_preview_active_infrastructure_orchestrator_error(
     preview_manifest = Manifest(orc)
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, preview_manifest, active_dbjobs=active_dbjobs)
+    output = previewrenderer.render(
+        exp, preview_manifest, active_dbjobs=active_dbjobs, verbosity_level="developer"
+    )
 
     assert "WARNING: Cannot preview a started entity" in output
 
@@ -350,7 +358,9 @@ def test_model_preview(test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
     # Execute preview method
-    rendered_preview = previewrenderer.render(exp, preview_manifest)
+    rendered_preview = previewrenderer.render(
+        exp, preview_manifest, verbosity_level="developer"
+    )
 
     # Evaluate output
     assert "Model Name" in rendered_preview
@@ -389,7 +399,9 @@ def test_model_preview_properties(test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
     # Execute preview method
-    rendered_preview = previewrenderer.render(exp, preview_manifest)
+    rendered_preview = previewrenderer.render(
+        exp, preview_manifest, verbosity_level="developer"
+    )
 
     # Evaluate output for hello world model
     assert hw_name in rendered_preview
@@ -422,7 +434,7 @@ def test_model_preview_properties(test_dir, wlmutils):
     assert se_param3 == spam_eggs_model.run_settings.exe_args[1]
 
 
-def test_model_with_tagged_files(fileutils, test_dir, wlmutils):
+def test_preview_model_tagged_files(fileutils, test_dir, wlmutils):
     """
     Test model with tagged files in preview.
     """
@@ -447,7 +459,9 @@ def test_model_with_tagged_files(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model)
 
     # Execute preview method
-    rendered_preview = previewrenderer.render(exp, preview_manifest)
+    rendered_preview = previewrenderer.render(
+        exp, preview_manifest, verbosity_level="developer"
+    )
 
     # Evaluate output
     assert "Tagged Files for Model Configuration" in rendered_preview
@@ -477,7 +491,7 @@ def test_model_key_prefixing(test_dir, wlmutils):
     preview_manifest = Manifest(db, model)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     # Evaluate output
     assert "Key Prefix" in output
@@ -515,7 +529,7 @@ def test_ensembles_preview(test_dir, wlmutils):
     )
 
     preview_manifest = Manifest(ensemble)
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     assert "Ensemble Name" in output
     assert "Members" in output
@@ -545,7 +559,7 @@ def test_preview_models_and_ensembles(test_dir, wlmutils):
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     assert "Models" in output
     assert hw_name in output
@@ -583,7 +597,7 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
     preview_manifest = Manifest(db, ml_model, ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     assert "Client Configuration" in output
     assert "Database Identifier" in output
@@ -623,7 +637,7 @@ def test_ensemble_preview_client_configuration_multidb(test_dir, wlmutils):
     preview_manifest = Manifest(db1, db2, ml_model, ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     assert "Client Configuration" in output
     assert "Database Identifier" in output
@@ -666,7 +680,7 @@ def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(ensemble)
 
     # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     # Evaluate output
     assert "Tagged Files for Model Configuration" in output
@@ -781,7 +795,7 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
     preview_manifest = Manifest(colo_ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     # Evaluate output
     assert "Models" in output
@@ -894,7 +908,7 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     preview_manifest = Manifest(colo_ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="developer")
 
     # Evaluate output
     assert "Scripts" in output
@@ -906,6 +920,140 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert torch_script in output
     assert test_device in output
     assert cm_name1 in output
+
+
+def test_preview_verbosity_level_info(test_dir, wlmutils):
+    """
+    Test preview of separate model entity and ensemble entity
+    with verbosity level set to info
+    """
+    exp_name = "test-model-and-ensemble"
+    test_dir = pathlib.Path(test_dir) / exp_name
+    test_dir.mkdir(parents=True)
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, exp_path=str(test_dir), launcher=test_launcher)
+
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+
+    hw_name = "echo-hello"
+    se_name = "echo-spam"
+    ens_name = "echo-ensemble"
+    hello_world_model = exp.create_model(hw_name, run_settings=rs1)
+    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
+    hello_ensemble = exp.create_ensemble(ens_name, run_settings=rs1, replicas=3)
+
+    exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
+
+    preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+
+    assert "Models" in output
+    assert hw_name in output
+    assert se_name in output
+
+    assert "Ensembles" in output
+    assert ens_name + "_1" in output
+    assert ens_name + "_2" in output
+
+
+def test_preview_verbosity_level_info_colocated_db_model_ensemble(
+    fileutils, test_dir, wlmutils, mlutils
+):
+    """Test preview of DBModel on colocated ensembles, first adding the DBModel to the
+    ensemble, then colocating DB.
+    """
+
+    exp_name = "test-colocated-db-model-ensemble-reordered"
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = 1
+
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks(1)
+
+    # Create the ensemble of two identical SmartSim Model
+    colo_ensemble = exp.create_ensemble(
+        "colocated_ens", run_settings=colo_settings, replicas=2
+    )
+
+    # Create colocated SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+
+    # Create and save ML model to filesystem
+    content = "empty test"
+    model_path = pathlib.Path(test_dir) / "model1.pt"
+    model_path.write_text(content)
+
+    # Test adding a model from ensemble
+    colo_ensemble.add_ml_model(
+        "cnn",
+        "TF",
+        model_path=model_path,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs="args_0",
+        outputs="Identity",
+    )
+
+    # Colocate a database with the first ensemble members
+    for i, entity in enumerate(colo_ensemble):
+        entity.colocate_db_tcp(
+            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
+        )
+        # Add ML models to each ensemble member to make sure they
+        # do not conflict with other ML models
+        entity.add_ml_model(
+            "cnn2",
+            "TF",
+            model_path=model_path,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+            inputs="args_0",
+            outputs="Identity",
+        )
+        entity.disable_key_prefixing()
+
+    # Add another ensemble member
+    colo_ensemble.add_model(colo_model)
+
+    # Colocate a database with the new ensemble member
+    colo_model.colocate_db_tcp(
+        port=test_port + len(colo_ensemble) - 1,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+    )
+    # Add a ML model to the new ensemble member
+    model_inputs = "args_0"
+    model_outputs = "Identity"
+    model_name = "cnn2"
+    model_backend = "TF"
+    colo_model.add_ml_model(
+        model_name,
+        model_backend,
+        model_path=model_path,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=model_inputs,
+        outputs=model_outputs,
+    )
+
+    exp.generate(colo_ensemble)
+
+    preview_manifest = Manifest(colo_ensemble)
+
+    # Execute preview method
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
 
 
 def test_output_format_error():

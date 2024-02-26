@@ -74,7 +74,7 @@ def render(
     :type output_format: _OutputFormatString
     """
 
-    verbosity_level = _check_verbosity_level(verbosity_level)
+    verbosity_level = _check_verbosity_level(Verbosity(verbosity_level))
 
     loader = jinja2.PackageLoader("templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
@@ -82,6 +82,7 @@ def render(
     env.filters["as_toggle"] = as_toggle
     env.filters["get_ifname"] = get_ifname
     env.filters["get_dbtype"] = get_dbtype
+    env.globals["Verbosity"] = Verbosity
 
     version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"

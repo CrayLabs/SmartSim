@@ -34,7 +34,7 @@
         {%- endif %}
         {%- if manifest.dbs %}
         {% include "preview/clientconfig_plain_text.template" %}
-        {% endif %}
+        {%- endif %}
     {% endfor %}
     {%- endif %}
 

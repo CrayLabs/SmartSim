@@ -2,12 +2,14 @@
     {%- for ensemble in manifest.ensembles %}
     = Ensemble Name: {{ ensemble.name }} =
         Members: {{ ensemble|length }}
+        {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
         {%- if ensemble.params %}
         Ensemble Parameters:  
             {%- for key, value in ensemble.params.items() %}
           {{ key }}: {{ '{:^9}'.format(value|string)|truncate(81,true,'...')}}
                 {%- endfor %}   
     {%- endif %}   
+    {%- endif %}
     {% for model in ensemble %}
     - Model Name: {{ model.name }} -
     {%- include 'preview/model_plain_text.template' %}
