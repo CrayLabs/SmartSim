@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=too-many-lines
+
 import concurrent.futures
 import enum
 import itertools
@@ -107,6 +109,11 @@ class OperatingSystem(enum.Enum):
         raise BuildError(f"Unrecognized or unsupported operating system: {string}")
 
 
+class Platform(t.NamedTuple):
+    os: OperatingSystem
+    architecture: Architecture
+
+
 class Builder:
     """Base class for building third-party libraries"""
 
@@ -121,10 +128,16 @@ class Builder:
     )
 
     def __init__(
-        self, env: t.Dict[str, t.Any], jobs: t.Optional[int] = 1, verbose: bool = False
+        self,
+        env: t.Dict[str, str],
+        jobs: int = 1,
+        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
+        architecture: Architecture = Architecture.from_str(platform.machine()),
+        verbose: bool = False,
     ) -> None:
         # build environment from buildenv
         self.env = env
+        self._platform = Platform(_os, architecture)
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
@@ -236,12 +249,20 @@ class DatabaseBuilder(Builder):
 
     def __init__(
         self,
-        build_env: t.Optional[t.Dict[str, t.Any]] = None,
+        build_env: t.Optional[t.Dict[str, str]] = None,
         malloc: str = "libc",
-        jobs: t.Optional[int] = None,
+        jobs: int = 1,
+        _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
+        architecture: Architecture = Architecture.from_str(platform.machine()),
         verbose: bool = False,
     ) -> None:
-        super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
+        super().__init__(
+            build_env or {},
+            jobs=jobs,
+            _os=_os,
+            architecture=architecture,
+            verbose=verbose,
+        )
         self.malloc = malloc
 
     @property
@@ -278,17 +299,21 @@ class DatabaseBuilder(Builder):
         if not self.is_valid_url(git_url):
             raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
+        clone_cmd = config_git_command(
+            self._platform,
+            [
+                self.binary_path("git"),
+                "clone",
+                git_url,
+                "--branch",
+                branch,
+                "--depth",
+                "1",
+                database_name,
+            ],
+        )
+
         # clone Redis
-        clone_cmd = [
-            self.binary_path("git"),
-            "clone",
-            git_url,
-            "--branch",
-            branch,
-            "--depth",
-            "1",
-            database_name,
-        ]
         self.run_command(clone_cmd, cwd=self.build_dir)
 
         # build Redis
@@ -372,20 +397,24 @@ class RedisAIBuilder(Builder):
         self,
         _os: OperatingSystem = OperatingSystem.from_str(platform.system()),
         architecture: Architecture = Architecture.from_str(platform.machine()),
-        build_env: t.Optional[t.Dict[str, t.Any]] = None,
+        build_env: t.Optional[t.Dict[str, str]] = None,
         torch_dir: str = "",
         libtf_dir: str = "",
         build_torch: bool = True,
         build_tf: bool = True,
         build_onnx: bool = False,
-        jobs: t.Optional[int] = None,
+        jobs: int = 1,
         verbose: bool = False,
     ) -> None:
-        super().__init__(build_env or {}, jobs=jobs, verbose=verbose)
+        super().__init__(
+            build_env or {},
+            jobs=jobs,
+            _os=_os,
+            architecture=architecture,
+            verbose=verbose,
+        )
 
         self.rai_install_path: t.Optional[Path] = None
-        self._os = _os
-        self._architecture = architecture
 
         # convert to int for RAI build script
         self._torch = build_torch
@@ -398,20 +427,23 @@ class RedisAIBuilder(Builder):
         self._validate_platform()
 
     def _validate_platform(self) -> None:
-        platform_ = (self._os, self._architecture)
         unsupported = []
-        if platform_ not in _DLPackRepository.supported_platforms():
+        if self._platform not in _DLPackRepository.supported_platforms():
             unsupported.append("DLPack")
-        if self.fetch_tf and (platform_ not in _TFArchive.supported_platforms()):
+        if self.fetch_tf and (self._platform not in _TFArchive.supported_platforms()):
             unsupported.append("Tensorflow")
-        if self.fetch_onnx and (platform_ not in _ORTArchive.supported_platforms()):
+        if self.fetch_onnx and (
+            self._platform not in _ORTArchive.supported_platforms()
+        ):
             unsupported.append("ONNX")
-        if self.fetch_torch and (platform_ not in _PTArchive.supported_platforms()):
+        if self.fetch_torch and (
+            self._platform not in _PTArchive.supported_platforms()
+        ):
             unsupported.append("PyTorch")
         if unsupported:
             raise BuildError(
-                f"The {', '.join(unsupported)} backend(s) are not "
-                f"supported on {self._os} with {self._architecture}"
+                f"The {', '.join(unsupported)} backend(s) are not supported "
+                f"on {self._platform.os} with {self._platform.architecture}"
             )
 
     @property
@@ -452,25 +484,25 @@ class RedisAIBuilder(Builder):
         def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
             return BuildError(f"Failed to format RedisAI dependency path: {reason}")
 
-        if self._os == OperatingSystem.DARWIN:
+        _os, architecture = self._platform
+        if _os == OperatingSystem.DARWIN:
             os_ = "macos"
-        elif self._os == OperatingSystem.LINUX:
+        elif _os == OperatingSystem.LINUX:
             os_ = "linux"
         else:  # pragma: no cover
-            raise fail_to_format(f"Unknown operating system: {self._os}")
-        if self._architecture == Architecture.X64:
+            raise fail_to_format(f"Unknown operating system: {_os}")
+        if architecture == Architecture.X64:
             arch = "x64"
-        elif self._architecture == Architecture.ARM64:
+        elif architecture == Architecture.ARM64:
             arch = "arm64v8"
         else:  # pragma: no cover
-            raise fail_to_format(f"Unknown architecture: {self._architecture}")
+            raise fail_to_format(f"Unknown architecture: {architecture}")
         return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
 
     def _get_deps_to_fetch_for(
         self, device: TDeviceStr
     ) -> t.Tuple[_RAIBuildDependency, ...]:
-        os_ = self._os
-        arch = self._architecture
+        os_, arch = self._platform
         # TODO: It would be nice if the backend version numbers were declared
         #       alongside the python package version numbers so that all of the
         #       dependency versions were declared in single location.
@@ -565,18 +597,21 @@ class RedisAIBuilder(Builder):
             raise BuildError(f"Malformed RedisAI URL: {git_url}")
 
         # clone RedisAI
-        clone_cmd = [
-            self.binary_path("env"),
-            "GIT_LFS_SKIP_SMUDGE=1",
-            "git",
-            "clone",
-            "--recursive",
-            git_url,
-            "--branch",
-            branch,
-            "--depth=1",
-            os.fspath(self.rai_build_path),
-        ]
+        clone_cmd = config_git_command(
+            self._platform,
+            [
+                self.binary_path("env"),
+                "GIT_LFS_SKIP_SMUDGE=1",
+                "git",
+                "clone",
+                "--recursive",
+                git_url,
+                "--branch",
+                branch,
+                "--depth=1",
+                os.fspath(self.rai_build_path),
+            ],
+        )
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
         self._fetch_deps_for(device)
@@ -873,7 +908,6 @@ class _PTArchiveMacOSX(_PTArchive):
 def _choose_pt_variant(
     os_: OperatingSystem,
 ) -> t.Union[t.Type[_PTArchiveLinux], t.Type[_PTArchiveMacOSX]]:
-
     if os_ == OperatingSystem.DARWIN:
         return _PTArchiveMacOSX
     if os_ == OperatingSystem.LINUX:
@@ -995,3 +1029,20 @@ def _git(*args: str) -> None:
             raise BuildError(
                 f"Command `{' '.join(cmd)}` failed with exit code {proc.returncode}"
             )
+
+
+def config_git_command(plat: Platform, cmd: t.Sequence[str]) -> t.List[str]:
+    """Modify git commands to include autocrlf when on a platform that needs
+    autocrlf enabled to behave correctly
+    """
+    cmd = list(cmd)
+    where = next((i for i, tok in enumerate(cmd) if tok.endswith("git")), len(cmd)) + 2
+    if where >= len(cmd):
+        raise ValueError(f"Failed to locate git command in '{' '.join(cmd)}'")
+    if plat == Platform(OperatingSystem.DARWIN, Architecture.ARM64):
+        cmd = (
+            cmd[:where]
+            + ["--config", "core.autocrlf=false", "--config", "core.eol=lf"]
+            + cmd[where:]
+        )
+    return cmd
