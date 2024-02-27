@@ -1056,6 +1056,29 @@ def test_preview_verbosity_level_info_colocated_db_model_ensemble(
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
 
 
+def test_verbosity_level_info_orchestrator_preview_render(
+    test_dir, wlmutils, choose_host
+):
+    """Test correct preview output properties for Orchestrator preview"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_orchestrator_preview_properties"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    # create regular database
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+    )
+    preview_manifest = Manifest(orc)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+    print(output)
+
+
 def test_output_format_error():
     """
     Test error when invalid ouput format is given.

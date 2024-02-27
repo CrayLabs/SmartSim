@@ -1,14 +1,12 @@
         
     = Database Identifier: {{ db.name }} =
-        {%- if verbosity_level == "debug" or verbosity_level == "developer" %}
+        {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
         Shards: {{ db.num_shards }}
-        {%- endif %}
         TCP/IP Port(s): 
           {%- for port in db.ports %}
           {{ port }}
           {%- endfor %}
         Network Interface: {{ db._interfaces[0] }}
-        {%- if verbosity_level == "debug" or verbosity_level == "developer" %}
         Type: {{ config.database_cli | get_dbtype }}
         Executable: {{ config.database_exe }}
         Batch Launch: {{ db.batch }}
