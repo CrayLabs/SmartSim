@@ -19,27 +19,27 @@
         {%- if model.files %}
         {%- if model.files.tagged %}
         Tagged Files for Model Configuration: 
-          {%- for tagged in model.files.tagged %}
+        {%- for tagged in model.files.tagged %}
           {{ tagged }} 
           -> {{ model.path }}
-          {%- endfor %}
-          {%- endif -%}
-          {%- if model.files.copy %}
+        {%- endfor %}
+        {%- endif -%}
+        {%- if model.files.copy %}
         Copy Files: 
-          {%- for copy in model.files.copy %}
+        {%- for copy in model.files.copy %}
           {{ copy }}
           -> {{ model.path }}
-          {%- endfor %}
-          {%- endif %}
-          {%- if model.files.link %}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.files.link %}
         Symlink Files: 
-          {%- for link in model.files.link %}
+        {%- for link in model.files.link %}
           {{ link }}
           -> {{ model.path }}
-          {%- endfor %}
-          {%- endif %}
-          {%- endif %}
-          {%- if model.run_settings.colocated_db_settings %}
+        {%- endfor %}
+        {%- endif %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings %}
         Colocated:
         {%- if model.run_settings.colocated_db_settings.db_identifier %}
           Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
@@ -66,9 +66,9 @@
             Backend: {{ script.device }}   
             Devices Per Node: {{ script.devices_per_node }} 
       
-    {%- endfor %}
-    {%- endif %}
-    {%- if model.run_settings.colocated_db_settings['db_models'] %}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings['db_models'] %}
         ML Models: 
         {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
           Model Name: {{ mlmodel.name }}
@@ -88,10 +88,10 @@
           Outputs: 
             {{ output }}
             {%- endfor %}
-    {%- endfor -%}
-    {%- endif %}
-    {%- endif %}
-    {%- if model.query_key_prefixing()%}  
+        {%- endfor -%}
+        {%- endif %}
+        {%- endif %}
+        {%- if model.query_key_prefixing()%}  
         Key Prefix: {{ model.name }}
-    {%- endif %}
+        {%- endif %}
     {%- endif %}
