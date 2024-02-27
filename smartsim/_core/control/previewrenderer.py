@@ -91,6 +91,13 @@ def render(
 
     tpl = env.get_template(tpl_path)
 
+    if verbosity_level == Verbosity.INFO:
+        logger.warning(
+            "Only showing user set parameters. Some entity "
+            "fields are truncated. To view truncated fields: use verbosity_"
+            "level 'developer' or 'debug'"
+        )
+
     rendered_preview = tpl.render(
         exp_entity=exp,
         active_dbjobs=active_dbjobs,
@@ -98,7 +105,6 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-
     return rendered_preview
 
 
@@ -145,7 +151,7 @@ def find_available_filename(filename: str) -> str:
 
 def _check_output_format(output_format: Format) -> None:
     """
-    Check that the output format given is valid.
+    Check that a valid file output format is given.
     """
     if not output_format == Format.PLAINTEXT:
         raise PreviewFormatError(

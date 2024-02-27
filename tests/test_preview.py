@@ -922,7 +922,7 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert cm_name1 in output
 
 
-def test_preview_verbosity_level_info(test_dir, wlmutils):
+def test_preview_verbosity_level_info_ensemble(test_dir, wlmutils):
     """
     Test preview of separate model entity and ensemble entity
     with verbosity level set to info
@@ -948,13 +948,10 @@ def test_preview_verbosity_level_info(test_dir, wlmutils):
     preview_manifest = Manifest(hello_world_model, spam_eggs_model, hello_ensemble)
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
 
-    assert "Models" in output
-    assert hw_name in output
-    assert se_name in output
+    assert "Executable" not in output
+    assert "Executable Arguments" not in output
 
-    assert "Ensembles" in output
-    assert ens_name + "_1" in output
-    assert ens_name + "_2" in output
+    assert "echo_ensemble_1" not in output
 
 
 def test_preview_verbosity_level_info_colocated_db_model_ensemble(
@@ -1055,6 +1052,9 @@ def test_preview_verbosity_level_info_colocated_db_model_ensemble(
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
 
+    assert "Outgoing Key Collision Prevention (Key Prefixing)" not in output
+    assert "Devices Per Node" not in output
+
 
 def test_verbosity_level_info_orchestrator_preview_render(
     test_dir, wlmutils, choose_host
@@ -1076,7 +1076,44 @@ def test_verbosity_level_info_orchestrator_preview_render(
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
-    print(output)
+
+    # Evaluate output
+    assert "TCP/IP Port(s)" not in output
+    assert "Executable" not in output
+    assert "Run Command" not in output
+
+
+def test_preview_verbosity_info_ensemble(test_dir, wlmutils):
+    """
+    Test client configuration and key prefixing in Ensemble preview
+    """
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment("key_prefix_test", exp_path=test_dir, launcher=test_launcher)
+    # Create Orchestrator
+    db = exp.create_database(port=6780, interface="lo")
+    exp.generate(db, overwrite=True)
+    rs1 = exp.create_run_settings("echo", ["hello", "world"])
+    # Create ensemble
+    ensemble = exp.create_ensemble("fd_simulation", run_settings=rs1, replicas=2)
+    # enable key prefixing on ensemble
+    ensemble.enable_key_prefixing()
+    exp.generate(ensemble, overwrite=True)
+    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
+    # Create model
+    ml_model = exp.create_model("tf_training", rs2)
+
+    for sim in ensemble.entities:
+        ml_model.register_incoming_entity(sim)
+
+    exp.generate(ml_model, overwrite=True)
+    preview_manifest = Manifest(db, ml_model, ensemble)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+
+    # Evaluate output
+    assert "Outgoing Key Collision Prevention (Key Prefixing)" not in output
 
 
 def test_output_format_error():
