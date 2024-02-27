@@ -11,7 +11,6 @@ Jump to :ref:`SmartRedis Changelog <sr_changelog>`
 SmartSim
 ========
 
-
 Development branch
 ------------------
 
@@ -20,14 +19,19 @@ To be released at some future point in time
 Description
 
 - Update Experiment API typing
-
+- Fix publishing of development docs
 
 Detailed Notes
 
+- The container which builds the documentation for every merge to develop
+  was failing due to a lack of space within the container. This was fixed
+  by including an additional Github action that removes some unneeded
+  software and files that come from the default Github Ubuntu container.
+  (SmartSim-PR-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
-
-.. _SmartSim-PR493: https://github.com/CrayLabs/SmartSim/pull/493
+.. _SmartSim-PR504: https://github.com/CrayLabs/SmartSim/pull/504
+.. _SmartSim-PR501: https://github.com/CrayLabs/SmartSim/pull/501
 
 
 0.6.2
