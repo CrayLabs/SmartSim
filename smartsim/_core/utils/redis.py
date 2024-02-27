@@ -69,7 +69,7 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "--cluster", "create"]
     cmd += ip_list
-    cmd += ["--cluster-replicas", "0"]
+    cmd += ["--cluster-replicas", "0", "--cluster-yes"]
     returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False)
 
     if returncode != 0:
