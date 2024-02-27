@@ -11,7 +11,24 @@ Jump to :ref:`SmartRedis Changelog <sr_changelog>`
 SmartSim
 ========
 
+Development Branch
+------------------
 
+To be released in the future
+
+Description
+
+- Fix publishing of development docs
+
+Detailed notes
+
+- The container which builds the documentation for every merge to develop
+  was failing due to a lack of space within the container. This was fixed
+  by including an additional Github action that removes some unneeded
+  software and files that come from the default Github Ubuntu container.
+  (SmartSim-PR-PR504_)
+
+.. _SmartSim-PR504: https://github.com/CrayLabs/SmartSim/pull/504
 
 0.6.2
 -----
