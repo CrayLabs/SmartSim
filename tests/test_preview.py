@@ -36,8 +36,7 @@ from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import PreviewFormatError
-from smartsim.settings import RunSettings
-from smartsim.settings import QsubBatchSettings
+from smartsim.settings import QsubBatchSettings, RunSettings
 
 on_wlm = (pytest.test_launcher in pytest.wlm_options,)
 
