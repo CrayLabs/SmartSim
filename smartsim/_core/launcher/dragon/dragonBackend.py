@@ -148,7 +148,9 @@ class DragonBackend:
         return DragonHandshakeResponse()
 
     @process_request.register
-    def shutdown(sels, request: DragonShutdownRequest) -> DragonShutdownResponse:
+    # Deliberately suppressing errors so that overloads have the same signature
+    # pylint: disable-next=no-self-use,unused-argument
+    def shutdown(self, request: DragonShutdownRequest) -> DragonShutdownResponse:
         DragonShutdownRequest.parse_obj(request)
 
         return DragonShutdownResponse()
