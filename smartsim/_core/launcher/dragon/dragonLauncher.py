@@ -130,6 +130,7 @@ class DragonLauncher(WLMLauncher):
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
 
+    # pylint: disable-next=too-many-statements
     def connect_to_dragon(self, path: str) -> None:
         with self._comm_lock:
             # TODO use manager instead
@@ -222,14 +223,16 @@ class DragonLauncher(WLMLauncher):
                 launcher_socket.close()
                 self._set_timeout(self._timeout)
                 self._handshake(dragon_head_address)
-                def cleanup():
+                def cleanup() -> None:
                     try:
                         shutdown_req = DragonShutdownRequest()
                         self._send_request_as_json(shutdown_req)
                     except zmq.error.ZMQError as e:
-                        logger.error("Could not send shutdown request to dragon server")
+                        logger.error("Could not send shutdown request to dragon server,"
+                                     f" ZMQ error: {e}")
                     finally:
-                        os.kill(self._dragon_head_process.pid, signal.SIGINT)
+                        if self._dragon_head_process is not None:
+                            os.kill(self._dragon_head_process.pid, signal.SIGINT)
 
                 atexit.register(cleanup)
             else:

@@ -115,7 +115,7 @@ class DragonBackend:
                                 Process(None, ident=puid).returncode
                                 for puid in proc_group_tuple[1]
                             ]
-                        except (ValueError, TypeError) as e:
+                        except (ValueError, TypeError):
                             return_codes = [-1 for _ in proc_group_tuple[1]]
                     else:
                         return_codes = [0]
