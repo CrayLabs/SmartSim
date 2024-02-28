@@ -131,7 +131,7 @@ class Controller:
                     logger.warning(msg)
                 self._launcher.connect_to_dragon(dragon_server_paths[0])
             else:
-                dragon_path = osp.join(exp_path, ".smartsim", "dragon")
+                dragon_path = osp.join(exp_path, CONFIG.dragon_default_subdir)
                 self._launcher.connect_to_dragon(dragon_path)
             if not self._launcher.is_connected:
                 raise LauncherError("Could not connect to Dragon server")

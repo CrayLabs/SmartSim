@@ -136,7 +136,7 @@ class DragonLauncher(WLMLauncher):
             if self.is_connected:
                 return
 
-            dragon_config_log = os.path.join(path, "dragon_config.log")
+            dragon_config_log = os.path.join(path, CONFIG.dragon_log_filename)
 
             if Path.is_file(Path(dragon_config_log)):
                 dragon_confs = (
