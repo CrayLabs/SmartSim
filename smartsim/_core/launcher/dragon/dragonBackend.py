@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import functools
 import typing as t
 from threading import RLock
 
@@ -61,14 +62,6 @@ class DragonBackend:
     """
 
     def __init__(self) -> None:
-        self._request_to_function: t.Mapping[
-            str, t.Callable[[t.Any], DragonResponse]
-        ] = {
-            "run": self.run,
-            "update_status": self.update_status,
-            "stop": self.stop,
-            "handshake": DragonBackend.handshake,
-        }
         self._proc_groups: t.Dict[str, t.Tuple[ProcessGroup, t.List[int]]] = {}
         self._step_id_lock = RLock()
         self._step_id = 0
@@ -78,29 +71,25 @@ class DragonBackend:
             self._step_id += 1
             return str(self._step_id)
 
+    @functools.singledispatchmethod
+    # Deliberately suppressing errors so that overloads have the same signature
+    # pylint: disable-next=no-self-use
     def process_request(self, request: DragonRequest) -> DragonResponse:
-        req_type = DragonRequest.parse_obj(request).request_type
-        if not req_type:
-            raise ValueError("Malformed request contains empty ``request_type`` field.")
-        if req_type not in self._request_to_function:
-            raise ValueError(f"Unknown request type {req_type}.")
+        raise TypeError("Unsure how to process a `{type(request)}` request")
 
-        return self._request_to_function[req_type](request)
-
-    def run(self, request: DragonRunRequest) -> DragonRunResponse:
-        run_request = DragonRunRequest.parse_obj(request)
-
+    @process_request.register
+    def _(self, request: DragonRunRequest) -> DragonRunResponse:
         proc = TemplateProcess(
-            target=run_request.exe,
-            args=run_request.exe_args,
-            cwd=run_request.path,
-            env={**run_request.current_env, **run_request.env},
+            target=request.exe,
+            args=request.exe_args,
+            cwd=request.path,
+            env={**request.current_env, **request.env},
             # stdout=Popen.PIPE,
             # stderr=Popen.PIPE,
         )
 
         grp = ProcessGroup(restart=False, pmi_enabled=True)
-        grp.add_process(nproc=run_request.tasks, template=proc)
+        grp.add_process(nproc=request.tasks, template=proc)
         step_id = self._get_new_id()
         grp.init()
         grp.start()
@@ -108,13 +97,10 @@ class DragonBackend:
 
         return DragonRunResponse(step_id=step_id)
 
-    def update_status(
-        self, request: DragonUpdateStatusRequest
-    ) -> DragonUpdateStatusResponse:
-        update_status_request = DragonUpdateStatusRequest.parse_obj(request)
-
+    @process_request.register
+    def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
         updated_statuses: t.Dict[str, t.Tuple[str, t.Optional[t.List[int]]]] = {}
-        for step_id in update_status_request.step_ids:
+        for step_id in request.step_ids:
             return_codes: t.List[int] = []
             if step_id in self._proc_groups:
                 proc_group_tuple = self._proc_groups[step_id]
@@ -139,20 +125,19 @@ class DragonBackend:
 
         return DragonUpdateStatusResponse(statuses=updated_statuses)
 
-    def stop(self, request: DragonStopRequest) -> DragonStopResponse:
-        stop_request = DragonStopRequest.parse_obj(request)
-
-        if stop_request.step_id in self._proc_groups:
+    @process_request.register
+    def _(self, request: DragonStopRequest) -> DragonStopResponse:
+        if request.step_id in self._proc_groups:
             # Technically we could just terminate, but what if
             # the application intercepts that and ignores it?
-            proc_group = self._proc_groups[stop_request.step_id][0]
+            proc_group = self._proc_groups[request.step_id][0]
             if proc_group.status == "Running":
                 proc_group.kill()
 
         return DragonStopResponse()
 
-    @staticmethod
-    def handshake(request: DragonHandshakeRequest) -> DragonHandshakeResponse:
-        DragonHandshakeRequest.parse_obj(request)
-
+    @process_request.register
+    # Deliberately suppressing errors so that overloads have the same signature
+    # pylint: disable-next=no-self-use,unused-argument
+    def _(self, request: DragonHandshakeRequest) -> DragonHandshakeResponse:
         return DragonHandshakeResponse()

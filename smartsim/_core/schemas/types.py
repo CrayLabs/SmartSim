@@ -24,42 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
-
-from pydantic import BaseModel
-
-import smartsim._core.schemas.utils as _utils
-from smartsim._core.schemas.types import NonEmptyStr
-
-# Black and Pylint disagree about where to put the `...`
-# pylint: disable=multiple-statements
+import pydantic
 
 
-class DragonResponse(BaseModel):
-    error_message: t.Optional[str] = None
-
-
-response_serializer = _utils.SchemaSerializer[str, DragonResponse]("response_type")
-
-
-@response_serializer.register("run")
-class DragonRunResponse(DragonResponse):
-    step_id: NonEmptyStr
-
-
-@response_serializer.register("status_update")
-class DragonUpdateStatusResponse(DragonResponse):
-    # status is a dict: {step_id: (is_alive, returncode)}
-    statuses: t.Mapping[NonEmptyStr, t.Tuple[NonEmptyStr, t.Optional[t.List[int]]]] = {}
-
-
-@response_serializer.register("stop")
-class DragonStopResponse(DragonResponse): ...
-
-
-@response_serializer.register("handshake")
-class DragonHandshakeResponse(DragonResponse): ...
-
-
-@response_serializer.register("bootstrap")
-class DragonBootstrapResponse(DragonResponse): ...
+class NonEmptyStr(pydantic.ConstrainedStr):
+    min_length = 1

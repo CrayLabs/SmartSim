@@ -24,30 +24,37 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# mypy: disable-error-code="valid-type"
 import typing as t
 
-from pydantic import BaseModel, PositiveInt, constr
+from pydantic import BaseModel, PositiveInt
+
+import smartsim._core.schemas.utils as _utils
+from smartsim._core.schemas.types import NonEmptyStr
+
+# Black and Pylint disagree about where to put the `...`
+# pylint: disable=multiple-statements
 
 
-class DragonRequest(BaseModel):
-    request_type: constr(min_length=1)
+class DragonRequest(BaseModel): ...
+
+
+request_serializer = _utils.SchemaSerializer[str, DragonRequest]("request_type")
 
 
 class DragonRunRequestView(DragonRequest):
-    request_type: constr(min_length=1) = "run"
-    exe: constr(min_length=1)
-    exe_args: t.Optional[t.List[constr(min_length=1)]] = []
-    path: constr(min_length=1)
+    exe: NonEmptyStr
+    exe_args: t.List[NonEmptyStr] = []
+    path: NonEmptyStr
     nodes: PositiveInt = 1
     tasks: PositiveInt = 1
-    output_file: t.Optional[constr(min_length=1)] = None
-    error_file: t.Optional[constr(min_length=1)] = None
+    output_file: t.Optional[NonEmptyStr] = None
+    error_file: t.Optional[NonEmptyStr] = None
     env: t.Dict[str, t.Optional[str]] = {}
-    name: t.Optional[constr(min_length=1)]
-    pmi_enabled: t.Optional[bool] = True
+    name: t.Optional[NonEmptyStr]
+    pmi_enabled: bool = True
 
 
+@request_serializer.register("run")
 class DragonRunRequest(DragonRunRequestView):
     current_env: t.Dict[str, t.Optional[str]] = {}
 
@@ -55,20 +62,20 @@ class DragonRunRequest(DragonRunRequestView):
         return str(DragonRunRequestView.parse_obj(self.dict(exclude={"current_env"})))
 
 
+@request_serializer.register("update_status")
 class DragonUpdateStatusRequest(DragonRequest):
-    request_type: constr(min_length=1) = "update_status"
-    step_ids: t.List[constr(min_length=1)]
+    step_ids: t.List[NonEmptyStr]
 
 
+@request_serializer.register("stop")
 class DragonStopRequest(DragonRequest):
-    request_type: constr(min_length=1) = "stop"
-    step_id: constr(min_length=1)
+    step_id: NonEmptyStr
 
 
-class DragonHandshakeRequest(DragonRequest):
-    request_type: constr(min_length=1) = "handshake"
+@request_serializer.register("handshake")
+class DragonHandshakeRequest(DragonRequest): ...
 
 
+@request_serializer.register("bootstrap")
 class DragonBootstrapRequest(DragonRequest):
-    request_type: constr(min_length=1) = "bootstrap"
-    address: constr(min_length=1)
+    address: NonEmptyStr
