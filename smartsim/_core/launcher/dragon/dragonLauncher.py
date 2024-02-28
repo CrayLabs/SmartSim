@@ -31,11 +31,11 @@ import fileinput
 import itertools
 import json
 import os
+import signal
 import subprocess
 import sys
 import typing as t
 from pathlib import Path
-import signal
 from threading import RLock
 
 import zmq
@@ -59,11 +59,11 @@ from ...schemas import (
     DragonResponse,
     DragonRunRequest,
     DragonRunResponse,
+    DragonShutdownRequest,
     DragonStopRequest,
     DragonStopResponse,
     DragonUpdateStatusRequest,
     DragonUpdateStatusResponse,
-    DragonShutdownRequest,
 )
 from ...utils.network import get_best_interface_and_address
 from ..launcher import WLMLauncher
@@ -78,6 +78,7 @@ _SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
 
 DRG_LOCK = RLock()
 DRG_CTX = zmq.Context()
+
 
 class DragonLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
@@ -223,13 +224,16 @@ class DragonLauncher(WLMLauncher):
                 launcher_socket.close()
                 self._set_timeout(self._timeout)
                 self._handshake(dragon_head_address)
+
                 def cleanup() -> None:
                     try:
                         shutdown_req = DragonShutdownRequest()
                         self._send_request_as_json(shutdown_req)
                     except zmq.error.ZMQError as e:
-                        logger.error("Could not send shutdown request to dragon server,"
-                                     f" ZMQ error: {e}")
+                        logger.error(
+                            "Could not send shutdown request to dragon server,"
+                            f" ZMQ error: {e}"
+                        )
                     finally:
                         if self._dragon_head_process is not None:
                             os.kill(self._dragon_head_process.pid, signal.SIGINT)

@@ -27,8 +27,8 @@
 import argparse
 import json
 import os
-import socket
 import signal
+import socket
 import textwrap
 import typing as t
 from types import FrameType
@@ -134,7 +134,6 @@ def main(args: argparse.Namespace) -> int:
 
     run(dragon_head_address=dragon_head_address)
 
-
     print("Shutting down! Bye bye!")
     return 0
 
@@ -143,6 +142,7 @@ def cleanup() -> None:
     print("Cleaning up", flush=True)
     # os.kill(os.getpid(), signal.SIGINT)
     # sys.exit(0)
+
 
 if __name__ == "__main__":
     os.environ["PYTHONUNBUFFERED"] = "1"
@@ -160,8 +160,6 @@ if __name__ == "__main__":
         "+interface", type=str, help="Network Interface name", required=False
     )
     args_ = parser.parse_args()
-
-
 
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop

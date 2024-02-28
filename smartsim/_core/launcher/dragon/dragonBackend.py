@@ -38,13 +38,13 @@ from smartsim._core.schemas import (
     DragonRequest,
     DragonResponse,
     DragonRunRequest,
-    DragonShutdownRequest,
     DragonRunResponse,
+    DragonShutdownRequest,
+    DragonShutdownResponse,
     DragonStopRequest,
     DragonStopResponse,
     DragonUpdateStatusRequest,
     DragonUpdateStatusResponse,
-    DragonShutdownResponse,
 )
 from smartsim.status import (
     STATUS_COMPLETED,
