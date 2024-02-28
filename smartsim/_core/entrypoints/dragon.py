@@ -37,7 +37,7 @@ import zmq
 
 import smartsim._core.utils.helpers as _helpers
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
-from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
+from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse, DragonShutdownResponse
 from smartsim._core.schemas.dragonRequests import request_serializer
 from smartsim._core.schemas.dragonResponses import response_serializer
 from smartsim._core.utils.network import get_best_interface_and_address
@@ -97,6 +97,8 @@ def run(dragon_head_address: str) -> None:
         resp = dragon_backend.process_request(drg_req)
         print(f"Sending response {resp}", flush=True)
         dragon_head_socket.send_json(response_serializer.serialize_to_json(resp))
+        if isinstance(resp, DragonShutdownResponse):
+            break
 
 
 def main(args: argparse.Namespace) -> int:

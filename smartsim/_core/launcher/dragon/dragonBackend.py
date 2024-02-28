@@ -147,8 +147,8 @@ class DragonBackend:
     def _(self, request: DragonHandshakeRequest) -> DragonHandshakeResponse:
         return DragonHandshakeResponse()
 
-    @staticmethod
-    def shutdown(request: DragonShutdownRequest) -> DragonShutdownResponse:
+    @process_request.register
+    def shutdown(sels, request: DragonShutdownRequest) -> DragonShutdownResponse:
         DragonShutdownRequest.parse_obj(request)
 
         return DragonShutdownResponse()
