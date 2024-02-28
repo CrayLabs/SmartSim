@@ -35,6 +35,7 @@ import smartsim
 from smartsim import Experiment
 from smartsim.entity import Model
 from smartsim.database import Orchestrator
+from smartsim.log import get_logger
 from smartsim.settings import (
     SrunSettings,
     AprunSettings,
@@ -50,10 +51,12 @@ from smartsim.error import SSConfigError
 from subprocess import run
 import sys
 import tempfile
+import time
 import typing as t
 import uuid
 import warnings
 
+logger = get_logger(__name__)
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
 
@@ -130,10 +133,20 @@ def pytest_sessionfinish(
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_output_root)
-    else:
-        # kill all spawned processes in case of error
-        kill_all_test_spawned_processes()
+        cleanup_attempts = 5
+        while cleanup_attempts > 0:
+            try:
+                shutil.rmtree(test_output_root)
+            except OSError as e:
+                cleanup_attempts -= 1
+                time.sleep(1)
+                if not cleanup_attempts:
+                    raise e
+            else:
+                break
+
+    # kill all spawned processes
+    kill_all_test_spawned_processes()
 
 
 def kill_all_test_spawned_processes() -> None:

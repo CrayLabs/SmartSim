@@ -79,3 +79,7 @@ class DragonHandshakeRequest(DragonRequest): ...
 @request_serializer.register("bootstrap")
 class DragonBootstrapRequest(DragonRequest):
     address: NonEmptyStr
+
+
+@request_serializer.register("shutdown")
+class DragonShutdownRequest(DragonRequest): ...

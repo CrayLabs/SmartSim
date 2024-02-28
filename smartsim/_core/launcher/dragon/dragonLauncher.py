@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import atexit
 import fileinput
 import itertools
 import json
@@ -34,6 +35,7 @@ import subprocess
 import sys
 import typing as t
 from pathlib import Path
+import signal
 from threading import RLock
 
 import zmq
@@ -61,6 +63,7 @@ from ...schemas import (
     DragonStopResponse,
     DragonUpdateStatusRequest,
     DragonUpdateStatusResponse,
+    DragonShutdownRequest,
 )
 from ...utils.network import get_best_interface_and_address
 from ..launcher import WLMLauncher
@@ -71,6 +74,10 @@ logger = get_logger(__name__)
 
 _SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
 
+_SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
+
+DRG_LOCK = RLock()
+DRG_CTX = zmq.Context()
 
 class DragonLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
@@ -85,7 +92,7 @@ class DragonLauncher(WLMLauncher):
 
     def __init__(self) -> None:
         super().__init__()
-        self._context = zmq.Context()
+        self._context = DRG_CTX
         self._timeout = CONFIG.dragon_server_timeout
         self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
@@ -93,13 +100,13 @@ class DragonLauncher(WLMLauncher):
         self._context.setsockopt(zmq.RCVTIMEO, value=self._timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]]
-        self._comm_lock = RLock()
+        self._comm_lock = DRG_LOCK
 
     @property
     def is_connected(self) -> bool:
         return self._dragon_head_socket is not None
 
-    def _handsake(self, address: str) -> None:
+    def _handshake(self, address: str) -> None:
         self._dragon_head_socket = self._context.socket(zmq.REQ)
         self._dragon_head_socket.connect(address)
         try:
@@ -146,7 +153,7 @@ class DragonLauncher(WLMLauncher):
                     logger.debug(msg)
                     try:
                         self._set_timeout(self._reconnect_timeout)
-                        self._handsake(dragon_conf["address"])
+                        self._handshake(dragon_conf["address"])
                     except LauncherError as e:
                         logger.warning(e)
                     finally:
@@ -214,7 +221,17 @@ class DragonLauncher(WLMLauncher):
 
                 launcher_socket.close()
                 self._set_timeout(self._timeout)
-                self._handsake(dragon_head_address)
+                self._handshake(dragon_head_address)
+                def cleanup():
+                    try:
+                        shutdown_req = DragonShutdownRequest()
+                        self._send_request_as_json(shutdown_req)
+                    except zmq.error.ZMQError as e:
+                        logger.error("Could not send shutdown request to dragon server")
+                    finally:
+                        os.kill(self._dragon_head_process.pid, signal.SIGINT)
+
+                atexit.register(cleanup)
             else:
                 # TODO parse output file
                 raise LauncherError("Could not receive address of Dragon head process")
