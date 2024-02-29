@@ -22,28 +22,28 @@
         {%- if model.files %}
         {%- if model.files.tagged %}
         Tagged Files for Model Configuration: 
-          {%- for tagged in model.files.tagged %}
+        {%- for tagged in model.files.tagged %}
           {{ tagged }} 
           -> {{ model.path }}
-          {%- endfor %}
-          {%- endif -%}
-          {%- if model.files.copy %}
+        {%- endfor %}
+        {%- endif -%}
+        {%- if model.files.copy %}
         Copy Files: 
-          {%- for copy in model.files.copy %}
-          {{ copy }}
+        {%- for copy in model.files.copy %}
+        {{ copy }}
           -> {{ model.path }}
-          {%- endfor %}
-          {%- endif %}
-          {%- if model.files.link %}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.files.link %}
         Symlink Files: 
-          {%- for link in model.files.link %}
+        {%- for link in model.files.link %}
           {{ link }}
           -> {{ model.path }}
-          {%- endfor %}
-          {%- endif %}
-          {%- endif %}
-          {%- endif %}
-          {%- if model.run_settings.colocated_db_settings %}
+        {%- endfor %}
+        {%- endif %}
+        {%- endif %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings %}
         {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
         Colocated:
         {%- if model.run_settings.colocated_db_settings.db_identifier %}
