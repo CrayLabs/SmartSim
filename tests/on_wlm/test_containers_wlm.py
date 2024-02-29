@@ -28,7 +28,8 @@ from shutil import which
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
 
@@ -92,7 +93,7 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
 

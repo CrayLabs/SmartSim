@@ -27,7 +27,8 @@ from contextlib import contextmanager
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 from smartsim.database import Orchestrator
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
@@ -51,7 +52,7 @@ def make_entity_context(exp: Experiment, entity: SmartSimEntity):
     try:
         yield entity
     finally:
-        if exp.get_status(entity)[0] == status.STATUS_RUNNING:
+        if exp.get_status(entity)[0] == SmartSimStatus.STATUS_RUNNING:
             exp.stop(entity)
 
 
@@ -65,7 +66,7 @@ def choose_host(wlmutils, index=0):
 
 def check_not_failed(exp, *args):
     statuses = exp.get_status(*args)
-    assert all(stat is not status.STATUS_FAILED for stat in statuses)
+    assert all(stat is not SmartSimStatus.STATUS_FAILED for stat in statuses)
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)

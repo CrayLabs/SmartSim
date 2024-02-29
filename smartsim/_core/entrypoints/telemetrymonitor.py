@@ -58,7 +58,7 @@ from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
-from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
+from smartsim.status import SmartSimStatus
 
 """Telemetry Monitor entrypoint"""
 
@@ -283,10 +283,10 @@ def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
     """Create a faux return code for a task run by the WLM. Must not be
     called with non-terminal statuses or results may be confusing
     """
-    if step_info.status not in TERMINAL_STATUSES:
+    if step_info.status not in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
         return None
 
-    if step_info.status == STATUS_COMPLETED:
+    if step_info.status == SmartSimStatus.STATUS_COMPLETED:
         return os.EX_OK
 
     return 1
@@ -494,7 +494,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             step_updates = self._launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:
-                if step_info and step_info.status in TERMINAL_STATUSES:
+                if step_info and step_info.status in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
                     completed_entity = names[step_name]
                     self._to_completed(timestamp, completed_entity, step_info)
 

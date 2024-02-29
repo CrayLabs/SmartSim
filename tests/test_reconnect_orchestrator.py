@@ -29,7 +29,8 @@ import time
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 from smartsim.database import Orchestrator
 
 # The tests in this file belong to the group_b group
@@ -54,7 +55,7 @@ def test_local_orchestrator(test_dir, wlmutils):
 
     exp.start(orc)
     statuses = exp.get_status(orc)
-    assert [stat != status.STATUS_FAILED for stat in statuses]
+    assert [stat != SmartSimStatus.STATUS_FAILED for stat in statuses]
 
     # simulate user shutting down main thread
     exp._control._jobs.actively_monitoring = False
@@ -76,7 +77,7 @@ def test_reconnect_local_orc(test_dir):
 
     statuses = exp_2.get_status(reloaded_orc)
     for stat in statuses:
-        if stat == status.STATUS_FAILED:
+        if stat == SmartSimStatus.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
     exp_2.stop(reloaded_orc)

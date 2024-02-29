@@ -27,7 +27,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 from smartsim.database import Orchestrator
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
@@ -57,7 +58,7 @@ def test_model_failure(fileutils, test_dir):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == status.STATUS_FAILED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_FAILED for stat in statuses])
 
 
 def test_orchestrator_relaunch(test_dir, wlmutils):

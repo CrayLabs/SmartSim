@@ -28,7 +28,8 @@ import time
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 from smartsim.settings.settings import RunSettings
 
 """
@@ -63,7 +64,7 @@ def test_simple_model_on_wlm(fileutils, test_dir, wlmutils):
     # launch model twice to show that it can also be restarted
     for _ in range(2):
         exp.start(M, block=True)
-        assert exp.get_status(M)[0] == status.STATUS_COMPLETED
+        assert exp.get_status(M)[0] == SmartSimStatus.STATUS_COMPLETED
 
 
 def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
@@ -83,4 +84,4 @@ def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     time.sleep(2)
     exp.stop(M)
     assert M.name in exp._control._jobs.completed
-    assert exp.get_status(M)[0] == status.STATUS_CANCELLED
+    assert exp.get_status(M)[0] == SmartSimStatus.STATUS_CANCELLED

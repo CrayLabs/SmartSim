@@ -28,7 +28,8 @@ from copy import deepcopy
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 from smartsim._core.utils.helpers import is_valid_cmd
 
 # retrieved from pytest fixtures
@@ -89,8 +90,8 @@ def test_mpmd(fileutils, test_dir, wlmutils):
         mpmd_model = exp.create_model("mmpd", path=test_dir, run_settings=settings)
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

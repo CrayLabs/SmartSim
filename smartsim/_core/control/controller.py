@@ -61,7 +61,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
-from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...status import SmartSimStatus
 from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
@@ -206,7 +206,7 @@ class Controller:
         """
         with JM_LOCK:
             job = self._jobs[entity.name]
-            if job.status not in TERMINAL_STATUSES:
+            if job.status not in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
                 logger.info(
                     " ".join(
                         ("Stopping model", entity.name, "with job name", str(job.name))
@@ -243,7 +243,7 @@ class Controller:
                             continue
 
                         job = self._jobs[node.name]
-                        job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                        job.set_status(SmartSimStatus.STATUS_CANCELLED, "", 0, output=None, error=None)
                         self._jobs.move_to_completed(job)
 
         db.reset_hosts()
@@ -271,7 +271,7 @@ class Controller:
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> str:
+    ) -> SmartSimStatus:
         """Get the status of an entity
 
         :param entity: entity to get status of
@@ -289,7 +289,7 @@ class Controller:
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
-    ) -> t.List[str]:
+    ) -> t.List[SmartSimStatus]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
@@ -726,11 +726,11 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all(stat == STATUS_RUNNING for stat in statuses):
+                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
-                elif any(stat in TERMINAL_STATUSES for stat in statuses):
+                elif any(stat in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED] for stat in statuses):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"
