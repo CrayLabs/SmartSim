@@ -108,13 +108,21 @@ def as_toggle(_eval_ctx: u.F, value: bool) -> str:
 
 @pass_eval_context
 def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
-    return next((item for item in value if "ifname" in item), str).split("=")[-1]
+    if value:
+        for val in value:
+            if "ifname=" in val:
+                output = val.split("=")[-1]
+                return output
+    return ""
 
 
 @pass_eval_context
 def get_dbtype(_eval_ctx: u.F, value: str) -> t.Any:
-    db_type, _ = value.split("/")[-1].split("-", 1)
-    return db_type
+    if value:
+        if "-cli" in value:
+            db_type, _ = value.split("/")[-1].split("-", 1)
+            return db_type
+    return ""
 
 
 def preview_to_file(content: str, filename: str) -> None:

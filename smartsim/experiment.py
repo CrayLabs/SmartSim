@@ -853,7 +853,7 @@ class Experiment:
         """
 
         # Retrive any active db jobs
-        active_dbjobs = self._control.active_orch_list
+        active_dbjobs = self._control.active_orch_dict
 
         preview_manifest = Manifest(*args)
 

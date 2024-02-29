@@ -30,6 +30,8 @@ from os import path as osp
 
 import numpy as np
 import pytest
+from jinja2 import Template
+from jinja2.filters import FILTERS
 
 import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
@@ -159,6 +161,48 @@ def test_preview_to_file(test_dir, wlmutils):
     assert path.is_file()
 
 
+def test_active_orch_dict_property(wlmutils, test_dir, choose_host):
+    """Ensure db_jobs remaines unchanched after deletion
+    of active_orch_dict property stays intace when retrieving db_jobs"""
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+
+    # start a new Experiment for this section
+    exp = Experiment(
+        "test_multidb_create_standard_twice", exp_path=test_dir, launcher=test_launcher
+    )
+
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(
+        port=test_port + 3,
+        interface=test_interface,
+        db_identifier="testdb_reg",
+        hosts=choose_host(wlmutils, 1),
+    )
+
+    # create database with different db_id
+    db2 = exp.create_database(
+        port=test_port + 5,
+        interface=test_interface,
+        db_identifier="testdb_reg2",
+        hosts=choose_host(wlmutils, 2),
+    )
+    exp.start(db, db2)
+
+    # Remove a job from active_orch_dict
+    active_orch_dict = exp._control.active_orch_dict
+    del active_orch_dict["testdb_reg2_0"]
+
+    # assert that db_jobs is not affected by deletion
+    assert len(active_orch_dict) == 1
+    assert len(exp._control._jobs.db_jobs) == 2
+
+    exp.stop(db, db2)
+
+
 def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     """Test active infrastructure without other orchestrators"""
 
@@ -182,7 +226,7 @@ def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     assert orc.is_active() == True
 
     # Retrieve started manifest from experiment
-    active_dbjobs = exp._control.active_orch_list
+    active_dbjobs = exp._control.active_orch_dict
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, active_dbjobs=active_dbjobs)
@@ -235,7 +279,7 @@ def test_preview_orch_active_infrastructure(wlmutils, test_dir, choose_host):
     )
 
     # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_list
+    active_dbjobs = exp._control.active_orch_dict
 
     preview_manifest = Manifest(orc2, orc3)
 
@@ -283,7 +327,7 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     exp.start(db, db2)
 
     # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_list
+    active_dbjobs = exp._control.active_orch_dict
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, active_dbjobs=active_dbjobs)
@@ -294,7 +338,7 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     assert "Network Interface" in output
     assert "Type" in output
     assert "TCP/IP" in output
-
+    
     assert "testdb_reg" in output
     assert "testdb_reg2" in output
     assert "Ochestrators" not in output
@@ -325,7 +369,7 @@ def test_preview_active_infrastructure_orchestrator_error(
     assert orc.is_active() == True
 
     # Retrieve any active jobs
-    active_dbjobs = exp._control.active_orch_list
+    active_dbjobs = exp._control.active_orch_dict
 
     preview_manifest = Manifest(orc)
 
@@ -1085,3 +1129,89 @@ def test_output_format_error():
         "The only valid output format currently available is plain_text"
         in ex.value.args[0]
     )
+
+
+def test_get_ifname_filter(wlmutils, test_dir, choose_host):
+    """Test get_ifname filter"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test-get-ifname-filter"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_1",
+    )
+    # Start the orchestrator
+    exp.start(orc)
+
+    assert orc.is_active() == True
+
+    active_dbjobs = exp._control.active_orch_dict
+
+    template_str = "{{db_exe_args | get_ifname}}"
+
+    for db in active_dbjobs.values():
+        FILTERS["get_ifname"] = previewrenderer.get_ifname
+        output = Template(template_str).render(
+            db_exe_args=db.entity.run_settings.exe_args
+        )
+        assert output == test_interface[0]
+        # Test empty input string
+        test_string = ""
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with no '=' delimiter
+        test_string = ["+ifnameib0"]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with empty RHS
+        test_string = ["=ib0"]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with empty LHS
+        test_string = ["+ifname="]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with no matching item
+        test_string = [
+            "+name=orc_1_0",
+            "+port=6780",
+        ]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+
+    exp.stop(orc)
+
+
+def test_get_dbtype_filter():
+    """Test get_dbtype filter to extract database backend from config"""
+
+    template_str = "{{ config | get_dbtype }}"
+    FILTERS["get_dbtype"] = previewrenderer.get_dbtype
+    output = Template(template_str).render(config=CONFIG.database_cli)
+    assert output in CONFIG.database_cli
+    # Test empty input
+    test_string = ""
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test empty path
+    test_string = "SmartSim/smartsim/_core/bin/"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test no hyphen
+    test_string = "SmartSim/smartsim/_core/bin/rediscli"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test no LHS
+    test_string = "SmartSim/smartsim/_core/bin/redis-"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test no RHS
+    test_string = "SmartSim/smartsim/_core/bin/-cli"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
