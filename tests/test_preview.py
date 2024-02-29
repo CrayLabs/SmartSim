@@ -338,7 +338,7 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     assert "Network Interface" in output
     assert "Type" in output
     assert "TCP/IP" in output
-    
+
     assert "testdb_reg" in output
     assert "testdb_reg2" in output
     assert "Ochestrators" not in output
