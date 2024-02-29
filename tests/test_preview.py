@@ -998,11 +998,29 @@ def test_get_ifname_filter(wlmutils, test_dir, choose_host):
         output = Template(template_str).render(
             db_exe_args=db.entity.run_settings.exe_args
         )
-
         assert output == test_interface[0]
-
-        empty_string = ""
-        output = Template(template_str).render(db_exe_args=empty_string)
+        # Test empty input string
+        test_string = ""
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with no '=' delimiter
+        test_string = ["+ifnameib0"]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with empty RHS
+        test_string = ["=ib0"]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with empty LHS
+        test_string = ["+ifname="]
+        output = Template(template_str).render(db_exe_args=test_string)
+        assert output == ""
+        # Test input with no matching item
+        test_string = [
+            "+name=orc_1_0",
+            "+port=6780",
+        ]
+        output = Template(template_str).render(db_exe_args=test_string)
         assert output == ""
 
     exp.stop(orc)
@@ -1011,12 +1029,27 @@ def test_get_ifname_filter(wlmutils, test_dir, choose_host):
 def test_get_dbtype_filter():
     """Test get_dbtype filter to extract database backend from config"""
 
-    template_str = "{{ config.database_cli | get_dbtype }}"
+    template_str = "{{ config | get_dbtype }}"
     FILTERS["get_dbtype"] = previewrenderer.get_dbtype
-    output = Template(template_str).render(config=CONFIG)
-
-    empty_string = ""
-    output = Template(template_str).render(config=empty_string)
-    assert output == ""
-
+    output = Template(template_str).render(config=CONFIG.database_cli)
     assert output in CONFIG.database_cli
+    # Test empty input
+    test_string = ""
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test empty path
+    test_string = "SmartSim/smartsim/_core/bin/"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test no hyphen
+    test_string = "SmartSim/smartsim/_core/bin/rediscli"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test no LHS
+    test_string = "SmartSim/smartsim/_core/bin/redis-"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""
+    # Test no RHS
+    test_string = "SmartSim/smartsim/_core/bin/-cli"
+    output = Template(template_str).render(config=test_string)
+    assert output == ""

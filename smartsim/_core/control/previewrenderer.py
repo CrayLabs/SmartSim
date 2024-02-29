@@ -109,15 +109,19 @@ def as_toggle(_eval_ctx: u.F, value: bool) -> str:
 @pass_eval_context
 def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
     if value:
-        return next((item for item in value if "ifname" in item), str).split("=")[-1]
+        for val in value:
+            if "ifname=" in val:
+                output = val.split("=")[-1]
+                return output
     return ""
 
 
 @pass_eval_context
 def get_dbtype(_eval_ctx: u.F, value: str) -> t.Any:
     if value:
-        db_type, _ = value.split("/")[-1].split("-", 1)
-        return db_type
+        if "-cli" in value:
+            db_type, _ = value.split("/")[-1].split("-", 1)
+            return db_type
     return ""
 
 
@@ -164,7 +168,9 @@ def _check_verbosity_level(
     """
     if not isinstance(verbosity_level, Verbosity):
 
-        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}")
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}"
+        )
         return Verbosity.INFO
     return verbosity_level
