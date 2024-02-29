@@ -221,7 +221,9 @@ def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     active_dbjobs = exp._control.active_orch_dict
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, active_dbjobs=active_dbjobs, verbosity_level="developer")
+    output = previewrenderer.render(
+        exp, active_dbjobs=active_dbjobs, verbosity_level="developer"
+    )
 
     assert "Active Infrastructure" in output
     assert "Database Identifier" in output
@@ -324,7 +326,9 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     active_dbjobs = exp._control.active_orch_dict
 
     # Execute method for template rendering
-    output = previewrenderer.render(exp, active_dbjobs=active_dbjobs, verbosity_level="developer")
+    output = previewrenderer.render(
+        exp, active_dbjobs=active_dbjobs, verbosity_level="developer"
+    )
 
     assert "Active Infrastructure" in output
     assert "Database Identifier" in output
@@ -367,7 +371,7 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     exp.start(db, db2)
 
     # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_list
+    active_dbjobs = exp._control.active_orch_dict
 
     # Execute method for template rendering
     output = previewrenderer.render(
