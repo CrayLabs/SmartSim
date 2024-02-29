@@ -75,7 +75,8 @@ _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
 F_MIN, F_MAX = 1.0, 600.0
 _LOG_FILE_NAME = "logs/telemetrymonitor.out"
 
-logger = get_logger(__name__)
+
+logger = logging.getLogger(__name__)
 
 
 class Sink(abc.ABC):
