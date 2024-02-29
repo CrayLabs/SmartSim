@@ -37,6 +37,7 @@ from ..._core.config import CONFIG
 from ..._core.control import Manifest
 from ...error.errors import PreviewFormatError
 from ...log import get_logger
+from .job import Job
 
 logger = get_logger(__name__)
 
@@ -59,6 +60,7 @@ def render(
     manifest: t.Optional[Manifest] = None,
     verbosity_level: Verbosity = Verbosity.INFO,
     output_format: Format = Format.PLAINTEXT,
+    active_dbjobs: t.Optional[t.Dict[str, Job]] = None,
 ) -> str:
     """
     Render the template from the supplied entities.
@@ -78,6 +80,8 @@ def render(
     env = jinja2.Environment(loader=loader, autoescape=True)
 
     env.filters["as_toggle"] = as_toggle
+    env.filters["get_ifname"] = get_ifname
+    env.filters["get_dbtype"] = get_dbtype
 
     version = f"_{output_format}"
     tpl_path = f"preview/base{version}.template"
@@ -88,16 +92,37 @@ def render(
 
     rendered_preview = tpl.render(
         exp_entity=exp,
+        active_dbjobs=active_dbjobs,
         manifest=manifest,
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
+
     return rendered_preview
 
 
 @pass_eval_context
 def as_toggle(_eval_ctx: u.F, value: bool) -> str:
     return "On" if value else "Off"
+
+
+@pass_eval_context
+def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
+    if value:
+        for val in value:
+            if "ifname=" in val:
+                output = val.split("=")[-1]
+                return output
+    return ""
+
+
+@pass_eval_context
+def get_dbtype(_eval_ctx: u.F, value: str) -> t.Any:
+    if value:
+        if "-cli" in value:
+            db_type, _ = value.split("/")[-1].split("-", 1)
+            return db_type
+    return ""
 
 
 def preview_to_file(content: str, filename: str) -> None:
