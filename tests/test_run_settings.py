@@ -162,20 +162,6 @@ def test_create_run_settings_input_mutation():
 ####### Base Run Settings tests #######
 
 
-def test_format_run_settings():
-    settings = RunSettings("python")
-    settings.add_exe_args("--time 5")
-    settings.add_exe_args(["--add", "--list"])
-    print(settings.exe_args)
-
-
-def test_format_run_settings():
-    settings = RunSettings("python")
-    settings.add_exe_args("--time 5")
-    settings.add_exe_args(["--add", "--list"])
-    print(settings.exe_args)
-
-
 def test_add_exe_args():
     """Ensure that valid exe args are added correctly"""
     settings = RunSettings("python")
