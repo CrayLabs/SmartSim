@@ -407,7 +407,7 @@ def test_shutdown_conditions():
     job_entity2.task_id = ""
 
     job_entity3 = JobEntity()
-    job_entity3.name = (job_entity2.name,)
+    job_entity3.name = job_entity2.name
     job_entity3.step_id = job_entity2.step_id
     job_entity3.task_id = job_entity2.task_id
     job_entity3.type = "orchestrator"
