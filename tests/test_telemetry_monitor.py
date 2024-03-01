@@ -415,7 +415,7 @@ def test_shutdown_conditions():
     mani_handler.job_manager.add_job(
         job_entity2.name, job_entity2.step_id, job_entity2, False
     )
-    mani_handler._tracked_jobs[JobEntity.key] = job_entity3
+    mani_handler._tracked_jobs[job_entity3.key] = job_entity3
 
     assert not can_shutdown(mani_handler)
     assert not bool(mani_handler.job_manager.db_jobs)  # db isn't run by job mgr
