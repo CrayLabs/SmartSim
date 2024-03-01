@@ -515,7 +515,7 @@ class CollectorManager:
     async def remove(self, entity: JobEntity) -> None:
         """Remove all collectors for the supplied entity"""
         registered = self._collectors.pop(entity.name, [])
-        _ = self._stoppers.pop(entity.name, [])
+        self._stoppers.pop(entity.name, [])
         observers = self._observers.pop(entity.name, [])
 
         if not registered:
