@@ -521,8 +521,7 @@ class CollectorManager:
         if not registered:
             return
 
-        if registered:
-            logger.debug(f"Removing collectors registered for {entity.name}")
+        logger.debug(f"Removing collectors registered for {entity.name}")
 
         asyncio.gather(*(col.shutdown() for col in registered))
 
