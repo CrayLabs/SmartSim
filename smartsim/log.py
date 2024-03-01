@@ -27,6 +27,7 @@
 import functools
 import logging
 import pathlib
+import socket
 import sys
 import threading
 import typing as t
@@ -128,6 +129,23 @@ class ContextInjectingLogFilter(logging.Filter):
         :rtype: bool
         """
         record.exp_path = ctx_exp_path.get()
+        return True
+
+
+class HostnameFilter(logging.Filter):
+    def __init__(self, name: str = "") -> None:
+        super().__init__(name)
+        self._hostname = ""
+
+    @property
+    @functools.lru_cache
+    def hostname(self) -> str:
+        self._hostname = socket.gethostname()
+        return self._hostname
+
+    def filter(self, record) -> bool:
+        if not hasattr(record, "hostname"):
+            record.hostname = self.hostname
         return True
 
 

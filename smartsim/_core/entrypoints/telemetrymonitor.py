@@ -62,7 +62,7 @@ from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
-from smartsim.log import get_logger
+from smartsim.log import DEFAULT_LOG_FORMAT, HostnameFilter
 from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
 
 # pylint: disable=too-many-lines
@@ -76,7 +76,7 @@ F_MIN, F_MAX = 1.0, 600.0
 _LOG_FILE_NAME = "logs/telemetrymonitor.out"
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("TelemetryMonitor")
 
 
 class Sink(abc.ABC):
@@ -1255,7 +1255,10 @@ if __name__ == "__main__":
     log_path = telem_dir / _LOG_FILE_NAME
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
+    formatter = logging.Formatter(DEFAULT_LOG_FORMAT)
     fh = logging.FileHandler(log_path, "a")
+    fh.addFilter(HostnameFilter())
+    fh.setFormatter(formatter)
     logger.addHandler(fh)
 
     # Must register cleanup before the main loop is running
