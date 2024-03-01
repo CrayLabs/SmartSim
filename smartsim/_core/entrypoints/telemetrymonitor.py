@@ -232,9 +232,9 @@ class TaskStatusHandler(PatternMatchingEventHandler):
         super().on_created(event)  # type: ignore
         self._notify(event.src_path)
 
+    @abc.abstractmethod
     def _notify(self, event_src: str) -> None:
         """Notify the collector that the entity has stopped"""
-        raise NotImplementedError("_notify is not implemented")
 
 
 class TaskCompleteHandler(TaskStatusHandler):
@@ -939,6 +939,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 )
 
                 if entity.is_managed:
+                    # Tell JobManager the task is unmanaged when adding so it will
+                    # monitor it but not try to start it
                     self.job_manager.add_job(
                         entity.name,
                         entity.task_id,
@@ -946,7 +948,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                         False,
                     )
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, entity.task_id, True
+                        entity.name, entity.step_id, entity.task_id, entity.is_managed
                     )
             self._tracked_runs[run.timestamp] = run
 
