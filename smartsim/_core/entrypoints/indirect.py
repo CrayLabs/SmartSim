@@ -106,7 +106,12 @@ def main(
         )
 
     logger.info(f"Waiting for child process {STEP_PID} to complete")
-    ret_code = process.wait()
+
+    try:
+        ret_code = process.wait()
+    except Exception as ex:
+        logger.error("Failed to complete process", exc_info=True)
+        ret_code = -1
 
     logger.info(
         f"Indirect proxy {proxy_pid} child process {STEP_PID} complete."
@@ -130,10 +135,11 @@ def main(
 
 def cleanup() -> None:
     """Perform cleanup required for clean termination"""
-    logger.info("Performing cleanup")
     global STEP_PID  # pylint: disable=global-statement
     if STEP_PID is None:
         return
+
+    logger.info("Performing cleanup")
 
     try:
         # attempt to stop the subprocess performing step-execution

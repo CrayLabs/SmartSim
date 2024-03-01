@@ -182,6 +182,52 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
     assert "Invalid cmd supplied" in ex.value.args[0]
 
 
+def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPatch):
+    """Ensure that a stop event is logged if the process unexpectedly terminates"""
+    mock_pid = 123
+    create_msg = "creating: {0}"
+    term_msg = "term: {0}"
+    wait_msg = "wait: {0}"
+
+    class MockProc:
+        def __init__(self, *args, **kwargs):
+            print(create_msg.format(mock_pid))
+
+        @property
+        def pid(self):
+            return mock_pid
+
+        def terminate(self):
+            print(term_msg.format(mock_pid))
+
+        def wait(self):
+            print(wait_msg.format(mock_pid))
+            raise Exception("You shall not pass!")
+
+    script = fileutils.get_test_conf_path("sleep.py")
+
+    exp_dir = pathlib.Path(test_dir)
+
+    raw_cmd = f"{sys.executable} {script} --time=10"
+    cmd = encode_cmd(raw_cmd.split())
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr("psutil.pid_exists", lambda pid: True)
+        ctx.setattr("psutil.Popen", MockProc)
+        ctx.setattr("smartsim._core.entrypoints.indirect.STEP_PID", mock_pid)
+
+        rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
+        assert rc == -1
+
+    data_dir = exp_dir / CONFIG.telemetry_subdir
+    stop_events = list(data_dir.rglob("stop.json"))
+
+    assert stop_events
+
+    content = stop_events[0].read_text()
+    assert "-1" in content
+
+
 def test_complete_process(fileutils, test_dir):
     """Ensure the happy-path completes and returns a success return code"""
     script = fileutils.get_test_conf_path("sleep.py")
