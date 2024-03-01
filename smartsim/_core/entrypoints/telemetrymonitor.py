@@ -1098,7 +1098,7 @@ async def event_loop(
 
         # track time elapsed to execute metric collection
         duration_ms = get_ts_ms() - start_ts
-        wait_ms = max(frequency - duration_ms, 0)
+        wait_ms = max(1000 * frequency - duration_ms, 0)
 
         # delay next loop if collection time didn't exceed loop frequency
         if wait_ms > 0:

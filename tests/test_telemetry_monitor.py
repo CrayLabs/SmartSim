@@ -456,7 +456,7 @@ async def test_auto_shutdown(test_dir: str):
     # show that an event handler w/out a monitored task will automatically stop
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    duration = 2
+    duration = 2000
 
     ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
