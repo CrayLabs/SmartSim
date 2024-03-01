@@ -252,7 +252,8 @@ class JobManager:
 
         :param entity: SmartSimEntity or EntitySequence instance
         :type entity: SmartSimEntity | EntitySequence
-        :returns: tuple of status
+        :returns: a SmartSimStatus status
+        :rtype: SmartSimStatus
         """
         with self._lock:
             if entity.name in self.completed:

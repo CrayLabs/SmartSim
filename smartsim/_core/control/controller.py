@@ -288,7 +288,7 @@ class Controller:
         :type entity: SmartSimEntity | EntitySequence
         :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
-        :rtype: str
+        :rtype: SmartSimStatus
         """
         if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
@@ -306,7 +306,7 @@ class Controller:
                             get statuses of
         :type entity_list: EntitySequence
         :raises TypeError: if not EntitySequence
-        :return: list of str statuses
+        :return: list of SmartSimStatus statuses
         :rtype: list
         """
         if not isinstance(entity_list, EntitySequence):

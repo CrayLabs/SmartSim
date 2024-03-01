@@ -125,9 +125,15 @@ class Job:
         """Set the status  of a job.
 
         :param new_status: The new status of the job
-        :type new_status: str
+        :type new_status: SmartSimStatus
+        :param raw_status: The return code for the launcher
+        :type raw_status: str
         :param returncode: The return code for the job
-        :type return_code: str
+        :type return_code: int
+        :param error: Output message
+        :type error: str
+        :param output: Output message
+        :type output: str
         """
         self.status = new_status
         self.raw_status = raw_status
