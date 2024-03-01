@@ -633,13 +633,7 @@ def _hydrate_persistable(
             "memory": persistable_entity.get("memory_file", ""),
         }
 
-        entity.telemetry_on = any(
-            (
-                entity.collectors["client"],
-                entity.collectors["client_count"],
-                entity.collectors["memory"],
-            )
-        )
+        entity.telemetry_on = any(entity.collectors.values())
         entity.config["host"] = persistable_entity.get("hostname", "")
         entity.config["port"] = persistable_entity.get("port", "")
 
