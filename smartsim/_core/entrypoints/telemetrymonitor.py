@@ -1052,27 +1052,26 @@ def can_shutdown(action_handler: ManifestEventHandler) -> bool:
 async def event_loop(
     observer: BaseObserver,
     action_handler: ManifestEventHandler,
-    frequency: t.Union[int, float],
+    frequency: int,
     cooldown_duration: int,
 ) -> None:
-    """Executes all attached timestep handlers every <frequency> seconds
+    """Executes all attached timestep handlers every <frequency> milliseconds
 
     :param observer: (optional) a preconfigured watchdog Observer to inject
     :type observer: t.Optional[BaseObserver]
     :param action_handler: The manifest event processor instance
     :type action_handler: ManifestEventHandler
-    :param frequency: frequency (in seconds) of update loop
+    :param frequency: frequency (in milliseconds) of update loop
     :type frequency: t.Union[int, float]
     :param logger: a preconfigured Logger instance
     :type logger: logging.Logger
-    :param cooldown_duration: number of seconds the telemetry monitor should
+    :param cooldown_duration: number of milliseconds the telemetry monitor should
                               poll for new jobs before attempting to shutdown
     :type cooldown_duration: int
     """
     elapsed: int = 0
     last_ts: int = get_ts_ms()
     shutdown_in_progress = False
-    cooldown_duration = 1000 * cooldown_duration  # convert to milliseconds
 
     while observer.is_alive() and not shutdown_in_progress:
         duration_ms = 0
@@ -1098,7 +1097,7 @@ async def event_loop(
 
         # track time elapsed to execute metric collection
         duration_ms = get_ts_ms() - start_ts
-        wait_ms = max(1000 * frequency - duration_ms, 0)
+        wait_ms = max(frequency - duration_ms, 0)
 
         # delay next loop if collection time didn't exceed loop frequency
         if wait_ms > 0:
@@ -1138,7 +1137,7 @@ async def main(
         f", telemetry path: {telemetry_path}"
     )
 
-    cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
+    cooldown_ms = 1000 * (cooldown_duration or CONFIG.telemetry_cooldown)
     log_handler = LoggingEventHandler(logger)  # type: ignore
     frequency_ms = int(frequency * 1000)  # limit collector execution time
     action_handler = ManifestEventHandler(
@@ -1160,7 +1159,7 @@ async def main(
         observer.schedule(action_handler, telemetry_path)  # type:ignore
         observer.start()  # type: ignore
 
-        await event_loop(observer, action_handler, frequency_ms, cooldown_duration)
+        await event_loop(observer, action_handler, frequency_ms, cooldown_ms)
         return os.EX_OK
     except Exception as ex:
         logger.error(ex)

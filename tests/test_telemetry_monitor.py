@@ -450,7 +450,7 @@ async def test_auto_shutdown(test_dir: str):
 
             return True
 
-    frequency = 1
+    frequency = 1000
 
     monitor_pattern = f"{test_dir}/mock_mani.json"
     # show that an event handler w/out a monitored task will automatically stop
@@ -468,7 +468,7 @@ async def test_auto_shutdown(test_dir: str):
     # show that the new cooldown duration is respected
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    duration = 5
+    duration = 5000
 
     ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
@@ -504,12 +504,12 @@ async def test_auto_shutdown_db():
     entity.type = "orchestrator"
     entity.telemetry_on = True
 
-    frequency = 1
+    frequency = 1000
 
     # show that an event handler w/out a monitored task will automatically stop
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    duration = 2
+    duration = 2000
 
     ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
@@ -521,7 +521,7 @@ async def test_auto_shutdown_db():
     # show that the new cooldown duration is respected
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    duration = 5
+    duration = 5000
 
     ts0 = get_ts_ms()
     await event_loop(observer, mani_handler, frequency, duration)
@@ -593,7 +593,7 @@ def test_telemetry_single_model_nonblocking(
         exp.start(smartsim_model)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+        snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
 
         assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
 
@@ -677,7 +677,7 @@ def test_telemetry_serial_models_nonblocking(
         exp.start(*smartsim_models)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+        snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
 
         assert all(
             [status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
@@ -717,7 +717,7 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config
         try:
             exp.start(orc, block=True)
 
-            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+            snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
 
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -726,7 +726,7 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config
             assert len(stop_events) <= 1
         finally:
             exp.stop(orc)
-            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+            snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
@@ -760,7 +760,7 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
         try:
             exp.start(orc)
 
-            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+            snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
 
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -770,7 +770,7 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
         finally:
             exp.stop(orc)
 
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+        snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -816,7 +816,7 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
             exp.stop(orc)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+        snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
 
         assert exp.get_status(orc)[0] == STATUS_CANCELLED
         assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
@@ -861,7 +861,7 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
         assert all([status == STATUS_COMPLETED for status in exp.get_status(ens)])
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+        snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -929,6 +929,8 @@ def test_telemetry_autoshutdown(
         ctx.setattr(cfg.Config, "telemetry_frequency", frequency)
         ctx.setattr(cfg.Config, "telemetry_cooldown", cooldown)
 
+        cooldown_ms = cooldown * 1000
+
         # Set experiment name
         exp_name = "telemetry_ensemble"
 
@@ -959,7 +961,7 @@ def test_telemetry_autoshutdown(
             time.sleep(3)
 
         assert popen.returncode is not None
-        assert stop_time >= (start_time + cooldown)
+        assert stop_time >= (start_time + cooldown_ms)
 
 
 class MockStep(Step):
