@@ -29,8 +29,8 @@ import time
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.settings.settings import RunSettings
+from smartsim.status import SmartSimStatus
 
 """
 Test the launch and stop of simple models and ensembles that use base

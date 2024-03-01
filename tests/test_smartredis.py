@@ -28,10 +28,10 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b

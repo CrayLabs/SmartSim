@@ -527,7 +527,10 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, con
         exp.generate(*smartsim_models)
         exp.start(*smartsim_models, block=True)
         assert all(
-            [status == SmartSimStatus.STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(*smartsim_models)
+            ]
         )
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
@@ -574,7 +577,10 @@ def test_telemetry_serial_models_nonblocking(
         snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
 
         assert all(
-            [status == SmartSimStatus.STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(*smartsim_models)
+            ]
         )
 
         start_events = list(telemetry_output_path.rglob("start.json"))
@@ -752,7 +758,12 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
         ens = exp.create_ensemble("troupeau", run_settings=app_settings, replicas=5)
         exp.generate(ens)
         exp.start(ens, block=True)
-        assert all([status == SmartSimStatus.STATUS_COMPLETED for status in exp.get_status(ens)])
+        assert all(
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(ens)
+            ]
+        )
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
@@ -791,7 +802,10 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
         exp.generate(smartsim_model)
         exp.start(smartsim_model, block=True)
         assert all(
-            [status == SmartSimStatus.STATUS_COMPLETED for status in exp.get_status(smartsim_model)]
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(smartsim_model)
+            ]
         )
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
@@ -1056,12 +1070,18 @@ def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
 @pytest.mark.parametrize(
     "status_in, expected_out, expected_has_jobs",
     [
-        pytest.param(SmartSimStatus.STATUS_CANCELLED, 1, False, id="failure on cancellation"),
-        pytest.param(SmartSimStatus.STATUS_COMPLETED, 0, False, id="success on completion"),
+        pytest.param(
+            SmartSimStatus.STATUS_CANCELLED, 1, False, id="failure on cancellation"
+        ),
+        pytest.param(
+            SmartSimStatus.STATUS_COMPLETED, 0, False, id="success on completion"
+        ),
         pytest.param(SmartSimStatus.STATUS_FAILED, 1, False, id="failure on failed"),
         pytest.param(SmartSimStatus.STATUS_NEW, None, True, id="failure on new"),
         pytest.param(SmartSimStatus.STATUS_PAUSED, None, True, id="failure on paused"),
-        pytest.param(SmartSimStatus.STATUS_RUNNING, None, True, id="failure on running"),
+        pytest.param(
+            SmartSimStatus.STATUS_RUNNING, None, True, id="failure on running"
+        ),
     ],
 )
 def test_wlm_completion_handling(

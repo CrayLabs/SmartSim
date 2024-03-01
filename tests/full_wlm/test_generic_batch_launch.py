@@ -29,8 +29,8 @@ from time import sleep
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.settings import QsubBatchSettings
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:

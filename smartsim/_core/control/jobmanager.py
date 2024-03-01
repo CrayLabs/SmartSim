@@ -104,7 +104,11 @@ class JobManager:
             for _, job in self().items():
                 # if the job has errors then output the report
                 # this should only output once
-                if job.returncode is not None and job.status in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
+                if job.returncode is not None and job.status in [
+                    SmartSimStatus.STATUS_CANCELLED,
+                    SmartSimStatus.STATUS_COMPLETED,
+                    SmartSimStatus.STATUS_FAILED,
+                ]:
                     if int(job.returncode) != 0:
                         logger.warning(job)
                         logger.warning(job.error_report())
@@ -204,7 +208,11 @@ class JobManager:
         with self._lock:
             job = self[entity.name]  # locked operation
             if entity.name in self.completed:
-                if job.status in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
+                if job.status in [
+                    SmartSimStatus.STATUS_CANCELLED,
+                    SmartSimStatus.STATUS_COMPLETED,
+                    SmartSimStatus.STATUS_FAILED,
+                ]:
                     return True
             return False
 
@@ -355,7 +363,15 @@ class JobManager:
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():
-                    if job.status not in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED] and self._launcher:
+                    if (
+                        job.status
+                        not in [
+                            SmartSimStatus.STATUS_CANCELLED,
+                            SmartSimStatus.STATUS_COMPLETED,
+                            SmartSimStatus.STATUS_FAILED,
+                        ]
+                        and self._launcher
+                    ):
                         self._launcher.stop(job.name)
             else:
                 logger.warning("SmartSim process interrupted before resource cleanup")

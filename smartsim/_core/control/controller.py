@@ -206,7 +206,11 @@ class Controller:
         """
         with JM_LOCK:
             job = self._jobs[entity.name]
-            if job.status not in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
+            if job.status not in [
+                SmartSimStatus.STATUS_CANCELLED,
+                SmartSimStatus.STATUS_COMPLETED,
+                SmartSimStatus.STATUS_FAILED,
+            ]:
                 logger.info(
                     " ".join(
                         ("Stopping model", entity.name, "with job name", str(job.name))
@@ -243,7 +247,13 @@ class Controller:
                             continue
 
                         job = self._jobs[node.name]
-                        job.set_status(SmartSimStatus.STATUS_CANCELLED, "", 0, output=None, error=None)
+                        job.set_status(
+                            SmartSimStatus.STATUS_CANCELLED,
+                            "",
+                            0,
+                            output=None,
+                            error=None,
+                        )
                         self._jobs.move_to_completed(job)
 
         db.reset_hosts()
@@ -730,7 +740,15 @@ class Controller:
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
-                elif any(stat in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED] for stat in statuses):
+                elif any(
+                    stat
+                    in [
+                        SmartSimStatus.STATUS_CANCELLED,
+                        SmartSimStatus.STATUS_COMPLETED,
+                        SmartSimStatus.STATUS_FAILED,
+                    ]
+                    for stat in statuses
+                ):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"

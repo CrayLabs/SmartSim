@@ -30,8 +30,8 @@ import time
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.database import Orchestrator
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b

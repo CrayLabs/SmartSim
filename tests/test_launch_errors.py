@@ -28,10 +28,10 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.database import Orchestrator
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a

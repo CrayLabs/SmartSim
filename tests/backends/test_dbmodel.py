@@ -30,12 +30,12 @@ import sys
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity import Ensemble
 from smartsim.entity.dbobject import DBModel
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
+from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 

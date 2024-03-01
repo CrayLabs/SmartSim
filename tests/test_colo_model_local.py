@@ -29,9 +29,9 @@ import sys
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.entity import Model
 from smartsim.error import SSUnsupportedError
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests

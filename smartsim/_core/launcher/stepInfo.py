@@ -27,7 +27,9 @@
 import typing as t
 
 import psutil
+
 from ...status import SmartSimStatus
+
 
 class StepInfo:
     def __init__(
@@ -45,7 +47,7 @@ class StepInfo:
         self.error = error
 
     def __str__(self) -> str:
-        info_str = f"Status: {self.status}"
+        info_str = f"Status: {self.status.value}"
         info_str += f" | Launcher Status {self.launcher_status}"
         info_str += f" | Returncode {str(self.returncode)}"
         return info_str
@@ -76,7 +78,9 @@ class UnmanagedStepInfo(StepInfo):
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
         return {
             psutil.STATUS_RUNNING: SmartSimStatus.STATUS_RUNNING,
-            psutil.STATUS_SLEEPING: SmartSimStatus.STATUS_RUNNING,  # sleeping thread is still alive
+            psutil.STATUS_SLEEPING: (
+                SmartSimStatus.STATUS_RUNNING
+            ),  # sleeping thread is still alive
             psutil.STATUS_WAKING: SmartSimStatus.STATUS_RUNNING,
             psutil.STATUS_DISK_SLEEP: SmartSimStatus.STATUS_RUNNING,
             psutil.STATUS_DEAD: SmartSimStatus.STATUS_FAILED,
@@ -153,11 +157,15 @@ class PBSStepInfo(StepInfo):  # cov-pbs
             "R": SmartSimStatus.STATUS_RUNNING,
             "B": SmartSimStatus.STATUS_RUNNING,
             "H": SmartSimStatus.STATUS_PAUSED,
-            "M": SmartSimStatus.STATUS_PAUSED,  # Actually means that it was moved to another server,
+            "M": (
+                SmartSimStatus.STATUS_PAUSED
+            ),  # Actually means that it was moved to another server,
             # TODO: understand what this implies
-            "Q":SmartSimStatus.STATUS_PAUSED,
+            "Q": SmartSimStatus.STATUS_PAUSED,
             "S": SmartSimStatus.STATUS_PAUSED,
-            "T": SmartSimStatus.STATUS_PAUSED,  # This means in transition, see above for comment
+            "T": (
+                SmartSimStatus.STATUS_PAUSED
+            ),  # This means in transition, see above for comment
             "U": SmartSimStatus.STATUS_PAUSED,
             "W": SmartSimStatus.STATUS_PAUSED,
             "E": SmartSimStatus.STATUS_COMPLETED,
@@ -174,7 +182,11 @@ class PBSStepInfo(StepInfo):  # cov-pbs
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
-                smartsim_status = SmartSimStatus.STATUS_COMPLETED if returncode == 0 else SmartSimStatus.STATUS_FAILED
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
             else:
                 # if PBS job history isnt available, and job isnt in queue
                 smartsim_status = SmartSimStatus.STATUS_COMPLETED
@@ -209,7 +221,11 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
-                smartsim_status = SmartSimStatus.STATUS_COMPLETED if returncode == 0 else SmartSimStatus.STATUS_FAILED
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
             else:
                 smartsim_status = SmartSimStatus.STATUS_COMPLETED
                 returncode = 0
@@ -241,7 +257,11 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
-                smartsim_status = SmartSimStatus.STATUS_COMPLETED if returncode == 0 else SmartSimStatus.STATUS_FAILED
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
             else:
                 smartsim_status = SmartSimStatus.STATUS_COMPLETED
                 returncode = 0

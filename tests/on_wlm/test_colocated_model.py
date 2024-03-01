@@ -29,8 +29,8 @@ import sys
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.entity import Model
+from smartsim.status import SmartSimStatus
 
 if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]

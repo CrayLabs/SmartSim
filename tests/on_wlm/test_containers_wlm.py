@@ -29,9 +29,9 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import SmartSimStatus
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
+from smartsim.status import SmartSimStatus
 
 """Test SmartRedis container integration on a supercomputer with a WLM."""
 

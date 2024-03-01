@@ -283,7 +283,11 @@ def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
     """Create a faux return code for a task run by the WLM. Must not be
     called with non-terminal statuses or results may be confusing
     """
-    if step_info.status not in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
+    if step_info.status not in [
+        SmartSimStatus.STATUS_CANCELLED,
+        SmartSimStatus.STATUS_COMPLETED,
+        SmartSimStatus.STATUS_FAILED,
+    ]:
         return None
 
     if step_info.status == SmartSimStatus.STATUS_COMPLETED:
@@ -494,7 +498,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             step_updates = self._launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:
-                if step_info and step_info.status in [SmartSimStatus.STATUS_CANCELLED, SmartSimStatus.STATUS_COMPLETED, SmartSimStatus.STATUS_FAILED]:
+                if step_info and step_info.status in [
+                    SmartSimStatus.STATUS_CANCELLED,
+                    SmartSimStatus.STATUS_COMPLETED,
+                    SmartSimStatus.STATUS_FAILED,
+                ]:
                     completed_entity = names[step_name]
                     self._to_completed(timestamp, completed_entity, step_info)
 
