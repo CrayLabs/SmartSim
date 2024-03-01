@@ -468,7 +468,15 @@ class CollectorManager:
 
     def add(self, col: Collector) -> None:
         """Add a new collector to the managed set"""
-        self.add_all([col])
+        registered_collectors = self._collectors[col.owner]
+
+        # ensure we only have 1 instance of a collector type registered
+        if any(x for x in registered_collectors if type(x) is type(col)):
+            return
+
+        logger.debug(f"Adding collector: {col.owner}::{type(col).__name__}")
+        self._collectors[col.owner].append(col)
+        self._create_stop_listener(col)
 
     def _create_stop_listener(self, collector: Collector) -> None:
         """Create a file system listener to trigger a shutdown callback
@@ -495,14 +503,7 @@ class CollectorManager:
     def add_all(self, clist: t.Iterable[Collector]) -> None:
         """Add multiple collectors to the managed set"""
         for col in clist:
-            owner_list = self._collectors[col.owner]
-            # ensure we can't add multiple collectors of the same type for an entity
-            if any(x for x in owner_list if type(x) is type(col)):
-                continue
-            logger.debug(f"Adding collector: {col.owner}::{type(col).__name__}")
-            self._collectors[col.owner].append(col)
-
-            self._create_stop_listener(col)
+            self.add(col)
 
     async def remove_all(self, entities: t.Iterable[JobEntity]) -> None:
         """Remove all collectors for the supplied entities"""
