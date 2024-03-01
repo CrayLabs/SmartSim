@@ -14,11 +14,10 @@
           Connection Type: UDS
           Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
           {%- endif -%}
+          {%- if model.run_settings.colocated_db_settings.ifname %}
           Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
           {%- endif %} 
-          {%- if model.run_settings.colocated_db_settings.unix_socket %}
-          Socket File: {{ model.run_settings.colocated_db_settings.unix_socket }}
-          {%- endif %}
+          {%- endif %} 
           Type: Colocated
           {%- if model.incoming_entities %}
           Incoming Entities (Available Data Sources): 
