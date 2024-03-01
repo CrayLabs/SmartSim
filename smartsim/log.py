@@ -143,7 +143,7 @@ class HostnameFilter(logging.Filter):
         self._hostname = socket.gethostname()
         return self._hostname
 
-    def filter(self, record) -> bool:
+    def filter(self, record: logging.LogRecord) -> bool:
         if not hasattr(record, "hostname"):
             record.hostname = self.hostname
         return True
