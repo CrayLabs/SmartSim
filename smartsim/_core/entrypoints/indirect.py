@@ -109,7 +109,7 @@ def main(
 
     try:
         ret_code = process.wait()
-    except Exception as ex:
+    except Exception:
         logger.error("Failed to complete process", exc_info=True)
         ret_code = -1
 
