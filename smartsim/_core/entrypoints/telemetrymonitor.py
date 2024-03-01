@@ -346,12 +346,7 @@ class DBMemoryCollector(DBCollector):
 
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save(
-            "timestamp",
-            "used_memory",
-            "used_memory_peak",
-            "total_system_memory",
-        )
+        await self._sink.save("timestamp", *self._columns)
 
     async def collect(self) -> None:
         if not self.enabled:
@@ -368,12 +363,8 @@ class DBMemoryCollector(DBCollector):
                 return
 
             db_info = await self._client.info("memory")
-            value = (
-                self.timestamp(),
-                float(db_info["used_memory"]),
-                float(db_info["used_memory_peak"]),
-                float(db_info["total_system_memory"]),
-            )
+            metrics = (float(db_info[col]) for col in self._columns)
+            value = (self.timestamp(), *metrics)
 
             await self._sink.save(*value)
         except Exception as ex:
@@ -384,9 +375,13 @@ class DBConnectionCollector(DBCollector):
     """A collector that collects client connection information from
     an orchestrator instance"""
 
+    def __init__(self, entity: JobEntity, sink: Sink) -> None:
+        super().__init__(entity, sink)
+        self._columns = ["client_id", "address"]
+
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save("timestamp", "client_id", "address")
+        await self._sink.save("timestamp", *self._columns)
 
     async def collect(self) -> None:
         if not self.enabled:
@@ -406,10 +401,10 @@ class DBConnectionCollector(DBCollector):
 
             clients = await self._client.client_list()
 
-            value = [(now_ts, item["id"], item["addr"]) for item in clients]
+            all_metrics = ((now_ts, item["id"], item["addr"]) for item in clients)
 
-            for client_info in value:
-                await self._sink.save(*client_info)
+            for metrics in all_metrics:
+                await self._sink.save(*metrics)
         except Exception as ex:
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
@@ -418,9 +413,13 @@ class DBConnectionCountCollector(DBCollector):
     """A collector that collects client connection information from
     an orchestrator instance and records aggregated counts"""
 
+    def __init__(self, entity: JobEntity, sink: Sink) -> None:
+        super().__init__(entity, sink)
+        self._columns = ["num_clients"]
+
     async def post_prepare(self) -> None:
         """Hook called after the db connection is established"""
-        await self._sink.save("timestamp", "num_clients")
+        await self._sink.save("timestamp", *self._columns)
 
     async def collect(self) -> None:
         if not self.enabled:
