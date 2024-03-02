@@ -1,58 +1,8 @@
-       
-    {%- for ensemble in manifest.ensembles %}
-    = Ensemble Name: {{ ensemble.name }} =
-        Members: {{ ensemble|length }}
-        {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
-        {%- if ensemble.params %}
-        Ensemble Parameters:  
-            {%- for key, value in ensemble.params.items() %}
-          {{ key }}: {{ '{:^9}'.format(value|string)|truncate(81,true,'...')}}
-                {%- endfor %}   
-    {%- endif %}   
-    {%- endif %}
-    {%- if verbosity_level == Verbosity.INFO %}
-        {%- if ensemble.models | length > 2 %}
-        {%- set model = ensemble.models[0] %}
-    - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text.template' %}
-              {%- if model.run_settings.colocated_db_settings %}
-                {% include "preview/clientconfigcolo_plain_text.template" %}
-            {%- endif %}
-            {%- if manifest.dbs %}
-            {% include "preview/clientconfig_plain_text.template" %}
-            {%- endif %}
-        ...
-        {% set model = ensemble.models[(ensemble.models | length)-1] %}  
-    - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text.template' %}
-              {%- if model.run_settings.colocated_db_settings %}
-                {% include "preview/clientconfigcolo_plain_text.template" %}
-            {%- endif %}
-            {%- if manifest.dbs %}
-            {% include "preview/clientconfig_plain_text.template" %}
-            {%- endif %}
-        {%- else %}
-        {% for model in ensemble %}
-        - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text.template' %}
-              {%- if model.run_settings.colocated_db_settings %}
-                {% include "preview/clientconfigcolo_plain_text.template" %}
-            {%- endif %}
-            {%- if manifest.dbs %}
-            {% include "preview/clientconfig_plain_text.template" %}
-            {%- endif %}
-        {% endfor %}
-        {%- endif %}
-    {%- else %}
-    {% for model in ensemble %}
-    - Model Name: {{ model.name }} -
-    {%- include 'preview/model_plain_text.template' %}
-              {%- if model.run_settings.colocated_db_settings %}
-                {% include "preview/clientconfigcolo_plain_text.template" %}
-            {%- endif %}
-            {%- if manifest.dbs %}
-            {% include "preview/clientconfig_plain_text.template" %}
-            {%- endif %}
-        {% endfor %}
-        {%- endif %}
-        {% endfor %}
+    
+
+{%- if verbosity_level == Verbosity.INFO %}
+{%- include "preview/ensemble_plain_text_info.template" -%}
+{% endif %}
+{%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+{%- include "preview/ensemble_plain_text_debug.template" -%}
+{% endif %}

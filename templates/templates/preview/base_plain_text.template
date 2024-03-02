@@ -33,7 +33,7 @@
         {% include "preview/clientconfigcolo_plain_text.template" %}
         {%- endif %}
         {%- if manifest.dbs %}
-        {% include "preview/clientconfig_plain_text.template" %}
+        {%- include "preview/clientconfig_plain_text.template" %}
         {%- endif %}
     {% endfor %}
     {%- endif %}

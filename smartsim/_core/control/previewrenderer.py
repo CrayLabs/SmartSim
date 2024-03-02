@@ -93,9 +93,9 @@ def render(
 
     if verbosity_level == Verbosity.INFO:
         logger.warning(
-            "Only showing user set parameters. Some entity "
-            "fields are truncated. To view truncated fields: use verbosity_"
-            "level 'developer' or 'debug'"
+            "Only showing user set parameters. Some entity fields are "
+            "truncated. To view truncated fields: use verbosity_level "
+            "'developer' or 'debug.'"
         )
 
     rendered_preview = tpl.render(
@@ -105,7 +105,7 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-
+    print(rendered_preview)
     return rendered_preview
 
 
@@ -176,7 +176,9 @@ def _check_verbosity_level(
     """
     if not isinstance(verbosity_level, Verbosity):
 
-        logger.warning(f"'{verbosity_level}' is an unsupported verbosity level.\
- Setting verbosity to: {Verbosity.INFO}")
+        logger.warning(
+            f"'{verbosity_level}' is an unsupported verbosity level.\
+ Setting verbosity to: {Verbosity.INFO}"
+        )
         return Verbosity.INFO
     return verbosity_level
