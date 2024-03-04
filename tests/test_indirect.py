@@ -214,6 +214,7 @@ def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPat
     with monkeypatch.context() as ctx:
         ctx.setattr("psutil.pid_exists", lambda pid: True)
         ctx.setattr("psutil.Popen", MockProc)
+        ctx.setattr("psutil.Process", MockProc)  # handle the proc.terminate()
         ctx.setattr("smartsim._core.entrypoints.indirect.STEP_PID", mock_pid)
 
         rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
