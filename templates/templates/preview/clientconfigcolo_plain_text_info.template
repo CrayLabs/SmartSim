@@ -24,4 +24,3 @@
             ML Models/Torch Scripts: {{ False | as_toggle }}
             Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}
           {%- endif %}
-
