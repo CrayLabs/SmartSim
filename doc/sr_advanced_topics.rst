@@ -1,2 +1,2 @@
-.. _learn_config_otpions:
+.. _config_options_explain:
 .. include:: ../smartredis/doc/advanced_topics.rst

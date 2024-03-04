@@ -1,4 +1,5 @@
 .. _model_object_doc:
+
 *****
 Model
 *****
@@ -91,6 +92,7 @@ is created to store input and output files from the ``Model``.
     and attached files.
 
 .. _std_model_doc:
+
 Example
 =======
 In this example, we provide a demonstration of how to initialize and launch a ``Model``
@@ -99,7 +101,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/model_init.py
 
 All workflow entities are initialized through the :ref:`Experiment API<experiment_api>`.
 Consequently, initializing a SmartSim ``Experiment`` is a prerequisite for ``Model``
@@ -109,7 +111,7 @@ To initialize an instance of the ``Experiment`` class, import the SmartSim
 ``Experiment`` module and invoke the ``Experiment`` constructor
 with a `name` and `launcher`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_init.py
   :language: python
   :linenos:
   :lines: 1-4
@@ -119,7 +121,7 @@ executed within the workflow. We use the ``Experiment`` instance `exp` to
 call the factory method ``Experiment.create_run_settings()`` to initialize a ``RunSettings``
 object. Finally, we specify the executable `"echo"` to run the executable argument `"Hello World"`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_init.py
     :language: python
     :linenos:
     :lines: 6-7
@@ -131,7 +133,7 @@ We now have a ``RunSettings`` instance named `model_settings` that contains all 
 information required to launch our application. Pass a `name` and the run settings instance
 to the ``create_model`` factory method:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_init.py
   :language: python
   :linenos:
   :lines: 9-10
@@ -139,7 +141,7 @@ to the ``create_model`` factory method:
 To create an isolated output directory for the ``Model``, invoke ``Experiment.generate()`` on the
 ``Model`` `model_instance`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_init.py
   :language: python
   :linenos:
   :lines: 12-13
@@ -153,7 +155,7 @@ To create an isolated output directory for the ``Model``, invoke ``Experiment.ge
 All entities are launched, monitored and stopped by the ``Experiment`` instance.
 To start the ``Model``, invoke ``Experiment.start()`` on `model_instance`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_init.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_init.py
   :language: python
   :linenos:
   :lines: 15-16
@@ -165,6 +167,7 @@ in the generated ``Model`` subdirectory:
 2. `model_instance.err` : this file will hold any errors that occurred during `model_instance` execution.
 
 .. _colo_model_doc:
+
 ======================
 Colocated Orchestrator
 ======================
@@ -210,6 +213,7 @@ Additionally, users may use the `custom_pinning` argument to avoid reserved proc
 by specifying a available processor ID or a list of available processor IDs.
 
 .. _files_doc:
+
 =====
 Files
 =====
@@ -243,6 +247,7 @@ In the :ref:`Example<files_example_doc>` subsection, we provide an example using
 within ``attach_generator_files()``.
 
 .. _files_example_doc:
+
 Example
 =======
 This example demonstrates how to attach a file to a ``Model`` for parameter replacement at the time
@@ -253,7 +258,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/model_file.py
 
 In this example, we have a text file named `params_inputs.txt`. Within the text file, is the parameter `THERMO`
 that is required by the ``Model`` application at runtime:
@@ -272,7 +277,7 @@ In order to have the tagged parameter `;THERMO;` replaced with a usable value at
 To encapsulate our application within a ``Model``, we must first create an ``Experiment`` instance.
 Begin by importing the ``Experiment`` module and initializing an ``Experiment``:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_file.py
   :language: python
   :linenos:
   :lines: 1-4
@@ -282,7 +287,7 @@ specify the ``Model`` executable (e.g. the full path to a compiled binary) as we
 executable arguments and launch parameters. Create a simple ``RunSettings`` object
 and specify the path to the executable script as an executable argument (`exe_args`):
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_file.py
   :language: python
   :linenos:
   :lines: 6-7
@@ -293,7 +298,7 @@ and specify the path to the executable script as an executable argument (`exe_ar
 Next, initialize a ``Model`` object via ``Experiment.create_model()``. Pass in the `model_settings` instance
 and the `params` value:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_file.py
   :language: python
   :linenos:
   :lines: 9-10
@@ -303,7 +308,7 @@ to the ``Model`` for use at entity runtime. To do so, use the
 ``Model.attach_generator_files()`` function and specify the `to_configure`
 parameter with the path to the text file, `params_inputs.txt`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_file.py
   :language: python
   :linenos:
   :lines: 12-13
@@ -311,7 +316,7 @@ parameter with the path to the text file, `params_inputs.txt`:
 To created an isolated directory for the ``Model`` outputs and configuration files, invoke ``Experiment.generate()``
 on `model_instance` as an input parameter:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/model_file.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/model_file.py
   :language: python
   :linenos:
   :lines: 15-16
@@ -323,6 +328,7 @@ The contents of `getting-started/model_name/params_inputs.txt` at runtime are:
    THERMO = 1
 
 .. _model_output_files:
+
 ======================
 Output and Error Files
 ======================
@@ -341,20 +347,26 @@ The files are created in the working directory of the ``Model``, and the filenam
     `path` parameter when invoking ``Experiment.create_model()``.
 
 .. _ml_script_model_doc:
+
 =====================
 ML Models and Scripts
 =====================
 Overview
 ========
-SmartSim users have the capability to utilize ML runtimes within a ``Model``.
-Functions accessible through a ``Model`` object support loading ML models (TensorFlow, TensorFlow-lite,
-PyTorch, and ONNX) and TorchScripts into standalone ``Orchestrators`` or colocated ``Orchestrators`` at
-application runtime.
+SmartSim users have the capability to load ML models and TorchScripts into an ``Orchestrator``
+within the ``Experiment`` script for use within a ``Model``. Functions accessible through
+a ``Model`` object support loading ML models (TensorFlow, TensorFlow-lite, PyTorch, and ONNX) and
+TorchScripts into standalone or colocated ``Orchestrators`` before application runtime.
 
 Users can follow **two** processes to load an ML model to the ``Orchestrator``:
 
 - :ref:`from memory<in_mem_ML_model_ex>`
 - :ref:`from file<from_file_ML_model_ex>`
+
+.. warning::
+    Uploading an ML model :ref:`from memory<in_mem_ML_model_ex>` is solely supported for
+    standalone ``Orchestrators``. To upload an ML model to a colocated ``Orchestrator``, users
+    must save the ML model to disk and upload :ref:`from file<from_file_ML_model_ex>`.
 
 Users can follow **three** processes to load a TorchScript to the ``Orchestrator``:
 
@@ -362,11 +374,17 @@ Users can follow **three** processes to load a TorchScript to the ``Orchestrator
 - :ref:`from file<TS_from_file>`
 - :ref:`from string<TS_raw_string>`
 
+.. warning::
+    Uploading a TorchScript :ref:`from memory<in_mem_TF_doc>` is solely supported for
+    standalone ``Orchestrators``. To upload a TorchScript to a colocated ``Orchestrator``, users
+    upload :ref:`from file<TS_from_file>` or :ref:`from string<TS_raw_string>`.
+
 Once an ML model or TorchScript is loaded into the ``Orchestrator``, ``Model`` objects can
 leverage ML capabilities by utilizing the SmartSim ``Client`` (:ref:`SmartRedis<smartredis-api>`)
 to execute the stored ML models and TorchScripts.
 
 .. _ai_model_doc:
+
 AI Models
 =========
 When configuring a ``Model``, users can instruct SmartSim to load
@@ -381,6 +399,7 @@ The arguments that customize the storage and execution of an ML model can be fou
 :ref:`Model API<model_api>` under the ``add_ml_model()`` docstring.
 
 .. _in_mem_ML_model_ex:
+
 -------------------------------------
 Example: Attach an in-memory ML Model
 -------------------------------------
@@ -390,7 +409,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
 
 .. note::
     This example assumes:
@@ -407,7 +426,7 @@ Additionally, the ``serialize_model()`` function returned the names of the input
 `inputs` and `outputs`. Assuming an initialized ``Model`` named `smartsim_model` exists, we add the in-memory TensorFlow model using
 the ``Model.add_ml_model()`` function and specify the in-memory ML model to the function parameter `model`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/in_mem_ml_model.py
   :language: python
   :linenos:
   :lines: 39-40
@@ -432,6 +451,7 @@ launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrat
 ``Client`` (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _from_file_ML_model_ex:
+
 ----------------------------------------
 Example: Attaching an ML Model from file
 ----------------------------------------
@@ -446,7 +466,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
 
 .. note::
     This example assumes:
@@ -463,7 +483,7 @@ Additionally, the ``freeze_model()`` function returned the names of the input an
 `inputs` and `outputs`. Assuming an initialized ``Model`` named `smartsim_model` exists, we add the TensorFlow model using
 the ``Model.add_ml_model()`` function and specify the TensorFlow model path to the parameter `model_path`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/from_file_ml_model.py
   :language: python
   :linenos:
   :lines: 39-40
@@ -488,6 +508,7 @@ launched standalone ``Orchestrator``. The ML model can then be executed on the `
 via a SmartRedis ``Client`` (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_doc:
+
 TorchScripts
 ============
 When configuring a ``Model``, users can instruct SmartSim to load TorchScripts dynamically
@@ -510,6 +531,7 @@ Continue or select a process link to learn more on how each function (``Model.ad
 dynamically load TorchScripts to launched ``Orchestrators``.
 
 .. _in_mem_TF_doc:
+
 -------------------------------
 Attach an in-memory TorchScript
 -------------------------------
@@ -527,7 +549,6 @@ In environments with multiple devices, specific device numbers can be specified 
 The arguments that customize the execution of an in-memory TorchScript function can be found in the
 :ref:`Model API<model_api>` under the ``add_function()`` docstring.
 
-.. _in_mem_TF_ex:
 Example: Loading a in-memory TorchScript function
 -------------------------------------------------
 This example walks through the steps of instructing SmartSim to load an in-memory TorchScript function
@@ -536,7 +557,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_script.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/in_mem_script.py
 
 .. note::
     The example assumes:
@@ -549,7 +570,7 @@ convenient execution and customization.
 To begin, define an in-memory TorchScript function within the ``Experiment`` driver script.
 For the purpose of the example, we add a simple TorchScript function named `timestwo`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_script.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/in_mem_script.py
   :language: python
   :linenos:
   :lines: 3-4
@@ -560,7 +581,7 @@ We use the ``Model.add_function()`` function to instruct SmartSim to load the To
 onto the launched standalone ``Orchestrator``. Specify the function `timestwo` to the `function`
 parameter:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/in_mem_script.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/in_mem_script.py
   :language: python
   :linenos:
   :lines: 15-16
@@ -582,6 +603,7 @@ standalone ``Orchestrator``. The function can then be executed on the ``Orchestr
 ``Client`` (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_from_file:
+
 ------------------------------
 Attach a TorchScript from file
 ------------------------------
@@ -595,7 +617,6 @@ In environments with multiple devices, specific device numbers can be specified 
 The arguments that customize the storage and execution of a TorchScript script can be found in the
 :ref:`Model API<model_api>` under the ``add_script()`` docstring.
 
-.. _TS_from_file_ex:
 Example: Loading a TorchScript from File
 ----------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript from file
@@ -604,7 +625,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_script.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/from_file_script.py
 
 .. note::
     This example assumes:
@@ -627,7 +648,7 @@ simple torch function shown below:
 Assuming an initialized ``Model`` named `smartsim_model` exists, we add the TorchScript script using
 ``Model.add_script()`` by specifying the script path to the `script_path` parameter:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/from_file_script.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/from_file_script.py
   :language: python
   :linenos:
   :lines: 13-14
@@ -649,6 +670,7 @@ When `smartsim_model` is started via ``Experiment.start()``, the TorchScript wil
 on the ``Orchestrator`` via a SmartRedis ``Client`` (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_raw_string:
+
 ---------------------------------
 Define TorchScripts as raw string
 ---------------------------------
@@ -662,7 +684,6 @@ In environments with multiple devices, specific device numbers can be specified 
 The arguments that customize the storage and execution of a TorchScript script can be found in the
 :ref:`Model API<model_api>` under the ``add_script()`` docstring.
 
-.. _TS_from_file_ex:
 Example: Loading a TorchScript from string
 ------------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript
@@ -671,7 +692,7 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/string_script.py
+    .. literalinclude:: tutorials/doc_examples/model_doc_examples/string_script.py
 
 .. note::
     This example assumes:
@@ -683,7 +704,7 @@ convenient execution and customization.
 
 Define the TorchScript code as a variable in the ``Experiment`` driver script:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/string_script.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/string_script.py
   :language: python
   :linenos:
   :lines: 12-13
@@ -694,7 +715,7 @@ Assuming an initialized ``Model`` named `smartsim_model` exists, we add a Tensor
 the ``Model.add_script()`` function and specify the variable `torch_script_str` to the parameter
 `script`:
 
-.. literalinclude:: ../tutorials/doc_examples/model_doc_examples/string_script.py
+.. literalinclude:: tutorials/doc_examples/model_doc_examples/string_script.py
   :language: python
   :linenos:
   :lines: 15-16
@@ -715,6 +736,7 @@ When the ``Model`` is started via ``Experiment.start()``, the TorchScript will b
 ``Orchestrator`` that is launched prior to the start of the ``Model``.
 
 .. _model_key_collision:
+
 =========================
 Data Collision Prevention
 =========================
@@ -758,6 +780,7 @@ The interaction between the prefix SmartSim `Model functions<model_prefix_func>`
 `Client functions<client_prefix_func>` are documentation below.
 
 .. _model_prefix_func:
+
 ---------------
 Model functions
 ---------------
@@ -785,6 +808,7 @@ For more information on ``Client.set_data_source()``, visit the
 :ref:`Client functions<client_prefix_func>` section.
 
 .. _client_prefix_func:
+
 ----------------
 Client functions
 ----------------
@@ -822,6 +846,7 @@ Examples are provided below that show the use of these ``Client`` methods in con
 with the SmartSim key prefixing ``Model`` API functions.
 
 .. _put_set_prefix:
+
 Put/Set Operations
 ==================
 In the following tabs we provide snippets of driver script and application code to demonstrate
@@ -841,12 +866,12 @@ SmartRedis put/get semantics.
 
         .. dropdown:: Example Driver Script source code
 
-            .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+            .. literalinclude:: tutorials/doc_examples/model_doc_examples/prefix_data.py
 
         In the driver script snippet below, we take an initialized ``Model`` and activate tensor
         prefixing through the ``enable_key_prefixing()`` function:
 
-        .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+        .. literalinclude:: tutorials/doc_examples/model_doc_examples/prefix_data.py
             :language: python
             :linenos:
             :lines: 6-12
@@ -909,12 +934,12 @@ SmartRedis put/get semantics.
 
         .. dropdown:: Example Driver Script source code
 
-            .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+            .. literalinclude:: tutorials/doc_examples/model_doc_examples/prefix_data.py
 
         In the driver script snippet below, we take an initialized ``Model`` and activate ``Dataset``
         prefixing through the ``enable_key_prefixing()`` function:
 
-        .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+        .. literalinclude:: tutorials/doc_examples/model_doc_examples/prefix_data.py
             :language: python
             :linenos:
             :lines: 6-12
@@ -981,12 +1006,12 @@ SmartRedis put/get semantics.
 
         .. dropdown:: Example Driver Script source code
 
-            .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+            .. literalinclude:: tutorials/doc_examples/model_doc_examples/prefix_data.py
 
         In the driver script snippet below, we take an initialized ``Model`` and activate list
         prefixing through the ``enable_key_prefixing()`` function:
 
-        .. literalinclude:: ../tutorials/doc_examples/model_doc_examples/prefix_data.py
+        .. literalinclude:: tutorials/doc_examples/model_doc_examples/prefix_data.py
             :language: python
             :linenos:
             :lines: 6-12
@@ -1554,6 +1579,7 @@ applications.
             return (X-mean)/std
 
 .. _run_prefix:
+
 Run Operations
 ==============
 In the following sections, we walk through snippets of application code to demonstrate executing
@@ -1748,6 +1774,7 @@ where ML Model and Script are placed by separate applications.
             and lists.
 
 .. _copy_rename_del_prefix:
+
 Copy/Rename/Delete Operations
 =============================
 In the following sections, we walk through snippets of application code to demonstrate the copy, rename and delete
@@ -1941,13 +1968,13 @@ scripts.
 
             1) "model_1.{renamed_dataset}.dataset_tensor"
             2) "model_1.{renamed_dataset}.meta"
-        
+
         Next, we copy the prefixed ``Dataset`` to a new destination:
 
         .. code-block:: python
 
             client.copy_dataset("renamed_dataset", "copied_dataset")
-        
+
         Since ``Dataset`` prefixing is enabled on the ``Client``, the `copied_dataset` is prefixed:
 
         .. code-block:: bash

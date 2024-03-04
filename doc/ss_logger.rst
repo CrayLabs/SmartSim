@@ -1,6 +1,9 @@
 ******
 Logger
 ******
+
+.. _ss_logger:
+
 ========
 Overview
 ========

@@ -1,4 +1,5 @@
 .. _ensemble_doc:
+
 ********
 Ensemble
 ********
@@ -26,6 +27,7 @@ SmartSim manages ``Ensemble`` instances through the :ref:`Experiment API<experim
 launch, monitor, and stop applications.
 
 .. _init_ensemble_strategies:
+
 ==============
 Initialization
 ==============
@@ -47,6 +49,7 @@ the creation of an ``Ensemble`` to align with one of the following creation stra
 3. :ref:`Manually<append_init>`: Attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
 
 .. _param_expansion_init:
+
 Parameter Expansion
 ===================
 Parameter expansion is a technique that allows users to set parameter values per ``Ensemble`` member.
@@ -74,6 +77,7 @@ while the :ref:`second example<param_second_ex>` demonstrates parameter expansio
 parameters along with the launch of the ``Ensemble`` as a batch workload.
 
 .. _param_first_ex:
+
 Example 1 : Parameter Expansion using `all_perm` strategy
 
     In this example an ``Ensemble`` of four ``Model`` entities is created by expanding two parameters
@@ -83,26 +87,26 @@ Example 1 : Parameter Expansion using `all_perm` strategy
 
     .. dropdown:: Example Driver Script source code
 
-        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+        .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
 
     Begin by initializing a ``RunSettings`` object to apply to
     all ``Ensemble`` members:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
         :language: python
         :linenos:
         :lines: 6-7
 
     Next, define the parameters that will be applied to the ``Ensemble``:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
         :language: python
         :linenos:
         :lines: 9-13
 
     Finally, initialize an ``Ensemble`` by specifying the ``RunSettings``, `params` and `perm_strategy="all_perm"`:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_1.py
         :language: python
         :linenos:
         :lines: 15-16
@@ -118,6 +122,7 @@ Example 1 : Parameter Expansion using `all_perm` strategy
         ensemble member 4: ["John", 11]
 
 .. _param_second_ex:
+
 Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` configured for batch launching
 
     In this example an ``Ensemble`` of two ``Model`` entities is created by expanding two parameters
@@ -128,12 +133,12 @@ Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` conf
 
     .. dropdown:: Example Driver Script source code
 
-        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+        .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
 
     Begin by initializing and configuring a ``BatchSettings`` object to
     run the ``Ensemble`` instance:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
         :language: python
         :linenos:
         :lines: 6-8
@@ -143,21 +148,21 @@ Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` conf
 
     Next initialize a ``RunSettings`` object to apply to all ``Ensemble`` members:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
         :language: python
         :linenos:
         :lines: 10-12
 
     Next, define the parameters to include in ``Ensemble``:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
         :language: python
         :linenos:
         :lines: 14-18
 
     Finally, initialize an ``Ensemble`` by passing in the ``RunSettings``, `params` and `perm_strategy="step"`:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/param_expansion_2.py
         :language: python
         :linenos:
         :lines: 20-21
@@ -171,6 +176,7 @@ Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` conf
         ensemble member 2: ["John", 11]
 
 .. _replicas_init:
+
 Replicas
 ========
 A replica strategy involves the creation of identical ``Models`` within an ``Ensemble``.
@@ -187,6 +193,7 @@ while the :ref:`second example<replicas_second_ex>` demonstrates creating four `
 member clones along with the launch of the ``Ensemble`` as a batch workload.
 
 .. _replicas_first_ex:
+
 Example 1 : ``Ensemble`` creation with replicas strategy
 
     In this example an ``Ensemble`` of four identical ``Model`` members is created by
@@ -197,19 +204,19 @@ Example 1 : ``Ensemble`` creation with replicas strategy
 
     .. dropdown:: Example Driver Script source code
 
-        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
+        .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
 
     To create an ``Ensemble`` of identical ``Models``, begin by initializing a ``RunSettings``
     object:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
         :language: python
         :linenos:
         :lines: 6-7
 
     Initialize the ``Ensemble`` by specifying the ``RunSettings`` object and number of clones to `replicas`:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
         :language: python
         :linenos:
         :lines: 9-10
@@ -217,6 +224,7 @@ Example 1 : ``Ensemble`` creation with replicas strategy
     By passing in `replicas=4`, four identical ``Ensemble`` members will be initialized.
 
 .. _replicas_second_ex:
+
 Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch launching
 
     In this example an ``Ensemble`` of four ``Model`` entities is created by specifying
@@ -227,12 +235,12 @@ Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch 
 
     .. dropdown:: Example Driver Script source code
 
-        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+        .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
 
     To launch the ``Ensemble`` of identical ``Models`` as a batch job, begin by initializing a ``BatchSettings``
     object:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
         :language: python
         :linenos:
         :lines: 6-9
@@ -242,7 +250,7 @@ Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch 
 
     Next, create a ``RunSettings`` object to apply to all ``Model`` replicas:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
         :language: python
         :linenos:
         :lines: 10-12
@@ -250,7 +258,7 @@ Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch 
     Initialize the ``Ensemble`` by specifying the ``RunSettings`` object, ``BatchSettings`` object
     and number of clones to `replicas`:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
         :language: python
         :linenos:
         :lines: 14-15
@@ -258,6 +266,7 @@ Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch 
     By passing in `replicas=4`, four identical ``Ensemble`` members will be initialized.
 
 .. _append_init:
+
 Manually Append
 ===============
 Manually appending ``Models`` to an ``Ensemble`` offers an in-depth level of customization in ``Ensemble`` design.
@@ -280,26 +289,26 @@ Example 1 : Append ``Models`` to an ``Ensemble`` and launch as a batch job
 
     .. dropdown:: Example Driver Script source code
 
-        .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+        .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
 
     To create an empty ``Ensemble`` to append ``Models``, initialize the ``Ensemble`` with
     a batch settings object:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
         :language: python
         :linenos:
         :lines: 6-11
 
     Next, create the ``Models`` to append to the ``Ensemble``:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
         :language: python
         :linenos:
         :lines: 13-20
 
     Finally, append the ``Model`` objects to the ``Ensemble``:
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
         :language: python
         :linenos:
         :lines: 22-25
@@ -307,6 +316,7 @@ Example 1 : Append ``Models`` to an ``Ensemble`` and launch as a batch job
     The new ``Ensemble`` is comprised of two appended ``Model`` members.
 
 .. _attach_files_ensemble:
+
 =====
 Files
 =====
@@ -348,6 +358,7 @@ within ``Ensemble.attach_generator_files()``.
     section of the ``Model`` documentation.
 
 .. _files_example_doc_ensem:
+
 Example
 =======
 This example demonstrates how to attach a text file to an ``Ensemble`` for parameter replacement.
@@ -358,12 +369,12 @@ convenient execution and customization.
 
 .. dropdown:: Example Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
 
 In this example, we have a text file named `params_inputs.txt`. Within the text, is the parameter `THERMO`
 that is required by each ``Ensemble`` member at runtime:
 
-.. code-block:: txt
+.. code-block:: bash
 
    THERMO = ;THERMO;
 
@@ -376,10 +387,9 @@ In order to have the tagged parameter `;THERMO;` replaced with a usable value at
 
 To encapsulate our application within an ``Ensemble``, we must create an ``Experiment`` instance
 to gain access to the ``Experiment`` factory method that creates the ``Ensemble``.
-Begin by importing the ``Experiment`` module and initializing
-an ``Experiment``:
+Begin by importing the ``Experiment`` module and initializing an ``Experiment``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
     :lines: 1-4
@@ -388,7 +398,7 @@ To create our ``Ensemble``, we are using the `replicas` initialization strategy.
 Begin by creating a simple ``RunSettings`` object to specify the path to
 the executable simulation as an executable:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
     :lines: 6-7
@@ -396,7 +406,7 @@ the executable simulation as an executable:
 Next, initialize an ``Ensemble`` object with ``Experiment.create_ensemble()``
 by passing in `ensemble_settings`, `params={"THERMO":1}` and `replicas=2`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
     :lines: 9-10
@@ -406,7 +416,7 @@ to the ``Ensemble`` for use at entity runtime. To do so, we use the
 ``Ensemble.attach_generator_files()`` function and specify the `to_configure`
 parameter with the path to the text file, `params_inputs.txt`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
     :lines: 12-13
@@ -414,7 +424,7 @@ parameter with the path to the text file, `params_inputs.txt`:
 To create an isolated directory for the ``Ensemble`` member outputs and configuration files, invoke ``Experiment.generate()`` via the
 ``Experiment`` instance `exp` with `example_ensemble` as an input parameter:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
     :lines: 15-16
@@ -422,27 +432,29 @@ To create an isolated directory for the ``Ensemble`` member outputs and configur
 After invoking ``Experiment.generate()``, the attached generator files will be available for the
 application when ``exp.start(example_ensemble)`` is called.
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/file_attach.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/file_attach.py
     :language: python
     :linenos:
     :lines: 18-19
 
 The contents of `params_inputs.txt` after ``Ensemble`` completion are:
 
-.. code-block:: txt
+.. code-block:: bash
 
    THERMO = 1
 
 .. _ensemble_ml_model_script:
+
 =====================
 ML Models and Scripts
 =====================
 Overview
 ========
-SmartSim users have the capability to load ML models and TorchScripts into an ``Orchestrator`` for
-use within ``Ensemble`` members. Functions accessible through an ``Ensemble`` object support loading
-ML models (TensorFlow, TensorFlow-lite, PyTorch, and ONNX) and TorchScripts into standalone
-``Orchestrators`` or colocated ``Orchestrators`` before application runtime.
+SmartSim users have the capability to load ML models and TorchScripts into an ``Orchestrator``
+within the ``Experiment`` script for use within ``Ensemble`` members. Functions
+accessible through an ``Ensemble`` object support loading ML models (TensorFlow, TensorFlow-lite,
+PyTorch, and ONNX) and TorchScripts into standalone or colocated ``Orchestrators`` before
+application runtime.
 
 .. seealso::
     To add an ML model or TorchScript to a single ``Model`` that will be appended to an
@@ -477,6 +489,7 @@ leverage ML capabilities by utilizing the SmartSim client (:ref:`SmartRedis<smar
 to execute the stored ML models or TorchScripts.
 
 .. _ai_model_ensemble_doc:
+
 AI Models
 =========
 When configuring an ``Ensemble``, users can instruct SmartSim to load
@@ -520,6 +533,7 @@ following arguments are offered to customize storage and execution:
     section of the ``Model`` documentation.
 
 .. _in_mem_ML_model_ensemble_ex:
+
 -------------------------------------
 Example: Attach an in-memory ML Model
 -------------------------------------
@@ -529,7 +543,7 @@ available in the dropdown below for convenient execution and customization.
 
 .. dropdown:: Experiment Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_mem.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_mem.py
 
 .. note::
     This example assumes:
@@ -546,7 +560,7 @@ Additionally, the ``serialize_model()`` function returned the names of the input
 `inputs` and `outputs`. Assuming an initialized ``Ensemble`` named `ensemble_instance` exists, we add the byte string TensorFlow model using
 ``Ensemble.add_ml_model()``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_mem.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_mem.py
   :language: python
   :linenos:
   :lines: 39-40
@@ -571,6 +585,7 @@ launched standalone ``Orchestrator``. The ML model can then be executed on the `
 client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _from_file_ML_model_ensemble_ex:
+
 ----------------------------------------
 Example: Attaching an ML Model from file
 ----------------------------------------
@@ -580,7 +595,7 @@ available in the dropdown below for convenient execution and customization.
 
 .. dropdown:: Experiment Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_file.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_file.py
 
 .. note::
     This example assumes:
@@ -597,7 +612,7 @@ Additionally, the ``freeze_model()`` function returned the names of the input an
 `inputs` and `outputs`. Assuming an initialized ``Ensemble`` named `ensemble_instance` exists, we add a TensorFlow model using
 the ``Ensemble.add_ml_model()`` function and specify the ML model path to the parameter `model_path`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_file.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_ml_model_file.py
   :language: python
   :linenos:
   :lines: 39-40
@@ -622,6 +637,7 @@ launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrat
 client (:ref:`SmartRedis<smartredis-api>`) within the application executable.
 
 .. _TS_ensemble_doc:
+
 TorchScripts
 ============
 When configuring an ``Ensemble``, users can instruct SmartSim to load TorchScripts dynamically
@@ -665,6 +681,7 @@ dynamically loads TorchScripts to the ``Orchestrator``.
     section of the ``Model`` documentation.
 
 .. _in_mem_TF_ensemble_doc:
+
 -------------------------------
 Attach an in-memory TorchScript
 -------------------------------
@@ -686,6 +703,7 @@ following arguments are offered:
 - `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
 .. _in_mem_TF_ex:
+
 Example: Loading a in-memory TorchScript function
 -------------------------------------------------
 This example walks through the steps of instructing SmartSim to load an in-memory TorchScript function
@@ -694,7 +712,7 @@ convenient execution and customization.
 
 .. dropdown:: Experiment Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
 
 .. note::
     The example assumes:
@@ -707,7 +725,7 @@ convenient execution and customization.
 To begin, define an in-memory TorchScript function within the Python driver script.
 For the purpose of the example, we add a simple TorchScript function, `timestwo`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
   :language: python
   :linenos:
   :lines: 3-4
@@ -718,7 +736,7 @@ We use the ``Ensemble.add_function()`` function to instruct SmartSim to load the
 onto the launched standalone ``Orchestrator``. Specify the function `timestwo` to the `function`
 parameter:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
   :language: python
   :linenos:
   :lines: 15-16
@@ -740,6 +758,7 @@ standalone ``Orchestrator``. The function can then be executed on the ``Orchestr
 client (:ref:`SmartRedis<smartredis-api>`) within the application code.
 
 .. _TS_from_file_ensemble:
+
 ------------------------------
 Attach a TorchScript from file
 ------------------------------
@@ -757,7 +776,6 @@ following arguments are offered:
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 - `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
-.. _TS_from_file_ex:
 Example: Loading a TorchScript from File
 ----------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript from file
@@ -766,7 +784,7 @@ convenient execution and customization.
 
 .. dropdown:: Experiment Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_file.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_file.py
 
 .. note::
     This example assumes:
@@ -795,7 +813,7 @@ simple torch function shown below:
 Assuming an initialized ``Ensemble`` named `ensemble_instance` exists, we add a TorchScript script using
 the ``Ensemble.add_script()`` function and specify the script path to the parameter `script_path`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_mem.py
   :language: python
   :linenos:
   :lines: 12-13
@@ -816,6 +834,7 @@ When `ensemble_instance` is started via ``Experiment.start()``, the TorchScript 
 ``Orchestrator`` that is launched prior to the start of `ensemble_instance`.
 
 .. _TS_raw_string_ensemble:
+
 ---------------------------------
 Define TorchScripts as raw string
 ---------------------------------
@@ -833,7 +852,6 @@ following arguments are offered:
 - `devices_per_node` (int = 1): The number of GPU devices available on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 - `first_device` (int = 0): The first GPU device to use on the host. This parameter only applies to GPU devices and will be ignored if device is specified as CPU.
 
-.. _TS_from_file_ex:
 Example: Loading a TorchScript from string
 ------------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript function
@@ -842,7 +860,7 @@ The source code example is available in the dropdown below for convenient execut
 
 .. dropdown:: Experiment Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_string.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_string.py
 
 .. note::
     This example assumes:
@@ -854,7 +872,7 @@ The source code example is available in the dropdown below for convenient execut
 
 Define the TorchScript code as a variable in the Python driver script:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_string.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_string.py
   :language: python
   :linenos:
   :lines: 12-13
@@ -865,7 +883,7 @@ Assuming an initialized ``Ensemble`` named `ensemble_instance` exists, we add a 
 the ``Ensemble.add_script()`` function and specify the variable `torch_script_str` to the parameter
 `script`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_string.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/ensemble_torchscript_string.py
   :language: python
   :linenos:
   :lines: 15-16
@@ -886,6 +904,7 @@ When the ``Ensemble`` is started via ``Experiment.start()``, the TorchScript wil
 ``Orchestrator`` that is launched prior to the start of the ``Ensemble``.
 
 .. _prefix_ensemble:
+
 =========================
 Data Collision Prevention
 =========================
@@ -922,6 +941,7 @@ their tensor `"tensor_0"` by name without overwriting or accessing the other ``M
 In this scenario, the two tensors placed in the ``Orchestrator`` are named `ensemble_0.tensor_0` and `ensemble_1.tensor_0`.
 
 .. _model_prefix_func_ensemble:
+
 ------------------
 Ensemble functions
 ------------------
@@ -983,7 +1003,7 @@ This example consists of **three** Python scripts:
 
 .. dropdown:: Application Producer Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_producer_script.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_producer_script.py
 
 1. :ref:`Application Consumer Script<app_con_prefix_ensemble>`: This script is encapsulated
    within a SmartSim ``Model`` in the ``Experiment`` driver script. The script requests the
@@ -992,7 +1012,7 @@ This example consists of **three** Python scripts:
 
 .. dropdown:: Application Consumer Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
 
 1. :ref:`Experiment Driver Script<exp_prefix_ensemble>`: The driver script launches the
    ``Orchestrator``, the ``Ensemble`` (which sends prefixed keys to the ``Orchestrator``),
@@ -1003,9 +1023,10 @@ This example consists of **three** Python scripts:
 
 .. dropdown:: Experiment Driver Script source code
 
-    .. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+    .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
 
 .. _app_prod_prefix_ensemble:
+
 -------------------------------
 The Application Producer Script
 -------------------------------
@@ -1019,7 +1040,7 @@ tensor is sent to the ``Orchestrator`` with the ``Ensemble`` member `name` prepe
 
 Here we provide the producer script that is applied to the ``Ensemble`` members:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_producer_script.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_producer_script.py
   :language: python
   :linenos:
 
@@ -1031,6 +1052,7 @@ After the completion of ``Ensemble`` members `producer_0` and `producer_1`, the 
     2) "producer_1.tensor"
 
 .. _app_con_prefix_ensemble:
+
 -------------------------------
 The Application Consumer Script
 -------------------------------
@@ -1045,7 +1067,7 @@ to append the name of an ``Ensemble`` member to the key `name`.
 
 To begin, specify the imports and initialize a SmartRedis ``Client``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
   :language: python
   :linenos:
   :lines: 1-4
@@ -1056,7 +1078,7 @@ as an argument to the function. This instructs SmartSim to append the ``Ensemble
 search on the ``Orchestrator``. When ``Client.poll_tensor()`` is executed,
 the SmartRedis `client` will poll for key, `producer_0.tensor`:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
   :language: python
   :linenos:
   :lines: 6-9
@@ -1064,14 +1086,14 @@ the SmartRedis `client` will poll for key, `producer_0.tensor`:
 Follow the same steps above, however, change the data source `name` to the `name`
 of the second ``Ensemble`` member (`producer_1`):
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
   :language: python
   :linenos:
   :lines: 11-14
 
 We print the boolean return to verify that the tensors were found:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/application_consumer_script.py
   :language: python
   :linenos:
   :lines: 16-17
@@ -1090,6 +1112,7 @@ When the ``Experiment`` driver script is executed, the following output will app
     We demonstrate this in the ``Experiment`` driver script section of the example.
 
 .. _exp_prefix_ensemble:
+
 ---------------------
 The Experiment Script
 ---------------------
@@ -1104,7 +1127,7 @@ application scripts. In the example, the ``Experiment``:
 To begin, add the necessary imports, initialize an ``Experiment`` instance and initialize the
 standalone ``Orchestrator``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 1-9
@@ -1114,21 +1137,21 @@ To create an ``Ensemble`` using the replicas strategy, begin by initializing a `
 object to apply to all ``Ensemble`` members. Specify the path to the application
 producer script:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 11-12
 
 Next, initialize an ``Ensemble`` by specifying `ensemble_settings` and the number of ``Model`` `replicas` to create:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 14-15
 
 Instruct SmartSim to prefix all tensors sent to the ``Orchestrator`` from the ``Ensemble`` via ``Ensemble.enable_key_prefixing()``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 17-18
@@ -1136,28 +1159,28 @@ Instruct SmartSim to prefix all tensors sent to the ``Orchestrator`` from the ``
 Next, initialize the consumer ``Model``. The consumer ``Model`` application requests
 the prefixed tensors produced by the ``Ensemble``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 20-23
 
 Next, organize the SmartSim entity output files into a single ``Experiment`` folder:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 25-26
 
 Launch the ``Orchestrator``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 28-29
 
 Launch the ``Ensemble``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 31-32
@@ -1170,21 +1193,21 @@ keys in the ``Orchestrator``. In order for SmartSim to recognize the ``Ensemble`
 member names as a valid data source in the consumer ``Model``, we must register
 the entity interaction:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 34-36
 
 Launch the consumer ``Model``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 38-39
 
 To finish, tear down the standalone ``Orchestrator``:
 
-.. literalinclude:: ../tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
+.. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/experiment_driver.py
   :language: python
   :linenos:
   :lines: 41-42

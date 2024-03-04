@@ -1,4 +1,5 @@
 .. _run_settings_doc:
+
 ************
 Run Settings
 ************
@@ -17,21 +18,21 @@ In general, ``RunSettings`` define:
 
 The base ``RunSettings`` class is utilized for local task launches,
 while its derived child classes offer specialized functionality for HPC workload managers (WLMs).
-Each SmartSim WLM `launcher` interfaces with a specific ``RunSettings`` subclass tailored to an HPC job scheduler.
+Each SmartSim `launcher` interfaces with a specific ``RunSettings`` subclass tailored to an HPC job scheduler.
 
-- Navigate to :ref:`Local<run_settings_local_ex>` section to configure run settings locally
-- Navigate to :ref:`HPC Systems<run_settings_hpc_ex>` section to configure run settings for HPC
+- Navigate to the :ref:`Local<run_settings_local_ex>` section to configure run settings locally
+- Navigate to the :ref:`HPC Systems<run_settings_hpc_ex>` section to configure run settings for HPC
 
 A ``RunSettings`` object is initialized through the ``Experiment.create_run_settings()`` function.
 This function accepts a `run_command` argument: the command to run the executable.
 
-If `run_command` is set to `auto`, SmartSim will attempt to match a run command on the
+If `run_command` is set to `"auto"`, SmartSim will attempt to match a run command on the
 system with a ``RunSettings`` class. If found, the class corresponding to
 that `run_command` will be created and returned.
 
-If the `run_command` is passed a recognized run command (e.g. `srun`) the ``RunSettings``
-instance will be a child class such as ``SrunSettings``. You may also specify `mpirun`,
-`mpiexec`, `aprun`, `jsrun` or `orterun` to the `run_command` argument.
+If the `run_command` is passed a recognized run command (e.g. `"srun"`) the ``RunSettings``
+instance will be a child class such as ``SrunSettings``. You may also specify `"mpirun"`,
+`"mpiexec"`, `"aprun"`, `"jsrun"` or `"orterun"` to the `run_command` argument.
 This will return the associated child class.
 
 If the run command is not supported by SmartSim, the base ``RunSettings`` class will be created and returned
@@ -45,29 +46,32 @@ settings for jobs.
 Examples
 ========
 .. _run_settings_local_ex:
+
 Local
 =====
-When running SmartSim on laptops and single node workstations via the `"local"` `launcher`, job execution is configured
-with the base ``RunSettings`` object. For local launches, ``RunSettings`` accepts a `run_command` parameter to allow
-the use of parallel launch binaries like `mpirun`, `mpiexec`, and others.
+When running SmartSim on laptops and single node workstations via the `"local"`
+`launcher`, job execution is configured with the base ``RunSettings`` object.
+For local launches, ``RunSettings`` accepts a `run_command` parameter to allow
+the use of parallel launch binaries like `"mpirun"`, `"mpiexec"`, and others.
 
 If no `run_command` is specified and the ``Experiment`` `launcher` is set to `"local"`,
-the executable is launched locally. When using the `"local"` launcher and
-setting `run_command` to `"auto"` in the ``Experiment.create_run_settings()`` factory
-method, SmartSim defaults to not prepending any run command before the executable.
+the executable is launched locally. When utilizing the `"local"` launcher and configuring
+the `run_command` parameter to `"auto"` in the ``Experiment.create_run_settings()`` factory
+method, SmartSim defaults to omitting any run command prefix before the executable.
 
-Once the RunSettings object is initialized using the ``Experiment.create_run_settings()`` factory
+Once the ``RunSettings`` object is initialized using the ``Experiment.create_run_settings()`` factory
 method, the :ref:`RunSettings API<rs-api>` can be used to further configure the
 ``RunSettings`` object prior to execution.
 
 .. note::
-      The local launcher is the default launcher for all Experiment instances.
+      The local `launcher` is the default `launcher` for all ``Experiment`` instances.
 
 When the user initializes the ``Experiment`` at the beginning of the Python driver script,
-a `launcher` argument may be specified. SmartSim will register or detect the `launcher` and return the supported class
-upon a call to ``Experiment.create_run_settings()``. Below we demonstrate creating and configuring the base ``RunSettings``
+a `launcher` argument may be specified. SmartSim will register or detect the
+`launcher` and return the supported class upon a call to ``Experiment.create_run_settings()``.
+Below we demonstrate creating and configuring the base ``RunSettings``
 object for local launches by specifying the `"local"` launcher during ``Experiment`` creation.
-We show an example for each run command that may be provided: `mpirun` and `mpiexec`.
+We also demonstrate specifying `run_command="mpirun"` locally.
 
 **Initialize and configure a run settings object with no run command specified:**
 
@@ -101,6 +105,7 @@ We show an example for each run command that may be provided: `mpirun` and `mpie
 Users may replace `mpirun` with `mpiexec`.
 
 .. _run_settings_hpc_ex:
+
 HPC System
 ==========
 To configure an entity for launch on an HPC system, SmartSim offers ``RunSettings`` child classes.
@@ -110,8 +115,8 @@ a `launcher` argument may be specified. The specified `launcher` will be used by
 return the correct ``RunSettings`` child class that matches with the specified (or auto-detected)
 `run_command` upon a call to ``Experiment.create_run_settings()``. Below we demonstrate
 creating and configuring the base ``RunSettings`` object for HPC launches
-by specifying the launcher during ``Experiment`` creation. We show an example
-for each run command that may be provided.
+by specifying the launcher during ``Experiment`` creation. We show examples
+for each job scheduler.
 
 .. tabs::
 
@@ -119,20 +124,20 @@ for each run command that may be provided.
 
       The Slurm `launcher` supports the :ref:`SrunSettings API <srun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
-      with launch binaries like `srun`, `mpirun`, `mpiexec` and `orterun`. Below we step through initializing a ``SrunSettings`` and ``MpirunSettings``
+      with launch binaries like `"srun"`, `"mpirun"`, `"mpiexec"` and `"orterun"`. Below we step through initializing a ``SrunSettings`` and ``MpirunSettings``
       instance on a Slurm based machine using the associated `run_command`.
 
       **SrunSettings**
 
-      Run a job with the `srun` command on a Slurm based system. Any arguments passed in the `run_args` dict will
-      be converted into `srun` arguments and prefixed with `"--"`. Values of `None` can be provided for
-      arguments that do not have values.
+      Run a job with the `srun` command on a Slurm based system. Any arguments passed in
+      the `run_args` dict will be converted into `srun` arguments and prefixed with `"--"`.
+      Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
 
             from smartsim import Experiment
 
-            # Initialize the experiment and provide launcher Slurm
+            # Initialize the Experiment and provide launcher Slurm
             exp = Experiment("name-of-experiment", launcher="slurm")
 
             # Initialize a SrunSettings object
@@ -148,14 +153,16 @@ for each run command that may be provided.
 
       **MpirunSettings**
 
-      Run a job with the `mpirun` command (MPI-standard) on a Slurm based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `"--"`.
-      Values of `None` can be provided for arguments that do not have values.
+      Run a job with the `mpirun` command (MPI-standard) on a Slurm based system. Any
+      arguments passed in the `run_args` dict will be converted into `mpirun` arguments
+      and prefixed with `"--"`. Values of `None` can be provided for arguments that do
+      not have values.
 
       .. code-block:: python
 
             from smartsim import Experiment
 
-            # Initialize the experiment and provide launcher Slurm
+            # Initialize the Experiment and provide launcher Slurm
             exp = Experiment("name-of-experiment", launcher="slurm")
 
             # Initialize a MpirunSettings object
@@ -172,12 +179,13 @@ for each run command that may be provided.
     .. group-tab:: PBS Pro
       The PBS Pro `launcher` supports the :ref:`AprunSettings API <aprun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
-      with launch binaries like `mpirun`, `mpiexec` and `orterun`. Below we step through initializing a ``AprunSettings`` and ``MpirunSettings``
+      with launch binaries like `"aprun"`, `"mpirun"`, `"mpiexec"` and `"orterun"`. Below we step through initializing a ``AprunSettings`` and ``MpirunSettings``
       instance on a PBS Pro based machine using the associated `run_command`.
 
       **AprunSettings**
 
-      Run a job with `aprun` command on a PBS Pro based system. Any arguments passed in the `run_args` dict will be converted into `aprun` arguments and prefixed with `--`.
+      Run a job with `aprun` command on a PBS Pro based system. Any arguments passed in
+      the `run_args` dict will be converted into `aprun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -198,7 +206,8 @@ for each run command that may be provided.
 
       **MpirunSettings**
 
-      Run a job with `mpirun` command on a PBS Pro based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
+      Run a job with `mpirun` command on a PBS Pro based system. Any arguments passed
+      in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -246,12 +255,13 @@ for each run command that may be provided.
     .. group-tab:: LSF
       The LSF `launcher` supports the :ref:`JsrunSettings API <jsrun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
-      with launch binaries like `mpirun`, `mpiexec` and `orterun`. Below we step through initializing a ``JsrunSettings`` and ``MpirunSettings``
+      with launch binaries like `"jsrun"`, `"mpirun"`, `"mpiexec"` and `"orterun"`. Below we step through initializing a ``JsrunSettings`` and ``MpirunSettings``
       instance on a LSF based machine using the associated `run_command`.
 
       **JsrunSettings**
 
-      Run a job with `jsrun` command on a LSF based system. Any arguments passed in the `run_args` dict will be converted into `jsrun` arguments and prefixed with `--`.
+      Run a job with `jsrun` command on a LSF based system. Any arguments passed in the
+      `run_args` dict will be converted into `jsrun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
@@ -272,7 +282,8 @@ for each run command that may be provided.
 
       **MpirunSettings**
 
-      Run a job with `mpirun` command on a LSF based system. Any arguments passed in the `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
+      Run a job with `mpirun` command on a LSF based system. Any arguments passed in the
+      `run_args` dict will be converted into `mpirun` arguments and prefixed with `--`.
       Values of `None` can be provided for arguments that do not have values.
 
       .. code-block:: python
