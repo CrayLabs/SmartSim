@@ -564,13 +564,13 @@ class CollectorManager:
         logger.debug("Collector shutdown complete...")
 
     @property
-    def all_collectors(self) -> t.Iterable[Collector]:
+    def all_collectors(self) -> t.Sequence[Collector]:
         """Get a list of all managed collectors"""
         collectors = itertools.chain.from_iterable(self._collectors.values())
         return [col for col in collectors if col.enabled]
 
     @property
-    def dead_collectors(self) -> t.Iterable[Collector]:
+    def dead_collectors(self) -> t.Sequence[Collector]:
         collectors = itertools.chain.from_iterable(self._collectors.values())
         return [col for col in collectors if not col.enabled]
 
