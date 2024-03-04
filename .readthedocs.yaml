@@ -10,8 +10,9 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
-  commands:
-    - ln -s https://github.com/CrayLabs/SmartRedis.git smartredis
+  pre_create_environment:
+      - git clone https://github.com/CrayLabs/SmartRedis.git
+      - ln -s ../SmartRedis smartredis
     # You can also specify other tool versions:
     # nodejs: "19"
     # rust: "1.64"
@@ -20,6 +21,7 @@ build:
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: doc/conf.py
+  fail_on_warning: true
 
 # Optionally build your docs in additional formats such as PDF and ePub
 # formats:
