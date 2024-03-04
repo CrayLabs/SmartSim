@@ -199,6 +199,7 @@ def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
     while manifest_dict is None and try_count < _MAX_MANIFEST_LOAD_ATTEMPTS:
         source = pathlib.Path(file_path)
         source = source.resolve()
+        time.sleep(0.01)  # a tiny sleep avoids reading partially written json
 
         try:
             if text := source.read_text(encoding="utf-8").strip():
