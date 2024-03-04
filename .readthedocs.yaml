@@ -10,9 +10,12 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
-  pre_create_environment:
-      - git clone https://github.com/CrayLabs/SmartRedis.git
-      - ln -s ../SmartRedis smartredis
+  jobs:
+    pre_build:
+        - python -m sphinx -b linkcheck -D linkcheck_timeout=1 doc/ $READTHEDOCS_OUTPUT/linkcheck
+    # post_checkout:
+    #   - git clone https://github.com/CrayLabs/SmartRedis.git
+    #   - ln -s ../SmartRedis smartredis
     # You can also specify other tool versions:
     # nodejs: "19"
     # rust: "1.64"
