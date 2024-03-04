@@ -394,7 +394,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 filter_fn=lambda e: e.key not in self._tracked_jobs
             ):
                 entity.path = str(exp_dir)
-                self._tracked_jobs[entity.key] = entity
 
                 if entity.telemetry_on:
                     collectors = find_collectors(entity)
@@ -410,6 +409,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 )
 
                 if entity.is_managed:
+                    self._tracked_jobs[entity.key] = entity
+
                     # Tell JobManager the task is unmanaged when adding so it will
                     # monitor it but not try to start it
                     self.job_manager.add_job(
