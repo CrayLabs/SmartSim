@@ -12,10 +12,16 @@ build:
     python: "3.10"
   jobs:
     pre_install:
-      - pip install .[dev]
-      - git clone https://github.com/CrayLabs/SmartRedis.git
-      - ln -s ../SmartRedis smartredis
-      - ln -s ./smartredis/examples ./examples
+      - python -m pip install .
+      - git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis
+      - cd smartredis
+      - python -m pip install .
+      - rm -rf ~/.cache/pip
+      - cd ..
+      - git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard
+      - cd smartdashboard
+      - python -m pip install .
+      - rm -rf ~/.cache/pip
     pre_build:
         - python -m sphinx -b linkcheck -D linkcheck_timeout=1 doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
