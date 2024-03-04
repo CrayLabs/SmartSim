@@ -1,5 +1,4 @@
-    
-
+   
 {%- if verbosity_level == Verbosity.INFO %}
 {%- include "preview/ensemble_plain_text_info.template" -%}
 {% endif %}
