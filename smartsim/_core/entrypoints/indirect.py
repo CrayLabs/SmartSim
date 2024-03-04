@@ -37,8 +37,8 @@ import coloredlogs
 import psutil
 
 import smartsim.log
-from smartsim._core.entrypoints.telemetrymonitor import track_event
 from smartsim._core.utils.helpers import decode_cmd, get_ts_ms
+from smartsim._core.utils.telemetry.telemetry import track_event
 
 STEP_PID: t.Optional[int] = None
 logger = smartsim.log.get_logger(__name__)

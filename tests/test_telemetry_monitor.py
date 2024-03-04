@@ -41,26 +41,29 @@ from smartsim import Experiment
 from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.entrypoints.telemetrymonitor import (
-    DBCollector,
-    DBConnectionCollector,
-    DBMemoryCollector,
     ManifestEventHandler,
-    TaskCompleteHandler,
     can_shutdown,
     check_frequency,
     event_loop,
-    faux_return_code,
     get_parser,
     get_ts_ms,
-    hydrate_persistable,
-    load_manifest,
-    track_event,
 )
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils import serialize
+from smartsim._core.utils.telemetry.collector import (
+    DBConnectionCollector,
+    DBMemoryCollector,
+    TaskCompleteHandler,
+)
+from smartsim._core.utils.telemetry.telemetry import (
+    faux_return_code,
+    hydrate_persistable,
+    load_manifest,
+    track_event,
+)
 from smartsim.error.errors import UnproxyableStepError
 from smartsim.settings.base import RunSettings
 from smartsim.status import (

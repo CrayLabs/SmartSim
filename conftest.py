@@ -45,7 +45,7 @@ import smartsim
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
-from smartsim._core.entrypoints.telemetrymonitor import JobEntity
+from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SSConfigError

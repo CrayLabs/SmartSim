@@ -23,14 +23,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pathlib
-import typing as t
 import uuid
 
 import pytest
 
 from conftest import MockCollectorEntityFunc
-from smartsim._core.entrypoints.telemetrymonitor import FileSink
+from smartsim._core.utils.telemetry.collector import FileSink
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a

@@ -35,7 +35,6 @@ import smartsim._core._cli.utils as _utils
 import smartsim.log
 
 if t.TYPE_CHECKING:
-    from smartsim import Experiment
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import Orchestrator
     from smartsim.entity import DBNode, Ensemble, Model
@@ -225,6 +224,7 @@ def _dictify_db(
         db_type, _ = db_path.name.split("-", 1)
     else:
         db_type = "Unknown"
+
     return {
         "name": db.name,
         "type": db_type,

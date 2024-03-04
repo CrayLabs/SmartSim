@@ -23,15 +23,16 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pathlib
+# import pathlib
+
 import typing as t
-import uuid
 
 import pytest
 
 import smartsim._core.entrypoints.telemetrymonitor
+import smartsim._core.utils.telemetry.collector
 from conftest import MockCollectorEntityFunc, MockSink
-from smartsim._core.entrypoints.telemetrymonitor import (
+from smartsim._core.utils.telemetry.collector import (
     DBConnectionCollector,
     DBConnectionCountCollector,
     DBMemoryCollector,
@@ -145,7 +146,7 @@ async def test_dbmemcollector_collect(
     with monkeypatch.context() as ctx:
         ctx.setattr(redisa, "Redis", mock_redis(mem_stats=mock_mem(1, 2)))
         ctx.setattr(
-            smartsim._core.entrypoints.telemetrymonitor,
+            smartsim._core.utils.telemetry.collector,
             "get_ts_ms",
             lambda: 12131415000,  # mult by 1000 for ms->s conversion
         )
@@ -161,7 +162,7 @@ async def test_dbmemcollector_collect(
         }
         actual_items = set(sink.args)
 
-        reqd_values = {1000, 1111, 1234, 12131415}
+        reqd_values = {1000.0, 1111.0, 1234.0, 12131415.0}
         actual_values = set(sink.args)
         assert actual_values == reqd_values
 
@@ -182,7 +183,7 @@ async def test_dbmemcollector_integration(
 
     with monkeypatch.context() as ctx:
         ctx.setattr(
-            smartsim._core.entrypoints.telemetrymonitor,
+            smartsim._core.utils.telemetry.collector,
             "get_ts_ms",
             lambda: 12131415000,  # mult by 1000 for ms->s conversion
         )
@@ -279,7 +280,7 @@ async def test_dbconncollector_integration(
 
     with monkeypatch.context() as ctx:
         ctx.setattr(
-            smartsim._core.entrypoints.telemetrymonitor,
+            smartsim._core.utils.telemetry.collector,
             "get_ts_ms",
             lambda: 12131415000,  # mult by 1000 for ms->s conversion
         )

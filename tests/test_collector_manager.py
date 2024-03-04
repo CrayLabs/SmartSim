@@ -25,21 +25,20 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import asyncio
 import datetime
-import typing as t
 
 import pytest
 
 from conftest import MockCollectorEntityFunc
-from smartsim._core.entrypoints.telemetrymonitor import (
+from smartsim._core.utils.telemetry.collector import (
     CollectorManager,
     DBConnectionCollector,
     DBConnectionCountCollector,
     DBMemoryCollector,
     FileSink,
-    JobEntity,
     find_collectors,
     redisa,
 )
+from smartsim._core.utils.telemetry.telemetry import JobEntity
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
