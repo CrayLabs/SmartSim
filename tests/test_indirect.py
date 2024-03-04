@@ -184,7 +184,7 @@ def test_indirect_main_cmd_check(capsys, test_dir, monkeypatch):
 
 def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPatch):
     """Ensure that a stop event is logged if the process unexpectedly terminates"""
-    mock_pid = 123
+    mock_pid = 1122334455
     create_msg = "creating: {0}"
     term_msg = "term: {0}"
     wait_msg = "wait: {0}"
