@@ -544,9 +544,11 @@ class CollectorManager:
 
             _, pending = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
             if pending:
+                for remaining_task in pending:
+                    remaining_task.cancel()
                 logger.debug(f"Execution of {len(pending)} collectors timed out.")
 
-            self._tasks = list(pending)
+            self._tasks = []
 
     async def shutdown(self) -> None:
         """Release resources"""
