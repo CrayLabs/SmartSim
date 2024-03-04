@@ -216,12 +216,12 @@ def test_telemetry_default(
     assert exp.telemetry.is_enabled
 
     # If telemetry disabled in env, should get False
-    monkeypatch.setattr(os, "environ", {"SMARTSIM_FLAG_TELEMETRY": "0"})
+    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     exp = Experiment("my-exp", exp_path=test_dir)
     assert not exp.telemetry.is_enabled
 
     # If telemetry enabled in env, should get True
-    monkeypatch.setattr(os, "environ", {"SMARTSIM_FLAG_TELEMETRY": "1"})
+    monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "1")
     exp = Experiment("my-exp", exp_path=test_dir)
     assert exp.telemetry.is_enabled
 
