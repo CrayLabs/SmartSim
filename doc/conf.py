@@ -66,7 +66,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints"]
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints", 'changelog.rst']
 
 breathe_projects = {
         "c_client":"../smartredis/doc/c_client/xml",
@@ -107,7 +107,6 @@ html_theme_options = {
 # white background with dark themes.  If sphinx-tabs updates its
 # static/tabs.css, this may need to be updated.
 html_css_files = ['custom_tab_style.css']
-
 autoclass_content = 'both'
 add_module_names = False
 
