@@ -50,7 +50,7 @@ The machine-learning backends have additional requirements in order to
 use GPUs for inference
 
   - `CUDA Toolkit 11 (tested with 11.8) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
-  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
+  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/archives/cudnn-891/install-guide/index.html>`_
   - OS: Linux
   - GPU: Nvidia
 

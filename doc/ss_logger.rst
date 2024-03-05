@@ -15,16 +15,16 @@ multiple verbosity levels for categorizing log messages.
 Users may instruct SmartSim to log certain verbosity level log messages
 and omit others through the `SMARTSIM_LOG_LEVEL` environment variable. The `SMARTSIM_LOG_LEVEL`
 environment variable may be overridden when logging to file by specifying a log level to
-the ``log_to_file()`` function. Examples walking through logging :ref:`to stdout<log_to_stdout>`
+the ``log_to_file`` function. Examples walking through logging :ref:`to stdout<log_to_stdout>`
 and :ref:`to file<log_to_file>` are provided below.
 
 SmartSim offers **four** log functions to use within the Python driver script. The
 below functions accept string messages:
 
-- ``logger.error()``
-- ``logger.warning()``
-- ``logger.info()``
-- ``logger.debug()``
+- ``logger.error``
+- ``logger.warning``
+- ``logger.info``
+- ``logger.debug``
 
 The `SMARTSIM_LOG_LEVEL` environment variable accepts **four** log levels: `quiet`,
 `info`, `debug` and `developer`. Setting the log level in the environment (or via the override function)
@@ -32,13 +32,13 @@ controls the log messages that are output at runtime. The log levels are listed 
 least verbose to most verbose:
 
 - level: `quiet`
-   - The `quiet` log level instructs SmartSim to print ``error()`` and ``warning()`` messages.
+   - The `quiet` log level instructs SmartSim to print ``error`` and ``warning`` messages.
 - level: `info`
-   - The `info` log level instructs SmartSim to print ``info()``, ``error()`` and ``warning()`` messages.
+   - The `info` log level instructs SmartSim to print ``info``, ``error`` and ``warning`` messages.
 - level: `debug`
-   - The `debug` log level instructs SmartSim to print ``debug()``, ``info()``, ``error()`` and ``warning()`` messages.
+   - The `debug` log level instructs SmartSim to print ``debug``, ``info``, ``error`` and ``warning`` messages.
 - level: `developer`
-   - The `developer` log level instructs SmartSim to print ``debug()``, ``info()``, ``error()`` and ``warning()`` messages.
+   - The `developer` log level instructs SmartSim to print ``debug``, ``info``, ``error`` and ``warning`` messages.
 
 .. note::
     Levels `developer` and `debug` print the same log messages. The `developer` log level is intended for use
@@ -57,7 +57,7 @@ Examples
 -------------
 Log to stdout
 -------------
-The ``get_logger()`` function in SmartSim enables users to initialize a logger instance.
+The ``get_logger`` function in SmartSim enables users to initialize a logger instance.
 Once initialized, a user may use the instance to log a message using one of the four
 logging functions.
 
@@ -156,7 +156,7 @@ SmartSim omits messages at higher verbosity levels (`debug` and `developer`).
 ---------------
 Logging to File
 ---------------
-The ``log_to_file()`` function in SmartSim allows users to log messages
+The ``log_to_file`` function in SmartSim allows users to log messages
 to a specified file by providing a file name or relative file path. If the file name
 passed in does not exist, SmartSim will create the file. If the program is re-executed with the same
 file name, the file contents will be overwritten.
@@ -173,7 +173,7 @@ Initialize a logger for use within the Python driver script:
 
       logger = get_logger("SmartSim")
 
-Invoke the ``log_to_file()`` function to instruct SmartSim to create a file named `logger.out`
+Invoke the ``log_to_file`` function to instruct SmartSim to create a file named `logger.out`
 to write log messages to:
 
 .. code-block:: python
@@ -205,7 +205,7 @@ directory with the listed contents:
 Notice that the `debug` function message was filtered. This is because by using
 a lower verbosity level (`info`), we instruct SmartSim to omit higher verbosity messages (`debug` and `developer`).
 
-In the same Python script, add a log level to the ``log_to_file()`` as a input argument:
+In the same Python script, add a log level to the ``log_to_file`` as a input argument:
 
 .. code-block:: python
 

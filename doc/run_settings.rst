@@ -23,7 +23,7 @@ Each SmartSim `launcher` interfaces with a specific ``RunSettings`` subclass tai
 - Navigate to the :ref:`Local<run_settings_local_ex>` section to configure run settings locally
 - Navigate to the :ref:`HPC Systems<run_settings_hpc_ex>` section to configure run settings for HPC
 
-A ``RunSettings`` object is initialized through the ``Experiment.create_run_settings()`` function.
+A ``RunSettings`` object is initialized through the ``Experiment.create_run_settings`` function.
 This function accepts a `run_command` argument: the command to run the executable.
 
 If `run_command` is set to `"auto"`, SmartSim will attempt to match a run command on the
@@ -56,10 +56,10 @@ the use of parallel launch binaries like `"mpirun"`, `"mpiexec"`, and others.
 
 If no `run_command` is specified and the ``Experiment`` `launcher` is set to `"local"`,
 the executable is launched locally. When utilizing the `"local"` launcher and configuring
-the `run_command` parameter to `"auto"` in the ``Experiment.create_run_settings()`` factory
+the `run_command` parameter to `"auto"` in the ``Experiment.create_run_settings`` factory
 method, SmartSim defaults to omitting any run command prefix before the executable.
 
-Once the ``RunSettings`` object is initialized using the ``Experiment.create_run_settings()`` factory
+Once the ``RunSettings`` object is initialized using the ``Experiment.create_run_settings`` factory
 method, the :ref:`RunSettings API<rs-api>` can be used to further configure the
 ``RunSettings`` object prior to execution.
 
@@ -68,7 +68,7 @@ method, the :ref:`RunSettings API<rs-api>` can be used to further configure the
 
 When the user initializes the ``Experiment`` at the beginning of the Python driver script,
 a `launcher` argument may be specified. SmartSim will register or detect the
-`launcher` and return the supported class upon a call to ``Experiment.create_run_settings()``.
+`launcher` and return the supported class upon a call to ``Experiment.create_run_settings``.
 Below we demonstrate creating and configuring the base ``RunSettings``
 object for local launches by specifying the `"local"` launcher during ``Experiment`` creation.
 We also demonstrate specifying `run_command="mpirun"` locally.
@@ -113,7 +113,7 @@ Each WLM `launcher` supports different ``RunSettings`` child classes.
 When the user initializes the ``Experiment`` at the beginning of the Python driver script,
 a `launcher` argument may be specified. The specified `launcher` will be used by SmartSim to
 return the correct ``RunSettings`` child class that matches with the specified (or auto-detected)
-`run_command` upon a call to ``Experiment.create_run_settings()``. Below we demonstrate
+`run_command` upon a call to ``Experiment.create_run_settings``. Below we demonstrate
 creating and configuring the base ``RunSettings`` object for HPC launches
 by specifying the launcher during ``Experiment`` creation. We show examples
 for each job scheduler.

@@ -64,7 +64,7 @@ node (single-sharded) or distributed (sharded) over multiple nodes. With a multi
 scale the number of database nodes for inference and script evaluation, enabling
 increased in-memory capacity for data storage in large-scale workflows. Single-node
 ``Orchestrators`` are effective for small-scale workflows and offer lower latency for ``Client`` API calls
-that involve data appending or processing (e.g. ``Client.append_to_list()``, ``Client.run_model()``, etc).
+that involve data appending or processing (e.g. ``Client.append_to_list``, ``Client.run_model``, etc).
 
 When connecting to a standalone ``Orchestrator`` from within a ``Model`` application, the user has
 several options to connect a SmartRedis ``Client``:
@@ -85,7 +85,7 @@ several options to connect a SmartRedis ``Client``:
 If connecting to a standalone ``Orchestrator`` from a ``Experiment`` driver script, the user must specify
 the address of the ``Orchestrator`` to the ``Client`` constructor. SmartSim does not automatically
 configure the environment of the ``Experiment`` driver script to connect to an ``Orchestrator``. Users
-can access an ``Orchestrators`` address through ``Orchestrator.get_address()``.
+can access an ``Orchestrators`` address through ``Orchestrator.get_address``.
 
 .. note::
   In SmartSim ``Model`` applications, it is advisable to **avoid** specifying addresses directly to the ``Client`` constructor.
@@ -198,7 +198,7 @@ SmartRedis will handle the connection configuration.
 Data Retrieval
 --------------
 To confirm a successful connection to the ``Orchestrator``, we retrieve the tensor set from the ``Experiment`` script.
-Use the ``Client.get_tensor()`` method to retrieve the tensor named `tensor_1` placed by the driver script:
+Use the ``Client.get_tensor`` method to retrieve the tensor named `tensor_1` placed by the driver script:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_app.py
     :language: python
@@ -245,7 +245,7 @@ Orchestrator Initialization
 ---------------------------
 In the next stage of the ``Experiment``, we create a standalone ``Orchestrator``.
 
-To create a standalone ``Orchestrator``, utilize the ``Experiment.create_database()`` function:
+To create a standalone ``Orchestrator``, utilize the ``Experiment.create_database`` function:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
     :language: python
@@ -260,7 +260,7 @@ data on the ``Orchestrator``. Begin by initializing a SmartRedis ``Client`` obje
 SmartRedis ``Clients`` in driver scripts do not have the ability to use a `db-identifier` or
 rely on automatic configurations to connect to ``Orchestrators``. Therefore, when creating a SmartRedis ``Client``
 connection from within a driver script, specify the address of the ``Orchestrator`` you would like to connect to.
-You can easily retrieve the ``Orchestrator`` address using the ``Orchestrator.get_address()`` function:
+You can easily retrieve the ``Orchestrator`` address using the ``Orchestrator.get_address`` function:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
     :language: python
@@ -291,7 +291,7 @@ a SmartSim ``Model`` and specify the executable path during ``Model`` creation:
 
 File Generation
 ---------------
-To create an isolated output directory for the ``Orchestrator`` and ``Model``, invoke ``Experiment.generate()`` on the
+To create an isolated output directory for the ``Orchestrator`` and ``Model``, invoke ``Experiment.generate`` on the
 ``Experiment`` instance `exp` with `standalone_orchestrator` and `model` as input parameters:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
@@ -304,7 +304,7 @@ Invoking ``Experiment.generate(standalone_orchestrator, model)`` will create two
 two output files: a `.out` file and a `.err` file.
 
 .. note::
-  It is important to invoke ``Experiment.generate()`` with all ``Experiment`` entity instances
+  It is important to invoke ``Experiment.generate`` with all ``Experiment`` entity instances
   before launching. This will ensure that the output files are organized in the main ``experiment-name/``
   folder. In this example, the ``Experiment`` folder is named `getting-started/`.
 
@@ -318,19 +318,19 @@ In the context of this ``Experiment``, it's essential to create and launch
 the ``Orchestrator`` as a preliminary step before any other workflow entities. This is important
 because the application requests and sends tensors to a launched ``Orchestrator``.
 
-To launch the ``Orchestrator``, pass the ``Orchestrator`` instance to ``Experiment.start()``.
+To launch the ``Orchestrator``, pass the ``Orchestrator`` instance to ``Experiment.start``.
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
     :language: python
     :linenos:
     :lines: 32-33
 
-The ``Experiment.start()`` function launches the ``Orchestrator`` for use within the workflow.
+The ``Experiment.start`` function launches the ``Orchestrator`` for use within the workflow.
 In other words, the function deploys the ``Orchestrator`` on the allocated compute resources.
 
 Step 2: Start Model
 '''''''''''''''''''
-Next, launch the `model` instance using the ``Experiment.start()`` function:
+Next, launch the `model` instance using the ``Experiment.start`` function:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
     :language: python
@@ -338,12 +338,12 @@ Next, launch the `model` instance using the ``Experiment.start()`` function:
     :lines: 35-36
 
 In the next subsection, we request tensors placed by the ``Model`` application.
-We specify `block=True` to ``exp.start()`` to require the ``Model`` to finish before
+We specify `block=True` to ``exp.start`` to require the ``Model`` to finish before
 the ``Experiment`` continues.
 
 Data Polling
 ------------
-Next, check if the tensor exists in the standalone ``Orchestrator`` using ``Client.poll_tensor()``.
+Next, check if the tensor exists in the standalone ``Orchestrator`` using ``Client.poll_tensor``.
 This function queries for data in the ``Orchestrator``. The function requires the tensor name (`name`),
 how many milliseconds to wait in between queries (`poll_frequency_ms`),
 and the total number of times to query (`num_tries`). Check if the data exists in the ``Orchestrator`` by
@@ -360,8 +360,8 @@ When you execute the driver script, the output will be as follows::
 
 Cleanup
 -------
-Finally, use the ``Experiment.stop()`` function to stop the ``Orchestrator`` instance. Print the
-workflow summary with ``Experiment.summary()``:
+Finally, use the ``Experiment.stop`` function to stop the ``Orchestrator`` instance. Print the
+workflow summary with ``Experiment.summary``:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
     :language: python
@@ -512,7 +512,7 @@ We will retrieve `“tensor_1”` in the following section.
 Data Retrieval
 --------------
 To confirm a successful connection to the ``Orchestrator``, we retrieve the tensor we stored.
-Use the ``Client.get_tensor()`` method to retrieve the tensor by specifying the name
+Use the ``Client.get_tensor`` method to retrieve the tensor by specifying the name
 `“tensor_1”`:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/colo_app.py
@@ -553,10 +553,10 @@ Step 1: Configure
 '''''''''''''''''
 In this example ``Experiment``, the ``Model`` application is a Python script as defined in section:
 :ref:`Application Script<colocated_orch_app_script>`. Before initializing the ``Model`` object, we must use
-``Experiment.create_run_settings()`` to create a ``RunSettings`` object that defines how to execute
+``Experiment.create_run_settings`` to create a ``RunSettings`` object that defines how to execute
 the ``Model``. To launch the Python script in this example workflow, we specify the path to the application
 file `application_script.py` as the `exe_args` parameter and the executable `exe_ex` (the Python
-executable on this system) as `exe` parameter. The ``Experiment.create_run_settings()`` function
+executable on this system) as `exe` parameter. The ``Experiment.create_run_settings`` function
 will return a ``RunSettings`` object that can then be used to initialize the ``Model`` object.
 
 .. note::
@@ -564,7 +564,7 @@ will return a ``RunSettings`` object that can then be used to initialize the ``M
   on your file system to run the example.
 
 Use the ``RunSettings`` helper functions to
-configure the the distribution of computational tasks (``RunSettings.set_nodes()``). In this
+configure the the distribution of computational tasks (``RunSettings.set_nodes``). In this
 example, we specify to SmartSim that we intend the ``Model`` to run on a single compute node.
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/colo_driver.py
@@ -574,7 +574,7 @@ example, we specify to SmartSim that we intend the ``Model`` to run on a single 
 
 Step 2: Initialize
 ''''''''''''''''''
-Next, create a ``Model`` instance using the ``Experiment.create_model()`` factory method.
+Next, create a ``Model`` instance using the ``Experiment.create_model`` factory method.
 Pass the ``model_settings`` object as input to the method and
 assign the returned ``Model`` instance to the variable `model`:
 
@@ -585,7 +585,7 @@ assign the returned ``Model`` instance to the variable `model`:
 
 Step 3: Colocate
 ''''''''''''''''
-To colocate an ``Orchestrator`` with a ``Model``, use the ``Model.colocate_db_uds()`` function.
+To colocate an ``Orchestrator`` with a ``Model``, use the ``Model.colocate_db_uds`` function.
 This function will colocate an ``Orchestrator`` instance with this ``Model`` over
 a Unix domain socket connection.
 
@@ -597,7 +597,7 @@ a Unix domain socket connection.
 Step 4: Generate Files
 ''''''''''''''''''''''
 Next, generate the ``Experiment`` entity directories by passing the ``Model`` instance to
-``Experiment.generate()``:
+``Experiment.generate``:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/colo_driver.py
     :language: python
@@ -606,7 +606,7 @@ Next, generate the ``Experiment`` entity directories by passing the ``Model`` in
 
 Step 5: Start
 '''''''''''''
-Next, launch the colocated ``Model`` instance using the ``Experiment.start()`` function.
+Next, launch the colocated ``Model`` instance using the ``Experiment.start`` function.
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/colo_driver.py
     :language: python
@@ -641,7 +641,7 @@ from within an ``Experiment``. Communication with the ``Orchestrator`` via a Sma
 colocated ``Model`` during a multiple ``Orchestrator`` ``Experiment``. When initializing a SmartRedis
 ``Client`` during the ``Experiment``, create a ``ConfigOptions`` object to specify the `db_identifier`
 argument used when creating the ``Orchestrator``. Pass the ``ConfigOptions`` object to
-the ``Client()`` init call.
+the ``Client`` init call.
 
 .. _mutli_orch:
 
@@ -738,11 +738,11 @@ Step 1: Initialize ConfigOptions
 Since we are launching multiple ``Orchestrators`` within the ``Experiment``,
 the SmartRedis ``ConfigOptions`` object is required when initializing
 a ``Client`` in the application.
-We use the ``ConfigOptions.create_from_environment()``
+We use the ``ConfigOptions.create_from_environment``
 function to create three instances of ``ConfigOptions``,
 with one instance associated with each launched ``Orchestrator``.
 Most importantly, to associate each launched ``Orchestrator`` to a ``ConfigOptions`` object,
-the ``create_from_environment()`` function requires specifying the unique ``Orchestrator`` identifier
+the ``create_from_environment`` function requires specifying the unique ``Orchestrator`` identifier
 argument named `db_identifier`.
 
 For the single-sharded ``Orchestrator``:
@@ -800,9 +800,9 @@ Retrieve Data and Store Using SmartRedis Client Objects
 To confirm a successful connection to each ``Orchestrator``, we will retrieve the tensors
 that we plan to store in the python driver script. After retrieving, we
 store both tensors in the colocated ``Orchestrator``.
-The ``Client.get_tensor()`` method allows
+The ``Client.get_tensor`` method allows
 retrieval of a tensor. It requires the `name` of the tensor assigned
-when sent to the ``Orchestrator`` via ``Client.put_tensor()``.
+when sent to the ``Orchestrator`` via ``Client.put_tensor``.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/application_script.py
   :language: python
@@ -825,7 +825,7 @@ store them in the colocated ``Orchestrator`` using  ``Client.put_tensor(name, da
   :linenos:
   :lines: 28-30
 
-Next, check if the tensors exist in the colocated ``Orchestrator`` using ``Client.poll_tensor()``.
+Next, check if the tensors exist in the colocated ``Orchestrator`` using ``Client.poll_tensor``.
 This function queries for data in the ``Orchestrator``. The function requires the tensor name (`name`),
 how many milliseconds to wait in between queries (`poll_frequency_ms`),
 and the total number of times to query (`num_tries`):
@@ -868,7 +868,7 @@ multi-sharded ``Orchestrator``.
 
 Step 1: Initialize Orchestrators
 ''''''''''''''''''''''''''''''''
-To create an ``Orchestrator``, utilize the ``Experiment.create_database()`` function.
+To create an ``Orchestrator``, utilize the ``Experiment.create_database`` function.
 The function requires specifying a unique
 ``Orchestrator`` identifier argument named `db_identifier` to launch multiple ``Orchestrators``.
 This step is necessary to connect to ``Orchestrators`` outside of the driver script.
@@ -889,7 +889,7 @@ For the multi-sharded ``Orchestrator``:
   :lines: 16-18
 
 .. note::
-  Calling ``exp.generate()`` will create two subfolders
+  Calling ``exp.generate`` will create two subfolders
   (one for each ``Orchestrator`` created in the previous step)
   whose names are based on the `db_identifier` of that ``Orchestrator``.
   In this example, the Experiment folder is
@@ -899,14 +899,14 @@ For the multi-sharded ``Orchestrator``:
 Step 2: Start
 '''''''''''''
 Next, to launch the ``Orchestrators``,
-pass the ``Orchestrator`` instances to ``Experiment.start()``.
+pass the ``Orchestrator`` instances to ``Experiment.start``.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
   :linenos:
   :lines: 20-21
 
-The ``Experiment.start()`` function launches the ``Orchestrators`` for use within the workflow. In other words, the function
+The ``Experiment.start`` function launches the ``Orchestrators`` for use within the workflow. In other words, the function
 deploys the ``Orchestrators`` on the allocated compute resources.
 
 .. note::
@@ -925,7 +925,7 @@ data within the ``Orchestrator``. Each ``Orchestrator`` has a single, dedicated 
 Begin by initializing a SmartRedis ``Client`` object per launched ``Orchestrator``.
 
 To create a designated SmartRedis ``Client``, you need to specify the address of the target
-running ``Orchestrator``. You can easily retrieve this address using the ``Orchestrator.get_address()`` function.
+running ``Orchestrator``. You can easily retrieve this address using the ``Orchestrator.get_address`` function.
 
 For the single-sharded ``Orchestrator``:
 
@@ -946,7 +946,7 @@ Store Data Using Clients
 In the application script, we retrieved two NumPy tensors.
 To support the apps functionality, we will create two
 NumPy arrays in the python driver script and send them to the a ``Orchestrator``. To
-accomplish this, we use the ``Client.put_tensor()`` function with the respective
+accomplish this, we use the ``Client.put_tensor`` function with the respective
 ``Orchestrator`` `client` instances.
 
 For the single-sharded ``Orchestrator``:
@@ -989,7 +989,7 @@ Step 1: Configure
 You can specify the run settings of a ``Model``.
 In this ``Experiment``, we invoke the Python interpreter to run
 the python script defined in section: :ref:`The Application Script<app_script_multi_db>`.
-To configure this into a SmartSim ``Model``, we use the ``Experiment.create_run_settings()`` function.
+To configure this into a SmartSim ``Model``, we use the ``Experiment.create_run_settings`` function.
 The function returns a ``RunSettings`` object.
 When initializing the RunSettings object,
 we specify the path to the application file,
@@ -1006,8 +1006,8 @@ we specify the path to the application file,
   on your machine to run the example.
 
 With the ``RunSettings`` instance,
-configure the the distribution of computational tasks (``RunSettings.set_nodes()``) and the number of instances
-the script is execute on each node (``RunSettings.set_tasks_per_node()``). In this
+configure the the distribution of computational tasks (``RunSettings.set_nodes``) and the number of instances
+the script is execute on each node (``RunSettings.set_tasks_per_node``). In this
 example, we specify to SmartSim that we intend to execute the script once on a single node.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/multidb_driver.py
@@ -1017,9 +1017,9 @@ example, we specify to SmartSim that we intend to execute the script once on a s
 
 Step 2: Initialize
 ''''''''''''''''''
-Next, create a ``Model`` instance using the ``Experiment.create_model()``.
+Next, create a ``Model`` instance using the ``Experiment.create_model``.
 Pass the ``model_settings`` object as an argument
-to the ``create_model()`` function and assign to the variable ``model``.
+to the ``create_model`` function and assign to the variable ``model``.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
@@ -1028,7 +1028,7 @@ to the ``create_model()`` function and assign to the variable ``model``.
 
 Step 2: Colocate
 ''''''''''''''''
-To colocate the ``Model``, use the ``Model.colocate_db_uds()`` function to
+To colocate the ``Model``, use the ``Model.colocate_db_uds`` function to
 Colocate an ``Orchestrator`` instance with this ``Model`` over
 a Unix domain socket connection.
 
@@ -1043,7 +1043,7 @@ to communicate with this colocated ``Orchestrator`` by using the loopback TCP in
 
 Step 3: Start
 '''''''''''''
-Next, launch the colocated ``Model`` instance using the ``Experiment.start()`` function.
+Next, launch the colocated ``Model`` instance using the ``Experiment.start`` function.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python
@@ -1052,18 +1052,18 @@ Next, launch the colocated ``Model`` instance using the ``Experiment.start()`` f
 
 .. note::
   We set `block=True`,
-  so that ``Experiment.start()`` waits until the last ``Model`` has finished
+  so that ``Experiment.start`` waits until the last ``Model`` has finished
   before returning: it will act like a job monitor, letting us know
   if processes run, complete, or fail.
 
 Cleanup Experiment
 ------------------
-Finally, use the ``Experiment.stop()`` function to stop the standard ``Orchestrator`` instances.
+Finally, use the ``Experiment.stop`` function to stop the standard ``Orchestrator`` instances.
 
 .. note::
   Co-located ``Orchestrator``s are stopped when their associated ``Model``'s are stopped.
 
-Print the workflow summary with ``Experiment.summary()``.
+Print the workflow summary with ``Experiment.summary``.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python

@@ -34,10 +34,10 @@ and configuration of a batch settings object.
 ========
 Examples
 ========
-A ``BatchSettings`` child class is created using the ``Experiment.create_batch_settings()``
+A ``BatchSettings`` child class is created using the ``Experiment.create_batch_settings``
 factory method. When the user initializes the ``Experiment`` at the beginning of the Python driver script,
 they may specify a `launcher` argument. SmartSim will then register or detect the `launcher` and return the
-corresponding supported child class when ``Experiment.create_batch_settings()`` is called. This
+corresponding supported child class when ``Experiment.create_batch_settings`` is called. This
 design allows SmartSim driver scripts utilizing ``BatchSettings`` to be portable between systems,
 requiring only a change in the specified `launcher` during ``Experiment`` initialization.
 
@@ -47,7 +47,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
 
     .. group-tab:: Slurm
       To instantiate the ``SbatchSettings`` object, which interfaces with the Slurm job scheduler, specify
-      `launcher="slurm"` when initializing the ``Experiment``. Upon calling ``create_batch_settings()``,
+      `launcher="slurm"` when initializing the ``Experiment``. Upon calling ``create_batch_settings``,
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
       .. code-block:: python
@@ -65,7 +65,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
           sbatch_settings.set_queue("default")
 
       The initialized ``SbatchSettings`` instance can now be passed to a SmartSim entity
-      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings()``.
+      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings``.
 
       .. note::
         If `launcher="auto"`, SmartSim will detect that the ``Experiment`` is running on a Slurm based
@@ -73,7 +73,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
 
     .. group-tab:: PBS Pro
       To instantiate the ``QsubBatchSettings`` object, which interfaces with the PBS Pro job scheduler, specify
-      `launcher="pbs"` when initializing the ``Experiment``. Upon calling ``create_batch_settings()``,
+      `launcher="pbs"` when initializing the ``Experiment``. Upon calling ``create_batch_settings``,
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
         .. code-block:: python
@@ -91,7 +91,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
             qsub_batch_settings.set_queue("default")
 
       The initialized ``QsubBatchSettings`` instance can now be passed to a SmartSim entity
-      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings()``.
+      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings``.
 
       .. note::
         If `launcher="auto"`, SmartSim will detect that the ``Experiment`` is running on a PBS Pro based
@@ -99,7 +99,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
 
     .. group-tab:: LSF
       To instantiate the ``BsubBatchSettings`` object, which interfaces with the LSF job scheduler, specify
-      `launcher="lsf"` when initializing the ``Experiment``. Upon calling ``create_batch_settings()``,
+      `launcher="lsf"` when initializing the ``Experiment``. Upon calling ``create_batch_settings``,
       SmartSim will detect the job scheduler and return the appropriate batch settings object.
 
         .. code-block:: python
@@ -117,7 +117,7 @@ Below are examples of how to initialize a ``BatchSettings`` object per `launcher
             bsub_batch_settings.set_queue("default")
 
       The initialized ``BsubBatchSettings`` instance can now be passed to a SmartSim entity
-      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings()``.
+      (``Model`` or ``Ensemble``) via the `batch_settings` argument in ``create_batch_settings``.
 
       .. note::
         If `launcher="auto"`, SmartSim will detect that the ``Experiment`` is running on a LSF based

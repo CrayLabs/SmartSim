@@ -87,7 +87,7 @@ general purpose of the three entities that can be created via
 ``Experiment`` factory class.
 
 To create a reference to a newly instantiated entity object, use the associated
-``Experiment.create_...()`` factory method.
+``Experiment.create_...`` factory method.
 
 .. list-table:: Experiment API Entity Creation
    :widths: 20 65 25
@@ -96,13 +96,13 @@ To create a reference to a newly instantiated entity object, use the associated
    * - Factory Method
      - Example
      - Return Type
-   * - ``create_database()``
+   * - ``create_database``
      - ``orch = exp.create_database([port, db_nodes, ...])``
      - :ref:`Orchestrator <orchestrator_api>`
-   * - ``create_model()``
+   * - ``create_model``
      - ``model = exp.create_model(name, run_settings)``
      - :ref:`Model <model_api>`
-   * - ``create_ensemble()``
+   * - ``create_ensemble``
      - ``ensemble = exp.create_ensemble(name[, params, ...])``
      - :ref:`Ensemble <ensemble_api>`
 
@@ -116,13 +116,13 @@ the :ref:`Experiment<experiment_api>` post-creation methods.
    * - Experiment Function
      - Example
      - Desc
-   * - ``start()``
+   * - ``start``
      - ``exp.start(*args[, block, summary, ...])``
      - Launch an Entity
-   * - ``stop()``
+   * - ``stop``
      - ``exp.stop(*args)``
      - Stop an Entity
-   * - ``get_status()``
+   * - ``get_status``
      - ``exp.get_status(*args)``
      - Retrieve Entity Status
 
@@ -144,18 +144,18 @@ Any SmartSim ``Model`` or ``Ensemble`` member can connect to the
 * :ref:`Colocated Orchestrator Deployment<colocated_orch_doc>`
 
 To create a standalone ``Orchestrator`` that does not share compute resources with other
-SmartSim entities, use the ``Experiment.create_database()`` factory method which
+SmartSim entities, use the ``Experiment.create_database`` factory method which
 returns an ``Orchestrator`` object. To create a colocated ``Orchestrator`` that
-shares compute resources with a ``Model``, use the ``Model.colocate_db_tcp()``
-or ``Model.colocate_db_uds()`` member functions accessible after a
+shares compute resources with a ``Model``, use the ``Model.colocate_db_tcp``
+or ``Model.colocate_db_uds`` member functions accessible after a
 ``Model`` object has been initialized. The functions instruct
 SmartSim to launch an ``Orchestrator`` on the application compute nodes. An ``Orchestrator`` object is not
-returned from a ``Model.colocate_db()`` instruction, and subsequent interactions with the
+returned from a ``Model.colocate_db`` instruction, and subsequent interactions with the
 colocated ``Orchestrator`` are handled through the :ref:`Model API<model_api>`.
 
 SmartSim supports :ref:`multi-database<mutli_orch_doc>` functionality, enabling an ``Experiment`` to have
 several concurrently launched ``Orchestrator(s)``. If there is a need to launch more than
-one ``Orchestrator``, the ``Experiment.create_database()`` and ``Model.colocate..()``
+one ``Orchestrator``, the ``Experiment.create_database`` and ``Model.colocate..``
 functions mandate the specification of a unique ``Orchestrator`` identifier, denoted
 by the `db_identifier` argument for each ``Orchestrator``. The `db_identifier` is used
 in an application script by a SmartRedis ``Client`` to connect to a specific ``Orchestrator``.
@@ -169,13 +169,13 @@ including applications, scripts, or generally, a program. They can
 interact with other SmartSim entities via data transmitted to/from
 SmartSim ``Orchestrators`` using a SmartRedis ``Client``.
 
-A ``Model`` is created through the factory method: ``Experiment.create_model()``.
+A ``Model`` is created through the factory method: ``Experiment.create_model``.
 ``Models`` are initialized with ``RunSettings`` objects that specify
 how a ``Model`` should be launched by a workload manager
 (e.g., Slurm) and the compute resources required.
 Optionally, the user may also specify a ``BatchSettings`` object if
 the ``Model`` should be launched as a batch job on the WLM system.
-The ``create_model()`` factory method returns an initialized ``Model`` object that
+The ``create_model`` factory method returns an initialized ``Model`` object that
 gives you access to functions associated with the :ref:`Model API<model_api>`.
 
 A ``Model`` supports key features, including methods to:
@@ -259,10 +259,10 @@ Initializing
 
 .. compound::
   Next, launch an in-memory database, referred to as an ``Orchestrator``.
-  To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database()``
+  To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database``
   function. Create a multi-sharded ``Orchestrator`` by setting the argument `db_nodes` to three.
   SmartSim will assign a `port` to the ``Orchestrator`` and attempt to detect your machine's
-  network interface if not provided to ``Experiment.create_database()``.
+  network interface if not provided to ``Experiment.create_database``.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
@@ -273,7 +273,7 @@ Initializing
   Before invoking the factory method to create a ``Model``,
   first create a ``RunSettings`` object. A ``RunSettings`` holds the
   information needed to execute the ``Model`` on the machine. The ``RunSettings``
-  object is initialized using the ``Experiment.create_run_settings()`` factory
+  object is initialized using the ``Experiment.create_run_settings`` factory
   method. Specify the executable to run and the arguments to pass to the executable.
 
   The example ``Model`` is a simple `Hello World` program
@@ -285,7 +285,7 @@ Initializing
     :lines: 12-13
 
   After creating the ``RunSettings`` object, initialize the ``Model`` object by passing the `name`
-  and ``RunSettings`` to the ``Experiment.create_model()`` function.
+  and ``RunSettings`` to the ``Experiment.create_model`` function.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
@@ -295,10 +295,10 @@ Initializing
 Generating
 ==========
 .. compound::
-  Next we generate the file structure for the ``Experiment``. A call to ``Experiment.generate()``
+  Next we generate the file structure for the ``Experiment``. A call to ``Experiment.generate``
   instructs SmartSim to create directories within the ``Experiment`` folder for each instance passed in.
   Organize the ``Orchestrator`` and ``Model`` output files within the ``Experiment`` folder by
-  passing the ``Orchestrator`` and ``Model`` instances to ``exp.generate()``:
+  passing the ``Orchestrator`` and ``Model`` instances to ``exp.generate``:
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
@@ -309,11 +309,11 @@ Generating
   already exist within the ``Experiment`` directory.
 
   .. note::
-    If files or folders are attached to a ``Model`` or ``Ensemble`` members through ``Model.attach_generator_files()``
-    or ``Ensemble.attach_generator_files()``, the attached files or directories will be symlinked, copied, or configured and
+    If files or folders are attached to a ``Model`` or ``Ensemble`` members through ``Model.attach_generator_files``
+    or ``Ensemble.attach_generator_files``, the attached files or directories will be symlinked, copied, or configured and
     written into the created directory for that instance.
 
-  Since we utilized the ``Experiment.generate()`` function to create an output directory for the ``Experiment``
+  Since we utilized the ``Experiment.generate`` function to create an output directory for the ``Experiment``
   entities, namely the ``Model`` and ``Orchestrator``, `.err` and `.out` log files will be placed in individual
   entity subdirectories within the main ``Experiment`` directory.
 
@@ -321,7 +321,7 @@ Starting
 ========
 .. compound::
   Next launch the components of the ``Experiment`` (``Orchestrator`` and ``Model``)
-  using functions provided through the ``Experiment``. To do so, use the ``Experiment.start()``
+  using functions provided through the ``Experiment``. To do so, use the ``Experiment.start``
   function and pass in the previous ``Orchestrator`` and ``Model`` instances.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
@@ -333,14 +333,14 @@ Stopping
 ========
 .. compound::
   Lastly, to clean up the ``Experiment``, tear down the launched ``Orchestrators``
-  using the ``Experiment.stop()`` function.
+  using the ``Experiment.stop`` function.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
     :lines: 23-26
 
-  Notice that we use the ``Experiment.summary()`` function to print
+  Notice that we use the ``Experiment.summary`` function to print
   the summary of the workflow.
 
 When you run the experiment, the following output will appear::
