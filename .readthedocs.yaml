@@ -15,7 +15,8 @@ build:
       - python -m pip install .
       - git clone https://github.com/CrayLabs/SmartRedis.git --branch develop smartredis
       - cd smartredis; python -m pip install .
-      - cd ../smartredis/doc;
+      - ls
+      - pwd
     pre_build:
         - python -m sphinx -b linkcheck -D linkcheck_timeout=1 doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
