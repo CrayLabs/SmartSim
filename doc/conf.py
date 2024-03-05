@@ -57,7 +57,6 @@ extensions = [
 ]
 
 autodoc_mock_imports = ["smartredis.smartredisPy"]
-linkcheck_timeout=0.5
 linkcheck_exclude_documents=['changelog.rst']
 suppress_warnings = ['autosectionlabel']
 
