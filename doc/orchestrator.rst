@@ -60,7 +60,7 @@ Overview
 --------
 During standalone ``Orchestrator`` deployment, a SmartSim ``Orchestrator`` (the database) runs on separate
 compute node(s) from the SmartSim ``Model`` node(s). A standalone ``Orchestrator`` can be deployed on a single
-node (single-sharded) or sharded (distributed) over multiple nodes. With a multi-node ``Orchestrator``, users can
+node (single-sharded) or distributed (sharded) over multiple nodes. With a multi-node ``Orchestrator``, users can
 scale the number of database nodes for inference and script evaluation, enabling
 increased in-memory capacity for data storage in large-scale workflows. Single-node
 ``Orchestrators`` are effective for small-scale workflows and offer lower latency for ``Client`` API calls
@@ -111,7 +111,7 @@ separate from the ``Orchestrator`` compute nodes. Communication is established b
 In scenarios where data needs to be shared amongst ``Experiment`` entities,
 such as online analysis, training, and processing, a standalone ``Orchestrator``
 is optimal. The data produced by multiple processes in a ``Model`` is stored in the standalone
-``Orchestrator`` and is available for consumption by other ``Models``.
+``Orchestrator`` and is available for consumption by other ``Model``'s.
 
 If a workflow requires an application to leverage multiple standalone deployments,
 multiple ``Clients`` can be instantiated within an application,
@@ -233,7 +233,7 @@ once and utilized throughout the workflow runtime.
 
 In this example, we instantiate an ``Experiment`` object with the name `getting-started`
 and the `launcher` set to `auto`. When using `launcher=auto`, SmartSim attempts to find a launcher on the machine.
-In this case, we are running the example on a Slurm-based machine. SmartSim will automatically set the launcher to `slurm`.
+For example, if this script were run on a Slurm-based system, SmartSim will automatically set the launcher to `slurm`.
 We also setup the SmartSim `logger` to output information from the ``Experiment`` at runtime:
 
 .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
@@ -384,11 +384,12 @@ Colocated Deployment
 Overview
 --------
 During colocated ``Orchestrator`` deployment, a SmartSim ``Orchestrator`` (the database) runs on
-the ``Models`` compute node(s). Colocated ``Orchestrators`` can only be deployed as isolated instances
+the ``Model``'s compute node(s). Colocated ``Orchestrators`` can only be deployed as isolated instances
 on each compute node and cannot be clustered over multiple nodes. The ``Orchestrator`` on each application node is
-utilized by SmartRedis ``Clients`` on the same node. With a colocated ``Orchestrator``, latency is reduced
-in ML inference and TorchScript evaluation by eliminating off-node communication. A colocated ``Orchestrator``
-is ideal when the data and hardware accelerator are located on the same compute node.
+utilized by SmartRedis ``Clients`` on the same node. With a colocated ``Orchestrator``, all interactions
+with the database occur on the same node, thus resulting in lower latency compared to the standard ``Orchestrator``.
+A colocated ``Orchestrator`` is ideal when the data and hardware accelerator are located on the
+same compute node.
 
 Communication between a colocated ``Orchestrator`` and ``Model`` is initiated in the application through a
 SmartRedis ``Client``. Since a colocated ``Orchestrator`` is launched when the ``Model``
@@ -584,7 +585,7 @@ assign the returned ``Model`` instance to the variable `model`:
 
 Step 3: Colocate
 ''''''''''''''''
-To colocate the `model`, use the ``Model.colocate_db_uds()`` function.
+To colocate an ``Orchestrator`` with a ``Model``, use the ``Model.colocate_db_uds()`` function.
 This function will colocate an ``Orchestrator`` instance with this ``Model`` over
 a Unix domain socket connection.
 
@@ -1057,8 +1058,12 @@ Next, launch the colocated ``Model`` instance using the ``Experiment.start()`` f
 
 Cleanup Experiment
 ------------------
-Finally, use the ``Experiment.stop()`` function to stop the ``Orchestrator`` instances. Print the
-workflow summary with ``Experiment.summary()``.
+Finally, use the ``Experiment.stop()`` function to stop the standard ``Orchestrator`` instances.
+
+.. note::
+  Co-located ``Orchestrator``s are stopped when their associated ``Model``'s are stopped.
+
+Print the workflow summary with ``Experiment.summary()``.
 
 .. literalinclude:: tutorials/getting_started/multi_db_example/multidb_driver.py
   :language: python

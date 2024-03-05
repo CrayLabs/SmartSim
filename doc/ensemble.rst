@@ -10,7 +10,7 @@ A SmartSim ``Ensemble`` enables users to run a **group** of computational tasks 
 ``Experiment`` workflow. An ``Ensemble`` is comprised of multiple ``Model`` objects,
 where each ``Ensemble`` member (SmartSim ``Model``) represents an individual application.
 An ``Ensemble`` can be managed as a single entity and
-launched with other :ref:`Models<model_object_doc>` and :ref:`Orchestrators<orch_docs>` to construct AI-enabled workflows.
+launched with other :ref:`Model's<model_object_doc>` and :ref:`Orchestrators<orch_docs>` to construct AI-enabled workflows.
 
 The :ref:`Ensemble API<ensemble_api>` offers key features, including methods to:
 
@@ -46,7 +46,7 @@ the creation of an ``Ensemble`` to align with one of the following creation stra
 1. :ref:`Parameter expansion<param_expansion_init>`: Generate a variable-sized set of unique simulation instances
    configured with user-defined input parameters.
 2. :ref:`Replica creation<replicas_init>`: Generate a specified number of ``Model`` replicas.
-3. :ref:`Manually<append_init>`: Attach pre-configured ``Models`` to an ``Ensemble`` to manage as a single unit.
+3. :ref:`Manually<append_init>`: Attach pre-configured ``Model``'s to an ``Ensemble`` to manage as a single unit.
 
 .. _param_expansion_init:
 
@@ -63,7 +63,7 @@ accepts three values listed below.
 -  `"all_perm"`: Generate all possible parameter permutations for an exhaustive exploration. This
    means that every possible combination of parameters will be used in the ``Ensemble``.
 -  `"step"`: Create parameter sets by collecting identically indexed values across parameter lists.
-   This allows for discrete combinations of parameters for ``Models``.
+   This allows for discrete combinations of parameters for ``Model``'s.
 -  `"random"`: Enable random selection from predefined parameter spaces, offering a stochastic approach.
    This means that the parameters will be chosen randomly for each ``Model``, which can be useful
    for exploring a wide range of possibilities.
@@ -81,7 +81,7 @@ parameters along with the launch of the ``Ensemble`` as a batch workload.
 Example 1 : Parameter Expansion using `all_perm` strategy
 
     In this example an ``Ensemble`` of four ``Model`` entities is created by expanding two parameters
-    using the `all_perm` strategy. All of the ``Models`` in the ``Ensemble`` share the same ``RunSettings``
+    using the `all_perm` strategy. All of the ``Model``'s in the ``Ensemble`` share the same ``RunSettings``
     and only differ in the value of the `params` assigned to each member. The source code example
     is available in the dropdown below for convenient execution and customization.
 
@@ -126,7 +126,7 @@ Example 1 : Parameter Expansion using `all_perm` strategy
 Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` configured for batch launching
 
     In this example an ``Ensemble`` of two ``Model`` entities is created by expanding two parameters
-    using the `step` strategy. All of the ``Models`` in the ``Ensemble`` share the same ``RunSettings``
+    using the `step` strategy. All of the ``Model``'s in the ``Ensemble`` share the same ``RunSettings``
     and only differ in the value of the `params` assigned to each member. Lastly, the ``Ensemble`` is
     submitted as a batch workload. The source code example is available in the dropdown below for
     convenient execution and customization.
@@ -179,7 +179,7 @@ Example 2 : Parameter Expansion using `step` strategy with the ``Ensemble`` conf
 
 Replicas
 ========
-A replica strategy involves the creation of identical ``Models`` within an ``Ensemble``.
+A replica strategy involves the creation of identical ``Model``'s within an ``Ensemble``.
 This strategy is particularly useful for applications that have some inherent randomness.
 Users may use the `replicas` factory method argument to create a specified number of identical
 ``Model`` members during ``Ensemble`` creation (``Experiment.create_ensemble()``).
@@ -198,7 +198,7 @@ Example 1 : ``Ensemble`` creation with replicas strategy
 
     In this example an ``Ensemble`` of four identical ``Model`` members is created by
     specifying the number of clones to create via the `replicas` argument.
-    All of the ``Models`` in the ``Ensemble`` share the same ``RunSettings``.
+    All of the ``Model``'s in the ``Ensemble`` share the same ``RunSettings``.
     The source code example is available in the dropdown below for convenient execution
     and customization.
 
@@ -206,7 +206,7 @@ Example 1 : ``Ensemble`` creation with replicas strategy
 
         .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
 
-    To create an ``Ensemble`` of identical ``Models``, begin by initializing a ``RunSettings``
+    To create an ``Ensemble`` of identical ``Model``'s, begin by initializing a ``RunSettings``
     object:
 
     .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_1.py
@@ -228,7 +228,7 @@ Example 1 : ``Ensemble`` creation with replicas strategy
 Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch launching
 
     In this example an ``Ensemble`` of four ``Model`` entities is created by specifying
-    the number of clones to create via the `replicas` argument. All of the ``Models`` in
+    the number of clones to create via the `replicas` argument. All of the ``Model``'s in
     the ``Ensemble`` share the same ``RunSettings`` and the ``Ensemble`` is
     submitted as a batch workload. The source code example is available in the dropdown below for
     convenient execution and customization.
@@ -237,7 +237,7 @@ Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch 
 
         .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
 
-    To launch the ``Ensemble`` of identical ``Models`` as a batch job, begin by initializing a ``BatchSettings``
+    To launch the ``Ensemble`` of identical ``Model``'s as a batch job, begin by initializing a ``BatchSettings``
     object:
 
     .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/replicas_2.py
@@ -269,29 +269,29 @@ Example 2 : ``Ensemble`` creation with replicas strategy and ``Ensemble`` batch 
 
 Manually Append
 ===============
-Manually appending ``Models`` to an ``Ensemble`` offers an in-depth level of customization in ``Ensemble`` design.
-This approach is favorable when users have distinct requirements for individual ``Models``, such as variations
+Manually appending ``Model``'s to an ``Ensemble`` offers an in-depth level of customization in ``Ensemble`` design.
+This approach is favorable when users have distinct requirements for individual ``Model``'s, such as variations
 in parameters, run settings, or different types of simulations.
 
 --------
 Examples
 --------
-This subsection contains an example of creating an ``Ensemble`` by manually appending ``Models``.
-The example illustrates attaching two SmartSim ``Models`` to the ``Ensemble``.
+This subsection contains an example of creating an ``Ensemble`` by manually appending ``Model``'s.
+The example illustrates attaching two SmartSim ``Model``'s to the ``Ensemble``.
 The ``Ensemble`` is submitted as a batch workload.
 
-Example 1 : Append ``Models`` to an ``Ensemble`` and launch as a batch job
+Example 1 : Append ``Model``'s to an ``Ensemble`` and launch as a batch job
 
-    In this example, we append ``Models`` to an ``Ensemble`` for batch job execution. To do
+    In this example, we append ``Model``'s to an ``Ensemble`` for batch job execution. To do
     this, we first initialize an Ensemble with a ``BatchSettings`` object. Then, manually
-    create ``Models`` and add each to the ``Ensemble`` using the ``Ensemble.add_model()`` function.
+    create ``Model``'s and add each to the ``Ensemble`` using the ``Ensemble.add_model()`` function.
     The source code example is available in the dropdown below for convenient execution and customization.
 
     .. dropdown:: Example Driver Script source code
 
         .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
 
-    To create an empty ``Ensemble`` to append ``Models``, initialize the ``Ensemble`` with
+    To create an empty ``Ensemble`` to append ``Model``'s, initialize the ``Ensemble`` with
     a batch settings object:
 
     .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
@@ -299,7 +299,7 @@ Example 1 : Append ``Models`` to an ``Ensemble`` and launch as a batch job
         :linenos:
         :lines: 6-11
 
-    Next, create the ``Models`` to append to the ``Ensemble``:
+    Next, create the ``Model``'s to append to the ``Ensemble``:
 
     .. literalinclude:: tutorials/doc_examples/ensemble_doc_examples/manual_append_ensemble.py
         :language: python
@@ -937,7 +937,7 @@ Two identical ``Model`` were created named `ensemble_0` and `ensemble_1` that us
 within an ``Ensemble`` named `ensemble`. In the application code you use the function ``Client.put_tensor("tensor_0", data)``.
 Without key prefixing enabled, the slower member will overwrite the data from the faster simulation.
 With ``Ensemble`` key prefixing turned on, `ensemble_0` and `ensemble_1` can access
-their tensor `"tensor_0"` by name without overwriting or accessing the other ``Models`` `"tensor_0"` tensor.
+their tensor `"tensor_0"` by name without overwriting or accessing the other ``Model``'s `"tensor_0"` tensor.
 In this scenario, the two tensors placed in the ``Orchestrator`` are named `ensemble_0.tensor_0` and `ensemble_1.tensor_0`.
 
 .. _model_prefix_func_ensemble:
@@ -946,7 +946,8 @@ In this scenario, the two tensors placed in the ``Orchestrator`` are named `ense
 Ensemble functions
 ------------------
 An ``Ensemble`` object supports two prefixing functions: ``Ensemble.enable_key_prefixing()`` and
-``Ensemble.register_incoming_entity()``.
+``Ensemble.register_incoming_entity()``. For more information on each function, reference the
+:ref:`Ensemble API docs<ensemble_api>`.
 
 To enable prefixing on a ``Ensemble``, users must use the ``Ensemble.enable_key_prefixing()``
 function in the ``Experiment`` driver script. This function activates prefixing for tensors,
@@ -955,9 +956,9 @@ also enables access to prefixing ``Client`` functions within the ``Ensemble`` me
 the ``Client.set_data_source()`` function, where ``enable_key_prefixing()`` is not require for access.
 
 .. note::
-    ML model and script prefixing is not automatically enabled through ``Ensemble.enable_key_prefixing()``
-    and rather must be enabled within the ``Ensemble`` member application using
-    ``Client.use_model_ensemble_prefix()``.
+    ML model and script prefixing is not automatically enabled through ``Ensemble.enable_key_prefixing``.
+    Prefixing must be enabled within the ``Ensemble`` by calling the ``use_model_ensemble_prefix`` method
+    on the ``Client`` embedded within the member application.
 
 Users can enable the SmartRedis ``Client`` to interact with prefixed data, ML models and TorchScripts
 using the ``Client.set_data_source()``. However, for SmartSim to recognize the producer entity name
@@ -979,12 +980,12 @@ a list of ``Ensemble`` members. Below we demonstrate registering producer member
     for name in list_of_ensemble_names:
         ensemble_member.register_incoming_entity(ensemble.models.get(name))
 
-For more examples on registering a ``Model`` on self, visit the
-:ref:`Copy/Rename/Delete Operations<copy_rename_del_prefix>`.
+For examples demonstrating how to retrieve data within the entity application that produced
+the data, visit the ``Model`` :ref:`Copy/Rename/Delete Operations<copy_rename_del_prefix>` subsection.
 
 Example: Ensemble Key Prefixing
 ===============================
-In this example, we create an ``Ensemble`` comprised of two ``Models`` that use identical code
+In this example, we create an ``Ensemble`` comprised of two ``Model``'s that use identical code
 to send data to a standalone ``Orchestrator``. To prevent key collisions and ensure data
 integrity, we enable key prefixing on the ``Ensemble`` which automatically
 appends the ``Ensemble`` member `name` to the data sent to the ``Orchestrator``. After the

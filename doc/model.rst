@@ -388,7 +388,7 @@ to execute the stored ML models and TorchScripts.
 AI Models
 =========
 When configuring a ``Model``, users can instruct SmartSim to load
-Machine Learning (ML) models dynamically to the ``Orchestrator``. ML models added
+Machine Learning (ML) models to the ``Orchestrator``. ML models added
 are loaded into the ``Orchestrator`` prior to the execution of the ``Model``. To load an ML model
 to the ``Orchestrator``, SmartSim users can provide the ML model **in-memory** or specify the **file path**
 when using the ``Model.add_ml_model()`` function. SmartSim solely supports loading an ML model from file
@@ -511,7 +511,7 @@ via a SmartRedis ``Client`` (:ref:`SmartRedis<smartredis-api>`) within the appli
 
 TorchScripts
 ============
-When configuring a ``Model``, users can instruct SmartSim to load TorchScripts dynamically
+When configuring a ``Model``, users can instruct SmartSim to load TorchScripts
 to the ``Orchestrator``. TorchScripts added are loaded into the ``Orchestrator`` prior to
 the execution of the ``Model``. To load a TorchScript to the ``Orchestrator``, SmartSim users
 can follow one of the processes:
@@ -528,7 +528,7 @@ can follow one of the processes:
     Users should instead load TorchScripts to a colocated ``Orchestrator`` from file or as a raw string.
 
 Continue or select a process link to learn more on how each function (``Model.add_script()`` and ``Model.add_function()``)
-dynamically load TorchScripts to launched ``Orchestrators``.
+load TorchScripts to launched ``Orchestrators``.
 
 .. _in_mem_TF_doc:
 
@@ -1202,7 +1202,7 @@ applications.
         In the `model.out` file, the ``Client`` will log the message::
             Default@00-00-00:The tensor value is: [1 2 3 4]
 
-        **Retrieve A Tensor Placed By An Alternate Application**
+        **Retrieve A Tensor Placed By An External Application**
 
         SmartSim supports retrieving prefixed tensors sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the tensor
@@ -1292,7 +1292,7 @@ applications.
                 Metadata:
                     none
 
-        **Retrieve A Dataset Placed By An Alternate Application**
+        **Retrieve A Dataset Placed By An External Application**
 
         SmartSim supports retrieving prefixed ``Datasets`` sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
@@ -1381,7 +1381,7 @@ applications.
         In the `model.out` file, the ``Client`` will log the message::
             The length of the list is: 1
 
-        **Retrieve A Aggregation List Placed By An Alternate Application**
+        **Retrieve A Aggregation List Placed By An External Application**
 
         SmartSim supports retrieving prefixed lists sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the list
@@ -1452,7 +1452,7 @@ applications.
             # Retrieve the prefixed ML model
             model_data = client.get_model("mnist_cnn")
 
-        **Retrieve A ML Model Placed By An Alternate Application**
+        **Retrieve A ML Model Placed By An External Application**
 
         SmartSim supports retrieving prefixed ML model sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ML model
@@ -1531,7 +1531,7 @@ applications.
 
             return (X-mean)/std
 
-        **Retrieve A Script Placed By An Alternate Application**
+        **Retrieve A Script Placed By An External Application**
 
         SmartSim supports retrieving prefixed scripts sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the script
@@ -1850,7 +1850,7 @@ scripts.
 
             1) "model_1.copied_tensor"
 
-        **Copy/Rename/Delete Operations On Tensors Placed By An Alternate Application**
+        **Copy/Rename/Delete Operations On Tensors Placed By An External Application**
 
         SmartSim supports copy/rename/delete operations on prefixed tensors sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the tensor
@@ -1997,7 +1997,7 @@ scripts.
             1) "model_1.{renamed_dataset}.dataset_tensor"
             2) "model_1.{renamed_dataset}.meta"
 
-        **Copy/Rename/Delete Operations On Datasets Placed By An Alternate Application**
+        **Copy/Rename/Delete Operations On Datasets Placed By An External Application**
 
         SmartSim supports copy/rename/delete operations on prefixed ``Datasets`` sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
@@ -2144,7 +2144,7 @@ scripts.
 
             1) "model_1.renamed_list"
 
-        **Copy/Rename/Delete Operations On Aggregation Lists Placed By An Alternate Application**
+        **Copy/Rename/Delete Operations On Aggregation Lists Placed By An External Application**
 
         SmartSim supports copy/rename/delete operations on prefixed lists sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the list
@@ -2253,7 +2253,7 @@ scripts.
             # Delete the ML model
             client.delete_model("ml_model")
 
-        **Delete A ML Model Placed By An Alternate Application**
+        **Delete A ML Model Placed By An External Application**
 
         SmartSim supports delete operations on prefixed ML models sent to the ``Orchestrator`` by separate ``Models``.
         To do so, users must provide the ``Model`` name that stored the ML model to ``Client.set_data_source()``.
@@ -2314,7 +2314,7 @@ scripts.
             # Rename the script
             client.delete_script("script")
 
-        **Delete A Script Placed By An Alternate Application**
+        **Delete A Script Placed By An External Application**
 
         SmartSim supports delete operations on prefixed scripts sent to the ``Orchestrator`` by separate ``Models``.
         To do so, users must provide the ``Model`` name that stored the script to ``Client.set_data_source()``.
