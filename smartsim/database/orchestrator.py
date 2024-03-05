@@ -329,7 +329,7 @@ class Orchestrator(EntityList[DBNode]):
 
         :raises SmartSimError: If database address cannot be found or is not active
         """
-        if not self._hosts:
+        if not self.hosts:
             raise SmartSimError("Could not find database address")
         if not self.is_active():
             raise SmartSimError("Database is not active")
@@ -338,7 +338,7 @@ class Orchestrator(EntityList[DBNode]):
     def _get_address(self) -> t.List[str]:
         return [
             f"{host}:{port}"
-            for host, port in itertools.product(self._hosts, self.ports)
+            for host, port in itertools.product(self.hosts, self.ports)
         ]
 
     def is_active(self) -> bool:
@@ -347,10 +347,10 @@ class Orchestrator(EntityList[DBNode]):
         :return: True if database is active, False otherwise
         :rtype: bool
         """
-        if not self._hosts:
+        if not self.hosts:
             return False
 
-        return db_is_active(self._hosts, self.ports, self.num_shards)
+        return db_is_active(self.hosts, self.ports, self.num_shards)
 
     @property
     def _rai_module(self) -> t.Tuple[str, ...]:

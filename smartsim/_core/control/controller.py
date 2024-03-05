@@ -719,17 +719,15 @@ class Controller:
         ready = False
         while not ready:
             try:
-                time.sleep(CONFIG.jm_interval)
                 # manually trigger job update if JM not running
                 if not self._jobs.actively_monitoring:
                     self._jobs.check_jobs()
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all(stat == STATUS_RUNNING for stat in statuses):
+                if all(stat == STATUS_RUNNING for stat in statuses) and orchestrator.is_active():
                     ready = True
                     # TODO remove in favor of by node status check
-                    time.sleep(CONFIG.jm_interval)
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
@@ -737,6 +735,8 @@ class Controller:
                     raise SmartSimError(msg)
                 else:
                     logger.debug("Waiting for orchestrator instances to spin up...")
+                    time.sleep(CONFIG.jm_interval)
+
             except KeyboardInterrupt:
                 logger.info("Orchestrator launch cancelled - requesting to stop")
                 self.stop_db(orchestrator)
