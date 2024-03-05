@@ -13,11 +13,11 @@ build:
   jobs:
     pre_install:
       - python -m pip install .
-      - git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --single-branch smartredis
+      - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
       - cd smartredis; python -m pip install .
       - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
       - ln -s smartredis/examples ./examples
-      - git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --single-branch smartdashboard
+      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
       - cd smartdashboard; python -m pip install .
     pre_build:
         - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
