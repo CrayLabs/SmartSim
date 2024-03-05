@@ -16,6 +16,8 @@ build:
       - git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis
       - cd smartredis
       - python -m pip install .
+      - cd /doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
+      - cd ../; ln -s ./smartredis/examples ./examples
     pre_build:
         - python -m sphinx -b linkcheck -D linkcheck_timeout=1 doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
