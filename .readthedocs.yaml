@@ -20,7 +20,7 @@ build:
       - git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --single-branch smartdashboard
       - cd smartdashboard; python -m pip install .
     pre_build:
-        - python -m sphinx -b linkcheck -D linkcheck_timeout=1.0 doc/ $READTHEDOCS_OUTPUT/linkcheck
+        - python -m sphinx -b linkcheck -D linkcheck_timeout=30 doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
     #   # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
     #   # You can add any other files or directories that you'd like here as well,
