@@ -57,8 +57,8 @@ extensions = [
 ]
 
 autodoc_mock_imports = ["smartredis.smartredisPy"]
-
-suppress_warnings = ['autosectionlabel', 'changelog.rst']
+linkcheck_exclude_documents = ['changelog.rst']
+suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
