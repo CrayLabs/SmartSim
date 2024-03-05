@@ -1,14 +1,7 @@
-        
-    = Database Identifier: {{ db.name }} =
-        Shards: {{ db.num_shards }}
-        TCP/IP Port(s): 
-          {%- for port in db.ports %}
-          {{ port }}
-          {%- endfor %}
-        Network Interface: {{ db._interfaces[0] }}
-        Type: {{ config.database_cli | get_dbtype }}
-        Executable: {{ config.database_exe }}
-        Batch Launch: {{ db.batch }}
-        {%- if db.run_command %}
-        Run Command: {{ db.run_command }}
-        {%- endif %}
+
+{%- if verbosity_level == Verbosity.INFO %}
+{%- include "preview/orchestrator_plain_text_info.template" -%}
+{%- endif %}
+{%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+{%- include "preview/orchestrator_plain_text_debug.template" -%}
+{%- endif %}

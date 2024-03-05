@@ -1,0 +1,14 @@
+        
+    = Database Identifier: {{ db.name }} =
+        Shards: {{ db.num_shards }}
+        TCP/IP Port(s): 
+          {%- for port in db.ports %}
+          {{ port }}
+          {%- endfor %}
+        Network Interface: {{ db._interfaces[0] }}
+        Type: {{ config.database_cli | get_dbtype }}
+        Executable: {{ config.database_exe }}
+        Batch Launch: {{ db.batch }}
+        {%- if db.run_command %}
+        Run Command: {{ db.run_command }}
+        {%- endif %}

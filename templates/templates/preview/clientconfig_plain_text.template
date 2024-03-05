@@ -1,28 +1,7 @@
 
-        Client Configuration:
-          {%- for db in manifest.dbs %}
-          {%- if db.name %}
-          Database Identifier: {{ db.name }}
-            {%- endif %}
-            Database Backend: {{ config.database_cli | get_dbtype }}
-            TCP/IP port:  
-            {%- for port in db.ports %}
-              {{ port }}
-            {%- endfor %}
-            {%- if db.num_shards > 2 %}
-            Type: Clustered
-            {%- else %}
-            Type: Standalone
-            {%- endif %}
-            {%- endfor %}
-            {%- if model.incoming_entities %}
-          Incoming Entities (Available Data Sources): 
-            {%- for incoming in model.incoming_entities %}
-            {{ incoming.name }}
-            {%- endfor %}
-            {%- endif %}
-          Outgoing Key Collision Prevention (Key Prefixing): 
-            Tensors: {{ model.query_key_prefixing() | as_toggle }}
-            Datasets: {{ model.query_key_prefixing() | as_toggle }}
-            ML Models/Torch Scripts: {{ False | as_toggle }}
-            Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}
+{%- if verbosity_level == Verbosity.INFO %}
+{% include "preview/clientconfig_plain_text_info.template" -%}
+{% endif %}
+{%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+{% include "preview/clientconfig_plain_text_debug.template" -%}
+{% endif %}
