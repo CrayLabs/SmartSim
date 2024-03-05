@@ -13,7 +13,7 @@ Experiment
 .. autosummary::
 
    Experiment.__init__
-   experiment.start
+   Experiment.start
    Experiment.stop
    Experiment.create_ensemble
    Experiment.create_model
