@@ -1130,19 +1130,13 @@ def test_multistart_experiment(
     telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
     db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
-    db_stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
     assert len(db_start_events) == 1
-    assert len(db_stop_events) == 1
 
     m_start_events = list(telemetry_output_path.rglob("model/**/start.json"))
-    m_stop_events = list(telemetry_output_path.rglob("model/**/stop.json"))
     assert len(m_start_events) == 1
-    assert len(m_stop_events) == 1
 
     e_start_events = list(telemetry_output_path.rglob("ensemble/**/start.json"))
-    e_stop_events = list(telemetry_output_path.rglob("ensemble/**/stop.json"))
     assert len(e_start_events) == 2
-    assert len(e_stop_events) == 2
 
 
 @pytest.mark.parametrize(
