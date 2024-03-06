@@ -155,7 +155,7 @@ The example is comprised of two script files:
    the driver script. Lastly, we tear down the ``Orchestrator``. The example source code is available in the dropdown below for
    convenient execution and customization.
 
-   .. dropdown:: Example Experiment Driver Script source code
+   .. dropdown:: Example Experiment Driver Script Source Code
 
        .. literalinclude:: tutorials/doc_examples/orch_examples/std_driver.py
 
@@ -444,7 +444,7 @@ The example is comprised of two script files:
    the ``Client`` is utilized to both send and retrieve data. The source code example
    is available in the dropdown below for convenient execution and customization.
 
-   .. dropdown:: Example Application Script source code
+   .. dropdown:: Example Application Script Source Code
 
        .. literalinclude:: tutorials/doc_examples/orch_examples/colo_app.py
 

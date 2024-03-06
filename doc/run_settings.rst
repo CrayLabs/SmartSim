@@ -73,7 +73,7 @@ Below we demonstrate creating and configuring the base ``RunSettings``
 object for local launches by specifying the `"local"` launcher during ``Experiment`` creation.
 We also demonstrate specifying `run_command="mpirun"` locally.
 
-**Initialize and configure a run settings object with no run command specified:**
+**Initialize and Configure a RunSettings Object with No Run Command Specified:**
 
 .. code-block:: python
 
@@ -86,7 +86,7 @@ We also demonstrate specifying `run_command="mpirun"` locally.
       # Initialize a RunSettings object
       run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World", run_command=None)
 
-**Initialize and configure a run settings object with the `mpirun` run command specified:**
+**Initialize and Configure a RunSettings Object with the `mpirun` Run Command Specified:**
 
 .. note::
       Please note that to run this example you need to have an MPI implementation

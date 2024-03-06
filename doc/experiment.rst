@@ -109,7 +109,7 @@ To create a reference to a newly instantiated entity object, use the associated
 After initialization, each entity can be started, monitored, and stopped using
 the :ref:`Experiment<experiment_api>` post-creation methods.
 
-.. list-table:: Interact with Entities during the Experiment
+.. list-table:: Interact with Entities During the Experiment
    :widths: 25 55 25
    :header-rows: 1
 
@@ -138,7 +138,7 @@ Any SmartSim ``Model`` or ``Ensemble`` member can connect to the
 ``Orchestrator`` via the :ref:`SmartRedis<smartredis-api>`
 ``Client`` library to transmit data, execute ML models, and execute scripts.
 
-**SmartSim offers two types Orchestrator deployments:**
+**SmartSim Offers Two Types of Orchestrator Deployments:**
 
 * :ref:`Standalone Orchestrator Deployment<standalone_orch_doc>`
 * :ref:`Colocated Orchestrator Deployment<colocated_orch_doc>`
@@ -180,11 +180,11 @@ gives you access to functions associated with the :ref:`Model API<model_api>`.
 
 A ``Model`` supports key features, including methods to:
 
-- :ref:`Attach configuration files<files_doc>` for use at ``Model`` runtime.
+- :ref:`Attach Configuration Files<files_doc>` for use at ``Model`` runtime.
 - :ref:`Colocate an Orchestrator<colo_model_doc>` to a SmartSim ``Model``.
-- :ref:`Load an ML model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
-- :ref:`Load a TorchScript function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
-- :ref:`Enable data collision prevention<model_key_collision>` which allows
+- :ref:`Load an ML Model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Load a TorchScript Function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Enable Data Collision Prevention<model_key_collision>` which allows
   for reuse of key names in different ``Model`` applications.
 
 Visit the respective links for more information on each topic.
@@ -203,10 +203,10 @@ section within the :ref:`Ensemble<ensemble_doc>` documentation.
 
 An ``Ensemble`` supports key features, including methods to:
 
-- :ref:`Attach configuration files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
-- :ref:`Load an ML model<ai_model_ensemble_doc>` (TF, TF-lite, PT, or ONNX) into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Load a TorchScript function<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Prevent data collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
+- :ref:`Attach Configuration Files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
+- :ref:`Load an ML Model<ai_model_ensemble_doc>` (TF, TF-lite, PT, or ONNX) into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Load a TorchScript Function<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Prevent Data Collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
 
 Visit the respective links for more information on each topic.
 
@@ -236,7 +236,7 @@ Example
   The example source code is available in the dropdown below for convenient execution
   and customization.
 
-  .. dropdown:: Example Driver Script source code
+  .. dropdown:: Example Driver Script Source Code
 
       .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
 
