@@ -23,16 +23,17 @@ build:
         then
           exit 183;
         fi
-    pre_install:
-      - python -m pip install .
+    pre_create_environment:
       - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
+      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
+    post_create_environment:
+      - python -m pip install .
       - cd smartredis; python -m pip install .
       - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
       - ln -s smartredis/examples ./examples
-      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
       - cd smartdashboard; python -m pip install .
     pre_build:
-        - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
+      - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
     #   - git clone https://github.com/CrayLabs/SmartRedis.git
     #   - ln -s ../SmartRedis smartredis
