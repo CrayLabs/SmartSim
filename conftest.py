@@ -820,3 +820,21 @@ def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
         return entity
 
     return _mock_entity
+
+
+class CountingCallable:
+    def __init__(self) -> None:
+        self._num: int = 0
+        self._details: t.List[t.Tuple[t.Tuple[t.Any], t.Dict[str, t.Any]]] = []
+
+    def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+        self._num = 0
+        self._details.append((args, kwargs))
+
+    @property
+    def num_calls(self) -> int:
+        return self._num
+
+    @property
+    def details(self) -> t.List[t.Tuple[t.Tuple[t.Any], t.Dict[str, t.Any]]]:
+        return self._details

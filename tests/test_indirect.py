@@ -24,13 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 import pathlib
 import sys
 
 import psutil
 import pytest
 
+import conftest
 from smartsim._core.config import CONFIG
 from smartsim._core.entrypoints.indirect import cleanup, get_parser, get_ts_ms, main
 from smartsim._core.utils.helpers import encode_cmd
@@ -211,7 +211,10 @@ def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPat
     raw_cmd = f"{sys.executable} {script} --time=10"
     cmd = encode_cmd(raw_cmd.split())
 
+    mock_track = conftest.CountingCallable()
+
     with monkeypatch.context() as ctx:
+        ctx.setattr("smartsim._core.entrypoints.indirect.track_event", mock_track)
         ctx.setattr("psutil.pid_exists", lambda pid: True)
         ctx.setattr("psutil.Popen", MockProc)
         ctx.setattr("psutil.Process", MockProc)  # handle the proc.terminate()
@@ -220,16 +223,15 @@ def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPat
         rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
         assert rc == -1
 
-    data_dir = exp_dir / CONFIG.telemetry_subdir
-    stop_events = list(data_dir.rglob("stop.json"))
-
-    assert stop_events
-
-    content = stop_events[0].read_text()
-    assert "-1" in content
+    (args1, _), (args2, kwargs2) = mock_track.details
+    assert "start" in args1
+    assert "stop" in args2
+    assert kwargs2.get("returncode", -1)
 
 
-def test_complete_process(fileutils, test_dir):
+def test_complete_process(
+    fileutils: conftest.FileUtils, test_dir: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Ensure the happy-path completes and returns a success return code"""
     script = fileutils.get_test_conf_path("sleep.py")
 
@@ -238,15 +240,12 @@ def test_complete_process(fileutils, test_dir):
     raw_cmd = f"{sys.executable} {script} --time=1"
     cmd = encode_cmd(raw_cmd.split())
 
-    rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
-    assert rc == 0
+    mock_track = conftest.CountingCallable()
+    with monkeypatch.context() as ctx:
+        ctx.setattr("smartsim._core.entrypoints.indirect.track_event", mock_track)
+        rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
+        assert rc == 0
 
-    assert exp_dir.exists()
-
-    # NOTE: don't have a manifest so we're falling back to default event path
-    data_dir = exp_dir / CONFIG.telemetry_subdir
-    start_events = list(data_dir.rglob("start.json"))
-    stop_events = list(data_dir.rglob("stop.json"))
-
-    assert start_events
-    assert stop_events
+    (args1, _), (args2, _) = mock_track.details
+    assert "start" in args1
+    assert "stop" in args2
