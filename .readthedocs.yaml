@@ -33,7 +33,7 @@ build:
       - ln -s smartredis/examples ./examples
       - cd smartdashboard; python -m pip install .
     pre_build:
-      - python -m sphinx -b linkcheck linkcheck_ignore=["https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing"] doc/ $READTHEDOCS_OUTPUT/linkcheck
+      - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
     #   - git clone https://github.com/CrayLabs/SmartRedis.git
     #   - ln -s ../SmartRedis smartredis

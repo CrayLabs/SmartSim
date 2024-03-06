@@ -830,7 +830,8 @@ class Experiment:
         launched and completed in this ``Experiment``
 
         :param style: the style in which the summary table is formatted,
-                       for a full list of styles see:
+                       for a full list of styles see the table-format section of:
+                       https://github.com/astanin/python-tabulate,
                        defaults to "github"
         :type style: str, optional
         :return: tabulate string of ``Experiment`` history

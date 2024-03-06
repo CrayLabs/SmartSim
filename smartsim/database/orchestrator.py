@@ -174,10 +174,11 @@ class Orchestrator(EntityList[DBNode]):
 
         Extra configurations for RedisAI
 
+        See https://oss.redis.com/redisai/configuration/
 
         :param threads_per_queue: threads per GPU device
         :type threads_per_queue: int, optional
-        :param inter_op_threads: threads accross CPU operations
+        :param inter_op_threads: threads across CPU operations
         :type inter_op_threads: int, optional
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int, optional

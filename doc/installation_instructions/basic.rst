@@ -29,7 +29,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - git
   - `git-lfs`_
 
-.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing
+.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs
 
 .. note::
 
