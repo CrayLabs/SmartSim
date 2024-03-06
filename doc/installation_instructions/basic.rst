@@ -27,7 +27,6 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - C++ compiler
   - GNU Make > 4.0
   - git
-  - `git-lfs`_
 
 .. note::
 
