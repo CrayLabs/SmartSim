@@ -34,13 +34,13 @@ The Model API functions provide users with the following capabilities:
 Once the ``Model`` has been configured and launched, a user can leverage an ``Orchestrator`` within a ``Model``
 through **two** strategies:
 
-- :ref:`Connect to a standalone Orchestrator<standalone_orch_doc>`
+- :ref:`Connect to a Standalone Orchestrator<standalone_orch_doc>`
    When a ``Model`` is launched, it does not use or share compute
    resources on the same host (computer/server) where a SmartSim ``Orchestrator`` is running.
    Instead, it is launched on its own compute resources specified by the ``RunSettings`` object.
    The ``Model`` can connect via a SmartRedis ``Client`` to a launched standalone ``Orchestrator``.
 
-- :ref:`Connect to a colocated Orchestrator<colocated_orch_doc>`
+- :ref:`Connect to a Colocated Orchestrator<colocated_orch_doc>`
    When the colocated ``Model`` is started, SmartSim launches an ``Orchestrator`` on the ``Model`` compute
    nodes prior to the ``Model`` execution. The ``Model`` can then connect to the colocated ``Orchestrator``
    via a SmartRedis ``Client``.
@@ -401,7 +401,7 @@ The arguments that customize the storage and execution of an ML model can be fou
 .. _in_mem_ML_model_ex:
 
 -------------------------------------
-Example: Attach an in-memory ML Model
+Example: Attach an In-Memory ML Model
 -------------------------------------
 This example demonstrates how to attach an in-memory ML model to a SmartSim ``Model``
 to load into an ``Orchestrator`` at ``Model`` runtime. The source code example is available in the dropdown below for
@@ -419,7 +419,7 @@ convenient execution and customization.
     - a Tensorflow-based ML model was serialized using ``serialize_model`` which returns the
       the ML model as a byte string with the names of the input and output layers
 
-**Attach the ML model to a SmartSim Model**
+**Attach the ML Model to a SmartSim Model**
 
 In this example, we have a serialized Tensorflow-based ML model that was saved to a byte string stored under `model`.
 Additionally, the ``serialize_model`` function returned the names of the input and output layers stored under
@@ -452,9 +452,9 @@ launched ``Orchestrator``. The ML model can then be executed on the ``Orchestrat
 
 .. _from_file_ML_model_ex:
 
-----------------------------------------
-Example: Attaching an ML Model from file
-----------------------------------------
+-------------------------------------
+Example: Attach an ML Model From File
+-------------------------------------
 This example demonstrates how to attach a ML model from file to a SmartSim ``Model``
 to load into an ``Orchestrator`` at ``Model`` runtime.
 The source code example is available in the dropdown below for
@@ -476,7 +476,7 @@ convenient execution and customization.
     - a Tensorflow-based ML model was serialized using ``freeze_model`` which returns the
       the path to the serialized model file and the names of the input and output layers
 
-**Attach the ML model to a SmartSim Model**
+**Attach the ML Model to a SmartSim Model**
 
 In this example, we have a serialized Tensorflow-based ML model that was saved to disk and stored under `model`.
 Additionally, the ``freeze_model`` function returned the names of the input and output layers stored under
@@ -516,11 +516,11 @@ to the ``Orchestrator``. TorchScripts added are loaded into the ``Orchestrator``
 the execution of the ``Model``. To load a TorchScript to the ``Orchestrator``, SmartSim users
 can follow one of the processes:
 
-- :ref:`Define a TorchScript function in-memory<in_mem_TF_doc>`
+- :ref:`Define a TorchScript Function In-Memory<in_mem_TF_doc>`
    Use the ``Model.add_function`` to instruct SmartSim to load an in-memory TorchScript to the ``Orchestrator``.
-- :ref:`Define a TorchScript function from file<TS_from_file>`
+- :ref:`Define a TorchScript Function From File<TS_from_file>`
    Provide file path to ``Model.add_script`` to instruct SmartSim to load the TorchScript from file to the ``Orchestrator``.
-- :ref:`Define a TorchScript function as string<TS_raw_string>`
+- :ref:`Define a TorchScript Function As String<TS_raw_string>`
    Provide function string to ``Model.add_script`` to instruct SmartSim to load a raw string as a TorchScript function to the ``Orchestrator``.
 
 .. note::
@@ -533,7 +533,7 @@ load TorchScripts to launched ``Orchestrators``.
 .. _in_mem_TF_doc:
 
 -------------------------------
-Attach an in-memory TorchScript
+Attach an In-Memory TorchScript
 -------------------------------
 Users can define TorchScript functions within the Python driver script
 to attach to a ``Model``. This feature is supported by ``Model.add_function`` which provides flexible
@@ -549,8 +549,8 @@ In environments with multiple devices, specific device numbers can be specified 
 The arguments that customize the execution of an in-memory TorchScript function can be found in the
 :ref:`Model API<model_api>` under the ``add_function`` docstring.
 
-Example: Loading a in-memory TorchScript function
--------------------------------------------------
+Example: Load a In-Memory TorchScript Function
+----------------------------------------------
 This example walks through the steps of instructing SmartSim to load an in-memory TorchScript function
 to a standalone ``Orchestrator``. The source code example is available in the dropdown below for
 convenient execution and customization.
@@ -565,7 +565,7 @@ convenient execution and customization.
     - a standalone ``Orchestrator`` is launched prior to the ``Model`` execution
     - an initialized ``Model`` named `smartsim_model` exists within the ``Experiment`` workflow
 
-**Define an in-memory TF function**
+**Define an In-Memory TF Function**
 
 To begin, define an in-memory TorchScript function within the ``Experiment`` driver script.
 For the purpose of the example, we add a simple TorchScript function named `timestwo`:
@@ -575,7 +575,7 @@ For the purpose of the example, we add a simple TorchScript function named `time
   :linenos:
   :lines: 3-4
 
-**Attach the in-memory TorchScript function to a SmartSim Model**
+**Attach the In-Memory TorchScript Function to a SmartSim Model**
 
 We use the ``Model.add_function`` function to instruct SmartSim to load the TorchScript function `timestwo`
 onto the launched standalone ``Orchestrator``. Specify the function `timestwo` to the `function`
@@ -605,7 +605,7 @@ standalone ``Orchestrator``. The function can then be executed on the ``Orchestr
 .. _TS_from_file:
 
 ------------------------------
-Attach a TorchScript from file
+Attach a TorchScript From File
 ------------------------------
 Users can attach TorchScript functions from a file to a ``Model`` and upload them to a
 colocated or standalone ``Orchestrator``. This functionality is supported by the ``Model.add_script``
@@ -617,8 +617,8 @@ In environments with multiple devices, specific device numbers can be specified 
 The arguments that customize the storage and execution of a TorchScript script can be found in the
 :ref:`Model API<model_api>` under the ``add_script`` docstring.
 
-Example: Loading a TorchScript from File
-----------------------------------------
+Example: Load a TorchScript From File
+-------------------------------------
 This example walks through the steps of instructing SmartSim to load a TorchScript from file
 to a launched ``Orchestrator``. The source code example is available in the dropdown below for
 convenient execution and customization.
@@ -633,7 +633,7 @@ convenient execution and customization.
     - a ``Orchestrator`` is launched prior to the ``Model`` execution (Colocated or standalone)
     - an initialized ``Model`` named `smartsim_model` exists within the ``Experiment`` workflow
 
-**Define a TorchScript script**
+**Define a TorchScript Script**
 
 For the example, we create the Python script `torchscript.py`. The file contains a
 simple torch function shown below:
@@ -643,7 +643,7 @@ simple torch function shown below:
     def negate(x):
         return torch.neg(x)
 
-**Attach the TorchScript script to a SmartSim Model**
+**Attach the TorchScript Script to a SmartSim Model**
 
 Assuming an initialized ``Model`` named `smartsim_model` exists, we add the TorchScript script using
 ``Model.add_script`` by specifying the script path to the `script_path` parameter:
@@ -672,7 +672,7 @@ on the ``Orchestrator`` via a SmartRedis ``Client`` (:ref:`SmartRedis<smartredis
 .. _TS_raw_string:
 
 ---------------------------------
-Define TorchScripts as raw string
+Define TorchScripts As Raw String
 ---------------------------------
 Users can upload TorchScript functions from string to colocated or
 standalone ``Orchestrators``. This feature is supported by the
@@ -1590,7 +1590,7 @@ where ML Model and Script are placed by separate applications.
 .. tabs::
 
     .. group-tab:: ML Model
-        **Access ML Models From The Application They Were Loaded In**
+        **Access ML Models From within the Application**
 
         SmartSim supports executing prefixed ML models with prefixed tensors sent to the ``Orchestrator`` from within
         the same application that the ML model was placed. To achieve this, users must
@@ -1635,7 +1635,7 @@ where ML Model and Script are placed by separate applications.
             in the driver script which enables and activates prefixing for tensors, ``Datasets``
             and lists.
 
-        **Access ML Models From Outside The Application They Were Loaded In**
+        **Access ML Models Loaded From an External Application**
 
         SmartSim supports executing prefixed ML models with prefixed tensors sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ML model and tensor
@@ -1685,7 +1685,7 @@ where ML Model and Script are placed by separate applications.
 
     .. group-tab:: Script
 
-        **Access Scripts From The Application They Were Loaded In**
+        **Access Scripts From within the Application**
 
         SmartSim supports executing prefixed scripts with prefixed tensors sent to the ``Orchestrator`` from within
         the same application that the script was placed. To achieve this, users must
@@ -1725,7 +1725,7 @@ where ML Model and Script are placed by separate applications.
             in the driver script which enables and activates prefixing for tensors, ``Datasets``
             and lists.
 
-        **Access Scripts From Outside The Application They Were Loaded In**
+        **Access Scripts Loaded From an External Application**
 
         SmartSim supports executing prefixed scripts with prefixed tensors sent to the ``Orchestrator`` by separate
         ``Models``. To achieve this, users need to provide the ``Model`` name that stored the script and tensor
@@ -2221,7 +2221,7 @@ scripts.
             1) "model_2.renamed_list"
 
     .. group-tab:: ML Model
-        **Delete ML Models From The Application They Were Loaded In**
+        **Delete ML Models From within the Application**
 
         SmartSim supports delete operations on prefixed ML models sent to the ``Orchestrator`` from within
         the same application that the ML model was placed. To achieve this, users must
@@ -2283,7 +2283,7 @@ scripts.
 
     .. group-tab:: Script
 
-        **Delete Scripts From The Application They Were Loaded In**
+        **Delete Scripts From within the Application**
 
         SmartSim supports delete operations on prefixed scripts sent to the ``Orchestrator`` from within
         the same application that the script was placed. To achieve this, users must
