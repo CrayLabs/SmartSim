@@ -828,7 +828,7 @@ class CountingCallable:
         self._details: t.List[t.Tuple[t.Tuple[t.Any], t.Dict[str, t.Any]]] = []
 
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        self._num = 0
+        self._num += 1
         self._details.append((args, kwargs))
 
     @property
