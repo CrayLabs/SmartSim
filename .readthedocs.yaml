@@ -11,16 +11,6 @@ build:
   tools:
     python: "3.10"
   jobs:
-    pre_install:
-      - python -m pip install .
-      - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
-      - cd smartredis; python -m pip install .
-      - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
-      - ln -s smartredis/examples ./examples
-      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
-      - cd smartdashboard; python -m pip install .
-    pre_build:
-        - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
     post_checkout:
       # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
       # You can add any other files or directories that you'd like here as well,
@@ -33,6 +23,16 @@ build:
         then
           exit 183;
         fi
+    pre_install:
+      - python -m pip install .
+      - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
+      - cd smartredis; python -m pip install .
+      - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
+      - ln -s smartredis/examples ./examples
+      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
+      - cd smartdashboard; python -m pip install .
+    pre_build:
+        - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
     # post_checkout:
     #   - git clone https://github.com/CrayLabs/SmartRedis.git
     #   - ln -s ../SmartRedis smartredis
@@ -44,6 +44,7 @@ build:
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: doc/conf.py
+  fail_on_warning: true
 
 # Optionally build your docs in additional formats such as PDF and ePub
 # formats:
@@ -56,3 +57,4 @@ sphinx:
 python:
    install:
    - requirements: doc/requirements-doc.txt
+   - method: pip
