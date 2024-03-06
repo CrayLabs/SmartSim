@@ -831,7 +831,6 @@ class Experiment:
 
         :param style: the style in which the summary table is formatted,
                        for a full list of styles see:
-                       https://github.com/astanin/python-tabulate#table-format,
                        defaults to "github"
         :type style: str, optional
         :return: tabulate string of ``Experiment`` history
