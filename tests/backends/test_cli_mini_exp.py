@@ -28,8 +28,8 @@
 from contextlib import contextmanager
 
 import pytest
-import smartredis
 
+import smartredis
 import smartsim._core._cli.validate
 from smartsim._core.utils.helpers import installed_redisai_backends
 

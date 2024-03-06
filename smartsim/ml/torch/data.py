@@ -28,8 +28,8 @@ import typing as t
 
 import numpy as np
 import torch
-from smartredis import Client, Dataset
 
+from smartredis import Client, Dataset
 from smartsim.ml.data import DataDownloader
 
 
