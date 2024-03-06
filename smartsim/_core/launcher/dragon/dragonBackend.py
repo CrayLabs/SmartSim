@@ -39,6 +39,8 @@ from smartsim._core.schemas import (
     DragonResponse,
     DragonRunRequest,
     DragonRunResponse,
+    DragonShutdownRequest,
+    DragonShutdownResponse,
     DragonStopRequest,
     DragonStopResponse,
     DragonUpdateStatusRequest,
@@ -79,6 +81,7 @@ class DragonBackend:
 
     @process_request.register
     def _(self, request: DragonRunRequest) -> DragonRunResponse:
+
         proc = TemplateProcess(
             target=request.exe,
             args=request.exe_args,
@@ -88,7 +91,7 @@ class DragonBackend:
             # stderr=Popen.PIPE,
         )
 
-        grp = ProcessGroup(restart=False, pmi_enabled=True)
+        grp = ProcessGroup(restart=False, pmi_enabled=request.pmi_enabled)
         grp.add_process(nproc=request.tasks, template=proc)
         step_id = self._get_new_id()
         grp.init()
@@ -108,10 +111,13 @@ class DragonBackend:
                     updated_statuses[step_id] = (STATUS_RUNNING, return_codes)
                 else:
                     if all(proc_id is not None for proc_id in proc_group_tuple[1]):
-                        return_codes = [
-                            Process(None, ident=puid).returncode
-                            for puid in proc_group_tuple[1]
-                        ]
+                        try:
+                            return_codes = [
+                                Process(None, ident=puid).returncode
+                                for puid in proc_group_tuple[1]
+                            ]
+                        except (ValueError, TypeError):
+                            return_codes = [-1 for _ in proc_group_tuple[1]]
                     else:
                         return_codes = [0]
                     status = (
@@ -141,3 +147,9 @@ class DragonBackend:
     # pylint: disable-next=no-self-use,unused-argument
     def _(self, request: DragonHandshakeRequest) -> DragonHandshakeResponse:
         return DragonHandshakeResponse()
+
+    @process_request.register
+    # Deliberately suppressing errors so that overloads have the same signature
+    # pylint: disable-next=no-self-use,unused-argument
+    def _(self, request: DragonShutdownRequest) -> DragonShutdownResponse:
+        return DragonShutdownResponse()

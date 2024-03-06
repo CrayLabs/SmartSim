@@ -47,6 +47,7 @@ class DragonRunRequestView(DragonRequest):
     path: NonEmptyStr
     nodes: PositiveInt = 1
     tasks: PositiveInt = 1
+    tasks_per_node: PositiveInt = 1
     output_file: t.Optional[NonEmptyStr] = None
     error_file: t.Optional[NonEmptyStr] = None
     env: t.Dict[str, t.Optional[str]] = {}
@@ -79,3 +80,7 @@ class DragonHandshakeRequest(DragonRequest): ...
 @request_serializer.register("bootstrap")
 class DragonBootstrapRequest(DragonRequest):
     address: NonEmptyStr
+
+
+@request_serializer.register("shutdown")
+class DragonShutdownRequest(DragonRequest): ...

@@ -252,6 +252,14 @@ class Config:
     def telemetry_subdir(self) -> str:
         return ".smartsim/telemetry"
 
+    @property
+    def dragon_default_subdir(self) -> str:
+        return ".smartsim/dragon"
+
+    @property
+    def dragon_log_filename(self) -> str:
+        return "dragon_config.log"
+
 
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:

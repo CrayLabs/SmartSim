@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import signal
+import socket
 import textwrap
 import typing as t
 from types import FrameType
@@ -36,13 +37,19 @@ import zmq
 
 import smartsim._core.utils.helpers as _helpers
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
-from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
+from smartsim._core.schemas import (
+    DragonBootstrapRequest,
+    DragonBootstrapResponse,
+    DragonShutdownResponse,
+)
 from smartsim._core.schemas.dragonRequests import request_serializer
 from smartsim._core.schemas.dragonResponses import response_serializer
 from smartsim._core.utils.network import get_best_interface_and_address
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+
+SHUTDOWN_INITIATED = False
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
@@ -56,7 +63,7 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
 context = zmq.Context()
 
 """
-Redis/KeyDB entrypoint script
+Dragon server entrypoint script
 """
 
 DBPID: t.Optional[int] = None
@@ -71,6 +78,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
                 -------- Dragon Configuration --------
                 IPADDRESS: {ip_address}
                 NETWORK: {network_interface}
+                HOSTNAME: {socket.gethostname()}
                 DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
                 --------------------------------------
 
@@ -81,13 +89,13 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
 
 def run(dragon_head_address: str) -> None:
+    global SHUTDOWN_INITIATED  # pylint: disable=global-statement
     print(f"Opening socket {dragon_head_address}")
     dragon_head_socket = context.socket(zmq.REP)
     dragon_head_socket.bind(dragon_head_address)
-
     dragon_backend = DragonBackend()
 
-    while True:
+    while not SHUTDOWN_INITIATED:
         print(f"Listening to {dragon_head_address}")
         req = dragon_head_socket.recv_json()
         print(f"Received request: {req}")
@@ -95,6 +103,8 @@ def run(dragon_head_address: str) -> None:
         resp = dragon_backend.process_request(drg_req)
         print(f"Sending response {resp}", flush=True)
         dragon_head_socket.send_json(response_serializer.serialize_to_json(resp))
+        if isinstance(resp, DragonShutdownResponse):
+            SHUTDOWN_INITIATED = True
 
 
 def main(args: argparse.Namespace) -> int:
@@ -132,11 +142,14 @@ def main(args: argparse.Namespace) -> int:
 
     run(dragon_head_address=dragon_head_address)
 
+    print("Shutting down! Bye bye!")
     return 0
 
 
 def cleanup() -> None:
+    global SHUTDOWN_INITIATED  # pylint: disable=global-statement
     print("Cleaning up", flush=True)
+    SHUTDOWN_INITIATED = True
 
 
 if __name__ == "__main__":
@@ -155,8 +168,6 @@ if __name__ == "__main__":
         "+interface", type=str, help="Network Interface name", required=False
     )
     args_ = parser.parse_args()
-
-    print(args_)
 
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop

@@ -35,6 +35,7 @@ import smartsim
 from smartsim import Experiment
 from smartsim.entity import Model
 from smartsim.database import Orchestrator
+from smartsim.log import get_logger
 from smartsim.settings import (
     SrunSettings,
     AprunSettings,
@@ -50,10 +51,12 @@ from smartsim.error import SSConfigError
 from subprocess import run
 import sys
 import tempfile
+import time
 import typing as t
 import uuid
 import warnings
 
+logger = get_logger(__name__)
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
 
@@ -68,6 +71,7 @@ test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
 test_batch_resources: t.Dict[t.Any,t.Any] = CONFIG.test_batch_resources
+test_output_dirs = 0
 
 # Fill this at runtime if needed
 test_hostlist = None
@@ -119,6 +123,9 @@ def pytest_sessionstart(
     if os.path.isdir(test_output_root):
         shutil.rmtree(test_output_root)
     os.makedirs(test_output_root)
+    while not os.path.isdir(test_output_root):
+        time.sleep(0.1)
+
     print_test_configuration()
 
 
@@ -130,10 +137,20 @@ def pytest_sessionfinish(
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_output_root)
-    else:
-        # kill all spawned processes in case of error
-        kill_all_test_spawned_processes()
+        cleanup_attempts = 5
+        while cleanup_attempts > 0:
+            try:
+                shutil.rmtree(test_output_root)
+            except OSError as e:
+                cleanup_attempts -= 1
+                time.sleep(1)
+                if not cleanup_attempts:
+                    raise
+            else:
+                break
+
+    # kill all spawned processes
+    kill_all_test_spawned_processes()
 
 
 def kill_all_test_spawned_processes() -> None:
@@ -454,6 +471,13 @@ def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SSKEYIN", raising=False)
     monkeypatch.delenv("SSKEYOUT", raising=False)
 
+
+@pytest.fixture(scope="function", autouse=True)
+def check_output_dir() -> None:
+    global test_output_dirs
+    assert os.path.isdir(test_output_root)
+    assert len(os.listdir(test_output_root)) >= test_output_dirs
+    test_output_dirs = len(os.listdir(test_output_root))
 
 @pytest.fixture
 def dbutils() -> t.Type[DBUtils]:
