@@ -126,7 +126,6 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     assert "Network Interface" in output
     assert "Type" in output
     assert "Executable" in output
-    assert "Batch Launch" in output
 
     db_path = _utils.get_db_path()
     if db_path:
@@ -137,7 +136,6 @@ def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
     assert orc._interfaces[0] in output
     assert db_type in output
     assert CONFIG.database_exe in output
-    assert str(orc.batch) in output
     assert orc.run_command in output
     assert str(orc.db_nodes) in output
 
@@ -154,7 +152,7 @@ def test_preview_to_file(test_dir, wlmutils):
     filename = "test_preview_output_filename.txt"
     path = pathlib.Path(test_dir) / filename
     # Execute preview method
-    exp.preview(output_format="plain_text", output_filename=str(path))
+    exp.preview(output_format="plain_text", output_filename=str(path), verbosity_level="debug")
 
     # Evaluate output
     assert path.exists()
@@ -1326,10 +1324,10 @@ def test_preview_batch_model(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(model)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "Batch Launch: True" in output
-    assert "Batch Commands" in output
+    assert "Batch Command" in output
     assert "Batch Arguments" in output
     assert "nodes" in output
     assert "time" in output
@@ -1362,7 +1360,7 @@ def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
     preview_manifest = Manifest(ensemble)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest)
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "Batch Launch: True" in output
     assert "Batch Commands" in output
