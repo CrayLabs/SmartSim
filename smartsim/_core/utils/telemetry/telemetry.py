@@ -409,7 +409,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     pathlib.Path(entity.status_dir),
                 )
 
-                if entity.is_managed:
+                if entity.is_managed or entity.is_db:
                     self._tracked_jobs[entity.key] = entity
 
                     # Tell JobManager the task is unmanaged when adding so it will
