@@ -345,7 +345,7 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     assert "Type" in output
     assert "TCP/IP" in output
 
-    exp.stop(orc)
+    exp.stop(db, db2)
 
 
 def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
