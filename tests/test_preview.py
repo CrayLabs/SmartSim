@@ -1363,7 +1363,7 @@ def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     assert "Batch Launch: True" in output
-    assert "Batch Commands" in output
+    assert "Batch Command" in output
     assert "Batch Arguments" in output
     assert "nodes" in output
     assert "time" in output

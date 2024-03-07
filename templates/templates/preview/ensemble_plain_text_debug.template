@@ -10,7 +10,7 @@
         {%- endif %}
         {%- if ensemble.batch_settings %}
         Batch Launch: True
-        Batch Commands: {{ ensemble.batch_settings.batch_cmd }}
+        Batch Command: {{ ensemble.batch_settings.batch_cmd }}
         {%- endif %}
         {%- if ensemble.batch_settings.batch_args %}
         Batch Arguments:

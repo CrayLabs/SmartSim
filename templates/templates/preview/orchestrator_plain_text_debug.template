@@ -10,7 +10,7 @@
         Executable: {{ config.database_exe }}
         {%- if db.batch_settings %}
         Batch Launch: True
-        Batch Commands: {{ db.batch_settings.batch_cmd }}
+        Batch Command: {{ db.batch_settings.batch_cmd }}
         Batch Arguments:
         {%- for key, value in db.batch_settings.batch_args.items() %}
           {{ key }}: {{ value }}
