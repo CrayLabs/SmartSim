@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
 import pathlib
 import time
 import typing as t
@@ -81,17 +80,11 @@ class JobEntity:
     def poll_state(self) -> None:
         # do not poll if already known to be done
         if self._is_complete or not self.is_db:
-            # we currently only need to poll for unmanaged db updates
             return
 
-        p = pathlib.Path(self.status_dir) / "stop.json"
-        if p.exists():
+        state_file = pathlib.Path(self.status_dir) / "stop.json"
+        if state_file.exists():
             self._is_complete = True
-            self._state = json.loads(p.read_text())
-
-    @property
-    def state(self) -> t.Dict[str, str]:
-        return self._state
 
 
 class Job:
