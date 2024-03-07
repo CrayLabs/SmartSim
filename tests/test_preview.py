@@ -152,7 +152,9 @@ def test_preview_to_file(test_dir, wlmutils):
     filename = "test_preview_output_filename.txt"
     path = pathlib.Path(test_dir) / filename
     # Execute preview method
-    exp.preview(output_format="plain_text", output_filename=str(path), verbosity_level="debug")
+    exp.preview(
+        output_format="plain_text", output_filename=str(path), verbosity_level="debug"
+    )
 
     # Evaluate output
     assert path.exists()
