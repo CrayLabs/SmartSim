@@ -763,7 +763,7 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
         try:
             exp.start(orc)
 
-            snooze_nonblocking(telemetry_output_path, max_delay=30, post_data_delay=2)
+            snooze_nonblocking(telemetry_output_path, max_delay=10, post_data_delay=2)
 
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))

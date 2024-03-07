@@ -395,6 +395,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 filter_fn=lambda e: e.key not in self._tracked_jobs
             ):
                 entity.path = str(exp_dir)
+                self._tracked_jobs[entity.key] = entity
 
                 if entity.telemetry_on:
                     collectors = find_collectors(entity)
@@ -409,9 +410,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     pathlib.Path(entity.status_dir),
                 )
 
-                if entity.is_managed or entity.is_db:
-                    self._tracked_jobs[entity.key] = entity
-
+                if entity.is_managed:
                     # Tell JobManager the task is unmanaged when adding so it will
                     # monitor it but not try to start it
                     self.job_manager.add_job(
@@ -420,8 +419,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                         entity,
                         False,
                     )
+                    # and tell the launcher it's managed so it doesn't lookup the PID
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, entity.task_id, entity.is_managed
+                        entity.name, entity.step_id, entity.task_id, True
                     )
             self._tracked_runs[run.timestamp] = run
 
@@ -503,8 +503,17 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         await self._collector.collect()
 
+        # ensure unmanaged jobs move out of tracked jobs list
+        u_jobs = [job for job in self._tracked_jobs.values() if not job.is_managed]
+        for job in u_jobs:
+            job.poll_state()
+            if job.is_complete:
+                completed_entity = self._tracked_jobs.pop(job.key)
+                self._completed_jobs[job.key] = completed_entity
+
         # consider not using name to avoid collisions
-        if names := {entity.name: entity for entity in self._tracked_jobs.values()}:
+        m_jobs = [job for job in self._tracked_jobs.values() if job.is_managed]
+        if names := {entity.name: entity for entity in m_jobs}:
             step_updates = self._launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:
