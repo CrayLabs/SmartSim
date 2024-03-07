@@ -159,7 +159,6 @@ one ``Orchestrator``, the ``Experiment.create_database`` and ``Model.colocate..`
 functions mandate the specification of a unique ``Orchestrator`` identifier, denoted
 by the `db_identifier` argument for each ``Orchestrator``. The `db_identifier` is used
 in an application script by a SmartRedis ``Client`` to connect to a specific ``Orchestrator``.
-jk
 
 .. _model_exp_docs:
 
