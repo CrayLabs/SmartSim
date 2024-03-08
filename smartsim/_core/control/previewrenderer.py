@@ -105,7 +105,6 @@ def render(
         config=CONFIG,
         verbosity_level=verbosity_level,
     )
-    print(rendered_preview)
     return rendered_preview
 
 
