@@ -35,3 +35,10 @@ class SmartSimStatus(Enum):
     STATUS_NEW = "New"
     STATUS_PAUSED = "Paused"
     STATUS_NEVER_STARTED = "NeverStarted"
+
+
+TERMINAL_STATUSES = {
+    SmartSimStatus.STATUS_CANCELLED,
+    SmartSimStatus.STATUS_COMPLETED,
+    SmartSimStatus.STATUS_FAILED,
+}

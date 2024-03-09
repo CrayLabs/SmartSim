@@ -126,13 +126,13 @@ class Job:
 
         :param new_status: The new status of the job
         :type new_status: SmartSimStatus
-        :param raw_status: The return code for the launcher
+        :param raw_status: The raw status of the launcher
         :type raw_status: str
         :param returncode: The return code for the job
         :type return_code: int
-        :param error: Output message
+        :param error: Content produced by stderr
         :type error: str
-        :param output: Output message
+        :param output: Content produced by stdout
         :type output: str
         """
         self.status = new_status

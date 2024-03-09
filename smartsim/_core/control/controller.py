@@ -61,7 +61,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
-from ...status import SmartSimStatus
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
@@ -206,11 +206,7 @@ class Controller:
         """
         with JM_LOCK:
             job = self._jobs[entity.name]
-            if job.status not in [
-                SmartSimStatus.STATUS_CANCELLED,
-                SmartSimStatus.STATUS_COMPLETED,
-                SmartSimStatus.STATUS_FAILED,
-            ]:
+            if job.status not in TERMINAL_STATUSES:
                 logger.info(
                     " ".join(
                         ("Stopping model", entity.name, "with job name", str(job.name))
@@ -740,15 +736,7 @@ class Controller:
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
-                elif any(
-                    stat
-                    in [
-                        SmartSimStatus.STATUS_CANCELLED,
-                        SmartSimStatus.STATUS_COMPLETED,
-                        SmartSimStatus.STATUS_FAILED,
-                    ]
-                    for stat in statuses
-                ):
+                elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"

@@ -35,7 +35,7 @@ from types import FrameType
 from ...database import Orchestrator
 from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import ContextThread, get_logger
-from ...status import SmartSimStatus
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
@@ -104,11 +104,7 @@ class JobManager:
             for _, job in self().items():
                 # if the job has errors then output the report
                 # this should only output once
-                if job.returncode is not None and job.status in [
-                    SmartSimStatus.STATUS_CANCELLED,
-                    SmartSimStatus.STATUS_COMPLETED,
-                    SmartSimStatus.STATUS_FAILED,
-                ]:
+                if job.returncode is not None and job.status in TERMINAL_STATUSES:
                     if int(job.returncode) != 0:
                         logger.warning(job)
                         logger.warning(job.error_report())
@@ -364,15 +360,7 @@ class JobManager:
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():
-                    if (
-                        job.status
-                        not in [
-                            SmartSimStatus.STATUS_CANCELLED,
-                            SmartSimStatus.STATUS_COMPLETED,
-                            SmartSimStatus.STATUS_FAILED,
-                        ]
-                        and self._launcher
-                    ):
+                    if job.status not in TERMINAL_STATUSES and self._launcher:
                         self._launcher.stop(job.name)
             else:
                 logger.warning("SmartSim process interrupted before resource cleanup")
