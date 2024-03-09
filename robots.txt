@@ -1,5 +1,7 @@
-# Disallow any searching agent from indexing the /doc file
-
+# Disallow crawling of the Read the Docs URL
 User-agent: *
+Disallow: /en/
 
-Disallow: /https://smartsim.readthedocs.io/
+# Allow crawling of the Cray Labs SmartSim docs URL
+User-agent: *
+Allow: /docs/
