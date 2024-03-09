@@ -2,4 +2,4 @@
 
 User-agent: *
 
-Disallow: smartsim.readthedocs.io
+Disallow: /https://smartsim.readthedocs.io/

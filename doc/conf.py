@@ -85,7 +85,7 @@ fortran_src = [
 html_theme = "sphinx_book_theme"
 
 # Avoid indexing by search engines
-html_extra_path = ['../robots.txt']
+html_extra_path = ['robots.txt']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
