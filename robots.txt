@@ -1,2 +1,5 @@
+# Disallow any searching agent from indexing the /doc file
+
 User-agent: *
-Disallow: /
+
+Disallow: smartsim.readthedocs.io
