@@ -62,7 +62,7 @@ class StepInfo:
         """
         Map the status of the WLM step to a smartsim-specific status
         """
-        if any(statuses.value == status for statuses in SmartSimStatus):
+        if any(ss_status.value == status for ss_status in SmartSimStatus):
             return SmartSimStatus(status)
 
         if status in self.mapping and returncode in [None, 0]:

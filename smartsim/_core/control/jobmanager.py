@@ -204,11 +204,7 @@ class JobManager:
         with self._lock:
             job = self[entity.name]  # locked operation
             if entity.name in self.completed:
-                if job.status in [
-                    SmartSimStatus.STATUS_CANCELLED,
-                    SmartSimStatus.STATUS_COMPLETED,
-                    SmartSimStatus.STATUS_FAILED,
-                ]:
+                if job.status in TERMINAL_STATUSES:
                     return True
             return False
 
