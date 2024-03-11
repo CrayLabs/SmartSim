@@ -30,12 +30,13 @@ import sys
 import pytest
 from smartredis import *
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity.dbobject import DBScript
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 from smartsim.settings import MpiexecSettings, MpirunSettings
+from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
@@ -125,7 +126,7 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(db)
 
@@ -221,7 +222,7 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, ensemble, block=True)
         statuses = exp.get_status(ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(db)
 
@@ -288,7 +289,7 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_model)
 
@@ -388,7 +389,7 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_ensemble)
 
@@ -486,7 +487,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_ensemble)
 
