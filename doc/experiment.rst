@@ -7,7 +7,7 @@ Overview
 SmartSim helps automate the deployment of AI-enabled workflows on HPC systems. With SmartSim, users
 can describe and launch combinations of applications and AI/ML infrastructure to produce novel and
 scalable workflows. SmartSim supports launching these workflows on a diverse set of systems, including
-local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS, and LSF).
+local environments such as Mac or Linux, as well as HPC job schedulers (e.g. Slurm, PBS Pro, and LSF).
 
 The ``Experiment`` API is SmartSim's top level API that provides users with methods for creating, combining,
 configuring, launching and monitoring :ref:`entities<entities_exp_docs>` in an AI-enabled workflow. More specifically, the
@@ -19,7 +19,7 @@ methods:
 * :ref:`Ensemble<ensemble_exp_docs>`
 
 Settings are given to ``Model`` and ``Ensemble`` objects to provide parameters for how the job should be executed. The
-:ref:`Experiment API<experiment_api>` offers customizable Settings objects that are created via the factory methods:
+:ref:`Experiment API<experiment_api>` offers two customizable Settings objects that are created via the factory methods:
 
 * :ref:`RunSettings<run_settings_doc>`
 * :ref:`BatchSettings<batch_settings_doc>`
@@ -40,7 +40,8 @@ initialize within an ``Experiment``.
   machine learning infrastructure launched by SmartSim and connected
   to online analysis and visualization via the in-memory ``Orchestrator``.
 
-An ``Experiment`` example is offered in the :ref:`Example<exp_example>` section of this page.
+Find an example of the ``Experiment`` class and factory methods used within a
+workflow in the :ref:`Example<exp_example>` section of this page.
 
 .. _launcher_exp_docs:
 
@@ -48,24 +49,24 @@ An ``Experiment`` example is offered in the :ref:`Example<exp_example>` section 
 Launchers
 =========
 SmartSim supports launching AI-enabled workflows on a wide variety of systems, including locally on a Mac or
-Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS, and LSF). When creating a SmartSim
+Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS Pro, and LSF). When creating a SmartSim
 ``Experiment``, the user has the opportunity to specify the `launcher` type or defer to automatic `launcher` selection.
 `Launcher` selection determines how SmartSim translates entity configurations into system calls to launch,
 manage, and monitor. Currently, SmartSim supports 5 `launchers`:
 
 1. ``local`` **[default]**: for single-node, workstation, or laptop
 2. ``slurm``: for systems using the Slurm scheduler
-3. ``pbs``: for systems using the PBSpro scheduler
+3. ``pbs``: for systems using the PBS Pro scheduler
 4. ``pals``: for systems using the PALS scheduler
 5. ``lsf``: for systems using the LSF scheduler
 6. ``auto``: have SmartSim auto-detect the launcher to use
 
 If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
-`launcher="local"` will be used which will start all ``Experiment`` launched entities on the
+`"local"` will be assigned which will start all ``Experiment`` launched entities on the
 localhost.
 
 For examples specifying a `launcher` during ``Experiment`` initialization, navigate to the
-``Experiment`` :ref:`__init__ function<exp_init>` in the ``Experiment`` API docstring.
+``Experiment`` :ref:`__init__ special method<exp_init>` in the ``Experiment`` API docstring.
 
 .. _entities_exp_docs:
 
@@ -83,11 +84,11 @@ The SmartSim entities include:
 While the ``Experiment`` object is intended to be instantiated once in the
 Python driver script, there is no limit to the number of SmartSim entities
 within the ``Experiment``. In the following subsections, we define the
-general purpose of the three entities that can be created via
-``Experiment`` factory class.
+general purpose of the three entities that can be created through the
+``Experiment``.
 
-To create a reference to a newly instantiated entity object, use the associated
-``Experiment.create_...`` factory method.
+To create a reference to a newly instantiated entity object, use the
+associated ``Experiment.create_...`` factory method shown below.
 
 .. list-table:: Experiment API Entity Creation
    :widths: 20 65 25
@@ -107,13 +108,13 @@ To create a reference to a newly instantiated entity object, use the associated
      - :ref:`Ensemble <ensemble_api>`
 
 After initialization, each entity can be started, monitored, and stopped using
-the :ref:`Experiment<experiment_api>` post-creation methods.
+the ``Experiment`` post-creation methods.
 
 .. list-table:: Interact with Entities During the Experiment
    :widths: 25 55 25
    :header-rows: 1
 
-   * - Experiment Function
+   * - Factory Method
      - Example
      - Desc
    * - ``start``
@@ -132,8 +133,8 @@ Orchestrator
 ============
 The :ref:`Orchestrator<orch_docs>` is an in-memory database built for
 a wide variety of AI-enabled workflows. The ``Orchestrator`` can be thought of as a general
-feature store capable of storing numerical data, ML models, and scripts.
-The ``Orchestrator`` is capable of performing inference and script evaluation using data in the feature store.
+feature store for numerical data, ML models, and scripts. The ``Orchestrator`` is capable
+of performing inference and script evaluation using data in the feature store.
 Any SmartSim ``Model`` or ``Ensemble`` member can connect to the
 ``Orchestrator`` via the :ref:`SmartRedis<smartredis-api>`
 ``Client`` library to transmit data, execute ML models, and execute scripts.
@@ -167,10 +168,10 @@ Model
 :ref:`Model(s)<model_object_doc>` represent a simulation model or any computational kernel,
 including applications, scripts, or generally, a program. They can
 interact with other SmartSim entities via data transmitted to/from
-SmartSim ``Orchestrators`` using a SmartRedis ``Client``.
+SmartSim ``Orchestrator(s)`` using a SmartRedis ``Client``.
 
 A ``Model`` is created through the factory method: ``Experiment.create_model``.
-``Models`` are initialized with ``RunSettings`` objects that specify
+``Model(s)`` are initialized with ``RunSettings`` objects that specify
 how a ``Model`` should be launched by a workload manager
 (e.g., Slurm) and the compute resources required.
 Optionally, the user may also specify a ``BatchSettings`` object if
@@ -180,11 +181,11 @@ gives you access to functions associated with the :ref:`Model API<model_api>`.
 
 A ``Model`` supports key features, including methods to:
 
-- :ref:`Attach Configuration Files<files_doc>` for use at ``Model`` runtime.
+- :ref:`Attach configuration files<files_doc>` for use at ``Model`` runtime.
 - :ref:`Colocate an Orchestrator<colo_model_doc>` to a SmartSim ``Model``.
-- :ref:`Load an ML Model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
-- :ref:`Load a TorchScript Function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
-- :ref:`Enable Data Collision Prevention<model_key_collision>` which allows
+- :ref:`Load an ML model<ai_model_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Load a TorchScript function<TS_doc>`  into the ``Orchestrator`` at ``Model`` runtime.
+- :ref:`Enable data collision prevention<model_key_collision>` which allows
   for reuse of key names in different ``Model`` applications.
 
 Visit the respective links for more information on each topic.
@@ -195,18 +196,18 @@ Ensemble
 ========
 In addition to a single ``Model``, SmartSim allows users to create,
 configure, and launch an :ref:`Ensemble<ensemble_doc>` of ``Model`` objects.
-``Ensembles`` can be given parameters and a permutation strategy that define how the
+``Ensemble(s)`` can be given parameters and a permutation strategy that define how the
 ``Ensemble`` will create the underlying ``Model`` objects. Users may also
 manually create and append ``Model(s)`` to an ``Ensemble``. For information
 and examples on ``Ensemble`` creation strategies, visit the :ref:`Initialization<init_ensemble_strategies>`
-section within the :ref:`Ensemble<ensemble_doc>` documentation.
+section within the ``Ensemble`` documentation.
 
 An ``Ensemble`` supports key features, including methods to:
 
-- :ref:`Attach Configuration Files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
-- :ref:`Load an ML Model<ai_model_ensemble_doc>` (TF, TF-lite, PT, or ONNX) into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Load a TorchScript Function<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
-- :ref:`Prevent Data Collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
+- :ref:`Attach configuration files<attach_files_ensemble>` for use at ``Ensemble`` runtime.
+- :ref:`Load an ML model<ai_model_ensemble_doc>` (TF, TF-lite, PT, or ONNX) into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Load a TorchScript function<TS_ensemble_doc>` into the ``Orchestrator`` at ``Ensemble`` runtime.
+- :ref:`Prevent data collisions<prefix_ensemble>` within the ``Ensemble``, which allows for reuse of application code.
 
 Visit the respective links for more information on each topic.
 
@@ -216,7 +217,7 @@ Visit the respective links for more information on each topic.
 Example
 =======
 .. compound::
-  In the following subsections, we provide an example of using SmartSim to automate the
+  In the following section, we provide an example of using SmartSim to automate the
   deployment of an HPC workflow consisting of a ``Model`` and standalone ``Orchestrator``.
   The example demonstrates:
 
@@ -225,8 +226,8 @@ Example
    - an in-memory database (standalone ``Orchestrator``)
    - an application (``Model``)
   *Generating*
-   - an in-memory database (standalone ``Orchestrator``) folder
-   - an application (``Model``) folder
+   - the ``Orchestrator`` output directory
+   - the ``Model`` output directory
   *Starting*
    - an in-memory database (standalone ``Orchestrator``)
    - an application (``Model``)
@@ -260,9 +261,9 @@ Initializing
 .. compound::
   Next, launch an in-memory database, referred to as an ``Orchestrator``.
   To *initialize* an ``Orchestrator`` object, use the ``Experiment.create_database``
-  function. Create a multi-sharded ``Orchestrator`` by setting the argument `db_nodes` to three.
+  factory method. Create a multi-sharded ``Orchestrator`` by setting the argument `db_nodes` to three.
   SmartSim will assign a `port` to the ``Orchestrator`` and attempt to detect your machine's
-  network interface if not provided to ``Experiment.create_database``.
+  network interface if not provided.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
@@ -271,10 +272,10 @@ Initializing
 
 .. compound::
   Before invoking the factory method to create a ``Model``,
-  first create a ``RunSettings`` object. A ``RunSettings`` holds the
+  first create a ``RunSettings`` object. ``RunSettings`` hold the
   information needed to execute the ``Model`` on the machine. The ``RunSettings``
-  object is initialized using the ``Experiment.create_run_settings`` factory
-  method. Specify the executable to run and the arguments to pass to the executable.
+  object is initialized using the ``Experiment.create_run_settings`` method.
+  Specify the executable to run and arguments to pass to the executable.
 
   The example ``Model`` is a simple `Hello World` program
   that echos `Hello World` to stdout.
@@ -285,7 +286,7 @@ Initializing
     :lines: 12-13
 
   After creating the ``RunSettings`` object, initialize the ``Model`` object by passing the `name`
-  and ``RunSettings`` to the ``Experiment.create_model`` function.
+  and `settings` to ``create_model``.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
@@ -297,7 +298,7 @@ Generating
 .. compound::
   Next we generate the file structure for the ``Experiment``. A call to ``Experiment.generate``
   instructs SmartSim to create directories within the ``Experiment`` folder for each instance passed in.
-  Organize the ``Orchestrator`` and ``Model`` output files within the ``Experiment`` folder by
+  We organize the ``Orchestrator`` and ``Model`` output files within the ``Experiment`` folder by
   passing the ``Orchestrator`` and ``Model`` instances to ``exp.generate``:
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
@@ -305,7 +306,7 @@ Generating
     :linenos:
     :lines: 17-18
 
-  `Overwrite=True` instructs SmartSim to overwrite entity contents if entity files and subdirectories
+  `Overwrite=True` instructs SmartSim to overwrite entity contents if files and subdirectories
   already exist within the ``Experiment`` directory.
 
   .. note::
@@ -313,16 +314,15 @@ Generating
     or ``Ensemble.attach_generator_files``, the attached files or directories will be symlinked, copied, or configured and
     written into the created directory for that instance.
 
-  Since we utilized the ``Experiment.generate`` function to create an output directory for the ``Experiment``
-  entities, namely the ``Model`` and ``Orchestrator``, `.err` and `.out` log files will be placed in individual
-  entity subdirectories within the main ``Experiment`` directory.
+  The ``Experiment.generate`` call places the `.err` and `.out` log files in the entity
+  subdirectories within the main ``Experiment`` directory.
 
 Starting
 ========
 .. compound::
-  Next launch the components of the ``Experiment`` (``Orchestrator`` and ``Model``)
-  using functions provided through the ``Experiment``. To do so, use the ``Experiment.start``
-  function and pass in the previous ``Orchestrator`` and ``Model`` instances.
+  Next launch the components of the ``Experiment`` (``Orchestrator`` and ``Model``).
+  To do so, use the ``Experiment.start`` factory method and pass in the previous
+  ``Orchestrator`` and ``Model`` instances.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
@@ -332,8 +332,8 @@ Starting
 Stopping
 ========
 .. compound::
-  Lastly, to clean up the ``Experiment``, tear down the launched ``Orchestrators``
-  using the ``Experiment.stop`` function.
+  Lastly, to clean up the ``Experiment``, tear down the launched ``Orchestrator``
+  using the ``Experiment.stop`` factory method.
 
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python

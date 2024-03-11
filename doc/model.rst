@@ -9,13 +9,13 @@ Overview
 SmartSim ``Model`` objects enable users to execute computational tasks in an
 ``Experiment`` workflow, such as launching compiled applications,
 running scripts, or performing general computational operations. A ``Model`` can be launched with
-other SmartSim ``Models`` and ``Orchestrators`` to build AI-enabled workflows.
+other SmartSim ``Model(s)`` and ``Orchestrator(s)`` to build AI-enabled workflows.
 With the SmartSim ``Client`` (:ref:`SmartRedis<smartredis-api>`), data can be transferred from a ``Model``
-to the ``Orchestrator`` for use in an ML Model (TF, TF-lite, PyTorch, or ONNX), online
+to the ``Orchestrator`` for use in an ML model (TF, TF-lite, PyTorch, or ONNX), online
 training process, or additional ``Model`` applications. SmartSim ``Clients`` (SmartRedis) are available in
 Python, C, C++, or Fortran.
 
-To initialize a SmartSim ``Model``, use the ``Experiment.create_model`` API function.
+To initialize a SmartSim ``Model``, use the ``Experiment.create_model`` factory method.
 When creating a ``Model``, a :ref:`RunSettings<run_settings_doc>` object must be provided. A ``RunSettings``
 object specifies the ``Model`` executable (e.g. the full path to a compiled binary) as well as
 executable arguments and launch parameters. These specifications include launch commands (e.g. `srun`, `aprun`, `mpiexec`, etc),
@@ -62,7 +62,7 @@ Initialization
 ==============
 Overview
 ========
-The :ref:`Experiment API<experiment_api>` is responsible for initializing all SmartSim entities.
+The ``Experiment`` is responsible for initializing all SmartSim entities.
 A ``Model`` is created using the ``Experiment.create_model`` factory method, and users can customize the
 ``Model`` via the factory method parameters.
 
@@ -356,7 +356,7 @@ Overview
 SmartSim users have the capability to load ML models and TorchScripts into an ``Orchestrator``
 within the ``Experiment`` script for use within a ``Model``. Functions accessible through
 a ``Model`` object support loading ML models (TensorFlow, TensorFlow-lite, PyTorch, and ONNX) and
-TorchScripts into standalone or colocated ``Orchestrators`` before application runtime.
+TorchScripts into standalone or colocated ``Orchestrator(s)`` before application runtime.
 
 Users can follow **two** processes to load an ML model to the ``Orchestrator``:
 
@@ -365,7 +365,7 @@ Users can follow **two** processes to load an ML model to the ``Orchestrator``:
 
 .. warning::
     Uploading an ML model :ref:`from memory<in_mem_ML_model_ex>` is solely supported for
-    standalone ``Orchestrators``. To upload an ML model to a colocated ``Orchestrator``, users
+    standalone ``Orchestrator(s)``. To upload an ML model to a colocated ``Orchestrator``, users
     must save the ML model to disk and upload :ref:`from file<from_file_ML_model_ex>`.
 
 Users can follow **three** processes to load a TorchScript to the ``Orchestrator``:
@@ -376,7 +376,7 @@ Users can follow **three** processes to load a TorchScript to the ``Orchestrator
 
 .. warning::
     Uploading a TorchScript :ref:`from memory<in_mem_TF_doc>` is solely supported for
-    standalone ``Orchestrators``. To upload a TorchScript to a colocated ``Orchestrator``, users
+    standalone ``Orchestrator(s)``. To upload a TorchScript to a colocated ``Orchestrator``, users
     upload :ref:`from file<TS_from_file>` or :ref:`from string<TS_raw_string>`.
 
 Once an ML model or TorchScript is loaded into the ``Orchestrator``, ``Model`` objects can
@@ -392,7 +392,7 @@ Machine Learning (ML) models to the ``Orchestrator``. ML models added
 are loaded into the ``Orchestrator`` prior to the execution of the ``Model``. To load an ML model
 to the ``Orchestrator``, SmartSim users can provide the ML model **in-memory** or specify the **file path**
 when using the ``Model.add_ml_model`` function. SmartSim solely supports loading an ML model from file
-for use within standalone ``Orchestrators``. The supported ML frameworks are TensorFlow,
+for use within standalone ``Orchestrator(s)``. The supported ML frameworks are TensorFlow,
 TensorFlow-lite, PyTorch, and ONNX.
 
 The arguments that customize the storage and execution of an ML model can be found in the
@@ -461,8 +461,8 @@ The source code example is available in the dropdown below for
 convenient execution and customization.
 
 .. note::
-    SmartSim supports loading ML models from file to standalone ``Orchestrators``.
-    This feature is **not** supported for colocated ``Orchestrators``.
+    SmartSim supports loading ML models from file to standalone ``Orchestrator(s)``.
+    This feature is **not** supported for colocated ``Orchestrator(s)``.
 
 .. dropdown:: Example Driver Script Source Code
 
@@ -524,11 +524,11 @@ can follow one of the processes:
    Provide function string to ``Model.add_script`` to instruct SmartSim to load a raw string as a TorchScript function to the ``Orchestrator``.
 
 .. note::
-    SmartSim does **not** support loading in-memory TorchScript functions to colocated ``Orchestrators``.
+    SmartSim does **not** support loading in-memory TorchScript functions to colocated ``Orchestrator(s)``.
     Users should instead load TorchScripts to a colocated ``Orchestrator`` from file or as a raw string.
 
 Continue or select a process link to learn more on how each function (``Model.add_script`` and ``Model.add_function``)
-load TorchScripts to launched ``Orchestrators``.
+load TorchScripts to launched ``Orchestrator(s)``.
 
 .. _in_mem_TF_doc:
 
@@ -675,7 +675,7 @@ on the ``Orchestrator`` via a SmartRedis ``Client`` (:ref:`SmartRedis<smartredis
 Define TorchScripts as Raw String
 ---------------------------------
 Users can upload TorchScript functions from string to colocated or
-standalone ``Orchestrators``. This feature is supported by the
+standalone ``Orchestrator(s)``. This feature is supported by the
 ``Model.add_script`` function's `script` parameter. The function supports
 flexible device selection, allowing users to choose between `"GPU"` or `"CPU"` via the `device` parameter.
 In environments with multiple devices, specific device numbers can be specified using the
@@ -742,13 +742,13 @@ Data Collision Prevention
 =========================
 Overview
 ========
-If an ``Experiment`` consists of multiple ``Models`` that use the same key names to reference
+If an ``Experiment`` consists of multiple ``Model(s)`` that use the same key names to reference
 information in the ``Orchestrator``, the names used to reference data, ML models, and scripts will be
-identical, and without the use of SmartSim and SmartRedis prefix methods, ``Models``
+identical, and without the use of SmartSim and SmartRedis prefix methods, ``Model(s)``
 will end up inadvertently accessing or overwriting each other’s data. To prevent this
 situation, the SmartSim ``Model`` object supports key prefixing, which prepends
 the name of the ``Model`` to the keys sent to the ``Orchestrator`` to create unique key names.
-With this enabled, collision is avoided and ``Models`` can use the same key names within their applications.
+With this enabled, collision is avoided and ``Model(s)`` can use the same key names within their applications.
 
 The key components of SmartSim ``Model`` prefixing functionality include:
 
@@ -759,11 +759,11 @@ The key components of SmartSim ``Model`` prefixing functionality include:
    ``Model`` name to a key during data retrieval, polling, or check for existence on the ``Orchestrator``
    through SmartRedis :ref:`Client functions<client_prefix_func>`.
 
-For example, assume you have two ``Models`` in an ``Experiment``, named `model_0` and `model_1`. In each
+For example, assume you have two ``Model(s)`` in an ``Experiment``, named `model_0` and `model_1`. In each
 application code you use the function ``Client.put_tensor("tensor_0", data)`` to send a tensor named `"tensor_0"`
 to the same ``Orchestrator``. With ``Model`` key prefixing turned on, the `model_0` and `model_1`
 applications can access their respective tensor `"tensor_0"` by name without overwriting or accessing
-the other ``Models`` `"tensor_0"` tensor. In this scenario, the two tensors placed in the
+the other ``Model(s)`` `"tensor_0"` tensor. In this scenario, the two tensors placed in the
 ``Orchestrator`` are `model_0.tensor_0` and `model_1.tensor_0`.
 
 Enabling and Disabling
@@ -1205,7 +1205,7 @@ applications.
         **Retrieve a Tensor Placed by an External Application**
 
         SmartSim supports retrieving prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the tensor
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the tensor
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1295,7 +1295,7 @@ applications.
         **Retrieve a Dataset Placed by an External Application**
 
         SmartSim supports retrieving prefixed ``Datasets`` sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1384,7 +1384,7 @@ applications.
         **Retrieve a Aggregation List Placed by an External Application**
 
         SmartSim supports retrieving prefixed lists sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the list
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the list
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1455,7 +1455,7 @@ applications.
         **Retrieve a ML Model Placed by an External Application**
 
         SmartSim supports retrieving prefixed ML model sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ML model
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the ML model
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1534,7 +1534,7 @@ applications.
         **Retrieve a Script Placed by an External Application**
 
         SmartSim supports retrieving prefixed scripts sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the script
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the script
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1638,7 +1638,7 @@ where ML Model and Script are placed by separate applications.
         **Access ML Models Loaded From an External Application**
 
         SmartSim supports executing prefixed ML models with prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ML model and tensor
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the ML model and tensor
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1728,7 +1728,7 @@ where ML Model and Script are placed by separate applications.
         **Access Scripts Loaded From an External Application**
 
         SmartSim supports executing prefixed scripts with prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the script and tensor
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the script and tensor
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -1853,7 +1853,7 @@ scripts.
         **Copy/Rename/Delete Operations on Tensors Placed by an External Application**
 
         SmartSim supports copy/rename/delete operations on prefixed tensors sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the tensor
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the tensor
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -2000,7 +2000,7 @@ scripts.
         **Copy/Rename/Delete Operations on Datasets Placed by an External Application**
 
         SmartSim supports copy/rename/delete operations on prefixed ``Datasets`` sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the ``Dataset``
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -2147,7 +2147,7 @@ scripts.
         **Copy/Rename/Delete Operations on Aggregation Lists Placed by an External Application**
 
         SmartSim supports copy/rename/delete operations on prefixed lists sent to the ``Orchestrator`` by separate
-        ``Models``. To achieve this, users need to provide the ``Model`` name that stored the list
+        ``Model(s)``. To achieve this, users need to provide the ``Model`` name that stored the list
         to ``Client.set_data_source``. This action instructs the ``Client`` to prepend the ``Model``
         name to all key searches. For SmartSim to recognize the ``Model`` name as a data source,
         users must execute the ``Model.register_incoming_entity`` function on the ``Model``
@@ -2255,7 +2255,7 @@ scripts.
 
         **Delete a ML Model Placed by an External Application**
 
-        SmartSim supports delete operations on prefixed ML models sent to the ``Orchestrator`` by separate ``Models``.
+        SmartSim supports delete operations on prefixed ML models sent to the ``Orchestrator`` by separate ``Model(s)``.
         To do so, users must provide the ``Model`` name that stored the ML model to ``Client.set_data_source``.
         This will instruct the ``Client`` to prepend the ``Model`` name input to all key searches.
 
@@ -2316,7 +2316,7 @@ scripts.
 
         **Delete a Script Placed by an External Application**
 
-        SmartSim supports delete operations on prefixed scripts sent to the ``Orchestrator`` by separate ``Models``.
+        SmartSim supports delete operations on prefixed scripts sent to the ``Orchestrator`` by separate ``Model(s)``.
         To do so, users must provide the ``Model`` name that stored the script to ``Client.set_data_source``.
         This will instruct the ``Client`` to prepend the ``Model`` name input to all key searches.
 

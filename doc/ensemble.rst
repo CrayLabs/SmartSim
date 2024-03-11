@@ -464,7 +464,7 @@ application runtime.
 Depending on the planned storage method of the **ML model**, there are **two** distinct
 approaches to load it into the ``Orchestrator``:
 
-- :ref:`From Femory<in_mem_ML_model_ensemble_ex>`
+- :ref:`From Memory<in_mem_ML_model_ensemble_ex>`
 - :ref:`From File<from_file_ML_model_ensemble_ex>`
 
 .. warning::
@@ -475,7 +475,7 @@ approaches to load it into the ``Orchestrator``:
 Depending on the planned storage method of the **TorchScript**, there are **three** distinct
 approaches to load it into the ``Orchestrator``:
 
-- :ref:`From Femory<in_mem_TF_ensemble_doc>`
+- :ref:`From Memory<in_mem_TF_ensemble_doc>`
 - :ref:`From File<TS_from_file_ensemble>`
 - :ref:`From String<TS_raw_string_ensemble>`
 
