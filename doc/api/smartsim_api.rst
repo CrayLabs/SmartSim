@@ -511,12 +511,18 @@ Slurm
 =====
 
 
-.. currentmodule:: smartsim.slurm
+.. currentmodule:: smartsim.wlm.slurm
 
 .. autosummary::
 
     get_allocation
     release_allocation
+    validate
+    get_default_partition
+    get_hosts
+    get_queue
+    get_tasks
+    get_tasks_per_node
 
-.. automodule:: smartsim.slurm
+.. automodule:: smartsim.wlm.slurm
     :members:
