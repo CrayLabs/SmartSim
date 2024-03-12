@@ -32,11 +32,12 @@ from os import getcwd
 from tabulate import tabulate
 
 from smartsim.error.errors import SSUnsupportedError
+from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
-from .entity import Ensemble, Model, SmartSimEntity
+from .entity import Ensemble, EntitySequence, Model, SmartSimEntity
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import Container, base, settings
@@ -149,7 +150,7 @@ class Experiment:
     @_contextualize
     def start(
         self,
-        *args: t.Any,
+        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         block: bool = True,
         summary: bool = False,
         kill_on_interrupt: bool = True,
@@ -221,7 +222,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def stop(self, *args: t.Any) -> None:
+    def stop(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
         """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
@@ -260,7 +263,7 @@ class Experiment:
     @_contextualize
     def generate(
         self,
-        *args: t.Any,
+        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         tag: t.Optional[str] = None,
         overwrite: bool = False,
         verbose: bool = False,
@@ -364,7 +367,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def get_status(self, *args: t.Any) -> t.List[str]:
+    def get_status(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> t.List[SmartSimStatus]:
         """Query the status of launched instances
 
         Return a smartsim.status string representing
@@ -392,7 +397,7 @@ class Experiment:
         """
         try:
             manifest = Manifest(*args)
-            statuses: t.List[str] = []
+            statuses: t.List[SmartSimStatus] = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:

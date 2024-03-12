@@ -275,7 +275,7 @@ class Versioner:
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
-    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.0.5"))
+    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
     REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 

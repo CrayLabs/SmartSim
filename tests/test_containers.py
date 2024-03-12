@@ -31,10 +31,11 @@ from shutil import which
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -109,7 +110,7 @@ def test_singularity_basic(fileutils, test_dir):
 
     # get and confirm status
     stat = exp.get_status(model)[0]
-    assert stat == status.STATUS_COMPLETED
+    assert stat == SmartSimStatus.STATUS_COMPLETED
 
     print(exp.summary())
 
@@ -136,7 +137,7 @@ def test_singularity_args(fileutils, test_dir):
 
     # get and confirm status
     stat = exp.get_status(model)[0]
-    assert stat == status.STATUS_COMPLETED
+    assert stat == SmartSimStatus.STATUS_COMPLETED
 
     print(exp.summary())
 
@@ -185,7 +186,7 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
 
