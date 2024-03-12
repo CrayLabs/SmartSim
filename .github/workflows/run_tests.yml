@@ -170,3 +170,7 @@ jobs:
         with:
           fail_ci_if_error: false
           files: ./coverage.xml
+
+      - name: Changelog Enforcer
+          uses: dangoslen/changelog-enforcer@v3.6.0
+
