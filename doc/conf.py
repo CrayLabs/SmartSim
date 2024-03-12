@@ -52,17 +52,13 @@ extensions = [
     'breathe',
     'nbsphinx',
     'sphinx_copybutton',
-    'sphinx_tabs.tabs',
-    'sphinx.ext.mathjax',
+    'sphinx_tabs.tabs'
 ]
 
 suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-
-# The path to the MathJax.js file that Sphinx will use to render math expressions
-mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
