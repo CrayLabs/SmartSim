@@ -1,3 +1,0 @@
-# Disallow crawling of the Read the Docs URL
-User-agent: *
-Disallow: /en/

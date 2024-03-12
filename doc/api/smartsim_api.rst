@@ -377,13 +377,35 @@ container.
     :undoc-members:
     :members:
 
+.. _orc_api:
 
 Orchestrator
 ============
 
 .. currentmodule:: smartsim.database
 
-.. _orc_api:
+.. autosummary::
+
+   Orchestrator.__init__
+   Orchestrator.db_identifier
+   Orchestrator.num_shards
+   Orchestrator.db_nodes
+   Orchestrator.hosts
+   Orchestrator.reset_hosts
+   Orchestrator.remove_stale_files
+   Orchestrator.get_address
+   Orchestrator.is_active
+   Orchestrator.set_cpus
+   Orchestrator.set_walltime
+   Orchestrator.set_hosts
+   Orchestrator.set_batch_arg
+   Orchestrator.set_run_arg
+   Orchestrator.enable_checkpoints
+   Orchestrator.set_max_memory
+   Orchestrator.set_eviction_strategy
+   Orchestrator.set_max_clients
+   Orchestrator.set_max_message_size
+   Orchestrator.set_db_conf
 
 Orchestrator
 ------------
