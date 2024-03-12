@@ -128,7 +128,7 @@ class RunSettings(SettingsBase):
         ):
             self._exe_args = self._build_exe_args(value)
         else:
-            raise TypeError("Exectuable arguments should be type str or list[str].")
+            raise TypeError("Executable arguments were not list of str or str.")
 
     @property
     def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:

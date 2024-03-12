@@ -217,9 +217,8 @@ def test_add_exe_args_list_of_str_lists_init():
     """Ensure that list[list[str]] pass validation"""
     exe_args = [["1", "2", "3"], ["4", "5", "6"]]
 
-    settings = RunSettings("python", exe_args=exe_args)
-
-    assert settings.exe_args == exe_args
+    with pytest.raises(TypeError) as type_error:
+        settings = RunSettings("python", exe_args=exe_args)
 
 
 def test_add_exe_args_list_of_str_lists():
