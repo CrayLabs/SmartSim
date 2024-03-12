@@ -323,6 +323,13 @@ def test_bad_exe_args_2():
         _ = RunSettings("python", exe_args=exe_args)
 
 
+def test_bad_exe_args_3():
+    """test when user provides incorrect types to exe_args"""
+    exe_args = [["this", "should"], ["not", "work"]]
+    with pytest.raises(TypeError):
+        _ = RunSettings("python", exe_args=exe_args)
+
+
 def test_set_args():
     rs = RunSettings("python")
     rs.set("str", "some-string")
