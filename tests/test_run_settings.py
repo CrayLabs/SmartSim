@@ -210,7 +210,7 @@ def test_add_exe_args_list_of_mixed_lists_init():
     with pytest.raises(TypeError) as type_error:
         settings = RunSettings("python", exe_args=exe_args)
 
-    assert "Executable arguments were not list of str or str" in type_error.value.args
+    assert "Executable arguments should be a list of str" in type_error.value.args
 
 
 def test_add_exe_args_list_of_str_lists_init():

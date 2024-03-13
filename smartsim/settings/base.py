@@ -546,19 +546,15 @@ class RunSettings(SettingsBase):
                 return exe_args.split()
             if isinstance(exe_args, list):
                 exe_args = copy.deepcopy(exe_args)
-                plain_type = all(isinstance(arg, (str)) for arg in exe_args)
-                if not plain_type:
-                    nested_type = all(
-                        all(isinstance(arg, (str)) for arg in exe_args_list)
-                        for exe_args_list in exe_args
+                nested_type = all(
+                    all(isinstance(arg, (str)) for arg in exe_args_list)
+                    for exe_args_list in exe_args
+                )
+                if not nested_type:
+                    raise TypeError(
+                        "Executable arguments were not list of str or str"
                     )
-                    if not nested_type:
-                        raise TypeError(
-                            "Executable arguments were not list of str or str"
-                        )
-                    return exe_args
                 return exe_args
-            raise TypeError("Executable arguments were not list of str or str")
         return []
 
     def format_run_args(self) -> t.List[str]:
