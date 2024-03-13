@@ -90,7 +90,7 @@ class Controller:
     def __init__(self, launcher: str = "local") -> None:
         """Initialize a Controller
 
-        :param launcher: The type of launcher being used
+        :param launcher: the type of launcher being used
         :type launcher: str
         """
         self._jobs = JobManager(JM_LOCK)
