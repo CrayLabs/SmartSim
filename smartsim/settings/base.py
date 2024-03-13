@@ -455,17 +455,17 @@ class RunSettings(SettingsBase):
         :type args: str | list[str]
         :raises TypeError: if exe args are not strings
         """
-        
+
         if not isinstance(args, (list, str)):
             raise TypeError("All elements in the list should be of type str")
-        
+
         if isinstance(args, str):
             args = args.split()
 
         if isinstance(args, list):
             if not all(isinstance(arg, str) for arg in args):
                 raise TypeError("All elements in the list should be of type str")
-    
+
         self._exe_args.extend(args)
 
     def set(
