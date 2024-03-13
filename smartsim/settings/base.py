@@ -551,9 +551,7 @@ class RunSettings(SettingsBase):
                     for exe_args_list in exe_args
                 )
                 if not nested_type:
-                    raise TypeError(
-                        "Executable arguments were not list of str or str"
-                    )
+                    raise TypeError("Executable arguments were not list of str or str")
                 return exe_args
         return []
 
