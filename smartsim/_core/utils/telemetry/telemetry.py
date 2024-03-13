@@ -272,8 +272,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         status_clause = f"status: {step_info.status}"
         error_clause = f", error: {step_info.error}" if step_info.error else ""
 
-        if hasattr(job.entity, "status_dir"):
-            write_path = pathlib.Path(job.entity.status_dir)
+        write_path = pathlib.Path(entity.status_dir)
 
         # persist a `stop` event for an entity that has completed
         write_event(

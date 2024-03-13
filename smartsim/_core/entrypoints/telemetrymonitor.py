@@ -94,7 +94,7 @@ def get_parser() -> argparse.ArgumentParser:
         "-loglevel",
         type=int,
         help="Logging level",
-        default=logging.DEBUG,
+        default=logging.INFO,
     )
     return arg_parser
 
@@ -116,7 +116,7 @@ def parse_arguments() -> TelemetryMonitorArgs:
     )
 
 
-def configure_logger(_logger: logging.Logger, _log_level: int, exp_dir: str) -> None:
+def configure_logger(logger_: logging.Logger, _log_level: int, exp_dir: str) -> None:
     """Configure the telemetry monitor logger to write logs to the
     target output file path passed as an argument to the entrypoint
 
@@ -131,8 +131,8 @@ def configure_logger(_logger: logging.Logger, _log_level: int, exp_dir: str) -> 
         if _log_level in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
         else logging.DEBUG
     )
-    _logger.setLevel(log_level)
-    _logger.propagate = False
+    logger_.setLevel(log_level)
+    logger_.propagate = False
 
     # use a standard subdirectory of the expiment output path for logs
     telemetry_dir = pathlib.Path(exp_dir) / cfg.CONFIG.telemetry_subdir
@@ -147,7 +147,7 @@ def configure_logger(_logger: logging.Logger, _log_level: int, exp_dir: str) -> 
 
     formatter = logging.Formatter(DEFAULT_LOG_FORMAT)
     file_handler.setFormatter(formatter)
-    _logger.addHandler(file_handler)
+    logger_.addHandler(file_handler)
 
 
 if __name__ == "__main__":
