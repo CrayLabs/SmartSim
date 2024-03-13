@@ -85,7 +85,7 @@ fortran_src = [
 html_theme = "sphinx_book_theme"
 
 # Check if the environment variable is set to 'True'
-if os.environ.get('GENERATE_ROBOTS_TXT') == 1:
+if os.environ.get('READTHEDOCS') == "True":
     # If it is, generate the robots.txt file
     with open('../robots.txt', 'w') as f:
         f.write("# Disallow crawling of the Read the Docs URL\nUser-agent: *\nDisallow: /en/")
