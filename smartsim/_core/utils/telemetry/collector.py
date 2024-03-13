@@ -121,6 +121,12 @@ class DBCollector(Collector):
     """A base class for collectors that retrieve statistics from an orchestrator"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
+        """Initialize the `DBCollector`
+
+        :param entity: entity with metadata about the resource to monitor
+        :type entity: JobEntity
+        :param sink: sink to write collected metrics to
+        :type sink: Sink"""
         super().__init__(entity, sink)
         self._client: t.Optional[redisa.Redis[bytes]] = None
         self._address = _DBAddress(
@@ -145,8 +151,7 @@ class DBCollector(Collector):
 
     async def prepare(self) -> None:
         """Initialization logic for the DB collector. Creates a database
-        connection and then execute the `post_prepare` callback function
-        to enable child classes to customize preparation behavior"""
+        connection then executes the `post_prepare` callback function."""
         if self._client:
             return
 
@@ -155,8 +160,8 @@ class DBCollector(Collector):
 
     @abc.abstractmethod
     async def _post_prepare(self) -> None:
-        """Hook function executed after the db connection is established
-        allowing subclasses to perform actions after a db client is ready"""
+        """Hook function to enable subclasses to perform actions
+        after a db client is ready"""
 
     @abc.abstractmethod
     async def _perform_collection(
@@ -171,7 +176,7 @@ class DBCollector(Collector):
 
     async def collect(self) -> None:
         """Execute database metric collection if the collector is enabled. Writes
-        the resulting metrics to the associated output sink. Calling `collect` on
+        the resulting metrics to the associated output sink. Calling `collect`
         when `self.enabled` is `False` performs no actions."""
         if not self.enabled:
             # collectors may be disabled by monitoring changes to the
@@ -212,7 +217,7 @@ class DBCollector(Collector):
     async def _check_db(self) -> bool:
         """Check if the target database is reachable.
 
-        :return: True if connection succeeds, False otherwise.
+        :return: `True` if connection succeeds, `False` otherwise.
         :rtype: bool"""
         try:
             if self._client:
@@ -224,7 +229,7 @@ class DBCollector(Collector):
 
 
 class DBMemoryCollector(DBCollector):
-    """A DBCollector that collects memory consumption metrics"""
+    """A `DBCollector` that collects memory consumption metrics"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         super().__init__(entity, sink)
@@ -257,7 +262,7 @@ class DBMemoryCollector(DBCollector):
 
 
 class DBConnectionCollector(DBCollector):
-    """A DBCollector that collects database client-connection metrics"""
+    """A `DBCollector` that collects database client-connection metrics"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         super().__init__(entity, sink)
