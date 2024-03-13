@@ -348,8 +348,6 @@ class CollectorManager:
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(list)
         # Max time to allow a collector to work before cancelling requests
         self._timeout_ms = timeout_ms
-        # Asynchronous tasks for collector instances collecting metrics
-        self._tasks: t.List[asyncio.Task[None]] = []
 
     def clear(self) -> None:
         """Remove all collectors from the monitored set"""
@@ -412,12 +410,7 @@ class CollectorManager:
     async def collect(self) -> None:
         """Perform collection for all registered collectors"""
         if collectors := self.all_collectors:
-            # tasks may still be in progress.
-            if self._tasks:
-                # avoid collecting more data if we can't keep up
-                tasks = self._tasks  # tasks still in progress
-            else:
-                tasks = [asyncio.create_task(item.collect()) for item in collectors]
+            tasks = [asyncio.create_task(item.collect()) for item in collectors]
 
             _, pending = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
             if pending:
@@ -427,16 +420,8 @@ class CollectorManager:
                     remaining_task.cancel()
                 logger.debug(f"Execution of {len(pending)} collectors timed out.")
 
-            self._tasks = []
-
     async def shutdown(self) -> None:
         """Release resources for all registered collectors"""
-        logger.debug(f"{type(self).__name__} cancelling tasks...")
-        for task in self._tasks:
-            # avoid leaving any tasks in a pending state
-            if not task.done():
-                task.cancel()
-
         logger.debug(f"{type(self).__name__} shutting down collectors...")
         if list(self.all_collectors):
             shutdown_tasks = []
