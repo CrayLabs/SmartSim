@@ -538,7 +538,6 @@ SmartSim includes built-in utilities for supporting PyTorch in training and infe
 Slurm
 =====
 
-
 .. currentmodule:: smartsim.slurm
 
 .. autosummary::
