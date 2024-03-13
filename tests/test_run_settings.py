@@ -207,10 +207,10 @@ def test_add_exe_args_list_of_mixed_lists_init():
     """Ensure that any non-string exe arg fails validation for all"""
     exe_args = [["1", "2", 3], ["4", "5", 6]]
 
-    with pytest.raises(TypeError) as type_error:
-        settings = RunSettings("python", exe_args=exe_args)
+    with pytest.raises(TypeError)  as type_error:
+        _ = RunSettings("python", exe_args=exe_args)
 
-    assert "Executable arguments should be a list of str" in type_error.value.args
+    assert "Executable arguments were not list of str or str." in type_error.value.args
 
 
 def test_add_exe_args_list_of_str_lists_init():

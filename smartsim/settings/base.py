@@ -455,13 +455,17 @@ class RunSettings(SettingsBase):
         :type args: str | list[str]
         :raises TypeError: if exe args are not strings
         """
+        
+        if not isinstance(args, (list, str)):
+            raise TypeError("All elements in the list should be of type str")
+        
         if isinstance(args, str):
             args = args.split()
 
-        for arg in args:
-            if not isinstance(arg, str):
-                raise TypeError("Executable arguments should be a list of str")
-
+        if isinstance(args, list):
+            if not all(isinstance(arg, str) for arg in args):
+                raise TypeError("All elements in the list should be of type str")
+    
         self._exe_args.extend(args)
 
     def set(
@@ -545,13 +549,6 @@ class RunSettings(SettingsBase):
             if isinstance(exe_args, str):
                 return exe_args.split()
             if isinstance(exe_args, list):
-                exe_args = copy.deepcopy(exe_args)
-                nested_type = all(
-                    all(isinstance(arg, (str)) for arg in exe_args_list)
-                    for exe_args_list in exe_args
-                )
-                if not nested_type:
-                    raise TypeError("Executable arguments were not list of str or str")
                 return exe_args
         return []
 
