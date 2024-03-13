@@ -35,6 +35,10 @@ from ...status import SmartSimStatus
 
 @dataclass(frozen=True)
 class _JobKey:
+    """A helper class for creating unique lookup keys within the telemetry
+    monitor. These guys are not guaranteed to be unique across experiments,
+    only within an experiment (due to process ID re-use by the OS)"""
+
     step_id: str
     """The process id of an unmanaged task"""
     task_id: str
@@ -42,8 +46,9 @@ class _JobKey:
 
 
 class JobEntity:
-    """An entity containing the minimum API required for a job processed
-    in the JobManager that is also supported by the telemetry monitor
+    """An entity containing run-time metadata about a SmartSimEntity. The run-time metadata
+    is required to perform telemetry collection. The `JobEntity` satisfies the core
+    API necessary to use a `JobManager` to manage retrieval of managed step updates.
     """
 
     def __init__(self) -> None:
