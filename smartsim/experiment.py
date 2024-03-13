@@ -61,14 +61,20 @@ def _exp_path_map(exp: "Experiment") -> str:
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 
-class ExperimentTelemetry(TelemetryConfiguration):
+class ExperimentTelemetryConfiguration(TelemetryConfiguration):
+    """Customized telemetry configuration for an `Experiment`. Ensures
+    backwards compatible behavior with drivers using environment variables
+    to enable experiment telemetry"""
+
     def __init__(self) -> None:
         super().__init__(enabled=CONFIG.telemetry_enabled)
 
     def _on_enable(self) -> None:
+        """Modify the environment variable to enable telemetry."""
         environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
 
     def _on_disable(self) -> None:
+        """Modify the environment variable to disable telemetry."""
         environ["SMARTSIM_FLAG_TELEMETRY"] = "0"
 
 
@@ -163,7 +169,7 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
-        self._telemetry_cfg = ExperimentTelemetry()
+        self._telemetry_cfg = ExperimentTelemetryConfiguration()
 
     @_contextualize
     def start(
