@@ -27,6 +27,7 @@ Description
 Detailed Notes
 
 - Removed deprecated SmartSim modules: slurm and mpirunSettings.
+  (SmartSim-PR514_)
 - Implemented new structure of SmartSim documentation. Added examples
   images and further detail of SmartSim components.
 - Update Redis version to `7.2.4`. This change fixes an issue in the Redis
