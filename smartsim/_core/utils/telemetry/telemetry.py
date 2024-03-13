@@ -364,7 +364,7 @@ class TelemetryMonitorArgs:
         """The minimum duration (in seconds) for the monitoring loop to wait
         between executions of the monitoring loop. Shorter frequencies may
         not allow the monitoring loop to complete. Adjusting the minimum frequency
-        can result in inconsistent or missing outputs due due to the telemetry
+        can result in inconsistent or missing outputs due to the telemetry
         monitor cancelling processes that exceed the allotted frequency."""
         return 1
 
@@ -508,7 +508,7 @@ class TelemetryMonitor:
 
             # check if there are no jobs being monitored
             if self._can_shutdown():
-                # cooldown period begins once there is
+                # cooldown period begins accumulating when no entities are monitored
                 if elapsed >= self._args.cooldown_ms:
                     shutdown_in_progress = True
                     logger.info("Beginning telemetry manager shutdown")
@@ -518,7 +518,7 @@ class TelemetryMonitor:
                     logger.info("Event loop shutdown complete")
                     break
             else:
-                # reset cooldown any time there are still jobs running
+                # reset cooldown any time jobs are running
                 elapsed = 0
 
             # track time elapsed to execute metric collection
@@ -561,15 +561,15 @@ class TelemetryMonitor:
             if self._manifest_path.exists():
                 self._action_handler.process_manifest(str(self._manifest_path))
 
-            # Add a handler to log file system events
+            # Add a handler to log file-system events
             self._observer.schedule(log_handler, self._telemetry_path)  # type:ignore
-            # Add a handler to perform actions on file system events
+            # Add a handler to perform actions on file-system events
             self._observer.schedule(
                 self._action_handler, self._telemetry_path
             )  # type:ignore
             self._observer.start()  # type: ignore
 
-            # kick off the 'infinite loop' of monitoring
+            # kick off the 'infinite' monitoring loop
             await self.monitor()
             return os.EX_OK
         except Exception as ex:

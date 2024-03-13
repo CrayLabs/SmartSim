@@ -106,7 +106,7 @@ def map_return_code(step_info: StepInfo) -> t.Optional[int]:
     that the process referenced in the `StepInfo` is running
     and does not yet have a return code.
 
-    :param step_info: (optional) the return code of a completed task
+    :param step_info: step information produced by job manager status update queries
     :type step_info: StepInfo
 
     :return: a return code if the step is finished, otherwise None
