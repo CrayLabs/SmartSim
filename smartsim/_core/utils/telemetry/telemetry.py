@@ -127,7 +127,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         SmartSim currently supports slurm, pbs(pro), lsf,
         and local launching
 
-        :param launcher: the type of launcher used by the experiment
+        :param launcher: the name of the workload manager used by the experiment
         :type launcher: str
         :raises SSUnsupportedError: if a string is passed that is not
         a supported launcher
@@ -143,7 +143,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def set_launcher(self, launcher: str) -> None:
         """Set the launcher for the experiment
 
-        :param launcher: type of launcher used by the experiment
+        :param launcher: the name of the workload manager used by the experiment
         :type launcher: str"""
         self._launcher = self.init_launcher(launcher)
         self.job_manager.set_launcher(self._launcher)
