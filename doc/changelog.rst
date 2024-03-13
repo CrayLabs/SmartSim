@@ -26,14 +26,14 @@ Description
 Detailed Notes
 
 - Implemented new structure of SmartSim documentation. Added examples
-  images and further detail of SmartSim components.
+  images and further detail of SmartSim components. (SmartSim-PR463_)
 - Update Redis version to `7.2.4`. This change fixes an issue in the Redis
   build scripts causing failures on Apple Silicon hosts. (SmartSim-PR507_)
 - The container which builds the documentation for every merge to develop
   was failing due to a lack of space within the container. This was fixed
   by including an additional Github action that removes some unneeded
   software and files that come from the default Github Ubuntu container.
-  (SmartSim-PR-PR504_)
+  (SmartSim-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
 .. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
