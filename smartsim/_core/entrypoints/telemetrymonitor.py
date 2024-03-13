@@ -460,6 +460,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if hasattr(job.entity, "status_dir"):
             write_path = pathlib.Path(job.entity.status_dir)
+        else:
+            raise AttributeError(
+                f"Instance of {type(job.entity)} does not have a "
+                "``status_dir`` attribute"
+            )
 
         track_event(
             timestamp,
