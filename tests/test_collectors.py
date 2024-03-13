@@ -48,7 +48,7 @@ async def test_dbmemcollector_prepare(
     mock_entity: MockCollectorEntityFunc, mock_sink
 ) -> None:
     """Ensure that collector preparation succeeds when expected"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     collector = DBMemoryCollector(entity, mock_sink())
     await collector.prepare()
@@ -63,7 +63,7 @@ async def test_dbmemcollector_prepare_fail(
 ) -> None:
     """Ensure that collector preparation reports a failure to connect
     when the redis client cannot be created"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     with monkeypatch.context() as ctx:
         # mock up a redis constructor that returns None
@@ -89,16 +89,16 @@ async def test_dbcollector_config(
     """Ensure that missing required db collector config causes an exception"""
 
     # Check that a bad host causes exception
-    entity = mock_entity(host="")
+    entity = mock_entity(host="", telemetry_on=True)
     with pytest.raises(ValueError):
         DBMemoryCollector(entity, mock_sink())
 
-    entity = mock_entity(host="   ")
+    entity = mock_entity(host="   ", telemetry_on=True)
     with pytest.raises(ValueError):
         DBMemoryCollector(entity, mock_sink())
 
     # Check that a bad port causes exception
-    entity = mock_entity(port="")  # type: ignore
+    entity = mock_entity(port="", telemetry_on=True)  # type: ignore
     with pytest.raises(ValueError):
         DBMemoryCollector(entity, mock_sink())
 
@@ -112,7 +112,7 @@ async def test_dbmemcollector_prepare_fail_dep(
 ) -> None:
     """Ensure that collector preparation attempts to connect, ensure it
     reports a failure if the db conn bombs"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     def raiser(*args: t.Any, **kwargs: t.Any) -> None:
         # mock raising exception on connect attempts to test err handling
@@ -139,7 +139,7 @@ async def test_dbmemcollector_collect(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Ensure that a valid response is returned as expected"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     sink = mock_sink()
     collector = DBMemoryCollector(entity, sink)
@@ -148,7 +148,7 @@ async def test_dbmemcollector_collect(
         ctx.setattr(
             smartsim._core.utils.telemetry.collector,
             "get_ts_ms",
-            lambda: 12131415000,  # mult by 1000 for ms->s conversion
+            lambda: 12131415,
         )
 
         await collector.prepare()
@@ -162,7 +162,7 @@ async def test_dbmemcollector_collect(
         }
         actual_items = set(sink.args)
 
-        reqd_values = {1000.0, 1111.0, 1234.0, 12131415.0}
+        reqd_values = {12131415, 1000.0, 1111.0, 1234.0}
         actual_values = set(sink.args)
         assert actual_values == reqd_values
 
@@ -176,7 +176,7 @@ async def test_dbmemcollector_integration(
 ) -> None:
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
-    entity = mock_entity(port=local_db.ports[0])
+    entity = mock_entity(port=local_db.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBMemoryCollector(entity, sink)
@@ -185,7 +185,7 @@ async def test_dbmemcollector_integration(
         ctx.setattr(
             smartsim._core.utils.telemetry.collector,
             "get_ts_ms",
-            lambda: 12131415000,  # mult by 1000 for ms->s conversion
+            lambda: 12131415,
         )
         assert sink.num_saves == 0
         await collector.prepare()
@@ -209,7 +209,7 @@ async def test_dbconncollector_collect(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Ensure that a valid response is returned as expected"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     sink = mock_sink()
     collector = DBConnectionCollector(entity, sink)
@@ -245,7 +245,7 @@ async def test_dbconn_count_collector_collect(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Ensure that a valid response is returned as expected"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     sink = mock_sink()
     collector = DBConnectionCountCollector(entity, sink)
@@ -273,7 +273,7 @@ async def test_dbconncollector_integration(
 ) -> None:
     """Integration test with a real orchestrator instance to ensure
     output data matches expectations and proper db client API uage"""
-    entity = mock_entity(port=local_db.ports[0])
+    entity = mock_entity(port=local_db.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBConnectionCollector(entity, sink)
@@ -282,7 +282,7 @@ async def test_dbconncollector_integration(
         ctx.setattr(
             smartsim._core.utils.telemetry.collector,
             "get_ts_ms",
-            lambda: 12131415000,  # mult by 1000 for ms->s conversion
+            lambda: 12131415,
         )
         await collector.prepare()
         await collector.collect()

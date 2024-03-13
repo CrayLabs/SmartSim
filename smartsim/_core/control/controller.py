@@ -36,11 +36,11 @@ import sys
 import threading
 import time
 import typing as t
-import uuid
 from os import environ
 
 from smartredis import Client, ConfigOptions
 
+from smartsim._core.utils import helpers as _helpers
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
@@ -90,13 +90,13 @@ class Controller:
     def __init__(self, launcher: str = "local") -> None:
         """Initialize a Controller
 
-        :param launcher: the type of launcher being used
+        :param launcher: The type of launcher being used
         :type launcher: str
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
         self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
-        self._exp_id = str(uuid.uuid4())
+        self._exp_id = _helpers.create_short_id_str()
 
     def start(
         self,
@@ -874,6 +874,7 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,
@@ -896,7 +897,6 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):

@@ -214,7 +214,7 @@ def test_process_failure(fileutils, test_dir: str, monkeypatch: pytest.MonkeyPat
     mock_track = conftest.CountingCallable()
 
     with monkeypatch.context() as ctx:
-        ctx.setattr("smartsim._core.entrypoints.indirect.track_event", mock_track)
+        ctx.setattr("smartsim._core.entrypoints.indirect.write_event", mock_track)
         ctx.setattr("psutil.pid_exists", lambda pid: True)
         ctx.setattr("psutil.Popen", MockProc)
         ctx.setattr("psutil.Process", MockProc)  # handle the proc.terminate()
@@ -242,7 +242,7 @@ def test_complete_process(
 
     mock_track = conftest.CountingCallable()
     with monkeypatch.context() as ctx:
-        ctx.setattr("smartsim._core.entrypoints.indirect.track_event", mock_track)
+        ctx.setattr("smartsim._core.entrypoints.indirect.write_event", mock_track)
         rc = main(cmd, "application", exp_dir, exp_dir / CONFIG.telemetry_subdir)
         assert rc == 0
 

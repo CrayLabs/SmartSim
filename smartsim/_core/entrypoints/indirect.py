@@ -38,7 +38,7 @@ import psutil
 
 import smartsim.log
 from smartsim._core.utils.helpers import decode_cmd, get_ts_ms
-from smartsim._core.utils.telemetry.telemetry import track_event
+from smartsim._core.utils.telemetry.telemetry import write_event
 
 STEP_PID: t.Optional[int] = None
 logger = smartsim.log.get_logger(__name__)
@@ -94,7 +94,7 @@ def main(
         cleanup()
         return 1
     finally:
-        track_event(
+        write_event(
             get_ts_ms(),
             proxy_pid,
             "",  # step_id for unmanaged task is always empty
@@ -118,7 +118,7 @@ def main(
         f" return code: {ret_code}"
     )
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
-    track_event(
+    write_event(
         get_ts_ms(),
         proxy_pid,
         "",  # step_id for unmanaged task is always empty

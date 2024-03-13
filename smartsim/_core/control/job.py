@@ -36,55 +36,127 @@ from ...status import SmartSimStatus
 @dataclass(frozen=True)
 class _JobKey:
     step_id: str
+    """The process id of an unmanaged task"""
     task_id: str
+    """The task id of a managed task"""
 
 
 class JobEntity:
-    """API required for a job processed in the JobManager with support for
-    telemetry monitoring
+    """An entity containing the minimum API required for a job processed
+    in the JobManager that is also supported by the telemetry monitor
     """
 
     def __init__(self) -> None:
         self.name: str = ""
+        """The entity name"""
         self.path: str = ""
+        """The root path for entity output files"""
         self.step_id: str = ""
+        """The process id of an unmanaged task"""
         self.task_id: str = ""
+        """The task id of a managed task"""
         self.type: str = ""
+        """The type of the associated `SmartSimEntity`"""
         self.timestamp: int = 0
+        """The timestamp when the entity was created"""
         self.status_dir: str = ""
+        """The path configured by the experiment for the entities telemetry output"""
         self.telemetry_on: bool = False
+        """"Boolean indicating if optional telemetry is enabled for the entity"""
         self.collectors: t.Dict[str, str] = {}
+        """A mapping of collectors enabled for the entity"""
         self.config: t.Dict[str, str] = {}
+        """Telemetry configuration supplied by the experiment"""
         self._is_complete: bool = False
-        self._state: t.Dict[str, str] = {}
+        """Toggle indicating if the entity has completed execution"""
 
     @property
     def is_db(self) -> bool:
+        """Returns `True` if the entity represents a database or database shard"""
         return self.type in ["orchestrator", "dbnode"]
 
     @property
     def is_managed(self) -> bool:
+        """Returns `True` if the entity is managed by a workload manager"""
         return bool(self.step_id)
 
     @property
     def key(self) -> _JobKey:
+        """Return a `_JobKey` that identifies an entity.
+        NOTE: not guaranteed to be unique over time due to reused process IDs"""
         return _JobKey(self.step_id, self.task_id)
 
     @property
     def is_complete(self) -> bool:
+        """Returns `True` if the entity has completed execution"""
         return self._is_complete
 
-    def set_complete(self) -> None:
-        self._is_complete = True
-
-    def poll_state(self) -> None:
-        # do not poll if already known to be done
+    def check_completion_status(self) -> None:
+        """Check for telemetry outputs indicating the entity has completed
+        TODO: determine correct location to avoid exposing telemetry
+        implementation details into `JobEntity`
+        """
+        # avoid touching file-system if not necessary
         if self._is_complete or not self.is_db:
             return
 
+        # status telemetry is tracked in JSON files written to disk. look
+        # for a corresponding `stop` event in the entity status directory
         state_file = pathlib.Path(self.status_dir) / "stop.json"
         if state_file.exists():
             self._is_complete = True
+
+    @staticmethod
+    def _deserialize_db_metadata(
+        entity_dict: t.Dict[str, t.Any], entity: "JobEntity"
+    ) -> None:
+        """Set properties that are specific to databases and db nodes
+
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param entity: The entity instance to modify if the entity is a database
+        :type entity: JobEntity"""
+        if entity.is_db:
+            # add collectors if they're configured to be enabled in the manifest
+            entity.collectors = {
+                "client": entity_dict.get("client_file", ""),
+                "client_count": entity_dict.get("client_count_file", ""),
+                "memory": entity_dict.get("memory_file", ""),
+            }
+
+            entity.telemetry_on = any(entity.collectors.values())
+            entity.config["host"] = entity_dict.get("hostname", "")
+            entity.config["port"] = entity_dict.get("port", "")
+
+    @staticmethod
+    def from_manifest(
+        entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
+    ) -> "JobEntity":
+        """Deserialize a `JobEntity` instance from a dictionary deserialized
+        from manifest JSON
+
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param entity_type: The type of the associated `SmartSimEntity`
+        :type entity_type: str
+        :param exp_dir: The path to the experiment working directory
+        :type exp_dir: str"""
+        entity = JobEntity()
+        metadata = entity_dict["telemetry_metadata"]
+        status_dir = pathlib.Path(metadata.get("status_dir"))
+
+        # all entities contain shared properties that identify the task
+        entity.type = entity_type
+        entity.name = entity_dict["name"]
+        entity.step_id = str(metadata.get("step_id") or "")
+        entity.task_id = str(metadata.get("task_id") or "")
+        entity.timestamp = int(entity_dict.get("timestamp", "0"))
+        entity.path = str(exp_dir)
+        entity.status_dir = str(status_dir)
+
+        JobEntity._deserialize_db_metadata(entity_dict, entity)
+
+        return entity
 
 
 class Job:

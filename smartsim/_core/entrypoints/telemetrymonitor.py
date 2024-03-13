@@ -33,184 +33,39 @@ import sys
 import typing as t
 from types import FrameType
 
-from watchdog.events import LoggingEventHandler
-from watchdog.observers import Observer
-from watchdog.observers.api import BaseObserver
-
-from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import get_ts_ms
-from smartsim._core.utils.serialize import MANIFEST_FILENAME
-from smartsim._core.utils.telemetry.telemetry import ManifestEventHandler
+import smartsim._core.config as cfg
+from smartsim._core.utils.telemetry.telemetry import (
+    TelemetryMonitor,
+    TelemetryMonitorArgs,
+)
 from smartsim.log import DEFAULT_LOG_FORMAT, HostnameFilter
 
-"""Telemetry Monitor entrypoint"""
-
-# kill is not catchable
-SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
-F_MIN, F_MAX = 1.0, 600.0
-_LOG_FILE_NAME = "logs/telemetrymonitor.out"
+"""Telemetry Monitor entrypoint
+Starts a long-running, standalone process that hosts a `TelemetryMonitor`"""
 
 
 logger = logging.getLogger("TelemetryMonitor")
 
 
-def can_shutdown(action_handler: ManifestEventHandler) -> bool:
-    managed_jobs = action_handler.job_manager.jobs
-    unmanaged_jobs = action_handler.tracked_jobs
-    db_jobs = list(filter(lambda j: j.is_db and not j.is_complete, unmanaged_jobs))
-
-    n_jobs, n_dbs = len(managed_jobs), len(db_jobs)
-    shutdown_ok = n_jobs + n_dbs == 0
-
-    logger.debug(f"{n_jobs} active job(s), {n_dbs} active db(s)")
-    return shutdown_ok
-
-
-async def event_loop(
-    observer: BaseObserver,
-    action_handler: ManifestEventHandler,
-    frequency: int,
-    cooldown_duration: int,
+def register_signal_handlers(
+    handle_signal: t.Callable[[int, t.Optional[FrameType]], None]
 ) -> None:
-    """Executes all attached timestep handlers every <frequency> milliseconds
+    """Register a signal handling function for all termination events
 
-    :param observer: (optional) a preconfigured watchdog Observer to inject
-    :type observer: t.Optional[BaseObserver]
-    :param action_handler: The manifest event processor instance
-    :type action_handler: ManifestEventHandler
-    :param frequency: frequency (in milliseconds) of update loop
-    :type frequency: t.Union[int, float]
-    :param logger: a preconfigured Logger instance
-    :type logger: logging.Logger
-    :param cooldown_duration: number of milliseconds the telemetry monitor should
-                              poll for new jobs before attempting to shutdown
-    :type cooldown_duration: int
-    """
-    elapsed: int = 0
-    last_ts: int = get_ts_ms()
-    shutdown_in_progress = False
-
-    while observer.is_alive() and not shutdown_in_progress:
-        duration_ms = 0
-        start_ts = get_ts_ms()
-        logger.debug(f"Timestep: {start_ts}")
-        await action_handler.on_timestep(start_ts)
-
-        elapsed += start_ts - last_ts
-        last_ts = start_ts
-
-        if can_shutdown(action_handler):
-            if elapsed >= cooldown_duration:
-                shutdown_in_progress = True
-                logger.info("Beginning telemetry manager shutdown")
-                await action_handler.shutdown()
-                logger.info("Beginning file monitor shutdown")
-                observer.stop()  # type: ignore
-                logger.info("Event loop shutdown complete")
-                break
-        else:
-            # reset cooldown any time there are still jobs running
-            elapsed = 0
-
-        # track time elapsed to execute metric collection
-        duration_ms = get_ts_ms() - start_ts
-        wait_ms = max(frequency - duration_ms, 0)
-
-        # delay next loop if collection time didn't exceed loop frequency
-        if wait_ms > 0:
-            await asyncio.sleep(wait_ms / 1000)  # convert to seconds for sleep
-
-    logger.info("Exiting telemetry monitor event loop")
-
-
-async def main(
-    exp_id: str,
-    frequency: t.Union[int, float],
-    experiment_dir: pathlib.Path,
-    observer: t.Optional[BaseObserver] = None,
-    cooldown_duration: t.Optional[int] = 0,
-) -> int:
-    """Setup the monitoring entities and start the timer-based loop that
-    will poll for telemetry data
-
-    :param frequency: frequency (in seconds) of update loop
-    :type frequency: t.Union[int, float]
-    :param experiment_dir: the experiement directory to monitor for changes
-    :type experiment_dir: pathlib.Path
-    :param logger: a preconfigured Logger instance
-    :type logger: logging.Logger
-    :param observer: (optional) a preconfigured Observer to inject
-    :type observer: t.Optional[BaseObserver]
-    :param cooldown_duration: number of seconds the telemetry monitor should
-                              poll for new jobs before attempting to shutdown
-    :type cooldown_duration: int
-    """
-    telemetry_path = experiment_dir / pathlib.Path(CONFIG.telemetry_subdir)
-    manifest_path = telemetry_path / MANIFEST_FILENAME
-
-    logger.info(
-        f"Executing telemetry monitor - frequency: {frequency}s"
-        f", target directory: {experiment_dir}"
-        f", telemetry path: {telemetry_path}"
-    )
-
-    cooldown_ms = 1000 * (cooldown_duration or CONFIG.telemetry_cooldown)
-    log_handler = LoggingEventHandler(logger)  # type: ignore
-    frequency_ms = int(frequency * 1000)  # limit collector execution time
-    action_handler = ManifestEventHandler(
-        exp_id,
-        str(MANIFEST_FILENAME),
-        timeout_ms=frequency_ms,
-        ignore_patterns=["*.out", "*.err"],
-    )
-
-    if observer is None:
-        observer = Observer()
-
-    try:
-        if manifest_path.exists():
-            # a manifest may not exist depending on startup timing
-            action_handler.process_manifest(str(manifest_path))
-
-        observer.schedule(log_handler, telemetry_path)  # type:ignore
-        observer.schedule(action_handler, telemetry_path)  # type:ignore
-        observer.start()  # type: ignore
-
-        await event_loop(observer, action_handler, frequency_ms, cooldown_ms)
-        return os.EX_OK
-    except Exception as ex:
-        logger.error(ex)
-    finally:
-        if observer.is_alive():
-            observer.stop()  # type: ignore
-            observer.join()
-        await action_handler.shutdown()
-        logger.debug("Telemetry monitor shutdown complete")
-
-    return os.EX_SOFTWARE
-
-
-def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
-    """Helper function to ensure clean process termination"""
-    if not signo:
-        logger.warning("Received signal with no signo")
-
-
-def register_signal_handlers() -> None:
-    """Register a signal handling function for all termination events"""
-    for sig in SIGNALS:
-        signal.signal(sig, handle_signal)
+    :param handle_signal: the function to execute when a term signal is received
+    :type handle_signal: Callable[[int, FrameType | None]]"""
+    # NOTE: omitting kill because it is not catchable
+    term_signals = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+    for signal_num in term_signals:
+        signal.signal(signal_num, handle_signal)
 
 
 def get_parser() -> argparse.ArgumentParser:
-    """Instantiate a parser to process command line arguments"""
+    """Instantiate a parser to process command line arguments
+
+    :returns: An argument parser ready to accept required telemetry monitor parameters
+    :rtype: argparse.ArgumentParser"""
     arg_parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
-    arg_parser.add_argument(
-        "-frequency",
-        type=float,
-        help="Frequency of telemetry updates (in seconds))",
-        required=True,
-    )
     arg_parser.add_argument(
         "-exp_dir",
         type=str,
@@ -218,16 +73,16 @@ def get_parser() -> argparse.ArgumentParser:
         required=True,
     )
     arg_parser.add_argument(
+        "-frequency",
+        type=float,
+        help="Frequency of telemetry updates (in seconds))",
+        required=True,
+    )
+    arg_parser.add_argument(
         "-cooldown",
         type=int,
         help="Default lifetime of telemetry monitor (in seconds) before auto-shutdown",
-        default=CONFIG.telemetry_cooldown,
-    )
-    arg_parser.add_argument(
-        "-loglevel",
-        type=int,
-        help="Logging level",
-        default=logging.DEBUG,
+        default=cfg.CONFIG.telemetry_cooldown,
     )
     arg_parser.add_argument(
         "-exp_id",
@@ -235,59 +90,91 @@ def get_parser() -> argparse.ArgumentParser:
         help="Unique ID of the parent experiment executing a run",
         required=True,
     )
+    arg_parser.add_argument(
+        "-loglevel",
+        type=int,
+        help="Logging level",
+        default=logging.DEBUG,
+    )
     return arg_parser
 
 
-def check_frequency(frequency: t.Union[int, float]) -> None:
-    freq_tpl = "Telemetry collection frequency must be {0} {1}s"
-    if frequency < F_MIN:
-        raise ValueError(freq_tpl.format("greater than", F_MIN))
-    if frequency > F_MAX:
-        raise ValueError(freq_tpl.format("less than", F_MAX))
+def parse_arguments() -> TelemetryMonitorArgs:
+    """Parse the command line arguments and return an instance
+    of TelemetryMonitorArgs populated with the CLI inputs
+
+    :returns: `TelemetryMonitorArgs` instance populated with command line arguments
+    :rtype: TelemetryMonitorArgs"""
+    parser = get_parser()
+    parsed_args = parser.parse_args()
+    return TelemetryMonitorArgs(
+        parsed_args.exp_dir,
+        parsed_args.frequency,
+        parsed_args.cooldown,
+        parsed_args.exp_id,
+        parsed_args.loglevel,
+    )
 
 
-def configure_logger(_logger: logging.Logger, arg_ns: argparse.Namespace) -> None:
+def configure_logger(_logger: logging.Logger, _log_level: int, exp_dir: str) -> None:
+    """Configure the telemetry monitor logger to write logs to the
+    target output file path passed as an argument to the entrypoint
+
+    :param _logger: logger to configure
+    :type _logger: logging.Logger
+    :param _log_level: log level to apply to the python logging system
+    :type _log_level: logging._Level
+    :param exp_dir: root path to experiment outputs
+    :type exp_dir:  str"""
     log_level: int = (
-        arg_ns.loglevel
-        if arg_ns.loglevel
-        in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
+        _log_level
+        if _log_level in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
         else logging.DEBUG
     )
     _logger.setLevel(log_level)
     _logger.propagate = False
 
-    telem_dir = pathlib.Path(arg_ns.exp_dir) / CONFIG.telemetry_subdir
-    log_path = telem_dir / _LOG_FILE_NAME
+    # use a standard subdirectory of the expiment output path for logs
+    telemetry_dir = pathlib.Path(exp_dir) / cfg.CONFIG.telemetry_subdir
+
+    # all telemetry monitor logs are written to file in addition to stdout
+    log_path = telemetry_dir / "logs/telemetrymonitor.out"
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(log_path, "a")
+
+    # HostnameFilter is required to enrich log context to use DEFAULT_LOG_FORMAT
+    file_handler.addFilter(HostnameFilter())
 
     formatter = logging.Formatter(DEFAULT_LOG_FORMAT)
-    file_handler = logging.FileHandler(log_path, "a")
-    file_handler.addFilter(HostnameFilter())
     file_handler.setFormatter(formatter)
     _logger.addHandler(file_handler)
 
 
 if __name__ == "__main__":
+    """Prepare the telemetry monitor process using command line arguments.
+
+    Sample usage:
+    python -m smartsim._core.entrypoints.telemetrymonitor -exp_dir <exp_dir>
+          -frequency 30 -cooldown 90 -exp_id 1234 -loglevel INFO
+    The experiment id is generated during experiment startup
+    and can be found in the manifest.json in <exp_dir>/.smartsim/telemetry
+    """
     os.environ["PYTHONUNBUFFERED"] = "1"
 
-    parser = get_parser()
-    run_args = parser.parse_args()
+    args = parse_arguments()
+    configure_logger(logger, args.log_level, args.exp_dir)
 
-    configure_logger(logger, run_args)
+    telemetry_monitor = TelemetryMonitor(args)
 
     # Must register cleanup before the main loop is running
-    register_signal_handlers()
-    check_frequency(float(run_args.frequency))
+    def cleanup_telemetry_monitor(_signo: int, _frame: t.Optional[FrameType]) -> None:
+        """Create an enclosure on `manifest_observer` to avoid global variables"""
+        telemetry_monitor.cleanup()
+
+    register_signal_handlers(cleanup_telemetry_monitor)
 
     try:
-        asyncio.run(
-            main(
-                run_args.exp_id,
-                int(run_args.frequency),
-                pathlib.Path(run_args.exp_dir),
-                cooldown_duration=run_args.cooldown,
-            )
-        )
+        asyncio.run(telemetry_monitor.run())
         sys.exit(0)
     except Exception:
         logger.exception(

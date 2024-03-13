@@ -35,7 +35,6 @@ from smartsim._core.utils.telemetry.collector import (
     DBConnectionCountCollector,
     DBMemoryCollector,
     FileSink,
-    find_collectors,
     redisa,
 )
 from smartsim._core.utils.telemetry.telemetry import JobEntity
@@ -46,7 +45,7 @@ pytestmark = pytest.mark.group_a
 
 def test_collector_manager_add(mock_entity: MockCollectorEntityFunc, mock_sink) -> None:
     """Ensure that collector manager add & clear work as expected"""
-    entity1 = mock_entity()
+    entity1 = mock_entity(telemetry_on=True)
 
     con_col = DBConnectionCollector(entity1, mock_sink())
     mem_col = DBMemoryCollector(entity1, mock_sink())
@@ -69,7 +68,7 @@ def test_collector_manager_add(mock_entity: MockCollectorEntityFunc, mock_sink) 
     assert len(list(manager.all_collectors)) == 2
 
     # create a collector for another entity
-    entity2 = mock_entity()
+    entity2 = mock_entity(telemetry_on=True)
     con_col2 = DBConnectionCollector(entity2, mock_sink())
 
     # ensure collectors w/same type for new entities are not treated as dupes
@@ -92,7 +91,7 @@ def test_collector_manager_add_multi(
     mock_entity: MockCollectorEntityFunc, mock_sink
 ) -> None:
     """Ensure that collector manager multi-add works as expected"""
-    entity = mock_entity()
+    entity = mock_entity(telemetry_on=True)
 
     con_col = DBConnectionCollector(entity, mock_sink())
     mem_col = DBMemoryCollector(entity, mock_sink())
@@ -116,8 +115,8 @@ async def test_collector_manager_remove(
     mock_entity: MockCollectorEntityFunc, mock_sink
 ) -> None:
     """Ensure that collector manager solo remove works as expected"""
-    entity1 = mock_entity()
-    entity2 = mock_entity()
+    entity1 = mock_entity(telemetry_on=True)
+    entity2 = mock_entity(telemetry_on=True)
 
     con_col1 = DBConnectionCollector(entity1, mock_sink())
     mem_col1 = DBMemoryCollector(entity1, mock_sink())
@@ -145,8 +144,8 @@ async def test_collector_manager_remove_all(
     mock_entity: MockCollectorEntityFunc, mock_sink
 ) -> None:
     """Ensure that collector manager multi-remove works as expected"""
-    entity1 = mock_entity()
-    entity2 = mock_entity()
+    entity1 = mock_entity(telemetry_on=True)
+    entity2 = mock_entity(telemetry_on=True)
 
     con_col1 = DBConnectionCollector(entity1, mock_sink())
     mem_col1 = DBMemoryCollector(entity1, mock_sink())
@@ -174,8 +173,8 @@ async def test_collector_manager_collect(
 ) -> None:
     """Ensure that all collectors are executed and some metric is retrieved
     NOTE: responses & producer are mocked"""
-    entity1 = mock_entity(port=1234, name="entity1")
-    entity2 = mock_entity(port=2345, name="entity2")
+    entity1 = mock_entity(port=1234, name="entity1", telemetry_on=True)
+    entity2 = mock_entity(port=2345, name="entity2", telemetry_on=True)
 
     sinks = [mock_sink(), mock_sink(), mock_sink()]
     con_col1 = DBConnectionCollector(entity1, sinks[0])
@@ -250,8 +249,8 @@ async def test_collector_manager_collect_integration(
     test_dir: str, mock_entity: MockCollectorEntityFunc, local_db, mock_sink
 ) -> None:
     """Ensure that all collectors are executed and some metric is retrieved"""
-    entity1 = mock_entity(port=local_db.ports[0], name="e1")
-    entity2 = mock_entity(port=local_db.ports[0], name="e2")
+    entity1 = mock_entity(port=local_db.ports[0], name="e1", telemetry_on=True)
+    entity2 = mock_entity(port=local_db.ports[0], name="e2", telemetry_on=True)
 
     # todo: consider a MockSink so i don't have to save the last value in the collector
     sinks = [mock_sink(), mock_sink(), mock_sink()]
@@ -294,8 +293,8 @@ async def test_collector_manager_timeout_db(
     mock_sink,
 ) -> None:
     """Ensure that the collector timeout is honored"""
-    entity1 = mock_entity(port=1234, name="e1")
-    entity2 = mock_entity(port=2345, name="e2")
+    entity1 = mock_entity(port=1234, name="e1", telemetry_on=True)
+    entity2 = mock_entity(port=2345, name="e2", telemetry_on=True)
 
     sinks = [mock_sink(), mock_sink(), mock_sink()]
     con_col1 = DBConnectionCollector(entity1, sinks[0])
@@ -359,7 +358,8 @@ async def test_collector_manager_find_nondb(
     manager = CollectorManager(timeout_ms=10000)
 
     # Ask manager to produce appliable collectors
-    collectors = find_collectors(entity)
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
 
     # Verify collector counts, assuming no per-collector config
     assert 0 == len(collectors)
@@ -374,8 +374,10 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 0. popping all should result in no collectors mapping to the entity
-    found = find_collectors(entity)
-    assert len(found) == 0
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+
+    assert len(collectors) == 0
 
     # 1. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
@@ -385,9 +387,11 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 2. client count collector should be mapped
-    found = find_collectors(entity)
-    assert len(found) == 1
-    assert isinstance(found[0], DBConnectionCollector)
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+
+    assert len(collectors) == 1
+    assert isinstance(collectors[0], DBConnectionCollector)
 
     # 3. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
@@ -397,9 +401,11 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 4. client count collector should be mapped
-    found = find_collectors(entity)
-    assert len(found) == 1
-    assert isinstance(found[0], DBConnectionCountCollector)
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+
+    assert len(collectors) == 1
+    assert isinstance(collectors[0], DBConnectionCountCollector)
 
     # ensure DbMemoryCollector is mapped
     entity = mock_entity(
@@ -409,9 +415,11 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
     manager = CollectorManager()
 
     # 5. memory collector should be mapped
-    found = find_collectors(entity)
-    assert len(found) == 1
-    assert isinstance(found[0], DBMemoryCollector)
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+
+    assert len(collectors) == 1
+    assert isinstance(collectors[0], DBMemoryCollector)
 
 
 @pytest.mark.asyncio
@@ -420,7 +428,6 @@ async def test_collector_manager_find_entity_disabled(
 ) -> None:
     """Ensure that disabling telemetry on the entity results in no collectors"""
     entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
-    manager = CollectorManager()
 
     # set paths for all known collectors
     entity.collectors["client"] = "mock/path.csv"
@@ -431,13 +438,15 @@ async def test_collector_manager_find_entity_disabled(
 
     # ON behavior should locate multiple collectors
     entity.telemetry_on = True
-    found = find_collectors(entity)
-    assert len(found) > 0
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+    assert len(collectors) > 0
 
     # OFF behavior should locate ZERO collectors
     entity.telemetry_on = False
-    found = find_collectors(entity)
-    assert len(found) == 0
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+    assert len(collectors) == 0
 
 
 @pytest.mark.asyncio
@@ -445,7 +454,9 @@ async def test_collector_manager_find_entity_unmapped(
     mock_entity: MockCollectorEntityFunc,
 ) -> None:
     """Ensure that an entity type that is not mapped results in no collectors"""
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="model")
+    entity: JobEntity = mock_entity(
+        port=1234, name="entity1", type="model", telemetry_on=True
+    )
     manager = CollectorManager()
 
     # set paths for all known collectors
@@ -457,10 +468,12 @@ async def test_collector_manager_find_entity_unmapped(
 
     # ON behavior should locate ZERO collectors
     entity.telemetry_on = True
-    found = find_collectors(entity)
-    assert len(found) == 0
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+    assert len(collectors) == 0
 
     # OFF behavior should locate ZERO collectors
     entity.telemetry_on = False
-    found = find_collectors(entity)
-    assert len(found) == 0
+    manager.register_collectors(entity)
+    collectors = manager.all_collectors
+    assert len(collectors) == 0

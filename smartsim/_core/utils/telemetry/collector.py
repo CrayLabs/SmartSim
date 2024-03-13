@@ -28,196 +28,79 @@ import asyncio
 import collections
 import itertools
 import logging
-import pathlib
 import typing as t
 
 import redis.asyncio as redisa
 import redis.exceptions as redisex
-from watchdog.events import FileSystemEvent, PatternMatchingEventHandler
-from watchdog.observers import Observer
-from watchdog.observers.api import BaseObserver
 
 from smartsim._core.control.job import JobEntity
 from smartsim._core.utils.helpers import get_ts_ms
+from smartsim._core.utils.telemetry.sink import FileSink, Sink
 
 logger = logging.getLogger("TelemetryMonitor")
 
 
-class Sink(abc.ABC):
-    """Base class for telemetry output sinks"""
-
-    @abc.abstractmethod
-    async def save(self, *args: t.Any) -> None:
-        """Save the passed data to the underlying sink"""
-
-
-class FileSink(Sink):
-    """Telemetry sink that writes to a file"""
-
-    def __init__(self, filename: str) -> None:
-        """Initialize the FileSink
-        :param entity: The JobEntity producing log data
-        :type entity: JobEntity
-        :param filename: The relative path and filename of the file to be written
-        :type filename: str"""
-        super().__init__()
-        filename = self._check_init(filename)
-        self._path = pathlib.Path(filename)
-
-    @staticmethod
-    def _check_init(filename: str) -> str:
-        """Validate initialization arguments.
-        raise ValueError if an invalid filename is passed"""
-
-        if not filename:
-            raise ValueError("No filename provided to FileSink")
-
-        return filename
-
-    @property
-    def path(self) -> pathlib.Path:
-        """Returns the path to the underlying file the FileSink will write to"""
-        return self._path
-
-    async def save(self, *args: t.Any) -> None:
-        """Save all arguments to a file as specified by the associated JobEntity"""
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(self._path, "a+", encoding="utf-8") as sink_fp:
-            values = ",".join(map(str, args)) + "\n"
-            sink_fp.write(values)
-
-
 class Collector(abc.ABC):
-    """Base class for metrics collectors"""
+    """Base class for telemetry collectors. Collectors are used to execute
+    a repeating series of requests related to a specific SmartSimEntity"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the collector
 
-        :param entity: The entity to collect metrics on
-        :type entity: JobEntity"""
+        :param entity: entity to collect metrics on
+        :type entity: JobEntity
+        :param sink: sink to write collected information to
+        :type sink: Sink"""
         self._entity = entity
         self._sink = sink
         self._enabled = True
 
-    def disable(self) -> None:
-        self._enabled = False
-
     @property
     def enabled(self) -> bool:
-        return self._enabled
+        """Boolean indicating if the collector should perform data collection"""
+        return self._entity.telemetry_on
+
+    @enabled.setter
+    def enabled(self, value: bool) -> None:
+        self._entity.telemetry_on = value
 
     @property
     def entity(self) -> JobEntity:
+        """The `JobEntity` for which data is collected
+        :return: the entity
+        :rtype: JobEntity"""
         return self._entity
 
     @property
-    def owner(self) -> str:
-        """The name of the SmartSim entity the collector is attached to"""
-        return self._entity.name
-
-    @property
     def sink(self) -> Sink:
-        """The sink where collected data is written"""
+        """The sink where collected data is written
+        :return: the sink
+        :rtype: Sink"""
         return self._sink
 
     @abc.abstractmethod
     async def prepare(self) -> None:
-        """Initialization logic for a collector"""
+        """Initialization logic for the collector"""
 
     @abc.abstractmethod
     async def collect(self) -> None:
-        """Execute metric collection against a producer"""
-
-    @staticmethod
-    def timestamp() -> int:
-        """Return an integer timestamp"""
-        return get_ts_ms() // 1000
+        """Execute metric collection"""
 
     @abc.abstractmethod
     async def shutdown(self) -> None:
-        """Execute any cleanup of resources for the collector"""
+        """Execute cleanup of resources for the collector"""
 
 
-def find_collectors(entity: JobEntity) -> t.List[Collector]:
-    """Map from manifest configuration to a set of possible collectors."""
-    collectors: t.List[Collector] = []
-
-    if entity.is_db and entity.telemetry_on:
-        if mem_out := entity.collectors.get("memory", None):
-            collectors.append(DBMemoryCollector(entity, FileSink(mem_out)))
-
-        if con_out := entity.collectors.get("client", None):
-            collectors.append(DBConnectionCollector(entity, FileSink(con_out)))
-
-        if num_out := entity.collectors.get("client_count", None):
-            collectors.append(DBConnectionCountCollector(entity, FileSink(num_out)))
-    else:
-        logger.debug(f"Collectors disabled for db {entity.name}")
-
-    return collectors
-
-
-class TaskStatusHandler(PatternMatchingEventHandler):
-    """A file listener that will notify a set of collectors when an
-    unmanaged entity has completed"""
-
-    def __init__(
-        self,
-        collector: Collector,
-        patterns: t.Optional[t.List[str]] = None,
-        ignore_patterns: t.Optional[t.List[str]] = None,
-        ignore_directories: bool = False,
-        case_sensitive: bool = False,
-    ):
-        self._collectors = [collector]
-        super().__init__(
-            patterns, ignore_patterns, ignore_directories, case_sensitive
-        )  # type: ignore
-
-    def add(self, collector: Collector) -> None:
-        self._collectors.append(collector)
-
-    def on_modified(self, event: FileSystemEvent) -> None:
-        """Event handler for when a file or directory is modified.
-
-        :param event: Event representing file/directory modification.
-        :type event: FileModifiedEvent
-        """
-        super().on_modified(event)  # type: ignore
-        self._notify(event.src_path)
-
-    def on_created(self, event: FileSystemEvent) -> None:
-        """Event handler for when a file or directory is created.
-
-        :param event: Event representing file/directory creation.
-        :type event: FileCreatedEvent
-        """
-        super().on_created(event)  # type: ignore
-        self._notify(event.src_path)
-
-    @abc.abstractmethod
-    def _notify(self, event_src: str) -> None:
-        """Notify the collector that the entity has stopped"""
-
-
-class TaskCompleteHandler(TaskStatusHandler):
-    def _notify(self, event_src: str) -> None:
-        """Notify the collector that the entity has stopped"""
-        logger.debug(f"Processing stop event created @ {event_src}")
-
-        working_set = [item for item in self._collectors if item.enabled]
-        for col in working_set:
-            logger.debug(f"Disabling {col.entity.name}::{type(col).__name__}")
-            col.disable()
-            col.entity.set_complete()
-
-
-class _Address:
+class _DBAddress:
     """Helper class to hold and pretty-print connection details"""
 
     def __init__(self, host: str, port: int) -> None:
-        """Initialize the instance"""
+        """Initialize the instance
+        :param host: host address for database connections
+        :type host: str
+        :param port: port number for database connections
+        :type port: int
+        """
         self.host = host.strip() if host else ""
         self.port = port
         self._check()
@@ -225,9 +108,9 @@ class _Address:
     def _check(self) -> None:
         """Validate input arguments"""
         if not self.host:
-            raise ValueError("Address requires host")
+            raise ValueError(f"{type(self).__name__} requires host")
         if not self.port:
-            raise ValueError("Address requires port")
+            raise ValueError(f"{type(self).__name__} requires port")
 
     def __str__(self) -> str:
         """Pretty-print the instance"""
@@ -238,16 +121,15 @@ class DBCollector(Collector):
     """A base class for collectors that retrieve statistics from an orchestrator"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
-        """Initialize the collector"""
         super().__init__(entity, sink)
         self._client: t.Optional[redisa.Redis[bytes]] = None
-        self._address = _Address(
+        self._address = _DBAddress(
             self._entity.config.get("host", ""),
             int(self._entity.config.get("port", 0)),
         )
 
     async def _configure_client(self) -> None:
-        """Configure and connect to the target database"""
+        """Configure the client connectoin to the target database"""
         try:
             if not self._client:
                 self._client = redisa.Redis(
@@ -262,19 +144,59 @@ class DBCollector(Collector):
                 )
 
     async def prepare(self) -> None:
-        """Initialization logic for a DB collector"""
+        """Initialization logic for the DB collector. Creates a database
+        connection and then execute the `post_prepare` callback function
+        to enable child classes to customize preparation behavior"""
         if self._client:
             return
 
         await self._configure_client()
-        await self.post_prepare()
+        await self._post_prepare()
 
     @abc.abstractmethod
-    async def post_prepare(self) -> None:
-        """Hook called after the db connection is established"""
+    async def _post_prepare(self) -> None:
+        """Hook function executed after the db connection is established
+        allowing subclasses to perform actions after a db client is ready"""
+
+    @abc.abstractmethod
+    async def _perform_collection(
+        self,
+    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+        """Hook function for subclasses to execute custom metric retrieval.
+        NOTE: all implementations return an iterable of metrics to avoid
+        adding extraneous base class code to differentiate the results
+
+        :return: an iterable containing individual metric collection results
+        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+
+    async def collect(self) -> None:
+        """Execute database metric collection if the collector is enabled. Writes
+        the resulting metrics to the associated output sink. Calling `collect` on
+        when `self.enabled` is `False` performs no actions."""
+        if not self.enabled:
+            # collectors may be disabled by monitoring changes to the
+            # manifest. Leave the collector but do NOT collect
+            logger.debug(f"{type(self).__name__} is not enabled")
+            return
+
+        await self.prepare()
+        if not self._client:
+            logger.warning(f"{type(self).__name__} cannot collect")
+            return
+
+        try:
+            # if we can't communicate w/the db, exit
+            if not await self._check_db():
+                return
+
+            all_metrics = await self._perform_collection()
+            for metrics in all_metrics:
+                await self._sink.save(*metrics)
+        except Exception as ex:
+            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
     async def shutdown(self) -> None:
-        """Release any resources held by the collector"""
+        """Execute cleanup of database client connections"""
         try:
             if self._client:
                 logger.info(
@@ -288,254 +210,279 @@ class DBCollector(Collector):
             )
 
     async def _check_db(self) -> bool:
-        """Check if a database is reachable.
+        """Check if the target database is reachable.
 
-        :returns: True if connection succeeds, False otherwise."""
+        :return: True if connection succeeds, False otherwise.
+        :rtype: bool"""
         try:
             if self._client:
                 return await self._client.ping()
         except redisex.ConnectionError:
-            logger.info(f"Cannot ping db {self._address}")
+            logger.warning(f"Cannot ping db {self._address}")
 
         return False
 
 
 class DBMemoryCollector(DBCollector):
-    """A collector that collects memory usage information from
-    an orchestrator instance"""
+    """A DBCollector that collects memory consumption metrics"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         super().__init__(entity, sink)
         self._columns = ["used_memory", "used_memory_peak", "total_system_memory"]
 
-    async def post_prepare(self) -> None:
-        """Hook called after the db connection is established"""
+    async def _post_prepare(self) -> None:
+        """Write column headers for a CSV formatted output sink after
+        the database connection is estabished"""
         await self._sink.save("timestamp", *self._columns)
 
-    async def collect(self) -> None:
-        if not self.enabled:
-            logger.debug(f"{type(self).__name__} is not enabled")
-            return
+    async def _perform_collection(
+        self,
+    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+        """Perform memory metric collection and return the results
 
-        await self.prepare()
-        if not self._client:
-            logger.warning(f"{type(self).__name__} cannot collect")
-            return
+        :return: an iterable containing individual metric collection results
+        in the format `(timestamp,used_memory,used_memory_peak,total_system_memory)`
+        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        if self._client is None:
+            return []
 
-        try:
-            if not await self._check_db():
-                return
+        db_info = await self._client.info("memory")
 
-            db_info = await self._client.info("memory")
-            metrics = (float(db_info[col]) for col in self._columns)
-            value = (self.timestamp(), *metrics)
+        metrics = (float(db_info[col]) for col in self._columns)
+        value: t.List[t.Union[int, float, str]] = [get_ts_ms(), *metrics]
 
-            await self._sink.save(*value)
-        except Exception as ex:
-            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
+        # return a list containing a single record to simplify the parent
+        # class code to save multiple records from a single collection
+        return [value]
 
 
 class DBConnectionCollector(DBCollector):
-    """A collector that collects client connection information from
-    an orchestrator instance"""
+    """A DBCollector that collects database client-connection metrics"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         super().__init__(entity, sink)
         self._columns = ["client_id", "address"]
 
-    async def post_prepare(self) -> None:
-        """Hook called after the db connection is established"""
+    async def _post_prepare(self) -> None:
+        """Write column headers for a CSV formatted output sink after
+        the database connection is estabished"""
         await self._sink.save("timestamp", *self._columns)
 
-    async def collect(self) -> None:
-        if not self.enabled:
-            logger.debug(f"{type(self).__name__} is not enabled")
-            return
+    async def _perform_collection(
+        self,
+    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+        """Perform connection metric collection and return the results
 
-        await self.prepare()
-        if not self._client:
-            logger.warning(f"{type(self).__name__} is not connected and cannot collect")
-            return
+        :return: an iterable containing individual metric collection results
+        in the format `(timestamp,client_id,address)`
+        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        if self._client is None:
+            return []
 
-        now_ts = self.timestamp()  # ensure all results have the same timestamp
+        now_ts = get_ts_ms()
+        clients = await self._client.client_list()
 
-        try:
-            if not await self._check_db():
-                return
+        values = []
 
-            clients = await self._client.client_list()
+        # content-filter the metrics and return them all together
+        for client in clients:
+            # all records for the request will have the same timestamp
+            value = now_ts, client["id"], client["addr"]
+            values.append(value)
 
-            all_metrics = ((now_ts, item["id"], item["addr"]) for item in clients)
-
-            for metrics in all_metrics:
-                await self._sink.save(*metrics)
-        except Exception as ex:
-            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
+        return values
 
 
 class DBConnectionCountCollector(DBCollector):
-    """A collector that collects client connection information from
-    an orchestrator instance and records aggregated counts"""
+    """A DBCollector that collects aggregated client-connection count metrics"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         super().__init__(entity, sink)
         self._columns = ["num_clients"]
 
-    async def post_prepare(self) -> None:
-        """Hook called after the db connection is established"""
+    async def _post_prepare(self) -> None:
+        """Write column headers for a CSV formatted output sink after
+        the database connection is estabished"""
         await self._sink.save("timestamp", *self._columns)
 
-    async def collect(self) -> None:
-        if not self.enabled:
-            logger.debug(f"{type(self).__name__} is not enabled")
-            return
+    async def _perform_collection(
+        self,
+    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+        """Perform connection-count metric collection and return the results
 
-        await self.prepare()
-        if not self._client:
-            logger.warning(f"{type(self).__name__} is not connected and cannot collect")
-            return
+        :return: an iterable containing individual metric collection results
+        in the format `(timestamp,num_clients)`
+        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        if self._client is None:
+            return []
 
-        try:
-            if not await self._check_db():
-                return
+        client_list = await self._client.client_list()
 
-            client_list = await self._client.client_list()
+        addresses = {item["addr"] for item in client_list}
 
-            now_ts = self.timestamp()  # ensure all results have the same timestamp
-            addresses = {item["addr"] for item in client_list}
-            value = str(len(addresses))
-
-            await self._sink.save(now_ts, value)
-        except Exception as ex:
-            logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
+        # return a list containing a single record to simplify the parent
+        # class code to save multiple records from a single collection
+        value: t.List[t.Union[int, float, str]] = [get_ts_ms(), len(addresses)]
+        return [value]
 
 
 class CollectorManager:
     def __init__(self, timeout_ms: int = 1000) -> None:
-        """Initialize the collector manager with an empty set of collectors
-        :param timeout_ms: Timout (in ms) for telemetry collection
+        """Initialize the `CollectorManager` without collectors
+        :param timeout_ms: maximum time (in ms) allowed for `Collector.collect`,
+        defaults to 1000ms
         :type timeout_ms: int
         """
+        # A lookup table to hold a list of registered collectors per entity
         self._collectors: t.Dict[str, t.List[Collector]] = collections.defaultdict(list)
+        # Max time to allow a collector to work before cancelling requests
         self._timeout_ms = timeout_ms
+        # Asynchronous tasks for collector instances collecting metrics
         self._tasks: t.List[asyncio.Task[None]] = []
-        self._stoppers: t.Dict[str, t.List[TaskCompleteHandler]] = (
-            collections.defaultdict(list)
-        )
-        self._observers: t.Dict[str, t.List[BaseObserver]] = collections.defaultdict(
-            list
-        )
 
     def clear(self) -> None:
-        """Remove all collectors from the managed set"""
+        """Remove all collectors from the monitored set"""
         self._collectors = collections.defaultdict(list)
 
-    def add(self, col: Collector) -> None:
-        """Add a new collector to the managed set"""
-        registered_collectors = self._collectors[col.owner]
+    def add(self, collector: Collector) -> None:
+        """Add a collector to the monitored set
 
-        # ensure we only have 1 instance of a collector type registered
-        if any(x for x in registered_collectors if type(x) is type(col)):
+        :param collector: `Collector` instance to monitor
+        :type collector: Collector"""
+        entity_name = collector.entity.name
+
+        registered_collectors = self._collectors[entity_name]
+
+        # Exit if the collector is already registered to the entity
+        if any(c for c in registered_collectors if type(c) is type(collector)):
             return
 
-        logger.debug(f"Adding collector: {col.owner}::{type(col).__name__}")
-        self._collectors[col.owner].append(col)
-        self._create_stop_listener(col)
+        logger.debug(f"Adding collector: {entity_name}::{type(collector).__name__}")
+        registered_collectors.append(collector)
 
-    def _create_stop_listener(self, collector: Collector) -> None:
-        """Create a file system listener to trigger a shutdown callback
-        when an entity has completed processing"""
-        if self._stoppers[collector.owner]:
-            # listener already registered, add collector to it
-            stopper = self._stoppers[collector.owner][0]
-            stopper.add(collector)
-            return
+    def add_all(self, collectors: t.Sequence[Collector]) -> None:
+        """Add multiple collectors to the monitored set
 
-        stopper = TaskCompleteHandler(collector, patterns=["stop.json"])
+        :param collectors: a collection of `Collectors` to monitor
+        :type collectors: Sequence[Collector]"""
+        for collector in collectors:
+            self.add(collector)
 
-        # if dir DNE, the observer may fail to start correctly.
-        entity_dir = pathlib.Path(collector.entity.status_dir)
-        entity_dir.mkdir(parents=True, exist_ok=True)
+    async def remove_all(self, entities: t.Sequence[JobEntity]) -> None:
+        """Remove all collectors registered to the supplied entities
 
-        observer = Observer()
-        observer.schedule(stopper, collector.entity.status_dir)  # type: ignore
-        observer.start()  # type: ignore
-
-        self._stoppers[collector.owner].append(stopper)
-        self._observers[collector.owner].append(observer)
-
-    def add_all(self, clist: t.Iterable[Collector]) -> None:
-        """Add multiple collectors to the managed set"""
-        for col in clist:
-            self.add(col)
-
-    async def remove_all(self, entities: t.Iterable[JobEntity]) -> None:
-        """Remove all collectors for the supplied entities"""
+        :param entities: a collection of `JobEntity` instances that will
+        no longer have registered collectors
+        :type entities: Sequence[JobEntity]"""
         if not entities:
             return
 
-        await asyncio.gather(*(self.remove(entity) for entity in entities))
+        tasks = (self.remove(entity) for entity in entities)
+        await asyncio.gather(*tasks)
 
     async def remove(self, entity: JobEntity) -> None:
-        """Remove all collectors for the supplied entity"""
-        registered = self._collectors.pop(entity.name, [])
-        self._stoppers.pop(entity.name, [])
-        observers = self._observers.pop(entity.name, [])
+        """Remove all collectors registered to the supplied entity
 
+        :param entities: `JobEntity` that will no longer have registered collectors
+        :type entities: JobEntity"""
+        registered = self._collectors.pop(entity.name, [])
         if not registered:
             return
 
         logger.debug(f"Removing collectors registered for {entity.name}")
-
-        asyncio.gather(*(col.shutdown() for col in registered))
-
-        for observer in itertools.chain(observers):
-            observer.stop()  # type: ignore
-            observer.join()
+        asyncio.gather(*(collector.shutdown() for collector in registered))
 
     async def prepare(self) -> None:
-        """Ensure all managed collectors have prepared for collection"""
-
-        await asyncio.gather(*(col.prepare() for col in self.all_collectors))
+        """Prepare registered collectors to perform collection"""
+        tasks = (collector.prepare() for collector in self.all_collectors)
+        # use gather so all collectors are prepared before collection
+        await asyncio.gather(*tasks)
 
     async def collect(self) -> None:
-        """Execute collection for all managed collectors"""
+        """Perform collection for all registered collectors"""
         if collectors := self.all_collectors:
+            # tasks may still be in progress.
             if self._tasks:
+                # avoid collecting more data if we can't keep up
                 tasks = self._tasks  # tasks still in progress
             else:
                 tasks = [asyncio.create_task(item.collect()) for item in collectors]
 
             _, pending = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
             if pending:
+                # any tasks still exeucting have exceeded the timeout
                 for remaining_task in pending:
+                    # manually cancel tasks since asyncio.wait will not
                     remaining_task.cancel()
                 logger.debug(f"Execution of {len(pending)} collectors timed out.")
 
             self._tasks = []
 
     async def shutdown(self) -> None:
-        """Release resources"""
+        """Release resources for all registered collectors"""
         logger.debug(f"{type(self).__name__} cancelling tasks...")
         for task in self._tasks:
+            # avoid leaving any tasks in a pending state
             if not task.done():
                 task.cancel()
 
         logger.debug(f"{type(self).__name__} shutting down collectors...")
         if list(self.all_collectors):
-            shutdown_tasks = [
-                asyncio.create_task(item.shutdown()) for item in self.all_collectors
-            ]
+            shutdown_tasks = []
+            # create an async tasks to execute all shutdowns in parallel
+            for item in self.all_collectors:
+                shutdown_tasks.append(asyncio.create_task(item.shutdown()))
+            # await until all shutdowns are complete
             await asyncio.wait(shutdown_tasks)
         logger.debug("Collector shutdown complete...")
 
     @property
     def all_collectors(self) -> t.Sequence[Collector]:
-        """Get a list of all managed collectors"""
+        """Get a list of all managed collectors
+
+        :return: a collection of registered collectors for all entities
+        :rtype: Sequence[Collector]"""
+        # flatten and return all the lists-of-collectors that are registered
         collectors = itertools.chain.from_iterable(self._collectors.values())
-        return [col for col in collectors if col.enabled]
+        return [collector for collector in collectors if collector.enabled]
 
     @property
     def dead_collectors(self) -> t.Sequence[Collector]:
+        """Get a list of all disabled collectors
+
+        :return: a collection of disabled collectors for all entities
+        :rtype: Sequence[Collector]"""
         collectors = itertools.chain.from_iterable(self._collectors.values())
-        return [col for col in collectors if not col.enabled]
+        return [collector for collector in collectors if not collector.enabled]
+
+    def register_collectors(self, entity: JobEntity) -> None:
+        """Find all configured collectors for the entity and register them
+
+        :param entity: a `JobEntity` instance that will have all configured collectors
+        registered for collection. Configuration is found in the `RuntimeManifest`
+        :type entity: JobEntity"""
+        collectors: t.List[Collector] = []
+
+        # ONLY db telemetry is implemented at this time. This resolver must
+        # be updated when non-database or always-on collectors are introduced
+        if entity.is_db and entity.telemetry_on:
+            if mem_out := entity.collectors.get("memory", None):
+                collectors.append(DBMemoryCollector(entity, FileSink(mem_out)))
+
+            if con_out := entity.collectors.get("client", None):
+                collectors.append(DBConnectionCollector(entity, FileSink(con_out)))
+
+            if num_out := entity.collectors.get("client_count", None):
+                collectors.append(DBConnectionCountCollector(entity, FileSink(num_out)))
+        else:
+            logger.debug(f"Collectors disabled for db {entity.name}")
+
+        self.add_all(collectors)
+
+    def register_all_collectors(self, entities: t.Sequence[JobEntity]) -> None:
+        """Find all configured collectors for the entity and register them
+
+        :param entities: entities to call `register_collectors` for
+        :type entities: Sequence[JobEntity]"""
+        for entity in entities:
+            self.register_collectors(entity)

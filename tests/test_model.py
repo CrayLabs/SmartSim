@@ -31,6 +31,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
+from smartsim._core.utils import helpers as _helpers
 from smartsim.entity import Ensemble, Model
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
@@ -90,7 +91,7 @@ def test_attach_batch_settings_to_model():
 def monkeypatch_exp_controller(monkeypatch):
     def _monkeypatch_exp_controller(exp):
         entity_steps = []
-        exp_id = str(uuid4())
+        exp_id = _helpers.create_short_id_str
 
         def start_wo_job_manager(
             self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
