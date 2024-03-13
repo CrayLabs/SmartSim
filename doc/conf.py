@@ -53,7 +53,7 @@ extensions = [
     'nbsphinx',
     'sphinx_copybutton',
     'sphinx_tabs.tabs',
-    'sphinx_design',,
+    'sphinx_design',
     'sphinx.ext.mathjax',
 ]
 
