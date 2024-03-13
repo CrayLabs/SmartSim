@@ -332,6 +332,12 @@ class DBConnectionCountCollector(DBCollector):
 
 
 class CollectorManager:
+    """The `CollectorManager` manages the set of all collectors required to collect
+    metrics for an experiment. It provides the ability to add and remove collectors
+    with unique configuration per entity. The `CollectorManager` is primarily used
+    to perform bulk actions on 1-to-many collectors (e.g. prepare all collectors,
+    request metrics for all collectors, close all collector connections)"""
+
     def __init__(self, timeout_ms: int = 1000) -> None:
         """Initialize the `CollectorManager` without collectors
         :param timeout_ms: maximum time (in ms) allowed for `Collector.collect`,
