@@ -44,7 +44,7 @@ from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.telemetry.collector import CollectorManager, find_collectors
 from smartsim.error.errors import SmartSimError
-from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
+from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
 
 _EventClass = t.Literal["start", "stop", "timestep"]
 _MAX_MANIFEST_LOAD_ATTEMPTS: t.Final[int] = 6
@@ -282,7 +282,9 @@ def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
     called with non-terminal statuses or results may be confusing
     """
     rc_map = {s: 1 for s in TERMINAL_STATUSES}  # return `1` for all terminal statuses
-    rc_map.update({STATUS_COMPLETED: os.EX_OK})  # return `0` for full success
+    rc_map.update(
+        {SmartSimStatus.STATUS_COMPLETED: os.EX_OK}
+    )  # return `0` for full success
 
     return rc_map.get(step_info.status, None)  # return `None` when in-progress
 

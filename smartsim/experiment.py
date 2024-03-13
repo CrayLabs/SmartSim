@@ -32,6 +32,7 @@ from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import SSUnsupportedError
+from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
@@ -380,7 +381,7 @@ class Experiment:
     @_contextualize
     def get_status(
         self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> t.List[str]:
+    ) -> t.List[SmartSimStatus]:
         """Query the status of launched instances
 
         Return a smartsim.status string representing
@@ -408,7 +409,7 @@ class Experiment:
         """
         try:
             manifest = Manifest(*args)
-            statuses: t.List[str] = []
+            statuses: t.List[SmartSimStatus] = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:

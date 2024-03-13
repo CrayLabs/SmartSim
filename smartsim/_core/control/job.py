@@ -30,7 +30,7 @@ import typing as t
 from dataclasses import dataclass
 
 from ...entity import EntitySequence, SmartSimEntity
-from ...status import STATUS_NEW
+from ...status import SmartSimStatus
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ class Job:
         self.name = job_name
         self.jid = job_id
         self.entity = entity
-        self.status = STATUS_NEW
+        self.status = SmartSimStatus.STATUS_NEW
         # status before smartsim status mapping is applied
         self.raw_status: t.Optional[str] = None
         self.returncode: t.Optional[int] = None
@@ -138,7 +138,7 @@ class Job:
 
     def set_status(
         self,
-        new_status: str,
+        new_status: SmartSimStatus,
         raw_status: str,
         returncode: t.Optional[int],
         error: t.Optional[str] = None,
@@ -147,9 +147,15 @@ class Job:
         """Set the status  of a job.
 
         :param new_status: The new status of the job
-        :type new_status: str
+        :type new_status: SmartSimStatus
+        :param raw_status: The raw status of the launcher
+        :type raw_status: str
         :param returncode: The return code for the job
-        :type return_code: str
+        :type return_code: int
+        :param error: Content produced by stderr
+        :type error: str
+        :param output: Content produced by stdout
+        :type output: str
         """
         self.status = new_status
         self.raw_status = raw_status
@@ -179,7 +185,7 @@ class Job:
         """
         self.name = new_job_name
         self.jid = new_job_id
-        self.status = STATUS_NEW
+        self.status = SmartSimStatus.STATUS_NEW
         self.returncode = None
         self.output = None
         self.error = None
@@ -235,14 +241,14 @@ class History:
         """
         self.runs = runs
         self.jids: t.Dict[int, t.Optional[str]] = {}
-        self.statuses: t.Dict[int, str] = {}
+        self.statuses: t.Dict[int, SmartSimStatus] = {}
         self.returns: t.Dict[int, t.Optional[int]] = {}
         self.job_times: t.Dict[int, float] = {}
 
     def record(
         self,
         job_id: t.Optional[str],
-        status: str,
+        status: SmartSimStatus,
         returncode: t.Optional[int],
         job_time: float,
     ) -> None:

@@ -26,7 +26,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -49,4 +50,4 @@ def test_launch_openmpi_lsf(fileutils, test_dir, wlmutils):
     model = exp.create_model("ompi-model", path=test_dir, run_settings=settings)
     exp.start(model, block=True)
     statuses = exp.get_status(model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

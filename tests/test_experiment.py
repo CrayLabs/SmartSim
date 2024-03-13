@@ -37,7 +37,7 @@ from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
-from smartsim.status import STATUS_NEVER_STARTED
+from smartsim.status import SmartSimStatus
 
 if t.TYPE_CHECKING:
     import conftest
@@ -96,7 +96,7 @@ def test_status_typeerror() -> None:
 def test_status_pre_launch() -> None:
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    assert exp.get_status(model)[0] == STATUS_NEVER_STARTED
+    assert exp.get_status(model)[0] == SmartSimStatus.STATUS_NEVER_STARTED
 
 
 def test_bad_ensemble_init_no_rs(test_dir: str) -> None:

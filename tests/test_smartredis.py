@@ -27,10 +27,11 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -97,7 +98,7 @@ def test_exchange(fileutils, test_dir, wlmutils):
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
     try:
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         # stop the orchestrator
         exp.stop(orc)
@@ -146,7 +147,7 @@ def test_consumer(fileutils, test_dir, wlmutils):
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
     try:
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         # stop the orchestrator
         exp.stop(orc)
