@@ -37,6 +37,7 @@ import threading
 import time
 import typing as t
 from os import environ
+import os
 
 from smartredis import Client, ConfigOptions
 
@@ -345,6 +346,17 @@ class Controller:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
         else:
             raise TypeError("Must provide a 'launcher' argument")
+    
+    @staticmethod
+    def symlink(job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]):
+        telem_out, telem_err = job_step.get_output_files()
+        entity_out = osp.join(entity.path, f"{entity.name}.out")
+        entity_err = osp.join(entity.path, f"{entity.name}.err")
+        if osp.islink(entity_out) or osp.islink(entity_err):
+            os.unlink(telem_out)
+            os.unlink(telem_err)
+        os.symlink(telem_out, entity_out)
+        os.symlink(telem_err, entity_err)
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
@@ -527,6 +539,7 @@ class Controller:
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
             try:
+                self.symlink(job_step, entity)
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
                 msg = f"An error occurred when launching {entity.name} \n"
@@ -538,6 +551,7 @@ class Controller:
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
             try:
+                self.symlink(job_step, entity)
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
                 msg = f"An error occurred when launching {entity.name} \n"
