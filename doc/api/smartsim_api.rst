@@ -490,7 +490,6 @@ SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytor
 TensorFlow
 ----------
 
-
 SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
 
 .. currentmodule:: smartsim.ml.tf.utils
