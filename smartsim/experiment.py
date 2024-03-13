@@ -37,7 +37,13 @@ from smartsim.status import SmartSimStatus
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
-from .entity import Ensemble, EntitySequence, Model, SmartSimEntity, TelemetryProducer
+from .entity import (
+    Ensemble,
+    EntitySequence,
+    Model,
+    SmartSimEntity,
+    TelemetryConfiguration,
+)
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import Container, base, settings
@@ -55,7 +61,7 @@ def _exp_path_map(exp: "Experiment") -> str:
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 
-class ExperimentTelemetry(TelemetryProducer):
+class ExperimentTelemetry(TelemetryConfiguration):
     def __init__(self) -> None:
         super().__init__(enabled=CONFIG.telemetry_enabled)
 
@@ -926,5 +932,9 @@ class Experiment:
         self.db_identifiers.add(db_identifier)
 
     @property
-    def telemetry(self) -> TelemetryProducer:
+    def telemetry(self) -> TelemetryConfiguration:
+        """Return the telemetry configuration for this entity.
+
+        :returns: configuration of telemetry for this entity
+        :rtype: TelemetryConfiguration"""
         return self._telemetry_cfg

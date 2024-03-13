@@ -31,9 +31,31 @@ if t.TYPE_CHECKING:
     import smartsim.settings.base
 
 
-class TelemetryProducer:
+class TelemetryConfiguration:
+    """A base class for configuraing telemetry production behavior on
+    existing `SmartSimEntity` subclasses. Any class that will have
+    optional telemetry collection must expose access to an instance
+    of `TelemetryConfiguration` such as:
+
+    ```
+    @property
+    def telemetry(self) -> TelemetryConfiguration:
+        # Return the telemetry configuration for this entity.
+        # :returns: Configuration object indicating the configuration
+        # status of telemetry for this entity
+        # :rtype: TelemetryConfiguration
+        return self._telemetry_producer
+    ```
+
+    This instance will be used by the manifest serializer to modify the metadata
+    serialized to the manifest file used by the telemetry monitor.
+    """
+
     def __init__(self, enabled: bool = False) -> None:
-        """Initialize the telemetry producer"""
+        """Initialize the telemetry producer and immediately call the `_on_enable` hook.
+
+        :param enabled: flag indicating the initial state of telemetry
+        :type enabled: bool"""
         self._is_on = enabled
 
         if self._is_on:
@@ -43,7 +65,10 @@ class TelemetryProducer:
 
     @property
     def is_enabled(self) -> bool:
-        """Return boolean indicating if telemetry is currently enabled"""
+        """Boolean flag indicating if telemetry is currently enabled
+
+        :returns: `True` if enabled, `False` otherwise
+        :rtype: bool"""
         return self._is_on
 
     def enable(self) -> None:
@@ -57,10 +82,12 @@ class TelemetryProducer:
         self._on_disable()
 
     def _on_enable(self) -> None:
-        """Overridable hook called after telemetry is enabled."""
+        """Overridable hook called after telemetry is enabled. Allows
+        subclasses to perform actions when the configuration is changed"""
 
     def _on_disable(self) -> None:
-        """Overridable hook called after telemetry is disabled"""
+        """Overridable hook called after telemetry is disabled. Allows
+        subclasses to perform actions when the configuration is changed"""
 
 
 class SmartSimEntity:

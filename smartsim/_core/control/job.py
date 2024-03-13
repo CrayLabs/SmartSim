@@ -67,13 +67,13 @@ class JobEntity:
         self.status_dir: str = ""
         """The path configured by the experiment for the entities telemetry output"""
         self.telemetry_on: bool = False
-        """"Boolean indicating if optional telemetry is enabled for the entity"""
+        """"Flag indicating if optional telemetry is enabled for the entity"""
         self.collectors: t.Dict[str, str] = {}
-        """A mapping of collectors enabled for the entity"""
+        """Mapping of collectors enabled for the entity"""
         self.config: t.Dict[str, str] = {}
         """Telemetry configuration supplied by the experiment"""
         self._is_complete: bool = False
-        """Toggle indicating if the entity has completed execution"""
+        """Flag indicating if the entity has completed execution"""
 
     @property
     def is_db(self) -> bool:

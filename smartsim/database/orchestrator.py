@@ -37,7 +37,7 @@ from .._core.config import CONFIG
 from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
-from ..entity import DBNode, EntityList, TelemetryProducer
+from ..entity import DBNode, EntityList, TelemetryConfiguration
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
@@ -197,7 +197,7 @@ class Orchestrator(EntityList[DBNode]):
         self.queue_threads = threads_per_queue
         self.inter_threads = inter_op_threads
         self.intra_threads = intra_op_threads
-        self._telemetry_cfg = TelemetryProducer()
+        self._telemetry_cfg = TelemetryConfiguration()
 
         gpus_per_shard: t.Optional[int] = None
         cpus_per_shard: t.Optional[int] = None
@@ -308,7 +308,11 @@ class Orchestrator(EntityList[DBNode]):
         return self._hosts
 
     @property
-    def telemetry(self) -> TelemetryProducer:
+    def telemetry(self) -> TelemetryConfiguration:
+        """Return the telemetry configuration for this entity.
+
+        :returns: configuration of telemetry for this entity
+        :rtype: TelemetryConfiguration"""
         return self._telemetry_cfg
 
     def reset_hosts(self) -> None:
