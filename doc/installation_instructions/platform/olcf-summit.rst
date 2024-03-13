@@ -6,7 +6,7 @@ Since SmartSim does not have a built PowerPC build, the build steps for an IBM
 system are slightly different than other systems.
 
 Luckily for us, a conda channel with all relevant packages is maintained as part
-of the `OpenCE <https://opence.mit.edu/#/>`_ initiative.  Users can follow these
+of the `OpenCE <https://opence.mit.edu>`_ initiative.  Users can follow these
 instructions to get a working SmartSim build with PyTorch and TensorFlow for GPU
 on Summit.  Note that SmartSim and SmartRedis will be downloaded to the working
 directory from which these instructions are executed.
