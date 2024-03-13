@@ -90,8 +90,6 @@ if os.environ.get('READTHEDOCS') == "True":
     with open('../robots.txt', 'w') as f:
         f.write("# Disallow crawling of the Read the Docs URL\nUser-agent: *\nDisallow: /en/")
     html_extra_path = ['../robots.txt']
-else:
-    html_extra_path = []
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
