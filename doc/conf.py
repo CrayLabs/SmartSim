@@ -52,9 +52,11 @@ extensions = [
     'breathe',
     'nbsphinx',
     'sphinx_copybutton',
-    'sphinx_tabs.tabs'
+    'sphinx_tabs.tabs',
+    'sphinx_design',
 ]
 
+autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -106,8 +108,31 @@ html_theme_options = {
 # white background with dark themes.  If sphinx-tabs updates its
 # static/tabs.css, this may need to be updated.
 html_css_files = ['custom_tab_style.css']
-
 autoclass_content = 'both'
 add_module_names = False
 
 nbsphinx_execute = 'never'
+
+from inspect import getsourcefile
+
+# Get path to directory containing this file, conf.py.
+DOCS_DIRECTORY = os.path.dirname(os.path.abspath(getsourcefile(lambda: 0)))
+
+def ensure_pandoc_installed(_):
+    import pypandoc
+
+    # Download pandoc if necessary. If pandoc is already installed and on
+    # the PATH, the installed version will be used. Otherwise, we will
+    # download a copy of pandoc into docs/bin/ and add that to our PATH.
+    pandoc_dir = os.path.join(DOCS_DIRECTORY, "bin")
+    # Add dir containing pandoc binary to the PATH environment variable
+    if pandoc_dir not in os.environ["PATH"].split(os.pathsep):
+        os.environ["PATH"] += os.pathsep + pandoc_dir
+    pypandoc.ensure_pandoc_installed(
+        targetfolder=pandoc_dir,
+        delete_installer=True,
+    )
+
+
+def setup(app):
+    app.connect("builder-inited", ensure_pandoc_installed)
