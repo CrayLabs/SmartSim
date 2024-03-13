@@ -42,7 +42,7 @@ def write_event(
     timestamp: int,
     task_id: t.Union[int, str],
     step_id: str,
-    etype: str,
+    entity_type: str,
     event_type: _EventClass,
     status_dir: pathlib.Path,
     detail: str = "",
@@ -56,8 +56,9 @@ def write_event(
     :type task_id: int|str
     :param step_id: the step_id of an unmanaged task
     :type step_id: str
-    :param etype: the SmartSimEntity subtype (e.g. `orchestrator`, `ensemble`, ...)
-    :type etype: str
+    :param entity_type: the SmartSimEntity subtype
+        (e.g. `orchestrator`, `ensemble`, `model`, `dbnode`, ...)
+    :type entity_type: str
     :param event_type: the event subtype
     :type event_type: _EventClass
     :param status_dir: (optional) path where the SmartSimEntity outputs are written
@@ -78,7 +79,7 @@ def write_event(
         "timestamp": timestamp,
         "job_id": task_id,
         "step_id": step_id,
-        "type": etype,
+        "type": entity_type,
         "action": event_type,
     }
 

@@ -49,15 +49,28 @@ SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 def main(
     cmd: str,
-    etype: str,
+    entity_type: str,
     cwd: str,
     status_dir: str,
 ) -> int:
-    """The main function of the entrypoint. This function takes an encoded step
-    command and runs it in a subprocess. In the background, this entrypoint
-    will then monitor the subprocess and write out status events such as when
-    the subprocess has started or stopped and write these events to a status
-    directory.
+    """This function receives an encoded step command from a SmartSim Experiment
+    and runs it in a subprocess. The entrypoint integrates with the telemetry
+    monitor by writing status update events. It is useful for wrapping
+    unmanaged tasks - a workload manager can be queried for a managed task
+    to achieve the same result.
+
+    :param cmd: a base64 encoded cmd to execute
+    :type cmd: List[str]
+
+    :param entity_type: `SmartSimEntity` entity class. Valid values
+    include: orchestrator, dbnode, ensemble, model
+    :type entity_type: str
+
+    :param cmd: a base64 encoded cmd to execute
+    :type cmd: List[str]
+
+    :param cmd: a base64 encoded cmd to execute
+    :type cmd: List[str]
     """
     global STEP_PID  # pylint: disable=global-statement
     proxy_pid = os.getpid()
@@ -98,7 +111,7 @@ def main(
             get_ts_ms(),
             proxy_pid,
             "",  # step_id for unmanaged task is always empty
-            etype,
+            entity_type,
             "start",
             status_path,
             detail=start_detail,
@@ -122,7 +135,7 @@ def main(
         get_ts_ms(),
         proxy_pid,
         "",  # step_id for unmanaged task is always empty
-        etype,
+        entity_type,
         "stop",
         status_path,
         detail=msg,
@@ -232,7 +245,7 @@ if __name__ == "__main__":
 
         rc = main(
             cmd=parsed_args.command,
-            etype=parsed_args.entity_type,
+            entity_type=parsed_args.entity_type,
             cwd=parsed_args.working_dir,
             status_dir=parsed_args.telemetry_dir,
         )

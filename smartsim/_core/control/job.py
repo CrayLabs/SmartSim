@@ -46,7 +46,7 @@ class _JobKey:
 
 
 class JobEntity:
-    """An entity containing run-time metadata about a SmartSimEntity. The run-time metadata
+    """An entity containing run-time SmartSimEntity metadata. The run-time metadata
     is required to perform telemetry collection. The `JobEntity` satisfies the core
     API necessary to use a `JobManager` to manage retrieval of managed step updates.
     """
@@ -112,14 +112,12 @@ class JobEntity:
             self._is_complete = True
 
     @staticmethod
-    def _deserialize_db_metadata(
-        entity_dict: t.Dict[str, t.Any], entity: "JobEntity"
-    ) -> None:
-        """Set properties that are specific to databases and db nodes
+    def _map_db_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
+        """Map DB-specific properties from a runtime manifest onto a `JobEntity`
 
         :param entity_dict: The raw dictionary deserialized from manifest JSON
         :type entity_dict: Dict[str, Any]
-        :param entity: The entity instance to modify if the entity is a database
+        :param entity: The entity instance to modify
         :type entity: JobEntity"""
         if entity.is_db:
             # add collectors if they're configured to be enabled in the manifest
@@ -134,19 +132,22 @@ class JobEntity:
             entity.config["port"] = entity_dict.get("port", "")
 
     @staticmethod
-    def from_manifest(
-        entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
-    ) -> "JobEntity":
-        """Deserialize a `JobEntity` instance from a dictionary deserialized
-        from manifest JSON
+    def _map_standard_metadata(
+        entity_type: str,
+        entity_dict: t.Dict[str, t.Any],
+        entity: "JobEntity",
+        exp_dir: str,
+    ) -> None:
+        """Map universal properties from a runtime manifest onto a `JobEntity`
 
-        :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
         :param entity_type: The type of the associated `SmartSimEntity`
         :type entity_type: str
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param entity: The entity instance to modify
+        :type entity: JobEntity
         :param exp_dir: The path to the experiment working directory
         :type exp_dir: str"""
-        entity = JobEntity()
         metadata = entity_dict["telemetry_metadata"]
         status_dir = pathlib.Path(metadata.get("status_dir"))
 
@@ -159,7 +160,22 @@ class JobEntity:
         entity.path = str(exp_dir)
         entity.status_dir = str(status_dir)
 
-        JobEntity._deserialize_db_metadata(entity_dict, entity)
+    @classmethod
+    def from_manifest(
+        cls, entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
+    ) -> "JobEntity":
+        """Deserialize a `JobEntity` from a dictionary deserialized from manifest JSON
+
+        :param entity_type: The type of the associated `SmartSimEntity`
+        :type entity_type: str
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param exp_dir: The path to the experiment working directory
+        :type exp_dir: str"""
+        entity = JobEntity()
+
+        cls._map_standard_metadata(entity_type, entity_dict, entity, exp_dir)
+        cls._map_db_metadata(entity_dict, entity)
 
         return entity
 
