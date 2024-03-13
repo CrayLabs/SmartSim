@@ -58,9 +58,4 @@ RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --
 RUN python -m pip install -r doc/requirements-doc.txt \
     && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
 
-RUN mkdir -p doc/tutorials/ \
-    && cd doc/tutorials/ \
-    && rm -rf * \
-    && ln -s ../../tutorials/* .
-
 RUN make docs
