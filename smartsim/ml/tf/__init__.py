@@ -43,7 +43,7 @@ except ImportError:  # pragma: no cover
 
 try:
     installed_tf = Version_(tf.__version__)
-    assert installed_tf >= Version_(TF_VERSION)
+    assert installed_tf >= TF_VERSION
 except AssertionError:  # pragma: no cover
     raise SmartSimError(
         f"TensorFlow >= {TF_VERSION} is required for smartsim. "
