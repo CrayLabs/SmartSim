@@ -26,7 +26,7 @@
 
 import pytest
 
-from smartsim.slurm import _get_alloc_cmd
+from smartsim.wlm.slurm import _get_alloc_cmd
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
