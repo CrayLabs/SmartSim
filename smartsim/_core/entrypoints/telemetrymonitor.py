@@ -88,7 +88,7 @@ def get_parser() -> argparse.ArgumentParser:
         "-exp_id",
         type=str,
         help="Unique ID of the parent experiment executing a run",
-        required=True,
+        default="",
     )
     arg_parser.add_argument(
         "-loglevel",

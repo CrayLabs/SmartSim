@@ -102,7 +102,7 @@ class JobEntity:
         implementation details into `JobEntity`
         """
         # avoid touching file-system if not necessary
-        if self._is_complete or not self.is_db:
+        if self._is_complete:  # or not self.is_db:
             return
 
         # status telemetry is tracked in JSON files written to disk. look

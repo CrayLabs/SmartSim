@@ -499,7 +499,6 @@ class TelemetryMonitor:
         while self._observer.is_alive() and not shutdown_in_progress:
             duration_ms = 0
             start_ts = get_ts_ms()
-            logger.debug(f"Timestep: {start_ts}")
             await self._action_handler.on_timestep(start_ts)
 
             elapsed += start_ts - last_ts
@@ -510,11 +509,11 @@ class TelemetryMonitor:
                 # cooldown period begins accumulating when no entities are monitored
                 if elapsed >= self._args.cooldown_ms:
                     shutdown_in_progress = True
-                    logger.info("Beginning telemetry manager shutdown")
+                    logger.info("Cooldown complete. Beginning shutdown")
                     await self._action_handler.shutdown()
-                    logger.info("Beginning file monitor shutdown")
+                    logger.debug("Beginning file monitor shutdown")
                     self._observer.stop()  # type: ignore
-                    logger.info("Event loop shutdown complete")
+                    logger.debug("Event loop shutdown complete")
                     break
             else:
                 # reset cooldown any time jobs are running
@@ -525,9 +524,12 @@ class TelemetryMonitor:
             wait_ms = max(self._args.frequency_ms - duration_ms, 0)
 
             # delay next loop if collection time didn't exceed loop frequency
-            if wait_ms > 0:
-                print(f"sleeping for {wait_ms / 1000}s")
-                await asyncio.sleep(wait_ms / 1000)  # convert to seconds for sleep
+            wait_sec = wait_ms / 1000  # convert to seconds for sleep
+            if elapsed > 0:
+                completion_pct = elapsed / self._args.cooldown_ms * 100
+                logger.info(f"Cooldown {completion_pct:.2f}% complete")
+            logger.debug(f"Collection in {wait_sec:.2f}s")
+            await asyncio.sleep(wait_sec)
 
         logger.info("Exiting telemetry monitor event loop")
 
@@ -537,11 +539,10 @@ class TelemetryMonitor:
 
         :return: return code for the process
         :rtype: int"""
-        logger.info(
-            f"Executing telemetry monitor - frequency: {self._args.frequency}s"
-            f", target directory: {self._experiment_dir}"
-            f", telemetry path: {self._telemetry_path}"
-        )
+        logger.info("Executing telemetry monitor")
+        logger.info(f"Polling frequency: {self._args.frequency}s")
+        logger.info(f"Experiment directory: {self._experiment_dir}")
+        logger.info(f"Telemetry output: {self._telemetry_path}")
 
         # Convert second-based inputs to milliseconds
         frequency_ms = int(self._args.frequency * 1000)
@@ -576,12 +577,13 @@ class TelemetryMonitor:
         finally:
             await self._action_handler.shutdown()
             self.cleanup()
-            logger.debug("Telemetry monitor shutdown complete")
+            logger.info("Telemetry monitor shutdown complete")
 
         return os.EX_SOFTWARE
 
     def cleanup(self) -> None:
         """Perform cleanup for all allocated resources"""
         if self._observer is not None and self._observer.is_alive():
+            logger.debug("Cleaning up manifest observer")
             self._observer.stop()  # type: ignore
             self._observer.join()
