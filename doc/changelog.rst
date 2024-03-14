@@ -28,7 +28,7 @@ Detailed Notes
 
 - Add readthedocs configuration file and enable readthedocs builds
   on pull requests. Additionally added robots.txt file generation
-  when readthedocs environment detected.
+  when readthedocs environment detected. (SmartSim-PR512_)
 - Implemented new structure of SmartSim documentation. Added examples
   images and further detail of SmartSim components. (SmartSim-PR463_)
 - Update Redis version to `7.2.4`. This change fixes an issue in the Redis
