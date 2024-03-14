@@ -118,23 +118,8 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-
         if isinstance(self._launcher, DragonLauncher):
-            dragon_server_path = CONFIG.dragon_server_path
-            if dragon_server_path is not None:
-                dragon_server_paths = dragon_server_path.split(":")
-                if len(dragon_server_paths) > 1:
-                    msg = (
-                        "Multiple dragon servers not supported, "
-                        "will connect to (or create) first server in list."
-                    )
-                    logger.warning(msg)
-                self._launcher.connect_to_dragon(dragon_server_paths[0])
-            else:
-                dragon_path = osp.join(exp_path, CONFIG.dragon_default_subdir)
-                self._launcher.connect_to_dragon(dragon_path)
-            if not self._launcher.is_connected:
-                raise LauncherError("Could not connect to Dragon server")
+            self._launcher.connect_to_dragon(exp_path)
 
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)

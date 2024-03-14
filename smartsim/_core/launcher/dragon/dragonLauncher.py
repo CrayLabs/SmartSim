@@ -128,28 +128,33 @@ class DragonLauncher(WLMLauncher):
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
 
+    def connect_to_dragon(self, path: t.Union[str, "os.PathLike[str]"]) -> None:
+        self._connect_to_dragon(path)
+        if not self.is_connected:
+            raise LauncherError("Could not connect to Dragon server")
+
     # pylint: disable-next=too-many-statements
-    def connect_to_dragon(self, path: str) -> None:
+    def _connect_to_dragon(self, path: t.Union[str, "os.PathLike[str]"]) -> None:
         with DRG_LOCK:
             # TODO use manager instead
             if self.is_connected:
                 return
 
-            dragon_config_log = os.path.join(path, CONFIG.dragon_log_filename)
+            path = _resolve_dragon_path(path)
+            dragon_config_log = path / CONFIG.dragon_log_filename
 
-            if Path.is_file(Path(dragon_config_log)):
-                dragon_confs = (
-                    DragonLauncher._parse_launched_dragon_server_info_from_files(
-                        [dragon_config_log]
-                    )
+            if dragon_config_log.is_file():
+                dragon_confs = self._parse_launched_dragon_server_info_from_files(
+                    [dragon_config_log]
                 )
                 logger.debug(dragon_confs)
                 for dragon_conf in dragon_confs:
                     if not "address" in dragon_conf:
                         continue
-                    msg = "Found dragon server config file. Checking if the server"
-                    msg += f" is still up at address {dragon_conf['address']}."
-                    logger.debug(msg)
+                    logger.debug(
+                        "Found dragon server config file. Checking if the server"
+                        f" is still up at address {dragon_conf['address']}."
+                    )
                     try:
                         self._set_timeout(self._reconnect_timeout)
                         self._handshake(dragon_conf["address"])
@@ -160,7 +165,7 @@ class DragonLauncher(WLMLauncher):
                     if self.is_connected:
                         return
 
-            os.makedirs(path, exist_ok=True)
+            path.mkdir(parents=True, exist_ok=True)
 
             cmd = [
                 "dragon",
@@ -179,8 +184,8 @@ class DragonLauncher(WLMLauncher):
                 launcher_socket.bind(socket_addr)
                 cmd += ["+launching_address", socket_addr]
 
-            dragon_out_file = os.path.join(path, "dragon_head.out")
-            dragon_err_file = os.path.join(path, "dragon_head.err")
+            dragon_out_file = path / "dragon_head.out"
+            dragon_err_file = path / "dragon_head.err"
 
             with open(dragon_out_file, "w", encoding="utf-8") as dragon_out, open(
                 dragon_err_file, "w", encoding="utf-8"
@@ -244,12 +249,7 @@ class DragonLauncher(WLMLauncher):
     @property
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
-        return {DragonRunSettings: DragonStep, RunSettings: DragonStep}
-
-    @staticmethod
-    def _unpack_launch_cmd(cmd: t.List[str]) -> DragonRunRequest:
-        req = DragonRunRequest.parse_obj(json.loads(cmd[-1]))
-        return req
+        return {DragonRunSettings: DragonStep, RunSettings: LocalStep}
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
@@ -270,23 +270,45 @@ class DragonLauncher(WLMLauncher):
         step_id = None
         task_id = None
 
+        cmd = step.get_launch_cmd()
+        out, err = step.get_output_files()
+
         if isinstance(step, DragonStep):
-            req = DragonLauncher._unpack_launch_cmd(step.get_launch_cmd())
-        elif isinstance(step, LocalStep):
-            cmd = step.get_launch_cmd()
-            req = DragonRunRequest(
-                exe=cmd[0], exe_args=cmd[1:], path=step.cwd, name=step.entity_name
+            run_args = step.run_settings.run_args
+            env = step.run_settings.env_vars
+            nodes = int(run_args.get("nodes", None) or 1)
+            response = (
+                _helpers.start_with(
+                    DragonRunRequest(
+                        exe=cmd[0],
+                        exe_args=cmd[1:],
+                        path=step.cwd,
+                        name=step.name,
+                        nodes=nodes,
+                        env=env,
+                        current_env=os.environ,
+                        output_file=out,
+                        error_file=err,
+                    )
+                )
+                .then(self._send_request)
+                .then(_assert_schema_type(DragonRunResponse))
+                .get_result()
             )
-
-        response = (
-            _helpers.start_with(req)
-            .then(self._send_request)
-            .then(_assert_schema_type(DragonRunResponse))
-            .get_result()
-        )
-
-        step_id = str(response.step_id)
-        task_id = step_id
+            step_id = task_id = str(response.step_id)
+        elif isinstance(step, LocalStep):
+            # pylint: disable-next=consider-using-with
+            out_strm = open(out, "w+", encoding="utf-8")
+            # pylint: disable-next=consider-using-with
+            err_strm = open(err, "w+", encoding="utf-8")
+            task_id = self.task_manager.start_task(
+                cmd, step.cwd, step.env, out=out_strm.fileno(), err=err_strm.fileno()
+            )
+        else:  # pragma: no-cover
+            raise TypeError(
+                f"{type(self).__name__} is unable to launch a step of "
+                f"type {type(step)}"
+            )
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -349,16 +371,17 @@ class DragonLauncher(WLMLauncher):
                     msg += response.error_message
                 raise LauncherError(msg)
 
-            stat_tuple = response.statuses[NonEmptyStr(step_id)]
-            ret_codes = stat_tuple[1]
+            status, ret_codes = response.statuses[NonEmptyStr(step_id)]
             if ret_codes:
                 grp_ret_code = min(ret_codes)
                 if any(ret_codes):
-                    err_msg = f"One or more processes failed for job {step_id}"
-                    err_msg += f"Return codes were: {ret_codes}"
+                    _err_msg = (
+                        f"One or more processes failed for job {step_id}"
+                        f"Return codes were: {ret_codes}"
+                    )
             else:
                 grp_ret_code = None
-            info = StepInfo(stat_tuple[0], stat_tuple[0], grp_ret_code)
+            info = StepInfo(status, status, grp_ret_code)
 
             updates.append(info)
         return updates
@@ -394,7 +417,9 @@ class DragonLauncher(WLMLauncher):
 
     @classmethod
     def _parse_launched_dragon_server_info_from_files(
-        cls, file_paths: t.List[str], num_dragon_envs: t.Optional[int] = None
+        cls,
+        file_paths: t.List[t.Union[str, "os.PathLike[str]"]],
+        num_dragon_envs: t.Optional[int] = None,
     ) -> t.List[t.Dict[str, str]]:
         with fileinput.FileInput(file_paths) as ifstream:
             dragon_envs = cls._parse_launched_dragon_server_info_from_iterable(
@@ -439,3 +464,16 @@ def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -
         )
     finally:
         os.kill(server_process_pid, signal.SIGINT)
+
+
+def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
+    dragon_server_path = CONFIG.dragon_server_path or os.path.join(
+        fallback, ".smartsim", "dragon"
+    )
+    dragon_server_paths = dragon_server_path.split(":")
+    if len(dragon_server_paths) > 1:
+        logger.warning(
+            "Multiple dragon servers not supported, "
+            "will connect to (or create) first server in list."
+        )
+    return Path(dragon_server_paths[0])

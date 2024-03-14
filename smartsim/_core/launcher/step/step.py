@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import functools
-import json
 import os.path as osp
 import sys
 import time
@@ -35,8 +34,6 @@ import typing as t
 from os import makedirs
 
 from smartsim._core.config import CONFIG
-from smartsim._core.schemas import DragonRunRequest
-from smartsim._core.schemas.types import NonEmptyStr
 from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
 from ....log import get_logger
@@ -134,49 +131,6 @@ def proxyable_launch_cmd(
 
         if not CONFIG.telemetry_enabled:
             return original_cmd_list
-
-        # pylint: disable-next=import-outside-toplevel
-        from .dragonStep import DragonStep
-
-        if isinstance(self, DragonStep):
-            proxy_module = "smartsim._core.entrypoints.indirect"
-            etype = self.meta["entity_type"]
-            status_dir = self.meta["status_dir"]
-            run_req = DragonRunRequest.parse_obj(json.loads(original_cmd_list[-1]))
-
-            exe_args = run_req.exe_args
-            encoded_cmd = encode_cmd([run_req.exe] + exe_args)
-
-            # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
-            #       serialize step and let the indirect entrypoint rebuild the
-            #       cmd... for now, test away...
-            # NOTE: This mapping DOES NOT VALIDATE THE STRINGS and we are lying
-            #       to pydantic and the type checker! We should try to remove this
-            #       dragon specific branch for more type safety.
-            new_cmd = list(
-                map(
-                    NonEmptyStr,
-                    (
-                        sys.executable,
-                        "-m",
-                        proxy_module,
-                        "+name",
-                        self.name,
-                        "+command",
-                        encoded_cmd,
-                        "+entity_type",
-                        etype,
-                        "+telemetry_dir",
-                        status_dir,
-                        "+working_dir",
-                        self.cwd,
-                    ),
-                )
-            )
-            run_req.exe = new_cmd[0]
-            run_req.exe_args = new_cmd[1:]
-
-            return [run_req.json()]
 
         if self.managed:
             raise UnproxyableStepError(
