@@ -21,6 +21,7 @@ Description
 - Update the version of Redis from `7.0.4` to `7.2.4`
 - Update Experiment API typing
 - Fix publishing of development docs
+- Minor enhancements to test suite
 
 Detailed Notes
 
@@ -32,7 +33,10 @@ Detailed Notes
   software and files that come from the default Github Ubuntu container.
   (SmartSim-PR-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
+- Remove previously deprecated behavior present in test suite on Slurm machines
+  with Open MPI. (SmartSim-PR520_)
 
+.. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR507: https://github.com/CrayLabs/SmartSim/pull/507
 .. _SmartSim-PR504: https://github.com/CrayLabs/SmartSim/pull/504
 .. _SmartSim-PR501: https://github.com/CrayLabs/SmartSim/pull/501

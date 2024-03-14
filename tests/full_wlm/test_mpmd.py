@@ -88,7 +88,7 @@ def test_mpmd(fileutils, test_dir, wlmutils):
         settings.make_mpmd(deepcopy(settings))
 
         mpmd_model = exp.create_model(
-            f"mmpd-{run_command}", path=test_dir, run_settings=settings
+            f"mpmd-{run_command}", path=test_dir, run_settings=settings
         )
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
