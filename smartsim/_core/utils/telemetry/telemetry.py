@@ -72,7 +72,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def __init__(
         self,
-        exp_id: str,
         pattern: str,
         ignore_patterns: t.Any = None,
         ignore_directories: bool = True,
@@ -81,8 +80,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     ) -> None:
         """Initialize the manifest event handler
 
-        :param exp_id: unique ID of the parent experiment executing a run
-        :type exp_id: str
         :param pattern: a pattern that identifies the files whose
         events are of interest by matching their name
         :type pattern:  str
@@ -100,7 +97,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         super().__init__(
             [pattern], ignore_patterns, ignore_directories, case_sensitive
         )  # type: ignore
-        self._exp_id: str = exp_id
         self._tracked_runs: t.Dict[int, Run] = {}
         self._tracked_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
@@ -178,10 +174,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         # filter out previously added items
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
-
-        # optionally filter by experiment ID; required only for multi-exp drivers
-        if self._exp_id:
-            runs = [run for run in runs if run.exp_id == self._exp_id]
 
         # manifest is stored at <exp_dir>/.smartsim/telemetry/manifest.json
         exp_dir = pathlib.Path(manifest_path).parent.parent.parent
@@ -331,29 +323,22 @@ class TelemetryMonitorArgs:
         exp_dir: str,
         frequency: int,
         cooldown: int,
-        exp_id: str = "",
         log_level: int = logging.DEBUG,
     ) -> None:
         """Initialize the instance with inputs and defaults
 
         :param exp_dir: root path to experiment outputs
         :type exp_dir:  str
-
         :param frequency: desired frequency of metric & status updates (in seconds)
         :type frequency:  int
-
         :param frequency: cooldown period (in seconds) before automatic shutdown
         :type frequency:  int
-
-        :param exp_id: unique experiment ID to support multi-experiment drivers
-        :type exp_id:  str, see `create_short_id_str`
 
         :param log_level: log level to apply to python logging
         :type log_level: logging._Level"""
         self.exp_dir: str = exp_dir
         self.frequency: int = frequency  # freq in seconds
         self.cooldown: int = cooldown  # cooldown in seconds
-        self.exp_id: str = exp_id
         self.log_level: int = log_level
         self._max_frequency = 600
         self._validate()
@@ -550,7 +535,6 @@ class TelemetryMonitor:
         # Create event handlers to trigger when target files are changed
         log_handler = LoggingEventHandler(logger)  # type: ignore
         self._action_handler = ManifestEventHandler(
-            self._args.exp_id,
             str(MANIFEST_FILENAME),
             timeout_ms=frequency_ms,
             ignore_patterns=["*.out", "*.err"],

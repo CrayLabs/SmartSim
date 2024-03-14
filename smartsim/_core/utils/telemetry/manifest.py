@@ -39,9 +39,6 @@ logger = logging.getLogger("TelemetryMonitor")
 class Run:
     """A Run is a collection of SmartSimEntity passed to a call to `Experiment.start`"""
 
-    exp_id: str
-    """an opaque, unique identifier for the experiment enabling
-    multi-experiment drivers"""
     timestamp: int
     """the timestamp at the time the `Experiment.start` is called"""
     models: t.List[JobEntity]
@@ -153,7 +150,6 @@ class Run:
                 run_entities[entity_type].extend(new_entities)
 
         loaded_run = Run(
-            raw_run["exp_id"],
             raw_run["timestamp"],
             run_entities["model"],
             run_entities["orchestrator"],

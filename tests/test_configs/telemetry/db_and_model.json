@@ -10,7 +10,6 @@
     },
     "runs": [
         {
-            "exp_id": "abc9ad89-020f-4e6a-b834-dbd88658ce84",
             "run_id": "2ca19ad",
             "timestamp": 1699038647234488933,
             "model": [],
@@ -46,7 +45,6 @@
             "ensemble": []
         },
         {
-            "exp_id": "abc9ad89-020f-4e6a-b834-dbd88658ce84",
             "run_id": "4b5507a",
             "timestamp": 1699038661491043211,
             "model": [

@@ -188,7 +188,6 @@ class Manifest:
 
 
 class _LaunchedManifestMetadata(t.NamedTuple):
-    exp_id: str
     run_id: str
     exp_name: str
     exp_path: str
@@ -252,7 +251,6 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     exp_name: str
     exp_path: str
     launcher_name: str
-    exp_id: str
     run_id: str = field(default_factory=_helpers.create_short_id_str)
 
     _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list, init=False)
@@ -296,7 +294,6 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
             metadata=_LaunchedManifestMetadata(
-                self.exp_id,
                 self.run_id,
                 self.exp_name,
                 self.exp_path,

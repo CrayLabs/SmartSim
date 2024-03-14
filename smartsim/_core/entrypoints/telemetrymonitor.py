@@ -85,12 +85,6 @@ def get_parser() -> argparse.ArgumentParser:
         default=cfg.CONFIG.telemetry_cooldown,
     )
     arg_parser.add_argument(
-        "-exp_id",
-        type=str,
-        help="Unique ID of the parent experiment executing a run",
-        default="",
-    )
-    arg_parser.add_argument(
         "-loglevel",
         type=int,
         help="Logging level",
@@ -111,7 +105,6 @@ def parse_arguments() -> TelemetryMonitorArgs:
         parsed_args.exp_dir,
         parsed_args.frequency,
         parsed_args.cooldown,
-        parsed_args.exp_id,
         parsed_args.loglevel,
     )
 
@@ -155,7 +148,7 @@ if __name__ == "__main__":
 
     Sample usage:
     python -m smartsim._core.entrypoints.telemetrymonitor -exp_dir <exp_dir>
-          -frequency 30 -cooldown 90 -exp_id 1234 -loglevel INFO
+          -frequency 30 -cooldown 90 -loglevel INFO
     The experiment id is generated during experiment startup
     and can be found in the manifest.json in <exp_dir>/.smartsim/telemetry
     """

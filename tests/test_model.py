@@ -91,15 +91,12 @@ def test_attach_batch_settings_to_model():
 def monkeypatch_exp_controller(monkeypatch):
     def _monkeypatch_exp_controller(exp):
         entity_steps = []
-        exp_id = _helpers.create_short_id_str
 
         def start_wo_job_manager(
             self, exp_name, exp_path, manifest, block=True, kill_on_interrupt=True
         ):
             self._launch(exp_name, exp_path, manifest)
-            return LaunchedManifestBuilder(
-                "name", "path", "launcher", exp_id
-            ).finalize()
+            return LaunchedManifestBuilder("name", "path", "launcher").finalize()
 
         def launch_step_nop(self, step, entity):
             entity_steps.append((step, entity))
@@ -113,11 +110,6 @@ def monkeypatch_exp_controller(monkeypatch):
             exp._control,
             "_launch_step",
             launch_step_nop.__get__(exp._control, type(exp._control)),
-        )
-        monkeypatch.setattr(
-            exp._control,
-            "_exp_id",
-            exp_id,
         )
 
         return entity_steps

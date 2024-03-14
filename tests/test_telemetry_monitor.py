@@ -146,7 +146,7 @@ def test_parser():
     test_dir = "/foo/bar"
     test_freq = 123
 
-    cmd = f"-exp_dir {test_dir} -frequency {test_freq} -exp_id {uuid.uuid4()}"
+    cmd = f"-exp_dir {test_dir} -frequency {test_freq}"
     args = cmd.split()
 
     ns = parser.parse_args(args)
@@ -175,7 +175,7 @@ def test_valid_frequencies(freq: t.Union[int, float], test_dir: str):
     """Ensure validation does not raise an exception on values in valid range"""
     # check_frequency(float(freq))
     telmon_args = TelemetryMonitorArgs(
-        test_dir, float(freq), 30, "exp123", logging.DEBUG
+        test_dir, float(freq), 30, logging.DEBUG
     )
     # telmon_args raises ValueError on bad inputs
     assert telmon_args is not None
@@ -197,7 +197,7 @@ def test_invalid_frequencies(freq: t.Union[int, float], test_dir: str):
     """Ensure validation raises an exception on values outside valid range"""
     exp_err_msg = "in the range"
     with pytest.raises(ValueError) as ex:
-        TelemetryMonitorArgs(test_dir, float(freq), 30, "exp123", logging.DEBUG)
+        TelemetryMonitorArgs(test_dir, float(freq), 30, logging.DEBUG)
     assert exp_err_msg in "".join(ex.value.args)
 
 
@@ -383,10 +383,9 @@ def test_shutdown_conditions__no_monitored_jobs(test_dir: str):
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
 
-    exp_id = str(uuid.uuid4())
-    mani_handler = ManifestEventHandler(exp_id, "xyz")
+    mani_handler = ManifestEventHandler("xyz")
 
-    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, exp_id, logging.DEBUG)
+    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, logging.DEBUG)
     telmon = TelemetryMonitor(tm_args)
     telmon._action_handler = mani_handler  # replace w/mock handler
 
@@ -400,12 +399,11 @@ def test_shutdown_conditions__has_monitored_job(test_dir: str):
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
 
-    exp_id = str(uuid.uuid4())
-    mani_handler = ManifestEventHandler(exp_id, "xyz")
+    mani_handler = ManifestEventHandler("xyz")
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
     )
-    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, exp_id, logging.DEBUG)
+    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, logging.DEBUG)
     telmon = TelemetryMonitor(tm_args)
     telmon._action_handler = mani_handler
 
@@ -422,8 +420,7 @@ def test_shutdown_conditions__has_db(test_dir: str):
     job_entity1.task_id = ""
     job_entity1.type = "orchestrator"  # <---- make entity appear as db
 
-    exp_id = str(uuid.uuid4())
-    mani_handler = ManifestEventHandler(exp_id, "xyz")
+    mani_handler = ManifestEventHandler("xyz")
     ## TODO: see next comment and combine an add_job method on manieventhandler
     # and _use within_ manieventhandler
     # PROBABLY just encapsulating the body of for run in runs: for entity in run.flatten()...
@@ -433,64 +430,13 @@ def test_shutdown_conditions__has_db(test_dir: str):
     ## TODO: !!!!!! shouldn't add_job (or something on mani_handler)
     # allow me to add a job to "all the places" in one call... even a private one?
     mani_handler._tracked_jobs[job_entity1.key] = job_entity1
-    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, exp_id, logging.DEBUG)
+    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, logging.DEBUG)
     telmon = TelemetryMonitor(tm_args)
-    # telmon._observer = observer  # replace w/mock observer
     telmon._action_handler = mani_handler  # replace w/mock handler
 
     assert not telmon._can_shutdown()
     assert bool([j for j in mani_handler._tracked_jobs.values() if j.is_db])
     assert not bool(mani_handler.job_manager.jobs)
-
-
-def test_shutdown_conditions__check_removal(test_dir: str):
-    """Show that an event handler w/dbs & tasks can shutdown when they are removed"""
-    job_entity1 = JobEntity()
-    job_entity1.name = "xyz"
-    job_entity1.step_id = "123"
-    job_entity1.task_id = ""
-
-    # # show that an event handler w/dbs & tasks cannot shutdown
-    # mani_handler = ManifestEventHandler(str(uuid.uuid4()), "xyz")
-
-    # job_entity2 = JobEntity()
-    # job_entity2.name = "xyz"
-    # job_entity2.step_id = "123"
-    # job_entity2.task_id = ""
-
-    # job_entity3 = JobEntity()
-    # job_entity3.name = job_entity2.name
-    # job_entity3.step_id = job_entity2.step_id
-    # job_entity3.task_id = job_entity2.task_id
-    # job_entity3.type = "orchestrator"
-
-    # mani_handler.job_manager.add_job(
-    #     job_entity2.name, job_entity2.step_id, job_entity2, False
-    # )
-    # mani_handler._tracked_jobs[job_entity3.key] = job_entity3
-
-    # exp_id = str(uuid.uuid4())
-    # mani_handler = ManifestEventHandler(exp_id, "xyz")
-    # mani_handler.job_manager.add_job(
-    #     job_entity1.name, job_entity1.step_id, job_entity1, False
-    # )
-    # tm_args = TelemetryMonitorArgs(test_dir, 1, 10, exp_id, logging.DEBUG)
-    # telmon = TelemetryMonitor(tm_args)
-    # # telmon._observer = observer  # replace w/mock observer
-    # telmon._action_handler = mani_handler  # replace w/mock handler
-
-    # assert not telmon._can_shutdown()
-    # assert not bool(mani_handler.job_manager.db_jobs)  # db isn't run by job mgr
-    # assert bool(list(mani_handler._tracked_jobs.values()))  # mani handler tracks db
-    # assert bool(mani_handler.job_manager.jobs)  # job mgr does normal tasks
-
-    # # ... now, show that removing 1 of 2 jobs still doesn't shutdown
-    # job_entity3.set_complete()
-    # assert not telmon._can_shutdown()
-
-    # # ... now, show that removing final job will allow shutdown
-    # mani_handler.job_manager.jobs.popitem()
-    # assert telmon._can_shutdown()
 
 
 @pytest.mark.parametrize(
@@ -522,7 +468,6 @@ async def test_auto_shutdown__no_jobs(test_dir: str, expected_duration: int):
             return True
 
     frequency = 1000
-    exp_id = "abc123"
 
     # monitor_pattern = f"{test_dir}/mock_mani.json"
     # show that an event handler w/out a monitored task will automatically stop
@@ -530,13 +475,9 @@ async def test_auto_shutdown__no_jobs(test_dir: str, expected_duration: int):
     observer = FauxObserver()
     expected_duration = 2000
 
-    # mani_handler.job_manager.add_job(
-    #     job_entity1.name, job_entity1.step_id, job_entity1, False
-    # )
-
     ts0 = get_ts_ms()
     tm_args = TelemetryMonitorArgs(
-        test_dir, frequency / 1000, expected_duration / 1000, exp_id, logging.DEBUG
+        test_dir, frequency / 1000, expected_duration / 1000, logging.DEBUG
     )
     telmon = TelemetryMonitor(tm_args)
     telmon._observer = observer  # replace w/mock observer
@@ -601,9 +542,8 @@ async def test_auto_shutdown__has_db(
     observer = FauxObserver()
     expected_duration = (cooldown_ms / 1000) + (task_duration_ms / 1000)
 
-    exp_id = "234abc"
     tm_args = TelemetryMonitorArgs(
-        test_dir, frequency / 1000, (cooldown_ms / 1000), exp_id, logging.DEBUG
+        test_dir, frequency / 1000, (cooldown_ms / 1000), logging.DEBUG
     )
     telmon = TelemetryMonitor(tm_args)
     telmon._observer = observer  # replace w/mock observer

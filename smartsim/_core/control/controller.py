@@ -40,7 +40,6 @@ from os import environ
 
 from smartredis import Client, ConfigOptions
 
-from smartsim._core.utils import helpers as _helpers
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
@@ -96,7 +95,6 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
         self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
-        self._exp_id = _helpers.create_short_id_str()
 
     def start(
         self,
@@ -368,7 +366,6 @@ class Controller:
             exp_name=exp_name,
             exp_path=exp_path,
             launcher_name=str(self._launcher),
-            exp_id=self._exp_id,
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -886,8 +883,6 @@ class Controller:
                 str(CONFIG.telemetry_frequency),
                 "-cooldown",
                 str(CONFIG.telemetry_cooldown),
-                "-exp_id",
-                self._exp_id,
             ]
             # pylint: disable-next=consider-using-with
             self._telemetry_monitor = subprocess.Popen(
