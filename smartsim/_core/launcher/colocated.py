@@ -56,6 +56,8 @@ def write_colocated_launch_script(
         script_file.write("set -e\n\n")
 
         script_file.write("Cleanup () {\n")
+        script_file.write("echo error detected cleanup triggered\n")
+        script_file.write("echo $DBPID\n")
         script_file.write("if ps -p $DBPID > /dev/null; then\n")
         script_file.write("\tkill -15 $DBPID\n")
         script_file.write("fi\n}\n\n")
@@ -67,9 +69,12 @@ def write_colocated_launch_script(
         # STDOUT of the job
         if colocated_settings["debug"]:
             script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
-
-        script_file.write(f"{colocated_cmd}\n")
-        script_file.write("DBPID=$!\n\n")
+        script_file.write("echo b4 colo entrypoint\n")
+        script_file.write(f"db_stdout=$({colocated_cmd})\n")
+        script_file.write("echo after colo entrypoint\n")
+        script_file.write("DBPID=$(echo $db_stdout | sed -n 's/.*__PID__\([0-9]*\)__PID__.*/\\1/p')\n")
+        #sed syntax
+        
 
         # Write the actual launch command for the app
         script_file.write("$@\n\n")
@@ -191,9 +196,11 @@ def _build_colocated_wrapper_cmd(
         db_cmd.extend(db_script_cmd)
 
     # run colocated db in the background
-    db_cmd.append("&")
-
+    # db_cmd.append("&")
+    # db_cmd = ["DBPID=$("] + db_cmd + [")"]
+    
     cmd.extend(db_cmd)
+
     return " ".join(cmd)
 
 

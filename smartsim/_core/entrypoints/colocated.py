@@ -201,8 +201,10 @@ def main(
     # we generally want to catch all exceptions here as
     # if this process dies, the application will most likely fail
     try:
-        process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
-        DBPID = process.pid
+        with open("output.txt", 'w') as f:
+            process = psutil.Popen(cmd, stdout=f.fileno(), stderr=STDOUT)
+            DBPID = process.pid
+        print(f"__PID__{DBPID}__PID__", flush=True)
 
     except Exception as e:
         cleanup()
@@ -249,8 +251,8 @@ def main(
                 # Make sure we don't keep this around
                 del client
 
-        for line in iter(process.stdout.readline, b""):
-            print(line.decode("utf-8").rstrip(), flush=True)
+        # for line in iter(process.stdout.readline, b""):
+        #     print(line.decode("utf-8").rstrip(), flush=True)
 
     except Exception as e:
         cleanup()
