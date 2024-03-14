@@ -7,6 +7,7 @@ and SmartRedis.
 
 Jump to :ref:`SmartRedis Changelog <sr_changelog>`
 
+
 SmartSim
 ========
 
@@ -17,7 +18,6 @@ To be released at some future point in time
 
 Description
 
-- Enforce updates to changelog for PRs
 - Remove deprecated SmartSim modules
 - SmartSim Documentation refactor
 - Update the version of Redis from `7.0.4` to `7.2.4`
@@ -26,8 +26,6 @@ Description
 
 Detailed Notes
 
-- Added check for edit to changelog.rst upon pull request.
-  (SmartSim-PR518_)
 - Removed deprecated SmartSim modules: slurm and mpirunSettings.
   (SmartSim-PR514_)
 - Implemented new structure of SmartSim documentation. Added examples
@@ -41,7 +39,6 @@ Detailed Notes
   (SmartSim-PR-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
-.. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
 .. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
 .. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
 .. _SmartSim-PR507: https://github.com/CrayLabs/SmartSim/pull/507
