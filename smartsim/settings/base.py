@@ -121,14 +121,7 @@ class RunSettings(SettingsBase):
 
     @exe_args.setter
     def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
-        if (
-            isinstance(value, str)
-            or isinstance(value, list)
-            and all(isinstance(i, str) for i in value)
-        ):
-            self._exe_args = self._build_exe_args(value)
-        else:
-            raise TypeError("Executable arguments were not list of str or str.")
+        self._exe_args = self._build_exe_args(value)
 
     @property
     def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
@@ -455,17 +448,7 @@ class RunSettings(SettingsBase):
         :type args: str | list[str]
         :raises TypeError: if exe args are not strings
         """
-
-        if not isinstance(args, (list, str)):
-            raise TypeError("All elements in the list should be of type str")
-
-        if isinstance(args, str):
-            args = args.split()
-
-        if isinstance(args, list):
-            if not all(isinstance(arg, str) for arg in args):
-                raise TypeError("All elements in the list should be of type str")
-
+        args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
     def set(
@@ -544,12 +527,24 @@ class RunSettings(SettingsBase):
 
     @staticmethod
     def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
-        """Convert exe_args input to a desired collection format"""
+        """Check and convert exe_args input to a desired collection format"""
+        if isinstance(exe_args, list):
+            exe_args = copy.deepcopy(exe_args)
+
+        if not (
+            exe_args is None
+            or isinstance(exe_args, str)
+            or (
+                isinstance(exe_args, list)
+                and all(isinstance(arg, str) for arg in exe_args)
+            )
+        ):
+            raise TypeError("Executable arguments were not a list of str or a str.")
+
         if exe_args:
             if isinstance(exe_args, str):
                 return exe_args.split()
-            if isinstance(exe_args, list):
-                return exe_args
+            return exe_args
         return []
 
     def format_run_args(self) -> t.List[str]:

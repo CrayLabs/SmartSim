@@ -185,6 +185,27 @@ def test_add_exe_args_list_of_mixed():
         settings.add_exe_args(["1", "2", 3])
 
 
+def test_add_exe_args_list_of_lists():
+    """Ensure that any non-string exe arg fails validation for all"""
+    settings = RunSettings("python")
+    with pytest.raises(TypeError):
+        settings.add_exe_args(["1", "2", "3"], ["1", "2", "3"])
+
+
+def test_init_exe_args_list_of_lists():
+    """Ensure that a list of lists exe arg fails validation"""
+    exe_args = [["1", "2", "3"], ["4", "5", "6"]]
+    with pytest.raises(TypeError):
+        _ = RunSettings("python", exe_args=exe_args)
+
+
+def test_init_exe_args_list_of_lists_mixed():
+    """Ensure that a list of lists exe arg fails validation"""
+    exe_args = [["1", "2", 3], ["4", "5", 6]]
+    with pytest.raises(TypeError):
+        _ = RunSettings("python", exe_args=exe_args)
+
+
 def test_add_exe_args_space_delimited_string():
     """Ensure that any non-string exe arg fails validation for all"""
     settings = RunSettings("python")
@@ -192,47 +213,6 @@ def test_add_exe_args_space_delimited_string():
     settings.add_exe_args("1 2 3")
 
     assert settings.exe_args == expected
-
-
-def test_add_exe_args_list_of_mixed_lists():
-    """Ensure that any non-string exe arg fails validation for all"""
-    settings = RunSettings("python")
-    with pytest.raises(TypeError) as type_error:
-        settings.add_exe_args([["1", "2", 3], ["4", "5", 6]])
-
-    assert "Executable arguments should be a list of str" in type_error.value.args
-
-
-def test_add_exe_args_list_of_mixed_lists_init():
-    """Ensure that any non-string exe arg fails validation for all"""
-    exe_args = [["1", "2", 3], ["4", "5", 6]]
-
-    with pytest.raises(TypeError) as type_error:
-        _ = RunSettings("python", exe_args=exe_args)
-
-    assert "Executable arguments were not list of str or str." in type_error.value.args
-
-
-def test_add_exe_args_list_of_str_lists_init():
-    """Ensure that list[list[str]] pass validation"""
-    exe_args = [["1", "2", "3"], ["4", "5", "6"]]
-
-    with pytest.raises(TypeError) as type_error:
-        settings = RunSettings("python", exe_args=exe_args)
-
-
-def test_add_exe_args_list_of_str_lists():
-    """Ensure that list[list[str]] fail validation when added via method"""
-    exe_args = [["1", "2", "3"], ["4", "5", "6"]]
-
-    settings = RunSettings("python")
-
-    with pytest.raises(TypeError) as type_error:
-        settings.add_exe_args(exe_args)
-
-    # NOTE that this behavior differs from sending constructor args like
-    # tested in test_add_exe_args_list_of_str_lists_init where it's allowed
-    assert "Executable arguments should be a list of str" in type_error.value.args
 
 
 def test_format_run_args():
@@ -318,13 +298,6 @@ def test_bad_exe_args():
 def test_bad_exe_args_2():
     """test when user provides incorrect types to exe_args"""
     exe_args = ["list-includes-int", 5]
-    with pytest.raises(TypeError):
-        _ = RunSettings("python", exe_args=exe_args)
-
-
-def test_bad_exe_args_3():
-    """test when user provides incorrect types to exe_args"""
-    exe_args = [["this", "should"], ["not", "work"]]
     with pytest.raises(TypeError):
         _ = RunSettings("python", exe_args=exe_args)
 
