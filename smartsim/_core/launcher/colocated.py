@@ -72,9 +72,10 @@ def write_colocated_launch_script(
         script_file.write("echo b4 colo entrypoint\n")
         script_file.write(f"db_stdout=$({colocated_cmd})\n")
         script_file.write("echo after colo entrypoint\n")
-        script_file.write("DBPID=$(echo $db_stdout | sed -n 's/.*__PID__\([0-9]*\)__PID__.*/\\1/p')\n")
-        #sed syntax
-        
+        sed_command = "sed -n \'s/.*__PID__\([0-9]*\)__PID__.*/\\1/p\'"
+        printable_command = repr(sed_command)
+        print(printable_command)
+        script_file.write(f"DBPID=$(echo $db_stdout | {sed_command})\n")
 
         # Write the actual launch command for the app
         script_file.write("$@\n\n")
