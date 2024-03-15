@@ -69,10 +69,9 @@ def write_colocated_launch_script(
         # STDOUT of the job
         if colocated_settings["debug"]:
             script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
-        script_file.write("echo b4 colo entrypoint\n")
         script_file.write(f"db_stdout=$({colocated_cmd})\n")
-        script_file.write("echo after colo entrypoint\n")
-        sed_command = "sed -n \'s/.*__PID__\([0-9]*\)__PID__.*/\\1/p\'"
+        # pylint: disable=anomalous-backslash-in-string
+        sed_command = "sed -n 's/.*__PID__\([0-9]*\)__PID__.*/\\1/p'"
         printable_command = repr(sed_command)
         print(printable_command)
         script_file.write(f"DBPID=$(echo $db_stdout | {sed_command})\n")
@@ -196,10 +195,6 @@ def _build_colocated_wrapper_cmd(
         db_script_cmd = _build_db_script_cmd(db_scripts)
         db_cmd.extend(db_script_cmd)
 
-    # run colocated db in the background
-    # db_cmd.append("&")
-    # db_cmd = ["DBPID=$("] + db_cmd + [")"]
-    
     cmd.extend(db_cmd)
 
     return " ".join(cmd)

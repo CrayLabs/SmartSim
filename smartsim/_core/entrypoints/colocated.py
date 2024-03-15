@@ -32,14 +32,14 @@ import sys
 import tempfile
 import typing as t
 from pathlib import Path
-from subprocess import PIPE, STDOUT
+from subprocess import STDOUT
 from types import FrameType
 
 import filelock
 import psutil
+
 from smartredis import Client, ConfigOptions
 from smartredis.error import RedisConnectionError, RedisReplyError
-
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
@@ -177,6 +177,7 @@ def main(
     db_scripts: t.List[t.List[str]],
     db_identifier: str,
 ) -> None:
+    # pylint: disable=too-many-statements
     global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
@@ -201,8 +202,8 @@ def main(
     # we generally want to catch all exceptions here as
     # if this process dies, the application will most likely fail
     try:
-        with open("output.txt", 'w') as f:
-            process = psutil.Popen(cmd, stdout=f.fileno(), stderr=STDOUT)
+        with open("colo_orch_output.txt", "w", encoding="utf-8") as file:
+            process = psutil.Popen(cmd, stdout=file.fileno(), stderr=STDOUT)
             DBPID = process.pid
         print(f"__PID__{DBPID}__PID__", flush=True)
 
@@ -250,9 +251,6 @@ def main(
             finally:
                 # Make sure we don't keep this around
                 del client
-
-        # for line in iter(process.stdout.readline, b""):
-        #     print(line.decode("utf-8").rstrip(), flush=True)
 
     except Exception as e:
         cleanup()
