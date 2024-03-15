@@ -527,6 +527,9 @@ class RunSettings(SettingsBase):
     @staticmethod
     def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
         """Check and convert exe_args input to a desired collection format"""
+        if not exe_args:
+            return []
+
         if isinstance(exe_args, list):
             exe_args = copy.deepcopy(exe_args)
 
@@ -544,7 +547,8 @@ class RunSettings(SettingsBase):
             if isinstance(exe_args, str):
                 return exe_args.split()
             return exe_args
-        return []
+
+        return exe_args
 
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments
