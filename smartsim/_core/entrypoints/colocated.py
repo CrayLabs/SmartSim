@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import contextlib
 import os
 import signal
 import socket
@@ -238,13 +237,18 @@ def main(
     try:
         if db_models or db_scripts:
             try:
-                with ephemeral_db_client(db_identifier) as client:
-                    launch_models(client, db_models)
-                    launch_db_scripts(client, db_scripts)
+                options = ConfigOptions.create_from_environment(db_identifier)
+                client = Client(options, logger_name="SmartSim")
+                launch_models(client, db_models)
+                launch_db_scripts(client, db_scripts)
             except (RedisConnectionError, RedisReplyError) as ex:
                 raise SSInternalError(
                     "Failed to set model or script, could not connect to database"
                 ) from ex
+            else:
+                # Make sure we don't keep this around
+                del client
+
         for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
 
@@ -252,15 +256,6 @@ def main(
         cleanup()
         logger.error(f"Colocated database process failed: {str(e)}")
         raise SSInternalError("Colocated entrypoint raised an error") from e
-
-
-@contextlib.contextmanager
-def ephemeral_db_client(db_id: str) -> t.Generator[Client, None, None]:
-    """Create an context that will yield a ``smartredis.Client`` created from the
-    environment that will reclaim the client resources upon exit.
-    """
-    options = ConfigOptions.create_from_environment(db_id)
-    yield Client(options, logger_name="SmartSim")
 
 
 def cleanup() -> None:
