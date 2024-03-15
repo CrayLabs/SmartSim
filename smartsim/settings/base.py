@@ -546,7 +546,6 @@ class RunSettings(SettingsBase):
         if exe_args:
             if isinstance(exe_args, str):
                 return exe_args.split()
-            return exe_args
 
         return exe_args
 
