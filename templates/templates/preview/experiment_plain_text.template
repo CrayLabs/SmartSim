@@ -1,7 +1,5 @@
 === Experiment Overview ===
 
   Experiment Name: {{ exp_entity.name }}
-    {%- if verbosity_level == "debug" or verbosity_level == "developer" %}
     Experiment Path: {{ exp_entity.exp_path }}
     Launcher: {{ exp_entity.launcher }}
-    {%- endif %}

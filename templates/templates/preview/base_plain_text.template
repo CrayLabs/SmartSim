@@ -2,51 +2,53 @@
 {% include "preview/experiment_plain_text.template" %}
 {%- if manifest.has_deployable or active_dbjobs %}
 
-=== Entity Preview ===   
-  
+=== Entity Preview ===
+
   {%- if active_dbjobs %}
 
-  == Active Infrastructure == 
+  == Active Infrastructure ==
   {%- for name, db in active_dbjobs.items() %}
       {% include "preview/activeinfra_plain_text.template" %}
   {%- endfor %}
   {%- endif %}
-  
   {%- if manifest.dbs %}
-  
-  == Orchestrators == 
+
+  == Orchestrators ==
     {%- for db in manifest.dbs %}
     {%- if db.is_active() %}
-    
-    WARNING: Cannot preview a started entity.
+    WARNING: Cannot preview {{ db.name }}, because it is already started.
     {%- else %}
         {% include "preview/orchestrator_plain_text.template" %}
     {%- endif %}
     {%- endfor %}
   {%- endif %}
-  {% if manifest.models %}
-  == Models == 
-    {% for model in manifest.models %}   
+  {%- if manifest.models %}
+
+  == Models ==
+    {%- for model in manifest.models %}
+
     = Model Name: {{ model.name }} =
     {%- include "preview/model_plain_text.template" %}
+      {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+
+        Client Configuration:
         {%- if model.run_settings.colocated_db_settings %}
-        {% include "preview/clientconfigcolo_plain_text.template" %}
+        {%- include "preview/clientconfigcolo_plain_text.template" %}
         {%- endif %}
         {%- if manifest.dbs %}
         {%- include "preview/clientconfig_plain_text.template" %}
         {%- endif %}
-    {% endfor %}
-    {%- endif %}
+        {%- endif %}
+      {%- endfor %}
+      {%- endif %}
 
   {%- if manifest.ensembles %}
+
   == Ensembles ==
-  {%- if active_jobs %}
-    WARNING: Cannot preview a started entity.
-  {% else %}
+
     {%- for ensemble in manifest.ensembles %}
     {% include "preview/ensemble_plain_text.template" %}
     {%- endfor %}
-    {%- endif -%}
-   {%- endif -%}
+    {%- endif %}
 
-{%- endif -%}
+{%- endif %}

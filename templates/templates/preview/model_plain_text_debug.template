@@ -11,7 +11,7 @@
         {%- if model.run_settings.run_args %}
         Run Arguments:
         {%- for key, value in model.run_settings.run_args.items() %}
-          {{ key }}: {{ value }}
+          {{ key }} {{ value }}
         {%- endfor %}
         {%- endif %}
         {%- if model.batch_settings %}
@@ -21,13 +21,13 @@
         {%- for key, value in model.batch_settings.batch_args.items() %}
           {{ key }}: {{ value }}
         {%- endfor %}
-        {%- endif -%}
+        {%- endif %}
         {%- if model.params %}
         Model Parameters:
         {%- for param, value in model.params.items() %}
           {{ param }}: {{ value }}
-        {%- endfor -%}
-        {% endif %}
+        {%- endfor %}
+        {%- endif %}
         {%- if model.files %}
         {%- if model.files.tagged %}
         Tagged Files for Model Configuration:
@@ -35,7 +35,7 @@
           {{ tagged }}
           -> {{ model.path }}
         {%- endfor %}
-        {%- endif -%}
+        {%- endif %}
         {%- if model.files.copy %}
         Copy Files:
         {%- for copy in model.files.copy %}
@@ -55,7 +55,7 @@
         Colocated:
         {%- if model.run_settings.colocated_db_settings.db_identifier %}
           Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
-          {% endif %}
+        {%- endif %}
           {%- if model.run_settings.colocated_db_settings.port %}
           Connection Type: TCP
           TCP/IP Port(s):
@@ -64,28 +64,28 @@
           {%- if model.run_settings.colocated_db_settings.unix_socket %}
           Connection Type: UDS
           Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
-          {%- endif -%}
+          {%- endif %}
           {%- if model.run_settings.colocated_db_settings.ifname %}
           Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
           {%- endif %}
           CPUs: {{ model.run_settings.colocated_db_settings.cpus }}
           Custom Pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
-          {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+          {%- endif %}
+        {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
         Torch Scripts:
         {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}
-            Script Name: {{ script.name }}
-            Script Path: {{ script.script_path }}
+          Name: {{ script.name }}
+            Path: {{ script.script_path }}
             Backend: {{ script.device }}
             Devices Per Node: {{ script.devices_per_node }}
-
         {%- endfor %}
         {%- endif %}
         {%- if model.run_settings.colocated_db_settings['db_models'] %}
         ML Models:
         {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
-          Model Name: {{ mlmodel.name }}
+          Name: {{ mlmodel.name }}
+            Path: {{ mlmodel.model_file }}
             Backend: {{ mlmodel.backend }}
-            Model Path: {{ mlmodel.model_file }}
             Device: {{ mlmodel.device }}
             Devices Per Node: {{ mlmodel.devices_per_node }}
             {%- if mlmodel.device == "GPU" %}
@@ -99,10 +99,9 @@
             Outputs:
               {{ output }}
               {%- endfor %}
-          {%- endfor %}
-          {%- endif %}
-          {%- endif %}
-          {%- if model.query_key_prefixing()%}
-        Key Prefix: {{ model.name }}
-        {%- endif %}
+    {%- endfor %}
     {%- endif %}
+    {%- if model.query_key_prefixing()%}
+        Key Prefix: {{ model.name }}
+    {%- endif %}
+{%- endif %}

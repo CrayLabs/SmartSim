@@ -1,7 +1,7 @@
 
 {%- if verbosity_level == Verbosity.INFO %}
 {%- include "preview/model_plain_text_info.template" -%}
-{% endif %}
+{%- endif %}
 {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
 {%- include "preview/model_plain_text_debug.template" -%}
-{% endif %}
+{%- endif -%}

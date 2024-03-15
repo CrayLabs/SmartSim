@@ -1,6 +1,6 @@
-        
+
     = Database Identifier: {{ db.name }} =
-        TCP/IP Port(s): 
+        TCP/IP Port(s):
           {%- for port in db.ports %}
           {{ port }}
           {%- endfor %}
