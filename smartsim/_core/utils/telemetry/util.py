@@ -48,7 +48,8 @@ def write_event(
     detail: str = "",
     return_code: t.Optional[int] = None,
 ) -> None:
-    """Write a record to durable storage for a SmartSimEntity lifecycle event
+    """Write a record to durable storage for a SmartSimEntity lifecycle event.
+    Does not overwrite existing records.
 
     :param timestamp: when the event occurred
     :type timestamp: str
