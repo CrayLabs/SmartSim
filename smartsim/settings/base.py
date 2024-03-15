@@ -543,9 +543,8 @@ class RunSettings(SettingsBase):
         ):
             raise TypeError("Executable arguments were not a list of str or a str.")
 
-        if exe_args:
-            if isinstance(exe_args, str):
-                return exe_args.split()
+        if isinstance(exe_args, str):
+            return exe_args.split()
 
         return exe_args
 
