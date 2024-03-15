@@ -18,12 +18,18 @@ To be released at some future point in time
 
 Description
 
+- Update telemetry monitor, add telemetry collectors
 - Update the version of Redis from `7.0.4` to `7.2.4`
 - Update Experiment API typing
 - Fix publishing of development docs
 
 Detailed Notes
 
+- Update the telemetry monitor to enable retrieval of metrics on a scheduled
+  interval. Switch basic experiment tracking telemetry to default to on. Add
+  database metric collectors. Improve telemetry monitor logging. Create
+  telemetry subpackage at `smartsim._core.utils.telemetry`. Refactor
+  telemetry monitor entrypoint. (SmartSim-PR460_)
 - Update Redis version to `7.2.4`. This change fixes an issue in the Redis
   build scripts causing failures on Apple Silicon hosts. (SmartSim-PR507_)
 - The container which builds the documentation for every merge to develop
@@ -33,6 +39,7 @@ Detailed Notes
   (SmartSim-PR-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
+.. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR507: https://github.com/CrayLabs/SmartSim/pull/507
 .. _SmartSim-PR504: https://github.com/CrayLabs/SmartSim/pull/504
 .. _SmartSim-PR501: https://github.com/CrayLabs/SmartSim/pull/501
