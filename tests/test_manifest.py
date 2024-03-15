@@ -149,7 +149,7 @@ def test_launched_manifest_transform_data():
     dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
     launched = LaunchedManifest(
         metadata=LaunchedManifestMetadata(
-            "name", "path", "launcher", "run_id", str(uuid4())
+            "name", "path", "launcher", "run_id"
         ),
         models=models,
         ensembles=ensembles,
