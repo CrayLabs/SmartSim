@@ -1,3 +1,5 @@
+.. _basic_install_SS:
+
 ******************
 Basic Installation
 ******************
@@ -27,7 +29,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - git
   - `git-lfs`_
 
-.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing
+.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs
 
 .. note::
 
@@ -48,7 +50,7 @@ The machine-learning backends have additional requirements in order to
 use GPUs for inference
 
   - `CUDA Toolkit 11 (tested with 11.8) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
-  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
+  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/installation/overview.html>`_
   - OS: Linux
   - GPU: Nvidia
 
