@@ -224,6 +224,59 @@ def test_write_event(
     assert expected_output.is_file()
 
 
+@pytest.mark.parametrize(
+    ["entity_type", "task_id", "step_id", "timestamp", "evt_type"],
+    [
+        pytest.param("ensemble", "", "123", get_ts_ms(), "start", id="start event"),
+        pytest.param("ensemble", "", "123", get_ts_ms(), "stop", id="stop event"),
+    ],
+)
+def test_write_event_overwrite(
+    entity_type: str,
+    task_id: str,
+    step_id: str,
+    timestamp: int,
+    evt_type: str,
+    test_dir: str,
+):
+    """Ensure that `write_event` does not overwrite an existing file if called more than once"""
+    exp_path = pathlib.Path(test_dir)
+    write_event(timestamp, task_id, step_id, entity_type, evt_type, exp_path)
+
+    expected_output = exp_path / f"{evt_type}.json"
+
+    assert expected_output.exists()
+    assert expected_output.is_file()
+
+    # grab whatever is in the file now to compare against
+    original_content = expected_output.read_text()
+
+    updated_timestamp = get_ts_ms()
+    updated_task_id = task_id + "xxx"
+    updated_step_id = step_id + "xxx"
+    updated_entity = entity_type + "xxx"
+
+    # write to the same location
+    write_event(
+        updated_timestamp,
+        updated_task_id,
+        updated_step_id,
+        updated_entity,
+        evt_type,
+        exp_path,
+    )
+
+    # read in file content after attempted overwrite
+    with open(expected_output, "r") as validate_fp:
+        validate_output = validate_fp.read()
+
+    # verify the content matches the old content
+    assert str(timestamp) in validate_output
+    assert str(updated_timestamp) not in validate_output
+    assert "xxx" not in validate_output
+    assert validate_output == original_content
+
+
 def test_load_manifest(fileutils: FileUtils, test_dir: str, config: cfg.Config):
     """Ensure that the runtime manifest loads correctly"""
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/telemetry.json")
