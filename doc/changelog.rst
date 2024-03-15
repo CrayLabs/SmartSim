@@ -19,17 +19,21 @@ To be released at some future point in time
 Description
 
 - ExecArgs handling correction
+- ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
 - Remove deprecated SmartSim modules
 - SmartSim Documentation refactor
 - Update the version of Redis from `7.0.4` to `7.2.4`
-- Update Experiment API typing
 - Fix publishing of development docs
+- Update Experiment API typing
 
 Detailed Notes
 
 - Add checks and tests to ensure SmartSim users cannot initialize run settings
   with a list of lists as the exe_args argument. (SmartSim-PR517_)
+- Add readthedocs configuration file and enable readthedocs builds
+  on pull requests. Additionally added robots.txt file generation
+  when readthedocs environment detected. (SmartSim-PR512_)
 - Add Github Actions workflow that checks if changelog is edited
   on pull requests into develop. (SmartSim-PR518_)
 - Removed deprecated SmartSim modules: slurm and mpirunSettings.
@@ -42,10 +46,11 @@ Detailed Notes
   was failing due to a lack of space within the container. This was fixed
   by including an additional Github action that removes some unneeded
   software and files that come from the default Github Ubuntu container.
-  (SmartSim-PR-PR504_)
+  (SmartSim-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
-.. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/518
+.. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/517
+.. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
 .. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
 .. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
