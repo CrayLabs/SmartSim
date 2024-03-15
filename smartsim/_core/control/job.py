@@ -36,7 +36,7 @@ from ...status import SmartSimStatus
 @dataclass(frozen=True)
 class _JobKey:
     """A helper class for creating unique lookup keys within the telemetry
-    monitor. These guys are not guaranteed to be unique across experiments,
+    monitor. These keys are not guaranteed to be unique across experiments,
     only within an experiment (due to process ID re-use by the OS)"""
 
     step_id: str
@@ -164,7 +164,7 @@ class JobEntity:
     def from_manifest(
         cls, entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
     ) -> "JobEntity":
-        """Deserialize a `JobEntity` from a dictionary deserialized from manifest JSON
+        """Instantiate a `JobEntity` from the dictionary deserialized from manifest JSON
 
         :param entity_type: The type of the associated `SmartSimEntity`
         :type entity_type: str

@@ -47,8 +47,8 @@ class TelemetryConfiguration:
         return self._telemetry_producer
     ```
 
-    This instance will be used by the manifest serializer to modify the metadata
-    serialized to the manifest file used by the telemetry monitor.
+    An instance will be used by to conditionally serialize
+    values to the `RuntimeManifest`
     """
 
     def __init__(self, enabled: bool = False) -> None:
@@ -82,12 +82,12 @@ class TelemetryConfiguration:
         self._on_disable()
 
     def _on_enable(self) -> None:
-        """Overridable hook called after telemetry is enabled. Allows
-        subclasses to perform actions when the configuration is changed"""
+        """Overridable hook called after telemetry is `enabled`. Allows subclasses
+        to perform actions when attempts to change configuration are made"""
 
     def _on_disable(self) -> None:
-        """Overridable hook called after telemetry is disabled. Allows
-        subclasses to perform actions when the configuration is changed"""
+        """Overridable hook called after telemetry is `disabled`. Allows subclasses
+        to perform actions when attempts to change configuration are made"""
 
 
 class SmartSimEntity:

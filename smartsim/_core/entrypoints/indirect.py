@@ -61,14 +61,11 @@ def main(
 
     :param cmd: a base64 encoded cmd to execute
     :type cmd: List[str]
-
     :param entity_type: `SmartSimEntity` entity class. Valid values
     include: orchestrator, dbnode, ensemble, model
     :type entity_type: str
-
     :param cwd: working directory to execute the cmd from
     :type cwd: str
-
     :param status_dir: path to the output directory for status updates
     :type status_dir: str
     """

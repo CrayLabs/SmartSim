@@ -61,7 +61,7 @@ def write_event(
     :type entity_type: str
     :param event_type: the event subtype
     :type event_type: _EventClass
-    :param status_dir: (optional) path where the SmartSimEntity outputs are written
+    :param status_dir: path where the SmartSimEntity outputs are written
     :type status_dir: pathlib.Path
     :param detail: (optional) additional information to write with the event
     :type detail: str

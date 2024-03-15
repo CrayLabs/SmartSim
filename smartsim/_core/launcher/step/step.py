@@ -127,9 +127,10 @@ def proxyable_launch_cmd(
 ) -> t.Callable[[_StepT], t.List[str]]:
     @functools.wraps(fn)
     def _get_launch_cmd(self: _StepT) -> t.List[str]:
-        """When supplied with a SmartSim job step, generates a new launch
-        command that executes the original command from the indirect
-        launching entrypoint instead of directly.
+        """
+        Generate a launch command that executes the `JobStep` with the
+        indirect launching entrypoint instead of directly. The original
+        command is passed to the proxy as a base64 encoded string.
 
         Steps implementing `get_launch_cmd` and decorated with
         `proxyable_launch_cmd` will generate status updates that can be consumed

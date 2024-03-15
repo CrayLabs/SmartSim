@@ -133,6 +133,9 @@ class ContextInjectingLogFilter(logging.Filter):
 
 
 class HostnameFilter(logging.Filter):
+    """Filter that performs enrichment of a log record by adding
+    the hostname of the machine executing the code"""
+
     def __init__(self, name: str = "") -> None:
         super().__init__(name)
         self._hostname = ""
@@ -140,10 +143,12 @@ class HostnameFilter(logging.Filter):
     @property
     @functools.lru_cache
     def hostname(self) -> str:
+        """Returns the hostname of the machine executing the code"""
         self._hostname = socket.gethostname()
         return self._hostname
 
     def filter(self, record: logging.LogRecord) -> bool:
+        # the hostname may already added if using the `ColoredLogs` plugin
         if not hasattr(record, "hostname"):
             record.hostname = self.hostname
         return True

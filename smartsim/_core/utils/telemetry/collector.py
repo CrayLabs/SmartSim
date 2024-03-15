@@ -332,7 +332,7 @@ class DBConnectionCountCollector(DBCollector):
 
 
 class CollectorManager:
-    """The `CollectorManager` manages the set of all collectors required to collect
+    """The `CollectorManager` manages the set of all collectors required to retrieve
     metrics for an experiment. It provides the ability to add and remove collectors
     with unique configuration per entity. The `CollectorManager` is primarily used
     to perform bulk actions on 1-to-many collectors (e.g. prepare all collectors,
@@ -413,10 +413,11 @@ class CollectorManager:
             tasks = [asyncio.create_task(item.collect()) for item in collectors]
 
             _, pending = await asyncio.wait(tasks, timeout=self._timeout_ms / 1000.0)
+
+            # any tasks still pending has exceeded the timeout
             if pending:
-                # any tasks still exeucting have exceeded the timeout
+                # manually cancel tasks since asyncio.wait will not
                 for remaining_task in pending:
-                    # manually cancel tasks since asyncio.wait will not
                     remaining_task.cancel()
                 logger.debug(f"Execution of {len(pending)} collectors timed out.")
 
@@ -434,7 +435,7 @@ class CollectorManager:
 
     @property
     def all_collectors(self) -> t.Sequence[Collector]:
-        """Get a list of all managed collectors
+        """Get a list of all registered collectors
 
         :return: a collection of registered collectors for all entities
         :rtype: Sequence[Collector]"""

@@ -42,7 +42,7 @@ class Run:
     timestamp: int
     """the timestamp at the time the `Experiment.start` is called"""
     models: t.List[JobEntity]
-    """"""
+    """models started in this run"""
     orchestrators: t.List[JobEntity]
     """orchestrators started in this run"""
     ensembles: t.List[JobEntity]
@@ -51,7 +51,7 @@ class Run:
     def flatten(
         self, filter_fn: t.Optional[t.Callable[[JobEntity], bool]] = None
     ) -> t.Sequence[JobEntity]:
-        """Flatten all entities in the `Run` into a 1-dimensional list of `JobEntity`
+        """Flatten all `JobEntity`'s in the `Run` into a 1-dimensional list
 
         :param filter_fn: optional boolean filter that returns
         True for entities to include in the result
@@ -77,8 +77,8 @@ class Run:
         :type exp_dir:  str"""
         entities = []
 
-        # an entity w/parent keys must create entities for the items that it comprises
-        # traverse children and create each entity
+        # an entity w/parent keys must create entities for the items that it
+        # comprises. traverse the children and create each entity
         parent_keys = {"shards", "models"}
         parent_keys = parent_keys.intersection(entity_dict.keys())
         if parent_keys:
@@ -90,7 +90,7 @@ class Run:
 
             return entities
 
-        # not a parent type, just create the entity w/the entity type passed in
+        # not a parent type, just create the entity w/the entity_type passed in
         entity = JobEntity.from_manifest(entity_type, entity_dict, str(exp_dir))
         entities.append(entity)
         return entities
