@@ -446,7 +446,6 @@ class RunSettings(SettingsBase):
 
         :param args: executable arguments
         :type args: str | list[str]
-        :raises TypeError: if exe args are not strings
         """
         args = self._build_exe_args(args)
         self._exe_args.extend(args)
