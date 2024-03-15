@@ -19,6 +19,8 @@ To be released at some future point in time
 Description
 
 - ReadTheDocs config file added and enabled on PRs
+- Enforce changelog updates
+- Remove deprecated SmartSim modules
 - SmartSim Documentation refactor
 - Update the version of Redis from `7.0.4` to `7.2.4`
 - Fix publishing of development docs
@@ -29,6 +31,10 @@ Detailed Notes
 - Add readthedocs configuration file and enable readthedocs builds
   on pull requests. Additionally added robots.txt file generation
   when readthedocs environment detected. (SmartSim-PR512_)
+- Add Github Actions workflow that checks if changelog is edited
+  on pull requests into develop. (SmartSim-PR518_)
+- Removed deprecated SmartSim modules: slurm and mpirunSettings.
+  (SmartSim-PR514_)
 - Implemented new structure of SmartSim documentation. Added examples
   images and further detail of SmartSim components. (SmartSim-PR463_)
 - Update Redis version to `7.2.4`. This change fixes an issue in the Redis
@@ -41,6 +47,8 @@ Detailed Notes
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
+.. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
+.. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
 .. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
 .. _SmartSim-PR507: https://github.com/CrayLabs/SmartSim/pull/507
 .. _SmartSim-PR504: https://github.com/CrayLabs/SmartSim/pull/504
