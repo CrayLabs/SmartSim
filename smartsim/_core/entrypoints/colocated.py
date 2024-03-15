@@ -245,9 +245,8 @@ def main(
                 raise SSInternalError(
                     "Failed to set model or script, could not connect to database"
                 ) from ex
-            else:
-                # Make sure we don't keep this around
-                del client
+            # Make sure we don't keep this around
+            del client
 
         for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
