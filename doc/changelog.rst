@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- ExecArgs handling correction
 - Enforce changelog updates
 - Remove deprecated SmartSim modules
 - SmartSim Documentation refactor
@@ -27,6 +28,8 @@ Description
 
 Detailed Notes
 
+- Add checks and tests to ensure SmartSim users cannot initialize run settings
+  with a list of lists as the exe_args argument. (SmartSim-PR517_)
 - Add Github Actions workflow that checks if changelog is edited
   on pull requests into develop. (SmartSim-PR518_)
 - Removed deprecated SmartSim modules: slurm and mpirunSettings.
@@ -42,6 +45,7 @@ Detailed Notes
   (SmartSim-PR-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
+.. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/518
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
 .. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
 .. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
