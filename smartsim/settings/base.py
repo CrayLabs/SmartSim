@@ -534,8 +534,7 @@ class RunSettings(SettingsBase):
             exe_args = copy.deepcopy(exe_args)
 
         if not (
-            exe_args is None
-            or isinstance(exe_args, str)
+            isinstance(exe_args, str)
             or (
                 isinstance(exe_args, list)
                 and all(isinstance(arg, str) for arg in exe_args)
