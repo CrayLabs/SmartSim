@@ -203,7 +203,7 @@ class RuntimeManifest:
             except json.JSONDecodeError as ex:
                 print(f"Error loading manifest: {ex}")
                 # hack/fix: handle issues reading file before it is fully written
-                time.sleep(0.5 * try_count)
+                time.sleep(0.1 * try_count)
             finally:
                 try_count += 1
 
