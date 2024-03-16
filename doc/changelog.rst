@@ -19,12 +19,13 @@ To be released at some future point in time
 Description
 
 - Update telemetry monitor, add telemetry collectors
+- ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
 - Remove deprecated SmartSim modules
 - SmartSim Documentation refactor
 - Update the version of Redis from `7.0.4` to `7.2.4`
-- Update Experiment API typing
 - Fix publishing of development docs
+- Update Experiment API typing
 
 Detailed Notes
 
@@ -33,6 +34,9 @@ Detailed Notes
   database metric collectors. Improve telemetry monitor logging. Create
   telemetry subpackage at `smartsim._core.utils.telemetry`. Refactor
   telemetry monitor entrypoint. (SmartSim-PR460_)
+- Add readthedocs configuration file and enable readthedocs builds
+  on pull requests. Additionally added robots.txt file generation
+  when readthedocs environment detected. (SmartSim-PR512_)
 - Add Github Actions workflow that checks if changelog is edited
   on pull requests into develop. (SmartSim-PR518_)
 - Removed deprecated SmartSim modules: slurm and mpirunSettings.
@@ -45,10 +49,11 @@ Detailed Notes
   was failing due to a lack of space within the container. This was fixed
   by including an additional Github action that removes some unneeded
   software and files that come from the default Github Ubuntu container.
-  (SmartSim-PR-PR504_)
+  (SmartSim-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
+.. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
 .. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
 .. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
