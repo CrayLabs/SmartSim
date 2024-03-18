@@ -26,6 +26,7 @@ Description
 - Update the version of Redis from `7.0.4` to `7.2.4`
 - Fix publishing of development docs
 - Update Experiment API typing
+- Minor enhancements to test suite
 
 Detailed Notes
 
@@ -50,17 +51,20 @@ Detailed Notes
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 - The CI will fail static analysis if common erroneous truthy checks are
   detected. (SmartSim-PR524_)
+- Remove previously deprecated behavior present in test suite on machines with
+  Slurm and Open MPI. (SmartSim-PR520_)
 
 
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
-.. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/517
-.. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
+.. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
+.. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/517
 .. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
-.. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
+.. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR507: https://github.com/CrayLabs/SmartSim/pull/507
 .. _SmartSim-PR504: https://github.com/CrayLabs/SmartSim/pull/504
 .. _SmartSim-PR501: https://github.com/CrayLabs/SmartSim/pull/501
+.. _SmartSim-PR463: https://github.com/CrayLabs/SmartSim/pull/463
 
 
 0.6.2

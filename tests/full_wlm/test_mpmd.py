@@ -87,7 +87,9 @@ def test_mpmd(fileutils, test_dir, wlmutils):
         settings.make_mpmd(deepcopy(settings))
         settings.make_mpmd(deepcopy(settings))
 
-        mpmd_model = exp.create_model("mmpd", path=test_dir, run_settings=settings)
+        mpmd_model = exp.create_model(
+            f"mpmd-{run_command}", path=test_dir, run_settings=settings
+        )
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
         assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
