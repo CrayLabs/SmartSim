@@ -48,7 +48,11 @@ Detailed Notes
   software and files that come from the default Github Ubuntu container.
   (SmartSim-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
+- The CI will fail static analysis if common erroneous tuthy checks are
+  detected. (SmartSim-PR524_)
 
+
+.. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
 .. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/517
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
