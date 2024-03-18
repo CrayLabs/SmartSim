@@ -126,7 +126,7 @@ class ModelWriter:
         :rtype: dict[str,str]
         """
         edited = []
-        unused_tags = collections.defaultdict[str, t.List[int]](list)
+        unused_tags: t.DefaultDict[str, t.List[int]] = collections.defaultdict(list)
         used_params: t.Dict[str, str] = {}
         for i, line in enumerate(self.lines, 1):
             while search := re.search(self.regex, line):
