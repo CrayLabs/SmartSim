@@ -104,12 +104,9 @@ class Ensemble(EntityList[Model]):
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self) -> t.Iterable[Model]:
-        """
-        Helper property to cast self.entities to Model type for type correctness
-        """
-        model_entities = [node for node in self.entities if isinstance(node, Model)]
-        return model_entities
+    def models(self) -> t.Collection[Model]:
+        """An allias for a shallow copy of the ``entities`` attribute"""
+        return list(self.entities)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize all the models within the ensemble based
