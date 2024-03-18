@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- ExecArgs handling correction
 - ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
 - Remove deprecated SmartSim modules
@@ -28,6 +29,8 @@ Description
 
 Detailed Notes
 
+- Add checks and tests to ensure SmartSim users cannot initialize run settings
+  with a list of lists as the exe_args argument. (SmartSim-PR517_)
 - Add readthedocs configuration file and enable readthedocs builds
   on pull requests. Additionally added robots.txt file generation
   when readthedocs environment detected. (SmartSim-PR512_)
@@ -46,6 +49,7 @@ Detailed Notes
   (SmartSim-PR504_)
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 
+.. _SmartSim-PR517: https://github.com/CrayLabs/SmartSim/pull/517
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
 .. _SmartSim-PR514: https://github.com/CrayLabs/SmartSim/pull/514
