@@ -105,7 +105,7 @@ class Ensemble(EntityList[Model]):
 
     @property
     def models(self) -> t.Collection[Model]:
-        """An allias for a shallow copy of the ``entities`` attribute"""
+        """An alias for a shallow copy of the ``entities`` attribute"""
         return list(self.entities)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
