@@ -31,7 +31,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.status import STATUS_FAILED
+from smartsim.status import SmartSimStatus
 
 torch_available = True
 try:
@@ -86,4 +86,4 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
     exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)[0]
-    assert model_status != STATUS_FAILED
+    assert model_status != SmartSimStatus.STATUS_FAILED

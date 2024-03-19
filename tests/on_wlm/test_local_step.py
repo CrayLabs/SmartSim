@@ -29,7 +29,7 @@ import uuid
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.settings import RunSettings
 
 # retrieved from pytest fixtures

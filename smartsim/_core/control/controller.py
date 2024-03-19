@@ -61,7 +61,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
-from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
@@ -243,7 +243,13 @@ class Controller:
                             continue
 
                         job = self._jobs[node.name]
-                        job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                        job.set_status(
+                            SmartSimStatus.STATUS_CANCELLED,
+                            "",
+                            0,
+                            output=None,
+                            error=None,
+                        )
                         self._jobs.move_to_completed(job)
 
         db.reset_hosts()
@@ -271,14 +277,14 @@ class Controller:
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> str:
+    ) -> SmartSimStatus:
         """Get the status of an entity
 
         :param entity: entity to get status of
         :type entity: SmartSimEntity | EntitySequence
         :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
-        :rtype: str
+        :rtype: SmartSimStatus
         """
         if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
@@ -289,14 +295,14 @@ class Controller:
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
-    ) -> t.List[str]:
+    ) -> t.List[SmartSimStatus]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
                             get statuses of
         :type entity_list: EntitySequence
         :raises TypeError: if not EntitySequence
-        :return: list of str statuses
+        :return: list of SmartSimStatus statuses
         :rtype: list
         """
         if not isinstance(entity_list, EntitySequence):
@@ -726,7 +732,7 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all(stat == STATUS_RUNNING for stat in statuses):
+                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
