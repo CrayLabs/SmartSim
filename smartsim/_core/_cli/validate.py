@@ -36,8 +36,8 @@ import typing as t
 from types import TracebackType
 
 import numpy as np
-from smartredis import Client
 
+from smartredis import Client
 from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core.utils.helpers import installed_redisai_backends
