@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import os.path as osp
 import pathlib
 import pickle
@@ -37,7 +38,6 @@ import threading
 import time
 import typing as t
 from os import environ
-import os
 
 from smartredis import Client, ConfigOptions
 
@@ -346,15 +346,17 @@ class Controller:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
         else:
             raise TypeError("Must provide a 'launcher' argument")
-    
+
     @staticmethod
-    def symlink(job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]):
+    def symlink(
+        job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ):
         telem_out, telem_err = job_step.get_output_files()
         entity_out = osp.join(entity.path, f"{entity.name}.out")
         entity_err = osp.join(entity.path, f"{entity.name}.err")
         if osp.islink(entity_out) or osp.islink(entity_err):
-            os.unlink(telem_out)
-            os.unlink(telem_err)
+            os.unlink(entity_out)
+            os.unlink(entity_err)
         os.symlink(telem_out, entity_out)
         os.symlink(telem_err, entity_err)
 

@@ -28,8 +28,8 @@ from __future__ import annotations
 
 import functools
 import os.path as osp
-import sys
 import pathlib
+import sys
 import time
 import typing as t
 from os import makedirs
@@ -69,11 +69,11 @@ class Step:
 
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on metadata directory"""
-        dir = self.meta["status_dir"]
-        if not osp.exists(dir):
-            pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
-        output = osp.join(dir, f"{self.entity_name}.out")
-        error = osp.join(dir, f"{self.entity_name}.err")
+        output_dir = self.meta["status_dir"]
+        if not osp.exists(output_dir):
+            pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output = osp.join(output_dir, f"{self.entity_name}.out")
+        error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
 
     def get_step_file(

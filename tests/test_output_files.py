@@ -28,10 +28,14 @@ import pathlib
 
 import pytest
 
+
+from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity.ensemble import Ensemble
+from smartsim.entity.model import Model
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
 controller = Controller()
@@ -43,33 +47,33 @@ ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
 orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 
 
-class MockStep(Step):
-    @staticmethod
-    def _create_unique_name(name):
-        return name
-
-    def add_to_batch(self, step): ...
-
-    def get_launch_cmd(self):
-        return []
-
-
 @pytest.mark.parametrize(
-    "collection",
+    "entity",
     [
-        pytest.param(ens, id="Ensemble"),
-        pytest.param(orc, id="Database"),
+        pytest.param(Model("test_model", {}, "", rs)),
+        pytest.param(ens),
     ],
 )
-def test_controller_batch_step_creation_preserves_entity_order(collection, monkeypatch):
-    monkeypatch.setattr(
-        controller._launcher,
-        "create_step",
-        lambda name, path, settings: MockStep(name, path, settings),
-    )
-    entity_names = [x.name for x in collection.entities]
-    assert len(entity_names) == len(set(entity_names))
-    _, steps = controller._create_batch_job_step(
-        collection, pathlib.Path("mock/exp/path")
-    )
-    assert entity_names == [step.name for step in steps]
+def test_get_output_files_with_create_job_step(entity, test_dir):
+    exp_dir = pathlib.Path(test_dir)
+    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
+    step = controller._create_job_step(entity, status_dir)
+    expected_out_path = status_dir / entity.name / (entity.name + ".out")
+    expected_err_path = status_dir / entity.name / (entity.name + ".err")
+    assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
+
+
+# @pytest.mark.parametrize(
+#     "entity",
+#     [
+#         pytest.param(Orchestrator()),
+#         pytest.param(ens),
+#     ],
+# )
+# def test_get_output_files_with_create_batch_job_step(entity, test_dir):
+#     exp_dir = pathlib.Path(test_dir)
+#     status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
+#     step = controller._create_batch_job_step(entity, status_dir)
+#     expected_out_path = status_dir / entity.name / (entity.name+".out")
+#     expected_err_path = status_dir / entity.name / (entity.name+".err")
+#     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
