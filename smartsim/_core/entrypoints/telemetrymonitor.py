@@ -58,7 +58,7 @@ from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim.error.errors import SmartSimError
-from smartsim.status import STATUS_COMPLETED, TERMINAL_STATUSES
+from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
 
 """Telemetry Monitor entrypoint"""
 
@@ -286,7 +286,7 @@ def faux_return_code(step_info: StepInfo) -> t.Optional[int]:
     if step_info.status not in TERMINAL_STATUSES:
         return None
 
-    if step_info.status == STATUS_COMPLETED:
+    if step_info.status == SmartSimStatus.STATUS_COMPLETED:
         return os.EX_OK
 
     return 1

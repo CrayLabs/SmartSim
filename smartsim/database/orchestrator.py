@@ -174,11 +174,11 @@ class Orchestrator(EntityList[DBNode]):
 
         Extra configurations for RedisAI
 
-        See https://oss.redislabs.com/redisai/configuration/
+        See https://oss.redis.com/redisai/configuration/
 
         :param threads_per_queue: threads per GPU device
         :type threads_per_queue: int, optional
-        :param inter_op_threads: threads accross CPU operations
+        :param inter_op_threads: threads across CPU operations
         :type inter_op_threads: int, optional
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int, optional
@@ -479,8 +479,7 @@ class Orchestrator(EntityList[DBNode]):
                 "it is a reserved keyword in Orchestrator"
             )
         else:
-            if hasattr(self, "batch_settings") and self.batch_settings:
-                self.batch_settings.batch_args[arg] = value
+            self.batch_settings.batch_args[arg] = value
 
     def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a run argument the orchestrator should launch

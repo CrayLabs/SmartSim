@@ -111,6 +111,8 @@ enable_error_code = [
     # "unused-awaitable",
     # "ignore-without-code",
     # "mutable-override",
+    "truthy-bool",
+    "truthy-iterable",
 ]
 
 [[tool.mypy.overrides]]

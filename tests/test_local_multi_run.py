@@ -26,7 +26,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -49,9 +50,9 @@ def test_models(fileutils, test_dir):
 
     exp.start(M1, block=False)
     statuses = exp.get_status(M1)
-    assert all([stat != status.STATUS_FAILED for stat in statuses])
+    assert all([stat != SmartSimStatus.STATUS_FAILED for stat in statuses])
 
     # start another while first model is running
     exp.start(M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
