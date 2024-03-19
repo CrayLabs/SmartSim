@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Colocated Model bug fix
 - ExecArgs handling correction
 - ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
@@ -30,6 +31,8 @@ Description
 
 Detailed Notes
 
+- Build shell script to execute application after colocated Orchestrator
+  is finished building for colocated Models. (SmartSim-PR522_)
 - Add checks and tests to ensure SmartSim users cannot initialize run settings
   with a list of lists as the exe_args argument. (SmartSim-PR517_)
 - Add readthedocs configuration file and enable readthedocs builds
@@ -55,6 +58,7 @@ Detailed Notes
   Slurm and Open MPI. (SmartSim-PR520_)
 
 
+.. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
 .. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
