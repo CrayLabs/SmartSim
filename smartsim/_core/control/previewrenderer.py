@@ -55,6 +55,35 @@ class Verbosity(str, Enum):
     DEVELOPER = "developer"
 
 
+@pass_eval_context
+def as_toggle(_eval_ctx: u.F, value: bool) -> str:
+    return "On" if value else "Off"
+
+
+@pass_eval_context
+def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
+    if value:
+        for val in value:
+            if "ifname=" in val:
+                output = val.split("=")[-1]
+                return output
+    return ""
+
+
+@pass_eval_context
+def get_dbtype(_eval_ctx: u.F, value: str) -> str:
+    if value:
+        if "-cli" in value:
+            db_type, _ = value.split("/")[-1].split("-", 1)
+            return db_type
+    return ""
+
+
+@pass_eval_context
+def is_list(_eval_ctx: u.F, value: str) -> bool:
+    return isinstance(value, list)
+
+
 def render(
     exp: "Experiment",
     manifest: t.Optional[Manifest] = None,
@@ -82,6 +111,7 @@ def render(
     env.filters["as_toggle"] = as_toggle
     env.filters["get_ifname"] = get_ifname
     env.filters["get_dbtype"] = get_dbtype
+    env.filters["is_list"] = is_list
     env.globals["Verbosity"] = Verbosity
 
     version = f"_{output_format}"
@@ -106,30 +136,6 @@ def render(
         verbosity_level=verbosity_level,
     )
     return rendered_preview
-
-
-@pass_eval_context
-def as_toggle(_eval_ctx: u.F, value: bool) -> str:
-    return "On" if value else "Off"
-
-
-@pass_eval_context
-def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
-    if value:
-        for val in value:
-            if "ifname=" in val:
-                output = val.split("=")[-1]
-                return output
-    return ""
-
-
-@pass_eval_context
-def get_dbtype(_eval_ctx: u.F, value: str) -> t.Any:
-    if value:
-        if "-cli" in value:
-            db_type, _ = value.split("/")[-1].split("-", 1)
-            return db_type
-    return ""
 
 
 def preview_to_file(content: str, filename: str) -> None:

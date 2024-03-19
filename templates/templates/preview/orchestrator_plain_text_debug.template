@@ -8,14 +8,6 @@
         Network Interface: {{ db._interfaces[0] }}
         Type: {{ config.database_cli | get_dbtype }}
         Executable: {{ config.database_exe }}
-        {%- if db.batch_settings %}
-        Batch Launch: True
-        Batch Command: {{ db.batch_settings.batch_cmd }}
-        Batch Arguments:
-        {%- for key, value in db.batch_settings.batch_args.items() %}
-          {{ key }}: {{ value }}
-        {%- endfor %}
-        {%- endif -%}
         {%- if db.run_settings %}
         Run Command: {{ db.run_settings.run_command }}
         {%- if db.run_settings.run_args %}
@@ -23,5 +15,16 @@
         {%- for key, value in db.run_settings.run_args.items() %}
           {{ key }}: {{ value }}
         {%- endfor %}
-        {% endif %}
+        {%- endif %}
+        {%- endif %}
+        {%- if db.run_command %}
+        Run Command: {{ db.run_command }}
+        {%- endif %}
+        {%- if db.batch_settings %}
+        Batch Launch: True
+        Batch Command: {{ db.batch_settings.batch_cmd }}
+        Batch Arguments:
+        {%- for key, value in db.batch_settings.batch_args.items() %}
+          {{ key }}: {{ value }}
+        {%- endfor %}
         {%- endif %}
