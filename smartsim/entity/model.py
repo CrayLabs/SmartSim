@@ -414,9 +414,10 @@ class Model(SmartSimEntity):
     def _create_pinning_string(
         pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
     ) -> t.Optional[str]:
-        """Create a comma-separated string CPU ids. By default, None returns
-        0,1,...,cpus-1; an empty iterable will disable pinning altogether,
-        and an iterable constructs a comma separate string (e.g. 0,2,5)
+        """Create a comma-separated string of CPU ids. By default, ``None``
+        returns 0,1,...,cpus-1; an empty iterable will disable pinning
+        altogether, and an iterable constructs a comma separated string of
+        integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
         """
 
         def _stringify_id(_id: int) -> str:
