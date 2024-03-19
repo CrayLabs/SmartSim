@@ -178,7 +178,7 @@ def main(
     db_identifier: str,
 ) -> None:
     # pylint: disable=too-many-statements
-    global DBPID  # pylint: disable=global-statement
+    global DBPID
 
     lo_address = current_ip("lo")
     ip_addresses = []

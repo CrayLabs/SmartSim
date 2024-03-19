@@ -56,8 +56,6 @@ def write_colocated_launch_script(
         script_file.write("set -e\n\n")
 
         script_file.write("Cleanup () {\n")
-        script_file.write("echo error detected cleanup triggered\n")
-        script_file.write("echo $DBPID\n")
         script_file.write("if ps -p $DBPID > /dev/null; then\n")
         script_file.write("\tkill -15 $DBPID\n")
         script_file.write("fi\n}\n\n")
