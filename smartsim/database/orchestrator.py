@@ -479,8 +479,7 @@ class Orchestrator(EntityList[DBNode]):
                 "it is a reserved keyword in Orchestrator"
             )
         else:
-            if hasattr(self, "batch_settings") and self.batch_settings:
-                self.batch_settings.batch_args[arg] = value
+            self.batch_settings.batch_args[arg] = value
 
     def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a run argument the orchestrator should launch
