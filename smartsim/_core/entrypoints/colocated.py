@@ -30,10 +30,10 @@ import signal
 import socket
 import sys
 import tempfile
-import typing as t
 from pathlib import Path
 from subprocess import STDOUT
 from types import FrameType
+import typing as t
 
 import filelock
 import psutil
