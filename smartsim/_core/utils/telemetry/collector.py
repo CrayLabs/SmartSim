@@ -172,7 +172,7 @@ class DBCollector(Collector):
         adding extraneous base class code to differentiate the results
 
         :return: an iterable containing individual metric collection results
-        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        :rtype: Sequence[Sequence[Union[int, float, str]]]"""
 
     async def collect(self) -> None:
         """Execute database metric collection if the collector is enabled. Writes
@@ -242,19 +242,22 @@ class DBMemoryCollector(DBCollector):
 
     async def _perform_collection(
         self,
-    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+    ) -> t.Sequence[t.Tuple[int, float, float, float]]:
         """Perform memory metric collection and return the results
 
         :return: an iterable containing individual metric collection results
         in the format `(timestamp,used_memory,used_memory_peak,total_system_memory)`
-        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        :rtype: Sequence[Tuple[int, float, float, float]]"""
         if self._client is None:
             return []
 
         db_info = await self._client.info("memory")
 
-        metrics = (float(db_info[col]) for col in self._columns)
-        value: t.List[t.Union[int, float, str]] = [get_ts_ms(), *metrics]
+        used = float(db_info["used_memory"])
+        peak = float(db_info["used_memory_peak"])
+        total = float(db_info["total_system_memory"])
+
+        value = (get_ts_ms(), used, peak, total)
 
         # return a list containing a single record to simplify the parent
         # class code to save multiple records from a single collection
@@ -275,19 +278,19 @@ class DBConnectionCollector(DBCollector):
 
     async def _perform_collection(
         self,
-    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+    ) -> t.Sequence[t.Sequence[t.Union[int, str, str]]]:
         """Perform connection metric collection and return the results
 
         :return: an iterable containing individual metric collection results
         in the format `(timestamp,client_id,address)`
-        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        :rtype: Sequence[Sequence[Union[int, str, str]]]"""
         if self._client is None:
             return []
 
         now_ts = get_ts_ms()
         clients = await self._client.client_list()
 
-        values = []
+        values: t.List[t.Tuple[int, str, str]] = []
 
         # content-filter the metrics and return them all together
         for client in clients:
@@ -312,12 +315,12 @@ class DBConnectionCountCollector(DBCollector):
 
     async def _perform_collection(
         self,
-    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+    ) -> t.Sequence[t.Tuple[int, int]]:
         """Perform connection-count metric collection and return the results
 
         :return: an iterable containing individual metric collection results
         in the format `(timestamp,num_clients)`
-        :rtype: t.Iterable[t.Tuple[t.Any]]"""
+        :rtype: Sequence[Tuple[int, int]]"""
         if self._client is None:
             return []
 
@@ -327,7 +330,7 @@ class DBConnectionCountCollector(DBCollector):
 
         # return a list containing a single record to simplify the parent
         # class code to save multiple records from a single collection
-        value: t.List[t.Union[int, float, str]] = [get_ts_ms(), len(addresses)]
+        value = (get_ts_ms(), len(addresses))
         return [value]
 
 

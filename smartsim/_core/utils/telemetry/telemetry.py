@@ -333,7 +333,6 @@ class TelemetryMonitorArgs:
         :type frequency:  int
         :param frequency: cooldown period (in seconds) before automatic shutdown
         :type frequency:  int
-
         :param log_level: log level to apply to python logging
         :type log_level: logging._Level"""
         self.exp_dir: str = exp_dir

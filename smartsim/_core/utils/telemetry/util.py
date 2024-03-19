@@ -67,7 +67,7 @@ def write_event(
     :param detail: (optional) additional information to write with the event
     :type detail: str
     :param return_code: (optional) the return code of a completed task
-    :type return_code: str|None"""
+    :type return_code: int|None"""
     tgt_path = status_dir / f"{event_type}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 

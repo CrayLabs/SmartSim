@@ -736,7 +736,7 @@ def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
 
 
 @pytest.fixture
-def mock_redis() -> t.Callable[[t.Any], t.Any]:
+def mock_redis() -> t.Callable[..., t.Any]:
     def _mock_redis(
         conn_side_effect=None,
         mem_stats=None,
@@ -825,7 +825,7 @@ def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
 class CountingCallable:
     def __init__(self) -> None:
         self._num: int = 0
-        self._details: t.List[t.Tuple[t.Tuple[t.Any], t.Dict[str, t.Any]]] = []
+        self._details: t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]] = []
 
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         self._num += 1
@@ -836,5 +836,5 @@ class CountingCallable:
         return self._num
 
     @property
-    def details(self) -> t.List[t.Tuple[t.Tuple[t.Any], t.Dict[str, t.Any]]]:
+    def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details

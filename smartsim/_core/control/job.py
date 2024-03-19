@@ -244,7 +244,7 @@ class Job:
         :param raw_status: The raw status of the launcher
         :type raw_status: str
         :param returncode: The return code for the job
-        :type return_code: int
+        :type return_code: int|None
         :param error: Content produced by stderr
         :type error: str
         :param output: Content produced by stdout

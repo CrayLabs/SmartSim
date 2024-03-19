@@ -53,7 +53,7 @@ def register_signal_handlers(
     """Register a signal handling function for all termination events
 
     :param handle_signal: the function to execute when a term signal is received
-    :type handle_signal: Callable[[int, FrameType | None]]"""
+    :type handle_signal: Callable[[int, FrameType | None], None]"""
     # NOTE: omitting kill because it is not catchable
     term_signals = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
     for signal_num in term_signals:
@@ -109,19 +109,19 @@ def parse_arguments() -> TelemetryMonitorArgs:
     )
 
 
-def configure_logger(logger_: logging.Logger, _log_level: int, exp_dir: str) -> None:
+def configure_logger(logger_: logging.Logger, log_level_: int, exp_dir: str) -> None:
     """Configure the telemetry monitor logger to write logs to the
     target output file path passed as an argument to the entrypoint
 
-    :param _logger: logger to configure
-    :type _logger: logging.Logger
-    :param _log_level: log level to apply to the python logging system
-    :type _log_level: logging._Level
+    :param logger_: logger to configure
+    :type logger_: logging.Logger
+    :param log_level_: log level to apply to the python logging system
+    :type log_level_: logging._Level
     :param exp_dir: root path to experiment outputs
-    :type exp_dir:  str"""
+    :type exp_dir: str"""
     log_level: int = (
-        _log_level
-        if _log_level in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
+        log_level_
+        if log_level_ in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
         else logging.DEBUG
     )
     logger_.setLevel(log_level)

@@ -69,12 +69,14 @@ class Run:
     ) -> t.List[JobEntity]:
         """Map entity data persisted in a manifest file to an object
 
-        :param entity_dict: raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
         :param entity_type: type of the associated `SmartSimEntity`
         :type entity_type: str
+        :param entity_dict: raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  str"""
+        :type exp_dir:  pathlib.Path
+        :return: list of loaded `JobEntity` instances
+        :rtype: List[JobEntity]"""
         entities = []
 
         # an entity w/parent keys must create entities for the items that it
@@ -108,7 +110,9 @@ class Run:
         :param run: raw dictionary containing `Run` data deserialized from JSON
         :type run: Dict[str, Any]
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  str"""
+        :type exp_dir:  pathlib.Path
+        :return: list of loaded `JobEntity` instances
+        :rtype: Dict[str, List[JobEntity]]"""
         persisted: t.Dict[str, t.List[JobEntity]] = {
             "model": [],
             "orchestrator": [],
@@ -127,7 +131,9 @@ class Run:
         :param runs: raw dictionary containing `Run` data deserialized from JSON
         :type runs: Dict[str, Any]
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  str"""
+        :type exp_dir:  pathlib.Path
+        :return: populated `Run` instance
+        :rtype: Run"""
 
         # create an output mapping to hold the deserialized entities
         run_entities: t.Dict[str, t.List[JobEntity]] = {

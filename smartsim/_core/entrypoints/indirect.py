@@ -60,7 +60,7 @@ def main(
     to achieve the same result.
 
     :param cmd: a base64 encoded cmd to execute
-    :type cmd: List[str]
+    :type cmd: str
     :param entity_type: `SmartSimEntity` entity class. Valid values
     include: orchestrator, dbnode, ensemble, model
     :type entity_type: str
