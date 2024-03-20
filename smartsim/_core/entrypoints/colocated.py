@@ -37,9 +37,9 @@ from types import FrameType
 
 import filelock
 import psutil
+
 from smartredis import Client, ConfigOptions
 from smartredis.error import RedisConnectionError, RedisReplyError
-
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
@@ -178,7 +178,7 @@ def main(
     db_identifier: str,
 ) -> None:
     # pylint: disable=too-many-statements
-    global DBPID # pylint: disable=global-statement
+    global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
     ip_addresses = []
