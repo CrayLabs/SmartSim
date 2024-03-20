@@ -119,15 +119,10 @@ def configure_logger(logger_: logging.Logger, log_level_: int, exp_dir: str) -> 
     :type log_level_: logging._Level
     :param exp_dir: root path to experiment outputs
     :type exp_dir: str"""
-    log_level: int = (
-        log_level_
-        if log_level_ in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
-        else logging.DEBUG
-    )
-    logger_.setLevel(log_level)
+    logger_.setLevel(log_level_)
     logger_.propagate = False
 
-    # use a standard subdirectory of the expiment output path for logs
+    # use a standard subdirectory of the experiment output path for logs
     telemetry_dir = pathlib.Path(exp_dir) / cfg.CONFIG.telemetry_subdir
 
     # all telemetry monitor logs are written to file in addition to stdout

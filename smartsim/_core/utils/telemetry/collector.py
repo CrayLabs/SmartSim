@@ -41,15 +41,16 @@ logger = logging.getLogger("TelemetryMonitor")
 
 
 class Collector(abc.ABC):
-    """Base class for telemetry collectors. Collectors are used to execute
-    a repeating series of requests related to a specific SmartSimEntity"""
+    """Base class for telemetry collectors.
+
+    A Collector is used to retrieve runtime metrics about an entity."""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the collector
 
         :param entity: entity to collect metrics on
         :type entity: JobEntity
-        :param sink: sink to write collected information to
+        :param sink: destination to write collected information
         :type sink: Sink"""
         self._entity = entity
         self._sink = sink
@@ -57,7 +58,8 @@ class Collector(abc.ABC):
 
     @property
     def enabled(self) -> bool:
-        """Boolean indicating if the collector should perform data collection"""
+        """Boolean indicating if the collector should perform data collection
+        :rtype: bool"""
         return self._entity.telemetry_on
 
     @enabled.setter
@@ -125,7 +127,7 @@ class DBCollector(Collector):
 
         :param entity: entity with metadata about the resource to monitor
         :type entity: JobEntity
-        :param sink: sink to write collected metrics to
+        :param sink: destination to write collected information
         :type sink: Sink"""
         super().__init__(entity, sink)
         self._client: t.Optional[redisa.Redis[bytes]] = None
@@ -135,7 +137,7 @@ class DBCollector(Collector):
         )
 
     async def _configure_client(self) -> None:
-        """Configure the client connectoin to the target database"""
+        """Configure the client connection to the target database"""
         try:
             if not self._client:
                 self._client = redisa.Redis(
@@ -166,13 +168,13 @@ class DBCollector(Collector):
     @abc.abstractmethod
     async def _perform_collection(
         self,
-    ) -> t.Sequence[t.Sequence[t.Union[int, float, str]]]:
+    ) -> t.Sequence[t.Tuple[t.Union[int, float, str], ...]]:
         """Hook function for subclasses to execute custom metric retrieval.
         NOTE: all implementations return an iterable of metrics to avoid
         adding extraneous base class code to differentiate the results
 
         :return: an iterable containing individual metric collection results
-        :rtype: Sequence[Sequence[Union[int, float, str]]]"""
+        :rtype: Sequence[Tuple[Union[int, float, str], ...]]"""
 
     async def collect(self) -> None:
         """Execute database metric collection if the collector is enabled. Writes
@@ -237,7 +239,7 @@ class DBMemoryCollector(DBCollector):
 
     async def _post_prepare(self) -> None:
         """Write column headers for a CSV formatted output sink after
-        the database connection is estabished"""
+        the database connection is established"""
         await self._sink.save("timestamp", *self._columns)
 
     async def _perform_collection(
@@ -273,17 +275,17 @@ class DBConnectionCollector(DBCollector):
 
     async def _post_prepare(self) -> None:
         """Write column headers for a CSV formatted output sink after
-        the database connection is estabished"""
+        the database connection is established"""
         await self._sink.save("timestamp", *self._columns)
 
     async def _perform_collection(
         self,
-    ) -> t.Sequence[t.Sequence[t.Union[int, str, str]]]:
+    ) -> t.Sequence[t.Tuple[t.Union[int, str, str], ...]]:
         """Perform connection metric collection and return the results
 
         :return: an iterable containing individual metric collection results
         in the format `(timestamp,client_id,address)`
-        :rtype: Sequence[Sequence[Union[int, str, str]]]"""
+        :rtype: Sequence[Tuple[Union[int, str, str], ...]]"""
         if self._client is None:
             return []
 
@@ -310,7 +312,7 @@ class DBConnectionCountCollector(DBCollector):
 
     async def _post_prepare(self) -> None:
         """Write column headers for a CSV formatted output sink after
-        the database connection is estabished"""
+        the database connection is established"""
         await self._sink.save("timestamp", *self._columns)
 
     async def _perform_collection(

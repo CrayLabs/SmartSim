@@ -37,7 +37,9 @@ logger = logging.getLogger("TelemetryMonitor")
 
 @dataclass
 class Run:
-    """A Run is a collection of SmartSimEntity passed to a call to `Experiment.start`"""
+    """
+    A Run contains the collection of entities created when a `SmartSim`
+    driver script executes `Experiment.start`"""
 
     timestamp: int
     """the timestamp at the time the `Experiment.start` is called"""

@@ -65,15 +65,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     the experiment manifest written to physical disk by a driver.
 
     It also contains an event loop. The loop checks experiment entities for updates
-    at each timestep and executes a configurable set of metrics collectors.
-
-    TODO: Move long-polling into the telemetry monitor and refactor
-    the manifest event handler to only load `RuntimeManifests`"""
+    at each timestep and executes a configurable set of metrics collectors."""
 
     def __init__(
         self,
         pattern: str,
-        ignore_patterns: t.Any = None,
+        ignore_patterns: t.Optional[t.List[str]] = None,
         ignore_directories: bool = True,
         case_sensitive: bool = False,
         timeout_ms: int = 1000,
@@ -84,8 +81,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         events are of interest by matching their name
         :type pattern:  str
         :param ignore_patterns: a pattern that identifies the files whose
-        events shoould be ignored
-        :type ignore_patterns:  Any
+        events should be ignored
+        :type ignore_patterns:  Optional[List[str]]
         :param ignore_directories: set to `True` to avoid directory events
         :type ignore_directories:  bool
         :param case_sensitive: set to `True` to require case sensitivity in
@@ -118,32 +115,39 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :rtype: Sequence[JobEntity]"""
         return list(self._tracked_jobs.values())
 
-    def init_launcher(self, launcher: str) -> Launcher:
+    def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
         SmartSim currently supports slurm, pbs(pro), lsf,
         and local launching
 
         :param launcher: the name of the workload manager used by the experiment
         :type launcher: str
-        :raises SSUnsupportedError: if a string is passed that is not
+        :raises ValueError: if a string is passed that is not
         a supported launcher
         :raises TypeError: if no launcher argument is provided."""
         if not launcher:
             raise TypeError("Must provide a 'launcher' argument")
 
         if launcher_type := self._launcher_map.get(launcher.lower(), None):
-            return launcher_type()
+            self._launcher = launcher_type()
 
         raise ValueError("Launcher type not supported: " + launcher)
 
+    def init_job_manager(self) -> None:
+        """Initialize the job manager instance"""
+        if not self._launcher:
+            raise TypeError("self._launcher must be initialized")
+
+        self.job_manager.set_launcher(self._launcher)
+        self.job_manager.start()
+
     def set_launcher(self, launcher: str) -> None:
-        """Set the launcher for the experiment
+        """Initialize all required dependencies
 
         :param launcher: the name of the workload manager used by the experiment
         :type launcher: str"""
-        self._launcher = self.init_launcher(launcher)
-        self.job_manager.set_launcher(self._launcher)
-        self.job_manager.start()
+        self.init_launcher(launcher)
+        self.init_job_manager()
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
@@ -158,6 +162,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             # and continue. it will retry on the next event loop iteration
             manifest = RuntimeManifest.load_manifest(manifest_path)
             if not manifest:
+                logger.debug("No manifest file exists")
                 return
         except json.JSONDecodeError:
             logger.error(f"Malformed manifest encountered: {manifest_path}")
@@ -221,7 +226,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Event handler for when a file or directory is modified.
 
         :param event: event representing file/directory modification.
-        :type event: FileModifiedEvent"""
+        :type event: FileSystemEvent"""
         super().on_modified(event)  # type: ignore
         logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
@@ -230,7 +235,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Event handler for when a file or directory is created.
 
         :param event: event representing file/directory creation.
-        :type event: FileCreatedEvent"""
+        :type event: FileSystemEvent"""
         super().on_created(event)  # type: ignore
         logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
@@ -248,8 +253,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type timestamp: int
         :param entity: running SmartSim Job
         :type entity: JobEntity
-        :param entity: `StepInfo` received when requesting a Job status update
-        :type entity: StepInfo"""
+        :param step_info: `StepInfo` received when requesting a Job status update
+        :type step_info: StepInfo"""
         # remember completed entities to ignore them after manifest updates
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
@@ -339,7 +344,6 @@ class TelemetryMonitorArgs:
         self.frequency: int = frequency  # freq in seconds
         self.cooldown: int = cooldown  # cooldown in seconds
         self.log_level: int = log_level
-        self._max_frequency = 600
         self._validate()
 
     @property
@@ -356,7 +360,7 @@ class TelemetryMonitorArgs:
         """The maximum duration (in seconds) for the monitoring loop to wait
         between executions of the monitoring loop. Longer frequencies potentially
         keep the telemetry monitor alive unnecessarily."""
-        return self._max_frequency
+        return 600
 
     @property
     def min_cooldown(self) -> int:
@@ -369,7 +373,7 @@ class TelemetryMonitorArgs:
     def max_cooldown(self) -> int:
         """The maximum allowed cooldown period that can be configured. Ensures the
         telemetry monitor can automatically shutdown if not needed"""
-        return self._max_frequency
+        return self.max_frequency
 
     @property
     def cooldown_ms(self) -> int:
@@ -405,7 +409,7 @@ class TelemetryMonitorArgs:
             logging.WARNING,
             logging.ERROR,
         ]:
-            raise ValueError("Invalid log_level supplied: {self.log_level}")
+            raise ValueError(f"Invalid log_level supplied: {self.log_level}")
 
     def _validate(self) -> None:
         """Execute all validation functions"""
@@ -430,11 +434,17 @@ class TelemetryMonitor:
         :type telemetry_monitor_args: TelemetryMonitorArgs
         """
         self._observer: BaseObserver = Observer()
+        """an observer object that triggers the action handler"""
         self._args = telemetry_monitor_args
+        """user-supplied arguments configuring telemetry monitor behavior"""
         self._experiment_dir = pathlib.Path(self._args.exp_dir)
+        """path to the root directory where experiment outputs are written"""
         self._telemetry_path = self._experiment_dir / CONFIG.telemetry_subdir
+        """path to the root directory where telemetry outputs are written"""
         self._manifest_path = self._telemetry_path / MANIFEST_FILENAME
+        """path to the runtime manifest file"""
         self._action_handler: t.Optional[ManifestEventHandler] = None
+        """an event listener holding action handlers for manifest on-change events"""
 
     def _can_shutdown(self) -> bool:
         """Determines if the telemetry monitor can perform shutdown. An
@@ -443,7 +453,7 @@ class TelemetryMonitor:
         are stored in the job manager
 
         :return: return True if capable of automatically shutting down
-        :rtype: int"""
+        :rtype: bool"""
         managed_jobs = (
             list(self._action_handler.job_manager.jobs.values())
             if self._action_handler
@@ -476,7 +486,8 @@ class TelemetryMonitor:
         last_ts: int = get_ts_ms()
         shutdown_in_progress = False
 
-        assert self._action_handler is not None
+        if self._action_handler is None:
+            raise ValueError("The action handler must be initialized to monitor")
 
         # Event loop runs until the observer shuts down or
         # an automatic shutdown is started.
