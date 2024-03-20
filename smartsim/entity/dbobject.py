@@ -28,6 +28,7 @@ import typing as t
 from pathlib import Path
 
 from .._core.utils import init_default
+from .._core._install.builder import Device
 from ..error import SSUnsupportedError
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
@@ -46,7 +47,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         name: str,
         func: t.Optional[_DBObjectFuncT],
         file_path: t.Optional[str],
-        device: t.Literal["CPU", "GPU"],
+        device: Device,
         devices_per_node: int,
         first_device: int,
     ) -> None:
@@ -103,9 +104,9 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         return file_path
 
     @staticmethod
-    def _check_device(device: t.Literal["CPU", "GPU"]) -> str:
-        device = t.cast(t.Literal["CPU", "GPU"], device.upper())
-        if not device.startswith("CPU") and not device.startswith("GPU"):
+    def _check_device(device: Device) -> str:
+        device = t.cast(Device, device.value.upper())
+        if not device.startswith(Device.CPU.value.upper) and not device.startswith(Device.GPU.value.upper):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
@@ -118,7 +119,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         :rtype: list[str]
         """
 
-        if self.device == "GPU" and self.devices_per_node > 1:
+        if self.device == Device.GPU.value.upper and self.devices_per_node > 1:
             return [
                 f"{self.device}:{device_num}"
                 for device_num in range(
@@ -130,16 +131,16 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_devices(
-        device: t.Literal["CPU", "GPU"],
+        device: Device,
         devices_per_node: int,
         first_device: int,
     ) -> None:
-        if device == "CPU" and devices_per_node > 1:
+        if device == Device.CPU and devices_per_node > 1:
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
 
-        if device == "CPU" and first_device > 0:
+        if device == Device.CPU and first_device > 0:
             raise SSUnsupportedError(
                 "Cannot set first_device>0 if CPU is specified under devices"
             )
@@ -147,7 +148,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         if devices_per_node == 1:
             return
 
-        if ":" in device:
+        if ":" in device.value:
             msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
             msg += f"the device was set to {device} and \
                 devices_per_node=={devices_per_node}"
@@ -160,7 +161,7 @@ class DBScript(DBObject[str]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: Device = Device.CPU,
         devices_per_node: int = 1,
         first_device: int = 0,
     ):
@@ -222,7 +223,7 @@ class DBModel(DBObject[bytes]):
         backend: str,
         model: t.Optional[bytes] = None,
         model_file: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: Device = Device.CPU,
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
