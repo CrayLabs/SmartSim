@@ -68,9 +68,9 @@ def write_colocated_launch_script(
         if colocated_settings["debug"]:
             script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
         script_file.write(f"db_stdout=$({colocated_cmd})\n")
-        # pylint: disable=anomalous-backslash-in-string
         script_file.write(
-            "DBPID=$(echo $db_stdout | sed -n 's/.*__PID__\([0-9]*\)__PID__.*/\\1/p')\n"
+            "DBPID=$(echo $db_stdout | sed -n "
+            "'s/.*__PID__\\([0-9]*\\)__PID__.*/\\1/p')\n"
         )
 
         # Write the actual launch command for the app
