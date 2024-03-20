@@ -130,6 +130,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if launcher_type := self._launcher_map.get(launcher.lower(), None):
             self._launcher = launcher_type()
+            return
 
         raise ValueError("Launcher type not supported: " + launcher)
 

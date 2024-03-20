@@ -1038,8 +1038,11 @@ def test_telemetry_autoshutdown(
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
+        rs = RunSettings("python", exe_args=["sleep.py", "1"])
+        model = exp.create_model("model", run_settings=rs)
+
         start_time = get_ts_ms()
-        exp.start(block=False)
+        exp.start(model, block=True)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         empty_mani = list(telemetry_output_path.rglob("manifest.json"))
@@ -1052,15 +1055,15 @@ def test_telemetry_autoshutdown(
         # give some leeway during testing for the cooldown to get hit
         for i in range(10):
             if popen.poll() is not None:
-
                 print(f"Completed polling for telemetry shutdown after {i} attempts")
                 break
             time.sleep(2)
 
         stop_time = get_ts_ms()
+        duration = stop_time - start_time
 
         assert popen.returncode is not None
-        assert stop_time >= (start_time + cooldown_ms)
+        assert duration >= cooldown_ms
 
 
 class MockStep(Step):
