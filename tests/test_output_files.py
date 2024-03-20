@@ -27,6 +27,7 @@
 import pathlib
 
 import pytest
+import os
 
 
 from smartsim import Experiment
@@ -36,9 +37,11 @@ from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.model import Model
+from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
 controller = Controller()
+slurm_controller = Controller(launcher="slurm")
 
 rs = SrunSettings("echo", ["spam", "eggs"])
 bs = SbatchSettings()
@@ -52,6 +55,7 @@ orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
     [
         pytest.param(Model("test_model", {}, "", rs)),
         pytest.param(ens),
+
     ],
 )
 def test_get_output_files_with_create_job_step(entity, test_dir):
@@ -63,17 +67,27 @@ def test_get_output_files_with_create_job_step(entity, test_dir):
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
-# @pytest.mark.parametrize(
-#     "entity",
-#     [
-#         pytest.param(Orchestrator()),
-#         pytest.param(ens),
-#     ],
-# )
-# def test_get_output_files_with_create_batch_job_step(entity, test_dir):
-#     exp_dir = pathlib.Path(test_dir)
-#     status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
-#     step = controller._create_batch_job_step(entity, status_dir)
-#     expected_out_path = status_dir / entity.name / (entity.name+".out")
-#     expected_err_path = status_dir / entity.name / (entity.name+".err")
-#     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
+def test_get_output_files_no_status_dir(test_dir):
+    step_settings = RunSettings("echo")
+    step = Step("mock-step", test_dir, step_settings)
+    with pytest.raises(KeyError):
+        out, err = step.get_output_files()
+
+
+@pytest.mark.parametrize(
+    "entity",
+    [
+        pytest.param(Model("test_model", {}, "", rs)),
+        pytest.param(ens),
+
+    ],
+)
+def test_symlink(entity, test_dir):
+    exp_dir = pathlib.Path(test_dir)
+    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
+    step = controller._create_job_step(entity, status_dir)
+    controller.symlink(step, entity)
+    assert os.path.islink(os.path.join(entity.path, f"{entity.name}.out"))
+    assert os.path.islink(os.path.join(entity.path, f"{entity.name}.err"))
+    assert os.readlink(os.path.join(entity.path, f"{entity.name}.out")) ==  str(status_dir / entity.name / (entity.name + ".out"))
+    assert os.readlink(os.path.join(entity.path, f"{entity.name}.err")) ==  str(status_dir / entity.name / (entity.name + ".err"))

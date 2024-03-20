@@ -105,6 +105,7 @@ def test_mpmd_compound_env_exports():
 
     step = SrunStep("teststep", "./", srun)
 
+    step.meta["status_dir"] = ""
     launch_cmd = step.get_launch_cmd()
     env_cmds = [v for v in launch_cmd if v == "env"]
     assert "env" in launch_cmd and len(env_cmds) == 1
@@ -164,6 +165,7 @@ def test_mpmd_non_compound_env_exports():
 
     step = SrunStep("teststep", "./", srun)
 
+    step.meta["status_dir"] = ""
     launch_cmd = step.get_launch_cmd()
     env_cmds = [v for v in launch_cmd if v == "env"]
     assert "env" not in launch_cmd and len(env_cmds) == 0
@@ -223,6 +225,7 @@ def test_mpmd_non_compound_no_exports():
 
     step = SrunStep("teststep", "./", srun)
 
+    step.meta["status_dir"] = ""
     launch_cmd = step.get_launch_cmd()
     env_cmds = [v for v in launch_cmd if v == "env"]
     assert "env" not in launch_cmd and len(env_cmds) == 0
