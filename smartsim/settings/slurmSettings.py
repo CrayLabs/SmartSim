@@ -243,6 +243,21 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
+    def set_node_feature(self, node_feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the hostlist for this job
+
+        This sets ``--nodelist``
+
+        :param host_list: hosts to launch on
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
+        """
+        if isinstance(node_feature_list, str):
+            node_feature_list = [node_feature_list.strip()]
+        elif not all(isinstance(feature, str) for feature in node_feature_list):
+            raise TypeError("node_feature_list argument must be string or list of strings")
+        self.run_args["C"] = ",".join(node_feature_list)
+
     @staticmethod
     def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format

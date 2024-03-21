@@ -324,6 +324,19 @@ class RunSettings(SettingsBase):
         return self.set_walltime(
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
+    
+    def set_node_feature(self, features: t.Union[int, t.List[int]]) -> None:
+        """Copy executable file to allocated compute nodes
+
+        :param dest_path: Path to copy an executable file
+        :type dest_path: str | None
+        """
+        logger.warning(
+            (
+                "Broadcast specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
 
     @staticmethod
     def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
