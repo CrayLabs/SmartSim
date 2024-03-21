@@ -348,7 +348,7 @@ def test_set_node_feature():
 
     with pytest.raises(TypeError):
         rs.set_node_feature(5)
-    
+
     with pytest.raises(TypeError):
         rs.set_node_feature(["P100", 5])
 

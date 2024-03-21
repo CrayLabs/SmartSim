@@ -257,7 +257,7 @@ class SrunSettings(RunSettings):
         elif not all(isinstance(feature, str) for feature in node_feature_list):
             raise TypeError(
                 "node_feature_list argument must be string or list of strings"
-                )
+            )
         self.run_args["C"] = ",".join(node_feature_list)
 
     @staticmethod
