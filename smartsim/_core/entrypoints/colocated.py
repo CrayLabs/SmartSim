@@ -204,9 +204,9 @@ def main(
     try:
         hostname = socket.gethostname()
         filename = (
-            f"{hostname}.log"
+            f"colo_orc_{hostname}.log"
             if os.getenv("SMARTSIM_LOG_LEVEL") == "debug"
-            else "/dev/null"
+            else os.devnull
         )
         with open(filename, "w", encoding="utf-8") as file:
             process = psutil.Popen(cmd, stdout=file.fileno(), stderr=STDOUT)
