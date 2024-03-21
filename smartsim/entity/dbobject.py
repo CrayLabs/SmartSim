@@ -196,8 +196,6 @@ class DBScript(DBObject[str]):
         if not script and not script_path:
             raise ValueError("Either script or script_path must be provided")
 
-        self.script_path = script_path
-
     @property
     def script(self) -> t.Optional[str]:
         return self.func
@@ -277,7 +275,6 @@ class DBModel(DBObject[bytes]):
         self.min_batch_timeout = min_batch_timeout
         self.tag = tag
         self.inputs, self.outputs = self._check_tensor_args(inputs, outputs)
-        self.model_file = model_file
 
     @property
     def model(self) -> t.Optional[bytes]:

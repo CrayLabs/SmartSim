@@ -75,7 +75,7 @@
         Torch Scripts:
         {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}
           Name: {{ script.name }}
-            Path: {{ script.script_path }}
+            Path: {{ script.file }}
             Backend: {{ script.device }}
             Devices Per Node: {{ script.devices_per_node }}
         {%- endfor %}
@@ -84,7 +84,7 @@
         ML Models:
         {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
           Name: {{ mlmodel.name }}
-            Path: {{ mlmodel.model_file }}
+            Path: {{ mlmodel.file }}
             Backend: {{ mlmodel.backend }}
             Device: {{ mlmodel.device }}
             Devices Per Node: {{ mlmodel.devices_per_node }}
