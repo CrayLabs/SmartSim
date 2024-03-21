@@ -830,8 +830,8 @@ class Experiment:
     def preview(
         self,
         *args: t.Any,
-        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
         verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
+        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
         output_filename: t.Optional[str] = None,
     ) -> None:
         """Preview entity information prior to launch. This method
@@ -839,40 +839,39 @@ class Experiment:
         into what and how entities will be launched.  Any instance of
         ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
-        :param output_filename: Specify name of file and extension to write
-        preview data to. If no output filename is set, the preview will be
-        output to stdout. Defaults to None.
-        :type output_filename: str
+        :param verbosity_level: Specify the verbosity level:
+            info: Display user-defined fields and entities
+            debug: Display user-defined field and entities and auto generated
+            fields.
+            developer: Display user-defined field and entities, auto generated
+            fields, and run commands.
+            Defaults to info.
+        :type verbosity_level: str
         :param output_format: Set output format. The possible accepted
         output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
         Defaults to 'plain_text'.
         :type output_type: str
-        :param verbosity_level: Specify the verbosity level:
-            info: Display User defined fields and entities
-            debug: Display user defined field and entities and auto generated
-            fields.
-            developer: Display user defined field and entities, auto generated
-            fields, and run commands.
-            Defaults to info.
-        :type verbosity_level: str
+        :param output_filename: Specify name of file and extension to write
+        preview data to. If no output filename is set, the preview will be
+        output to stdout. Defaults to None.
+        :type output_filename: str
         """
 
-        # Retrive any active db jobs
-        active_dbjobs = self._control.active_orch_dict
+        # Retrive any active orchestrator jobs
+        active_dbjobs = self._control.active_orchestrator_jobs
 
         preview_manifest = Manifest(*args)
 
-        rendered_preview = previewrenderer.render(
+        previewrenderer.render(
             self,
             preview_manifest,
             verbosity_level,
             output_format,
+            output_filename,
             active_dbjobs,
         )
-        if output_filename:
-            previewrenderer.preview_to_file(rendered_preview, output_filename)
-        else:
-            logger.info(rendered_preview)
+
+        ##test_preview_to_file
 
     @property
     def launcher(self) -> str:

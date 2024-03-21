@@ -162,9 +162,9 @@ def test_preview_to_file(test_dir, wlmutils):
     assert path.is_file()
 
 
-def test_active_orch_dict_property(wlmutils, test_dir, choose_host):
+def test_active_orchestrator_jobs_property(wlmutils, test_dir, choose_host):
     """Ensure db_jobs remaines unchanched after deletion
-    of active_orch_dict property stays intace when retrieving db_jobs"""
+    of active_orchestrator_jobs property stays intace when retrieving db_jobs"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -173,7 +173,9 @@ def test_active_orch_dict_property(wlmutils, test_dir, choose_host):
 
     # start a new Experiment for this section
     exp = Experiment(
-        "test-active-orch-dict-property", exp_path=test_dir, launcher=test_launcher
+        "test-active_orchestrator_jobst-property",
+        exp_path=test_dir,
+        launcher=test_launcher,
     )
 
     # create and start an instance of the Orchestrator database
@@ -193,12 +195,12 @@ def test_active_orch_dict_property(wlmutils, test_dir, choose_host):
     )
     exp.start(db, db2)
 
-    # Remove a job from active_orch_dict
-    active_orch_dict = exp._control.active_orch_dict
-    del active_orch_dict["testdb_reg2_0"]
+    # Remove a job from active_orchestrator_jobs
+    active_orchestrator_jobs = exp._control.active_orchestrator_jobs
+    del active_orchestrator_jobs["testdb_reg2_0"]
 
     # assert that db_jobs is not affected by deletion
-    assert len(active_orch_dict) == 1
+    assert len(active_orchestrator_jobs) == 1
     assert len(exp._control._jobs.db_jobs) == 2
 
     exp.stop(db, db2)
@@ -227,7 +229,7 @@ def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
     assert orc.is_active() == True
 
     # Retrieve started manifest from experiment
-    active_dbjobs = exp._control.active_orch_dict
+    active_dbjobs = exp._control.active_orchestrator_jobs
 
     # Execute method for template rendering
     output = previewrenderer.render(
@@ -282,7 +284,7 @@ def test_preview_orch_active_infrastructure(wlmutils, test_dir, choose_host):
     )
 
     # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_dict
+    active_dbjobs = exp._control.active_orchestrator_jobs
 
     preview_manifest = Manifest(orc2, orc3)
 
@@ -334,7 +336,7 @@ def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
     exp.start(db, db2)
 
     # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_dict
+    active_dbjobs = exp._control.active_orchestrator_jobs
 
     # Execute method for template rendering
     output = previewrenderer.render(
@@ -378,7 +380,7 @@ def test_preview_active_infrastructure_orchestrator_error(
     assert orc.is_active() == True
 
     # Retrieve any active jobs
-    active_dbjobs = exp._control.active_orch_dict
+    active_dbjobs = exp._control.active_orchestrator_jobs
 
     preview_manifest = Manifest(orc)
 
@@ -1326,7 +1328,7 @@ def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
     assert "time" in output
 
 
-def test_output_format_error():
+def test_check_output_format_error():
     """
     Test error when invalid ouput format is given.
     """
@@ -1341,6 +1343,20 @@ def test_output_format_error():
         "The only valid output format currently available is plain_text"
         in ex.value.args[0]
     )
+
+
+def test_check_verbosity_level():
+    """
+    Test error when invalid verbosity level is given.
+    """
+    # Prepare entities
+    exp_name = "test_verbosity_level"
+    exp = Experiment(exp_name)
+
+    # Execute preview method
+    with pytest.raises(ValueError) as ex:
+        exp.preview(verbosity_level="hello")
+    assert "is not a valid Verbosity" in ex.value.args[0]
 
 
 @pytest.mark.skipif(
@@ -1576,7 +1592,7 @@ def test_get_ifname_filter(wlmutils, test_dir, choose_host):
 
     assert orc.is_active() == True
 
-    active_dbjobs = exp._control.active_orch_dict
+    active_dbjobs = exp._control.active_orchestrator_jobs
 
     template_str = "{{db_exe_args | get_ifname}}"
 
