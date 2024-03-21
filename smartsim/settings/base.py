@@ -324,7 +324,7 @@ class RunSettings(SettingsBase):
         return self.set_walltime(
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
-    
+
     def set_node_feature(self, node_feature_list: t.Union[str, t.List[str]]) -> None:
         """Copy executable file to allocated compute nodes
 
