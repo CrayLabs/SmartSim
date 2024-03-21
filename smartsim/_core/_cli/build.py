@@ -224,18 +224,18 @@ def build_redis_ai(
         logger.info("ML Backends and RedisAI build complete!")
 
 
-def check_py_torch_version(versions: Versioner, device_in: str = Device.CPU.value) -> None:
+def check_py_torch_version(versions: Versioner, device_in: Device = Device.CPU) -> None:
     """Check Python environment for TensorFlow installation"""
 
-    device = device_in.lower()
+    #device = device_in.lower()
     if BuildEnv.is_macos():
-        if device == Device.GPU.value:
+        if device_in == Device.GPU:
             raise BuildError("SmartSim does not support GPU on MacOS")
         device_suffix = ""
     else:  # linux
-        if device == Device.CPU.value:
+        if device_in == Device.CPU:
             device_suffix = versions.TORCH_CPU_SUFFIX
-        elif device == Device.GPU.value:
+        elif device_in == Device.GPU:
             device_suffix = versions.TORCH_CUDA_SUFFIX
         else:
             raise BuildError("Unrecognized device requested")
@@ -259,7 +259,7 @@ def check_py_torch_version(versions: Versioner, device_in: str = Device.CPU.valu
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
-        wheel_device = device if device == Device.CPU.value else device_suffix.replace("+", "")
+        wheel_device = device_in if device_in == Device.CPU else device_suffix.replace("+", "")
         pip(
             "install",
             "--extra-index-url",
@@ -361,7 +361,7 @@ def execute(
 ) -> int:
     verbose = args.v
     keydb = args.keydb
-    device: Device = args.device
+    device: Device = Device(args.device)
 
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
@@ -426,7 +426,7 @@ def execute(
 
     try:
         if "torch" in backends:
-            check_py_torch_version(versions, device.value)
+            check_py_torch_version(versions, device)
         if "tensorflow" in backends:
             check_py_tf_version(versions)
         if "onnxruntime" in backends:

@@ -500,7 +500,7 @@ class RedisAIBuilder(Builder):
             arch = "arm64v8"
         else:  # pragma: no cover
             raise fail_to_format(f"Unknown architecture: {architecture}")
-        return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
+        return self.rai_build_path / f"deps/{os_}-{arch}-{device.value}"
 
     def _get_deps_to_fetch_for(
         self, device: Device
@@ -516,15 +516,15 @@ class RedisAIBuilder(Builder):
         fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
         if self.fetch_torch:
             pt_dep = _choose_pt_variant(os_)
-            fetchable_deps.append(pt_dep(arch, device, "2.0.1"))
+            fetchable_deps.append(pt_dep(arch, device.value, "2.0.1"))
         if self.fetch_tf:
-            fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
+            fetchable_deps.append(_TFArchive(os_, arch, device.value, "2.13.1"))
         if self.fetch_onnx:
-            fetchable_deps.append(_ORTArchive(os_, device, "1.16.3"))
+            fetchable_deps.append(_ORTArchive(os_, device.value, "1.16.3"))
 
         return tuple(fetchable_deps)
 
-    def symlink_libtf(self, device: str) -> None:
+    def symlink_libtf(self, device: Device) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
 
         :param device: cpu or gpu
@@ -620,7 +620,7 @@ class RedisAIBuilder(Builder):
         self._fetch_deps_for(device)
 
         if self.libtf_dir and device.value:
-            self.symlink_libtf(device.value)
+            self.symlink_libtf(device)
 
         build_cmd = self._rai_build_env_prefix(
             with_pt=self.build_torch,
@@ -702,7 +702,7 @@ class RedisAIBuilder(Builder):
         :type device: str
         """
         self.rai_install_path = self.rai_build_path.joinpath(
-            f"install-{device.upper()}"
+            f"install-{device.value.upper()}"
         ).resolve()
         rai_lib = self.rai_install_path / "redisai.so"
         rai_backends = self.rai_install_path / "backends"
