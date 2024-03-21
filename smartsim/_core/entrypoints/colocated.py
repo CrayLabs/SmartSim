@@ -205,7 +205,7 @@ def main(
         hostname = socket.gethostname()
         filename = (
             f"{hostname}.log"
-            if os.getenv('SMARTSIM_LOG_LEVEL') == "debug"
+            if os.getenv("SMARTSIM_LOG_LEVEL") == "debug"
             else "/dev/null"
         )
         with open(filename, "w", encoding="utf-8") as file:
