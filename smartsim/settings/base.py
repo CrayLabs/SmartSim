@@ -325,7 +325,7 @@ class RunSettings(SettingsBase):
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
     
-    def set_node_feature(self, features: t.Union[int, t.List[int]]) -> None:
+    def set_node_feature(self, node_feature_list: t.Union[str, t.List[str]]) -> None:
         """Copy executable file to allocated compute nodes
 
         :param dest_path: Path to copy an executable file
