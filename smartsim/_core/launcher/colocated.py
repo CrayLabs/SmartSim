@@ -68,6 +68,9 @@ def write_colocated_launch_script(
         if colocated_settings["debug"]:
             script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
         script_file.write(f"db_stdout=$({colocated_cmd})\n")
+        # extract and set DBPID within the shell script that is
+        # enclosed between __PID__ and sent to stdout by the colocated
+        # entrypoints file
         script_file.write(
             "DBPID=$(echo $db_stdout | sed -n "
             "'s/.*__PID__\\([0-9]*\\)__PID__.*/\\1/p')\n"

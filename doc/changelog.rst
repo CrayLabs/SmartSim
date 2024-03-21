@@ -18,7 +18,7 @@ To be released at some future point in time
 
 Description
 
-- Colocated Model bug fix
+- Colo Orchestrator setup now blocks application start until setup finished.
 - ExecArgs handling correction
 - ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
@@ -31,8 +31,11 @@ Description
 
 Detailed Notes
 
-- Build shell script to execute application after colocated Orchestrator
-  is finished building for colocated Models. (SmartSim-PR522_)
+- The request to the colocated entrypoints file within the shell script
+  is now a blocking process. Once the Orchestrator is setup, it returns
+  which moves the process to the background and allows the application to
+  start. This prevents the application from requesting a ML model or
+  script that has not been uploaded to the Orchestrator yet. (SmartSim-PR522_)
 - Add checks and tests to ensure SmartSim users cannot initialize run settings
   with a list of lists as the exe_args argument. (SmartSim-PR517_)
 - Add readthedocs configuration file and enable readthedocs builds

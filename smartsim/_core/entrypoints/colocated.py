@@ -202,9 +202,16 @@ def main(
     # we generally want to catch all exceptions here as
     # if this process dies, the application will most likely fail
     try:
-        with open("colo_orch_output.txt", "w", encoding="utf-8") as file:
+        hostname = socket.gethostname()
+        filename = (
+            f"{hostname}.log"
+            if os.getenv('SMARTSIM_LOG_LEVEL') == "debug"
+            else "/dev/null"
+        )
+        with open(filename, "w", encoding="utf-8") as file:
             process = psutil.Popen(cmd, stdout=file.fileno(), stderr=STDOUT)
             DBPID = process.pid
+        # printing to stdout shell file for extraction
         print(f"__PID__{DBPID}__PID__", flush=True)
 
     except Exception as e:
