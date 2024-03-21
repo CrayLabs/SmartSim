@@ -644,7 +644,7 @@ class RedisAIBuilder(Builder):
         )
         self.run_command(build_cmd, cwd=self.rai_build_path)
 
-        self._install_backends(device.value)
+        self._install_backends(device)
         if self.user_supplied_backend("torch"):
             self._move_torch_libs()
         self.cleanup()
@@ -696,13 +696,13 @@ class RedisAIBuilder(Builder):
                 f"found {len(unique_placed_paths)}"
             )
 
-    def _install_backends(self, device: str) -> None:
+    def _install_backends(self, device: Device) -> None:
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
         :type device: str
         """
         self.rai_install_path = self.rai_build_path.joinpath(
-            f"install-{device}"
+            f"install-{device.upper()}"
         ).resolve()
         rai_lib = self.rai_install_path / "redisai.so"
         rai_backends = self.rai_install_path / "backends"
