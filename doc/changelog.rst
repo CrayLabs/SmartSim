@@ -18,7 +18,7 @@ To be released at some future point in time
 
 Description
 
-- Add method to specify node features for a slurm job
+- Add method to specify node features for a Slurm job
 - Colo Orchestrator setup now blocks application start until setup finished
 - ExecArgs handling correction
 - ReadTheDocs config file added and enabled on PRs
@@ -32,8 +32,8 @@ Description
 
 Detailed Notes
 
-- Users can now specify node features to a job through
-  SrunSettings.set_node_feature. The method accepts a string
+- Users can now specify node features for a Slurm job through
+  ``SrunSettings.set_node_feature``. The method accepts a string
   or list of strings. (SmartSim-PR529_)
 - The request to the colocated entrypoints file within the shell script
   is now a blocking process. Once the Orchestrator is setup, it returns
