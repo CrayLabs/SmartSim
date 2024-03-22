@@ -326,14 +326,14 @@ class RunSettings(SettingsBase):
         )
 
     def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
-        """Copy executable file to allocated compute nodes
+        """Specify the node feature for this job
 
-        :param dest_path: Path to copy an executable file
-        :type dest_path: str | None
+        :param feature_list: node feature to launch on
+        :type feature_list: str | list[str]
         """
         logger.warning(
             (
-                "Broadcast specification not implemented for this "
+                "Feature specification not implemented for this "
                 f"RunSettings type: {type(self)}"
             )
         )
