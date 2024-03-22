@@ -1,0 +1,37 @@
+
+          {%- if model.run_settings.colocated_db_settings.db_identifier %}
+          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+          {%- else %}
+          Database Identifier: N/A
+          {%- endif %}
+            Database Backend: {{ config.database_cli | get_dbtype }}
+            {%- if model.run_settings.colocated_db_settings %}
+            {%- if model.run_settings.colocated_db_settings.port %}
+            Connection Type: TCP
+            TCP/IP Port(s):
+              {{ model.run_settings.colocated_db_settings.port }}
+            {%- endif %}
+            {%- if model.run_settings.colocated_db_settings.unix_socket %}
+            Connection Type: UDS
+            Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+            {%- endif %}
+            {%- if model.run_settings.colocated_db_settings.ifname %}
+            {%- if model.run_settings.colocated_db_settings.ifname | is_list %}
+            Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+            {%- else %}
+            Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname }}
+            {%- endif %}
+            {%- endif %}
+            Type: Colocated
+            {%- if model.incoming_entities %}
+            Incoming Entities (Available Data Sources):
+            {%- for incoming in model.incoming_entities %}
+              {{ incoming.name }}
+              {%- endfor %}
+            {%- endif %}
+            {%- endif %}
+          Outgoing Key Collision Prevention (Key Prefixing):
+            Tensors: {{ model.query_key_prefixing() | as_toggle }}
+            Datasets: {{ model.query_key_prefixing() | as_toggle }}
+            ML Models/Torch Scripts: {{ False | as_toggle }}
+            Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}

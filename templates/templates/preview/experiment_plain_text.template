@@ -1,0 +1,5 @@
+=== Experiment Overview ===
+
+  Experiment Name: {{ exp_entity.name }}
+    Experiment Path: {{ exp_entity.exp_path }}
+    Launcher: {{ exp_entity.launcher }}

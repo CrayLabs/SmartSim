@@ -149,3 +149,11 @@ class UnproxyableStepError(TelemetryError):
 
 class SmartSimCLIActionCancelled(SmartSimError):
     """Raised when a `smart` CLI command is terminated"""
+
+
+class PreviewException(Exception):
+    """Raised when a part of preview isn't support by SmartSim yet"""
+
+
+class PreviewFormatError(PreviewException):
+    """Raised when the output format of the preview method call is not supported"""

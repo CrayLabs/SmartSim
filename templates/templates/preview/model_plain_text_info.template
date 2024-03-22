@@ -1,0 +1,54 @@
+
+
+        {%- if model.batch_settings %}
+        Batch Launch: True
+        {% endif %}
+        {%- if model.params %}
+        Model Parameters:
+        {%- for param, value in model.params.items() %}
+          {{ param }}: {{ value }}
+        {%- endfor %}
+        {%- endif %}
+
+        {%- if model.run_settings.colocated_db_settings %}
+        Colocated:
+        {%- if model.run_settings.colocated_db_settings.db_identifier %}
+          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+          {%- endif %}
+          {%- if model.run_settings.colocated_db_settings.port %}
+          Connection Type: TCP
+          TCP/IP Port(s):
+            {{ model.run_settings.colocated_db_settings.port }}
+          {%- endif %}
+          {%- if model.run_settings.colocated_db_settings.unix_socket %}
+          Connection Type: UDS
+          Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+        {%- endif %}
+        {%- endif %}
+
+        {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+        Torch Scripts:
+        {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}
+          Name: {{ script.name }}
+          Path: {{ script.script_path }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings['db_models'] %}
+        ML Models:
+        {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
+          Name: {{ mlmodel.name }}
+            Path: {{ mlmodel.model_file }}
+            Backend: {{ mlmodel.backend }}
+            {%- for input in mlmodel.inputs %}
+            Inputs:
+              {{ input }}
+              {%- endfor %}
+              {%- for output in mlmodel.outputs %}
+            Outputs:
+              {{ output }}
+              {%- endfor %}
+        {%- endfor %}
+        {%- endif %}
+    {%- if model.query_key_prefixing() %}
+        Key Prefix: {{ model.name }}
+    {%- endif %}
