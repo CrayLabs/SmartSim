@@ -227,7 +227,7 @@ def build_redis_ai(
 def check_py_torch_version(versions: Versioner, device_in: Device = Device.CPU) -> None:
     """Check Python environment for TensorFlow installation"""
 
-    #device = device_in.lower()
+    # device = device_in.lower()
     if BuildEnv.is_macos():
         if device_in == Device.GPU:
             raise BuildError("SmartSim does not support GPU on MacOS")
@@ -259,7 +259,9 @@ def check_py_torch_version(versions: Versioner, device_in: Device = Device.CPU) 
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
-        wheel_device = device_in if device_in == Device.CPU else device_suffix.replace("+", "")
+        wheel_device = (
+            device_in if device_in == Device.CPU else device_suffix.replace("+", "")
+        )
         pip(
             "install",
             "--extra-index-url",

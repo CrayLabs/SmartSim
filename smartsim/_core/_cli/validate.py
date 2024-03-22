@@ -39,8 +39,8 @@ import numpy as np
 from smartredis import Client
 
 from smartsim import Experiment
-from smartsim._core._install.builder import Device
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
+from smartsim._core._install.builder import Device
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.log import get_logger
 
@@ -60,6 +60,7 @@ if t.TYPE_CHECKING:
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
 else:
     _TemporaryDirectory = tempfile.TemporaryDirectory
+
 
 class _VerificationTempDir(_TemporaryDirectory):
     """A Temporary directory to be used as a context manager that will only
@@ -232,7 +233,12 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
         ) from e
 
     client.set_model_from_file(
-        "keras-fcn", model_path, "TF", device=device.value.upper(), inputs=inputs, outputs=outputs
+        "keras-fcn",
+        model_path,
+        "TF",
+        device=device.value.upper(),
+        inputs=inputs,
+        outputs=outputs,
     )
     client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
     client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
