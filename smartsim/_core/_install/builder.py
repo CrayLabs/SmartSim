@@ -54,9 +54,11 @@ from subprocess import SubprocessError
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 
+
 class Device(enum.Enum):
     CPU = "cpu"
     GPU = "gpu"
+
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")

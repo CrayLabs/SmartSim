@@ -105,7 +105,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_device(device: Device) -> str:
-        #device = t.cast(t.Literal["CPU", "GPU"], device.upper())
+        # device = t.cast(t.Literal["CPU", "GPU"], device.upper())
         if device not in Device:
             raise ValueError("Device argument must start with either CPU or GPU")
         return device.value
