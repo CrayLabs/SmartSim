@@ -33,8 +33,8 @@ import typing as t
 import warnings
 from os import path as osp
 
-from .._core.utils.helpers import cat_arg_and_value, init_default
 from .._core._install.builder import Device
+from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings

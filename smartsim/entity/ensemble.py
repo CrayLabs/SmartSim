@@ -30,8 +30,8 @@ from os import getcwd
 
 from tabulate import tabulate
 
-from .._core.utils.helpers import init_default
 from .._core._install.builder import Device
+from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
     SmartSimError,

@@ -27,8 +27,8 @@
 import typing as t
 from pathlib import Path
 
-from .._core.utils import init_default
 from .._core._install.builder import Device
+from .._core.utils import init_default
 from ..error import SSUnsupportedError
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
