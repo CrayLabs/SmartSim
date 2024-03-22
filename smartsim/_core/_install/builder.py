@@ -503,7 +503,7 @@ class RedisAIBuilder(Builder):
         return self.rai_build_path / f"deps/{os_}-{arch}-{device.value}"
 
     def _get_deps_to_fetch_for(
-        self, device: Device
+        self, device: str
     ) -> t.Tuple[_RAIBuildDependency, ...]:
         os_, arch = self._platform
         # TODO: It would be nice if the backend version numbers were declared
@@ -516,11 +516,11 @@ class RedisAIBuilder(Builder):
         fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
         if self.fetch_torch:
             pt_dep = _choose_pt_variant(os_)
-            fetchable_deps.append(pt_dep(arch, device.value, "2.0.1"))
+            fetchable_deps.append(pt_dep(arch, Device(device), "2.0.1"))
         if self.fetch_tf:
-            fetchable_deps.append(_TFArchive(os_, arch, device.value, "2.13.1"))
+            fetchable_deps.append(_TFArchive(os_, arch, Device(device), "2.13.1"))
         if self.fetch_onnx:
-            fetchable_deps.append(_ORTArchive(os_, device.value, "1.16.3"))
+            fetchable_deps.append(_ORTArchive(os_, Device(device), "1.16.3"))
 
         return tuple(fetchable_deps)
 
@@ -685,7 +685,7 @@ class RedisAIBuilder(Builder):
         deps_dir.mkdir(parents=True, exist_ok=True)
         if any(deps_dir.iterdir()):
             raise BuildError("RAI build dependency directory is not empty")
-        to_fetch = self._get_deps_to_fetch_for(device)
+        to_fetch = self._get_deps_to_fetch_for(device.value)
         placed_paths = _threaded_map(
             _place_rai_dep_at(deps_dir, self.verbose), to_fetch
         )
