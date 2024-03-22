@@ -243,22 +243,22 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
-    def set_node_feature(self, node_feature_list: t.Union[str, t.List[str]]) -> None:
-        """Specify the hostlist for this job
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
 
-        This sets ``--nodelist``
+        This sets ``--constraint``
 
-        :param host_list: hosts to launch on
-        :type host_list: str | list[str]
+        :param feature_list: node feature to launch on
+        :type feature_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
-        if isinstance(node_feature_list, str):
-            node_feature_list = [node_feature_list.strip()]
-        elif not all(isinstance(feature, str) for feature in node_feature_list):
+        if isinstance(feature_list, str):
+            feature_list = [feature_list.strip()]
+        elif not all(isinstance(feature, str) for feature in feature_list):
             raise TypeError(
-                "node_feature_list argument must be string or list of strings"
+                "node_feature argument must be string or list of strings"
             )
-        self.run_args["C"] = ",".join(node_feature_list)
+        self.run_args["C"] = ",".join(feature_list)
 
     @staticmethod
     def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
