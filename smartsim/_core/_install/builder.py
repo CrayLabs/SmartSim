@@ -531,7 +531,7 @@ class RedisAIBuilder(Builder):
         :type device: str
         """
         rai_deps_path = sorted(
-            self.rai_build_path.glob(os.path.join("deps", f"*{device}*"))
+            self.rai_build_path.glob(os.path.join("deps", f"*{device.value}*"))
         )
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
@@ -836,7 +836,7 @@ class _WebZip(_ExtractableWebArchive):
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
     architecture: Architecture
-    device: Device
+    device: str
     version: str
 
     @staticmethod
@@ -868,7 +868,7 @@ class _PTArchiveLinux(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.GPU:
+        if self.device == Device.GPU.value:
             pt_build = "cu117"
         else:
             pt_build = Device.CPU.value
@@ -890,7 +890,7 @@ class _PTArchiveMacOSX(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.GPU:
+        if self.device == Device.GPU.value:
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
             pt_build = Device.CPU.value
@@ -924,7 +924,7 @@ def _choose_pt_variant(
 class _TFArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
     architecture: Architecture
-    device: Device
+    device: str
     version: str
 
     @staticmethod
@@ -948,9 +948,9 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_device = self.device
         elif self.os_ == OperatingSystem.DARWIN:
             tf_os = "darwin"
-            if self.device == Device.GPU:
+            if self.device == Device.GPU.value:
                 raise BuildError("RedisAI does not currently support GPU on Macos")
-            tf_device = Device.CPU
+            tf_device = Device.CPU.value
         else:
             raise BuildError("Unexpected OS for TF Archive: {self.os_}")
         return (
@@ -973,7 +973,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 @dataclass(frozen=True)
 class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
-    device: Device
+    device: str
     version: str
 
     @staticmethod
@@ -992,12 +992,12 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
         if self.os_ == OperatingSystem.LINUX:
             ort_os = "linux"
             ort_arch = "x64"
-            ort_build = "-gpu" if self.device == Device.GPU else ""
+            ort_build = "-gpu" if self.device == Device.GPU.value else ""
         elif self.os_ == OperatingSystem.DARWIN:
             ort_os = "osx"
             ort_arch = "x86_64"
             ort_build = ""
-            if self.device == Device.GPU:
+            if self.device == Device.GPU.value:
                 raise BuildError("RedisAI does not currently support GPU on Macos")
         else:
             raise BuildError("Unexpected OS for TF Archive: {self.os_}")
