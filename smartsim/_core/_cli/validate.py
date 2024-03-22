@@ -285,7 +285,7 @@ def _test_torch_install(client: Client, device: Device) -> None:
     traced = torch.jit.trace(net, forward_input)  # type: ignore[no-untyped-call]
 
     buffer = io.BytesIO()
-    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
+    torch.jit.save(traced, buffer)
     model = buffer.getvalue()
 
     client.set_model("torch-nn", model, backend="TORCH", device=device.value.upper())
