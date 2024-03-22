@@ -246,7 +246,7 @@ class SrunSettings(RunSettings):
     def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
         """Specify the node feature for this job
 
-        This sets ``--C``
+        This sets ``-C``
 
         :param feature_list: node feature to launch on
         :type feature_list: str | list[str]
