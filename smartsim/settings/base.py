@@ -325,6 +325,19 @@ class RunSettings(SettingsBase):
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
 
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        :param feature_list: node feature to launch on
+        :type feature_list: str | list[str]
+        """
+        logger.warning(
+            (
+                "Feature specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
     @staticmethod
     def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format

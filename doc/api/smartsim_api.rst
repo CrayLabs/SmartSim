@@ -111,6 +111,7 @@ steps to a batch.
 .. autosummary::
 
     SrunSettings.set_nodes
+    SrunSettings.set_node_feature
     SrunSettings.set_tasks
     SrunSettings.set_tasks_per_node
     SrunSettings.set_walltime
