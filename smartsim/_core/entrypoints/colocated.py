@@ -255,9 +255,8 @@ def main(
                 raise SSInternalError(
                     "Failed to set model or script, could not connect to database"
                 ) from ex
-            finally:
-                # Make sure we don't keep this around
-                del client
+            # Make sure we don't keep this around
+            del client
 
     except Exception as e:
         cleanup()
