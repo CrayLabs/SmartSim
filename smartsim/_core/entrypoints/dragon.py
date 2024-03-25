@@ -35,15 +35,13 @@ from types import FrameType
 
 import zmq
 
-import smartsim._core.utils.helpers as _helpers
+from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from smartsim._core.schemas import (
     DragonBootstrapRequest,
     DragonBootstrapResponse,
     DragonShutdownResponse,
 )
-from smartsim._core.schemas.dragonRequests import request_serializer
-from smartsim._core.schemas.dragonResponses import response_serializer
 from smartsim._core.utils.network import get_best_interface_and_address
 
 # kill is not catchable
@@ -95,14 +93,15 @@ def run(dragon_head_address: str) -> None:
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend()
 
+    server = dragonSockets.as_server(dragon_head_socket)
+
     while not SHUTDOWN_INITIATED:
         print(f"Listening to {dragon_head_address}")
-        req = dragon_head_socket.recv_json()
+        req = server.recv()
         print(f"Received request: {req}")
-        drg_req = request_serializer.deserialize_from_json(str(req))
-        resp = dragon_backend.process_request(drg_req)
+        resp = dragon_backend.process_request(req)
         print(f"Sending response {resp}", flush=True)
-        dragon_head_socket.send_json(response_serializer.serialize_to_json(resp))
+        server.send(resp)
         if isinstance(resp, DragonShutdownResponse):
             SHUTDOWN_INITIATED = True
 
@@ -122,17 +121,10 @@ def main(args: argparse.Namespace) -> int:
 
         launcher_socket = context.socket(zmq.REQ)
         launcher_socket.connect(args.launching_address)
+        client = dragonSockets.as_client(launcher_socket)
 
-        response = (
-            _helpers.start_with(DragonBootstrapRequest(address=dragon_head_address))
-            .then(request_serializer.serialize_to_json)
-            .then(launcher_socket.send_json)
-            .then(lambda _: launcher_socket.recv_json())
-            .then(str)
-            .then(response_serializer.deserialize_from_json)
-            .get_result()
-        )
-
+        client.send(DragonBootstrapRequest(address=dragon_head_address))
+        response = client.recv()
         if not isinstance(response, DragonBootstrapResponse):
             raise ValueError(
                 "Could not receive connection confirmation from launcher. Aborting."

@@ -34,11 +34,10 @@ from smartsim._core.schemas.types import NonEmptyStr
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
 
+request_registry = _utils.SchemaRegistry["DragonRequest"]()
+
 
 class DragonRequest(BaseModel): ...
-
-
-request_serializer = _utils.SchemaSerializer[str, DragonRequest]("request_type")
 
 
 class DragonRunRequestView(DragonRequest):
@@ -55,7 +54,7 @@ class DragonRunRequestView(DragonRequest):
     pmi_enabled: bool = True
 
 
-@request_serializer.register("run")
+@request_registry.register("run")
 class DragonRunRequest(DragonRunRequestView):
     current_env: t.Dict[str, t.Optional[str]] = {}
 
@@ -63,24 +62,24 @@ class DragonRunRequest(DragonRunRequestView):
         return str(DragonRunRequestView.parse_obj(self.dict(exclude={"current_env"})))
 
 
-@request_serializer.register("update_status")
+@request_registry.register("update_status")
 class DragonUpdateStatusRequest(DragonRequest):
     step_ids: t.List[NonEmptyStr]
 
 
-@request_serializer.register("stop")
+@request_registry.register("stop")
 class DragonStopRequest(DragonRequest):
     step_id: NonEmptyStr
 
 
-@request_serializer.register("handshake")
+@request_registry.register("handshake")
 class DragonHandshakeRequest(DragonRequest): ...
 
 
-@request_serializer.register("bootstrap")
+@request_registry.register("bootstrap")
 class DragonBootstrapRequest(DragonRequest):
     address: NonEmptyStr
 
 
-@request_serializer.register("shutdown")
+@request_registry.register("shutdown")
 class DragonShutdownRequest(DragonRequest): ...

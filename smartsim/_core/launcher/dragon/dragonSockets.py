@@ -26,43 +26,31 @@
 
 import typing as t
 
-from pydantic import BaseModel
+from smartsim._core.schemas import dragonRequests as _dragonRequests
+from smartsim._core.schemas import dragonResponses as _dragonResponses
+from smartsim._core.schemas import utils as _utils
 
-import smartsim._core.schemas.utils as _utils
-from smartsim._core.schemas.types import NonEmptyStr
-
-# Black and Pylint disagree about where to put the `...`
-# pylint: disable=multiple-statements
-
-response_registry = _utils.SchemaRegistry["DragonResponse"]()
+if t.TYPE_CHECKING:
+    from zmq.sugar.socket import Socket
 
 
-class DragonResponse(BaseModel):
-    error_message: t.Optional[str] = None
+def as_server(
+    socket: "Socket[t.Any]",
+) -> _utils.SocketSchemaTranslator[
+    _dragonResponses.DragonResponse,
+    _dragonRequests.DragonRequest,
+]:
+    return _utils.SocketSchemaTranslator(
+        socket, _dragonResponses.response_registry, _dragonRequests.request_registry
+    )
 
 
-@response_registry.register("run")
-class DragonRunResponse(DragonResponse):
-    step_id: NonEmptyStr
-
-
-@response_registry.register("status_update")
-class DragonUpdateStatusResponse(DragonResponse):
-    # status is a dict: {step_id: (is_alive, returncode)}
-    statuses: t.Mapping[NonEmptyStr, t.Tuple[NonEmptyStr, t.Optional[t.List[int]]]] = {}
-
-
-@response_registry.register("stop")
-class DragonStopResponse(DragonResponse): ...
-
-
-@response_registry.register("handshake")
-class DragonHandshakeResponse(DragonResponse): ...
-
-
-@response_registry.register("bootstrap")
-class DragonBootstrapResponse(DragonResponse): ...
-
-
-@response_registry.register("shutdown")
-class DragonShutdownResponse(DragonResponse): ...
+def as_client(
+    socket: "Socket[t.Any]",
+) -> _utils.SocketSchemaTranslator[
+    _dragonRequests.DragonRequest,
+    _dragonResponses.DragonResponse,
+]:
+    return _utils.SocketSchemaTranslator(
+        socket, _dragonRequests.request_registry, _dragonResponses.response_registry
+    )
