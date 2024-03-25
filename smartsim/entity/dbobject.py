@@ -47,7 +47,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         name: str,
         func: t.Optional[_DBObjectFuncT],
         file_path: t.Optional[str],
-        device: Device,
+        device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
@@ -104,11 +104,12 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         return file_path
 
     @staticmethod
-    def _check_device(device: Device) -> str:
+    def _check_device(device: str) -> str:
         # device = t.cast(t.Literal["CPU", "GPU"], device.upper())
-        if device not in Device:
+        print(f"naur: {device}")
+        if device.lower() not in (member.value for member in Device):
             raise ValueError("Device argument must start with either CPU or GPU")
-        return device.value
+        return device
 
     def _enumerate_devices(self) -> t.List[str]:
         """Enumerate devices for a DBObject
@@ -131,16 +132,16 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_devices(
-        device: Device,
+        device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
-        if device.value.upper() == "CPU" and devices_per_node > 1:
+        if device == Device.CPU.value and devices_per_node > 1:
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
 
-        if device.value.upper() == "CPU" and first_device > 0:
+        if device == Device.CPU.value and first_device > 0:
             raise SSUnsupportedError(
                 "Cannot set first_device>0 if CPU is specified under devices"
             )
@@ -148,7 +149,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         if devices_per_node == 1:
             return
 
-        if ":" in device.value:
+        if ":" in device:
             msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
             msg += f"the device was set to {device} and \
                 devices_per_node=={devices_per_node}"
@@ -161,7 +162,7 @@ class DBScript(DBObject[str]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: Device = Device.CPU,
+        device: str = Device.CPU.value,
         devices_per_node: int = 1,
         first_device: int = 0,
     ):

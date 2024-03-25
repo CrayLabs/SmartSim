@@ -703,8 +703,9 @@ class RedisAIBuilder(Builder):
         :param device: cpu or cpu
         :type device: str
         """
+        print(f"plz: {device.value}")
         self.rai_install_path = self.rai_build_path.joinpath(
-            f"install-{device.value.upper()}"
+            f"install-{device.value}"
         ).resolve()
         rai_lib = self.rai_install_path / "redisai.so"
         rai_backends = self.rai_install_path / "backends"
@@ -942,7 +943,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_arch = "x86_64"
         else:
             raise BuildError(
-                "Unexpected Architecture for TF Archive: {self.architecture}"
+                f"Unexpected Architecture for TF Archive: {self.architecture}"
             )
 
         if self.os_ == OperatingSystem.LINUX:
@@ -954,7 +955,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
                 raise BuildError("RedisAI does not currently support GPU on Macos")
             tf_device = Device.CPU.value
         else:
-            raise BuildError("Unexpected OS for TF Archive: {self.os_}")
+            raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
             f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
