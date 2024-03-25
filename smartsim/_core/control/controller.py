@@ -358,7 +358,7 @@ class Controller:
         :param entity: Entity instance
         :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
         """
-        telem_out, telem_err = job_step.get_output_files()
+        historical_out, historical_err = job_step.get_output_files()
         entity_out = osp.join(entity.path, f"{entity.name}.out")
         entity_err = osp.join(entity.path, f"{entity.name}.err")
 
@@ -366,8 +366,8 @@ class Controller:
         if osp.islink(entity_out) or osp.islink(entity_err):
             os.unlink(entity_out)
             os.unlink(entity_err)
-        os.symlink(telem_out, entity_out)
-        os.symlink(telem_err, entity_err)
+        os.symlink(historical_out, entity_out)
+        os.symlink(historical_err, entity_err)
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
