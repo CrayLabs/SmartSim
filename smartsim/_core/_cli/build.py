@@ -339,10 +339,10 @@ def _assess_python_env(
 
 
 def _format_incompatible_python_env_message(
-    missing: t.Iterable[str], conflicting: t.Iterable[str]
+    missing: t.Collection[str], conflicting: t.Collection[str]
 ) -> str:
     indent = "\n\t"
-    fmt_list: t.Callable[[str, t.Iterable[str]], str] = lambda n, l: (
+    fmt_list: t.Callable[[str, t.Collection[str]], str] = lambda n, l: (
         f"{n}:{indent}{indent.join(l)}" if l else ""
     )
     missing_str = fmt_list("Missing", missing)
