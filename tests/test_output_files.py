@@ -24,11 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import pathlib
 
 import pytest
-import os
-
 
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
@@ -55,7 +54,6 @@ orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
     [
         pytest.param(Model("test_model", {}, "", rs)),
         pytest.param(ens),
-
     ],
 )
 def test_get_output_files_with_create_job_step(entity, test_dir):
@@ -79,7 +77,6 @@ def test_get_output_files_no_status_dir(test_dir):
     [
         pytest.param(Model("test_model", {}, "", rs)),
         pytest.param(ens),
-
     ],
 )
 def test_symlink(entity, test_dir):
@@ -89,5 +86,9 @@ def test_symlink(entity, test_dir):
     controller.symlink(step, entity)
     assert os.path.islink(os.path.join(entity.path, f"{entity.name}.out"))
     assert os.path.islink(os.path.join(entity.path, f"{entity.name}.err"))
-    assert os.readlink(os.path.join(entity.path, f"{entity.name}.out")) ==  str(status_dir / entity.name / (entity.name + ".out"))
-    assert os.readlink(os.path.join(entity.path, f"{entity.name}.err")) ==  str(status_dir / entity.name / (entity.name + ".err"))
+    assert os.readlink(os.path.join(entity.path, f"{entity.name}.out")) == str(
+        status_dir / entity.name / (entity.name + ".out")
+    )
+    assert os.readlink(os.path.join(entity.path, f"{entity.name}.err")) == str(
+        status_dir / entity.name / (entity.name + ".err")
+    )

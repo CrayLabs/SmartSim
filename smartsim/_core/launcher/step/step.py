@@ -71,8 +71,8 @@ class Step:
         """Return two paths to error and output files based on metadata directory"""
         try:
             output_dir = self.meta["status_dir"]
-        except KeyError:
-            raise KeyError("Status directory for this step has not been set.")
+        except KeyError as exc:
+            raise KeyError("Status directory for this step has not been set.") from exc
         if not osp.exists(output_dir):
             pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
         output = osp.join(output_dir, f"{self.entity_name}.out")

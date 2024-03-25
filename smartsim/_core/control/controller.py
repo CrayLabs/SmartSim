@@ -350,10 +350,19 @@ class Controller:
     @staticmethod
     def symlink(
         job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ):
+    ) -> None:
+        """Symlink output files under .smartsim to the entity output files
+
+        :param job_step: Job step instance
+        :type job_step: Step
+        :param entity: Entity instance
+        :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
+        """
         telem_out, telem_err = job_step.get_output_files()
         entity_out = osp.join(entity.path, f"{entity.name}.out")
         entity_err = osp.join(entity.path, f"{entity.name}.err")
+
+        # check if there is already a link to a previous run
         if osp.islink(entity_out) or osp.islink(entity_err):
             os.unlink(entity_out)
             os.unlink(entity_err)
@@ -473,6 +482,11 @@ class Controller:
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
+
+            # symlink substeps to maintain directory structure
+            for substep, substep_entity in zip(substeps, orchestrator.entities):
+                self.symlink(substep, substep_entity)
+
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -604,7 +618,7 @@ class Controller:
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
-        batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
+        batch_step.meta["status_dir"] = str(telemetry_dir)
 
         substeps = []
         for entity in entity_list.entities:
