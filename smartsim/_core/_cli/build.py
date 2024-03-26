@@ -260,7 +260,9 @@ def check_py_torch_version(versions: Versioner, device_in: Device = Device.CPU) 
             "Attempting to install via `pip`"
         )
         wheel_device = (
-            device_in.value if device_in == Device.CPU else device_suffix.replace("+", "")
+            device_in.value
+            if device_in == Device.CPU
+            else device_suffix.replace("+", "")
         )
         print(f"wheel: {wheel_device}")
         pip(
@@ -365,11 +367,11 @@ def execute(
     verbose = args.v
     keydb = args.keydb
     # cast device input to Device instance
-    try:
-        device: Device = Device(args.device.lower())
-    except ValueError:
-        logger.error(f"Invalid device: {args.device}")
-
+    # try:
+    #     device: Device = Device(args.device.lower())
+    # except ValueError:
+    #     logger.error(f"Invalid device: {args.device}")
+    device: Device = Device(args.device.lower())
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name

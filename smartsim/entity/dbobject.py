@@ -105,9 +105,9 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_device(device: str) -> str:
-        # device = t.cast(t.Literal["CPU", "GPU"], device.upper())
-        print(f"naur: {device}")
-        if device.lower() not in (member.value for member in Device):
+        if not device.lower().startswith(
+            Device.CPU.value
+        ) and not device.lower().startswith(Device.GPU.value):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
@@ -136,12 +136,12 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         devices_per_node: int,
         first_device: int,
     ) -> None:
-        if device == Device.CPU.value and devices_per_node > 1:
+        if device.lower() == Device.CPU.value and devices_per_node > 1:
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
 
-        if device == Device.CPU.value and first_device > 0:
+        if device.lower() == Device.CPU.value and first_device > 0:
             raise SSUnsupportedError(
                 "Cannot set first_device>0 if CPU is specified under devices"
             )
@@ -162,7 +162,7 @@ class DBScript(DBObject[str]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: str = Device.CPU.value,
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ):
@@ -224,7 +224,7 @@ class DBModel(DBObject[bytes]):
         backend: str,
         model: t.Optional[bytes] = None,
         model_file: t.Optional[str] = None,
-        device: Device = Device.CPU,
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,

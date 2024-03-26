@@ -483,7 +483,7 @@ class Model(SmartSimEntity):
         backend: str,
         model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
-        device: Device = Device.CPU,
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -555,7 +555,7 @@ class Model(SmartSimEntity):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: Device = Device.CPU,
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -607,7 +607,7 @@ class Model(SmartSimEntity):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: Device = Device.CPU,
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
