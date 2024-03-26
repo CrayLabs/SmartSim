@@ -209,6 +209,10 @@ class Experiment:
         for model in start_manifest.models:
             if not os.path.isdir(model.path):
                 os.makedirs(model.path)
+        for orch in start_manifest.dbs:
+            if not os.path.isdir(osp.join(self.exp_path, orch.name)):
+                os.makedirs(osp.join(self.exp_path, orch.name))
+            orch.set_path(osp.join(self.exp_path, orch.name))
         try:
             if summary:
                 self._launch_summary(start_manifest)
