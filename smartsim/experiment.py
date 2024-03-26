@@ -578,7 +578,10 @@ class Experiment:
         :return: the created ``Model``
         :rtype: Model
         """
-        path = init_default(osp.join(self.exp_path, name), path, str)
+        if name is None:
+            path = init_default(self.exp_path, path, str)
+        else:
+            path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
             path = osp.join(self.exp_path, name)
         if not os.path.isdir(path):
