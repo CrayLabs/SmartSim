@@ -105,9 +105,8 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_device(device: str) -> str:
-        if not device.lower().startswith(
-            Device.CPU.value
-        ) and not device.lower().startswith(Device.GPU.value):
+        valid_devices = [Device.CPU.value, Device.GPU.value]
+        if not any(device.lower().startswith(dev) for dev in valid_devices):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 

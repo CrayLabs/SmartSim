@@ -367,11 +367,10 @@ def execute(
     verbose = args.v
     keydb = args.keydb
     # cast device input to Device instance
-    # try:
-    #     device: Device = Device(args.device.lower())
-    # except ValueError:
-    #     logger.error(f"Invalid device: {args.device}")
-    device: Device = Device(args.device.lower())
+    try:
+        device: Device = Device(args.device.lower())
+    except ValueError:
+        logger.error(f"Invalid device: {args.device}")
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name

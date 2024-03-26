@@ -473,7 +473,6 @@ class Ensemble(EntityList[Model]):
         :param first_device: first device to use on each host
         :type first_device: int
         """
-        print(f"I wanna know device: {type(device)}")
         db_script = DBScript(
             name=name,
             script=script,
@@ -482,7 +481,6 @@ class Ensemble(EntityList[Model]):
             devices_per_node=devices_per_node,
             first_device=first_device,
         )
-        print("does it get passed")
         dupe = next(
             (
                 db_script.name
