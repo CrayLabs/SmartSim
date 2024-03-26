@@ -163,7 +163,9 @@ def test_rai_builder_will_add_dep_if_backend_requested_wo_duplicates(
     rai_builder = build.RedisAIBuilder(
         build_tf=build_tf, build_torch=build_pt, build_onnx=build_ort
     )
-    requested_backends = rai_builder._get_deps_to_fetch_for(build.Device(device.lower()))
+    requested_backends = rai_builder._get_deps_to_fetch_for(
+        build.Device(device.lower())
+    )
     assert dlpack_dep_presence(requested_backends)
     assert tf_dep_presence(build_tf, requested_backends)
     assert pt_dep_presence(build_pt, requested_backends)
