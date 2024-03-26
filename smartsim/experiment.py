@@ -205,8 +205,14 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
-
         start_manifest = Manifest(*args)
+        for model in start_manifest.models:
+            if not os.path.isdir(model.path):
+                os.makedirs(model.path)
+        for orch in start_manifest.dbs:
+            if not os.path.isdir(osp.join(self.exp_path, orch.name)):
+                os.makedirs(osp.join(self.exp_path, orch.name))
+            orch.set_path(osp.join(self.exp_path, orch.name))
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -578,10 +584,14 @@ class Experiment:
         :return: the created ``Model``
         :rtype: Model
         """
-        path = init_default(getcwd(), path, str)
-
+        if name is None:
+            path = init_default(self.exp_path, path, str)
+        else:
+            path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
-            path = getcwd()
+            path = osp.join(self.exp_path, name)
+        # if not os.path.isdir(path):
+        #     os.makedirs(path)
         if params is None:
             params = {}
 
