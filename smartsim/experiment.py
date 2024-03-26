@@ -581,14 +581,14 @@ class Experiment:
         path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
             path = osp.join(self.exp_path, name)
-        if not os.path.isdir(path): # type: ignore
-            os.makedirs(path) # type: ignore
+        if not os.path.isdir(path):
+            os.makedirs(path)
         if params is None:
             params = {}
 
         try:
             new_model = Model(
-                name, params, path, run_settings, batch_settings=batch_settings # type: ignore
+                name, params, path, run_settings, batch_settings=batch_settings
             )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
