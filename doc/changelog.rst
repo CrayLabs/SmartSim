@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Change default path for entities
 - Add method to specify node features for a Slurm job
 - Colo Orchestrator setup now blocks application start until setup finished
 - ExecArgs handling correction
@@ -32,6 +33,8 @@ Description
 
 Detailed Notes
 
+- The default path for an entity is now the path to the experiment / the
+  entity name. (SmartSim-PR533_)
 - Users can now specify node features for a Slurm job through
   ``SrunSettings.set_node_feature``. The method accepts a string
   or list of strings. (SmartSim-PR529_)
@@ -64,7 +67,7 @@ Detailed Notes
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
-
+.. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524

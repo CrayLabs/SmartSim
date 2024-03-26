@@ -205,8 +205,10 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
-
         start_manifest = Manifest(*args)
+        for model in start_manifest.models:
+            if not os.path.isdir(model.path):
+                os.makedirs(model.path)
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -584,8 +586,8 @@ class Experiment:
             path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
             path = osp.join(self.exp_path, name)
-        if not os.path.isdir(path):
-            os.makedirs(path)
+        # if not os.path.isdir(path):
+        #     os.makedirs(path)
         if params is None:
             params = {}
 
