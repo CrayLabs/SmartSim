@@ -260,6 +260,10 @@ class Config:
     def dragon_log_filename(self) -> str:
         return "dragon_config.log"
 
+    @property
+    def smartsim_key_dir(self) -> str:
+        return os.environ.get("SMARTSIM_KEY_PATH", Path.home() / ".smartsim" / "keys")
+
 
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:
