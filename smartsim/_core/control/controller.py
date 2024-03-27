@@ -71,6 +71,8 @@ from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:
+    from types import FrameType
+
     from ..utils.serialize import TStepLaunchMetaData
 
 
@@ -113,8 +115,15 @@ class Controller:
         execution of all jobs.
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
+
         # register custom signal handler for ^C (SIGINT)
-        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        handle = signal.getsignal(signal.SIGINT)
+        # XXX: THIS IS A DANGEROUS MEMORY LEAK
+        #      Every time this is called a new callback fn is registered
+        #      I need to find a way to make this not keep wrapping itself
+        #      for every new JM.
+        signal.signal(signal.SIGINT, _hacky_signal_handle(self._jobs, handle))
+
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
@@ -132,7 +141,7 @@ class Controller:
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
-            # it may be called seperately
+            # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
@@ -931,3 +940,15 @@ def _look_up_launched_data(
         )
 
     return _unpack_launched_data
+
+
+def _hacky_signal_handle(
+    job_manager: JobManager,
+    callback: t.Union[t.Callable[[int, t.Optional["FrameType"]], None], int, None],
+) -> t.Callable[[int, t.Optional["FrameType"]], None]:
+    def _handle(signo: int, frame: t.Optional["FrameType"]) -> None:
+        job_manager.signal_interrupt(signo, frame)
+        if callable(callback):
+            callback(signo, frame)
+
+    return _handle
