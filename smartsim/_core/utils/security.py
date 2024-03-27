@@ -139,7 +139,6 @@ class KeyManager:
         :param server: flag indicating if executing in context of a client;
         set to `True` to avoid loading server secret key
         :type server: bool"""
-        self._key_dir = pathlib.Path(config.smartsim_key_dir).resolve()
 
         self._as_server = as_server
         self._as_client = as_client
@@ -147,16 +146,10 @@ class KeyManager:
         self._server_base = "server"
         self._client_base = "client"
 
-        self._server_locator = KeyLocator(self._key_dir, self._server_base)
-        self._client_locator = KeyLocator(self._key_dir, self._client_base)
+        key_dir = pathlib.Path(config.smartsim_key_dir).resolve()
 
-    @property
-    def key_dir(self) -> pathlib.Path:
-        """The root path to keys for this experiment
-
-        :returns: The path to the root directory for persisting key files
-        :rtype: pathlib.Path"""
-        return self._key_dir
+        self._server_locator = KeyLocator(key_dir, self._server_base)
+        self._client_locator = KeyLocator(key_dir, self._client_base)
 
     def create_directories(self) -> None:
         """Create the subdirectory structure necessary to hold
@@ -181,10 +174,10 @@ class KeyManager:
         :rtype: KeyPair
         """
         # private keys contain public & private key parts
-        key_path = locator.public
-        if in_context:
-            key_path = locator.private
+        key_path = locator.private if in_context else locator.public
         pub_key, priv_key = zmq.auth.load_certificate(key_path)
+
+        # avoid a `None` value in the private key when it isn't loaded
         return KeyPair(pub_key, priv_key or "")
 
     def _load_keys(self) -> t.Tuple[KeyPair, KeyPair]:
