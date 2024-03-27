@@ -281,7 +281,7 @@ def get_ts() -> int:
     return int(datetime.timestamp(datetime.now()))
 
 
-def encode_cmd(cmd: t.List[str]) -> str:
+def encode_cmd(cmd: t.Sequence[str]) -> str:
     """Transform a standard command list into an encoded string safe for providing as an
     argument to a proxy entrypoint
     """

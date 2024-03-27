@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,30 +24,47 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsSettings import AprunSettings
-from .base import RunSettings, SettingsBase
-from .containers import Container, Singularity
-from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-from .palsSettings import PalsMpiexecSettings
-from .pbsSettings import QsubBatchSettings
-from .slurmSettings import SbatchSettings, SrunSettings
+import typing as t
 
-__all__ = [
-    "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
-    "MpirunSettings",
-    "MpiexecSettings",
-    "OrterunSettings",
-    "QsubBatchSettings",
-    "RunSettings",
-    "SettingsBase",
-    "SbatchSettings",
-    "SrunSettings",
-    "PalsMpiexecSettings",
-    "DragonRunSettings",
-    "Container",
-    "Singularity",
-]
+from pydantic import BaseModel, Field
+
+import smartsim._core.schemas.utils as _utils
+
+# Black and Pylint disagree about where to put the `...`
+# pylint: disable=multiple-statements
+
+response_registry = _utils.SchemaRegistry["DragonResponse"]()
+
+
+class DragonResponse(BaseModel):
+    error_message: t.Optional[str] = None
+
+
+@response_registry.register("run")
+class DragonRunResponse(DragonResponse):
+    step_id: t.Annotated[str, Field(min_length=1)]
+
+
+@response_registry.register("status_update")
+class DragonUpdateStatusResponse(DragonResponse):
+    # status is a dict: {step_id: (is_alive, returncode)}
+    statuses: t.Mapping[
+        t.Annotated[str, Field(min_length=1)],
+        t.Tuple[t.Annotated[str, Field(min_length=1)], t.Optional[t.List[int]]],
+    ] = {}
+
+
+@response_registry.register("stop")
+class DragonStopResponse(DragonResponse): ...
+
+
+@response_registry.register("handshake")
+class DragonHandshakeResponse(DragonResponse): ...
+
+
+@response_registry.register("bootstrap")
+class DragonBootstrapResponse(DragonResponse): ...
+
+
+@response_registry.register("shutdown")
+class DragonShutdownResponse(DragonResponse): ...

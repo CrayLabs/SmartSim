@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,30 +24,33 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsSettings import AprunSettings
-from .base import RunSettings, SettingsBase
-from .containers import Container, Singularity
-from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-from .palsSettings import PalsMpiexecSettings
-from .pbsSettings import QsubBatchSettings
-from .slurmSettings import SbatchSettings, SrunSettings
+import typing as t
 
-__all__ = [
-    "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
-    "MpirunSettings",
-    "MpiexecSettings",
-    "OrterunSettings",
-    "QsubBatchSettings",
-    "RunSettings",
-    "SettingsBase",
-    "SbatchSettings",
-    "SrunSettings",
-    "PalsMpiexecSettings",
-    "DragonRunSettings",
-    "Container",
-    "Singularity",
-]
+from smartsim._core.schemas import dragonRequests as _dragonRequests
+from smartsim._core.schemas import dragonResponses as _dragonResponses
+from smartsim._core.schemas import utils as _utils
+
+if t.TYPE_CHECKING:
+    from zmq.sugar.socket import Socket
+
+
+def as_server(
+    socket: "Socket[t.Any]",
+) -> _utils.SocketSchemaTranslator[
+    _dragonResponses.DragonResponse,
+    _dragonRequests.DragonRequest,
+]:
+    return _utils.SocketSchemaTranslator(
+        socket, _dragonResponses.response_registry, _dragonRequests.request_registry
+    )
+
+
+def as_client(
+    socket: "Socket[t.Any]",
+) -> _utils.SocketSchemaTranslator[
+    _dragonRequests.DragonRequest,
+    _dragonResponses.DragonResponse,
+]:
+    return _utils.SocketSchemaTranslator(
+        socket, _dragonRequests.request_registry, _dragonResponses.response_registry
+    )

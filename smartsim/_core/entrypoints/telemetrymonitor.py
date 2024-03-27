@@ -28,6 +28,7 @@ import argparse
 import json
 import logging
 import os
+import os.path
 import pathlib
 import signal
 import sys
@@ -49,6 +50,7 @@ from watchdog.observers.api import BaseObserver
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
@@ -326,6 +328,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "pbs": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
 
     def init_launcher(self, launcher: str) -> Launcher:
@@ -347,9 +350,15 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         raise ValueError("Launcher type not supported: " + launcher)
 
-    def set_launcher(self, launcher_type: str) -> None:
+    def set_launcher(
+        self, launcher_type: str, exp_dir: t.Union[str, "os.PathLike[str]"]
+    ) -> None:
         """Set the launcher for the experiment"""
         self._launcher = self.init_launcher(launcher_type)
+
+        if isinstance(self._launcher, DragonLauncher):
+            self._launcher.connect_to_dragon(exp_dir)
+
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
 
@@ -370,15 +379,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             self._logger.error("Manifest content error", exc_info=True)
             return
 
+        exp_dir = pathlib.Path(manifest_path).parent.parent.parent
         if self._launcher is None:
-            self.set_launcher(manifest.launcher)
+            self.set_launcher(manifest.launcher, exp_dir)
 
         if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
-
-        exp_dir = pathlib.Path(manifest_path).parent.parent.parent
 
         for run in runs:
             for entity in run.flatten(
@@ -591,6 +599,7 @@ def main(
     )
 
     cooldown_duration = cooldown_duration or CONFIG.telemetry_cooldown
+    logger.warning(cooldown_duration)
     log_handler = LoggingEventHandler(logger)  # type: ignore
     action_handler = ManifestEventHandler(monitor_pattern, logger)
 

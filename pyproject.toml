@@ -78,7 +78,7 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = []
+plugins = ["pydantic.mypy"]
 ignore_errors = false
 
 # Dynamic typing
@@ -122,6 +122,7 @@ module = [
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
   "watchdog",
+  "dragon.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true

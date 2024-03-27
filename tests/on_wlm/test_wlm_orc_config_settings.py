@@ -27,6 +27,9 @@
 import pytest
 
 from smartsim.error import SmartSimError
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -47,6 +50,7 @@ def test_config_methods_on_wlm_single(dbutils, db):
     # successfully execute when given correct key-value pairs
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
+        logger.debug(f"Setting {setting}={value}")
         config_set_method = dbutils.get_config_edit_method(db, setting)
         config_set_method(value)
 
@@ -74,6 +78,7 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
     # successfully execute when given correct key-value pairs
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
+        logger.debug(f"Setting {setting}={value}")
         config_set_method = dbutils.get_config_edit_method(db_cluster, setting)
         config_set_method(value)
 
@@ -83,6 +88,7 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
+                logger.debug(f"Setting {key}={value}")
                 db_cluster.set_db_conf(key, value)
 
     # ensure TypeError is raised when a clustered database's
@@ -91,4 +97,5 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
+                logger.debug(f"Setting {key}={value}")
                 db_cluster.set_db_conf(key, value)

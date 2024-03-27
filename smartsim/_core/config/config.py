@@ -89,6 +89,7 @@ from ..utils.helpers import expand_exe_path
 #  - Default: None
 
 
+# pylint: disable-next=too-many-public-methods
 class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
@@ -151,6 +152,22 @@ class Config:
     @property
     def database_file_parse_interval(self) -> int:
         return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
+
+    @property
+    def dragon_server_path(self) -> t.Optional[str]:
+        return os.getenv("SMARTSIM_DRAGON_SERVER_PATH")
+
+    @property
+    def dragon_server_reconnect_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", "5000"))
+
+    @property
+    def dragon_server_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "5000"))
+
+    @property
+    def dragon_server_startup_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", "-1"))
 
     @property
     def log_level(self) -> str:
@@ -234,6 +251,14 @@ class Config:
     @property
     def telemetry_subdir(self) -> str:
         return ".smartsim/telemetry"
+
+    @property
+    def dragon_default_subdir(self) -> str:
+        return ".smartsim/dragon"
+
+    @property
+    def dragon_log_filename(self) -> str:
+        return "dragon_config.log"
 
 
 @lru_cache(maxsize=128, typed=False)
