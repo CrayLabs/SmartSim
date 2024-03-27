@@ -26,10 +26,9 @@
 
 import typing as t
 
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt
 
 import smartsim._core.schemas.utils as _utils
-from smartsim._core.schemas.types import NonEmptyStr
 
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
@@ -41,16 +40,16 @@ class DragonRequest(BaseModel): ...
 
 
 class DragonRunRequestView(DragonRequest):
-    exe: NonEmptyStr
-    exe_args: t.List[NonEmptyStr] = []
-    path: NonEmptyStr
+    exe: t.Annotated[str, Field(min_length=1)]
+    exe_args: t.List[t.Annotated[str, Field(min_length=1)]] = []
+    path: t.Annotated[str, Field(min_length=1)]
     nodes: PositiveInt = 1
     tasks: PositiveInt = 1
     tasks_per_node: PositiveInt = 1
-    output_file: t.Optional[NonEmptyStr] = None
-    error_file: t.Optional[NonEmptyStr] = None
+    output_file: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
+    error_file: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
     env: t.Dict[str, t.Optional[str]] = {}
-    name: t.Optional[NonEmptyStr]
+    name: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
     pmi_enabled: bool = True
 
 
@@ -64,12 +63,12 @@ class DragonRunRequest(DragonRunRequestView):
 
 @request_registry.register("update_status")
 class DragonUpdateStatusRequest(DragonRequest):
-    step_ids: t.List[NonEmptyStr]
+    step_ids: t.List[t.Annotated[str, Field(min_length=1)]]
 
 
 @request_registry.register("stop")
 class DragonStopRequest(DragonRequest):
-    step_id: NonEmptyStr
+    step_id: t.Annotated[str, Field(min_length=1)]
 
 
 @request_registry.register("handshake")
@@ -78,7 +77,7 @@ class DragonHandshakeRequest(DragonRequest): ...
 
 @request_registry.register("bootstrap")
 class DragonBootstrapRequest(DragonRequest):
-    address: NonEmptyStr
+    address: t.Annotated[str, Field(min_length=1)]
 
 
 @request_registry.register("shutdown")

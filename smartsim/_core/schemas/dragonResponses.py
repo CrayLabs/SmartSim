@@ -26,10 +26,9 @@
 
 import typing as t
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import smartsim._core.schemas.utils as _utils
-from smartsim._core.schemas.types import NonEmptyStr
 
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
@@ -43,13 +42,16 @@ class DragonResponse(BaseModel):
 
 @response_registry.register("run")
 class DragonRunResponse(DragonResponse):
-    step_id: NonEmptyStr
+    step_id: t.Annotated[str, Field(min_length=1)]
 
 
 @response_registry.register("status_update")
 class DragonUpdateStatusResponse(DragonResponse):
     # status is a dict: {step_id: (is_alive, returncode)}
-    statuses: t.Mapping[NonEmptyStr, t.Tuple[NonEmptyStr, t.Optional[t.List[int]]]] = {}
+    statuses: t.Mapping[
+        t.Annotated[str, Field(min_length=1)],
+        t.Tuple[t.Annotated[str, Field(min_length=1)], t.Optional[t.List[int]]],
+    ] = {}
 
 
 @response_registry.register("stop")
