@@ -150,16 +150,12 @@ class KeyManager:
         self._server_locator = KeyLocator(self._key_dir, self._server_base)
         self._client_locator = KeyLocator(self._key_dir, self._client_base)
 
-    def create_directories(self) -> None:
-        """Prepare the directory structure for key persistence"""
-        self._prepare_file_system()
-
     @property
     def key_dir(self) -> pathlib.Path:
         """The root path to keys for this experiment"""
         return self._key_dir
 
-    def _prepare_file_system(self) -> None:
+    def create_directories(self) -> None:
         """Create the subdirectory structure necessary to hold
         the public and private key pairs for servers & clients"""
         for locator in [self._server_locator, self._client_locator]:
