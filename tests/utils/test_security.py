@@ -2,7 +2,7 @@ import pathlib
 import pytest
 
 from smartsim._core.config.config import get_config
-from smartsim._core.utils.security import KeyManager
+from smartsim._core.utils.security import KeyManager, KeyLocator
 
 
 def test_key_manager_dir_preparation(
@@ -14,20 +14,21 @@ def test_key_manager_dir_preparation(
         ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
 
         cfg = get_config()
-        km = KeyManager(cfg, server=True)
+        km = KeyManager(cfg)
+        km.create_directories()
 
-        key_dirs = [
-            pathlib.Path(test_dir) / "server" / "pub",
-            pathlib.Path(test_dir) / "server" / "priv",
-            pathlib.Path(test_dir) / "client" / "pub",
-            pathlib.Path(test_dir) / "client" / "priv",
-        ]
+        # verify the expected paths are created after initializing the key manager
+        server_locator = KeyLocator(pathlib.Path(test_dir), "server")
+        client_locator = KeyLocator(pathlib.Path(test_dir), "client")
 
-        for dir in key_dirs:
-            assert dir.exists()
+        locators = [server_locator, client_locator]
+
+        for locator in locators:
+            assert locator.public_dir.exists()
+            assert locator.private_dir.exists()
 
 
-def test_key_manager_get_existing_keys(
+def test_key_manager_get_existing_keys_only(
     test_dir: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Ensure the key manager loads only existing keys when
@@ -36,14 +37,14 @@ def test_key_manager_get_existing_keys(
         ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
 
         cfg = get_config()
-        km = KeyManager(cfg, server=True)
+        km = KeyManager(cfg)
 
         key_set = km.get_keys(no_create=True)
         assert key_set[0] is None
         assert key_set[1] is None
 
 
-def test_key_manager_get_or_create_keys(
+def test_key_manager_get_or_create_keys_default(
     test_dir: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Ensure the key manager creates keys when none can be loaded"""
@@ -54,8 +55,13 @@ def test_key_manager_get_or_create_keys(
         km = KeyManager(cfg)
 
         key_set = km.get_keys()
-        assert key_set[0] is not None
-        assert key_set[1] is not None
+
+        assert key_set[0].public is not None
+        assert key_set[1].public is not None
+
+        # default behavior will only return public keys
+        assert not key_set[0].private
+        assert not key_set[1].private
 
 
 def test_key_manager_server_context(
@@ -67,7 +73,7 @@ def test_key_manager_server_context(
         ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
 
         cfg = get_config()
-        km = KeyManager(cfg, server=True)
+        km = KeyManager(cfg, as_server=True)
 
         server_keyset, client_keyset = km.get_keys()
 
@@ -76,7 +82,6 @@ def test_key_manager_server_context(
 
         assert len(client_keyset.public) > 0
         assert len(client_keyset.private) == 0
-
 
 
 def test_key_manager_client_context(
@@ -88,7 +93,7 @@ def test_key_manager_client_context(
         ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
 
         cfg = get_config()
-        km = KeyManager(cfg, client=True)
+        km = KeyManager(cfg, as_client=True)
 
         server_keyset, client_keyset = km.get_keys()
 
