@@ -97,3 +97,24 @@ def get_best_interface_and_address() -> t.Tuple[t.Optional[str], t.Optional[str]
         if any(interface.startswith(if_prefix) for if_prefix in known_ifs):
             return interface, get_ip_from_interface(interface)
     return None, None
+
+
+def find_free_port(start: int = 0) -> int:
+    """A 'good enough' way to find an open port to bind to
+
+    :param start: The first port number to consider
+    :type start: int
+    :returns: The first open port found
+    :rtype: int
+    """
+    port_num = -1
+    while port_num < 0:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            try:
+                sock.bind(("0.0.0.0", start))
+                _, port = sock.getsockname()
+                port_num = int(port)
+            except Exception:
+                # swallow connection exception; test if the next port is open
+                start += 1
+    return port_num
