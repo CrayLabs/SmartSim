@@ -366,8 +366,14 @@ class Controller:
         if osp.islink(entity_out) or osp.islink(entity_err):
             os.unlink(entity_out)
             os.unlink(entity_err)
-        os.symlink(historical_out, entity_out)
-        os.symlink(historical_err, entity_err)
+
+        try:
+            os.symlink(historical_out, entity_out)
+            os.symlink(historical_err, entity_err)
+        except FileNotFoundError as fnf:
+            raise FileNotFoundError(
+                f"Output files for {entity.name} could not be found. Symlinking files failed."
+            ) from fnf
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
@@ -556,8 +562,8 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
+            self.symlink_output_files(job_step, entity)
             try:
-                self.symlink_output_files(job_step, entity)
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
                 msg = f"An error occurred when launching {entity.name} \n"
@@ -568,8 +574,8 @@ class Controller:
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
+            self.symlink_output_files(job_step, entity)
             try:
-                self.symlink_output_files(job_step, entity)
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
                 msg = f"An error occurred when launching {entity.name} \n"

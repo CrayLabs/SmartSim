@@ -181,7 +181,7 @@ def symlink_with_create_job_step(test_dir, entity):
     exp_dir = pathlib.Path(test_dir)
     status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
     step = controller._create_job_step(entity, status_dir)
-    controller.symlink(step, entity)
+    controller.symlink_output_files(step, entity)
     assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
     assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
     assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
@@ -202,7 +202,7 @@ def test_batch_symlink(entity, test_dir):
     status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
     batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
     for step in substeps:
-        slurm_controller.symlink(step, entity)
+        slurm_controller.symlink_output_files(step, entity)
         assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
         assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
         assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
@@ -211,3 +211,13 @@ def test_batch_symlink(entity, test_dir):
         assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.err")) == str(
             status_dir / entity.name / step.entity_name / (step.entity_name + ".err")
         )
+
+
+def test_symlink_error(test_dir):
+    """Ensure FileNotFoundError is thrown"""
+    bad_model = Model("bad_model", {}, pathlib.Path(test_dir, "badpath"), RunSettings("echo"))
+    telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
+    bad_step = controller._create_job_step(bad_model, telem_dir)
+    with pytest.raises(FileNotFoundError):
+        controller.symlink_output_files(bad_step, bad_model)
+
