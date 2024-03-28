@@ -49,7 +49,11 @@ class KeyLocator:
     """Determines the paths to use when persisting a `KeyPair` to disk"""
 
     def __init__(
-        self, root_dir: pathlib.Path, filename: str, separate_keys: bool = True
+        self,
+        root_dir: pathlib.Path,
+        filename: str,
+        category: str,
+        separate_keys: bool = True,
     ) -> None:
         """Initiailize a `KeyLocator`
 
@@ -57,8 +61,8 @@ class KeyLocator:
         :type root_dir: pathlib.Path
         :param filename: the stem name of the key file
         :type filename: str
-        :param separate_keys: flag indicating if keys should be separated into
-        public and private subdirectories
+        :param separate_keys: flag indicating if public and private keys should
+        be persisted in separate, corresponding directories
         :type separate_keys: bool
 
         """
@@ -69,15 +73,13 @@ class KeyLocator:
         self._private_extension = "key_secret"
 
         self._key_root_dir = root_dir
+        """Path to the root directory containing key files"""
         self._filename = filename
+        """Base name for key files"""
         self._separate_keys = separate_keys
-
-    _key_root_dir: pathlib.Path
-    """Path to the root directory containing key files"""
-    _filename: str
-    """base name for key files"""
-    _separate_keys: bool
-    """Flag indicating if public and private keys are persisted separately"""
+        """Flag indicating if public and private keys are persisted separately"""
+        self._category = category
+        """(optional) Category name used to further separate key locations"""
 
     @property
     def public_dir(self) -> pathlib.Path:
@@ -103,7 +105,7 @@ class KeyLocator:
     def public(self) -> pathlib.Path:
         """Full target path of the public key file"""
         # combine the root and key type (e.g. /foo/bar + /server)
-        path = self._key_root_dir / self._filename
+        path = self._key_root_dir / self._category  # self._filename
         # combine the pub/priv key subdir if necessary (e.g. /foo/bar + /pub)
         if self._separate_keys:
             path = path / self._public_subdir
@@ -114,7 +116,7 @@ class KeyLocator:
     def private(self) -> pathlib.Path:
         """Full target path of the private key file"""
         # combine the root and key type (e.g. /foo/bar + /server)
-        path = self._key_root_dir / self._filename
+        path = self._key_root_dir / self._category
         # combine the pub/priv key subdir if necessary (e.g. /foo/bar + /priv)
         if self._separate_keys:
             path = path / self._private_subdir
@@ -144,8 +146,8 @@ class KeyManager:
 
         key_dir = pathlib.Path(config.smartsim_key_path).resolve()
 
-        self._server_locator = KeyLocator(key_dir, self._server_base)
-        self._client_locator = KeyLocator(key_dir, self._client_base)
+        self._server_locator = KeyLocator(key_dir, "smartsim", self._server_base)
+        self._client_locator = KeyLocator(key_dir, "smartsim", self._client_base)
 
     def create_directories(self) -> None:
         """Create the subdirectory structure necessary to hold
