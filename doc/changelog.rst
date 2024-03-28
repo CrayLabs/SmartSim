@@ -67,6 +67,8 @@ Detailed Notes
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 - The CI will fail static analysis if common erroneous truthy checks are
   detected. (SmartSim-PR524_)
+- The CI will fail static analysis if a local variable used while potentially
+  undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
@@ -74,6 +76,7 @@ Detailed Notes
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
+.. _SmartSim-PR521: https://github.com/CrayLabs/SmartSim/pull/521
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
 .. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
