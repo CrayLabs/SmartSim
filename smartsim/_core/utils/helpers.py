@@ -29,6 +29,7 @@ A file of helper functions for SmartSim
 """
 import base64
 import os
+import signal
 import typing as t
 import uuid
 from datetime import datetime
@@ -37,6 +38,9 @@ from pathlib import Path
 from shutil import which
 
 from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
+
+if t.TYPE_CHECKING:
+    from types import FrameType
 
 
 def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
@@ -302,3 +306,65 @@ def decode_cmd(encoded_cmd: str) -> t.List[str]:
     cleaned_cmd = decoded_cmd.decode("ascii").split("|")
 
     return cleaned_cmd
+
+
+@t.final
+class SignalInterceptionStack:
+    """Registers a stack of unique callables to be called when a signal is
+    received before calling the original signal handler.
+    """
+
+    def __init__(
+        self,
+        signalnum: int,
+        callbacks: t.Optional[
+            t.Iterable[t.Callable[[int, t.Optional["FrameType"]], t.Any]]
+        ] = None,
+    ) -> None:
+        """Set up a ``SignalInterceptionStack`` for particular signal number.
+
+        :param signalnum: The signal number to intercept
+        :type signalnum: int
+        :param callbacks: A iterable of functions to call upon receiving the signal
+        :type callbacks: t.Iterable[t.Callable[[int, FrameType | None], t.Any]]
+        """
+        self._callbacks = list(set(callbacks)) if callbacks else []
+        self._original = signal.signal(signalnum, self)
+
+    @classmethod
+    def push(
+        cls, signalnum: int, fn: t.Callable[[int, t.Optional["FrameType"]], t.Any]
+    ) -> "SignalInterceptionStack":
+        """Append a new callable to an existing ``SignalInterceptionStack`` or
+        create a new one for a particular signal number.
+
+        :param signalnum: A signal number
+        :type signalnum: int
+        :param fn: A callable to add to the unique signal stack
+        :type fn: t.Callable[[int, FrameType | None], t.Any]
+        :returns: The signal interception stack to which the callback was
+                  appended
+        :rtype: SignalInterceptionStack
+        """
+        handler = signal.getsignal(signalnum)
+        if isinstance(handler, cls):
+            # pylint: disable=protected-access
+            if fn not in handler._callbacks:
+                handler._callbacks.append(fn)
+            # pylint: enable=protected-access
+            return handler
+        return cls(signalnum, {fn})
+
+    def __call__(self, signalnum: int, frame: t.Optional["FrameType"]) -> None:
+        """Handle the signal on which the interception stack was registered.
+        End by calling the originally registered signal hander (if present).
+
+        :param signalnum: The singal number of the signal being handled
+        :type signalnum: int
+        :param frame: The current stack frame
+        :type frame: FrameType | None
+        """
+        for fn in reversed(self._callbacks):
+            fn(signalnum, frame)
+        if callable(self._original):
+            self._original(signalnum, frame)

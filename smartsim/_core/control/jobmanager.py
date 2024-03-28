@@ -350,9 +350,9 @@ class JobManager:
                         self.db_jobs[dbnode.name].hosts = dbnode.hosts
 
     def signal_interrupt(self, signo: int, _frame: t.Optional[FrameType]) -> None:
+        """Custom handler for whenever SIGINT is received"""
         if not signo:
             logger.warning("Received SIGINT with no signal number")
-        """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():
