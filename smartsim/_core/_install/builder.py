@@ -53,7 +53,7 @@ from subprocess import SubprocessError
 # TODO: check cmake version and use system if possible to avoid conflicts
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
-TDeviceStr = t.Literal["cpu", "gpu"]
+
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -94,6 +94,11 @@ class Architecture(enum.Enum):
             if string in type_.value:
                 return type_
         raise BuildError(f"Unrecognized or unsupported architecture: {string}")
+
+
+class Device(enum.Enum):
+    CPU = "cpu"
+    GPU = "gpu"
 
 
 class OperatingSystem(enum.Enum):
@@ -173,7 +178,7 @@ class Builder:
         raise NotImplementedError
 
     def build_from_git(
-        self, git_url: str, branch: str, device: TDeviceStr = "cpu"
+        self, git_url: str, branch: str, device: Device = Device.CPU
     ) -> None:
         raise NotImplementedError
 
@@ -274,7 +279,7 @@ class DatabaseBuilder(Builder):
         return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
 
     def build_from_git(
-        self, git_url: str, branch: str, device: TDeviceStr = "cpu"
+        self, git_url: str, branch: str, device: Device = Device.CPU
     ) -> None:
         """Build Redis from git
         :param git_url: url from which to retrieve Redis
@@ -480,7 +485,7 @@ class RedisAIBuilder(Builder):
     def fetch_onnx(self) -> bool:
         return self.build_onnx
 
-    def get_deps_dir_path_for(self, device: TDeviceStr) -> Path:
+    def get_deps_dir_path_for(self, device: Device) -> Path:
         def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
             return BuildError(f"Failed to format RedisAI dependency path: {reason}")
 
@@ -497,10 +502,10 @@ class RedisAIBuilder(Builder):
             arch = "arm64v8"
         else:  # pragma: no cover
             raise fail_to_format(f"Unknown architecture: {architecture}")
-        return self.rai_build_path / f"deps/{os_}-{arch}-{device}"
+        return self.rai_build_path / f"deps/{os_}-{arch}-{device.value}"
 
     def _get_deps_to_fetch_for(
-        self, device: TDeviceStr
+        self, device: Device
     ) -> t.Tuple[_RAIBuildDependency, ...]:
         os_, arch = self._platform
         # TODO: It would be nice if the backend version numbers were declared
@@ -521,14 +526,14 @@ class RedisAIBuilder(Builder):
 
         return tuple(fetchable_deps)
 
-    def symlink_libtf(self, device: str) -> None:
+    def symlink_libtf(self, device: Device) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
 
         :param device: cpu or gpu
         :type device: str
         """
         rai_deps_path = sorted(
-            self.rai_build_path.glob(os.path.join("deps", f"*{device}*"))
+            self.rai_build_path.glob(os.path.join("deps", f"*{device.value}*"))
         )
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
@@ -577,7 +582,7 @@ class RedisAIBuilder(Builder):
                 os.symlink(src_file, dst_file)
 
     def build_from_git(
-        self, git_url: str, branch: str, device: TDeviceStr = "cpu"
+        self, git_url: str, branch: str, device: Device = Device.CPU
     ) -> None:
         """Build RedisAI from git
 
@@ -616,14 +621,14 @@ class RedisAIBuilder(Builder):
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
         self._fetch_deps_for(device)
 
-        if self.libtf_dir and device:
+        if self.libtf_dir and device.value:
             self.symlink_libtf(device)
 
         build_cmd = self._rai_build_env_prefix(
             with_pt=self.build_torch,
             with_tf=self.build_tf,
             with_ort=self.build_onnx,
-            extra_env={"GPU": "1" if device == "gpu" else "0"},
+            extra_env={"GPU": "1" if device == Device.GPU else "0"},
         )
 
         if self.torch_dir:
@@ -674,7 +679,7 @@ class RedisAIBuilder(Builder):
             *(f"{key}={val}" for key, val in extra_env.items()),
         ]
 
-    def _fetch_deps_for(self, device: TDeviceStr) -> None:
+    def _fetch_deps_for(self, device: Device) -> None:
         if not self.rai_build_path.is_dir():
             raise BuildError("RedisAI build directory not found")
 
@@ -693,13 +698,13 @@ class RedisAIBuilder(Builder):
                 f"found {len(unique_placed_paths)}"
             )
 
-    def _install_backends(self, device: str) -> None:
+    def _install_backends(self, device: Device) -> None:
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
         :type device: str
         """
         self.rai_install_path = self.rai_build_path.joinpath(
-            f"install-{device}"
+            f"install-{device.value}"
         ).resolve()
         rai_lib = self.rai_install_path / "redisai.so"
         rai_backends = self.rai_install_path / "backends"
@@ -833,7 +838,7 @@ class _WebZip(_ExtractableWebArchive):
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
     architecture: Architecture
-    device: TDeviceStr
+    device: Device
     version: str
 
     @staticmethod
@@ -865,10 +870,10 @@ class _PTArchiveLinux(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == "gpu":
+        if self.device == Device.GPU:
             pt_build = "cu117"
         else:
-            pt_build = "cpu"
+            pt_build = Device.CPU.value
         # pylint: disable-next=line-too-long
         libtorch_archive = (
             f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
@@ -887,10 +892,10 @@ class _PTArchiveMacOSX(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == "gpu":
+        if self.device == Device.GPU:
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
-            pt_build = "cpu"
+            pt_build = Device.CPU.value
             libtorch_archive = f"libtorch-macos-{self.version}.zip"
             root_url = "https://download.pytorch.org/libtorch"
             return f"{root_url}/{pt_build}/{libtorch_archive}"
@@ -902,7 +907,7 @@ class _PTArchiveMacOSX(_PTArchive):
             )
             return f"{root_url}/{libtorch_archive}"
 
-        raise BuildError("Unsupported architecture for Pytorch: {self.architecture}")
+        raise BuildError(f"Unsupported architecture for Pytorch: {self.architecture}")
 
 
 def _choose_pt_variant(
@@ -921,7 +926,7 @@ def _choose_pt_variant(
 class _TFArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
     architecture: Architecture
-    device: TDeviceStr
+    device: Device
     version: str
 
     @staticmethod
@@ -937,7 +942,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_arch = "x86_64"
         else:
             raise BuildError(
-                "Unexpected Architecture for TF Archive: {self.architecture}"
+                f"Unexpected Architecture for TF Archive: {self.architecture}"
             )
 
         if self.os_ == OperatingSystem.LINUX:
@@ -945,14 +950,14 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_device = self.device
         elif self.os_ == OperatingSystem.DARWIN:
             tf_os = "darwin"
-            if self.device == "gpu":
+            if self.device == Device.GPU:
                 raise BuildError("RedisAI does not currently support GPU on Macos")
-            tf_device = "cpu"
+            tf_device = Device.CPU
         else:
-            raise BuildError("Unexpected OS for TF Archive: {self.os_}")
+            raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
-            f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
+            f"libtensorflow-{tf_device.value}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
     @property
@@ -970,7 +975,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 @dataclass(frozen=True)
 class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     os_: OperatingSystem
-    device: TDeviceStr
+    device: Device
     version: str
 
     @staticmethod
@@ -989,15 +994,15 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
         if self.os_ == OperatingSystem.LINUX:
             ort_os = "linux"
             ort_arch = "x64"
-            ort_build = "-gpu" if self.device == "gpu" else ""
+            ort_build = "-gpu" if self.device == Device.GPU else ""
         elif self.os_ == OperatingSystem.DARWIN:
             ort_os = "osx"
             ort_arch = "x86_64"
             ort_build = ""
-            if self.device == "gpu":
+            if self.device == Device.GPU:
                 raise BuildError("RedisAI does not currently support GPU on Macos")
         else:
-            raise BuildError("Unexpected OS for TF Archive: {self.os_}")
+            raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
         return f"{ort_url_base}/{ort_archive}"
 
