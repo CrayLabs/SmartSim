@@ -952,12 +952,12 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_os = "darwin"
             if self.device == Device.GPU:
                 raise BuildError("RedisAI does not currently support GPU on Macos")
-            tf_device = Device.CPU.value
+            tf_device = Device.CPU
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
-            f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
+            f"libtensorflow-{tf_device.value}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
     @property
