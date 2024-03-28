@@ -27,6 +27,7 @@
 import json
 import logging
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 
@@ -59,7 +60,7 @@ def manifest_json(test_dir, config) -> str:
 
 
 def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
-    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
+    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4()))
     serialize.save_launch_manifest(lmb.finalize())
 
     assert manifest_json.is_file()
@@ -71,28 +72,29 @@ def test_serialize_creates_a_manifest_json_file_if_dne(test_dir, manifest_json):
         assert len(manifest["runs"]) == 1
 
 
-def test_serialize_does_not_write_manifest_json_if_telemetry_monitor_is_off(
+def test_serialize_does_write_manifest_json_if_telemetry_monitor_is_off(
     test_dir, monkeypatch, manifest_json
 ):
+    """Ensure that the manifest is written even if telemetry is not collected"""
     monkeypatch.setattr(
         smartsim._core.config.config.Config,
         _CFG_TM_ENABLED_ATTR,
         property(lambda self: False),
     )
-    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
+    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4()))
     serialize.save_launch_manifest(lmb.finalize())
-    assert not manifest_json.exists()
+    assert manifest_json.exists()
 
 
 def test_serialize_appends_a_manifest_json_exists(test_dir, manifest_json):
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
+        LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4())).finalize()
     )
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
+        LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4())).finalize()
     )
     serialize.save_launch_manifest(
-        LaunchedManifestBuilder("exp", test_dir, "launcher").finalize()
+        LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4())).finalize()
     )
 
     assert manifest_json.is_file()
@@ -108,7 +110,7 @@ def test_serialize_overwites_file_if_not_json(test_dir, manifest_json):
     with open(manifest_json, "w") as f:
         f.write("This is not a json\n")
 
-    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher")
+    lmb = LaunchedManifestBuilder("exp", test_dir, "launcher", str(uuid4()))
     serialize.save_launch_manifest(lmb.finalize())
     with open(manifest_json, "r") as f:
         assert isinstance(json.load(f), dict)

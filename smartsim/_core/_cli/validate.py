@@ -151,7 +151,8 @@ def test_install(
     with_onnx: bool,
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
-    exp.disable_telemetry()
+    exp.telemetry.disable()
+
     port = _find_free_port() if port is None else port
     with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
