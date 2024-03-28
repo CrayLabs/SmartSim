@@ -216,10 +216,8 @@ def _reset_signal(signalnum: int):
     original = signal.getsignal(signalnum)
 
     def _reset():
-        print(f"Starting: {signalnum}")
         yield
         signal.signal(signalnum, original)
-        print(f"Ending: {signalnum}")
 
     return _reset
 
