@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import os.path as osp
 import pathlib
 import pickle
@@ -346,6 +347,35 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
+    @staticmethod
+    def symlink_output_files(
+        job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
+        """Symlink output files under .smartsim to the entity output files
+
+        :param job_step: Job step instance
+        :type job_step: Step
+        :param entity: Entity instance
+        :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
+        """
+        historical_out, historical_err = job_step.get_output_files()
+        entity_out = osp.join(entity.path, f"{entity.name}.out")
+        entity_err = osp.join(entity.path, f"{entity.name}.err")
+
+        # check if there is already a link to a previous run
+        if osp.islink(entity_out) or osp.islink(entity_err):
+            os.unlink(entity_out)
+            os.unlink(entity_err)
+
+        try:
+            os.symlink(historical_out, entity_out)
+            os.symlink(historical_err, entity_err)
+        except FileNotFoundError as fnf:
+            raise FileNotFoundError(
+                f"Output files for {entity.name} could not be found. "
+                "Symlinking files failed."
+            ) from fnf
+
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
     ) -> LaunchedManifest[t.Tuple[str, Step]]:
@@ -461,6 +491,11 @@ class Controller:
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
+
+            # symlink substeps to maintain directory structure
+            for substep, substep_entity in zip(substeps, orchestrator.entities):
+                self.symlink_output_files(substep, substep_entity)
+
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -528,6 +563,7 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
+            self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -539,6 +575,7 @@ class Controller:
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
+            self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -590,7 +627,7 @@ class Controller:
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
-        batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
+        batch_step.meta["status_dir"] = str(telemetry_dir)
 
         substeps = []
         for entity in entity_list.entities:

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import functools
 import os.path as osp
+import pathlib
 import sys
 import time
 import typing as t
@@ -67,9 +68,15 @@ class Step:
         return step_name
 
     def get_output_files(self) -> t.Tuple[str, str]:
-        """Return two paths to error and output files based on cwd"""
-        output = self.get_step_file(ending=".out")
-        error = self.get_step_file(ending=".err")
+        """Return two paths to error and output files based on metadata directory"""
+        try:
+            output_dir = self.meta["status_dir"]
+        except KeyError as exc:
+            raise KeyError("Status directory for this step has not been set.") from exc
+        if not osp.exists(output_dir):
+            pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output = osp.join(output_dir, f"{self.entity_name}.out")
+        error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
 
     def get_step_file(
