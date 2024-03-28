@@ -276,9 +276,9 @@ def installed_redisai_backends(
     return {backend for backend in backends if _installed(base_path, backend)}
 
 
-def get_ts() -> int:
-    """Return the current timestamp (accurate to seconds) cast to an integer"""
-    return int(datetime.timestamp(datetime.now()))
+def get_ts_ms() -> int:
+    """Return the current timestamp (accurate to milliseconds) cast to an integer"""
+    return int(datetime.now().timestamp() * 1000)
 
 
 def encode_cmd(cmd: t.List[str]) -> str:

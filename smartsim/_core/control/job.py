@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pathlib
 import time
 import typing as t
 from dataclasses import dataclass
@@ -34,35 +35,149 @@ from ...status import SmartSimStatus
 
 @dataclass(frozen=True)
 class _JobKey:
+    """A helper class for creating unique lookup keys within the telemetry
+    monitor. These keys are not guaranteed to be unique across experiments,
+    only within an experiment (due to process ID re-use by the OS)"""
+
     step_id: str
+    """The process id of an unmanaged task"""
     task_id: str
+    """The task id of a managed task"""
 
 
 class JobEntity:
-    """API required for a job processed in the JobManager with support for
-    telemetry monitoring
+    """An entity containing run-time SmartSimEntity metadata. The run-time metadata
+    is required to perform telemetry collection. The `JobEntity` satisfies the core
+    API necessary to use a `JobManager` to manage retrieval of managed step updates.
     """
 
     def __init__(self) -> None:
         self.name: str = ""
+        """The entity name"""
         self.path: str = ""
+        """The root path for entity output files"""
         self.step_id: str = ""
+        """The process id of an unmanaged task"""
         self.task_id: str = ""
+        """The task id of a managed task"""
         self.type: str = ""
+        """The type of the associated `SmartSimEntity`"""
         self.timestamp: int = 0
+        """The timestamp when the entity was created"""
         self.status_dir: str = ""
+        """The path configured by the experiment for the entities telemetry output"""
+        self.telemetry_on: bool = False
+        """"Flag indicating if optional telemetry is enabled for the entity"""
+        self.collectors: t.Dict[str, str] = {}
+        """Mapping of collectors enabled for the entity"""
+        self.config: t.Dict[str, str] = {}
+        """Telemetry configuration supplied by the experiment"""
+        self._is_complete: bool = False
+        """Flag indicating if the entity has completed execution"""
 
     @property
     def is_db(self) -> bool:
+        """Returns `True` if the entity represents a database or database shard"""
         return self.type in ["orchestrator", "dbnode"]
 
     @property
     def is_managed(self) -> bool:
+        """Returns `True` if the entity is managed by a workload manager"""
         return bool(self.step_id)
 
     @property
     def key(self) -> _JobKey:
+        """Return a `_JobKey` that identifies an entity.
+        NOTE: not guaranteed to be unique over time due to reused process IDs"""
         return _JobKey(self.step_id, self.task_id)
+
+    @property
+    def is_complete(self) -> bool:
+        """Returns `True` if the entity has completed execution"""
+        return self._is_complete
+
+    def check_completion_status(self) -> None:
+        """Check for telemetry outputs indicating the entity has completed
+        TODO: determine correct location to avoid exposing telemetry
+        implementation details into `JobEntity`
+        """
+        # avoid touching file-system if not necessary
+        if self._is_complete:
+            return
+
+        # status telemetry is tracked in JSON files written to disk. look
+        # for a corresponding `stop` event in the entity status directory
+        state_file = pathlib.Path(self.status_dir) / "stop.json"
+        if state_file.exists():
+            self._is_complete = True
+
+    @staticmethod
+    def _map_db_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
+        """Map DB-specific properties from a runtime manifest onto a `JobEntity`
+
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param entity: The entity instance to modify
+        :type entity: JobEntity"""
+        if entity.is_db:
+            # add collectors if they're configured to be enabled in the manifest
+            entity.collectors = {
+                "client": entity_dict.get("client_file", ""),
+                "client_count": entity_dict.get("client_count_file", ""),
+                "memory": entity_dict.get("memory_file", ""),
+            }
+
+            entity.telemetry_on = any(entity.collectors.values())
+            entity.config["host"] = entity_dict.get("hostname", "")
+            entity.config["port"] = entity_dict.get("port", "")
+
+    @staticmethod
+    def _map_standard_metadata(
+        entity_type: str,
+        entity_dict: t.Dict[str, t.Any],
+        entity: "JobEntity",
+        exp_dir: str,
+    ) -> None:
+        """Map universal properties from a runtime manifest onto a `JobEntity`
+
+        :param entity_type: The type of the associated `SmartSimEntity`
+        :type entity_type: str
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param entity: The entity instance to modify
+        :type entity: JobEntity
+        :param exp_dir: The path to the experiment working directory
+        :type exp_dir: str"""
+        metadata = entity_dict["telemetry_metadata"]
+        status_dir = pathlib.Path(metadata.get("status_dir"))
+
+        # all entities contain shared properties that identify the task
+        entity.type = entity_type
+        entity.name = entity_dict["name"]
+        entity.step_id = str(metadata.get("step_id") or "")
+        entity.task_id = str(metadata.get("task_id") or "")
+        entity.timestamp = int(entity_dict.get("timestamp", "0"))
+        entity.path = str(exp_dir)
+        entity.status_dir = str(status_dir)
+
+    @classmethod
+    def from_manifest(
+        cls, entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
+    ) -> "JobEntity":
+        """Instantiate a `JobEntity` from the dictionary deserialized from manifest JSON
+
+        :param entity_type: The type of the associated `SmartSimEntity`
+        :type entity_type: str
+        :param entity_dict: The raw dictionary deserialized from manifest JSON
+        :type entity_dict: Dict[str, Any]
+        :param exp_dir: The path to the experiment working directory
+        :type exp_dir: str"""
+        entity = JobEntity()
+
+        cls._map_standard_metadata(entity_type, entity_dict, entity, exp_dir)
+        cls._map_db_metadata(entity_dict, entity)
+
+        return entity
 
 
 class Job:
@@ -129,7 +244,7 @@ class Job:
         :param raw_status: The raw status of the launcher
         :type raw_status: str
         :param returncode: The return code for the job
-        :type return_code: int
+        :type return_code: int|None
         :param error: Content produced by stderr
         :type error: str
         :param output: Content produced by stdout
