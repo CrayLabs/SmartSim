@@ -96,13 +96,13 @@ def execute(
                     "SR_LOG_FILE", os.path.join(temp_dir, "smartredis.log")
                 ),
             }
-            if device.value.upper() == Device.GPU.value.upper():
+            if device == Device.GPU:
                 validate_env["CUDA_VISIBLE_DEVICES"] = "0"
             ctx.enter_context(_env_vars_set_to(validate_env))
             test_install(
                 location=temp_dir,
                 port=args.port,
-                device=device.value,
+                device=device,
                 with_tf="tensorflow" in backends,
                 with_pt="torch" in backends,
                 with_onnx="onnxruntime" in backends,
@@ -143,7 +143,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 def test_install(
     location: str,
     port: t.Optional[int],
-    device: str,
+    device: Device,
     with_tf: bool,
     with_pt: bool,
     with_onnx: bool,
@@ -211,7 +211,7 @@ def _find_free_port() -> int:
         return int(port)
 
 
-def _test_tf_install(client: Client, tmp_dir: str, device: str) -> None:
+def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
     recv_conn, send_conn = mp.Pipe(duplex=False)
     # Build the model in a subproc so that keras does not hog the gpu
     proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
@@ -236,7 +236,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: str) -> None:
         "keras-fcn",
         model_path,
         "TF",
-        device=device.upper(),
+        device=device.value.upper(),
         inputs=inputs,
         outputs=outputs,
     )
@@ -266,7 +266,7 @@ def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
     conn.send((model_path, inputs, outputs))
 
 
-def _test_torch_install(client: Client, device: str) -> None:
+def _test_torch_install(client: Client, device: Device) -> None:
     import torch
     from torch import nn
 
@@ -278,7 +278,7 @@ def _test_torch_install(client: Client, device: str) -> None:
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.conv(x)
 
-    if device.upper() == Device.GPU.value.upper():
+    if device == Device.GPU:
         device_ = torch.device("cuda")
     else:
         device_ = torch.device("cpu")
@@ -294,13 +294,13 @@ def _test_torch_install(client: Client, device: str) -> None:
     torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
     model = buffer.getvalue()
 
-    client.set_model("torch-nn", model, backend="TORCH", device=device.upper())
+    client.set_model("torch-nn", model, backend="TORCH", device=device.value.upper())
     client.put_tensor("torch-in", torch.rand(1, 1, 3, 3).numpy())
     client.run_model("torch-nn", inputs=["torch-in"], outputs=["torch-out"])
     client.get_tensor("torch-out")
 
 
-def _test_onnx_install(client: Client, device: str) -> None:
+def _test_onnx_install(client: Client, device: Device) -> None:
     from skl2onnx import to_onnx
     from sklearn.cluster import KMeans
 
@@ -313,7 +313,7 @@ def _test_onnx_install(client: Client, device: str) -> None:
     sample = np.arange(20, dtype=np.float32).reshape(10, 2)
 
     client.put_tensor("onnx-input", sample)
-    client.set_model("onnx-kmeans", model, "ONNX", device=device.upper())
+    client.set_model("onnx-kmeans", model, "ONNX", device=device.value.upper())
     client.run_model(
         "onnx-kmeans", inputs=["onnx-input"], outputs=["onnx-labels", "onnx-transform"]
     )

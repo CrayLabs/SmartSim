@@ -224,18 +224,16 @@ def build_redis_ai(
         logger.info("ML Backends and RedisAI build complete!")
 
 
-def check_py_torch_version(versions: Versioner, device_in: Device = Device.CPU) -> None:
+def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
     """Check Python environment for TensorFlow installation"""
-
-    # device = device_in.lower()
     if BuildEnv.is_macos():
-        if device_in == Device.GPU:
+        if device == Device.GPU:
             raise BuildError("SmartSim does not support GPU on MacOS")
         device_suffix = ""
     else:  # linux
-        if device_in == Device.CPU:
+        if device == Device.CPU:
             device_suffix = versions.TORCH_CPU_SUFFIX
-        elif device_in == Device.GPU:
+        elif device == Device.GPU:
             device_suffix = versions.TORCH_CUDA_SUFFIX
         else:
             raise BuildError("Unrecognized device requested")
@@ -260,11 +258,8 @@ def check_py_torch_version(versions: Versioner, device_in: Device = Device.CPU) 
             "Attempting to install via `pip`"
         )
         wheel_device = (
-            device_in.value
-            if device_in == Device.CPU
-            else device_suffix.replace("+", "")
+            device.value if device == Device.CPU else device_suffix.replace("+", "")
         )
-        print(f"wheel: {wheel_device}")
         pip(
             "install",
             "--extra-index-url",
@@ -366,7 +361,7 @@ def execute(
 ) -> int:
     verbose = args.v
     keydb = args.keydb
-    device: Device = Device(args.device.lower())
+    device = Device(args.device.lower())
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name
@@ -454,7 +449,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--device",
-        type=lambda s: Device(s.lower()).value,
+        type=str.lower,
         default=Device.CPU.value,
         choices=[device.value for device in Device],
         help="Device to build ML runtimes for",
