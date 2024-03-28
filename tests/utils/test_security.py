@@ -1,4 +1,5 @@
 import pathlib
+import stat
 
 import pytest
 
@@ -97,7 +98,7 @@ def test_key_manager_get_existing_keys_only(
         cfg = get_config()
         km = KeyManager(cfg)
 
-        # use no_create=True to only load pre-existing keys
+        # use create=False to only load pre-existing keys
         server_keys, client_keys = km.get_keys(create=False)
 
         assert server_keys.empty
@@ -167,9 +168,6 @@ def test_key_manager_client_context(
         # e=True returns only public server key
         assert len(client_keyset.public) > 0
         assert len(client_keyset.private) > 0
-
-
-import stat
 
 
 def test_key_manager_applied_permissions(
