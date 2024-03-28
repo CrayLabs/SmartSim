@@ -133,7 +133,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--device",
-        type=lambda s: Device(s.lower()).value,
+        type=str.lower,
         default=Device.CPU.value,
         choices=[device.value for device in Device],
         help="Device to test the ML backends against",
