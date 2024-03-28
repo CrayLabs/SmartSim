@@ -86,7 +86,7 @@ def execute(
     simple experiment
     """
     backends = installed_redisai_backends()
-    device: Device = Device(args.device.lower)
+    device: Device = Device(args.device)
     try:
         with contextlib.ExitStack() as ctx:
             temp_dir = ctx.enter_context(_VerificationTempDir(dir=os.getcwd()))
