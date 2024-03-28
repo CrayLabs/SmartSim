@@ -348,7 +348,7 @@ class Controller:
             raise TypeError("Must provide a 'launcher' argument")
 
     @staticmethod
-    def symlink(
+    def symlink_output_files(
         job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> None:
         """Symlink output files under .smartsim to the entity output files
@@ -485,7 +485,7 @@ class Controller:
 
             # symlink substeps to maintain directory structure
             for substep, substep_entity in zip(substeps, orchestrator.entities):
-                self.symlink(substep, substep_entity)
+                self.symlink_output_files(substep, substep_entity)
 
             self._launch_step(orc_batch_step, orchestrator)
 
@@ -555,7 +555,7 @@ class Controller:
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
             try:
-                self.symlink(job_step, entity)
+                self.symlink_output_files(job_step, entity)
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
                 msg = f"An error occurred when launching {entity.name} \n"
@@ -567,7 +567,7 @@ class Controller:
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
             try:
-                self.symlink(job_step, entity)
+                self.symlink_output_files(job_step, entity)
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
                 msg = f"An error occurred when launching {entity.name} \n"
