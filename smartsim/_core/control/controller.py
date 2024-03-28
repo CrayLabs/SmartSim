@@ -43,7 +43,11 @@ from smartredis import Client, ConfigOptions
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
-from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
+from ..._core.utils.helpers import (
+    SignalInterceptionStack,
+    unpack_colo_db_identifier,
+    unpack_db_identifier,
+)
 from ..._core.utils.redis import (
     db_is_active,
     set_ml_model,
@@ -117,13 +121,7 @@ class Controller:
         self._jobs.kill_on_interrupt = kill_on_interrupt
 
         # register custom signal handler for ^C (SIGINT)
-        handle = signal.getsignal(signal.SIGINT)
-        # XXX: THIS IS A DANGEROUS MEMORY LEAK
-        #      Every time this is called a new callback fn is registered
-        #      I need to find a way to make this not keep wrapping itself
-        #      for every new JM.
-        signal.signal(signal.SIGINT, _hacky_signal_handle(self._jobs, handle))
-
+        SignalInterceptionStack.push(signal.SIGINT, self._jobs.signal_interrupt)
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
@@ -940,15 +938,3 @@ def _look_up_launched_data(
         )
 
     return _unpack_launched_data
-
-
-def _hacky_signal_handle(
-    job_manager: JobManager,
-    callback: t.Union[t.Callable[[int, t.Optional["FrameType"]], None], int, None],
-) -> t.Callable[[int, t.Optional["FrameType"]], None]:
-    def _handle(signo: int, frame: t.Optional["FrameType"]) -> None:
-        job_manager.signal_interrupt(signo, frame)
-        if callable(callback):
-            callback(signo, frame)
-
-    return _handle
