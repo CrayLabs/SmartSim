@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Promote device options to an Enum
 - Update telemetry monitor, add telemetry collectors
 - Add method to specify node features for a Slurm job
 - Colo Orchestrator setup now blocks application start until setup finished
@@ -33,6 +34,7 @@ Description
 
 Detailed Notes
 
+- Promote devices to a dedicated Enum type throughout the SmartSim code base.
 - Update the telemetry monitor to enable retrieval of metrics on a scheduled
   interval. Switch basic experiment tracking telemetry to default to on. Add
   database metric collectors. Improve telemetry monitor logging. Create
@@ -72,6 +74,7 @@ Detailed Notes
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
+.. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
