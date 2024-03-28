@@ -98,10 +98,10 @@ def test_key_manager_get_existing_keys_only(
         km = KeyManager(cfg)
 
         # use no_create=True to only load pre-existing keys
-        key_set = km.get_keys(create=False)
+        server_keys, client_keys = km.get_keys(create=False)
 
-        assert key_set[0] is None
-        assert key_set[1] is None
+        assert server_keys.empty
+        assert client_keys.empty
 
 
 def test_key_manager_get_or_create_keys_default(
@@ -117,8 +117,8 @@ def test_key_manager_get_or_create_keys_default(
         key_set = km.get_keys()
 
         # public keys are returned by default
-        assert key_set[0].public is not None
-        assert key_set[1].public is not None
+        assert key_set[0].public != b""
+        assert key_set[1].public != b""
 
         # default behavior will only return public keys
         assert not key_set[0].private

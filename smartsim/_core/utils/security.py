@@ -39,10 +39,17 @@ from smartsim._core.config.config import Config
 class KeyPair:
     """A public and private key pair"""
 
-    public: bytes
+    public: bytes = dataclasses.field(default=b"")
     """The public key"""
-    private: bytes
+
+    private: bytes = dataclasses.field(default=b"", repr=False)
     """The private key"""
+
+    @property
+    def empty(self) -> bool:
+        """Return `True` if the KeyPair has no key values set. Useful
+        for faking the null object pattern"""
+        return self.public == self.private and len(self.public) == 0
 
 
 class KeyLocator:
@@ -61,6 +68,8 @@ class KeyLocator:
         :type root_dir: pathlib.Path
         :param filename: the stem name of the key file
         :type filename: str
+        :param category: the category or use-case for the key (e.g. server)
+        :type category: str
         :param separate_keys: flag indicating if public and private keys should
         be persisted in separate, corresponding directories
         :type separate_keys: bool
@@ -68,16 +77,26 @@ class KeyLocator:
         """
         # constants for standardized paths.
         self._public_subdir = "pub"
+        """The category subdirectory to use when persisting a public key"""
+
         self._private_subdir = "priv"
+        """The category subdirectory to use when persisting a private key"""
+
         self._public_extension = "key"
+        """The extension found on public keys"""
+
         self._private_extension = "key_secret"
+        """The extension found on private keys"""
 
         self._key_root_dir = root_dir
         """Path to the root directory containing key files"""
+
         self._filename = filename
         """Base name for key files"""
+
         self._separate_keys = separate_keys
         """Flag indicating if public and private keys are persisted separately"""
+
         self._category = category
         """(optional) Category name used to further separate key locations"""
 
@@ -131,23 +150,31 @@ class KeyManager:
         """Initialize a KeyManager instance.
         :param config: SmartSim configuration
         :type config: Config
-        :param server: flag indicating if executing in context of a server;
+        :param as_server: flag to indicate when executing in the server context;
         set to `True` to avoid loading client secret key
-        :type server: bool
-        :param server: flag indicating if executing in context of a client;
+        :type as_server: bool
+        :param as_client: flag to indicate when executing in the client context;
         set to `True` to avoid loading server secret key
-        :type server: bool"""
+        :type as_client: bool"""
 
         self._as_server = as_server
+        """Set to `True` to return keys appropriate for the server context"""
+
         self._as_client = as_client
+        """Set to `True` to return keys appropriate for the client context"""
 
         self._server_base = "server"
+        """The `category` directory for persisting server keys"""
+
         self._client_base = "client"
+        """The `category` directory for persisting client keys"""
 
         key_dir = pathlib.Path(config.smartsim_key_path).resolve()
 
         self._server_locator = KeyLocator(key_dir, "smartsim", self._server_base)
+        """The locator for producing the paths to store server key files"""
         self._client_locator = KeyLocator(key_dir, "smartsim", self._client_base)
+        """The locator for producing the paths to store client key files"""
 
     def create_directories(self) -> None:
         """Create the subdirectory structure necessary to hold
@@ -179,23 +206,22 @@ class KeyManager:
         # avoid a `None` value in the private key when it isn't loaded
         return KeyPair(pub_key, priv_key or b"")
 
-    def _load_keys(self) -> t.Tuple[t.Optional[KeyPair], t.Optional[KeyPair]]:
+    def _load_keys(self) -> t.Tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to load public/private key pairs for the server and client
         components from the standard key paths for the associated experiment
 
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
-        :rtype: Tuple[Optional[KeyPair], Optional[KeyPair]]"""
-        result: t.Tuple[t.Optional[KeyPair], t.Optional[KeyPair]] = (None, None)
-
+        :rtype: Tuple[KeyPair, KeyPair]"""
         try:
             server_keys = self._load_keypair(self._server_locator, self._as_server)
             client_keys = self._load_keypair(self._client_locator, self._as_client)
 
-            result = (server_keys, client_keys)
+            return server_keys, client_keys
         except (ValueError, OSError):
             # expected if no keys could be loaded from disk
             ...
-        return result
+
+        return KeyPair(), KeyPair()
 
     @classmethod
     def _move_public_key(cls, locator: KeyLocator) -> None:
@@ -205,8 +231,9 @@ class KeyManager:
         :param locator: `KeyLocator` that determines the path to the
         key pair persisted in the same directory.
         :type locator: KeyLocator"""
-        pub_path = locator.private.with_suffix(locator.public.suffix)
-        pub_path.rename(locator.public)
+        new_path = locator.private.with_suffix(locator.public.suffix)
+        if new_path != locator.public:
+            new_path.rename(locator.public)
 
     def _create_keys(self) -> None:
         """Create and persist key files to disk"""
@@ -224,24 +251,27 @@ class KeyManager:
         # ...and move the client public key out of the private subdirectory
         self._move_public_key(self._client_locator)
 
-    def get_keys(self, create: bool = True) -> t.Tuple[t.Optional[KeyPair], ...]:
+    def get_keys(self, create: bool = True) -> t.Tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to generate a public/private key pair for the server
         and client components.
 
         :param no_create: pass `no_create=True` to ensure keys are not
         created and only pre-existing keys can be loaded
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
-        :rtype: t.Tuple[t.Optional[KeyPair], t.Optional[KeyPair]]
+        :rtype: t.Tuple[KeyPair, KeyPair]
         """
-        keys = self._load_keys()
-        if keys[0] is not None or keys[1] is not None:
-            return keys
+        server_keys, client_keys = self._load_keys()
+
+        # check if we received "empty keys"
+        if not server_keys.empty or not client_keys.empty:
+            return server_keys, client_keys
 
         if not create:
-            return (None, None)
+            # if directed not to create new keys, return "empty keys"
+            return KeyPair(), KeyPair()
 
         self.create_directories()
         self._create_keys()
 
-        # ensure keys are persisted to avoid inability to connect
+        # load keys to ensure they were persisted
         return self._load_keys()
