@@ -1,8 +1,9 @@
 import pathlib
+
 import pytest
 
 from smartsim._core.config.config import get_config
-from smartsim._core.utils.security import KeyManager, KeyLocator
+from smartsim._core.utils.security import KeyLocator, KeyManager
 
 
 def test_key_manager_dir_preparation(

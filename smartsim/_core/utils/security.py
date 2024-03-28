@@ -28,6 +28,7 @@
 import dataclasses
 import pathlib
 import typing as t
+
 import zmq
 import zmq.auth
 
@@ -38,15 +39,14 @@ from smartsim._core.config.config import Config
 class KeyPair:
     """A public and private key pair"""
 
-    public: str
+    public: bytes
     """The public key"""
-    private: str
+    private: bytes
     """The private key"""
 
 
 class KeyLocator:
-    """Encapsulates logic for determining the path where a
-    `KeyPair` will persist on disk"""
+    """Determines the paths to use when persisting a `KeyPair` to disk"""
 
     def __init__(
         self, root_dir: pathlib.Path, filename: str, separate_keys: bool = True
@@ -73,57 +73,53 @@ class KeyLocator:
         self._separate_keys = separate_keys
 
     _key_root_dir: pathlib.Path
-    """directory path to location of key files"""
+    """Path to the root directory containing key files"""
     _filename: str
     """base name for key files"""
     _separate_keys: bool
-    """flag indicating if public and private keys are persisted separately"""
+    """Flag indicating if public and private keys are persisted separately"""
 
     @property
     def public_dir(self) -> pathlib.Path:
-        """target directory for the public key"""
+        """Target directory for the public key"""
         return self.public.parent
 
     @property
     def private_dir(self) -> pathlib.Path:
-        """target directory for the private key"""
+        """Target directory for the private key"""
         return self.private.parent
 
     @property
-    def public_filename(self) -> pathlib.Path:
-        """The filename (<stem>.<suffix>) for the public key file"""
+    def public_filename(self) -> str:
+        """Filename (<stem>.<suffix>) of the public key file"""
         return f"{self._filename}.{self._public_extension}"
 
     @property
-    def private_filename(self) -> pathlib.Path:
-        """The filename (<stem>.<suffix>) for the private key file"""
+    def private_filename(self) -> str:
+        """Filename (<stem>.<suffix>) of the private key file"""
         return f"{self._filename}.{self._private_extension}"
 
     @property
     def public(self) -> pathlib.Path:
-        """The full target path for the public key file"""
-        # combine the root and key type, e.g. /foo/bar + /server
-        p = self._key_root_dir / self._filename
-        # combine the pub/priv key subdir if necessary
-        # e.g. /foo/bar + /pub
+        """Full target path of the public key file"""
+        # combine the root and key type (e.g. /foo/bar + /server)
+        path = self._key_root_dir / self._filename
+        # combine the pub/priv key subdir if necessary (e.g. /foo/bar + /pub)
         if self._separate_keys:
-            p = p / self._public_subdir
+            path = path / self._public_subdir
 
-        p = p / self.public_filename
-        return p
+        return path / self.public_filename
 
     @property
     def private(self) -> pathlib.Path:
-        """The full target path for the private key file"""
-        # combine the root and key type, e.g. /foo/bar + /server
-        p = self._key_root_dir / self._filename
-        # combine the pub/priv key subdir if necessary
-        # e.g. /foo/bar + /priv
+        """Full target path of the private key file"""
+        # combine the root and key type (e.g. /foo/bar + /server)
+        path = self._key_root_dir / self._filename
+        # combine the pub/priv key subdir if necessary (e.g. /foo/bar + /priv)
         if self._separate_keys:
-            p = p / self._private_subdir
+            path = path / self._private_subdir
 
-        p = p / self.private_filename
-        return p
+        return path / self.private_filename
 
 
 class KeyManager:
@@ -146,7 +142,7 @@ class KeyManager:
         self._server_base = "server"
         self._client_base = "client"
 
-        key_dir = pathlib.Path(config.smartsim_key_dir).resolve()
+        key_dir = pathlib.Path(config.smartsim_key_path).resolve()
 
         self._server_locator = KeyLocator(key_dir, self._server_base)
         self._client_locator = KeyLocator(key_dir, self._client_base)
@@ -161,7 +157,8 @@ class KeyManager:
             if not locator.private_dir.exists():
                 locator.private_dir.mkdir(parents=True)
 
-    def _load_keypair(self, locator: KeyLocator, in_context: bool) -> KeyPair:
+    @classmethod
+    def _load_keypair(cls, locator: KeyLocator, in_context: bool) -> KeyPair:
         """Load a specific `KeyPair` from disk
 
         :param locator: a `KeyLocator` that specifies the path to an existing key
@@ -178,29 +175,33 @@ class KeyManager:
         pub_key, priv_key = zmq.auth.load_certificate(key_path)
 
         # avoid a `None` value in the private key when it isn't loaded
-        return KeyPair(pub_key, priv_key or "")
+        return KeyPair(pub_key, priv_key or b"")
 
-    def _load_keys(self) -> t.Tuple[KeyPair, KeyPair]:
+    def _load_keys(self) -> t.Tuple[t.Optional[KeyPair], t.Optional[KeyPair]]:
         """Use ZMQ auth to load public/private key pairs for the server and client
         components from the standard key paths for the associated experiment
 
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
-        :rtype: t.Tuple[t.Optional[KeyPair], t.Optional[KeyPair]]"""
+        :rtype: Tuple[Optional[KeyPair], Optional[KeyPair]]"""
+        result: t.Tuple[t.Optional[KeyPair], t.Optional[KeyPair]] = (None, None)
+
         try:
             server_keys = self._load_keypair(self._server_locator, self._as_server)
             client_keys = self._load_keypair(self._client_locator, self._as_client)
 
-            return (server_keys, client_keys)
-        except (ValueError, OSError) as ex:
-            # no keys could be loaded from disk
+            result = (server_keys, client_keys)
+        except (ValueError, OSError):
+            # expected if no keys could be loaded from disk
             ...
-        return (None, None)
+        return result
 
-    def _move_public_key(self, locator: KeyLocator) -> None:
+    @classmethod
+    def _move_public_key(cls, locator: KeyLocator) -> None:
         """The public and private key pair are created in the same directory. Move
         the public key out of the private subdir and into the public subdir
 
-        :param locator: a `KeyLocator` that specifies the path to an existing private key
+        :param locator: `KeyLocator` that determines the path to the
+        key pair persisted in the same directory.
         :type locator: KeyLocator"""
         pub_path = locator.private.with_suffix(locator.public.suffix)
         pub_path.rename(locator.public)
@@ -222,8 +223,8 @@ class KeyManager:
         self._move_public_key(self._client_locator)
 
     def get_keys(self, create: bool = True) -> t.Tuple[t.Optional[KeyPair], ...]:
-        """Use ZMQ auth to generate a public/private key pair for the server and
-        client components.
+        """Use ZMQ auth to generate a public/private key pair for the server
+        and client components.
 
         :param no_create: pass `no_create=True` to ensure keys are not
         created and only pre-existing keys can be loaded
