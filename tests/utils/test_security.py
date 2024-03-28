@@ -167,3 +167,48 @@ def test_key_manager_client_context(
         # e=True returns only public server key
         assert len(client_keyset.public) > 0
         assert len(client_keyset.private) > 0
+
+
+import stat
+
+
+def test_key_manager_applied_permissions(
+    test_dir: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ensure the key manager applies the appropriate file-system
+    permissions to the keys and directories"""
+    with monkeypatch.context() as ctx:
+        ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
+
+        cfg = get_config()
+        km = KeyManager(cfg, as_client=True, as_server=True)
+
+        server_keys, client_keys = km.get_keys()
+
+        # ensure public dirs are open for reading by others
+        s_pub_stat = km._server_locator.public_dir.stat()
+        c_pub_stat = km._client_locator.public_dir.stat()
+
+        assert stat.S_IMODE(s_pub_stat.st_mode) == 0o744
+        assert stat.S_IMODE(c_pub_stat.st_mode) == 0o744
+
+        # ensure private dirs are open only to owner
+        s_priv_stat = km._server_locator.private_dir.stat()
+        c_priv_stat = km._client_locator.private_dir.stat()
+
+        assert stat.S_IMODE(s_priv_stat.st_mode) == 0o700
+        assert stat.S_IMODE(c_priv_stat.st_mode) == 0o700
+
+        # ensure public files are open for reading by others
+        s_pub_stat = km._server_locator.public.stat()
+        c_pub_stat = km._client_locator.public.stat()
+
+        assert stat.S_IMODE(s_pub_stat.st_mode) == 0o744
+        assert stat.S_IMODE(c_pub_stat.st_mode) == 0o744
+
+        # ensure private files are read-only for owner
+        s_priv_stat = km._server_locator.private.stat()
+        c_priv_stat = km._client_locator.private.stat()
+
+        assert stat.S_IMODE(s_priv_stat.st_mode) == 0o600
+        assert stat.S_IMODE(c_priv_stat.st_mode) == 0o600

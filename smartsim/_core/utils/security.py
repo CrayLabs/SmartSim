@@ -184,10 +184,10 @@ class KeyManager:
         the public and private key pairs for servers & clients"""
         for locator in [self._server_locator, self._client_locator]:
             if not locator.public_dir.exists():
-                locator.public_dir.mkdir(parents=True)
+                locator.public_dir.mkdir(parents=True, mode=0o744)
 
             if not locator.private_dir.exists():
-                locator.private_dir.mkdir(parents=True)
+                locator.private_dir.mkdir(parents=True, mode=0o700)
 
     @classmethod
     def _load_keypair(cls, locator: KeyLocator, in_context: bool) -> KeyPair:
@@ -247,12 +247,18 @@ class KeyManager:
         # ...and move the server public key out of the private subdirectory
         self._move_public_key(self._server_locator)
 
+        self._server_locator.private.chmod(0o600)
+        self._server_locator.public.chmod(0o744)
+
         # create client keys in the client private directory
         zmq.auth.create_certificates(
             self._client_locator.private.parent, self._client_locator.private.stem
         )
         # ...and move the client public key out of the private subdirectory
         self._move_public_key(self._client_locator)
+
+        self._client_locator.private.chmod(0o600)
+        self._client_locator.public.chmod(0o744)
 
     def get_keys(self, create: bool = True) -> t.Tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to generate a public/private key pair for the server
@@ -261,7 +267,7 @@ class KeyManager:
         :param no_create: pass `no_create=True` to ensure keys are not
         created and only pre-existing keys can be loaded
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
-        :rtype: t.Tuple[KeyPair, KeyPair]
+        :rtype: Tuple[KeyPair, KeyPair]
         """
         server_keys, client_keys = self._load_keys()
 
