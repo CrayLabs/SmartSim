@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import os.path as osp
 import typing as t
 from os import environ, getcwd
@@ -230,23 +231,7 @@ class Experiment:
         :type kill_on_interrupt: bool, optional
         """
         start_manifest = Manifest(*args)
-        for model in start_manifest.models:
-            if not os.path.isdir(model.path):
-                os.makedirs(model.path)
-        for orch in start_manifest.dbs:
-            if not os.path.isdir(osp.join(self.exp_path, orch.name)):
-                os.makedirs(osp.join(self.exp_path, orch.name))
-            orch.set_path(osp.join(self.exp_path, orch.name))
-        for ensemble in start_manifest.ensembles:
-            if not os.path.isdir(osp.join(self.exp_path, ensemble.name)):
-                os.makedirs(osp.join(self.exp_path, ensemble.name))
-            ensemble.set_path(osp.join(self.exp_path, ensemble.name))
-            for model in ensemble.models:
-                if not os.path.isdir(
-                    osp.join(self.exp_path, ensemble.name, model.name)
-                ):
-                    os.makedirs(osp.join(self.exp_path, ensemble.name, model.name))
-                model.set_path(osp.join(self.exp_path, ensemble.name, model.name))
+        self._create_dir_and_set_path(start_manifest)
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -942,6 +927,26 @@ class Experiment:
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
+
+    def _create_dir_and_set_path(self, start_manifest: Manifest) -> None:
+        for model in start_manifest.models:
+            if not os.path.isdir(model.path):
+                os.makedirs(model.path)
+        for orch in start_manifest.dbs:
+            orch_path = osp.join(self.exp_path, orch.name)
+            if not os.path.isdir(orch_path):
+                os.makedirs(orch_path)
+                orch.set_path(orch_path)
+        for ensemble in start_manifest.ensembles:
+            ensemble_path = osp.join(self.exp_path, ensemble.name)
+            if not os.path.isdir(ensemble_path):
+                os.makedirs(ensemble_path)
+                ensemble.set_path(ensemble_path)
+            for member in ensemble.models:
+                ensemble_member = osp.join(self.exp_path, ensemble.name, member.name)
+                if not os.path.isdir(ensemble_member):
+                    os.makedirs(ensemble_member)
+                    model.set_path(ensemble_member)
 
     def __str__(self) -> str:
         return self.name
