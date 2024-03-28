@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Historical output files stored under .smartsim directory
+- Update telemetry monitor, add telemetry collectors
 - Add method to specify node features for a Slurm job
 - Colo Orchestrator setup now blocks application start until setup finished
 - ExecArgs handling correction
@@ -36,6 +37,11 @@ Detailed Notes
 - The dashboard needs to display historical logs, so log files are written
   out under the .smartsim directory and symlinked to the files in the 
   experiment directory. (SmartSim-PR532_)
+- Update the telemetry monitor to enable retrieval of metrics on a scheduled
+  interval. Switch basic experiment tracking telemetry to default to on. Add
+  database metric collectors. Improve telemetry monitor logging. Create
+  telemetry subpackage at `smartsim._core.utils.telemetry`. Refactor
+  telemetry monitor entrypoint. (SmartSim-PR460_)
 - Users can now specify node features for a Slurm job through
   ``SrunSettings.set_node_feature``. The method accepts a string
   or list of strings. (SmartSim-PR529_)
@@ -68,8 +74,9 @@ Detailed Notes
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
-
 .. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
+.. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
+.. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
