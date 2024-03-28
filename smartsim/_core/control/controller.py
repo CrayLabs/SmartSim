@@ -363,7 +363,9 @@ class Controller:
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
-            exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
+            exp_name=exp_name,
+            exp_path=exp_path,
+            launcher_name=str(self._launcher),
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -869,6 +871,7 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,
@@ -889,7 +892,6 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):
