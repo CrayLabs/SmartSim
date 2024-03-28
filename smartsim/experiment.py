@@ -946,7 +946,7 @@ class Experiment:
                 ensemble_member = osp.join(self.exp_path, ensemble.name, member.name)
                 if not os.path.isdir(ensemble_member):
                     os.makedirs(ensemble_member)
-                    model.set_path(ensemble_member)
+                    member.set_path(ensemble_member)
 
     def __str__(self) -> str:
         return self.name
