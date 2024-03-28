@@ -1,0 +1,802 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>smartsim.entity.ensemble &#8212; SmartSim 0.4.1+dev.e804ad0 documentation</title>
+    
+  <link href="../../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1+dev.e804ad0 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../contributing_examples.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../tutorials/ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../../developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2F_modules/smartsim/entity/ensemble.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <h1>Source code for smartsim.entity.ensemble</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021-2022, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">getcwd</span>
+
+<span class="kn">from</span> <span class="nn">.._core.utils.helpers</span> <span class="kn">import</span> <span class="n">init_default</span>
+<span class="kn">from</span> <span class="nn">..error</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EntityExistsError</span><span class="p">,</span>
+    <span class="n">SmartSimError</span><span class="p">,</span>
+    <span class="n">SSUnsupportedError</span><span class="p">,</span>
+    <span class="n">UserStrategyError</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">..settings.base</span> <span class="kn">import</span> <span class="n">BatchSettings</span><span class="p">,</span> <span class="n">RunSettings</span>
+<span class="kn">from</span> <span class="nn">.dbobject</span> <span class="kn">import</span> <span class="n">DBModel</span><span class="p">,</span> <span class="n">DBScript</span>
+<span class="kn">from</span> <span class="nn">.entityList</span> <span class="kn">import</span> <span class="n">EntityList</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">.strategies</span> <span class="kn">import</span> <span class="n">create_all_permutations</span><span class="p">,</span> <span class="n">random_permutations</span><span class="p">,</span> <span class="n">step_values</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Ensemble"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble">[docs]</a><span class="k">class</span> <span class="nc">Ensemble</span><span class="p">(</span><span class="n">EntityList</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;``Ensemble`` is a group of ``Model`` instances that can</span>
+<span class="sd">    be treated as a reference to a single instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">,</span>
+        <span class="n">params_as_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">run_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">perm_strat</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize an Ensemble of Model instances.</span>
+
+<span class="sd">        The kwargs argument can be used to pass custom input</span>
+<span class="sd">        parameters to the permutation strategy.</span>
+
+<span class="sd">        :param name: name of the ensemble</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param params: parameters to expand into ``Model`` members</span>
+<span class="sd">        :type params: dict[str, Any]</span>
+<span class="sd">        :param params_as_args: list of params which should be used as command line arguments</span>
+<span class="sd">                               to the ``Model`` member executables and not written to generator</span>
+<span class="sd">                               files</span>
+<span class="sd">        :type arg_params: list[str]</span>
+<span class="sd">        :param batch_settings: describes settings for ``Ensemble`` as batch workload</span>
+<span class="sd">        :type batch_settings: BatchSettings, optional</span>
+<span class="sd">        :param run_settings: describes how each ``Model`` should be executed</span>
+<span class="sd">        :type run_settings: RunSettings, optional</span>
+<span class="sd">        :param replicas: number of ``Model`` replicas to create - a keyword argument of kwargs</span>
+<span class="sd">        :type replicas: int, optional</span>
+<span class="sd">        :param perm_strategy: strategy for expanding ``params`` into</span>
+<span class="sd">                             ``Model`` instances from params argument</span>
+<span class="sd">                             options are &quot;all_perm&quot;, &quot;stepped&quot;, &quot;random&quot;</span>
+<span class="sd">                             or a callable function. Defaults to &quot;all_perm&quot;.</span>
+<span class="sd">        :type perm_strategy: str</span>
+<span class="sd">        :return: ``Ensemble`` instance</span>
+<span class="sd">        :rtype: ``Ensemble``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params_as_args</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">params_as_args</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_prefixing_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">batch_settings</span><span class="p">,</span> <span class="n">BatchSettings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">({},</span> <span class="n">run_settings</span><span class="p">,</span> <span class="n">RunSettings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_models</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_scripts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">getcwd</span><span class="p">(),</span> <span class="n">perm_strat</span><span class="o">=</span><span class="n">perm_strat</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize all the models within the ensemble based</span>
+<span class="sd">        on the parameters passed to the ensemble and the permutation</span>
+<span class="sd">        strategy given at init.</span>
+
+<span class="sd">        :raises UserStrategyError: if user generation strategy fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_strategy</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;perm_strat&quot;</span><span class="p">))</span>
+        <span class="n">replicas</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;replicas&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># if a ensemble has parameters and run settings, create</span>
+        <span class="c1"># the ensemble and assign run_settings to each member</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span><span class="p">:</span>
+                <span class="n">param_names</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_model_parameters</span><span class="p">()</span>
+
+                <span class="c1"># Compute all combinations of model parameters and arguments</span>
+                <span class="n">all_model_params</span> <span class="o">=</span> <span class="n">strategy</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">all_model_params</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">UserStrategyError</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">param_set</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_model_params</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_set</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">UserStrategyError</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
+                    <span class="n">run_settings</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span><span class="p">)</span>
+                    <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+                    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span>
+                        <span class="n">model_name</span><span class="p">,</span>
+                        <span class="n">param_set</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                        <span class="n">run_settings</span><span class="o">=</span><span class="n">run_settings</span><span class="p">,</span>
+                        <span class="n">params_as_args</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params_as_args</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">params_to_args</span><span class="p">()</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Created ensemble member: </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+            <span class="c1"># cannot generate models without run settings</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                    <span class="s2">&quot;Ensembles without &#39;params&#39; or &#39;replicas&#39; argument to expand into members cannot be given run settings&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">replicas</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">replicas</span><span class="p">):</span>
+                        <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+                        <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span>
+                            <span class="n">model_name</span><span class="p">,</span>
+                            <span class="p">{},</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                            <span class="n">run_settings</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span><span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Created ensemble member: </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                        <span class="s2">&quot;Ensembles without &#39;params&#39; or &#39;replicas&#39; argument to expand into members cannot be given run settings&quot;</span>
+                    <span class="p">)</span>
+            <span class="c1"># if no params, no run settings and no batch settings, error because we</span>
+            <span class="c1"># don&#39;t know how to run the ensemble</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_settings</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                    <span class="s2">&quot;Ensemble must be provided batch settings or run settings&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Empty ensemble created for batch launch&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Ensemble.add_model"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.add_model">[docs]</a>    <span class="k">def</span> <span class="nf">add_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a model to this ensemble</span>
+
+<span class="sd">        :param model: model instance to be added</span>
+<span class="sd">        :type model: Model</span>
+<span class="sd">        :raises TypeError: if model is not an instance of ``Model``</span>
+<span class="sd">        :raises EntityExistsError: if model already exists in this ensemble</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Model</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Argument to add_model was of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">, not Model&quot;</span>
+            <span class="p">)</span>
+        <span class="c1"># &quot;in&quot; operator uses model name for __eq__</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">EntityExistsError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> already exists in ensemble </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_models</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extend_entity_db_models</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_models</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_scripts</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extend_entity_db_scripts</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_scripts</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Ensemble.register_incoming_entity"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.register_incoming_entity">[docs]</a>    <span class="k">def</span> <span class="nf">register_incoming_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming_entity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register future communication between entities.</span>
+
+<span class="sd">        Registers the named data sources that this entity</span>
+<span class="sd">        has access to by storing the key_prefix associated</span>
+<span class="sd">        with that entity</span>
+
+<span class="sd">        Only python clients can have multiple incoming connections</span>
+
+<span class="sd">        :param incoming_entity: The entity that data will be received from</span>
+<span class="sd">        :type incoming_entity: SmartSimEntity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">incoming_entity</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Ensemble.enable_key_prefixing"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.enable_key_prefixing">[docs]</a>    <span class="k">def</span> <span class="nf">enable_key_prefixing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If called, all models within this ensemble will prefix their keys with its</span>
+<span class="sd">        own model name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">enable_key_prefixing</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Ensemble.query_key_prefixing"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.query_key_prefixing">[docs]</a>    <span class="k">def</span> <span class="nf">query_key_prefixing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Inquire as to whether each model within the ensemble will prefix its keys</span>
+
+<span class="sd">        :returns: True if all models have key prefixing enabled, False otherwise</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">([</span><span class="n">model</span><span class="o">.</span><span class="n">query_key_prefixing</span><span class="p">()</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Ensemble.attach_generator_files"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.attach_generator_files">[docs]</a>    <span class="k">def</span> <span class="nf">attach_generator_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_copy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_symlink</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_configure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attach files to each model within the ensemble for generation</span>
+
+<span class="sd">        Attach files needed for the entity that, upon generation,</span>
+<span class="sd">        will be located in the path of the entity.</span>
+
+<span class="sd">        During generation, files &quot;to_copy&quot; are copied into</span>
+<span class="sd">        the path of the entity, and files &quot;to_symlink&quot; are</span>
+<span class="sd">        symlinked into the path of the entity.</span>
+
+<span class="sd">        Files &quot;to_configure&quot; are text based model input files where</span>
+<span class="sd">        parameters for the model are set. Note that only models</span>
+<span class="sd">        support the &quot;to_configure&quot; field. These files must have</span>
+<span class="sd">        fields tagged that correspond to the values the user</span>
+<span class="sd">        would like to change. The tag is settable but defaults</span>
+<span class="sd">        to a semicolon e.g. THERMO = ;10;</span>
+
+<span class="sd">        :param to_copy: files to copy, defaults to []</span>
+<span class="sd">        :type to_copy: list, optional</span>
+<span class="sd">        :param to_symlink: files to symlink, defaults to []</span>
+<span class="sd">        :type to_symlink: list, optional</span>
+<span class="sd">        :param to_configure: input files with tagged parameters, defaults to []</span>
+<span class="sd">        :type to_configure: list, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span>
+                <span class="n">to_copy</span><span class="o">=</span><span class="n">to_copy</span><span class="p">,</span> <span class="n">to_symlink</span><span class="o">=</span><span class="n">to_symlink</span><span class="p">,</span> <span class="n">to_configure</span><span class="o">=</span><span class="n">to_configure</span>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_set_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strategy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the permutation strategy for generating models within</span>
+<span class="sd">        the ensemble</span>
+
+<span class="sd">        :param strategy: name of the strategy or callable function</span>
+<span class="sd">        :type strategy: str</span>
+<span class="sd">        :raises SSUnsupportedError: if str name is not supported</span>
+<span class="sd">        :return: strategy function</span>
+<span class="sd">        :rtype: callable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;all_perm&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">create_all_permutations</span>
+        <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">step_values</span>
+        <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">random_permutations</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">strategy</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">strategy</span>
+        <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Permutation strategy given is not supported: </span><span class="si">{</span><span class="n">strategy</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read_model_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Take in the parameters given to the ensemble and prepare to</span>
+<span class="sd">        create models for the ensemble</span>
+
+<span class="sd">        :raises TypeError: if params are of the wrong type</span>
+<span class="sd">        :return: param names and values for permutation strategy</span>
+<span class="sd">        :rtype: tuple[list, list]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Ensemble initialization argument &#39;params&#39; must be of type dict&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">param_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">param_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">val</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Incorrect type for ensemble parameters</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;Must be list, int, or string.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">parameters</span>
+
+<div class="viewcode-block" id="Ensemble.add_ml_model"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.add_ml_model">[docs]</a>    <span class="k">def</span> <span class="nf">add_ml_model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">backend</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">model_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">,</span>
+        <span class="n">devices_per_node</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">min_batch_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A TF, TF-lite, PT, or ONNX model to load into the DB at runtime</span>
+
+<span class="sd">        Each ML Model added will be loaded into an</span>
+<span class="sd">        orchestrator (converged or not) prior to the execution</span>
+<span class="sd">        of every entity belonging to this ensemble</span>
+
+<span class="sd">        One of either model (in memory representation) or model_path (file)</span>
+<span class="sd">        must be provided</span>
+
+<span class="sd">        :param name: key to store model under</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param model: model in memory</span>
+<span class="sd">        :type model: str | bytes | None</span>
+<span class="sd">        :param model_path: serialized model</span>
+<span class="sd">        :type model_path: file path to model</span>
+<span class="sd">        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)</span>
+<span class="sd">        :type backend: str</span>
+<span class="sd">        :param device: name of device for execution, defaults to &quot;CPU&quot;</span>
+<span class="sd">        :type device: str, optional</span>
+<span class="sd">        :param batch_size: batch size for execution, defaults to 0</span>
+<span class="sd">        :type batch_size: int, optional</span>
+<span class="sd">        :param min_batch_size: minimum batch size for model execution, defaults to 0</span>
+<span class="sd">        :type min_batch_size: int, optional</span>
+<span class="sd">        :param tag: additional tag for model information, defaults to &quot;&quot;</span>
+<span class="sd">        :type tag: str, optional</span>
+<span class="sd">        :param inputs: model inputs (TF only), defaults to None</span>
+<span class="sd">        :type inputs: list[str], optional</span>
+<span class="sd">        :param outputs: model outupts (TF only), defaults to None</span>
+<span class="sd">        :type outputs: list[str], optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">db_model</span> <span class="o">=</span> <span class="n">DBModel</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">model_file</span><span class="o">=</span><span class="n">model_path</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">devices_per_node</span><span class="o">=</span><span class="n">devices_per_node</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">min_batch_size</span><span class="o">=</span><span class="n">min_batch_size</span><span class="p">,</span>
+            <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_model</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extend_entity_db_models</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="p">[</span><span class="n">db_model</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Ensemble.add_script"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.add_script">[docs]</a>    <span class="k">def</span> <span class="nf">add_script</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">script_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">devices_per_node</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;TorchScript to launch with every entity belonging to this ensemble</span>
+
+<span class="sd">        Each script added to the model will be loaded into an</span>
+<span class="sd">        orchestrator (converged or not) prior to the execution</span>
+<span class="sd">        of every entity belonging to this ensemble</span>
+
+<span class="sd">        Device selection is either &quot;GPU&quot; or &quot;CPU&quot;. If many devices are</span>
+<span class="sd">        present, a number can be passed for specification e.g. &quot;GPU:1&quot;.</span>
+
+<span class="sd">        Setting ``devices_per_node=N``, with N greater than one will result</span>
+<span class="sd">        in the model being stored in the first N devices of type ``device``.</span>
+
+<span class="sd">        One of either script (in memory string representation) or script_path (file)</span>
+<span class="sd">        must be provided</span>
+
+<span class="sd">        :param name: key to store script under</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param script: TorchScript code</span>
+<span class="sd">        :type script: str, optional</span>
+<span class="sd">        :param script_path: path to TorchScript code</span>
+<span class="sd">        :type script_path: str, optional</span>
+<span class="sd">        :param device: device for script execution, defaults to &quot;CPU&quot;</span>
+<span class="sd">        :type device: str, optional</span>
+<span class="sd">        :param devices_per_node: number of devices on each host</span>
+<span class="sd">        :type devices_per_node: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">db_script</span> <span class="o">=</span> <span class="n">DBScript</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">script</span><span class="o">=</span><span class="n">script</span><span class="p">,</span>
+            <span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">devices_per_node</span><span class="o">=</span><span class="n">devices_per_node</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_script</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extend_entity_db_scripts</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="p">[</span><span class="n">db_script</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Ensemble.add_function"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.ensemble.Ensemble.add_function">[docs]</a>    <span class="k">def</span> <span class="nf">add_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">devices_per_node</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;TorchScript function to launch with every entity belonging to this ensemble</span>
+
+<span class="sd">        Each script function to the model will be loaded into a</span>
+<span class="sd">        non-converged orchestrator prior to the execution</span>
+<span class="sd">        of every entity belonging to this ensemble.</span>
+
+<span class="sd">        For converged orchestrators, the :meth:`add_script` method should be used.</span>
+
+<span class="sd">        Device selection is either &quot;GPU&quot; or &quot;CPU&quot;. If many devices are</span>
+<span class="sd">        present, a number can be passed for specification e.g. &quot;GPU:1&quot;.</span>
+
+<span class="sd">        Setting ``devices_per_node=N``, with N greater than one will result</span>
+<span class="sd">        in the model being stored in the first N devices of type ``device``.</span>
+
+<span class="sd">        :param name: key to store function under</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param script: TorchScript code</span>
+<span class="sd">        :type script: str, optional</span>
+<span class="sd">        :param script_path: path to TorchScript code</span>
+<span class="sd">        :type script_path: str, optional</span>
+<span class="sd">        :param device: device for script execution, defaults to &quot;CPU&quot;</span>
+<span class="sd">        :type device: str, optional</span>
+<span class="sd">        :param devices_per_node: number of devices on each host</span>
+<span class="sd">        :type devices_per_node: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">db_script</span> <span class="o">=</span> <span class="n">DBScript</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="n">function</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">devices_per_node</span><span class="o">=</span><span class="n">devices_per_node</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_script</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_extend_entity_db_scripts</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="p">[</span><span class="n">db_script</span><span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">_extend_entity_db_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">db_models</span><span class="p">):</span>
+        <span class="n">entity_db_models</span> <span class="o">=</span> <span class="p">[</span><span class="n">db_model</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">db_model</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_db_models</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">db_model</span> <span class="ow">in</span> <span class="n">db_models</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">db_model</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">entity_db_models</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_append_db_model</span><span class="p">(</span><span class="n">db_model</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_extend_entity_db_scripts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">db_scripts</span><span class="p">):</span>
+        <span class="n">entity_db_scripts</span> <span class="o">=</span> <span class="p">[</span><span class="n">db_script</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">db_script</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_db_scripts</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">db_script</span> <span class="ow">in</span> <span class="n">db_scripts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">db_script</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">entity_db_scripts</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">_append_db_script</span><span class="p">(</span><span class="n">db_script</span><span class="p">)</span></div>
+</pre></div>
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

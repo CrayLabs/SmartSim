@@ -1,0 +1,1245 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Basic Installation &#8212; SmartSim 0.5.1 documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet">
+  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation on specific platforms" href="platform.html" />
+    <link rel="prev" title="Introduction" href="../overview.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.5.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Basic Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="platform.html">
+   Installation on specific platforms
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../contributing.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smartsim_zoo.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_dataset_conversions.html">
+   DataSet Conversions
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../developer.html">
+   Developer
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../testing.html">
+   Testing
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/installation_instructions/basic.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Finstallation_instructions/basic.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#prerequisites">
+   Prerequisites
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#basic">
+     Basic
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#gpu-support">
+     GPU Support
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#supported-versions">
+   Supported Versions
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#macos-only">
+     MacOS-only
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#smartsim">
+   SmartSim
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#step-1-install-python-package">
+     Step 1: Install Python Package
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#step-2-build-smartsim">
+     Step 2: Build SmartSim
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#cpu-install">
+       CPU Install
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#gpu-install">
+       GPU Install
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#smartredis">
+   SmartRedis
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#build-smartredis-library-c-c-fortran">
+     Build SmartRedis Library (C++, C, Fortran)
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#customizing-the-library-build">
+       Customizing the library build
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#linking-instructions-using-compiler-flags">
+       Linking instructions using compiler flags
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#linking-instructions-for-cmake-based-build-systems">
+       Linking instructions for CMake-based build systems
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#from-source">
+   From Source
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#install-smartsim-from-source">
+     Install SmartSim from Source
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#build-the-smartredis-library">
+     Build the SmartRedis library
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id3">
+       Customizing the library build
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id4">
+       Linking instructions using compiler flags
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id5">
+       Linking instructions for CMake-based build systems
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Basic Installation</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#prerequisites">
+   Prerequisites
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#basic">
+     Basic
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#gpu-support">
+     GPU Support
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#supported-versions">
+   Supported Versions
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#macos-only">
+     MacOS-only
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#smartsim">
+   SmartSim
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#step-1-install-python-package">
+     Step 1: Install Python Package
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#step-2-build-smartsim">
+     Step 2: Build SmartSim
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#cpu-install">
+       CPU Install
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#gpu-install">
+       GPU Install
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#smartredis">
+   SmartRedis
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#build-smartredis-library-c-c-fortran">
+     Build SmartRedis Library (C++, C, Fortran)
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#customizing-the-library-build">
+       Customizing the library build
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#linking-instructions-using-compiler-flags">
+       Linking instructions using compiler flags
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#linking-instructions-for-cmake-based-build-systems">
+       Linking instructions for CMake-based build systems
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#from-source">
+   From Source
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#install-smartsim-from-source">
+     Install SmartSim from Source
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#build-the-smartredis-library">
+     Build the SmartRedis library
+    </a>
+    <ul class="nav section-nav flex-column">
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id3">
+       Customizing the library build
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id4">
+       Linking instructions using compiler flags
+      </a>
+     </li>
+     <li class="toc-h4 nav-item toc-entry">
+      <a class="reference internal nav-link" href="#id5">
+       Linking instructions for CMake-based build systems
+      </a>
+     </li>
+    </ul>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="basic-installation">
+<h1>Basic Installation<a class="headerlink" href="#basic-installation" title="Permalink to this headline">¶</a></h1>
+<p>The following will show how to install both SmartSim and SmartRedis.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For users on platforms with a ‘site install’ of SmartSim please follow
+<a class="reference internal" href="platform.html#site-installation"><span class="std std-ref">Site Installation</span></a>.</p>
+</div>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<section id="basic">
+<h3>Basic<a class="headerlink" href="#basic" title="Permalink to this headline">¶</a></h3>
+<p>The base prerequisites to install SmartSim and SmartRedis are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Python 3.8-3.10</p></li>
+<li><p>Pip</p></li>
+<li><p>Cmake 3.13.x (or later)</p></li>
+<li><p>C compiler</p></li>
+<li><p>C++ compiler</p></li>
+<li><p>GNU Make &gt; 4.0</p></li>
+<li><p>git</p></li>
+<li><p><a class="reference external" href="https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&amp;utm_medium=installation_link&amp;utm_campaign=gitlfs#installing">git-lfs</a></p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.</p>
+</div>
+</section>
+<section id="gpu-support">
+<span id="id1"></span><h3>GPU Support<a class="headerlink" href="#gpu-support" title="Permalink to this headline">¶</a></h3>
+<p>The machine-learning backends have additional requirements in order to
+use GPUs for inference</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA Toolkit 11 (tested with 11.8)</a></p></li>
+<li><p><a class="reference external" href="https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download">cuDNN 8 (tested with 8.2.1 and 8.4.0)</a></p></li>
+<li><p>OS: Linux</p></li>
+<li><p>GPU: Nvidia</p></li>
+</ul>
+</div></blockquote>
+<p>Be sure to reference the <a class="reference internal" href="platform.html#install-notes"><span class="std std-ref">installation notes</span></a> for helpful
+information regarding various system types before installation.</p>
+</section>
+</section>
+<section id="supported-versions">
+<h2>Supported Versions<a class="headerlink" href="#supported-versions" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given table" id="id6">
+<caption><span class="caption-text">Supported System for Pre-built Wheels</span><a class="headerlink" href="#id6" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>CPU</p></th>
+<th class="head"><p>GPU</p></th>
+<th class="head"><p>Python Versions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MacOS</p></td>
+<td><p>x86_64</p></td>
+<td><p>Not supported</p></td>
+<td><p>3.8 - 3.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linux</p></td>
+<td><p>x86_64</p></td>
+<td><p>Nvidia</p></td>
+<td><p>3.8 - 3.10</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Windows is not supported and there are currently no plans
+to support Windows.</p>
+</div>
+<p>Native support for various machine learning libraries and their
+versions is dictated by our dependency on <a class="reference external" href="https://github.com/RedisAI/RedisAI">RedisAI</a> 1.2.7. Users
+can also select RedisAI 1.2.5 (though that also limits
+the version of the ML libraries).</p>
+<table class="table">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 18%" />
+<col style="width: 23%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>RedisAI</p></th>
+<th class="head"><p>PyTorch</p></th>
+<th class="head"><p>Tensorflow</p></th>
+<th class="head"><p>ONNX Runtime</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1.2.7 (default)</p></td>
+<td><p>1.11.0</p></td>
+<td><p>2.8.0</p></td>
+<td><p>1.11.1</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.2.5</p></td>
+<td><p>1.9.0</p></td>
+<td><p>2.6.0</p></td>
+<td><p>1.9.0</p></td>
+</tr>
+</tbody>
+</table>
+<p><a class="reference external" href="https://github.com/tensorflow/tensorflow">TensorFlow</a> 2.0 and <a class="reference external" href="https://keras.io">Keras</a> are supported through <a class="reference external" href="https://github.com/leimao/Frozen-Graph-TensorFlow">graph freezing</a>.</p>
+<p><a class="reference external" href="https://github.com/scikit-learn/scikit-learn">ScikitLearn</a> and <a class="reference external" href="https://spark.apache.org/mllib/">Spark</a> models are supported by SmartSim as well
+through the use of the <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX</a> runtime (which is not built by
+default due to issues with glibc on a variety of Linux
+platforms and lack of support for Mac OS X).</p>
+<hr class="docutils" />
+<section id="macos-only">
+<h3>MacOS-only<a class="headerlink" href="#macos-only" title="Permalink to this headline">¶</a></h3>
+<p>We recommend users and contributors install <a class="reference external" href="https://brew.sh/">brew</a> for managing installed
+packages. For contributors, the following brew packages can be helpful:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/open-mpi#default">openmpi</a> for building and running parallel SmartRedis examples</p></li>
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/doxygen#default">doxygen</a> for building the documentation</p></li>
+<li><p><a class="reference external" href="https://formulae.brew.sh/formula/cmake#default">cmake</a> for building SmartSim and SmartRedis from source</p></li>
+</ul>
+<p>For Mac OS users, the version of <code class="docutils literal notranslate"><span class="pre">make</span></code> that comes with the Mac command line
+tools is often 3.81 which needs to be updated to install SmartSim. Users can run
+<code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">make</span></code> to get <code class="docutils literal notranslate"><span class="pre">make</span></code> &gt; 4.0 but brew will install it as
+<code class="docutils literal notranslate"><span class="pre">gmake</span></code>. An easy way around this is to run <code class="docutils literal notranslate"><span class="pre">alias</span> <span class="pre">make=gmake</span></code>.</p>
+</section>
+</section>
+<section id="smartsim">
+<span id="from-pypi"></span><h2>SmartSim<a class="headerlink" href="#smartsim" title="Permalink to this headline">¶</a></h2>
+<p>There are two stages for the installation of SmartSim.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><cite>pip</cite> install SmartSim Python package</p></li>
+<li><p>Build SmartSim using the <cite>smart</cite> command line tool</p></li>
+</ol>
+</div></blockquote>
+<section id="step-1-install-python-package">
+<h3>Step 1: Install Python Package<a class="headerlink" href="#step-1-install-python-package" title="Permalink to this headline">¶</a></h3>
+<p>We first recommend creating a new
+<a class="reference external" href="https://docs.python.org/3/library/venv.html">virtual environment</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>/path/to/new/environment
+<span class="nb">source</span><span class="w"> </span>/path/to/new/environment/bin/activate
+</pre></div>
+</div>
+<p>and install SmartSim from PyPI with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>smartsim
+</pre></div>
+</div>
+<p>If you would like SmartSim to also install python machine learning libraries
+that can be used outside SmartSim to build SmartSim-compatible models, you
+can request their installation through the <code class="docutils literal notranslate"><span class="pre">[ml]</span></code> optional dependencies,
+as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># For bash</span>
+pip<span class="w"> </span>install<span class="w"> </span>smartsim<span class="o">[</span>ml<span class="o">]</span>
+<span class="c1"># For zsh</span>
+pip<span class="w"> </span>install<span class="w"> </span>smartsim<span class="se">\[</span>ml<span class="se">\]</span>
+</pre></div>
+</div>
+<p>At this point, SmartSim is installed and can be used for more basic features.
+If you want to use the machine learning features of SmartSim, you will need
+to install the ML backends in the section below.</p>
+</section>
+<section id="step-2-build-smartsim">
+<h3>Step 2: Build SmartSim<a class="headerlink" href="#step-2-build-smartsim" title="Permalink to this headline">¶</a></h3>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">smart</span></code> cli tool to install the machine learning backends that
+are built into the Orchestrator database. <code class="docutils literal notranslate"><span class="pre">smart</span></code> is installed during
+the pip installation of SmartSim and may only be available while your
+virtual environment is active.</p>
+<p>To see all the installation options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>smart<span class="w"> </span>--help
+</pre></div>
+</div>
+<section id="cpu-install">
+<h4>CPU Install<a class="headerlink" href="#cpu-install" title="Permalink to this headline">¶</a></h4>
+<p>To install the default ML backends for CPU, run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w">          </span><span class="c1"># install PT and TF for cpu</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w"> </span>--onnx<span class="w">   </span><span class="c1"># install all backends (PT, TF, ONNX) on cpu</span>
+</pre></div>
+</div>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">smart</span></code> will install PyTorch and TensorFlow backends
+for use in SmartSim.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If a re-build is needed for any reason, <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">clean</span></code> will remove
+all of the previous installs for the ML backends and <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">clobber</span></code> will
+remove all pre-built dependencies as well as the ML backends.</p>
+</div>
+</section>
+<section id="gpu-install">
+<h4>GPU Install<a class="headerlink" href="#gpu-install" title="Permalink to this headline">¶</a></h4>
+<p>With the proper environment setup (see <a class="reference internal" href="#gpu-support"><span class="std std-ref">GPU Support</span></a>) the only difference
+to building SmartSim with GPU support is to specify a different <code class="docutils literal notranslate"><span class="pre">device</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>gpu<span class="w">          </span><span class="c1"># install PT and TF for gpu</span>
+smart<span class="w"> </span>build<span class="w"> </span>--device<span class="w"> </span>gpu<span class="w"> </span>--onnx<span class="w">   </span><span class="c1"># install all backends (PT, TF, ONNX) on gpu</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>GPU builds can be troublesome due to the way that RedisAI and the ML-package
+backends look for the CUDA Toolkit and cuDNN libraries. Please see the
+<a class="reference internal" href="platform.html#install-notes"><span class="std std-ref">Platform Installation Section</span></a> section for guidance.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="smartredis">
+<h2>SmartRedis<a class="headerlink" href="#smartredis" title="Permalink to this headline">¶</a></h2>
+<p>There are implementations of the SmartRedis client in 4 languages: Python, C++,
+C, and Fortran. The Python client is installed through <code class="docutils literal notranslate"><span class="pre">pip</span></code> and the compiled
+clients can be built as a static or shared library through <code class="docutils literal notranslate"><span class="pre">cmake</span></code>.</p>
+<p>SmartRedis Python supports the same architectures for pre-built wheels that
+SmartSim does.</p>
+<table class="colwidths-given table" id="id7">
+<caption><span class="caption-text">Supported Systems for Pre-built Wheels</span><a class="headerlink" href="#id7" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Platform</p></th>
+<th class="head"><p>Python Versions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>MacOS</p></td>
+<td><p>3.7 - 3.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>Linux</p></td>
+<td><p>3.7 - 3.10</p></td>
+</tr>
+</tbody>
+</table>
+<p>The Python client for SmartRedis is installed through <code class="docutils literal notranslate"><span class="pre">pip</span></code> as follows:</p>
+<p>First, activate your Python virtual environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>&lt;env<span class="w"> </span>name&gt;
+</pre></div>
+</div>
+<p>Install SmartRedis Python client from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>smartredis
+</pre></div>
+</div>
+<p>Developers installing the Python client from PyPI
+can install the SmartRedis client with additional
+dependencies for testing and documentation with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>smartredis<span class="o">[</span>dev<span class="o">]</span>
+<span class="c1"># or if using ZSH</span>
+pip<span class="w"> </span>install<span class="w"> </span>smartredis<span class="se">\[</span>dev<span class="se">\]</span>
+</pre></div>
+</div>
+<p>Now, when inside your virtual environment, you should be able to import
+the <code class="docutils literal notranslate"><span class="pre">Client</span></code> from <code class="docutils literal notranslate"><span class="pre">smartredis</span></code> as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Python</span> <span class="mf">3.7.7</span> <span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">May</span>  <span class="mi">7</span> <span class="mi">2020</span><span class="p">,</span> <span class="mi">21</span><span class="p">:</span><span class="mi">25</span><span class="p">:</span><span class="mi">33</span><span class="p">)</span>
+<span class="p">[</span><span class="n">GCC</span> <span class="mf">7.3.0</span><span class="p">]</span> <span class="p">::</span> <span class="n">Anaconda</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span> <span class="n">on</span> <span class="n">linux</span>
+<span class="n">Type</span> <span class="s2">&quot;help&quot;</span><span class="p">,</span> <span class="s2">&quot;copyright&quot;</span><span class="p">,</span> <span class="s2">&quot;credits&quot;</span> <span class="ow">or</span> <span class="s2">&quot;license&quot;</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="o">.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="o">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+<section id="build-smartredis-library-c-c-fortran">
+<h3>Build SmartRedis Library (C++, C, Fortran)<a class="headerlink" href="#build-smartredis-library-c-c-fortran" title="Permalink to this headline">¶</a></h3>
+<p>Clone the SmartRedis repository and optionally checkout a specific branch or tag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git<span class="w"> </span><span class="o">[</span>--branch<span class="w"> </span>tag_name<span class="o">]</span><span class="w"> </span>smartredis
+</pre></div>
+</div>
+<p>The release tarball can also be used instead of cloning the git repository, but
+the preferred method is a repository clone.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">`Makefile</span></code> included in the top level of the SmartRedis repository has two
+main targets: <code class="docutils literal notranslate"><span class="pre">lib</span></code> which will create a dynamic library for C, C++, and
+(optionally) Fortran and Python clients; and <code class="docutils literal notranslate"><span class="pre">lib-with-fortran</span></code> which will also
+unconditionally build a library for Fortran applications. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> will list
+additional targets that are used for SmartRedis development.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="c1">#or lib-with-fortran</span>
+</pre></div>
+</div>
+<p>The SmartRedis library will be installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/lib/</span></code> and the
+SmartRedis header files (and optionally the Fortran <code class="docutils literal notranslate"><span class="pre">.mod</span></code> files) will be
+installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/include/</span></code>.  The library installation can be
+used to easily include SmartRedis capabilities in C++, C, and Fortran
+applications.</p>
+<section id="customizing-the-library-build">
+<h4>Customizing the library build<a class="headerlink" href="#customizing-the-library-build" title="Permalink to this headline">¶</a></h4>
+<p>By default, the SmartRedis library is built as a shared library. For some
+applications, however, it is preferable to link to a statically compiled
+library. This can be done easily with the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Static build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_LINK</span><span class="o">=</span>Static
+<span class="c1"># Shared build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_LINK</span><span class="o">=</span>Shared<span class="w"> </span><span class="c1">#or skip the SR_LINK variable as this is the default</span>
+</pre></div>
+</div>
+<p>Linked statically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.a</span></code> file extension.  When
+linked dynamically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.so</span></code> file extension.</p>
+<p>It is also possible to adjust compilation settings for the SmartRedis library.
+By default, the library compiles in an optimized build (<code class="docutils literal notranslate"><span class="pre">Release</span></code>), but debug builds
+with full symbols (<code class="docutils literal notranslate"><span class="pre">Debug</span></code>) can be created as can debug builds with extensions enabled
+for code coverage metrics (<code class="docutils literal notranslate"><span class="pre">Coverage</span></code>; this build type is only available with GNU
+compilers). Similar to configuring a link type, selecting the build mode can be done
+via a variable supplied to make:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Release build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Release<span class="w"> </span><span class="c1">#or skip the SR_BUILD variable as this is the default</span>
+<span class="c1"># Debug build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Debug
+<span class="c1"># Code coverage build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Coverage
+</pre></div>
+</div>
+<p>The name of the library produced for a Debug mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-debug</span></code>.
+The name of the library produced for a Coverage mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-coverage</span></code>.
+The name of the library  produced for a Release mode build is <code class="docutils literal notranslate"><span class="pre">smartredis</span></code>.
+In each case, the file extension is dependent on the link type, <code class="docutils literal notranslate"><span class="pre">.so</span></code> or <code class="docutils literal notranslate"><span class="pre">.a</span></code>.
+All libraries will be located in the <code class="docutils literal notranslate"><span class="pre">install/lib</span></code> folder.</p>
+<p>Finally, it is possible to build SmartRedis to include Python and/or Fortran support
+(both are omitted by default):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Build support for Python</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_PYTHON</span><span class="o">=</span>ON
+<span class="c1"># Build support for Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># equivalent to make lib-with-fortran</span>
+<span class="c1"># Build support for Python and Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_PYTHON</span><span class="o">=</span>ON<span class="w"> </span><span class="nv">SR_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># or make lib-with-fortran SR_PYTHON=ON</span>
+</pre></div>
+</div>
+<p>The build mode, link type, and Fortran/Python support settings are fully orthogonal;
+any combination of them is supported. For example, a statically linked debug build
+with Python support may be achieved via the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_LINK</span><span class="o">=</span>Static<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Debug<span class="w"> </span><span class="nv">SR_PYTHON</span><span class="o">=</span>ON
+</pre></div>
+</div>
+<p>The SR_LINK, SR_BUILD, SR_PYTHON, and SR_FORTRAN variables are fully supported for all
+test and build targets in the Makefile.</p>
+<p>Fortran support is built in a secondary library.
+The name of the Fortran library produced for a Debug mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-fortran-debug</span></code>.
+The name of the library produced for a Coverage mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-fortran-coverage</span></code>.
+The name of the library  produced for a Release mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-fortran</span></code>.
+As with the main libray, the file extension is dependent on the link type, <code class="docutils literal notranslate"><span class="pre">.so</span></code> or <code class="docutils literal notranslate"><span class="pre">.a</span></code>.
+All libraries will be located in the <code class="docutils literal notranslate"><span class="pre">install/lib</span></code> folder.</p>
+<p>Additional make variables are described in the <code class="docutils literal notranslate"><span class="pre">help</span></code> make target:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span><span class="nb">help</span>
+</pre></div>
+</div>
+</section>
+<section id="linking-instructions-using-compiler-flags">
+<h4>Linking instructions using compiler flags<a class="headerlink" href="#linking-instructions-using-compiler-flags" title="Permalink to this headline">¶</a></h4>
+<p>For applications which use pre-defined compiler flags for compilation, the
+following flags should be included for the preprocessor</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-I/path/to/smartredis/install/include
+</pre></div>
+</div>
+<p>The linking flags will differ slightly whether the Fortran client library needs
+to be included. If so, be sure that you ran <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">lib-with-fortran</span></code> (or <code class="docutils literal notranslate"><span class="pre">make</span>
+<span class="pre">lib</span> <span class="pre">SR_FORTRAN=ON</span></code>) and include the SmartRedis fortran library via the following flags:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-L/path/to/smartredis/install/lib -lsmartredis [-lsmartredis-fortran]
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Fortran applications need to link in both <code class="docutils literal notranslate"><span class="pre">smartredis-fortran</span></code> and
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code> libraries whereas C/C++ applications require only
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code>. For debug or coverage builds, use the appropriate alternate
+libraries as described previously.</p>
+</div>
+</section>
+<section id="linking-instructions-for-cmake-based-build-systems">
+<h4>Linking instructions for CMake-based build systems<a class="headerlink" href="#linking-instructions-for-cmake-based-build-systems" title="Permalink to this headline">¶</a></h4>
+<p>The CMake instructions below illustrate how to compile a C or C++ application
+with SmartRedis. To build a Fortran client, uncomment out the lines after the
+<code class="docutils literal notranslate"><span class="pre">Fortran-only</span></code> comments</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>cmake_minimum_required(VERSION 3.13)
+project(Example)
+
+set(CMAKE_CXX_STANDARD 17)
+
+set(SMARTREDIS_INSTALL_PATH /path/to/smartredis/install)
+find_library(SMARTREDIS_LIBRARY smartredis
+             PATHS ${SMARTREDIS_INSTALL_PATH}/lib
+             NO_DEFAULT_PATH REQUIRED
+)
+
+# Fortran-only:
+#find_library(SMARTREDIS_FORTRAN_LIBRARY smartredis-fortran
+#             PATHS SMARTREDIS_INSTALL_PATH/lib
+#             NO_DEFAULT_PATH REQUIRED
+#)
+
+include_directories(SYSTEM
+    /usr/local/include
+    ${SMARTREDIS_INSTALL_PATH}/include
+)
+
+# Build executables
+
+add_executable(example
+    example.cpp
+)
+target_link_libraries(example
+    ${SMARTREDIS_LIBRARY}
+    # Fortran-only:
+    #${SMARTREDIS_FORTRAN_LIBRARY}
+)
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="from-source">
+<h2>From Source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h2>
+<p>This section will be geared towards contributors who want to install SmartSim
+and SmartRedis from source for development purposes. If you are installing
+from source for other reasons, follow the steps below but use the source
+distributions provided on GitHub or PyPI.</p>
+<section id="install-smartsim-from-source">
+<span id="id2"></span><h3>Install SmartSim from Source<a class="headerlink" href="#install-smartsim-from-source" title="Permalink to this headline">¶</a></h3>
+<p>First, clone SmartSim.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartSim<span class="w"> </span>smartsim
+</pre></div>
+</div>
+<p>And then install SmartSim with pip in <em>editable</em> mode. This way, SmartSim is
+installed in your virtual environment and available on <cite>sys.path</cite>, but the
+source remains at the site of the clone instead of in site-packages.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>smartsim
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev,ml<span class="o">]</span><span class="w">    </span><span class="c1"># for bash users</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="se">\[</span>dev,ml<span class="se">\]</span><span class="w">  </span><span class="c1"># for zsh users</span>
+</pre></div>
+</div>
+<p>Use the now installed <code class="docutils literal notranslate"><span class="pre">smart</span></code> cli to install the machine learning runtimes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># run one of the following</span>
+smart<span class="w"> </span>build<span class="w"> </span>-v<span class="w"> </span>--device<span class="w"> </span>cpu<span class="w">          </span><span class="c1"># verbose install cpu</span>
+smart<span class="w"> </span>build<span class="w"> </span>-v<span class="w"> </span>--device<span class="w"> </span>gpu<span class="w">          </span><span class="c1"># verbose install gpu</span>
+smart<span class="w"> </span>build<span class="w"> </span>-v<span class="w"> </span>--device<span class="w"> </span>gpu<span class="w"> </span>--onnx<span class="w">   </span><span class="c1"># install all backends (PT, TF, ONNX) on gpu</span>
+</pre></div>
+</div>
+</section>
+<section id="build-the-smartredis-library">
+<h3>Build the SmartRedis library<a class="headerlink" href="#build-the-smartredis-library" title="Permalink to this headline">¶</a></h3>
+<p>Clone the SmartRedis repository and optionally checkout a specific branch or tag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CrayLabs/SmartRedis.git<span class="w"> </span><span class="o">[</span>--branch<span class="w"> </span>tag_name<span class="o">]</span><span class="w"> </span>smartredis
+</pre></div>
+</div>
+<p>The release tarball can also be used instead of cloning the git repository, but
+the preferred method is a repository clone.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">`Makefile</span></code> included in the top level of the SmartRedis repository has two
+main targets: <code class="docutils literal notranslate"><span class="pre">lib</span></code> which will create a dynamic library for C, C++, and
+(optionally) Fortran and Python clients; and <code class="docutils literal notranslate"><span class="pre">lib-with-fortran</span></code> which will also
+unconditionally build a library for Fortran applications. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> will list
+additional targets that are used for SmartRedis development.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="c1">#or lib-with-fortran</span>
+</pre></div>
+</div>
+<p>The SmartRedis library will be installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/lib/</span></code> and the
+SmartRedis header files (and optionally the Fortran <code class="docutils literal notranslate"><span class="pre">.mod</span></code> files) will be
+installed in <code class="docutils literal notranslate"><span class="pre">SmartRedis/install/include/</span></code>.  The library installation can be
+used to easily include SmartRedis capabilities in C++, C, and Fortran
+applications.</p>
+<section id="id3">
+<h4>Customizing the library build<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>By default, the SmartRedis library is built as a shared library. For some
+applications, however, it is preferable to link to a statically compiled
+library. This can be done easily with the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Static build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_LINK</span><span class="o">=</span>Static
+<span class="c1"># Shared build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_LINK</span><span class="o">=</span>Shared<span class="w"> </span><span class="c1">#or skip the SR_LINK variable as this is the default</span>
+</pre></div>
+</div>
+<p>Linked statically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.a</span></code> file extension.  When
+linked dynamically, the SmartRedis library will have a <code class="docutils literal notranslate"><span class="pre">.so</span></code> file extension.</p>
+<p>It is also possible to adjust compilation settings for the SmartRedis library.
+By default, the library compiles in an optimized build (<code class="docutils literal notranslate"><span class="pre">Release</span></code>), but debug builds
+with full symbols (<code class="docutils literal notranslate"><span class="pre">Debug</span></code>) can be created as can debug builds with extensions enabled
+for code coverage metrics (<code class="docutils literal notranslate"><span class="pre">Coverage</span></code>; this build type is only available with GNU
+compilers). Similar to configuring a link type, selecting the build mode can be done
+via a variable supplied to make:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Release build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Release<span class="w"> </span><span class="c1">#or skip the SR_BUILD variable as this is the default</span>
+<span class="c1"># Debug build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Debug
+<span class="c1"># Code coverage build</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Coverage
+</pre></div>
+</div>
+<p>The name of the library produced for a Debug mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-debug</span></code>.
+The name of the library produced for a Coverage mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-coverage</span></code>.
+The name of the library  produced for a Release mode build is <code class="docutils literal notranslate"><span class="pre">smartredis</span></code>.
+In each case, the file extension is dependent on the link type, <code class="docutils literal notranslate"><span class="pre">.so</span></code> or <code class="docutils literal notranslate"><span class="pre">.a</span></code>.
+All libraries will be located in the <code class="docutils literal notranslate"><span class="pre">install/lib</span></code> folder.</p>
+<p>Finally, it is possible to build SmartRedis to include Python and/or Fortran support
+(both are omitted by default):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+<span class="c1"># Build support for Python</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_PYTHON</span><span class="o">=</span>ON
+<span class="c1"># Build support for Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># equivalent to make lib-with-fortran</span>
+<span class="c1"># Build support for Python and Fortran</span>
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_PYTHON</span><span class="o">=</span>ON<span class="w"> </span><span class="nv">SR_FORTRAN</span><span class="o">=</span>ON<span class="w"> </span><span class="c1"># or make lib-with-fortran SR_PYTHON=ON</span>
+</pre></div>
+</div>
+<p>The build mode, link type, and Fortran/Python support settings are fully orthogonal;
+any combination of them is supported. For example, a statically linked debug build
+with Python support may be achieved via the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span>lib<span class="w"> </span><span class="nv">SR_LINK</span><span class="o">=</span>Static<span class="w"> </span><span class="nv">SR_BUILD</span><span class="o">=</span>Debug<span class="w"> </span><span class="nv">SR_PYTHON</span><span class="o">=</span>ON
+</pre></div>
+</div>
+<p>The SR_LINK, SR_BUILD, SR_PYTHON, and SR_FORTRAN variables are fully supported for all
+test and build targets in the Makefile.</p>
+<p>Fortran support is built in a secondary library.
+The name of the Fortran library produced for a Debug mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-fortran-debug</span></code>.
+The name of the library produced for a Coverage mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-fortran-coverage</span></code>.
+The name of the library  produced for a Release mode build is <code class="docutils literal notranslate"><span class="pre">smartredis-fortran</span></code>.
+As with the main libray, the file extension is dependent on the link type, <code class="docutils literal notranslate"><span class="pre">.so</span></code> or <code class="docutils literal notranslate"><span class="pre">.a</span></code>.
+All libraries will be located in the <code class="docutils literal notranslate"><span class="pre">install/lib</span></code> folder.</p>
+<p>Additional make variables are described in the <code class="docutils literal notranslate"><span class="pre">help</span></code> make target:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>SmartRedis
+make<span class="w"> </span><span class="nb">help</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h4>Linking instructions using compiler flags<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<p>For applications which use pre-defined compiler flags for compilation, the
+following flags should be included for the preprocessor</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-I/path/to/smartredis/install/include
+</pre></div>
+</div>
+<p>The linking flags will differ slightly whether the Fortran client library needs
+to be included. If so, be sure that you ran <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">lib-with-fortran</span></code> (or <code class="docutils literal notranslate"><span class="pre">make</span>
+<span class="pre">lib</span> <span class="pre">SR_FORTRAN=ON</span></code>) and include the SmartRedis fortran library via the following flags:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-L/path/to/smartredis/install/lib -lsmartredis [-lsmartredis-fortran]
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Fortran applications need to link in both <code class="docutils literal notranslate"><span class="pre">smartredis-fortran</span></code> and
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code> libraries whereas C/C++ applications require only
+<code class="docutils literal notranslate"><span class="pre">smartredis</span></code>. For debug or coverage builds, use the appropriate alternate
+libraries as described previously.</p>
+</div>
+</section>
+<section id="id5">
+<h4>Linking instructions for CMake-based build systems<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<p>The CMake instructions below illustrate how to compile a C or C++ application
+with SmartRedis. To build a Fortran client, uncomment out the lines after the
+<code class="docutils literal notranslate"><span class="pre">Fortran-only</span></code> comments</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>cmake_minimum_required(VERSION 3.13)
+project(Example)
+
+set(CMAKE_CXX_STANDARD 17)
+
+set(SMARTREDIS_INSTALL_PATH /path/to/smartredis/install)
+find_library(SMARTREDIS_LIBRARY smartredis
+             PATHS ${SMARTREDIS_INSTALL_PATH}/lib
+             NO_DEFAULT_PATH REQUIRED
+)
+
+# Fortran-only:
+#find_library(SMARTREDIS_FORTRAN_LIBRARY smartredis-fortran
+#             PATHS SMARTREDIS_INSTALL_PATH/lib
+#             NO_DEFAULT_PATH REQUIRED
+#)
+
+include_directories(SYSTEM
+    /usr/local/include
+    ${SMARTREDIS_INSTALL_PATH}/include
+)
+
+# Build executables
+
+add_executable(example
+    example.cpp
+)
+target_link_libraries(example
+    ${SMARTREDIS_LIBRARY}
+    # Fortran-only:
+    #${SMARTREDIS_FORTRAN_LIBRARY}
+)
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="../overview.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Introduction</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="platform.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Installation on specific platforms</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2023, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

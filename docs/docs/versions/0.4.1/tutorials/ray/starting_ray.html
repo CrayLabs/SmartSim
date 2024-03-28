@@ -1,0 +1,837 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Ray Integration &#8212; SmartSim 0.4.1 documentation</title>
+    
+  <link href="../../_static/css/theme.css" rel="stylesheet">
+  <link href="../../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Experiments" href="../../experiment.html" />
+    <link rel="prev" title="Online Training" href="../ml_training/surrogate/train_surrogate.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../contributing_examples.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../../_sources/tutorials/ray/starting_ray.ipynb.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.ipynb</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Ftutorials/ray/starting_ray.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Starting-a-Ray-Cluster-with-SmartSim">
+   Starting a Ray Cluster with SmartSim
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Connect-to-the-Ray-Cluster">
+   Connect to the Ray Cluster
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Stop-Cluster-and-Release-Resources">
+   Stop Cluster and Release Resources
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Ray Integration</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Starting-a-Ray-Cluster-with-SmartSim">
+   Starting a Ray Cluster with SmartSim
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Connect-to-the-Ray-Cluster">
+   Connect to the Ray Cluster
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#Stop-Cluster-and-Release-Resources">
+   Stop Cluster and Release Resources
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Ray-Integration">
+<h1>Ray Integration<a class="headerlink" href="#Ray-Integration" title="Permalink to this headline">¶</a></h1>
+<section id="Starting-a-Ray-Cluster-with-SmartSim">
+<h2>Starting a Ray Cluster with SmartSim<a class="headerlink" href="#Starting-a-Ray-Cluster-with-SmartSim" title="Permalink to this headline">¶</a></h2>
+<p>Before we can begin starting up a Cluster, we first import the relevant modules. We will also define some global variables for clarity and ease of use:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">NUM_NODES</span></code> is the number of Ray nodes we will deploy with the first one will be the head node. We will run one node on each host.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPUS_PER_WORKER</span></code> is number of cpus to be used by each worker in the cluster</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LAUNCHER</span></code> is the workload manager that our SmartSim experiment and ray cluster will use</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">ray</span>
+<span class="kn">from</span> <span class="nn">ray</span> <span class="kn">import</span> <span class="n">tune</span>
+<span class="kn">import</span> <span class="nn">ray.util</span>
+
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">smartsim.exp.ray</span> <span class="kn">import</span> <span class="n">RayCluster</span>
+
+<span class="n">NUM_NODES</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">CPUS_PER_WORKER</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">LAUNCHER</span><span class="o">=</span><span class="s1">&#39;slurm&#39;</span>
+</pre></div>
+</div>
+</div>
+<p>Now, we instance a SmartSim experiment with the name <code class="docutils literal notranslate"><span class="pre">&quot;ray-cluster&quot;</span></code>, which we will spin up the Ray cluster. By doing so we will create a <code class="docutils literal notranslate"><span class="pre">ray-cluster</span></code> directory (relative to the path from where we are executing this notebook). The output files generated by the experment will be located in the <code class="docutils literal notranslate"><span class="pre">ray-cluster</span></code> directory.</p>
+<p>Next, we will instance a <code class="docutils literal notranslate"><span class="pre">RayCluster</span></code> to connect to the cluster. We are limiting the number each ray node can use to <code class="docutils literal notranslate"><span class="pre">CPUS_PER_WORKER</span></code>. If we wanted to let it use all the CPUs, it would suffice not to pass <code class="docutils literal notranslate"><span class="pre">ray_args</span></code>. Notice that the cluster will be password-protected (the password, generated internally, will be shared with worker nodes).</p>
+<p>If the hosts are attached to multiple interfaces (e.g. <code class="docutils literal notranslate"><span class="pre">ib</span></code>, <code class="docutils literal notranslate"><span class="pre">eth0</span></code>, …), we can specify to which one the Ray nodes should bind by setting the <code class="docutils literal notranslate"><span class="pre">interface</span></code> argument; it is recommended to always choose the one offering the best performances. On a Cray XC, for example, this will be <code class="docutils literal notranslate"><span class="pre">ipogif0</span></code>.</p>
+<p>Note that this approach only works with <code class="docutils literal notranslate"><span class="pre">ray&gt;=1.6</span></code>. For previous versions, you have to add <code class="docutils literal notranslate"><span class="pre">password=None</span></code> to the <code class="docutils literal notranslate"><span class="pre">RayCluster</span></code> constructor.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;ray-cluster&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="n">LAUNCHER</span><span class="p">)</span>
+<span class="n">cluster</span> <span class="o">=</span> <span class="n">RayCluster</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ray-cluster&quot;</span><span class="p">,</span>
+    <span class="n">run_args</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">ray_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;num-cpus&quot;</span><span class="p">:</span> <span class="n">CPUS_PER_WORKER</span><span class="p">},</span>
+    <span class="n">launcher</span><span class="o">=</span><span class="n">LAUNCHER</span><span class="p">,</span>
+    <span class="n">num_nodes</span><span class="o">=</span><span class="n">NUM_NODES</span><span class="p">,</span>
+    <span class="n">batch</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;ipogif0&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We now generate the needed directories. If an experiment with the same name already exists, this call will fail to avoid overwriting existing results. If we want to overwrite, we can simply pass <code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code> to <code class="docutils literal notranslate"><span class="pre">exp.generate()</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we are ready to start the cluster!</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Connect-to-the-Ray-Cluster">
+<h2>Connect to the Ray Cluster<a class="headerlink" href="#Connect-to-the-Ray-Cluster" title="Permalink to this headline">¶</a></h2>
+<p>Now we can just connect to our running server.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">ray</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ray://</span><span class="si">{</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_head_address</span><span class="p">()</span><span class="si">}</span><span class="s2">:10001&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We can check that all resources are set properly.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+    <span class="p">(</span>
+        <span class="s2">&quot;This cluster consists of</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ray</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span><span class="si">}</span><span class="s2"> nodes in total</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ray</span><span class="o">.</span><span class="n">cluster_resources</span><span class="p">()[</span><span class="s1">&#39;CPU&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> CPU resources in total</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;and the head node is running at </span><span class="si">{</span><span class="n">cluster</span><span class="o">.</span><span class="n">get_head_address</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We can run a Ray Tune example, to see that everything is working.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tune</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="s2">&quot;PPO&quot;</span><span class="p">,</span>
+    <span class="n">stop</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;episode_reward_max&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">},</span>
+    <span class="n">config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;framework&quot;</span><span class="p">:</span> <span class="s2">&quot;torch&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;env&quot;</span><span class="p">:</span> <span class="s2">&quot;CartPole-v0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;num_gpus&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="n">tune</span><span class="o">.</span><span class="n">grid_search</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span> <span class="p">(</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span>
+        <span class="s2">&quot;log_level&quot;</span><span class="p">:</span> <span class="s2">&quot;ERROR&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">local_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">exp_path</span><span class="p">,</span> <span class="s2">&quot;ray_log&quot;</span><span class="p">),</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">fail_fast</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_to_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>When the Ray job is running, we can connect to the Ray dashboard to monitor the evolution of the experiment. To do this, if Ray is running on a compute node of a remote system, we need to setup a SSH tunnel (we will see later how), to forward the port on which the dashboard is published to our local system. For example, if the head address (printed in the cell above) is <code class="docutils literal notranslate"><span class="pre">&lt;head_ip_address&gt;</span></code>, and the system name is <code class="docutils literal notranslate"><span class="pre">&lt;remote_sytem_name&gt;</span></code>, we can establish a tunnel to the dashboard opening a
+terminal on the local system and entering:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh -L <span class="m">8265</span>:&lt;head_ip_address&gt;:8265 &lt;remote_system_name&gt;
+</pre></div>
+</div>
+<p>Then, from a browser on the local system, we can go to the address <code class="docutils literal notranslate"><span class="pre">http://localhost:8265</span></code> to see the dashboard.</p>
+<p>There are two things to know if something does not work:</p>
+<ol class="arabic simple">
+<li><p>We are using <code class="docutils literal notranslate"><span class="pre">8265</span></code> as a port, which is the default dashboard port. If that port is not free, we can bind the dashboard to another port, e.g. <code class="docutils literal notranslate"><span class="pre">PORT_NUMBER</span></code> (by adding <code class="docutils literal notranslate"><span class="pre">&quot;dashboard-port&quot;:</span> <span class="pre">str(PORT_NUMBER)</span></code> to <code class="docutils literal notranslate"><span class="pre">ray_args</span></code> when creating the cluster) and the command changed accordingly.</p></li>
+<li><p>If the port forwarding fails, it is possible that the interface is not reachable. In that case, you can add <code class="docutils literal notranslate"><span class="pre">&quot;dashboard-address&quot;:</span> <span class="pre">&quot;0.0.0.0&quot;</span></code> to <code class="docutils literal notranslate"><span class="pre">ray_args</span></code> when creating the cluster, to bind the dashboard to all interfaces, or select a visible address if one knows it. You can then use the node name (or its public IP) to establish the tunnel, by entering (on the local terminal): <code class="docutils literal notranslate"><span class="pre">bash</span>&#160;&#160; <span class="pre">ssh</span> <span class="pre">-L</span> <span class="pre">8265:&lt;node_name_or_public_IP&gt;:8265</span> <span class="pre">&lt;remote_system_name&gt;</span></code> Please refer to your system guide to
+find out how you can get the name and the address of a node.</p></li>
+</ol>
+</section>
+<section id="Stop-Cluster-and-Release-Resources">
+<h2>Stop Cluster and Release Resources<a class="headerlink" href="#Stop-Cluster-and-Release-Resources" title="Permalink to this headline">¶</a></h2>
+<p>When we are finished with the cluster and ready to deallocate resources, we must first shut down the Ray runtime, followed by disconnecting the context.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ray</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+<span class="n">ctx</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>Now that all is gracefully stopped, we can stop the job on the allocation.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="../ml_training/surrogate/train_surrogate.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Online Training</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="../../experiment.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Experiments</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

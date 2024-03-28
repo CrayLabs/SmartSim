@@ -1,0 +1,522 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Online Training &#8212; SmartSim 0.4.0 documentation</title>
+    
+  <link href="../_static/css/theme.css" rel="stylesheet">
+  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Ray Integration" href="ray/starting_ray.html" />
+    <link rel="prev" title="Online Inference" href="ml_inference/Inference-in-SmartSim.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.0 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../community.html">
+   Community
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="../_sources/tutorials/training.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#producing-and-uploading-the-samples">
+   Producing and uploading the samples
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#downloading-the-samples-and-training-the-model">
+   Downloading the samples and training the model
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#launching-the-experiment">
+   Launching the experiment
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Online Training</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#producing-and-uploading-the-samples">
+   Producing and uploading the samples
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#downloading-the-samples-and-training-the-model">
+   Downloading the samples and training the model
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#launching-the-experiment">
+   Launching the experiment
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="online-training">
+<h1>Online Training<a class="headerlink" href="#online-training" title="Permalink to this headline">¶</a></h1>
+<p>Online training provides the ability to use dynamic processes as your training
+data set. In SmartSim, training data can be any process using the SmartRedis clients
+to store data inside of a deployed <cite>Orchestrator</cite> database.</p>
+<p>SmartSim includes utilizes to help with online training workflows in PyTorch and TensorFlow
+In this example, we show how to use <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf</span></code> to train a Neural Network implemented
+in TensorFlow and Keras.</p>
+<p>In particular, we will be using two classes:
+- <code class="docutils literal notranslate"><span class="pre">smartsim.ml.data.TrainingUploader</span></code> which streamlines the uploading of samples and corresponding targets to the DB
+- <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf.DataGenerator</span></code> which is a Keras <code class="docutils literal notranslate"><span class="pre">Generator</span></code> which can be used to train a DNN,
+and will download the samples from the DB updating the training set at the end of each epoch.</p>
+<p>The SmartSim <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> will consist in one mock simulation (the <code class="docutils literal notranslate"><span class="pre">producer</span></code>) uploading samples,
+and one application (the <code class="docutils literal notranslate"><span class="pre">training_service</span></code>) downloading the samples to train a DNN.</p>
+<p>A richer example, entirely implemented in Python, is available as a Jupyter Notebook in the
+<code class="docutils literal notranslate"><span class="pre">tutorials</span></code> section of the SmartSim repository. An equivalent example using PyTorch
+instead of TensorFlow is available in the same directory.</p>
+<section id="producing-and-uploading-the-samples">
+<h2>Producing and uploading the samples<a class="headerlink" href="#producing-and-uploading-the-samples" title="Permalink to this headline">¶</a></h2>
+<p id="ml-training-producer-code">The first application in the workflow, the <code class="docutils literal notranslate"><span class="pre">producer</span></code> will upload batches of samples at regular intervals,
+mimicking the behavior of an iterative simulation.</p>
+<p>Since the <code class="docutils literal notranslate"><span class="pre">training_service</span></code> will use a <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf.DynamicDataGenerator</span></code> two download the samples, their
+keys need to follow a pre-defined format. Assuming that only one process in the simulation
+uploads the data, this format is <code class="docutils literal notranslate"><span class="pre">&lt;sample_prefix&gt;_&lt;iteration&gt;</span></code>. And for targets
+(which can also be integer labels), the key format is <code class="docutils literal notranslate"><span class="pre">&lt;target_prefix&gt;_&lt;iteration&gt;</span></code>. Both <code class="docutils literal notranslate"><span class="pre">&lt;sample_prefix&gt;</span></code>
+and <code class="docutils literal notranslate"><span class="pre">&lt;target_prefix&gt;</span></code> are user-defined, and will need to be used to initialize the
+<code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf.DynamicDataGenerator</span></code> object.</p>
+<p>Assuming the simulation is written in Python, then the code would look like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">SmartRedis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="c1"># simulation initialization code</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iterations</span><span class="p">):</span>
+    <span class="c1"># simulation code producing two tensors, data_points</span>
+    <span class="c1"># and data_values</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;points_</span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data_points</span><span class="p">)</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">put_tensor</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;values_</span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data_values</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For simple simulations, this is sufficient. But if the simulation
+uses MPI, then each rank could upload a portion of the data set. In that case,
+the format for sample and target keys will be <code class="docutils literal notranslate"><span class="pre">&lt;sample_prefix&gt;_&lt;sub-index&gt;_&lt;iteration&gt;</span></code>
+and <code class="docutils literal notranslate"><span class="pre">&lt;target_prefix&gt;_&lt;sub-index&gt;_&lt;iteration&gt;</span></code>, where <code class="docutils literal notranslate"><span class="pre">&lt;sub_index&gt;</span></code> can be, e.g.
+the MPI rank id.</p>
+</section>
+<section id="downloading-the-samples-and-training-the-model">
+<h2>Downloading the samples and training the model<a class="headerlink" href="#downloading-the-samples-and-training-the-model" title="Permalink to this headline">¶</a></h2>
+<p>The second part of the workflow is the <code class="docutils literal notranslate"><span class="pre">training_service</span></code>, an application that
+downloads the data uploaded by the <code class="docutils literal notranslate"><span class="pre">producer</span></code> and uses them to train a ML model.
+Most importantly, the <code class="docutils literal notranslate"><span class="pre">training_service</span></code> needs to keep looking for new samples,
+and download them as they are available. The training data set size thus needs to grow at
+each <code class="docutils literal notranslate"><span class="pre">producer</span></code> iteration.</p>
+<p>In Keras, a <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> represents a data set and can be passed to <code class="docutils literal notranslate"><span class="pre">model.fit()</span></code>.
+The class <code class="docutils literal notranslate"><span class="pre">smartsim.ml.tf.DynamicDataGenerator</span></code> is a Keras <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>, which updates
+its data set at the end of each training epoch, looking for newly produced batches of samples.
+A current limitation of the TensorFlow training algorithm is that it does not take
+into account changes of size in the data sets once the training has started, i.e. it is always
+assumed that the training (and validation) data does not change during the training. To
+overcome this limitation, we need to train one epoch at the time. Thus,
+following what we defined in the <a class="reference internal" href="#ml-training-producer-code"><span class="std std-ref">producer section</span></a>,
+the <code class="docutils literal notranslate"><span class="pre">training_service</span></code> would look like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim.ml.tf</span> <span class="kn">import</span> <span class="n">DynamicDataGenerator</span>
+<span class="n">generator</span> <span class="o">=</span> <span class="n">DynamicDataGenerator</span><span class="p">(</span>
+        <span class="n">sample_prefix</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
+        <span class="n">target_prefix</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="c1"># some ML model</span>
+<span class="c1"># model initialization</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span>
+              <span class="n">steps_per_epoch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">epochs</span><span class="o">=</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+              <span class="n">initial_epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+              <span class="n">batch_size</span><span class="o">=</span><span class="n">generator</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+              <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Again, this is enough for simple simulations. If the simulation uses MPI,
+then the <code class="docutils literal notranslate"><span class="pre">DynamicDataGenerator</span></code> needs to know about the possible sub-indices. For example,
+if the simulation runs 8 MPI ranks, the <code class="docutils literal notranslate"><span class="pre">DynamicDataGenerator</span></code> initialization will
+need to be adapted as follows</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">generator</span> <span class="o">=</span> <span class="n">DynamicDataGenerator</span><span class="p">(</span>
+                <span class="n">sample_prefix</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
+                <span class="n">target_prefix</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">,</span>
+                <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+                <span class="n">cluster</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">uploader_ranks</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="launching-the-experiment">
+<h2>Launching the experiment<a class="headerlink" href="#launching-the-experiment" title="Permalink to this headline">¶</a></h2>
+<p>To launch the <code class="docutils literal notranslate"><span class="pre">producer</span></code> and the <code class="docutils literal notranslate"><span class="pre">training_service</span></code> as models
+within a SmartSim <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>, we can use the following code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">smartsim.database</span> <span class="kn">import</span> <span class="n">Orchestrator</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">6780</span><span class="p">)</span>
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;online-training&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">)</span>
+
+<span class="c1"># producer</span>
+<span class="n">producer_script</span> <span class="o">=</span> <span class="s2">&quot;producer.py&quot;</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="n">producer_script</span><span class="p">)</span>
+<span class="n">uploader_model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;producer&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="n">enable_key_prefixing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">uploader_model</span><span class="o">.</span><span class="n">attach_generator_files</span><span class="p">(</span><span class="n">to_copy</span><span class="o">=</span><span class="n">producer_script</span><span class="p">)</span>
+
+<span class="c1"># training_service</span>
+<span class="n">training_script</span> <span class="o">=</span> <span class="s2">&quot;training_service.py&quot;</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="n">training_script</span><span class="p">)</span>
+<span class="n">trainer_model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;training_service&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+<span class="n">trainer_model</span><span class="o">.</span><span class="n">register_incoming_entity</span><span class="p">(</span><span class="n">uploader_model</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">uploader_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">trainer_model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Two lines require attention, as they are needed by the <code class="docutils literal notranslate"><span class="pre">DataGenerator</span></code> to work:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">uploader_model.enable_key_prefixing()</span></code> will ensure that the <code class="docutils literal notranslate"><span class="pre">producer</span></code> prefixes all tensor keys with its name</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trainer_model.register_incoming_entity(uploader_model)</span></code> enables the <code class="docutils literal notranslate"><span class="pre">DataGenerator</span></code> in
+the <code class="docutils literal notranslate"><span class="pre">training_service</span></code> to know that it needs to download samples produced by the <code class="docutils literal notranslate"><span class="pre">producer</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="ml_inference/Inference-in-SmartSim.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Online Inference</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="ray/starting_ray.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Ray Integration</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

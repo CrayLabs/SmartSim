@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>smartsim.entity.model &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.entity.model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.entity.model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># BSD 2-Clause License</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2021, Hewlett Packard Enterprise</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#    list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#    this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#    and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">from</span> <span class="nn">..error</span> <span class="kn">import</span> <span class="n">EntityExistsError</span>
+<span class="kn">from</span> <span class="nn">..utils.helpers</span> <span class="kn">import</span> <span class="n">init_default</span>
+<span class="kn">from</span> <span class="nn">.entity</span> <span class="kn">import</span> <span class="n">SmartSimEntity</span>
+<span class="kn">from</span> <span class="nn">.files</span> <span class="kn">import</span> <span class="n">EntityFiles</span>
+
+
+<div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.model.Model">[docs]</a><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">SmartSimEntity</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a model entity within Smartsim</span>
+
+<span class="sd">        :param name: name of the model</span>
+<span class="sd">        :type name: str</span>
+<span class="sd">        :param params: model parameters for writing into configuration files.</span>
+<span class="sd">        :type params: dict</span>
+<span class="sd">        :param path: path to output, error, and configuration files</span>
+<span class="sd">        :type path: str</span>
+<span class="sd">        :param run_settings: launcher settings specified in the experiment</span>
+<span class="sd">        :type run_settings: RunSettings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">incoming_entities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_prefixing_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Model.register_incoming_entity"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.model.Model.register_incoming_entity">[docs]</a>    <span class="k">def</span> <span class="nf">register_incoming_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming_entity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register future communication between entities.</span>
+
+<span class="sd">        Registers the named data sources that this entity</span>
+<span class="sd">        has access to by storing the key_prefix associated</span>
+<span class="sd">        with that entity</span>
+
+<span class="sd">        :param incoming_entity: The entity that data will be received from</span>
+<span class="sd">        :type incoming_entity: SmartSimEntity</span>
+<span class="sd">        :raises SmartSimError: if incoming entity has already been registered</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">incoming_entity</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">in_entity</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">in_entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">incoming_entities</span>
+        <span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">EntityExistsError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">incoming_entity</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has already &quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;been registered as an incoming entity&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">incoming_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">incoming_entity</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Model.enable_key_prefixing"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.model.Model.enable_key_prefixing">[docs]</a>    <span class="k">def</span> <span class="nf">enable_key_prefixing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If called, the entity will prefix its keys with its own model name&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_prefixing_enabled</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Model.disable_key_prefixing"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.model.Model.disable_key_prefixing">[docs]</a>    <span class="k">def</span> <span class="nf">disable_key_prefixing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If called, the entity will not prefix its keys with its own model name&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_prefixing_enabled</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Model.query_key_prefixing"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.model.Model.query_key_prefixing">[docs]</a>    <span class="k">def</span> <span class="nf">query_key_prefixing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Inquire as to whether this entity will prefix its keys with its name&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key_prefixing_enabled</span></div>
+
+<div class="viewcode-block" id="Model.attach_generator_files"><a class="viewcode-back" href="../../../api/smartsim_api.html#smartsim.entity.model.Model.attach_generator_files">[docs]</a>    <span class="k">def</span> <span class="nf">attach_generator_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_copy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_symlink</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_configure</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attach files to an entity for generation</span>
+
+<span class="sd">        Attach files needed for the entity that, upon generation,</span>
+<span class="sd">        will be located in the path of the entity.</span>
+
+<span class="sd">        During generation, files &quot;to_copy&quot; are copied into</span>
+<span class="sd">        the path of the entity, and files &quot;to_symlink&quot; are</span>
+<span class="sd">        symlinked into the path of the entity.</span>
+
+<span class="sd">        Files &quot;to_configure&quot; are text based model input files where</span>
+<span class="sd">        parameters for the model are set. Note that only models</span>
+<span class="sd">        support the &quot;to_configure&quot; field. These files must have</span>
+<span class="sd">        fields tagged that correspond to the values the user</span>
+<span class="sd">        would like to change. The tag is settable but defaults</span>
+<span class="sd">        to a semicolon e.g. THERMO = ;10;</span>
+
+<span class="sd">        :param to_copy: files to copy, defaults to []</span>
+<span class="sd">        :type to_copy: list, optional</span>
+<span class="sd">        :param to_symlink: files to symlink, defaults to []</span>
+<span class="sd">        :type to_symlink: list, optional</span>
+<span class="sd">        :param to_configure: input files with tagged parameters, defaults to []</span>
+<span class="sd">        :type to_configure: list, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">to_copy</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">([],</span> <span class="n">to_copy</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+        <span class="n">to_symlink</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">([],</span> <span class="n">to_symlink</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+        <span class="n">to_configure</span> <span class="o">=</span> <span class="n">init_default</span><span class="p">([],</span> <span class="n">to_configure</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">EntityFiles</span><span class="p">(</span><span class="n">to_configure</span><span class="p">,</span> <span class="n">to_copy</span><span class="p">,</span> <span class="n">to_symlink</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">entity_str</span> <span class="o">=</span> <span class="s2">&quot;Name: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">entity_str</span> <span class="o">+=</span> <span class="s2">&quot;Type: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">entity_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">entity_str</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

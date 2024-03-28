@@ -1,0 +1,652 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Introduction &#8212; SmartSim 0.6.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'overview';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Basic Installation" href="installation_instructions/basic.html" />
+    <link rel="prev" title="Versions" href="versions.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.6.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Foverview.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/overview.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Introduction</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#library-design">Library Design</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#smartsim-infrastructure-library">SmartSim (infrastructure library)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#smartredis-client-library">SmartRedis (Client Library)</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">#</a></h1>
+<a class="reference internal image-reference" href="_images/SmartSim_Large.png"><img alt="SmartSim" src="_images/SmartSim_Large.png" style="width: 700px;" /></a>
+<p><strong>SmartSim enables scientists to utilize machine learning inside traditional HPC workloads</strong></p>
+<p>SmartSim provides this capability by</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Automating the deployment of HPC workloads and distributed, in-memory storage (Redis).</p></li>
+<li><p>Making TensorFlow, Pytorch, and ONNX callable from Fortran, C, and C++ simulations.</p></li>
+<li><p>Providing flexible data communication and formats for hierarchical data, enabling online
+analysis, visualization, and processing of simulation data.</p></li>
+</ol>
+</div></blockquote>
+<p>The main goal of SmartSim is to provide scientists a flexible, easy to use method for
+interacting at runtime with the data generated by simulation. The type of interaction
+is completely up to the user.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Embed calls to machine learning models inside a simulation</p></li>
+<li><p>Create hooks to manually or programmatically steer a simulation</p></li>
+<li><p>Visualize the progression of a simulation integration from a Jupyter notebook</p></li>
+</ul>
+</div></blockquote>
+<p>The figure below shows the architecture of SmartSim for a given use case.
+SmartSim can create, configure and launch workloads (called a <code class="docutils literal notranslate"><span class="pre">Model</span></code>),
+as well as groups of workloads (<code class="docutils literal notranslate"><span class="pre">Ensembles</span></code>). The data communication between
+a workload and in-memory storage is handled by the SmartRedis clients, available
+in Fortran, C, C++, and Python.</p>
+<p><a class="reference internal" href="_images/ss-arch-overview.png"><img alt="Alternative text" src="_images/ss-arch-overview.png" style="width: 700px;" /></a></p>
+<section id="library-design">
+<h2>Library Design<a class="headerlink" href="#library-design" title="Permalink to this heading">#</a></h2>
+<p>There are two core components of SmartSim:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>SmartSim (infrastructure library)</p></li>
+<li><p>SmartRedis (client library)</p></li>
+</ol>
+</div></blockquote>
+<p>The two libraries can either be used in conjunction or separately, depending
+on the needs of the user.</p>
+<section id="smartsim-infrastructure-library">
+<h3>SmartSim (infrastructure library)<a class="headerlink" href="#smartsim-infrastructure-library" title="Permalink to this heading">#</a></h3>
+<p>The infrastructure library (IL) provides an API to automate the process of
+deploying HPC workloads alongside an in-memory database: Redis.</p>
+<p>The key features of the IL are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>An API to start, monitor, and stop HPC jobs from Python or from a Jupyter notebook.</p></li>
+<li><p>Automated deployment of in-memory data staging (<a class="reference external" href="https://redis.io">Redis</a>) and computational
+storage (<a class="reference external" href="https://redisai.io">RedisAI</a>).</p></li>
+<li><p>Programmatic launches of batch and in-allocation jobs on PBS, Slurm, LSF,
+and Cobalt systems.</p></li>
+<li><p>Creating and configuring ensembles of workloads with isolated communication channels.</p></li>
+</ul>
+</div></blockquote>
+<p>The IL can configure and launch batch jobs as well as jobs within interactive
+allocations. The IL integrates with workload managers, (like Slurm and PBS),
+if it is running on a supercomputer or cluster system.</p>
+<p>The IL can deploy a distributed, shared-nothing, in-memory cluster of Redis
+instances across multiple compute nodes of a supercomputer, cluster, or laptop.
+In SmartSim, this clustered Redis deployment is called the <code class="docutils literal notranslate"><span class="pre">Orchestrator</span></code>.</p>
+<p>By coupling the Orchestrator with HPC applications, users can connect their
+workloads to other applications, like trained machine learning models, with
+the SmartRedis clients.</p>
+</section>
+<hr class="docutils" />
+<section id="smartredis-client-library">
+<h3>SmartRedis (Client Library)<a class="headerlink" href="#smartredis-client-library" title="Permalink to this heading">#</a></h3>
+<p>SmartRedis is a collection of <a class="reference external" href="https://redis.io">Redis</a> clients that support
+<a class="reference external" href="https://redisai.io">RedisAI</a> capabilities and include additional
+features for high performance computing (HPC) applications.
+Key features of RedisAI that are supported by SmartRedis include:</p>
+<ul class="simple">
+<li><p>A tensor data type in Redis</p></li>
+<li><p>TensorFlow, TensorFlow Lite, Torch,
+and <a class="reference external" href="https://onnxruntime.ai/">ONNXRuntime</a> backends for model evaluations</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/docs/1.11/jit.html">TorchScript</a> storage and evaluation</p></li>
+</ul>
+<p>In addition to the RedisAI capabilities above,
+SmartRedis includes the following features developed for
+large, distributed HPC architectures:</p>
+<ul class="simple">
+<li><p>Redis cluster support for RedisAI data types
+(<a class="reference external" href="https://oss.redis.com/redisai/intro/#using-redisai-tensors">tensors</a>,
+<a class="reference external" href="https://oss.redis.com/redisai/intro/#loading-models">models</a>,
+and <a class="reference external" href="https://oss.redis.com/redisai/intro/#scripting">scripts</a>).</p></li>
+<li><p>Distributed model and script placement for parallel
+evaluation that maximizes hardware utilization and throughput</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> storage format to aggregate multiple tensors
+and metadata into a single Redis cluster hash slot
+to prevent data scatter on Redis clusters and
+maintain contextual relationships between tensors.
+This is useful when clients produce tensors and
+metadata that are referenced or utilized together.</p></li>
+<li><p>An API for efficiently aggregating <code class="docutils literal notranslate"><span class="pre">DataSet</span></code> objects
+distributed on one or more database nodes.</p></li>
+<li><p>Compatibility with SmartSim ensemble capabilities to
+prevent key collisions with
+tensors, <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>, models, and scripts when
+clients are part of an ensemble of applications.</p></li>
+</ul>
+<p>SmartRedis provides clients in Python, C++, C, and Fortran.
+These clients have been written to provide a
+consistent API experience across languages, within
+the constraints of language capabilities.  The table
+below summarizes the language standards for each client.</p>
+<table class="table table-center" id="id1">
+<caption><span class="caption-text">Supported Languages</span><a class="headerlink" href="#id1" title="Permalink to this table">#</a></caption>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Language</p></th>
+<th class="head"><p>Version/Standard</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Python</p></td>
+<td><p>3.7, 3.8, 3.9, 3.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>C++</p></td>
+<td><p>C++17</p></td>
+</tr>
+<tr class="row-even"><td><p>C</p></td>
+<td><p>C99</p></td>
+</tr>
+<tr class="row-odd"><td><p>Fortran</p></td>
+<td><p>Fortran 2018 (GNU/Intel), 2003 (PGI/Nvidia)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="versions.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Versions</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="installation_instructions/basic.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Basic Installation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#library-design">Library Design</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#smartsim-infrastructure-library">SmartSim (infrastructure library)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#smartredis-client-library">SmartRedis (Client Library)</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2023, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

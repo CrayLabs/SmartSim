@@ -1,0 +1,686 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Integrating into a Simulation &#8212; SmartSim 0.4.1 documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Python" href="sr_python_walkthrough.html" />
+    <link rel="prev" title="SmartRedis" href="smartredis.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="contributing_examples.html">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/sr_integration.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fsr_integration.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#overview">
+   Overview
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#initialization">
+   Initialization
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#creating-the-client">
+     Creating the client
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#parallel-programs-creating-unique-names">
+     (Parallel Programs): Creating unique names
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#storing-scripts-and-models">
+     Storing scripts and models
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#main-loop">
+   Main loop
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#full-example">
+   Full example
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Integrating into a Simulation</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#overview">
+   Overview
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#initialization">
+   Initialization
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#creating-the-client">
+     Creating the client
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#parallel-programs-creating-unique-names">
+     (Parallel Programs): Creating unique names
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#storing-scripts-and-models">
+     Storing scripts and models
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#main-loop">
+   Main loop
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#full-example">
+   Full example
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="integrating-into-a-simulation">
+<h1>Integrating into a Simulation<a class="headerlink" href="#integrating-into-a-simulation" title="Permalink to this headline">¶</a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This document provides some general guidelines to integrate the SmartRedis client
+into existing simulation codebases. Developers of these simulation codebases will
+need to identify the exact places to add the code; generally SmartRedis calls
+will only need to be added in two places:</p>
+<ol class="arabic simple">
+<li><p>Initialization</p></li>
+<li><p>Main loop</p></li>
+</ol>
+</section>
+<section id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h2>
+<section id="creating-the-client">
+<h3>Creating the client<a class="headerlink" href="#creating-the-client" title="Permalink to this headline">¶</a></h3>
+<p>The SmartRedis client must be initialized before it can be used to communicate
+with the orchestrator. In the C++ and Python versions of the clients, this is done
+when creating a new client. In the C and Fortran client an <cite>initialize</cite>
+method must be called.</p>
+<p>C++:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &quot;client.h&quot;</span>
+<span class="n">SmartRedis</span><span class="p">::</span><span class="n">Client</span> <span class="n">client</span><span class="p">(</span><span class="n">use_cluster</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartredis</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">use_cluster</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Fortran:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">use</span> <span class="n">smartredis_client</span><span class="p">,</span> <span class="n">only</span> <span class="p">:</span> <span class="n">client_type</span>
+<span class="n">include</span> <span class="s2">&quot;enum_fortran.inc&quot;</span>
+
+<span class="nb">type</span><span class="p">(</span><span class="n">client_type</span><span class="p">)</span> <span class="p">::</span> <span class="n">client</span>
+<span class="n">return_code</span> <span class="o">=</span> <span class="n">client</span><span class="o">%</span><span class="n">initialize</span><span class="p">(</span><span class="n">use_cluster</span><span class="p">)</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">return_code</span> <span class="o">/=</span> <span class="n">SRNoError</span><span class="p">)</span> <span class="n">stop</span> <span class="s1">&#39;Error in initialization&#39;</span>
+</pre></div>
+</div>
+<p>C:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &quot;client.h&quot;</span>
+<span class="c1">#include &quot;sr_enums.h&quot;</span>
+<span class="n">void</span><span class="o">*</span> <span class="n">client</span> <span class="o">=</span> <span class="n">NULL</span><span class="p">;</span>
+<span class="n">return_code</span> <span class="o">=</span> <span class="n">SmartRedisCClient</span><span class="p">(</span><span class="n">use_cluster</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">client</span><span class="p">)</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">return_code</span> <span class="o">!=</span> <span class="n">SRNoError</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>All these methods only have one configurable parameter – indicated in the
+above cases by the variable <cite>use_cluster</cite>. If this parameter is true,
+then the client expects to be able to communicate with an orchestrator with
+three or more shards.</p>
+</section>
+<section id="parallel-programs-creating-unique-names">
+<h3>(Parallel Programs): Creating unique names<a class="headerlink" href="#parallel-programs-creating-unique-names" title="Permalink to this headline">¶</a></h3>
+<p>For parallel applications, each rank or thread that is communicating with
+the orchestrator will likely need to create a unique prefix for names to prevent
+another rank or thread inadvertently overwriting data. This prefix should be used
+for when creating the name of a tensor, dataset, and model that needs to be unique
+to a given rank. (Note: for models run within SmartSim, Additional prefixing may
+done by the client when running an ensemble and/or multiple data sources).
+Any identifier can be used, though typically the MPI rank number (or equivalent
+identifier) is a useful, unique number.</p>
+<p>C++:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">string</span> <span class="n">name_prefix</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="nb">format</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:06}</span><span class="s2">_&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">rank_id</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rank_id</span><span class="si">:</span><span class="s2">06d</span><span class="si">}</span><span class="s2">_&quot;</span>
+</pre></div>
+</div>
+<p>Fortran:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span> <span class="p">::</span> <span class="n">name_prefix</span>
+<span class="n">write</span><span class="p">(</span><span class="n">name_prefix</span><span class="p">,</span><span class="s1">&#39;(A,I6.6)&#39;</span><span class="p">)</span> <span class="n">rank_id</span>
+</pre></div>
+</div>
+<p>C:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">char</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="n">name_prefix</span><span class="p">;</span>
+<span class="n">name_prefix</span> <span class="o">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="n">name_prefix</span><span class="s2">&quot;, &quot;</span><span class="o">%</span><span class="mi">06</span><span class="n">d</span>\<span class="mi">0</span><span class="s2">&quot;, *rank_id);</span>
+</pre></div>
+</div>
+</section>
+<section id="storing-scripts-and-models">
+<h3>Storing scripts and models<a class="headerlink" href="#storing-scripts-and-models" title="Permalink to this headline">¶</a></h3>
+<p>The last task that typically needs to be done is to store models or scripts
+that will be used later in the simulation. When using a clustered orchestrator,
+this only needs to be done by one client (unless each rank requires a different
+model or script). MPI rank 0 is often a convenient choice to set models and
+scripts.</p>
+<p>C++:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">root_client</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">root_client</span><span class="p">:</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Fortran:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">root_client</span><span class="p">)</span> <span class="n">return_code</span> <span class="o">=</span> <span class="n">client</span><span class="o">%</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">return_code</span> <span class="o">/=</span> <span class="n">SRNoError</span><span class="p">)</span> <span class="n">stop</span> <span class="s1">&#39;Error setting model&#39;</span>
+</pre></div>
+</div>
+<p>C:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">root_client</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">return_code</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">set_model_from_file</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_file</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">return_code</span> <span class="o">!=</span> <span class="n">SRNoError</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="main-loop">
+<h2>Main loop<a class="headerlink" href="#main-loop" title="Permalink to this headline">¶</a></h2>
+<p>Within the main loop of the code (e.g. every timestep or iteration of a solver),
+the developer typically uses the SmartRedis client methods to implement a workflow which
+may include receiving data, sending data, running a script or model, and/or
+retrieving a result. These workflows are covered extensively in the walkthroughs
+for the Fortran, C++, and python clients and the integrations with MOM6, OpenFOAM,
+LAMMPS, and others.</p>
+<p>Generally though, developers are advised to:</p>
+<ol class="arabic simple">
+<li><p>Find locations where file I/O would normally happen and either augment
+or replace code to use the SmartRedis client and store the data in the
+orchestrator</p></li>
+<li><p>Use the <cite>name_prefix</cite> created during initialization to avoid accidental
+writes/reads from different clients</p></li>
+<li><p>Use the SmartSim <cite>dataset</cite> type when using clients representing decomposed
+subdomains to make the retrieval/use of the data more performant</p></li>
+</ol>
+</section>
+<section id="full-example">
+<h2>Full example<a class="headerlink" href="#full-example" title="Permalink to this headline">¶</a></h2>
+<p>The following pseudocode is used to demonstrate various aspects of instrumenting an
+existing simulation code with SmartRedis. This code is representative of solving
+the time-evolving heat equation. but we will augment it using an ML model to
+provide a preconditioning step each iteration and post the state of the simulation
+to the orchestrator.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>program main
+
+    ! Initialize the model, setup MPI, communications, read input files
+    call initialize_model(temperature, number_of_timesteps)
+
+    main_loop: do i=1,number_of_timesteps
+
+        ! Write the current state of the simulation to a file
+        call write_current_state(temperature)
+
+        ! Call a time integrator to step the temperature field forward
+        call timestep_simulation(temperature)
+
+    enddo
+end program main
+</pre></div>
+</div>
+<p>Following the guidelines from above, the first step is to initialize the client
+and create a unique identifier for the given processor. This should be done
+within roughly the same portion of the code where the rest of the model
+performs the initialization of other components.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>! Import SmartRedis modules
+use, only smartredis_client : client_type
+
+! Declare a new variable called client and a string to create a unique
+! name for names
+type(client_type) :: smartredis_client
+character(len=7)  :: name_prefix
+integer :: mpi_rank, mpi_code, smartredis_code
+
+! Note adding use_cluster as an additional runtime argument for SmartRedis
+call initialize_model(temperature, number_of_timesteps, use_cluster)
+call smartredis_client%initialize(use_cluster)
+call MPI_Comm_rank(MPI_COMM_WORLD, mpi_rank, mpi_code)
+! Build the prefix for all tensors set in this model
+write(name_prefix,&#39;(I6.6,A)&#39;) mpi_rank, &#39;_&#39;
+
+! Assume all ranks will use the same machine learning model, so no need to
+! add the prefix to the model name
+if (mpi_rank==0) call set_model_from_file(&quot;example_model_name&quot;, &quot;path/to/model.pt&quot;, &quot;TORCH&quot;, &quot;gpu&quot;)
+</pre></div>
+</div>
+<p>Next, add the calls in the main loop to send the temperature to the orchestrator</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>character(len=30), dimension(1) :: model_input, model_output
+
+main_loop: do i=1,number_of_timesteps
+
+    ! Write the current state of the simulation to a file
+    call write_current_state(temperature)
+    model_input(1) = name_prefix//&quot;temperature&quot;
+    model_output(1) = name_prefix//&quot;temperature_out&quot;
+    call smartredis_client%put_tensor(model_input(1), temperature)
+
+    ! Run the machine learning model
+    return_code = smartredis_client%run_model(&quot;example_model_name&quot;, model_input, model_output)
+    ! The following line overwrites the prognostic temperature array
+    return_code = smartredis_client%unpack_tensor(model_output(1), temperature)
+
+    ! Call a time integrator to step the temperature field forward
+    call timestep_simulation(temperature)
+
+enddo
+</pre></div>
+</div>
+<p>This model will now use the client every timestep to put a
+temperature array in the orchestrator, instruct the orchestrator to call
+a machine learning model for prediction/inference, and unpack the resulting
+inference into the existing temperature array. For more complex examples,
+please see some of the integrations in the SmartSim Zoo or feel free to
+contact the team at <a class="reference external" href="mailto:CrayLabs&#37;&#52;&#48;hpe&#46;com">CrayLabs<span>&#64;</span>hpe<span>&#46;</span>com</a></p>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="smartredis.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">SmartRedis</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="sr_python_walkthrough.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Python</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>
