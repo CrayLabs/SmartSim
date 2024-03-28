@@ -51,7 +51,7 @@ def test_local_orchestrator(test_dir, wlmutils):
     first_dir = test_dir
 
     orc = Orchestrator(port=wlmutils.get_test_port())
-    #orc.set_path(test_dir)
+    # orc.set_path(test_dir)
 
     exp.start(orc)
     statuses = exp.get_status(orc)

@@ -213,6 +213,16 @@ class Experiment:
             if not os.path.isdir(osp.join(self.exp_path, orch.name)):
                 os.makedirs(osp.join(self.exp_path, orch.name))
             orch.set_path(osp.join(self.exp_path, orch.name))
+        for ensemble in start_manifest.ensembles:
+            if not os.path.isdir(osp.join(self.exp_path, ensemble.name)):
+                os.makedirs(osp.join(self.exp_path, ensemble.name))
+            ensemble.set_path(osp.join(self.exp_path, ensemble.name))
+            for model in ensemble.models:
+                if not os.path.isdir(
+                    osp.join(self.exp_path, ensemble.name, model.name)
+                ):
+                    os.makedirs(osp.join(self.exp_path, ensemble.name, model.name))
+                model.set_path(osp.join(self.exp_path, ensemble.name, model.name))
         try:
             if summary:
                 self._launch_summary(start_manifest)
