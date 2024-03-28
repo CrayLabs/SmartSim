@@ -30,6 +30,7 @@ Description
 - Fix publishing of development docs
 - Update Experiment API typing
 - Minor enhancements to test suite
+- Improve SmartSim experiment signal handlers
 
 Detailed Notes
 
@@ -69,9 +70,15 @@ Detailed Notes
   detected. (SmartSim-PR524_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
+- When calling ``Experiment.start`` SmartSim would register a signal handler
+  that would capture an interrupt signal (^C) to kill any jobs launched through
+  its ``JobManager``. This would replace the default (or user defined) signal
+  handler. SmartSim will now attempt to kill any launched jobs before calling
+  the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
+.. _SmartSim-PR535: https://github.com/CrayLabs/SmartSim/pull/535
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
