@@ -895,10 +895,10 @@ class _PTArchiveMacOSX(_PTArchive):
         if self.device == Device.GPU:
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
-            pt_build = Device.CPU
+            pt_build = Device.CPU.value
             libtorch_archive = f"libtorch-macos-{self.version}.zip"
             root_url = "https://download.pytorch.org/libtorch"
-            return f"{root_url}/{pt_build.value}/{libtorch_archive}"
+            return f"{root_url}/{pt_build}/{libtorch_archive}"
         if self.architecture == Architecture.ARM64:
             libtorch_archive = f"libtorch-macos-arm64-{self.version}.zip"
             # pylint: disable-next=line-too-long
@@ -952,12 +952,12 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             tf_os = "darwin"
             if self.device == Device.GPU:
                 raise BuildError("RedisAI does not currently support GPU on Macos")
-            tf_device = Device.CPU
+            tf_device = Device.CPU.value
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
-            f"libtensorflow-{tf_device.value}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
+            f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
     @property
