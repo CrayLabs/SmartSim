@@ -164,15 +164,18 @@ class KeyManager:
         """Set to `True` to return keys appropriate for the client context"""
 
         self._server_base = "server"
-        """The `category` directory for persisting server keys"""
+        """The `category` directory for persisting server keys. Results in
+        key path such as <key_root>/server/pub/curve.key"""
 
         self._client_base = "client"
-        """The `category` directory for persisting client keys"""
+        """The `category` directory for persisting client keys. Results in
+        key path such as <key_root>/client/pub/curve.key"""
 
         key_dir = pathlib.Path(config.smartsim_key_path).resolve()
 
         self._server_locator = KeyLocator(key_dir, "smartsim", self._server_base)
         """The locator for producing the paths to store server key files"""
+
         self._client_locator = KeyLocator(key_dir, "smartsim", self._client_base)
         """The locator for producing the paths to store client key files"""
 
