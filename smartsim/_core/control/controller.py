@@ -372,7 +372,8 @@ class Controller:
             os.symlink(historical_err, entity_err)
         except FileNotFoundError as fnf:
             raise FileNotFoundError(
-                f"Output files for {entity.name} could not be found. Symlinking files failed."
+                f"Output files for {entity.name} could not be found. "
+                "Symlinking files failed."
             ) from fnf
 
     def _launch(
