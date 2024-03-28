@@ -58,6 +58,7 @@ def make_entity_context(exp: Experiment, entity: SmartSimEntity):
 
 def choose_host(wlmutils, index=0):
     hosts = wlmutils.get_test_hostlist()
+    print(f"tehe: {hosts}")
     if hosts:
         return hosts[index]
     else:
