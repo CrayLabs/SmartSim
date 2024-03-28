@@ -441,7 +441,7 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
         pytest.param("build", "build_execute", "verbose mocked-build", "-v", True, "", "v", True, id="verbose 'on'"),
         pytest.param("build", "build_execute", "cpu mocked-build", "--device=cpu", True, "", "device", "cpu", id="device 'cpu'"),
         pytest.param("build", "build_execute", "gpu mocked-build", "--device=gpu", True, "", "device", "gpu", id="device 'gpu'"),
-        pytest.param("build", "build_execute", "gpuX mocked-build", "--device=gpux", False, "invalid <lambda> value: 'gpux'", "", "", id="set bad device 'gpuX'"),
+        pytest.param("build", "build_execute", "gpuX mocked-build", "--device=gpux", False, "invalid choice: 'gpux'", "", "", id="set bad device 'gpuX'"),
         pytest.param("build", "build_execute", "no tensorflow mocked-build", "--no_tf", True, "", "no_tf", True, id="set no TF"),
         pytest.param("build", "build_execute", "no torch mocked-build", "--no_pt", True, "", "no_pt", True, id="set no torch"),
         pytest.param("build", "build_execute", "onnx mocked-build", "--onnx", True, "", "onnx", True, id="set w/onnx"),
@@ -453,7 +453,7 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
         pytest.param("validate", "validate_execute", "abbrv port mocked-validate", "-p 12345", True, "", "port", 12345, id="validate w/ manual abbreviated port"),
         pytest.param("validate", "validate_execute", "cpu mocked-validate", "--device=cpu", True, "", "device", "cpu", id="validate: device 'cpu'"),
         pytest.param("validate", "validate_execute", "gpu mocked-validate", "--device=gpu", True, "", "device", "gpu", id="validate: device 'gpu'"),
-        pytest.param("validate", "validate_execute", "gpuX mocked-validate", "--device=gpux", False, "invalid <lambda> value: 'gpux'", "", "", id="validate: set bad device 'gpuX'"),
+        pytest.param("validate", "validate_execute", "gpuX mocked-validate", "--device=gpux", False, "invalid choice: 'gpux'", "", "", id="validate: set bad device 'gpuX'"),
     ]
 )
 # fmt: on
