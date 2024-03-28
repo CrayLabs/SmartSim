@@ -215,9 +215,10 @@ def test_batch_symlink(entity, test_dir):
 
 def test_symlink_error(test_dir):
     """Ensure FileNotFoundError is thrown"""
-    bad_model = Model("bad_model", {}, pathlib.Path(test_dir, "badpath"), RunSettings("echo"))
+    bad_model = Model(
+        "bad_model", {}, pathlib.Path(test_dir, "badpath"), RunSettings("echo")
+    )
     telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
     bad_step = controller._create_job_step(bad_model, telem_dir)
     with pytest.raises(FileNotFoundError):
         controller.symlink_output_files(bad_step, bad_model)
-
