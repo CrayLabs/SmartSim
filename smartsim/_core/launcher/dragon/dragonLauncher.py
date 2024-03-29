@@ -41,6 +41,7 @@ from threading import RLock
 import zmq
 
 from smartsim._core.launcher.dragon import dragonSockets
+from smartsim.error.errors import SmartSimError
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -170,6 +171,8 @@ class DragonLauncher(WLMLauncher):
             ]
 
             _, address = get_best_interface_and_address()
+            socket_addr = ""
+            launcher_socket: t.Optional[zmq.Socket[t.Any]] = None
             if address is not None:
                 self._set_timeout(self._startup_timeout)
                 launcher_socket = self._context.socket(zmq.REP)
@@ -201,6 +204,9 @@ class DragonLauncher(WLMLauncher):
                     env=current_env,
                     start_new_session=True,
                 )
+
+            if launcher_socket is None:
+                raise SmartSimError("Socket failed to initialize")
 
             if address is not None:
                 server = dragonSockets.as_server(launcher_socket)
