@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Preview entities on experiment before start
 - ExecArgs handling correction
 - ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
@@ -30,6 +31,8 @@ Description
 
 Detailed Notes
 
+- Added preview functionality to Experiment, including preview of all entities,
+  active infrastructure and client configuration. (SmartSim-PR525_)
 - Add checks and tests to ensure SmartSim users cannot initialize run settings
   with a list of lists as the exe_args argument. (SmartSim-PR517_)
 - Add readthedocs configuration file and enable readthedocs builds
@@ -55,6 +58,7 @@ Detailed Notes
   Slurm and Open MPI. (SmartSim-PR520_)
 
 
+.. _SmartSim-PR525: https://github.com/CrayLabs/SmartSim/pull/525
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
 .. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
