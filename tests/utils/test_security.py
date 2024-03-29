@@ -187,26 +187,26 @@ def test_key_manager_applied_permissions(
         s_pub_stat = km._server_locator.public_dir.stat()
         c_pub_stat = km._client_locator.public_dir.stat()
 
-        assert stat.S_IMODE(s_pub_stat.st_mode) == _KeyPermissions.WorldRead
-        assert stat.S_IMODE(c_pub_stat.st_mode) == _KeyPermissions.WorldRead
+        assert stat.S_IMODE(s_pub_stat.st_mode) == _KeyPermissions.WORLD_R
+        assert stat.S_IMODE(c_pub_stat.st_mode) == _KeyPermissions.WORLD_R
 
         # ensure private dirs are open only to owner
         s_priv_stat = km._server_locator.private_dir.stat()
         c_priv_stat = km._client_locator.private_dir.stat()
 
-        assert stat.S_IMODE(s_priv_stat.st_mode) == _KeyPermissions.OwnerFull
-        assert stat.S_IMODE(c_priv_stat.st_mode) == _KeyPermissions.OwnerFull
+        assert stat.S_IMODE(s_priv_stat.st_mode) == _KeyPermissions.OWNER_FULL
+        assert stat.S_IMODE(c_priv_stat.st_mode) == _KeyPermissions.OWNER_FULL
 
         # ensure public files are open for reading by others
         s_pub_stat = km._server_locator.public.stat()
         c_pub_stat = km._client_locator.public.stat()
 
-        assert stat.S_IMODE(s_pub_stat.st_mode) == _KeyPermissions.WorldRead
-        assert stat.S_IMODE(c_pub_stat.st_mode) == _KeyPermissions.WorldRead
+        assert stat.S_IMODE(s_pub_stat.st_mode) == _KeyPermissions.WORLD_R
+        assert stat.S_IMODE(c_pub_stat.st_mode) == _KeyPermissions.WORLD_R
 
         # ensure private files are read-only for owner
         s_priv_stat = km._server_locator.private.stat()
         c_priv_stat = km._client_locator.private.stat()
 
-        assert stat.S_IMODE(s_priv_stat.st_mode) == _KeyPermissions.OwnerReadWrite
-        assert stat.S_IMODE(c_priv_stat.st_mode) == _KeyPermissions.OwnerReadWrite
+        assert stat.S_IMODE(s_priv_stat.st_mode) == _KeyPermissions.OWNER_RW
+        assert stat.S_IMODE(c_priv_stat.st_mode) == _KeyPermissions.OWNER_RW

@@ -39,12 +39,12 @@ from smartsim._core.config.config import Config
 class _KeyPermissions(IntEnum):
     """Permissions used by KeyManager"""
 
-    OwnerReadWrite = 0o600
+    OWNER_RW = 0o600
     """Permissions allowing owner to r/w"""
-    OwnerFull = 0o700
+    OWNER_FULL = 0o700
     """permissions allowing owner to r/w/x"""
-    WorldRead = 0o744
-    """permissions allowing world to r/w"""
+    WORLD_R = 0o744
+    """permissions allowing world to read"""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -196,10 +196,10 @@ class KeyManager:
         the public and private key pairs for servers & clients"""
         for locator in [self._server_locator, self._client_locator]:
             if not locator.public_dir.exists():
-                locator.public_dir.mkdir(parents=True, mode=_KeyPermissions.WorldRead)
+                locator.public_dir.mkdir(parents=True, mode=_KeyPermissions.WORLD_R)
 
             if not locator.private_dir.exists():
-                locator.private_dir.mkdir(parents=True, mode=_KeyPermissions.OwnerFull)
+                locator.private_dir.mkdir(parents=True, mode=_KeyPermissions.OWNER_FULL)
 
     @classmethod
     def _load_keypair(cls, locator: _KeyLocator, in_context: bool) -> KeyPair:
@@ -260,8 +260,8 @@ class KeyManager:
             self._move_public_key(locator)
 
             # and ensure correct r/w/x permissions on each file.
-            locator.private.chmod(_KeyPermissions.OwnerReadWrite)
-            locator.public.chmod(_KeyPermissions.WorldRead)
+            locator.private.chmod(_KeyPermissions.OWNER_RW)
+            locator.public.chmod(_KeyPermissions.WORLD_R)
 
     def get_keys(self, create: bool = True) -> t.Tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to generate a public/private key pair for the server
