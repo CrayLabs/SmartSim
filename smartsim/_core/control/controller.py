@@ -137,8 +137,7 @@ class Controller:
 
     @property
     def active_orchestrator_jobs(self) -> t.Dict[str, Job]:
-        """ Return active orchestrator jobs.
-        """
+        """Return active orchestrator jobs."""
         return {**self._jobs.db_jobs}
 
     @property
