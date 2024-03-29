@@ -73,7 +73,8 @@ Detailed Notes
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
-.. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533.. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
+.. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
+.. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
