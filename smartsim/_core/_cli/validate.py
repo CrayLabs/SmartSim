@@ -86,7 +86,8 @@ def execute(
     simple experiment
     """
     backends = installed_redisai_backends()
-    device: Device = Device(args.device)
+    temp_dir = ""
+    device = Device(args.device)
     try:
         with contextlib.ExitStack() as ctx:
             temp_dir = ctx.enter_context(_VerificationTempDir(dir=os.getcwd()))
@@ -110,10 +111,11 @@ def execute(
     except Exception as e:
         logger.error(
             "SmartSim failed to run a simple experiment!\n"
-            f"Experiment failed due to the following exception:\n{e}\n\n"
-            f"Output files are available at `{temp_dir}`",
+            f"Experiment failed due to the following exception:\n{e}",
             exc_info=True,
         )
+        if temp_dir:
+            logger.info(f"Output files are available at `{temp_dir}`")
         return os.EX_SOFTWARE
     return os.EX_OK
 
