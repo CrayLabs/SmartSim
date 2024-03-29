@@ -64,7 +64,7 @@ class KeyPair:
         return self.public == self.private and len(self.public) == 0
 
 
-class KeyLocator:
+class _KeyLocator:
     """Determines the paths to use when persisting a `KeyPair` to disk"""
 
     def __init__(
@@ -185,10 +185,10 @@ class KeyManager:
 
         key_dir = pathlib.Path(config.smartsim_key_path).resolve()
 
-        self._server_locator = KeyLocator(key_dir, "smartsim", self._server_base)
+        self._server_locator = _KeyLocator(key_dir, "smartsim", self._server_base)
         """The locator for producing the paths to store server key files"""
 
-        self._client_locator = KeyLocator(key_dir, "smartsim", self._client_base)
+        self._client_locator = _KeyLocator(key_dir, "smartsim", self._client_base)
         """The locator for producing the paths to store client key files"""
 
     def create_directories(self) -> None:
@@ -202,7 +202,7 @@ class KeyManager:
                 locator.private_dir.mkdir(parents=True, mode=_KeyPermissions.OwnerFull)
 
     @classmethod
-    def _load_keypair(cls, locator: KeyLocator, in_context: bool) -> KeyPair:
+    def _load_keypair(cls, locator: _KeyLocator, in_context: bool) -> KeyPair:
         """Load a specific `KeyPair` from disk
 
         :param locator: a `KeyLocator` that specifies the path to an existing key
@@ -239,7 +239,7 @@ class KeyManager:
         return KeyPair(), KeyPair()
 
     @classmethod
-    def _move_public_key(cls, locator: KeyLocator) -> None:
+    def _move_public_key(cls, locator: _KeyLocator) -> None:
         """The public and private key pair are created in the same directory. Move
         the public key out of the private subdir and into the public subdir
 

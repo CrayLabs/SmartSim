@@ -4,7 +4,7 @@ import stat
 import pytest
 
 from smartsim._core.config.config import get_config
-from smartsim._core.utils.security import KeyLocator, KeyManager, _KeyPermissions
+from smartsim._core.utils.security import KeyManager, _KeyLocator, _KeyPermissions
 
 
 @pytest.mark.parametrize(
@@ -20,7 +20,7 @@ def test_keylocator_filename_resolution(separate_keys: bool, test_dir: str) -> N
     key_path = pathlib.Path(test_dir)
     key_category = "mycategory"
     key_file = "mykey"
-    locator = KeyLocator(key_path, key_file, key_category, separate_keys=separate_keys)
+    locator = _KeyLocator(key_path, key_file, key_category, separate_keys=separate_keys)
 
     assert locator.public_filename == f"{key_file}.key", "public mismatch"
     assert locator.private_filename == f"{key_file}.key_secret", "private mismatch"
@@ -33,7 +33,7 @@ def test_keylocator_separate_dir_resolution(test_dir: str) -> None:
     key_name = "test"
     key_category = "mycategory"
 
-    locator = KeyLocator(key_path, key_name, key_category)
+    locator = _KeyLocator(key_path, key_name, key_category)
 
     # we expect a category AND pub/priv subdirectory
     exp_pub = pathlib.Path(f"{test_dir}/{key_category}/pub").resolve()
@@ -50,7 +50,7 @@ def test_keylocator_dir_resolution(test_dir: str) -> None:
     key_name = "test"
     key_category = "mycategory"
 
-    locator = KeyLocator(key_path, key_name, key_category, separate_keys=False)
+    locator = _KeyLocator(key_path, key_name, key_category, separate_keys=False)
 
     # we expect a category but NO pub/priv subdirectory
     exp_pub = pathlib.Path(f"{test_dir}/{key_category}").resolve()
@@ -77,8 +77,8 @@ def test_key_manager_dir_preparation(
         km.create_directories()
 
         # verify the expected paths are created
-        server_locator = KeyLocator(pathlib.Path(test_dir), "curve", "server")
-        client_locator = KeyLocator(pathlib.Path(test_dir), "curve", "client")
+        server_locator = _KeyLocator(pathlib.Path(test_dir), "curve", "server")
+        client_locator = _KeyLocator(pathlib.Path(test_dir), "curve", "client")
 
         locators = [server_locator, client_locator]
 
