@@ -857,7 +857,7 @@ class Experiment:
         :type output_filename: str
         """
 
-        # Retrive any active orchestrator jobs
+        # Retrieve any active orchestrator jobs
         active_dbjobs = self._control.active_orchestrator_jobs
 
         preview_manifest = Manifest(*args)
@@ -870,8 +870,6 @@ class Experiment:
             output_filename,
             active_dbjobs,
         )
-
-        ##test_preview_to_file
 
     @property
     def launcher(self) -> str:
