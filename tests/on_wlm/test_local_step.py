@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@ import uuid
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.settings import RunSettings
 
 # retrieved from pytest fixtures

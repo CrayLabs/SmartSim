@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -184,6 +184,7 @@ extras_require = {
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
+        "pytest-asyncio>=0.23.3",
     ],
     "mypy": [
         "mypy>=1.3.0",

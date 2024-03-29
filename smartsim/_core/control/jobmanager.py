@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ from types import FrameType
 from ...database import Orchestrator
 from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import ContextThread, get_logger
-from ...status import STATUS_NEVER_STARTED, TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
@@ -239,12 +239,13 @@ class JobManager:
     def get_status(
         self,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-    ) -> str:
+    ) -> SmartSimStatus:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
         :type entity: SmartSimEntity | EntitySequence
-        :returns: tuple of status
+        :returns: a SmartSimStatus status
+        :rtype: SmartSimStatus
         """
         with self._lock:
             if entity.name in self.completed:
@@ -254,7 +255,7 @@ class JobManager:
                 job: Job = self[entity.name]  # locked
                 return job.status
 
-            return STATUS_NEVER_STARTED
+            return SmartSimStatus.STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance

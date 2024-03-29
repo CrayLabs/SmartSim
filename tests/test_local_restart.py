@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -48,12 +49,12 @@ def test_restart(fileutils, test_dir):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
     # restart the model
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 def test_ensemble(fileutils, test_dir):
@@ -68,9 +69,9 @@ def test_ensemble(fileutils, test_dir):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
     # restart the ensemble
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -60,12 +60,12 @@ def get_allocation(
     The options can be used to pass extra settings to the
     workload manager such as the following for Slurm:
 
-        - nodelist="nid00004"
+    - nodelist="nid00004"
 
     For arguments without a value, pass None or and empty
     string as the value. For Slurm:
 
-        - exclusive=None
+    - exclusive=None
 
     :param nodes: number of nodes for the allocation, defaults to 1
     :type nodes: int, optional

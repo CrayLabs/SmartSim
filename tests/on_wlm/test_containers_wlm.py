@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,9 +28,10 @@ from shutil import which
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
+from smartsim.status import SmartSimStatus
 
 """Test SmartRedis container integration on a supercomputer with a WLM."""
 
@@ -91,7 +92,7 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
 

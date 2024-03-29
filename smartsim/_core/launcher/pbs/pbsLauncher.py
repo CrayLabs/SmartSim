@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ from ....settings import (
     RunSettings,
     SettingsBase,
 )
-from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -149,7 +149,9 @@ class PBSLauncher(WLMLauncher):
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
-        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
+        step_info.status = (
+            SmartSimStatus.STATUS_CANCELLED
+        )  # set status to cancelled instead of failed
         return step_info
 
     @staticmethod
@@ -191,7 +193,7 @@ class PBSLauncher(WLMLauncher):
         for stat, _ in zip(stats, step_ids):
             info = PBSStepInfo(stat, None)
             # account for case where job history is not logged by PBS
-            if info.status == STATUS_COMPLETED:
+            if info.status == SmartSimStatus.STATUS_COMPLETED:
                 info.returncode = 0
 
             updates.append(info)

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,12 @@ from contextlib import contextmanager
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -51,7 +52,7 @@ def make_entity_context(exp: Experiment, entity: SmartSimEntity):
     try:
         yield entity
     finally:
-        if exp.get_status(entity)[0] == status.STATUS_RUNNING:
+        if exp.get_status(entity)[0] == SmartSimStatus.STATUS_RUNNING:
             exp.stop(entity)
 
 
@@ -65,7 +66,7 @@ def choose_host(wlmutils, index=0):
 
 def check_not_failed(exp, *args):
     statuses = exp.get_status(*args)
-    assert all(stat is not status.STATUS_FAILED for stat in statuses)
+    assert all(stat is not SmartSimStatus.STATUS_FAILED for stat in statuses)
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)

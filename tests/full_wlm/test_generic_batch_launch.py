@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,9 @@ from time import sleep
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.settings import QsubBatchSettings
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -67,7 +68,7 @@ def test_batch_model(fileutils, test_dir, wlmutils):
     exp.start(model, block=True)
     statuses = exp.get_status(model)
     assert len(statuses) == 1
-    assert statuses[0] == status.STATUS_COMPLETED
+    assert statuses[0] == SmartSimStatus.STATUS_COMPLETED
 
 
 def test_batch_ensemble(fileutils, test_dir, wlmutils):
@@ -92,7 +93,7 @@ def test_batch_ensemble(fileutils, test_dir, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
@@ -113,4 +114,4 @@ def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

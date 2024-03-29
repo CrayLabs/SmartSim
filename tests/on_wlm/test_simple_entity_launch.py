@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,8 @@ from copy import deepcopy
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 """
 Test the launch of simple entity types on pre-existing allocations.
@@ -59,7 +60,7 @@ def test_models(fileutils, test_dir, wlmutils):
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 def test_ensemble(fileutils, test_dir, wlmutils):
@@ -75,7 +76,7 @@ def test_ensemble(fileutils, test_dir, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 def test_summary(fileutils, test_dir, wlmutils):
@@ -97,8 +98,8 @@ def test_summary(fileutils, test_dir, wlmutils):
 
     # start and poll
     exp.start(sleep, bad)
-    assert exp.get_status(bad)[0] == status.STATUS_FAILED
-    assert exp.get_status(sleep)[0] == status.STATUS_COMPLETED
+    assert exp.get_status(bad)[0] == SmartSimStatus.STATUS_FAILED
+    assert exp.get_status(sleep)[0] == SmartSimStatus.STATUS_COMPLETED
 
     summary_str = exp.summary(style="plain")
     print(summary_str)

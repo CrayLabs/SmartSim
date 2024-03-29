@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.status import STATUS_FAILED
+from smartsim.status import SmartSimStatus
 
 sklearn_available = True
 try:
@@ -98,4 +98,4 @@ def test_sklearn_onnx(test_dir, mlutils, wlmutils):
     exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)
-    assert model_status[0] != STATUS_FAILED
+    assert model_status[0] != SmartSimStatus.STATUS_FAILED

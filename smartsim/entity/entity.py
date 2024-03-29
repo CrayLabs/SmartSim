@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,65 @@ import typing as t
 if t.TYPE_CHECKING:
     # pylint: disable-next=unused-import
     import smartsim.settings.base
+
+
+class TelemetryConfiguration:
+    """A base class for configuraing telemetry production behavior on
+    existing `SmartSimEntity` subclasses. Any class that will have
+    optional telemetry collection must expose access to an instance
+    of `TelemetryConfiguration` such as:
+
+    ```
+    @property
+    def telemetry(self) -> TelemetryConfiguration:
+        # Return the telemetry configuration for this entity.
+        # :returns: Configuration object indicating the configuration
+        # status of telemetry for this entity
+        # :rtype: TelemetryConfiguration
+        return self._telemetry_producer
+    ```
+
+    An instance will be used by to conditionally serialize
+    values to the `RuntimeManifest`
+    """
+
+    def __init__(self, enabled: bool = False) -> None:
+        """Initialize the telemetry producer and immediately call the `_on_enable` hook.
+
+        :param enabled: flag indicating the initial state of telemetry
+        :type enabled: bool"""
+        self._is_on = enabled
+
+        if self._is_on:
+            self._on_enable()
+        else:
+            self._on_disable()
+
+    @property
+    def is_enabled(self) -> bool:
+        """Boolean flag indicating if telemetry is currently enabled
+
+        :returns: `True` if enabled, `False` otherwise
+        :rtype: bool"""
+        return self._is_on
+
+    def enable(self) -> None:
+        """Enable telemetry for this producer"""
+        self._is_on = True
+        self._on_enable()
+
+    def disable(self) -> None:
+        """Disable telemetry for this producer"""
+        self._is_on = False
+        self._on_disable()
+
+    def _on_enable(self) -> None:
+        """Overridable hook called after telemetry is `enabled`. Allows subclasses
+        to perform actions when attempts to change configuration are made"""
+
+    def _on_disable(self) -> None:
+        """Overridable hook called after telemetry is `disabled`. Allows subclasses
+        to perform actions when attempts to change configuration are made"""
 
 
 class SmartSimEntity:

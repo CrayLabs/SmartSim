@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,9 @@ import time
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.database import Orchestrator
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -54,7 +55,7 @@ def test_local_orchestrator(test_dir, wlmutils):
 
     exp.start(orc)
     statuses = exp.get_status(orc)
-    assert [stat != status.STATUS_FAILED for stat in statuses]
+    assert [stat != SmartSimStatus.STATUS_FAILED for stat in statuses]
 
     # simulate user shutting down main thread
     exp._control._jobs.actively_monitoring = False
@@ -76,7 +77,7 @@ def test_reconnect_local_orc(test_dir):
 
     statuses = exp_2.get_status(reloaded_orc)
     for stat in statuses:
-        if stat == status.STATUS_FAILED:
+        if stat == SmartSimStatus.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
     exp_2.stop(reloaded_orc)

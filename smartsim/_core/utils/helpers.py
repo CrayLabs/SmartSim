@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -276,9 +276,9 @@ def installed_redisai_backends(
     return {backend for backend in backends if _installed(base_path, backend)}
 
 
-def get_ts() -> int:
-    """Return the current timestamp (accurate to seconds) cast to an integer"""
-    return int(datetime.timestamp(datetime.now()))
+def get_ts_ms() -> int:
+    """Return the current timestamp (accurate to milliseconds) cast to an integer"""
+    return int(datetime.now().timestamp() * 1000)
 
 
 def encode_cmd(cmd: t.Sequence[str]) -> str:

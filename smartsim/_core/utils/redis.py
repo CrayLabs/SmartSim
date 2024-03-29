@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "--cluster", "create"]
     cmd += ip_list
-    cmd += ["--cluster-replicas", "0"]
+    cmd += ["--cluster-replicas", "0", "--cluster-yes"]
     returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False)
 
     if returncode != 0:

@@ -1,3 +1,5 @@
+.. _basic_install_SS:
+
 ******************
 Basic Installation
 ******************
@@ -27,11 +29,18 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - git
   - `git-lfs`_
 
-.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing
+.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs
 
 .. note::
 
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
+
+.. warning::
+
+  Apple Clang 15 seems to have issues on MacOS with Apple Silicon. Please modify
+  your path to ensure that a version of GCC installed by brew has priority. Note
+  this seems to be hardcoded to `gcc` and `g++` in the Redis build so ensure that
+  `which gcc g++` do not point to Apple Clang.
 
 
 GPU Support
@@ -41,7 +50,7 @@ The machine-learning backends have additional requirements in order to
 use GPUs for inference
 
   - `CUDA Toolkit 11 (tested with 11.8) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
-  - `cuDNN 8 (tested with 8.2.1 and 8.4.0) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
+  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/installation/overview.html>`_
   - OS: Linux
   - GPU: Nvidia
 
@@ -63,7 +72,7 @@ Supported Versions
      - GPU
      - Python Versions
    * - MacOS
-     - x86_64
+     - x86_64, aarch64
      - Not supported
      - 3.8 - 3.11
    * - Linux
@@ -74,8 +83,9 @@ Supported Versions
 
 .. note::
 
-    Windows is not supported and there are currently no plans
-    to support Windows.
+    Users have succesfully run SmartSim on Windows using Windows Subsystem for Linux
+    with Nvidia support. Generally, users should follow the Linux instructions here,
+    however we make no guarantee or offer of support.
 
 
 Native support for various machine learning libraries and their
@@ -86,6 +96,11 @@ versions is dictated by our dependency on RedisAI_ 1.2.7.
 +==================+==========+=============+===============+
 | 1.2.7 (default)  | 2.0.1    | 2.13.1      | 1.16.3        |
 +------------------+----------+-------------+---------------+
+
+.. warning::
+
+  On Apple Silicon, only the PyTorch backend is supported for now. Please contact us
+  if you need support for other backends
 
 TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
 
@@ -105,7 +120,7 @@ default due to issues with glibc on a variety of Linux platforms).
 ------------------------------------------------------------
 
 MacOS-only
-==========
+============
 
 We recommend users and contributors install brew_ for managing installed
 packages. For contributors, the following brew packages can be helpful:
@@ -274,6 +289,7 @@ First, clone SmartSim.
 
   git clone https://github.com/CrayLabs/SmartSim smartsim
 
+
 And then install SmartSim with pip in *editable* mode. This way, SmartSim is
 installed in your virtual environment and available on `sys.path`, but the
 source remains at the site of the clone instead of in site-packages.
@@ -286,12 +302,29 @@ source remains at the site of the clone instead of in site-packages.
 
 Use the now installed ``smart`` cli to install the machine learning runtimes.
 
-.. code-block:: bash
+.. tabs::
 
-  # run one of the following
-  smart build -v --device cpu          # verbose install cpu
-  smart build -v --device gpu          # verbose install gpu
-  smart build -v --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
+  .. tab:: Linux
+
+    .. code-block:: bash
+
+      # run one of the following
+      smart build --device cpu --onnx  # install with cpu-only support
+      smart build --device gpu --onnx  # install with both cpu and gpu support
+
+
+  .. tab:: MacOS (Intel x64)
+
+    .. code-block:: bash
+
+      smart build --device cpu --onnx  # install all backends (PT, TF, ONNX) on gpu
+
+
+  .. tab:: MacOS (Apple Silicon)
+
+    .. code-block:: bash
+
+      smart build --device cpu --no_tf # Only install PyTorch (TF/ONNX unsupported)
 
 
 Build the SmartRedis library

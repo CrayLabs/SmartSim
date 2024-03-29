@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -127,6 +127,14 @@ def proxyable_launch_cmd(
 ) -> t.Callable[[_StepT], t.List[str]]:
     @functools.wraps(fn)
     def _get_launch_cmd(self: _StepT) -> t.List[str]:
+        """
+        Generate a launch command that executes the `JobStep` with the
+        indirect launching entrypoint instead of directly. The original
+        command is passed to the proxy as a base64 encoded string.
+
+        Steps implementing `get_launch_cmd` and decorated with
+        `proxyable_launch_cmd` will generate status updates that can be consumed
+        by the telemetry monitor and dashboard"""
         original_cmd_list = fn(self)
 
         if not CONFIG.telemetry_enabled:
@@ -139,13 +147,15 @@ def proxyable_launch_cmd(
             )
 
         proxy_module = "smartsim._core.entrypoints.indirect"
-        etype = self.meta["entity_type"]
+        entity_type = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
+
+        # encode the original cmd to avoid potential collisions and escaping
+        # errors when passing it using CLI arguments to the indirect entrypoint
         encoded_cmd = encode_cmd(original_cmd_list)
 
-        # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
-        #       serialize step and let the indirect entrypoint rebuild the
-        #       cmd... for now, test away...
+        # return a new command that executes the proxy and passes
+        # the original command as an argument
         return [
             sys.executable,
             "-m",
@@ -155,7 +165,7 @@ def proxyable_launch_cmd(
             "+command",
             encoded_cmd,
             "+entity_type",
-            etype,
+            entity_type,
             "+telemetry_dir",
             status_dir,
             "+working_dir",

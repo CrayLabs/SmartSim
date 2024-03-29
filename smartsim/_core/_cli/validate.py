@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ from smartredis import Client
 
 from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
+from smartsim._core._install.builder import Device
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim._core.utils.network import find_free_port
 from smartsim.log import get_logger
@@ -59,9 +60,6 @@ if t.TYPE_CHECKING:
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
 else:
     _TemporaryDirectory = tempfile.TemporaryDirectory
-
-
-_TCapitalDeviceStr = t.Literal["CPU", "GPU"]
 
 
 class _VerificationTempDir(_TemporaryDirectory):
@@ -88,7 +86,7 @@ def execute(
     simple experiment
     """
     backends = installed_redisai_backends()
-    device: _TCapitalDeviceStr = args.device.upper()
+    device: Device = Device(args.device)
     try:
         with contextlib.ExitStack() as ctx:
             temp_dir = ctx.enter_context(_VerificationTempDir(dir=os.getcwd()))
@@ -98,7 +96,7 @@ def execute(
                     "SR_LOG_FILE", os.path.join(temp_dir, "smartredis.log")
                 ),
             }
-            if device == "GPU":
+            if device == Device.GPU:
                 validate_env["CUDA_VISIBLE_DEVICES"] = "0"
             ctx.enter_context(_env_vars_set_to(validate_env))
             test_install(
@@ -136,8 +134,8 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--device",
         type=str.lower,
-        default="cpu",
-        choices=["cpu", "gpu"],
+        default=Device.CPU.value,
+        choices=[device.value for device in Device],
         help="Device to test the ML backends against",
     )
 
@@ -145,14 +143,15 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 def test_install(
     location: str,
     port: t.Optional[int],
-    device: _TCapitalDeviceStr,
+    device: Device,
     with_tf: bool,
     with_pt: bool,
     with_onnx: bool,
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
-    exp.disable_telemetry()
+    exp.telemetry.disable()
     port = find_free_port() if port is None else port
+
     with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
@@ -205,7 +204,7 @@ def _make_managed_local_orc(
         exp.stop(orc)
 
 
-def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -> None:
+def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
     recv_conn, send_conn = mp.Pipe(duplex=False)
     # Build the model in a subproc so that keras does not hog the gpu
     proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
@@ -227,7 +226,12 @@ def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -
         ) from e
 
     client.set_model_from_file(
-        "keras-fcn", model_path, "TF", device=device, inputs=inputs, outputs=outputs
+        "keras-fcn",
+        model_path,
+        "TF",
+        device=device.value.upper(),
+        inputs=inputs,
+        outputs=outputs,
     )
     client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
     client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
@@ -255,7 +259,7 @@ def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
     conn.send((model_path, inputs, outputs))
 
 
-def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
+def _test_torch_install(client: Client, device: Device) -> None:
     import torch
     from torch import nn
 
@@ -267,7 +271,7 @@ def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.conv(x)
 
-    if device == "GPU":
+    if device == Device.GPU:
         device_ = torch.device("cuda")
     else:
         device_ = torch.device("cpu")
@@ -283,13 +287,13 @@ def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
     torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
     model = buffer.getvalue()
 
-    client.set_model("torch-nn", model, backend="TORCH", device=device)
+    client.set_model("torch-nn", model, backend="TORCH", device=device.value.upper())
     client.put_tensor("torch-in", torch.rand(1, 1, 3, 3).numpy())
     client.run_model("torch-nn", inputs=["torch-in"], outputs=["torch-out"])
     client.get_tensor("torch-out")
 
 
-def _test_onnx_install(client: Client, device: _TCapitalDeviceStr) -> None:
+def _test_onnx_install(client: Client, device: Device) -> None:
     from skl2onnx import to_onnx
     from sklearn.cluster import KMeans
 
@@ -302,7 +306,7 @@ def _test_onnx_install(client: Client, device: _TCapitalDeviceStr) -> None:
     sample = np.arange(20, dtype=np.float32).reshape(10, 2)
 
     client.put_tensor("onnx-input", sample)
-    client.set_model("onnx-kmeans", model, "ONNX", device=device)
+    client.set_model("onnx-kmeans", model, "ONNX", device=device.value.upper())
     client.run_model(
         "onnx-kmeans", inputs=["onnx-input"], outputs=["onnx-labels", "onnx-transform"]
     )

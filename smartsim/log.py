@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 import functools
 import logging
 import pathlib
+import socket
 import sys
 import threading
 import typing as t
@@ -95,17 +96,13 @@ def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.
     Returns None for both paths if experiment context is unavailable.
 
     :returns: 2-tuple of paths to experiment logs in form (output_path, error_path)
-    if telemetry is enabled, a 2-tuple of None otherwise
     :rtype: Tuple[pathlib.Path | None, pathlib.Path | None]
     """
     default_paths = None, None
 
-    if not CONFIG.telemetry_enabled:
-        return default_paths
-
-    if _exp_path := ctx_exp_path.get():
-        file_out = pathlib.Path(_exp_path) / CONFIG.telemetry_subdir / "smartsim.out"
-        file_err = pathlib.Path(_exp_path) / CONFIG.telemetry_subdir / "smartsim.err"
+    if _path := ctx_exp_path.get():
+        file_out = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.out"
+        file_err = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.err"
         return file_out, file_err
 
     return default_paths
@@ -133,6 +130,28 @@ class ContextInjectingLogFilter(logging.Filter):
         :rtype: bool
         """
         record.exp_path = ctx_exp_path.get()
+        return True
+
+
+class HostnameFilter(logging.Filter):
+    """Filter that performs enrichment of a log record by adding
+    the hostname of the machine executing the code"""
+
+    def __init__(self, name: str = "") -> None:
+        super().__init__(name)
+        self._hostname = ""
+
+    @property
+    @functools.lru_cache
+    def hostname(self) -> str:
+        """Returns the hostname of the machine executing the code"""
+        self._hostname = socket.gethostname()
+        return self._hostname
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # the hostname may already added if using the `ColoredLogs` plugin
+        if not hasattr(record, "hostname"):
+            record.hostname = self.hostname
         return True
 
 

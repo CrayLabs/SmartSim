@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 from .dbnode import DBNode
 from .dbobject import *
 from .ensemble import Ensemble
-from .entity import SmartSimEntity
+from .entity import SmartSimEntity, TelemetryConfiguration
 from .entityList import EntityList, EntitySequence
 from .files import TaggedFilesHierarchy
 from .model import Model

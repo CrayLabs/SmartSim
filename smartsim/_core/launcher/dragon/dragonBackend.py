@@ -46,12 +46,7 @@ from smartsim._core.schemas import (
     DragonUpdateStatusRequest,
     DragonUpdateStatusResponse,
 )
-from smartsim.status import (
-    STATUS_COMPLETED,
-    STATUS_FAILED,
-    STATUS_NEVER_STARTED,
-    STATUS_RUNNING,
-)
+from smartsim.status import SmartSimStatus
 
 # pylint: enable=import-error
 
@@ -81,7 +76,6 @@ class DragonBackend:
 
     @process_request.register
     def _(self, request: DragonRunRequest) -> DragonRunResponse:
-
         proc = TemplateProcess(
             target=request.exe,
             args=request.exe_args,
@@ -102,13 +96,18 @@ class DragonBackend:
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
-        updated_statuses: t.Dict[str, t.Tuple[str, t.Optional[t.List[int]]]] = {}
+        updated_statuses: t.Dict[
+            str, t.Tuple[SmartSimStatus, t.Optional[t.List[int]]]
+        ] = {}
         for step_id in request.step_ids:
             return_codes: t.List[int] = []
             if step_id in self._proc_groups:
                 proc_group_tuple = self._proc_groups[step_id]
                 if proc_group_tuple[0].status == "Running":
-                    updated_statuses[step_id] = (STATUS_RUNNING, return_codes)
+                    updated_statuses[step_id] = (
+                        SmartSimStatus.STATUS_RUNNING,
+                        return_codes,
+                    )
                 else:
                     if all(proc_id is not None for proc_id in proc_group_tuple[1]):
                         try:
@@ -121,13 +120,16 @@ class DragonBackend:
                     else:
                         return_codes = [0]
                     status = (
-                        STATUS_FAILED
+                        SmartSimStatus.STATUS_FAILED
                         if any(return_codes) or proc_group_tuple[0].status == "Error"
-                        else STATUS_COMPLETED
+                        else SmartSimStatus.STATUS_COMPLETED
                     )
                     updated_statuses[step_id] = (status, return_codes)
             else:
-                updated_statuses[step_id] = (STATUS_NEVER_STARTED, return_codes)
+                updated_statuses[step_id] = (
+                    SmartSimStatus.STATUS_NEVER_STARTED,
+                    return_codes,
+                )
 
         return DragonUpdateStatusResponse(statuses=updated_statuses)
 

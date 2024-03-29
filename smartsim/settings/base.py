@@ -1,5 +1,5 @@
 # BSD 2-Clause License #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -325,6 +325,19 @@ class RunSettings(SettingsBase):
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
 
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        :param feature_list: node feature to launch on
+        :type feature_list: str | list[str]
+        """
+        logger.warning(
+            (
+                "Feature specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
     @staticmethod
     def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
@@ -446,15 +459,8 @@ class RunSettings(SettingsBase):
 
         :param args: executable arguments
         :type args: str | list[str]
-        :raises TypeError: if exe args are not strings
         """
-        if isinstance(args, str):
-            args = args.split()
-
-        for arg in args:
-            if not isinstance(arg, str):
-                raise TypeError("Executable arguments should be a list of str")
-
+        args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
     def set(
@@ -533,26 +539,26 @@ class RunSettings(SettingsBase):
 
     @staticmethod
     def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
-        """Convert exe_args input to a desired collection format"""
-        if exe_args:
-            if isinstance(exe_args, str):
-                return exe_args.split()
-            if isinstance(exe_args, list):
-                exe_args = copy.deepcopy(exe_args)
-                plain_type = all(isinstance(arg, (str)) for arg in exe_args)
-                if not plain_type:
-                    nested_type = all(
-                        all(isinstance(arg, (str)) for arg in exe_args_list)
-                        for exe_args_list in exe_args
-                    )
-                    if not nested_type:
-                        raise TypeError(
-                            "Executable arguments were not list of str or str"
-                        )
-                    return exe_args
-                return exe_args
-            raise TypeError("Executable arguments were not list of str or str")
-        return []
+        """Check and convert exe_args input to a desired collection format"""
+        if not exe_args:
+            return []
+
+        if isinstance(exe_args, list):
+            exe_args = copy.deepcopy(exe_args)
+
+        if not (
+            isinstance(exe_args, str)
+            or (
+                isinstance(exe_args, list)
+                and all(isinstance(arg, str) for arg in exe_args)
+            )
+        ):
+            raise TypeError("Executable arguments were not a list of str or a str.")
+
+        if isinstance(exe_args, str):
+            return exe_args.split()
+
+        return exe_args
 
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments

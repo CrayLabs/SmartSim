@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,13 @@ import sys
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity import Ensemble
 from smartsim.entity.dbobject import DBModel
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
+from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
@@ -218,7 +219,7 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
@@ -285,7 +286,7 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
@@ -386,7 +387,7 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
         exp.start(db, smartsim_ensemble, block=True)
         statuses = exp.get_status(smartsim_ensemble)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(db)
@@ -458,7 +459,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
@@ -518,7 +519,7 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
@@ -620,7 +621,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
@@ -724,7 +725,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
@@ -859,3 +860,83 @@ def test_inconsistent_params_db_model():
         ex.value.args[0]
         == "Cannot set devices_per_node>1 if CPU is specified under devices"
     )
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+def test_db_model_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
+    """Test DBModels on remote DB, with an ensemble"""
+
+    # Set experiment name
+    exp_name = "test-db-model-ensemble-duplicate"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = 1  # TF backend fails on multiple GPUs
+
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks(1)
+
+    # Create ensemble
+    smartsim_ensemble = exp.create_ensemble(
+        "smartsim_ensemble", run_settings=run_settings, replicas=2
+    )
+
+    # Create Model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+
+    # Create and save ML model to filesystem
+    model, inputs, outputs = create_tf_cnn()
+    model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
+
+    # Add the first ML model to all of the ensemble members
+    smartsim_ensemble.add_ml_model(
+        "cnn",
+        "TF",
+        model=model,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs,
+        outputs=outputs,
+    )
+
+    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_ml_model()
+    with pytest.raises(SSUnsupportedError) as ex:
+        smartsim_ensemble.add_ml_model(
+            "cnn",
+            "TF",
+            model=model,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+            inputs=inputs,
+            outputs=outputs,
+        )
+    assert ex.value.args[0] == 'An ML Model with name "cnn" already exists'
+
+    # Add same name ML model to a new SmartSim Model
+    smartsim_model.add_ml_model(
+        "cnn",
+        "TF",
+        model_path=model_file2,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs2,
+        outputs=outputs2,
+    )
+
+    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_model()
+    with pytest.raises(SSUnsupportedError) as ex:
+        smartsim_ensemble.add_model(smartsim_model)
+    assert ex.value.args[0] == 'An ML Model with name "cnn" already exists'

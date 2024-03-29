@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -270,12 +270,12 @@ class Versioner:
     PYTHON_MIN = Version_("3.8.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.0"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.0"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.2"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.2"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
-    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.0.5"))
+    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.2.4"))
     REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 

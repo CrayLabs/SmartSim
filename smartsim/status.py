@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,27 +24,21 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from enum import Enum
 
-# Statuses that are applied to jobs
-STATUS_RUNNING = "Running"
-STATUS_COMPLETED = "Completed"
-STATUS_CANCELLED = "Cancelled"
-STATUS_FAILED = "Failed"
-STATUS_NEW = "New"
-STATUS_PAUSED = "Paused"
-STATUS_NEVER_STARTED = "NeverStarted"
 
-# SmartSim status mapping
-SMARTSIM_STATUS = {
-    "Running": STATUS_RUNNING,
-    "Paused": STATUS_PAUSED,
-    "Completed": STATUS_COMPLETED,
-    "Cancelled": STATUS_CANCELLED,
-    "Failed": STATUS_FAILED,
-    "New": STATUS_NEW,
-    "NeverStarted": STATUS_NEVER_STARTED,
+class SmartSimStatus(Enum):
+    STATUS_RUNNING = "Running"
+    STATUS_COMPLETED = "Completed"
+    STATUS_CANCELLED = "Cancelled"
+    STATUS_FAILED = "Failed"
+    STATUS_NEW = "New"
+    STATUS_PAUSED = "Paused"
+    STATUS_NEVER_STARTED = "NeverStarted"
+
+
+TERMINAL_STATUSES = {
+    SmartSimStatus.STATUS_CANCELLED,
+    SmartSimStatus.STATUS_COMPLETED,
+    SmartSimStatus.STATUS_FAILED,
 }
-
-# Status groupings
-TERMINAL_STATUSES = {STATUS_CANCELLED, STATUS_COMPLETED, STATUS_FAILED}
-LIVE_STATUSES = {STATUS_RUNNING, STATUS_PAUSED, STATUS_NEW}

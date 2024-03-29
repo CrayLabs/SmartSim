@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -294,7 +294,10 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
             metadata=_LaunchedManifestMetadata(
-                self.run_id, self.exp_name, self.exp_path, self.launcher_name
+                self.run_id,
+                self.exp_name,
+                self.exp_path,
+                self.launcher_name,
             ),
             models=tuple(self._models),
             ensembles=tuple(self._ensembles),

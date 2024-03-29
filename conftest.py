@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,35 +26,41 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
-import pytest
-import psutil
+import pathlib
 import shutil
-import smartsim
-from smartsim import Experiment
-from smartsim.entity import Model
-from smartsim.database import Orchestrator
-from smartsim.log import get_logger
-from smartsim.settings import (
-    SrunSettings,
-    AprunSettings,
-    DragonRunSettings,
-    JsrunSettings,
-    MpirunSettings,
-    MpiexecSettings,
-    PalsMpiexecSettings,
-    RunSettings,
-)
-from smartsim._core.config import CONFIG
-from smartsim.error import SSConfigError
-from subprocess import run
 import sys
 import tempfile
 import time
 import typing as t
 import uuid
 import warnings
+from subprocess import run
+
+import psutil
+import pytest
+
+import smartsim
+from smartsim import Experiment
+from smartsim._core.config import CONFIG
+from smartsim._core.config.config import Config
+from smartsim._core.utils.telemetry.telemetry import JobEntity
+from smartsim.database import Orchestrator
+from smartsim.entity import Model
+from smartsim.error import SSConfigError
+from smartsim.log import get_logger
+from smartsim.settings import (
+    AprunSettings,
+    DragonRunSettings,
+    JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    PalsMpiexecSettings,
+    RunSettings,
+    SrunSettings,
+)
 
 logger = get_logger(__name__)
 
@@ -70,12 +76,13 @@ test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
-test_batch_resources: t.Dict[t.Any,t.Any] = CONFIG.test_batch_resources
+test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
 test_output_dirs = 0
 
 # Fill this at runtime if needed
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
+
 
 def get_account() -> str:
     return test_account
@@ -404,6 +411,7 @@ class WLMUtils:
 
         return None
 
+
 @pytest.fixture
 def local_db(
     request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
@@ -478,6 +486,7 @@ def check_output_dir() -> None:
     assert os.path.isdir(test_output_root)
     assert len(os.listdir(test_output_root)) >= test_output_dirs
     test_output_dirs = len(os.listdir(test_output_root))
+
 
 @pytest.fixture
 def dbutils() -> t.Type[DBUtils]:
@@ -567,7 +576,7 @@ def _sanitize_caller_function(caller_function: str) -> str:
     # We split at the opening bracket, sanitize the string
     # to its right and then merge the function name and
     # the sanitized list with a dot.
-    caller_function = caller_function.replace("]","")
+    caller_function = caller_function.replace("]", "")
     caller_function_list = caller_function.split("[", maxsplit=1)
 
     def is_accepted_char(char: str) -> bool:
@@ -602,7 +611,8 @@ class FileUtils:
     @staticmethod
     def get_test_output_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
-        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_output_root))
+        dir_name = os.path.dirname(test_output_root)
+        rel_path = os.path.relpath(caller_file_to_dir, dir_name)
         dir_path = os.path.join(test_output_root, rel_path, caller_function)
         return dir_path
 
@@ -617,7 +627,9 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_file(file_name: str, file_dir: str, file_content: t.Optional[str] = None) -> str:
+    def make_test_file(
+        file_name: str, file_dir: str, file_content: t.Optional[str] = None
+    ) -> str:
         """Create a dummy file in the test output directory.
 
         :param file_name: name of file to create, e.g. "file.txt"
@@ -692,8 +704,8 @@ class ColoUtils:
         if db_type == "uds" and colo_model_name is not None:
             tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
-            db_args["unix_socket"] = os.path.join(tmp_dir,
-                f"{colo_model_name}_{socket_suffix}.socket")
+            socket_name = f"{colo_model_name}_{socket_suffix}.socket"
+            db_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,
@@ -702,16 +714,172 @@ class ColoUtils:
         }
         with warnings.catch_warnings():
             if db_type == "deprecated":
-                warnings.filterwarnings(
-                    "ignore",
-                    message="`colocate_db` has been deprecated"
-                )
+                message = "`colocate_db` has been deprecated"
+                warnings.filterwarnings("ignore", message=message)
             colocate_fun[db_type](**db_args)
         # assert model will launch with colocated db
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
 
+
 @pytest.fixture
-def config() -> smartsim._core.config.Config:
+def config() -> Config:
     return CONFIG
+
+
+class MockSink:
+    """Telemetry sink that writes console output for testing purposes"""
+
+    def __init__(self, delay_ms: int = 0) -> None:
+        self._delay_ms = delay_ms
+        self.num_saves = 0
+        self.args: t.Any = None
+
+    async def save(self, *args: t.Any) -> None:
+        """Save all arguments as console logged messages"""
+        self.num_saves += 1
+        if self._delay_ms:
+            # mimic slow collection....
+            delay_s = self._delay_ms / 1000
+            await asyncio.sleep(delay_s)
+        self.args = args
+
+
+@pytest.fixture
+def mock_sink() -> t.Type[MockSink]:
+    return MockSink
+
+
+@pytest.fixture
+def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
+    """Generates mock db connection telemetry"""
+
+    def _mock_con(min: int = 1, max: int = 254) -> t.Iterable[t.Any]:
+        for i in range(min, max):
+            yield [
+                {"addr": f"127.0.0.{i}:1234", "id": f"ABC{i}"},
+                {"addr": f"127.0.0.{i}:2345", "id": f"XYZ{i}"},
+            ]
+
+    return _mock_con
+
+
+@pytest.fixture
+def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
+    """Generates mock db memory usage telemetry"""
+
+    def _mock_mem(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
+        for i in range(min, max):
+            yield {
+                "total_system_memory": 1000 * i,
+                "used_memory": 1111 * i,
+                "used_memory_peak": 1234 * i,
+            }
+
+    return _mock_mem
+
+
+@pytest.fixture
+def mock_redis() -> t.Callable[..., t.Any]:
+    def _mock_redis(
+        conn_side_effect=None,
+        mem_stats=None,
+        client_stats=None,
+        coll_side_effect=None,
+    ):
+        """Generate a mock object for the redis.Redis contract"""
+
+        class MockConn:
+            def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
+                if conn_side_effect is not None:
+                    conn_side_effect()
+
+            async def info(self, *args: t.Any, **kwargs: t.Any) -> t.Dict[str, t.Any]:
+                if coll_side_effect:
+                    await coll_side_effect()
+
+                if mem_stats:
+                    return next(mem_stats)
+                return {
+                    "total_system_memory": "111",
+                    "used_memory": "222",
+                    "used_memory_peak": "333",
+                }
+
+            async def client_list(
+                self, *args: t.Any, **kwargs: t.Any
+            ) -> t.Dict[str, t.Any]:
+                if coll_side_effect:
+                    await coll_side_effect()
+
+                if client_stats:
+                    return next(client_stats)
+                return {"addr": "127.0.0.1", "id": "111"}
+
+            async def ping(self):
+                return True
+
+        return MockConn
+
+    return _mock_redis
+
+
+class MockCollectorEntityFunc(t.Protocol):
+    @staticmethod
+    def __call__(
+        host: str = "127.0.0.1",
+        port: int = 6379,
+        name: str = "",
+        type: str = "",
+        telemetry_on: bool = False,
+    ) -> "JobEntity": ...
+
+
+@pytest.fixture
+def mock_entity(test_dir: str) -> MockCollectorEntityFunc:
+    def _mock_entity(
+        host: str = "127.0.0.1",
+        port: int = 6379,
+        name: str = "",
+        type: str = "",
+        telemetry_on: bool = False,
+    ) -> "JobEntity":
+        test_path = pathlib.Path(test_dir)
+
+        entity = JobEntity()
+        entity.name = name if name else str(uuid.uuid4())
+        entity.status_dir = str(test_path / entity.name)
+        entity.type = type
+        entity.telemetry_on = True
+        entity.collectors = {
+            "client": "",
+            "client_count": "",
+            "memory": "",
+        }
+        entity.config = {
+            "host": host,
+            "port": str(port),
+        }
+        entity.telemetry_on = telemetry_on
+        return entity
+
+    return _mock_entity
+
+
+class CountingCallable:
+    def __init__(self) -> None:
+        self._num: int = 0
+        self._details: t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]] = []
+
+    def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+        self._num += 1
+        self._details.append((args, kwargs))
+
+    @property
+    def num_calls(self) -> int:
+        return self._num
+
+    @property
+    def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
+        return self._details

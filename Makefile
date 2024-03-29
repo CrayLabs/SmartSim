@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -150,11 +150,11 @@ tutorials-dev:
 	@docker compose build tutorials-dev
 	@docker run -p 8888:8888 smartsim-tutorials:dev-latest
 
-# help: tutorials-prod                 - Build and start a docker container to run the tutorials (v0.6.0)
+# help: tutorials-prod                 - Build and start a docker container to run the tutorials (v0.6.2)
 .PHONY: tutorials-prod
 tutorials-prod:
 	@docker compose build tutorials-prod
-	@docker run -p 8888:8888 smartsim-tutorials:v0.6.0
+	@docker run -p 8888:8888 smartsim-tutorials:v0.6.2
 
 
 # help:

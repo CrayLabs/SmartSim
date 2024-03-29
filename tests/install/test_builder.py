@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,9 @@ pytestmark = pytest.mark.group_a
 
 RAI_VERSIONS = RedisAIVersion("1.2.7")
 
-for_each_device = pytest.mark.parametrize("device", ["cpu", "gpu"])
+for_each_device = pytest.mark.parametrize(
+    "device", [build.Device.CPU, build.Device.GPU]
+)
 
 _toggle_build_optional_backend = lambda backend: pytest.mark.parametrize(
     f"build_{backend}",
@@ -163,7 +165,7 @@ def test_rai_builder_will_add_dep_if_backend_requested_wo_duplicates(
     rai_builder = build.RedisAIBuilder(
         build_tf=build_tf, build_torch=build_pt, build_onnx=build_ort
     )
-    requested_backends = rai_builder._get_deps_to_fetch_for(device)
+    requested_backends = rai_builder._get_deps_to_fetch_for(build.Device(device))
     assert dlpack_dep_presence(requested_backends)
     assert tf_dep_presence(build_tf, requested_backends)
     assert pt_dep_presence(build_pt, requested_backends)
@@ -212,7 +214,7 @@ def test_rai_builder_raises_if_it_fetches_an_unexpected_number_of_ml_deps(
         build.BuildError,
         match=r"Expected to place \d+ dependencies, but only found \d+",
     ):
-        rai_builder._fetch_deps_for("cpu")
+        rai_builder._fetch_deps_for(build.Device.CPU)
 
 
 def test_threaded_map():
@@ -251,18 +253,24 @@ def test_PTArchiveMacOSX_url():
     arch = build.Architecture.X64
     pt_version = RAI_VERSIONS.torch
 
-    pt_linux_cpu = build._PTArchiveLinux(build.Architecture.X64, "cpu", pt_version)
+    pt_linux_cpu = build._PTArchiveLinux(
+        build.Architecture.X64, build.Device.CPU, pt_version
+    )
     x64_prefix = "https://download.pytorch.org/libtorch/"
     assert x64_prefix in pt_linux_cpu.url
 
-    pt_macosx_cpu = build._PTArchiveMacOSX(build.Architecture.ARM64, "cpu", pt_version)
+    pt_macosx_cpu = build._PTArchiveMacOSX(
+        build.Architecture.ARM64, build.Device.CPU, pt_version
+    )
     arm64_prefix = "https://github.com/CrayLabs/ml_lib_builder/releases/download/"
     assert arm64_prefix in pt_macosx_cpu.url
 
 
 def test_PTArchiveMacOSX_gpu_error():
     with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
-        build._PTArchiveMacOSX(build.Architecture.ARM64, "gpu", RAI_VERSIONS.torch).url
+        build._PTArchiveMacOSX(
+            build.Architecture.ARM64, build.Device.GPU, RAI_VERSIONS.torch
+        ).url
 
 
 def test_valid_platforms():
@@ -287,3 +295,78 @@ def test_valid_platforms():
         build_torch=True,
         build_onnx=False,
     )
+
+
+@pytest.mark.parametrize(
+    "plat,cmd,expected_cmd",
+    [
+        # Bare Word
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.X64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "my-repo"],
+            id="git-Linux-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.ARM64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "my-repo"],
+            id="git-Linux-Arm64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.X64),
+            ["git", "clone", "my-repo"],
+            ["git", "clone", "my-repo"],
+            id="git-Darwin-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.ARM64),
+            ["git", "clone", "my-repo"],
+            [
+                "git",
+                "clone",
+                "--config",
+                "core.autocrlf=false",
+                "--config",
+                "core.eol=lf",
+                "my-repo",
+            ],
+            id="git-Darwin-Arm64",
+        ),
+        # Abs path
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.X64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "my-repo"],
+            id="Abs-Linux-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.LINUX, build.Architecture.ARM64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "my-repo"],
+            id="Abs-Linux-Arm64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.X64),
+            ["/path/to/git", "clone", "my-repo"],
+            ["/path/to/git", "clone", "my-repo"],
+            id="Abs-Darwin-X64",
+        ),
+        pytest.param(
+            build.Platform(build.OperatingSystem.DARWIN, build.Architecture.ARM64),
+            ["/path/to/git", "clone", "my-repo"],
+            [
+                "/path/to/git",
+                "clone",
+                "--config",
+                "core.autocrlf=false",
+                "--config",
+                "core.eol=lf",
+                "my-repo",
+            ],
+            id="Abs-Darwin-Arm64",
+        ),
+    ],
+)
+def test_git_commands_are_configered_correctly_for_platforms(plat, cmd, expected_cmd):
+    assert build.config_git_command(plat, cmd) == expected_cmd

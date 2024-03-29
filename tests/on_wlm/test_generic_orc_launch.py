@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -55,13 +56,13 @@ def test_launch_orc_auto(test_dir, wlmutils):
     statuses = exp.get_status(orc)
 
     # don't use assert so that we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_single(test_dir, wlmutils):
@@ -88,13 +89,13 @@ def test_launch_cluster_orc_single(test_dir, wlmutils):
     statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_multi(test_dir, wlmutils):
@@ -121,10 +122,10 @@ def test_launch_cluster_orc_multi(test_dir, wlmutils):
     statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])

@@ -29,6 +29,9 @@
                             "conf_file": null,
                             "out_file": "/path/to/some/file.out",
                             "err_file": "/path/to/some/file.err",
+                            "client_file": "/path/to/some/client.log",
+                            "client_count_file": null,
+                            "memory_file": "/path/to/some/mem.log",
                             "telemetry_metadata": {
                                 "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/2ca19ad/database/orchestrator/orchestrator_0",
                                 "step_id": "4139111.27",

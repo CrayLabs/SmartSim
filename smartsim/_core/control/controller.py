@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
-from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import (
     DragonLauncher,
@@ -252,7 +252,13 @@ class Controller:
                             continue
 
                         job = self._jobs[node.name]
-                        job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                        job.set_status(
+                            SmartSimStatus.STATUS_CANCELLED,
+                            "",
+                            0,
+                            output=None,
+                            error=None,
+                        )
                         self._jobs.move_to_completed(job)
 
         db.reset_hosts()
@@ -280,14 +286,14 @@ class Controller:
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> str:
+    ) -> SmartSimStatus:
         """Get the status of an entity
 
         :param entity: entity to get status of
         :type entity: SmartSimEntity | EntitySequence
         :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
-        :rtype: str
+        :rtype: SmartSimStatus
         """
         if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
@@ -298,14 +304,14 @@ class Controller:
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
-    ) -> t.List[str]:
+    ) -> t.List[SmartSimStatus]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
                             get statuses of
         :type entity_list: EntitySequence
         :raises TypeError: if not EntitySequence
-        :return: list of str statuses
+        :return: list of SmartSimStatus statuses
         :rtype: list
         """
         if not isinstance(entity_list, EntitySequence):
@@ -367,7 +373,9 @@ class Controller:
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
-            exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
+            exp_name=exp_name,
+            exp_path=exp_path,
+            launcher_name=str(self._launcher),
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -521,14 +529,38 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-        try:
-            job_id = self._launcher.run(job_step)
-        except LauncherError as e:
-            msg = f"An error occurred when launching {entity.name} \n"
-            msg += "Check error and output files for details.\n"
-            msg += f"{entity}"
-            logger.error(msg)
-            raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # attempt to retrieve entity name in JobManager.completed
+        completed_job = self._jobs.completed.get(entity.name, None)
+
+        # if completed job DNE and is the entity name is not
+        # running in JobManager.jobs or JobManager.db_jobs,
+        # launch the job
+        if completed_job is None and (
+            entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
+        ):
+            try:
+                job_id = self._launcher.run(job_step)
+            except LauncherError as e:
+                msg = f"An error occurred when launching {entity.name} \n"
+                msg += "Check error and output files for details.\n"
+                msg += f"{entity}"
+                logger.error(msg)
+                raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # if the completed job does exist and the entity passed in is the same
+        # that has ran and completed, relaunch the entity.
+        elif completed_job is not None and completed_job.entity is entity:
+            try:
+                job_id = self._launcher.run(job_step)
+            except LauncherError as e:
+                msg = f"An error occurred when launching {entity.name} \n"
+                msg += "Check error and output files for details.\n"
+                msg += f"{entity}"
+                logger.error(msg)
+                raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # the entity is using a duplicate name of an existing entity in
+        # the experiment, throw an error
+        else:
+            raise SSUnsupportedError("SmartSim entities cannot have duplicate names.")
 
         # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
         # but is rather started, monitored, and exited through the Popen interface
@@ -712,7 +744,7 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all(stat == STATUS_RUNNING for stat in statuses):
+                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
@@ -869,7 +901,6 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):
@@ -885,7 +916,8 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.entities = [model]
         self.batch_settings = model.batch_settings
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
+        ...
 
 
 def _look_up_launched_data(

@@ -45,7 +45,7 @@ from smartsim._core.launcher.dragon import dragonSockets
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import DragonRunSettings, RunSettings, SettingsBase
-from ....status import STATUS_CANCELLED
+from ....status import SmartSimStatus
 from ...config import CONFIG
 from ...schemas import (
     DragonBootstrapRequest,
@@ -322,7 +322,9 @@ class DragonLauncher(WLMLauncher):
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
-        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
+        step_info.status = (
+            SmartSimStatus.STATUS_CANCELLED  # set status to cancelled instead of failed
+        )
         return step_info
 
     def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
@@ -363,7 +365,7 @@ class DragonLauncher(WLMLauncher):
                     )
             else:
                 grp_ret_code = None
-            info = StepInfo(status, status, grp_ret_code)
+            info = StepInfo(SmartSimStatus(status), status, grp_ret_code)
 
             updates.append(info)
         return updates

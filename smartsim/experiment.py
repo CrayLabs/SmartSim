@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,19 +24,26 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path as osp
 import typing as t
-from os import getcwd
+from os import environ, getcwd
 
 from tabulate import tabulate
 
+from smartsim._core.config import CONFIG
 from smartsim.error.errors import SSUnsupportedError
+from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
-from .entity import Ensemble, Model, SmartSimEntity
+from .entity import (
+    Ensemble,
+    EntitySequence,
+    Model,
+    SmartSimEntity,
+    TelemetryConfiguration,
+)
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import Container, base, settings
@@ -52,6 +59,23 @@ def _exp_path_map(exp: "Experiment") -> str:
 
 
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
+
+
+class ExperimentTelemetryConfiguration(TelemetryConfiguration):
+    """Customized telemetry configuration for an `Experiment`. Ensures
+    backwards compatible behavior with drivers using environment variables
+    to enable experiment telemetry"""
+
+    def __init__(self) -> None:
+        super().__init__(enabled=CONFIG.telemetry_enabled)
+
+    def _on_enable(self) -> None:
+        """Modify the environment variable to enable telemetry."""
+        environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
+
+    def _on_disable(self) -> None:
+        """Modify the environment variable to disable telemetry."""
+        environ["SMARTSIM_FLAG_TELEMETRY"] = "0"
 
 
 # pylint: disable=no-self-use
@@ -147,11 +171,12 @@ class Experiment:
         self._control = Controller(launcher=self._launcher)
 
         self.db_identifiers: t.Set[str] = set()
+        self._telemetry_cfg = ExperimentTelemetryConfiguration()
 
     @_contextualize
     def start(
         self,
-        *args: t.Any,
+        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         block: bool = True,
         summary: bool = False,
         kill_on_interrupt: bool = True,
@@ -223,7 +248,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def stop(self, *args: t.Any) -> None:
+    def stop(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
         """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
@@ -262,7 +289,7 @@ class Experiment:
     @_contextualize
     def generate(
         self,
-        *args: t.Any,
+        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         tag: t.Optional[str] = None,
         overwrite: bool = False,
         verbose: bool = False,
@@ -366,7 +393,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def get_status(self, *args: t.Any) -> t.List[str]:
+    def get_status(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> t.List[SmartSimStatus]:
         """Query the status of launched instances
 
         Return a smartsim.status string representing
@@ -394,7 +423,7 @@ class Experiment:
         """
         try:
             manifest = Manifest(*args)
-            statuses: t.List[str] = []
+            statuses: t.List[SmartSimStatus] = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:
@@ -832,8 +861,8 @@ class Experiment:
         launched and completed in this ``Experiment``
 
         :param style: the style in which the summary table is formatted,
-                       for a full list of styles see:
-                       https://github.com/astanin/python-tabulate#table-format,
+                       for a full list of styles see the table-format section of:
+                       https://github.com/astanin/python-tabulate,
                        defaults to "github"
         :type style: str, optional
         :return: tabulate string of ``Experiment`` history
@@ -910,34 +939,10 @@ class Experiment:
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
 
-    def enable_telemetry(self) -> None:
-        """Experiments will start producing telemetry for all entities run
-        through ``Experiment.start``
+    @property
+    def telemetry(self) -> TelemetryConfiguration:
+        """Return the telemetry configuration for this entity.
 
-        .. warning::
-
-            This method is currently implemented so that ALL ``Experiment``
-            instances will begin producing telemetry data. In the future it
-            is planned to have this method work on a "per instance" basis!
-        """
-        self._set_telemetry(True)
-
-    def disable_telemetry(self) -> None:
-        """Experiments will stop producing telemetry for all entities run
-        through ``Experiment.start``
-
-        .. warning::
-
-            This method is currently implemented so that ALL ``Experiment``
-            instances will stop producing telemetry data. In the future it
-            is planned to have this method work on a "per instance" basis!
-        """
-        self._set_telemetry(False)
-
-    @staticmethod
-    def _set_telemetry(switch: bool, /) -> None:
-        tm_key = "SMARTSIM_FLAG_TELEMETRY"
-        if switch:
-            os.environ[tm_key] = "1"
-        else:
-            os.environ[tm_key] = "0"
+        :returns: configuration of telemetry for this entity
+        :rtype: TelemetryConfiguration"""
+        return self._telemetry_cfg

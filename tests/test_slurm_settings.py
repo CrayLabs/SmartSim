@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -336,6 +336,21 @@ def test_set_hostlist():
 
     with pytest.raises(TypeError):
         rs.set_hostlist([5])
+
+
+def test_set_node_feature():
+    rs = SrunSettings("python")
+    rs.set_node_feature(["P100", "V100"])
+    assert rs.run_args["C"] == "P100,V100"
+
+    rs.set_node_feature("P100")
+    assert rs.run_args["C"] == "P100"
+
+    with pytest.raises(TypeError):
+        rs.set_node_feature(5)
+
+    with pytest.raises(TypeError):
+        rs.set_node_feature(["P100", 5])
 
 
 def test_set_hostlist_from_file():

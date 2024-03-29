@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,11 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -57,7 +58,7 @@ def test_model_failure(fileutils, test_dir):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == status.STATUS_FAILED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_FAILED for stat in statuses])
 
 
 def test_orchestrator_relaunch(test_dir, wlmutils):
@@ -65,9 +66,9 @@ def test_orchestrator_relaunch(test_dir, wlmutils):
     exp_name = "test-orc-on-relaunch"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    orc = Orchestrator(port=wlmutils.get_test_port())
+    orc = Orchestrator(port=wlmutils.get_test_port(), db_identifier="orch_1")
     orc.set_path(test_dir)
-    orc_1 = Orchestrator(port=wlmutils.get_test_port() + 1)
+    orc_1 = Orchestrator(port=wlmutils.get_test_port() + 1, db_identifier="orch_2")
     orc_1.set_path(test_dir)
     try:
         exp.start(orc)
