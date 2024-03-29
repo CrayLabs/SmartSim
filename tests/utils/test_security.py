@@ -4,7 +4,7 @@ import stat
 import pytest
 
 from smartsim._core.config.config import get_config
-from smartsim._core.utils.security import KeyLocator, KeyManager
+from smartsim._core.utils.security import KeyLocator, KeyManager, _KeyPermissions
 
 
 @pytest.mark.parametrize(
@@ -187,26 +187,26 @@ def test_key_manager_applied_permissions(
         s_pub_stat = km._server_locator.public_dir.stat()
         c_pub_stat = km._client_locator.public_dir.stat()
 
-        assert stat.S_IMODE(s_pub_stat.st_mode) == 0o744
-        assert stat.S_IMODE(c_pub_stat.st_mode) == 0o744
+        assert stat.S_IMODE(s_pub_stat.st_mode) == _KeyPermissions.WorldRead
+        assert stat.S_IMODE(c_pub_stat.st_mode) == _KeyPermissions.WorldRead
 
         # ensure private dirs are open only to owner
         s_priv_stat = km._server_locator.private_dir.stat()
         c_priv_stat = km._client_locator.private_dir.stat()
 
-        assert stat.S_IMODE(s_priv_stat.st_mode) == 0o700
-        assert stat.S_IMODE(c_priv_stat.st_mode) == 0o700
+        assert stat.S_IMODE(s_priv_stat.st_mode) == _KeyPermissions.OwnerFull
+        assert stat.S_IMODE(c_priv_stat.st_mode) == _KeyPermissions.OwnerFull
 
         # ensure public files are open for reading by others
         s_pub_stat = km._server_locator.public.stat()
         c_pub_stat = km._client_locator.public.stat()
 
-        assert stat.S_IMODE(s_pub_stat.st_mode) == 0o744
-        assert stat.S_IMODE(c_pub_stat.st_mode) == 0o744
+        assert stat.S_IMODE(s_pub_stat.st_mode) == _KeyPermissions.WorldRead
+        assert stat.S_IMODE(c_pub_stat.st_mode) == _KeyPermissions.WorldRead
 
         # ensure private files are read-only for owner
         s_priv_stat = km._server_locator.private.stat()
         c_priv_stat = km._client_locator.private.stat()
 
-        assert stat.S_IMODE(s_priv_stat.st_mode) == 0o600
-        assert stat.S_IMODE(c_priv_stat.st_mode) == 0o600
+        assert stat.S_IMODE(s_priv_stat.st_mode) == _KeyPermissions.OwnerReadWrite
+        assert stat.S_IMODE(c_priv_stat.st_mode) == _KeyPermissions.OwnerReadWrite

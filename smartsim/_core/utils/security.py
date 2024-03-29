@@ -28,11 +28,23 @@
 import dataclasses
 import pathlib
 import typing as t
+from enum import IntEnum
 
 import zmq
 import zmq.auth
 
 from smartsim._core.config.config import Config
+
+
+class _KeyPermissions(IntEnum):
+    """Permissions used by KeyManager"""
+
+    OwnerReadWrite = 0o600
+    """Permissions allowing owner to r/w"""
+    OwnerFull = 0o700
+    """permissions allowing owner to r/w/x"""
+    WorldRead = 0o744
+    """permissions allowing world to r/w"""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -73,8 +85,8 @@ class KeyLocator:
         :param separate_keys: flag indicating if public and private keys should
         be persisted in separate, corresponding directories
         :type separate_keys: bool
-
         """
+
         # constants for standardized paths.
         self._public_subdir = "pub"
         """The category subdirectory to use when persisting a public key"""
@@ -184,10 +196,10 @@ class KeyManager:
         the public and private key pairs for servers & clients"""
         for locator in [self._server_locator, self._client_locator]:
             if not locator.public_dir.exists():
-                locator.public_dir.mkdir(parents=True, mode=0o744)
+                locator.public_dir.mkdir(parents=True, mode=_KeyPermissions.WorldRead)
 
             if not locator.private_dir.exists():
-                locator.private_dir.mkdir(parents=True, mode=0o700)
+                locator.private_dir.mkdir(parents=True, mode=_KeyPermissions.OwnerFull)
 
     @classmethod
     def _load_keypair(cls, locator: KeyLocator, in_context: bool) -> KeyPair:
@@ -240,25 +252,16 @@ class KeyManager:
 
     def _create_keys(self) -> None:
         """Create and persist key files to disk"""
-        # create server keys in the server private directory
-        zmq.auth.create_certificates(
-            self._server_locator.private.parent, self._server_locator.private.stem
-        )
-        # ...and move the server public key out of the private subdirectory
-        self._move_public_key(self._server_locator)
+        for locator in [self._server_locator, self._client_locator]:
+            # create keys in the private directory...
+            zmq.auth.create_certificates(locator.private.parent, locator.private.stem)
 
-        self._server_locator.private.chmod(0o600)
-        self._server_locator.public.chmod(0o744)
+            # ...but move the public key out of the private subdirectory
+            self._move_public_key(locator)
 
-        # create client keys in the client private directory
-        zmq.auth.create_certificates(
-            self._client_locator.private.parent, self._client_locator.private.stem
-        )
-        # ...and move the client public key out of the private subdirectory
-        self._move_public_key(self._client_locator)
-
-        self._client_locator.private.chmod(0o600)
-        self._client_locator.public.chmod(0o744)
+            # and ensure correct r/w/x permissions on each file.
+            locator.private.chmod(_KeyPermissions.OwnerReadWrite)
+            locator.public.chmod(_KeyPermissions.WorldRead)
 
     def get_keys(self, create: bool = True) -> t.Tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to generate a public/private key pair for the server
