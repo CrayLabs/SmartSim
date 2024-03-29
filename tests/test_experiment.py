@@ -59,6 +59,7 @@ def test_model_prefix(test_dir: str) -> None:
     )
     assert model._key_prefixing_enabled == True
 
+
 def test_bad_exp_path() -> None:
     with pytest.raises(NotADirectoryError):
         exp = Experiment("test", "not-a-directory")
@@ -233,12 +234,12 @@ def test_error_on_cobalt() -> None:
 def test_default_orch_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
     exp_name = "default-orch-path"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    db = exp.create_database(port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface())
+    db = exp.create_database(
+        port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface()
+    )
     exp.start(db)
     exp.stop(db)
-    mani_path = (
-        pathlib.Path(test_dir) / db.name
-    )
+    mani_path = pathlib.Path(test_dir) / db.name
     err_file = os.path.join(mani_path, f"{db.name}_0.err")
     out_file = os.path.join(mani_path, f"{db.name}_0.out")
     assert mani_path.exists()
@@ -252,9 +253,7 @@ def test_default_model_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> Non
     settings = exp.create_run_settings(exe="echo", exe_args="hello")
     model = exp.create_model(name="nerp", run_settings=settings)
     exp.start(model)
-    mani_path = (
-        pathlib.Path(test_dir) / model.name
-    )
+    mani_path = pathlib.Path(test_dir) / model.name
     err_file = os.path.join(mani_path, f"{model.name}.err")
     out_file = os.path.join(mani_path, f"{model.name}.out")
     assert mani_path.exists()
@@ -268,14 +267,10 @@ def test_default_ensemble_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> 
     settings = exp.create_run_settings(exe="echo", exe_args="hello")
     ensemble = exp.create_ensemble(name="nerp", run_settings=settings, replicas=2)
     exp.start(ensemble)
-    mani_path = (
-        pathlib.Path(test_dir) / ensemble.name
-    )
+    mani_path = pathlib.Path(test_dir) / ensemble.name
     assert mani_path.exists()
     for model in ensemble.models:
-        nurm_path = (
-            pathlib.Path(test_dir) / ensemble.name / model.name
-        )
+        nurm_path = pathlib.Path(test_dir) / ensemble.name / model.name
         err_file = os.path.join(nurm_path, f"{model.name}.err")
         out_file = os.path.join(nurm_path, f"{model.name}.out")
         assert nurm_path.exists()
