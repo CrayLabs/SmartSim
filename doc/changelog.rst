@@ -38,6 +38,7 @@ Detailed Notes
 - The default path for an entity is now the path to the experiment / the
   entity name. (SmartSim-PR533_)
 - Promote devices to a dedicated Enum type throughout the SmartSim code base.
+  (SmartSim-PR498_)
 - Update the telemetry monitor to enable retrieval of metrics on a scheduled
   interval. Switch basic experiment tracking telemetry to default to on. Add
   database metric collectors. Improve telemetry monitor logging. Create
