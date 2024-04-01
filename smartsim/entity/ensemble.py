@@ -30,6 +30,7 @@ from os import getcwd
 
 from tabulate import tabulate
 
+from .._core._install.builder import Device
 from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
@@ -356,7 +357,7 @@ class Ensemble(EntityList[Model]):
         backend: str,
         model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -440,7 +441,7 @@ class Ensemble(EntityList[Model]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -500,7 +501,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
