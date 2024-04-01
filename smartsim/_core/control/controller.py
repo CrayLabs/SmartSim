@@ -359,13 +359,13 @@ class Controller:
         :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
         """
         historical_out, historical_err = job_step.get_output_files()
-        entity_out = osp.join(entity.path, f"{entity.name}.out")
-        entity_err = osp.join(entity.path, f"{entity.name}.err")
+        entity_out = pathlib.Path(entity.path, f"{entity.name}.out")
+        entity_err = pathlib.Path(entity.path, f"{entity.name}.err")
 
         # check if there is already a link to a previous run
-        if osp.islink(entity_out) or osp.islink(entity_err):
-            os.unlink(entity_out)
-            os.unlink(entity_err)
+        if entity_out.is_symlink() or entity_err.is_symlink():
+            entity_out.unlink()
+            entity_err.unlink()
 
         try:
             os.symlink(historical_out, entity_out)
