@@ -60,6 +60,12 @@ def test_model_prefix(test_dir: str) -> None:
     assert model._key_prefixing_enabled == True
 
 
+def test_model_no_name():
+    exp = Experiment("test_model_no_name")
+    with pytest.raises(AttributeError):
+        _ = exp.create_model(name=None, run_settings=RunSettings("python"))
+
+
 def test_bad_exp_path() -> None:
     with pytest.raises(NotADirectoryError):
         exp = Experiment("test", "not-a-directory")

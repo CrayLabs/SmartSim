@@ -603,6 +603,8 @@ class Experiment:
         :return: the created ``Model``
         :rtype: Model
         """
+        if name is None:
+            raise AttributeError("Entity has no name. Please set name attribute.")
         path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
             path = osp.join(self.exp_path, name)
