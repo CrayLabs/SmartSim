@@ -441,6 +441,7 @@ class Experiment:
         run_settings: t.Optional[base.RunSettings] = None,
         replicas: t.Optional[int] = None,
         perm_strategy: str = "all_perm",
+        path: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> Ensemble:
         """Create an ``Ensemble`` of ``Model`` instances
@@ -492,10 +493,14 @@ class Experiment:
         :return: ``Ensemble`` instance
         :rtype: Ensemble
         """
+        path = init_default(osp.join(self.exp_path, name), path, str)
+        if path is None:
+            path = osp.join(self.exp_path, name)
         try:
             new_ensemble = Ensemble(
                 name,
                 params or {},
+                path=path,
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -753,6 +758,7 @@ class Experiment:
     def create_database(
         self,
         port: int = 6379,
+        path: t.Optional[str] = None,
         db_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
@@ -816,9 +822,12 @@ class Experiment:
         """
 
         self.append_to_db_identifier_list(db_identifier)
-
+        path = init_default(osp.join(self.exp_path, db_identifier), path, str)
+        if path is None:
+            path = osp.join(self.exp_path, db_identifier)
         return Orchestrator(
             port=port,
+            path=path,
             db_nodes=db_nodes,
             batch=batch,
             hosts=hosts,
@@ -928,29 +937,22 @@ class Experiment:
 
     def _create_dir_and_set_path(self, start_manifest: Manifest) -> None:
         def create_dir_and_set_path(
-            entity: t.Union[Orchestrator, Model, Ensemble], entity_path: str
+            entity: t.Union[Orchestrator, Model, Ensemble]
         ) -> None:
-            if not os.path.isdir(entity_path):
-                os.makedirs(entity_path)
-                entity.set_path(entity_path)
+            if not os.path.isdir(entity.path):
+                os.makedirs(entity.path)
 
         for model in start_manifest.models:
-            create_dir_and_set_path(model, model.path)
+            create_dir_and_set_path(model)
 
         for orch in start_manifest.dbs:
-            orch_path = osp.join(self.exp_path, orch.name)
-            create_dir_and_set_path(orch, orch_path)
+            create_dir_and_set_path(orch)
 
         for ensemble in start_manifest.ensembles:
-            ensemble_path = osp.join(self.exp_path, ensemble.name)
-            create_dir_and_set_path(ensemble, ensemble_path)
+            create_dir_and_set_path(ensemble)
 
             for member in ensemble.models:
-                # if member.path is None:
-                member_path = osp.join(self.exp_path, ensemble.name, member.name)
-                # else:
-                #     member_path = member.path
-                create_dir_and_set_path(member, member_path)
+                create_dir_and_set_path(member)
 
     def __str__(self) -> str:
         return self.name

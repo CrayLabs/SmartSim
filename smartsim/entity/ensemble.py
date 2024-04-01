@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os.path as osp
 import typing as t
 from copy import deepcopy
 from os import getcwd
@@ -62,6 +63,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         params: t.Dict[str, t.Any],
+        path: t.Optional[str] = None,
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
@@ -96,13 +98,15 @@ class Ensemble(EntityList[Model]):
         :return: ``Ensemble`` instance
         :rtype: ``Ensemble``
         """
+        if path is None:
+            path = getcwd()
         self.params = init_default({}, params, dict)
         self.params_as_args = init_default({}, params_as_args, (list, str))
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
 
-        super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
+        super().__init__(name, path, perm_strat=perm_strat, **kwargs)
 
     @property
     def models(self) -> t.Collection[Model]:
@@ -139,7 +143,7 @@ class Ensemble(EntityList[Model]):
                     model = Model(
                         model_name,
                         param_set,
-                        self.path,
+                        osp.join(self.path, model_name),
                         run_settings=run_settings,
                         params_as_args=self.params_as_args,
                     )
@@ -163,7 +167,7 @@ class Ensemble(EntityList[Model]):
                         model = Model(
                             model_name,
                             {},
-                            self.path,
+                            osp.join(self.path, model_name),
                             run_settings=deepcopy(self.run_settings),
                         )
                         model.enable_key_prefixing()
