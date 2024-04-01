@@ -232,6 +232,8 @@ def test_error_on_cobalt() -> None:
 
 
 def test_default_orch_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+    """Ensure the default file structure is created for Orchestrator"""
+
     exp_name = "default-orch-path"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     db = exp.create_database(
@@ -239,40 +241,65 @@ def test_default_orch_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> None
     )
     exp.start(db)
     exp.stop(db)
-    mani_path = pathlib.Path(test_dir) / db.name
-    err_file = os.path.join(mani_path, f"{db.name}_0.err")
-    out_file = os.path.join(mani_path, f"{db.name}_0.out")
-    assert mani_path.exists()
+    orch_path = pathlib.Path(test_dir) / db.name
+    err_file = os.path.join(orch_path, f"{db.name}_0.err")
+    out_file = os.path.join(orch_path, f"{db.name}_0.out")
+    assert orch_path.exists()
     assert os.path.isfile(err_file)
     assert os.path.isfile(out_file)
+    assert db.path == str(orch_path)
 
 
-def test_default_model_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+def test_default_model_path(test_dir: str) -> None:
+    """Ensure the default file structure is created for Model"""
+
     exp_name = "default-model-path"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     settings = exp.create_run_settings(exe="echo", exe_args="hello")
     model = exp.create_model(name="nerp", run_settings=settings)
     exp.start(model)
-    mani_path = pathlib.Path(test_dir) / model.name
-    err_file = os.path.join(mani_path, f"{model.name}.err")
-    out_file = os.path.join(mani_path, f"{model.name}.out")
-    assert mani_path.exists()
+    model_path = pathlib.Path(test_dir) / model.name
+    err_file = os.path.join(model_path, f"{model.name}.err")
+    out_file = os.path.join(model_path, f"{model.name}.out")
+    assert model_path.exists()
     assert os.path.isfile(err_file)
     assert os.path.isfile(out_file)
+    assert model.path == str(model_path)
 
 
-def test_default_ensemble_path(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+def test_default_model_with_path(test_dir: str) -> None:
+    """Ensure the default file structure is created for Model"""
+
+    exp_name = "default-model-path"
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
+    settings = exp.create_run_settings(exe="echo", exe_args="hello")
+    model_path = os.path.join(test_dir, "test_folder")
+    model = exp.create_model(name="nerp", run_settings=settings, path=model_path)
+    exp.start(model)
+    err_file = os.path.join(model_path, f"{model.name}.err")
+    out_file = os.path.join(model_path, f"{model.name}.out")
+    assert pathlib.Path(model_path).exists()
+    assert os.path.isfile(err_file)
+    assert os.path.isfile(out_file)
+    assert model.path == model_path
+
+
+def test_default_ensemble_path(test_dir: str) -> None:
+    """Ensure the default file structure is created for Ensemble"""
+
     exp_name = "default-ensemble-path"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     settings = exp.create_run_settings(exe="echo", exe_args="hello")
     ensemble = exp.create_ensemble(name="nerp", run_settings=settings, replicas=2)
     exp.start(ensemble)
-    mani_path = pathlib.Path(test_dir) / ensemble.name
-    assert mani_path.exists()
+    ensemble_path = pathlib.Path(test_dir) / ensemble.name
+    assert ensemble_path.exists()
+    assert ensemble.path == str(ensemble_path)
     for model in ensemble.models:
-        nurm_path = pathlib.Path(test_dir) / ensemble.name / model.name
-        err_file = os.path.join(nurm_path, f"{model.name}.err")
-        out_file = os.path.join(nurm_path, f"{model.name}.out")
-        assert nurm_path.exists()
+        member_path = pathlib.Path(test_dir) / ensemble.name / model.name
+        err_file = os.path.join(member_path, f"{model.name}.err")
+        out_file = os.path.join(member_path, f"{model.name}.out")
+        assert member_path.exists()
         assert os.path.isfile(err_file)
         assert os.path.isfile(out_file)
+        assert model.path == os.path.join(test_dir, ensemble.name, model.name)

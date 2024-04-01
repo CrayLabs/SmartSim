@@ -603,14 +603,11 @@ class Experiment:
         :return: the created ``Model``
         :rtype: Model
         """
-        if name is None:
-            path = init_default(self.exp_path, path, str)
-        else:
-            path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
             path = osp.join(self.exp_path, name)
-        # if not os.path.isdir(path):
-        #     os.makedirs(path)
+        else:
+            path = init_default(osp.join(self.exp_path, name), path, str)
+
         if params is None:
             params = {}
 
@@ -929,24 +926,28 @@ class Experiment:
         logger.info(summary)
 
     def _create_dir_and_set_path(self, start_manifest: Manifest) -> None:
+        def create_dir_and_set_path(entity, entity_path):
+            if not os.path.isdir(entity_path):
+                os.makedirs(entity_path)
+                entity.set_path(entity_path)
+
         for model in start_manifest.models:
-            if not os.path.isdir(model.path):
-                os.makedirs(model.path)
+            create_dir_and_set_path(model, model.path)
+
         for orch in start_manifest.dbs:
             orch_path = osp.join(self.exp_path, orch.name)
-            if not os.path.isdir(orch_path):
-                os.makedirs(orch_path)
-                orch.set_path(orch_path)
+            create_dir_and_set_path(orch, orch_path)
+
         for ensemble in start_manifest.ensembles:
             ensemble_path = osp.join(self.exp_path, ensemble.name)
-            if not os.path.isdir(ensemble_path):
-                os.makedirs(ensemble_path)
-                ensemble.set_path(ensemble_path)
+            create_dir_and_set_path(ensemble, ensemble_path)
+
             for member in ensemble.models:
-                ensemble_member = osp.join(self.exp_path, ensemble.name, member.name)
-                if not os.path.isdir(ensemble_member):
-                    os.makedirs(ensemble_member)
-                    member.set_path(ensemble_member)
+                # if member.path is None:
+                member_path = osp.join(self.exp_path, ensemble.name, member.name)
+                # else:
+                #     member_path = member.path
+                create_dir_and_set_path(member, member_path)
 
     def __str__(self) -> str:
         return self.name
