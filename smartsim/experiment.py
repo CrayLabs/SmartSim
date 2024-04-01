@@ -603,10 +603,9 @@ class Experiment:
         :return: the created ``Model``
         :rtype: Model
         """
+        path = init_default(osp.join(self.exp_path, name), path, str)
         if path is None:
             path = osp.join(self.exp_path, name)
-        else:
-            path = init_default(osp.join(self.exp_path, name), path, str)
 
         if params is None:
             params = {}
@@ -926,7 +925,9 @@ class Experiment:
         logger.info(summary)
 
     def _create_dir_and_set_path(self, start_manifest: Manifest) -> None:
-        def create_dir_and_set_path(entity, entity_path):
+        def create_dir_and_set_path(
+            entity: t.Union[Orchestrator, Model, Ensemble], entity_path: str
+        ) -> None:
             if not os.path.isdir(entity_path):
                 os.makedirs(entity_path)
                 entity.set_path(entity_path)
