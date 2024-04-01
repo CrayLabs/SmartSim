@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import itertools
-import os
 import os.path as osp
 import pathlib
 import pickle
@@ -358,7 +357,7 @@ class Controller:
         :param entity: Entity instance
         :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
         """
-        historical_out, historical_err = job_step.get_output_files()
+        historical_out, historical_err = map(pathlib.Path, job_step.get_output_files())
         entity_out = pathlib.Path(entity.path, f"{entity.name}.out")
         entity_err = pathlib.Path(entity.path, f"{entity.name}.err")
 
@@ -368,8 +367,8 @@ class Controller:
             entity_err.unlink()
 
         try:
-            os.symlink(historical_out, entity_out)
-            os.symlink(historical_err, entity_err)
+            entity_out.symlink_to(historical_out)
+            entity_err.symlink_to(historical_err)
         except FileNotFoundError as fnf:
             raise FileNotFoundError(
                 f"Output files for {entity.name} could not be found. "
