@@ -39,7 +39,9 @@ import typing as t
 from pathlib import Path
 from threading import RLock
 
+import psutil
 import zmq
+import zmq.auth.thread
 
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim.error.errors import SmartSimError
@@ -101,13 +103,16 @@ class DragonLauncher(WLMLauncher):
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another launcher
         self._dragon_head_pid: t.Optional[int] = None
+        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
 
     @property
     def is_connected(self) -> bool:
         return self._dragon_head_socket is not None
 
     def _handshake(self, address: str) -> None:
-        self._dragon_head_socket = self._context.socket(zmq.REQ)
+        self._dragon_head_socket, self._authenticator = dragonSockets.get_secure_socket(
+            self._context, zmq.REQ, False, self._authenticator
+        )
         self._dragon_head_socket.connect(address)
         try:
             dragon_handshake = _assert_schema_type(
@@ -180,7 +185,10 @@ class DragonLauncher(WLMLauncher):
             launcher_socket: t.Optional[zmq.Socket[t.Any]] = None
             if address is not None:
                 self._set_timeout(self._startup_timeout)
-                launcher_socket = self._context.socket(zmq.REP)
+
+                launcher_socket, self._authenticator = dragonSockets.get_secure_socket(
+                    self._context, zmq.REP, True, self._authenticator
+                )
 
                 # find first available port >= 5995
                 port = find_free_port(start=5995)
@@ -255,6 +263,7 @@ class DragonLauncher(WLMLauncher):
                         _dragon_cleanup,
                         server_socket=server_socket,
                         server_process_pid=server_process_pid,
+                        server_authenticator=self._authenticator,
                     )
             else:
                 # TODO parse output file
@@ -467,7 +476,20 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
     return obj
 
 
-def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -> None:
+def _dragon_cleanup(
+    server_socket: zmq.Socket[t.Any],
+    server_process_pid: int,
+    server_authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None,
+) -> None:
+    """Clean up resources used by the launcher.
+    :param server_socket: Socket used to connect to dragon environment
+    :type server_socket: zmq.Socket
+    :param server_process_pid: Process ID of the dragon entrypoint
+    :type server_process_pid: int
+    :param server_authenticator: (optional) Authenticator used to secure sockets
+    :type server_authenticator: Optional[zmq.auth.thread.ThreadAuthenticator]
+    """
+
     try:
         DragonLauncher.send_req_with_socket(server_socket, DragonShutdownRequest())
     except zmq.error.ZMQError as e:
@@ -476,12 +498,27 @@ def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -
         print(f"ZMQ error: {e}", flush=True)
     finally:
         time.sleep(1)
-        try:
+
+    try:
+        if psutil.pid_exists(server_process_pid):
             os.kill(server_process_pid, signal.SIGINT)
             print("Sent SIGINT to dragon server")
-        except ProcessLookupError:
-            # Can't use the logger as I/O file may be closed
-            print("Dragon server is not running.", flush=True)
+    except ProcessLookupError:
+        # Can't use the logger as I/O file may be closed
+        print("Dragon server is not running.", flush=True)
+
+    try:
+        if server_authenticator is not None and server_authenticator.is_alive():
+            server_authenticator.stop()
+    except Exception:
+        print("Authenticator shutdown error")
+
+    try:
+        os.kill(server_process_pid, signal.SIGINT)
+    except ProcessLookupError:
+        print(f"Process {server_process_pid} not found")
+    except Exception:
+        print(f"Process {server_process_pid} shutdown error")
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
