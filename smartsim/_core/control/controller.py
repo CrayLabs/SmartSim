@@ -358,8 +358,8 @@ class Controller:
         :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
         """
         historical_out, historical_err = map(pathlib.Path, job_step.get_output_files())
-        entity_out = pathlib.Path(entity.path, f"{entity.name}.out")
-        entity_err = pathlib.Path(entity.path, f"{entity.name}.err")
+        entity_out = pathlib.Path(entity.path) / f"{entity.name}.out"
+        entity_err = pathlib.Path(entity.path) / f"{entity.name}.err"
 
         # check if there is already a link to a previous run
         if entity_out.is_symlink() or entity_err.is_symlink():
