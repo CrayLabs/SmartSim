@@ -14,4 +14,3 @@ protobuf
 numpy
 sphinx-design
 pypandoc
-typing_extensions==4.6.0
