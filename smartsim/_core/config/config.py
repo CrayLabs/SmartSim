@@ -260,6 +260,17 @@ class Config:
     def dragon_log_filename(self) -> str:
         return "dragon_config.log"
 
+    @property
+    def smartsim_key_path(self) -> str:
+        """Path to a root directory used for persistence of key files. Default
+        value `$HOME/.smartsim/keys`. User-overrideable by setting the environment
+        variable `SMARTSIM_KEY_PATH`.
+
+        :returns: The configured key path.
+        :rtype: str"""
+        default_path = Path.home() / ".smartsim" / "keys"
+        return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
+
 
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:
