@@ -139,7 +139,7 @@ def build_redis_ai(
     torch_dir: t.Union[str, Path, None] = None,
     libtf_dir: t.Union[str, Path, None] = None,
     verbose: bool = False,
-    torch_with_mkl=True,
+    torch_with_mkl: bool = True,
 ) -> None:
     # make sure user isn't trying to do something silly on MacOS
     if build_env.PLATFORM == "darwin" and device == Device.GPU:
