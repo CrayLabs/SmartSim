@@ -864,7 +864,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     def _patch_out_mkl(libtorch_root: Path) -> None:
         _modify_source_files(
             libtorch_root / "share/cmake/Caffe2/public/mkl.cmake",
-            "find_package(MKL QUIET)",
+            r"find_package\(MKL QUIET\)",
             "# find_package(MKL QUIET)",
         )
 

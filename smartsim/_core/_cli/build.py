@@ -501,8 +501,23 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     )
 
     parser.add_argument(
+<<<<<<< HEAD
         "--torch_with_mkl",
         action="store_true",
         default=True,
         help="Build torch with Intel MKL support",
     )
+=======
+        "--torch_with_mkl",
+        dest="torch_with_mkl",
+        action="store_true",
+        help="Build Torch with Intel MKL (if available)"
+    )
+    parser.add_argument(
+        "--no_torch_with_mkl",
+        dest="torch_with_mkl",
+        action="store_false",
+        help="Do not build Torch with Intel MKL"
+    )
+    parser.set_defaults(torch_with_mkl=True)
+>>>>>>> a376eac2c729f5e791a10d1241f822c0a3f2f5a4
