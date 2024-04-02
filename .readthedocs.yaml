@@ -28,6 +28,7 @@ build:
       - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
       - ln -s smartredis/examples ./examples
       - cd smartdashboard; python -m pip install .
+      - pip list
     pre_build:
       - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
 
