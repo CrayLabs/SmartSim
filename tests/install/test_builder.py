@@ -27,8 +27,7 @@
 
 import functools
 import pathlib
-import platform
-import threading
+import textwrap
 import time
 
 import pytest
@@ -370,3 +369,36 @@ def test_valid_platforms():
 )
 def test_git_commands_are_configered_correctly_for_platforms(plat, cmd, expected_cmd):
     assert build.config_git_command(plat, cmd) == expected_cmd
+
+
+def test_modify_source_files(p_test_dir):
+    def make_text_blurb(food):
+        return textwrap.dedent(f"""\
+            My favorite food is {food}
+            {food} is an important part of a healthy breakfast
+            {food} {food} {food} {food}
+            This line should be unchanged!
+            --> {food} <--
+            """)
+
+    original_word = "SPAM"
+    mutated_word = "EGGS"
+
+    source_files = []
+    for i in range(3):
+        source_file = p_test_dir / f"test_{i}"
+        source_file.touch()
+        source_file.write_text(make_text_blurb(original_word))
+        source_files.append(source_file)
+    # Modify a single file
+    build._modify_source_files(source_files[0], original_word, mutated_word)
+    assert source_files[0].read_text() == make_text_blurb(mutated_word)
+    assert source_files[1].read_text() == make_text_blurb(original_word)
+    assert source_files[2].read_text() == make_text_blurb(original_word)
+
+    # Modify multiple files
+    build._modify_source_files(
+        (source_files[1], source_files[2]), original_word, mutated_word
+    )
+    assert source_files[1].read_text() == make_text_blurb(mutated_word)
+    assert source_files[2].read_text() == make_text_blurb(mutated_word)

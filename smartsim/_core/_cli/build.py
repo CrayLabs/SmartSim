@@ -139,6 +139,7 @@ def build_redis_ai(
     torch_dir: t.Union[str, Path, None] = None,
     libtf_dir: t.Union[str, Path, None] = None,
     verbose: bool = False,
+    torch_with_mkl=True,
 ) -> None:
     # make sure user isn't trying to do something silly on MacOS
     if build_env.PLATFORM == "darwin" and device == Device.GPU:
@@ -186,6 +187,7 @@ def build_redis_ai(
         build_tf=use_tf,
         build_onnx=use_onnx,
         verbose=verbose,
+        torch_with_mkl=torch_with_mkl,
     )
 
     if rai_builder.is_built:
@@ -414,6 +416,7 @@ def execute(
                 args.torch_dir,
                 args.libtensorflow_dir,
                 verbose=verbose,
+                torch_with_mkl=args.torch_with_mkl,
             )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
@@ -495,4 +498,11 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=False,
         help="Build KeyDB instead of Redis",
+    )
+
+    parser.add_argument(
+        "--torch_with_mkl",
+        action="store_true",
+        default=True,
+        help="Build torch with Intel MKL support",
     )
