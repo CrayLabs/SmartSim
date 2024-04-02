@@ -28,6 +28,7 @@
 
 import concurrent.futures
 import enum
+import fileinput
 import itertools
 import os
 import platform
@@ -54,7 +55,7 @@ from subprocess import SubprocessError
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 
-
+_PathLike = t.TypeVar("_PathLike", Path, str, bytes)
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 
@@ -410,6 +411,7 @@ class RedisAIBuilder(Builder):
         build_onnx: bool = False,
         jobs: int = 1,
         verbose: bool = False,
+        torch_with_mkl: bool = True,
     ) -> None:
         super().__init__(
             build_env or {},
@@ -427,6 +429,9 @@ class RedisAIBuilder(Builder):
         self._onnx = build_onnx
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
+
+        # extra configuration options
+        self.torch_with_mkl = torch_with_mkl
 
         # Sanity checks
         self._validate_platform()
@@ -517,8 +522,8 @@ class RedisAIBuilder(Builder):
         # DLPack is always required
         fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
         if self.fetch_torch:
-            pt_dep = _choose_pt_variant(os_)
-            fetchable_deps.append(pt_dep(arch, device, "2.0.1"))
+            pt_dep = _choose_pt_variant(os_)(arch, device, "2.0.1", self.torch_with_mkl)
+            fetchable_deps.append(pt_dep)
         if self.fetch_tf:
             fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
         if self.fetch_onnx:
@@ -840,6 +845,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     architecture: Architecture
     device: Device
     version: str
+    torch_with_mkl: bool
 
     @staticmethod
     def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
@@ -854,9 +860,19 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"libtorch@{self.url}"
 
+    @staticmethod
+    def _patch_out_mkl(libtorch_root: Path) -> None:
+        _modify_source_files(
+            libtorch_root / "share/cmake/Caffe2/public/mkl.cmake",
+            r"find_package\(MKL QUIET\)",
+            "# find_package(MKL QUIET)",
+        )
+
     def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         self.extract(target)
         target = Path(target) / "libtorch"
+        if not self.torch_with_mkl:
+            self._patch_out_mkl(target)
         if not target.is_dir():
             raise BuildError("Failed to place RAI dependency: `libtorch`")
         return target
@@ -1051,3 +1067,14 @@ def config_git_command(plat: Platform, cmd: t.Sequence[str]) -> t.List[str]:
             + cmd[where:]
         )
     return cmd
+
+
+def _modify_source_files(
+    files: t.Union[_PathLike, t.Iterable[_PathLike]], regex: str, replacement: str
+) -> None:
+    compiled_regex = re.compile(regex)
+    patcher: t.Callable[[str], str] = lambda line: compiled_regex.sub(replacement, line)
+    with fileinput.input(files=files, encoding="utf-8", inplace=True) as f:
+        for line in f:
+            line = patcher(line)
+            print(line, end="")
