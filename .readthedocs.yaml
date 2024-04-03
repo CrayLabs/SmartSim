@@ -32,8 +32,8 @@ build:
       - pip list
       - pip uninstall typing_extensions -y
       - pip uninstall pydantic -y
-      - pip install typing_extensions==4.8.0 -y
-      - pip install pydantic==1.10.13 -y
+      - pip install typing_extensions==4.8.0
+      - pip install pydantic==1.10.13
       - pip list
       - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
 
