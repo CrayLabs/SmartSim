@@ -55,7 +55,7 @@ from subprocess import SubprocessError
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
 
-_PathLike = t.TypeVar("_PathLike", Path, str, bytes)
+_PathLike = t.Union[Path, str, bytes]
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 
@@ -845,7 +845,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     architecture: Architecture
     device: Device
     version: str
-    torch_with_mkl: bool
+    with_mkl: bool
 
     @staticmethod
     def supported_platforms() -> t.Sequence[t.Tuple[OperatingSystem, Architecture]]:
@@ -871,7 +871,7 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
     def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
         self.extract(target)
         target = Path(target) / "libtorch"
-        if not self.torch_with_mkl:
+        if not self.with_mkl:
             self._patch_out_mkl(target)
         if not target.is_dir():
             raise BuildError("Failed to place RAI dependency: `libtorch`")
@@ -1073,8 +1073,7 @@ def _modify_source_files(
     files: t.Union[_PathLike, t.Iterable[_PathLike]], regex: str, replacement: str
 ) -> None:
     compiled_regex = re.compile(regex)
-    patcher: t.Callable[[str], str] = lambda line: compiled_regex.sub(replacement, line)
     with fileinput.input(files=files, encoding="utf-8", inplace=True) as f:
         for line in f:
-            line = patcher(line)
+            line = compiled_regex.sub(replacement, line)
             print(line, end="")
