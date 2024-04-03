@@ -29,12 +29,6 @@ build:
       - ln -s smartredis/examples ./examples
       - cd smartdashboard; python -m pip install .
     pre_build:
-      - pip list
-      - pip uninstall typing_extensions -y
-      - pip uninstall pydantic -y
-      - pip install typing_extensions==4.8.0
-      - pip install pydantic==1.10.13
-      - pip list
       - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
 
 # Build documentation in the "docs/" directory with Sphinx
