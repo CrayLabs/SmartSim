@@ -57,8 +57,6 @@ extensions = [
     'sphinx.ext.mathjax',
 ]
 
-sphinx_tabs_valid_builders = ['linkcheck']
-
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 
