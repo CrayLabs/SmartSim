@@ -350,7 +350,8 @@ class Controller:
     def symlink_output_files(
         job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> None:
-        """Symlink output files under .smartsim to the entity output files
+        """Create symlinks for entity output files that point to the output files
+        under the .smartsim directory
 
         :param job_step: Job step instance
         :type job_step: Step
