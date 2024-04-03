@@ -46,6 +46,7 @@ class DragonRunRequestView(DragonRequest):
     nodes: PositiveInt = 1
     tasks: PositiveInt = 1
     tasks_per_node: PositiveInt = 1
+    hostlist: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
     output_file: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
     error_file: t.Optional[t.Annotated[str, Field(min_length=1)]] = None
     env: t.Dict[str, t.Optional[str]] = {}

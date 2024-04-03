@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import datetime
 import typing as t
 
 from ..log import get_logger
@@ -75,15 +74,13 @@ class DragonRunSettings(RunSettings):
         self.alloc = alloc
         self.mpmd: t.List[RunSettings] = []
 
-    reserved_run_args = {"chdir", "D"}
-
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
 
         :param nodes: number of nodes to run with
         :type nodes: int
         """
-        self.run_args["nodes"] = int(nodes)
+        self.run_args["nodes"] = nodes
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
@@ -129,7 +126,7 @@ class DragonRunSettings(RunSettings):
         :param num_cpus: number of cpus to use per task
         :type num_cpus: int
         """
-        self.run_args["cpus-per-task"] = int(cpus_per_task)
+        self.run_args["cpus-per-task"] = cpus_per_task
 
     def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
@@ -137,7 +134,7 @@ class DragonRunSettings(RunSettings):
         :param tasks: number of tasks
         :type tasks: int
         """
-        self.run_args["ntasks"] = int(tasks)
+        self.run_args["ntasks"] = tasks
 
     def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks for this job
@@ -145,7 +142,7 @@ class DragonRunSettings(RunSettings):
         :param tasks_per_node: number of tasks per node
         :type tasks_per_node: int
         """
-        self.run_args["ntasks-per-node"] = int(tasks_per_node)
+        self.run_args["tasks-per-node"] = tasks_per_node
 
     def set_memory_per_node(self, memory_per_node: int) -> None:
         """Specify the real memory required per node
@@ -153,7 +150,7 @@ class DragonRunSettings(RunSettings):
         :param memory_per_node: Amount of memory per node in megabytes
         :type memory_per_node: int
         """
-        self.run_args["mem"] = f"{int(memory_per_node)}M"
+        self.run_args["mem"] = f"{memory_per_node}M"
 
     def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
@@ -168,27 +165,6 @@ class DragonRunSettings(RunSettings):
         else:
             self.run_args.pop("verbose", None)
 
-    @staticmethod
-    def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
-        """Convert hours, minutes, and seconds into valid walltime format
-
-        Converts time to format HH:MM:SS
-
-        :param hours: number of hours to run job
-        :type hours: int
-        :param minutes: number of minutes to run job
-        :type minutes: int
-        :param seconds: number of seconds to run job
-        :type seconds: int
-        :returns: Formatted walltime
-        :rtype
-        """
-        delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
-        fmt_str = str(delta)
-        if delta.seconds // 3600 < 10:
-            fmt_str = "0" + fmt_str
-        return fmt_str
-
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
@@ -198,11 +174,3 @@ class DragonRunSettings(RunSettings):
         :type walltime: str
         """
         self.run_args["time"] = str(walltime)
-
-    def format_env_vars(self) -> t.List[str]:
-        """Build bash compatible environment variable string for Slurm
-
-        :returns: the formatted string of environment variables
-        :rtype: list[str]
-        """
-        return [f"{k}={v}" for k, v in self.env_vars.items()]

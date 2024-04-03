@@ -866,6 +866,8 @@ class Orchestrator(EntityList[DBNode]):
         ]
         if cluster:
             cmd.append("+cluster")  # is the shard part of a cluster
+        # TODO eliminate this as soon as output redirection works
+        # for dragon
         if self.launcher == "dragon":
             cmd.append("+redirect_output")
         return cmd

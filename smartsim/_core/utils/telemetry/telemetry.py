@@ -105,6 +105,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "pbs": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
         self._collector_mgr = CollectorManager(timeout_ms)
 

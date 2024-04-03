@@ -30,6 +30,7 @@ import pytest
 
 from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.schemas.dragonRequests import DragonBootstrapRequest
+from smartsim._core.utils.network import IFConfig
 from smartsim.error.errors import LauncherError
 
 # The tests in this file belong to the group_a group
@@ -85,7 +86,7 @@ def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: 
         ctx.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
         ctx.setattr(
             "smartsim._core.launcher.dragon.dragonLauncher.get_best_interface_and_address",
-            lambda: ("faux_interface", "127.0.0.1"),
+            lambda: IFConfig(interface="faux_interface", address="127.0.0.1"),
         )
         ctx.setattr(
             "smartsim._core.launcher.dragon.dragonLauncher.DragonLauncher._handshake",

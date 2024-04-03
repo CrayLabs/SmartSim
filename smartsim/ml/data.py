@@ -114,7 +114,7 @@ class DataInfo:
                 "Could not retrieve data for DataInfo object, the following "
                 "values will be kept."
             )
-            logger.debug(f"Original error from Redis was {e}")
+            logger.error(f"Original error from Redis was {e}")
             logger.warning(str(self))
             return
         self.sample_name = info_ds.get_meta_strings("sample_name")[0]

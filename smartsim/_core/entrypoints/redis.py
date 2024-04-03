@@ -195,7 +195,7 @@ if __name__ == "__main__":
         "+redirect_output",
         action="store_true",
         help=(
-            "Specify if stdout and stder of this script should be redirected. "
+            "Specify if stdout and stderr of this script should be redirected. "
             + "Only needed for dragon launcher."
         ),
     )

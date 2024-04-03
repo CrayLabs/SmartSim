@@ -29,6 +29,7 @@ import typing as t
 from pydantic import BaseModel, Field
 
 import smartsim._core.schemas.utils as _utils
+from smartsim.status import SmartSimStatus
 
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
@@ -50,7 +51,7 @@ class DragonUpdateStatusResponse(DragonResponse):
     # status is a dict: {step_id: (is_alive, returncode)}
     statuses: t.Mapping[
         t.Annotated[str, Field(min_length=1)],
-        t.Tuple[t.Annotated[str, Field(min_length=1)], t.Optional[t.List[int]]],
+        t.Tuple[SmartSimStatus, t.Optional[t.List[int]]],
     ] = {}
 
 
@@ -59,11 +60,13 @@ class DragonStopResponse(DragonResponse): ...
 
 
 @response_registry.register("handshake")
-class DragonHandshakeResponse(DragonResponse): ...
+class DragonHandshakeResponse(DragonResponse):
+    dragon_pid: int
 
 
 @response_registry.register("bootstrap")
-class DragonBootstrapResponse(DragonResponse): ...
+class DragonBootstrapResponse(DragonResponse):
+    dragon_pid: int
 
 
 @response_registry.register("shutdown")

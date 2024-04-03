@@ -29,6 +29,7 @@ import json
 import os
 import signal
 import socket
+import sys
 import textwrap
 import typing as t
 from types import FrameType
@@ -37,12 +38,11 @@ import zmq
 
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
-from smartsim._core.schemas import (
-    DragonBootstrapRequest,
-    DragonBootstrapResponse,
-    DragonShutdownResponse,
-)
+from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
 from smartsim._core.utils.network import get_best_interface_and_address
+from smartsim.log import get_logger
+
+logger = get_logger("Dragon Server")
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
@@ -52,13 +52,11 @@ SHUTDOWN_INITIATED = False
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     if not signo:
-        print("Received signal with no signo")
+        logger.info("Received signal with no signo")
     else:
-        print(f"Received {signo}")
+        logger.info(f"Received {signo}")
     cleanup()
 
-
-context = zmq.Context()
 
 """
 Dragon server entrypoint script
@@ -86,28 +84,52 @@ def print_summary(network_interface: str, ip_address: str) -> None:
         )
 
 
-def run(dragon_head_address: str) -> None:
-    global SHUTDOWN_INITIATED  # pylint: disable=global-statement
-    print(f"Opening socket {dragon_head_address}")
-    dragon_head_socket = context.socket(zmq.REP)
+def run(
+    dragon_head_address: str, dragon_pid: int, zmq_context: zmq.Context[t.Any]
+) -> None:
+    logger.debug(f"Opening socket {dragon_head_address}")
+
+    zmq_context.setsockopt(zmq.SNDTIMEO, value=1000)
+    zmq_context.setsockopt(zmq.RCVTIMEO, value=1000)
+    zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
+    zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
+    dragon_head_socket = zmq_context.socket(zmq.REP)
     dragon_head_socket.bind(dragon_head_address)
-    dragon_backend = DragonBackend()
+    dragon_backend = DragonBackend(pid=dragon_pid)
 
     server = dragonSockets.as_server(dragon_head_socket)
 
-    while not SHUTDOWN_INITIATED:
-        print(f"Listening to {dragon_head_address}")
-        req = server.recv()
-        print(f"Received request: {req}")
+    logger.debug(f"Listening to {dragon_head_address}")
+    while not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+        try:
+            req = server.recv()
+            logger.debug(f"Received {type(req).__name__} {req}")
+        except zmq.Again:
+            # dragon_backend.print_status()
+            dragon_backend.update()
+            continue
+
         resp = dragon_backend.process_request(req)
-        print(f"Sending response {resp}", flush=True)
-        server.send(resp)
-        if isinstance(resp, DragonShutdownResponse):
-            SHUTDOWN_INITIATED = True
+
+        logger.debug(f"Sending {type(resp).__name__} {resp}")
+        try:
+            server.send(resp)
+        except zmq.Again:
+            logger.error("Could not send response back to launcher.")
+
+        dragon_backend.print_status()
+        dragon_backend.update()
+        if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+            logger.debug(f"Listening to {dragon_head_address}")
+        else:
+            logger.info("Shutdown has been requested")
+            break
 
 
-def main(args: argparse.Namespace) -> int:
-    interface, address = get_best_interface_and_address()
+def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
+    if_config = get_best_interface_and_address()
+    interface = if_config.interface
+    address = if_config.address
     if not interface:
         raise ValueError("Net interface could not be determined")
     dragon_head_address = f"tcp://{address}"
@@ -119,7 +141,7 @@ def main(args: argparse.Namespace) -> int:
         else:
             dragon_head_address += ":5555"
 
-        launcher_socket = context.socket(zmq.REQ)
+        launcher_socket = zmq_context.socket(zmq.REQ)
         launcher_socket.connect(args.launching_address)
         client = dragonSockets.as_client(launcher_socket)
 
@@ -130,22 +152,30 @@ def main(args: argparse.Namespace) -> int:
                 "Could not receive connection confirmation from launcher. Aborting."
             )
 
-    print_summary(interface, dragon_head_address)
+        print_summary(interface, dragon_head_address)
+        try:
+            run(
+                dragon_head_address=dragon_head_address,
+                dragon_pid=response.dragon_pid,
+                zmq_context=zmq_context,
+            )
+        except Exception as e:
+            logger.error(f"Dragon server failed with {e}", exc_info=True)
+            return os.EX_SOFTWARE
 
-    run(dragon_head_address=dragon_head_address)
-
-    print("Shutting down! Bye bye!")
+    logger.info("Shutting down! Bye bye!")
     return 0
 
 
 def cleanup() -> None:
     global SHUTDOWN_INITIATED  # pylint: disable=global-statement
-    print("Cleaning up", flush=True)
+    logger.debug("Cleaning up")
     SHUTDOWN_INITIATED = True
 
 
 if __name__ == "__main__":
     os.environ["PYTHONUNBUFFERED"] = "1"
+    logger.info("Dragon server started")
 
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Dragon Head Process"
@@ -167,4 +197,6 @@ if __name__ == "__main__":
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 
-    raise SystemExit(main(args_))
+    context = zmq.Context()
+
+    sys.exit(main(args_, context))

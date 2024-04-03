@@ -31,6 +31,7 @@ import json
 import os
 import pathlib
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -44,6 +45,7 @@ import pytest
 
 import smartsim
 from smartsim import Experiment
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher, _dragon_cleanup
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
@@ -78,6 +80,8 @@ test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
 test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
 test_output_dirs = 0
+mpi_app_exe = None
+built_mpi_app = False
 
 # Fill this at runtime if needed
 test_hostlist = None
@@ -133,6 +137,11 @@ def pytest_sessionstart(
     while not os.path.isdir(test_output_root):
         time.sleep(0.1)
 
+    if CONFIG.dragon_server_path is None:
+        dragon_server_path =  os.path.join(test_output_root, "dragon_server")
+        os.makedirs(dragon_server_path)
+        os.environ["SMARTSIM_DRAGON_SERVER_PATH"] = dragon_server_path
+
     print_test_configuration()
 
 
@@ -160,6 +169,44 @@ def pytest_sessionfinish(
     kill_all_test_spawned_processes()
 
 
+def build_mpi_app() -> t.Optional[pathlib.Path]:
+    global built_mpi_app
+    built_mpi_app = True
+    cc = shutil.which("cc")
+    if cc is None:
+        cc = shutil.which("gcc")
+    if cc is None:
+        return None
+
+    path_to_src =  pathlib.Path(FileUtils().get_test_conf_path("mpi"))
+    path_to_out = pathlib.Path(test_output_root) / "apps" / "mpi_app"
+    os.makedirs(path_to_out.parent, exist_ok=True)
+    cmd = [cc, str(path_to_src / "mpi_hello.c"), "-o", str(path_to_out)]
+    proc = subprocess.Popen(cmd)
+    proc.wait(timeout=1)
+    if proc.returncode == 0:
+        return path_to_out
+    else:
+        return None
+
+@pytest.fixture(scope="session")
+def mpi_app_path() -> t.Optional[pathlib.Path]:
+    """Return path to MPI app if it was built
+
+        return None if it could not or will not be built
+    """
+    if not CONFIG.test_mpi:
+        return None
+
+    # if we already tried to build, return what we have
+    if built_mpi_app:
+        return mpi_app_exe
+
+    # attempt to build, set global
+    mpi_app_exe = build_mpi_app()
+    return mpi_app_exe
+
+
 def kill_all_test_spawned_processes() -> None:
     # in case of test failure, clean up all spawned processes
     pid = os.getpid()
@@ -173,6 +220,7 @@ def kill_all_test_spawned_processes() -> None:
             child.kill()
     except Exception:
         print("Not all processes were killed after test")
+
 
 
 def get_hostlist() -> t.Optional[t.List[str]]:
@@ -721,6 +769,28 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
+
+
+@pytest.fixture(scope="function")
+def global_dragon_teardown() -> None:
+    """Connect to a dragon server started at the path indicated by
+    the environment variable SMARTSIM_DRAGON_SERVER_PATH and
+    force its shutdown to bring down the runtime and allow a subsequent
+    allocation of a new runtime.
+    """
+    if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
+        return
+    exp_path = os.path.join(test_output_root, "dragon_teardown")
+    os.makedirs(exp_path, exist_ok=True)
+    exp: Experiment = Experiment("dragon_shutdown", exp_path=exp_path, launcher=test_launcher)
+    rs = exp.create_run_settings("sleep", ["0.1"])
+    model = exp.create_model("dummy", run_settings=rs)
+    exp.generate(model, overwrite=True)
+    exp.start(model, block=True)
+
+    launcher: DragonLauncher = exp._control._launcher
+    launcher.cleanup()
+    time.sleep(5)
 
 
 @pytest.fixture

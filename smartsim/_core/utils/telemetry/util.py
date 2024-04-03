@@ -68,6 +68,7 @@ def write_event(
     :type detail: str
     :param return_code: (optional) the return code of a completed task
     :type return_code: int|None"""
+
     tgt_path = status_dir / f"{event_type}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -75,7 +76,8 @@ def write_event(
         if task_id:
             task_id = int(task_id)
     except ValueError:
-        logger.exception(f"Unable to parse task_id: {task_id}")
+        if not isinstance(task_id, str):
+            logger.exception(f"Unable to parse task_id: {task_id}")
 
     entity_dict = {
         "timestamp": timestamp,
