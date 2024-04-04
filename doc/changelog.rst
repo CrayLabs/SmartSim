@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Update watchdog dependency
 - Promote device options to an Enum
 - Update telemetry monitor, add telemetry collectors
 - Add method to specify node features for a Slurm job
@@ -34,6 +35,7 @@ Description
 
 Detailed Notes
 
+- Update watchdog dependency from 3.x to 4.x, fix new type issues (SmartSim-PR540_)
 - Promote devices to a dedicated Enum type throughout the SmartSim code base.
 - Update the telemetry monitor to enable retrieval of metrics on a scheduled
   interval. Switch basic experiment tracking telemetry to default to on. Add
@@ -74,6 +76,7 @@ Detailed Notes
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
+.. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
 .. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
