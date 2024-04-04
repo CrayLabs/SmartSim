@@ -148,9 +148,7 @@ class Controller:
     @property
     def orchestrator_active(self) -> bool:
         with JM_LOCK:
-            if len(self._jobs.db_jobs) > 0:
-                return True
-            return False
+            return len(self._jobs.db_jobs) > 0
 
     def poll(
         self, interval: int, verbose: bool, kill_on_interrupt: bool = True
@@ -799,7 +797,7 @@ class Controller:
                 time.sleep(CONFIG.jm_interval)
                 # manually trigger job update if JM not running
                 if not self._jobs.actively_monitoring:
-                    self._jobs.check_jobs()
+                    self._jobs.update_statuses()
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)

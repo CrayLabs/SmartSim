@@ -25,32 +25,28 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
+import textwrap
+import dataclasses
 
 import psutil
 
 from ...status import SmartSimStatus
 
 
+@dataclasses.dataclass
 class StepInfo:
-    def __init__(
-        self,
-        status: SmartSimStatus,
-        launcher_status: str = "",
-        returncode: t.Optional[int] = None,
-        output: t.Optional[str] = None,
-        error: t.Optional[str] = None,
-    ) -> None:
-        self.status = status
-        self.launcher_status = launcher_status
-        self.returncode = returncode
-        self.output = output
-        self.error = error
+    status: SmartSimStatus
+    launcher_status: str = ""
+    returncode: t.Optional[int] = None
+    output: t.Optional[str] = None
+    error: t.Optional[str] = None
 
     def __str__(self) -> str:
-        info_str = f"Status: {self.status.value}"
-        info_str += f" | Launcher Status {self.launcher_status}"
-        info_str += f" | Returncode {str(self.returncode)}"
-        return info_str
+        return (
+            f"Status: {self.status.value} "
+            f"| Launcher Status {self.launcher_status} "
+            f"| Returncode {self.returncode}"
+        )
 
     @property
     def mapping(self) -> t.Dict[str, SmartSimStatus]:

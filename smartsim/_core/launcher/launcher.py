@@ -173,9 +173,6 @@ class WLMLauncher(Launcher):  # cov-wlm
             updates.append(update)
         return updates
 
-    # pylint: disable-next=no-self-use
-    def _get_managed_step_update(
-        self,
-        step_ids: t.List[str],  # pylint: disable=unused-argument
-    ) -> t.List[StepInfo]:  # pragma: no cover
-        return []
+    @abc.abstractmethod
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
+        raise NotImplementedError

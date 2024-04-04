@@ -313,12 +313,7 @@ class Job:
         :returns: A user-readable string of the Job
         :rtype: str
         """
-        if self.jid:
-            job = "{}({}): {}"
-            return job.format(self.ename, self.jid, self.status)
-
-        job = "{}: {}"
-        return job.format(self.ename, self.status)
+        return f"{self.ename}{f'({self.jid})' if self.jid else ''}: {self.status}"
 
 
 class History:

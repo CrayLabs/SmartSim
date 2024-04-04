@@ -100,8 +100,8 @@ class JobManager:
         self.actively_monitoring = True
         while self.actively_monitoring:
             self._thread_sleep()
-            self.check_jobs()  # update all job statuses at once
-            for _, job in self().items():
+            self.update_statuses()  # update all job statuses at once
+            for job in self.get_active_jobs().values():
                 # if the job has errors then output the report
                 # this should only output once
                 if job.returncode is not None and job.status in TERMINAL_STATUSES:
@@ -115,7 +115,7 @@ class JobManager:
                         self.move_to_completed(job)
 
             # if no more jobs left to actively monitor
-            if not self():
+            if not self.get_active_jobs():
                 self.actively_monitoring = False
                 logger.debug("Sleeping, no jobs to monitor")
 
@@ -149,21 +149,13 @@ class JobManager:
             entities = ChainMap(self.db_jobs, self.jobs, self.completed)
             return entities[entity_name]
 
-    def __call__(self) -> t.Dict[str, Job]:
-        """Returns dictionary all jobs for () operator
+    def get_active_jobs(self) -> t.Mapping[str, Job]:
+        """Returns a mapping of entity name to job for all active jobs
 
-        :returns: Dictionary of all jobs
-        :rtype: dictionary
+        :returns: A mapping of entity name to job for all active jobs
+        :rtype: Mapping[str, Job]
         """
-        all_jobs = {**self.jobs, **self.db_jobs}
-        return all_jobs
-
-    def __contains__(self, key: str) -> bool:
-        try:
-            self[key]  # pylint: disable=pointless-statement
-            return True
-        except KeyError:
-            return False
+        return ChainMap(self.db_jobs, self.jobs)
 
     def add_job(
         self,
@@ -203,20 +195,16 @@ class JobManager:
         """
         with self._lock:
             job = self[entity.name]  # locked operation
-            if entity.name in self.completed:
-                if job.status in TERMINAL_STATUSES:
-                    return True
-            return False
+            return entity.name in self.completed and job.status in TERMINAL_STATUSES
 
-    def check_jobs(self) -> None:
-        """Update all jobs in jobmanager
+    def update_statuses(self) -> None:
+        """Trigger a status of all monitored jobs
 
         Update all jobs returncode, status, error and output
         through one call to the launcher.
-
         """
         with self._lock:
-            jobs = self().values()
+            jobs = self.get_active_jobs().values()
             job_name_map = {job.name: job.ename for job in jobs}
 
             # returns (job step name, StepInfo) tuples
@@ -251,11 +239,10 @@ class JobManager:
             if entity.name in self.completed:
                 return self.completed[entity.name].status
 
-            if entity.name in self:
-                job: Job = self[entity.name]  # locked
-                return job.status
-
-            return SmartSimStatus.STATUS_NEVER_STARTED
+            try:
+                return self[entity.name].status
+            except KeyError:
+                return SmartSimStatus.STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
@@ -273,9 +260,7 @@ class JobManager:
         :return: if job should be restarted instead of started
         :rtype: bool
         """
-        if entity_name in self.completed:
-            return True
-        return False
+        return entity_name in self.completed
 
     def restart_job(
         self,
@@ -353,16 +338,16 @@ class JobManager:
         """Custom handler for whenever SIGINT is received"""
         if not signo:
             logger.warning("Received SIGINT with no signal number")
-        if self.actively_monitoring and len(self) > 0:
+        if self.actively_monitoring and len(self.get_active_jobs()) > 0:
             if self.kill_on_interrupt:
-                for _, job in self().items():
+                for job in self.get_active_jobs().values():
                     if job.status not in TERMINAL_STATUSES and self._launcher:
                         self._launcher.stop(job.name)
             else:
                 logger.warning("SmartSim process interrupted before resource cleanup")
                 logger.warning("You may need to manually stop the following:")
 
-                for job_name, job in self().items():
+                for job_name, job in self.get_active_jobs().items():
                     if job.is_task:
                         # this will be the process id
                         logger.warning(f"Task {job_name} with id: {job.jid}")
@@ -380,7 +365,3 @@ class JobManager:
             time.sleep(local_jm_interval)
         else:
             time.sleep(CONFIG.jm_interval)
-
-    def __len__(self) -> int:
-        # number of active jobs
-        return len(self.db_jobs) + len(self.jobs)
