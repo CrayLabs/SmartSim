@@ -35,7 +35,6 @@ import typing as t
 from types import FrameType
 
 import zmq
-import zmq.auth.thread
 
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
@@ -86,10 +85,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
 
 def run(
-    dragon_head_address: str,
-    dragon_pid: int,
-    zmq_context: zmq.Context[t.Any],
-    zmq_authenticator: zmq.auth.thread.ThreadAuthenticator,
+    dragon_head_address: str, dragon_pid: int, zmq_context: zmq.Context[t.Any]
 ) -> None:
     logger.debug(f"Opening socket {dragon_head_address}")
 
@@ -97,10 +93,7 @@ def run(
     zmq_context.setsockopt(zmq.RCVTIMEO, value=1000)
     zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
     zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
-
-    dragon_head_socket, zmq_authenticator = dragonSockets.get_secure_socket(
-        context, zmq.REP, True, zmq_authenticator
-    )
+    dragon_head_socket = zmq_context.socket(zmq.REP)
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
@@ -124,8 +117,8 @@ def run(
         except zmq.Again:
             logger.error("Could not send response back to launcher.")
 
-        dragon_backend.print_status()
         dragon_backend.update()
+        dragon_backend.print_status()
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
         else:
@@ -148,9 +141,7 @@ def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
         else:
             dragon_head_address += ":5555"
 
-        launcher_socket, authenticator = dragonSockets.get_secure_socket(
-            context, zmq.REQ, False
-        )
+        launcher_socket = zmq_context.socket(zmq.REQ)
         launcher_socket.connect(args.launching_address)
         client = dragonSockets.as_client(launcher_socket)
 
@@ -167,14 +158,10 @@ def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
                 dragon_head_address=dragon_head_address,
                 dragon_pid=response.dragon_pid,
                 zmq_context=zmq_context,
-                zmq_authenticator=authenticator,
             )
         except Exception as e:
             logger.error(f"Dragon server failed with {e}", exc_info=True)
             return os.EX_SOFTWARE
-        finally:
-            if authenticator.is_alive():
-                authenticator.stop()
 
     logger.info("Shutting down! Bye bye!")
     return 0

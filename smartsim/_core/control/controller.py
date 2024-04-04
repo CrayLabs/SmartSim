@@ -118,8 +118,6 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        if isinstance(self._launcher, DragonLauncher):
-            self._launcher.connect_to_dragon(exp_path)
 
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)

@@ -113,28 +113,18 @@ def main(args: argparse.Namespace) -> int:
         *build_bind_args(src_addr, *bind_addrs),
     ]
 
-    # Prevent redirection of stdout and stderr
-    with (
-        open(shard_data.name + ".out", "w", encoding="utf-8")
-        if args.redirect_output
-        else sys.stdout
-    ) as sys.stdout, (
-        open(shard_data.name + ".err", "w", encoding="utf-8")
-        if args.redirect_output
-        else sys.stderr
-    ) as sys.stderr:
-        print_summary(cmd, args.ifname, shard_data)
+    print_summary(cmd, args.ifname, shard_data)
 
-        try:
-            process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
-            DBPID = process.pid
+    try:
+        process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        DBPID = process.pid
 
-            for line in iter(process.stdout.readline, b""):
-                print(line.decode("utf-8").rstrip(), flush=True)
-        except Exception as e:
-            cleanup()
-            raise SSInternalError("Database process starter raised an exception") from e
-        return 0
+        for line in iter(process.stdout.readline, b""):
+            print(line.decode("utf-8").rstrip(), flush=True)
+    except Exception as e:
+        cleanup()
+        raise SSInternalError("Database process starter raised an exception") from e
+    return 0
 
 
 def cleanup() -> None:
@@ -191,14 +181,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Specify if this orchestrator shard is part of a cluster",
     )
-    parser.add_argument(
-        "+redirect_output",
-        action="store_true",
-        help=(
-            "Specify if stdout and stderr of this script should be redirected. "
-            + "Only needed for dragon launcher."
-        ),
-    )
+    # parser.add_argument(
+    #     "+redirect_output",
+    #     action="store_true",
+    #     help=(
+    #         "Specify if stdout and stderr of this script should be redirected. "
+    #         + "Only needed for dragon launcher."
+    #     ),
+    # )
     args_ = parser.parse_args()
 
     # make sure to register the cleanup before the start

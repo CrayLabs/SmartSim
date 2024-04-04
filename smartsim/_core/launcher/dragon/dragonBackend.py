@@ -32,13 +32,12 @@ from threading import RLock
 
 # pylint: disable=import-error
 # isort: off
+from dragon.infrastructure.connection import Connection
 from dragon.infrastructure.policy import Policy
-from dragon.native.process import Process, TemplateProcess
+from dragon.native.process import Process, ProcessTemplate, Popen
 from dragon.native.process_group import (
     ProcessGroup,
     DragonProcessGroupError,
-    Error,
-    Running,
 )
 from dragon.native.machine import System, Node
 
@@ -61,8 +60,8 @@ from smartsim._core.schemas import (
 from smartsim._core.utils.helpers import create_short_id_str
 from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
 
-DRG_ERROR_STATUS = str(Error())
-DRG_RUNNING_STATUS = str(Running())
+DRG_ERROR_STATUS = "Error"
+DRG_RUNNING_STATUS = "Running"
 
 
 @dataclass
@@ -76,6 +75,27 @@ class ProcessGroupInfo:
     @property
     def smartsim_info(self) -> t.Tuple[SmartSimStatus, t.Optional[t.List[int]]]:
         return (self.status, self.return_codes)
+
+
+# Thanks to Colin Wahl from HPE HPC Dragon Team
+def redir_worker(io_conn: Connection, file_path: str) -> None:
+    """Read stdout/stderr from the Dragon connection.
+
+    :param io_conn: Dragon connection to stdout or stderr
+    :type io_conn: Connection
+    :param file_path: path to file to write to
+    :type file_path: str
+    """
+    file_to_write = open(file_path, "a")
+    try:
+        while True:
+            output = io_conn.recv()
+            print(output, flush=True, file=file_to_write, end="")
+    except EOFError:
+        pass
+    finally:
+        io_conn.close()
+        file_to_write.close()
 
 
 class DragonBackend:
@@ -159,8 +179,9 @@ class DragonBackend:
 
     def _get_new_id(self) -> str:
         with self._step_id_lock:
+            step_id = create_short_id_str() + "-" + str(self._step_id)
             self._step_id += 1
-            return create_short_id_str() + "-" + str(self._step_id)
+            return step_id
 
     @functools.singledispatchmethod
     # Deliberately suppressing errors so that overloads have the same signature
@@ -202,32 +223,62 @@ class DragonBackend:
                 restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
             )
 
+            policies = []
             for node_name in hosts[: request.nodes]:
                 local_policy = Policy(
                     placement=Policy.Placement.HOST_NAME, host_name=node_name
                 )
-                tmp_proc = TemplateProcess(
+                policies.extend([local_policy] * request.tasks_per_node)
+                tmp_proc = ProcessTemplate(
                     target=request.exe,
                     args=request.exe_args,
                     cwd=request.path,
                     env={**request.current_env, **request.env},
-                    # stdout=Popen.PIPE,
-                    # stderr=Popen.PIPE,
+                    stdout=Popen.PIPE,
+                    stderr=Popen.PIPE,
                     policy=local_policy,
                 )
                 grp.add_process(nproc=request.tasks_per_node, template=tmp_proc)
 
             grp.init()
             grp.start()
+            puids = grp.puids
             self._group_infos[step_id] = ProcessGroupInfo(
                 process_group=grp,
-                puids=grp.puids,
+                puids=puids,
                 return_codes=[],
                 status=SmartSimStatus.STATUS_RUNNING,
                 hosts=hosts,
             )
             self._running_steps.append(step_id)
             started.append(step_id)
+
+            try:
+                grp_redir = ProcessGroup(restart=False, policy=global_policy)
+                for pol, puid in zip(policies, puids):
+                    proc = Process(None, ident=puid)
+                    grp_redir.add_process(
+                        nproc=1,
+                        template=ProcessTemplate(
+                            target=redir_worker,
+                            args=(proc.stdout_conn, request.output_file),
+                            stdout=Popen.DEVNULL,
+                            policy=pol,
+                        ),
+                    )
+                    grp_redir.add_process(
+                        nproc=1,
+                        template=ProcessTemplate(
+                            target=redir_worker,
+                            args=(proc.stderr_conn, request.error_file),
+                            stdout=Popen.DEVNULL,
+                            policy=pol,
+                        ),
+                    )
+                grp_redir.init()
+                grp_redir.start()
+            except Exception as e:
+                raise IOError("Could not redirect output") from e
 
         if started:
             print(f"{self._updates}: {started=}")
@@ -249,7 +300,8 @@ class DragonBackend:
                         group_info.return_codes = [
                             Process(None, ident=puid).returncode for puid in puids
                         ]
-                    except (ValueError, TypeError):
+                    except (ValueError, TypeError) as e:
+                        print(e)
                         group_info.return_codes = [-1 for _ in puids]
                 else:
                     group_info.return_codes = [0]
