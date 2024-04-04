@@ -18,6 +18,8 @@ To be released at some future point in time
 
 Description
 
+- Fix ReadTheDocs build issue
+- Promote device options to an Enum
 - Update telemetry monitor, add telemetry collectors
 - Add method to specify node features for a Slurm job
 - Colo Orchestrator setup now blocks application start until setup finished
@@ -34,6 +36,9 @@ Description
 
 Detailed Notes
 
+- Change type_extension and pydantic versions in readthedocs environment
+  to enable docs build. (SmartSim-PR537_)
+- Promote devices to a dedicated Enum type throughout the SmartSim code base.
 - Update the telemetry monitor to enable retrieval of metrics on a scheduled
   interval. Switch basic experiment tracking telemetry to default to on. Add
   database metric collectors. Improve telemetry monitor logging. Create
@@ -68,6 +73,8 @@ Detailed Notes
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 - The CI will fail static analysis if common erroneous truthy checks are
   detected. (SmartSim-PR524_)
+- The CI will fail static analysis if a local variable used while potentially
+  undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 - When calling ``Experiment.start`` SmartSim would register a signal handler
@@ -76,11 +83,14 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537
+.. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
 .. _SmartSim-PR535: https://github.com/CrayLabs/SmartSim/pull/535
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
+.. _SmartSim-PR521: https://github.com/CrayLabs/SmartSim/pull/521
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
 .. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518
