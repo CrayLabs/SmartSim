@@ -58,7 +58,6 @@ def make_entity_context(exp: Experiment, entity: SmartSimEntity):
 
 def choose_host(wlmutils, index=0):
     hosts = wlmutils.get_test_hostlist()
-    print(f"tehe: {hosts}")
     if hosts:
         return hosts[index]
     else:
@@ -154,7 +153,6 @@ def test_db_identifier_colo_then_standard(
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("colocated_model", colo_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port,
@@ -327,7 +325,6 @@ def test_multidb_colo_once(fileutils, test_dir, wlmutils, coloutils, db_type):
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port + 1,

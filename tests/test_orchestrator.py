@@ -79,7 +79,6 @@ def test_orc_active_functions(test_dir: str, wlmutils: "conftest.WLMUtils") -> N
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
 
     exp.start(db)
 
@@ -113,7 +112,6 @@ def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> No
     net_if_addrs = ["lo", net_if_addrs[0]]
 
     db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
-    db.set_path(test_dir)
 
     exp.start(db)
 
@@ -319,7 +317,6 @@ def test_lsf_set_batch_args(wlmutils: "conftest.WLMUtils") -> None:
 def test_orc_telemetry(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
     """Ensure the default behavior for an orchestrator is to disable telemetry"""
     db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
 
     # default is disabled
     assert not db.telemetry.is_enabled

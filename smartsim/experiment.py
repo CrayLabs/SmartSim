@@ -231,7 +231,7 @@ class Experiment:
         :type kill_on_interrupt: bool, optional
         """
         start_manifest = Manifest(*args)
-        self._create_dir_and_set_path(start_manifest)
+        self._create_entity_dir(start_manifest)
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -935,24 +935,24 @@ class Experiment:
 
         logger.info(summary)
 
-    def _create_dir_and_set_path(self, start_manifest: Manifest) -> None:
-        def create_dir_and_set_path(
+    def _create_entity_dir(self, start_manifest: Manifest) -> None:
+        def create_entity_dir(
             entity: t.Union[Orchestrator, Model, Ensemble]
         ) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 
         for model in start_manifest.models:
-            create_dir_and_set_path(model)
+            create_entity_dir(model)
 
         for orch in start_manifest.dbs:
-            create_dir_and_set_path(orch)
+            create_entity_dir(orch)
 
         for ensemble in start_manifest.ensembles:
-            create_dir_and_set_path(ensemble)
+            create_entity_dir(ensemble)
 
             for member in ensemble.models:
-                create_dir_and_set_path(member)
+                create_entity_dir(member)
 
     def __str__(self) -> str:
         return self.name

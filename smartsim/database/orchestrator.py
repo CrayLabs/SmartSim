@@ -207,7 +207,6 @@ class Orchestrator(EntityList[DBNode]):
         if self.launcher == "lsf":
             gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
-        print(f"identity: {db_identifier}")
         super().__init__(
             name=db_identifier,
             path=path,
