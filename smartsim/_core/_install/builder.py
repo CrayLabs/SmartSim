@@ -1073,7 +1073,7 @@ def _modify_source_files(
     files: t.Union[_PathLike, t.Iterable[_PathLike]], regex: str, replacement: str
 ) -> None:
     compiled_regex = re.compile(regex)
-    with fileinput.input(files=files, encoding="utf-8", inplace=True) as f:
-        for line in f:
+    with fileinput.input(files=files, encoding="utf-8", inplace=True) as handles:
+        for line in handles:
             line = compiled_regex.sub(replacement, line)
             print(line, end="")
