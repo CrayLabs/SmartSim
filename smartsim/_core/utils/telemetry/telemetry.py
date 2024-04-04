@@ -42,6 +42,7 @@ from watchdog.observers.api import BaseObserver
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
@@ -104,6 +105,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "pbs": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
         self._collector_mgr = CollectorManager(timeout_ms)
 
@@ -142,13 +144,20 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
 
-    def set_launcher(self, launcher: str) -> None:
-        """Initialize all required dependencies
+    def set_launcher(
+        self, launcher_type: str, exp_dir: t.Union[str, "os.PathLike[str]"]
+    ) -> None:
+        """Set the launcher for the experiment"""
+        self.init_launcher(launcher_type)
 
-        :param launcher: the name of the workload manager used by the experiment
-        :type launcher: str"""
-        self.init_launcher(launcher)
-        self.init_job_manager()
+        if self._launcher is None:
+            raise SmartSimError("Launcher init failed")
+
+        if isinstance(self._launcher, DragonLauncher):
+            self._launcher.connect_to_dragon(exp_dir)
+
+        self.job_manager.set_launcher(self._launcher)
+        self.job_manager.start()
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
@@ -172,8 +181,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             logger.error("Manifest content error", exc_info=True)
             return
 
+        exp_dir = pathlib.Path(manifest_path).parent.parent.parent
         if self._launcher is None:
-            self.set_launcher(manifest.launcher)
+            self.set_launcher(manifest.launcher, exp_dir)
 
         if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")

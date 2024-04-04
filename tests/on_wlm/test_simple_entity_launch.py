@@ -24,7 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os.path
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -61,6 +63,37 @@ def test_models(fileutils, test_dir, wlmutils):
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+
+
+def test_multinode_app(mpi_app_path, test_dir, wlmutils):
+
+    if not mpi_app_path:
+        pytest.skip("Test needs MPI to run")
+
+    exp_name = "test-mpi-app"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+
+    settings = exp.create_run_settings(str(mpi_app_path), [])
+    settings.set_nodes(3)
+
+    model = exp.create_model("mpi_app", run_settings=settings)
+    exp.generate(model)
+
+    exp.start(model, block=True)
+
+    p = Path(model.path)
+    output_files = sorted([str(path) for path in p.glob("*")])
+    expected_files = sorted(
+        [os.path.join(model.path, f"mpi_hello.{idx}.log") for idx in range(3)]
+    )
+
+    assert output_files == expected_files
+
+    for index, file in enumerate(output_files):
+        with open(file) as f:
+            assert f.readlines() == [
+                f"Hello world from rank {index} out of 3 processors\n"
+            ]
 
 
 def test_ensemble(fileutils, test_dir, wlmutils):

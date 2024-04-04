@@ -142,7 +142,7 @@ def proxyable_launch_cmd(
 
         if self.managed:
             raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)}"
+                f"Attempting to proxy managed step of type {type(self)} "
                 "through the unmanaged step proxy entry point"
             )
 

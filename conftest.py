@@ -31,8 +31,10 @@ import json
 import os
 import pathlib
 import shutil
+import subprocess
 import sys
 import tempfile
+import time
 import typing as t
 import uuid
 import warnings
@@ -43,14 +45,17 @@ import pytest
 
 import smartsim
 from smartsim import Experiment
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher, _dragon_cleanup
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SSConfigError
+from smartsim.log import get_logger
 from smartsim.settings import (
     AprunSettings,
+    DragonRunSettings,
     JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
@@ -58,6 +63,8 @@ from smartsim.settings import (
     RunSettings,
     SrunSettings,
 )
+
+logger = get_logger(__name__)
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
 
@@ -72,6 +79,9 @@ test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
 test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
+test_output_dirs = 0
+mpi_app_exe = None
+built_mpi_app = False
 
 # Fill this at runtime if needed
 test_hostlist = None
@@ -107,7 +117,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals"]
+    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals", "dragon"]
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
@@ -124,6 +134,14 @@ def pytest_sessionstart(
     if os.path.isdir(test_output_root):
         shutil.rmtree(test_output_root)
     os.makedirs(test_output_root)
+    while not os.path.isdir(test_output_root):
+        time.sleep(0.1)
+
+    if CONFIG.dragon_server_path is None:
+        dragon_server_path =  os.path.join(test_output_root, "dragon_server")
+        os.makedirs(dragon_server_path)
+        os.environ["SMARTSIM_DRAGON_SERVER_PATH"] = dragon_server_path
+
     print_test_configuration()
 
 
@@ -135,10 +153,58 @@ def pytest_sessionfinish(
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_output_root)
+        cleanup_attempts = 5
+        while cleanup_attempts > 0:
+            try:
+                shutil.rmtree(test_output_root)
+            except OSError as e:
+                cleanup_attempts -= 1
+                time.sleep(1)
+                if not cleanup_attempts:
+                    raise
+            else:
+                break
+
+    # kill all spawned processes
+    kill_all_test_spawned_processes()
+
+
+def build_mpi_app() -> t.Optional[pathlib.Path]:
+    global built_mpi_app
+    built_mpi_app = True
+    cc = shutil.which("cc")
+    if cc is None:
+        cc = shutil.which("gcc")
+    if cc is None:
+        return None
+
+    path_to_src =  pathlib.Path(FileUtils().get_test_conf_path("mpi"))
+    path_to_out = pathlib.Path(test_output_root) / "apps" / "mpi_app"
+    os.makedirs(path_to_out.parent, exist_ok=True)
+    cmd = [cc, str(path_to_src / "mpi_hello.c"), "-o", str(path_to_out)]
+    proc = subprocess.Popen(cmd)
+    proc.wait(timeout=1)
+    if proc.returncode == 0:
+        return path_to_out
     else:
-        # kill all spawned processes in case of error
-        kill_all_test_spawned_processes()
+        return None
+
+@pytest.fixture(scope="session")
+def mpi_app_path() -> t.Optional[pathlib.Path]:
+    """Return path to MPI app if it was built
+
+        return None if it could not or will not be built
+    """
+    if not CONFIG.test_mpi:
+        return None
+
+    # if we already tried to build, return what we have
+    if built_mpi_app:
+        return mpi_app_exe
+
+    # attempt to build, set global
+    mpi_app_exe = build_mpi_app()
+    return mpi_app_exe
 
 
 def kill_all_test_spawned_processes() -> None:
@@ -154,6 +220,7 @@ def kill_all_test_spawned_processes() -> None:
             child.kill()
     except Exception:
         print("Not all processes were killed after test")
+
 
 
 def get_hostlist() -> t.Optional[t.List[str]]:
@@ -252,6 +319,11 @@ class WLMUtils:
             run_args.update(kwargs)
             settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
             return settings
+        if test_launcher == "dragon":
+            run_args = {"nodes": nodes}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="", run_args=run_args)
+            return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
                 run_command = "aprun"
@@ -293,6 +365,11 @@ class WLMUtils:
             run_args = {"nodes": nodes, "ntasks": ntasks, "time": "00:10:00"}
             run_args.update(kwargs)
             return SrunSettings(exe, args, run_args=run_args)
+        if test_launcher == "dragon":
+            run_args = {"nodes": nodes}
+            run_args.update(kwargs)
+            settings = DragonRunSettings(exe, args, run_args=run_args)
+            return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
                 run_args = {"pes": ntasks}
@@ -344,6 +421,14 @@ class WLMUtils:
                 hosts=hostlist,
             )
         if test_launcher == "slurm":
+            return Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                interface=test_nic,
+                launcher=test_launcher,
+            )
+        if test_launcher == "dragon":
             return Orchestrator(
                 db_nodes=nodes,
                 port=test_port,
@@ -441,6 +526,14 @@ def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
             monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("SSKEYIN", raising=False)
     monkeypatch.delenv("SSKEYOUT", raising=False)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def check_output_dir() -> None:
+    global test_output_dirs
+    assert os.path.isdir(test_output_root)
+    assert len(os.listdir(test_output_root)) >= test_output_dirs
+    test_output_dirs = len(os.listdir(test_output_root))
 
 
 @pytest.fixture
@@ -676,6 +769,28 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
+
+
+@pytest.fixture(scope="function")
+def global_dragon_teardown() -> None:
+    """Connect to a dragon server started at the path indicated by
+    the environment variable SMARTSIM_DRAGON_SERVER_PATH and
+    force its shutdown to bring down the runtime and allow a subsequent
+    allocation of a new runtime.
+    """
+    if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
+        return
+    exp_path = os.path.join(test_output_root, "dragon_teardown")
+    os.makedirs(exp_path, exist_ok=True)
+    exp: Experiment = Experiment("dragon_shutdown", exp_path=exp_path, launcher=test_launcher)
+    rs = exp.create_run_settings("sleep", ["0.1"])
+    model = exp.create_model("dummy", run_settings=rs)
+    exp.generate(model, overwrite=True)
+    exp.start(model, block=True)
+
+    launcher: DragonLauncher = exp._control._launcher
+    launcher.cleanup()
+    time.sleep(5)
 
 
 @pytest.fixture

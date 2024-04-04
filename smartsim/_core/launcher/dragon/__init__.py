@@ -1,4 +1,3 @@
-#
 # BSD 2-Clause License
 #
 # Copyright (c) 2021-2024, Hewlett Packard Enterprise
@@ -24,26 +23,3 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-
-name: enforce_changelog
-
-# on:
-#   pull_request:
-#   push:
-#     branches:
-#       - develop
-
-jobs:
-  changelog:
-    name: check_changelog
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Changelog Enforcer
-        uses: dangoslen/changelog-enforcer@v3.6.0
-        with:
-          changeLogPath: "./doc/changelog.rst"
-          missingUpdateErrorMessage: "changelog.rst has not been updated"

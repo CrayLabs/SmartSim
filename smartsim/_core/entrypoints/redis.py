@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import signal
+import sys
 import textwrap
 import typing as t
 from subprocess import PIPE, STDOUT
@@ -111,18 +112,29 @@ def main(args: argparse.Namespace) -> int:
         *build_cluster_args(shard_data),
         *build_bind_args(src_addr, *bind_addrs),
     ]
-    print_summary(cmd, args.ifname, shard_data)
 
-    try:
-        process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
-        DBPID = process.pid
+    # Prevent redirection of stdout and stderr
+    with (
+        open(shard_data.name + ".out", "w", encoding="utf-8")
+        if args.redirect_output
+        else sys.stdout
+    ) as sys.stdout, (
+        open(shard_data.name + ".err", "w", encoding="utf-8")
+        if args.redirect_output
+        else sys.stderr
+    ) as sys.stderr:
+        print_summary(cmd, args.ifname, shard_data)
 
-        for line in iter(process.stdout.readline, b""):
-            print(line.decode("utf-8").rstrip(), flush=True)
-    except Exception as e:
-        cleanup()
-        raise SSInternalError("Database process starter raised an exception") from e
-    return 0
+        try:
+            process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
+            DBPID = process.pid
+
+            for line in iter(process.stdout.readline, b""):
+                print(line.decode("utf-8").rstrip(), flush=True)
+        except Exception as e:
+            cleanup()
+            raise SSInternalError("Database process starter raised an exception") from e
+        return 0
 
 
 def cleanup() -> None:
@@ -178,6 +190,14 @@ if __name__ == "__main__":
         "+cluster",
         action="store_true",
         help="Specify if this orchestrator shard is part of a cluster",
+    )
+    parser.add_argument(
+        "+redirect_output",
+        action="store_true",
+        help=(
+            "Specify if stdout and stderr of this script should be redirected. "
+            + "Only needed for dragon launcher."
+        ),
     )
     args_ = parser.parse_args()
 

@@ -161,13 +161,15 @@ class Experiment:
             exp_path = osp.abspath(exp_path)
         self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
 
-        if launcher == "auto":
-            launcher = detect_launcher()
-        if launcher == "cobalt":
+        self._launcher = launcher.lower()
+
+        if self._launcher == "auto":
+            self._launcher = detect_launcher()
+        if self._launcher == "cobalt":
             raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
-        self._control = Controller(launcher=launcher)
-        self._launcher = launcher.lower()
+        self._control = Controller(launcher=self._launcher)
+
         self.db_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
 

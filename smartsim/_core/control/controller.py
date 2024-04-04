@@ -63,7 +63,13 @@ from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
-from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import (
+    DragonLauncher,
+    LocalLauncher,
+    LSFLauncher,
+    PBSLauncher,
+    SlurmLauncher,
+)
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
 from .job import Job
@@ -112,6 +118,9 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
+        if isinstance(self._launcher, DragonLauncher):
+            self._launcher.connect_to_dragon(exp_path)
+
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
@@ -333,6 +342,7 @@ class Controller:
             "pals": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
 
         if launcher is not None:
@@ -871,7 +881,6 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
-
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,

@@ -169,6 +169,8 @@ deps = [
     "filelock>=3.4.2",
     "protobuf~=3.20",
     "watchdog>=3.0.0,<4.0.0",
+    "pydantic==1.10.14",
+    "pyzmq>=25.1.2",
 ]
 
 # Add SmartRedis at specific version

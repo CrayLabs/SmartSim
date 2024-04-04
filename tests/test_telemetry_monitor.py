@@ -72,8 +72,7 @@ requires_wlm = pytest.mark.skipif(
     pytest.test_launcher == "local", reason="Test requires WLM"
 )
 
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -888,6 +887,18 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
         try:
             exp.start(orc)
 
+            # TODO: This sleep is necessary as there is race condition between
+            #       SmartSim and the TM when launching and adding a managed
+            #       task into their respective JMs for tracking. Essentially,
+            #       the TM does not have enough time register file listeners
+            #       before the manifest is updated with the start of
+            #       `smartsim_model` when launching through a Launcher that
+            #       does devolve into a simple system call from the driver
+            #       script process (e.g. the dragon launcher)
+            # FIXME: THIS NEEDS TO BE REMOVED AND THIS TEST NEEDS TO PASS
+            #        CONSISTENTLY BEFORE WE CAN SHIP A DRAGON LAUNCHER.
+            time.sleep(1)
+
             # create run settings
             app_settings = exp.create_run_settings(sys.executable, test_script)
             app_settings.set_nodes(1)
@@ -1138,7 +1149,7 @@ def test_unmanaged_steps_are_proxyed_through_indirect(
 
 
 @for_all_wlm_launchers
-def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
+def test_unmanaged_steps_are_not_proxyed_if_the_telemetry_monitor_is_disabled(
     wlm_launcher, mock_step_meta_dict, test_dir, monkeypatch
 ):
     monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, False)
@@ -1295,7 +1306,7 @@ async def test_wlm_completion_handling(
         ctx.setattr(SlurmLauncher, "get_step_update", get_faux_update(status_in))
 
         mani_handler = ManifestEventHandler("xyz", logger)
-        mani_handler.set_launcher("slurm")
+        mani_handler.set_launcher("slurm", test_dir)
 
         # prep a fake job to request updates for
         job_entity = JobEntity()
