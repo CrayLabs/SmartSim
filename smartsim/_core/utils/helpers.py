@@ -31,6 +31,7 @@ import base64
 import collections.abc
 import os
 import signal
+import sys
 import typing as t
 import uuid
 from datetime import datetime
@@ -312,8 +313,16 @@ def decode_cmd(encoded_cmd: str) -> t.List[str]:
     return cleaned_cmd
 
 
+# TODO: Remove this hack when Python 3.8 support is dropped
+#       ``collections.abc.Collection`` is not subscriptable until Python 3.9
+if sys.version_info < (3, 9):
+    _SignalHandlerFnCollection = collections.abc.Collection
+else:
+    _SignalHandlerFnCollection = collections.abc.Collection[_TSignalHandlerFn]
+
+
 @t.final
-class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
+class SignalInterceptionStack(_SignalHandlerFnCollection):
     """Registers a stack of unique callables to be called when a signal is
     received before calling the original signal handler.
     """
