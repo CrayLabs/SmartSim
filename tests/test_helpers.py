@@ -95,29 +95,33 @@ def mock_signal(monkeypatch):
 
 def test_signal_intercept_stack_will_register_itself_with_callback_fn(mock_signal):
     callback = lambda num, frame: ...
-    stack = helpers.SignalInterceptionStack.push(signal.NSIG, callback)
+    stack = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack.push(callback)
     assert isinstance(stack, helpers.SignalInterceptionStack)
     assert stack is mock_signal.signal_handlers[signal.NSIG]
-    assert len(stack._callbacks) == 1
-    assert stack._callbacks[0] == callback
+    assert len(stack) == 1
+    assert list(stack)[0] == callback
 
 
 def test_signal_intercept_stack_keeps_track_of_previous_handlers(mock_signal):
     default_handler = lambda num, frame: ...
     mock_signal.signal_handlers[signal.NSIG] = default_handler
-    stack = helpers.SignalInterceptionStack.push(signal.NSIG, lambda n, f: ...)
+    stack = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack.push(lambda n, f: ...)
     assert stack._original is default_handler
 
 
 def test_signal_intercept_stacks_are_registered_per_signal_number(mock_signal):
     handler = lambda num, frame: ...
-    stack_1 = helpers.SignalInterceptionStack.push(signal.NSIG, handler)
-    stack_2 = helpers.SignalInterceptionStack.push(signal.NSIG + 1, handler)
+    stack_1 = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack_1.push(handler)
+    stack_2 = helpers.SignalInterceptionStack.get(signal.NSIG + 1)
+    stack_2.push(handler)
 
     assert mock_signal.signal_handlers[signal.NSIG] is stack_1
     assert mock_signal.signal_handlers[signal.NSIG + 1] is stack_2
     assert stack_1 is not stack_2
-    assert stack_1._callbacks == stack_2._callbacks == [handler]
+    assert list(stack_1) == list(stack_2) == [handler]
 
 
 def test_signal_intercept_handlers_will_not_overwrite_if_handler_already_exists(
@@ -125,27 +129,47 @@ def test_signal_intercept_handlers_will_not_overwrite_if_handler_already_exists(
 ):
     handler_1 = lambda num, frame: ...
     handler_2 = lambda num, frame: ...
-    stack_1 = helpers.SignalInterceptionStack.push(signal.NSIG, handler_1)
-    stack_2 = helpers.SignalInterceptionStack.push(signal.NSIG, handler_2)
+    stack_1 = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack_1.push(handler_1)
+    stack_2 = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack_2.push(handler_2)
     assert stack_1 is stack_2 is mock_signal.signal_handlers[signal.NSIG]
-    assert list(stack_1._callbacks) == [handler_1, handler_2]
+    assert list(stack_1) == [handler_2, handler_1]
 
 
-def test_signal_intercept_stack_enforces_that_handlers_are_unique(mock_signal):
+def test_signal_intercept_stack_can_add_multiple_instances_of_the_same_handler(
+    mock_signal,
+):
     handler = lambda num, frame: ...
-    stack = helpers.SignalInterceptionStack.push(signal.NSIG, handler)
-    helpers.SignalInterceptionStack.push(signal.NSIG, handler)
-    assert list(stack._callbacks) == [handler]
+    stack = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack.push(handler)
+    stack.push(handler)
+    assert list(stack) == [handler, handler]
 
 
-def test_singnal_intercept_stack_enforces_that_method_handlers_are_unique(mock_signal):
+def test_signal_intercept_stack_enforces_that_unique_push_handlers_are_unique(
+    mock_signal,
+):
+    handler = lambda num, frame: ...
+    stack = helpers.SignalInterceptionStack.get(signal.NSIG)
+    assert stack.push_unique(handler)
+    assert not helpers.SignalInterceptionStack.get(signal.NSIG).push_unique(handler)
+    assert list(stack) == [handler]
+
+
+def test_signal_intercept_stack_enforces_that_unique_push_method_handlers_are_unique(
+    mock_signal,
+):
     class C:
         def fn(num, frame): ...
 
-    c = C()
-    stack = helpers.SignalInterceptionStack.push(signal.NSIG, c.fn)
-    helpers.SignalInterceptionStack.push(signal.NSIG, c.fn)
-    assert list(stack._callbacks) == [c.fn]
+    c1 = C()
+    c2 = C()
+    stack = helpers.SignalInterceptionStack.get(signal.NSIG)
+    stack.push_unique(c1.fn)
+    assert helpers.SignalInterceptionStack.get(signal.NSIG).push_unique(c2.fn)
+    assert not helpers.SignalInterceptionStack.get(signal.NSIG).push_unique(c1.fn)
+    assert list(stack) == [c2.fn, c1.fn]
 
 
 def test_signal_handler_calls_functions_in_reverse_order(mock_signal):
@@ -155,7 +179,7 @@ def test_signal_handler_calls_functions_in_reverse_order(mock_signal):
     handler_2 = lambda num, frame: called_list.append("handler_2")
 
     mock_signal.signal_handlers[signal.NSIG] = default
-    helpers.SignalInterceptionStack.push(signal.NSIG, handler_1)
-    helpers.SignalInterceptionStack.push(signal.NSIG, handler_2)
+    helpers.SignalInterceptionStack.get(signal.NSIG).push(handler_1)
+    helpers.SignalInterceptionStack.get(signal.NSIG).push(handler_2)
     mock_signal.signal_handlers[signal.NSIG](signal.NSIG, None)
     assert called_list == ["handler_2", "handler_1", "default"]
