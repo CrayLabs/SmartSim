@@ -253,13 +253,13 @@ def test_PTArchiveMacOSX_url():
     pt_version = RAI_VERSIONS.torch
 
     pt_linux_cpu = build._PTArchiveLinux(
-        build.Architecture.X64, build.Device.CPU, pt_version
+        build.Architecture.X64, build.Device.CPU, pt_version, False
     )
     x64_prefix = "https://download.pytorch.org/libtorch/"
     assert x64_prefix in pt_linux_cpu.url
 
     pt_macosx_cpu = build._PTArchiveMacOSX(
-        build.Architecture.ARM64, build.Device.CPU, pt_version
+        build.Architecture.ARM64, build.Device.CPU, pt_version, False
     )
     arm64_prefix = "https://github.com/CrayLabs/ml_lib_builder/releases/download/"
     assert arm64_prefix in pt_macosx_cpu.url
@@ -268,7 +268,7 @@ def test_PTArchiveMacOSX_url():
 def test_PTArchiveMacOSX_gpu_error():
     with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
         build._PTArchiveMacOSX(
-            build.Architecture.ARM64, build.Device.GPU, RAI_VERSIONS.torch
+            build.Architecture.ARM64, build.Device.GPU, RAI_VERSIONS.torch, False
         ).url
 
 
