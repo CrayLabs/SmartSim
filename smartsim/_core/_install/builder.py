@@ -54,8 +54,7 @@ from subprocess import SubprocessError
 # TODO: check cmake version and use system if possible to avoid conflicts
 
 TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
-
-_PathLike = t.Union[Path, str, bytes]
+_PathLike = t.Union[str, "os.PathLike[str]"]
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 
@@ -370,7 +369,7 @@ class _RAIBuildDependency(ABC):
     def __rai_dependency_name__(self) -> str: ...
 
     @abstractmethod
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path: ...
+    def __place_for_rai__(self, target: _PathLike) -> Path: ...
 
     @staticmethod
     @abstractmethod
@@ -378,7 +377,7 @@ class _RAIBuildDependency(ABC):
 
 
 def _place_rai_dep_at(
-    target: t.Union[str, "os.PathLike[str]"], verbose: bool
+    target: _PathLike, verbose: bool
 ) -> t.Callable[[_RAIBuildDependency], Path]:
     def _place(dep: _RAIBuildDependency) -> Path:
         if verbose:
@@ -760,7 +759,7 @@ class _WebLocation(ABC):
 class _WebGitRepository(_WebLocation):
     def clone(
         self,
-        target: t.Union[str, "os.PathLike[str]"],
+        target: _PathLike,
         depth: t.Optional[int] = None,
         branch: t.Optional[str] = None,
     ) -> None:
@@ -790,7 +789,7 @@ class _DLPackRepository(_WebGitRepository, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"dlpack@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+    def __place_for_rai__(self, target: _PathLike) -> Path:
         target = Path(target) / "dlpack"
         self.clone(target, branch=self.version, depth=1)
         if not target.is_dir():
@@ -804,7 +803,7 @@ class _WebArchive(_WebLocation):
         _, name = self.url.rsplit("/", 1)
         return name
 
-    def download(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+    def download(self, target: _PathLike) -> Path:
         target = Path(target)
         if target.is_dir():
             target = target / self.name
@@ -814,28 +813,22 @@ class _WebArchive(_WebLocation):
 
 class _ExtractableWebArchive(_WebArchive, ABC):
     @abstractmethod
-    def _extract_download(
-        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
-    ) -> None: ...
+    def _extract_download(self, download_path: Path, target: _PathLike) -> None: ...
 
-    def extract(self, target: t.Union[str, "os.PathLike[str]"]) -> None:
+    def extract(self, target: _PathLike) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             arch_path = self.download(tmp_dir)
             self._extract_download(arch_path, target)
 
 
 class _WebTGZ(_ExtractableWebArchive):
-    def _extract_download(
-        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
-    ) -> None:
+    def _extract_download(self, download_path: Path, target: _PathLike) -> None:
         with tarfile.open(download_path, "r") as tgz_file:
             tgz_file.extractall(target)
 
 
 class _WebZip(_ExtractableWebArchive):
-    def _extract_download(
-        self, download_path: Path, target: t.Union[str, "os.PathLike[str]"]
-    ) -> None:
+    def _extract_download(self, download_path: Path, target: _PathLike) -> None:
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
 
@@ -868,11 +861,14 @@ class _PTArchive(_WebZip, _RAIBuildDependency):
             "# find_package(MKL QUIET)",
         )
 
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+    def extract(self, target: _PathLike) -> None:
+        super().extract(target)
+        if not self.with_mkl:
+            self._patch_out_mkl(Path(target))
+
+    def __place_for_rai__(self, target: _PathLike) -> Path:
         self.extract(target)
         target = Path(target) / "libtorch"
-        if not self.with_mkl:
-            self._patch_out_mkl(target)
         if not target.is_dir():
             raise BuildError("Failed to place RAI dependency: `libtorch`")
         return target
@@ -980,7 +976,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"libtensorflow@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+    def __place_for_rai__(self, target: _PathLike) -> Path:
         target = Path(target) / "libtensorflow"
         target.mkdir()
         self.extract(target)
@@ -1026,7 +1022,7 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
     def __rai_dependency_name__(self) -> str:
         return f"onnxruntime@{self.url}"
 
-    def __place_for_rai__(self, target: t.Union[str, "os.PathLike[str]"]) -> Path:
+    def __place_for_rai__(self, target: _PathLike) -> Path:
         target = Path(target).resolve() / "onnxruntime"
         self.extract(target)
         try:

@@ -506,4 +506,3 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_false",
         help="Do not build Torch with Intel MKL",
     )
-    parser.set_defaults(torch_with_mkl=True)
