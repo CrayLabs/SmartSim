@@ -63,7 +63,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         params: t.Dict[str, t.Any],
-        path: t.Optional[str] = None,
+        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
@@ -98,15 +98,13 @@ class Ensemble(EntityList[Model]):
         :return: ``Ensemble`` instance
         :rtype: ``Ensemble``
         """
-        if path is None:
-            path = getcwd()
         self.params = init_default({}, params, dict)
         self.params_as_args = init_default({}, params_as_args, (list, str))
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
 
-        super().__init__(name, path, perm_strat=perm_strat, **kwargs)
+        super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
 
     @property
     def models(self) -> t.Collection[Model]:
@@ -141,9 +139,9 @@ class Ensemble(EntityList[Model]):
                     run_settings = deepcopy(self.run_settings)
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
-                        model_name,
-                        param_set,
-                        osp.join(self.path, model_name),
+                        name=model_name,
+                        params=param_set,
+                        path=osp.join(self.path, model_name),
                         run_settings=run_settings,
                         params_as_args=self.params_as_args,
                     )
@@ -165,9 +163,9 @@ class Ensemble(EntityList[Model]):
                     for i in range(replicas):
                         model_name = "_".join((self.name, str(i)))
                         model = Model(
-                            model_name,
-                            {},
-                            osp.join(self.path, model_name),
+                            name=model_name,
+                            params={},
+                            path=osp.join(self.path, model_name),
                             run_settings=deepcopy(self.run_settings),
                         )
                         model.enable_key_prefixing()

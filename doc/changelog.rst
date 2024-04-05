@@ -19,6 +19,8 @@ To be released at some future point in time
 Description
 
 - Change default path for entities
+- Add option to build Torch backend without the Intel Math Kernel Library
+- Fix ReadTheDocs build issue
 - Promote device options to an Enum
 - Update telemetry monitor, add telemetry collectors
 - Add method to specify node features for a Slurm job
@@ -32,11 +34,19 @@ Description
 - Fix publishing of development docs
 - Update Experiment API typing
 - Minor enhancements to test suite
+- Improve SmartSim experiment signal handlers
 
 Detailed Notes
 
 - The default path for an entity is now the path to the experiment / the
   entity name. (SmartSim-PR533_)
+- Add an option to smart build "--torch_with_mkl"/"--no_torch_with_mkl" to
+  prevent Torch from trying to link in the Intel Math Kernel Library. This
+  is needed because on machines that have the Intel compilers installed, the
+  Torch will unconditionally try to link in this library, however fails
+  because the linking flags are incorrect. (SmartSim-PR538_)
+- Change type_extension and pydantic versions in readthedocs environment
+  to enable docs build. (SmartSim-PR537_)
 - Promote devices to a dedicated Enum type throughout the SmartSim code base.
   (SmartSim-PR498_)
 - Update the telemetry monitor to enable retrieval of metrics on a scheduled
@@ -77,11 +87,19 @@ Detailed Notes
   undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
+- When calling ``Experiment.start`` SmartSim would register a signal handler
+  that would capture an interrupt signal (^C) to kill any jobs launched through
+  its ``JobManager``. This would replace the default (or user defined) signal
+  handler. SmartSim will now attempt to kill any launched jobs before calling
+  the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
+.. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
+.. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537
 .. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
 .. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
+.. _SmartSim-PR535: https://github.com/CrayLabs/SmartSim/pull/535
 .. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
 .. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
 .. _SmartSim-PR521: https://github.com/CrayLabs/SmartSim/pull/521

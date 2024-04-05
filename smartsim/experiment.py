@@ -493,14 +493,16 @@ class Experiment:
         :return: ``Ensemble`` instance
         :rtype: Ensemble
         """
-        path = init_default(osp.join(self.exp_path, name), path, str)
-        if path is None:
-            path = osp.join(self.exp_path, name)
+        if name is None:
+            raise AttributeError("Entity has no name. Please set name attribute.")
+        check_path = init_default(osp.join(self.exp_path, name), path, str)
+        entity_path: str = osp.abspath(check_path)
+        
         try:
             new_ensemble = Ensemble(
-                name,
-                params or {},
-                path=path,
+                name=name,
+                params=params or {},
+                path=entity_path,
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -610,16 +612,14 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        path = init_default(osp.join(self.exp_path, name), path, str)
-        if path is None:
-            path = osp.join(self.exp_path, name)
-
+        check_path = init_default(osp.join(self.exp_path, name), path, str)
+        entity_path: str = osp.abspath(check_path)
         if params is None:
             params = {}
 
         try:
             new_model = Model(
-                name, params, path, run_settings, batch_settings=batch_settings
+                name=name, params=params, path=entity_path, run_settings=run_settings, batch_settings=batch_settings
             )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
@@ -822,12 +822,11 @@ class Experiment:
         """
 
         self.append_to_db_identifier_list(db_identifier)
-        path = init_default(osp.join(self.exp_path, db_identifier), path, str)
-        if path is None:
-            path = osp.join(self.exp_path, db_identifier)
+        check_path = init_default(osp.join(self.exp_path, db_identifier), path, str)
+        entity_path: str = osp.abspath(check_path)
         return Orchestrator(
             port=port,
-            path=path,
+            path=entity_path,
             db_nodes=db_nodes,
             batch=batch,
             hosts=hosts,

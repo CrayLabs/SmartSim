@@ -147,7 +147,7 @@ class Orchestrator(EntityList[DBNode]):
 
     def __init__(
         self,
-        path: t.Optional[str] = None,
+        path: t.Optional[str] = getcwd(),
         port: int = 6379,
         interface: t.Union[str, t.List[str]] = "lo",
         launcher: str = "local",
@@ -184,8 +184,6 @@ class Orchestrator(EntityList[DBNode]):
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int, optional
         """
-        if path is None:
-            path = getcwd()
         self.launcher, self.run_command = _autodetect(launcher, run_command)
         _check_run_command(self.launcher, self.run_command)
         _check_local_constraints(self.launcher, batch)
@@ -209,7 +207,7 @@ class Orchestrator(EntityList[DBNode]):
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
         super().__init__(
             name=db_identifier,
-            path=path,
+            path=str(path),
             port=port,
             interface=interface,
             db_nodes=db_nodes,
