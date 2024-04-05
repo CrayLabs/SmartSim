@@ -54,6 +54,7 @@ def test_hosts(test_dir, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir)
 
     orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
+    orc.set_path(test_dir)
     exp.start(orc)
 
     hosts = []

@@ -66,6 +66,7 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
     test_device = mlutils.get_test_device()
 
     db = wlmutils.get_orchestrator(nodes=1)
+    db.set_path(test_dir)
     exp.start(db)
 
     run_settings = exp.create_run_settings(

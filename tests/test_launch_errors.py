@@ -67,7 +67,9 @@ def test_orchestrator_relaunch(test_dir, wlmutils):
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     orc = Orchestrator(port=wlmutils.get_test_port(), db_identifier="orch_1")
+    orc.set_path(test_dir)
     orc_1 = Orchestrator(port=wlmutils.get_test_port() + 1, db_identifier="orch_2")
+    orc_1.set_path(test_dir)
     try:
         exp.start(orc)
         exp.start(orc_1)
