@@ -45,7 +45,7 @@ import pytest
 
 import smartsim
 from smartsim import Experiment
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher, _dragon_cleanup
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity

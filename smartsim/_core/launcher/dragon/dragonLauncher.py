@@ -29,11 +29,15 @@ from __future__ import annotations
 import os
 import typing as t
 
-from smartsim._core.launcher.dragon.dragonConnector import DragonConnector, _SchemaT
-
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import DragonRunSettings, RunSettings, SettingsBase
+from ....settings import (
+    DragonRunSettings,
+    QsubBatchSettings,
+    RunSettings,
+    SbatchSettings,
+    SettingsBase,
+)
 from ....status import SmartSimStatus
 from ...schemas import (
     DragonRunRequest,
@@ -44,8 +48,10 @@ from ...schemas import (
     DragonUpdateStatusResponse,
 )
 from ..launcher import WLMLauncher
-from ..step import DragonStep, LocalStep, Step
+from ..slurm.slurmLauncher import SlurmLauncher
+from ..step import DragonBatchStep, DragonStep, LocalStep, Step
 from ..stepInfo import StepInfo
+from .dragonConnector import DragonConnector, _SchemaT
 
 logger = get_logger(__name__)
 
@@ -64,6 +70,7 @@ class DragonLauncher(WLMLauncher):
     def __init__(self) -> None:
         super().__init__()
         self._connector = DragonConnector()
+        self._slurm_launcher = SlurmLauncher()
 
     @property
     def is_connected(self) -> bool:
@@ -76,7 +83,12 @@ class DragonLauncher(WLMLauncher):
     @property
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
-        return {DragonRunSettings: DragonStep, RunSettings: LocalStep}
+        return {
+            DragonRunSettings: DragonStep,
+            SbatchSettings: DragonBatchStep,
+            QsubBatchSettings: DragonBatchStep,
+            RunSettings: LocalStep,
+        }
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
@@ -97,7 +109,23 @@ class DragonLauncher(WLMLauncher):
         cmd = step.get_launch_cmd()
         out, err = step.get_output_files()
 
-        if isinstance(step, DragonStep):
+        if isinstance(step, DragonBatchStep) and isinstance(
+            step.batch_settings, SbatchSettings
+        ):
+            # wait for batch step to submit successfully
+            logger.warning(f"{cmd}, {step.cwd}")
+            return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
+            if return_code != 0:
+                raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
+            if out:
+                slurm_step_id = out.strip()
+                logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
+
+                self._slurm_launcher.step_mapping.add(
+                    step.name, slurm_step_id, task_id, step.managed
+                )
+                step_id = "SLURM-" + slurm_step_id
+        elif isinstance(step, DragonStep):
             run_args = step.run_settings.run_args
             env = step.run_settings.env_vars
             nodes = int(run_args.get("nodes", None) or 1)
@@ -142,10 +170,12 @@ class DragonLauncher(WLMLauncher):
         :rtype: StepInfo
         """
 
-        self._connector.ensure_connected()
-
         stepmap = self.step_mapping[step_name]
         step_id = str(stepmap.step_id)
+
+        if step_id.startswith("SLURM-"):
+            return self._slurm_launcher.stop(step_name.split("-", maxsplit=1)[1])
+
         _assert_schema_type(
             self._connector.send_request(DragonStopRequest(step_id=step_id)),
             DragonStopResponse,
@@ -169,37 +199,62 @@ class DragonLauncher(WLMLauncher):
         :rtype: list[StepInfo]
         """
 
-        response = _assert_schema_type(
-            self._connector.send_request(DragonUpdateStatusRequest(step_ids=step_ids)),
-            DragonUpdateStatusResponse,
-        )
+        step_id_updates: dict[str, StepInfo] = {}
 
-        # create StepInfo objects to return
-        updates: t.List[StepInfo] = []
-        # Order matters as we return an ordered list of StepInfo objects
+        dragon_step_ids = []
+        slurm_step_ids = []
         for step_id in step_ids:
-            if step_id not in response.statuses:
-                msg = "Missing step id update from Dragon launcher."
-                if response.error_message is not None:
-                    msg += "\nDragon backend reported following error: "
-                    msg += response.error_message
-                raise LauncherError(msg)
-
-            status, ret_codes = response.statuses[step_id]
-            if ret_codes:
-                grp_ret_code = min(ret_codes)
-                if any(ret_codes):
-                    _err_msg = (
-                        f"One or more processes failed for job {step_id}"
-                        f"Return codes were: {ret_codes}"
-                    )
-                    logger.error(_err_msg)
+            if step_id.startswith("SLURM-"):
+                print(step_id.split("-", maxsplit=1)[1])
+                slurm_step_ids.append(step_id)
             else:
-                grp_ret_code = None
-            info = StepInfo(status, str(status), grp_ret_code)
+                dragon_step_ids.append(step_id)
 
-            updates.append(info)
-        return updates
+        if slurm_step_ids:
+            # pylint: disable-next=protected-access
+            slurm_updates = self._slurm_launcher._get_managed_step_update(
+                [step_id.split("-", maxsplit=1)[1] for step_id in slurm_step_ids]
+            )
+            step_id_updates.update(dict(zip(slurm_step_ids, slurm_updates)))
+
+        if dragon_step_ids:
+            response = _assert_schema_type(
+                self._connector.send_request(
+                    DragonUpdateStatusRequest(step_ids=dragon_step_ids)
+                ),
+                DragonUpdateStatusResponse,
+            )
+
+            for step_id in step_ids:
+                if step_id not in response.statuses:
+                    msg = "Missing step id update from Dragon launcher."
+                    if response.error_message is not None:
+                        msg += "\nDragon backend reported following error: "
+                        msg += response.error_message
+                    logger.error(msg)
+                    info = StepInfo(
+                        SmartSimStatus.STATUS_FAILED,
+                        str(SmartSimStatus.STATUS_FAILED),
+                        -1,
+                    )
+                else:
+                    status, ret_codes = response.statuses[step_id]
+                    if ret_codes:
+                        grp_ret_code = min(ret_codes)
+                        if any(ret_codes):
+                            _err_msg = (
+                                f"One or more processes failed for job {step_id}"
+                                f"Return codes were: {ret_codes}"
+                            )
+                            logger.error(_err_msg)
+                    else:
+                        grp_ret_code = None
+                    info = StepInfo(status, str(status), grp_ret_code)
+
+                step_id_updates[step_id] = info
+
+        # Order matters as we return an ordered list of StepInfo objects
+        return [step_id_updates[step_id] for step_id in step_ids]
 
     def __str__(self) -> str:
         return "Dragon"

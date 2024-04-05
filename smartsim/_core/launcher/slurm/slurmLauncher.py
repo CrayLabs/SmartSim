@@ -138,6 +138,7 @@ class SlurmLauncher(WLMLauncher):
         # Launch a batch step with Slurm
         if isinstance(step, SbatchStep):
             # wait for batch step to submit successfully
+            print(cmd_list, step.cwd)
             return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if return_code != 0:
                 raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")

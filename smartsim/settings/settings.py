@@ -86,8 +86,10 @@ def create_batch_settings(
         "lsf": BsubBatchSettings,
     }
 
-    if launcher == "auto":
+    if launcher in ["auto", "dragon"]:
         launcher = detect_launcher()
+        if launcher == "dragon":
+            by_launcher["dragon"] = by_launcher["launcher"]
 
     if launcher == "local":
         raise SmartSimError("Local launcher does not support batch workloads")
