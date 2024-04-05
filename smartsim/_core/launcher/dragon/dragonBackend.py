@@ -86,16 +86,15 @@ def redir_worker(io_conn: Connection, file_path: str) -> None:
     :param file_path: path to file to write to
     :type file_path: str
     """
-    file_to_write = open(file_path, "a")
     try:
-        while True:
-            output = io_conn.recv()
-            print(output, flush=True, file=file_to_write, end="")
+        with open(file_path, "a", encoding="utf-8") as file_to_write:
+            while True:
+                output = io_conn.recv()
+                print(output, flush=True, file=file_to_write, end="")
     except EOFError:
         pass
     finally:
         io_conn.close()
-        file_to_write.close()
 
 
 class DragonBackend:
@@ -206,8 +205,41 @@ class DragonBackend:
         )
         return DragonRunResponse(step_id=step_id)
 
-    def update(self) -> None:
-        self._updates += 1
+    @staticmethod
+    def _start_redirect_workers(
+        global_policy: Policy,
+        policies: t.List[Policy],
+        puids: t.List[int],
+        out_file: t.Optional[str],
+        err_file: t.Optional[str],
+    ) -> None:
+        grp_redir = ProcessGroup(restart=False, policy=global_policy)
+        for pol, puid in zip(policies, puids):
+            proc = Process(None, ident=puid)
+            if out_file:
+                grp_redir.add_process(
+                    nproc=1,
+                    template=ProcessTemplate(
+                        target=redir_worker,
+                        args=(proc.stdout_conn, out_file),
+                        stdout=Popen.DEVNULL,
+                        policy=pol,
+                    ),
+                )
+            if err_file:
+                grp_redir.add_process(
+                    nproc=1,
+                    template=ProcessTemplate(
+                        target=redir_worker,
+                        args=(proc.stderr_conn, err_file),
+                        stdout=Popen.DEVNULL,
+                        policy=pol,
+                    ),
+                )
+        grp_redir.init()
+        grp_redir.start()
+
+    def _start_steps(self) -> None:
         started = []
         for step_id, request in self._queued_steps.items():
             hosts = self._allocate_step(step_id, self._queued_steps[step_id])
@@ -254,29 +286,13 @@ class DragonBackend:
             started.append(step_id)
 
             try:
-                grp_redir = ProcessGroup(restart=False, policy=global_policy)
-                for pol, puid in zip(policies, puids):
-                    proc = Process(None, ident=puid)
-                    grp_redir.add_process(
-                        nproc=1,
-                        template=ProcessTemplate(
-                            target=redir_worker,
-                            args=(proc.stdout_conn, request.output_file),
-                            stdout=Popen.DEVNULL,
-                            policy=pol,
-                        ),
-                    )
-                    grp_redir.add_process(
-                        nproc=1,
-                        template=ProcessTemplate(
-                            target=redir_worker,
-                            args=(proc.stderr_conn, request.error_file),
-                            stdout=Popen.DEVNULL,
-                            policy=pol,
-                        ),
-                    )
-                grp_redir.init()
-                grp_redir.start()
+                DragonBackend._start_redirect_workers(
+                    global_policy,
+                    policies,
+                    puids,
+                    request.output_file,
+                    request.error_file,
+                )
             except Exception as e:
                 raise IOError("Could not redirect output") from e
 
@@ -286,30 +302,36 @@ class DragonBackend:
         for step_id in started:
             self._queued_steps.pop(step_id)
 
+    def _refresh_statuses(self) -> None:
         terminated = []
         for step_id in self._running_steps:
             group_info = self._group_infos[step_id]
             grp = group_info.process_group
 
-            if grp.status == DRG_RUNNING_STATUS:
-                group_info.status = SmartSimStatus.STATUS_RUNNING
+            if grp is None:
+                group_info.status = SmartSimStatus.STATUS_FAILED
+                group_info.return_codes = [-1]
             else:
-                puids = group_info.puids
-                if puids is not None and all(puid is not None for puid in puids):
-                    try:
-                        group_info.return_codes = [
-                            Process(None, ident=puid).returncode for puid in puids
-                        ]
-                    except (ValueError, TypeError) as e:
-                        print(e)
-                        group_info.return_codes = [-1 for _ in puids]
+                if grp.status == DRG_RUNNING_STATUS:
+                    group_info.status = SmartSimStatus.STATUS_RUNNING
                 else:
-                    group_info.return_codes = [0]
-                group_info.status = (
-                    SmartSimStatus.STATUS_FAILED
-                    if any(group_info.return_codes) or grp.status == DRG_ERROR_STATUS
-                    else SmartSimStatus.STATUS_COMPLETED
-                )
+                    puids = group_info.puids
+                    if puids is not None and all(puid is not None for puid in puids):
+                        try:
+                            group_info.return_codes = [
+                                Process(None, ident=puid).returncode for puid in puids
+                            ]
+                        except (ValueError, TypeError) as e:
+                            print(e)
+                            group_info.return_codes = [-1 for _ in puids]
+                    else:
+                        group_info.return_codes = [0]
+                    group_info.status = (
+                        SmartSimStatus.STATUS_FAILED
+                        if any(group_info.return_codes)
+                        or grp.status == DRG_ERROR_STATUS
+                        else SmartSimStatus.STATUS_COMPLETED
+                    )
 
             if group_info.status in TERMINAL_STATUSES:
                 terminated.append(step_id)
@@ -326,6 +348,12 @@ class DragonBackend:
                         print(f"{self._updates}: Releasing host {host}", flush=True)
                         self._allocated_hosts.pop(host)
                         self._free_hosts.append(host)
+
+    def update(self) -> None:
+        self._updates += 1
+
+        self._start_steps()
+        self._refresh_statuses()
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:

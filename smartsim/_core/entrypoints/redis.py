@@ -28,7 +28,6 @@ import argparse
 import json
 import os
 import signal
-import sys
 import textwrap
 import typing as t
 from subprocess import PIPE, STDOUT
