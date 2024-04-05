@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Add option to build Torch backend without the Intel Math Kernel Library
 - Fix ReadTheDocs build issue
 - Promote device options to an Enum
 - Update telemetry monitor, add telemetry collectors
@@ -35,6 +36,11 @@ Description
 
 Detailed Notes
 
+- Add an option to smart build "--torch_with_mkl"/"--no_torch_with_mkl" to
+  prevent Torch from trying to link in the Intel Math Kernel Library. This
+  is needed because on machines that have the Intel compilers installed, the
+  Torch will unconditionally try to link in this library, however fails
+  because the linking flags are incorrect. (SmartSim-PR538_)
 - Change type_extension and pydantic versions in readthedocs environment
   to enable docs build. (SmartSim-PR537_)
 - Promote devices to a dedicated Enum type throughout the SmartSim code base.
@@ -77,6 +83,7 @@ Detailed Notes
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
 
+.. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
 .. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537
 .. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
 .. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
