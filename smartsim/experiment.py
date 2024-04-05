@@ -497,7 +497,7 @@ class Experiment:
             raise AttributeError("Entity has no name. Please set name attribute.")
         check_path = init_default(osp.join(self.exp_path, name), path, str)
         entity_path: str = osp.abspath(check_path)
-        
+
         try:
             new_ensemble = Ensemble(
                 name=name,
@@ -619,7 +619,11 @@ class Experiment:
 
         try:
             new_model = Model(
-                name=name, params=params, path=entity_path, run_settings=run_settings, batch_settings=batch_settings
+                name=name,
+                params=params,
+                path=entity_path,
+                run_settings=run_settings,
+                batch_settings=batch_settings,
             )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
@@ -935,9 +939,7 @@ class Experiment:
         logger.info(summary)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(
-            entity: t.Union[Orchestrator, Model, Ensemble]
-        ) -> None:
+        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 

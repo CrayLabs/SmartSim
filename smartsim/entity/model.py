@@ -31,8 +31,8 @@ import re
 import sys
 import typing as t
 import warnings
-from os import path as osp
 from os import getcwd
+from os import path as osp
 
 from .._core._install.builder import Device
 from .._core.utils.helpers import cat_arg_and_value, init_default
