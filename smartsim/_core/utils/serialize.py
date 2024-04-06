@@ -36,6 +36,7 @@ import smartsim.log
 
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
+    from smartsim._core.types import StepID, TaskID
     from smartsim.database.orchestrator import Orchestrator
     from smartsim.entity import DBNode, Ensemble, Model
     from smartsim.entity.dbobject import DBModel, DBScript
@@ -43,7 +44,7 @@ if t.TYPE_CHECKING:
 
 
 TStepLaunchMetaData = t.Tuple[
-    t.Optional[str], t.Optional[str], t.Optional[bool], str, str, Path
+    t.Optional["StepID"], t.Optional["TaskID"], t.Optional[bool], str, str, Path
 ]
 
 MANIFEST_FILENAME: t.Final[str] = "manifest.json"
@@ -97,8 +98,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
 
 def _dictify_model(
     model: Model,
-    step_id: t.Optional[str],
-    task_id: t.Optional[str],
+    step_id: t.Optional["StepID"],
+    task_id: t.Optional["TaskID"],
     managed: t.Optional[bool],
     out_file: str,
     err_file: str,

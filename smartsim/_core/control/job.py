@@ -29,7 +29,9 @@ import time
 import typing as t
 from dataclasses import dataclass
 
+from ..._core import types as _core_types
 from ...entity import EntitySequence, SmartSimEntity
+from ...entity import types as _entity_types
 from ...status import SmartSimStatus
 
 
@@ -39,9 +41,9 @@ class _JobKey:
     monitor. These keys are not guaranteed to be unique across experiments,
     only within an experiment (due to process ID re-use by the OS)"""
 
-    step_id: str
+    step_id: _core_types.StepID
     """The process id of an unmanaged task"""
-    task_id: str
+    task_id: _core_types.TaskID
     """The task id of a managed task"""
 
 
@@ -52,15 +54,15 @@ class JobEntity:
     """
 
     def __init__(self) -> None:
-        self.name: str = ""
+        self.name = _entity_types.EntityName("")
         """The entity name"""
         self.path: str = ""
         """The root path for entity output files"""
-        self.step_id: str = ""
+        self.step_id = _core_types.StepID("")
         """The process id of an unmanaged task"""
-        self.task_id: str = ""
+        self.task_id = _core_types.TaskID("")
         """The task id of a managed task"""
-        self.type: str = ""
+        self.type: t.Literal[_core_types.TTelmonEntityTypeStr, ""] = ""
         """The type of the associated `SmartSimEntity`"""
         self.timestamp: int = 0
         """The timestamp when the entity was created"""
@@ -133,7 +135,7 @@ class JobEntity:
 
     @staticmethod
     def _map_standard_metadata(
-        entity_type: str,
+        entity_type: _core_types.TTelmonEntityTypeStr,
         entity_dict: t.Dict[str, t.Any],
         entity: "JobEntity",
         exp_dir: str,
@@ -154,15 +156,18 @@ class JobEntity:
         # all entities contain shared properties that identify the task
         entity.type = entity_type
         entity.name = entity_dict["name"]
-        entity.step_id = str(metadata.get("step_id") or "")
-        entity.task_id = str(metadata.get("task_id") or "")
+        entity.step_id = _core_types.StepID(metadata.get("step_id") or "")
+        entity.task_id = _core_types.TaskID(metadata.get("task_id") or "")
         entity.timestamp = int(entity_dict.get("timestamp", "0"))
         entity.path = str(exp_dir)
         entity.status_dir = str(status_dir)
 
     @classmethod
     def from_manifest(
-        cls, entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
+        cls,
+        entity_type: _core_types.TTelmonEntityTypeStr,
+        entity_dict: t.Dict[str, t.Any],
+        exp_dir: str,
     ) -> "JobEntity":
         """Instantiate a `JobEntity` from the dictionary deserialized from manifest JSON
 
@@ -189,8 +194,8 @@ class Job:
 
     def __init__(
         self,
-        job_name: str,
-        job_id: t.Optional[str],
+        job_name: _core_types.StepName,
+        job_id: _core_types.JobIdType,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         launcher: str,
         is_task: bool,
@@ -225,7 +230,7 @@ class Job:
         self.history = History()
 
     @property
-    def ename(self) -> str:
+    def ename(self) -> _entity_types.EntityName:
         """Return the name of the entity this job was created from"""
         return self.entity.name
 
@@ -265,7 +270,10 @@ class Job:
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
     def reset(
-        self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool
+        self,
+        new_job_name: _core_types.StepName,
+        new_job_id: _core_types.JobIdType,
+        is_task: bool,
     ) -> None:
         """Reset the job in order to be able to restart it.
 
@@ -276,6 +284,7 @@ class Job:
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
+        # XXX: Very scary casts here
         self.name = new_job_name
         self.jid = new_job_id
         self.status = SmartSimStatus.STATUS_NEW

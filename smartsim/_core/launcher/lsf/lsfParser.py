@@ -26,8 +26,10 @@
 
 import typing as t
 
+from smartsim._core.types import StepID
 
-def parse_bsub(output: str) -> str:
+
+def parse_bsub(output: str) -> StepID:
     """Parse bsub output and return job id.
 
     :param output: stdout of bsub command
@@ -37,8 +39,8 @@ def parse_bsub(output: str) -> str:
     """
     for line in output.split("\n"):
         if line.startswith("Job"):
-            return line.split()[1][1:-1]
-    return ""
+            return StepID(line.split()[1][1:-1])
+    return StepID("")
 
 
 def parse_bsub_error(output: str) -> str:

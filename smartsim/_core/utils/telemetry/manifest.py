@@ -32,6 +32,9 @@ from dataclasses import dataclass, field
 
 from smartsim._core.control.job import JobEntity
 
+if t.TYPE_CHECKING:
+    from smartsim._core import types as _core_types
+
 logger = logging.getLogger("TelemetryMonitor")
 
 
@@ -65,7 +68,7 @@ class Run:
 
     @staticmethod
     def load_entity(
-        entity_type: str,
+        entity_type: "_core_types.TTelmonEntityTypeStr",
         entity_dict: t.Dict[str, t.Any],
         exp_dir: pathlib.Path,
     ) -> t.List[JobEntity]:
@@ -83,11 +86,13 @@ class Run:
 
         # an entity w/parent keys must create entities for the items that it
         # comprises. traverse the children and create each entity
-        parent_keys = {"shards", "models"}
-        parent_keys = parent_keys.intersection(entity_dict.keys())
+        parent_keys_: t.Set[t.Literal["shards", "models"]] = {"shards", "models"}
+        parent_keys = parent_keys_.intersection(entity_dict.keys())
         if parent_keys:
             container = "shards" if "shards" in parent_keys else "models"
-            child_type = "orchestrator" if container == "shards" else "model"
+            child_type: "_core_types.TTelmonEntityTypeStr" = (
+                "orchestrator" if container == "shards" else "model"
+            )
             for child_entity in entity_dict[container]:
                 entity = JobEntity.from_manifest(child_type, child_entity, str(exp_dir))
                 entities.append(entity)
@@ -101,10 +106,10 @@ class Run:
 
     @staticmethod
     def load_entities(
-        entity_type: str,
+        entity_type: "_core_types.TTelmonEntityTypeStr",
         run: t.Dict[str, t.Any],
         exp_dir: pathlib.Path,
-    ) -> t.Dict[str, t.List[JobEntity]]:
+    ) -> t.Dict["_core_types.TTelmonEntityTypeStr", t.List[JobEntity]]:
         """Map a collection of entity data persisted in a manifest file to an object
 
         :param entity_type: type of the associated `SmartSimEntity`
@@ -115,14 +120,16 @@ class Run:
         :type exp_dir:  pathlib.Path
         :return: list of loaded `JobEntity` instances
         :rtype: Dict[str, List[JobEntity]]"""
-        persisted: t.Dict[str, t.List[JobEntity]] = {
+        persisted: t.Dict["_core_types.TTelmonEntityTypeStr", t.List[JobEntity]] = {
             "model": [],
             "orchestrator": [],
         }
         for item in run[entity_type]:
             entities = Run.load_entity(entity_type, item, exp_dir)
             for new_entity in entities:
-                persisted[new_entity.type].append(new_entity)
+                persisted[
+                    t.cast("_core_types.TTelmonEntityTypeStr", new_entity.type)
+                ].append(new_entity)
 
         return persisted
 
@@ -138,7 +145,7 @@ class Run:
         :rtype: Run"""
 
         # create an output mapping to hold the deserialized entities
-        run_entities: t.Dict[str, t.List[JobEntity]] = {
+        run_entities: t.Dict["_core_types.TTelmonEntityTypeStr", t.List[JobEntity]] = {
             "model": [],
             "orchestrator": [],
             "ensemble": [],

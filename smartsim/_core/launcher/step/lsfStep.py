@@ -34,11 +34,19 @@ from ....settings import BsubBatchSettings, JsrunSettings
 from ....settings.base import RunSettings
 from .step import Step
 
+if t.TYPE_CHECKING:
+    from smartsim.entity import types as _entity_types
+
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BsubBatchSettings) -> None:
+    def __init__(
+        self,
+        name: "_entity_types.EntityName",
+        cwd: str,
+        batch_settings: BsubBatchSettings,
+    ) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
@@ -109,7 +117,9 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: RunSettings
+    ):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched

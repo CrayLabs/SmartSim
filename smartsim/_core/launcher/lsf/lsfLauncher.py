@@ -27,6 +27,8 @@
 import time
 import typing as t
 
+from smartsim._core import types as _core_types
+
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
@@ -87,7 +89,7 @@ class LSFLauncher(WLMLauncher):
             RunSettings: LocalStep,
         }
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> t.Optional[_core_types.StepID]:
         """Run a job step through LSF
 
         :param step: a job step instance
@@ -130,7 +132,7 @@ class LSFLauncher(WLMLauncher):
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
-    def stop(self, step_name: str) -> StepInfo:
+    def stop(self, step_name: _core_types.StepName) -> StepInfo:
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
@@ -161,7 +163,7 @@ class LSFLauncher(WLMLauncher):
         return step_info
 
     @staticmethod
-    def _get_lsf_step_id(step: Step, interval: int = 2) -> str:
+    def _get_lsf_step_id(step: Step, interval: int = 2) -> _core_types.StepID:
         """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
         step_id: t.Optional[str] = None
@@ -179,7 +181,7 @@ class LSFLauncher(WLMLauncher):
         if not hasattr(step, "alloc"):
             raise LauncherError("Could not find alloc for launched job step")
 
-        return f"{step.alloc}.{step_id}"
+        return _core_types.StepID(f"{step.alloc}.{step_id}")
 
     def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs

@@ -40,6 +40,7 @@ from os import environ
 
 from smartredis import Client, ConfigOptions
 
+from smartsim._core.types import StepName
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
@@ -78,6 +79,7 @@ from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 if t.TYPE_CHECKING:
     from types import FrameType
 
+    from ...entity import types as _entity_types
     from ..utils.serialize import TStepLaunchMetaData
 
 
@@ -275,7 +277,7 @@ class Controller:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
 
-    def get_jobs(self) -> t.Dict[str, Job]:
+    def get_jobs(self) -> t.Dict["_entity_types.EntityName", Job]:
         """Return a dictionary of completed job data
 
         :returns: dict[str, Job]
@@ -389,7 +391,7 @@ class Controller:
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
-    ) -> LaunchedManifest[t.Tuple[str, Step]]:
+    ) -> LaunchedManifest[t.Tuple[StepName, Step]]:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
@@ -403,7 +405,7 @@ class Controller:
         :type manifest: Manifest
         """
 
-        manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
+        manifest_builder = LaunchedManifestBuilder[t.Tuple[StepName, Step]](
             exp_name=exp_name,
             exp_path=exp_path,
             launcher_name=str(self._launcher),
@@ -494,7 +496,7 @@ class Controller:
     def _launch_orchestrator(
         self,
         orchestrator: Orchestrator,
-        manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
+        manifest_builder: LaunchedManifestBuilder[t.Tuple[StepName, Step]],
     ) -> None:
         """Launch an Orchestrator instance
 

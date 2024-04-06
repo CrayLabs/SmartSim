@@ -33,6 +33,8 @@ from threading import RLock
 
 import psutil
 
+import smartsim._core.types as _core_types
+
 from ...error import LauncherError
 from ...log import ContextThread, get_logger
 from ..utils.helpers import check_dev_log_level
@@ -107,7 +109,7 @@ class TaskManager:
         env: t.Optional[t.Dict[str, str]] = None,
         out: int = PIPE,
         err: int = PIPE,
-    ) -> str:
+    ) -> _core_types.TaskID:
         """Start a task managed by the TaskManager
 
         This is an "unmanaged" task, meaning it is NOT managed
@@ -281,7 +283,7 @@ class Task:
         :type process: psutil.Process
         """
         self.process = process
-        self.pid = str(self.process.pid)
+        self.pid = _core_types.TaskID(str(self.process.pid))
 
     def check_status(self) -> t.Optional[int]:
         """Ping the job and return the returncode if finished

@@ -27,6 +27,8 @@
 import time
 import typing as t
 
+from smartsim._core import types as _core_types
+
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
@@ -84,7 +86,7 @@ class PBSLauncher(WLMLauncher):
             PalsMpiexecSettings: MpiexecStep,
         }
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> t.Optional[_core_types.StepID]:
         """Run a job step through PBSPro
 
         :param step: a job step instance
@@ -97,15 +99,15 @@ class PBSLauncher(WLMLauncher):
             self.task_manager.start()
 
         cmd_list = step.get_launch_cmd()
-        step_id: t.Optional[str] = None
-        task_id: t.Optional[str] = None
+        step_id = None
+        task_id = None
         if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
             return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if return_code != 0:
                 raise LauncherError(f"Qsub batch submission failed\n {out}\n {err}")
             if out:
-                step_id = out.strip()
+                step_id = _core_types.StepID(out.strip())
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
             # aprun/local doesn't direct output for us.
@@ -127,7 +129,7 @@ class PBSLauncher(WLMLauncher):
 
         return step_id
 
-    def stop(self, step_name: str) -> StepInfo:
+    def stop(self, step_name: _core_types.StepName) -> StepInfo:
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
@@ -155,14 +157,14 @@ class PBSLauncher(WLMLauncher):
         return step_info
 
     @staticmethod
-    def _get_pbs_step_id(step: Step, interval: int = 2) -> str:
+    def _get_pbs_step_id(step: Step, interval: int = 2) -> _core_types.StepID:
         """Get the step_id of a step from qstat (rarely used)
 
         Parses qstat JSON output by looking for the step name
         TODO: change this to use ``qstat -a -u user``
         """
         time.sleep(interval)
-        step_id: t.Optional[str] = None
+        step_id = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["-f", "-F", "json"])

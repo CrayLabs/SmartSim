@@ -32,9 +32,14 @@ from ....settings import Singularity
 from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd
 
+if t.TYPE_CHECKING:
+    from smartsim.entity import types as _entity_types
+
 
 class LocalStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: RunSettings
+    ):
         super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self._env = self._set_env()

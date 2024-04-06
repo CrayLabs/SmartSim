@@ -34,11 +34,16 @@ from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
 from .step import Step
 
+if t.TYPE_CHECKING:
+    from smartsim.entity import types as _entity_types
+
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: SbatchSettings) -> None:
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, batch_settings: SbatchSettings
+    ) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -104,7 +109,9 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: SrunSettings) -> None:
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: SrunSettings
+    ) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched

@@ -39,6 +39,7 @@ from watchdog.events import (
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
+from smartsim._core import types as _core_types
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
@@ -53,10 +54,35 @@ from smartsim._core.utils.serialize import MANIFEST_FILENAME
 from smartsim._core.utils.telemetry.collector import CollectorManager
 from smartsim._core.utils.telemetry.manifest import Run, RuntimeManifest
 from smartsim._core.utils.telemetry.util import map_return_code, write_event
+from smartsim.entity import types as _entity_types
 from smartsim.error.errors import SmartSimError
 from smartsim.status import TERMINAL_STATUSES
 
 logger = logging.getLogger("TelemetryMonitor")
+
+
+def _dangerous_cast_entity_name_to_step_name(
+    name: _entity_types.EntityName,
+) -> _core_types.StepName:
+    """The telemetry monitor makes a potentially dangerous cast to use an
+    entity name as a step name. This function was added as a way to introduce
+    new type hints to the module without breaking existing the existing
+    functionality.
+    """
+    # TODO: Ideally we should not use this function
+    return _core_types.StepName(name)
+
+
+def _dangerous_cast_step_name_to_entity_name(
+    name: _core_types.StepName,
+) -> _entity_types.EntityName:
+    """The telemetry monitor makes a potentially dangerous cast to use a
+    step name as an entity name. This function was added as a way to introduce
+    new type hints to the module without breaking existing the existing
+    functionality.
+    """
+    # TODO: Ideally we should not use this function
+    return _entity_types.EntityName(name)
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -211,7 +237,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     # Tell JobManager the task is unmanaged. This collects
                     # status updates but does not try to start a new copy
                     self.job_manager.add_job(
-                        entity.name,
+                        _dangerous_cast_entity_name_to_step_name(entity.name),
                         entity.step_id,
                         entity,
                         False,
@@ -219,7 +245,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     # Tell the launcher it's managed so it doesn't attempt
                     # to look for a PID that may no longer exist
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, "", True
+                        _dangerous_cast_entity_name_to_step_name(entity.name),
+                        entity.step_id,
+                        "",
+                        True
                     )
             self._tracked_runs[run.timestamp] = run
 
@@ -306,11 +335,15 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         # consider not using name to avoid collisions
         m_jobs = [job for job in self._tracked_jobs.values() if job.is_managed]
         if names := {entity.name: entity for entity in m_jobs}:
-            step_updates = self._launcher.get_step_update(list(names.keys()))
+            step_updates = self._launcher.get_step_update(
+                list(map(_dangerous_cast_entity_name_to_step_name, names))
+            )
 
             for step_name, step_info in step_updates:
                 if step_info and step_info.status in TERMINAL_STATUSES:
-                    completed_entity = names[step_name]
+                    completed_entity = names[
+                        _dangerous_cast_step_name_to_entity_name(step_name)
+                    ]
                     await self._to_completed(timestamp, completed_entity, step_info)
 
     async def shutdown(self) -> None:

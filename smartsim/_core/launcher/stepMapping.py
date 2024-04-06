@@ -24,46 +24,42 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import dataclasses
 import typing as t
+
+from smartsim._core import types as _core_types
 
 from ...log import get_logger
 
 logger = get_logger(__name__)
 
 
+@dataclasses.dataclass
 class StepMap:
-    def __init__(
-        self,
-        step_id: t.Optional[str] = None,
-        task_id: t.Optional[str] = None,
-        managed: t.Optional[bool] = None,
-    ) -> None:
-        self.step_id = step_id
-        self.task_id = task_id
-        self.managed = managed
+    step_id: t.Optional[_core_types.StepID] = None
+    task_id: t.Optional[_core_types.TaskID] = None
+    managed: t.Optional[bool] = None
 
 
 class StepMapping:
     def __init__(self) -> None:
-        # step_name : wlm_id, pid, wlm_managed?
-        self.mapping: t.Dict[str, StepMap] = {}
+        self.mapping: t.Dict["_core_types.StepName", StepMap] = {}
 
-    def __getitem__(self, step_name: str) -> StepMap:
+    def __getitem__(self, step_name: "_core_types.StepName") -> StepMap:
         return self.mapping[step_name]
 
-    def __setitem__(self, step_name: str, step_map: StepMap) -> None:
+    def __setitem__(self, step_name: "_core_types.StepName", step_map: StepMap) -> None:
         self.mapping[step_name] = step_map
 
     def add(
         self,
-        step_name: str,
-        step_id: t.Optional[str] = None,
-        task_id: t.Optional[str] = None,
+        step_name: _core_types.StepName,
+        step_id: t.Optional[_core_types.StepID] = None,
+        task_id: t.Optional[_core_types.TaskID] = None,
         managed: bool = True,
     ) -> None:
         try:
-            n_task_id = str(task_id) if task_id else None
-            self.mapping[step_name] = StepMap(step_id, n_task_id, managed)
+            self.mapping[step_name] = StepMap(step_id, task_id, managed)
         except Exception as e:
             msg = f"Could not add step {step_name} to mapping: {e}"
             logger.exception(msg)
@@ -78,8 +74,8 @@ class StepMapping:
         return task_id
 
     def get_ids(
-        self, step_names: t.List[str], managed: bool = True
-    ) -> t.Tuple[t.List[str], t.List[t.Union[str, None]]]:
+        self, step_names: t.List["_core_types.StepName"], managed: bool = True
+    ) -> t.Tuple[t.List["_core_types.StepName"], t.List[t.Union[str, None]]]:
         ids: t.List[t.Union[str, None]] = []
         names = []
         for name in step_names:

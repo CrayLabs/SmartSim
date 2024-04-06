@@ -35,11 +35,17 @@ from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
 from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd
 
+if t.TYPE_CHECKING:
+    from smartsim.entity import types as _entity_types
+
+
 logger = get_logger(__name__)
 
 
 class _BaseMPIStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: RunSettings
+    ) -> None:
         """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
@@ -157,7 +163,9 @@ class _BaseMPIStep(Step):
 
 
 class MpiexecStep(_BaseMPIStep):
-    def __init__(self, name: str, cwd: str, run_settings: MpiexecSettings) -> None:
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: MpiexecSettings
+    ) -> None:
         """Initialize an mpiexec job step
 
         :param name: name of the entity to be launched
@@ -175,7 +183,9 @@ class MpiexecStep(_BaseMPIStep):
 
 
 class MpirunStep(_BaseMPIStep):
-    def __init__(self, name: str, cwd: str, run_settings: MpirunSettings) -> None:
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: MpirunSettings
+    ) -> None:
         """Initialize an mpirun job step
 
         :param name: name of the entity to be launched
@@ -193,7 +203,9 @@ class MpirunStep(_BaseMPIStep):
 
 
 class OrterunStep(_BaseMPIStep):
-    def __init__(self, name: str, cwd: str, run_settings: OrterunSettings) -> None:
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, run_settings: OrterunSettings
+    ) -> None:
         """Initialize an orterun job step
 
         :param name: name of the entity to be launched

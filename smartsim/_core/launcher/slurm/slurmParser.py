@@ -27,6 +27,8 @@
 import typing as t
 from shutil import which
 
+from smartsim._core.types import StepID, StepName
+
 """
 Parsers for various slurm functions.
 """
@@ -129,7 +131,7 @@ def parse_sstat_nodes(output: str, job_id: str) -> t.List[str]:
     return list(set(nodes))
 
 
-def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
+def parse_step_id_from_sacct(output: str, step_name: StepName) -> t.Optional[StepID]:
     """Parse and return the step id from a sacct command
 
     :param output: output of sacct --noheader -p
@@ -145,5 +147,5 @@ def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
         sacct_string = line.split("|")
         if len(sacct_string) >= 2:
             if sacct_string[0] == step_name:
-                step_id = sacct_string[1]
+                step_id = StepID(sacct_string[1])
     return step_id

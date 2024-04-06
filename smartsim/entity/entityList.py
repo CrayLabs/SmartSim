@@ -27,6 +27,7 @@
 import typing as t
 
 from .entity import SmartSimEntity
+from .types import EntityName
 
 if t.TYPE_CHECKING:
     # pylint: disable-next=unused-import
@@ -42,8 +43,8 @@ class EntitySequence(t.Generic[_T_co]):
     """Abstract class for containers for SmartSimEntities"""
 
     def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
-        self.name: str = name
-        self.path: str = path
+        self.name: t.Final = EntityName(name)
+        self.path = path
 
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         # WARNING: This class cannot be made truly covariant until the

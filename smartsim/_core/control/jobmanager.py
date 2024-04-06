@@ -41,6 +41,10 @@ from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
 
+if t.TYPE_CHECKING:
+    from smartsim._core import types as _core_types
+    from smartsim.entity import types as _entity_types
+
 logger = get_logger(__name__)
 
 
@@ -66,11 +70,11 @@ class JobManager:
         self.monitor: t.Optional[Thread] = None
 
         # active jobs
-        self.jobs: t.Dict[str, Job] = {}
-        self.db_jobs: t.Dict[str, Job] = {}
+        self.jobs: t.Dict["_entity_types.EntityName", Job] = {}
+        self.db_jobs: t.Dict["_entity_types.EntityName", Job] = {}
 
         # completed jobs
-        self.completed: t.Dict[str, Job] = {}
+        self.completed: t.Dict["_entity_types.EntityName", Job] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
@@ -136,7 +140,7 @@ class JobManager:
             elif job.ename in self.jobs:
                 del self.jobs[job.ename]
 
-    def __getitem__(self, entity_name: str) -> Job:
+    def __getitem__(self, entity_name: "_entity_types.EntityName") -> Job:
         """Return the job associated with the name of the entity
         from which it was created.
 
@@ -149,7 +153,7 @@ class JobManager:
             entities = ChainMap(self.db_jobs, self.jobs, self.completed)
             return entities[entity_name]
 
-    def get_active_jobs(self) -> t.Mapping[str, Job]:
+    def get_active_jobs(self) -> t.Mapping["_entity_types.EntityName", Job]:
         """Returns a mapping of entity name to job for all active jobs
 
         :returns: A mapping of entity name to job for all active jobs
@@ -159,8 +163,8 @@ class JobManager:
 
     def add_job(
         self,
-        job_name: str,
-        job_id: t.Optional[str],
+        job_name: "_core_types.StepName",
+        job_id: "_core_types.JobIdType",
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
     ) -> None:
@@ -264,9 +268,9 @@ class JobManager:
 
     def restart_job(
         self,
-        job_name: str,
-        job_id: t.Optional[str],
-        entity_name: str,
+        job_name: "_core_types.StepName",
+        job_id: "_core_types.JobIdType",
+        entity_name: "_entity_types.EntityName",
         is_task: bool = True,
     ) -> None:
         """Function to reset a job to record history and be
@@ -280,7 +284,6 @@ class JobManager:
         :type entity_name: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
-
         """
         with self._lock:
             job = self.completed[entity_name]

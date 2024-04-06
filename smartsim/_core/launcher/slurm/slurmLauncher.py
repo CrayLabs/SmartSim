@@ -29,6 +29,8 @@ import time
 import typing as t
 from shutil import which
 
+from smartsim._core import types as _core_types
+
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
@@ -85,7 +87,9 @@ class SlurmLauncher(WLMLauncher):
             RunSettings: LocalStep,
         }
 
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
+    def get_step_nodes(
+        self, step_names: t.List[_core_types.StepName]
+    ) -> t.List[t.List[str]]:
         """Return the compute nodes of a specific job or allocation
 
         This function returns the compute nodes of a specific job or allocation
@@ -118,7 +122,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> t.Optional[_core_types.StepID]:
         """Run a job step through Slurm
 
         :param step: a job step instance
@@ -142,7 +146,7 @@ class SlurmLauncher(WLMLauncher):
             if return_code != 0:
                 raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
             if out:
-                step_id = out.strip()
+                step_id = _core_types.StepID(out.strip())
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
 
         # Launch a in-allocation or on-allocation (if srun) command
@@ -171,7 +175,7 @@ class SlurmLauncher(WLMLauncher):
 
         return step_id
 
-    def stop(self, step_name: str) -> StepInfo:
+    def stop(self, step_name: _core_types.StepName) -> StepInfo:
         """Step a job step
 
         :param step_name: name of the job to stop
@@ -224,7 +228,7 @@ class SlurmLauncher(WLMLauncher):
         return step_info
 
     @staticmethod
-    def _get_slurm_step_id(step: Step, interval: int = 2) -> str:
+    def _get_slurm_step_id(step: Step, interval: int = 2) -> _core_types.StepID:
         """Get the step_id of a step from sacct
 
         Parses sacct output by looking for the step name
@@ -236,7 +240,7 @@ class SlurmLauncher(WLMLauncher):
         m2-119225.1|119225.1|
         """
         time.sleep(interval)
-        step_id: t.Optional[str] = None
+        step_id = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = sacct(

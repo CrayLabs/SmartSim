@@ -34,6 +34,10 @@ from .stepInfo import StepInfo, UnmanagedStepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
 
+if t.TYPE_CHECKING:
+    from smartsim._core import types as _core_types
+    from smartsim.entity import types as _entity_types
+
 
 class Launcher(abc.ABC):  # pragma: no cover
     """Abstract base class of all launchers
@@ -48,25 +52,29 @@ class Launcher(abc.ABC):  # pragma: no cover
     task_manager: TaskManager
 
     @abc.abstractmethod
-    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
+    def create_step(
+        self, name: "_entity_types.EntityName", cwd: str, step_settings: SettingsBase
+    ) -> Step:
         raise NotImplementedError
 
     @abc.abstractmethod
     def get_step_update(
-        self, step_names: t.List[str]
-    ) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:
+        self, step_names: t.List["_core_types.StepName"]
+    ) -> t.List[t.Tuple["_core_types.StepName", t.Union[StepInfo, None]]]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
+    def get_step_nodes(
+        self, step_names: t.List["_core_types.StepName"]
+    ) -> t.List[t.List[str]]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self, step: Step) -> t.Optional[str]:
+    def run(self, step: Step) -> "_core_types.JobIdType":
         raise NotImplementedError
 
     @abc.abstractmethod
-    def stop(self, step_name: str) -> StepInfo:
+    def stop(self, step_name: "_core_types.StepName") -> StepInfo:
         raise NotImplementedError
 
 
@@ -81,6 +89,10 @@ class WLMLauncher(Launcher):  # cov-wlm
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
+    @abc.abstractmethod
+    def run(self, step: Step) -> t.Optional["_core_types.StepID"]:
+        raise NotImplementedError
+
     @property
     @abc.abstractmethod
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
@@ -89,7 +101,7 @@ class WLMLauncher(Launcher):  # cov-wlm
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
     def create_step(
-        self, name: str, cwd: str, step_settings: SettingsBase
+        self, name: "_entity_types.EntityName", cwd: str, step_settings: SettingsBase
     ) -> Step:  # cov-wlm
         """Create a WLM job step
 
@@ -119,13 +131,13 @@ class WLMLauncher(Launcher):  # cov-wlm
     # don't need to be covered here.
 
     def get_step_nodes(
-        self, step_names: t.List[str]
+        self, step_names: t.List["_core_types.StepName"]
     ) -> t.List[t.List[str]]:  # pragma: no cover
         raise SSUnsupportedError("Node acquisition not supported for this launcher")
 
     def get_step_update(
-        self, step_names: t.List[str]
-    ) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:  # cov-wlm
+        self, step_names: t.List["_core_types.StepName"]
+    ) -> t.List[t.Tuple["_core_types.StepName", t.Union[StepInfo, None]]]:  # cov-wlm
         """Get update for a list of job steps
 
         :param step_names: list of job steps to get updates for
@@ -133,7 +145,7 @@ class WLMLauncher(Launcher):  # cov-wlm
         :return: list of name, job update tuples
         :rtype: list[(str, StepInfo)]
         """
-        updates: t.List[t.Tuple[str, t.Union[StepInfo, None]]] = []
+        updates: t.List[t.Tuple["_core_types.StepName", t.Union[StepInfo, None]]] = []
 
         # get updates of jobs managed by workload manager (PBS, Slurm, etc)
         # this is primarily batch jobs.

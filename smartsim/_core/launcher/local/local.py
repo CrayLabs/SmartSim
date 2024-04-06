@@ -33,6 +33,10 @@ from ..stepInfo import StepInfo, UnmanagedStepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 
+if t.TYPE_CHECKING:
+    from smartsim._core import types as _core_types
+    from smartsim.entity import types as _entity_types
+
 
 class LocalLauncher(Launcher):
     """Launcher used for spawning proceses on a localhost machine."""
@@ -41,7 +45,9 @@ class LocalLauncher(Launcher):
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
+    def create_step(
+        self, name: "_entity_types.EntityName", cwd: str, step_settings: SettingsBase
+    ) -> Step:
         """Create a job step to launch an entity locally
 
         :return: Step object
@@ -54,8 +60,8 @@ class LocalLauncher(Launcher):
         return LocalStep(name, cwd, step_settings)
 
     def get_step_update(
-        self, step_names: t.List[str]
-    ) -> t.List[t.Tuple[str, t.Optional[StepInfo]]]:
+        self, step_names: t.List["_core_types.StepName"]
+    ) -> t.List[t.Tuple["_core_types.StepName", t.Optional[StepInfo]]]:
         """Get status updates of each job step name provided
 
         :param step_names: list of step_names
@@ -65,7 +71,7 @@ class LocalLauncher(Launcher):
         """
         # step ids are process ids of the tasks
         # as there is no WLM intermediary
-        updates: t.List[t.Tuple[str, t.Optional[StepInfo]]] = []
+        updates: t.List[t.Tuple["_core_types.StepName", t.Optional[StepInfo]]] = []
         s_names, s_ids = self.step_mapping.get_ids(step_names, managed=False)
         for step_name, step_id in zip(s_names, s_ids):
             status, ret_code, out, err = self.task_manager.get_task_update(str(step_id))
@@ -74,7 +80,9 @@ class LocalLauncher(Launcher):
             updates.append(update)
         return updates
 
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
+    def get_step_nodes(
+        self, step_names: t.List["_core_types.StepName"]
+    ) -> t.List[t.List[str]]:
         """Return the address of nodes assigned to the step
 
         :param step_names: list of step_names
@@ -86,7 +94,7 @@ class LocalLauncher(Launcher):
         """
         return [["127.0.0.1"] * len(step_names)]
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> "_core_types.TaskID":
         """Run a local step created by this launcher. Utilize the shell
            library to execute the command with a Popen. Output and error
            files will be written to the entity path.
@@ -114,7 +122,7 @@ class LocalLauncher(Launcher):
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id
 
-    def stop(self, step_name: str) -> UnmanagedStepInfo:
+    def stop(self, step_name: "_core_types.StepName") -> UnmanagedStepInfo:
         """Stop a job step
 
         :param step_name: name of the step to be stopped

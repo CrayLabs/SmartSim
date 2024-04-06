@@ -35,6 +35,7 @@ import typing as t
 from os import makedirs
 
 from smartsim._core.config import CONFIG
+from smartsim._core.types import StepName
 from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
 from ....log import get_logger
@@ -44,10 +45,15 @@ from ..colocated import write_colocated_launch_script
 
 logger = get_logger(__name__)
 
+if t.TYPE_CHECKING:
+    from smartsim.entity import types as _entity_types
+
 
 class Step:
-    def __init__(self, name: str, cwd: str, step_settings: SettingsBase) -> None:
-        self.name = self._create_unique_name(name)
+    def __init__(
+        self, name: "_entity_types.EntityName", cwd: str, step_settings: SettingsBase
+    ) -> None:
+        self.name: t.Final = self._create_unique_name(name)
         self.entity_name = name
         self.cwd = cwd
         self.managed = False
@@ -63,9 +69,8 @@ class Step:
         raise NotImplementedError
 
     @staticmethod
-    def _create_unique_name(entity_name: str) -> str:
-        step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
-        return step_name
+    def _create_unique_name(entity_name: "_entity_types.EntityName") -> StepName:
+        return StepName(f"{entity_name}-{get_base_36_repr(time.time_ns())}")
 
     @staticmethod
     def _ensure_output_directory_exists(output_dir: str) -> None:

@@ -27,6 +27,8 @@
 import json
 import typing as t
 
+from smartsim._core.types import StepID, StepName
+
 
 def parse_qsub(output: str) -> str:
     """Parse qsub output and return job id. For PBS, the
@@ -112,7 +114,7 @@ def parse_qstat_nodes(output: str) -> t.List[str]:
     return list(sorted(set(nodes)))
 
 
-def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
+def parse_step_id_from_qstat(output: str, step_name: StepName) -> t.Optional[StepID]:
     """Parse and return the step id from a qstat command
 
     :param output: output qstat
@@ -122,18 +124,15 @@ def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
     :return: the step_id
     :rtype: str
     """
-    step_id: t.Optional[str] = None
     out_json = load_and_clean_json(output)
 
     if "Jobs" not in out_json:
-        return step_id
+        return None
     jobs = out_json["Jobs"]
     for key, val in jobs.items():
         if val["Job_Name"] == step_name:
-            step_id = key
-            return step_id
-
-    return step_id
+            return StepID(key)
+    return None
 
 
 def load_and_clean_json(out: str) -> t.Any:

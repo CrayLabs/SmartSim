@@ -36,17 +36,14 @@ from ..launcher.launcher import Launcher
 
 if t.TYPE_CHECKING:
     from ..utils.serialize import TStepLaunchMetaData
+    from .. import types as _core_types
 
 
 class _AnonymousBatchJob(EntityList[Model]):
-    @staticmethod
-    def _validate(model: Model) -> None:
-        if model.batch_settings is None:
-            msg = "Unable to create _AnonymousBatchJob without batch_settings"
-            raise SmartSimError(msg)
-
     def __init__(self, model: Model) -> None:
-        self._validate(model)
+        if model.batch_settings is None:
+            msg = f"Unable to create {type(self).__name__} without batch_settings"
+            raise SmartSimError(msg)
         super().__init__(model.name, model.path)
         self.entities = [model]
         self.batch_settings = model.batch_settings
@@ -56,8 +53,8 @@ class _AnonymousBatchJob(EntityList[Model]):
 
 def _look_up_launched_data(
     launcher: Launcher,
-) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
-    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
+) -> t.Callable[[t.Tuple["_core_types.StepName", Step]], "TStepLaunchMetaData"]:
+    def _unpack_launched_data(data: t.Tuple["_core_types.StepName", Step]) -> "TStepLaunchMetaData":
         # NOTE: we cannot assume that the name of the launched step
         # ``launched_step_name`` is equal to the name of the step referring to
         # the entity ``step.name`` as is the case when an entity list is

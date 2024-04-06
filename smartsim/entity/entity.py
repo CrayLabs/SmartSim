@@ -26,6 +26,8 @@
 
 import typing as t
 
+from smartsim.entity import types as _types
+
 if t.TYPE_CHECKING:
     # pylint: disable-next=unused-import
     import smartsim.settings.base
@@ -108,7 +110,7 @@ class SmartSimEntity:
                              entity
         :type run_settings: dict
         """
-        self.name = name
+        self.name: t.Final = _types.EntityName(name)
         self.run_settings = run_settings
         self.path = path
 
@@ -123,4 +125,4 @@ class SmartSimEntity:
         self.path = path
 
     def __repr__(self) -> str:
-        return self.name
+        return str(self.name)
