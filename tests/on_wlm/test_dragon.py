@@ -48,6 +48,8 @@ def test_dragon_global_path(global_dragon_teardown, wlmutils, test_dir, monkeypa
     exp.start(model, block=True)
 
     assert exp.get_status(model)[0] == SmartSimStatus.STATUS_COMPLETED
+    launcher: DragonLauncher = exp._control._launcher
+    launcher.cleanup()
 
 
 def test_dragon_exp_path(global_dragon_teardown, wlmutils, test_dir, monkeypatch):
@@ -62,17 +64,15 @@ def test_dragon_exp_path(global_dragon_teardown, wlmutils, test_dir, monkeypatch
 
     exp.generate(model)
     exp.start(model, block=True)
+    assert exp.get_status(model)[0] == SmartSimStatus.STATUS_COMPLETED
 
     launcher: DragonLauncher = exp._control._launcher
     launcher.cleanup()
 
-    assert exp.get_status(model)[0] == SmartSimStatus.STATUS_COMPLETED
 
-
-def test_dragon_cannot_honor(wlmutils, test_dir, monkeypatch):
-    monkeypatch.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
+def test_dragon_cannot_honor(wlmutils, test_dir):
     exp: Experiment = Experiment(
-        "test_dragon_cannott_honor",
+        "test_dragon_cannot_honor",
         exp_path=test_dir,
         launcher=wlmutils.get_test_launcher(),
     )
@@ -84,3 +84,5 @@ def test_dragon_cannot_honor(wlmutils, test_dir, monkeypatch):
     exp.start(model, block=True)
 
     assert exp.get_status(model)[0] == SmartSimStatus.STATUS_FAILED
+    launcher: DragonLauncher = exp._control._launcher
+    launcher.cleanup()

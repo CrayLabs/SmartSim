@@ -85,11 +85,11 @@ def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: 
     with monkeypatch.context() as ctx:
         ctx.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
         ctx.setattr(
-            "smartsim._core.launcher.dragon.dragonLauncher.get_best_interface_and_address",
+            "smartsim._core.launcher.dragon.dragonConnector.get_best_interface_and_address",
             lambda: IFConfig(interface="faux_interface", address="127.0.0.1"),
         )
         ctx.setattr(
-            "smartsim._core.launcher.dragon.dragonLauncher.DragonLauncher._handshake",
+            "smartsim._core.launcher.dragon.dragonLauncher.DragonConnector._handshake",
             lambda self, address: ...,
         )
 
@@ -99,9 +99,7 @@ def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: 
         ctx.setattr("subprocess.Popen", lambda *args, **kwargs: MockPopen())
 
         dragon_launcher = DragonLauncher()
-        with pytest.raises(LauncherError) as ex:
-            # it will complain about failure to connect when validating...
-            dragon_launcher.connect_to_dragon(test_dir)
+        dragon_launcher._connector.connect_to_dragon()
 
         chosen_port = int(mock_socket.bind_address.split(":")[-1])
         assert chosen_port >= 5995

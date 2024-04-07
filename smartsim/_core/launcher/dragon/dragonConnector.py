@@ -39,6 +39,7 @@ import typing as t
 from pathlib import Path
 from threading import RLock
 
+import psutil
 import zmq
 
 from smartsim._core.launcher.dragon import dragonSockets
@@ -86,10 +87,8 @@ class DragonConnector:
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
-        self._dragon_server_path = os.getenv(
-            "SMARTSIM_DRAGON_SERVER_PATH_EXP",
-            os.getenv("SMARTSIM_DRAGON_SERVER_PATH", None),
-        )
+        self._dragon_server_path = CONFIG.dragon_server_path
+        logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         if self._dragon_server_path is None:
             raise SmartSimError(
                 "DragonConnector could not find the dragon server path. "
@@ -268,6 +267,7 @@ class DragonConnector:
                 server_socket=self._dragon_head_socket,
                 server_process_pid=self._dragon_head_pid,
             )
+            time.sleep(1)
 
     def send_request(self, request: DragonRequest, flags: int = 0) -> DragonResponse:
         self.ensure_connected()
@@ -314,38 +314,10 @@ class DragonConnector:
         client = dragonSockets.as_client(socket)
         with DRG_LOCK:
             logger.debug(f"Sending {type(request).__name__}: {request}")
-            send_trials = 5
-            while send_trials:
-                try:
-                    client.send(request, flags)
-                    break
-                except zmq.Again as e:
-                    send_trials -= 1
-                    logger.debug(
-                        "Could not send request to Dragon server in "
-                        f"{int(client.socket.getsockopt(zmq.SNDTIMEO))/1000} seconds"
-                    )
-                    if send_trials < 1:
-                        raise e
+            client.send(request, flags)
 
             time.sleep(0.1)
-            receive_trials = 5
-            response = None
-            while receive_trials:
-                try:
-                    response = client.recv()
-                    break
-                except zmq.Again as e:
-                    receive_trials -= 1
-                    logger.debug(
-                        "Did not receive response from Dragon server in "
-                        f"{int(client.socket.getsockopt(zmq.RCVTIMEO))/1000} seconds"
-                    )
-                    if receive_trials < 1:
-                        raise e
-
-            if response is None:
-                raise SmartSimError("Could not receive response from Dragon server")
+            response = client.recv()
 
             logger.debug(f"Received {type(response).__name__}: {response}")
             return response
@@ -358,6 +330,8 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 
 
 def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -> None:
+    if not psutil.pid_exists(server_process_pid):
+        return
     try:
         # pylint: disable-next=protected-access
         DragonConnector._send_req_with_socket(server_socket, DragonShutdownRequest())
@@ -366,13 +340,15 @@ def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -
         print("Could not send shutdown request to dragon server")
         print(f"ZMQ error: {e}", flush=True)
     finally:
-        time.sleep(1)
+        time.sleep(5)
         try:
-            os.kill(server_process_pid, signal.SIGINT)
+            os.kill(server_process_pid, signal.SIGKILL)
             print("Sent SIGINT to dragon server")
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed
             print("Dragon server is not running.", flush=True)
+        finally:
+            time.sleep(5)
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:

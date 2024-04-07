@@ -179,7 +179,9 @@ class Experiment:
     def _set_dragon_server_path(self) -> None:
         """Set path for dragon server through environment varialbes"""
         if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
-            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = self.exp_path
+            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
+                self.exp_path, CONFIG.dragon_default_subdir
+            )
 
     @_contextualize
     def start(

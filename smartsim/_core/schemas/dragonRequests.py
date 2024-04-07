@@ -82,4 +82,8 @@ class DragonBootstrapRequest(DragonRequest):
 
 
 @request_registry.register("shutdown")
-class DragonShutdownRequest(DragonRequest): ...
+class DragonShutdownRequest(DragonRequest):
+    # Whether the server should shut down immediately
+    # setting this to False means that the server will
+    # shut down when all jobs are terminated.
+    immediate: bool = True

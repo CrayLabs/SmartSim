@@ -48,8 +48,9 @@ from ...schemas import (
     DragonUpdateStatusResponse,
 )
 from ..launcher import WLMLauncher
+from ..pbs.pbsLauncher import PBSLauncher
 from ..slurm.slurmLauncher import SlurmLauncher
-from ..step import DragonBatchStep, DragonStep, LocalStep, Step
+from ..step import DragonBatchStep, DragonStep, Step
 from ..stepInfo import StepInfo
 from .dragonConnector import DragonConnector, _SchemaT
 
@@ -71,6 +72,7 @@ class DragonLauncher(WLMLauncher):
         super().__init__()
         self._connector = DragonConnector()
         self._slurm_launcher = SlurmLauncher()
+        self._pbs_launcher = PBSLauncher()
 
     @property
     def is_connected(self) -> bool:
@@ -87,7 +89,7 @@ class DragonLauncher(WLMLauncher):
             DragonRunSettings: DragonStep,
             SbatchSettings: DragonBatchStep,
             QsubBatchSettings: DragonBatchStep,
-            RunSettings: LocalStep,
+            RunSettings: DragonStep,
         }
 
     def run(self, step: Step) -> t.Optional[str]:
@@ -109,22 +111,32 @@ class DragonLauncher(WLMLauncher):
         cmd = step.get_launch_cmd()
         out, err = step.get_output_files()
 
-        if isinstance(step, DragonBatchStep) and isinstance(
-            step.batch_settings, SbatchSettings
-        ):
-            # wait for batch step to submit successfully
-            logger.warning(f"{cmd}, {step.cwd}")
-            return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
-            if return_code != 0:
-                raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
-            if out:
-                slurm_step_id = out.strip()
-                logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
+        if isinstance(step, DragonBatchStep):
+            if isinstance(step.batch_settings, SbatchSettings):
+                # wait for batch step to submit successfully
+                return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
+                if return_code != 0:
+                    raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
+                if out:
+                    slurm_step_id = out.strip()
+                    logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
 
-                self._slurm_launcher.step_mapping.add(
-                    step.name, slurm_step_id, task_id, step.managed
-                )
-                step_id = "SLURM-" + slurm_step_id
+                    self._slurm_launcher.step_mapping.add(
+                        step.name, slurm_step_id, task_id, step.managed
+                    )
+                    step_id = "SLURM-" + slurm_step_id
+            elif isinstance(step.batch_settings, QsubBatchSettings):
+                # wait for batch step to submit successfully
+                return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
+                if return_code != 0:
+                    raise LauncherError(f"Qsub batch submission failed\n {out}\n {err}")
+                if out:
+                    pbs_step_id = out.strip()
+                    logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
+                    self._pbs_launcher.step_mapping.add(
+                        step.name, pbs_step_id, task_id, step.managed
+                    )
+                    step_id = "PBS-" + pbs_step_id
         elif isinstance(step, DragonStep):
             run_args = step.run_settings.run_args
             env = step.run_settings.env_vars
@@ -156,6 +168,7 @@ class DragonLauncher(WLMLauncher):
             task_id = self.task_manager.start_task(
                 cmd, step.cwd, step.env, out=out_strm.fileno(), err=err_strm.fileno()
             )
+            step.managed = False
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -174,7 +187,12 @@ class DragonLauncher(WLMLauncher):
         step_id = str(stepmap.step_id)
 
         if step_id.startswith("SLURM-"):
-            return self._slurm_launcher.stop(step_name.split("-", maxsplit=1)[1])
+            return self._slurm_launcher.stop(
+                DragonLauncher._unprefix_step_id(step_name)
+            )
+
+        if step_id.startswith("PBS-"):
+            return self._pbs_launcher.stop(DragonLauncher._unprefix_step_id(step_name))
 
         _assert_schema_type(
             self._connector.send_request(DragonStopRequest(step_id=step_id)),
@@ -190,6 +208,10 @@ class DragonLauncher(WLMLauncher):
         )
         return step_info
 
+    @staticmethod
+    def _unprefix_step_id(step_id: str) -> str:
+        return step_id.split("-", maxsplit=1)[1]
+
     def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for Dragon-managed jobs
 
@@ -201,21 +223,33 @@ class DragonLauncher(WLMLauncher):
 
         step_id_updates: dict[str, StepInfo] = {}
 
-        dragon_step_ids = []
-        slurm_step_ids = []
+        dragon_step_ids: t.List[str] = []
+        slurm_step_ids: t.List[str] = []
+        pbs_step_ids: t.List[str] = []
         for step_id in step_ids:
             if step_id.startswith("SLURM-"):
-                print(step_id.split("-", maxsplit=1)[1])
                 slurm_step_ids.append(step_id)
+            elif step_id.startswith("PBS-"):
+                pbs_step_ids.append(step_id)
             else:
                 dragon_step_ids.append(step_id)
 
         if slurm_step_ids:
             # pylint: disable-next=protected-access
             slurm_updates = self._slurm_launcher._get_managed_step_update(
-                [step_id.split("-", maxsplit=1)[1] for step_id in slurm_step_ids]
+                [
+                    DragonLauncher._unprefix_step_id(step_id)
+                    for step_id in slurm_step_ids
+                ]
             )
             step_id_updates.update(dict(zip(slurm_step_ids, slurm_updates)))
+
+        if pbs_step_ids:
+            # pylint: disable-next=protected-access
+            pbs_updates = self._pbs_launcher._get_managed_step_update(
+                [DragonLauncher._unprefix_step_id(step_id) for step_id in pbs_step_ids]
+            )
+            step_id_updates.update(dict(zip(pbs_step_ids, pbs_updates)))
 
         if dragon_step_ids:
             response = _assert_schema_type(

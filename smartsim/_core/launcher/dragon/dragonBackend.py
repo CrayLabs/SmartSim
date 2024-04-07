@@ -26,6 +26,7 @@
 
 import collections
 import functools
+import time
 import typing as t
 from dataclasses import dataclass, field
 from threading import RLock
@@ -123,6 +124,7 @@ class DragonBackend:
         num_hosts = len(self._hosts)
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
+        self._can_shutdown = False
         self._updates = 0
         print(f"{host_string} available for execution: {self._hosts}")
 
@@ -138,7 +140,7 @@ class DragonBackend:
 
     @property
     def should_shutdown(self) -> bool:
-        return self._shutdown_requested
+        return self._shutdown_requested and self._can_shutdown
 
     def _initialize_hosts(self) -> None:
         with self._hostlist_lock:
@@ -349,11 +351,21 @@ class DragonBackend:
                         self._allocated_hosts.pop(host)
                         self._free_hosts.append(host)
 
-    def update(self) -> None:
-        self._updates += 1
+    def _update_shutdown_status(self) -> None:
+        self._can_shutdown = all(
+            grp_info.status in TERMINAL_STATUSES
+            for grp_info in self._group_infos.values()
+        )
 
-        self._start_steps()
-        self._refresh_statuses()
+    def update(self) -> None:
+        while True:
+            self._updates += 1
+            self._start_steps()
+            self._refresh_statuses()
+            self._update_shutdown_status()
+            time.sleep(0.1)
+            if (self._updates % 100) == 0:
+                self.print_status()
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
@@ -395,4 +407,6 @@ class DragonBackend:
     # pylint: disable-next=no-self-use,unused-argument
     def _(self, request: DragonShutdownRequest) -> DragonShutdownResponse:
         self._shutdown_requested = True
+        self._update_shutdown_status()
+        self._can_shutdown |= request.immediate
         return DragonShutdownResponse()

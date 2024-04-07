@@ -40,7 +40,7 @@ from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
 from smartsim._core.utils.network import get_best_interface_and_address
-from smartsim.log import get_logger
+from smartsim.log import ContextThread, get_logger
 
 logger = get_logger("Dragon Server")
 
@@ -97,6 +97,11 @@ def run(
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
+    backend_updater = ContextThread(
+        name="JobManager", daemon=True, target=dragon_backend.update
+    )
+    backend_updater.start()
+
     server = dragonSockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")
@@ -105,9 +110,11 @@ def run(
             req = server.recv()
             logger.debug(f"Received {type(req).__name__} {req}")
         except zmq.Again:
-            # dragon_backend.print_status()
-            dragon_backend.update()
-            continue
+            if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+                logger.debug(f"Listening to {dragon_head_address}")
+                continue
+            logger.info("Shutdown has been requested")
+            break
 
         resp = dragon_backend.process_request(req)
 
@@ -117,13 +124,16 @@ def run(
         except zmq.Again:
             logger.error("Could not send response back to launcher.")
 
-        dragon_backend.update()
-        dragon_backend.print_status()
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
         else:
             logger.info("Shutdown has been requested")
             break
+
+    try:
+        del backend_updater
+    except Exception:
+        logger.debug("Could not delete backend updater thread")
 
 
 def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:

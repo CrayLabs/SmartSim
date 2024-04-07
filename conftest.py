@@ -45,6 +45,7 @@ import pytest
 
 import smartsim
 from smartsim import Experiment
+from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
 from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
@@ -152,7 +153,7 @@ def pytest_sessionfinish(
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
-    if exitstatus == 0:
+    if False and exitstatus == 0:
         cleanup_attempts = 5
         while cleanup_attempts > 0:
             try:
@@ -780,16 +781,10 @@ def global_dragon_teardown() -> None:
     """
     if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
         return
-    exp_path = os.path.join(test_output_root, "dragon_teardown")
-    os.makedirs(exp_path, exist_ok=True)
-    exp: Experiment = Experiment("dragon_shutdown", exp_path=exp_path, launcher=test_launcher)
-    rs = exp.create_run_settings("sleep", ["0.1"])
-    model = exp.create_model("dummy", run_settings=rs)
-    exp.generate(model, overwrite=True)
-    exp.start(model, block=True)
-
-    launcher: DragonLauncher = exp._control._launcher
-    launcher.cleanup()
+    logger.debug(f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}")
+    dragon_connector = DragonConnector()
+    dragon_connector.ensure_connected()
+    dragon_connector.cleanup()
     time.sleep(5)
 
 

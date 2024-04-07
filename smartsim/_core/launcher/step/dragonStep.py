@@ -157,7 +157,7 @@ class DragonBatchStep(Step):
             f"{sys.executable}",
             "-m",
             "smartsim._core.entrypoints.dragon_client",
-            "--submit",
+            "+submit",
             f"{request_file}",
             "\n",
         ]
@@ -215,6 +215,10 @@ class DragonBatchStep(Step):
             for opt in self.batch_settings.format_batch_args():
                 script_file.write(f"#SBATCH {opt}\n")
 
+            script_file.write(
+                f"#SBATCH --export=ALL,SMARTSIM_DRAGON_SERVER_PATH={self.cwd}\n"
+            )
+
             for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")
 
@@ -240,6 +244,8 @@ class DragonBatchStep(Step):
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():
                 script_file.write(f"#PBS {opt}\n")
+
+            script_file.write(f"#PBS -v SMARTSIM_DRAGON_SERVER_PATH={self.cwd}\n")
 
             for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")

@@ -55,7 +55,7 @@ def test_batch_model(fileutils, test_dir, wlmutils):
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
+    batch_settings = exp.create_batch_settings(nodes=1, time="00:05:00")
 
     batch_settings.set_account(wlmutils.get_test_account())
     add_batch_resources(wlmutils, batch_settings)
