@@ -62,15 +62,26 @@ def test_stop_entity(fileutils, test_dir, wlmutils):
 def test_stop_entity_list(fileutils, test_dir, wlmutils):
     exp_name = "test-launch-stop-ensemble"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    timeout = 60
 
     script = fileutils.get_test_conf_path("sleep.py")
-    settings = exp.create_run_settings("python", f"{script} --time=10")
+    settings = exp.create_run_settings("python", f"{script} --time={timeout}")
     settings.set_tasks(1)
 
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
 
     exp.start(ensemble, block=False)
-    time.sleep(5)
+
+    for _ in range(timeout):
+        if not all(stat == SmartSimStatus.STATUS_RUNNING for stat in exp.get_status(ensemble)):
+            break
+        time.sleep(1)
+    else:
+        assert False, (
+            "Ensemble members never all had a status of "
+            f"{SmartSimStatus.STATUS_RUNNING}"
+        )
+
     exp.stop(ensemble)
     statuses = exp.get_status(ensemble)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
