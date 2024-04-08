@@ -183,3 +183,43 @@ def test_signal_handler_calls_functions_in_reverse_order(mock_signal):
     helpers.SignalInterceptionStack.get(signal.NSIG).push(handler_2)
     mock_signal.signal_handlers[signal.NSIG](signal.NSIG, None)
     assert called_list == ["handler_2", "handler_1", "default"]
+
+
+@pytest.mark.parametrize(
+    "iterable, key, expected",
+    (
+        pytest.param("AABCCCCCDDBBACCEFFFFF", None, "ABCDEF", id="strs"),
+        pytest.param([2, 3, 2, 3, 1], None, (2, 3, 1), id="ints"),
+        pytest.param("BaAAAbbCbBcBBa", str.lower, "BaC", id="with key"),
+    ),
+)
+def test_unique_iter(iterable, key, expected):
+    assert tuple(expected) == tuple(helpers.unique(iterable, key))
+
+
+@pytest.mark.parametrize(
+    "fn, iterable, expected",
+    (
+        pytest.param(
+            lambda n: "odd" if n & 1 else "even",
+            range(10),
+            {"even": (0, 2, 4, 6, 8), "odd": (1, 3, 5, 7, 9)},
+            id="ints by even/odd",
+        ),
+        pytest.param(
+            lambda c: c,
+            "AABbcCddA",
+            {
+                "A": ("A", "A", "A"),
+                "B": ("B",),
+                "b": ("b",),
+                "C": ("C",),
+                "c": ("c",),
+                "d": ("d", "d"),
+            },
+            id="chars by occurrence",
+        ),
+    ),
+)
+def test_group_by_map(fn, iterable, expected):
+    assert expected == helpers.group_by_map(fn, iterable)

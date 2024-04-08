@@ -28,7 +28,9 @@
 A file of helper functions for SmartSim
 """
 import base64
+import collections
 import collections.abc
+import itertools
 import os
 import signal
 import typing as t
@@ -43,8 +45,9 @@ from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBacke
 if t.TYPE_CHECKING:
     from types import FrameType
 
-
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
+_T = t.TypeVar("_T")
+_THashable = t.TypeVar("_THashable", bound=collections.abc.Hashable)
 
 
 def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
@@ -386,3 +389,41 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         if did_push := fn not in self:
             self.push(fn)
         return did_push
+
+
+@t.overload
+def unique(
+    iterable: t.Iterable[_T], key: t.Callable[[_T], collections.abc.Hashable]
+) -> t.Iterable[_T]: ...
+@t.overload
+def unique(
+    iterable: t.Iterable[_THashable], key: None = ...
+) -> t.Iterable[_THashable]: ...
+def unique(
+    iterable: t.Iterable[_T],
+    key: t.Optional[t.Callable[[_T], collections.abc.Hashable]] = None,
+) -> t.Iterable[_T]:
+    return _unique(iterable, key if key is not None else lambda x: x)
+
+
+def _unique(
+    iterable: t.Iterable[_T], key: t.Callable[[_T], collections.abc.Hashable]
+) -> t.Iterable[_T]:
+    seen: t.Set[collections.abc.Hashable] = set()
+
+    def _not_seen(item: _T) -> bool:
+        look_up_val = key(item)
+        if not_seen := look_up_val not in seen:
+            seen.add(look_up_val)
+        return not_seen
+
+    return (item for item in iterable if _not_seen(item))
+
+
+def group_by_map(
+    fn: t.Callable[[_T], _THashable], iterable: t.Iterable[_T]
+) -> t.Mapping[_THashable, t.Sequence[_T]]:
+    mapping: t.Mapping[_THashable, t.List[_T]] = collections.defaultdict(list)
+    for key, vals in itertools.groupby(iterable, fn):
+        mapping[key].extend(vals)
+    return dict((key, tuple(vals)) for key, vals in mapping.items())
