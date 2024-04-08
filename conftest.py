@@ -153,7 +153,7 @@ def pytest_sessionfinish(
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
-    if False and exitstatus == 0:
+    if exitstatus == 0:
         cleanup_attempts = 5
         while cleanup_attempts > 0:
             try:

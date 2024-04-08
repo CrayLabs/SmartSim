@@ -125,7 +125,7 @@ class DragonBackend:
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
         self._can_shutdown = False
-        self._frontend_shutdown = None
+        self._frontend_shutdown: t.Optional[bool] = None
         self._updates = 0
         print(f"{host_string} available for execution: {self._hosts}")
 
