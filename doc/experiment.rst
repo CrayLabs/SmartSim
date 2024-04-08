@@ -214,19 +214,20 @@ Visit the respective links for more information on each topic.
 ==============
 File Structure
 ==============
-When you execute an ``Experiment`` script, it generates output folders in your system's directory.
-By default, SmartSim creates a predefined file structure and assigns a path to each entity initialized. However, you have the
-flexibility to customize this according to your workflow needs. Please refer to the respective
-:ref:`default<default_folder>` and :ref:`configure<config_folder>` sections below for detailed file structure instructions.
+When a user executes an ``Experiment`` script, it generates output folders in the system's directory.
+By default, SmartSim creates a predefined file structure and assigns a path to each entity initialized.
+However, users have the flexibility to customize this according to workflow needs. Please refer
+to the respective :ref:`default<default_folder>` and :ref:`configure<config_folder>` sections below
+for more details.
 
 .. _default_folder:
 
 Default
 =======
-By default, when you execute the driver script in SmartSim, an ``Experiment`` folder is created
-in your current working directory, using the `name` specified for the ``Experiment``. Each entity
-initiated by the ``Experiment`` generates an output folder under the ``Experiment`` directory, named
-after the entity.
+By default, an ``Experiment`` folder is created in your current working directory, using the
+specified `name` parameter during ``Experiment`` initialization. Each entity created by the
+``Experiment`` generates an output folder under the ``Experiment`` directory, named after the
+entity. These folders hold `.err` and `.out` files, containing execution-related information.
 
 For instance, consider the following Python script:
 
@@ -267,9 +268,10 @@ working directory:
 
 Configure
 =========
-Customizing the path for ``Experiment`` folder generation and entity execution is possible by
-specifying the `path` argument during initialization. This allows you to define either an
-absolute or relative `path` depending to your requirements.
+Customizing the path of the ``Experiment`` and entity folders is possible by providing
+either an absolute or relative path to the `path` argument during initialization. When
+a relative path is provided, SmartSim executes the entity relative to the current working
+directory.
 
 For instance, consider the following Python script:
 
