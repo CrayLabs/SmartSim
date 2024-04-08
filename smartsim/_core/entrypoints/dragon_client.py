@@ -32,10 +32,11 @@ import sys
 import time
 import typing as t
 
-import psutil
+import zmq
 
 from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
 from smartsim._core.schemas import (
+    DragonHandshakeRequest,
     DragonRequest,
     DragonShutdownRequest,
     request_registry,
@@ -61,7 +62,7 @@ def main(args: argparse.Namespace) -> int:
     for req_str in req_strings:
         requests.append(request_registry.from_string(req_str))
 
-    requests.append(DragonShutdownRequest(immediate=False))
+    requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=False))
 
     connector = DragonConnector()
 
@@ -81,11 +82,14 @@ def main(args: argparse.Namespace) -> int:
 
     while True:
         # pylint: disable-next=protected-access
-        if psutil.pid_exists(connector._dragon_head_pid):
+        try:
             time.sleep(1)
-        else:
+            connector.send_request(DragonHandshakeRequest())
+        except zmq.error.Again:
+            print("Could not reach server, assuming backend has shut down")
             break
 
+    print("Server has finished.")
     return 0
 
 

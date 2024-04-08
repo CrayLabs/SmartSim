@@ -87,3 +87,6 @@ class DragonShutdownRequest(DragonRequest):
     # setting this to False means that the server will
     # shut down when all jobs are terminated.
     immediate: bool = True
+    # Whether the frontend will have to shut down
+    # or wait for external termination
+    frontend_shutdown: bool = True

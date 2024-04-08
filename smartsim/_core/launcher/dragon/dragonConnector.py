@@ -342,7 +342,7 @@ def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -
     finally:
         time.sleep(5)
         try:
-            os.kill(server_process_pid, signal.SIGKILL)
+            os.kill(server_process_pid, signal.SIGTERM)
             print("Sent SIGINT to dragon server")
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed

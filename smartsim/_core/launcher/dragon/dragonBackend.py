@@ -125,6 +125,7 @@ class DragonBackend:
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
         self._can_shutdown = False
+        self._frontend_shutdown = None
         self._updates = 0
         print(f"{host_string} available for execution: {self._hosts}")
 
@@ -137,6 +138,10 @@ class DragonBackend:
         print(f"| {self._updates}: Group infos: ", self._group_infos)
         print(f"| {self._updates}: There are {len(self._queued_steps)} queued steps")
         print("-------------------------------------------------------------\n")
+
+    @property
+    def frontend_shutdown(self) -> bool:
+        return bool(self._frontend_shutdown)
 
     @property
     def should_shutdown(self) -> bool:
@@ -409,4 +414,5 @@ class DragonBackend:
         self._shutdown_requested = True
         self._update_shutdown_status()
         self._can_shutdown |= request.immediate
+        self._frontend_shutdown = request.frontend_shutdown
         return DragonShutdownResponse()

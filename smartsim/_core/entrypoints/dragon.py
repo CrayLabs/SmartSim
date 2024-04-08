@@ -31,6 +31,7 @@ import signal
 import socket
 import sys
 import textwrap
+import time
 import typing as t
 from types import FrameType
 
@@ -127,13 +128,19 @@ def run(
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
         else:
-            logger.info("Shutdown has been requested")
+            logger.info("Backend shutdown has been requested")
             break
 
     try:
         del backend_updater
     except Exception:
         logger.debug("Could not delete backend updater thread")
+
+    if not dragon_backend.frontend_shutdown:
+        logger.info("Frontend will have to be shut down externally")
+        while True:
+            time.sleep(1)
+            logger.info("Waiting for external shutdown")
 
 
 def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
@@ -174,6 +181,7 @@ def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
             return os.EX_SOFTWARE
 
     logger.info("Shutting down! Bye bye!")
+
     return 0
 
 

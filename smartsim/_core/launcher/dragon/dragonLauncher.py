@@ -187,12 +187,10 @@ class DragonLauncher(WLMLauncher):
         step_id = str(stepmap.step_id)
 
         if step_id.startswith("SLURM-"):
-            return self._slurm_launcher.stop(
-                DragonLauncher._unprefix_step_id(step_name)
-            )
+            return self._slurm_launcher.stop(step_name)
 
         if step_id.startswith("PBS-"):
-            return self._pbs_launcher.stop(DragonLauncher._unprefix_step_id(step_name))
+            return self._pbs_launcher.stop(step_name)
 
         _assert_schema_type(
             self._connector.send_request(DragonStopRequest(step_id=step_id)),
