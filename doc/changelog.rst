@@ -39,8 +39,8 @@ Description
 Detailed Notes
 
 - The dashboard needs to display historical logs, so log files are written
-  out under the .smartsim directory and symlinked to the files in the 
-  experiment directory. (SmartSim-PR532_)
+  out under the .smartsim directory and files under the experiment
+  directory are symlinked to them. (SmartSim-PR532_)
 - Add an option to smart build "--torch_with_mkl"/"--no_torch_with_mkl" to
   prevent Torch from trying to link in the Intel Math Kernel Library. This
   is needed because on machines that have the Intel compilers installed, the
