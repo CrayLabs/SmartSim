@@ -1113,7 +1113,7 @@ def test_proxy_launch_cmd_decorator_errors_if_attempt_to_proxy_a_managed_step(
     mock_step, monkeypatch
 ):
     monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, True)
-    mock_step.managed = True
+    type(mock_step).managed = property(lambda self: True)
     get_launch_cmd = proxyable_launch_cmd(lambda step: ["some", "cmd", "list"])
     with pytest.raises(UnproxyableStepError):
         get_launch_cmd(mock_step)

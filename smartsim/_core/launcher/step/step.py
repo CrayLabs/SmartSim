@@ -54,11 +54,17 @@ class Step:
         self, name: "_entity_types.EntityName", cwd: str, step_settings: SettingsBase
     ) -> None:
         self.name: t.Final = self._create_unique_name(name)
-        self.entity_name = name
-        self.cwd = cwd
-        self.managed = False
+        self.entity_name: t.Final = name
+        self.cwd: t.Final = cwd
         self.step_settings = step_settings
-        self.meta: t.Dict[str, str] = {}
+        self.meta: t.Final[t.Dict[str, str]] = {}
+
+    @property
+    def managed(cls) -> bool:
+        # XXX: keeping this as an instance attr for now, this is really more
+        #      a class property than an instance propery. Even better would
+        #      be to have different classes for managed and unmanaged steps
+        return False
 
     @property
     def env(self) -> t.Optional[t.Dict[str, str]]:

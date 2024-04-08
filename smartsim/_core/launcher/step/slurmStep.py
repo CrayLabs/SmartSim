@@ -55,8 +55,11 @@ class SbatchStep(Step):
         """
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
-        self.managed = True
         self.batch_settings = batch_settings
+
+    @property
+    def managed(self) -> bool:
+        return True
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -123,10 +126,13 @@ class SrunStep(Step):
         """
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
-        self.managed = True
         self.run_settings = run_settings
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    @property
+    def managed(self) -> bool:
+        return True
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
