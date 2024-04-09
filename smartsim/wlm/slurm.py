@@ -31,7 +31,6 @@ from shutil import which
 from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
-from .._core.utils.helpers import init_default
 from ..error import (
     AllocationError,
     LauncherError,
@@ -84,7 +83,9 @@ def get_allocation(
             "Attempted slurm function without access to slurm(salloc) at the call site"
         )
 
-    options = init_default({}, options, dict)
+    options = options or {}
+    if not isinstance(options, dict):
+        raise TypeError
 
     salloc_args = _get_alloc_cmd(nodes, time, account, options=options)
     debug_msg = " ".join(salloc_args[1:])

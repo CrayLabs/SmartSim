@@ -36,7 +36,6 @@ from smartsim.error.errors import SSUnsupportedError
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest
-from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import (
     Ensemble,
@@ -160,7 +159,8 @@ class Experiment:
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
+        else:
+            self.exp_path = osp.join(getcwd(), name)
 
         if launcher == "auto":
             launcher = detect_launcher()
@@ -495,7 +495,9 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        check_path = init_default(osp.join(self.exp_path, name), path, str)
+        check_path = path or osp.join(self.exp_path, name)
+        if not isinstance(check_path, str):
+            raise TypeError
         entity_path: str = osp.abspath(check_path)
 
         try:
@@ -612,7 +614,9 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        check_path = init_default(osp.join(self.exp_path, name), path, str)
+        check_path = path or osp.join(self.exp_path, name)
+        if not isinstance(check_path, str):
+            raise TypeError
         entity_path: str = osp.abspath(check_path)
         if params is None:
             params = {}
@@ -826,7 +830,9 @@ class Experiment:
         """
 
         self.append_to_db_identifier_list(db_identifier)
-        check_path = init_default(osp.join(self.exp_path, db_identifier), path, str)
+        check_path = path or osp.join(self.exp_path, db_identifier)
+        if not isinstance(check_path, str):
+            raise TypeError
         entity_path: str = osp.abspath(check_path)
         return Orchestrator(
             port=port,

@@ -32,7 +32,6 @@ from os import getcwd
 from tabulate import tabulate
 
 from .._core._install.builder import Device
-from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
     SmartSimError,
@@ -98,11 +97,11 @@ class Ensemble(EntityList[Model]):
         :return: ``Ensemble`` instance
         :rtype: ``Ensemble``
         """
-        self.params = init_default({}, params, dict)
-        self.params_as_args = init_default({}, params_as_args, (list, str))
+        self.params = params or {}
+        self.params_as_args = params_as_args or []
         self._key_prefixing_enabled = True
-        self.batch_settings = init_default({}, batch_settings, BatchSettings)
-        self.run_settings = init_default({}, run_settings, RunSettings)
+        self.batch_settings = batch_settings
+        self.run_settings = run_settings
 
         super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
 

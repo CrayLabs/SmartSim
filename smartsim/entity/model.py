@@ -35,7 +35,7 @@ from os import getcwd
 from os import path as osp
 
 from .._core._install.builder import Device
-from .._core.utils.helpers import cat_arg_and_value, init_default
+from .._core.utils.helpers import cat_arg_and_value
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
@@ -164,9 +164,15 @@ class Model(SmartSimEntity):
         :param to_configure: input files with tagged parameters, defaults to []
         :type to_configure: list, optional
         """
-        to_copy = init_default([], to_copy, (list, str))
-        to_symlink = init_default([], to_symlink, (list, str))
-        to_configure = init_default([], to_configure, (list, str))
+        to_copy = to_copy or []
+        if not isinstance(to_copy, (list, str)):
+            raise TypeError
+        to_symlink = to_symlink or []
+        if not isinstance(to_symlink, (list, str)):
+            raise TypeError
+        to_configure = to_configure or []
+        if not isinstance(to_configure, (list, str)):
+            raise TypeError
 
         # Check that no file collides with the parameter file written
         # by Generator. We check the basename, even though it is more
