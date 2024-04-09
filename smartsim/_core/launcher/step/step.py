@@ -68,7 +68,8 @@ class Step:
         return step_name
 
     @staticmethod
-    def ensure_output_directory_exists(output_dir: str) -> None:
+    def _ensure_output_directory_exists(output_dir: str) -> None:
+        """Create the directory for the step output if it doesn't exist already"""
         if not osp.exists(output_dir):
             pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
@@ -78,7 +79,7 @@ class Step:
             output_dir = self.meta["status_dir"]
         except KeyError as exc:
             raise KeyError("Status directory for this step has not been set.") from exc
-        self.ensure_output_directory_exists(output_dir)
+        self._ensure_output_directory_exists(output_dir)
         output = osp.join(output_dir, f"{self.entity_name}.out")
         error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
