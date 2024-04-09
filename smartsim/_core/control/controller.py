@@ -43,7 +43,11 @@ from smartredis import Client, ConfigOptions
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
-from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
+from ..._core.utils.helpers import (
+    SignalInterceptionStack,
+    unpack_colo_db_identifier,
+    unpack_db_identifier,
+)
 from ..._core.utils.redis import (
     db_is_active,
     set_ml_model,
@@ -71,6 +75,8 @@ from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:
+    from types import FrameType
+
     from ..utils.serialize import TStepLaunchMetaData
 
 
@@ -113,8 +119,11 @@ class Controller:
         execution of all jobs.
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
+
         # register custom signal handler for ^C (SIGINT)
-        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        SignalInterceptionStack.get(signal.SIGINT).push_unique(
+            self._jobs.signal_interrupt
+        )
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
@@ -132,7 +141,7 @@ class Controller:
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
-            # it may be called seperately
+            # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
