@@ -169,6 +169,7 @@ def test_get_output_files_no_status_dir(test_dir):
 )
 def test_symlink(test_dir, entity):
     """Test symlinking historical output files"""
+    entity.path = test_dir
     if entity.type == Ensemble:
         for member in ens.models:
             symlink_with_create_job_step(test_dir, member)
@@ -179,6 +180,7 @@ def test_symlink(test_dir, entity):
 def symlink_with_create_job_step(test_dir, entity):
     """Function that helps cut down on repeated testing code"""
     exp_dir = pathlib.Path(test_dir)
+    entity.path = test_dir
     status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
     step = controller._create_job_step(entity, status_dir)
     controller.symlink_output_files(step, entity)
@@ -199,6 +201,7 @@ def symlink_with_create_job_step(test_dir, entity):
 def test_batch_symlink(entity, test_dir):
     """Test symlinking historical output files"""
     exp_dir = pathlib.Path(test_dir)
+    entity.path = test_dir
     status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
     batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
     for step in substeps:
