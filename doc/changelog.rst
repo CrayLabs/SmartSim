@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Drop Python 3.8 support.
 - Historical output files stored under .smartsim directory
 - Add option to build Torch backend without the Intel Math Kernel Library
 - Fix ReadTheDocs build issue
@@ -38,6 +39,8 @@ Description
 
 Detailed Notes
 
+- Python 3.8 is reaching its end-of-life in October, 2024, so it will
+  no longer continue to be supported. (SmartSim-PR544_) 
 - The dashboard needs to display historical logs, so log files are written
   out under the .smartsim directory and files under the experiment
   directory are symlinked to them. (SmartSim-PR532_)
@@ -93,6 +96,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
 .. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
 .. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
 .. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537
