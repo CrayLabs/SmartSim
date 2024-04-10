@@ -170,6 +170,10 @@ class DragonConnector:
 
             cmd = [
                 "dragon",
+                "-t",
+                CONFIG.dragon_transport,
+                "-l",
+                CONFIG.dragon_log_level,
                 sys.executable,
                 "-m",
                 "smartsim._core.entrypoints.dragon",

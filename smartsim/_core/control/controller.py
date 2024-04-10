@@ -806,7 +806,7 @@ class Controller:
             try:
                 for db_job, step in job_steps:
                     self._jobs.db_jobs[db_job.ename] = db_job
-                    self._launcher.step_mapping[db_job.name] = step
+                    self._launcher.add_step_to_mapping_table(db_job.name, step)
                     if step.task_id:
                         self._launcher.task_manager.add_existing(int(step.task_id))
             except LauncherError as e:

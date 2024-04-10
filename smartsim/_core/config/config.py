@@ -147,11 +147,11 @@ class Config:
 
     @property
     def database_file_parse_trials(self) -> int:
-        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_TRIALS", "10"))
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_TRIALS", "100"))
 
     @property
     def database_file_parse_interval(self) -> int:
-        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "5"))
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:
@@ -171,6 +171,14 @@ class Config:
     @property
     def dragon_server_startup_timeout(self) -> int:
         return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", "-1"))
+
+    @property
+    def dragon_transport(self) -> str:
+        return os.getenv("SMARTSIM_DRAGON_TRANSPORT", "hsta")
+
+    @property
+    def dragon_log_level(self) -> str:
+        return os.getenv("SMARTSIM_DRAGON_LOG_LEVEL", "INFO")
 
     @property
     def log_level(self) -> str:

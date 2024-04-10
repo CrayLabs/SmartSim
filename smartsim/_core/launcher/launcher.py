@@ -27,6 +27,7 @@
 import abc
 import typing as t
 
+from ..._core.launcher.stepMapping import StepMap
 from ...error import AllocationError, LauncherError, SSUnsupportedError
 from ...settings import SettingsBase
 from .step import Step
@@ -69,6 +70,10 @@ class Launcher(abc.ABC):  # pragma: no cover
     def stop(self, step_name: str) -> StepInfo:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap):
+        raise NotImplementedError
+
 
 class WLMLauncher(Launcher):  # cov-wlm
     """The base class for any Launcher that utilizes workload
@@ -85,6 +90,9 @@ class WLMLauncher(Launcher):  # cov-wlm
     @abc.abstractmethod
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         raise NotImplementedError
+
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap):
+        self.step_mapping[name] = step_map
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)

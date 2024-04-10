@@ -29,6 +29,7 @@ from __future__ import annotations
 import os
 import typing as t
 
+from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
@@ -91,6 +92,24 @@ class DragonLauncher(WLMLauncher):
             QsubBatchSettings: DragonBatchStep,
             RunSettings: DragonStep,
         }
+
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap):
+        super().add_step_to_mapping_table(name, step_map)
+
+        if step_map.step_id.startswith("SLURM-"):
+            slurm_step_map = StepMap(
+                step_id=DragonLauncher._unprefix_step_id(step_map.step_id),
+                task_id=step_map.task_id,
+                managed=step_map.managed,
+            )
+            self._slurm_launcher.add_step_to_mapping_table(name, slurm_step_map)
+        elif step_map.step_id.startswith("PBS-"):
+            pbs_step_map = StepMap(
+                step_id=DragonLauncher._unprefix_step_id(step_map.step_id),
+                task_id=step_map.task_id,
+                managed=step_map.managed,
+            )
+            self._pbs_launcher.add_step_to_mapping_table(name, pbs_step_map)
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
