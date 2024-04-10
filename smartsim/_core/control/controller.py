@@ -570,7 +570,8 @@ class Controller:
                     else:
                         # surface SSInternalError as we have no way to recover
                         raise
-        self._save_orchestrator(orchestrator)
+        # XXX: This needs to be put back if we want to reload an orc
+        # self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(

@@ -37,6 +37,7 @@ from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import ContextThread, get_logger
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
+from ..utils import helpers as _helpers
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
@@ -179,9 +180,10 @@ class JobManager:
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
-        launcher = str(self._launcher)
+        # XXX: rm this!!
+        assert self._launcher is not None
         # all operations here should be atomic
-        job = Job(job_name, job_id, entity, launcher, is_task)
+        job = Job(job_name, job_id, entity, self._launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
         elif isinstance(entity, JobEntity) and entity.is_db:
@@ -208,25 +210,7 @@ class JobManager:
         through one call to the launcher.
         """
         with self._lock:
-            jobs = self.get_active_jobs().values()
-            job_name_map = {job.name: job.ename for job in jobs}
-
-            # returns (job step name, StepInfo) tuples
-            if self._launcher:
-                step_names = list(job_name_map.keys())
-                statuses = self._launcher.get_step_update(step_names)
-                for job_name, status in statuses:
-                    job = self[job_name_map[job_name]]
-
-                    if status:
-                        # uses abstract step interface
-                        job.set_status(
-                            status.status,
-                            status.launcher_status,
-                            status.returncode,
-                            error=status.error,
-                            output=status.output,
-                        )
+            Job.refresh_all(self.get_active_jobs().values())
 
     def get_status(
         self,
@@ -343,9 +327,7 @@ class JobManager:
             logger.warning("Received SIGINT with no signal number")
         if self.actively_monitoring and len(self.get_active_jobs()) > 0:
             if self.kill_on_interrupt:
-                for job in self.get_active_jobs().values():
-                    if job.status not in TERMINAL_STATUSES and self._launcher:
-                        self._launcher.stop(job.name)
+                Job.stop_all(self.get_active_jobs().values())
             else:
                 logger.warning("SmartSim process interrupted before resource cleanup")
                 logger.warning("You may need to manually stop the following:")

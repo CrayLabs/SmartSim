@@ -30,9 +30,14 @@ import typing as t
 from dataclasses import dataclass
 
 from ..._core import types as _core_types
+from ..._core.utils import helpers as _helpers
 from ...entity import EntitySequence, SmartSimEntity
 from ...entity import types as _entity_types
-from ...status import SmartSimStatus
+from ...status import TERMINAL_STATUSES, SmartSimStatus
+
+if t.TYPE_CHECKING:
+    from smartsim._core.launcher.launcher import Launcher
+    from smartsim._core.launcher.stepInfo import StepInfo
 
 
 @dataclass(frozen=True)
@@ -197,7 +202,7 @@ class Job:
         job_name: _core_types.StepName,
         job_id: _core_types.JobIdType,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
-        launcher: str,
+        launcher: "Launcher",
         is_task: bool,
     ) -> None:
         """Initialize a Job.
@@ -224,7 +229,7 @@ class Job:
         self.output: t.Optional[str] = None
         self.error: t.Optional[str] = None  # same as output
         self.hosts: t.List[str] = []  # currently only used for DB jobs
-        self.launched_with = launcher
+        self._launcher = launcher
         self.is_task = is_task
         self.start_time = time.time()
         self.history = History()
@@ -233,6 +238,48 @@ class Job:
     def ename(self) -> _entity_types.EntityName:
         """Return the name of the entity this job was created from"""
         return self.entity.name
+
+    @property
+    def launched_with(self) -> str:
+        return str(self._launcher)
+
+    def _get_update_callback(self) -> t.Callable[
+        [t.List[_core_types.StepName]],
+        t.List[t.Tuple[_core_types.StepName, t.Union["StepInfo", None]]],
+    ]:
+        return self._launcher.get_step_update
+
+
+    def _get_stop_callback(self) -> t.Callable[[_core_types.StepName], "StepInfo"]:
+        return self._launcher.stop
+
+    @classmethod
+    def refresh_all(cls, jobs: t.Iterable["Job"]) -> None:
+        jobs = _helpers.unique(jobs)
+        to_update = _helpers.group_by_map(cls._get_update_callback, jobs)
+        for update, stale_jobs in to_update.items():
+            name_to_status = dict(
+                update(list(_helpers.unique(job.name for job in stale_jobs)))
+            )
+            for job in stale_jobs:
+                status = name_to_status[job.name]
+                if status:
+                    job.set_status(
+                        status.status,
+                        status.launcher_status,
+                        status.returncode,
+                        error=status.error,
+                        output=status.output,
+                    )
+
+    @classmethod
+    def stop_all(cls, jobs: t.Iterable["Job"]) -> None:
+        jobs = _helpers.unique(jobs)
+        active = (job for job in jobs if job.status not in TERMINAL_STATUSES)
+        to_kill = _helpers.group_by_map(cls._get_stop_callback, active)
+        for kill, jobs_ in to_kill.items():
+            for job_name in _helpers.unique(job.name for job in jobs_):
+                kill(job.name)
 
     def set_status(
         self,
