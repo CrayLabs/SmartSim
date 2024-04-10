@@ -40,7 +40,9 @@ Description
 Detailed Notes
 
 - The default path for an entity is now the path to the experiment / the
-  entity name. (SmartSim-PR533_)
+  entity name. create_database and create_ensemble now have path arguments.
+  All path arguments are compatible with relative paths. Relative paths are
+  relative to the CWD. (SmartSim-PR533_)
 - The dashboard needs to display historical logs, so log files are written
   out under the .smartsim directory and files under the experiment
   directory are symlinked to them. (SmartSim-PR532_)
