@@ -160,7 +160,9 @@ class Experiment:
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
         else:
-            self.exp_path = osp.join(getcwd(), name)
+            exp_path = osp.join(getcwd(), name)
+
+        self.exp_path = exp_path
 
         if launcher == "auto":
             launcher = detect_launcher()
