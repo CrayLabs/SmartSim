@@ -238,7 +238,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         :param event: event representing file/directory modification.
         :type event: FileSystemEvent"""
-        super().on_modified(event)  # type: ignore
+        super().on_modified(event)
         logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
@@ -247,7 +247,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         :param event: event representing file/directory creation.
         :type event: FileSystemEvent"""
-        super().on_created(event)  # type: ignore
+        super().on_created(event)
         logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
@@ -554,7 +554,7 @@ class TelemetryMonitor:
         frequency_ms = int(self._args.frequency * 1000)
 
         # Create event handlers to trigger when target files are changed
-        log_handler = LoggingEventHandler(logger)  # type: ignore
+        log_handler = LoggingEventHandler(logger)
         self._action_handler = ManifestEventHandler(
             str(MANIFEST_FILENAME),
             timeout_ms=frequency_ms,
