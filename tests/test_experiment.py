@@ -69,6 +69,14 @@ def test_model_no_name():
         _ = exp.create_model(name=None, run_settings=RunSettings("python"))
 
 
+def test_model_no_name():
+    exp = Experiment("test_ensemble_no_name")
+    with pytest.raises(AttributeError):
+        _ = exp.create_ensemble(
+            name=None, run_settings=RunSettings("python"), replicas=2
+        )
+
+
 def test_bad_exp_path() -> None:
     with pytest.raises(NotADirectoryError):
         exp = Experiment("test", "not-a-directory")

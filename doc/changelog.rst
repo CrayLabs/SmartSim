@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Change default path for entities
+- Historical output files stored under .smartsim directory
 - Add option to build Torch backend without the Intel Math Kernel Library
 - Fix ReadTheDocs build issue
 - Promote device options to an Enum
@@ -40,6 +41,9 @@ Detailed Notes
 
 - The default path for an entity is now the path to the experiment / the
   entity name. (SmartSim-PR533_)
+- The dashboard needs to display historical logs, so log files are written
+  out under the .smartsim directory and files under the experiment
+  directory are symlinked to them. (SmartSim-PR532_)
 - Add an option to smart build "--torch_with_mkl"/"--no_torch_with_mkl" to
   prevent Torch from trying to link in the Intel Math Kernel Library. This
   is needed because on machines that have the Intel compilers installed, the
@@ -94,6 +98,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
+.. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
 .. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
 .. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537
 .. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
