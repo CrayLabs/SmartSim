@@ -18,7 +18,7 @@ To be released at some future point in time
 
 Description
 
-- Drop Python 3.8 support.
+- Drop Python 3.8 support
 - Historical output files stored under .smartsim directory
 - Add option to build Torch backend without the Intel Math Kernel Library
 - Fix ReadTheDocs build issue
