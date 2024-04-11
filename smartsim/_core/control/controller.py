@@ -33,6 +33,7 @@ import pickle
 import signal
 import subprocess
 import sys
+import textwrap
 import threading
 import time
 import typing as t
@@ -95,14 +96,33 @@ class Controller:
     underlying workload manager or run framework.
     """
 
+    # XXX: Ideally this map should not exist. A controller requires a launcher,
+    #      so a launcher instance should just be passed in as part of
+    #      construction...
+    _LAUNCHER_MAP: t.Dict[str, t.Type[Launcher]] = {
+        "slurm": SlurmLauncher,
+        "pbs": PBSLauncher,
+        "pals": PBSLauncher,
+        "lsf": LSFLauncher,
+        "local": LocalLauncher,
+    }
+
     def __init__(self, launcher: str = "local") -> None:
         """Initialize a Controller
 
         :param launcher: the type of launcher being used
         :type launcher: str
         """
-        self._jobs = JobManager(JM_LOCK)
-        self.init_launcher(launcher)
+        launcher = launcher.lower()
+        try:
+            self._launcher = type(self)._LAUNCHER_MAP[launcher]()
+        except KeyError:
+            msg = f"Launcher type not supported: {launcher}"
+            raise SSUnsupportedError(msg) from None
+        jm_interval = (
+            CONFIG.jm_interval if isinstance(self._launcher, LocalLauncher) else 2
+        )
+        self._jobs = JobManager(JM_LOCK, poll_status_interval=jm_interval)
         self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
 
     def start(
@@ -214,24 +234,11 @@ class Controller:
         :param entity: entity to be stopped
         :type entity: Entity | EntitySequence
         """
-        with JM_LOCK:
-            job = self._jobs[entity.name]
-            if job.status not in TERMINAL_STATUSES:
-                logger.info(
-                    " ".join(
-                        ("Stopping model", entity.name, "with job name", str(job.name))
-                    )
-                )
-                status = self._launcher.stop(job.name)
-
-                job.set_status(
-                    status.status,
-                    status.launcher_status,
-                    status.returncode,
-                    error=status.error,
-                    output=status.output,
-                )
-                self._jobs.move_to_completed(job)
+        job = self._jobs[entity.name]
+        if job.status not in TERMINAL_STATUSES:
+            logger.info(f"Stopping entity {entity.name} with job name {job.name}")
+            Job.stop_all((job,))
+            self._jobs.move_to_completed(job)
 
     def stop_db(self, db: Orchestrator) -> None:
         """Stop an orchestrator
@@ -325,36 +332,6 @@ class Controller:
         for entity in entity_list.entities:
             statuses.append(self.get_entity_status(entity))
         return statuses
-
-    def init_launcher(self, launcher: str) -> None:
-        """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), lsf,
-        and local launching
-
-        :param launcher: which launcher to initialize
-        :type launcher: str
-        :raises SSUnsupportedError: if a string is passed that is not
-                                    a supported launcher
-        :raises TypeError: if no launcher argument is provided.
-        """
-        launcher_map: t.Dict[str, t.Type[Launcher]] = {
-            "slurm": SlurmLauncher,
-            "pbs": PBSLauncher,
-            "pals": PBSLauncher,
-            "lsf": LSFLauncher,
-            "local": LocalLauncher,
-        }
-
-        if launcher is not None:
-            launcher = launcher.lower()
-            if launcher in launcher_map:
-                # create new instance of the launcher
-                self._launcher = launcher_map[launcher]()
-                self._jobs.set_launcher(self._launcher)
-            else:
-                raise SSUnsupportedError("Launcher type not supported: " + launcher)
-        else:
-            raise TypeError("Must provide a 'launcher' argument")
 
     @staticmethod
     def symlink_output_files(
@@ -588,7 +565,7 @@ class Controller:
         :raises SmartSimError: if launch fails
         """
         # attempt to retrieve entity name in JobManager.completed
-        completed_job = self._jobs.completed.get(entity.name, None)
+        completed_job = self._jobs.find_completed_job(entity.name)
 
         # if completed job DNE and is the entity name is not
         # running in JobManager.jobs or JobManager.db_jobs,
@@ -599,11 +576,21 @@ class Controller:
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
-                msg = f"An error occurred when launching {entity.name} \n"
-                msg += "Check error and output files for details.\n"
-                msg += f"{entity}"
+                msg = textwrap.dedent(f"""\
+                    An error occurred when launching {entity.name}
+                    Check error and output files for details.
+                    """) + str(entity)
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+            job = Job.from_launched_step(job_id, self._launcher, job_step, entity)
+            #                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            # XXX: All of this data aside of the entity is theoretically known
+            #      by the launcher at the moment it "runs" a step, and the only
+            #      thing you can do with a step is "run" it, and, to create a
+            #      step, a launcher needs to take in an entity! Why does
+            #      `Launcher.run` not just take in an entity, and return `Job`?
+            #      Do we use `Step`s literally anywhere else??
+            self._jobs.add_job(job)
 
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
@@ -611,28 +598,22 @@ class Controller:
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
-                msg = f"An error occurred when launching {entity.name} \n"
-                msg += "Check error and output files for details.\n"
-                msg += f"{entity}"
+                msg = textwrap.dedent(f"""\
+                    An error occurred when launching {entity.name}
+                    Check error and output files for details.
+                    """) + str(entity)
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+            self._jobs.restart_job(job_step.name, job_id, entity.name, not job_step.managed)
+            #                      ^^^^^^^^^^^^^          ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+            # XXX: All of these fields can be retrieved off of the existing
+            #      job, and are (or at least we assume are) immutable. Why do
+            #      we need to respecify them here??
 
         # the entity is using a duplicate name of an existing entity in
         # the experiment, throw an error
         else:
             raise SSUnsupportedError("SmartSim entities cannot have duplicate names.")
-
-        # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
-        # but is rather started, monitored, and exited through the Popen interface
-        # in the taskmanager
-        is_task = not job_step.managed
-
-        if self._jobs.query_restart(entity.name):
-            logger.debug(f"Restarting {entity.name}")
-            self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
-        else:
-            logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(job_step.name, job_id, entity, is_task)
 
     def _create_batch_job_step(
         self,
@@ -650,15 +631,8 @@ class Controller:
                  executed within the batch job
         :rtype: tuple[Step, list[Step]]
         """
-        if not entity_list.batch_settings:
-            raise ValueError(
-                "EntityList must have batch settings to be launched as batch"
-            )
-
         telemetry_dir = telemetry_dir / entity_list.name
-        batch_step = self._launcher.create_step(
-            entity_list.name, entity_list.path, entity_list.batch_settings
-        )
+        batch_step = self._launcher.create_batch_step_from(entity_list)
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
         batch_step.meta["status_dir"] = str(telemetry_dir)
 
@@ -688,11 +662,9 @@ class Controller:
         if isinstance(entity, Model):
             self._prep_entity_client_env(entity)
 
-        step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
-
+        step = self._launcher.create_step_from(entity)
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         step.meta["status_dir"] = str(telemetry_dir / entity.name)
-
         return step
 
     def _prep_entity_client_env(self, entity: Model) -> None:

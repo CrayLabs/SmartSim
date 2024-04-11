@@ -62,7 +62,12 @@ class JobManager:
     wlm to query information about jobs that the user requests.
     """
 
-    def __init__(self, lock: RLock, launcher: t.Optional[Launcher] = None) -> None:
+    def __init__(
+        self,
+        lock: RLock,
+        launcher: t.Optional[Launcher] = None,
+        poll_status_interval: int = CONFIG.jm_interval,
+    ) -> None:
         """Initialize a Jobmanager
 
         :param launcher: a Launcher object to manage jobs
@@ -78,10 +83,10 @@ class JobManager:
         self.completed: t.Dict["_entity_types.EntityName", Job] = {}
 
         self.actively_monitoring = False  # on/off flag
-        self._launcher = launcher  # reference to launcher
         self._lock = lock  # thread lock
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
+        self._poll_status_interval = poll_status_interval
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -162,13 +167,7 @@ class JobManager:
         """
         return ChainMap(self.db_jobs, self.jobs)
 
-    def add_job(
-        self,
-        job_name: "_core_types.StepName",
-        job_id: "_core_types.JobIdType",
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
-        is_task: bool = True,
-    ) -> None:
+    def add_job(self, job: Job) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -180,16 +179,13 @@ class JobManager:
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
-        # XXX: rm this!!
-        assert self._launcher is not None
         # all operations here should be atomic
-        job = Job(job_name, job_id, entity, self._launcher, is_task)
-        if isinstance(entity, (DBNode, Orchestrator)):
-            self.db_jobs[entity.name] = job
-        elif isinstance(entity, JobEntity) and entity.is_db:
-            self.db_jobs[entity.name] = job
+        if isinstance(job.entity, (DBNode, Orchestrator)):
+            self.db_jobs[job.entity.name] = job
+        elif isinstance(job.entity, JobEntity) and job.entity.is_db:
+            self.db_jobs[job.entity.name] = job
         else:
-            self.jobs[entity.name] = job
+            self.jobs[job.entity.name] = job
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
@@ -232,15 +228,9 @@ class JobManager:
             except KeyError:
                 return SmartSimStatus.STATUS_NEVER_STARTED
 
-    def set_launcher(self, launcher: Launcher) -> None:
-        """Set the launcher of the job manager to a specific launcher instance
-
-        :param launcher: child of Launcher
-        :type launcher: Launcher instance
-        """
-        self._launcher = launcher
-
-    def query_restart(self, entity_name: str) -> bool:
+    def find_completed_job(
+        self, entity_name: "_entity_types.EntityName"
+    ) -> t.Optional[Job]:
         """See if the job just started should be restarted or not.
 
         :param entity_name: name of entity to check for a job for
@@ -248,9 +238,11 @@ class JobManager:
         :return: if job should be restarted instead of started
         :rtype: bool
         """
-        return entity_name in self.completed
+        return self.completed.get(entity_name, None)
 
     def restart_job(
+    #   ^^^^^^^^^^^
+    # XXX: Don't like this name, nothing is being "started", only tracked
         self,
         job_name: "_core_types.StepName",
         job_id: "_core_types.JobIdType",
@@ -289,15 +281,14 @@ class JobManager:
 
         address_dict: t.Dict[str, t.List[str]] = {}
         for db_job in self.db_jobs.values():
-            addresses = []
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
-                for combine in itertools.product(db_job.hosts, db_entity.ports):
-                    ip_addr = get_ip_from_host(combine[0])
-                    addresses.append(":".join((ip_addr, str(combine[1]))))
 
                 dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
-                dict_entry.extend(addresses)
+                dict_entry.extend(
+                    f"{get_ip_from_host(host)}:{port}"
+                    for host, port in itertools.product(db_job.hosts, db_entity.ports)
+                )
                 address_dict[db_entity.db_identifier] = dict_entry
 
         return address_dict
@@ -345,8 +336,4 @@ class JobManager:
         """Sleep the job manager for a specific constant
         set for the launcher type.
         """
-        local_jm_interval = 2
-        if isinstance(self._launcher, (LocalLauncher)):
-            time.sleep(local_jm_interval)
-        else:
-            time.sleep(CONFIG.jm_interval)
+        time.sleep(self._poll_status_interval)

@@ -37,6 +37,7 @@ from ...status import TERMINAL_STATUSES, SmartSimStatus
 
 if t.TYPE_CHECKING:
     from smartsim._core.launcher.launcher import Launcher
+    from smartsim._core.launcher.step.step import Step
     from smartsim._core.launcher.stepInfo import StepInfo
 
 
@@ -190,6 +191,9 @@ class JobEntity:
         return entity
 
 
+_TJob = t.TypeVar("_TJob", bound="Job")
+
+
 class Job:
     """Keep track of various information for the controller.
     In doing so, continuously add various fields of information
@@ -234,6 +238,21 @@ class Job:
         self.start_time = time.time()
         self.history = History()
 
+    @classmethod
+    def from_launched_step(
+        cls: t.Type[_TJob],
+        job_id: _core_types.JobIdType,
+        launcher: "Launcher",
+        step: "Step",
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
+    ) -> _TJob:
+        # XXX: Why is this not the default constructor?? Why does the job not
+        #      hold a backref to the step it is tracking (Same question for the
+        #      step and the launcher that launched it, tbh)? Why does the job
+        #      need to know the entity that it was launched from but the step
+        #      does not? Is the job a wrapper around a step or not??
+        return cls(step.name, job_id, entity, launcher, not step.managed)
+
     @property
     def ename(self) -> _entity_types.EntityName:
         """Return the name of the entity this job was created from"""
@@ -249,7 +268,6 @@ class Job:
     ]:
         return self._launcher.get_step_update
 
-
     def _get_stop_callback(self) -> t.Callable[[_core_types.StepName], "StepInfo"]:
         return self._launcher.stop
 
@@ -258,12 +276,15 @@ class Job:
         jobs = _helpers.unique(jobs)
         to_update = _helpers.group_by_map(cls._get_update_callback, jobs)
         for update, stale_jobs in to_update.items():
-            name_to_status = dict(
-                update(list(_helpers.unique(job.name for job in stale_jobs)))
-            )
+            stale_job_names = _helpers.unique(job.name for job in stale_jobs)
+            name_to_status = dict(update(list(stale_job_names)))
             for job in stale_jobs:
                 status = name_to_status[job.name]
                 if status:
+                    # XXX: Why do we unpack that status? Can we just pass a
+                    #      reference to the job?? Does the job not have a
+                    #      reference to the "most up to date" status bc we
+                    #      explicitly want copies??
                     job.set_status(
                         status.status,
                         status.launcher_status,
@@ -278,8 +299,16 @@ class Job:
         active = (job for job in jobs if job.status not in TERMINAL_STATUSES)
         to_kill = _helpers.group_by_map(cls._get_stop_callback, active)
         for kill, jobs_ in to_kill.items():
-            for job_name in _helpers.unique(job.name for job in jobs_):
-                kill(job.name)
+            for job in jobs_:
+                status = kill(job.name)
+                # XXX: Same question as above
+                job.set_status(
+                    status.status,
+                    status.launcher_status,
+                    status.returncode,
+                    error=status.error,
+                    output=status.output,
+                )
 
     def set_status(
         self,

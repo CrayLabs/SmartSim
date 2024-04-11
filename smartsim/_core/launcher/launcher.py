@@ -55,7 +55,32 @@ class Launcher(abc.ABC):  # pragma: no cover
     def create_step(
         self, name: "_entity_types.EntityName", cwd: str, step_settings: SettingsBase
     ) -> Step:
+        # XXX: There appears to always be a 1-to-1 mapping of `Settings Type`
+        #      to `Step Type` across all launchers. If that is true, why do we
+        #      need to query the query the launcher for the type of step to
+        #      build when the settings should know it intrinsically?
         raise NotImplementedError
+
+    # ==========================================================================
+    # XXX: These methods have very little right to exist! Ideally we should
+    #      move all of the logic for deciding what type of step to create from
+    #      the controller/launcher into the step constructor(s) including
+    #      knowing which settings to use!
+    # --------------------------------------------------------------------------
+    def create_step_from(self, entity: "_core_types.RunSettingsStepable") -> Step:
+        return self.create_step(entity.name, entity.path, entity.run_settings)
+
+    def create_batch_step_from(
+        self, entity: "_core_types.BatchSettingsStepable"
+    ) -> Step:
+        if not entity.batch_settings:
+            raise ValueError(
+                f"{type(self).__name__}:{entity.name} must have a non-null "
+                "`batch_setting` attribute to be launched as batch"
+            )
+        return self.create_step(entity.name, entity.path, entity.batch_settings)
+
+    # ==========================================================================
 
     @abc.abstractmethod
     def get_step_update(
