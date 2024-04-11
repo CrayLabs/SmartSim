@@ -314,7 +314,7 @@ def decode_cmd(encoded_cmd: str) -> t.List[str]:
 
 @t.final
 class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
-    """Registers a stack of unique callables to be called when a signal is
+    """Registers a stack of callables to be called when a signal is
     received before calling the original signal handler.
     """
 
