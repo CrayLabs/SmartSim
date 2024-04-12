@@ -169,8 +169,7 @@ class Controller:
 
     @property
     def orchestrator_active(self) -> bool:
-        with JM_LOCK:
-            return len(self._jobs.db_jobs) > 0
+        return len(self._jobs.db_jobs) > 0
 
     def poll(
         self, interval: int, verbose: bool, kill_on_interrupt: bool = True
@@ -188,18 +187,21 @@ class Controller:
         to_monitor = self._jobs.jobs
         while len(to_monitor) > 0:
             time.sleep(interval)
-
-            # acquire lock to avoid "dictionary changed during iteration" error
-            # without having to copy dictionary each time.
             if verbose:
-                with JM_LOCK:
-                    for job in to_monitor.values():
-                        logger.info(job)
+                # XXX: Previously we were locking here for "performance"
+                #      reasons, but in theory a `memcpy` should almost always
+                #      be faster than acquiring a lock. Check if there was
+                #      another reason for the lock!!
+
+                # Need to make a shallow copy here in case the `_jobs` thread
+                # alters the dict underlying the values iterator
+                for job in to_monitor.copy().values():
+                    logger.info(job)
 
     def finished(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> bool:
-        """Return a boolean indicating wether a job has finished or not
+        """Return a boolean indicating whether a job has finished or not
 
         :param entity: object launched by SmartSim.
         :type entity: Entity | EntitySequence
@@ -248,26 +250,25 @@ class Controller:
         if db.batch:
             self.stop_entity(db)
         else:
-            with JM_LOCK:
-                for node in db.entities:
-                    for host_ip, port in itertools.product(
-                        (get_ip_from_host(host) for host in node.hosts), db.ports
-                    ):
-                        retcode, _, _ = shutdown_db_node(host_ip, port)
-                        # Sometimes the DB will not shutdown (unless we force NOSAVE)
-                        if retcode != 0:
-                            self.stop_entity(node)
-                            continue
+            for node in db.entities:
+                for host_ip, port in itertools.product(
+                    (get_ip_from_host(host) for host in node.hosts), db.ports
+                ):
+                    retcode, _, _ = shutdown_db_node(host_ip, port)
+                    # Sometimes the DB will not shutdown (unless we force NOSAVE)
+                    if retcode != 0:
+                        self.stop_entity(node)
+                        continue
 
-                        job = self._jobs[node.name]
-                        job.set_status(
-                            SmartSimStatus.STATUS_CANCELLED,
-                            "",
-                            0,
-                            output=None,
-                            error=None,
-                        )
-                        self._jobs.move_to_completed(job)
+                    job = self._jobs[node.name]
+                    job.set_status(
+                        SmartSimStatus.STATUS_CANCELLED,
+                        "",
+                        0,
+                        output=None,
+                        error=None,
+                    )
+                    self._jobs.move_to_completed(job)
 
         db.reset_hosts()
 
@@ -289,8 +290,7 @@ class Controller:
 
         :returns: dict[str, Job]
         """
-        with JM_LOCK:
-            return self._jobs.completed
+        return self._jobs.completed
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
