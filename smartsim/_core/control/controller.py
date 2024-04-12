@@ -439,6 +439,11 @@ class Controller:
                 manifest_builder.add_ensemble(
                     elist, [(batch_step.name, step) for step in substeps]
                 )
+
+                # symlink substeps to maintain directory structure
+                for substep, substep_entity in zip(substeps, elist.models):
+                    self.symlink_output_files(substep, substep_entity)
+
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
@@ -456,10 +461,14 @@ class Controller:
             model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
-                batch_step, _ = self._create_batch_job_step(
+                batch_step, substeps = self._create_batch_job_step(
                     anon_entity_list, model_telem_dir
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
+
+                # symlink substep to maintain directory structure
+                self.symlink_output_files(substeps[0], model)
+
                 steps.append((batch_step, model))
             else:
                 job_step = self._create_job_step(model, model_telem_dir)
@@ -572,7 +581,9 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
-            self.symlink_output_files(job_step, entity)
+            # model step is already symlinked if it's a batch
+            if isinstance(entity, Model) and not entity.batch_settings:
+                self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -584,7 +595,9 @@ class Controller:
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
-            self.symlink_output_files(job_step, entity)
+            # model step is already symlinked if it's a batch
+            if isinstance(entity, Model) and not entity.batch_settings:
+                self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
