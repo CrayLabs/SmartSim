@@ -583,7 +583,9 @@ class Controller:
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
             # make sure it's not an _AnonymousBatchJob
-            if not isinstance(entity, Model) or (isinstance(entity, Model) and not entity.batch_settings):
+            if not isinstance(entity, Model) or (
+                isinstance(entity, Model) and not entity.batch_settings
+            ):
                 self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
@@ -597,7 +599,9 @@ class Controller:
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
             # make sure it's not an _AnonymousBatchJob
-            if not isinstance(entity, Model) or (isinstance(entity, Model) and not entity.batch_settings):
+            if not isinstance(entity, Model) or (
+                isinstance(entity, Model) and not entity.batch_settings
+            ):
                 self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
