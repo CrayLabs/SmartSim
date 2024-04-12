@@ -35,8 +35,12 @@ from ...error import SmartSimError
 from ..launcher.launcher import Launcher
 
 if t.TYPE_CHECKING:
-    from ..utils.serialize import TStepLaunchMetaData
+    from ...database import Orchestrator
+    from ...entity import EntitySequence, SmartSimEntity
     from .. import types as _core_types
+    from ..launcher.stepMapping import StepMap
+    from ..utils.serialize import TStepLaunchMetaData
+    from .job import JobEntity
 
 
 class _AnonymousBatchJob(EntityList[Model]):
@@ -54,11 +58,13 @@ class _AnonymousBatchJob(EntityList[Model]):
 def _look_up_launched_data(
     launcher: Launcher,
 ) -> t.Callable[[t.Tuple["_core_types.StepName", Step]], "TStepLaunchMetaData"]:
-    def _unpack_launched_data(data: t.Tuple["_core_types.StepName", Step]) -> "TStepLaunchMetaData":
-        # NOTE: we cannot assume that the name of the launched step
-        # ``launched_step_name`` is equal to the name of the step referring to
-        # the entity ``step.name`` as is the case when an entity list is
-        # launched as a batch job
+    def _unpack_launched_data(
+        data: t.Tuple["_core_types.StepName", Step]
+    ) -> "TStepLaunchMetaData":
+        # NOTE: We cannot assume that the name of the launched step
+        #       ``launched_step_name`` is equal to the name of the step
+        #       referring to the entity ``step.name`` as is the case when an
+        #       entity list is launched as a batch job
         launched_step_name, step = data
         launched_step_map = launcher.step_mapping[launched_step_name]
         out_file, err_file = step.get_output_files()
@@ -72,3 +78,15 @@ def _look_up_launched_data(
         )
 
     return _unpack_launched_data
+
+
+class SerializableLaunchedDBConfig(t.NamedTuple):
+    database: "Orchestrator"
+    launched_step_info: t.Tuple["SerializableLaunchedDBStepInfo", ...]
+
+
+class SerializableLaunchedDBStepInfo(t.NamedTuple):
+    job_id: "_core_types.JobIdType"
+    step: Step
+    step_map: "StepMap"
+    entity: t.Union["SmartSimEntity", "EntitySequence[SmartSimEntity]", "JobEntity"]

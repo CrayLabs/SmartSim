@@ -41,7 +41,7 @@ from os import environ
 
 from smartredis import Client, ConfigOptions
 
-from smartsim._core.types import StepName
+from smartsim._core.types import JobIdType, StepName
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
@@ -72,6 +72,12 @@ from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
+from .controller_utils import (
+    SerializableLaunchedDBConfig as _SerializableLaunchedDBConfig,
+)
+from .controller_utils import (
+    SerializableLaunchedDBStepInfo as _SerializableLaunchedDBStepInfo,
+)
 from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
 from .job import Job
 from .jobmanager import JobManager
@@ -81,7 +87,9 @@ if t.TYPE_CHECKING:
     from types import FrameType
 
     from ...entity import types as _entity_types
+    from ..launcher.stepMapping import StepMap
     from ..utils.serialize import TStepLaunchMetaData
+    from .job import JobEntity
 
 
 logger = get_logger(__name__)
@@ -506,6 +514,9 @@ class Controller:
             for substep, substep_entity in zip(substeps, orchestrator.entities):
                 self.symlink_output_files(substep, substep_entity)
 
+            self._launch_step(orc_batch_step, orchestrator)
+            launched_steps: t.Tuple[Step, ...] = (orc_batch_step,)
+
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
             db_steps = [
@@ -518,6 +529,7 @@ class Controller:
             for db_step in db_steps:
                 self._launch_step(*db_step)
                 self.symlink_output_files(*db_step)
+            launched_steps = tuple(step for step, _ in db_steps)
 
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)
@@ -548,7 +560,17 @@ class Controller:
                         # surface SSInternalError as we have no way to recover
                         raise
         # XXX: This needs to be put back if we want to reload an orc
-        # self._save_orchestrator(orchestrator)
+        self._save_orchestrator(
+            orchestrator,
+            (
+                (
+                    self._jobs[step.entity_name],
+                    step,
+                    self._launcher.step_mapping[step.name],
+                )
+                for step in launched_steps
+            ),
+        )
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(
@@ -728,7 +750,11 @@ class Controller:
 
         entity.run_settings.update_env(client_env)
 
-    def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
+    def _save_orchestrator(
+        self,
+        orchestrator: Orchestrator,
+        launched_job_steps: t.Iterable[t.Tuple[Job, Step, "StepMap"]],
+    ) -> None:
         """Save the orchestrator object via pickle
 
         This function saves the orchestrator information to a pickle
@@ -739,13 +765,14 @@ class Controller:
         :type orchestrator: Orchestrator
         """
 
-        dat_file = "/".join((orchestrator.path, "smartsim_db.dat"))
-        db_jobs = self._jobs.db_jobs
-        orc_data = {"db": orchestrator, "db_jobs": db_jobs}
-        steps = []
-        for db_job in db_jobs.values():
-            steps.append(self._launcher.step_mapping[db_job.name])
-        orc_data["steps"] = steps
+        dat_file = osp.join(orchestrator.path, "smartsim_db.dat")
+        orc_data = _SerializableLaunchedDBConfig(
+            orchestrator,
+            tuple(
+                _SerializableLaunchedDBStepInfo(job.jid, step, map_, job.entity)
+                for job, step, map_ in launched_job_steps
+            ),
+        )
         with open(dat_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
 
@@ -799,44 +826,38 @@ class Controller:
 
     def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
         with JM_LOCK:
-            if self.orchestrator_active:
-                raise SmartSimError("Orchestrator exists and is active")
-
-            if not osp.exists(checkpoint_file):
-                raise FileNotFoundError(
-                    f"The SmartSim database config file {checkpoint_file} "
-                    "cannot be found."
-                )
-
             try:
                 with open(checkpoint_file, "rb") as pickle_file:
                     db_config = pickle.load(pickle_file)
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"The SmartSim database config file {checkpoint_file} "
+                    "cannot be found."
+                ) from None
             except (OSError, IOError) as e:
                 msg = "Database checkpoint corrupted"
                 raise SmartSimError(msg) from e
 
-            err_message = (
-                "The SmartSim database checkpoint is incomplete or corrupted. "
-            )
-            if not "db" in db_config:
+            if not isinstance(db_config, _SerializableLaunchedDBConfig):
                 raise SmartSimError(
-                    err_message + "Could not find the orchestrator object."
+                    "The SmartSim database checkpoint is incomplete or corrupted."
                 )
-
-            if not "db_jobs" in db_config:
-                raise SmartSimError(
-                    err_message + "Could not find database job objects."
-                )
-
-            if not "steps" in db_config:
-                raise SmartSimError(
-                    err_message + "Could not find database job objects."
-                )
-            orc: Orchestrator = db_config["db"]
 
             # TODO check that each db_object is running
 
-            job_steps = zip(db_config["db_jobs"].values(), db_config["steps"])
+            job_steps = (
+                (
+                    Job.from_launched_step(
+                        info.job_id, self._launcher, info.step, info.entity
+                    ),
+                    info.step_map,
+                )
+                for info in db_config.launched_step_info
+            )
+
+            # XXX: Currently this strategy will lose job history and status (at
+            #      least until the JM has a chance to reset it). Is that going
+            #      to be a problem?
             try:
                 for db_job, step in job_steps:
                     self._jobs.db_jobs[db_job.ename] = db_job
@@ -850,7 +871,7 @@ class Controller:
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
 
-            return orc
+            return db_config.database
 
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
