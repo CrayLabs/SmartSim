@@ -385,6 +385,7 @@ class Controller:
                 "Symlinking files failed."
             ) from fnf
 
+    # pylint: disable-msg=too-many-locals
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
     ) -> LaunchedManifest[t.Tuple[str, Step]]:
