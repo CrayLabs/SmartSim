@@ -582,8 +582,8 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
-
-            if not isinstance(job_step, _AnonymousBatchJob):
+            # make sure it's not an _AnonymousBatchJob
+            if not isinstance(entity, Model) or (isinstance(entity, Model) and not entity.batch_settings):
                 self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
@@ -596,8 +596,8 @@ class Controller:
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
-
-            if not isinstance(job_step, _AnonymousBatchJob):
+            # make sure it's not an _AnonymousBatchJob
+            if not isinstance(entity, Model) or (isinstance(entity, Model) and not entity.batch_settings):
                 self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
