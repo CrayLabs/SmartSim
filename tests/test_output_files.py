@@ -31,7 +31,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
-from smartsim._core.control.controller import Controller
+from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity.ensemble import Ensemble
@@ -50,6 +50,7 @@ ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
 orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 model = Model("test_model", {}, "", rs)
 batch_model = Model("batch_test_model", {}, "", batch_rs, batch_settings=bs)
+anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
 def test_mutated_model_output(test_dir):
@@ -196,7 +197,11 @@ def symlink_with_create_job_step(test_dir, entity):
 
 @pytest.mark.parametrize(
     "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(orc, id="orchestrator")],
+    [
+        pytest.param(ens, id="ensemble"),
+        pytest.param(orc, id="orchestrator"),
+        pytest.param(anon_batch_model, id="model"),
+    ],
 )
 def test_batch_symlink(entity, test_dir):
     """Test symlinking historical output files"""
