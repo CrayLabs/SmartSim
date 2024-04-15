@@ -825,53 +825,52 @@ class Controller:
                 raise
 
     def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
-        with JM_LOCK:
-            try:
-                with open(checkpoint_file, "rb") as pickle_file:
-                    db_config = pickle.load(pickle_file)
-            except FileNotFoundError:
-                raise FileNotFoundError(
-                    f"The SmartSim database config file {checkpoint_file} "
-                    "cannot be found."
-                ) from None
-            except (OSError, IOError) as e:
-                msg = "Database checkpoint corrupted"
-                raise SmartSimError(msg) from e
+        try:
+            with open(checkpoint_file, "rb") as pickle_file:
+                db_config = pickle.load(pickle_file)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"The SmartSim database config file {checkpoint_file} "
+                "cannot be found."
+            ) from None
+        except (OSError, IOError) as e:
+            msg = "Database checkpoint corrupted"
+            raise SmartSimError(msg) from e
 
-            if not isinstance(db_config, _SerializableLaunchedDBConfig):
-                raise SmartSimError(
-                    "The SmartSim database checkpoint is incomplete or corrupted."
-                )
-
-            # TODO check that each db_object is running
-
-            job_steps = (
-                (
-                    Job.from_launched_step(
-                        info.job_id, self._launcher, info.step, info.entity
-                    ),
-                    info.step_map,
-                )
-                for info in db_config.launched_step_info
+        if not isinstance(db_config, _SerializableLaunchedDBConfig):
+            raise SmartSimError(
+                "The SmartSim database checkpoint is incomplete or corrupted."
             )
 
-            # XXX: Currently this strategy will lose job history and status (at
-            #      least until the JM has a chance to reset it). Is that going
-            #      to be a problem?
-            try:
-                for db_job, step in job_steps:
-                    self._jobs.db_jobs[db_job.ename] = db_job
-                    self._launcher.step_mapping[db_job.name] = step
-                    if step.task_id:
-                        self._launcher.task_manager.add_existing(int(step.task_id))
-            except LauncherError as e:
-                raise SmartSimError("Failed to reconnect orchestrator") from e
+        # TODO check that each db_object is running
 
-            # start job manager if not already started
-            if not self._jobs.actively_monitoring:
-                self._jobs.start()
+        job_steps = (
+            (
+                Job.from_launched_step(
+                    info.job_id, self._launcher, info.step, info.entity
+                ),
+                info.step_map,
+            )
+            for info in db_config.launched_step_info
+        )
 
-            return db_config.database
+        # XXX: Currently this strategy will lose job history and status (at
+        #      least until the JM has a chance to reset it). Is that going
+        #      to be a problem?
+        try:
+            for db_job, step in job_steps:
+                self._jobs.add_job(db_job)
+                self._launcher.step_mapping[db_job.name] = step
+                if step.task_id:
+                    self._launcher.task_manager.add_existing(int(step.task_id))
+        except LauncherError as e:
+            raise SmartSimError("Failed to reconnect orchestrator") from e
+
+        # start job manager if not already started
+        if not self._jobs.actively_monitoring:
+            self._jobs.start()
+
+        return db_config.database
 
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:

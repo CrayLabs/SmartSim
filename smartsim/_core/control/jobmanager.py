@@ -179,13 +179,13 @@ class JobManager:
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
-        # all operations here should be atomic
-        if isinstance(job.entity, (DBNode, Orchestrator)):
-            self.db_jobs[job.entity.name] = job
-        elif isinstance(job.entity, JobEntity) and job.entity.is_db:
-            self.db_jobs[job.entity.name] = job
-        else:
-            self.jobs[job.entity.name] = job
+        with self._lock:
+            if isinstance(job.entity, (DBNode, Orchestrator)):
+                self.db_jobs[job.entity.name] = job
+            elif isinstance(job.entity, JobEntity) and job.entity.is_db:
+                self.db_jobs[job.entity.name] = job
+            else:
+                self.jobs[job.entity.name] = job
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
