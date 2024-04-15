@@ -58,7 +58,7 @@ def test_local_orchestrator(test_dir, wlmutils):
     assert [stat != SmartSimStatus.STATUS_FAILED for stat in statuses]
 
     # simulate user shutting down main thread
-    exp._control._jobs.actively_monitoring = False
+    exp._control._job_manager.actively_monitoring = False
     exp._control._launcher.task_manager.actively_monitoring = False
 
 

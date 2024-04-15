@@ -483,7 +483,7 @@ def test_launch_cluster_orc_single_dbid(
     with make_entity_context(exp, orc), make_entity_context(exp, smartsim_model):
         exp.start(orc, block=True)
         exp.start(smartsim_model, block=True)
-        job_dict = exp._control._jobs.get_db_host_addresses()
+        job_dict = exp._control._job_manager.get_db_host_addresses()
         assert len(job_dict[orc.entities[0].db_identifier]) == 3
 
     check_not_failed(exp, orc, smartsim_model)

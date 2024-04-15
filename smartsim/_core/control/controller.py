@@ -130,7 +130,7 @@ class Controller:
         jm_interval = (
             CONFIG.jm_interval if isinstance(self._launcher, LocalLauncher) else 2
         )
-        self._jobs = JobManager(JM_LOCK, poll_status_interval=jm_interval)
+        self._job_manager = JobManager(JM_LOCK, poll_status_interval=jm_interval)
         self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
 
     def start(
@@ -149,17 +149,17 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        self._jobs.kill_on_interrupt = kill_on_interrupt
+        self._job_manager.kill_on_interrupt = kill_on_interrupt
 
         # register custom signal handler for ^C (SIGINT)
         SignalInterceptionStack.get(signal.SIGINT).push_unique(
-            self._jobs.signal_interrupt
+            self._job_manager.signal_interrupt
         )
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
-        if not self._jobs.actively_monitoring:
-            self._jobs.start()
+        if not self._job_manager.actively_monitoring:
+            self._job_manager.start()
 
         serialize.save_launch_manifest(
             launched.map(_look_up_launched_data(self._launcher))
@@ -177,7 +177,7 @@ class Controller:
 
     @property
     def orchestrator_active(self) -> bool:
-        return len(self._jobs.db_jobs) > 0
+        return len(self._job_manager.db_jobs) > 0
 
     def poll(
         self, interval: int, verbose: bool, kill_on_interrupt: bool = True
@@ -191,8 +191,8 @@ class Controller:
         :param kill_on_interrupt: flag for killing jobs when SIGINT is received
         :type kill_on_interrupt: bool, optional
         """
-        self._jobs.kill_on_interrupt = kill_on_interrupt
-        to_monitor = self._jobs.jobs
+        self._job_manager.kill_on_interrupt = kill_on_interrupt
+        to_monitor = self._job_manager.jobs
         while len(to_monitor) > 0:
             time.sleep(interval)
             if verbose:
@@ -201,7 +201,7 @@ class Controller:
                 #      be faster than acquiring a lock. Check if there was
                 #      another reason for the lock!!
 
-                # Need to make a shallow copy here in case the `_jobs` thread
+                # Need to make a shallow copy here in case the `_job_manager` thread
                 # alters the dict underlying the values iterator
                 for job in to_monitor.copy().values():
                     logger.info(job)
@@ -227,7 +227,7 @@ class Controller:
                     "from SmartSimEntity or EntitySequence"
                 )
 
-            return self._jobs.is_finished(entity)
+            return self._job_manager.is_finished(entity)
         except KeyError:
             raise ValueError(
                 f"Entity {entity.name} has not been launched in this experiment"
@@ -244,11 +244,11 @@ class Controller:
         :param entity: entity to be stopped
         :type entity: Entity | EntitySequence
         """
-        job = self._jobs[entity.name]
+        job = self._job_manager[entity.name]
         if job.status not in TERMINAL_STATUSES:
             logger.info(f"Stopping entity {entity.name} with job name {job.name}")
             Job.stop_all((job,))
-            self._jobs.move_to_completed(job)
+            self._job_manager.move_to_completed(job)
 
     def stop_db(self, db: Orchestrator) -> None:
         """Stop an orchestrator
@@ -268,7 +268,7 @@ class Controller:
                         self.stop_entity(node)
                         continue
 
-                    job = self._jobs[node.name]
+                    job = self._job_manager[node.name]
                     job.set_status(
                         SmartSimStatus.STATUS_CANCELLED,
                         "",
@@ -276,7 +276,7 @@ class Controller:
                         output=None,
                         error=None,
                     )
-                    self._jobs.move_to_completed(job)
+                    self._job_manager.move_to_completed(job)
 
         db.reset_hosts()
 
@@ -298,7 +298,7 @@ class Controller:
 
         :returns: dict[str, Job]
         """
-        return self._jobs.completed
+        return self._job_manager.completed
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
@@ -316,7 +316,7 @@ class Controller:
                 "Argument must be of type SmartSimEntity or EntitySequence, "
                 f"not {type(entity)}"
             )
-        return self._jobs.get_status(entity)
+        return self._job_manager.get_status(entity)
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
@@ -397,7 +397,7 @@ class Controller:
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
-            for key in self._jobs.get_db_host_addresses():
+            for key in self._job_manager.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if orchestrator.db_identifier == db_id:
                     raise SSDBIDConflictError(
@@ -536,7 +536,7 @@ class Controller:
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
-        self._jobs.set_db_hosts(orchestrator)
+        self._job_manager.set_db_hosts(orchestrator)
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -562,14 +562,8 @@ class Controller:
         # XXX: This needs to be put back if we want to reload an orc
         self._save_orchestrator(
             orchestrator,
-            (
-                (
-                    self._jobs[step.entity_name],
-                    step,
-                    self._launcher.step_mapping[step.name],
-                )
-                for step in launched_steps
-            ),
+            ((self._job_manager[step.entity_name], step, self._launcher.step_mapping[step.name])
+             for step in launched_steps),
         )
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
@@ -587,13 +581,14 @@ class Controller:
         :raises SmartSimError: if launch fails
         """
         # attempt to retrieve entity name in JobManager.completed
-        completed_job = self._jobs.find_completed_job(entity.name)
+        completed_job = self._job_manager.find_completed_job(entity.name)
 
         # if completed job DNE and is the entity name is not
         # running in JobManager.jobs or JobManager.db_jobs,
         # launch the job
         if completed_job is None and (
-            entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
+            entity.name not in self._job_manager.jobs
+            and entity.name not in self._job_manager.db_jobs
         ):
             try:
                 job_id = self._launcher.run(job_step)
@@ -612,7 +607,7 @@ class Controller:
             #      step, a launcher needs to take in an entity! Why does
             #      `Launcher.run` not just take in an entity, and return `Job`?
             #      Do we use `Step`s literally anywhere else??
-            self._jobs.add_job(job)
+            self._job_manager.add_job(job)
 
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
@@ -626,8 +621,16 @@ class Controller:
                     """) + str(entity)
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
-            self._jobs.restart_job(job_step.name, job_id, entity.name, not job_step.managed)
-            #                      ^^^^^^^^^^^^^          ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+            self._job_manager.restart_job(
+                job_step.name,
+                # ^^^^^^^^^^^
+                job_id,
+                entity.name,
+                # ^^^^^^^^^
+                not job_step.managed,
+                # ^^^^^^^^^^^^^^^^^^
+            )
             # XXX: All of these fields can be retrieved off of the existing
             #      job, and are (or at least we assume are) immutable. Why do
             #      we need to respecify them here??
@@ -697,7 +700,7 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._job_manager.get_db_host_addresses()
 
         for db_id, addresses in address_dict.items():
             db_name, _ = unpack_db_identifier(db_id, "_")
@@ -798,10 +801,10 @@ class Controller:
             try:
                 time.sleep(CONFIG.jm_interval)
                 # manually trigger job update if JM not running
-                if not self._jobs.actively_monitoring:
-                    self._jobs.update_statuses()
+                if not self._job_manager.actively_monitoring:
+                    self._job_manager.update_statuses()
 
-                # _jobs.get_status acquires JM lock for main thread, no need for locking
+                # _job_manager.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
                 if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
@@ -859,7 +862,7 @@ class Controller:
         #      to be a problem?
         try:
             for db_job, step in job_steps:
-                self._jobs.add_job(db_job)
+                self._job_manager.add_job(db_job)
                 self._launcher.step_mapping[db_job.name] = step
                 if step.task_id:
                     self._launcher.task_manager.add_existing(int(step.task_id))
@@ -867,8 +870,8 @@ class Controller:
             raise SmartSimError("Failed to reconnect orchestrator") from e
 
         # start job manager if not already started
-        if not self._jobs.actively_monitoring:
-            self._jobs.start()
+        if not self._job_manager.actively_monitoring:
+            self._job_manager.start()
 
         return db_config.database
 
@@ -876,7 +879,7 @@ class Controller:
         if not manifest.has_db_objects:
             return
 
-        address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._job_manager.get_db_host_addresses()
         for (
             db_id,
             db_addresses,

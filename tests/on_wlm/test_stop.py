@@ -55,7 +55,7 @@ def test_stop_entity(fileutils, test_dir, wlmutils):
     exp.start(M1, block=False)
     time.sleep(5)
     exp.stop(M1)
-    assert M1.name in exp._control._jobs.completed
+    assert M1.name in exp._control._job_manager.completed
     assert exp.get_status(M1)[0] == SmartSimStatus.STATUS_CANCELLED
 
 
@@ -85,4 +85,4 @@ def test_stop_entity_list(fileutils, test_dir, wlmutils):
     exp.stop(ensemble)
     statuses = exp.get_status(ensemble)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
-    assert all([m.name in exp._control._jobs.completed for m in ensemble])
+    assert all([m.name in exp._control._job_manager.completed for m in ensemble])
