@@ -40,7 +40,7 @@ Description
 
 Detailed Notes
 
-- Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR546_)
+- Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR549_)
 - Update watchdog dependency from 3.x to 4.x, fix new type issues (SmartSim-PR540_)
 - The dashboard needs to display historical logs, so log files are written
   out under the .smartsim directory and files under the experiment
@@ -97,7 +97,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
-.. _SmartSim-PR546: https://github.com/CrayLabs/SmartSim/pull/546
+.. _SmartSim-PR549: https://github.com/CrayLabs/SmartSim/pull/549
 .. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
 .. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
 .. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
