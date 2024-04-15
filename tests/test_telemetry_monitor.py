@@ -402,7 +402,8 @@ def test_persistable_computed_properties(
             "step_id": step_id,
         },
     }
-    persistables = Run.load_entity(etype, stored, exp_dir)
+    faux_experiment = {"launcher": "local"}
+    persistables = Run.load_entity(etype, stored, exp_dir, faux_experiment)
     persistable = persistables[0] if persistables else None
 
     assert persistable.is_managed == exp_ismanaged

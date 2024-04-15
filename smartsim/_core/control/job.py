@@ -137,6 +137,7 @@ class JobEntity:
         entity_dict: t.Dict[str, t.Any],
         entity: "JobEntity",
         exp_dir: str,
+        raw_experiment: t.Dict[str, t.Any],
     ) -> None:
         """Map universal properties from a runtime manifest onto a `JobEntity`
 
@@ -147,13 +148,21 @@ class JobEntity:
         :param entity: The entity instance to modify
         :type entity: JobEntity
         :param exp_dir: The path to the experiment working directory
-        :type exp_dir: str"""
+        :type exp_dir: str
+        :param raw_experiment: The raw experiment dictionary deserialized from
+        manifest JSON
+        :type raw_experiment: Dict[str, Any]"""
         metadata = entity_dict["telemetry_metadata"]
         status_dir = pathlib.Path(metadata.get("status_dir"))
+        is_dragon = raw_experiment["launcher"].lower() == "dragon"
 
         # all entities contain shared properties that identify the task
         entity.type = entity_type
-        entity.name = entity_dict["name"]
+        entity.name = (
+            entity_dict["name"]
+            if not is_dragon
+            else entity_dict["telemetry_metadata"]["step_id"]
+        )
         entity.step_id = str(metadata.get("step_id") or "")
         entity.task_id = str(metadata.get("task_id") or "")
         entity.timestamp = int(entity_dict.get("timestamp", "0"))
@@ -162,19 +171,25 @@ class JobEntity:
 
     @classmethod
     def from_manifest(
-        cls, entity_type: str, entity_dict: t.Dict[str, t.Any], exp_dir: str
+        cls,
+        entity_type: str,
+        entity_dict: t.Dict[str, t.Any],
+        exp_dir: str,
+        raw_experiment: t.Dict[str, t.Any],
     ) -> "JobEntity":
         """Instantiate a `JobEntity` from the dictionary deserialized from manifest JSON
 
         :param entity_type: The type of the associated `SmartSimEntity`
         :type entity_type: str
-        :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
+        :param raw_experiment: raw experiment deserialized from manifest JSON
+        :type raw_experiment: Dict[str, Any]
         :param exp_dir: The path to the experiment working directory
         :type exp_dir: str"""
         entity = JobEntity()
 
-        cls._map_standard_metadata(entity_type, entity_dict, entity, exp_dir)
+        cls._map_standard_metadata(
+            entity_type, entity_dict, entity, exp_dir, raw_experiment
+        )
         cls._map_db_metadata(entity_dict, entity)
 
         return entity
