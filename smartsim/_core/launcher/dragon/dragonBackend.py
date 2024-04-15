@@ -23,7 +23,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import collections
 import functools
 import typing as t
@@ -33,12 +32,10 @@ from threading import RLock
 # pylint: disable=import-error
 # isort: off
 from dragon.infrastructure.policy import Policy
-from dragon.native.process import Process, TemplateProcess
+from dragon.native.process import Process, ProcessTemplate
 from dragon.native.process_group import (
     ProcessGroup,
     DragonProcessGroupError,
-    Error,
-    Running,
 )
 from dragon.native.machine import System, Node
 
@@ -61,8 +58,8 @@ from smartsim._core.schemas import (
 from smartsim._core.utils.helpers import create_short_id_str
 from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
 
-DRG_ERROR_STATUS = str(Error())
-DRG_RUNNING_STATUS = str(Running())
+DRG_ERROR_STATUS = "Error"
+DRG_RUNNING_STATUS = "Running"
 
 
 @dataclass
@@ -206,7 +203,7 @@ class DragonBackend:
                 local_policy = Policy(
                     placement=Policy.Placement.HOST_NAME, host_name=node_name
                 )
-                tmp_proc = TemplateProcess(
+                tmp_proc = ProcessTemplate(
                     target=request.exe,
                     args=request.exe_args,
                     cwd=request.path,

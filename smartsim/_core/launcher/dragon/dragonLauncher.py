@@ -76,7 +76,6 @@ logger = get_logger(__name__)
 _SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
 
 DRG_LOCK = RLock()
-DRG_CTX = zmq.Context()
 
 
 class DragonLauncher(WLMLauncher):
@@ -92,12 +91,10 @@ class DragonLauncher(WLMLauncher):
 
     def __init__(self) -> None:
         super().__init__()
-        self._context = DRG_CTX
+        self._context = zmq.Context()
         self._timeout = CONFIG.dragon_server_timeout
         self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
-        self._context.setsockopt(zmq.SNDTIMEO, value=self._timeout)
-        self._context.setsockopt(zmq.RCVTIMEO, value=self._timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
         # Returned by dragon head, useful if shutdown is to be requested
@@ -105,13 +102,15 @@ class DragonLauncher(WLMLauncher):
         self._dragon_head_pid: t.Optional[int] = None
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
 
+        self._set_timeout(self._timeout)
+
     @property
     def is_connected(self) -> bool:
         return self._dragon_head_socket is not None
 
     def _handshake(self, address: str) -> None:
-        self._dragon_head_socket, self._authenticator = dragonSockets.get_secure_socket(
-            self._context, zmq.REQ, False, self._authenticator
+        self._dragon_head_socket = dragonSockets.get_secure_socket(
+            self._context, zmq.REQ, False
         )
         self._dragon_head_socket.connect(address)
         try:
@@ -149,6 +148,8 @@ class DragonLauncher(WLMLauncher):
             path = _resolve_dragon_path(path)
             dragon_config_log = path / CONFIG.dragon_log_filename
 
+            self._authenticator = dragonSockets.get_authenticator(self._context)
+
             if dragon_config_log.is_file():
                 dragon_confs = self._parse_launched_dragon_server_info_from_files(
                     [dragon_config_log]
@@ -180,14 +181,19 @@ class DragonLauncher(WLMLauncher):
                 "smartsim._core.entrypoints.dragon",
             ]
 
+            # Optionally configure the dragon host for debug output
+            if CONFIG.log_level in ["debug", "developer"]:
+                cmd.insert(1, "DEBUG")
+                cmd.insert(1, "-l")
+
             address = get_best_interface_and_address().address
             socket_addr = ""
             launcher_socket: t.Optional[zmq.Socket[t.Any]] = None
             if address is not None:
                 self._set_timeout(self._startup_timeout)
 
-                launcher_socket, self._authenticator = dragonSockets.get_secure_socket(
-                    self._context, zmq.REP, True, self._authenticator
+                launcher_socket = dragonSockets.get_secure_socket(
+                    self._context, zmq.REP, True
                 )
 
                 # find first available port >= 5995
@@ -206,6 +212,8 @@ class DragonLauncher(WLMLauncher):
             ) as dragon_err:
                 current_env = os.environ.copy()
                 current_env.update({"PYTHONUNBUFFERED": "1"})
+                logger.debug(f"Starting Dragon environment: {' '.join(cmd)}")
+
                 # pylint: disable-next=consider-using-with
                 self._dragon_head_process = subprocess.Popen(
                     args=cmd,
@@ -258,6 +266,7 @@ class DragonLauncher(WLMLauncher):
                 server_socket = self._dragon_head_socket
                 server_process_pid = self._dragon_head_process.pid
 
+                # avoid registering the same cleanup more than once
                 if server_socket is not None and self._dragon_head_process is not None:
                     atexit.register(
                         _dragon_cleanup,
@@ -271,11 +280,15 @@ class DragonLauncher(WLMLauncher):
                 raise LauncherError("Could not receive address of Dragon head process")
 
     def cleanup(self) -> None:
+        logger.debug("Starting Dragon launcher cleanup")
         _dragon_cleanup(
             server_socket=self._dragon_head_socket,
             server_process_pid=self._dragon_head_pid,
             server_authenticator=self._authenticator,
         )
+        self._dragon_head_socket = None
+        self._dragon_head_pid = 0
+        self._authenticator = None
 
     # RunSettings types supported by this launcher
     @property
@@ -492,27 +505,34 @@ def _dragon_cleanup(
 
     try:
         if server_socket is not None:
+            print("Sending shutdown request to dragon environment")
             DragonLauncher.send_req_with_socket(server_socket, DragonShutdownRequest())
     except zmq.error.ZMQError as e:
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
         print(f"ZMQ error: {e}", flush=True)
     finally:
+        print("Sending shutdown request is complete")
         time.sleep(1)
 
     try:
         if server_process_pid and psutil.pid_exists(server_process_pid):
+            print("Sending SIGINT to dragon server")
             os.kill(server_process_pid, signal.SIGINT)
-            print("Sent SIGINT to dragon server")
     except ProcessLookupError:
         # Can't use the logger as I/O file may be closed
         print("Dragon server is not running.", flush=True)
+    finally:
+        print("Dragon server process shutdown is complete")
 
     try:
-        if server_authenticator is not None:
+        if server_authenticator is not None and server_authenticator.is_alive():
+            print("Shutting down ZMQ authenticator")
             server_authenticator.stop()
     except Exception:
         print("Authenticator shutdown error")
+    finally:
+        print("Authenticator shutdown is complete")
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:

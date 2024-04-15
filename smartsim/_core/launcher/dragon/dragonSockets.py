@@ -33,10 +33,14 @@ from smartsim._core.schemas import dragonRequests as _dragonRequests
 from smartsim._core.schemas import dragonResponses as _dragonResponses
 from smartsim._core.schemas import utils as _utils
 from smartsim._core.utils.security import KeyManager
+from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
     from zmq import Context
     from zmq.sugar.socket import Socket
+
+
+logger = get_logger(__name__)
 
 
 def as_server(
@@ -62,11 +66,10 @@ def as_client(
 
 
 def get_secure_socket(
-    context: "Context[t.Any]",
+    context: "zmq.Context[t.Any]",
     socket_type: int,
     is_server: bool,
-    authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None,
-) -> "t.Tuple[Socket[t.Any], zmq.auth.thread.ThreadAuthenticator]":
+) -> "Socket[t.Any]":
     """Create secured socket that consumes & produces encrypted messages
 
     :param context: ZMQ context object
@@ -76,29 +79,18 @@ def get_secure_socket(
     :param is_server: Pass `True` to secure the socket as server. Pass `False`
     to secure the socket as a client.
     :type is_server: bool
-    :param authenticator: (optional) An existing authenticator that will be used
-    to authenticate secure communications.
-    :type authenticator: Optional[zmq.auth.thread.ThreadAuthenticator]
-    :returns: the secured socket prepared for sending encrypted messages and
-    an active authenticator if one was not supplied as a parameter.
-    :rtype: Tuple[zmq.Socket, zmq.auth.thread.ThreadAuthenticator]"""
+    :returns: the secured socket prepared for sending encrypted messages
+    :rtype: zmq.Socket"""
     config = get_config()
-    socket = context.socket(socket_type)
+    socket: "Socket[t.Any]" = context.socket(socket_type)
 
     key_manager = KeyManager(config, as_server=is_server, as_client=not is_server)
     server_keys, client_keys = key_manager.get_keys()
-
-    # start an auth thread to provide encryption services on the socket
-    if authenticator is None:
-        authenticator = zmq.auth.thread.ThreadAuthenticator(context)
-
-        # allow all keys in the client key directory to connect
-        authenticator.configure_curve(domain="*", location=key_manager.client_keys_dir)
-
-    if not authenticator.is_alive():
-        authenticator.start()
+    logger.debug(f"Applying keys to socket: {server_keys}, {client_keys}")
 
     if is_server:
+        logger.debug("Configuring socket as server")
+
         # configure the server keys on the socket
         socket.curve_secretkey = server_keys.private
         socket.curve_publickey = client_keys.public
@@ -110,5 +102,32 @@ def get_secure_socket(
 
         # set the server public key for decrypting incoming messages
         socket.curve_serverkey = server_keys.public
+    return socket
 
-    return socket, authenticator
+
+def get_authenticator(
+    context: "zmq.Context[t.Any]",
+) -> "zmq.auth.thread.ThreadAuthenticator":
+    """Create an authenticator to handle encryption of ZMQ communications
+
+    :param context: ZMQ context object
+    :type context: zmq.Context
+    :returns: the activated `Authenticator`
+    :rtype: zmq.auth.thread.ThreadAuthenticator"""
+    config = get_config()
+
+    key_manager = KeyManager(config, as_client=True)
+    server_keys, client_keys = key_manager.get_keys()
+    logger.debug(f"Applying keys to authenticator: {server_keys}, {client_keys}")
+
+    authenticator = zmq.auth.thread.ThreadAuthenticator(context)
+
+    # allow all keys in the client key directory to connect
+    logger.debug(f"Securing with client keys in {key_manager.client_keys_dir}")
+    authenticator.configure_curve(domain="*", location=key_manager.client_keys_dir)
+
+    if not authenticator.is_alive():
+        logger.debug("Starting authenticator")
+        authenticator.start()
+
+    return authenticator
