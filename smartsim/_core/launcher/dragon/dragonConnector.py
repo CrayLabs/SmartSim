@@ -365,18 +365,16 @@ def _dragon_cleanup(
     finally:
         time.sleep(1)
 
-    if not psutil.pid_exists(server_process_pid) or not server_process_pid:
-        return
-
-    try:
-        os.kill(server_process_pid, signal.SIGINT)
-        print("Sent SIGINT to dragon server")
-        time.sleep(5)
-        if psutil.pid_exists(server_process_pid):
-            os.kill(server_process_pid, signal.SIGTERM)
-    except ProcessLookupError:
-        # Can't use the logger as I/O file may be closed
-        print("Dragon server is not running.", flush=True)
+    if psutil.pid_exists(server_process_pid) and server_process_pid:
+        try:
+            os.kill(server_process_pid, signal.SIGINT)
+            print("Sent SIGINT to dragon server")
+            time.sleep(5)
+            if psutil.pid_exists(server_process_pid):
+                os.kill(server_process_pid, signal.SIGTERM)
+        except ProcessLookupError:
+            # Can't use the logger as I/O file may be closed
+            print("Dragon server is not running.", flush=True)
 
 
     try:

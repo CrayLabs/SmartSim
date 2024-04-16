@@ -115,7 +115,6 @@ def get_authenticator(
     :type context: zmq.Context
     :returns: the activated `Authenticator`
     :rtype: zmq.auth.thread.ThreadAuthenticator"""
-    return None
     config = get_config()
 
     key_manager = KeyManager(config, as_client=True)
