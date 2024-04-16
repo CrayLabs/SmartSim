@@ -230,3 +230,40 @@ def test_symlink_error(test_dir):
     bad_step = controller._create_job_step(bad_model, telem_dir)
     with pytest.raises(FileNotFoundError):
         controller.symlink_output_files(bad_step, bad_model)
+
+
+def test_batch_model_and_ensemble(test_dir):
+    exp_name = "test-batch"
+    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
+
+    test_model = exp.create_model(
+        "test_model", path=test_dir, run_settings=rs, batch_settings=bs
+    )
+    exp.generate(test_model)
+    exp.start(test_model, block=True)
+
+    assert pathlib.Path(test_model.path).exists()
+    assert pathlib.Path(test_model.path, f"{test_model.name}.out").is_symlink()
+    assert pathlib.Path(test_model.path, f"{test_model.name}.err").is_symlink()
+
+    test_ensemble = exp.create_ensemble(
+        "test_ensemble", params={}, batch_settings=bs, run_settings=rs, replicas=3
+    )
+    exp.generate(test_ensemble)
+    exp.start(test_ensemble, block=True)
+
+    assert pathlib.Path(test_ensemble.path).exists()
+    assert pathlib.Path(test_ensemble.path, f"{test_ensemble.name}.out").is_symlink()
+    assert pathlib.Path(test_ensemble.path, f"{test_ensemble.name}.err").is_symlink()
+
+    for i in range(len(test_ensemble.models)):
+        assert pathlib.Path(
+            test_ensemble.path,
+            f"{test_ensemble.name}_{i}",
+            f"{test_ensemble.name}_{i}.out",
+        ).is_symlink()
+        assert pathlib.Path(
+            test_ensemble.path,
+            f"{test_ensemble.name}_{i}",
+            f"{test_ensemble.name}_{i}.err",
+        ).is_symlink()
