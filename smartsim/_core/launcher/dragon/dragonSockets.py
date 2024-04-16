@@ -93,7 +93,8 @@ def get_secure_socket(
 
         # configure the server keys on the socket
         socket.curve_secretkey = server_keys.private
-        socket.curve_publickey = client_keys.public
+        socket.curve_publickey = server_keys.public
+
         socket.curve_server = True
     else:
         # configure client keys on the socket to encrypt outgoing messages
