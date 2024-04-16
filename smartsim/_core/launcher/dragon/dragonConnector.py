@@ -87,6 +87,7 @@ class DragonConnector:
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
+        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
         self._dragon_server_path = CONFIG.dragon_server_path
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         if self._dragon_server_path is None:
@@ -103,7 +104,9 @@ class DragonConnector:
         return self._dragon_head_socket is not None
 
     def _handshake(self, address: str) -> None:
-        self._dragon_head_socket = self._context.socket(zmq.REQ)
+        self._dragon_head_socket, self._authenticator = dragonSockets.get_secure_socket(
+            self._context, zmq.REQ, False, self._authenticator
+        )
         self._dragon_head_socket.connect(address)
         try:
             dragon_handshake = _assert_schema_type(
@@ -184,8 +187,10 @@ class DragonConnector:
             connector_socket: t.Optional[zmq.Socket[t.Any]] = None
             if address is not None:
                 self._set_timeout(self._startup_timeout)
-                connector_socket = self._context.socket(zmq.REP)
 
+                connector_socket, self._authenticator = dragonSockets.get_secure_socket(
+                    self._context, zmq.REP, True, self._authenticator
+                )
                 # find first available port >= 5995
                 port = find_free_port(start=5995)
                 socket_addr = f"tcp://{address}:{port}"
@@ -259,6 +264,7 @@ class DragonConnector:
                         _dragon_cleanup,
                         server_socket=server_socket,
                         server_process_pid=server_process_pid,
+                        server_authenticator=self._authenticator,
                     )
             else:
                 # TODO parse output file
@@ -270,6 +276,7 @@ class DragonConnector:
             _dragon_cleanup(
                 server_socket=self._dragon_head_socket,
                 server_process_pid=self._dragon_head_pid,
+                server_authenticator=self._authenticator,
             )
 
     def send_request(self, request: DragonRequest, flags: int = 0) -> DragonResponse:
@@ -332,28 +339,48 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
     return obj
 
 
-def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -> None:
-    if not psutil.pid_exists(server_process_pid):
-        return
+def _dragon_cleanup(
+    server_socket: t.Optional[zmq.Socket[t.Any]] = None,
+    server_process_pid: t.Optional[int] = 0,
+    server_authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None,
+) -> None:
+    """Clean up resources used by the launcher.
+    :param server_socket: (optional) Socket used to connect to dragon environment
+    :type server_socket: Optional[zmq.Socket]
+    :param server_process_pid: (optional) Process ID of the dragon entrypoint
+    :type server_process_pid: Optional[int]
+    :param server_authenticator: (optional) Authenticator used to secure sockets
+    :type server_authenticator: Optional[zmq.auth.thread.ThreadAuthenticator]
+    """
     try:
-        # pylint: disable-next=protected-access
-        DragonConnector._send_req_with_socket(server_socket, DragonShutdownRequest())
+        if server_socket is not None:
+            DragonConnector.send_req_with_socket(server_socket, DragonShutdownRequest())
     except zmq.error.ZMQError as e:
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
         print(f"ZMQ error: {e}", flush=True)
     finally:
-        time.sleep(5)
-        try:
-            os.kill(server_process_pid, signal.SIGINT)
-            print("Sent SIGINT to dragon server")
-            time.sleep(5)
-            if psutil.pid_exists(server_process_pid):
-                os.kill(server_process_pid, signal.SIGTERM)
-        except ProcessLookupError:
-            # Can't use the logger as I/O file may be closed
-            print("Dragon server is not running.", flush=True)
+        time.sleep(1)
 
+    if not psutil.pid_exists(server_process_pid) or not server_process_pid:
+        return
+
+    try:
+        os.kill(server_process_pid, signal.SIGINT)
+        print("Sent SIGINT to dragon server")
+        time.sleep(5)
+        if psutil.pid_exists(server_process_pid):
+            os.kill(server_process_pid, signal.SIGTERM)
+    except ProcessLookupError:
+        # Can't use the logger as I/O file may be closed
+        print("Dragon server is not running.", flush=True)
+
+
+    try:
+        if server_authenticator is not None:
+            server_authenticator.stop()
+    except Exception:
+        print("Authenticator shutdown error")
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
