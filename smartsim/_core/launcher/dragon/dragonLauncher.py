@@ -75,8 +75,6 @@ class DragonLauncher(WLMLauncher):
         self._slurm_launcher = SlurmLauncher()
         self._pbs_launcher = PBSLauncher()
 
-        self._set_timeout(self._timeout)
-
     @property
     def is_connected(self) -> bool:
         return self._connector.is_connected
