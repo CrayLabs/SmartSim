@@ -362,14 +362,14 @@ class DragonBackend:
             for grp_info in self._group_infos.values()
         )
 
-    def update(self) -> None:
+    def update(self, interval: float=0.01) -> None:
         while True:
             self._updates += 1
             self._start_steps()
             self._refresh_statuses()
             self._update_shutdown_status()
-            time.sleep(0.1)
-            if (self._updates % 100) == 0:
+            time.sleep(0.01)
+            if (self._updates % int(10/interval)) == 0:
                 self.print_status()
 
     @process_request.register

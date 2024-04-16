@@ -223,6 +223,7 @@ class DragonLauncher(WLMLauncher):
         step_info.status = (
             SmartSimStatus.STATUS_CANCELLED  # set status to cancelled instead of failed
         )
+        step_info.launcher_status = str(SmartSimStatus.STATUS_CANCELLED)
         return step_info
 
     @staticmethod
@@ -294,7 +295,7 @@ class DragonLauncher(WLMLauncher):
                         grp_ret_code = min(ret_codes)
                         if any(ret_codes):
                             _err_msg = (
-                                f"One or more processes failed for job {step_id}"
+                                f"One or more processes failed for job {step_id} "
                                 f"Return codes were: {ret_codes}"
                             )
                             logger.error(_err_msg)

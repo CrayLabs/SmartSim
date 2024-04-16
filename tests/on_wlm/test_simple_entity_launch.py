@@ -82,7 +82,7 @@ def test_multinode_app(mpi_app_path, test_dir, wlmutils):
     exp.start(model, block=True)
 
     p = Path(model.path)
-    output_files = sorted([str(path) for path in p.glob("*")])
+    output_files = sorted([str(path) for path in p.glob("mpi_hello*")])
     expected_files = sorted(
         [os.path.join(model.path, f"mpi_hello.{idx}.log") for idx in range(3)]
     )
@@ -140,13 +140,18 @@ def test_summary(fileutils, test_dir, wlmutils):
     rows = [s.split() for s in summary_str.split("\n")]
     headers = ["Index"] + rows.pop(0)
 
+    # There is no guarantee that the order of
+    # the rows will be sleep, bad
     row = dict(zip(headers, rows[0]))
+    row_1 = dict(zip(headers, rows[1]))
+    if row["Name"] != sleep.name:
+        row_1, row = row, row_1
+
     assert sleep.name == row["Name"]
     assert sleep.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 
-    row_1 = dict(zip(headers, rows[1]))
     assert bad.name == row_1["Name"]
     assert bad.type == row_1["Entity-Type"]
     assert 0 == int(row_1["RunID"])

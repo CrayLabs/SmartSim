@@ -271,7 +271,6 @@ class DragonConnector:
                 server_socket=self._dragon_head_socket,
                 server_process_pid=self._dragon_head_pid,
             )
-            time.sleep(1)
 
     def send_request(self, request: DragonRequest, flags: int = 0) -> DragonResponse:
         self.ensure_connected()
@@ -346,13 +345,15 @@ def _dragon_cleanup(server_socket: zmq.Socket[t.Any], server_process_pid: int) -
     finally:
         time.sleep(5)
         try:
-            os.kill(server_process_pid, signal.SIGTERM)
+            os.kill(server_process_pid, signal.SIGINT)
             print("Sent SIGINT to dragon server")
+            time.sleep(5)
+            if psutil.pid_exists(server_process_pid):
+                os.kill(server_process_pid, signal.SIGTERM)
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed
             print("Dragon server is not running.", flush=True)
-        finally:
-            time.sleep(5)
+
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:

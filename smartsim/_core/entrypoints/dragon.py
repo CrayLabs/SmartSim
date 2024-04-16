@@ -99,7 +99,7 @@ def run(
     dragon_backend = DragonBackend(pid=dragon_pid)
 
     backend_updater = ContextThread(
-        name="JobManager", daemon=True, target=dragon_backend.update
+        name="DragonBackend", daemon=True, target=dragon_backend.update
     )
     backend_updater.start()
 
