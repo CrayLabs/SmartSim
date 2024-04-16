@@ -888,18 +888,6 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
         try:
             exp.start(orc)
 
-            # TODO: This sleep is necessary as there is race condition between
-            #       SmartSim and the TM when launching and adding a managed
-            #       task into their respective JMs for tracking. Essentially,
-            #       the TM does not have enough time register file listeners
-            #       before the manifest is updated with the start of
-            #       `smartsim_model` when launching through a Launcher that
-            #       does devolve into a simple system call from the driver
-            #       script process (e.g. the dragon launcher)
-            # FIXME: THIS NEEDS TO BE REMOVED AND THIS TEST NEEDS TO PASS
-            #        CONSISTENTLY BEFORE WE CAN SHIP A DRAGON LAUNCHER.
-            time.sleep(1)
-
             # create run settings
             app_settings = exp.create_run_settings(sys.executable, test_script)
             app_settings.set_nodes(1)
