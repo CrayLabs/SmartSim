@@ -105,7 +105,7 @@ class DragonConnector:
 
     def _handshake(self, address: str) -> None:
         self._dragon_head_socket, self._authenticator = dragonSockets.get_secure_socket(
-            self._context, zmq.REQ, False, self._authenticator
+            self._context, zmq.REQ, False
         )
         self._dragon_head_socket.connect(address)
         try:
@@ -189,7 +189,7 @@ class DragonConnector:
                 self._set_timeout(self._startup_timeout)
 
                 connector_socket, self._authenticator = dragonSockets.get_secure_socket(
-                    self._context, zmq.REP, True, self._authenticator
+                    self._context, zmq.REP, True
                 )
                 # find first available port >= 5995
                 port = find_free_port(start=5995)
