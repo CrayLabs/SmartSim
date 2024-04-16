@@ -83,5 +83,5 @@ def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     exp.start(M, block=False)
     time.sleep(2)
     exp.stop(M)
-    assert M.name in exp._control._job_manager.completed
+    assert exp._control._entity_to_job_monitor_id[M.name] in exp._control._job_manager.completed
     assert exp.get_status(M)[0] == SmartSimStatus.STATUS_CANCELLED

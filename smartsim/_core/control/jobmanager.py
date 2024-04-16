@@ -28,6 +28,7 @@
 import itertools
 import time
 import typing as t
+import uuid
 from collections import ChainMap
 from threading import RLock, Thread
 from types import FrameType
@@ -40,9 +41,9 @@ from ..config import CONFIG
 from ..utils import helpers as _helpers
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
+from .. import types as _core_types
 
 if t.TYPE_CHECKING:
-    from smartsim._core import types as _core_types
     from smartsim.entity import types as _entity_types
 
 logger = get_logger(__name__)
@@ -70,11 +71,11 @@ class JobManager:
         self.monitor: t.Optional[Thread] = None
 
         # active jobs
-        self.jobs: t.Dict["_entity_types.EntityName", Job] = {}
-        self.db_jobs: t.Dict["_entity_types.EntityName", Job] = {}
+        self.jobs: t.Dict[_core_types.MonitoredJobID, Job] = {}
+        self.db_jobs: t.Dict[_core_types.MonitoredJobID, Job] = {}
 
         # completed jobs
-        self.completed: t.Dict["_entity_types.EntityName", Job] = {}
+        self.completed: t.Dict[_core_types.MonitoredJobID, Job] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._lock = lock  # thread lock
@@ -105,25 +106,24 @@ class JobManager:
         while self.actively_monitoring:
             self._thread_sleep()
             self.update_statuses()  # update all job statuses at once
-            for job in self.get_active_jobs().values():
+            for id_, job in self.get_active_jobs().items():
                 # if the job has errors then output the report
                 # this should only output once
                 if job.returncode is not None and job.status in TERMINAL_STATUSES:
                     if int(job.returncode) != 0:
                         logger.warning(job)
                         logger.warning(job.error_report())
-                        self.move_to_completed(job)
                     else:
                         # job completed without error
                         logger.info(job)
-                        self.move_to_completed(job)
+                    self.move_to_completed(id_, job)
 
             # if no more jobs left to actively monitor
             if not self.get_active_jobs():
                 self.actively_monitoring = False
                 logger.debug("Sleeping, no jobs to monitor")
 
-    def move_to_completed(self, job: Job) -> None:
+    def move_to_completed(self, id_: _core_types.MonitoredJobID, job: Job) -> None:
         """Move job to completed queue so that its no longer
            actively monitored by the job manager
 
@@ -131,29 +131,33 @@ class JobManager:
         :type job: Job
         """
         with self._lock:
-            self.completed[job.ename] = job
+            self.completed[id_] = job
             job.record_history()
 
             # remove from actively monitored jobs
-            if job.ename in self.db_jobs:
-                del self.db_jobs[job.ename]
-            elif job.ename in self.jobs:
-                del self.jobs[job.ename]
+            if id_ in self.db_jobs:
+                del self.db_jobs[id_]
+            elif id_ in self.jobs:
+                del self.jobs[id_]
 
-    def __getitem__(self, entity_name: "_entity_types.EntityName") -> Job:
+    def __getitem__(self, id_: _core_types.MonitoredJobID) -> Job:
         """Return the job associated with the name of the entity
         from which it was created.
 
-        :param entity_name: The name of the entity of a job
-        :type entity_name: str
-        :returns: the Job associated with the entity_name
+        :param id_: The name of the entity of a job
+        :type id_: str
+        :returns: the Job associated with the id_
         :rtype: Job
         """
         with self._lock:
-            entities = ChainMap(self.db_jobs, self.jobs, self.completed)
-            return entities[entity_name]
+            return ChainMap(self.db_jobs, self.jobs, self.completed)[id_]
+            #                                                       ^^^^^
+            # XXX: Why are we locking on reads? They should not changed the
+            #      size of the mapping and thus should not raise "dictionary
+            #      changed size during iteration" error? Is there some other
+            #      reason??
 
-    def get_active_jobs(self) -> t.Mapping["_entity_types.EntityName", Job]:
+    def get_active_jobs(self) -> t.Mapping[_core_types.MonitoredJobID, Job]:
         """Returns a mapping of entity name to job for all active jobs
 
         :returns: A mapping of entity name to job for all active jobs
@@ -161,7 +165,7 @@ class JobManager:
         """
         return ChainMap(self.db_jobs, self.jobs)
 
-    def add_job(self, job: Job) -> None:
+    def add_job(self, job: Job) -> _core_types.MonitoredJobID:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -173,15 +177,17 @@ class JobManager:
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
+        id_ = _core_types.MonitoredJobID(uuid.uuid4())
         with self._lock:
             if isinstance(job.entity, (DBNode, Orchestrator)):
-                self.db_jobs[job.entity.name] = job
+                self.db_jobs[id_] = job
             elif isinstance(job.entity, JobEntity) and job.entity.is_db:
-                self.db_jobs[job.entity.name] = job
+                self.db_jobs[id_] = job
             else:
-                self.jobs[job.entity.name] = job
+                self.jobs[id_] = job
+        return id_
 
-    def is_finished(self, entity: SmartSimEntity) -> bool:
+    def is_finished(self, id_: _core_types.MonitoredJobID) -> bool:
         """Detect if a job has completed
 
         :param entity: entity to check
@@ -190,8 +196,8 @@ class JobManager:
         :rtype: bool
         """
         with self._lock:
-            job = self[entity.name]  # locked operation
-            return entity.name in self.completed and job.status in TERMINAL_STATUSES
+            job = self[id_]  # locked operation
+            return id_ in self.completed and job.status in TERMINAL_STATUSES
 
     def update_statuses(self) -> None:
         """Trigger a status of all monitored jobs
@@ -202,10 +208,7 @@ class JobManager:
         with self._lock:
             Job.refresh_all(self.get_active_jobs().values())
 
-    def get_status(
-        self,
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-    ) -> SmartSimStatus:
+    def get_status(self, id_: _core_types.MonitoredJobID) -> SmartSimStatus:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
@@ -214,16 +217,13 @@ class JobManager:
         :rtype: SmartSimStatus
         """
         with self._lock:
-            if entity.name in self.completed:
-                return self.completed[entity.name].status
-
             try:
-                return self[entity.name].status
+                return self[id_].status
             except KeyError:
                 return SmartSimStatus.STATUS_NEVER_STARTED
 
     def find_completed_job(
-        self, entity_name: "_entity_types.EntityName"
+        self, entity_name: _core_types.MonitoredJobID
     ) -> t.Optional[Job]:
         """See if the job just started should be restarted or not.
 
@@ -238,9 +238,9 @@ class JobManager:
     #   ^^^^^^^^^^^
     # XXX: Don't like this name, nothing is being "started", only tracked
         self,
-        job_name: "_core_types.StepName",
-        job_id: "_core_types.JobIdType",
-        entity_name: "_entity_types.EntityName",
+        job_name: _core_types.StepName,
+        job_id: _core_types.JobIdType,
+        id_: _core_types.MonitoredJobID,
         is_task: bool = True,
     ) -> None:
         """Function to reset a job to record history and be
@@ -256,14 +256,14 @@ class JobManager:
         :type is_task: bool
         """
         with self._lock:
-            job = self.completed[entity_name]
-            del self.completed[entity_name]
+            job = self.completed[id_]
+            del self.completed[id_]
             job.reset(job_name, job_id, is_task)
 
             if isinstance(job.entity, (DBNode, Orchestrator)):
-                self.db_jobs[entity_name] = job
+                self.db_jobs[id_] = job
             else:
-                self.jobs[entity_name] = job
+                self.jobs[id_] = job
 
     def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
@@ -286,25 +286,6 @@ class JobManager:
                 address_dict[db_entity.db_identifier] = dict_entry
 
         return address_dict
-
-    def set_db_hosts(self, orchestrator: Orchestrator) -> None:
-        """Set the DB hosts in db_jobs so future entities can query this
-
-        :param orchestrator: orchestrator instance
-        :type orchestrator: Orchestrator
-        """
-        # should only be called during launch in the controller
-
-        with self._lock:
-            if orchestrator.batch:
-                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
-
-            else:
-                for dbnode in orchestrator.entities:
-                    if not dbnode.is_mpmd:
-                        self.db_jobs[dbnode.name].hosts = [dbnode.host]
-                    else:
-                        self.db_jobs[dbnode.name].hosts = dbnode.hosts
 
     def signal_interrupt(self, signo: int, _frame: t.Optional[FrameType]) -> None:
         """Custom handler for whenever SIGINT is received"""

@@ -87,6 +87,7 @@ if t.TYPE_CHECKING:
     from types import FrameType
 
     from ...entity import types as _entity_types
+    from .. import types as _core_types
     from ..launcher.stepMapping import StepMap
     from ..utils.serialize import TStepLaunchMetaData
     from .job import JobEntity
@@ -132,6 +133,13 @@ class Controller:
         )
         self._job_manager = JobManager(JM_LOCK, poll_status_interval=jm_interval)
         self._telemetry_monitor: t.Optional[subprocess.Popen[bytes]] = None
+        self._entity_to_job_monitor_id: t.Dict[
+            "_entity_types.EntityName",
+            # XXX: or should this be a
+            #      `t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]`?
+            #       Going with the name for now for ease of implementation
+            "_core_types.MonitoredJobID",
+        ] = {}
 
     def start(
         self,
@@ -227,7 +235,9 @@ class Controller:
                     "from SmartSimEntity or EntitySequence"
                 )
 
-            return self._job_manager.is_finished(entity)
+            return self._job_manager.is_finished(
+                self._entity_to_job_monitor_id[entity.name]
+            )
         except KeyError:
             raise ValueError(
                 f"Entity {entity.name} has not been launched in this experiment"
@@ -244,11 +254,12 @@ class Controller:
         :param entity: entity to be stopped
         :type entity: Entity | EntitySequence
         """
-        job = self._job_manager[entity.name]
+        id_ = self._entity_to_job_monitor_id[entity.name]
+        job = self._job_manager[id_]
         if job.status not in TERMINAL_STATUSES:
             logger.info(f"Stopping entity {entity.name} with job name {job.name}")
             Job.stop_all((job,))
-            self._job_manager.move_to_completed(job)
+            self._job_manager.move_to_completed(id_, job)
 
     def stop_db(self, db: Orchestrator) -> None:
         """Stop an orchestrator
@@ -268,7 +279,8 @@ class Controller:
                         self.stop_entity(node)
                         continue
 
-                    job = self._job_manager[node.name]
+                    id_ = self._entity_to_job_monitor_id[node.name]
+                    job = self._job_manager[id_]
                     job.set_status(
                         SmartSimStatus.STATUS_CANCELLED,
                         "",
@@ -276,7 +288,7 @@ class Controller:
                         output=None,
                         error=None,
                     )
-                    self._job_manager.move_to_completed(job)
+                    self._job_manager.move_to_completed(id_, job)
 
         db.reset_hosts()
 
@@ -293,7 +305,7 @@ class Controller:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
 
-    def get_jobs(self) -> t.Dict["_entity_types.EntityName", Job]:
+    def get_jobs(self) -> t.Dict["_core_types.MonitoredJobID", Job]:
         """Return a dictionary of completed job data
 
         :returns: dict[str, Job]
@@ -316,7 +328,8 @@ class Controller:
                 "Argument must be of type SmartSimEntity or EntitySequence, "
                 f"not {type(entity)}"
             )
-        return self._job_manager.get_status(entity)
+        id_ = self._entity_to_job_monitor_id[entity.name]
+        return self._job_manager.get_status(id_)
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
@@ -536,7 +549,26 @@ class Controller:
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
-        self._job_manager.set_db_hosts(orchestrator)
+        # XXX: Why on earth does the launching process set the hosts attrs of
+        #      the launched job? Especially since `hosts` is a user writeable
+        #      attr on both the `Orchestrator` and the `DBNode` instances via
+        #      the `set_hosts` method.  Since the `Job` (theoretically)
+        #      correlates to a launched entity, shouldn't it be the one
+        #      responsible for knowing with hosts it is actually running on??
+        # XXX: IMO, it is a MASSIVE code smell that we need to query into the
+        #      `_entity_to_job_monitor_id` even though we assume that
+        #      `_launch_step` will make the insertion. If we need to modify the
+        #      `Job` why does `launch_step` not return a job? Why do we need to
+        #      modify the `Job` at all?
+        if orchestrator.batch:
+            self._job_manager[
+                self._entity_to_job_monitor_id[orchestrator.name]
+            ].hosts = orchestrator.hosts
+        else:
+            for dbnode in orchestrator.entities:
+                self._job_manager[self._entity_to_job_monitor_id[dbnode.name]].hosts = (
+                    dbnode.hosts
+                )
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -561,8 +593,14 @@ class Controller:
                         raise
         self._save_orchestrator(
             orchestrator,
-            ((self._job_manager[step.entity_name], step, self._launcher.step_mapping[step.name])
-             for step in launched_steps),
+            (
+                (
+                    self._job_manager[self._entity_to_job_monitor_id[step.entity_name]],
+                    step,
+                    self._launcher.step_mapping[step.name],
+                )
+                for step in launched_steps
+            ),
         )
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
@@ -580,7 +618,12 @@ class Controller:
         :raises SmartSimError: if launch fails
         """
         # attempt to retrieve entity name in JobManager.completed
-        completed_job = self._job_manager.find_completed_job(entity.name)
+        try:
+            id_ = self._entity_to_job_monitor_id[entity.name]
+        except KeyError:
+            completed_job = None
+        else:
+            completed_job = self._job_manager.find_completed_job(id_)
 
         # if completed job DNE and is the entity name is not
         # running in JobManager.jobs or JobManager.db_jobs,
@@ -606,7 +649,7 @@ class Controller:
             #      step, a launcher needs to take in an entity! Why does
             #      `Launcher.run` not just take in an entity, and return `Job`?
             #      Do we use `Step`s literally anywhere else??
-            self._job_manager.add_job(job)
+            self._entity_to_job_monitor_id[entity.name] = self._job_manager.add_job(job)
 
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
@@ -625,14 +668,13 @@ class Controller:
                 job_step.name,
                 # ^^^^^^^^^^^
                 job_id,
-                entity.name,
-                # ^^^^^^^^^
+                self._entity_to_job_monitor_id[entity.name],
                 not job_step.managed,
                 # ^^^^^^^^^^^^^^^^^^
             )
-            # XXX: All of these fields can be retrieved off of the existing
-            #      job, and are (or at least we assume are) immutable. Why do
-            #      we need to respecify them here??
+            # XXX: These fields can be retrieved off of the existing job, and
+            #      are (or at least we assume are) immutable. Why do we need to
+            #      respecify them here??
 
         # the entity is using a duplicate name of an existing entity in
         # the experiment, throw an error
@@ -861,7 +903,9 @@ class Controller:
         #      to be a problem?
         try:
             for db_job, step in job_steps:
-                self._job_manager.add_job(db_job)
+                self._entity_to_job_monitor_id[db_job.ename] = (
+                    self._job_manager.add_job(db_job)
+                )
                 self._launcher.step_mapping[db_job.name] = step
                 if step.task_id:
                     self._launcher.task_manager.add_existing(int(step.task_id))

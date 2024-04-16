@@ -1,4 +1,5 @@
 import typing as t
+import uuid
 
 if t.TYPE_CHECKING:
     from smartsim.entity.entity import SmartSimEntity
@@ -10,6 +11,7 @@ if t.TYPE_CHECKING:
 StepName = t.NewType("StepName", str)
 StepID = t.NewType("StepID", str)
 TaskID = t.NewType("TaskID", str)
+MonitoredJobID = t.NewType("MonitoredJobID", uuid.UUID)
 
 
 # Protocols
