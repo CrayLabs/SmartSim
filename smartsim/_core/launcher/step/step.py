@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import functools
 import os.path as osp
+import pathlib
 import sys
 import time
 import typing as t
@@ -66,10 +67,21 @@ class Step:
         step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
+    @staticmethod
+    def _ensure_output_directory_exists(output_dir: str) -> None:
+        """Create the directory for the step output if it doesn't exist already"""
+        if not osp.exists(output_dir):
+            pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+
     def get_output_files(self) -> t.Tuple[str, str]:
-        """Return two paths to error and output files based on cwd"""
-        output = self.get_step_file(ending=".out")
-        error = self.get_step_file(ending=".err")
+        """Return two paths to error and output files based on metadata directory"""
+        try:
+            output_dir = self.meta["status_dir"]
+        except KeyError as exc:
+            raise KeyError("Status directory for this step has not been set.") from exc
+        self._ensure_output_directory_exists(output_dir)
+        output = osp.join(output_dir, f"{self.entity_name}.out")
+        error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
 
     def get_step_file(

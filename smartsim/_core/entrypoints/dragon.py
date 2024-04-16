@@ -55,15 +55,13 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     if not signo:
         logger.info("Received signal with no signo")
     else:
-        logger.info(f"Received {signo}")
+        logger.info(f"Received signal {signo}")
     cleanup()
 
 
 """
 Dragon server entrypoint script
 """
-
-DBPID: t.Optional[int] = None
 
 
 def print_summary(network_interface: str, ip_address: str) -> None:
@@ -86,7 +84,9 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 
 
 def run(
-    dragon_head_address: str, dragon_pid: int, zmq_context: zmq.Context[t.Any]
+    zmq_context: "zmq.Context[t.Any]",
+    dragon_head_address: str,
+    dragon_pid: int,
 ) -> None:
     logger.debug(f"Opening socket {dragon_head_address}")
 
@@ -94,7 +94,8 @@ def run(
     zmq_context.setsockopt(zmq.RCVTIMEO, value=1000)
     zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
     zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
-    dragon_head_socket = zmq_context.socket(zmq.REP)
+
+    dragon_head_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REP, True)
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
@@ -143,7 +144,7 @@ def run(
             logger.info("Waiting for external shutdown")
 
 
-def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
+def main(args: argparse.Namespace) -> int:
     if_config = get_best_interface_and_address()
     interface = if_config.interface
     address = if_config.address
@@ -152,33 +153,50 @@ def main(args: argparse.Namespace, zmq_context: zmq.Context[t.Any]) -> int:
     dragon_head_address = f"tcp://{address}"
 
     if args.launching_address:
+        zmq_context = zmq.Context()
+
         if str(args.launching_address).split(":", maxsplit=1)[0] == dragon_head_address:
             address = "localhost"
             dragon_head_address = "tcp://localhost:5555"
         else:
             dragon_head_address += ":5555"
 
-        launcher_socket = zmq_context.socket(zmq.REQ)
+        zmq_authenticator = dragonSockets.get_authenticator(zmq_context)
+
+        logger.debug("Getting launcher socket")
+        launcher_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REQ, False)
+
+        logger.debug(f"Connecting launcher socket to: {args.launching_address}")
         launcher_socket.connect(args.launching_address)
         client = dragonSockets.as_client(launcher_socket)
 
+        logger.debug(
+            f"Sending bootstrap request to launcher_socket with {dragon_head_address}"
+        )
         client.send(DragonBootstrapRequest(address=dragon_head_address))
         response = client.recv()
+
+        logger.debug(f"Received bootstrap response: {response}")
         if not isinstance(response, DragonBootstrapResponse):
             raise ValueError(
                 "Could not receive connection confirmation from launcher. Aborting."
             )
 
         print_summary(interface, dragon_head_address)
+
         try:
+            logger.debug("Executing event loop")
             run(
+                zmq_context=zmq_context,
                 dragon_head_address=dragon_head_address,
                 dragon_pid=response.dragon_pid,
-                zmq_context=zmq_context,
             )
         except Exception as e:
             logger.error(f"Dragon server failed with {e}", exc_info=True)
             return os.EX_SOFTWARE
+        finally:
+            if zmq_authenticator is not None and zmq_authenticator.is_alive():
+                zmq_authenticator.stop()
 
     logger.info("Shutting down! Bye bye!")
 
@@ -215,6 +233,4 @@ if __name__ == "__main__":
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 
-    context = zmq.Context()
-
-    sys.exit(main(args_, context))
+    sys.exit(main(args_))

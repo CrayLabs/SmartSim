@@ -162,6 +162,8 @@ def test_restarting_entity(test_dir, wlmutils, entity):
     """Validate restarting a completed Model/Ensemble job"""
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
+    step.meta["status_dir"] = test_dir
+    entity.path = test_dir
     test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
     # if test_launcher == "dragon":
@@ -175,6 +177,8 @@ def test_restarting_orch(test_dir, wlmutils):
     """Validate restarting a completed Orchestrator job"""
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
+    step.meta["status_dir"] = test_dir
+    orc.path = test_dir
     test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
     # if test_launcher == "dragon":

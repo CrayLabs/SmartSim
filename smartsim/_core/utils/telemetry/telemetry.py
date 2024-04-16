@@ -233,7 +233,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         :param event: event representing file/directory modification.
         :type event: FileSystemEvent"""
-        super().on_modified(event)  # type: ignore
+        super().on_modified(event)
         logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
 
@@ -242,7 +242,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         :param event: event representing file/directory creation.
         :type event: FileSystemEvent"""
-        super().on_created(event)  # type: ignore
+        super().on_created(event)
         logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
 
@@ -261,6 +261,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         :type entity: JobEntity
         :param step_info: `StepInfo` received when requesting a Job status update
         :type step_info: StepInfo"""
+        logger.debug(f"Moving entity {entity.key} to completed status")
+
         # remember completed entities to ignore them after manifest updates
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
@@ -311,12 +313,24 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         # consider not using name to avoid collisions
         m_jobs = [job for job in self._tracked_jobs.values() if job.is_managed]
         if names := {entity.name: entity for entity in m_jobs}:
-            step_updates = self._launcher.get_step_update(list(names.keys()))
+            step_updates: t.List[t.Tuple[str, t.Optional[StepInfo]]] = []
 
-            for step_name, step_info in step_updates:
-                if step_info and step_info.status in TERMINAL_STATUSES:
-                    completed_entity = names[step_name]
-                    await self._to_completed(timestamp, completed_entity, step_info)
+            try:
+                task_names = list(names.keys())
+                updates = self._launcher.get_step_update(task_names)
+                step_updates.extend(updates)
+                logger.debug(f"Retrieved updates for: {task_names}")
+            except Exception:
+                logger.warning(f"Telemetry step updates failed for {names.keys()}")
+
+            try:
+                for step_name, step_info in step_updates:
+                    if step_info and step_info.status in TERMINAL_STATUSES:
+                        completed_entity = names[step_name]
+                        await self._to_completed(timestamp, completed_entity, step_info)
+            except Exception as ex:
+                msg = f"An error occurred getting step updates on {names}"
+                logger.error(msg, exc_info=ex)
 
     async def shutdown(self) -> None:
         """Release all resources owned by the `ManifestEventHandler`"""
@@ -549,7 +563,7 @@ class TelemetryMonitor:
         frequency_ms = int(self._args.frequency * 1000)
 
         # Create event handlers to trigger when target files are changed
-        log_handler = LoggingEventHandler(logger)  # type: ignore
+        log_handler = LoggingEventHandler(logger)
         self._action_handler = ManifestEventHandler(
             str(MANIFEST_FILENAME),
             timeout_ms=frequency_ms,

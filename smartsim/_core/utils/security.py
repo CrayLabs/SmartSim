@@ -35,17 +35,33 @@ import zmq
 import zmq.auth
 
 from smartsim._core.config.config import Config
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 
 class _KeyPermissions(IntEnum):
     """Permissions used by KeyManager"""
 
-    OWNER_RW = stat.S_IRUSR | stat.S_IWUSR
-    """Permissions allowing owner to r/w"""
-    OWNER_FULL = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR
-    """permissions allowing owner to r/w/x"""
-    WORLD_R = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IROTH | stat.S_IRGRP
-    """permissions allowing world to read"""
+    PRIVATE_KEY = stat.S_IRUSR | stat.S_IWUSR
+    """Permissions only allowing an owner to read and write the file"""
+    PUBLIC_KEY = stat.S_IRUSR | stat.S_IWUSR | stat.S_IROTH | stat.S_IRGRP
+    """Permissions allowing an owner, others, and the group to read a file"""
+
+    PRIVATE_DIR = (
+        stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXOTH | stat.S_IXGRP
+    )
+    """Permissions allowing only owners to read, write and traverse a directory"""
+    PUBLIC_DIR = (
+        stat.S_IRUSR
+        | stat.S_IWUSR
+        | stat.S_IXUSR
+        | stat.S_IROTH
+        | stat.S_IXOTH
+        | stat.S_IRGRP
+        | stat.S_IXGRP
+    )
+    """Permissions allowing non-owners to traverse a directory"""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -183,10 +199,14 @@ class KeyManager:
         the public and private key pairs for servers & clients"""
         for locator in [self._server_locator, self._client_locator]:
             if not locator.public_dir.exists():
-                locator.public_dir.mkdir(parents=True, mode=_KeyPermissions.WORLD_R)
+                permission = _KeyPermissions.PUBLIC_DIR
+                logger.debug(f"Creating key dir: {locator.public_dir}, {permission}")
+                locator.public_dir.mkdir(parents=True, mode=permission)
 
             if not locator.private_dir.exists():
-                locator.private_dir.mkdir(parents=True, mode=_KeyPermissions.OWNER_FULL)
+                permission = _KeyPermissions.PRIVATE_DIR
+                logger.debug(f"Creating key dir: {locator.private_dir}, {permission}")
+                locator.private_dir.mkdir(parents=True, mode=permission)
 
     @classmethod
     def _load_keypair(cls, locator: _KeyLocator, in_context: bool) -> KeyPair:
@@ -203,7 +223,15 @@ class KeyManager:
         """
         # private keys contain public & private key parts
         key_path = locator.private if in_context else locator.public
-        pub_key, priv_key = zmq.auth.load_certificate(key_path)
+
+        pub_key: bytes = b""
+        priv_key: t.Optional[bytes] = b""
+
+        if key_path.exists():
+            logger.debug(f"Existing key files located at {key_path}")
+            pub_key, priv_key = zmq.auth.load_certificate(key_path)
+        else:
+            logger.debug(f"No key files found at {key_path}")
 
         # avoid a `None` value in the private key when it isn't loaded
         return KeyPair(pub_key, priv_key or b"")
@@ -221,7 +249,7 @@ class KeyManager:
             return server_keys, client_keys
         except (ValueError, OSError):
             # expected if no keys could be loaded from disk
-            ...
+            logger.warning("Loading key pairs failed.", exc_info=True)
 
         return KeyPair(), KeyPair()
 
@@ -235,6 +263,7 @@ class KeyManager:
         :type locator: KeyLocator"""
         new_path = locator.private.with_suffix(locator.public.suffix)
         if new_path != locator.public:
+            logger.debug(f"Moving key file from {locator.public} to {new_path}")
             new_path.rename(locator.public)
 
     def _create_keys(self) -> None:
@@ -247,8 +276,8 @@ class KeyManager:
             self._move_public_key(locator)
 
             # and ensure correct r/w/x permissions on each file.
-            locator.private.chmod(_KeyPermissions.OWNER_RW)
-            locator.public.chmod(_KeyPermissions.WORLD_R)
+            locator.private.chmod(_KeyPermissions.PRIVATE_KEY)
+            locator.public.chmod(_KeyPermissions.PUBLIC_KEY)
 
     def get_keys(self, create: bool = True) -> t.Tuple[KeyPair, KeyPair]:
         """Use ZMQ auth to generate a public/private key pair for the server
@@ -259,6 +288,7 @@ class KeyManager:
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
         :rtype: Tuple[KeyPair, KeyPair]
         """
+        logger.debug(f"Loading keys, creation {'is' if create else 'not'} allowed")
         server_keys, client_keys = self._load_keys()
 
         # check if we received "empty keys"
@@ -267,6 +297,7 @@ class KeyManager:
 
         if not create:
             # if directed not to create new keys, return "empty keys"
+            logger.debug("Returning empty key pairs")
             return KeyPair(), KeyPair()
 
         self.create_directories()
