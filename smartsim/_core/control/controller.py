@@ -559,7 +559,6 @@ class Controller:
                     else:
                         # surface SSInternalError as we have no way to recover
                         raise
-        # XXX: This needs to be put back if we want to reload an orc
         self._save_orchestrator(
             orchestrator,
             ((self._job_manager[step.entity_name], step, self._launcher.step_mapping[step.name])

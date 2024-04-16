@@ -38,7 +38,6 @@ from ...log import ContextThread, get_logger
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..utils import helpers as _helpers
-from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
 
@@ -65,14 +64,9 @@ class JobManager:
     def __init__(
         self,
         lock: RLock,
-        launcher: t.Optional[Launcher] = None,
         poll_status_interval: int = CONFIG.jm_interval,
     ) -> None:
-        """Initialize a Jobmanager
-
-        :param launcher: a Launcher object to manage jobs
-        :type: SmartSim.Launcher
-        """
+        """Initialize a Jobmanager"""
         self.monitor: t.Optional[Thread] = None
 
         # active jobs
