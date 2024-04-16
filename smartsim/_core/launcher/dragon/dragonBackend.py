@@ -220,7 +220,6 @@ class DragonBackend:
         out_file: t.Optional[str],
         err_file: t.Optional[str],
     ) -> None:
-        print("INSIDE START REDIR")
         grp_redir = ProcessGroup(restart=False, policy=global_policy)
         for pol, puid in zip(policies, puids):
             proc = Process(None, ident=puid)
@@ -244,29 +243,25 @@ class DragonBackend:
                         policy=pol,
                     ),
                 )
-        print("INIT REDIR GRP")
         grp_redir.init()
-        print("START REDIR GRP")
         grp_redir.start()
-        print("EXIT REDIR GRP")
 
     def _stop_steps(self) -> None:
-        print(f"Steps to stop {self._stop_requests}")
         while len(self._stop_requests) > 0:
             request = self._stop_requests.popleft()
-            print(f"Stopping step {request.step_id}")
+            step_id = request.step_id
+            if step_id not in self._group_infos:
+                print(f"Requested to stop non-existing step {step_id}")
+                continue
+
+            print(f"Stopping step {step_id}")
             if request.step_id in self._queued_steps:
-                self._group_infos[request.step_id].status = SmartSimStatus.STATUS_CANCELLED
-                self._group_infos[request.step_id].return_codes = [-9]
-                self._queued_steps.pop(request.step_id)
-            elif request.step_id in self._group_infos:
+                self._queued_steps.pop(step_id)
+            else:
                 # Technically we could just terminate, but what if
                 # the application intercepts that and ignores it?
-                proc_group = self._group_infos[request.step_id].process_group
-                if proc_group is None:
-                    self._group_infos[request.step_id].status = SmartSimStatus.STATUS_CANCELLED
-                    self._group_infos[request.step_id].return_codes = [-9]
-                elif proc_group.status not in TERMINAL_STATUSES:
+                proc_group = self._group_infos[step_id].process_group
+                if proc_group is None and proc_group.status not in TERMINAL_STATUSES:
                     try:
                         proc_group.kill()
                     except DragonProcessGroupError:
@@ -274,6 +269,9 @@ class DragonBackend:
                             proc_group.stop()
                         except DragonProcessGroupError:
                             print("Process group already stopped")
+
+            self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
+            self._group_infos[step_id].return_codes = [-9]
 
 
     def _start_steps(self) -> None:
@@ -310,9 +308,7 @@ class DragonBackend:
                 grp.add_process(nproc=request.tasks_per_node, template=tmp_proc)
 
             try:
-                print("init")
                 grp.init()
-                print("start")
                 grp.start()
             except Exception as e:
                 print(e)
@@ -332,7 +328,6 @@ class DragonBackend:
                 print(e)
 
             try:
-                print("Redir")
                 DragonBackend._start_redirect_workers(
                     global_policy,
                     policies,
@@ -340,7 +335,6 @@ class DragonBackend:
                     request.output_file,
                     request.error_file,
                 )
-                print("Redir'd")
             except Exception as e:
                 raise IOError("Could not redirect output") from e
 
@@ -358,11 +352,10 @@ class DragonBackend:
         for step_id in self._running_steps:
             group_info = self._group_infos[step_id]
             grp = group_info.process_group
-
             if grp is None:
                 group_info.status = SmartSimStatus.STATUS_FAILED
                 group_info.return_codes = [-1]
-            elif grp.status not in TERMINAL_STATUSES:
+            elif group_info.status not in TERMINAL_STATUSES:
                 if grp.status == DRG_RUNNING_STATUS:
                     group_info.status = SmartSimStatus.STATUS_RUNNING
                 else:
@@ -411,19 +404,15 @@ class DragonBackend:
         while True:
             try:
                 self._updates += 1
-                print("STOP")
                 self._stop_steps()
-                print("START")
                 self._start_steps()
-                print("REFRESH")
                 self._refresh_statuses()
-                print("UPDATE SHUTDOWN")
                 self._update_shutdown_status()
+                time.sleep(0.1)
             except Exception as e:
                 print(e)
-            time.sleep(0.1)
-            # if (self._updates % int(10/interval)) == 0:
-            self.print_status()
+            if (self._updates % int(10/interval)) == 0:
+                self.print_status()
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
