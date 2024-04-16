@@ -124,6 +124,10 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
+        # launch a telemetry monitor to track job progress
+        if CONFIG.telemetry_enabled:
+            self._start_telemetry_monitor(exp_path)
+
         if isinstance(self._launcher, DragonLauncher):
             self._launcher.connect_to_dragon(exp_path)
 
@@ -142,10 +146,6 @@ class Controller:
         serialize.save_launch_manifest(
             launched.map(_look_up_launched_data(self._launcher))
         )
-
-        # launch a telemetry monitor to track job progress
-        if CONFIG.telemetry_enabled:
-            self._start_telemetry_monitor(exp_path)
 
         # block until all non-database jobs are complete
         if block:
