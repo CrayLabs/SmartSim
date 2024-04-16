@@ -93,7 +93,7 @@ def get_secure_socket(
 
         # configure the server keys on the socket
         socket.curve_secretkey = server_keys.private
-        socket.curve_publickey = client_keys.public
+        socket.curve_publickey = server_keys.public
         socket.curve_server = True
     else:
         # configure client keys on the socket to encrypt outgoing messages
@@ -114,6 +114,7 @@ def get_authenticator(
     :type context: zmq.Context
     :returns: the activated `Authenticator`
     :rtype: zmq.auth.thread.ThreadAuthenticator"""
+
     config = get_config()
 
     key_manager = KeyManager(config, as_client=True)

@@ -41,6 +41,7 @@ from threading import RLock
 
 import psutil
 import zmq
+import zmq.auth.thread
 
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim.error.errors import SmartSimError
@@ -104,7 +105,7 @@ class DragonConnector:
         return self._dragon_head_socket is not None
 
     def _handshake(self, address: str) -> None:
-        self._dragon_head_socket, self._authenticator = dragonSockets.get_secure_socket(
+        self._dragon_head_socket = dragonSockets.get_secure_socket(
             self._context, zmq.REQ, False
         )
         self._dragon_head_socket.connect(address)
@@ -147,6 +148,8 @@ class DragonConnector:
             path = _resolve_dragon_path(self._dragon_server_path)
             dragon_config_log = path / CONFIG.dragon_log_filename
 
+            self._authenticator = dragonSockets.get_authenticator(self._context)
+
             if dragon_config_log.is_file():
                 dragon_confs = self._parse_launched_dragon_server_info_from_files(
                     [dragon_config_log]
@@ -188,7 +191,7 @@ class DragonConnector:
             if address is not None:
                 self._set_timeout(self._startup_timeout)
 
-                connector_socket, self._authenticator = dragonSockets.get_secure_socket(
+                connector_socket = dragonSockets.get_secure_socket(
                     self._context, zmq.REP, True
                 )
                 # find first available port >= 5995
@@ -354,7 +357,7 @@ def _dragon_cleanup(
     """
     try:
         if server_socket is not None:
-            DragonConnector.send_req_with_socket(server_socket, DragonShutdownRequest())
+            DragonConnector._send_req_with_socket(server_socket, DragonShutdownRequest())
     except zmq.error.ZMQError as e:
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
