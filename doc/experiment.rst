@@ -211,6 +211,107 @@ An ``Ensemble`` supports key features, including methods to:
 
 Visit the respective links for more information on each topic.
 
+==============
+File Structure
+==============
+When a user executes an ``Experiment`` script, it generates output folders in the system's directory.
+By default, SmartSim creates a predefined file structure and assigns a path to each entity initialized.
+However, users have the flexibility to customize this according to workflow needs. Please refer
+to the respective :ref:`default<default_folder>` and :ref:`configure<config_folder>` sections below
+for more details.
+
+.. note::
+  Files added for symlinking, copying, or configuration will not be organized into the generated
+  directories unless ``Experiment.generate`` is invoked on the designated entity.
+
+.. _default_folder:
+
+Default
+=======
+By default, an ``Experiment`` folder is created in your current working directory, using the
+specified `name` parameter during ``Experiment`` initialization. Each entity created by the
+``Experiment`` generates an output folder under the ``Experiment`` directory, named after the
+entity. These folders hold `.err` and `.out` files, containing execution-related information.
+
+For instance, consider the following Python script:
+
+.. code-block:: python
+
+   from smartsim import Experiment
+
+   exp = Experiment(name="experiment-example")
+   database = exp.create_database(port=6379, interface="ib0")
+   exp.start(database)
+   settings = exp.create_run_settings(exe="echo", exec_args="hello world")
+   model = exp.create_model(name="model-name", run_settings=settings)
+   ensemble = exp.create_ensemble(name="ensemble-name", run_settings=settings, replicas=2)
+   exp.start(model, ensemble)
+   exp.stop(database)
+
+When executed, this script creates the following directory structure in your
+working directory:
+
+::
+
+    experiment-example
+    ├── orchestrator
+    │   ├── orchestrator_0.err
+    │   └── orchestrator_0.out
+    ├── model-name
+    │   ├── model-name.err
+    │   └── model-name.out
+    └── ensemble-name
+        ├── ensemble-name_0
+        │   ├── ensemble-name_0.err
+        │   └── ensemble-name_0.out
+        ├── ensemble-name_1
+        │   ├── ensemble-name_1.err
+        │   └── ensemble-name_1.out
+
+.. _config_folder:
+
+Configure
+=========
+Customizing the path of the ``Experiment`` and entity folders is possible by providing
+either an absolute or relative path to the `path` argument during initialization. When
+a relative path is provided, SmartSim executes the entity relative to the current working
+directory.
+
+For instance, consider the following Python script:
+
+.. code-block:: python
+
+   from smartsim import Experiment
+
+   exp = Experiment(name="experiment-example", exp_path="absolute/path/to/experiment-folder")
+   database = exp.create_database(port=6379, interface="ib0")
+   exp.start(database)
+   settings = exp.create_run_settings(exe="echo", exec_args="hello world")
+   model = exp.create_model(name="model-name", run_settings=settings, path="./model-folder")
+   ensemble = exp.create_ensemble(name="ensemble-name", run_settings=settings, replicas=2, path="./ensemble-folder")
+   exp.start(model, ensemble)
+   exp.stop(database)
+
+When executed, this script creates the following directory structure in your
+working directory:
+
+::
+
+    ├── experiment-folder
+    |   ├── orchestrator
+    |   │   ├── orchestrator_0.err
+    |   │   └── orchestrator_0.out
+    ├── model-folder
+    │   ├── model-name.err
+    │   └── model-name.out
+    └── ensemble-folder
+        ├── ensemble-name_0
+        │   ├── ensemble-name_0.err
+        │   └── ensemble-name_0.out
+        ├── ensemble-name_1
+        │   ├── ensemble-name_1.err
+        │   └── ensemble-name_1.out
+
 .. _exp_example:
 
 =======
