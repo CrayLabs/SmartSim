@@ -93,9 +93,11 @@ class DragonLauncher(WLMLauncher):
             RunSettings: DragonStep,
         }
 
-    def add_step_to_mapping_table(self, name: str, step_map: StepMap):
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
         super().add_step_to_mapping_table(name, step_map)
 
+        if step_map.step_id is None:
+            return
         if step_map.step_id.startswith("SLURM-"):
             slurm_step_map = StepMap(
                 step_id=DragonLauncher._unprefix_step_id(step_map.step_id),

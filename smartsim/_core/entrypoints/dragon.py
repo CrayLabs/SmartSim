@@ -96,8 +96,8 @@ def run(
     zmq_context.setsockopt(zmq.RCVTIMEO, value=-1)
     zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
     zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
-    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, optval=-1)
-    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, optval=-1)
+    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, -1)
+    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, -1)
 
     dragon_head_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REP, True)
     dragon_head_socket.bind(dragon_head_address)
@@ -171,8 +171,8 @@ def main(args: argparse.Namespace) -> int:
             dragon_head_address += ":5555"
 
         zmq_authenticator = dragonSockets.get_authenticator(zmq_context)
-        zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, optval=-1)
-        zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, optval=-1)
+        zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, -1)
+        zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, -1)
 
         logger.debug("Getting launcher socket")
         launcher_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REQ, False)

@@ -58,13 +58,14 @@ from ...._core.schemas import (
     DragonUpdateStatusResponse,
 )
 from ...._core.utils.helpers import create_short_id_str
-from ....status import TERMINAL_STATUSES, SmartSimStatus
 from ....log import get_logger
+from ....status import TERMINAL_STATUSES, SmartSimStatus
 
 DRG_ERROR_STATUS = "Error"
 DRG_RUNNING_STATUS = "Running"
 
 logger = get_logger(__name__)
+
 
 @dataclass
 class ProcessGroupInfo:
@@ -119,10 +120,10 @@ class DragonBackend:
         self._queued_steps: "collections.OrderedDict[str, DragonRunRequest]" = (
             collections.OrderedDict()
         )
-        self._stop_requests:  t.Deque[str] = collections.deque()
+        self._stop_requests: t.Deque[DragonStopRequest] = collections.deque()
         self._running_steps: t.List[str] = []
         self._completed_steps: t.List[str] = []
-        self._last_update_time: int = time.time_ns() // 1e9
+        self._last_update_time: float = time.time_ns() / 1e9
         num_hosts = len(self._hosts)
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
@@ -260,7 +261,10 @@ class DragonBackend:
                 # Technically we could just terminate, but what if
                 # the application intercepts that and ignores it?
                 proc_group = self._group_infos[step_id].process_group
-                if proc_group is None and proc_group.status not in TERMINAL_STATUSES:
+                if (
+                    proc_group is not None
+                    and proc_group.status not in TERMINAL_STATUSES
+                ):
                     try:
                         proc_group.kill()
                     except DragonProcessGroupError:
@@ -271,7 +275,6 @@ class DragonBackend:
 
             self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
             self._group_infos[step_id].return_codes = [-9]
-
 
     def _start_steps(self) -> None:
         started = []
@@ -312,6 +315,7 @@ class DragonBackend:
             except Exception as e:
                 logger.error(e)
 
+            puids = None
             try:
                 puids = grp.puids
                 self._group_infos[step_id] = ProcessGroupInfo(
@@ -326,16 +330,17 @@ class DragonBackend:
             except Exception as e:
                 logger.error(e)
 
-            try:
-                DragonBackend._start_redirect_workers(
-                    global_policy,
-                    policies,
-                    puids,
-                    request.output_file,
-                    request.error_file,
-                )
-            except Exception as e:
-                raise IOError("Could not redirect output") from e
+            if puids is not None:
+                try:
+                    DragonBackend._start_redirect_workers(
+                        global_policy,
+                        policies,
+                        puids,
+                        request.output_file,
+                        request.error_file,
+                    )
+                except Exception as e:
+                    raise IOError("Could not redirect output") from e
 
         if started:
             logger.debug(f"{started=}")
@@ -399,16 +404,15 @@ class DragonBackend:
             for grp_info in self._group_infos.values()
         )
 
-    def _should_update(self):
-        current_time = time.time_ns() // 1e9
+    def _should_update(self) -> bool:
+        current_time = time.time_ns() / 1e9
         if current_time - self._last_update_time > 10:
             self._last_update_time = current_time
             return True
         return False
 
-    def update(self, interval: float=0.01) -> None:
+    def update(self) -> None:
         logger.debug("Dragon Backend update thread started")
-        time.time_ns
         while True:
             try:
                 self._stop_steps()

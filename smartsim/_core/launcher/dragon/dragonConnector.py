@@ -74,11 +74,12 @@ class DragonConnector:
 
     def __init__(self) -> None:
         super().__init__()
-        self._context = None
-        self._context = zmq.Context()
+        self._context: zmq.Context[t.Any] = zmq.Context()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
-        self._authenticator = dragonSockets.get_authenticator(self._context)
+        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = (
+            dragonSockets.get_authenticator(self._context)
+        )
         self._timeout = CONFIG.dragon_server_timeout
         self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
@@ -118,10 +119,11 @@ class DragonConnector:
             )
         except (zmq.ZMQError, zmq.Again) as e:
             logger.debug(e)
-            try:
-                self._authenticator.stop()
-            except zmq.Again:
-                logger.error("Could not stop authenticator")
+            if self._authenticator is not None:
+                try:
+                    self._authenticator.stop()
+                except zmq.Again:
+                    logger.error("Could not stop authenticator")
             self._dragon_head_socket.close()
             self._dragon_head_socket = None
             raise SmartSimError(
@@ -132,9 +134,12 @@ class DragonConnector:
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
         if self._authenticator is not None and self._authenticator.thread is not None:
-            self._authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, optval=timeout)
-            self._authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, optval=timeout)
-
+            self._authenticator.thread.authenticator.zap_socket.setsockopt(
+                zmq.SNDTIMEO, timeout
+            )
+            self._authenticator.thread.authenticator.zap_socket.setsockopt(
+                zmq.RCVTIMEO, timeout
+            )
 
     def ensure_connected(self) -> None:
         if not self.is_connected:
@@ -155,7 +160,6 @@ class DragonConnector:
             path = _resolve_dragon_path(self._dragon_server_path)
             dragon_config_log = path / CONFIG.dragon_log_filename
 
-
             if dragon_config_log.is_file():
                 dragon_confs = self._parse_launched_dragon_server_info_from_files(
                     [dragon_config_log]
@@ -174,15 +178,19 @@ class DragonConnector:
                     except SmartSimError as e:
                         logger.warning(e)
                         logger.debug("Closing ZAP socket")
-                        if self._authenticator.thread is not None:
+                        if (
+                            self._authenticator is not None
+                            and self._authenticator.thread is not None
+                        ):
                             self._authenticator.thread.authenticator.zap_socket.close()
                         logger.debug("Getting new auth")
-                        self._authenticator = dragonSockets.get_authenticator(self._context)
+                        self._authenticator = dragonSockets.get_authenticator(
+                            self._context
+                        )
                     finally:
                         self._set_timeout(self._timeout)
                     if self.is_connected:
                         return
-
 
             path.mkdir(parents=True, exist_ok=True)
 
@@ -375,7 +383,10 @@ def _dragon_cleanup(
     try:
         if server_socket is not None:
             print("Sending shutdown request to dragon environment")
-            DragonConnector._send_req_with_socket(server_socket, DragonShutdownRequest())
+            # pylint: disable-next=protected-access
+            DragonConnector._send_req_with_socket(
+                server_socket, DragonShutdownRequest()
+            )
     except (zmq.error.ZMQError, zmq.Again) as e:
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
@@ -392,7 +403,7 @@ def _dragon_cleanup(
     finally:
         print("Authenticator shutdown is complete")
 
-    if psutil.pid_exists(server_process_pid) and server_process_pid:
+    if server_process_pid and psutil.pid_exists(server_process_pid):
         try:
             os.kill(server_process_pid, signal.SIGINT)
             print("Sent SIGINT to dragon server")

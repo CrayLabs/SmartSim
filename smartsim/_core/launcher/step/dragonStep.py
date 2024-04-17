@@ -216,7 +216,8 @@ class DragonBatchStep(Step):
                 script_file.write(f"#SBATCH {opt}\n")
 
             script_file.write(
-                f"#SBATCH --export=ALL,SMARTSIM_DRAGON_SERVER_PATH={self.cwd},PYTHONUNBUFFERED=1\n"
+                f"#SBATCH --export=ALL,SMARTSIM_DRAGON_SERVER_PATH={self.cwd},"
+                "PYTHONUNBUFFERED=1\n"
             )
 
             for cmd in self.batch_settings.preamble:

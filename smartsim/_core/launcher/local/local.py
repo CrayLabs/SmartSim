@@ -41,7 +41,7 @@ class LocalLauncher(Launcher):
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def add_step_to_mapping_table(self, name: str, step_map: StepMap):
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
         self.step_mapping[name] = step_map
 
     def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:

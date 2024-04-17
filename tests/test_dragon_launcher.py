@@ -29,12 +29,15 @@ import multiprocessing as mp
 import os
 import sys
 import typing as t
-import zmq
 
 import pytest
+import zmq
 
 from smartsim._core.config.config import get_config
-from smartsim._core.launcher.dragon.dragonLauncher import DragonConnector, DragonLauncher
+from smartsim._core.launcher.dragon.dragonLauncher import (
+    DragonConnector,
+    DragonLauncher,
+)
 from smartsim._core.launcher.dragon.dragonSockets import (
     get_authenticator,
     get_secure_socket,
