@@ -162,11 +162,11 @@ class Config:
 
     @property
     def dragon_server_reconnect_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", "5000"))
+        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", "20000"))
 
     @property
     def dragon_server_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "10000"))
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "20000"))
 
     @property
     def dragon_server_startup_timeout(self) -> int:
