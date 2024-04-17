@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Fix race condition for telemetry monitor
+- Change default path for entities
 - Drop Python 3.8 support
 - Update watchdog dependency
 - Historical output files stored under .smartsim directory
@@ -42,6 +43,10 @@ Description
 Detailed Notes
 
 - Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR549_)
+- The default path for an entity is now the path to the experiment / the
+  entity name. create_database and create_ensemble now have path arguments.
+  All path arguments are compatible with relative paths. Relative paths are
+  relative to the CWD. (SmartSim-PR533_)
 - Python 3.8 is reaching its end-of-life in October, 2024, so it will
   no longer continue to be supported. (SmartSim-PR544_) 
 - Update watchdog dependency from 3.x to 4.x, fix new type issues (SmartSim-PR540_)
@@ -56,6 +61,7 @@ Detailed Notes
 - Change type_extension and pydantic versions in readthedocs environment
   to enable docs build. (SmartSim-PR537_)
 - Promote devices to a dedicated Enum type throughout the SmartSim code base.
+  (SmartSim-PR498_)
 - Update the telemetry monitor to enable retrieval of metrics on a scheduled
   interval. Switch basic experiment tracking telemetry to default to on. Add
   database metric collectors. Improve telemetry monitor logging. Create
@@ -101,6 +107,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR549: https://github.com/CrayLabs/SmartSim/pull/549
+.. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
 .. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
 .. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
 .. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
