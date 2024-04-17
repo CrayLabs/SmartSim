@@ -376,14 +376,17 @@ class Controller:
             entity_out.unlink()
             entity_err.unlink()
 
-        try:
+        historical_err.touch()
+        historical_out.touch()
+
+        if historical_err.exists() and historical_out.exists():
             entity_out.symlink_to(historical_out)
             entity_err.symlink_to(historical_err)
-        except FileNotFoundError as fnf:
+        else:
             raise FileNotFoundError(
                 f"Output files for {entity.name} could not be found. "
                 "Symlinking files failed."
-            ) from fnf
+            )
 
     # pylint: disable-msg=too-many-locals
     def _launch(
@@ -433,6 +436,11 @@ class Controller:
         steps: t.List[
             t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
         ] = []
+
+        symlink_substeps: t.List[
+            t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
+        ] = []
+
         for elist in manifest.ensembles:
             ens_telem_dir = manifest_builder.run_telemetry_subdirectory / "ensemble"
             if elist.batch:
@@ -443,7 +451,7 @@ class Controller:
 
                 # symlink substeps to maintain directory structure
                 for substep, substep_entity in zip(substeps, elist.models):
-                    self.symlink_output_files(substep, substep_entity)
+                    symlink_substeps.append((substep, substep_entity))
 
                 steps.append((batch_step, elist))
             else:
@@ -467,8 +475,7 @@ class Controller:
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
 
-                # symlink substep to maintain directory structure
-                self.symlink_output_files(substeps[0], model)
+                symlink_substeps.append((substeps[0], model))
 
                 steps.append((batch_step, model))
             else:
@@ -479,6 +486,10 @@ class Controller:
         # launch steps
         for step, entity in steps:
             self._launch_step(step, entity)
+
+        # symlink substeps to maintain directory structure
+        for substep, entity in symlink_substeps:
+            self.symlink_output_files(substep, entity)
 
         return manifest_builder.finalize()
 
@@ -511,11 +522,11 @@ class Controller:
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
 
+            self._launch_step(orc_batch_step, orchestrator)
+
             # symlink substeps to maintain directory structure
             for substep, substep_entity in zip(substeps, orchestrator.entities):
                 self.symlink_output_files(substep, substep_entity)
-
-            self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
@@ -573,6 +584,9 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
+        not_a_model = not isinstance(entity, Model)
+        is_non_batch_model = isinstance(entity, Model) and not entity.batch_settings
+
         # attempt to retrieve entity name in JobManager.completed
         completed_job = self._jobs.completed.get(entity.name, None)
 
@@ -582,11 +596,6 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
-            # make sure it's not an _AnonymousBatchJob
-            if not isinstance(entity, Model) or (
-                isinstance(entity, Model) and not entity.batch_settings
-            ):
-                self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -595,14 +604,13 @@ class Controller:
                 msg += f"{entity}"
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+            finally:
+                if not_a_model or is_non_batch_model:
+                    self.symlink_output_files(job_step, entity)
+
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
-            # make sure it's not an _AnonymousBatchJob
-            if not isinstance(entity, Model) or (
-                isinstance(entity, Model) and not entity.batch_settings
-            ):
-                self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -611,6 +619,10 @@ class Controller:
                 msg += f"{entity}"
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+            finally:
+                if not_a_model or is_non_batch_model:
+                    self.symlink_output_files(job_step, entity)
+
         # the entity is using a duplicate name of an existing entity in
         # the experiment, throw an error
         else:
