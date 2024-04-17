@@ -43,7 +43,7 @@ from dragon.native.machine import System, Node
 
 # pylint: enable=import-error
 # isort: on
-from smartsim._core.schemas import (
+from ...._core.schemas import (
     DragonHandshakeRequest,
     DragonHandshakeResponse,
     DragonRequest,
@@ -57,12 +57,14 @@ from smartsim._core.schemas import (
     DragonUpdateStatusRequest,
     DragonUpdateStatusResponse,
 )
-from smartsim._core.utils.helpers import create_short_id_str
-from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
+from ...._core.utils.helpers import create_short_id_str
+from ....status import TERMINAL_STATUSES, SmartSimStatus
+from ....log import get_logger
 
 DRG_ERROR_STATUS = "Error"
 DRG_RUNNING_STATUS = "Running"
 
+logger = get_logger(__name__)
 
 @dataclass
 class ProcessGroupInfo:
@@ -120,24 +122,21 @@ class DragonBackend:
         self._stop_requests:  t.Deque[str] = collections.deque()
         self._running_steps: t.List[str] = []
         self._completed_steps: t.List[str] = []
-
+        self._last_update_time: int = time.time_ns() // 1e9
         num_hosts = len(self._hosts)
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
         self._can_shutdown = False
         self._frontend_shutdown: t.Optional[bool] = None
-        self._updates = 0
-        print(f"{host_string} available for execution: {self._hosts}")
+        logger.debug(f"{host_string} available for execution: {self._hosts}")
 
     def print_status(self) -> None:
-        print("\n-----------------------Launcher Status-----------------------")
-        print(f"| {self._updates}: System hosts: ", self._hosts)
-        print(f"| {self._updates}: Free hosts: ", list(self._free_hosts))
-        print(f"| {self._updates}: Allocated hosts: ", self._allocated_hosts)
-        print(f"| {self._updates}: Running steps: ", self._running_steps)
-        print(f"| {self._updates}: Group infos: ", self._group_infos)
-        print(f"| {self._updates}: There are {len(self._queued_steps)} queued steps")
-        print("-------------------------------------------------------------\n")
+        logger.debug(f"System hosts: {self._hosts}")
+        logger.debug(f"Free hosts: {list(self._free_hosts)}")
+        logger.debug(f"Allocated hosts: {self._allocated_hosts}")
+        logger.debug(f"Running steps: {self._running_steps}")
+        logger.debug(f"Group infos: {self._group_infos}")
+        logger.debug(f"There are {len(self._queued_steps)} queued steps")
 
     @property
     def frontend_shutdown(self) -> bool:
@@ -251,10 +250,10 @@ class DragonBackend:
             request = self._stop_requests.popleft()
             step_id = request.step_id
             if step_id not in self._group_infos:
-                print(f"Requested to stop non-existing step {step_id}")
+                logger.error(f"Requested to stop non-existing step {step_id}")
                 continue
 
-            print(f"Stopping step {step_id}")
+            logger.debug(f"Stopping step {step_id}")
             if request.step_id in self._queued_steps:
                 self._queued_steps.pop(step_id)
             else:
@@ -268,7 +267,7 @@ class DragonBackend:
                         try:
                             proc_group.stop()
                         except DragonProcessGroupError:
-                            print("Process group already stopped")
+                            logger.error("Process group already stopped")
 
             self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
             self._group_infos[step_id].return_codes = [-9]
@@ -281,7 +280,7 @@ class DragonBackend:
             if not hosts:
                 continue
 
-            print(f"Step id {step_id} allocated on {hosts}")
+            logger.debug(f"Step id {step_id} allocated on {hosts}")
 
             global_policy = Policy(
                 placement=Policy.Placement.HOST_NAME, host_name=hosts[0]
@@ -311,7 +310,7 @@ class DragonBackend:
                 grp.init()
                 grp.start()
             except Exception as e:
-                print(e)
+                logger.error(e)
 
             try:
                 puids = grp.puids
@@ -325,7 +324,7 @@ class DragonBackend:
                 self._running_steps.append(step_id)
                 started.append(step_id)
             except Exception as e:
-                print(e)
+                logger.error(e)
 
             try:
                 DragonBackend._start_redirect_workers(
@@ -339,13 +338,13 @@ class DragonBackend:
                 raise IOError("Could not redirect output") from e
 
         if started:
-            print(f"{self._updates}: {started=}")
+            logger.debug(f"{started=}")
 
         for step_id in started:
             try:
                 self._queued_steps.pop(step_id)
             except KeyError as e:
-                print(e)
+                logger.error(e)
 
     def _refresh_statuses(self) -> None:
         terminated = []
@@ -366,7 +365,7 @@ class DragonBackend:
                                 Process(None, ident=puid).returncode for puid in puids
                             ]
                         except (ValueError, TypeError) as e:
-                            print(e)
+                            logger.error(e)
                             group_info.return_codes = [-1 for _ in puids]
                     else:
                         group_info.return_codes = [0]
@@ -382,7 +381,7 @@ class DragonBackend:
                 terminated.append(step_id)
 
         if terminated:
-            print(f"{self._updates}: {terminated=}", flush=True)
+            logger.debug(f"{terminated=}")
         for step_id in terminated:
             self._running_steps.remove(step_id)
             self._completed_steps.append(step_id)
@@ -390,7 +389,7 @@ class DragonBackend:
             if group_info is not None:
                 with self._hostlist_lock:
                     for host in group_info.hosts:
-                        print(f"{self._updates}: Releasing host {host}", flush=True)
+                        logger.debug(f"Releasing host {host}")
                         self._allocated_hosts.pop(host)
                         self._free_hosts.append(host)
 
@@ -400,18 +399,26 @@ class DragonBackend:
             for grp_info in self._group_infos.values()
         )
 
+    def _should_update(self):
+        current_time = time.time_ns() // 1e9
+        if current_time - self._last_update_time > 10:
+            self._last_update_time = current_time
+            return True
+        return False
+
     def update(self, interval: float=0.01) -> None:
+        logger.debug("Dragon Backend update thread started")
+        time.time_ns
         while True:
             try:
-                self._updates += 1
                 self._stop_steps()
                 self._start_steps()
                 self._refresh_statuses()
                 self._update_shutdown_status()
                 time.sleep(0.1)
             except Exception as e:
-                print(e)
-            if (self._updates % int(10/interval)) == 0:
+                logger.error(e)
+            if self._should_update():
                 self.print_status()
 
     @process_request.register

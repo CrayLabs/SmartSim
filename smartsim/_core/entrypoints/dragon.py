@@ -36,6 +36,7 @@ import typing as t
 from types import FrameType
 
 import zmq
+import zmq.auth.thread
 
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
@@ -87,13 +88,16 @@ def run(
     zmq_context: "zmq.Context[t.Any]",
     dragon_head_address: str,
     dragon_pid: int,
+    zmq_authenticator: "zmq.auth.thread.ThreadAuthenticator",
 ) -> None:
     logger.debug(f"Opening socket {dragon_head_address}")
 
-    zmq_context.setsockopt(zmq.SNDTIMEO, value=1000)
-    zmq_context.setsockopt(zmq.RCVTIMEO, value=1000)
+    zmq_context.setsockopt(zmq.SNDTIMEO, value=-1)
+    zmq_context.setsockopt(zmq.RCVTIMEO, value=-1)
     zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
     zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
+    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, optval=-1)
+    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, optval=-1)
 
     dragon_head_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REP, True)
     dragon_head_socket.bind(dragon_head_address)
@@ -114,7 +118,7 @@ def run(
             logger.debug(f"Received {type(req).__name__} {req}")
         except zmq.Again:
             if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
-                logger.debug(f"Listening to {dragon_head_address}")
+                # logger.debug(f"Listening to {dragon_head_address}")
                 continue
             logger.info("Shutdown has been requested")
             break
@@ -155,8 +159,8 @@ def main(args: argparse.Namespace) -> int:
 
     if args.launching_address:
         zmq_context = zmq.Context()
-        zmq_context.setsockopt(zmq.SNDTIMEO, value=20000)
-        zmq_context.setsockopt(zmq.RCVTIMEO, value=20000)
+        zmq_context.setsockopt(zmq.SNDTIMEO, value=-1)
+        zmq_context.setsockopt(zmq.RCVTIMEO, value=-1)
         zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
         zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
 
@@ -167,6 +171,8 @@ def main(args: argparse.Namespace) -> int:
             dragon_head_address += ":5555"
 
         zmq_authenticator = dragonSockets.get_authenticator(zmq_context)
+        zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, optval=-1)
+        zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, optval=-1)
 
         logger.debug("Getting launcher socket")
         launcher_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REQ, False)
@@ -195,6 +201,7 @@ def main(args: argparse.Namespace) -> int:
                 zmq_context=zmq_context,
                 dragon_head_address=dragon_head_address,
                 dragon_pid=response.dragon_pid,
+                zmq_authenticator=zmq_authenticator,
             )
         except Exception as e:
             logger.error(f"Dragon server failed with {e}", exc_info=True)

@@ -29,17 +29,20 @@ import multiprocessing as mp
 import os
 import sys
 import typing as t
+import zmq
 
 import pytest
 
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
+from smartsim._core.config.config import get_config
+from smartsim._core.launcher.dragon.dragonLauncher import DragonConnector, DragonLauncher
 from smartsim._core.launcher.dragon.dragonSockets import (
     get_authenticator,
     get_secure_socket,
 )
 from smartsim._core.schemas.dragonRequests import DragonBootstrapRequest
-from smartsim._core.utils.network import IFConfig
-from smartsim.error.errors import LauncherError
+from smartsim._core.schemas.dragonResponses import DragonHandshakeResponse
+from smartsim._core.utils.network import IFConfig, find_free_port
+from smartsim._core.utils.security import KeyManager
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -53,7 +56,7 @@ class MockPopen:
 
     @property
     def pid(self) -> int:
-        return 1
+        return 99999
 
     @property
     def returncode(self) -> int:
@@ -95,6 +98,7 @@ class MockAuthenticator:
         self.num_stops: int = 0
         self.num_configure_curves: int = 0
         self.context = context
+        self.thread = None
 
     def configure_curve(self, *args, **kwargs) -> None:
         self.cfg_args = args
@@ -179,18 +183,26 @@ def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: 
     in the range supplied"""
 
     with monkeypatch.context() as ctx:
+        # make sure we don't touch "real keys" during a test
+        ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
+
+        mock_socket = MockSocket()
+
+        # look at test_dir for dragon config
         ctx.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
+        # avoid finding real interface
         ctx.setattr(
             "smartsim._core.launcher.dragon.dragonConnector.get_best_interface_and_address",
             lambda: IFConfig(interface="faux_interface", address="127.0.0.1"),
         )
+        # we need to set the socket value or is_connected returns False
         ctx.setattr(
             "smartsim._core.launcher.dragon.dragonLauncher.DragonConnector._handshake",
             lambda self, address: ...,
         )
-
-        mock_socket = MockSocket()
-
+        # avoid starting a real authenticator thread
+        ctx.setattr("zmq.auth.thread.ThreadAuthenticator", MockAuthenticator)
+        # avoid starting a real zmq socket
         ctx.setattr("zmq.Context.socket", mock_socket)
         ctx.setattr("subprocess.Popen", lambda *args, **kwargs: MockPopen())
 
@@ -318,7 +330,7 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
         ctx.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
         # avoid finding real interface since we may not be on a super
         ctx.setattr(
-            "smartsim._core.launcher.dragon.dragonLauncher.get_best_interface_and_address",
+            "smartsim._core.launcher.dragon.dragonConnector.get_best_interface_and_address",
             lambda: IFConfig("faux_interface", addr),
         )
 
@@ -336,11 +348,11 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
 
         ctx.setattr("subprocess.Popen", fn)
 
-        launcher = DragonLauncher()
+        connector = DragonConnector()
 
         try:
             # connect executes the complete handshake and raises an exception if comms fails
-            launcher.connect_to_dragon(test_dir)
+            connector.connect_to_dragon()
         finally:
-            launcher.cleanup()
+            connector.cleanup()
             ...
