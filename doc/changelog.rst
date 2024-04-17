@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Change default path for entities
+- Update watchdog dependency
 - Historical output files stored under .smartsim directory
 - Add option to build Torch backend without the Intel Math Kernel Library
 - Fix ReadTheDocs build issue
@@ -43,6 +44,7 @@ Detailed Notes
   entity name. create_database and create_ensemble now have path arguments.
   All path arguments are compatible with relative paths. Relative paths are
   relative to the CWD. (SmartSim-PR533_)
+- Update watchdog dependency from 3.x to 4.x, fix new type issues (SmartSim-PR540_)
 - The dashboard needs to display historical logs, so log files are written
   out under the .smartsim directory and files under the experiment
   directory are symlinked to them. (SmartSim-PR532_)
@@ -100,6 +102,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
+.. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
 .. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
 .. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
 .. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537

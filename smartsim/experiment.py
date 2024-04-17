@@ -495,9 +495,8 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        check_path = init_default(osp.join(self.exp_path, name), path, str)
-        entity_path: str = osp.abspath(check_path)
-
+        path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(path)
         try:
             new_ensemble = Ensemble(
                 name=name,
@@ -612,8 +611,8 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        check_path = init_default(osp.join(self.exp_path, name), path, str)
-        entity_path: str = osp.abspath(check_path)
+        path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(path)
         if params is None:
             params = {}
 
@@ -826,8 +825,8 @@ class Experiment:
         """
 
         self.append_to_db_identifier_list(db_identifier)
-        check_path = init_default(osp.join(self.exp_path, db_identifier), path, str)
-        entity_path: str = osp.abspath(check_path)
+        path = path or osp.join(self.exp_path, db_identifier)
+        entity_path: str = osp.abspath(path)
         return Orchestrator(
             port=port,
             path=entity_path,
