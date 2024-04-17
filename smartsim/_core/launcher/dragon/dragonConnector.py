@@ -64,31 +64,30 @@ logger = get_logger(__name__)
 _SchemaT = t.TypeVar("_SchemaT", bound=t.Union[DragonRequest, DragonResponse])
 
 DRG_LOCK = RLock()
-DRG_CTX = zmq.Context()
-DRG_CTX.setsockopt(zmq.REQ_CORRELATE, 1)
-DRG_CTX.setsockopt(zmq.REQ_RELAXED, 1)
 
 
 class DragonConnector:
     """This class encapsulates the functionality needed
-    to launch start a Dragon server and communicate with it.
+    to start a Dragon server and communicate with it.
 
     """
 
     def __init__(self) -> None:
         super().__init__()
-        self._context = DRG_CTX
+        self._context = None
+        self._context = zmq.Context()
+        self._context.setsockopt(zmq.REQ_CORRELATE, 1)
+        self._context.setsockopt(zmq.REQ_RELAXED, 1)
+        self._authenticator = dragonSockets.get_authenticator(self._context)
         self._timeout = CONFIG.dragon_server_timeout
         self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
-        self._context.setsockopt(zmq.SNDTIMEO, value=self._timeout)
-        self._context.setsockopt(zmq.RCVTIMEO, value=self._timeout)
+        self._set_timeout(self._timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
-        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
         self._dragon_server_path = CONFIG.dragon_server_path
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         if self._dragon_server_path is None:
@@ -119,6 +118,10 @@ class DragonConnector:
             )
         except (zmq.ZMQError, zmq.Again) as e:
             logger.debug(e)
+            try:
+                self._authenticator.stop()
+            except zmq.Again:
+                logger.error("Could not stop authenticator")
             self._dragon_head_socket.close()
             self._dragon_head_socket = None
             raise SmartSimError(
@@ -128,6 +131,10 @@ class DragonConnector:
     def _set_timeout(self, timeout: int) -> None:
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
+        if self._authenticator is not None and self._authenticator.thread is not None:
+            self._authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, optval=timeout)
+            self._authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, optval=timeout)
+
 
     def ensure_connected(self) -> None:
         if not self.is_connected:
@@ -148,7 +155,6 @@ class DragonConnector:
             path = _resolve_dragon_path(self._dragon_server_path)
             dragon_config_log = path / CONFIG.dragon_log_filename
 
-            self._authenticator = dragonSockets.get_authenticator(self._context)
 
             if dragon_config_log.is_file():
                 dragon_confs = self._parse_launched_dragon_server_info_from_files(
@@ -167,10 +173,16 @@ class DragonConnector:
                         self._handshake(dragon_conf["address"])
                     except SmartSimError as e:
                         logger.warning(e)
+                        logger.debug("Closing ZAP socket")
+                        if self._authenticator.thread is not None:
+                            self._authenticator.thread.authenticator.zap_socket.close()
+                        logger.debug("Getting new auth")
+                        self._authenticator = dragonSockets.get_authenticator(self._context)
                     finally:
                         self._set_timeout(self._timeout)
                     if self.is_connected:
                         return
+
 
             path.mkdir(parents=True, exist_ok=True)
 
@@ -194,6 +206,7 @@ class DragonConnector:
                 connector_socket = dragonSockets.get_secure_socket(
                     self._context, zmq.REP, True
                 )
+
                 # find first available port >= 5995
                 port = find_free_port(start=5995)
                 socket_addr = f"tcp://{address}:{port}"
@@ -210,6 +223,8 @@ class DragonConnector:
             ) as dragon_err:
                 current_env = os.environ.copy()
                 current_env.update({"PYTHONUNBUFFERED": "1"})
+                logger.debug(f"Starting Dragon environment: {' '.join(cmd)}")
+
                 # pylint: disable-next=consider-using-with
                 self._dragon_head_process = subprocess.Popen(
                     args=cmd,
@@ -281,6 +296,9 @@ class DragonConnector:
                 server_process_pid=self._dragon_head_pid,
                 server_authenticator=self._authenticator,
             )
+            self._dragon_head_socket = None
+            self._dragon_head_pid = 0
+            self._authenticator = None
 
     def send_request(self, request: DragonRequest, flags: int = 0) -> DragonResponse:
         self.ensure_connected()
@@ -318,6 +336,7 @@ class DragonConnector:
             dragon_envs = cls._parse_launched_dragon_server_info_from_iterable(
                 ifstream, num_dragon_envs
             )
+
             return dragon_envs
 
     @staticmethod
@@ -328,8 +347,6 @@ class DragonConnector:
         with DRG_LOCK:
             logger.debug(f"Sending {type(request).__name__}: {request}")
             client.send(request, flags)
-
-            time.sleep(0.1)
             response = client.recv()
 
             logger.debug(f"Received {type(response).__name__}: {response}")
@@ -357,13 +374,23 @@ def _dragon_cleanup(
     """
     try:
         if server_socket is not None:
+            print("Sending shutdown request to dragon environment")
             DragonConnector._send_req_with_socket(server_socket, DragonShutdownRequest())
-    except zmq.error.ZMQError as e:
+    except (zmq.error.ZMQError, zmq.Again) as e:
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
         print(f"ZMQ error: {e}", flush=True)
     finally:
-        time.sleep(1)
+        print("Sending shutdown request is complete")
+
+    try:
+        if server_authenticator is not None and server_authenticator.is_alive():
+            print("Shutting down ZMQ authenticator")
+            server_authenticator.stop()
+    except Exception:
+        print("Authenticator shutdown error")
+    finally:
+        print("Authenticator shutdown is complete")
 
     if psutil.pid_exists(server_process_pid) and server_process_pid:
         try:
@@ -375,13 +402,8 @@ def _dragon_cleanup(
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed
             print("Dragon server is not running.", flush=True)
-
-
-    try:
-        if server_authenticator is not None:
-            server_authenticator.stop()
-    except Exception:
-        print("Authenticator shutdown error")
+        finally:
+            print("Dragon server process shutdown is complete")
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:

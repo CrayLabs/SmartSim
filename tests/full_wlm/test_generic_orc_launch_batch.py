@@ -163,7 +163,7 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
-    orc.batch_settings.set_walltime("00:01:00")
+    orc.batch_settings.set_walltime("00:02:00")
 
     exp.start(orc, block=True)
 

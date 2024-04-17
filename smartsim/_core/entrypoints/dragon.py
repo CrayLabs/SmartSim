@@ -107,6 +107,7 @@ def run(
     server = dragonSockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")
+
     while not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
         try:
             req = server.recv()
@@ -154,6 +155,10 @@ def main(args: argparse.Namespace) -> int:
 
     if args.launching_address:
         zmq_context = zmq.Context()
+        zmq_context.setsockopt(zmq.SNDTIMEO, value=20000)
+        zmq_context.setsockopt(zmq.RCVTIMEO, value=20000)
+        zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
+        zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
 
         if str(args.launching_address).split(":", maxsplit=1)[0] == dragon_head_address:
             address = "localhost"
