@@ -407,9 +407,24 @@ def _dragon_cleanup(
         try:
             os.kill(server_process_pid, signal.SIGINT)
             print("Sent SIGINT to dragon server")
-            time.sleep(5)
+            time.sleep(2)
             if psutil.pid_exists(server_process_pid):
+                print("Dragon server is still alive, sending SIGINT")
+                os.kill(server_process_pid, signal.SIGINT)
+                time.sleep(10)
+            if psutil.pid_exists(server_process_pid):
+                print("Dragon server is still alive, sending SIGTERM")
                 os.kill(server_process_pid, signal.SIGTERM)
+                time.sleep(5)
+            if psutil.pid_exists(server_process_pid):
+                print("Dragon server is still alive, sending SIGKILL")
+                os.kill(server_process_pid, signal.SIGKILL)
+            if psutil.pid_exists(server_process_pid):
+                print("Waiting for Dragon process to complete")
+                try:
+                    os.waitpid(server_process_pid, os.WEXITED)
+                except Exception:
+                    pass
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed
             print("Dragon server is not running.", flush=True)

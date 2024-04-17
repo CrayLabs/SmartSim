@@ -111,7 +111,7 @@ class DragonBackend:
         self._pid = pid
         self._group_infos: t.Dict[str, ProcessGroupInfo] = {}
         self._step_id_lock = RLock()
-        self._hostlist_lock = RLock()
+        self._queue_lock = RLock()
         self._step_id = 0
         # hosts available for execution
         # dictionary maps hostname to step_id of
@@ -148,7 +148,7 @@ class DragonBackend:
         return self._shutdown_requested and self._can_shutdown
 
     def _initialize_hosts(self) -> None:
-        with self._hostlist_lock:
+        with self._queue_lock:
             self._hosts: t.List[str] = sorted(
                 Node(node).hostname for node in System().nodes
             )
@@ -173,7 +173,7 @@ class DragonBackend:
     ) -> t.Optional[t.List[str]]:
 
         num_hosts: int = request.nodes
-        with self._hostlist_lock:
+        with self._queue_lock:
             if num_hosts <= 0 or num_hosts > len(self._free_hosts):
                 return None
             to_allocate = []
@@ -206,11 +206,12 @@ class DragonBackend:
             )
             return DragonRunResponse(step_id=step_id, error_message=err)
 
-        self._queued_steps[step_id] = request
-        self._group_infos[step_id] = ProcessGroupInfo(
-            status=SmartSimStatus.STATUS_NEVER_STARTED
-        )
-        return DragonRunResponse(step_id=step_id)
+        with self._queue_lock:
+            self._queued_steps[step_id] = request
+            self._group_infos[step_id] = ProcessGroupInfo(
+                status=SmartSimStatus.STATUS_NEVER_STARTED
+            )
+            return DragonRunResponse(step_id=step_id)
 
     @staticmethod
     def _start_redirect_workers(
@@ -247,152 +248,154 @@ class DragonBackend:
         grp_redir.start()
 
     def _stop_steps(self) -> None:
-        while len(self._stop_requests) > 0:
-            request = self._stop_requests.popleft()
-            step_id = request.step_id
-            if step_id not in self._group_infos:
-                logger.error(f"Requested to stop non-existing step {step_id}")
-                continue
+        with self._queue_lock:
+            while len(self._stop_requests) > 0:
+                request = self._stop_requests.popleft()
+                step_id = request.step_id
+                if step_id not in self._group_infos:
+                    logger.error(f"Requested to stop non-existing step {step_id}")
+                    continue
 
-            logger.debug(f"Stopping step {step_id}")
-            if request.step_id in self._queued_steps:
-                self._queued_steps.pop(step_id)
-            else:
-                # Technically we could just terminate, but what if
-                # the application intercepts that and ignores it?
-                proc_group = self._group_infos[step_id].process_group
-                if (
-                    proc_group is not None
-                    and proc_group.status not in TERMINAL_STATUSES
-                ):
-                    try:
-                        proc_group.kill()
-                    except DragonProcessGroupError:
+                logger.debug(f"Stopping step {step_id}")
+                if request.step_id in self._queued_steps:
+                    self._queued_steps.pop(step_id)
+                else:
+                    # Technically we could just terminate, but what if
+                    # the application intercepts that and ignores it?
+                    proc_group = self._group_infos[step_id].process_group
+                    if (
+                        proc_group is not None
+                        and proc_group.status not in TERMINAL_STATUSES
+                    ):
                         try:
-                            proc_group.stop()
+                            proc_group.kill()
                         except DragonProcessGroupError:
-                            logger.error("Process group already stopped")
+                            try:
+                                proc_group.stop()
+                            except DragonProcessGroupError:
+                                logger.error("Process group already stopped")
 
-            self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
-            self._group_infos[step_id].return_codes = [-9]
+                self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
+                self._group_infos[step_id].return_codes = [-9]
 
     def _start_steps(self) -> None:
         started = []
-        for step_id, request in self._queued_steps.items():
-            hosts = self._allocate_step(step_id, self._queued_steps[step_id])
-            if not hosts:
-                continue
+        with self._queue_lock:
+            for step_id, request in self._queued_steps.items():
+                hosts = self._allocate_step(step_id, self._queued_steps[step_id])
+                if not hosts:
+                    continue
 
-            logger.debug(f"Step id {step_id} allocated on {hosts}")
+                logger.debug(f"Step id {step_id} allocated on {hosts}")
 
-            global_policy = Policy(
-                placement=Policy.Placement.HOST_NAME, host_name=hosts[0]
-            )
-            grp = ProcessGroup(
-                restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
-            )
-
-            policies = []
-            for node_name in hosts:
-                local_policy = Policy(
-                    placement=Policy.Placement.HOST_NAME, host_name=node_name
+                global_policy = Policy(
+                    placement=Policy.Placement.HOST_NAME, host_name=hosts[0]
                 )
-                policies.extend([local_policy] * request.tasks_per_node)
-                tmp_proc = ProcessTemplate(
-                    target=request.exe,
-                    args=request.exe_args,
-                    cwd=request.path,
-                    env={**request.current_env, **request.env},
-                    stdout=Popen.PIPE,
-                    stderr=Popen.PIPE,
-                    policy=local_policy,
+                grp = ProcessGroup(
+                    restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
                 )
-                grp.add_process(nproc=request.tasks_per_node, template=tmp_proc)
 
-            try:
-                grp.init()
-                grp.start()
-            except Exception as e:
-                logger.error(e)
-
-            puids = None
-            try:
-                puids = grp.puids
-                self._group_infos[step_id] = ProcessGroupInfo(
-                    process_group=grp,
-                    puids=puids,
-                    return_codes=[],
-                    status=SmartSimStatus.STATUS_RUNNING,
-                    hosts=hosts,
-                )
-                self._running_steps.append(step_id)
-                started.append(step_id)
-            except Exception as e:
-                logger.error(e)
-
-            if puids is not None:
-                try:
-                    DragonBackend._start_redirect_workers(
-                        global_policy,
-                        policies,
-                        puids,
-                        request.output_file,
-                        request.error_file,
+                policies = []
+                for node_name in hosts:
+                    local_policy = Policy(
+                        placement=Policy.Placement.HOST_NAME, host_name=node_name
                     )
+                    policies.extend([local_policy] * request.tasks_per_node)
+                    tmp_proc = ProcessTemplate(
+                        target=request.exe,
+                        args=request.exe_args,
+                        cwd=request.path,
+                        env={**request.current_env, **request.env},
+                        stdout=Popen.PIPE,
+                        stderr=Popen.PIPE,
+                        policy=local_policy,
+                    )
+                    grp.add_process(nproc=request.tasks_per_node, template=tmp_proc)
+
+                try:
+                    grp.init()
+                    grp.start()
                 except Exception as e:
-                    raise IOError("Could not redirect output") from e
+                    logger.error(e)
 
-        if started:
-            logger.debug(f"{started=}")
+                puids = None
+                try:
+                    puids = grp.puids
+                    self._group_infos[step_id] = ProcessGroupInfo(
+                        process_group=grp,
+                        puids=puids,
+                        return_codes=[],
+                        status=SmartSimStatus.STATUS_RUNNING,
+                        hosts=hosts,
+                    )
+                    self._running_steps.append(step_id)
+                    started.append(step_id)
+                except Exception as e:
+                    logger.error(e)
 
-        for step_id in started:
-            try:
-                self._queued_steps.pop(step_id)
-            except KeyError as e:
-                logger.error(e)
+                if puids is not None:
+                    try:
+                        DragonBackend._start_redirect_workers(
+                            global_policy,
+                            policies,
+                            puids,
+                            request.output_file,
+                            request.error_file,
+                        )
+                    except Exception as e:
+                        raise IOError("Could not redirect output") from e
+
+            if started:
+                logger.debug(f"{started=}")
+
+            for step_id in started:
+                try:
+                    self._queued_steps.pop(step_id)
+                except KeyError as e:
+                    logger.error(e)
 
     def _refresh_statuses(self) -> None:
         terminated = []
-        for step_id in self._running_steps:
-            group_info = self._group_infos[step_id]
-            grp = group_info.process_group
-            if grp is None:
-                group_info.status = SmartSimStatus.STATUS_FAILED
-                group_info.return_codes = [-1]
-            elif group_info.status not in TERMINAL_STATUSES:
-                if grp.status == DRG_RUNNING_STATUS:
-                    group_info.status = SmartSimStatus.STATUS_RUNNING
-                else:
-                    puids = group_info.puids
-                    if puids is not None and all(puid is not None for puid in puids):
-                        try:
-                            group_info.return_codes = [
-                                Process(None, ident=puid).returncode for puid in puids
-                            ]
-                        except (ValueError, TypeError) as e:
-                            logger.error(e)
-                            group_info.return_codes = [-1 for _ in puids]
+        with self._queue_lock:
+            for step_id in self._running_steps:
+                group_info = self._group_infos[step_id]
+                grp = group_info.process_group
+                if grp is None:
+                    group_info.status = SmartSimStatus.STATUS_FAILED
+                    group_info.return_codes = [-1]
+                elif group_info.status not in TERMINAL_STATUSES:
+                    if grp.status == DRG_RUNNING_STATUS:
+                        group_info.status = SmartSimStatus.STATUS_RUNNING
                     else:
-                        group_info.return_codes = [0]
-                    if not group_info.status == SmartSimStatus.STATUS_CANCELLED:
-                        group_info.status = (
-                            SmartSimStatus.STATUS_FAILED
-                            if any(group_info.return_codes)
-                            or grp.status == DRG_ERROR_STATUS
-                            else SmartSimStatus.STATUS_COMPLETED
-                        )
+                        puids = group_info.puids
+                        if puids is not None and all(puid is not None for puid in puids):
+                            try:
+                                group_info.return_codes = [
+                                    Process(None, ident=puid).returncode for puid in puids
+                                ]
+                            except (ValueError, TypeError) as e:
+                                logger.error(e)
+                                group_info.return_codes = [-1 for _ in puids]
+                        else:
+                            group_info.return_codes = [0]
+                        if not group_info.status == SmartSimStatus.STATUS_CANCELLED:
+                            group_info.status = (
+                                SmartSimStatus.STATUS_FAILED
+                                if any(group_info.return_codes)
+                                or grp.status == DRG_ERROR_STATUS
+                                else SmartSimStatus.STATUS_COMPLETED
+                            )
 
-            if group_info.status in TERMINAL_STATUSES:
-                terminated.append(step_id)
+                if group_info.status in TERMINAL_STATUSES:
+                    terminated.append(step_id)
 
-        if terminated:
-            logger.debug(f"{terminated=}")
-        for step_id in terminated:
-            self._running_steps.remove(step_id)
-            self._completed_steps.append(step_id)
-            group_info = self._group_infos[step_id]
-            if group_info is not None:
-                with self._hostlist_lock:
+            if terminated:
+                logger.debug(f"{terminated=}")
+            for step_id in terminated:
+                self._running_steps.remove(step_id)
+                self._completed_steps.append(step_id)
+                group_info = self._group_infos[step_id]
+                if group_info is not None:
                     for host in group_info.hosts:
                         logger.debug(f"Releasing host {host}")
                         self._allocated_hosts.pop(host)
@@ -423,7 +426,10 @@ class DragonBackend:
             except Exception as e:
                 logger.error(e)
             if self._should_update():
-                self.print_status()
+                try:
+                    self.print_status()
+                except Exception as e:
+                    logger.error(e)
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
@@ -437,7 +443,8 @@ class DragonBackend:
 
     @process_request.register
     def _(self, request: DragonStopRequest) -> DragonStopResponse:
-        self._stop_requests.append(request)
+        with self._queue_lock:
+            self._stop_requests.append(request)
         return DragonStopResponse()
 
     @process_request.register

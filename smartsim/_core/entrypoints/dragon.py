@@ -77,9 +77,6 @@ def print_summary(network_interface: str, ip_address: str) -> None:
                 HOSTNAME: {socket.gethostname()}
                 DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
                 --------------------------------------
-
-                --------------- Output ---------------
-
                 """),
         )
 
@@ -133,6 +130,8 @@ def run(
 
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
+            if not backend_updater.is_alive():
+                backend_updater.start()
         else:
             logger.info("Backend shutdown has been requested")
             break
