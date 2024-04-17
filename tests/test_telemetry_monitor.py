@@ -839,7 +839,6 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
 
         # create regular database
         orc = exp.create_database(port=test_port, interface=test_interface)
-        orc.set_path(test_dir)
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
         try:

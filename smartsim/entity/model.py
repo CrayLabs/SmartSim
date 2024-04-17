@@ -31,6 +31,7 @@ import re
 import sys
 import typing as t
 import warnings
+from os import getcwd
 from os import path as osp
 
 from .._core._install.builder import Device
@@ -50,8 +51,8 @@ class Model(SmartSimEntity):
         self,
         name: str,
         params: t.Dict[str, str],
-        path: str,
         run_settings: RunSettings,
+        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
     ):
@@ -74,7 +75,7 @@ class Model(SmartSimEntity):
                                model as a batch job, defaults to None
         :type batch_settings: BatchSettings | None
         """
-        super().__init__(name, path, run_settings)
+        super().__init__(name, str(path), run_settings)
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []

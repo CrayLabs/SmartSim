@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import os.path as osp
 import typing as t
 from os import environ, getcwd
@@ -229,8 +230,8 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
-
         start_manifest = Manifest(*args)
+        self._create_entity_dir(start_manifest)
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -440,6 +441,7 @@ class Experiment:
         run_settings: t.Optional[base.RunSettings] = None,
         replicas: t.Optional[int] = None,
         perm_strategy: str = "all_perm",
+        path: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> Ensemble:
         """Create an ``Ensemble`` of ``Model`` instances
@@ -491,10 +493,15 @@ class Experiment:
         :return: ``Ensemble`` instance
         :rtype: Ensemble
         """
+        if name is None:
+            raise AttributeError("Entity has no name. Please set name attribute.")
+        path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(path)
         try:
             new_ensemble = Ensemble(
-                name,
-                params or {},
+                name=name,
+                params=params or {},
+                path=entity_path,
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -602,16 +609,20 @@ class Experiment:
         :return: the created ``Model``
         :rtype: Model
         """
-        path = init_default(getcwd(), path, str)
-
-        if path is None:
-            path = getcwd()
+        if name is None:
+            raise AttributeError("Entity has no name. Please set name attribute.")
+        path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(path)
         if params is None:
             params = {}
 
         try:
             new_model = Model(
-                name, params, path, run_settings, batch_settings=batch_settings
+                name=name,
+                params=params,
+                path=entity_path,
+                run_settings=run_settings,
+                batch_settings=batch_settings,
             )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
@@ -750,6 +761,7 @@ class Experiment:
     def create_database(
         self,
         port: int = 6379,
+        path: t.Optional[str] = None,
         db_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
@@ -813,9 +825,11 @@ class Experiment:
         """
 
         self.append_to_db_identifier_list(db_identifier)
-
+        path = path or osp.join(self.exp_path, db_identifier)
+        entity_path: str = osp.abspath(path)
         return Orchestrator(
             port=port,
+            path=entity_path,
             db_nodes=db_nodes,
             batch=batch,
             hosts=hosts,
@@ -922,6 +936,23 @@ class Experiment:
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
+
+    def _create_entity_dir(self, start_manifest: Manifest) -> None:
+        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+            if not os.path.isdir(entity.path):
+                os.makedirs(entity.path)
+
+        for model in start_manifest.models:
+            create_entity_dir(model)
+
+        for orch in start_manifest.dbs:
+            create_entity_dir(orch)
+
+        for ensemble in start_manifest.ensembles:
+            create_entity_dir(ensemble)
+
+            for member in ensemble.models:
+                create_entity_dir(member)
 
     def __str__(self) -> str:
         return self.name

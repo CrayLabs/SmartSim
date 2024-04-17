@@ -61,7 +61,6 @@ def test_launch_orc_auto_batch(test_dir, wlmutils):
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
     orc.batch_settings.set_walltime("00:02:00")
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
@@ -97,7 +96,6 @@ def test_launch_cluster_orc_batch_single(test_dir, wlmutils):
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
     orc.batch_settings.set_walltime("00:02:00")
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
@@ -133,7 +131,6 @@ def test_launch_cluster_orc_batch_multi(test_dir, wlmutils):
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
     orc.batch_settings.set_walltime("00:03:00")
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
@@ -159,7 +156,6 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
     orc = exp.create_database(
         wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface
     )
-    orc.set_path(test_dir)
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
 

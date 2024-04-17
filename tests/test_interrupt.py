@@ -63,7 +63,6 @@ def test_interrupt_blocked_jobs(test_dir):
         replicas=2,
         run_settings=RunSettings("sleep", "100"),
     )
-    ensemble.set_path(test_dir)
     num_jobs = 1 + len(ensemble)
     pid = os.getpid()
     keyboard_interrupt_thread = Thread(
@@ -105,7 +104,6 @@ def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
             replicas=2,
             run_settings=RunSettings("sleep", "100"),
         )
-        ensemble.set_path(test_dir)
         jobs_per_experiment[i] = 1 + len(ensemble)
 
     pid = os.getpid()

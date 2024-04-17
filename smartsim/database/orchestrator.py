@@ -147,6 +147,7 @@ class Orchestrator(EntityList[DBNode]):
 
     def __init__(
         self,
+        path: t.Optional[str] = getcwd(),
         port: int = 6379,
         interface: t.Union[str, t.List[str]] = "lo",
         launcher: str = "local",
@@ -204,10 +205,9 @@ class Orchestrator(EntityList[DBNode]):
         if self.launcher == "lsf":
             gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
-
         super().__init__(
             name=db_identifier,
-            path=getcwd(),
+            path=str(path),
             port=port,
             interface=interface,
             db_nodes=db_nodes,

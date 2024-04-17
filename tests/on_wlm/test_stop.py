@@ -68,7 +68,6 @@ def test_stop_entity_list(fileutils, test_dir, wlmutils):
     settings.set_tasks(1)
 
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
-    ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=False)
     time.sleep(5)
