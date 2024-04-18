@@ -212,7 +212,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     # status updates but does not try to start a new copy
                     self.job_manager.add_job(
                         entity.name,
-                        entity.task_id,
+                        entity.step_id,
                         entity,
                         False,
                     )
