@@ -498,15 +498,10 @@ class Experiment:
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
         check_path = path or osp.join(self.exp_path, name)
-        if not isinstance(check_path, str):
-            raise TypeError
         entity_path: str = osp.abspath(check_path)
 
         try:
             new_ensemble = Ensemble(
-                name=name,
-                params=params or {},
-                path=entity_path,
                 name=name,
                 params=params or {},
                 path=entity_path,
@@ -620,19 +615,12 @@ class Experiment:
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
         check_path = path or osp.join(self.exp_path, name)
-        if not isinstance(check_path, str):
-            raise TypeError
         entity_path: str = osp.abspath(check_path)
         if params is None:
             params = {}
 
         try:
             new_model = Model(
-                name=name,
-                params=params,
-                path=entity_path,
-                run_settings=run_settings,
-                batch_settings=batch_settings,
                 name=name,
                 params=params,
                 path=entity_path,
@@ -777,7 +765,6 @@ class Experiment:
         self,
         port: int = 6379,
         path: t.Optional[str] = None,
-        path: t.Optional[str] = None,
         db_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
@@ -842,12 +829,9 @@ class Experiment:
 
         self.append_to_db_identifier_list(db_identifier)
         check_path = path or osp.join(self.exp_path, db_identifier)
-        if not isinstance(check_path, str):
-            raise TypeError
         entity_path: str = osp.abspath(check_path)
         return Orchestrator(
             port=port,
-            path=entity_path,
             path=entity_path,
             db_nodes=db_nodes,
             batch=batch,
@@ -955,23 +939,6 @@ class Experiment:
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
-
-    def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
-            if not os.path.isdir(entity.path):
-                os.makedirs(entity.path)
-
-        for model in start_manifest.models:
-            create_entity_dir(model)
-
-        for orch in start_manifest.dbs:
-            create_entity_dir(orch)
-
-        for ensemble in start_manifest.ensembles:
-            create_entity_dir(ensemble)
-
-            for member in ensemble.models:
-                create_entity_dir(member)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
         def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
