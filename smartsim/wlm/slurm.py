@@ -84,8 +84,6 @@ def get_allocation(
         )
 
     options = options or {}
-    if not isinstance(options, dict):
-        raise TypeError
 
     salloc_args = _get_alloc_cmd(nodes, time, account, options=options)
     debug_msg = " ".join(salloc_args[1:])

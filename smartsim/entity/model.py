@@ -165,14 +165,8 @@ class Model(SmartSimEntity):
         :type to_configure: list, optional
         """
         to_copy = to_copy or []
-        if not isinstance(to_copy, (list, str)):
-            raise TypeError
         to_symlink = to_symlink or []
-        if not isinstance(to_symlink, (list, str)):
-            raise TypeError
         to_configure = to_configure or []
-        if not isinstance(to_configure, (list, str)):
-            raise TypeError
 
         # Check that no file collides with the parameter file written
         # by Generator. We check the basename, even though it is more

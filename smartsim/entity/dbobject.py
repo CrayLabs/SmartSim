@@ -76,12 +76,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         outputs: t.Union[str, t.Optional[t.List[str]]],
     ) -> t.Tuple[t.List[str], t.List[str]]:
         inputs = inputs or []
-        if not isinstance(inputs, (list, str)):
-            raise TypeError
         outputs = outputs or []
-        if not isinstance(outputs, (list, str)):
-            raise TypeError
-
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
