@@ -128,7 +128,7 @@ def render(
 
     _check_output_format(output_format)
 
-    loader = jinja2.PackageLoader("templates")
+    loader = jinja2.PackageLoader("smartsim.templates")
     env = jinja2.Environment(loader=loader, autoescape=True)
 
     env.filters["as_toggle"] = as_toggle
