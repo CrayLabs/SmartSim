@@ -216,7 +216,7 @@ def cleanup() -> None:
     SHUTDOWN_INITIATED = True
 
 
-def register_signal_handlers():
+def register_signal_handlers() -> None:
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
     # the database process.
@@ -248,7 +248,7 @@ def parse_arguments(args: t.List[str]) -> DragonEntrypointArgs:
     return DragonEntrypointArgs(args_.launching_address, args_.interface)
 
 
-def main(args_: t.List[str]):
+def main(args_: t.List[str]) -> int:
     """Execute the dragon entrypoint as a module"""
     os.environ["PYTHONUNBUFFERED"] = "1"
     logger.info("Dragon server started")
