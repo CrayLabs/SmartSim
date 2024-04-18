@@ -185,7 +185,7 @@ class Controller:
 
     @property
     def orchestrator_active(self) -> bool:
-        return len(self._job_manager.db_jobs) > 0
+        return len(self._job_manager.ongoing_db_jobs) > 0
 
     def poll(
         self, interval: int, verbose: bool, kill_on_interrupt: bool = True
@@ -200,18 +200,10 @@ class Controller:
         :type kill_on_interrupt: bool, optional
         """
         self._job_manager.kill_on_interrupt = kill_on_interrupt
-        to_monitor = self._job_manager.jobs
-        while len(to_monitor) > 0:
+        while jobs := self._job_manager.ongoing_non_db_jobs:
             time.sleep(interval)
             if verbose:
-                # XXX: Previously we were locking here for "performance"
-                #      reasons, but in theory a `memcpy` should almost always
-                #      be faster than acquiring a lock. Check if there was
-                #      another reason for the lock!!
-
-                # Need to make a shallow copy here in case the `_job_manager` thread
-                # alters the dict underlying the values iterator
-                for job in to_monitor.copy().values():
+                for job in jobs:
                     logger.info(job)
 
     def finished(
@@ -625,13 +617,9 @@ class Controller:
         else:
             completed_job = self._job_manager.find_completed_job(id_)
 
-        # if completed job DNE and is the entity name is not
-        # running in JobManager.jobs or JobManager.db_jobs,
-        # launch the job
-        if completed_job is None and (
-            entity.name not in self._job_manager.jobs
-            and entity.name not in self._job_manager.db_jobs
-        ):
+        # If completed job DNE and is the entity name is not tracked by the
+        # ``JobManager``, launch the job
+        if completed_job is None:
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:

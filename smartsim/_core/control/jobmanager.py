@@ -71,8 +71,7 @@ class JobManager:
         self.monitor: t.Optional[Thread] = None
 
         # active jobs
-        self.jobs: t.Dict[_core_types.MonitoredJobID, Job] = {}
-        self.db_jobs: t.Dict[_core_types.MonitoredJobID, Job] = {}
+        self._jobs: t.Dict[_core_types.MonitoredJobID, Job] = {}
 
         # completed jobs
         self.completed: t.Dict[_core_types.MonitoredJobID, Job] = {}
@@ -82,6 +81,22 @@ class JobManager:
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
         self._poll_status_interval = poll_status_interval
+
+    @property
+    def ongoing_db_jobs(self) -> t.Tuple[Job, ...]:
+        with self._lock:
+            return tuple(job for job in self._jobs.values() if self._is_db_job(job))
+
+    @property
+    def ongoing_non_db_jobs(self) -> t.Tuple[Job, ...]:
+        with self._lock:
+            return tuple(job for job in self._jobs.values() if not self._is_db_job(job))
+
+    @staticmethod
+    def _is_db_job(job: Job) -> bool:
+        return isinstance(job.entity, (DBNode, Orchestrator)) or (
+            isinstance(job.entity, JobEntity) and job.entity.is_db
+        )
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -135,10 +150,8 @@ class JobManager:
             job.record_history()
 
             # remove from actively monitored jobs
-            if id_ in self.db_jobs:
-                del self.db_jobs[id_]
-            elif id_ in self.jobs:
-                del self.jobs[id_]
+            if id_ in self._jobs:
+                del self._jobs[id_]
 
     def __getitem__(self, id_: _core_types.MonitoredJobID) -> Job:
         """Return the job associated with the name of the entity
@@ -150,8 +163,8 @@ class JobManager:
         :rtype: Job
         """
         with self._lock:
-            return ChainMap(self.db_jobs, self.jobs, self.completed)[id_]
-            #                                                       ^^^^^
+            return ChainMap(self._jobs, self.completed)[id_]
+            #                                          ^^^^^
             # XXX: Why are we locking on reads? They should not changed the
             #      size of the mapping and thus should not raise "dictionary
             #      changed size during iteration" error? Is there some other
@@ -163,7 +176,8 @@ class JobManager:
         :returns: A mapping of entity name to job for all active jobs
         :rtype: Mapping[str, Job]
         """
-        return ChainMap(self.db_jobs, self.jobs)
+        with self._lock:
+            return self._jobs.copy()
 
     def add_job(self, job: Job) -> _core_types.MonitoredJobID:
         """Add a job to the job manager which holds specific jobs by type.
@@ -179,12 +193,7 @@ class JobManager:
         """
         id_ = _core_types.MonitoredJobID(uuid.uuid4())
         with self._lock:
-            if isinstance(job.entity, (DBNode, Orchestrator)):
-                self.db_jobs[id_] = job
-            elif isinstance(job.entity, JobEntity) and job.entity.is_db:
-                self.db_jobs[id_] = job
-            else:
-                self.jobs[id_] = job
+            self._jobs[id_] = job
         return id_
 
     def is_finished(self, id_: _core_types.MonitoredJobID) -> bool:
@@ -259,11 +268,7 @@ class JobManager:
             job = self.completed[id_]
             del self.completed[id_]
             job.reset(job_name, job_id, is_task)
-
-            if isinstance(job.entity, (DBNode, Orchestrator)):
-                self.db_jobs[id_] = job
-            else:
-                self.jobs[id_] = job
+            self._jobs[id_] = job
 
     def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
@@ -274,14 +279,14 @@ class JobManager:
         """
 
         address_dict: t.Dict[str, t.List[str]] = {}
-        for db_job in self.db_jobs.values():
-            if isinstance(db_job.entity, (DBNode, Orchestrator)):
-                db_entity = db_job.entity
+        for job in self.ongoing_db_jobs:
+            if isinstance(job.entity, (DBNode, Orchestrator)):
+                db_entity = job.entity
 
                 dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
                 dict_entry.extend(
                     f"{get_ip_from_host(host)}:{port}"
-                    for host, port in itertools.product(db_job.hosts, db_entity.ports)
+                    for host, port in itertools.product(job.hosts, db_entity.ports)
                 )
                 address_dict[db_entity.db_identifier] = dict_entry
 
