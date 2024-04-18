@@ -123,9 +123,9 @@ class DragonBackend:
         self._stop_requests: t.Deque[DragonStopRequest] = collections.deque()
         self._running_steps: t.List[str] = []
         self._completed_steps: t.List[str] = []
-        self._last_update_time: float = time.time_ns() / 1e9
         self._last_beat: float = 0.0
         self._heartbeat()
+        self._last_update_time = self._last_beat
         num_hosts = len(self._hosts)
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
@@ -141,7 +141,7 @@ class DragonBackend:
         logger.debug(f"Group infos: {self._group_infos}")
         logger.debug(f"There are {len(self._queued_steps)} queued steps")
 
-    def _heartbeat(self):
+    def _heartbeat(self) -> None:
         self._last_beat = time.time_ns() / 1e9
 
     @property

@@ -143,7 +143,7 @@ class DragonConnector:
         if not self.is_connected:
             raise SmartSimError("Could not connect to Dragon server")
 
-    def _get_new_authenticator(self):
+    def _get_new_authenticator(self) -> None:
         if self._authenticator is not None:
             if self._authenticator.thread is not None:
                 try:
