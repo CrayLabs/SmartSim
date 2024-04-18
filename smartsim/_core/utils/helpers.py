@@ -300,11 +300,9 @@ def decode_cmd(encoded_cmd: str) -> t.List[str]:
     return cleaned_cmd
 
 
-# TODO: Remove the ``type: ignore`` comment here when Python 3.8 support is dropped
-#       ``collections.abc.Collection`` is not subscriptable until Python 3.9
 @t.final
-class SignalInterceptionStack(collections.abc.Collection):  # type: ignore[type-arg]
-    """Registers a stack of unique callables to be called when a signal is
+class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
+    """Registers a stack of callables to be called when a signal is
     received before calling the original signal handler.
     """
 

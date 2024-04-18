@@ -220,6 +220,10 @@ However, users have the flexibility to customize this according to workflow need
 to the respective :ref:`default<default_folder>` and :ref:`configure<config_folder>` sections below
 for more details.
 
+.. note::
+  Files added for symlinking, copying, or configuration will not be organized into the generated
+  directories unless ``Experiment.generate`` is invoked on the designated entity.
+
 .. _default_folder:
 
 Default
@@ -256,7 +260,7 @@ working directory:
     ├── model-name
     │   ├── model-name.err
     │   └── model-name.out
-    └── ensemble-name        
+    └── ensemble-name
         ├── ensemble-name_0
         │   ├── ensemble-name_0.err
         │   └── ensemble-name_0.out
@@ -300,7 +304,7 @@ working directory:
     ├── model-folder
     │   ├── model-name.err
     │   └── model-name.out
-    └── ensemble-folder        
+    └── ensemble-folder
         ├── ensemble-name_0
         │   ├── ensemble-name_0.err
         │   └── ensemble-name_0.out

@@ -507,6 +507,9 @@ class Experiment:
                 name=name,
                 params=params or {},
                 path=entity_path,
+                name=name,
+                params=params or {},
+                path=entity_path,
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -625,6 +628,11 @@ class Experiment:
 
         try:
             new_model = Model(
+                name=name,
+                params=params,
+                path=entity_path,
+                run_settings=run_settings,
+                batch_settings=batch_settings,
                 name=name,
                 params=params,
                 path=entity_path,
@@ -769,6 +777,7 @@ class Experiment:
         self,
         port: int = 6379,
         path: t.Optional[str] = None,
+        path: t.Optional[str] = None,
         db_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
@@ -838,6 +847,7 @@ class Experiment:
         entity_path: str = osp.abspath(check_path)
         return Orchestrator(
             port=port,
+            path=entity_path,
             path=entity_path,
             db_nodes=db_nodes,
             batch=batch,
@@ -945,6 +955,23 @@ class Experiment:
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
+
+    def _create_entity_dir(self, start_manifest: Manifest) -> None:
+        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+            if not os.path.isdir(entity.path):
+                os.makedirs(entity.path)
+
+        for model in start_manifest.models:
+            create_entity_dir(model)
+
+        for orch in start_manifest.dbs:
+            create_entity_dir(orch)
+
+        for ensemble in start_manifest.ensembles:
+            create_entity_dir(ensemble)
+
+            for member in ensemble.models:
+                create_entity_dir(member)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
         def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
