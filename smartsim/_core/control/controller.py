@@ -486,6 +486,7 @@ class Controller:
         # launch steps
         for step, entity in steps:
             self._launch_step(step, entity)
+            self.symlink_output_files(step, entity)
 
         # symlink substeps to maintain directory structure
         for substep, entity in symlink_substeps:
@@ -523,6 +524,7 @@ class Controller:
             )
 
             self._launch_step(orc_batch_step, orchestrator)
+            self.symlink_output_files(orc_batch_step, orchestrator)
 
             # symlink substeps to maintain directory structure
             for substep, substep_entity in zip(substeps, orchestrator.entities):
@@ -539,6 +541,7 @@ class Controller:
             )
             for db_step in db_steps:
                 self._launch_step(*db_step)
+                self.symlink_output_files(*db_step)
 
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)
@@ -584,9 +587,6 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-        not_a_model = not isinstance(entity, Model)
-        is_non_batch_model = isinstance(entity, Model) and not entity.batch_settings
-
         # attempt to retrieve entity name in JobManager.completed
         completed_job = self._jobs.completed.get(entity.name, None)
 
@@ -604,9 +604,6 @@ class Controller:
                 msg += f"{entity}"
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
-            finally:
-                if not_a_model or is_non_batch_model:
-                    self.symlink_output_files(job_step, entity)
 
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
@@ -619,9 +616,6 @@ class Controller:
                 msg += f"{entity}"
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
-            finally:
-                if not_a_model or is_non_batch_model:
-                    self.symlink_output_files(job_step, entity)
 
         # the entity is using a duplicate name of an existing entity in
         # the experiment, throw an error
