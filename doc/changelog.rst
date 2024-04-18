@@ -18,7 +18,7 @@ To be released at some future point in time
 
 Description
 
-- Remove helper function init_default
+- Remove helper function ``init_default``
 - Change default path for entities
 - Drop Python 3.8 support
 - Update watchdog dependency
@@ -42,7 +42,7 @@ Description
 
 Detailed Notes
 
-- Remove helper function init_default and replace with traditional type
+- Remove helper function ``init_default`` and replace with traditional type
   narrowing. (SmartSim-PR545_)
 - The default path for an entity is now the path to the experiment / the
   entity name. create_database and create_ensemble now have path arguments.
