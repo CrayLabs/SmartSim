@@ -34,10 +34,7 @@ import pytest
 import zmq
 
 from smartsim._core.config.config import get_config
-from smartsim._core.launcher.dragon.dragonLauncher import (
-    DragonConnector,
-    DragonLauncher,
-)
+from smartsim._core.launcher.dragon.dragonLauncher import DragonConnector
 from smartsim._core.launcher.dragon.dragonSockets import (
     get_authenticator,
     get_secure_socket,
@@ -209,11 +206,13 @@ def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: 
         ctx.setattr("zmq.Context.socket", mock_socket)
         ctx.setattr("subprocess.Popen", lambda *args, **kwargs: MockPopen())
 
-        dragon_launcher = DragonLauncher()
-        dragon_launcher._connector.connect_to_dragon()
+        dragon_connector = DragonConnector()
+        dragon_connector.connect_to_dragon()
 
         chosen_port = int(mock_socket.bind_address.split(":")[-1])
         assert chosen_port >= 5995
+
+        dragon_connector._authenticator.stop()
 
 
 @pytest.mark.parametrize(
@@ -250,6 +249,8 @@ def test_secure_socket_authenticator_setup(
         assert authenticator.cfg_kwargs.get("domain", "") == "*"
         # ensure authenticator is using the expected set of keys
         assert authenticator.cfg_kwargs.get("location", "") == km.client_keys_dir
+
+        authenticator.stop()
 
 
 @pytest.mark.parametrize(
@@ -357,5 +358,5 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
             # connect executes the complete handshake and raises an exception if comms fails
             connector.connect_to_dragon()
         finally:
-            connector.cleanup()
+            connector.cleanup(False)
             ...

@@ -124,6 +124,8 @@ class DragonBackend:
         self._running_steps: t.List[str] = []
         self._completed_steps: t.List[str] = []
         self._last_update_time: float = time.time_ns() / 1e9
+        self._last_beat: float = 0.0
+        self._heartbeat()
         num_hosts = len(self._hosts)
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
@@ -139,9 +141,16 @@ class DragonBackend:
         logger.debug(f"Group infos: {self._group_infos}")
         logger.debug(f"There are {len(self._queued_steps)} queued steps")
 
+    def _heartbeat(self):
+        self._last_beat = time.time_ns() / 1e9
+
     @property
     def frontend_shutdown(self) -> bool:
         return bool(self._frontend_shutdown)
+
+    @property
+    def last_heartbeat(self) -> float:
+        return self._last_beat
 
     @property
     def should_shutdown(self) -> bool:
@@ -244,8 +253,14 @@ class DragonBackend:
                         policy=pol,
                     ),
                 )
-        grp_redir.init()
-        grp_redir.start()
+        try:
+            grp_redir.init()
+            time.sleep(0.1)
+            grp_redir.start()
+        except Exception as e:
+            raise IOError(
+                f"Could not redirect stdout and stderr for PUIDS {puids}"
+            ) from e
 
     def _stop_steps(self) -> None:
         with self._queue_lock:
@@ -343,7 +358,7 @@ class DragonBackend:
                             request.error_file,
                         )
                     except Exception as e:
-                        raise IOError("Could not redirect output") from e
+                        logger.error(e)
 
             if started:
                 logger.debug(f"{started=}")
@@ -351,8 +366,10 @@ class DragonBackend:
             for step_id in started:
                 try:
                     self._queued_steps.pop(step_id)
-                except KeyError as e:
-                    logger.error(e)
+                except KeyError:
+                    logger.error(
+                        "Tried to allocate the same step twice, step id {step_id}"
+                    )
 
     def _refresh_statuses(self) -> None:
         terminated = []
@@ -401,9 +418,15 @@ class DragonBackend:
                 if group_info is not None:
                     for host in group_info.hosts:
                         logger.debug(f"Releasing host {host}")
-                        self._allocated_hosts.pop(host)
+                        try:
+                            self._allocated_hosts.pop(host)
+                        except KeyError:
+                            logger.error(f"Tried to free same host twice :{host}")
                         self._free_hosts.append(host)
-                    del group_info.process_group
+                    try:
+                        del group_info.process_group
+                    except Exception:
+                        logger.error("Could not delete Process Group")
                     group_info.process_group = None
 
     def _update_shutdown_status(self) -> None:
@@ -413,9 +436,8 @@ class DragonBackend:
         )
 
     def _should_update(self) -> bool:
-        current_time = time.time_ns() / 1e9
-        if current_time - self._last_update_time > 10:
-            self._last_update_time = current_time
+        if self._last_beat - self._last_update_time > 10:
+            self._last_update_time = self._last_beat
             return True
         return False
 
@@ -423,6 +445,7 @@ class DragonBackend:
         logger.debug("Dragon Backend update thread started")
         while True:
             try:
+                self._heartbeat()
                 self._stop_steps()
                 self._start_steps()
                 self._refresh_statuses()
@@ -438,13 +461,14 @@ class DragonBackend:
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
-        return DragonUpdateStatusResponse(
-            statuses={
-                step_id: self._group_infos[step_id].smartsim_info
-                for step_id in request.step_ids
-                if step_id in self._group_infos
-            }
-        )
+        with self._queue_lock:
+            return DragonUpdateStatusResponse(
+                statuses={
+                    step_id: self._group_infos[step_id].smartsim_info
+                    for step_id in request.step_ids
+                    if step_id in self._group_infos
+                }
+            )
 
     @process_request.register
     def _(self, request: DragonStopRequest) -> DragonStopResponse:

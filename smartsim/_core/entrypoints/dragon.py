@@ -81,6 +81,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
         )
 
 
+# pylint: disable-next=too-many-statements
 def run(
     zmq_context: "zmq.Context[t.Any]",
     dragon_head_address: str,
@@ -109,13 +110,16 @@ def run(
 
     logger.debug(f"Listening to {dragon_head_address}")
 
+    updater_last_beat = dragon_backend.last_heartbeat
+    grace_period = 2
+    no_update_steps = 0
+
     while not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
         try:
             req = server.recv()
             logger.debug(f"Received {type(req).__name__} {req}")
         except zmq.Again:
             if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
-                # logger.debug(f"Listening to {dragon_head_address}")
                 continue
             logger.info("Shutdown has been requested")
             break
@@ -130,8 +134,19 @@ def run(
 
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
-            if not backend_updater.is_alive():
-                backend_updater.start()
+            if updater_last_beat <= dragon_backend.last_heartbeat:
+                no_update_steps += 1
+                if no_update_steps >= grace_period:
+                    logger.debug("Restarting updater")
+                    del backend_updater
+                    backend_updater = ContextThread(
+                        name="DragonBackend", daemon=True, target=dragon_backend.update
+                    )
+                    backend_updater.start()
+                    no_update_steps = 0
+            else:
+                updater_last_beat = dragon_backend.last_heartbeat
+                no_update_steps = 0
         else:
             logger.info("Backend shutdown has been requested")
             break
@@ -144,7 +159,7 @@ def run(
     if not dragon_backend.frontend_shutdown:
         logger.info("Frontend will have to be shut down externally")
         while True:
-            time.sleep(1)
+            time.sleep(5)
             logger.info("Waiting for external shutdown")
 
 

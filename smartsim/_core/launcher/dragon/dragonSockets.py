@@ -26,6 +26,7 @@
 
 import typing as t
 
+import zmq
 import zmq.auth.thread
 
 from smartsim._core.config.config import get_config
@@ -39,8 +40,9 @@ if t.TYPE_CHECKING:
     from zmq import Context
     from zmq.sugar.socket import Socket
 
-
 logger = get_logger(__name__)
+
+AUTHENTICATOR: t.Optional["zmq.auth.thread.ThreadAuthenticator"] = None
 
 
 def as_server(
@@ -115,20 +117,28 @@ def get_authenticator(
     :type context: zmq.Context
     :returns: the activated `Authenticator`
     :rtype: zmq.auth.thread.ThreadAuthenticator"""
+    # pylint: disable-next=global-statement
+    global AUTHENTICATOR
+
+    if AUTHENTICATOR is not None:
+        if AUTHENTICATOR.is_alive():
+            return AUTHENTICATOR
+        del AUTHENTICATOR
+
     config = get_config()
 
     key_manager = KeyManager(config, as_client=True)
     server_keys, client_keys = key_manager.get_keys()
     logger.debug(f"Applying keys to authenticator: {server_keys}, {client_keys}")
 
-    authenticator = zmq.auth.thread.ThreadAuthenticator(context)
+    AUTHENTICATOR = zmq.auth.thread.ThreadAuthenticator(context)
 
     # allow all keys in the client key directory to connect
     logger.debug(f"Securing with client keys in {key_manager.client_keys_dir}")
-    authenticator.configure_curve(domain="*", location=key_manager.client_keys_dir)
+    AUTHENTICATOR.configure_curve(domain="*", location=key_manager.client_keys_dir)
 
-    if not authenticator.is_alive():
+    if not AUTHENTICATOR.is_alive():
         logger.debug("Starting authenticator")
-        authenticator.start()
+        AUTHENTICATOR.start()
 
-    return authenticator
+    return AUTHENTICATOR

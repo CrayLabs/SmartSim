@@ -69,17 +69,15 @@ DRG_LOCK = RLock()
 class DragonConnector:
     """This class encapsulates the functionality needed
     to start a Dragon server and communicate with it.
-
     """
 
     def __init__(self, graceful_cleanup: bool = True) -> None:
         super().__init__()
-        self._context: zmq.Context[t.Any] = zmq.Context()
+        self._context: zmq.Context[t.Any] = zmq.Context.instance()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
         self._timeout = CONFIG.dragon_server_timeout
-        self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
         self._set_timeout(self._timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
@@ -118,13 +116,9 @@ class DragonConnector:
             )
         except (zmq.ZMQError, zmq.Again) as e:
             logger.debug(e)
-            if self._authenticator is not None:
-                try:
-                    self._authenticator.stop()
-                except zmq.Again:
-                    logger.error("Could not stop authenticator")
             self._dragon_head_socket.close()
             self._dragon_head_socket = None
+
             raise SmartSimError(
                 f"Unsuccessful handshake with Dragon server at address {address}"
             ) from e
@@ -141,13 +135,32 @@ class DragonConnector:
                     zmq.RCVTIMEO, timeout
                 )
             except zmq.ZMQError:
-                logger.debug("ZAP socket is not set")
+                pass
 
     def ensure_connected(self) -> None:
         if not self.is_connected:
             self.connect_to_dragon()
         if not self.is_connected:
             raise SmartSimError("Could not connect to Dragon server")
+
+    def _get_new_authenticator(self):
+        if self._authenticator is not None:
+            if self._authenticator.thread is not None:
+                try:
+                    logger.debug("Closing ZAP socket")
+                    self._authenticator.thread.authenticator.zap_socket.close()
+                except Exception as e:
+                    logger.debug(f"Could not close ZAP socket, {e}")
+            try:
+                self._authenticator.stop()
+            except zmq.Again:
+                logger.debug("Could not stop authenticator")
+        try:
+            self._authenticator = dragonSockets.get_authenticator(self._context)
+            return
+        except RuntimeError as e:
+            logger.error("Could not get authenticator")
+            raise e from None
 
     # pylint: disable-next=too-many-statements,too-many-locals
     def connect_to_dragon(self) -> None:
@@ -175,23 +188,15 @@ class DragonConnector:
                         f" is still up at address {dragon_conf['address']}."
                     )
                     try:
-                        self._set_timeout(self._reconnect_timeout)
-                        self._authenticator = dragonSockets.get_authenticator(self._context)
+                        self._set_timeout(self._timeout)
+                        self._get_new_authenticator()
                         self._handshake(dragon_conf["address"])
                     except SmartSimError as e:
-                        logger.warning(e)
+                        logger.debug(e)
                     finally:
-                        logger.debug("Closing ZAP socket")
-                        if (
-                            self._authenticator is not None
-                            and self._authenticator.thread is not None
-                        ):
-                            try:
-                                self._authenticator.thread.authenticator.zap_socket.close()
-                            except Exception:
-                                logger.debug("Could not close ZAP socket")
                         self._set_timeout(self._timeout)
                     if self.is_connected:
+                        logger.debug("Connected to existing Dragon server")
                         return
 
             path.mkdir(parents=True, exist_ok=True)
@@ -212,8 +217,7 @@ class DragonConnector:
             connector_socket: t.Optional[zmq.Socket[t.Any]] = None
             if address is not None:
                 self._set_timeout(self._startup_timeout)
-
-                self._authenticator = dragonSockets.get_authenticator(self._context)
+                self._get_new_authenticator()
                 connector_socket = dragonSockets.get_secure_socket(
                     self._context, zmq.REP, True
                 )
