@@ -219,7 +219,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     # Tell the launcher it's managed so it doesn't attempt
                     # to look for a PID that may no longer exist
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, entity.task_id, True
+                        entity.name, entity.step_id, "", True
                     )
             self._tracked_runs[run.timestamp] = run
 
