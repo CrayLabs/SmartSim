@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Remove helper function ``init_default``
 - Fix telemetry monitor logging errrors for task history
 - Change default path for entities
 - Drop Python 3.8 support
@@ -42,6 +43,8 @@ Description
 
 Detailed Notes
 
+- Remove helper function ``init_default`` and replace with traditional type
+  narrowing. (SmartSim-PR545_)
 - Ensure the telemetry monitor does not track a task_id 
   for a managed task. (SmartSim-PR557_)
 - The default path for an entity is now the path to the experiment / the
@@ -107,6 +110,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
 .. _SmartSim-PR557: https://github.com/CrayLabs/SmartSim/pull/557
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
 .. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
