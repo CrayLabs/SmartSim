@@ -72,7 +72,7 @@ class DragonConnector:
 
     """
 
-    def __init__(self) -> None:
+    def __init__(self, graceful_cleanup: bool = True) -> None:
         super().__init__()
         self._context: zmq.Context[t.Any] = zmq.Context()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
@@ -90,6 +90,7 @@ class DragonConnector:
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
         self._dragon_server_path = CONFIG.dragon_server_path
+        self._graceful_cleanup = graceful_cleanup
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         if self._dragon_server_path is None:
             raise SmartSimError(
@@ -291,18 +292,20 @@ class DragonConnector:
                         server_socket=server_socket,
                         server_process_pid=server_process_pid,
                         server_authenticator=self._authenticator,
+                        graceful=self._graceful_cleanup,
                     )
             else:
                 # TODO parse output file
                 log_dragon_outputs()
                 raise SmartSimError("Could not receive address of Dragon head process")
 
-    def cleanup(self) -> None:
+    def cleanup(self, graceful: bool = True) -> None:
         if self._dragon_head_socket is not None and self._dragon_head_pid is not None:
             _dragon_cleanup(
                 server_socket=self._dragon_head_socket,
                 server_process_pid=self._dragon_head_pid,
                 server_authenticator=self._authenticator,
+                graceful=graceful,
             )
             self._dragon_head_socket = None
             self._dragon_head_pid = 0
@@ -371,6 +374,7 @@ def _dragon_cleanup(
     server_socket: t.Optional[zmq.Socket[t.Any]] = None,
     server_process_pid: t.Optional[int] = 0,
     server_authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None,
+    graceful: bool = True,
 ) -> None:
     """Clean up resources used by the launcher.
     :param server_socket: (optional) Socket used to connect to dragon environment
@@ -406,11 +410,12 @@ def _dragon_cleanup(
     if server_process_pid and psutil.pid_exists(server_process_pid):
         print("Sending SIGINT to dragon server")
         try:
-            os.kill(server_process_pid, signal.SIGINT)
-            time.sleep(2)
-            os.kill(server_process_pid, signal.SIGINT)
-            time.sleep(10)
-            os.kill(server_process_pid, signal.SIGKILL)
+            if graceful:
+                os.kill(server_process_pid, signal.SIGINT)
+                time.sleep(2)
+                os.kill(server_process_pid, signal.SIGINT)
+                time.sleep(10)
+            os.kill(server_process_pid, signal.SIGTERM)
             os.waitpid(server_process_pid, os.WEXITED)
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed
