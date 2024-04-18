@@ -51,7 +51,7 @@ from ...schemas import (
 from ..launcher import WLMLauncher
 from ..pbs.pbsLauncher import PBSLauncher
 from ..slurm.slurmLauncher import SlurmLauncher
-from ..step import DragonBatchStep, DragonStep, Step
+from ..step import DragonBatchStep, DragonStep, LocalStep, Step
 from ..stepInfo import StepInfo
 from .dragonConnector import DragonConnector, _SchemaT
 
@@ -90,7 +90,7 @@ class DragonLauncher(WLMLauncher):
             DragonRunSettings: DragonStep,
             SbatchSettings: DragonBatchStep,
             QsubBatchSettings: DragonBatchStep,
-            RunSettings: DragonStep,
+            RunSettings: LocalStep,
         }
 
     def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:

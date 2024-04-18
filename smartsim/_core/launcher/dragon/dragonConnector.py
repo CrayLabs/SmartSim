@@ -77,9 +77,7 @@ class DragonConnector:
         self._context: zmq.Context[t.Any] = zmq.Context()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
-        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = (
-            dragonSockets.get_authenticator(self._context)
-        )
+        self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
         self._timeout = CONFIG.dragon_server_timeout
         self._reconnect_timeout = CONFIG.dragon_server_reconnect_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
@@ -154,7 +152,7 @@ class DragonConnector:
             # TODO use manager instead
             if self.is_connected:
                 return
-
+            self._authenticator = dragonSockets.get_authenticator(self._context)
             if self._dragon_server_path is None:
                 raise SmartSimError("Path to Dragon server not set.")
 
@@ -416,12 +414,15 @@ def _dragon_cleanup(
                 os.kill(server_process_pid, signal.SIGINT)
                 time.sleep(10)
             os.kill(server_process_pid, signal.SIGTERM)
-            os.waitpid(server_process_pid, os.WEXITED)
+            _, retcode = os.waitpid(server_process_pid, 0)
         except ProcessLookupError:
             # Can't use the logger as I/O file may be closed
-            print("Dragon server is not running.", flush=True)
+            print("Dragon server is not running.")
         finally:
-            print("Dragon server process shutdown is complete")
+            print(
+                f"Dragon server process shutdown is complete , return code {retcode}",
+                flush=True,
+            )
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
