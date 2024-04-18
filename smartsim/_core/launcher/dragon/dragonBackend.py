@@ -404,7 +404,7 @@ class DragonBackend:
                         self._allocated_hosts.pop(host)
                         self._free_hosts.append(host)
                     del group_info.process_group
-                    group_info.process_grop = None
+                    group_info.process_group = None
 
     def _update_shutdown_status(self) -> None:
         self._can_shutdown = all(
