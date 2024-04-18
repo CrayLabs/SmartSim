@@ -31,8 +31,10 @@ import re
 import sys
 import typing as t
 import warnings
+from os import getcwd
 from os import path as osp
 
+from .._core._install.builder import Device
 from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
@@ -49,8 +51,8 @@ class Model(SmartSimEntity):
         self,
         name: str,
         params: t.Dict[str, str],
-        path: str,
         run_settings: RunSettings,
+        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
     ):
@@ -73,7 +75,7 @@ class Model(SmartSimEntity):
                                model as a batch job, defaults to None
         :type batch_settings: BatchSettings | None
         """
-        super().__init__(name, path, run_settings)
+        super().__init__(name, str(path), run_settings)
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
@@ -482,7 +484,7 @@ class Model(SmartSimEntity):
         backend: str,
         model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -554,7 +556,7 @@ class Model(SmartSimEntity):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -606,7 +608,7 @@ class Model(SmartSimEntity):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:

@@ -18,6 +18,16 @@ To be released at some future point in time
 
 Description
 
+- Change default path for entities
+- Drop Python 3.8 support
+- Update watchdog dependency
+- Historical output files stored under .smartsim directory
+- Add option to build Torch backend without the Intel Math Kernel Library
+- Fix ReadTheDocs build issue
+- Promote device options to an Enum
+- Update telemetry monitor, add telemetry collectors
+- Add method to specify node features for a Slurm job
+- Colo Orchestrator setup now blocks application start until setup finished
 - ExecArgs handling correction
 - ReadTheDocs config file added and enabled on PRs
 - Enforce changelog updates
@@ -27,9 +37,42 @@ Description
 - Fix publishing of development docs
 - Update Experiment API typing
 - Minor enhancements to test suite
+- Improve SmartSim experiment signal handlers
 
 Detailed Notes
 
+- The default path for an entity is now the path to the experiment / the
+  entity name. create_database and create_ensemble now have path arguments.
+  All path arguments are compatible with relative paths. Relative paths are
+  relative to the CWD. (SmartSim-PR533_)
+- Python 3.8 is reaching its end-of-life in October, 2024, so it will
+  no longer continue to be supported. (SmartSim-PR544_) 
+- Update watchdog dependency from 3.x to 4.x, fix new type issues (SmartSim-PR540_)
+- The dashboard needs to display historical logs, so log files are written
+  out under the .smartsim directory and files under the experiment
+  directory are symlinked to them. (SmartSim-PR532_)
+- Add an option to smart build "--torch_with_mkl"/"--no_torch_with_mkl" to
+  prevent Torch from trying to link in the Intel Math Kernel Library. This
+  is needed because on machines that have the Intel compilers installed, the
+  Torch will unconditionally try to link in this library, however fails
+  because the linking flags are incorrect. (SmartSim-PR538_)
+- Change type_extension and pydantic versions in readthedocs environment
+  to enable docs build. (SmartSim-PR537_)
+- Promote devices to a dedicated Enum type throughout the SmartSim code base.
+  (SmartSim-PR498_)
+- Update the telemetry monitor to enable retrieval of metrics on a scheduled
+  interval. Switch basic experiment tracking telemetry to default to on. Add
+  database metric collectors. Improve telemetry monitor logging. Create
+  telemetry subpackage at `smartsim._core.utils.telemetry`. Refactor
+  telemetry monitor entrypoint. (SmartSim-PR460_)
+- Users can now specify node features for a Slurm job through
+  ``SrunSettings.set_node_feature``. The method accepts a string
+  or list of strings. (SmartSim-PR529_)
+- The request to the colocated entrypoints file within the shell script
+  is now a blocking process. Once the Orchestrator is setup, it returns
+  which moves the process to the background and allows the application to
+  start. This prevents the application from requesting a ML model or
+  script that has not been uploaded to the Orchestrator yet. (SmartSim-PR522_)
 - Add checks and tests to ensure SmartSim users cannot initialize run settings
   with a list of lists as the exe_args argument. (SmartSim-PR517_)
 - Add readthedocs configuration file and enable readthedocs builds
@@ -51,10 +94,29 @@ Detailed Notes
 - Update the generic `t.Any` typehints in Experiment API. (SmartSim-PR501_)
 - The CI will fail static analysis if common erroneous truthy checks are
   detected. (SmartSim-PR524_)
+- The CI will fail static analysis if a local variable used while potentially
+  undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
+- When calling ``Experiment.start`` SmartSim would register a signal handler
+  that would capture an interrupt signal (^C) to kill any jobs launched through
+  its ``JobManager``. This would replace the default (or user defined) signal
+  handler. SmartSim will now attempt to kill any launched jobs before calling
+  the previously registered signal handler. (SmartSim-PR535_)
 
-
+.. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
+.. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
+.. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
+.. _SmartSim-PR532: https://github.com/CrayLabs/SmartSim/pull/532
+.. _SmartSim-PR538: https://github.com/CrayLabs/SmartSim/pull/538
+.. _SmartSim-PR537: https://github.com/CrayLabs/SmartSim/pull/537
+.. _SmartSim-PR498: https://github.com/CrayLabs/SmartSim/pull/498
+.. _SmartSim-PR460: https://github.com/CrayLabs/SmartSim/pull/460
+.. _SmartSim-PR512: https://github.com/CrayLabs/SmartSim/pull/512
+.. _SmartSim-PR535: https://github.com/CrayLabs/SmartSim/pull/535
+.. _SmartSim-PR529: https://github.com/CrayLabs/SmartSim/pull/529
+.. _SmartSim-PR522: https://github.com/CrayLabs/SmartSim/pull/522
+.. _SmartSim-PR521: https://github.com/CrayLabs/SmartSim/pull/521
 .. _SmartSim-PR524: https://github.com/CrayLabs/SmartSim/pull/524
 .. _SmartSim-PR520: https://github.com/CrayLabs/SmartSim/pull/520
 .. _SmartSim-PR518: https://github.com/CrayLabs/SmartSim/pull/518

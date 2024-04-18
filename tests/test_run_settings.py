@@ -339,6 +339,7 @@ def test_set_format_args(set_str, val, key):
         pytest.param("set_task_map", (3,), id="set_task_map"),
         pytest.param("set_cpus_per_task", (4,), id="set_cpus_per_task"),
         pytest.param("set_hostlist", ("hostlist",), id="set_hostlist"),
+        pytest.param("set_node_feature", ("P100",), id="set_node_feature"),
         pytest.param(
             "set_hostlist_from_file", ("~/hostfile",), id="set_hostlist_from_file"
         ),

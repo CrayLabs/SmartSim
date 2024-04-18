@@ -27,8 +27,7 @@
 
 import functools
 import pathlib
-import platform
-import threading
+import textwrap
 import time
 
 import pytest
@@ -41,7 +40,9 @@ pytestmark = pytest.mark.group_a
 
 RAI_VERSIONS = RedisAIVersion("1.2.7")
 
-for_each_device = pytest.mark.parametrize("device", ["cpu", "gpu"])
+for_each_device = pytest.mark.parametrize(
+    "device", [build.Device.CPU, build.Device.GPU]
+)
 
 _toggle_build_optional_backend = lambda backend: pytest.mark.parametrize(
     f"build_{backend}",
@@ -163,7 +164,7 @@ def test_rai_builder_will_add_dep_if_backend_requested_wo_duplicates(
     rai_builder = build.RedisAIBuilder(
         build_tf=build_tf, build_torch=build_pt, build_onnx=build_ort
     )
-    requested_backends = rai_builder._get_deps_to_fetch_for(device)
+    requested_backends = rai_builder._get_deps_to_fetch_for(build.Device(device))
     assert dlpack_dep_presence(requested_backends)
     assert tf_dep_presence(build_tf, requested_backends)
     assert pt_dep_presence(build_pt, requested_backends)
@@ -212,7 +213,7 @@ def test_rai_builder_raises_if_it_fetches_an_unexpected_number_of_ml_deps(
         build.BuildError,
         match=r"Expected to place \d+ dependencies, but only found \d+",
     ):
-        rai_builder._fetch_deps_for("cpu")
+        rai_builder._fetch_deps_for(build.Device.CPU)
 
 
 def test_threaded_map():
@@ -251,18 +252,24 @@ def test_PTArchiveMacOSX_url():
     arch = build.Architecture.X64
     pt_version = RAI_VERSIONS.torch
 
-    pt_linux_cpu = build._PTArchiveLinux(build.Architecture.X64, "cpu", pt_version)
+    pt_linux_cpu = build._PTArchiveLinux(
+        build.Architecture.X64, build.Device.CPU, pt_version, False
+    )
     x64_prefix = "https://download.pytorch.org/libtorch/"
     assert x64_prefix in pt_linux_cpu.url
 
-    pt_macosx_cpu = build._PTArchiveMacOSX(build.Architecture.ARM64, "cpu", pt_version)
+    pt_macosx_cpu = build._PTArchiveMacOSX(
+        build.Architecture.ARM64, build.Device.CPU, pt_version, False
+    )
     arm64_prefix = "https://github.com/CrayLabs/ml_lib_builder/releases/download/"
     assert arm64_prefix in pt_macosx_cpu.url
 
 
 def test_PTArchiveMacOSX_gpu_error():
     with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
-        build._PTArchiveMacOSX(build.Architecture.ARM64, "gpu", RAI_VERSIONS.torch).url
+        build._PTArchiveMacOSX(
+            build.Architecture.ARM64, build.Device.GPU, RAI_VERSIONS.torch, False
+        ).url
 
 
 def test_valid_platforms():
@@ -362,3 +369,36 @@ def test_valid_platforms():
 )
 def test_git_commands_are_configered_correctly_for_platforms(plat, cmd, expected_cmd):
     assert build.config_git_command(plat, cmd) == expected_cmd
+
+
+def test_modify_source_files(p_test_dir):
+    def make_text_blurb(food):
+        return textwrap.dedent(f"""\
+            My favorite food is {food}
+            {food} is an important part of a healthy breakfast
+            {food} {food} {food} {food}
+            This line should be unchanged!
+            --> {food} <--
+            """)
+
+    original_word = "SPAM"
+    mutated_word = "EGGS"
+
+    source_files = []
+    for i in range(3):
+        source_file = p_test_dir / f"test_{i}"
+        source_file.touch()
+        source_file.write_text(make_text_blurb(original_word))
+        source_files.append(source_file)
+    # Modify a single file
+    build._modify_source_files(source_files[0], original_word, mutated_word)
+    assert source_files[0].read_text() == make_text_blurb(mutated_word)
+    assert source_files[1].read_text() == make_text_blurb(original_word)
+    assert source_files[2].read_text() == make_text_blurb(original_word)
+
+    # Modify multiple files
+    build._modify_source_files(
+        (source_files[1], source_files[2]), original_word, mutated_word
+    )
+    assert source_files[1].read_text() == make_text_blurb(mutated_word)
+    assert source_files[2].read_text() == make_text_blurb(mutated_word)

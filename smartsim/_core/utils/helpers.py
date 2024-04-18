@@ -28,7 +28,9 @@
 A file of helper functions for SmartSim
 """
 import base64
+import collections.abc
 import os
+import signal
 import typing as t
 import uuid
 from datetime import datetime
@@ -37,6 +39,12 @@ from pathlib import Path
 from shutil import which
 
 from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
+
+if t.TYPE_CHECKING:
+    from types import FrameType
+
+
+_TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
 def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
@@ -276,9 +284,9 @@ def installed_redisai_backends(
     return {backend for backend in backends if _installed(base_path, backend)}
 
 
-def get_ts() -> int:
-    """Return the current timestamp (accurate to seconds) cast to an integer"""
-    return int(datetime.timestamp(datetime.now()))
+def get_ts_ms() -> int:
+    """Return the current timestamp (accurate to milliseconds) cast to an integer"""
+    return int(datetime.now().timestamp() * 1000)
 
 
 def encode_cmd(cmd: t.List[str]) -> str:
@@ -302,3 +310,91 @@ def decode_cmd(encoded_cmd: str) -> t.List[str]:
     cleaned_cmd = decoded_cmd.decode("ascii").split("|")
 
     return cleaned_cmd
+
+
+@t.final
+class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
+    """Registers a stack of callables to be called when a signal is
+    received before calling the original signal handler.
+    """
+
+    def __init__(
+        self,
+        signalnum: int,
+        callbacks: t.Optional[t.Iterable[_TSignalHandlerFn]] = None,
+    ) -> None:
+        """Set up a ``SignalInterceptionStack`` for particular signal number.
+
+        .. note::
+            This class typically should not be instanced directly as it will
+            change the registered signal handler regardless of if a signal
+            interception stack is already present. Instead, it is generally
+            best to create or get a signal interception stack for a particular
+            signal number via the `get` factory method.
+
+        :param signalnum: The signal number to intercept
+        :type signalnum: int
+        :param callbacks: A iterable of functions to call upon receiving the signal
+        :type callbacks: t.Iterable[_TSignalHandlerFn] | None
+        """
+        self._callbacks = list(callbacks) if callbacks else []
+        self._original = signal.signal(signalnum, self)
+
+    def __call__(self, signalnum: int, frame: t.Optional["FrameType"]) -> None:
+        """Handle the signal on which the interception stack was registered.
+        End by calling the originally registered signal hander (if present).
+
+        :param frame: The current stack frame
+        :type frame: FrameType | None
+        """
+        for fn in self:
+            fn(signalnum, frame)
+        if callable(self._original):
+            self._original(signalnum, frame)
+
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._callbacks
+
+    def __iter__(self) -> t.Iterator[_TSignalHandlerFn]:
+        return reversed(self._callbacks)
+
+    def __len__(self) -> int:
+        return len(self._callbacks)
+
+    @classmethod
+    def get(cls, signalnum: int) -> "SignalInterceptionStack":
+        """Fetch an existing ``SignalInterceptionStack`` or create a new one
+        for a particular signal number.
+
+        :param signalnum: The singal number of the signal interception stack
+                          should be registered
+        :type signalnum: int
+        :returns: The existing or created signal interception stack
+        :rtype: SignalInterceptionStack
+        """
+        handler = signal.getsignal(signalnum)
+        if isinstance(handler, cls):
+            return handler
+        return cls(signalnum, [])
+
+    def push(self, fn: _TSignalHandlerFn) -> None:
+        """Add a callback to the signal interception stack.
+
+        :param fn: A callable to add to the unique signal stack
+        :type fn: _TSignalHandlerFn
+        """
+        self._callbacks.append(fn)
+
+    def push_unique(self, fn: _TSignalHandlerFn) -> bool:
+        """Add a callback to the signal interception stack if and only if the
+        callback is not already present.
+
+        :param fn: A callable to add to the unique signal stack
+        :type fn: _TSignalHandlerFn
+        :returns: True if the callback was added, False if the callback was
+                  already present
+        :rtype: bool
+        """
+        if did_push := fn not in self:
+            self.push(fn)
+        return did_push

@@ -63,22 +63,22 @@ def test_interrupt_blocked_jobs(test_dir):
         replicas=2,
         run_settings=RunSettings("sleep", "100"),
     )
-    ensemble.set_path(test_dir)
     num_jobs = 1 + len(ensemble)
-    try:
-        pid = os.getpid()
-        keyboard_interrupt_thread = Thread(
-            name="sigint_thread", target=keyboard_interrupt, args=(pid,)
-        )
-        keyboard_interrupt_thread.start()
+    pid = os.getpid()
+    keyboard_interrupt_thread = Thread(
+        name="sigint_thread", target=keyboard_interrupt, args=(pid,)
+    )
+    keyboard_interrupt_thread.start()
+
+    with pytest.raises(KeyboardInterrupt):
         exp.start(model, ensemble, block=True, kill_on_interrupt=True)
-    except KeyboardInterrupt:
-        time.sleep(2)  # allow time for jobs to be stopped
-        active_jobs = exp._control._jobs.jobs
-        active_db_jobs = exp._control._jobs.db_jobs
-        completed_jobs = exp._control._jobs.completed
-        assert len(active_jobs) + len(active_db_jobs) == 0
-        assert len(completed_jobs) == num_jobs
+
+    time.sleep(2)  # allow time for jobs to be stopped
+    active_jobs = exp._control._jobs.jobs
+    active_db_jobs = exp._control._jobs.db_jobs
+    completed_jobs = exp._control._jobs.completed
+    assert len(active_jobs) + len(active_db_jobs) == 0
+    assert len(completed_jobs) == num_jobs
 
 
 def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
@@ -104,22 +104,23 @@ def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
             replicas=2,
             run_settings=RunSettings("sleep", "100"),
         )
-        ensemble.set_path(test_dir)
         jobs_per_experiment[i] = 1 + len(ensemble)
-    try:
-        pid = os.getpid()
-        keyboard_interrupt_thread = Thread(
-            name="sigint_thread", target=keyboard_interrupt, args=(pid,)
-        )
-        keyboard_interrupt_thread.start()
+
+    pid = os.getpid()
+    keyboard_interrupt_thread = Thread(
+        name="sigint_thread", target=keyboard_interrupt, args=(pid,)
+    )
+    keyboard_interrupt_thread.start()
+
+    with pytest.raises(KeyboardInterrupt):
         for experiment in experiments:
             experiment.start(model, ensemble, block=False, kill_on_interrupt=True)
-        time.sleep(9)  # since jobs aren't blocked, wait for SIGINT
-    except KeyboardInterrupt:
-        time.sleep(2)  # allow time for jobs to be stopped
-        for i, experiment in enumerate(experiments):
-            active_jobs = experiment._control._jobs.jobs
-            active_db_jobs = experiment._control._jobs.db_jobs
-            completed_jobs = experiment._control._jobs.completed
-            assert len(active_jobs) + len(active_db_jobs) == 0
-            assert len(completed_jobs) == jobs_per_experiment[i]
+        keyboard_interrupt_thread.join()  # since jobs aren't blocked, wait for SIGINT
+
+    time.sleep(2)  # allow time for jobs to be stopped
+    for i, experiment in enumerate(experiments):
+        active_jobs = experiment._control._jobs.jobs
+        active_db_jobs = experiment._control._jobs.db_jobs
+        completed_jobs = experiment._control._jobs.completed
+        assert len(active_jobs) + len(active_db_jobs) == 0
+        assert len(completed_jobs) == jobs_per_experiment[i]
