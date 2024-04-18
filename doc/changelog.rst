@@ -18,7 +18,7 @@ To be released at some future point in time
 
 Description
 
-- Change default path for entities
+- Remove helper function init_default
 - Change default path for entities
 - Drop Python 3.8 support
 - Update watchdog dependency
@@ -42,8 +42,8 @@ Description
 
 Detailed Notes
 
-- The default path for an entity is now the path to the experiment / the
-  entity name. (SmartSim-PR533_)
+- Remove helper function init_default and replace with traditional type
+  narrowing. (SmartSim-PR545_)
 - The default path for an entity is now the path to the experiment / the
   entity name. create_database and create_ensemble now have path arguments.
   All path arguments are compatible with relative paths. Relative paths are
@@ -107,7 +107,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
-.. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
+.. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
 .. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
 .. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
