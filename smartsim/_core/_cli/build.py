@@ -43,7 +43,7 @@ from smartsim._core._install.buildenv import (
     VersionConflictError,
     Versioner,
 )
-from smartsim._core._install.builder import BuildError
+from smartsim._core._install.builder import BuildError, Device
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
@@ -54,8 +54,6 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
 
-
-_TDeviceStr = t.Literal["cpu", "gpu"]
 _TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
 
 
@@ -134,16 +132,17 @@ def build_database(
 def build_redis_ai(
     build_env: BuildEnv,
     versions: Versioner,
-    device: _TDeviceStr,
+    device: Device,
     use_torch: bool = True,
     use_tf: bool = True,
     use_onnx: bool = False,
     torch_dir: t.Union[str, Path, None] = None,
     libtf_dir: t.Union[str, Path, None] = None,
     verbose: bool = False,
+    torch_with_mkl: bool = True,
 ) -> None:
     # make sure user isn't trying to do something silly on MacOS
-    if build_env.PLATFORM == "darwin" and device == "gpu":
+    if build_env.PLATFORM == "darwin" and device == Device.GPU:
         raise BuildError("SmartSim does not support GPU on MacOS")
 
     # decide which runtimes to build
@@ -154,7 +153,7 @@ def build_redis_ai(
         ["ONNX", versions.ONNX, color_bool(use_onnx)],
     ]
     print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
-    print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
+    print(f"Building for GPU support: {color_bool(device == Device.GPU)}\n")
 
     if not check_backends_install():
         sys.exit(1)
@@ -188,6 +187,7 @@ def build_redis_ai(
         build_tf=use_tf,
         build_onnx=use_onnx,
         verbose=verbose,
+        torch_with_mkl=torch_with_mkl,
     )
 
     if rai_builder.is_built:
@@ -195,7 +195,7 @@ def build_redis_ai(
     else:
         # get the build environment, update with CUDNN env vars
         # if present and building for GPU, otherwise warn the user
-        if device == "gpu":
+        if device == Device.GPU:
             gpu_env = build_env.get_cudnn_env()
             cudnn_env_vars = [
                 "CUDNN_LIBRARY",
@@ -226,18 +226,16 @@ def build_redis_ai(
         logger.info("ML Backends and RedisAI build complete!")
 
 
-def check_py_torch_version(versions: Versioner, device_in: _TDeviceStr = "cpu") -> None:
+def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
     """Check Python environment for TensorFlow installation"""
-
-    device = device_in.lower()
     if BuildEnv.is_macos():
-        if device == "gpu":
+        if device == Device.GPU:
             raise BuildError("SmartSim does not support GPU on MacOS")
         device_suffix = ""
     else:  # linux
-        if device == "cpu":
+        if device == Device.CPU:
             device_suffix = versions.TORCH_CPU_SUFFIX
-        elif device == "gpu":
+        elif device == Device.GPU:
             device_suffix = versions.TORCH_CUDA_SUFFIX
         else:
             raise BuildError("Unrecognized device requested")
@@ -261,7 +259,9 @@ def check_py_torch_version(versions: Versioner, device_in: _TDeviceStr = "cpu") 
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
-        wheel_device = device if device == "cpu" else device_suffix.replace("+", "")
+        wheel_device = (
+            device.value if device == Device.CPU else device_suffix.replace("+", "")
+        )
         pip(
             "install",
             "--extra-index-url",
@@ -363,8 +363,7 @@ def execute(
 ) -> int:
     verbose = args.v
     keydb = args.keydb
-    device: _TDeviceStr = args.device
-
+    device = Device(args.device.lower())
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name
@@ -417,6 +416,7 @@ def execute(
                 args.torch_dir,
                 args.libtensorflow_dir,
                 verbose=verbose,
+                torch_with_mkl=args.torch_with_mkl,
             )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
@@ -453,8 +453,8 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--device",
         type=str.lower,
-        default="cpu",
-        choices=["cpu", "gpu"],
+        default=Device.CPU.value,
+        choices=[device.value for device in Device],
         help="Device to build ML runtimes for",
     )
     parser.add_argument(
@@ -498,4 +498,11 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=False,
         help="Build KeyDB instead of Redis",
+    )
+
+    parser.add_argument(
+        "--no_torch_with_mkl",
+        dest="torch_with_mkl",
+        action="store_false",
+        help="Do not build Torch with Intel MKL",
     )

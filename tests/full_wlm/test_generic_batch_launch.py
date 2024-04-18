@@ -63,7 +63,6 @@ def test_batch_model(fileutils, test_dir, wlmutils):
     model = exp.create_model(
         "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
     )
-    model.set_path(test_dir)
 
     exp.start(model, block=True)
     statuses = exp.get_status(model)
@@ -89,7 +88,6 @@ def test_batch_ensemble(fileutils, test_dir, wlmutils):
     ensemble = exp.create_ensemble("batch-ens", batch_settings=batch)
     ensemble.add_model(M1)
     ensemble.add_model(M2)
-    ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
@@ -110,7 +108,6 @@ def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
     ensemble = exp.create_ensemble(
         "batch-ens-replicas", batch_settings=batch, run_settings=settings, replicas=2
     )
-    ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)

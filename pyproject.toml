@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py39', 'py310', 'py311']
 exclude = '''
 (
   | \.egg
@@ -107,7 +107,7 @@ strict_equality = true
 # Additional Error Codes
 enable_error_code = [
     # "redundant-expr",
-    # "possibly-undefined",
+    "possibly-undefined",
     # "unused-awaitable",
     # "ignore-without-code",
     # "mutable-override",

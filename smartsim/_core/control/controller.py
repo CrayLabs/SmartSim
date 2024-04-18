@@ -43,7 +43,11 @@ from smartredis import Client, ConfigOptions
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
-from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
+from ..._core.utils.helpers import (
+    SignalInterceptionStack,
+    unpack_colo_db_identifier,
+    unpack_db_identifier,
+)
 from ..._core.utils.redis import (
     db_is_active,
     set_ml_model,
@@ -71,6 +75,8 @@ from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:
+    from types import FrameType
+
     from ..utils.serialize import TStepLaunchMetaData
 
 
@@ -113,8 +119,11 @@ class Controller:
         execution of all jobs.
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
+
         # register custom signal handler for ^C (SIGINT)
-        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        SignalInterceptionStack.get(signal.SIGINT).push_unique(
+            self._jobs.signal_interrupt
+        )
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
@@ -132,7 +141,7 @@ class Controller:
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
-            # it may be called seperately
+            # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
@@ -351,6 +360,36 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
+    @staticmethod
+    def symlink_output_files(
+        job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
+        """Create symlinks for entity output files that point to the output files
+        under the .smartsim directory
+
+        :param job_step: Job step instance
+        :type job_step: Step
+        :param entity: Entity instance
+        :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
+        """
+        historical_out, historical_err = map(pathlib.Path, job_step.get_output_files())
+        entity_out = pathlib.Path(entity.path) / f"{entity.name}.out"
+        entity_err = pathlib.Path(entity.path) / f"{entity.name}.err"
+
+        # check if there is already a link to a previous run
+        if entity_out.is_symlink() or entity_err.is_symlink():
+            entity_out.unlink()
+            entity_err.unlink()
+
+        try:
+            entity_out.symlink_to(historical_out)
+            entity_err.symlink_to(historical_err)
+        except FileNotFoundError as fnf:
+            raise FileNotFoundError(
+                f"Output files for {entity.name} could not be found. "
+                "Symlinking files failed."
+            ) from fnf
+
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
     ) -> LaunchedManifest[t.Tuple[str, Step]]:
@@ -368,7 +407,9 @@ class Controller:
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
-            exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
+            exp_name=exp_name,
+            exp_path=exp_path,
+            launcher_name=str(self._launcher),
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -464,6 +505,11 @@ class Controller:
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
+
+            # symlink substeps to maintain directory structure
+            for substep, substep_entity in zip(substeps, orchestrator.entities):
+                self.symlink_output_files(substep, substep_entity)
+
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -531,6 +577,7 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
+            self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -542,6 +589,7 @@ class Controller:
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
+            self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -593,7 +641,7 @@ class Controller:
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
-        batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
+        batch_step.meta["status_dir"] = str(telemetry_dir)
 
         substeps = []
         for entity in entity_list.entities:
@@ -874,6 +922,7 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,
@@ -894,7 +943,6 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):

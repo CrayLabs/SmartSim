@@ -24,12 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os.path as osp
 import typing as t
 from copy import deepcopy
 from os import getcwd
 
 from tabulate import tabulate
 
+from .._core._install.builder import Device
 from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
@@ -61,6 +63,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         params: t.Dict[str, t.Any],
+        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
@@ -101,7 +104,7 @@ class Ensemble(EntityList[Model]):
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
 
-        super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
+        super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
 
     @property
     def models(self) -> t.Collection[Model]:
@@ -136,9 +139,9 @@ class Ensemble(EntityList[Model]):
                     run_settings = deepcopy(self.run_settings)
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
-                        model_name,
-                        param_set,
-                        self.path,
+                        name=model_name,
+                        params=param_set,
+                        path=osp.join(self.path, model_name),
                         run_settings=run_settings,
                         params_as_args=self.params_as_args,
                     )
@@ -160,9 +163,9 @@ class Ensemble(EntityList[Model]):
                     for i in range(replicas):
                         model_name = "_".join((self.name, str(i)))
                         model = Model(
-                            model_name,
-                            {},
-                            self.path,
+                            name=model_name,
+                            params={},
+                            path=osp.join(self.path, model_name),
                             run_settings=deepcopy(self.run_settings),
                         )
                         model.enable_key_prefixing()
@@ -356,7 +359,7 @@ class Ensemble(EntityList[Model]):
         backend: str,
         model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -440,7 +443,7 @@ class Ensemble(EntityList[Model]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -500,7 +503,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:

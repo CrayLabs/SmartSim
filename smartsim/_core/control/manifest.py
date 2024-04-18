@@ -302,7 +302,10 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
             metadata=_LaunchedManifestMetadata(
-                self.run_id, self.exp_name, self.exp_path, self.launcher_name
+                self.run_id,
+                self.exp_name,
+                self.exp_path,
+                self.launcher_name,
             ),
             models=tuple(self._models),
             ensembles=tuple(self._ensembles),
