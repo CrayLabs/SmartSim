@@ -407,6 +407,7 @@ def _dragon_cleanup(
 
     if server_process_pid and psutil.pid_exists(server_process_pid):
         print("Sending SIGINT to dragon server")
+        retcode = None
         try:
             if graceful:
                 os.kill(server_process_pid, signal.SIGINT)
