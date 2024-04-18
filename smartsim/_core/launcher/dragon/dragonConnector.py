@@ -133,12 +133,15 @@ class DragonConnector:
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
         if self._authenticator is not None and self._authenticator.thread is not None:
-            self._authenticator.thread.authenticator.zap_socket.setsockopt(
-                zmq.SNDTIMEO, timeout
-            )
-            self._authenticator.thread.authenticator.zap_socket.setsockopt(
-                zmq.RCVTIMEO, timeout
-            )
+            try:
+                self._authenticator.thread.authenticator.zap_socket.setsockopt(
+                    zmq.SNDTIMEO, timeout
+                )
+                self._authenticator.thread.authenticator.zap_socket.setsockopt(
+                    zmq.RCVTIMEO, timeout
+                )
+            except zmq.ZMQError:
+                logger.debug("ZAP socket is not set")
 
     def ensure_connected(self) -> None:
         if not self.is_connected:
@@ -152,7 +155,6 @@ class DragonConnector:
             # TODO use manager instead
             if self.is_connected:
                 return
-            self._authenticator = dragonSockets.get_authenticator(self._context)
             if self._dragon_server_path is None:
                 raise SmartSimError("Path to Dragon server not set.")
 
@@ -160,6 +162,7 @@ class DragonConnector:
             dragon_config_log = path / CONFIG.dragon_log_filename
 
             if dragon_config_log.is_file():
+
                 dragon_confs = self._parse_launched_dragon_server_info_from_files(
                     [dragon_config_log]
                 )
@@ -173,20 +176,20 @@ class DragonConnector:
                     )
                     try:
                         self._set_timeout(self._reconnect_timeout)
+                        self._authenticator = dragonSockets.get_authenticator(self._context)
                         self._handshake(dragon_conf["address"])
                     except SmartSimError as e:
                         logger.warning(e)
+                    finally:
                         logger.debug("Closing ZAP socket")
                         if (
                             self._authenticator is not None
                             and self._authenticator.thread is not None
                         ):
-                            self._authenticator.thread.authenticator.zap_socket.close()
-                        logger.debug("Getting new auth")
-                        self._authenticator = dragonSockets.get_authenticator(
-                            self._context
-                        )
-                    finally:
+                            try:
+                                self._authenticator.thread.authenticator.zap_socket.close()
+                            except Exception:
+                                logger.debug("Could not close ZAP socket")
                         self._set_timeout(self._timeout)
                     if self.is_connected:
                         return
@@ -210,6 +213,7 @@ class DragonConnector:
             if address is not None:
                 self._set_timeout(self._startup_timeout)
 
+                self._authenticator = dragonSockets.get_authenticator(self._context)
                 connector_socket = dragonSockets.get_secure_socket(
                     self._context, zmq.REP, True
                 )

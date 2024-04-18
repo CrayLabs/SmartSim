@@ -343,8 +343,9 @@ class WLMUtils:
             return settings
         if test_launcher == "dragon":
             run_args = {"nodes": nodes}
+            run_args = {"ntasks": ntasks}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="", run_args=run_args)
+            settings = DragonRunSettings(exe, args, run_args=run_args)
             return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
@@ -806,7 +807,6 @@ def global_dragon_teardown() -> None:
     dragon_connector = DragonConnector()
     dragon_connector.ensure_connected()
     dragon_connector.cleanup()
-    time.sleep(5)
 
 
 @pytest.fixture
