@@ -55,7 +55,7 @@ from ..._core.utils.redis import (
     shutdown_db_node,
 )
 from ...database import Orchestrator
-from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
+from ...entity import Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
@@ -70,6 +70,7 @@ from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
+from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
 from .job import Job
 from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
@@ -962,42 +963,3 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-
-
-class _AnonymousBatchJob(EntityList[Model]):
-    @staticmethod
-    def _validate(model: Model) -> None:
-        if model.batch_settings is None:
-            msg = "Unable to create _AnonymousBatchJob without batch_settings"
-            raise SmartSimError(msg)
-
-    def __init__(self, model: Model) -> None:
-        self._validate(model)
-        super().__init__(model.name, model.path)
-        self.entities = [model]
-        self.batch_settings = model.batch_settings
-
-    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
-
-
-def _look_up_launched_data(
-    launcher: Launcher,
-) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
-    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
-        # NOTE: we cannot assume that the name of the launched step
-        # ``launched_step_name`` is equal to the name of the step referring to
-        # the entity ``step.name`` as is the case when an entity list is
-        # launched as a batch job
-        launched_step_name, step = data
-        launched_step_map = launcher.step_mapping[launched_step_name]
-        out_file, err_file = step.get_output_files()
-        return (
-            launched_step_map.step_id,
-            launched_step_map.task_id,
-            launched_step_map.managed,
-            out_file,
-            err_file,
-            pathlib.Path(step.meta.get("status_dir", step.cwd)),
-        )
-
-    return _unpack_launched_data
