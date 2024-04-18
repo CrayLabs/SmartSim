@@ -368,10 +368,13 @@ class DragonBackend:
                         group_info.status = SmartSimStatus.STATUS_RUNNING
                     else:
                         puids = group_info.puids
-                        if puids is not None and all(puid is not None for puid in puids):
+                        if puids is not None and all(
+                            puid is not None for puid in puids
+                        ):
                             try:
                                 group_info.return_codes = [
-                                    Process(None, ident=puid).returncode for puid in puids
+                                    Process(None, ident=puid).returncode
+                                    for puid in puids
                                 ]
                             except (ValueError, TypeError) as e:
                                 logger.error(e)
@@ -400,6 +403,8 @@ class DragonBackend:
                         logger.debug(f"Releasing host {host}")
                         self._allocated_hosts.pop(host)
                         self._free_hosts.append(host)
+                    del group_info.process_group
+                    group_info.process_grop = None
 
     def _update_shutdown_status(self) -> None:
         self._can_shutdown = all(
