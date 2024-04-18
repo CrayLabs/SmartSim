@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Fix race condition for telemetry monitor
+- Fix telemetry monitor logging errrors for task history
 - Change default path for entities
 - Drop Python 3.8 support
 - Update watchdog dependency
@@ -43,6 +44,8 @@ Description
 Detailed Notes
 
 - Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR549_)
+- Ensure the telemetry monitor does not track a task_id 
+  for a managed task. (SmartSim-PR557_)
 - The default path for an entity is now the path to the experiment / the
   entity name. create_database and create_ensemble now have path arguments.
   All path arguments are compatible with relative paths. Relative paths are
@@ -107,6 +110,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR549: https://github.com/CrayLabs/SmartSim/pull/549
+.. _SmartSim-PR557: https://github.com/CrayLabs/SmartSim/pull/557
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
 .. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
 .. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540
