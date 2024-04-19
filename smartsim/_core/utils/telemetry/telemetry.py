@@ -212,14 +212,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     # status updates but does not try to start a new copy
                     self.job_manager.add_job(
                         entity.name,
-                        entity.task_id,
+                        entity.step_id,
                         entity,
                         False,
                     )
                     # Tell the launcher it's managed so it doesn't attempt
                     # to look for a PID that may no longer exist
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, entity.task_id, True
+                        entity.name, entity.step_id, "", True
                     )
             self._tracked_runs[run.timestamp] = run
 

@@ -19,6 +19,9 @@ To be released at some future point in time
 Description
 
 - Fix symlinking batch ensemble and model bug
+- Upgrade ubuntu to 22.04
+- Remove helper function ``init_default``
+- Fix telemetry monitor logging errrors for task history
 - Change default path for entities
 - Drop Python 3.8 support
 - Update watchdog dependency
@@ -43,6 +46,12 @@ Description
 Detailed Notes
 
 - Properly symlinks batch ensembles and batch models (SmartSim-PR547_)
+- After dropping support for Python 3.8, ubuntu needs to be upgraded.
+  (SmartSim-PR558_)
+- Remove helper function ``init_default`` and replace with traditional type
+  narrowing. (SmartSim-PR545_)
+- Ensure the telemetry monitor does not track a task_id 
+  for a managed task. (SmartSim-PR557_)
 - The default path for an entity is now the path to the experiment / the
   entity name. create_database and create_ensemble now have path arguments.
   All path arguments are compatible with relative paths. Relative paths are
@@ -107,6 +116,9 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547
+.. _SmartSim-PR558: https://github.com/CrayLabs/SmartSim/pull/558
+.. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
+.. _SmartSim-PR557: https://github.com/CrayLabs/SmartSim/pull/557
 .. _SmartSim-PR533: https://github.com/CrayLabs/SmartSim/pull/533
 .. _SmartSim-PR544: https://github.com/CrayLabs/SmartSim/pull/544
 .. _SmartSim-PR540: https://github.com/CrayLabs/SmartSim/pull/540

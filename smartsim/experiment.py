@@ -36,7 +36,6 @@ from smartsim.error.errors import SSUnsupportedError
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest
-from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import (
     Ensemble,
@@ -160,7 +159,10 @@ class Experiment:
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
+        else:
+            exp_path = osp.join(getcwd(), name)
+
+        self.exp_path = exp_path
 
         if launcher == "auto":
             launcher = detect_launcher()
@@ -495,8 +497,9 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        path = path or osp.join(self.exp_path, name)
-        entity_path: str = osp.abspath(path)
+        check_path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(check_path)
+
         try:
             new_ensemble = Ensemble(
                 name=name,
@@ -611,8 +614,8 @@ class Experiment:
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
-        path = path or osp.join(self.exp_path, name)
-        entity_path: str = osp.abspath(path)
+        check_path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(check_path)
         if params is None:
             params = {}
 
@@ -825,8 +828,8 @@ class Experiment:
         """
 
         self.append_to_db_identifier_list(db_identifier)
-        path = path or osp.join(self.exp_path, db_identifier)
-        entity_path: str = osp.abspath(path)
+        check_path = path or osp.join(self.exp_path, db_identifier)
+        entity_path: str = osp.abspath(check_path)
         return Orchestrator(
             port=port,
             path=entity_path,
