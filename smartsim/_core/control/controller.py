@@ -474,18 +474,18 @@ class Controller:
                     anon_entity_list, model_telem_dir
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
+                
                 symlink_substeps.append((substeps[0], model))
-
                 steps.append((batch_step, model))
             else:
                 job_step = self._create_job_step(model, model_telem_dir)
                 manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
-        # launch steps
+        # launch and symlink steps
         for step, entity in steps:
-            self.symlink_output_files(step, entity)
             self._launch_step(step, entity)
+            self.symlink_output_files(step, entity)
 
         # symlink substeps to maintain directory structure
         for substep, entity in symlink_substeps:
@@ -522,8 +522,8 @@ class Controller:
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
 
-            self.symlink_output_files(orc_batch_step, orchestrator)
             self._launch_step(orc_batch_step, orchestrator)
+            self.symlink_output_files(orc_batch_step, orchestrator)
 
             # symlink substeps to maintain directory structure
             for substep, substep_entity in zip(substeps, orchestrator.entities):
@@ -539,8 +539,8 @@ class Controller:
                 orchestrator, [(step.name, step) for step, _ in db_steps]
             )
             for db_step in db_steps:
-                self.symlink_output_files(*db_step)
                 self._launch_step(*db_step)
+                self.symlink_output_files(*db_step)
 
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)

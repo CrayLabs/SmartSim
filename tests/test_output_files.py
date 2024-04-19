@@ -52,7 +52,9 @@ batch_rs = SrunSettings("echo", ["spam", "eggs"])
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
 orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 model = Model("test_model", params={}, path="", run_settings=rs)
-batch_model = Model("batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs)
+batch_model = Model(
+    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
+)
 anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
@@ -227,7 +229,10 @@ def test_batch_symlink(entity, test_dir):
 def test_symlink_error(test_dir):
     """Ensure FileNotFoundError is thrown"""
     bad_model = Model(
-        "bad_model", params={},path=pathlib.Path(test_dir, "badpath"), run_settings=RunSettings("echo")
+        "bad_model",
+        params={},
+        path=pathlib.Path(test_dir, "badpath"),
+        run_settings=RunSettings("echo"),
     )
     telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
     bad_step = controller._create_job_step(bad_model, telem_dir)
@@ -240,48 +245,76 @@ def test_batch_model_and_ensemble(test_dir):
     exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
 
     test_model = exp.create_model(
-        "test_model", path=test_dir, run_settings=rs, batch_settings=bs
+        "test_model", path=test_dir, run_settings=batch_rs, batch_settings=bs
     )
     exp.generate(test_model)
     exp.start(test_model, block=True)
 
     assert pathlib.Path(test_model.path).exists()
-    assert pathlib.Path(test_model.path, f"{test_model.name}.out").is_symlink()
-    assert pathlib.Path(test_model.path, f"{test_model.name}.err").is_symlink()
+    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.out"), True)
+    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.err"), False)
+    _should_not_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.sh"))
 
     test_ensemble = exp.create_ensemble(
-        "test_ensemble", params={}, batch_settings=bs, run_settings=rs, replicas=3
+        "test_ensemble", params={}, batch_settings=bs, run_settings=batch_rs, replicas=3
     )
     exp.generate(test_ensemble)
     exp.start(test_ensemble, block=True)
 
     assert pathlib.Path(test_ensemble.path).exists()
-    out_path = pathlib.Path(test_ensemble.path, f"{test_ensemble.name}.out")
-    assert out_path.is_symlink()
-    assert pathlib.Path(test_ensemble.path, f"{test_ensemble.name}.err").is_symlink()
-
     for i in range(len(test_ensemble.models)):
-        out_path = pathlib.Path(
-            test_ensemble.path,
-            f"{test_ensemble.name}_{i}",
-            f"{test_ensemble.name}_{i}.out",
+        _should_be_symlinked(
+            pathlib.Path(
+                test_ensemble.path,
+                f"{test_ensemble.name}_{i}",
+                f"{test_ensemble.name}_{i}.out",
+            ),
+            True,
         )
-        assert out_path.is_symlink()
-        assert pathlib.Path(os.readlink(out_path)).exists()
-        err_path = pathlib.Path(
-            test_ensemble.path,
-            f"{test_ensemble.name}_{i}",
-            f"{test_ensemble.name}_{i}.err",
+        _should_be_symlinked(
+            pathlib.Path(
+                test_ensemble.path,
+                f"{test_ensemble.name}_{i}",
+                f"{test_ensemble.name}_{i}.err",
+            ),
+            False,
         )
-        assert err_path.is_symlink()
-        assert pathlib.Path(os.readlink(err_path)).exists()
+
+    _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-def test_failed_launch_symlinks(test_dir):
-    ...
+def test_failed_launch_symlinks(test_dir): ...
+
 
 def test_batch_ensemble_symlinks(test_dir):
-    ...
+    exp_name = "test-batch-ensemble"
+    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
+    test_ensemble = exp.create_ensemble(
+        "test_ensemble", params={}, batch_settings=bs, run_settings=batch_rs, replicas=3
+    )
+    exp.generate(test_ensemble)
+    exp.start(test_ensemble, block=True)
+
+    for i in range(len(test_ensemble.models)):
+        _should_be_symlinked(
+            pathlib.Path(
+                test_ensemble.path,
+                f"{test_ensemble.name}_{i}",
+                f"{test_ensemble.name}_{i}.out",
+            ),
+            True,
+        )
+        _should_be_symlinked(
+            pathlib.Path(
+                test_ensemble.path,
+                f"{test_ensemble.name}_{i}",
+                f"{test_ensemble.name}_{i}.err",
+            ),
+            False,
+        )
+
+    _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
+
 
 def test_batch_model_symlinks(test_dir):
     exp_name = "test-batch-model"
@@ -301,19 +334,61 @@ def test_batch_model_symlinks(test_dir):
 
 
 def test_batch_orchestrator_symlinks(test_dir):
-    ...
+    exp = Experiment("test-batch-orc", launcher="slurm", exp_path=test_dir)
+    port = 2424
+    db = exp.create_database(db_nodes=3, port=port, batch=True, single_cmd=False)
+    exp.generate(db)
+    exp.start(db, block=True)
+    exp.stop(db)
+
+    _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.out"), False)
+    _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.err"), False)
+
+    for i in range(db.db_nodes):
+        _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.out"), False)
+        _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.err"), False)
+        _should_not_be_symlinked(
+            pathlib.Path(db.path, f"nodes-orchestrator_{i}-{port}.conf")
+        )
+
 
 def test_non_batch_ensemble_symlinks(test_dir):
-    ...
+    exp_name = "test-non-batch-ensemble"
+    rs = RunSettings("echo", ["spam", "eggs"])
+    exp = Experiment(exp_name, exp_path=test_dir)
+    test_ensemble = exp.create_ensemble(
+        "test_ensemble", params={}, run_settings=rs, replicas=3
+    )
+    exp.generate(test_ensemble)
+    exp.start(test_ensemble, block=True)
+
+    for i in range(len(test_ensemble.models)):
+        _should_be_symlinked(
+            pathlib.Path(
+                test_ensemble.path,
+                f"{test_ensemble.name}_{i}",
+                f"{test_ensemble.name}_{i}.out",
+            ),
+            True,
+        )
+        _should_be_symlinked(
+            pathlib.Path(
+                test_ensemble.path,
+                f"{test_ensemble.name}_{i}",
+                f"{test_ensemble.name}_{i}.err",
+            ),
+            False,
+        )
+
+    _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
+
 
 def test_non_batch_model_symlinks(test_dir):
-    exp_name = "test-model"
+    exp_name = "test-non-batch-model"
     exp = Experiment(exp_name, exp_path=test_dir)
     rs = RunSettings("echo", ["spam", "eggs"])
 
-    test_model = exp.create_model(
-        "test_model", path=test_dir, run_settings=rs
-    )
+    test_model = exp.create_model("test_model", path=test_dir, run_settings=rs)
     exp.generate(test_model)
     exp.start(test_model, block=True)
 
@@ -324,14 +399,26 @@ def test_non_batch_model_symlinks(test_dir):
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-
 def test_non_batch_orchestrator_symlinks(test_dir):
-    ...
+    exp = Experiment("test-non-batch-orc", launcher="slurm", exp_path=test_dir)
+
+    db = exp.create_database(db_nodes=3, single_cmd=False)
+    exp.generate(db)
+    exp.start(db, block=True)
+    exp.stop(db)
+
+    for i in range(db.db_nodes):
+        _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.out"), False)
+        _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.err"), False)
+
+    _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
+
 
 def _should_not_be_symlinked(non_linked_path: pathlib.Path):
     """Helper function for assertions about paths that should NOT be symlinked"""
     assert non_linked_path.exists()
     assert not non_linked_path.is_symlink()
+
 
 def _should_be_symlinked(linked_path: pathlib.Path, open_file: bool):
     """Helper function for assertions about paths that SHOULD be symlinked"""
