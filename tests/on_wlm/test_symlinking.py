@@ -38,9 +38,6 @@ from smartsim.entity.model import Model
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
-# The tests in this file belong to the group_a group
-pytestmark = pytest.mark.group_a
-
 controller = Controller()
 slurm_controller = Controller(launcher="slurm")
 
@@ -57,12 +54,15 @@ batch_model = Model(
 anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
-def test_batch_model_and_ensemble(test_dir):
+def test_batch_model_and_ensemble(test_dir, wlmutils):
     exp_name = "test-batch"
-    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
+    launcher=wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
+    rs = exp.create_run_settings("echo", ["spam", "eggs"])
+    bs = exp.create_batch_settings()
 
     test_model = exp.create_model(
-        "test_model", path=test_dir, run_settings=batch_rs, batch_settings=bs
+        "test_model", path=test_dir, run_settings=rs, batch_settings=bs
     )
     exp.generate(test_model)
     exp.start(test_model, block=True)
@@ -73,7 +73,7 @@ def test_batch_model_and_ensemble(test_dir):
     _should_not_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.sh"))
 
     test_ensemble = exp.create_ensemble(
-        "test_ensemble", params={}, batch_settings=bs, run_settings=batch_rs, replicas=3
+        "test_ensemble", params={}, batch_settings=bs, run_settings=rs, replicas=3
     )
     exp.generate(test_ensemble)
     exp.start(test_ensemble, block=True)
@@ -100,11 +100,14 @@ def test_batch_model_and_ensemble(test_dir):
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-def test_batch_ensemble_symlinks(test_dir):
+def test_batch_ensemble_symlinks(test_dir, wlmutils):
     exp_name = "test-batch-ensemble"
-    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
+    launcher=wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
+    rs = exp.create_run_settings("echo", ["spam", "eggs"])
+    bs = exp.create_batch_settings()
     test_ensemble = exp.create_ensemble(
-        "test_ensemble", params={}, batch_settings=bs, run_settings=batch_rs, replicas=3
+        "test_ensemble", params={}, batch_settings=bs, run_settings=rs, replicas=3
     )
     exp.generate(test_ensemble)
     exp.start(test_ensemble, block=True)
@@ -130,12 +133,14 @@ def test_batch_ensemble_symlinks(test_dir):
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-def test_batch_model_symlinks(test_dir):
+def test_batch_model_symlinks(test_dir, wlmutils):
     exp_name = "test-batch-model"
-    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
-
+    launcher=wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
+    rs = exp.create_run_settings("echo", ["spam", "eggs"])
+    bs = exp.create_batch_settings()
     test_model = exp.create_model(
-        "test_model", path=test_dir, run_settings=batch_rs, batch_settings=bs
+        "test_model", path=test_dir, run_settings=rs, batch_settings=bs
     )
     exp.generate(test_model)
     exp.start(test_model, block=True)
@@ -147,8 +152,10 @@ def test_batch_model_symlinks(test_dir):
     _should_not_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.sh"))
 
 
-def test_batch_orchestrator_symlinks(test_dir):
-    exp = Experiment("test-batch-orc", launcher="slurm", exp_path=test_dir)
+def test_batch_orchestrator_symlinks(test_dir, wlmutils):
+    exp_name="test-batch-orc"
+    launcher=wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     port = 2424
     db = exp.create_database(db_nodes=3, port=port, batch=True, single_cmd=False)
     exp.generate(db)

@@ -38,6 +38,9 @@ from smartsim.entity.model import Model
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 controller = Controller()
 slurm_controller = Controller(launcher="slurm")
 
