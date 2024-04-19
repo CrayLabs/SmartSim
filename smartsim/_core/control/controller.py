@@ -474,7 +474,7 @@ class Controller:
                     anon_entity_list, model_telem_dir
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
-                
+
                 symlink_substeps.append((substeps[0], model))
                 steps.append((batch_step, model))
             else:
