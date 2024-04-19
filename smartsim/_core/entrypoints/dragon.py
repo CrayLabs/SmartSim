@@ -110,10 +110,6 @@ def run(
 
     logger.debug(f"Listening to {dragon_head_address}")
 
-    updater_last_beat = dragon_backend.last_heartbeat
-    grace_period = 2
-    no_update_steps = 0
-
     while not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
         try:
             req = server.recv()
@@ -134,33 +130,28 @@ def run(
 
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
-            if updater_last_beat <= dragon_backend.last_heartbeat:
-                no_update_steps += 1
-                if no_update_steps >= grace_period:
-                    logger.debug("Restarting updater")
-                    del backend_updater
-                    backend_updater = ContextThread(
-                        name="DragonBackend", daemon=True, target=dragon_backend.update
-                    )
-                    backend_updater.start()
-                    no_update_steps = 0
-            else:
-                updater_last_beat = dragon_backend.last_heartbeat
-                no_update_steps = 0
+            heartbeat_delay = dragon_backend.current_time - dragon_backend.last_heartbeat
+            if heartbeat_delay > 10.0:
+                logger.debug(
+                    f"Restarting updater after {heartbeat_delay:.2f} seconds of inactivity."
+                )
+                del backend_updater
+                backend_updater = ContextThread(
+                    name="DragonBackend", daemon=True, target=dragon_backend.update
+                )
+                backend_updater.start()
         else:
             logger.info("Backend shutdown has been requested")
             break
 
-    try:
+    if backend_updater.is_alive():
         del backend_updater
-    except Exception:
-        logger.debug("Could not delete backend updater thread")
 
     if not dragon_backend.frontend_shutdown:
         logger.info("Frontend will have to be shut down externally")
         while True:
-            time.sleep(5)
             logger.info("Waiting for external shutdown")
+            time.sleep(5)
 
 
 def main(args: argparse.Namespace) -> int:

@@ -62,7 +62,7 @@ def main(args: argparse.Namespace) -> int:
     for req_str in req_strings:
         requests.append(request_registry.from_string(req_str))
 
-    requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=False))
+    requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=True))
 
     connector = DragonConnector(graceful_cleanup=False)
 
@@ -83,19 +83,21 @@ def main(args: argparse.Namespace) -> int:
     while True:
         # pylint: disable-next=protected-access
         try:
-            time.sleep(1)
+            time.sleep(5)
             connector.send_request(DragonHandshakeRequest())
         except zmq.error.Again:
-            print("Could not reach server, assuming backend has shut down")
+            print("Could not reach server, assuming backend has shut down", flush=True)
+            # os.waitpid(connector._dragon_head_pid, 0)
             break
 
     print("Server has finished.")
+
     return 0
 
 
 if __name__ == "__main__":
     os.environ["PYTHONUNBUFFERED"] = "1"
-    logger.info("Dragon server started")
+    logger.info("Dragon client started")
 
     parser = argparse.ArgumentParser(
         prefix_chars="+",

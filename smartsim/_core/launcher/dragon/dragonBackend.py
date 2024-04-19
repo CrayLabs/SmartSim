@@ -74,6 +74,7 @@ class ProcessGroupInfo:
     puids: t.Optional[t.List[t.Optional[int]]] = None  # puids can be None
     return_codes: t.Optional[t.List[int]] = None
     hosts: t.List[str] = field(default_factory=list)
+    redir_workers: t.Optional[ProcessGroup] = None
 
     @property
     def smartsim_info(self) -> t.Tuple[SmartSimStatus, t.Optional[t.List[int]]]:
@@ -142,7 +143,7 @@ class DragonBackend:
         logger.debug(f"There are {len(self._queued_steps)} queued steps")
 
     def _heartbeat(self) -> None:
-        self._last_beat = time.time_ns() / 1e9
+        self._last_beat = self.current_time
 
     @property
     def frontend_shutdown(self) -> bool:
@@ -155,6 +156,10 @@ class DragonBackend:
     @property
     def should_shutdown(self) -> bool:
         return self._shutdown_requested and self._can_shutdown
+
+    @property
+    def current_time(self) -> float:
+        return time.time_ns() / 1e9
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
@@ -229,7 +234,7 @@ class DragonBackend:
         puids: t.List[int],
         out_file: t.Optional[str],
         err_file: t.Optional[str],
-    ) -> None:
+    ) -> ProcessGroup:
         grp_redir = ProcessGroup(restart=False, policy=global_policy)
         for pol, puid in zip(policies, puids):
             proc = Process(None, ident=puid)
@@ -262,6 +267,8 @@ class DragonBackend:
                 f"Could not redirect stdout and stderr for PUIDS {puids}"
             ) from e
 
+        return grp_redir
+
     def _stop_steps(self) -> None:
         with self._queue_lock:
             while len(self._stop_requests) > 0:
@@ -280,7 +287,7 @@ class DragonBackend:
                     proc_group = self._group_infos[step_id].process_group
                     if (
                         proc_group is not None
-                        and proc_group.status not in TERMINAL_STATUSES
+                        and proc_group.status == DRG_RUNNING_STATUS
                     ):
                         try:
                             proc_group.kill()
@@ -289,6 +296,13 @@ class DragonBackend:
                                 proc_group.stop()
                             except DragonProcessGroupError:
                                 logger.error("Process group already stopped")
+                    redir_group = self._group_infos[step_id].redir_workers
+                    if redir_group is not None:
+                        try:
+                            redir_group.join(0.1)
+                            del redir_group
+                        except Exception as e:
+                            logger.error(e)
 
                 self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
                 self._group_infos[step_id].return_codes = [-9]
@@ -350,13 +364,14 @@ class DragonBackend:
 
                 if puids is not None:
                     try:
-                        DragonBackend._start_redirect_workers(
+                        redir_grp = DragonBackend._start_redirect_workers(
                             global_policy,
                             policies,
                             puids,
                             request.output_file,
                             request.error_file,
                         )
+                        self._group_infos[step_id].redir_workers = redir_grp
                     except Exception as e:
                         logger.error(e)
 
@@ -421,17 +436,16 @@ class DragonBackend:
                         try:
                             self._allocated_hosts.pop(host)
                         except KeyError:
-                            logger.error(f"Tried to free same host twice :{host}")
+                            logger.error(f"Tried to free same host twice: {host}")
                         self._free_hosts.append(host)
-                    try:
-                        del group_info.process_group
-                    except Exception:
-                        logger.error("Could not delete Process Group")
                     group_info.process_group = None
+                    group_info.redir_workers = None
 
     def _update_shutdown_status(self) -> None:
         self._can_shutdown = all(
             grp_info.status in TERMINAL_STATUSES
+            and grp_info.process_group is None
+            and grp_info.redir_workers is None
             for grp_info in self._group_infos.values()
         )
 
@@ -443,7 +457,7 @@ class DragonBackend:
 
     def update(self) -> None:
         logger.debug("Dragon Backend update thread started")
-        while True:
+        while not self.should_shutdown:
             try:
                 self._heartbeat()
                 self._stop_steps()
@@ -458,6 +472,7 @@ class DragonBackend:
                     self.print_status()
                 except Exception as e:
                     logger.error(e)
+        logger.debug("Dragon Backend update thread stopping")
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
