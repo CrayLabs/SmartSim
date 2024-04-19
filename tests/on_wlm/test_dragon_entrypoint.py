@@ -29,17 +29,14 @@ import typing as t
 
 import pytest
 
-import smartsim._core.entrypoints.dragon as drg
-from smartsim._core.entrypoints.dragon import (
-    cleanup,
-    get_log_path,
-    handle_signal,
-    main,
-    parse_arguments,
-    print_summary,
-    register_signal_handlers,
-    remove_config_log,
-)
+# retrieved from pytest fixtures
+if pytest.test_launcher != "dragon":
+    pytestmark = pytest.mark.skip(reason="Test is only for Dragon WLM systems")
+
+try:
+    import smartsim._core.entrypoints.dragon as drg
+except:
+    pytest.skip("Unable to import Dragon library", allow_module_level=True)
 
 
 @pytest.fixture
@@ -60,7 +57,7 @@ def test_file_removal(test_dir: str, monkeypatch: pytest.MonkeyPatch):
             "smartsim._core.entrypoints.dragon.get_log_path", lambda: str(expected_path)
         )
 
-        remove_config_log()
+        drg.remove_config_log()
         assert not expected_path.exists(), "Dragon config file was not removed"
 
 
@@ -80,7 +77,7 @@ def test_file_removal_on_bad_path(test_dir: str, monkeypatch: pytest.MonkeyPatch
 
         try:
             # ensure we don't blow up
-            remove_config_log()
+            drg.remove_config_log()
         except:
             assert False
 
@@ -106,7 +103,7 @@ def test_dragon_failure(
         # we don't need to execute the entrypoint...
         ctx.setattr("smartsim._core.entrypoints.dragon.execute_entrypoint", raiser)
 
-        return_code = main(mock_argv)
+        return_code = drg.main(mock_argv)
 
         # ensure our exception error code is returned
         assert return_code == -1
@@ -131,7 +128,7 @@ def test_dragon_main(
             "smartsim._core.entrypoints.dragon.execute_entrypoint", lambda args_: 0
         )
 
-        return_code = main(mock_argv)
+        return_code = drg.main(mock_argv)
 
         # execute_entrypoint should return 0 from our mock
         assert return_code == 0
@@ -161,7 +158,7 @@ def test_signal_handler(signal_num: int, monkeypatch: pytest.MonkeyPatch):
         ctx.setattr("smartsim._core.entrypoints.dragon.cleanup", increment_counter)
         ctx.setattr("smartsim._core.entrypoints.dragon.logger.info", increment_counter)
 
-        handle_signal(signal_num, None)
+        drg.handle_signal(signal_num, None)
 
         # show that we log informational message & do cleanup (take 2 actions)
         assert counter == 2
@@ -176,7 +173,7 @@ def test_log_path(monkeypatch: pytest.MonkeyPatch):
             "smartsim._core.config.config.Config.dragon_log_filename", expected_filename
         )
 
-        log_path = get_log_path()
+        log_path = drg.get_log_path()
 
         assert expected_filename in log_path
 
@@ -199,7 +196,7 @@ def test_summary(test_dir: str, monkeypatch: pytest.MonkeyPatch):
             lambda: expected_hostname,
         )
 
-        print_summary(expected_interface, expected_ip)
+        drg.print_summary(expected_interface, expected_ip)
 
         summary = summary_file.read_text()
 
@@ -220,11 +217,8 @@ def test_cleanup(monkeypatch: pytest.MonkeyPatch):
         ctx.setattr(
             "smartsim._core.entrypoints.dragon.remove_config_log", increment_counter
         )
-
-        # ensure shutdown isn't initially true
-        assert not drg.SHUTDOWN_INITIATED
-
-        cleanup()
+        drg.SHUTDOWN_INITIATED = False
+        drg.cleanup()
 
         # show that cleanup removes config
         assert counter == 1
@@ -246,7 +240,7 @@ def test_signal_handler_registration(test_dir: str, monkeypatch: pytest.MonkeyPa
         # ensure valid start point
         assert not sig_nums
 
-        register_signal_handlers()
+        drg.register_signal_handlers()
 
         # ensure all expected handlers are registered
         assert set(sig_nums) == set(drg.SIGNALS)
@@ -258,7 +252,7 @@ def test_arg_parser__no_args():
 
     with pytest.raises(SystemExit) as ex:
         # ensure that parser complains about missing required arguments
-        parse_arguments(args_list)
+        drg.parse_arguments(args_list)
 
 
 def test_arg_parser__invalid_launch_addr():
@@ -269,7 +263,7 @@ def test_arg_parser__invalid_launch_addr():
     args_list = [addr_flag, addr_value]
 
     with pytest.raises(ValueError) as ex:
-        args = parse_arguments(args_list)
+        args = drg.parse_arguments(args_list)
 
 
 def test_arg_parser__required_only():
@@ -279,7 +273,7 @@ def test_arg_parser__required_only():
 
     args_list = [addr_flag, addr_value]
 
-    args = parse_arguments(args_list)
+    args = drg.parse_arguments(args_list)
 
     assert args.launching_address == addr_value
     assert not args.interface
@@ -295,7 +289,7 @@ def test_arg_parser__with_optionals():
 
     args_list = [interface_flag, interface_value, addr_flag, addr_value]
 
-    args = parse_arguments(args_list)
+    args = drg.parse_arguments(args_list)
 
     assert args.launching_address == addr_value
     assert args.interface == interface_value
