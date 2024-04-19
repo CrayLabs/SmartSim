@@ -107,12 +107,18 @@ Detailed Notes
   undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
+- Experiments in the WLM tests are given explicit paths to prevent unexpected
+  directory creation. Ensure database are not left open on test suite failures.
+  Update path to pickle file in
+  ``tests/full_wlm/test_generic_orc_launch_batch.py::test_launch_cluster_orc_reconnect``
+  to conform with changes made in SmartSim-533_. (SmartSim-559_)
 - When calling ``Experiment.start`` SmartSim would register a signal handler
   that would capture an interrupt signal (^C) to kill any jobs launched through
   its ``JobManager``. This would replace the default (or user defined) signal
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR559: https://github.com/CrayLabs/SmartSim/pull/559
 .. _SmartSim-PR558: https://github.com/CrayLabs/SmartSim/pull/558
 .. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
 .. _SmartSim-PR557: https://github.com/CrayLabs/SmartSim/pull/557
