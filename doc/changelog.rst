@@ -111,7 +111,7 @@ Detailed Notes
   directory creation. Ensure database are not left open on test suite failures.
   Update path to pickle file in
   ``tests/full_wlm/test_generic_orc_launch_batch.py::test_launch_cluster_orc_reconnect``
-  to conform with changes made in SmartSim-533_. (SmartSim-559_)
+  to conform with changes made in SmartSim-PR533_. (SmartSim-PR559_)
 - When calling ``Experiment.start`` SmartSim would register a signal handler
   that would capture an interrupt signal (^C) to kill any jobs launched through
   its ``JobManager``. This would replace the default (or user defined) signal
