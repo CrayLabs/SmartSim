@@ -56,7 +56,7 @@ anon_batch_model = _AnonymousBatchJob(batch_model)
 
 def test_batch_model_and_ensemble(test_dir, wlmutils):
     exp_name = "test-batch"
-    launcher=wlmutils.get_test_launcher()
+    launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     rs = exp.create_run_settings("echo", ["spam", "eggs"])
     bs = exp.create_batch_settings()
@@ -102,7 +102,7 @@ def test_batch_model_and_ensemble(test_dir, wlmutils):
 
 def test_batch_ensemble_symlinks(test_dir, wlmutils):
     exp_name = "test-batch-ensemble"
-    launcher=wlmutils.get_test_launcher()
+    launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     rs = exp.create_run_settings("echo", ["spam", "eggs"])
     bs = exp.create_batch_settings()
@@ -135,7 +135,7 @@ def test_batch_ensemble_symlinks(test_dir, wlmutils):
 
 def test_batch_model_symlinks(test_dir, wlmutils):
     exp_name = "test-batch-model"
-    launcher=wlmutils.get_test_launcher()
+    launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     rs = exp.create_run_settings("echo", ["spam", "eggs"])
     bs = exp.create_batch_settings()
@@ -153,8 +153,8 @@ def test_batch_model_symlinks(test_dir, wlmutils):
 
 
 def test_batch_orchestrator_symlinks(test_dir, wlmutils):
-    exp_name="test-batch-orc"
-    launcher=wlmutils.get_test_launcher()
+    exp_name = "test-batch-orc"
+    launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     port = 2424
     db = exp.create_database(db_nodes=3, port=port, batch=True, single_cmd=False)
