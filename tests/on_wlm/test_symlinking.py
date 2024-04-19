@@ -56,6 +56,7 @@ batch_model = Model(
 )
 anon_batch_model = _AnonymousBatchJob(batch_model)
 
+
 def test_batch_model_and_ensemble(test_dir):
     exp_name = "test-batch"
     exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
@@ -97,7 +98,6 @@ def test_batch_model_and_ensemble(test_dir):
         )
 
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
-
 
 
 def test_batch_ensemble_symlinks(test_dir):

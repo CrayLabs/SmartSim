@@ -224,7 +224,7 @@ def test_non_batch_model_symlinks(test_dir):
 def test_non_batch_orchestrator_symlinks(test_dir):
     exp = Experiment("test-non-batch-orc", exp_path=test_dir)
 
-    db = exp.create_database(interface='lo')
+    db = exp.create_database(interface="lo")
     exp.generate(db)
     exp.start(db, block=True)
     exp.stop(db)
