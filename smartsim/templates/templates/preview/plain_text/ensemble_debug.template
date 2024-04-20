@@ -1,6 +1,9 @@
 
     {%- for ensemble in manifest.ensembles %}
     = Ensemble Name: {{ ensemble.name }} =
+        {%- if ensemble.path %}
+        Path: {{ ensemble.path }}
+        {%- endif %}
         Members: {{ ensemble|length }}
         {%- if ensemble.params %}
         Ensemble Parameters:

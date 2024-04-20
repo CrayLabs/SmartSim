@@ -1,5 +1,8 @@
 
     = Database Identifier: {{ db.name }} =
+        {%- if db.path %}
+        Path: {{ db.path }}
+        {%- endif %}
         Shards: {{ db.num_shards }}
         TCP/IP Port(s):
           {%- for port in db.ports %}

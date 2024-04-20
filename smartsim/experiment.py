@@ -877,21 +877,23 @@ class Experiment:
         into what and how entities will be launched.  Any instance of
         ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
-        :param verbosity_level: Specify the verbosity level:
-            info: Display user-defined fields and entities
-            debug: Display user-defined field and entities and auto generated
+
+        Verbosity levels:
+            - info: Display user-defined fields and entities
+            - debug: Display user-defined field and entities and auto-generated
             fields.
-            developer: Display user-defined field and entities, auto generated
+            - developer: Display user-defined field and entities, auto-generated
             fields, and run commands.
-            Defaults to info.
+
+        :param verbosity_level: verbosity level specified by user, defaults to info.
         :type verbosity_level: str
         :param output_format: Set output format. The possible accepted
-        output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
-        Defaults to 'plain_text'.
+            output formats are `json`, `xml`, `html`, `plain_text`, `color_text`.
+            Defaults to 'plain_text'.
         :type output_type: str
         :param output_filename: Specify name of file and extension to write
-        preview data to. If no output filename is set, the preview will be
-        output to stdout. Defaults to None.
+            preview data to. If no output filename is set, the preview will be
+            output to stdout. Defaults to None.
         :type output_filename: str
         """
 

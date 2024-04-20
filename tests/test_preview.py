@@ -163,8 +163,8 @@ def test_preview_to_file(test_dir, wlmutils):
 
 
 def test_active_orchestrator_jobs_property(wlmutils, test_dir, choose_host):
-    """Ensure db_jobs remaines unchanched after deletion
-    of active_orchestrator_jobs property stays intace when retrieving db_jobs"""
+    """Ensure db_jobs remaines unchanged after deletion
+    of active_orchestrator_jobs property stays intact when retrieving db_jobs"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -1517,7 +1517,7 @@ def test_ensemble_batch(test_dir, wlmutils):
 
 def test_preview_colocated_db_singular_model(wlmutils, test_dir):
     """Test preview behavior when a colocated db is only added to
-    one model. The expected behviour is that
+    one model. The expected behviour is that both models are colocated
     """
 
     test_launcher = wlmutils.get_test_launcher()
@@ -1541,6 +1541,98 @@ def test_preview_colocated_db_singular_model(wlmutils, test_dir):
     assert "model_1" in output
     assert "model_2" in output
     assert "Client Configuration" in output
+
+
+def test_preview_db_script(wlmutils, test_dir):
+    """
+    Test preview of model instance with a torch script.
+    """
+    test_launcher = wlmutils.get_test_launcher()
+    # Initialize the Experiment and set the launcher to auto
+
+    exp = Experiment("getting-started", launcher=test_launcher)
+
+    # Initialize a RunSettings object
+    model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
+
+    # Initialize a Model object
+    model_instance = exp.create_model("model_name", model_settings)
+    model_instance.colocate_db_tcp()
+
+    # TorchScript string
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+    # Attach TorchScript to Model
+    model_instance.add_script(
+        name="example_script",
+        script=torch_script_str,
+        device="GPU",
+        devices_per_node=2,
+        first_device=0,
+    )
+    preview_manifest = Manifest(model_instance)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+
+    # Evaluate output
+    assert "Torch Script" in output
+
+
+def test_preview_ensemble_db_script(wlmutils, test_dir):
+    """
+    Test preview of a torch script on a model in an ensemble.
+    """
+    # Initialize the Experiment and set the launcher to auto
+    exp = Experiment("getting-started", launcher="auto")
+
+    orch = exp.create_database(db_identifier="test_db1")
+    orch_2 = exp.create_database(db_identifier="test_db2", db_nodes=3)
+    # Initialize a RunSettings object
+    model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
+    model_settings_2 = exp.create_run_settings(exe="python", exe_args="params.py")
+    model_settings_3 = exp.create_run_settings(exe="python", exe_args="params.py")
+    # Initialize a Model object
+    model_instance = exp.create_model("model_name", model_settings)
+    model_instance_2 = exp.create_model("model_name_2", model_settings_2)
+    batch = exp.create_batch_settings(time="24:00:00", account="test")
+    ensemble = exp.create_ensemble(
+        "ensemble", batch_settings=batch, run_settings=model_settings_3, replicas=2
+    )
+    ensemble.add_model(model_instance)
+    ensemble.add_model(model_instance_2)
+
+    # TorchScript string
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+    # Attach TorchScript to Model
+    model_instance.add_script(
+        name="example_script",
+        script=torch_script_str,
+        device="GPU",
+        devices_per_node=2,
+        first_device=0,
+    )
+    preview_manifest = Manifest(ensemble, orch, orch_2)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+
+    # Evaluate output
+    assert "Torch Script" in output
+
+
+# # I would add the path for Ensemble, Model and Orchestrator to the previews!
+# It is possible that a user specifies their own path and therefore it is not located
+# in the exp_path.
+
+## USER SPECIFIED PATH#
+#
+# the path arguments for Orch and Ensemble have been pushed to develop.
+# # I notice that in an Experiment with multiple databases, the db_identifier for
+# the standalone dbs are given, even if one is not provided. A colo db identifier is
+# only shown if provided even though the identifier would be default: orchestrator
+# -> should we show the colo db_identifier name always like for std?
 
 
 def test_get_dbtype_filter():

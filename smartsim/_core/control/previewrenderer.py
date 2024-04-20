@@ -94,9 +94,13 @@ def is_list(_eval_ctx: u.F, value: str) -> bool:
 
 
 def render_to_file(content: str, filename: str) -> None:
-    """
-    Output preview to a file if an output filename
+    """Output preview to a file if an output filename
     is specified.
+
+    :param content: The rendered preview.
+    :type content: str
+    :param filename: The name of the file to write the preview to.
+    "type filename: str
     """
     filename = find_available_filename(filename)
 
