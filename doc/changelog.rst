@@ -49,7 +49,7 @@ Detailed Notes
   All path arguments are compatible with relative paths. Relative paths are
   relative to the CWD. (SmartSim-PR533_)
 - Python 3.8 is reaching its end-of-life in October, 2024, so it will
-  no longer continue to be supported. (SmartSim-PR544_)
+  no longer continue to be supported. (SmartSim-PR544_) 
 - Update watchdog dependency from 3.x to 4.x, fix new type issues (SmartSim-PR540_)
 - The dashboard needs to display historical logs, so log files are written
   out under the .smartsim directory and files under the experiment
@@ -101,7 +101,6 @@ Detailed Notes
   undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
-
 - When calling ``Experiment.start`` SmartSim would register a signal handler
   that would capture an interrupt signal (^C) to kill any jobs launched through
   its ``JobManager``. This would replace the default (or user defined) signal
