@@ -60,7 +60,6 @@ extensions = [
 always_use_bars_union = True
 typehints_document_rtype = True
 typehints_use_signature = True
-typehints_use_signature_return = True
 typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
