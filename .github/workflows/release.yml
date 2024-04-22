@@ -143,8 +143,8 @@ jobs:
           with:
             token: ${{ secrets.PAT }}
             commit-message: test_3
-            branch: auto-post-release
-            base: develop
             title: test_2
             body: test_1
             draft: false
+            branch: auto-post-release
+            base: develop
