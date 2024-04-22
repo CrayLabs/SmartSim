@@ -29,8 +29,9 @@
 name: deploy-release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - develop
 
 
 env:
