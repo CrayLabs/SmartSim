@@ -59,9 +59,7 @@ class LocalLauncher(Launcher):
         """Get status updates of each job step name provided
 
         :param step_names: list of step_names
-        :type step_names: list[str]
         :return: list of tuples for update
-        :rtype: list[tuple[str, StepInfo | None]]
         """
         # step ids are process ids of the tasks
         # as there is no WLM intermediary
@@ -78,9 +76,7 @@ class LocalLauncher(Launcher):
         """Return the address of nodes assigned to the step
 
         :param step_names: list of step_names
-        :type step_names: list[str]
         :return: list of node addresses
-        :rtype: list[list[str]]
 
         TODO: Use socket to find the actual Lo address?
         """
@@ -92,9 +88,7 @@ class LocalLauncher(Launcher):
            files will be written to the entity path.
 
         :param step: LocalStep instance to run
-        :type step: LocalStep
         :return: task_id of the newly created step
-        :rtype: str
         """
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
@@ -118,9 +112,7 @@ class LocalLauncher(Launcher):
         """Stop a job step
 
         :param step_name: name of the step to be stopped
-        :type step_name: str
         :return: a UnmanagedStepInfo instance
-        :rtype: UnmanagedStepInfo
         """
         # step_id is task_id for local. Naming for consistency
         step_id = self.step_mapping[step_name].task_id

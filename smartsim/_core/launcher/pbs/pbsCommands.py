@@ -33,7 +33,6 @@ def qstat(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls PBS qstat with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of qstat
     """
     cmd = ["qstat"] + args
@@ -45,7 +44,6 @@ def qsub(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls PBS qsub with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of salloc
     """
     cmd = ["qsub"] + args
@@ -59,9 +57,7 @@ def qdel(args: t.List[str]) -> t.Tuple[int, str, str]:
     returncode is also supplied in this function.
 
     :param args: list of command arguments
-    :type args: list of str
     :return: output and error
-    :rtype: str
     """
     cmd = ["qdel"] + args
     returncode, out, error = execute_cmd(cmd)

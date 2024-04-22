@@ -43,11 +43,8 @@ class _BaseMPIStep(Step):
         """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
         """
 
         super().__init__(name, cwd, run_settings)
@@ -64,7 +61,6 @@ class _BaseMPIStep(Step):
         """Get the command to launch this step
 
         :return: launch command
-        :rtype: list[str]
         """
         run_cmd = self.run_settings.run_command
         if not run_cmd:
@@ -130,7 +126,6 @@ class _BaseMPIStep(Step):
         """Build the executable for this step
 
         :return: executable list
-        :rtype: list[str]
         """
         if self._get_mpmd():
             return self._make_mpmd()
@@ -161,14 +156,10 @@ class MpiexecStep(_BaseMPIStep):
         """Initialize an mpiexec job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: MpiexecSettings
         :param default_run_command: The default command to launch an MPI
                                     application
-        :type default_run_command: str, optional
         """
 
         super().__init__(name, cwd, run_settings)
@@ -179,14 +170,10 @@ class MpirunStep(_BaseMPIStep):
         """Initialize an mpirun job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: MpirunSettings
         :param default_run_command: The default command to launch an MPI
                                     application
-        :type default_run_command: str, optional
         """
 
         super().__init__(name, cwd, run_settings)
@@ -197,14 +184,10 @@ class OrterunStep(_BaseMPIStep):
         """Initialize an orterun job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: OrterunSettings
         :param default_run_command: The default command to launch an MPI
                                     application
-        :type default_run_command: str, optional
         """
 
         super().__init__(name, cwd, run_settings)

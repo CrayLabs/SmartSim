@@ -58,13 +58,10 @@ class EntityFiles:
         """Initialize an EntityFiles instance
 
         :param tagged: tagged files for model configuration
-        :type tagged: list of str
         :param copy: files or directories to copy into model
                      or node directories
-        :type copy: list of str
         :param symlink: files to symlink into model or node
                         directories
-        :type symlink: list of str
         """
         self.tagged = tagged or []
         self.copy = copy or []
@@ -102,12 +99,9 @@ class EntityFiles:
         """Check the type of the files provided by the user.
 
         :param file_list: either tagged, copy, or symlink files
-        :type file_list: list of str
         :param file_type: name of the file type e.g. "tagged"
-        :type file_type: str
         :raises TypeError: if incorrect type is provided by user
         :return: file list provided
-        :rtype: list of str
         """
         if file_list:
             if not isinstance(file_list, list):
@@ -128,10 +122,8 @@ class EntityFiles:
            the directory or file and create a full path.
 
         :param file_path: path to a specific file or directory
-        :type file_path: str
         :raises FileNotFoundError: if file or directory does not exist
         :return: full path to file or directory
-        :rtype: str
         """
         full_path = path.abspath(file_path)
         if path.isfile(full_path):
@@ -183,12 +175,10 @@ class TaggedFilesHierarchy:
         :param parent: The parent hierarchy of the new hierarchy,
                        must be None if creating a root hierarchy,
                        must be provided if creating a subhierachy
-        :type parent: TaggedFilesHierarchy | None, optional
         :param subdir_name: Name of subdirectory representd by the new hierarchy,
                             must be "" if creating a root hierarchy,
                             must be any valid dir name if subhierarchy,
                             invalid names are ".", ".." or contain path seperators
-        :type subdir_name: str, optional
         :raises ValueError: if given a subdir_name without a parent,
                             if given a parent without a subdir_name,
                             or if the subdir_name is invalid
@@ -232,15 +222,12 @@ class TaggedFilesHierarchy:
 
         :param path_list: list of absolute paths to tagged files or dirs
                           containing tagged files
-        :type path_list: list[str]
         :param dir_contents_to_base: When a top level dir is encountered, if
                                      this value is truthy, files in the dir are
                                      put into the base hierarchy level.
                                      Otherwise, a new sub level is created for
                                      the dir
-        :type dir_contents_to_base: bool
         :return: A built tagged file hierarchy for the given files
-        :rtype: TaggedFilesHierarchy
         """
         tagged_file_hierarchy = cls()
         if dir_contents_to_base:
@@ -261,7 +248,6 @@ class TaggedFilesHierarchy:
         """Add a file to the current level in the file hierarchy
 
         :param file: absoute path to a file to add to the hierarchy
-        :type file: str
         """
         self.files.add(file)
 
@@ -271,7 +257,6 @@ class TaggedFilesHierarchy:
         the new level sub level tagged file hierarchy
 
         :param dir: absoute path to a dir to add to the hierarchy
-        :type dir: str
         """
         tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir_path))
         # pylint: disable-next=protected-access
@@ -285,7 +270,6 @@ class TaggedFilesHierarchy:
         TaggedFilesHierarchy.
 
         :param paths: list of paths to files or dirs to add to the hierarchy
-        :type paths: list[str]
         :raises ValueError: if link to dir is found
         :raises FileNotFoundError: if path does not exist
         """

@@ -57,7 +57,7 @@ class Run:
 
         :param filter_fn: optional boolean filter that returns
         True for entities to include in the result
-        :type filter_fn: (optional) Callable[[JobEntity], bool]"""
+        """
         entities = self.models + self.orchestrators + self.ensembles
         if filter_fn:
             entities = [entity for entity in entities if filter_fn(entity)]
@@ -72,13 +72,10 @@ class Run:
         """Map entity data persisted in a manifest file to an object
 
         :param entity_type: type of the associated `SmartSimEntity`
-        :type entity_type: str
         :param entity_dict: raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  pathlib.Path
         :return: list of loaded `JobEntity` instances
-        :rtype: List[JobEntity]"""
+        """
         entities = []
 
         # an entity w/parent keys must create entities for the items that it
@@ -108,13 +105,10 @@ class Run:
         """Map a collection of entity data persisted in a manifest file to an object
 
         :param entity_type: type of the associated `SmartSimEntity`
-        :type entity_type: str
         :param run: raw dictionary containing `Run` data deserialized from JSON
-        :type run: Dict[str, Any]
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  pathlib.Path
         :return: list of loaded `JobEntity` instances
-        :rtype: Dict[str, List[JobEntity]]"""
+        """
         persisted: t.Dict[str, t.List[JobEntity]] = {
             "model": [],
             "orchestrator": [],
@@ -131,11 +125,9 @@ class Run:
         """Map run data persisted in a manifest file to an object
 
         :param runs: raw dictionary containing `Run` data deserialized from JSON
-        :type runs: Dict[str, Any]
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  pathlib.Path
         :return: populated `Run` instance
-        :rtype: Run"""
+        """
 
         # create an output mapping to hold the deserialized entities
         run_entities: t.Dict[str, t.List[JobEntity]] = {
@@ -189,11 +181,8 @@ class RuntimeManifest:
         """Load a persisted manifest and return the content
 
         :param file_path: path to the manifest file to load
-        :type file_path: str
-
         :return: deserialized `RuntimeManifest` if the manifest file is found,
         otherwise None
-        :rtype: RuntimeManifest|None
         """
         manifest_dict: t.Optional[t.Dict[str, t.Any]] = None
         try_count, max_attempts = 1, 5

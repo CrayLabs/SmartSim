@@ -53,9 +53,7 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     needs to occur manually which is not often.
 
     :param hosts: List of hostnames to connect to
-    :type hosts: List[str]
     :param ports: List of ports for each hostname
-    :type ports: List[int]
     :raises SmartSimError: if cluster creation fails
     """
     ip_list = []
@@ -85,11 +83,8 @@ def check_cluster_status(
     """Check that a Redis/KeyDB cluster is up and running
 
     :param hosts: List of hostnames to connect to
-    :type hosts: List[str]
     :param ports: List of ports for each hostname
-    :type ports: List[int]
     :param trials: number of attempts to verify cluster status
-    :type trials: int, optional
 
     :raises SmartSimError: If cluster status cannot be verified
     """
@@ -129,13 +124,9 @@ def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> boo
     just ping DB.
 
     :param hosts: list of hosts
-    :type hosts: list[str]
     :param ports: list of ports
-    :type ports: list[int]
     :param num_shards: Number of DB shards
-    :type num_shards: int
     :return: Whether DB is running
-    :rtype: bool
     """
     # if single shard
     if num_shards < 2:
@@ -229,11 +220,8 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
     will take care of this automatically.
 
     :param host_ip: IP of host to connect to
-    :type hosts: str
     :param ports: Port to which node is listening
-    :type ports: int
     :return: returncode, output, and error of the process
-    :rtype: tuple of (int, str, str)
     """
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]

@@ -42,11 +42,8 @@ class SbatchStep(Step):
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: SbatchSettings
         """
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
@@ -57,7 +54,6 @@ class SbatchStep(Step):
         """Get the launch command for the batch
 
         :return: launch command for the batch
-        :rtype: list[str]
         """
         script = self._write_script()
         return [self.batch_settings.batch_cmd, "--parsable", script]
@@ -66,7 +62,6 @@ class SbatchStep(Step):
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
-        :type step: Step
         """
         launch_cmd = ["cd", step.cwd, ";"]
         launch_cmd += step.get_launch_cmd()
@@ -77,7 +72,6 @@ class SbatchStep(Step):
         """Write the batch script
 
         :return: batch script path after writing
-        :rtype: str
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
@@ -108,11 +102,8 @@ class SrunStep(Step):
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: SrunSettings
         """
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
@@ -125,7 +116,6 @@ class SrunStep(Step):
         """Get the command to launch this step
 
         :return: launch command
-        :rtype: list[str]
         """
         srun = self.run_settings.run_command
         if not srun:
@@ -206,7 +196,6 @@ class SrunStep(Step):
         """Build the executable for this step
 
         :return: executable list
-        :rtype: list[str]
         """
         if self._get_mpmd():
             return self._make_mpmd()

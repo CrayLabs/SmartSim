@@ -126,7 +126,6 @@ class Step:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
-        :type step: Step
         """
         raise SmartSimError("add_to_batch not implemented for this step type")
 

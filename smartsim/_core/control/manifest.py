@@ -68,7 +68,6 @@ class Manifest:
 
         :raises SmartSimError: if user added to databases to manifest
         :return: List of orchestrator instances
-        :rtype: list[Orchestrator]
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
         return dbs
@@ -78,7 +77,6 @@ class Manifest:
         """Return Model instances in Manifest
 
         :return: model instances
-        :rtype: List[Model]
         """
         _models: t.List[Model] = [
             item for item in self._deployables if isinstance(item, Model)
@@ -90,7 +88,6 @@ class Manifest:
         """Return Ensemble instances in Manifest
 
         :return: list of ensembles
-        :rtype: List[Ensemble]
         """
         return [e for e in self._deployables if isinstance(e, Ensemble)]
 
@@ -100,7 +97,6 @@ class Manifest:
         exceptional ones like Orchestrator
 
         :return: list of entity lists
-        :rtype: List[EntitySequence[SmartSimEntity]]
         """
         _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
 

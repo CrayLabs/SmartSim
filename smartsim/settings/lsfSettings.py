@@ -51,13 +51,9 @@ class JsrunSettings(RunSettings):
         ``JsrunSettings`` should only be used on LSF-based systems.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         """
         super().__init__(
             exe,
@@ -81,7 +77,6 @@ class JsrunSettings(RunSettings):
         This sets ``--nrs``.
 
         :param num_rs: Number of resource sets or `ALL_HOSTS`
-        :type num_rs: int or str
         """
         if isinstance(num_rs, str):
             self.run_args["nrs"] = num_rs
@@ -94,7 +89,6 @@ class JsrunSettings(RunSettings):
         This sets ``--cpu_per_rs``
 
         :param cpus_per_rs: number of cpus to use per resource set or ALL_CPUS
-        :type cpus_per_rs: int or str
         """
         if self.colocated_db_settings:
             db_cpus = int(t.cast(int, self.colocated_db_settings.get("db_cpus", 0)))
@@ -117,7 +111,6 @@ class JsrunSettings(RunSettings):
         This sets ``--gpu_per_rs``
 
         :param gpus_per_rs: number of gpus to use per resource set or ALL_GPUS
-        :type gpus_per_rs: int or str
         """
         if isinstance(gpus_per_rs, str):
             self.run_args["gpu_per_rs"] = gpus_per_rs
@@ -130,7 +123,6 @@ class JsrunSettings(RunSettings):
         This sets ``--rs_per_host``
 
         :param rs_per_host: number of resource sets to use per host
-        :type rs_per_host: int
         """
         self.run_args["rs_per_host"] = int(rs_per_host)
 
@@ -140,7 +132,6 @@ class JsrunSettings(RunSettings):
         This sets ``--np``
 
         :param tasks: number of tasks
-        :type tasks: int
         """
         self.run_args["np"] = int(tasks)
 
@@ -150,7 +141,6 @@ class JsrunSettings(RunSettings):
         This sets ``--tasks_per_rs``
 
         :param tasks_per_rs: number of tasks per resource set
-        :type tasks_per_rs: int
         """
         self.run_args["tasks_per_rs"] = int(tasks_per_rs)
 
@@ -160,7 +150,6 @@ class JsrunSettings(RunSettings):
         This function is an alias for `set_tasks_per_rs`.
 
         :param tasks_per_node: number of tasks per resource set
-        :type tasks_per_node: int
         """
         self.set_tasks_per_rs(int(tasks_per_node))
 
@@ -170,7 +159,6 @@ class JsrunSettings(RunSettings):
         This function is an alias for `set_cpus_per_rs`.
 
         :param cpus_per_task: number of cpus per resource set
-        :type cpus_per_task: int
         """
         self.set_cpus_per_rs(int(cpus_per_task))
 
@@ -180,7 +168,6 @@ class JsrunSettings(RunSettings):
         This sets ``--memory_per_rs``
 
         :param memory_per_rs: Number of megabytes per rs
-        :type memory_per_rs: int
         """
         self.run_args["memory_per_rs"] = int(memory_per_rs)
 
@@ -190,7 +177,6 @@ class JsrunSettings(RunSettings):
         Alias for `set_memory_per_rs`.
 
         :param memory_per_node: Number of megabytes per rs
-        :type memory_per_node: int
         """
         self.set_memory_per_rs(int(memory_per_node))
 
@@ -200,7 +186,6 @@ class JsrunSettings(RunSettings):
         This sets ``--bind``
 
         :param binding: Binding, e.g. `packed:21`
-        :type binding: str
         """
         self.run_args["bind"] = binding
 
@@ -213,7 +198,6 @@ class JsrunSettings(RunSettings):
         the list of settings to be launched in the same ERF file.
 
         :param settings: ``JsrunSettings`` instance
-        :type settings: JsrunSettings, optional
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -231,7 +215,6 @@ class JsrunSettings(RunSettings):
 
         :param preamble_lines: lines to put at the beginning of the ERF
                                file.
-        :type preamble_lines: list[str]
         """
         self.mpmd_preamble_lines = preamble_lines
 
@@ -249,7 +232,6 @@ class JsrunSettings(RunSettings):
         only `rank` is used.
 
         :param hosts: dictionary of resources
-        :type hosts: dict[str,str]
         """
         self.erf_sets = copy.deepcopy(erf_sets)
 
@@ -259,7 +241,6 @@ class JsrunSettings(RunSettings):
         its value is propagated from the current environment.
 
         :returns: formatted list of strings to export variables
-        :rtype: list[str]
         """
         format_str = []
         for k, v in self.env_vars.items():
@@ -279,8 +260,6 @@ class JsrunSettings(RunSettings):
         :param suffix: Optional suffix to add to output file names,
                        it can contain `%j`, `%h`, `%p`, or `%t`,
                        as specified by `jsrun` options.
-        :type suffix: str, optional
-
         """
         self.run_args["stdio_mode"] = "individual"
         if suffix:
@@ -290,7 +269,6 @@ class JsrunSettings(RunSettings):
         """Return a list of LSF formatted run arguments
 
         :return: list of LSF arguments for these settings
-        :rtype: list[str]
         """
         # args launcher uses
         args = []
@@ -403,16 +381,11 @@ class BsubBatchSettings(BatchSettings):
     ) -> None:
         """Specify ``bsub`` batch parameters for a job
 
-        :param nodes: number of nodes for batch, defaults to None
-        :type nodes: int, optional
-        :param time: walltime for batch job in format hh:mm, defaults to None
-        :type time: str, optional
-        :param project: project for batch launch, defaults to None
-        :type project: str, optional
-        :param batch_args: overrides for LSF batch arguments, defaults to None
-        :type batch_args: dict[str, str], optional
-        :param smts: SMTs, defaults to 0
-        :type smts: int, optional
+        :param nodes: number of nodes for batch
+        :param time: walltime for batch job in format hh:mm
+        :param project: project for batch launch
+        :param batch_args: overrides for LSF batch arguments
+        :param smts: SMTs
         """
         self.project: t.Optional[str] = None
 
@@ -445,7 +418,6 @@ class BsubBatchSettings(BatchSettings):
         :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours,
                          if time is supplied in hh:mm:ss format, seconds
                          will be ignored and walltime will be set as ``hh:mm``
-        :type walltime: str
         """
         # For compatibility with other launchers, as explained in docstring
         if walltime:
@@ -461,7 +433,6 @@ class BsubBatchSettings(BatchSettings):
         takes precedence.
 
         :param smts: SMT (e.g on Summit: 1, 2, or 4)
-        :type smts: int
         """
         self.smts = smts
 
@@ -471,7 +442,6 @@ class BsubBatchSettings(BatchSettings):
         This sets ``-P``.
 
         :param time: project name
-        :type time: str
         """
         if project:
             self.project = project
@@ -482,7 +452,6 @@ class BsubBatchSettings(BatchSettings):
         this function is an alias for `set_project`.
 
         :param account: project name
-        :type account: str
         """
         self.set_project(account)
 
@@ -492,7 +461,6 @@ class BsubBatchSettings(BatchSettings):
         This sets ``-nnodes``.
 
         :param nodes: number of nodes
-        :type nodes: int
         """
         if num_nodes:
             self.batch_args["nnodes"] = str(int(num_nodes))
@@ -503,6 +471,9 @@ class BsubBatchSettings(BatchSettings):
         disregard all other allocation options.
 
         This sets ``-csm -n slots -R res_req``
+
+        :param res_req: specific resource requirements
+        :param slots: number of resources to allocate
         """
         self.expert_mode = True
         self.batch_args["csm"] = "y"
@@ -513,7 +484,6 @@ class BsubBatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -530,7 +500,6 @@ class BsubBatchSettings(BatchSettings):
         This sets ``-n``
 
         :param tasks: number of tasks
-        :type tasks: int
         """
         self.batch_args["n"] = str(int(tasks))
 
@@ -538,7 +507,6 @@ class BsubBatchSettings(BatchSettings):
         """Set the queue for this job
 
         :param queue: The queue to submit the job on
-        :type queue: str
         """
         if queue:
             self.batch_args["q"] = queue
@@ -573,7 +541,6 @@ class BsubBatchSettings(BatchSettings):
         """Get the formatted batch arguments for a preview
 
         :return: list of batch arguments for Qsub
-        :rtype: list[str]
         """
         opts = []
 

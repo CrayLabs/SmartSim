@@ -52,22 +52,15 @@ def write_event(
     Does not overwrite existing records.
 
     :param timestamp: when the event occurred
-    :type timestamp: str
     :param task_id: the task_id of a managed task
-    :type task_id: int|str
     :param step_id: the step_id of an unmanaged task
-    :type step_id: str
     :param entity_type: the SmartSimEntity subtype
         (e.g. `orchestrator`, `ensemble`, `model`, `dbnode`, ...)
-    :type entity_type: str
     :param event_type: the event subtype
-    :type event_type: _EventClass
     :param status_dir: path where the SmartSimEntity outputs are written
-    :type status_dir: pathlib.Path
     :param detail: (optional) additional information to write with the event
-    :type detail: str
     :param return_code: (optional) the return code of a completed task
-    :type return_code: int|None"""
+    """
     tgt_path = status_dir / f"{event_type}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -109,10 +102,8 @@ def map_return_code(step_info: StepInfo) -> t.Optional[int]:
     and does not yet have a return code.
 
     :param step_info: step information produced by job manager status update queries
-    :type step_info: StepInfo
-
     :return: a return code if the step is finished, otherwise None
-    :rtype: int"""
+    """
     rc_map = {s: 1 for s in TERMINAL_STATUSES}  # return `1` for all terminal statuses
     rc_map.update(
         {SmartSimStatus.STATUS_COMPLETED: os.EX_OK}

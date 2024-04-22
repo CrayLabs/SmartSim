@@ -43,9 +43,7 @@ def parse_salloc_error(output: str) -> t.Optional[str]:
     """Parse and return error output of a failed salloc command
 
     :param output: stderr output of salloc command
-    :type output: str
     :return: error message
-    :rtype: str
     """
     salloc = which("salloc")
     # look for error first
@@ -73,10 +71,9 @@ def jobid_exact_match(parsed_id: str, job_id: str) -> bool:
     the prefix of another job_id, like 1 and 11
     or 1.1 and 1.10. Works with job id or step
     id (i.e. with or without a '.' in the id)
+
     :param parsed_id: the id read from the line
-    :type paserd_id: str
     :param job_id: the id to check for equality
-    :type job_id: str
     """
     if "." in job_id:
         return parsed_id == job_id
@@ -88,11 +85,8 @@ def parse_sacct(output: str, job_id: str) -> t.Tuple[str, t.Optional[str]]:
     """Parse and return output of the sacct command
 
     :param output: output of the sacct command
-    :type output: str
     :param job_id: allocation id or job step id
-    :type job_id: str
     :return: status and returncode
-    :rtype: tuple
     """
     result: t.Tuple[str, t.Optional[str]] = ("PENDING", None)
     for line in output.split("\n"):
@@ -113,9 +107,7 @@ def parse_sstat_nodes(output: str, job_id: str) -> t.List[str]:
     a job in a list with the duplicates removed.
 
     :param output: output of the sstat command
-    :type output: str
     :return: compute nodes of the allocation or job
-    :rtype: list of str
     """
     nodes = []
     for line in output.split("\n"):
@@ -134,11 +126,8 @@ def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
 
     :param output: output of sacct --noheader -p
                    --format=jobname,jobid --job <alloc>
-    :type output: str
     :param step_name: the name of the step to query
-    :type step_name: str
     :return: the step_id
-    :rtype: str
     """
     step_id = None
     for line in output.split("\n"):

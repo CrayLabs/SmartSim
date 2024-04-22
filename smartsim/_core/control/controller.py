@@ -96,7 +96,6 @@ class Controller:
         """Initialize a Controller
 
         :param launcher: the type of launcher being used
-        :type launcher: str
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
@@ -157,11 +156,8 @@ class Controller:
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
-        :type interval: int
         :param verbose: set verbosity
-        :type verbose: bool
         :param kill_on_interrupt: flag for killing jobs when SIGINT is received
-        :type kill_on_interrupt: bool, optional
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
         to_monitor = self._jobs.jobs
@@ -181,7 +177,6 @@ class Controller:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
-        :type entity: Entity | EntitySequence
         :returns: bool
         :raises ValueError: if entity has not been launched yet
         """
@@ -211,7 +206,6 @@ class Controller:
         the jobmanager so that the job appears as "cancelled".
 
         :param entity: entity to be stopped
-        :type entity: Entity | EntitySequence
         """
         with JM_LOCK:
             job = self._jobs[entity.name]
@@ -234,8 +228,8 @@ class Controller:
 
     def stop_db(self, db: Orchestrator) -> None:
         """Stop an orchestrator
+
         :param db: orchestrator to be stopped
-        :type db: Orchestrator
         """
         if db.batch:
             self.stop_entity(db)
@@ -267,7 +261,6 @@ class Controller:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
-        :type entity_list: EntitySequence
         """
 
         if entity_list.batch:
@@ -290,10 +283,8 @@ class Controller:
         """Get the status of an entity
 
         :param entity: entity to get status of
-        :type entity: SmartSimEntity | EntitySequence
         :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
-        :rtype: SmartSimStatus
         """
         if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
@@ -309,10 +300,8 @@ class Controller:
 
         :param entity_list: entity list containing entities to
                             get statuses of
-        :type entity_list: EntitySequence
         :raises TypeError: if not EntitySequence
         :return: list of SmartSimStatus statuses
-        :rtype: list
         """
         if not isinstance(entity_list, EntitySequence):
             raise TypeError(
@@ -331,7 +320,6 @@ class Controller:
         and local launching
 
         :param launcher: which launcher to initialize
-        :type launcher: str
         :raises SSUnsupportedError: if a string is passed that is not
                                     a supported launcher
         :raises TypeError: if no launcher argument is provided.
@@ -363,9 +351,7 @@ class Controller:
         under the .smartsim directory
 
         :param job_step: Job step instance
-        :type job_step: Step
         :param entity: Entity instance
-        :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
         """
         historical_out, historical_err = map(pathlib.Path, job_step.get_output_files())
         entity_out = pathlib.Path(entity.path) / f"{entity.name}.out"
@@ -394,11 +380,8 @@ class Controller:
         address of the database can be given to following entities
 
         :param exp_name: The name of the launching experiment
-        :type exp_name: str
         :param exp_path: path to location of ``Experiment`` directory if generated
-        :type exp_path: str
         :param manifest: Manifest of deployables to launch
-        :type manifest: Manifest
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
@@ -484,10 +467,8 @@ class Controller:
         set them in the JobManager
 
         :param orchestrator: orchestrator to launch
-        :type orchestrator: Orchestrator
         :param manifest_builder: An `LaunchedManifestBuilder` to record the
                                  names and `Step`s of the launched orchestrator
-        :type manifest_builder: LaunchedManifestBuilder[tuple[str, Step]]
         """
         orchestrator.remove_stale_files()
         orc_telem_dir = manifest_builder.run_telemetry_subdirectory / "database"
@@ -558,9 +539,7 @@ class Controller:
         """Use the launcher to launch a job step
 
         :param job_step: a job step instance
-        :type job_step: Step
         :param entity: entity instance
-        :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
         # attempt to retrieve entity name in JobManager.completed
@@ -618,13 +597,10 @@ class Controller:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
-        :type entity_list: EntityList
         :param telemetry_dir: Path to a directory in which the batch job step
                               may write telemetry events
-        :type telemetry_dir: pathlib.Path
         :return: batch job step instance and a list of run steps to be
                  executed within the batch job
-        :rtype: tuple[Step, list[Step]]
         """
         if not entity_list.batch_settings:
             raise ValueError(
@@ -653,12 +629,9 @@ class Controller:
         """Create job steps for all entities with the launcher
 
         :param entity: an entity to create a step for
-        :type entity: SmartSimEntity
         :param telemetry_dir: Path to a directory in which the job step
                                may write telemetry events
-        :type telemetry_dir: pathlib.Path
         :return: the job step
-        :rtype: Step
         """
         # get SSDB, SSIN, SSOUT and add to entity run settings
         if isinstance(entity, Model):
@@ -675,7 +648,6 @@ class Controller:
         """Retrieve all connections registered to this entity
 
         :param entity: The entity to retrieve connections from
-        :type entity:  Model
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
@@ -740,7 +712,6 @@ class Controller:
         to the orchestrator.
 
         :param orchestrator: Orchestrator configuration to be saved
-        :type orchestrator: Orchestrator
         """
 
         dat_file = "/".join((orchestrator.path, "smartsim_db.dat"))
@@ -762,7 +733,6 @@ class Controller:
         be launched with SSDB address
 
         :param orchestrator: orchestrator instance
-        :type orchestrator: Orchestrator
         :raises SmartSimError: if launch fails or manually stopped by user
         """
         if orchestrator.batch:
@@ -911,7 +881,6 @@ class Controller:
         of the processes launched through this controller.
 
         :param exp_dir: An experiment directory
-        :type exp_dir: str
         """
         if (
             self._telemetry_monitor is None

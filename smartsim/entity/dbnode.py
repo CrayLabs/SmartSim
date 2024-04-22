@@ -146,9 +146,7 @@ class DBNode(SmartSimEntity):
         This function should bu used if and only if ``_mpmd==True``
 
         :param port: port number
-        :type port: int
         :return: the dbnode configuration file name
-        :rtype: str
         """
         if self.num_shards == 1:
             return [f"nodes-{self.name}-{port}.conf"]
@@ -188,7 +186,6 @@ class DBNode(SmartSimEntity):
 
         :raises SmartSimError: if all shard info could not be found
         :return: The found launched shard info
-        :rtype: list[LaunchedShardData]
         """
         ips: "t.List[LaunchedShardData]" = []
         trials = CONFIG.database_file_parse_trials
@@ -225,7 +222,6 @@ class DBNode(SmartSimEntity):
 
         :raises SmartSimError: if host/ip could not be found
         :return: ip addresses | hostnames
-        :rtype: list[str]
         """
         return list({shard.hostname for shard in self.get_launched_shard_info()})
 

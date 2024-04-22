@@ -61,16 +61,11 @@ class _BaseMPISettings(RunSettings):
         None can be provided for arguments that do not have values.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         :param fail_if_missing_exec: Throw an exception of the MPI command
                                      is missing. Otherwise, throw a warning
-        :type fail_if_missing_exec: bool, optional
         """
         super().__init__(
             exe,
@@ -101,7 +96,6 @@ class _BaseMPISettings(RunSettings):
         Model instance
 
         :param settings: MpirunSettings instance
-        :type settings: MpirunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -117,7 +111,6 @@ class _BaseMPISettings(RunSettings):
         For examples, see the man page for ``mpirun``
 
         :param task_mapping: task mapping
-        :type task_mapping: str
         """
         self.run_args["map-by"] = task_mapping
 
@@ -130,7 +123,6 @@ class _BaseMPISettings(RunSettings):
         and will soon be replaced.
 
         :param cpus_per_task: number of tasks
-        :type cpus_per_task: int
         """
         self.run_args["cpus-per-proc"] = int(cpus_per_task)
 
@@ -140,7 +132,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--bind-to`` for MPI compliant implementations
 
         :param bind_type: binding type
-        :type bind_type: str
         """
         self.run_args["bind-to"] = bind_type
 
@@ -148,7 +139,6 @@ class _BaseMPISettings(RunSettings):
         """Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node
-        :type tasks_per_node: int
         """
         self.run_args["npernode"] = int(tasks_per_node)
 
@@ -158,7 +148,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``-n`` for MPI compliant implementations
 
         :param tasks: number of tasks
-        :type tasks: int
         """
         self.run_args["n"] = int(tasks)
 
@@ -168,7 +157,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--host``
 
         :param host_list: list of host names
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -185,7 +173,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--hostfile``
 
         :param file_path: Path to the hostlist file
-        :type file_path: str
         """
         self.run_args["hostfile"] = file_path
 
@@ -195,7 +182,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--verbose``
 
         :param verbose: Whether the job should be run verbosely
-        :type verbose: bool
         """
         if verbose:
             self.run_args["verbose"] = None
@@ -208,7 +194,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool
         """
         if quiet:
             self.run_args["quiet"] = None
@@ -221,7 +206,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--preload-binary``
 
         :param dest_path: Destination path (Ignored)
-        :type dest_path: str | None
         """
         if dest_path is not None and isinstance(dest_path, str):
             logger.warning(
@@ -238,7 +222,6 @@ class _BaseMPISettings(RunSettings):
         This sets ``--timeout``
 
         :param walltime: number like string of seconds that a job will run in secs
-        :type walltime: str
         """
         self.run_args["timeout"] = walltime
 
@@ -246,7 +229,6 @@ class _BaseMPISettings(RunSettings):
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
-        :rtype: list[str]
         """
         # args launcher uses
         args = []
@@ -265,7 +247,6 @@ class _BaseMPISettings(RunSettings):
         """Format the environment variables for mpirun
 
         :return: list of env vars
-        :rtype: list[str]
         """
         formatted = []
         env_string = "-x"
@@ -299,13 +280,9 @@ class MpirunSettings(_BaseMPISettings):
         None can be provided for arguments that do not have values.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         """
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
@@ -330,13 +307,9 @@ class MpiexecSettings(_BaseMPISettings):
         None can be provided for arguments that do not have values.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         """
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
@@ -370,12 +343,8 @@ class OrterunSettings(_BaseMPISettings):
         None can be provided for arguments that do not have values.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         """
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)

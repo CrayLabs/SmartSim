@@ -33,7 +33,6 @@ def bjobs(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls LSF bjobs with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of bjobs
     """
     cmd = ["bjobs"] + args
@@ -47,9 +46,7 @@ def bkill(args: t.List[str]) -> t.Tuple[int, str, str]:
     returncode is also supplied in this function.
 
     :param args: list of command arguments
-    :type args: list of str
     :return: returncode, output and error
-    :rtype: (int, str, str)
     """
     cmd = ["bkill"] + args
     returncode, out, error = execute_cmd(cmd)
@@ -62,9 +59,7 @@ def jskill(args: t.List[str]) -> t.Tuple[int, str, str]:
     returncode is also supplied in this function.
 
     :param args: list of command arguments
-    :type args: list of str
     :return: returncode, output and error
-    :rtype: (int, str, str)
     """
 
     cmd = ["jskill"] + args
@@ -76,9 +71,7 @@ def jslist(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls LSF jslist with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of jslist
-    :rtype: (str, str)
     """
     cmd = ["jslist"] + args
     _, out, err = execute_cmd(cmd)

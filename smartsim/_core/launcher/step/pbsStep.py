@@ -38,11 +38,8 @@ class QsubBatchStep(Step):
         """Initialize a PBSpro qsub step
 
         :param name: name of the entity to launch
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: QsubBatchSettings
         """
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
@@ -53,7 +50,6 @@ class QsubBatchStep(Step):
         """Get the launch command for the batch
 
         :return: launch command for the batch
-        :rtype: list[str]
         """
         script = self._write_script()
         return [self.batch_settings.batch_cmd, script]
@@ -62,7 +58,6 @@ class QsubBatchStep(Step):
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
-        :type step: Step
         """
         launch_cmd = step.get_launch_cmd()
         self.step_cmds.append(launch_cmd)
@@ -72,7 +67,6 @@ class QsubBatchStep(Step):
         """Write the batch script
 
         :return: batch script path after writing
-        :rtype: str
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()

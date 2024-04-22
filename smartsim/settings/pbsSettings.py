@@ -53,20 +53,13 @@ class QsubBatchSettings(BatchSettings):
         the value for select statement supplied in ``resources``
         will override.
 
-        :param nodes: number of nodes for batch, defaults to None
-        :type nodes: int, optional
-        :param ncpus: number of cpus per node, defaults to None
-        :type ncpus: int, optional
-        :param time: walltime for batch job, defaults to None
-        :type time: str, optional
-        :param queue: queue to run batch in, defaults to None
-        :type queue: str, optional
-        :param account: account for batch launch, defaults to None
-        :type account: str, optional
-        :param resources: overrides for resource arguments, defaults to None
-        :type resources: dict[str, str], optional
-        :param batch_args: overrides for PBS batch arguments, defaults to None
-        :type batch_args: dict[str, str], optional
+        :param nodes: number of nodes for batch
+        :param ncpus: number of cpus per node
+        :param time: walltime for batch job
+        :param queue: queue to run batch in
+        :param account: account for batch launch
+        :param resources: overrides for resource arguments
+        :param batch_args: overrides for PBS batch arguments
         """
 
         self._ncpus = ncpus
@@ -112,7 +105,6 @@ class QsubBatchSettings(BatchSettings):
         nodes here is sets the 'nodes' resource.
 
         :param num_nodes: number of nodes
-        :type num_nodes: int
         """
 
         if num_nodes:
@@ -122,7 +114,6 @@ class QsubBatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -143,7 +134,6 @@ class QsubBatchSettings(BatchSettings):
         this value will be overridden
 
         :param walltime: wall time
-        :type walltime: str
         """
         if walltime:
             self.set_resource("walltime", walltime)
@@ -152,7 +142,6 @@ class QsubBatchSettings(BatchSettings):
         """Set the queue for the batch job
 
         :param queue: queue name
-        :type queue: str
         """
         if queue:
             self.batch_args["q"] = str(queue)
@@ -165,7 +154,6 @@ class QsubBatchSettings(BatchSettings):
         this value will be overridden
 
         :param num_cpus: number of cpus per node in select
-        :type num_cpus: int
         """
         self._ncpus = int(num_cpus)
 
@@ -173,7 +161,6 @@ class QsubBatchSettings(BatchSettings):
         """Set the account for this batch job
 
         :param acct: account id
-        :type acct: str
         """
         if account:
             self.batch_args["A"] = str(account)
@@ -185,9 +172,7 @@ class QsubBatchSettings(BatchSettings):
         arguments will be overridden. Likewise for Walltime
 
         :param resource_name: name of resource, e.g. walltime
-        :type resource_name: str
         :param value: value
-        :type value: str
         """
         # TODO add error checking here
         # TODO include option to overwrite place (warning for orchestrator?)
@@ -200,7 +185,6 @@ class QsubBatchSettings(BatchSettings):
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Qsub
-        :rtype: list[str]
         :raises ValueError: if options are supplied without values
         """
         opts = self._create_resource_list()

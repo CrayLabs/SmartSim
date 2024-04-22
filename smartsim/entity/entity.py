@@ -55,7 +55,7 @@ class TelemetryConfiguration:
         """Initialize the telemetry producer and immediately call the `_on_enable` hook.
 
         :param enabled: flag indicating the initial state of telemetry
-        :type enabled: bool"""
+        """
         self._is_on = enabled
 
         if self._is_on:
@@ -68,7 +68,7 @@ class TelemetryConfiguration:
         """Boolean flag indicating if telemetry is currently enabled
 
         :returns: `True` if enabled, `False` otherwise
-        :rtype: bool"""
+        """
         return self._is_on
 
     def enable(self) -> None:
@@ -101,12 +101,9 @@ class SmartSimEntity:
         share these attributes.
 
         :param name: Name of the entity
-        :type name: str
         :param path: path to output, error, and configuration files
-        :type path: str
         :param run_settings: Launcher settings specified in the experiment
                              entity
-        :type run_settings: dict
         """
         self.name = name
         self.run_settings = run_settings

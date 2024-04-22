@@ -62,11 +62,8 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     """Parse options to launch model on local cluster
 
     :param client: SmartRedis client connected to local DB
-    :type client: Client
     :param db_model: List of arguments defining the model
-    :type db_model: List[str]
     :return: Name of model
-    :rtype: str
     """
     parser = argparse.ArgumentParser("Set ML model on DB")
     parser.add_argument("--name", type=str)
@@ -129,11 +126,8 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     """Parse options to launch script on local cluster
 
     :param client: SmartRedis client connected to local DB
-    :type client: Client
     :param db_model: List of arguments defining the script
-    :type db_model: List[str]
     :return: Name of model
-    :rtype: str
     """
     parser = argparse.ArgumentParser("Set script on DB")
     parser.add_argument("--name", type=str)
