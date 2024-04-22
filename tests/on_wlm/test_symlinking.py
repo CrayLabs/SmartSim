@@ -27,31 +27,7 @@
 import os
 import pathlib
 
-import pytest
-
 from smartsim import Experiment
-from smartsim._core.config import CONFIG
-from smartsim._core.control.controller import Controller, _AnonymousBatchJob
-from smartsim.database.orchestrator import Orchestrator
-from smartsim.entity.ensemble import Ensemble
-from smartsim.entity.model import Model
-from smartsim.settings.base import RunSettings
-from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
-
-controller = Controller()
-slurm_controller = Controller(launcher="slurm")
-
-rs = RunSettings("echo", ["spam", "eggs"])
-bs = SbatchSettings()
-batch_rs = SrunSettings("echo", ["spam", "eggs"])
-
-ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
-model = Model("test_model", params={}, path="", run_settings=rs)
-batch_model = Model(
-    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
-)
-anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
 def test_batch_model_and_ensemble(test_dir, wlmutils):
@@ -157,7 +133,13 @@ def test_batch_orchestrator_symlinks(test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     port = 2424
-    db = exp.create_database(db_nodes=3, port=port, batch=True, single_cmd=False)
+    db = exp.create_database(
+        db_nodes=3,
+        port=port,
+        batch=True,
+        interface=wlmutils.get_test_interface(),
+        single_cmd=False,
+    )
     exp.generate(db)
     exp.start(db, block=True)
     exp.stop(db)
