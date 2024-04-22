@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -81,21 +82,25 @@ def test_sklearn_onnx(test_dir, mlutils, wlmutils):
 
     db = wlmutils.get_orchestrator(nodes=1)
     db.set_path(test_dir)
+
     exp.start(db)
+    try:
+        run_settings = exp.create_run_settings(
+            sys.executable, f"run_sklearn_onnx.py --device={test_device}"
+        )
+        if wlmutils.get_test_launcher() != "local":
+            run_settings.set_tasks(1)
+        model = exp.create_model("onnx_models", run_settings)
 
-    run_settings = exp.create_run_settings(
-        "python", f"run_sklearn_onnx.py --device={test_device}"
-    )
-    model = exp.create_model("onnx_models", run_settings)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = Path(script_dir, "run_sklearn_onnx.py").resolve()
+        model.attach_generator_files(to_copy=str(script_path))
+        exp.generate(model)
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    script_path = Path(script_dir, "run_sklearn_onnx.py").resolve()
-    model.attach_generator_files(to_copy=str(script_path))
-    exp.generate(model)
+        exp.start(model, block=True)
+    finally:
+        exp.stop(db)
 
-    exp.start(model, block=True)
-
-    exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)
     assert model_status[0] != SmartSimStatus.STATUS_FAILED
