@@ -26,6 +26,7 @@
 
 import os
 import pathlib
+import time
 
 from smartsim import Experiment
 
@@ -142,6 +143,7 @@ def test_batch_orchestrator_symlinks(test_dir, wlmutils):
     )
     exp.generate(db)
     exp.start(db, block=True)
+    time.sleep(2)
     exp.stop(db)
 
     _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.out"), False)
