@@ -14,6 +14,7 @@
 
 import os
 import sys
+import warnings
 sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
@@ -60,9 +61,13 @@ extensions = [
 always_use_bars_union = True
 typehints_document_rtype = True
 typehints_use_signature = True
+typehints_use_signature_return = True
 typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
+
+# Ignore specific warnings related to smartsim
+warnings.filterwarnings("ignore", category=FutureWarning, module="smartsim")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
