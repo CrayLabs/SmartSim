@@ -29,6 +29,7 @@
 name: deploy_dev_docs
 
 on:
+  pull_request: # Delete before merging 
   push:
     branches:
       - develop
@@ -70,15 +71,15 @@ jobs:
       - name: Build documentation with docker
         run: make docks
 
-      - name: Commit files
-        run: |
-          git add -Af
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -m "Update develop documentation"
-
-      - uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: doc
-          force: true
+#      - name: Commit files
+#        run: |
+#          git add -Af
+#          git config --local user.email "action@github.com"
+#          git config --local user.name "GitHub Action"
+#          git commit -m "Update develop documentation"
+#
+#      - uses: ad-m/github-push-action@v0.6.0
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          branch: doc
+#          force: true

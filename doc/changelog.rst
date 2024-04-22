@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Fix building of documentation
 - Remove defensive regexp in .gitignore
 - Upgrade ubuntu to 22.04
 - Remove helper function ``init_default``
@@ -45,6 +46,8 @@ Description
 
 Detailed Notes
 
+- Manually ensure that typing_extensions==4.6.1 in Dockerfile used to build
+  docs. This fixes the deploy_dev_docs Github action (SmartSim-PR561_)
 - Remove defensive regexp in .gitignore and ensure tests write to test_output.
   (SmartSim-PR560_)
 - After dropping support for Python 3.8, ubuntu needs to be upgraded.
@@ -116,6 +119,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR561: https://github.com/CrayLabs/SmartSim/pull/561
 .. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
 .. _SmartSim-PR558: https://github.com/CrayLabs/SmartSim/pull/558
 .. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
