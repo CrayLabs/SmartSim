@@ -1622,19 +1622,6 @@ def test_preview_ensemble_db_script(wlmutils, test_dir):
     assert "Torch Script" in output
 
 
-# # I would add the path for Ensemble, Model and Orchestrator to the previews!
-# It is possible that a user specifies their own path and therefore it is not located
-# in the exp_path.
-
-## USER SPECIFIED PATH#
-#
-# the path arguments for Orch and Ensemble have been pushed to develop.
-# # I notice that in an Experiment with multiple databases, the db_identifier for
-# the standalone dbs are given, even if one is not provided. A colo db identifier is
-# only shown if provided even though the identifier would be default: orchestrator
-# -> should we show the colo db_identifier name always like for std?
-
-
 def test_get_dbtype_filter():
     """Test get_dbtype filter to extract database backend from config"""
 
