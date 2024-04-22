@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      
+
       # Maximize the space in this image
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
