@@ -141,7 +141,7 @@ jobs:
         - name: Create Pull Request
           uses: peter-evans/create-pull-request@v6
           with:
-            token: ${{ secrets.PAT || github.token }}
+            token: ${{ secrets.PAT }}
             commit-message: test_3
             base: develop
             title: test_2
