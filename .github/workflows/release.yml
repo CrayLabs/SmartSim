@@ -137,6 +137,7 @@ jobs:
           uses: peter-evans/create-pull-request@v6
           with:
             token: ${{ secrets.PAT }}
+            repository: amandarichardsonn/SmartSim
             commit-message: test_3
             base: develop
             branch: master
