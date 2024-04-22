@@ -67,7 +67,7 @@ def test_orch_single_cmd(monkeypatch, wlmutils, test_dir):
     """Test that single cmd is rejected in a heterogeneous job"""
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-orch-single-cmd"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher="slurm")
+    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
     orc = exp.create_database(
         wlmutils.get_test_port(),
         db_nodes=3,
