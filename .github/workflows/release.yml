@@ -143,6 +143,7 @@ jobs:
           with:
             token: ${{ secrets.PAT }}
             commit-message: test_3
+            base: amandarichardsonn/SmartSim/master
             branch: develop
             title: test_2
             body: test_1
