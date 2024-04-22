@@ -39,6 +39,7 @@ release = version
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx_autodoc_typehints',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -56,7 +57,10 @@ extensions = [
     'sphinx_design',
     'sphinx.ext.mathjax',
 ]
-
+always_use_bars_union = True
+typehints_document_rtype = True
+typehints_use_signature_return = True
+typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 

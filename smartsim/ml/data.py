@@ -378,7 +378,6 @@ class DataDownloader:
         """Compute if targets have to be downloaded.
 
         :return: Whether targets (or labels) should be downloaded
-        :rtype: bool
         """
         return bool(self.target_name) and not self.autoencoding
 
@@ -409,8 +408,8 @@ class DataDownloader:
 
         A new attempt to download samples will be made every ten seconds,
         for ``init_trials`` times.
+
         :param init_trials: maximum number of attempts to fetch data
-        :type init_trials: int
         """
         self._client = Client(self.cluster, self.address)
 

@@ -47,13 +47,9 @@ def freeze_model(
     a trained model and put it inside an ``orchestrator`` instance
 
     :param model: TensorFlow or Keras model
-    :type model: tf.Module
     :param output_dir: output dir to save model file to
-    :type output_dir: str
     :param file_name: name of model file to create
-    :type file_name: str
     :return: path to model file, model input layer names, model output layer names
-    :rtype: str, list[str], list[str]
     """
     # TODO figure out why layer names don't match up to
     # specified name in Model init.
@@ -93,9 +89,7 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
     a trained model and put it inside an ``orchestrator`` instance.
 
     :param model: TensorFlow or Keras model
-    :type model: tf.Module
     :return: serialized model, model input layer names, model output layer names
-    :rtype: str, list[str], list[str]
     """
 
     full_model = tf.function(model)
