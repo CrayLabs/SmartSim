@@ -9,10 +9,18 @@ services:
       context: .
       dockerfile: ./docker/docs/dev/Dockerfile
 
-  tutorials:
+  tutorials-dev:
     image: smartsim-tutorials:dev-latest
     build:
       context: .
       dockerfile: ./docker/dev/Dockerfile
+    ports:
+      - "8888:8888"
+
+  tutorials-prod:
+    image: smartsim-tutorials:v0.6.2
+    build:
+      context: .
+      dockerfile: ./docker/prod/Dockerfile
     ports:
       - "8888:8888"

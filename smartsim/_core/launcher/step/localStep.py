@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,25 @@
 
 import os
 import shutil
+import typing as t
 
-from .step import Step
+from ....settings import Singularity
+from ....settings.base import RunSettings
+from .step import Step, proxyable_launch_cmd
+
 
 class LocalStep(Step):
-    def __init__(self, name, cwd, run_settings):
-        super().__init__(name, cwd)
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+        super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
-        self.env = self._set_env()
+        self._env = self._set_env()
 
-    def get_launch_cmd(self):
+    @property
+    def env(self) -> t.Dict[str, str]:
+        return self._env
+
+    @proxyable_launch_cmd
+    def get_launch_cmd(self) -> t.List[str]:
         cmd = []
 
         # Add run command and args if user specified
@@ -47,21 +56,26 @@ class LocalStep(Step):
 
         if self.run_settings.colocated_db_settings:
             # Replace the command with the entrypoint wrapper script
-            bash = shutil.which("bash")
+            if not (bash := shutil.which("bash")):
+                raise RuntimeError("Unable to locate bash interpreter")
 
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])
+
+        container = self.run_settings.container
+        if container and isinstance(container, Singularity):
+            # pylint: disable-next=protected-access
+            cmd += container._container_cmds(self.cwd)
 
         # build executable
         cmd.extend(self.run_settings.exe)
         if self.run_settings.exe_args:
             cmd.extend(self.run_settings.exe_args)
-
         return cmd
 
-    def _set_env(self):
+    def _set_env(self) -> t.Dict[str, str]:
         env = os.environ.copy()
         if self.run_settings.env_vars:
             for k, v in self.run_settings.env_vars.items():
-                env[k] = v
+                env[k] = v or ""
         return env

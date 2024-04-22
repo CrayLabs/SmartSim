@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,64 +24,72 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ....error import LauncherError
+from ....log import get_logger
 from ...utils.helpers import expand_exe_path
 from ..util.shell import execute_cmd
 
+logger = get_logger(__name__)
 
-def sstat(args):
+
+def sstat(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls sstat with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sstat
     """
-    _sstat = _find_slurm_command("sstat")
-    cmd = [_sstat] + args
-    _, out, error = execute_cmd(cmd)
-    return out, error
+    _, out, err = _execute_slurm_cmd("sstat", args, raise_on_err=raise_on_err)
+    return out, err
 
 
-def sacct(args):
+def sacct(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls sacct with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sacct
     """
-    _sacct = _find_slurm_command("sacct")
-    cmd = [_sacct] + args
-    _, out, error = execute_cmd(cmd)
-    return out, error
+    _, out, err = _execute_slurm_cmd("sacct", args, raise_on_err=raise_on_err)
+    return out, err
 
 
-def salloc(args):
+def salloc(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls slurm salloc with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of salloc
     """
-    _salloc = _find_slurm_command("salloc")
-    cmd = [_salloc] + args
-    _, out, error = execute_cmd(cmd)
-    return out, error
+    _, out, err = _execute_slurm_cmd("salloc", args, raise_on_err=raise_on_err)
+    return out, err
 
 
-def sinfo(args):
+def sinfo(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
     """Calls slurm sinfo with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sinfo
     """
-    _sinfo = _find_slurm_command("sinfo")
-    cmd = [_sinfo] + args
-    _, out, error = execute_cmd(cmd)
-    return out, error
+    _, out, err = _execute_slurm_cmd("sinfo", args, raise_on_err=raise_on_err)
+    return out, err
 
 
-def scancel(args):
+def scontrol(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]:
+    """Calls slurm scontrol with args
+
+    :param args: List of command arguments
+    :type args: List of str
+    :returns: Output and error of sinfo
+    """
+    _, out, err = _execute_slurm_cmd("scontrol", args, raise_on_err=raise_on_err)
+    return out, err
+
+
+def scancel(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[int, str, str]:
     """Calls slurm scancel with args.
 
     returncode is also supplied in this function.
@@ -91,13 +99,10 @@ def scancel(args):
     :return: output and error
     :rtype: str
     """
-    _scancel = _find_slurm_command("scancel")
-    cmd = [_scancel] + args
-    returncode, out, error = execute_cmd(cmd)
-    return returncode, out, error
+    return _execute_slurm_cmd("scancel", args, raise_on_err=raise_on_err)
 
 
-def _find_slurm_command(cmd):
+def _find_slurm_command(cmd: str) -> str:
     try:
         full_cmd = expand_exe_path(cmd)
         return full_cmd
@@ -105,3 +110,17 @@ def _find_slurm_command(cmd):
         raise LauncherError(
             f"Slurm Launcher could not find path of {cmd} command"
         ) from e
+
+
+def _execute_slurm_cmd(
+    command: str, args: t.List[str], raise_on_err: bool = False
+) -> t.Tuple[int, str, str]:
+    cmd_exe = _find_slurm_command(command)
+    cmd = [cmd_exe] + args
+    returncode, out, error = execute_cmd(cmd)
+    if returncode != 0:
+        msg = f"An error occurred while calling {command}: {error}"
+        if raise_on_err:
+            raise LauncherError(msg)
+        logger.error(msg)
+    return returncode, out, error

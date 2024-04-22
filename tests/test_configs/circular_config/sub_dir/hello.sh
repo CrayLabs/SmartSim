@@ -1,1 +1,0 @@
-echo "Param \`P\` is ;P;"

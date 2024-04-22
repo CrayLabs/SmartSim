@@ -2,32 +2,41 @@
    sphinx-quickstart on Sat Sep 14 15:07:14 2019.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Overview of SmartSim
+   :maxdepth: 1
+
+   versions
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Getting Started
 
    overview
-   installation
-   community
+   installation_instructions/basic
+   installation_instructions/platform
+   contributing
+   smartsim_zoo
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials
 
-   tutorials/01_getting_started/01_getting_started
-   tutorials/02_using_clients
-   tutorials/03_lattice_boltz_analysis
-   tutorials/04_inference
-   tutorials/05_training
-   tutorials/06_starting_ray/06_starting_ray_builtin
-
+   tutorials/getting_started/getting_started
+   tutorials/online_analysis/lattice/online_analysis
+   tutorials/ml_inference/Inference-in-SmartSim
+   tutorials/ml_training/surrogate/train_surrogate
 
 .. toctree::
    :maxdepth: 2
    :caption: SmartSim
 
    experiment
+   run_settings
+   batch_settings
+   model
+   ensemble
    orchestrator
-   launchers
+   ss_logger
+   ml_features
    api/smartsim_api
 
 .. toctree::
@@ -35,17 +44,30 @@
    :caption: SmartRedis
 
    smartredis
+   sr_integration
+   sr_python_walkthrough
+   sr_cpp_walkthrough
+   sr_fortran_walkthrough
    sr_data_structures
+   sr_dataset_conversions
    sr_runtime
+   sr_advanced_topics
    api/smartredis_api
+
+.. toctree::
+   :maxdepth: 2
+   :caption: SmartDashboard
+
+   smartdashboard
 
 .. toctree::
    :maxdepth: 2
    :caption: Reference
 
+   changelog
    code_of_conduct
    developer
-   changelog
+   testing
 
 
 Indices and tables

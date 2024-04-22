@@ -1,4 +1,30 @@
-FROM ubuntu:20.04
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+FROM ubuntu:22.04
 
 LABEL maintainer="Cray Labs"
 
@@ -15,17 +41,21 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY . /usr/local/src/SmartSim/
 WORKDIR /usr/local/src/SmartSim/
-RUN NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .[doc]
 
+# Install smartredis
 RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
     && cd smartredis \
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
-# address needs of nbsphinx and ml docs
-# see https://nbsphinx.readthedocs.io/en/0.8.1/installation.html#Jupyter-Kernel
-RUN python -m pip install ipython ipykernel torch==1.7.1 tensorflow==2.5.2
+# Install smartdashboard
+RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --depth=1 smartdashboard \
+    && cd smartdashboard \
+    && python -m pip install . \
+    && rm -rf ~/.cache/pip
 
-RUN cd doc/tutorials/ && \
-    ln -s ../../tutorials/* .
+# Install docs dependencies and SmartSim
+RUN python -m pip install -r doc/requirements-doc.txt \
+    && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
+
 RUN make docs

@@ -1,9 +1,36 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import time
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.settings.settings import RunSettings
+from smartsim.status import SmartSimStatus
 
 """
 Test the launch and stop of simple models and ensembles that use base
@@ -22,16 +49,13 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_simple_model_on_wlm(fileutils, wlmutils):
+def test_simple_model_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
-        pytest.skip(
-            "Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM"
-        )
+    if launcher not in ["pbs", "slurm", "lsf"]:
+        pytest.skip("Test only runs on systems with LSF, PBSPro, or Slurm as WLM")
 
     exp_name = "test-simplebase-settings-model-launch"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")
@@ -40,19 +64,16 @@ def test_simple_model_on_wlm(fileutils, wlmutils):
     # launch model twice to show that it can also be restarted
     for _ in range(2):
         exp.start(M, block=True)
-        assert exp.get_status(M)[0] == status.STATUS_COMPLETED
+        assert exp.get_status(M)[0] == SmartSimStatus.STATUS_COMPLETED
 
 
-def test_simple_model_stop_on_wlm(fileutils, wlmutils):
+def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
-        pytest.skip(
-            "Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM"
-        )
+    if launcher not in ["pbs", "slurm", "lsf"]:
+        pytest.skip("Test only runs on systems with LSF, PBSPro, or Slurm as WLM")
 
     exp_name = "test-simplebase-settings-model-stop"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")
@@ -63,4 +84,4 @@ def test_simple_model_stop_on_wlm(fileutils, wlmutils):
     time.sleep(2)
     exp.stop(M)
     assert M.name in exp._control._jobs.completed
-    assert exp.get_status(M)[0] == status.STATUS_CANCELLED
+    assert exp.get_status(M)[0] == SmartSimStatus.STATUS_CANCELLED

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
 import os
+import typing as t
 from functools import lru_cache
 from pathlib import Path
 
@@ -44,15 +46,15 @@ from ..utils.helpers import expand_exe_path
 #
 # REDIS_CONF
 #   - Path to the redis.conf file
-#   - Default: /SmartSim/smartsim/config/redis6.conf
+#   - Default: /SmartSim/smartsim/_core/config/redis.conf
 #
 # REDIS_PATH
 #   - Path to the redis-server executable
-#   - Default: /SmartSim/smartsim/bin/redis-server
+#   - Default: /SmartSim/smartsim/_core/bin/redis-server
 #
 # REDIS_CLI_PATH
 #   - Path to the redis-cli executable
-#   - Default: /SmartSim/smartsim/bin/redis-cli
+#   - Default: /SmartSim/smartsim/_core/bin/redis-cli
 #
 # SMARTSIM_LOG_LEVEL
 #   - Log level for SmartSim
@@ -78,18 +80,25 @@ from ..utils.helpers import expand_exe_path
 #  - CPU or GPU for model serving tests
 #  - Default: CPU
 #
+# SMARTSIM_TEST_NUM_GPUS
+#  - Number of GPUs on the host for testing
+#  - Defaults: 1
+#
 # SMARTSIM_TEST_ACCOUNT
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
 
 
 class Config:
-    def __init__(self):
+    def __init__(self) -> None:
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
-        self.lib_path = Path(self.core_path, "lib").resolve()
-        self.bin_path = Path(self.core_path, "bin").resolve()
-        self.conf_path = Path(self.core_path, "config", "redis6.conf")
+
+        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", self.core_path)
+
+        self.lib_path = Path(dependency_path, "lib").resolve()
+        self.bin_path = Path(dependency_path, "bin").resolve()
+        self.conf_path = Path(dependency_path, "config", "redis.conf")
 
     @property
     def redisai(self) -> str:
@@ -97,35 +106,36 @@ class Config:
         redisai = Path(os.environ.get("RAI_PATH", rai_path)).resolve()
         if not redisai.is_file():
             raise SSConfigError(
-                "RedisAI dependency not found. Build with `smart` cli or specify RAI_PATH"
+                "RedisAI dependency not found. Build with `smart` cli "
+                "or specify RAI_PATH"
             )
         return str(redisai)
 
     @property
-    def redis_conf(self) -> str:
+    def database_conf(self) -> str:
         conf = Path(os.environ.get("REDIS_CONF", self.conf_path)).resolve()
         if not conf.is_file():
             raise SSConfigError(
-                "Redis configuration file at REDIS_CONF could not be found"
+                "Database configuration file at REDIS_CONF could not be found"
             )
         return str(conf)
 
     @property
-    def redis_exe(self) -> str:
+    def database_exe(self) -> str:
         try:
-            redis_exe = self.bin_path / "redis-server"
-            redis = Path(os.environ.get("REDIS_PATH", redis_exe)).resolve()
-            exe = expand_exe_path(str(redis))
+            database_exe = next(self.bin_path.glob("*-server"))
+            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            exe = expand_exe_path(str(database))
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified Redis binary at REDIS_PATH could not be used"
+                "Specified database binary at REDIS_PATH could not be used"
             ) from e
 
     @property
-    def redis_cli(self) -> str:
+    def database_cli(self) -> str:
         try:
-            redis_cli_exe = self.bin_path / "redis-cli"
+            redis_cli_exe = next(self.bin_path.glob("*-cli"))
             redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
             exe = expand_exe_path(str(redis_cli))
             return exe
@@ -135,44 +145,98 @@ class Config:
             ) from e
 
     @property
+    def database_file_parse_trials(self) -> int:
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_TRIALS", "10"))
+
+    @property
+    def database_file_parse_interval(self) -> int:
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
+
+    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 
     @property
     def jm_interval(self) -> int:
-        return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
+        return int(os.environ.get("SMARTSIM_JM_INTERVAL") or 10)
 
     @property
-    def test_launcher(self) -> str:
+    def wlm_trials(self) -> int:
+        return int(os.environ.get("SMARTSIM_WLM_TRIALS") or 10)
+
+    @property
+    def test_launcher(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_LAUNCHER", "local")
 
     @property
-    def test_device(self) -> str:
+    def test_device(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
 
     @property
-    def test_interface(self) -> str:
-        interface = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
-        if not interface:
-            # try to pick a sensible one
-            net_if_addrs = psutil.net_if_addrs()
-            if "ipogif0" in net_if_addrs:
-                return "ipogif0"
-            elif "ib0" in net_if_addrs:
-                return "ib0"
-            # default to aries network
-            return "ipogif0"
-        else:
-            return interface
+    def test_num_gpus(self) -> int:  # pragma: no cover
+        return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
-    def test_account(self) -> str:
+    def test_port(self) -> int:  # pragma: no cover
+        return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
+
+    @property
+    def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
+        resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
+        resources = json.loads(resource_str)
+        if not isinstance(resources, dict):
+            raise TypeError(
+                (
+                    "SMARTSIM_TEST_BATCH_RESOURCES was not interpreted as a "
+                    "dictionary, check to make sure that it is a valid "
+                    f"JSON string: {resource_str}"
+                )
+            )
+        return resources
+
+    @property
+    def test_interface(self) -> t.List[str]:  # pragma: no cover
+        if interfaces_cfg := os.environ.get("SMARTSIM_TEST_INTERFACE", None):
+            return interfaces_cfg.split(",")
+
+        # try to pick a sensible one
+        net_if_addrs = psutil.net_if_addrs()
+        if "ipogif0" in net_if_addrs:
+            return ["ipogif0"]
+        if "hsn0" in net_if_addrs:
+            return [
+                net_if_addr
+                for net_if_addr in net_if_addrs
+                if net_if_addr.startswith("hsn")
+            ]
+        if "ib0" in net_if_addrs:
+            return ["ib0"]
+        # default to aries network
+        return ["lo"]
+
+    @property
+    def test_account(self) -> t.Optional[str]:  # pragma: no cover
         # no account by default
-        return os.environ.get("SMARTSIM_TEST_ACCOUNT", "")
+        return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
+
+    @property
+    def telemetry_frequency(self) -> int:
+        return int(os.environ.get("SMARTSIM_TELEMETRY_FREQUENCY", 5))
+
+    @property
+    def telemetry_enabled(self) -> bool:
+        return int(os.environ.get("SMARTSIM_FLAG_TELEMETRY", "1")) > 0
+
+    @property
+    def telemetry_cooldown(self) -> int:
+        return int(os.environ.get("SMARTSIM_TELEMETRY_COOLDOWN", 90))
+
+    @property
+    def telemetry_subdir(self) -> str:
+        return ".smartsim/telemetry"
 
 
 @lru_cache(maxsize=128, typed=False)
-def get_config():
-
+def get_config() -> Config:
     # wrap into a function with a cached result
     return Config()

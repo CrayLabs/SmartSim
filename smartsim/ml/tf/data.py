@@ -1,37 +1,61 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import typing as t
+
 import numpy as np
-import tensorflow.keras as keras
+from tensorflow import keras
 
-from smartsim.ml import DynamicDataDownloader, StaticDataDownloader
+from smartsim.ml import DataDownloader
+
+if t.TYPE_CHECKING:
+    import numpy.typing as npt
 
 
-class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
-    """A class to download a dataset from the DB.
-
-    Details about parameters and features of this class can be found
-    in the documentation of ``StaticDataDownloader``, of which it is just
-    a TensorFlow-specialized sub-class.
-    """
-
-    def __init__(self, **kwargs):
-        StaticDataDownloader.__init__(self, **kwargs)
-
-    def __getitem__(self, index):
+class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
+    def __getitem__(
+        self, index: int
+    ) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
         if len(self) < 1:
-            msg = "Not enough samples in generator for one batch. "
-            msg += "Please run init_samples() or initialize generator with init_samples=True"
-            raise ValueError(msg)
+            raise ValueError(
+                "Not enough samples in generator for one batch. Please "
+                "run init_samples() or initialize generator with init_samples=True"
+            )
         # Generate indices of the batch
         indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
 
         # Generate data
-        x, y = self.__data_generation(indices)
+        xval, yval = self._data_generation(indices)
 
-        if y is not None:
-            return x, y
-        else:
-            return x
+        if yval is not None:
+            return xval, yval
 
-    def on_epoch_end(self):
+        return xval
+
+    def on_epoch_end(self) -> None:
         """Callback called at the end of each training epoch
 
         If `self.shuffle` is set to `True`, data is shuffled.
@@ -39,38 +63,70 @@ class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def __data_generation(self, indices):
+    def _data_generation(
+        self, indices: "npt.NDArray[t.Any]"
+    ) -> t.Tuple["npt.NDArray[t.Any]", "npt.NDArray[t.Any]"]:
         # Initialization
-        x = self.samples[indices]
+        if self.samples is None:
+            raise ValueError("No samples loaded for data generation")
+
+        xval = self.samples[indices]
 
         if self.need_targets:
-            y = self.targets[indices]
+            yval = t.cast("npt.NDArray[t.Any]", self.targets)[indices]
             if self.num_classes is not None:
-                y = keras.utils.to_categorical(y, num_classes=self.num_classes)
+                yval = keras.utils.to_categorical(yval, num_classes=self.num_classes)
         elif self.autoencoding:
-            y = x
+            yval = xval
         else:
-            y = None
+            return xval  # type: ignore[no-any-return]
 
-        return x, y
+        return xval, yval
 
 
-class DynamicDataGenerator(DynamicDataDownloader, StaticDataGenerator):
+class StaticDataGenerator(_TFDataGenerationCommon):
+    """A class to download a dataset from the DB.
+
+    Details about parameters and features of this class can be found
+    in the documentation of ``DataDownloader``, of which it is just
+    a TensorFlow-specialized sub-class with dynamic=False.
+    """
+
+    def __init__(self, **kwargs: t.Any) -> None:
+        dynamic = kwargs.pop("dynamic", False)
+        kwargs["dynamic"] = False
+        super().__init__(**kwargs)
+        if dynamic:
+            msg = (
+                "Static data generator cannot be started with dynamic=True, "
+                "setting it to False"
+            )
+            self.log(msg)
+
+
+class DynamicDataGenerator(_TFDataGenerationCommon):
     """A class to download batches from the DB.
 
     Details about parameters and features of this class can be found
-    in the documentation of ``DynamicDataDownloader``, of which it is just
-    a TensorFlow-specialized sub-class.
+    in the documentation of ``DataDownloader``, of which it is just
+    a TensorFlow-specialized sub-class with dynamic=True.
     """
 
-    def __init__(self, **kwargs):
-        StaticDataGenerator.__init__(self, **kwargs)
+    def __init__(self, **kwargs: t.Any) -> None:
+        dynamic = kwargs.pop("dynamic", True)
+        kwargs["dynamic"] = True
+        super().__init__(**kwargs)
+        if not dynamic:
+            msg = (
+                "Dynamic data generator cannot be started with dynamic=False,"
+                " setting it to True"
+            )
+            self.log(msg)
 
-    def on_epoch_end(self):
+    def on_epoch_end(self) -> None:
         """Callback called at the end of each training epoch
 
         Update data (the DB is queried for new batches) and
         if `self.shuffle` is set to `True`, data is also shuffled.
         """
         self.update_data()
-        super().on_epoch_end()

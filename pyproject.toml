@@ -1,10 +1,37 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 [build-system]
-requires = ["setuptools", "wheel", "cmake>=3.10"]
+requires = ["setuptools", "wheel", "cmake>=3.13"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-target-version = ['py37', 'py38']
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
 exclude = '''
 (
   | \.egg
@@ -24,9 +51,15 @@ exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
+markers = [
+  "group_a: fast test subset a",
+  "group_b: fast test subset b",
+  "slow_tests: tests that take a long duration to complete",
+]
 
 [tool.isort]
 # supress circular import warning
+profile = "black"
 skip = ["tests/test_configs/circular_config"]
 
 [tool.coverage.run]
@@ -39,3 +72,58 @@ ignore_errors = true
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+[tool.mypy]
+namespace_packages = true
+files = [
+  "smartsim"
+]
+plugins = []
+ignore_errors = false
+
+# Dynamic typing
+disallow_any_generics = true
+warn_return_any = true
+
+# Strict fn defs
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+
+# Probably Unintended Branches/Blocks
+# warn_unreachable = true
+
+# Safety/Upgrading Mypy
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
+
+# Misc Strictness Settings
+strict_concatenate = false
+strict_equality = true
+
+# Additional Error Codes
+enable_error_code = [
+    # "redundant-expr",
+    "possibly-undefined",
+    # "unused-awaitable",
+    # "ignore-without-code",
+    # "mutable-override",
+    "truthy-bool",
+    "truthy-iterable",
+]
+
+[[tool.mypy.overrides]]
+# Ignore packages that are not used or not typed
+module = [
+  "coloredlogs",
+  "redis.cluster",
+  "keras",
+  "torch",
+  "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
+  "watchdog",
+]
+ignore_missing_imports = true
+ignore_errors = true

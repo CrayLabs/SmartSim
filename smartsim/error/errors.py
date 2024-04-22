@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 
 # Exceptions
 
@@ -38,18 +39,21 @@ class SSUnsupportedError(Exception):
 
 class EntityExistsError(SmartSimError):
     """Raised when a user tries to create an entity or files/directories for
-    an entity and either the entity/files/directories already exist"""
+    an entity and either the entity/files/directories already exist
+    """
 
 
 class UserStrategyError(SmartSimError):
     """Raised when there is an error with model creation inside an ensemble
-    that is from a user provided permutation strategy"""
+    that is from a user provided permutation strategy
+    """
 
-    def __init__(self, perm_strat):
+    def __init__(self, perm_strat: str) -> None:
         message = self.create_message(perm_strat)
         super().__init__(message)
 
-    def create_message(self, perm_strat):
+    @staticmethod
+    def create_message(perm_strat: str) -> str:
         prefix = "User provided ensemble generation strategy"
         message = "failed to generate valid parameter names and values"
         return " ".join((prefix, str(perm_strat), message))
@@ -60,27 +64,34 @@ class ParameterWriterError(SmartSimError):
     could not be written.
     """
 
-    def __init__(self, file_path, read=True):
+    def __init__(self, file_path: str, read: bool = True) -> None:
         message = self.create_message(file_path, read)
         super().__init__(message)
 
-    def create_message(self, fp, read):
+    @staticmethod
+    def create_message(file_path: str, read: bool) -> str:
         if read:
-            msg = f"Failed to read configuration file to write at {fp}"
+            msg = f"Failed to read configuration file to write at {file_path}"
         else:
-            msg = f"Failed to write configuration file to {fp}"
+            msg = f"Failed to write configuration file to {file_path}"
         return msg
+
+
+class SSReservedKeywordError(SmartSimError):
+    """Raised when a Reserved Keyword is used incorrectly"""
+
+
+class SSDBIDConflictError(SmartSimError):
+    """Raised in the event that a database identifier
+    is not unique when multiple databases are created
+    """
 
 
 # Internal Exceptions
 
 
 class SSInternalError(Exception):
-    """
-    SSInternalError is raised when an internal error is encountered.
-    """
-
-    pass
+    """SSInternalError is raised when an internal error is encountered"""
 
 
 class SSConfigError(SSInternalError):
@@ -97,17 +108,44 @@ class AllocationError(LauncherError):
 
 class ShellError(LauncherError):
     """Raised when error arises from function within launcher.shell
-    Closely related to error from subprocess(Popen) commands"""
+    Closely related to error from subprocess(Popen) commands
+    """
 
-    def __init__(self, message, shell_error, command_list):
-        msg = self.create_message(message, shell_error, command_list)
+    def __init__(
+        self,
+        message: str,
+        command_list: t.Union[str, t.List[str]],
+        details: t.Optional[t.Union[Exception, str]] = None,
+    ) -> None:
+        msg = self.create_message(message, command_list, details=details)
         super().__init__(msg)
 
-    def create_message(self, message, shell_error, command_list):
+    @staticmethod
+    def create_message(
+        message: str,
+        command_list: t.Union[str, t.List[str]],
+        details: t.Optional[t.Union[Exception, str]],
+    ) -> str:
         if isinstance(command_list, list):
             command_list = " ".join(command_list)
         msg = message + "\n"
         msg += f"\nCommand: {command_list}"
-        if shell_error:
-            msg += f"\nError from shell: {shell_error}"
+        if details:
+            msg += f"\nError from shell: {details}"
         return msg
+
+
+class TelemetryError(SSInternalError):
+    """Raised when SmartSim runs into trouble establishing or communicating
+    telemetry information
+    """
+
+
+class UnproxyableStepError(TelemetryError):
+    """Raised when a user attempts to proxy a managed ``Step`` through the
+    unmanaged step proxy entry point
+    """
+
+
+class SmartSimCLIActionCancelled(SmartSimError):
+    """Raised when a `smart` CLI command is terminated"""

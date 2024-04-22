@@ -12,9 +12,9 @@ Introduction
 
 SmartSim provides this capability by
 
- 1. Automating the deployment of HPC workloads and distributed, in-memory, storage (Redis)
+ 1. Automating the deployment of HPC workloads and distributed, in-memory storage (Redis).
  2. Making TensorFlow, Pytorch, and ONNX callable from Fortran, C, and C++ simulations.
- 3. Providing flexible data communication and formats for hierarchical data enabling online
+ 3. Providing flexible data communication and formats for hierarchical data, enabling online
     analysis, visualization, and processing of simulation data.
 
 The main goal of SmartSim is to provide scientists a flexible, easy to use method for
@@ -26,7 +26,7 @@ is completely up to the user.
  - Visualize the progression of a simulation integration from a Jupyter notebook
 
 The figure below shows the architecture of SmartSim for a given use case.
-SmartSim can create, configure and launch workloads (called a ``Model``)
+SmartSim can create, configure and launch workloads (called a ``Model``),
 as well as groups of workloads (``Ensembles``). The data communication between
 a workload and in-memory storage is handled by the SmartRedis clients, available
 in Fortran, C, C++, and Python.
@@ -47,7 +47,7 @@ There are two core components of SmartSim:
   1. SmartSim (infrastructure library)
   2. SmartRedis (client library)
 
-The two libraries can either be used in conjunction, or separately depending
+The two libraries can either be used in conjunction or separately, depending
 on the needs of the user.
 
 SmartSim (infrastructure library)
@@ -58,19 +58,18 @@ deploying HPC workloads alongside an in-memory database: Redis.
 
 The key features of the IL are:
 
-  - An API to start, monitor, and stop HPC jobs from Python or Jupyter notebook.
-  - Automated deployment of in-memory data staging (Redis) and computational
-    storage (RedisAI)
-  - Programmatic launches of batch and in-allocation jobs on PBS, Slurm, LSF,
-    and Cobalt systems.
+  - An API to start, monitor, and stop HPC jobs from Python or from a Jupyter notebook.
+  - Automated deployment of in-memory data staging (`Redis <https://redis.io>`_) and computational
+    storage (`RedisAI <https://redisai.io>`_).
+  - Programmatic launches of batch and in-allocation jobs on PBS, Slurm, and LSF systems.
   - Creating and configuring ensembles of workloads with isolated communication channels.
 
 The IL can configure and launch batch jobs as well as jobs within interactive
-allocations. The IL integrates with workload managers (like Slurm and PBS),
-if it's running on a supercomputer or cluster system.
+allocations. The IL integrates with workload managers, (like Slurm and PBS),
+if it is running on a supercomputer or cluster system.
 
 The IL can deploy a distributed, shared-nothing, in-memory cluster of Redis
-instances across multiple compute nodes of a supercomputer, cluster, or laptop
+instances across multiple compute nodes of a supercomputer, cluster, or laptop.
 In SmartSim, this clustered Redis deployment is called the ``Orchestrator``.
 
 By coupling the Orchestrator with HPC applications, users can connect their
