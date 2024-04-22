@@ -143,7 +143,8 @@ jobs:
           with:
             token: ${{ secrets.PAT }}
             commit-message: test_3
-            base: develop
+            base: master
+            branch: develop
             title: test_2
             body: test_1
             draft: false
