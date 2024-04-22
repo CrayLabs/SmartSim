@@ -133,6 +133,11 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v4
 
+        - name: Commit files
+          run: |
+            git config --global user.email "action@github.com"
+            git config --global user.name "GitHub Action"
+
         - name: Create Pull Request
           uses: peter-evans/create-pull-request@v6
           with:
