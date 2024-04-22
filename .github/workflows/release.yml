@@ -34,17 +34,17 @@ on:
       - develop
 
 
-env:
-  HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
-  HOMEBREW_NO_AUTO_UPDATE: "ON"
-  HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
-  HOMEBREW_NO_GITHUB_API: "ON"
-  HOMEBREW_NO_INSTALL_CLEANUP: "ON"
-  CIBW_SKIP: "pp* *i686*" # skip building for PyPy
-  CIBW_ARCHS_MACOS: x86_64
-  CIBW_ARCHS_LINUX: x86_64  # ppc64le # uncomment to enable powerPC build
-  CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
-  MACOSX_DEPLOYMENT_TARGET: "10.09"
+# env:
+#   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
+#   HOMEBREW_NO_AUTO_UPDATE: "ON"
+#   HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
+#   HOMEBREW_NO_GITHUB_API: "ON"
+#   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
+#   CIBW_SKIP: "pp* *i686*" # skip building for PyPy
+#   CIBW_ARCHS_MACOS: x86_64
+#   CIBW_ARCHS_LINUX: x86_64  # ppc64le # uncomment to enable powerPC build
+#   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+#   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
 
 jobs:

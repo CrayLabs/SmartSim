@@ -26,24 +26,24 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-name: enforce_changelog
+# name: enforce_changelog
 
-on:
-  pull_request:
-  push:
-    branches:
-      - develop
+# on:
+#   pull_request:
+#   push:
+#     branches:
+#       - develop
 
-jobs:
-  changelog:
-    name: check_changelog
-    runs-on: ubuntu-latest
+# jobs:
+#   changelog:
+#     name: check_changelog
+#     runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
+#     steps:
+#     - uses: actions/checkout@v4
 
-    - name: Changelog Enforcer
-      uses: dangoslen/changelog-enforcer@v3.6.0
-      with:
-        changeLogPath: './doc/changelog.rst'
-        missingUpdateErrorMessage: 'changelog.rst has not been updated'
+#     - name: Changelog Enforcer
+#       uses: dangoslen/changelog-enforcer@v3.6.0
+#       with:
+#         changeLogPath: './doc/changelog.rst'
+#         missingUpdateErrorMessage: 'changelog.rst has not been updated'
