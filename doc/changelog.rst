@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Fix race condition for telemetry monitor
+- Remove defensive regexp in .gitignore
 - Upgrade ubuntu to 22.04
 - Remove helper function ``init_default``
 - Fix telemetry monitor logging errrors for task history
@@ -46,6 +47,8 @@ Description
 Detailed Notes
 
 - Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR549_)
+- Remove defensive regexp in .gitignore and ensure tests write to test_output.
+  (SmartSim-PR560_)
 - After dropping support for Python 3.8, ubuntu needs to be upgraded.
   (SmartSim-PR558_)
 - Remove helper function ``init_default`` and replace with traditional type
@@ -116,6 +119,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR549: https://github.com/CrayLabs/SmartSim/pull/549
+.. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
 .. _SmartSim-PR558: https://github.com/CrayLabs/SmartSim/pull/558
 .. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
 .. _SmartSim-PR557: https://github.com/CrayLabs/SmartSim/pull/557
