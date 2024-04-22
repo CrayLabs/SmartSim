@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023 Hewlett Packard Enterprise
+# Copyright (c) 2021-2024 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -67,9 +67,14 @@ def write_colocated_launch_script(
         # STDOUT of the job
         if colocated_settings["debug"]:
             script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
-
-        script_file.write(f"{colocated_cmd}\n")
-        script_file.write("DBPID=$!\n\n")
+        script_file.write(f"db_stdout=$({colocated_cmd})\n")
+        # extract and set DBPID within the shell script that is
+        # enclosed between __PID__ and sent to stdout by the colocated
+        # entrypoints file
+        script_file.write(
+            "DBPID=$(echo $db_stdout | sed -n "
+            "'s/.*__PID__\\([0-9]*\\)__PID__.*/\\1/p')\n"
+        )
 
         # Write the actual launch command for the app
         script_file.write("$@\n\n")
@@ -190,10 +195,8 @@ def _build_colocated_wrapper_cmd(
         db_script_cmd = _build_db_script_cmd(db_scripts)
         db_cmd.extend(db_script_cmd)
 
-    # run colocated db in the background
-    db_cmd.append("&")
-
     cmd.extend(db_cmd)
+
     return " ".join(cmd)
 
 

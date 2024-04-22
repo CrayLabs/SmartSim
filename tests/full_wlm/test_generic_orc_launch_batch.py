@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,8 @@ import time
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -60,19 +61,18 @@ def test_launch_orc_auto_batch(test_dir, wlmutils):
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
     orc.batch_settings.set_walltime("00:02:00")
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
 
     # don't use assert so that we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_batch_single(test_dir, wlmutils):
@@ -96,19 +96,18 @@ def test_launch_cluster_orc_batch_single(test_dir, wlmutils):
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
     orc.batch_settings.set_walltime("00:02:00")
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_batch_multi(test_dir, wlmutils):
@@ -132,19 +131,18 @@ def test_launch_cluster_orc_batch_multi(test_dir, wlmutils):
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
     orc.batch_settings.set_walltime("00:03:00")
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
@@ -158,7 +156,6 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
     orc = exp.create_database(
         wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface
     )
-    orc.set_path(test_dir)
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
 
@@ -168,7 +165,7 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
 
     statuses = exp.get_status(orc)
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
@@ -185,7 +182,7 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
 
     statuses = exp_2.get_status(reloaded_orc)
     for stat in statuses:
-        if stat == status.STATUS_FAILED:
+        if stat == SmartSimStatus.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
 

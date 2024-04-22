@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@ from shutil import which
 from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
-from .._core.utils.helpers import init_default
 from ..error import (
     AllocationError,
     LauncherError,
@@ -39,6 +38,7 @@ from ..error import (
     SSReservedKeywordError,
 )
 from ..log import get_logger
+from ..settings.slurmSettings import fmt_walltime
 
 logger = get_logger(__name__)
 
@@ -59,12 +59,12 @@ def get_allocation(
     The options can be used to pass extra settings to the
     workload manager such as the following for Slurm:
 
-        - nodelist="nid00004"
+    - nodelist="nid00004"
 
     For arguments without a value, pass None or and empty
     string as the value. For Slurm:
 
-        - exclusive=None
+    - exclusive=None
 
     :param nodes: number of nodes for the allocation, defaults to 1
     :type nodes: int, optional
@@ -83,7 +83,7 @@ def get_allocation(
             "Attempted slurm function without access to slurm(salloc) at the call site"
         )
 
-    options = init_default({}, options, dict)
+    options = options or {}
 
     salloc_args = _get_alloc_cmd(nodes, time, account, options=options)
     debug_msg = " ".join(salloc_args[1:])
@@ -248,7 +248,7 @@ def _get_alloc_cmd(
         "SmartSim",
     ]
     if time:
-        salloc_args.extend(["-t", time])
+        salloc_args.extend(["-t", _validate_time_format(time)])
     if account:
         salloc_args.extend(["-A", str(account)])
 
@@ -271,6 +271,25 @@ def _get_alloc_cmd(
             else:
                 salloc_args += ["=".join((prefix + opt, str(val)))]
     return salloc_args
+
+
+def _validate_time_format(time: str) -> str:
+    """Convert time into valid walltime format
+
+    By defualt the formatted wall time is the total number of seconds.
+
+    :param time: number of hours to run job
+    :type time: str
+    :returns: Formatted walltime
+    :rtype: str
+    """
+    try:
+        hours, minutes, seconds = map(int, time.split(":"))
+    except ValueError as e:
+        raise ValueError(
+            "Input time must be formatted as `HH:MM:SS` with valid Integers."
+        ) from e
+    return fmt_walltime(hours, minutes, seconds)
 
 
 def get_hosts() -> t.List[str]:

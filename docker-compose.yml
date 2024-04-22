@@ -18,7 +18,7 @@ services:
       - "8888:8888"
 
   tutorials-prod:
-    image: smartsim-tutorials:v0.6.0
+    image: smartsim-tutorials:v0.6.2
     build:
       context: .
       dockerfile: ./docker/prod/Dockerfile

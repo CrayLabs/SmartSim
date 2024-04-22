@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,11 +63,11 @@ def test_set_het_groups(monkeypatch):
         rs.set_het_group([4])
 
 
-def test_orch_single_cmd(monkeypatch, wlmutils):
+def test_orch_single_cmd(monkeypatch, wlmutils, test_dir):
     """Test that single cmd is rejected in a heterogeneous job"""
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-orch-single-cmd"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
     orc = exp.create_database(
         wlmutils.get_test_port(),
         db_nodes=3,

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023 Hewlett Packard Enterprise
+# Copyright (c) 2021-2024 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,8 @@ import coloredlogs
 import psutil
 
 import smartsim.log
-from smartsim._core.entrypoints.telemetrymonitor import track_event
-from smartsim._core.utils.helpers import decode_cmd, get_ts
+from smartsim._core.utils.helpers import decode_cmd, get_ts_ms
+from smartsim._core.utils.telemetry.telemetry import write_event
 
 STEP_PID: t.Optional[int] = None
 logger = smartsim.log.get_logger(__name__)
@@ -49,15 +49,25 @@ SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 def main(
     cmd: str,
-    etype: str,
+    entity_type: str,
     cwd: str,
     status_dir: str,
 ) -> int:
-    """The main function of the entrypoint. This function takes an encoded step
-    command and runs it in a subprocess. In the background, this entrypoint
-    will then monitor the subprocess and write out status events such as when
-    the subprocess has started or stopped and write these events to a status
-    directory.
+    """This function receives an encoded step command from a SmartSim Experiment
+    and runs it in a subprocess. The entrypoint integrates with the telemetry
+    monitor by writing status update events. It is useful for wrapping
+    unmanaged tasks - a workload manager can be queried for a managed task
+    to achieve the same result.
+
+    :param cmd: a base64 encoded cmd to execute
+    :type cmd: str
+    :param entity_type: `SmartSimEntity` entity class. Valid values
+    include: orchestrator, dbnode, ensemble, model
+    :type entity_type: str
+    :param cwd: working directory to execute the cmd from
+    :type cwd: str
+    :param status_dir: path to the output directory for status updates
+    :type status_dir: str
     """
     global STEP_PID  # pylint: disable=global-statement
     proxy_pid = os.getpid()
@@ -94,34 +104,37 @@ def main(
         cleanup()
         return 1
     finally:
-        track_event(
-            get_ts(),
+        write_event(
+            get_ts_ms(),
             proxy_pid,
             "",  # step_id for unmanaged task is always empty
-            etype,
+            entity_type,
             "start",
             status_path,
-            logger,
             detail=start_detail,
             return_code=start_rc,
         )
 
     logger.info(f"Waiting for child process {STEP_PID} to complete")
-    ret_code = process.wait()
+
+    try:
+        ret_code = process.wait()
+    except Exception:
+        logger.error("Failed to complete process", exc_info=True)
+        ret_code = -1
 
     logger.info(
         f"Indirect proxy {proxy_pid} child process {STEP_PID} complete."
         f" return code: {ret_code}"
     )
     msg = f"Process {STEP_PID} finished with return code: {ret_code}"
-    track_event(
-        get_ts(),
+    write_event(
+        get_ts_ms(),
         proxy_pid,
         "",  # step_id for unmanaged task is always empty
-        etype,
+        entity_type,
         "stop",
         status_path,
-        logger,
         detail=msg,
         return_code=ret_code,
     )
@@ -132,10 +145,11 @@ def main(
 
 def cleanup() -> None:
     """Perform cleanup required for clean termination"""
-    logger.info("Performing cleanup")
     global STEP_PID  # pylint: disable=global-statement
     if STEP_PID is None:
         return
+
+    logger.info("Performing cleanup")
 
     try:
         # attempt to stop the subprocess performing step-execution
@@ -228,7 +242,7 @@ if __name__ == "__main__":
 
         rc = main(
             cmd=parsed_args.command,
-            etype=parsed_args.entity_type,
+            entity_type=parsed_args.entity_type,
             cwd=parsed_args.working_dir,
             status_dir=parsed_args.telemetry_dir,
         )

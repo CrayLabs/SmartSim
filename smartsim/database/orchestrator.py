@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ from .._core.config import CONFIG
 from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
-from ..entity import DBNode, EntityList
+from ..entity import DBNode, EntityList, TelemetryConfiguration
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
@@ -147,6 +147,7 @@ class Orchestrator(EntityList[DBNode]):
 
     def __init__(
         self,
+        path: t.Optional[str] = getcwd(),
         port: int = 6379,
         interface: t.Union[str, t.List[str]] = "lo",
         launcher: str = "local",
@@ -174,11 +175,11 @@ class Orchestrator(EntityList[DBNode]):
 
         Extra configurations for RedisAI
 
-        See https://oss.redislabs.com/redisai/configuration/
+        See https://oss.redis.com/redisai/configuration/
 
         :param threads_per_queue: threads per GPU device
         :type threads_per_queue: int, optional
-        :param inter_op_threads: threads accross CPU operations
+        :param inter_op_threads: threads across CPU operations
         :type inter_op_threads: int, optional
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int, optional
@@ -197,16 +198,16 @@ class Orchestrator(EntityList[DBNode]):
         self.queue_threads = threads_per_queue
         self.inter_threads = inter_op_threads
         self.intra_threads = intra_op_threads
+        self._telemetry_cfg = TelemetryConfiguration()
 
         gpus_per_shard: t.Optional[int] = None
         cpus_per_shard: t.Optional[int] = None
         if self.launcher == "lsf":
             gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
-
         super().__init__(
             name=db_identifier,
-            path=getcwd(),
+            path=str(path),
             port=port,
             interface=interface,
             db_nodes=db_nodes,
@@ -305,6 +306,14 @@ class Orchestrator(EntityList[DBNode]):
         if not self._hosts:
             self._hosts = self._get_db_hosts()
         return self._hosts
+
+    @property
+    def telemetry(self) -> TelemetryConfiguration:
+        """Return the telemetry configuration for this entity.
+
+        :returns: configuration of telemetry for this entity
+        :rtype: TelemetryConfiguration"""
+        return self._telemetry_cfg
 
     def reset_hosts(self) -> None:
         """Clear hosts or reset them to last user choice"""
@@ -479,8 +488,7 @@ class Orchestrator(EntityList[DBNode]):
                 "it is a reserved keyword in Orchestrator"
             )
         else:
-            if hasattr(self, "batch_settings") and self.batch_settings:
-                self.batch_settings.batch_args[arg] = value
+            self.batch_settings.batch_args[arg] = value
 
     def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a run argument the orchestrator should launch
@@ -573,7 +581,7 @@ class Orchestrator(EntityList[DBNode]):
         """
         self.set_db_conf("proto-max-bulk-len", str(size))
 
-    def set_db_conf(self, key: str, value: t.Union[int, str]) -> None:
+    def set_db_conf(self, key: str, value: str) -> None:
         """Set any valid configuration at runtime without the need
         to restart the database. All configuration parameters
         that are set are immediately loaded by the database and

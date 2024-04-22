@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@ class JsrunSettings(RunSettings):
         :type cpus_per_rs: int or str
         """
         if self.colocated_db_settings:
-            db_cpus = int(self.colocated_db_settings.get("db_cpus", 0))
+            db_cpus = int(t.cast(int, self.colocated_db_settings.get("db_cpus", 0)))
             if not db_cpus:
                 raise ValueError("db_cpus must be configured on colocated_db_settings")
 

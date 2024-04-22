@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -243,6 +243,21 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        This sets ``-C``
+
+        :param feature_list: node feature to launch on
+        :type feature_list: str | list[str]
+        :raises TypeError: if not str or list of str
+        """
+        if isinstance(feature_list, str):
+            feature_list = [feature_list.strip()]
+        elif not all(isinstance(feature, str) for feature in feature_list):
+            raise TypeError("node_feature argument must be string or list of strings")
+        self.run_args["C"] = ",".join(feature_list)
+
     @staticmethod
     def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
@@ -256,13 +271,9 @@ class SrunSettings(RunSettings):
         :param seconds: number of seconds to run job
         :type seconds: int
         :returns: Formatted walltime
-        :rtype
+        :rtype: str
         """
-        delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
-        fmt_str = str(delta)
-        if delta.seconds // 3600 < 10:
-            fmt_str = "0" + fmt_str
-        return fmt_str
+        return fmt_walltime(hours, minutes, seconds)
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
@@ -388,6 +399,27 @@ class SrunSettings(RunSettings):
             compound_env.extend(compound_mpmd_fmt)
 
         return fmt_exported_env, compound_env
+
+
+def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
+    """Helper function walltime format conversion
+
+    Converts time to format HH:MM:SS
+
+    :param hours: number of hours to run job
+    :type hours: int
+    :param minutes: number of minutes to run job
+    :type minutes: int
+    :param seconds: number of seconds to run job
+    :type seconds: int
+    :returns: Formatted walltime
+    :rtype: str
+    """
+    delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    fmt_str = str(delta)
+    if delta.seconds // 3600 < 10:
+        fmt_str = "0" + fmt_str
+    return fmt_str
 
 
 class SbatchSettings(BatchSettings):

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py39', 'py310', 'py311']
 exclude = '''
 (
   | \.egg
@@ -91,18 +91,34 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 
+# Probably Unintended Branches/Blocks
+# warn_unreachable = true
+
 # Safety/Upgrading Mypy
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
 show_error_codes = true
 
+# Misc Strictness Settings
+strict_concatenate = false
+strict_equality = true
+
+# Additional Error Codes
+enable_error_code = [
+    # "redundant-expr",
+    "possibly-undefined",
+    # "unused-awaitable",
+    # "ignore-without-code",
+    # "mutable-override",
+    "truthy-bool",
+    "truthy-iterable",
+]
+
 [[tool.mypy.overrides]]
 # Ignore packages that are not used or not typed
 module = [
   "coloredlogs",
-  "smartredis",
-  "smartredis.error",
   "redis.cluster",
   "keras",
   "torch",

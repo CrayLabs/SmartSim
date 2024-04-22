@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,8 @@ from copy import deepcopy
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -48,10 +49,10 @@ def test_restart(fileutils, test_dir, wlmutils):
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
     # TODO add job history check here.

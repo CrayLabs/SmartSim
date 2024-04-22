@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,16 @@
 import typing as t
 from pathlib import Path
 
-from .._core.utils import init_default
+from .._core._install.builder import Device
 from ..error import SSUnsupportedError
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
 
-class DBObject:
+_DBObjectFuncT = t.TypeVar("_DBObjectFuncT", str, bytes)
+
+
+class DBObject(t.Generic[_DBObjectFuncT]):
     """Base class for ML objects residing on DB. Should not
     be instantiated.
     """
@@ -41,17 +44,17 @@ class DBObject:
     def __init__(
         self,
         name: str,
-        func: t.Optional[str],
+        func: t.Optional[_DBObjectFuncT],
         file_path: t.Optional[str],
-        device: t.Literal["CPU", "GPU"],
+        device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
         self.name = name
-        self.func = func
-        self.file: t.Optional[
-            Path
-        ] = None  # Need to have this explicitly to check on it
+        self.func: t.Optional[_DBObjectFuncT] = func
+        self.file: t.Optional[Path] = (
+            None  # Need to have this explicitly to check on it
+        )
         if file_path:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
@@ -65,18 +68,13 @@ class DBObject:
 
     @property
     def is_file(self) -> bool:
-        if self.func:
-            return False
-        return True
+        return not self.func
 
     @staticmethod
     def _check_tensor_args(
         inputs: t.Union[str, t.Optional[t.List[str]]],
         outputs: t.Union[str, t.Optional[t.List[str]]],
     ) -> t.Tuple[t.List[str], t.List[str]]:
-        inputs = init_default([], inputs, (list, str))
-        outputs = init_default([], outputs, (list, str))
-
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
@@ -102,9 +100,9 @@ class DBObject:
         return file_path
 
     @staticmethod
-    def _check_device(device: t.Literal["CPU", "GPU"]) -> str:
-        device = t.cast(t.Literal["CPU", "GPU"], device.upper())
-        if not device.startswith("CPU") and not device.startswith("GPU"):
+    def _check_device(device: str) -> str:
+        valid_devices = [Device.CPU.value, Device.GPU.value]
+        if not any(device.lower().startswith(dev) for dev in valid_devices):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
@@ -129,16 +127,16 @@ class DBObject:
 
     @staticmethod
     def _check_devices(
-        device: t.Literal["CPU", "GPU"],
+        device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
-        if device == "CPU" and devices_per_node > 1:
+        if device.lower() == Device.CPU.value and devices_per_node > 1:
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
 
-        if device == "CPU" and first_device > 0:
+        if device.lower() == Device.CPU.value and first_device > 0:
             raise SSUnsupportedError(
                 "Cannot set first_device>0 if CPU is specified under devices"
             )
@@ -153,13 +151,13 @@ class DBObject:
             raise ValueError(msg)
 
 
-class DBScript(DBObject):
+class DBScript(DBObject[str]):
     def __init__(
         self,
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ):
@@ -214,14 +212,14 @@ class DBScript(DBObject):
         return desc_str
 
 
-class DBModel(DBObject):
+class DBModel(DBObject[bytes]):
     def __init__(
         self,
         name: str,
         backend: str,
-        model: t.Optional[str] = None,
+        model: t.Optional[bytes] = None,
         model_file: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -276,7 +274,7 @@ class DBModel(DBObject):
         self.inputs, self.outputs = self._check_tensor_args(inputs, outputs)
 
     @property
-    def model(self) -> t.Union[str, None]:
+    def model(self) -> t.Optional[bytes]:
         return self.func
 
     def __str__(self) -> str:

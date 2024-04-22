@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,14 +26,16 @@
 
 from __future__ import annotations
 
-import collections.abc
+import itertools
 import re
 import sys
 import typing as t
 import warnings
+from os import getcwd
 from os import path as osp
 
-from .._core.utils.helpers import cat_arg_and_value, init_default
+from .._core._install.builder import Device
+from .._core.utils.helpers import cat_arg_and_value
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
@@ -49,8 +51,8 @@ class Model(SmartSimEntity):
         self,
         name: str,
         params: t.Dict[str, str],
-        path: str,
         run_settings: RunSettings,
+        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
     ):
@@ -73,7 +75,7 @@ class Model(SmartSimEntity):
                                model as a batch job, defaults to None
         :type batch_settings: BatchSettings | None
         """
-        super().__init__(name, path, run_settings)
+        super().__init__(name, str(path), run_settings)
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
@@ -162,9 +164,9 @@ class Model(SmartSimEntity):
         :param to_configure: input files with tagged parameters, defaults to []
         :type to_configure: list, optional
         """
-        to_copy = init_default([], to_copy, (list, str))
-        to_symlink = init_default([], to_symlink, (list, str))
-        to_configure = init_default([], to_configure, (list, str))
+        to_copy = to_copy or []
+        to_symlink = to_symlink or []
+        to_configure = to_configure or []
 
         # Check that no file collides with the parameter file written
         # by Generator. We check the basename, even though it is more
@@ -258,11 +260,11 @@ class Model(SmartSimEntity):
                 f"Invalid name for unix socket: {unix_socket}. Must only "
                 "contain alphanumeric characters or . : _ - /"
             )
-
-        uds_options = {
+        uds_options: t.Dict[str, t.Union[int, str]] = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
-            "port": 0,  # This is hardcoded to 0 as recommended by redis for UDS
+            # This is hardcoded to 0 as recommended by redis for UDS
+            "port": 0,
         }
 
         common_options = {
@@ -332,9 +334,18 @@ class Model(SmartSimEntity):
 
     def _set_colocated_db_settings(
         self,
-        connection_options: t.Dict[str, t.Any],
-        common_options: t.Dict[str, t.Any],
-        **kwargs: t.Any,
+        connection_options: t.Mapping[str, t.Union[int, t.List[str], str]],
+        common_options: t.Dict[
+            str,
+            t.Union[
+                t.Union[t.Iterable[t.Union[int, t.Iterable[int]]], None],
+                bool,
+                int,
+                str,
+                None,
+            ],
+        ],
+        **kwargs: t.Union[int, None],
     ) -> None:
         """
         Ingest the connection-specific options (UDS/TCP) and set the final settings
@@ -357,21 +368,42 @@ class Model(SmartSimEntity):
             )
 
         # TODO list which db settings can be extras
+        custom_pinning_ = t.cast(
+            t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
+            common_options.get("custom_pinning"),
+        )
+        cpus_ = t.cast(int, common_options.get("cpus"))
         common_options["custom_pinning"] = self._create_pinning_string(
-            common_options["custom_pinning"], common_options["cpus"]
+            custom_pinning_, cpus_
         )
 
-        colo_db_config = {}
+        colo_db_config: t.Dict[
+            str,
+            t.Union[
+                bool,
+                int,
+                str,
+                None,
+                t.List[str],
+                t.Iterable[t.Union[int, t.Iterable[int]]],
+                t.List[DBModel],
+                t.List[DBScript],
+                t.Dict[str, t.Union[int, None]],
+                t.Dict[str, str],
+            ],
+        ] = {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
-        # redisai arguments for inference settings
-        colo_db_config["rai_args"] = {
+
+        redis_ai_temp = {
             "threads_per_queue": kwargs.get("threads_per_queue", None),
             "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
             "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
         }
+        # redisai arguments for inference settings
+        colo_db_config["rai_args"] = redis_ai_temp
         colo_db_config["extra_db_args"] = {
-            k: str(v) for k, v in kwargs.items() if k not in colo_db_config["rai_args"]
+            k: str(v) for k, v in kwargs.items() if k not in redis_ai_temp
         }
 
         self._check_db_objects_colo()
@@ -384,9 +416,10 @@ class Model(SmartSimEntity):
     def _create_pinning_string(
         pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
     ) -> t.Optional[str]:
-        """Create a comma-separated string CPU ids. By default, None returns
-        0,1,...,cpus-1; an empty iterable will disable pinning altogether,
-        and an iterable constructs a comma separate string (e.g. 0,2,5)
+        """Create a comma-separated string of CPU ids. By default, ``None``
+        returns 0,1,...,cpus-1; an empty iterable will disable pinning
+        altogether, and an iterable constructs a comma separated string of
+        integers (e.g. ``[0, 2, 5]`` -> ``"0,2,5"``)
         """
 
         def _stringify_id(_id: int) -> str:
@@ -398,40 +431,34 @@ class Model(SmartSimEntity):
 
             raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
 
-        _invalid_input_message = (
-            "Expected a cpu pinning specification of type iterable of ints or "
-            f"iterables of ints. Instead got type `{type(pin_ids)}`"
-        )
+        try:
+            pin_ids = tuple(pin_ids) if pin_ids is not None else None
+        except TypeError:
+            raise TypeError(
+                "Expected a cpu pinning specification of type iterable of ints or "
+                f"iterables of ints. Instead got type `{type(pin_ids)}`"
+            ) from None
 
         # Deal with MacOSX limitations first. The "None" (default) disables pinning
-        # and is equivalent to []. The only invalid option is an iterable
+        # and is equivalent to []. The only invalid option is a non-empty pinning
         if sys.platform == "darwin":
-            if pin_ids is None or not pin_ids:
-                return None
-
-            if isinstance(pin_ids, collections.abc.Iterable):
+            if pin_ids:
                 warnings.warn(
                     "CPU pinning is not supported on MacOSX. Ignoring pinning "
                     "specification.",
                     RuntimeWarning,
                 )
-                return None
-            raise TypeError(_invalid_input_message)
+            return None
+
         # Flatten the iterable into a list and check to make sure that the resulting
         # elements are all ints
         if pin_ids is None:
             return ",".join(_stringify_id(i) for i in range(cpus))
         if not pin_ids:
             return None
-        if isinstance(pin_ids, collections.abc.Iterable):
-            pin_list = []
-            for pin_id in pin_ids:
-                if isinstance(pin_id, collections.abc.Iterable):
-                    pin_list.extend([_stringify_id(j) for j in pin_id])
-                else:
-                    pin_list.append(_stringify_id(pin_id))
-            return ",".join(sorted(set(pin_list)))
-        raise TypeError(_invalid_input_message)
+        pin_ids = ((x,) if isinstance(x, int) else x for x in pin_ids)
+        to_fmt = itertools.chain.from_iterable(pin_ids)
+        return ",".join(sorted({_stringify_id(x) for x in to_fmt}))
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""
@@ -455,9 +482,9 @@ class Model(SmartSimEntity):
         self,
         name: str,
         backend: str,
-        model: t.Optional[str] = None,
+        model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -529,7 +556,7 @@ class Model(SmartSimEntity):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -581,7 +608,7 @@ class Model(SmartSimEntity):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023 Hewlett Packard Enterprise
+# Copyright (c) 2021-2024 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ import sys
 import tempfile
 import typing as t
 from pathlib import Path
-from subprocess import PIPE, STDOUT
+from subprocess import STDOUT
 from types import FrameType
 
 import filelock
@@ -177,6 +177,7 @@ def main(
     db_scripts: t.List[t.List[str]],
     db_identifier: str,
 ) -> None:
+    # pylint: disable=too-many-statements
     global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
@@ -201,8 +202,17 @@ def main(
     # we generally want to catch all exceptions here as
     # if this process dies, the application will most likely fail
     try:
-        process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
-        DBPID = process.pid
+        hostname = socket.gethostname()
+        filename = (
+            f"colo_orc_{hostname}.log"
+            if os.getenv("SMARTSIM_LOG_LEVEL") == "debug"
+            else os.devnull
+        )
+        with open(filename, "w", encoding="utf-8") as file:
+            process = psutil.Popen(cmd, stdout=file.fileno(), stderr=STDOUT)
+            DBPID = process.pid
+        # printing to stdout shell file for extraction
+        print(f"__PID__{DBPID}__PID__", flush=True)
 
     except Exception as e:
         cleanup()
@@ -245,12 +255,8 @@ def main(
                 raise SSInternalError(
                     "Failed to set model or script, could not connect to database"
                 ) from ex
-            finally:
-                # Make sure we don't keep this around
-                del client
-
-        for line in iter(process.stdout.readline, b""):
-            print(line.decode("utf-8").rstrip(), flush=True)
+            # Make sure we don't keep this around
+            del client
 
     except Exception as e:
         cleanup()

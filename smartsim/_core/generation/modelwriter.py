@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import collections
 import re
 import typing as t
 
@@ -125,35 +126,26 @@ class ModelWriter:
         :rtype: dict[str,str]
         """
         edited = []
-        unused_tags: t.Dict[str, t.List[int]] = {}
+        unused_tags: t.DefaultDict[str, t.List[int]] = collections.defaultdict(list)
         used_params: t.Dict[str, str] = {}
-        for i, line in enumerate(self.lines):
-            search = re.search(self.regex, line)
-            if search:
-                while search:
-                    tagged_line = search.group(0)
-                    previous_value = self._get_prev_value(tagged_line)
-                    if self._is_ensemble_spec(tagged_line, params):
-                        new_val = str(params[previous_value])
-                        new_line = re.sub(self.regex, new_val, line, 1)
-                        search = re.search(self.regex, new_line)
-                        used_params[previous_value] = new_val
-                        if not search:
-                            edited.append(new_line)
-                        else:
-                            line = new_line
+        for i, line in enumerate(self.lines, 1):
+            while search := re.search(self.regex, line):
+                tagged_line = search.group(0)
+                previous_value = self._get_prev_value(tagged_line)
+                if self._is_ensemble_spec(tagged_line, params):
+                    new_val = str(params[previous_value])
+                    line = re.sub(self.regex, new_val, line, 1)
+                    used_params[previous_value] = new_val
 
-                    # if a tag is found but is not in this model's configurations
-                    # put in placeholder value
-                    else:
-                        tag = tagged_line.split(self.tag)[1]
-                        if tag not in unused_tags:
-                            unused_tags[tag] = []
-                        unused_tags[tag].append(i + 1)
-                        edited.append(re.sub(self.regex, previous_value, line))
-                        search = None  # Move on to the next tag
-            else:
-                edited.append(line)
+                # if a tag is found but is not in this model's configurations
+                # put in placeholder value
+                else:
+                    tag = tagged_line.split(self.tag)[1]
+                    unused_tags[tag].append(i)
+                    line = re.sub(self.regex, previous_value, line)
+                    break
+            edited.append(line)
+
         for tag, value in unused_tags.items():
             missing_tag_message = f"Unused tag {tag} on line(s): {str(value)}"
             if make_fatal:

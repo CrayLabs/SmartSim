@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,13 @@ import sys
 import pytest
 from smartredis import *
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity.dbobject import DBScript
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 from smartsim.settings import MpiexecSettings, MpirunSettings
+from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
@@ -125,7 +126,7 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, smartsim_model, block=True)
         statuses = exp.get_status(smartsim_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(db)
 
@@ -221,7 +222,7 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(db, ensemble, block=True)
         statuses = exp.get_status(ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(db)
 
@@ -288,7 +289,7 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_model)
 
@@ -388,7 +389,7 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_ensemble)
 
@@ -486,7 +487,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
     try:
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
         exp.stop(colo_ensemble)
 
@@ -623,3 +624,107 @@ def test_inconsistent_params_db_script(fileutils):
         ex.value.args[0]
         == "Cannot set first_device>0 if CPU is specified under devices"
     )
+
+
+@pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
+def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
+    """Test DB scripts on remote DB"""
+
+    # Set experiment name
+    exp_name = "test-db-script"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
+
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks(1)
+
+    # Create Ensemble with two identical models
+    ensemble = exp.create_ensemble(
+        "dbscript_ensemble", run_settings=run_settings, replicas=2
+    )
+
+    # Create SmartSim model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    # Create 2nd SmartSim model
+    smartsim_model_2 = exp.create_model("smartsim_model_2", run_settings)
+    # Create the script string
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+    # Add the first ML script to all of the ensemble members
+    ensemble.add_script(
+        "test_script1",
+        script_path=torch_script,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
+
+    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_script()
+    with pytest.raises(SSUnsupportedError) as ex:
+        ensemble.add_script(
+            "test_script1",
+            script_path=torch_script,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+        )
+    assert ex.value.args[0] == 'A Script with name "test_script1" already exists'
+
+    # Add the first function to all of the ensemble members
+    ensemble.add_function(
+        "test_func",
+        function=timestwo,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
+
+    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_function()
+    with pytest.raises(SSUnsupportedError) as ex:
+        ensemble.add_function(
+            "test_func",
+            function=timestwo,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+        )
+    assert ex.value.args[0] == 'A Script with name "test_func" already exists'
+
+    # Add a script with a non-unique name to a SmartSim Model
+    smartsim_model.add_script(
+        "test_script1",
+        script_path=torch_script,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
+
+    with pytest.raises(SSUnsupportedError) as ex:
+        ensemble.add_model(smartsim_model)
+    assert ex.value.args[0] == 'A Script with name "test_script1" already exists'
+
+    # Add a function with a non-unique name to a SmartSim Model
+    smartsim_model_2.add_function(
+        "test_func",
+        function=timestwo,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+    )
+
+    with pytest.raises(SSUnsupportedError) as ex:
+        ensemble.add_model(smartsim_model_2)
+    assert ex.value.args[0] == 'A Script with name "test_func" already exists'

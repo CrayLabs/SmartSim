@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023 Hewlett Packard Enterprise
+# Copyright (c) 2021-2024 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -325,7 +325,7 @@ valid-metaclass-classmethod-first-arg=mcs
 max-args=9
 
 # Maximum number of locals for function / method body
-max-locals=20
+max-locals=25
 
 # Maximum number of return / yield for function / method body
 max-returns=11

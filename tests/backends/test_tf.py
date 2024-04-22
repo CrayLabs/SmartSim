@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.error import SmartSimError
-from smartsim.status import STATUS_FAILED
+from smartsim.status import SmartSimStatus
 
 tf_available = True
 try:
@@ -87,7 +87,7 @@ def test_keras_model(test_dir, mlutils, wlmutils):
     exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)[0]
-    assert model_status != STATUS_FAILED
+    assert model_status != SmartSimStatus.STATUS_FAILED
 
 
 def create_tf_model():

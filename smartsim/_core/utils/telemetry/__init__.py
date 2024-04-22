@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,19 +23,3 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-from warnings import simplefilter, warn
-
-from ..log import get_logger
-
-# pylint: disable-next=unused-import
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-
-logger = get_logger(__name__)
-
-simplefilter("once", DeprecationWarning)
-warn(
-    "mpirunSettings will be deprecated; use mpiSettings instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)

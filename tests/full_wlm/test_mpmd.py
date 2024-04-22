@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,9 @@ from copy import deepcopy
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim._core.utils.helpers import is_valid_cmd
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -86,11 +87,13 @@ def test_mpmd(fileutils, test_dir, wlmutils):
         settings.make_mpmd(deepcopy(settings))
         settings.make_mpmd(deepcopy(settings))
 
-        mpmd_model = exp.create_model("mmpd", path=test_dir, run_settings=settings)
+        mpmd_model = exp.create_model(
+            f"mpmd-{run_command}", path=test_dir, run_settings=settings
+        )
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

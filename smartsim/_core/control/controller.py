@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,11 @@ from smartredis import Client, ConfigOptions
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step
-from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
+from ..._core.utils.helpers import (
+    SignalInterceptionStack,
+    unpack_colo_db_identifier,
+    unpack_db_identifier,
+)
 from ..._core.utils.redis import (
     db_is_active,
     set_ml_model,
@@ -61,7 +65,7 @@ from ...error import (
 )
 from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
-from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
@@ -71,6 +75,8 @@ from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:
+    from types import FrameType
+
     from ..utils.serialize import TStepLaunchMetaData
 
 
@@ -113,8 +119,11 @@ class Controller:
         execution of all jobs.
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
+
         # register custom signal handler for ^C (SIGINT)
-        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        SignalInterceptionStack.get(signal.SIGINT).push_unique(
+            self._jobs.signal_interrupt
+        )
         launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
@@ -132,7 +141,7 @@ class Controller:
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
-            # it may be called seperately
+            # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
@@ -243,7 +252,13 @@ class Controller:
                             continue
 
                         job = self._jobs[node.name]
-                        job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                        job.set_status(
+                            SmartSimStatus.STATUS_CANCELLED,
+                            "",
+                            0,
+                            output=None,
+                            error=None,
+                        )
                         self._jobs.move_to_completed(job)
 
         db.reset_hosts()
@@ -271,14 +286,14 @@ class Controller:
 
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
-    ) -> str:
+    ) -> SmartSimStatus:
         """Get the status of an entity
 
         :param entity: entity to get status of
         :type entity: SmartSimEntity | EntitySequence
         :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
-        :rtype: str
+        :rtype: SmartSimStatus
         """
         if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
@@ -289,14 +304,14 @@ class Controller:
 
     def get_entity_list_status(
         self, entity_list: EntitySequence[SmartSimEntity]
-    ) -> t.List[str]:
+    ) -> t.List[SmartSimStatus]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
                             get statuses of
         :type entity_list: EntitySequence
         :raises TypeError: if not EntitySequence
-        :return: list of str statuses
+        :return: list of SmartSimStatus statuses
         :rtype: list
         """
         if not isinstance(entity_list, EntitySequence):
@@ -340,6 +355,36 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
+    @staticmethod
+    def symlink_output_files(
+        job_step: Step, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
+        """Create symlinks for entity output files that point to the output files
+        under the .smartsim directory
+
+        :param job_step: Job step instance
+        :type job_step: Step
+        :param entity: Entity instance
+        :type entity: SmartSimEntity | EntitySequence[SmartSimEntity]
+        """
+        historical_out, historical_err = map(pathlib.Path, job_step.get_output_files())
+        entity_out = pathlib.Path(entity.path) / f"{entity.name}.out"
+        entity_err = pathlib.Path(entity.path) / f"{entity.name}.err"
+
+        # check if there is already a link to a previous run
+        if entity_out.is_symlink() or entity_err.is_symlink():
+            entity_out.unlink()
+            entity_err.unlink()
+
+        try:
+            entity_out.symlink_to(historical_out)
+            entity_err.symlink_to(historical_err)
+        except FileNotFoundError as fnf:
+            raise FileNotFoundError(
+                f"Output files for {entity.name} could not be found. "
+                "Symlinking files failed."
+            ) from fnf
+
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
     ) -> LaunchedManifest[t.Tuple[str, Step]]:
@@ -357,7 +402,9 @@ class Controller:
         """
 
         manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]](
-            exp_name=exp_name, exp_path=exp_path, launcher_name=str(self._launcher)
+            exp_name=exp_name,
+            exp_path=exp_path,
+            launcher_name=str(self._launcher),
         )
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
@@ -453,6 +500,11 @@ class Controller:
             manifest_builder.add_database(
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
+
+            # symlink substeps to maintain directory structure
+            for substep, substep_entity in zip(substeps, orchestrator.entities):
+                self.symlink_output_files(substep, substep_entity)
+
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -511,14 +563,40 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-        try:
-            job_id = self._launcher.run(job_step)
-        except LauncherError as e:
-            msg = f"An error occurred when launching {entity.name} \n"
-            msg += "Check error and output files for details.\n"
-            msg += f"{entity}"
-            logger.error(msg)
-            raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # attempt to retrieve entity name in JobManager.completed
+        completed_job = self._jobs.completed.get(entity.name, None)
+
+        # if completed job DNE and is the entity name is not
+        # running in JobManager.jobs or JobManager.db_jobs,
+        # launch the job
+        if completed_job is None and (
+            entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
+        ):
+            self.symlink_output_files(job_step, entity)
+            try:
+                job_id = self._launcher.run(job_step)
+            except LauncherError as e:
+                msg = f"An error occurred when launching {entity.name} \n"
+                msg += "Check error and output files for details.\n"
+                msg += f"{entity}"
+                logger.error(msg)
+                raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # if the completed job does exist and the entity passed in is the same
+        # that has ran and completed, relaunch the entity.
+        elif completed_job is not None and completed_job.entity is entity:
+            self.symlink_output_files(job_step, entity)
+            try:
+                job_id = self._launcher.run(job_step)
+            except LauncherError as e:
+                msg = f"An error occurred when launching {entity.name} \n"
+                msg += "Check error and output files for details.\n"
+                msg += f"{entity}"
+                logger.error(msg)
+                raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+        # the entity is using a duplicate name of an existing entity in
+        # the experiment, throw an error
+        else:
+            raise SSUnsupportedError("SmartSim entities cannot have duplicate names.")
 
         # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
         # but is rather started, monitored, and exited through the Popen interface
@@ -558,7 +636,7 @@ class Controller:
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
-        batch_step.meta["status_dir"] = str(telemetry_dir / entity_list.name)
+        batch_step.meta["status_dir"] = str(telemetry_dir)
 
         substeps = []
         for entity in entity_list.entities:
@@ -624,7 +702,7 @@ class Controller:
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
-
+            assert isinstance(db_name_colo, str)
             for key in address_dict:
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
@@ -702,7 +780,7 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all(stat == STATUS_RUNNING for stat in statuses):
+                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
@@ -839,6 +917,7 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
+
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,
@@ -859,7 +938,6 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-            logger.debug("Telemetry monitor started")
 
 
 class _AnonymousBatchJob(EntityList[Model]):
@@ -875,8 +953,7 @@ class _AnonymousBatchJob(EntityList[Model]):
         self.entities = [model]
         self.batch_settings = model.batch_settings
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None:
-        ...
+    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
 
 
 def _look_up_launched_data(

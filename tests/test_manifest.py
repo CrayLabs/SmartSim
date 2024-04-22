@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 
 import os.path
 from copy import deepcopy
+from uuid import uuid4
 
 import pytest
 
@@ -40,6 +41,7 @@ from smartsim._core.control.manifest import (
     _LaunchedManifestMetadata as LaunchedManifestMetadata,
 )
 from smartsim.database import Orchestrator
+from smartsim.entity.dbobject import DBModel, DBScript
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 
@@ -59,7 +61,9 @@ ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
-model_no_name = exp.create_model(name=None, run_settings=rs)
+
+db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
+db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
 
 
 def test_separate():
@@ -69,11 +73,6 @@ def test_separate():
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.dbs[0] == orc
-
-
-def test_no_name():
-    with pytest.raises(AttributeError):
-        _ = Manifest(model_no_name)
 
 
 def test_separate_type():
@@ -106,6 +105,38 @@ def test_corner_case():
         _ = Manifest(p)
 
 
+@pytest.mark.parametrize(
+    "patch, has_db_objects",
+    [
+        pytest.param((), False, id="No DB Objects"),
+        pytest.param((model, "_db_models", [db_model]), True, id="Model w/ DB Model"),
+        pytest.param(
+            (model, "_db_scripts", [db_script]), True, id="Model w/ DB Script"
+        ),
+        pytest.param(
+            (ensemble, "_db_models", [db_model]), True, id="Ensemble w/ DB Model"
+        ),
+        pytest.param(
+            (ensemble, "_db_scripts", [db_script]), True, id="Ensemble w/ DB Script"
+        ),
+        pytest.param(
+            (ensemble.entities[0], "_db_models", [db_model]),
+            True,
+            id="Ensemble Member w/ DB Model",
+        ),
+        pytest.param(
+            (ensemble.entities[0], "_db_scripts", [db_script]),
+            True,
+            id="Ensemble Member w/ DB Script",
+        ),
+    ],
+)
+def test_manifest_detects_db_objects(monkeypatch, patch, has_db_objects):
+    if patch:
+        monkeypatch.setattr(*patch)
+    assert Manifest(model, ensemble).has_db_objects == has_db_objects
+
+
 def test_launched_manifest_transform_data():
     models = [(model, 1), (model_2, 2)]
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
@@ -123,7 +154,7 @@ def test_launched_manifest_transform_data():
 
 
 def test_launched_manifest_builder_correctly_maps_data():
-    lmb = LaunchedManifestBuilder("name", "path", "launcher name")
+    lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
     lmb.add_model(model, 1)
     lmb.add_model(model_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
@@ -136,7 +167,7 @@ def test_launched_manifest_builder_correctly_maps_data():
 
 
 def test_launced_manifest_builder_raises_if_lens_do_not_match():
-    lmb = LaunchedManifestBuilder("name", "path", "launcher name")
+    lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, list(range(123)))
     with pytest.raises(ValueError):
@@ -146,7 +177,7 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match():
 def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
     monkeypatch,
 ):
-    lmb = LaunchedManifestBuilder("name", "path", "launcher")
+    lmb = LaunchedManifestBuilder("name", "path", "launcher", str(uuid4()))
     monkeypatch.setattr(ensemble, "entities", [])
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, [])
@@ -154,7 +185,7 @@ def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
 
 def test_lmb_and_launched_manifest_have_same_paths_for_launched_metadata():
     exp_path = "/path/to/some/exp"
-    lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher")
+    lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher", str(uuid4()))
     manifest = lmb.finalize()
     assert (
         lmb.exp_telemetry_subdirectory == manifest.metadata.exp_telemetry_subdirectory
