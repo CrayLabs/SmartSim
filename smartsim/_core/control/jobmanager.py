@@ -131,14 +131,14 @@ class JobManager:
                     else:
                         # job completed without error
                         logger.info(job)
-                    self.move_to_completed(id_, job)
+                    self._move_to_completed(id_)
 
             # if no more jobs left to actively monitor
             if not self.get_active_jobs():
                 self.actively_monitoring = False
                 logger.debug("Sleeping, no jobs to monitor")
 
-    def move_to_completed(self, id_: _core_types.MonitoredJobID, job: Job) -> None:
+    def _move_to_completed(self, id_: _core_types.MonitoredJobID) -> None:
         """Move job to completed queue so that its no longer
            actively monitored by the job manager
 
@@ -146,12 +146,11 @@ class JobManager:
         :type job: Job
         """
         with self._lock:
-            self.completed[id_] = job
-            job.record_history()
-
             # remove from actively monitored jobs
-            if id_ in self._jobs:
-                del self._jobs[id_]
+            job = self._jobs.pop(id_, None)
+            if job:
+                self.completed[id_] = job
+                job.record_history()
 
     def __getitem__(self, id_: _core_types.MonitoredJobID) -> Job:
         """Return the job associated with the name of the entity
@@ -195,6 +194,16 @@ class JobManager:
         with self._lock:
             self._jobs[id_] = job
         return id_
+
+    def stop_jobs(self, ids: t.Sequence[_core_types.MonitoredJobID]) -> None:
+        with self._lock:
+        #    ^^^^^^^^^^
+        # XXX: Probably an over zealous lock here
+            optional_jobs = (self._jobs.get(id_, None) for id_ in ids)
+            jobs = (job for job in optional_jobs if job is not None)
+            Job.stop_all(jobs)
+            for id_ in ids:
+                self._move_to_completed(id_)
 
     def is_finished(self, id_: _core_types.MonitoredJobID) -> bool:
         """Detect if a job has completed

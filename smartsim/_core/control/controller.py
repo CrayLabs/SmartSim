@@ -235,6 +235,13 @@ class Controller:
                 f"Entity {entity.name} has not been launched in this experiment"
             ) from None
 
+    def _stop(
+        self,
+        entities: t.Sequence[t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]],
+    ) -> None:
+        ids = tuple(self._entity_to_job_monitor_id[entity.name] for entity in entities)
+        self._job_manager.stop_jobs(ids)
+
     def stop_entity(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> None:
@@ -246,12 +253,7 @@ class Controller:
         :param entity: entity to be stopped
         :type entity: Entity | EntitySequence
         """
-        id_ = self._entity_to_job_monitor_id[entity.name]
-        job = self._job_manager[id_]
-        if job.status not in TERMINAL_STATUSES:
-            logger.info(f"Stopping entity {entity.name} with job name {job.name}")
-            Job.stop_all((job,))
-            self._job_manager.move_to_completed(id_, job)
+        self._stop((entity,))
 
     def stop_db(self, db: Orchestrator) -> None:
         """Stop an orchestrator
@@ -259,29 +261,9 @@ class Controller:
         :type db: Orchestrator
         """
         if db.batch:
-            self.stop_entity(db)
+            self._stop((db,))
         else:
-            for node in db.entities:
-                for host_ip, port in itertools.product(
-                    (get_ip_from_host(host) for host in node.hosts), db.ports
-                ):
-                    retcode, _, _ = shutdown_db_node(host_ip, port)
-                    # Sometimes the DB will not shutdown (unless we force NOSAVE)
-                    if retcode != 0:
-                        self.stop_entity(node)
-                        continue
-
-                    id_ = self._entity_to_job_monitor_id[node.name]
-                    job = self._job_manager[id_]
-                    job.set_status(
-                        SmartSimStatus.STATUS_CANCELLED,
-                        "",
-                        0,
-                        output=None,
-                        error=None,
-                    )
-                    self._job_manager.move_to_completed(id_, job)
-
+            self._stop(db.entities)
         db.reset_hosts()
 
     def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
@@ -292,10 +274,9 @@ class Controller:
         """
 
         if entity_list.batch:
-            self.stop_entity(entity_list)
+            self._stop((entity_list,))
         else:
-            for entity in entity_list.entities:
-                self.stop_entity(entity)
+            self._stop(entity_list.entities)
 
     def get_jobs(self) -> t.Dict["_core_types.MonitoredJobID", Job]:
         """Return a dictionary of completed job data
@@ -519,7 +500,6 @@ class Controller:
             for substep, substep_entity in zip(substeps, orchestrator.entities):
                 self.symlink_output_files(substep, substep_entity)
 
-            self._launch_step(orc_batch_step, orchestrator)
             launched_steps: t.Tuple[Step, ...] = (orc_batch_step,)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -546,7 +526,7 @@ class Controller:
         #      attr on both the `Orchestrator` and the `DBNode` instances via
         #      the `set_hosts` method.  Since the `Job` (theoretically)
         #      correlates to a launched entity, shouldn't it be the one
-        #      responsible for knowing with hosts it is actually running on??
+        #      responsible for knowing what hosts it is actually running on??
         # XXX: IMO, it is a MASSIVE code smell that we need to query into the
         #      `_entity_to_job_monitor_id` even though we assume that
         #      `_launch_step` will make the insertion. If we need to modify the

@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
 import pathlib
 import time
 import typing as t
@@ -32,13 +33,16 @@ from dataclasses import dataclass
 from ..._core import types as _core_types
 from ..._core.utils import helpers as _helpers
 from ...entity import EntitySequence, SmartSimEntity
+from ...entity.dbnode import DBNode
 from ...entity import types as _entity_types
 from ...status import TERMINAL_STATUSES, SmartSimStatus
+
+from smartsim._core.utils import network, redis
+from smartsim._core.launcher.stepInfo import StepInfo
 
 if t.TYPE_CHECKING:
     from smartsim._core.launcher.launcher import Launcher
     from smartsim._core.launcher.step.step import Step
-    from smartsim._core.launcher.stepInfo import StepInfo
 
 
 @dataclass(frozen=True)
@@ -206,8 +210,13 @@ class Job:
         job_name: _core_types.StepName,
         job_id: _core_types.JobIdType,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
-        launcher: "Launcher",
+        launcher: str,
         is_task: bool,
+        update_callback: t.Callable[
+            [t.List[_core_types.StepName]],
+            t.List[t.Tuple[_core_types.StepName, t.Union[StepInfo, None]]],
+        ],
+        stop_callback: t.Callable[[_core_types.StepName], StepInfo],
     ) -> None:
         """Initialize a Job.
 
@@ -233,10 +242,12 @@ class Job:
         self.output: t.Optional[str] = None
         self.error: t.Optional[str] = None  # same as output
         self.hosts: t.List[str] = []  # currently only used for DB jobs
-        self._launcher = launcher
+        self.launched_with: t.Final = launcher
         self.is_task = is_task
         self.start_time = time.time()
         self.history = History()
+        self._update_callback: t.Final = update_callback
+        self._stop_callback: t.Final = stop_callback
 
     @classmethod
     def from_launched_step(
@@ -251,25 +262,40 @@ class Job:
         #      step and the launcher that launched it, tbh)? Why does the job
         #      need to know the entity that it was launched from but the step
         #      does not? Is the job a wrapper around a step or not??
-        return cls(step.name, job_id, entity, launcher, not step.managed)
+        return cls(
+            step.name,
+            job_id,
+            entity,
+            str(launcher),
+            not step.managed,
+            launcher.get_step_update,
+            (
+                launcher.stop
+                if not isinstance(entity, DBNode)
+                else _attempt_graceful_db_node_shutdown(entity, launcher.stop)
+                #                                       ^^^^^^
+                # XXX: I _HATE_ that I have to pass this reference. At best it
+                #      is sloppy, but there is no strong guarentee that the
+                #      ``hosts`` attr is defined at job creation time, and
+                #      there is no way to populate if the ``Controller`` has
+                #      not had time to symlink output files. The best I can do
+                #      is delay look up time :(
+            ),
+        )
 
     @property
     def ename(self) -> _entity_types.EntityName:
         """Return the name of the entity this job was created from"""
         return self.entity.name
 
-    @property
-    def launched_with(self) -> str:
-        return str(self._launcher)
-
     def _get_update_callback(self) -> t.Callable[
         [t.List[_core_types.StepName]],
-        t.List[t.Tuple[_core_types.StepName, t.Union["StepInfo", None]]],
+        t.List[t.Tuple[_core_types.StepName, t.Union[StepInfo, None]]],
     ]:
-        return self._launcher.get_step_update
+        return self._update_callback
 
-    def _get_stop_callback(self) -> t.Callable[[_core_types.StepName], "StepInfo"]:
-        return self._launcher.stop
+    def _get_stop_callback(self) -> t.Callable[[_core_types.StepName], StepInfo]:
+        return self._stop_callback
 
     @classmethod
     def refresh_all(cls, jobs: t.Iterable["Job"]) -> None:
@@ -434,3 +460,20 @@ class History:
     def new_run(self) -> None:
         """increment run total"""
         self.runs += 1
+
+
+def _attempt_graceful_db_node_shutdown(
+    dbnode: DBNode, fallback: t.Callable[["_core_types.StepName"], StepInfo]
+) -> t.Callable[["_core_types.StepName"], StepInfo]:
+    def _inner(step_name: "_core_types.StepName") -> StepInfo:
+        ips = (network.get_ip_from_host(host) for host in dbnode.hosts)
+        shutdown_results = (
+            redis.shutdown_db_node(ip, port)
+            for ip, port in itertools.product(ips, dbnode.ports)
+        )
+        return_codes = (ret for ret, _, _ in shutdown_results)
+        if not all(ret == 0 for ret in return_codes):
+            return fallback(step_name)
+        return StepInfo(SmartSimStatus.STATUS_CANCELLED, "", 0, output=None, error=None)
+
+    return _inner
