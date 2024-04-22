@@ -67,7 +67,7 @@ autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 
 # Ignore specific warnings related to smartsim
-warnings.filterwarnings("ignore", category=FutureWarning, module="smartsim")
+warnings.filterwarnings("ignore", category=Warning, module="smartsim")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
