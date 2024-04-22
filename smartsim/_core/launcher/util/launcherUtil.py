@@ -38,9 +38,7 @@ class ComputeNode:  # cov-slurm
         """Initialize a ComputeNode
 
         :param node_name: the name of the node
-        :type node_name: str
         :param node_ppn: the number of ppn
-        :type node_ppn: int
         """
         self.name: t.Optional[str] = node_name
         self.ppn: t.Optional[int] = node_ppn
@@ -52,7 +50,6 @@ class ComputeNode:  # cov-slurm
         and ppn being not None.
 
         :returns: True if valid, false otherwise
-        :rtype: bool
         """
         if self.name is None:
             return False
@@ -80,7 +77,6 @@ class Partition:  # cov-slurm
         and each ComputeNode being valid
 
         :returns: True if valid, false otherwise
-        :rtype: bool
         """
         if self.name is None:
             return False

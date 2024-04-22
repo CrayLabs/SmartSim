@@ -43,7 +43,6 @@ class TelemetryConfiguration:
         # Return the telemetry configuration for this entity.
         # :returns: Configuration object indicating the configuration
         # status of telemetry for this entity
-        # :rtype: TelemetryConfiguration
         return self._telemetry_producer
     ```
 

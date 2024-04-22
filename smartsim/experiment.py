@@ -860,7 +860,6 @@ class Experiment:
         """Experiment pre-launch summary of entities that will be launched
 
         :param manifest: Manifest of deployables.
-        :type manifest: Manifest
         """
 
         summary = "\n\n=== Launch Summary ===\n"

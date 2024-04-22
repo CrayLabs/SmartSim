@@ -308,7 +308,7 @@ class History:
     def __init__(self, runs: int = 0) -> None:
         """Init a history object for a job
 
-        :param runs: number of runs so far, defaults to 0
+        :param runs: number of runs so far
         """
         self.runs = runs
         self.jids: t.Dict[int, t.Optional[str]] = {}

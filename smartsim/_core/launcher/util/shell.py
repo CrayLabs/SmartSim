@@ -49,22 +49,14 @@ def execute_cmd(
     """Execute a command locally
 
     :param cmd_list: list of command with arguments
-    :type cmd_list: list of str
-    :param shell: run in system shell, defaults to False
-    :type shell: bool, optional
-    :param cwd: current working directory, defaults to None
-    :type cwd: str, optional
-    :param env: environment to launcher process with,
-                defaults to None (current env)
-    :type env: dict[str, str], optional
-    :param proc_input: input to the process, defaults to ""
-    :type proc_input: str, optional
-    :param timeout: timeout of the process, defaults to None
-    :type timeout: int, optional
+    :param shell: run in system shell
+    :param cwd: current working directory
+    :param env: environment to launcher process with
+    :param proc_input: input to the process
+    :param timeout: timeout of the process
     :raises ShellError: if timeout of process was exceeded
     :raises ShellError: if child process raises an error
     :return: returncode, output, and error of the process
-    :rtype: tuple of (int, str, str)
     """
     if VERBOSE_SHELL:
         source = "shell" if shell else "Popen"
@@ -106,13 +98,9 @@ def execute_async_cmd(
     popen subprocess object wrapped with psutil.
 
     :param cmd_list: list of command with arguments
-    :type cmd_list: list of str
     :param cwd: current working directory
-    :type cwd: str
     :param env: environment variables to set
-    :type env: dict[str, str]
     :return: the subprocess object
-    :rtype: psutil.Popen
     """
     if VERBOSE_SHELL:
         logger.debug(f"Executing command: {' '.join(cmd_list)}")

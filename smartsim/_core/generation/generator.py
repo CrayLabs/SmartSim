@@ -64,7 +64,7 @@ class Generator:
         collision between entities.
 
         :param gen_path: Path in which files need to be generated
-        :param overwrite: toggle entity replacement, defaults to False
+        :param overwrite: toggle entity replacement
         :param verbose: Whether generation information should be logged to std out
         """
         self._writer = ModelWriter()
@@ -245,7 +245,6 @@ class Generator:
 
                 :param tagged: a TaggedFileHierarchy to be built as a
                                directory structure
-                :type tagged: TaggedFilesHierarchy
                 """
                 for file in tagged.files:
                     dst_path = path.join(entity.path, tagged.base, path.basename(file))

@@ -42,11 +42,8 @@ def write_colocated_launch_script(
     is created for this entity.
 
     :param file_name: name of the script to write
-    :type file_name: str
     :param db_log: log file for the db
-    :type db_log: str
     :param colocated_settings: db settings from entity run_settings
-    :type colocated_settings: dict[str, Any]
     """
 
     colocated_cmd = _build_colocated_wrapper_cmd(db_log, **colocated_settings)
@@ -93,21 +90,13 @@ def _build_colocated_wrapper_cmd(
     """Build the command use to run a colocated DB application
 
     :param db_log: log file for the db
-    :type db_log: str
-    :param cpus: db cpus, defaults to 1
-    :type cpus: int, optional
-    :param rai_args: redisai args, defaults to None
-    :type rai_args: dict[str, str], optional
-    :param extra_db_args: extra redis args, defaults to None
-    :type extra_db_args: dict[str, str], optional
+    :param cpus: db cpus
+    :param rai_args: redisai args
+    :param extra_db_args: extra redis args
     :param port: port to bind DB to
-    :type port: int
     :param ifname: network interface(s) to bind DB to
-    :type ifname: str | list[str], optional
     :param db_cpu_list: The list of CPUs that the database should be limited to
-    :type db_cpu_list: str, optional
     :return: the command to run
-    :rtype: str
     """
     # pylint: disable=too-many-locals
 
