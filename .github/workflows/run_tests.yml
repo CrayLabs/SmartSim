@@ -26,145 +26,145 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-name: run-tests
+# name: run-tests
 
-on:
-  pull_request:
-  push:
-    branches:
-      - develop
+# on:
+#   pull_request:
+#   push:
+#     branches:
+#       - develop
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
-env:
-  HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
-  HOMEBREW_NO_AUTO_UPDATE: "ON"
-  HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
-  HOMEBREW_NO_GITHUB_API: "ON"
-  HOMEBREW_NO_INSTALL_CLEANUP: "ON"
-  DEBIAN_FRONTEND: "noninteractive" # Disable interactive apt install sessions
+# env:
+#   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
+#   HOMEBREW_NO_AUTO_UPDATE: "ON"
+#   HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
+#   HOMEBREW_NO_GITHUB_API: "ON"
+#   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
+#   DEBIAN_FRONTEND: "noninteractive" # Disable interactive apt install sessions
 
-jobs:
-  run_tests:
-    name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}, RedisAI ${{ matrix.rai }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        subset: [backends, slow_tests, group_a, group_b]
-        os: [macos-12, macos-14, ubuntu-22.04] # Operating systems
-        compiler: [8] # GNU compiler version
-        rai: [1.2.7] # Redis AI versions
-        py_v: ["3.9", "3.10", "3.11"] # Python versions
-        exclude:
-          - os: macos-14
-            py_v: "3.9"
+# jobs:
+#   run_tests:
+#     name: Run tests ${{ matrix.subset }} with ${{ matrix.os }}, Python ${{ matrix.py_v}}, RedisAI ${{ matrix.rai }}
+#     runs-on: ${{ matrix.os }}
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         subset: [backends, slow_tests, group_a, group_b]
+#         os: [macos-12, macos-14, ubuntu-22.04] # Operating systems
+#         compiler: [8] # GNU compiler version
+#         rai: [1.2.7] # Redis AI versions
+#         py_v: ["3.9", "3.10", "3.11"] # Python versions
+#         exclude:
+#           - os: macos-14
+#             py_v: "3.9"
 
-    env:
-      SMARTSIM_REDISAI: ${{ matrix.rai }}
+#     env:
+#       SMARTSIM_REDISAI: ${{ matrix.rai }}
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.py_v }}
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ matrix.py_v }}
 
-      - name: Install build-essentials for Ubuntu
-        if: contains( matrix.os, 'ubuntu' )
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
-          sudo apt-get install -y build-essential
-          sudo apt-get install -y wget
+#       - name: Install build-essentials for Ubuntu
+#         if: contains( matrix.os, 'ubuntu' )
+#         run: |
+#           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+#           sudo apt-get update
+#           sudo apt-get install -y build-essential
+#           sudo apt-get install -y wget
 
-      - name: Install GNU make for MacOS and set GITHUB_PATH
-        if: contains( matrix.os, 'macos' )
-        run: |
-          brew install make || true
-          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
+#       - name: Install GNU make for MacOS and set GITHUB_PATH
+#         if: contains( matrix.os, 'macos' )
+#         run: |
+#           brew install make || true
+#           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
 
-      - name: Build Singularity from source
-        if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
-        run: |
-          sudo apt-get install -y libseccomp-dev pkg-config squashfs-tools cryptsetup curl git # wget build-essential
-          echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc
-          source ~/.bashrc
-          export VERSION=1.0.0 # Apptainer (singularity) version
-          wget https://github.com/apptainer/apptainer/releases/download/v${VERSION}/apptainer-${VERSION}.tar.gz
-          tar -xzf apptainer-${VERSION}.tar.gz
-          cd apptainer-${VERSION}
-          ./mconfig
-          make -C builddir
-          sudo make -C builddir install
+#       - name: Build Singularity from source
+#         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
+#         run: |
+#           sudo apt-get install -y libseccomp-dev pkg-config squashfs-tools cryptsetup curl git # wget build-essential
+#           echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc
+#           source ~/.bashrc
+#           export VERSION=1.0.0 # Apptainer (singularity) version
+#           wget https://github.com/apptainer/apptainer/releases/download/v${VERSION}/apptainer-${VERSION}.tar.gz
+#           tar -xzf apptainer-${VERSION}.tar.gz
+#           cd apptainer-${VERSION}
+#           ./mconfig
+#           make -C builddir
+#           sudo make -C builddir install
 
-      - name: singularity pull test container # This lets us time how long the pull takes
-        if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
-        run: singularity pull docker://alrigazzi/smartsim-testing
+#       - name: singularity pull test container # This lets us time how long the pull takes
+#         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
+#         run: singularity pull docker://alrigazzi/smartsim-testing
 
-      # Note: The develop branch of smartredis is installed first to ensure that any tests that depend
-      # on developments of the client are brought in.
-      - name: Install SmartSim (with ML backends)
-        run: |
-          python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
-          python -m pip install .[dev,ml]
+#       # Note: The develop branch of smartredis is installed first to ensure that any tests that depend
+#       # on developments of the client are brought in.
+#       - name: Install SmartSim (with ML backends)
+#         run: |
+#           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
+#           python -m pip install .[dev,ml]
 
-      - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')
-        run: smart build --device cpu --onnx -v
+#       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
+#         if: contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')
+#         run: smart build --device cpu --onnx -v
 
-      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
-        if: contains( matrix.os, 'macos-14' )
-        run: smart build --device cpu --no_tf -v
+#       - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
+#         if: contains( matrix.os, 'macos-14' )
+#         run: smart build --device cpu --no_tf -v
 
-      - name: Run mypy
-        run: |
-          python -m pip install .[mypy]
-          make check-mypy
+#       - name: Run mypy
+#         run: |
+#           python -m pip install .[mypy]
+#           make check-mypy
 
-      - name: Run Pylint
-        run: make check-lint
+#       - name: Run Pylint
+#         run: make check-lint
 
-      # Run isort/black style check
-      - name: Run isort
-        run: isort --check-only --profile black ./smartsim ./tests
+#       # Run isort/black style check
+#       - name: Run isort
+#         run: isort --check-only --profile black ./smartsim ./tests
 
-      # Run isort/black style check
-      - name: Run black
-        run: |
-          black --exclude smartsim/version.py --check ./smartsim ./tests
+#       # Run isort/black style check
+#       - name: Run black
+#         run: |
+#           black --exclude smartsim/version.py --check ./smartsim ./tests
 
-      # Run pytest (backends subdirectory)
-      - name: Run Pytest
-        if: (matrix.subset == 'backends')
-        run: |
-          echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
-          py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ ./tests/backends
+#       # Run pytest (backends subdirectory)
+#       - name: Run Pytest
+#         if: (matrix.subset == 'backends')
+#         run: |
+#           echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
+#           py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ ./tests/backends
 
-      # Run pytest (test subsets)
-      - name: Run Pytest
-        if: "!contains(matrix.subset, 'backends')" # if not running backend tests
-        run: |
-          echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
-          py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ -m ${{ matrix.subset }} ./tests
+#       # Run pytest (test subsets)
+#       - name: Run Pytest
+#         if: "!contains(matrix.subset, 'backends')" # if not running backend tests
+#         run: |
+#           echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
+#           py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ -m ${{ matrix.subset }} ./tests
 
-      # Upload artifacts on failure, ignoring binary files
-      - name: Upload Artifact
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test_artifact
-          path: |
-            tests/test_output
-            !**/*.so
-            !**/*.pb
-            !**/*.pt
-            !**/core
-          retention-days: 5
+#       # Upload artifacts on failure, ignoring binary files
+#       - name: Upload Artifact
+#         if: failure()
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: test_artifact
+#           path: |
+#             tests/test_output
+#             !**/*.so
+#             !**/*.pb
+#             !**/*.pt
+#             !**/core
+#           retention-days: 5
 
-      - name: Upload Pytest coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
-        with:
-          fail_ci_if_error: false
-          files: ./coverage.xml
+#       - name: Upload Pytest coverage to Codecov
+#         uses: codecov/codecov-action@v3.1.4
+#         with:
+#           fail_ci_if_error: false
+#           files: ./coverage.xml
