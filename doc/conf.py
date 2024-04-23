@@ -14,7 +14,6 @@
 
 import os
 import sys
-import warnings
 sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
@@ -65,24 +64,6 @@ typehints_use_signature_return = True
 typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
-
-
-# Define a custom warning filter to ignore specific warnings
-def custom_warning_filter(action, category, filename, lineno, file=None, line=None):
-    # List of warning messages to ignore
-    ignored_warnings = [
-        "Cannot resolve forward reference in type annotations",
-        # Add other warning messages to ignore here
-    ]
-
-    # Check if the warning message is in the ignored_warnings list
-    if category.__name__ in ignored_warnings:
-        return None  # Suppress the warning
-    else:
-        return action(category, filename, lineno, file, line)
-
-# Register the custom warning filter
-warnings.showwarning = custom_warning_filter
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
