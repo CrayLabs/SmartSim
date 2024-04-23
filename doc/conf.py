@@ -14,6 +14,7 @@
 
 import os
 import sys
+import logging
 sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
@@ -63,10 +64,20 @@ typehints_use_signature = True
 typehints_use_signature_return = True
 typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
-suppress_warnings = ['autosectionlabel', 'smartsim.database.Orchestrator.db_models']
+suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+# Create a logging filter to suppress the specific warning
+class ForwardReferenceFilter(logging.Filter):
+    def filter(self, record):
+        # Suppress the warning related to forward references
+        return "Cannot resolve forward reference in type annotations" not in record.getMessage()
+
+# Add the filter to the logger used by sphinx-autodoc-typehints
+logger = logging.getLogger("sphinx_autodoc_typehints")
+logger.addFilter(ForwardReferenceFilter())
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
