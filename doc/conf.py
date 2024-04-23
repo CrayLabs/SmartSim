@@ -69,6 +69,8 @@ suppress_warnings = ['autosectionlabel']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+suppress_extension_warnings = ["sphinx_autodoc_typehints"]
+
 # Create a logging filter to suppress the specific warning
 class ForwardReferenceFilter(logging.Filter):
     def filter(self, record):
@@ -76,7 +78,7 @@ class ForwardReferenceFilter(logging.Filter):
         return "Cannot resolve forward reference in type annotations" not in record.getMessage()
 
 # Add the filter to the logger used by sphinx-autodoc-typehints
-logger = logging.getLogger("sphinx_autodoc_typehints")
+logger = logging.getLogger(suppress_extension_warnings)
 logger.addFilter(ForwardReferenceFilter())
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
