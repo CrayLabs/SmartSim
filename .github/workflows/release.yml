@@ -133,7 +133,8 @@ jobs:
             uses: actions/checkout@v4
 
           - name: create pull request
-            run: gh pr create -B master -H develop --title 'Merge branch_to_merge into base_branch' --body 'Created by Github action'
+            run: |
+              gh pr create -B develop -H master --title 'Merge branch_to_merge into base_branch' --body 'This PR brings develop up to date with master for release'
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # createPullRequest:
