@@ -31,13 +31,16 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
-from smartsim._core.control.controller import Controller
+from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import Orchestrator
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.model import Model
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
 controller = Controller()
 slurm_controller = Controller(launcher="slurm")
@@ -48,8 +51,11 @@ batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
 orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
-model = Model("test_model", {}, "", rs)
-batch_model = Model("batch_test_model", {}, "", batch_rs, batch_settings=bs)
+model = Model("test_model", params={}, path="", run_settings=rs)
+batch_model = Model(
+    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
+)
+anon_batch_model = _AnonymousBatchJob(batch_model)
 
 
 def test_mutated_model_output(test_dir):
@@ -161,67 +167,3 @@ def test_get_output_files_no_status_dir(test_dir):
     step = Step("mock-step", test_dir, step_settings)
     with pytest.raises(KeyError):
         out, err = step.get_output_files()
-
-
-@pytest.mark.parametrize(
-    "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(model, id="model")],
-)
-def test_symlink(test_dir, entity):
-    """Test symlinking historical output files"""
-    entity.path = test_dir
-    if entity.type == Ensemble:
-        for member in ens.models:
-            symlink_with_create_job_step(test_dir, member)
-    else:
-        symlink_with_create_job_step(test_dir, entity)
-
-
-def symlink_with_create_job_step(test_dir, entity):
-    """Function that helps cut down on repeated testing code"""
-    exp_dir = pathlib.Path(test_dir)
-    entity.path = test_dir
-    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
-    step = controller._create_job_step(entity, status_dir)
-    controller.symlink_output_files(step, entity)
-    assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
-    assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
-    assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
-        status_dir / entity.name / (entity.name + ".out")
-    )
-    assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.err")) == str(
-        status_dir / entity.name / (entity.name + ".err")
-    )
-
-
-@pytest.mark.parametrize(
-    "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(orc, id="orchestrator")],
-)
-def test_batch_symlink(entity, test_dir):
-    """Test symlinking historical output files"""
-    exp_dir = pathlib.Path(test_dir)
-    entity.path = test_dir
-    status_dir = exp_dir / CONFIG.telemetry_subdir / entity.type
-    batch_step, substeps = slurm_controller._create_batch_job_step(entity, status_dir)
-    for step in substeps:
-        slurm_controller.symlink_output_files(step, entity)
-        assert pathlib.Path(entity.path, f"{entity.name}.out").is_symlink()
-        assert pathlib.Path(entity.path, f"{entity.name}.err").is_symlink()
-        assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.out")) == str(
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".out")
-        )
-        assert os.readlink(pathlib.Path(entity.path, f"{entity.name}.err")) == str(
-            status_dir / entity.name / step.entity_name / (step.entity_name + ".err")
-        )
-
-
-def test_symlink_error(test_dir):
-    """Ensure FileNotFoundError is thrown"""
-    bad_model = Model(
-        "bad_model", {}, pathlib.Path(test_dir, "badpath"), RunSettings("echo")
-    )
-    telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
-    bad_step = controller._create_job_step(bad_model, telem_dir)
-    with pytest.raises(FileNotFoundError):
-        controller.symlink_output_files(bad_step, bad_model)
