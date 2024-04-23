@@ -148,5 +148,5 @@ jobs:
             title: test_2
             body: test_1
             draft: false
-            branch: develop
-            base: master
+            branch: auto-post-release
+            base: develop
