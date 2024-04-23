@@ -108,7 +108,7 @@
               {%- endfor %}
         {%- endfor %}
         {%- endif %}
-    {%- if model.query_key_prefixing()%}
+        {%- if model.query_key_prefixing()%}
         Key Prefix: {{ model.name }}
-    {%- endif %}
+        {%- endif %}
 {%- endif %}

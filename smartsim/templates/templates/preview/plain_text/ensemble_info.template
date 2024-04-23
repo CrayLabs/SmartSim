@@ -1,4 +1,3 @@
-
     = Ensemble Name: {{ ensemble.name }} =
         Members: {{ ensemble|length }}
         {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}

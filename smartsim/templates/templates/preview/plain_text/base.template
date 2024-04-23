@@ -44,9 +44,8 @@
   {%- if manifest.ensembles %}
 
   == Ensembles ==
-
     {%- for ensemble in manifest.ensembles %}
-    {% include "preview/plain_text/ensemble.template" %}
+    {%- include "preview/plain_text/ensemble.template" %}
     {%- endfor %}
     {%- endif %}
 

@@ -8,11 +8,7 @@
             {%- for port in db.ports %}
               {{ port }}
             {%- endfor %}
-            {%- if db.num_shards > 2 %}
-            Type: Clustered
-            {%- else %}
             Type: Standalone
-            {%- endif %}
             {%- endfor %}
           {%- if model.query_key_prefixing() %}
           Outgoing Key Collision Prevention (Key Prefixing):
