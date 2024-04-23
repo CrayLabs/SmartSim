@@ -63,7 +63,7 @@ typehints_use_signature = True
 typehints_use_signature_return = True
 typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
-suppress_warnings = ['autosectionlabel']
+suppress_warnings = ['autosectionlabel', 'smartsim.database.Orchestrator.db_models']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
