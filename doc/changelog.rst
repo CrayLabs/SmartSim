@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Bump manifest.json to version 0.0.4
 - Fix symlinking batch ensemble and model bug
 - Remove defensive regexp in .gitignore
 - Upgrade ubuntu to 22.04
@@ -46,6 +47,8 @@ Description
 
 Detailed Notes
 
+- The manifest.json version needs to match the SmartDashboard version, which is
+  0.0.4 in the upcoming release. (SmartSim-PR563_)
 - Properly symlinks batch ensembles and batch models. (SmartSim-PR547_)
 - Remove defensive regexp in .gitignore and ensure tests write to test_output.
   (SmartSim-PR560_)
@@ -123,6 +126,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/563
 .. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547
 .. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
 .. _SmartSim-PR559: https://github.com/CrayLabs/SmartSim/pull/559
