@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Fix race condition for telemetry monitor
+- Fix symlinking batch ensemble and model bug
 - Remove defensive regexp in .gitignore
 - Upgrade ubuntu to 22.04
 - Remove helper function ``init_default``
@@ -47,6 +48,7 @@ Description
 Detailed Notes
 
 - Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR549_)
+- Properly symlinks batch ensembles and batch models. (SmartSim-PR547_)
 - Remove defensive regexp in .gitignore and ensure tests write to test_output.
   (SmartSim-PR560_)
 - After dropping support for Python 3.8, ubuntu needs to be upgraded.
@@ -124,6 +126,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR549: https://github.com/CrayLabs/SmartSim/pull/549
+.. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547
 .. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
 .. _SmartSim-PR559: https://github.com/CrayLabs/SmartSim/pull/559
 .. _SmartSim-PR558: https://github.com/CrayLabs/SmartSim/pull/558
