@@ -29,101 +29,102 @@
 name: deploy-release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - develop
 
 
-env:
-  HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
-  HOMEBREW_NO_AUTO_UPDATE: "ON"
-  HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
-  HOMEBREW_NO_GITHUB_API: "ON"
-  HOMEBREW_NO_INSTALL_CLEANUP: "ON"
-  CIBW_SKIP: "pp* *i686*" # skip building for PyPy
-  CIBW_ARCHS_MACOS: x86_64
-  CIBW_ARCHS_LINUX: x86_64  # ppc64le # uncomment to enable powerPC build
-  CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
-  MACOSX_DEPLOYMENT_TARGET: "10.09"
+# env:
+#   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
+#   HOMEBREW_NO_AUTO_UPDATE: "ON"
+#   HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
+#   HOMEBREW_NO_GITHUB_API: "ON"
+#   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
+#   CIBW_SKIP: "pp* *i686*" # skip building for PyPy
+#   CIBW_ARCHS_MACOS: x86_64
+#   CIBW_ARCHS_LINUX: x86_64  # ppc64le # uncomment to enable powerPC build
+#   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+#   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, macos-12]
+  # build_wheels:
+  #   name: Build wheels on ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-22.04, macos-12]
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel>=2.12.3
+  #     - name: Install cibuildwheel
+  #       run: python -m pip install cibuildwheel>=2.12.3
 
-      - name: Install build-essentials
-        if: contains(matrix.os, 'ubuntu')
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
-          sudo apt-get install -y build-essential
-          sudo apt-get install -y wget
+  #     - name: Install build-essentials
+  #       if: contains(matrix.os, 'ubuntu')
+  #       run: |
+  #         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  #         sudo apt-get update
+  #         sudo apt-get install -y build-essential
+  #         sudo apt-get install -y wget
 
-      - name: Install GNU make for MacOS
-        if: contains(matrix.os, 'macos')
-        run: brew install make || true
+  #     - name: Install GNU make for MacOS
+  #       if: contains(matrix.os, 'macos')
+  #       run: brew install make || true
 
-      - name: list target wheels
-        run: |
-          python -m cibuildwheel . --print-build-identifiers
+  #     - name: list target wheels
+  #       run: |
+  #         python -m cibuildwheel . --print-build-identifiers
 
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
-          MACOSX_DEPLOYMENT_TARGET: "10.09"
+  #     - name: Build wheels
+  #       run: python -m cibuildwheel --output-dir wheelhouse
+  #       env:
+  #         CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+  #         MACOSX_DEPLOYMENT_TARGET: "10.09"
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
-
-  build_sdist:
-    name: Build source distribution
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          python-version: '3.9'
-
-      - name: Build sdist
-        run: |
-          python -m pip install cmake>=3.13
-          python setup.py sdist
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: dist/*.tar.gz
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         path: ./wheelhouse/*.whl
 
 
-  upload_pypi:
-    needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: artifact
-          path: dist
+  # build_sdist:
+  #   name: Build source distribution
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI }}
-          #repository_url: https://test.pypi.org/legacy/
+  #     - uses: actions/setup-python@v5
+  #       name: Install Python
+  #       with:
+  #         python-version: '3.9'
+
+  #     - name: Build sdist
+  #       run: |
+  #         python -m pip install cmake>=3.13
+  #         python setup.py sdist
+
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         path: dist/*.tar.gz
+
+
+  # upload_pypi:
+  #   needs: [build_wheels, build_sdist]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: artifact
+  #         path: dist
+
+  #     - uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.PYPI }}
+  #         #repository_url: https://test.pypi.org/legacy/
 
 
   createPullRequest:
@@ -132,12 +133,20 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v4
 
+        - name: Commit files
+          run: |
+            git config --global user.email "action@github.com"
+            git config --global user.name "GitHub Action"
+
         - name: Create Pull Request
           uses: peter-evans/create-pull-request@v6
           with:
-            commit-message: test_3
-            base: master
-            branch: develop
+            token: ${{ secrets.GITHUB_TOKEN }}
+            committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+            author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+            signoff: false
             title: test_2
             body: test_1
             draft: false
+            branch: auto-post-release
+            base: develop
