@@ -66,8 +66,6 @@ typehints_defaults = 'comma'
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 
-# Ignore specific warnings related to smartsim
-warnings.filterwarnings("ignore", category=Warning, module="smartsim")
 
 # Define a custom warning filter to ignore specific warnings
 def custom_warning_filter(action, category, filename, lineno, file=None, line=None):
