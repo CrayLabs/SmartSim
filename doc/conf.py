@@ -69,9 +69,25 @@ suppress_warnings = ['autosectionlabel']
 # Ignore specific warnings related to smartsim
 warnings.filterwarnings("ignore", category=Warning, module="smartsim")
 
+# Define a custom warning filter to ignore specific warnings
+def custom_warning_filter(action, category, filename, lineno, file=None, line=None):
+    # List of warning messages to ignore
+    ignored_warnings = [
+        "Cannot resolve forward reference in type annotations",
+        # Add other warning messages to ignore here
+    ]
+
+    # Check if the warning message is in the ignored_warnings list
+    if category.__name__ in ignored_warnings:
+        return None  # Suppress the warning
+    else:
+        return action(category, filename, lineno, file, line)
+
+# Register the custom warning filter
+warnings.showwarning = custom_warning_filter
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-warning_is_error = False
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
