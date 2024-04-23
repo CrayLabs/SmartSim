@@ -134,7 +134,8 @@ jobs:
 
           - name: create pull request
             run: |
-              gh pr create -B develop -H master --title 'Merge branch_to_merge into base_branch' --body 'This PR brings develop up to date with master for release'
+              RELEASE_VERSION=$(git describe --tags --abbrev=0)
+              gh pr create -B develop -H master --title 'Merge branch_to_merge into base_branch' --body 'This PR brings develop up to date with master for release $RELEASE_VERSION'
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # createPullRequest:
