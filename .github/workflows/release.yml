@@ -147,6 +147,6 @@ jobs:
             signoff: false
             title: test_2
             body: test_1
-            draft: false
-            branch: origin/auto-post-release
-            base: origin/develop
+            draft: true
+            branch: develop
+            base: master
