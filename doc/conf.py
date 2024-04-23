@@ -60,20 +60,18 @@ extensions = [
     'sphinx_design',
     'sphinx.ext.mathjax',
 ]
+# sphinx_autodoc_typehints configurations
 always_use_bars_union = True
 typehints_document_rtype = True
 typehints_use_signature = True
 typehints_use_signature_return = True
 typehints_defaults = 'comma'
+
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-
-suppress_extension_warnings = ["sphinx_autodoc_typehints"]
-print("")
-# Create a logging filter to suppress the specific warning
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
@@ -156,9 +154,8 @@ def ensure_pandoc_installed(_):
 
 def setup(app):
     app.connect("builder-inited", ensure_pandoc_installed)
-    #members = inspect.getmodulename(app.extensions['sphinx_autodoc_typehints'].module)
-    # print(f"yurp: {members}")
-    # sys.exit(0)
+
+    # Below code from https://github.com/sphinx-doc/sphinx/issues/10219
     def _is_sphinx_logger_adapter(obj):
         return isinstance(obj, SphinxLoggerAdapter)
     class ForwardReferenceFilter(logging.Filter):
@@ -166,8 +163,6 @@ def setup(app):
             # Suppress the warning related to forward references
             return "Cannot resolve forward reference in type annotations" not in record.getMessage()
 
-    members = inspect.getmembers(... , _is_sphinx_logger_adapter)
+    members = inspect.getmembers(app.extensions['sphinx_autodoc_typehints'].module, _is_sphinx_logger_adapter)
     for _, adapter in members:
         adapter.logger.addFilter(ForwardReferenceFilter())
-    # Add the filter to the logger used by sphinx-autodoc-typehints
-    #_LOGGER.addFilter(ForwardReferenceFilter())
