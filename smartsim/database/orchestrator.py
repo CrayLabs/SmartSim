@@ -42,7 +42,7 @@ from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList, TelemetryConfiguration
-from ..error import SmartSimError, SSConfigError, SSUnsupportedError
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError, SSDBFilesNotParseable
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
@@ -374,7 +374,10 @@ class Orchestrator(EntityList[DBNode]):
         if not self.hosts:
             return False
 
-        return db_is_active(self._hosts, self.ports, self.num_shards)
+        try:
+            return db_is_active(self._hosts, self.ports, self.num_shards)
+        except SSDBFilesNotParseable:
+            return False
 
     @property
     def _rai_module(self) -> t.Tuple[str, ...]:

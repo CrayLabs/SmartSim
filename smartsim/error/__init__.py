@@ -37,4 +37,5 @@ from .errors import (
     SSReservedKeywordError,
     SSUnsupportedError,
     UserStrategyError,
+    SSDBFilesNotParseable
 )
