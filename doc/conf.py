@@ -15,6 +15,8 @@
 import os
 import sys
 import logging
+import inspect
+from sphinx.util.logging import SphinxLoggerAdapter
 sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
@@ -70,16 +72,8 @@ suppress_warnings = ['autosectionlabel']
 templates_path = ['_templates']
 
 suppress_extension_warnings = ["sphinx_autodoc_typehints"]
-
+print("")
 # Create a logging filter to suppress the specific warning
-class ForwardReferenceFilter(logging.Filter):
-    def filter(self, record):
-        # Suppress the warning related to forward references
-        return "Cannot resolve forward reference in type annotations" not in record.getMessage()
-
-# Add the filter to the logger used by sphinx-autodoc-typehints
-logger = logging.getLogger(suppress_extension_warnings)
-logger.addFilter(ForwardReferenceFilter())
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
@@ -162,3 +156,18 @@ def ensure_pandoc_installed(_):
 
 def setup(app):
     app.connect("builder-inited", ensure_pandoc_installed)
+    #members = inspect.getmodulename(app.extensions['sphinx_autodoc_typehints'].module)
+    # print(f"yurp: {members}")
+    # sys.exit(0)
+    def _is_sphinx_logger_adapter(obj):
+        return isinstance(obj, SphinxLoggerAdapter)
+    class ForwardReferenceFilter(logging.Filter):
+        def filter(self, record):
+            # Suppress the warning related to forward references
+            return "Cannot resolve forward reference in type annotations" not in record.getMessage()
+
+    members = inspect.getmembers(... , _is_sphinx_logger_adapter)
+    for _, adapter in members:
+        adapter.logger.addFilter(ForwardReferenceFilter())
+    # Add the filter to the logger used by sphinx-autodoc-typehints
+    #_LOGGER.addFilter(ForwardReferenceFilter())
