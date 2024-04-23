@@ -173,10 +173,6 @@ class Config:
         return os.getenv("SMARTSIM_DRAGON_TRANSPORT", "hsta")
 
     @property
-    def dragon_log_level(self) -> str:
-        return os.getenv("SMARTSIM_DRAGON_LOG_LEVEL", "NONE")
-
-    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 

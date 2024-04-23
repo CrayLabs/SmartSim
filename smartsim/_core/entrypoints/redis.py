@@ -180,14 +180,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Specify if this orchestrator shard is part of a cluster",
     )
-    # parser.add_argument(
-    #     "+redirect_output",
-    #     action="store_true",
-    #     help=(
-    #         "Specify if stdout and stderr of this script should be redirected. "
-    #         + "Only needed for dragon launcher."
-    #     ),
-    # )
+
     args_ = parser.parse_args()
 
     # make sure to register the cleanup before the start

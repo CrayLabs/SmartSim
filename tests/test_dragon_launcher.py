@@ -28,6 +28,7 @@ import logging
 import multiprocessing as mp
 import os
 import sys
+import time
 import typing as t
 
 import pytest
@@ -61,6 +62,17 @@ class MockPopen:
     @property
     def returncode(self) -> int:
         return 0
+
+    @property
+    def stdout(self):
+        return None
+
+    @property
+    def stderr(self):
+        return None
+
+    def wait(self, timeout: float) -> None:
+        time.sleep(timeout)
 
 
 class MockSocket:
@@ -119,7 +131,6 @@ def mock_dragon_env(test_dir, *args, **kwargs):
     """Create a mock dragon environment that can talk to the launcher through ZMQ"""
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=logging.DEBUG)
-
     try:
         addr = "127.0.0.1"
         callback_port = kwargs["port"]
@@ -286,7 +297,8 @@ def test_secure_socket_setup(
 def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
     """Ensure the authenticator created by the secure socket factory method
     is fully configured and started when returned to a client"""
-
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG)
     with monkeypatch.context() as ctx:
         # make sure we don't touch "real keys" during a test
         ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
@@ -308,7 +320,7 @@ def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
 
             received_msg = server.recv_string()
             assert received_msg == to_send
-            print("server receieved: ", received_msg)
+            logger.debug("server receieved: ", received_msg)
         finally:
             if authenticator:
                 authenticator.stop()
@@ -322,7 +334,6 @@ def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
 def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: str):
     """Test that a real handshake between a launcher & dragon environment
     completes successfully using secure sockets"""
-    context = zmq.Context()
     addr = "127.0.0.1"
     bootstrap_port = find_free_port(start=5995)
 

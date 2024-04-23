@@ -56,8 +56,18 @@ def main(args: argparse.Namespace) -> int:
 
     requests: t.List[DragonRequest] = []
 
-    with open(args.submit, "r", encoding="utf-8") as request_file:
-        req_strings = json.load(fp=request_file)
+    try:
+        with open(args.submit, "r", encoding="utf-8") as request_file:
+            req_strings = json.load(fp=request_file)
+    except FileNotFoundError:
+        logger.error(
+            "Could not find file with run requests,"
+            f"please check whether {args.submit} exists."
+        )
+        return 1
+    except json.JSONDecodeError:
+        logger.error(f"Could not decode request file {args.submit}.")
+        return 1
 
     for req_str in req_strings:
         requests.append(request_registry.from_string(req_str))
@@ -73,24 +83,21 @@ def main(args: argparse.Namespace) -> int:
 
     logger.info("Terminated sending requests, waiting for Dragon Server to complete")
 
-    # pylint: disable-next=protected-access
-    if connector._dragon_head_pid is None:
+    if not connector.can_monitor:
         logger.error(
             "Could not get Dragon Server PID and will not be able to monitor it."
         )
         return 1
 
     while True:
-        # pylint: disable-next=protected-access
         try:
             time.sleep(5)
             connector.send_request(DragonHandshakeRequest())
         except zmq.error.Again:
-            print("Could not reach server, assuming backend has shut down", flush=True)
-            # os.waitpid(connector._dragon_head_pid, 0)
+            logger.debug("Could not reach server, assuming backend has shut down")
             break
 
-    print("Server has finished.")
+    logger.info("Server has finished.")
 
     return 0
 

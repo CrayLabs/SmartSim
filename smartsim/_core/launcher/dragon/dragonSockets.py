@@ -123,7 +123,15 @@ def get_authenticator(
     if AUTHENTICATOR is not None:
         if AUTHENTICATOR.is_alive():
             return AUTHENTICATOR
-        del AUTHENTICATOR
+        try:
+            logger.debug("Stopping authenticator")
+            AUTHENTICATOR.thread.authenticator.zap_socket.close()
+            AUTHENTICATOR.thread.join(0.1)
+            AUTHENTICATOR = None
+        except Exception as e:
+            logger.debug(e)
+        finally:
+            logger.debug("Stopped authenticator")
 
     config = get_config()
 
@@ -137,8 +145,7 @@ def get_authenticator(
     logger.debug(f"Securing with client keys in {key_manager.client_keys_dir}")
     AUTHENTICATOR.configure_curve(domain="*", location=key_manager.client_keys_dir)
 
-    if not AUTHENTICATOR.is_alive():
-        logger.debug("Starting authenticator")
-        AUTHENTICATOR.start()
+    logger.debug("Starting authenticator")
+    AUTHENTICATOR.start()
 
     return AUTHENTICATOR

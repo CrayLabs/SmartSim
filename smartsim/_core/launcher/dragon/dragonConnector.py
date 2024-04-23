@@ -72,14 +72,12 @@ class DragonConnector:
     """
 
     def __init__(self, graceful_cleanup: bool = True) -> None:
-        super().__init__()
         self._context: zmq.Context[t.Any] = zmq.Context.instance()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
-        self._timeout = CONFIG.dragon_server_timeout
         self._startup_timeout = CONFIG.dragon_server_startup_timeout
-        self._set_timeout(self._timeout)
+        self._set_timeout(CONFIG.dragon_server_timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
         # Returned by dragon head, useful if shutdown is to be requested
@@ -100,6 +98,10 @@ class DragonConnector:
     @property
     def is_connected(self) -> bool:
         return self._dragon_head_socket is not None
+
+    @property
+    def can_monitor(self) -> bool:
+        return self._dragon_head_pid is not None
 
     def _handshake(self, address: str) -> None:
         self._dragon_head_socket = dragonSockets.get_secure_socket(
@@ -162,7 +164,56 @@ class DragonConnector:
             logger.error("Could not get authenticator")
             raise e from None
 
-    # pylint: disable-next=too-many-statements,too-many-locals
+    @staticmethod
+    def _get_dragon_log_level() -> str:
+        smartsim_to_dragon = {
+            "developer": "INFO",
+            "debug": "NONE",
+            "info": "NONE",
+            "quiet": "NONE",
+        }
+        return smartsim_to_dragon.get(CONFIG.log_level, "NONE")
+
+    def _connect_to_existing_server(self, path: Path) -> None:
+        dragon_config_log = path / CONFIG.dragon_log_filename
+
+        if dragon_config_log.is_file():
+
+            dragon_confs = self._parse_launched_dragon_server_info_from_files(
+                [dragon_config_log]
+            )
+            logger.debug(dragon_confs)
+            for dragon_conf in dragon_confs:
+                if not "address" in dragon_conf:
+                    continue
+                logger.debug(
+                    "Found dragon server config file. Checking if the server"
+                    f" is still up at address {dragon_conf['address']}."
+                )
+                try:
+                    self._set_timeout(CONFIG.dragon_server_timeout)
+                    self._get_new_authenticator()
+                    self._handshake(dragon_conf["address"])
+                except SmartSimError as e:
+                    logger.error(e)
+                finally:
+                    self._set_timeout(CONFIG.dragon_server_timeout)
+                if self.is_connected:
+                    logger.debug("Connected to existing Dragon server")
+                    return
+
+    def _start_connector_socket(self, socket_addr: str) -> zmq.Socket[t.Any]:
+        connector_socket: t.Optional[zmq.Socket[t.Any]] = None
+        self._set_timeout(self._startup_timeout)
+        self._get_new_authenticator()
+        connector_socket = dragonSockets.get_secure_socket(self._context, zmq.REP, True)
+        logger.debug(f"Binding connector to {socket_addr}")
+        connector_socket.bind(socket_addr)
+        if connector_socket is None:
+            raise SmartSimError("Socket failed to initialize")
+
+        return connector_socket
+
     def connect_to_dragon(self) -> None:
         with DRG_LOCK:
             # TODO use manager instead
@@ -172,63 +223,37 @@ class DragonConnector:
                 raise SmartSimError("Path to Dragon server not set.")
 
             path = _resolve_dragon_path(self._dragon_server_path)
-            dragon_config_log = path / CONFIG.dragon_log_filename
 
-            if dragon_config_log.is_file():
-
-                dragon_confs = self._parse_launched_dragon_server_info_from_files(
-                    [dragon_config_log]
-                )
-                logger.debug(dragon_confs)
-                for dragon_conf in dragon_confs:
-                    if not "address" in dragon_conf:
-                        continue
-                    logger.debug(
-                        "Found dragon server config file. Checking if the server"
-                        f" is still up at address {dragon_conf['address']}."
-                    )
-                    try:
-                        self._set_timeout(self._timeout)
-                        self._get_new_authenticator()
-                        self._handshake(dragon_conf["address"])
-                    except SmartSimError as e:
-                        logger.debug(e)
-                    finally:
-                        self._set_timeout(self._timeout)
-                    if self.is_connected:
-                        logger.debug("Connected to existing Dragon server")
-                        return
+            self._connect_to_existing_server(path)
+            if self.is_connected:
+                return
 
             path.mkdir(parents=True, exist_ok=True)
+
+            local_address = get_best_interface_and_address().address
+            if local_address is None:
+                # TODO parse output file
+                raise SmartSimError(
+                    "Could not determine SmartSim's local address, "
+                    "the Dragon server could not be started."
+                )
+            # find first available port >= 5995
+            port = find_free_port(start=5995)
+            socket_addr = f"tcp://{local_address}:{port}"
+            connector_socket = self._start_connector_socket(socket_addr)
 
             cmd = [
                 "dragon",
                 "-t",
                 CONFIG.dragon_transport,
                 "-l",
-                CONFIG.dragon_log_level,
+                DragonConnector._get_dragon_log_level(),
                 sys.executable,
                 "-m",
                 "smartsim._core.entrypoints.dragon",
+                "+launching_address",
+                socket_addr,
             ]
-
-            address = get_best_interface_and_address().address
-            socket_addr = ""
-            connector_socket: t.Optional[zmq.Socket[t.Any]] = None
-            if address is not None:
-                self._set_timeout(self._startup_timeout)
-                self._get_new_authenticator()
-                connector_socket = dragonSockets.get_secure_socket(
-                    self._context, zmq.REP, True
-                )
-
-                # find first available port >= 5995
-                port = find_free_port(start=5995)
-                socket_addr = f"tcp://{address}:{port}"
-                logger.debug(f"Binding connector to {socket_addr}")
-
-                connector_socket.bind(socket_addr)
-                cmd += ["+launching_address", socket_addr]
 
             dragon_out_file = path / "dragon_head.out"
             dragon_err_file = path / "dragon_head.err"
@@ -252,58 +277,44 @@ class DragonConnector:
                     start_new_session=True,
                 )
 
-            if connector_socket is None:
-                raise SmartSimError("Socket failed to initialize")
+            server = dragonSockets.as_server(connector_socket)
+            logger.debug(f"Listening to {socket_addr}")
+            request = _assert_schema_type(server.recv(), DragonBootstrapRequest)
+            server.send(
+                DragonBootstrapResponse(dragon_pid=self._dragon_head_process.pid)
+            )
+            connector_socket.close()
+            logger.debug(f"Connecting to {request.address}")
+            self._set_timeout(CONFIG.dragon_server_timeout)
+            self._handshake(request.address)
 
-            def log_dragon_outputs() -> None:
-                if self._dragon_head_process:
-                    self._dragon_head_process.wait(1.0)
-                    if self._dragon_head_process.stdout:
-                        for line in iter(
-                            self._dragon_head_process.stdout.readline, b""
-                        ):
-                            logger.info(line.decode("utf-8").rstrip())
-                    if self._dragon_head_process.stderr:
-                        for line in iter(
-                            self._dragon_head_process.stderr.readline, b""
-                        ):
-                            logger.warning(line.decode("utf-8").rstrip())
-                    logger.warning(self._dragon_head_process.returncode)
+            # Only the Connector which started the server is
+            # responsible of it, that's why we register the
+            # cleanup in this code branch.
+            # The cleanup function should not have references
+            # to this object to avoid Garbage Collector lockup
+            server_socket = self._dragon_head_socket
+            server_process_pid = self._dragon_head_process.pid
 
-            if address is not None:
-                server = dragonSockets.as_server(connector_socket)
-                logger.debug(f"Listening to {socket_addr}")
-                request = _assert_schema_type(server.recv(), DragonBootstrapRequest)
-
-                logger.debug(f"Connecting to {request.address}")
-                server.send(
-                    DragonBootstrapResponse(dragon_pid=self._dragon_head_process.pid)
+            if server_socket is not None and self._dragon_head_process is not None:
+                atexit.register(
+                    _dragon_cleanup,
+                    server_socket=server_socket,
+                    server_process_pid=server_process_pid,
+                    server_authenticator=self._authenticator,
+                    graceful=self._graceful_cleanup,
                 )
-
-                connector_socket.close()
-                self._set_timeout(self._timeout)
-                self._handshake(request.address)
-
-                # Only the Connector which started the server is
-                # responsible of it, that's why we register the
-                # cleanup in this code branch.
-                # The cleanup function should not have references
-                # to this object to avoid Garbage Collector lockup
-                server_socket = self._dragon_head_socket
-                server_process_pid = self._dragon_head_process.pid
-
-                if server_socket is not None and self._dragon_head_process is not None:
-                    atexit.register(
-                        _dragon_cleanup,
-                        server_socket=server_socket,
-                        server_process_pid=server_process_pid,
-                        server_authenticator=self._authenticator,
-                        graceful=self._graceful_cleanup,
-                    )
+            elif self._dragon_head_process is not None:
+                self._dragon_head_process.wait(1.0)
+                if self._dragon_head_process.stdout:
+                    for line in iter(self._dragon_head_process.stdout.readline, b""):
+                        logger.info(line.decode("utf-8").rstrip())
+                if self._dragon_head_process.stderr:
+                    for line in iter(self._dragon_head_process.stderr.readline, b""):
+                        logger.warning(line.decode("utf-8").rstrip())
+                logger.warning(self._dragon_head_process.returncode)
             else:
-                # TODO parse output file
-                log_dragon_outputs()
-                raise SmartSimError("Could not receive address of Dragon head process")
+                logger.warning("Could not start Dragon server as subprocess")
 
     def cleanup(self, graceful: bool = True) -> None:
         if self._dragon_head_socket is not None and self._dragon_head_pid is not None:
@@ -429,7 +440,7 @@ def _dragon_cleanup(
             print("Dragon server is not running.")
         finally:
             print(
-                f"Dragon server process shutdown is complete , return code {retcode}",
+                f"Dragon server process shutdown is complete, return code {retcode}",
                 flush=True,
             )
 

@@ -159,7 +159,6 @@ class DragonBatchStep(Step):
             "smartsim._core.entrypoints.dragon_client",
             "+submit",
             f"{request_file}",
-            "\n",
         ]
         return " ".join(cmd)
 
@@ -197,7 +196,7 @@ class DragonBatchStep(Step):
         return request_file
 
     def _write_sbatch_script(self) -> str:
-        """Write the batch script
+        """Write the PBS batch script
 
         :return: batch script path after writing
         :rtype: str
@@ -223,11 +222,13 @@ class DragonBatchStep(Step):
             for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")
 
-            script_file.write(DragonBatchStep._dragon_entrypoint_cmd(request_file))
+            script_file.write(
+                DragonBatchStep._dragon_entrypoint_cmd(request_file) + "\n"
+            )
         return batch_script
 
     def _write_qsub_script(self) -> str:
-        """Write the batch script
+        """Write the Slurm batch script
 
         :return: batch script path after writing
         :rtype: str
@@ -251,6 +252,8 @@ class DragonBatchStep(Step):
             for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")
 
-            script_file.write(DragonBatchStep._dragon_entrypoint_cmd(request_file))
+            script_file.write(
+                DragonBatchStep._dragon_entrypoint_cmd(request_file) + "\n"
+            )
 
         return batch_script

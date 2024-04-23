@@ -81,31 +81,29 @@ def print_summary(network_interface: str, ip_address: str) -> None:
         )
 
 
+def start_updater(
+    backend: DragonBackend, updater: t.Optional[ContextThread]
+) -> ContextThread:
+    if updater is not None:
+        updater.join(0.1)
+    updater = ContextThread(name="DragonBackend", daemon=True, target=backend.update)
+    updater.start()
+    return updater
+
+
 # pylint: disable-next=too-many-statements
 def run(
     zmq_context: "zmq.Context[t.Any]",
     dragon_head_address: str,
     dragon_pid: int,
-    zmq_authenticator: "zmq.auth.thread.ThreadAuthenticator",
 ) -> None:
     logger.debug(f"Opening socket {dragon_head_address}")
-
-    zmq_context.setsockopt(zmq.SNDTIMEO, value=-1)
-    zmq_context.setsockopt(zmq.RCVTIMEO, value=-1)
-    zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
-    zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
-    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.SNDTIMEO, -1)
-    zmq_authenticator.thread.authenticator.zap_socket.setsockopt(zmq.RCVTIMEO, -1)
 
     dragon_head_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REP, True)
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
-    backend_updater = ContextThread(
-        name="DragonBackend", daemon=True, target=dragon_backend.update
-    )
-    backend_updater.start()
-
+    backend_updater = start_updater(dragon_backend, None)
     server = dragonSockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")
@@ -115,10 +113,7 @@ def run(
             req = server.recv()
             logger.debug(f"Received {type(req).__name__} {req}")
         except zmq.Again:
-            if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
-                continue
-            logger.info("Shutdown has been requested")
-            break
+            continue
 
         resp = dragon_backend.process_request(req)
 
@@ -130,22 +125,21 @@ def run(
 
         if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
             logger.debug(f"Listening to {dragon_head_address}")
-            heartbeat_delay = dragon_backend.current_time - dragon_backend.last_heartbeat
+            heartbeat_delay = (
+                dragon_backend.current_time - dragon_backend.last_heartbeat
+            )
             if heartbeat_delay > 10.0:
                 logger.debug(
-                    f"Restarting updater after {heartbeat_delay:.2f} seconds of inactivity."
+                    f"Restarting updater after {heartbeat_delay:.2f} "
+                    "seconds of inactivity."
                 )
-                del backend_updater
-                backend_updater = ContextThread(
-                    name="DragonBackend", daemon=True, target=dragon_backend.update
-                )
-                backend_updater.start()
+                backend_updater = start_updater(dragon_backend, backend_updater)
         else:
             logger.info("Backend shutdown has been requested")
             break
 
     if backend_updater.is_alive():
-        del backend_updater
+        backend_updater.join(1)
 
     if not dragon_backend.frontend_shutdown:
         logger.info("Frontend will have to be shut down externally")
@@ -206,7 +200,6 @@ def main(args: argparse.Namespace) -> int:
                 zmq_context=zmq_context,
                 dragon_head_address=dragon_head_address,
                 dragon_pid=response.dragon_pid,
-                zmq_authenticator=zmq_authenticator,
             )
         except Exception as e:
             logger.error(f"Dragon server failed with {e}", exc_info=True)

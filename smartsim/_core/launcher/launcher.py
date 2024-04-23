@@ -70,9 +70,16 @@ class Launcher(abc.ABC):  # pragma: no cover
     def stop(self, step_name: str) -> StepInfo:
         raise NotImplementedError
 
-    @abc.abstractmethod
     def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
-        raise NotImplementedError
+        """Add a StepMap to the Launcher step mapping table
+        making it monitor the step.
+
+        :param name: name of step to be added
+        :type name: str
+        :param step_map: step map of added step
+        :type step_map: StepMap
+        """
+        self.step_mapping[name] = step_map
 
 
 class WLMLauncher(Launcher):  # cov-wlm
@@ -90,9 +97,6 @@ class WLMLauncher(Launcher):  # cov-wlm
     @abc.abstractmethod
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         raise NotImplementedError
-
-    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
-        self.step_mapping[name] = step_map
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)

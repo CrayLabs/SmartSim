@@ -30,7 +30,7 @@ from ....settings import RunSettings, SettingsBase
 from ..launcher import Launcher
 from ..step import LocalStep, Step
 from ..stepInfo import StepInfo, UnmanagedStepInfo
-from ..stepMapping import StepMap, StepMapping
+from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 
 
@@ -40,9 +40,6 @@ class LocalLauncher(Launcher):
     def __init__(self) -> None:
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
-
-    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
-        self.step_mapping[name] = step_map
 
     def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
         """Create a job step to launch an entity locally
