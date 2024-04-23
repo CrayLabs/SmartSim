@@ -71,6 +71,7 @@ warnings.filterwarnings("ignore", category=Warning, module="smartsim")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+warning_is_error = False
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
