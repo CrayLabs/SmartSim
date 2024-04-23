@@ -129,8 +129,11 @@ jobs:
     createPullRequest:
         runs-on: ubuntu-latest
         steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
           - name: create pull request
-            run: gh pr create -B amandarichardsonn/master -H amandarichardsonn/develop --title 'Merge branch_to_merge into base_branch' --body 'Created by Github action'
+            run: gh pr create -B master -H develop --title 'Merge branch_to_merge into base_branch' --body 'Created by Github action'
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # createPullRequest:
