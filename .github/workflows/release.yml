@@ -134,6 +134,6 @@ jobs:
 
           - name: Create pull request
             run: |
-              gh pr create -B develop -H master --title 'Merge master into develop' --body 'This PR brings develop up to date with master for release.'
+              gh pr create -B master -H develop --title 'Merge master into develop' --body 'This PR brings develop up to date with master for release.'
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
