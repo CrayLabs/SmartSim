@@ -129,7 +129,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
-.. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/566
+.. _SmartSim-PR566: https://github.com/CrayLabs/SmartSim/pull/566
 .. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/563
 .. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547
 .. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
