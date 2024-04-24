@@ -320,7 +320,7 @@ def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
 
             received_msg = server.recv_string()
             assert received_msg == to_send
-            logger.debug("server receieved: ", received_msg)
+            logger.debug(f"server received: {received_msg}")
         finally:
             if authenticator:
                 authenticator.stop()
