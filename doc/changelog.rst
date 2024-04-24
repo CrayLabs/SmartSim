@@ -19,6 +19,7 @@ To be released at some future point in time
 Description
 
 - Fix race condition for telemetry monitor
+- Auto-post release PR to develop
 - Bump manifest.json to version 0.0.4
 - Fix symlinking batch ensemble and model bug
 - Remove defensive regexp in .gitignore
@@ -49,6 +50,8 @@ Description
 Detailed Notes
 
 - Ensure the telemetry monitor is started prior to launching entities (SmartSim-PR549_)
+- Add to github release workflow to auto generate a pull request from master
+  into develop for release. (SmartSim-PR566_)
 - The manifest.json version needs to match the SmartDashboard version, which is
   0.0.4 in the upcoming release. (SmartSim-PR563_)
 - Properly symlinks batch ensembles and batch models. (SmartSim-PR547_)
@@ -129,6 +132,7 @@ Detailed Notes
   the previously registered signal handler. (SmartSim-PR535_)
 
 .. _SmartSim-PR549: https://github.com/CrayLabs/SmartSim/pull/549
+.. _SmartSim-PR566: https://github.com/CrayLabs/SmartSim/pull/566
 .. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/563
 .. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547
 .. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
