@@ -18,6 +18,8 @@ To be released at some future point in time
 
 Description
 
+- Bump manifest.json to version 0.0.4
+- Fix symlinking batch ensemble and model bug
 - Remove defensive regexp in .gitignore
 - Upgrade ubuntu to 22.04
 - Remove helper function ``init_default``
@@ -45,6 +47,9 @@ Description
 
 Detailed Notes
 
+- The manifest.json version needs to match the SmartDashboard version, which is
+  0.0.4 in the upcoming release. (SmartSim-PR563_)
+- Properly symlinks batch ensembles and batch models. (SmartSim-PR547_)
 - Remove defensive regexp in .gitignore and ensure tests write to test_output.
   (SmartSim-PR560_)
 - After dropping support for Python 3.8, ubuntu needs to be upgraded.
@@ -110,13 +115,21 @@ Detailed Notes
   undefined. (SmartSim-PR521_)
 - Remove previously deprecated behavior present in test suite on machines with
   Slurm and Open MPI. (SmartSim-PR520_)
+- Experiments in the WLM tests are given explicit paths to prevent unexpected
+  directory creation. Ensure database are not left open on test suite failures.
+  Update path to pickle file in
+  ``tests/full_wlm/test_generic_orc_launch_batch.py::test_launch_cluster_orc_reconnect``
+  to conform with changes made in SmartSim-PR533_. (SmartSim-PR559_)
 - When calling ``Experiment.start`` SmartSim would register a signal handler
   that would capture an interrupt signal (^C) to kill any jobs launched through
   its ``JobManager``. This would replace the default (or user defined) signal
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/563
+.. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547
 .. _SmartSim-PR560: https://github.com/CrayLabs/SmartSim/pull/560
+.. _SmartSim-PR559: https://github.com/CrayLabs/SmartSim/pull/559
 .. _SmartSim-PR558: https://github.com/CrayLabs/SmartSim/pull/558
 .. _SmartSim-PR545: https://github.com/CrayLabs/SmartSim/pull/545
 .. _SmartSim-PR557: https://github.com/CrayLabs/SmartSim/pull/557
