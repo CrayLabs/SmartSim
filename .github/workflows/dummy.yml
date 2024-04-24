@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: checkout
     - uses: actions/checkout@v4
 
-    - name: Changelog Enforcer
-      uses: dangoslen/changelog-enforcer@v3.6.0
-      with:
-        changeLogPath: './doc/changelog.rst'
-        missingUpdateErrorMessage: 'changelog.rst has not been updated'
+    categories:
+      - title: testing
+        labels:
+          - '*'
