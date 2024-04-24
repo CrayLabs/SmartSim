@@ -8,13 +8,14 @@ on:
 
 jobs:
   changelog:
-    categories:
-      - title: 🏕 Features
-        labels:
-          - '*'
-        exclude:
-          labels:
-            - dependencies
-      - title: 👒 Dependencies
-        labels:
-          - dependencies
+    name: check_changelog
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Changelog Enforcer
+      uses: dangoslen/changelog-enforcer@v3.6.0
+      with:
+        changeLogPath: './doc/changelog.rst'
+        missingUpdateErrorMessage: 'changelog.rst has not been updated'
