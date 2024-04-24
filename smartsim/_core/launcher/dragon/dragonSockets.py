@@ -109,7 +109,7 @@ def get_secure_socket(
 
 
 def get_authenticator(
-    context: "zmq.Context[t.Any]",
+    context: "zmq.Context[t.Any]", timeout: int = get_config().dragon_server_timeout
 ) -> "zmq.auth.thread.ThreadAuthenticator":
     """Create an authenticator to handle encryption of ZMQ communications
 
@@ -141,11 +141,22 @@ def get_authenticator(
 
     AUTHENTICATOR = zmq.auth.thread.ThreadAuthenticator(context)
 
+    ctx_sndtimeo = context.getsockopt(zmq.SNDTIMEO)
+    ctx_rcvtimeo = context.getsockopt(zmq.RCVTIMEO)
+
+    AUTHENTICATOR.context.setsockopt(zmq.SNDTIMEO, timeout)
+    AUTHENTICATOR.context.setsockopt(zmq.RCVTIMEO, timeout)
+    AUTHENTICATOR.context.setsockopt(zmq.REQ_CORRELATE, 1)
+    AUTHENTICATOR.context.setsockopt(zmq.REQ_RELAXED, 1)
+
     # allow all keys in the client key directory to connect
     logger.debug(f"Securing with client keys in {key_manager.client_keys_dir}")
     AUTHENTICATOR.configure_curve(domain="*", location=key_manager.client_keys_dir)
 
     logger.debug("Starting authenticator")
     AUTHENTICATOR.start()
+
+    context.setsockopt(zmq.SNDTIMEO, ctx_sndtimeo)
+    context.setsockopt(zmq.RCVTIMEO, ctx_rcvtimeo)
 
     return AUTHENTICATOR

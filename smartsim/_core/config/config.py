@@ -162,7 +162,7 @@ class Config:
 
     @property
     def dragon_server_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "20000"))
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "30000"))
 
     @property
     def dragon_server_startup_timeout(self) -> int:

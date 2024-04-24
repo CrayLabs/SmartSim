@@ -43,11 +43,10 @@ import psutil
 import zmq
 import zmq.auth.thread
 
-from smartsim._core.launcher.dragon import dragonSockets
-from smartsim.error.errors import SmartSimError
-
+from ...._core.launcher.dragon import dragonSockets
+from ....error.errors import SmartSimError
 from ....log import get_logger
-from ...config import CONFIG
+from ...config import get_config
 from ...schemas import (
     DragonBootstrapRequest,
     DragonBootstrapResponse,
@@ -76,14 +75,14 @@ class DragonConnector:
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
-        self._startup_timeout = CONFIG.dragon_server_startup_timeout
-        self._set_timeout(CONFIG.dragon_server_timeout)
+        config = get_config()
+        self._reset_timeout(config.dragon_server_timeout)
         self._dragon_head_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._dragon_head_process: t.Optional[subprocess.Popen[bytes]] = None
         # Returned by dragon head, useful if shutdown is to be requested
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
-        self._dragon_server_path = CONFIG.dragon_server_path
+        self._dragon_server_path = config.dragon_server_path
         self._graceful_cleanup = graceful_cleanup
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         if self._dragon_server_path is None:
@@ -125,7 +124,7 @@ class DragonConnector:
                 f"Unsuccessful handshake with Dragon server at address {address}"
             ) from e
 
-    def _set_timeout(self, timeout: int) -> None:
+    def _reset_timeout(self, timeout: int = get_config().dragon_server_timeout) -> None:
         self._context.setsockopt(zmq.SNDTIMEO, value=timeout)
         self._context.setsockopt(zmq.RCVTIMEO, value=timeout)
         if self._authenticator is not None and self._authenticator.thread is not None:
@@ -145,7 +144,9 @@ class DragonConnector:
         if not self.is_connected:
             raise SmartSimError("Could not connect to Dragon server")
 
-    def _get_new_authenticator(self) -> None:
+    def _get_new_authenticator(
+        self, timeout: int = get_config().dragon_server_timeout
+    ) -> None:
         if self._authenticator is not None:
             if self._authenticator.thread is not None:
                 try:
@@ -158,7 +159,9 @@ class DragonConnector:
             except zmq.Again:
                 logger.debug("Could not stop authenticator")
         try:
-            self._authenticator = dragonSockets.get_authenticator(self._context)
+            self._authenticator = dragonSockets.get_authenticator(
+                self._context, timeout
+            )
             return
         except RuntimeError as e:
             logger.error("Could not get authenticator")
@@ -172,10 +175,11 @@ class DragonConnector:
             "info": "NONE",
             "quiet": "NONE",
         }
-        return smartsim_to_dragon.get(CONFIG.log_level, "NONE")
+        return smartsim_to_dragon.get(get_config().log_level, "NONE")
 
     def _connect_to_existing_server(self, path: Path) -> None:
-        dragon_config_log = path / CONFIG.dragon_log_filename
+        config = get_config()
+        dragon_config_log = path / config.dragon_log_filename
 
         if dragon_config_log.is_file():
 
@@ -191,21 +195,22 @@ class DragonConnector:
                     f" is still up at address {dragon_conf['address']}."
                 )
                 try:
-                    self._set_timeout(CONFIG.dragon_server_timeout)
+                    self._reset_timeout()
                     self._get_new_authenticator()
                     self._handshake(dragon_conf["address"])
                 except SmartSimError as e:
                     logger.error(e)
                 finally:
-                    self._set_timeout(CONFIG.dragon_server_timeout)
+                    self._reset_timeout(config.dragon_server_timeout)
                 if self.is_connected:
                     logger.debug("Connected to existing Dragon server")
                     return
 
     def _start_connector_socket(self, socket_addr: str) -> zmq.Socket[t.Any]:
+        config = get_config()
         connector_socket: t.Optional[zmq.Socket[t.Any]] = None
-        self._set_timeout(self._startup_timeout)
-        self._get_new_authenticator()
+        self._reset_timeout(config.dragon_server_startup_timeout)
+        self._get_new_authenticator(config.dragon_server_startup_timeout)
         connector_socket = dragonSockets.get_secure_socket(self._context, zmq.REP, True)
         logger.debug(f"Binding connector to {socket_addr}")
         connector_socket.bind(socket_addr)
@@ -215,6 +220,7 @@ class DragonConnector:
         return connector_socket
 
     def connect_to_dragon(self) -> None:
+        config = get_config()
         with DRG_LOCK:
             # TODO use manager instead
             if self.is_connected:
@@ -245,7 +251,7 @@ class DragonConnector:
             cmd = [
                 "dragon",
                 "-t",
-                CONFIG.dragon_transport,
+                config.dragon_transport,
                 "-l",
                 DragonConnector._get_dragon_log_level(),
                 sys.executable,
@@ -285,7 +291,7 @@ class DragonConnector:
             )
             connector_socket.close()
             logger.debug(f"Connecting to {request.address}")
-            self._set_timeout(CONFIG.dragon_server_timeout)
+            self._reset_timeout(config.dragon_server_timeout)
             self._handshake(request.address)
 
             # Only the Connector which started the server is
@@ -424,29 +430,40 @@ def _dragon_cleanup(
     finally:
         print("Authenticator shutdown is complete")
 
-    if server_process_pid and psutil.pid_exists(server_process_pid):
-        retcode = None
-        print("Terminating Dragon server")
+    if server_process_pid:
         try:
-            if graceful:
-                os.kill(server_process_pid, signal.SIGINT)
-                time.sleep(2)
-                os.kill(server_process_pid, signal.SIGINT)
-                time.sleep(10)
-            os.kill(server_process_pid, signal.SIGTERM)
             _, retcode = os.waitpid(server_process_pid, 0)
-        except ProcessLookupError:
-            # Can't use the logger as I/O file may be closed
-            print("Dragon server is not running.")
-        finally:
             print(
                 f"Dragon server process shutdown is complete, return code {retcode}",
                 flush=True,
             )
+        except Exception as e:
+            logger.debug(e)
+
+    # TODO remove this code once we are sure that it is not needed anymore
+    # if server_process_pid and psutil.pid_exists(server_process_pid):
+    #     retcode = None
+    #     print("Terminating Dragon server")
+    #     try:
+    #         if graceful:
+    #             os.kill(server_process_pid, signal.SIGINT)
+    #             time.sleep(2)
+    #             os.kill(server_process_pid, signal.SIGINT)
+    #             time.sleep(20)
+    #         os.kill(server_process_pid, signal.SIGTERM)
+    #         _, retcode = os.waitpid(server_process_pid, 0)
+    #     except ProcessLookupError:
+    #         # Can't use the logger as I/O file may be closed
+    #         print("Dragon server is not running.")
+    #     finally:
+    #         print(
+    #             f"Dragon server process shutdown is complete, return code {retcode}",
+    #             flush=True,
+    #         )
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:
-    dragon_server_path = CONFIG.dragon_server_path or os.path.join(
+    dragon_server_path = get_config().dragon_server_path or os.path.join(
         fallback, ".smartsim", "dragon"
     )
     dragon_server_paths = dragon_server_path.split(":")
