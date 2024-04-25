@@ -22,6 +22,7 @@ Description
 - Update authentication in release workflow
 - Auto-generate type-hints into documentation
 - Add dragon runtime installer
+- Auto-generate type-hints into documentation
 - Auto-post release PR to develop
 - Bump manifest.json to version 0.0.4
 - Fix symlinking batch ensemble and model bug
@@ -59,6 +60,8 @@ Detailed Notes
   (SmartSim-PR561_)
 - Add `--dragon` option to `smart build`. Install appropriate Dragon runtime
   from Dragon GitHub release assets. (SmartSim-PR569_)
+- Add extension to auto-generate function type-hints into documentation.
+  (SmartSim-PR561_)
 - Add to github release workflow to auto generate a pull request from master
   into develop for release. (SmartSim-PR566_)
 - The manifest.json version needs to match the SmartDashboard version, which is
