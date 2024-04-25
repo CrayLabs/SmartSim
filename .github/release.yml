@@ -27,10 +27,13 @@
 #
 
 changelog:
+  exclude:
+    labels:
+      - non-user-facing
   categories:
     - title: Features
       labels:
-        - short task
+        - 'type: feature'
     - title: Bug Fixes
       labels:
         - 'bug: critical'
@@ -38,4 +41,4 @@ changelog:
         - 'bug: minor'
     - title: API Breaks
       labels:
-        - short task
+        - 'API break'
