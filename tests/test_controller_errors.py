@@ -196,11 +196,9 @@ def test_starting_entity(test_dir, wlmutils, entity, entity_2):
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
     test_launcher = wlmutils.get_test_launcher()
-    # if test_launcher == "dragon":
-    #     step = DragonStep("mock-step", test_dir, step_settings)
     controller = Controller(test_launcher)
     controller._jobs.add_job(entity.name, job_id="1234", entity=entity)
     controller._jobs.move_to_completed(controller._jobs.jobs.get(entity.name))
     with pytest.raises(SSUnsupportedError) as ex:
         controller._launch_step(step, entity=entity_2)
-        assert ex.value.args[0] == "SmartSim entities cannot have duplicate names."
+    assert ex.value.args[0] == "SmartSim entities cannot have duplicate names."

@@ -111,7 +111,6 @@ class DragonBackend:
     def __init__(self, pid: int) -> None:
         self._pid = pid
         self._group_infos: t.Dict[str, ProcessGroupInfo] = {}
-        self._step_id_lock = RLock()
         self._queue_lock = RLock()
         self._step_id = 0
         # hosts available for execution
@@ -131,23 +130,27 @@ class DragonBackend:
         host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
         self._shutdown_requested = False
         self._can_shutdown = False
-        self._frontend_shutdown: t.Optional[bool] = None
+        self._frontend_shutdown: bool = False
         logger.debug(f"{host_string} available for execution: {self._hosts}")
 
-    def print_status(self) -> None:
-        logger.debug(f"System hosts: {self._hosts}")
-        logger.debug(f"Free hosts: {list(self._free_hosts)}")
-        logger.debug(f"Allocated hosts: {self._allocated_hosts}")
-        logger.debug(f"Running steps: {self._running_steps}")
-        logger.debug(f"Group infos: {self._group_infos}")
-        logger.debug(f"There are {len(self._queued_steps)} queued steps")
+    def __str__(self) -> str:
+        return self.get_status_message()
+
+    def get_status_message(self) -> str:
+        msg = [f"System hosts: {self._hosts}"]
+        msg.append(f"Free hosts: {list(self._free_hosts)}")
+        msg.append(f"Allocated hosts: {self._allocated_hosts}")
+        msg.append(f"Running steps: {self._running_steps}")
+        msg.append(f"Group infos: {self._group_infos}")
+        msg.append(f"There are {len(self._queued_steps)} queued steps")
+        return "\n".join(msg)
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time
 
     @property
     def frontend_shutdown(self) -> bool:
-        return bool(self._frontend_shutdown)
+        return self._frontend_shutdown
 
     @property
     def last_heartbeat(self) -> float:
@@ -198,10 +201,9 @@ class DragonBackend:
             return to_allocate
 
     def _get_new_id(self) -> str:
-        with self._step_id_lock:
-            step_id = create_short_id_str() + "-" + str(self._step_id)
-            self._step_id += 1
-            return step_id
+        step_id = create_short_id_str() + "-" + str(self._step_id)
+        self._step_id += 1
+        return step_id
 
     @functools.singledispatchmethod
     # Deliberately suppressing errors so that overloads have the same signature
@@ -449,7 +451,7 @@ class DragonBackend:
             for grp_info in self._group_infos.values()
         )
 
-    def _should_update(self) -> bool:
+    def _should_print_status(self) -> bool:
         if self._last_beat - self._last_update_time > 10:
             self._last_update_time = self._last_beat
             return True
@@ -464,13 +466,12 @@ class DragonBackend:
                 self._start_steps()
                 self._refresh_statuses()
                 self._update_shutdown_status()
-                time.sleep(0.1)
             except Exception as e:
                 logger.error(e)
-            if self._should_update():
+            if self._should_print_status():
                 try:
-                    self.print_status()
-                except Exception as e:
+                    logger.debug(str(self))
+                except ValueError as e:
                     logger.error(e)
         logger.debug("Dragon Backend update thread stopping")
 

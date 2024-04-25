@@ -34,7 +34,6 @@ import os
 import signal
 import subprocess
 import sys
-import time
 import typing as t
 from pathlib import Path
 from threading import RLock
@@ -70,7 +69,7 @@ class DragonConnector:
     to start a Dragon server and communicate with it.
     """
 
-    def __init__(self, graceful_cleanup: bool = True) -> None:
+    def __init__(self) -> None:
         self._context: zmq.Context[t.Any] = zmq.Context.instance()
         self._context.setsockopt(zmq.REQ_CORRELATE, 1)
         self._context.setsockopt(zmq.REQ_RELAXED, 1)
@@ -83,7 +82,6 @@ class DragonConnector:
         # but process was started by another connector
         self._dragon_head_pid: t.Optional[int] = None
         self._dragon_server_path = config.dragon_server_path
-        self._graceful_cleanup = graceful_cleanup
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         if self._dragon_server_path is None:
             raise SmartSimError(
@@ -308,7 +306,6 @@ class DragonConnector:
                     server_socket=server_socket,
                     server_process_pid=server_process_pid,
                     server_authenticator=self._authenticator,
-                    graceful=self._graceful_cleanup,
                 )
             elif self._dragon_head_process is not None:
                 self._dragon_head_process.wait(1.0)
@@ -322,13 +319,12 @@ class DragonConnector:
             else:
                 logger.warning("Could not start Dragon server as subprocess")
 
-    def cleanup(self, graceful: bool = True) -> None:
+    def cleanup(self) -> None:
         if self._dragon_head_socket is not None and self._dragon_head_pid is not None:
             _dragon_cleanup(
                 server_socket=self._dragon_head_socket,
                 server_process_pid=self._dragon_head_pid,
                 server_authenticator=self._authenticator,
-                graceful=graceful,
             )
             self._dragon_head_socket = None
             self._dragon_head_pid = 0
@@ -397,7 +393,6 @@ def _dragon_cleanup(
     server_socket: t.Optional[zmq.Socket[t.Any]] = None,
     server_process_pid: t.Optional[int] = 0,
     server_authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None,
-    graceful: bool = True,
 ) -> None:
     """Clean up resources used by the launcher.
     :param server_socket: (optional) Socket used to connect to dragon environment
@@ -418,6 +413,8 @@ def _dragon_cleanup(
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
         print(f"ZMQ error: {e}", flush=True)
+        if server_process_pid and psutil.pid_exists(server_process_pid):
+            os.kill(server_process_pid, signal.SIGKILL)
     finally:
         print("Sending shutdown request is complete")
 
@@ -439,27 +436,6 @@ def _dragon_cleanup(
             )
         except Exception as e:
             logger.debug(e)
-
-    # TODO remove this code once we are sure that it is not needed anymore
-    # if server_process_pid and psutil.pid_exists(server_process_pid):
-    #     retcode = None
-    #     print("Terminating Dragon server")
-    #     try:
-    #         if graceful:
-    #             os.kill(server_process_pid, signal.SIGINT)
-    #             time.sleep(2)
-    #             os.kill(server_process_pid, signal.SIGINT)
-    #             time.sleep(20)
-    #         os.kill(server_process_pid, signal.SIGTERM)
-    #         _, retcode = os.waitpid(server_process_pid, 0)
-    #     except ProcessLookupError:
-    #         # Can't use the logger as I/O file may be closed
-    #         print("Dragon server is not running.")
-    #     finally:
-    #         print(
-    #             f"Dragon server process shutdown is complete, return code {retcode}",
-    #             flush=True,
-    #         )
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:

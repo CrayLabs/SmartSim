@@ -118,21 +118,21 @@ def test_summary(fileutils, test_dir, wlmutils):
     exp_name = "test-launch-summary"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
-    sleep = fileutils.get_test_conf_path("sleep.py")
+    sleep_exp = fileutils.get_test_conf_path("sleep.py")
     bad = fileutils.get_test_conf_path("bad.py")
 
-    sleep_settings = exp.create_run_settings("python", f"{sleep} --time=3")
+    sleep_settings = exp.create_run_settings("python", f"{sleep_exp} --time=3")
     sleep_settings.set_tasks(1)
     bad_settings = exp.create_run_settings("python", f"{bad} --time=6")
     bad_settings.set_tasks(1)
 
-    sleep = exp.create_model("sleep", path=test_dir, run_settings=sleep_settings)
+    sleep_exp = exp.create_model("sleep", path=test_dir, run_settings=sleep_settings)
     bad = exp.create_model("bad", path=test_dir, run_settings=bad_settings)
 
     # start and poll
-    exp.start(sleep, bad)
+    exp.start(sleep_exp, bad)
     assert exp.get_status(bad)[0] == SmartSimStatus.STATUS_FAILED
-    assert exp.get_status(sleep)[0] == SmartSimStatus.STATUS_COMPLETED
+    assert exp.get_status(sleep_exp)[0] == SmartSimStatus.STATUS_COMPLETED
 
     summary_str = exp.summary(style="plain")
     print(summary_str)
@@ -144,11 +144,11 @@ def test_summary(fileutils, test_dir, wlmutils):
     # the rows will be sleep, bad
     row = dict(zip(headers, rows[0]))
     row_1 = dict(zip(headers, rows[1]))
-    if row["Name"] != sleep.name:
+    if row["Name"] != sleep_exp.name:
         row_1, row = row, row_1
 
-    assert sleep.name == row["Name"]
-    assert sleep.type == row["Entity-Type"]
+    assert sleep_exp.name == row["Name"]
+    assert sleep_exp.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 

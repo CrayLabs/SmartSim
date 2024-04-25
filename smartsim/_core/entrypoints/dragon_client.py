@@ -74,7 +74,7 @@ def main(args: argparse.Namespace) -> int:
 
     requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=True))
 
-    connector = DragonConnector(graceful_cleanup=False)
+    connector = DragonConnector()
 
     for request in requests:
         response = connector.send_request(request)

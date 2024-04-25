@@ -30,7 +30,7 @@ import os
 import typing as t
 
 from ...._core.launcher.stepMapping import StepMap
-from ....error import LauncherError
+from ....error import LauncherError, SmartSimError
 from ....log import get_logger
 from ....settings import (
     DragonRunSettings,
@@ -98,20 +98,20 @@ class DragonLauncher(WLMLauncher):
 
         if step_map.step_id is None:
             return
+        sublauncher: t.Optional[t.Union[SlurmLauncher, PBSLauncher]] = None
         if step_map.step_id.startswith("SLURM-"):
-            slurm_step_map = StepMap(
-                step_id=DragonLauncher._unprefix_step_id(step_map.step_id),
-                task_id=step_map.task_id,
-                managed=step_map.managed,
-            )
-            self._slurm_launcher.add_step_to_mapping_table(name, slurm_step_map)
+            sublauncher = self._slurm_launcher
         elif step_map.step_id.startswith("PBS-"):
-            pbs_step_map = StepMap(
-                step_id=DragonLauncher._unprefix_step_id(step_map.step_id),
-                task_id=step_map.task_id,
-                managed=step_map.managed,
-            )
-            self._pbs_launcher.add_step_to_mapping_table(name, pbs_step_map)
+            sublauncher = self._pbs_launcher
+        else:
+            raise ValueError(f"Step id {step_map.step_id} is not valid.")
+
+        sublauncher_step_map = StepMap(
+            step_id=DragonLauncher._unprefix_step_id(step_map.step_id),
+            task_id=step_map.task_id,
+            managed=step_map.managed,
+        )
+        sublauncher.add_step_to_mapping_table(name, sublauncher_step_map)
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
@@ -133,31 +133,30 @@ class DragonLauncher(WLMLauncher):
         out, err = step.get_output_files()
 
         if isinstance(step, DragonBatchStep):
-            if isinstance(step.batch_settings, SbatchSettings):
-                # wait for batch step to submit successfully
-                return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
-                if return_code != 0:
-                    raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
-                if out:
-                    slurm_step_id = out.strip()
-                    logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
+            # wait for batch step to submit successfully
+            sublauncher_step_id: t.Optional[str] = None
+            return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
+            if return_code != 0:
+                raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
+            if out:
+                sublauncher_step_id = out.strip()
+                logger.debug(
+                    f"Gleaned batch job id: {sublauncher_step_id} for {step.name}"
+                )
 
-                    self._slurm_launcher.step_mapping.add(
-                        step.name, slurm_step_id, task_id, step.managed
-                    )
-                    step_id = "SLURM-" + slurm_step_id
+            if sublauncher_step_id is None:
+                raise SmartSimError("Could not get step id for batch step")
+
+            if isinstance(step.batch_settings, SbatchSettings):
+                self._slurm_launcher.step_mapping.add(
+                    step.name, sublauncher_step_id, task_id, step.managed
+                )
+                step_id = "SLURM-" + sublauncher_step_id
             elif isinstance(step.batch_settings, QsubBatchSettings):
-                # wait for batch step to submit successfully
-                return_code, out, err = self.task_manager.start_and_wait(cmd, step.cwd)
-                if return_code != 0:
-                    raise LauncherError(f"Qsub batch submission failed\n {out}\n {err}")
-                if out:
-                    pbs_step_id = out.strip()
-                    logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-                    self._pbs_launcher.step_mapping.add(
-                        step.name, pbs_step_id, task_id, step.managed
-                    )
-                    step_id = "PBS-" + pbs_step_id
+                self._pbs_launcher.step_mapping.add(
+                    step.name, sublauncher_step_id, task_id, step.managed
+                )
+                step_id = "PBS-" + sublauncher_step_id
         elif isinstance(step, DragonStep):
             run_args = step.run_settings.run_args
             env = step.run_settings.env_vars
