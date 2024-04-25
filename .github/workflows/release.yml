@@ -32,6 +32,10 @@ on:
   release:
     types: [published]
 
+changelog:
+  categories:
+    - title: plz work
+      labels: testing
 
 env:
   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
