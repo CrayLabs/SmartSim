@@ -75,7 +75,7 @@ def test_db_identifier_standard_then_colo_error(
 ):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
-        # Set experiment name
+    # Set experiment name
     exp_name = "test_db_identifier_standard_then_colo"
 
     # Retrieve parameters from testing environment

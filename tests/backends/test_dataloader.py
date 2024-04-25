@@ -349,4 +349,3 @@ def test_wrong_dataloaders(test_dir, wlmutils, single_db):
                 cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)
-

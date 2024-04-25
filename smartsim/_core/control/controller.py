@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import os.path as osp
 import pathlib
 import pickle
@@ -36,7 +37,6 @@ import sys
 import threading
 import time
 import typing as t
-from os import environ
 
 from smartredis import Client, ConfigOptions
 
@@ -758,7 +758,9 @@ class Controller:
         else:
             job_names = [dbnode.name for dbnode in orchestrator.entities]
         db_jobs = {
-            job: self._jobs.db_jobs[job] for job in self._jobs.db_jobs if job in job_names
+            job: self._jobs.db_jobs[job]
+            for job in self._jobs.db_jobs
+            if job in job_names
         }
 
         # Extract the associated steps
@@ -766,11 +768,7 @@ class Controller:
             self._launcher.step_mapping[db_job.name] for db_job in db_jobs.values()
         ]
 
-        orc_data = {
-            "db": orchestrator,
-            "db_jobs": db_jobs,
-            "steps": steps
-        }
+        orc_data = {"db": orchestrator, "db_jobs": db_jobs, "steps": steps}
 
         with open(orchestrator.checkpoint_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
@@ -801,8 +799,10 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if (all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
-                     and orchestrator.is_active()):
+                if (
+                    all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
+                    and orchestrator.is_active()
+                ):
                     ready = True
                     # TODO remove in favor of by node status check
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
@@ -822,12 +822,14 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_db(self, checkpoint_file: pathlib.Path) -> Orchestrator:
+    def reload_saved_db(
+        self, checkpoint_file: t.Union[str, os.PathLike[str]]
+    ) -> Orchestrator:
         with JM_LOCK:
 
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(
-                    f"The SmartSim database config file {checkpoint_file} "
+                    f"The SmartSim database config file {os.fspath(checkpoint_file)} "
                     "cannot be found."
                 )
 
@@ -892,9 +894,9 @@ class Controller:
             if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
                 raise SSInternalError("Cannot set DB Objects, DB is not running")
 
-            environ[f"SSDB{db_name}"] = db_addresses[0]
+            os.environ[f"SSDB{db_name}"] = db_addresses[0]
 
-            environ[f"SR_DB_TYPE{db_name}"] = (
+            os.environ[f"SR_DB_TYPE{db_name}"] = (
                 CLUSTERED if len(db_addresses) > 1 else STANDALONE
             )
 

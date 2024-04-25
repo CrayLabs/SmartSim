@@ -1,4 +1,3 @@
-
 # BSD 2-Clause License
 #
 # Copyright (c) 2021-2024, Hewlett Packard Enterprise
@@ -26,16 +25,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 
-import pytest
-
 import psutil
+import pytest
 
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
+
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
+
 
 def test_single_db_fixture(single_db):
     experiment = Experiment("test_single_fixture")

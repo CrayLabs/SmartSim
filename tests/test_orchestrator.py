@@ -74,7 +74,9 @@ def test_inactive_orc_get_address() -> None:
         db.get_address()
 
 
-def test_orc_is_active_functions(test_dir: str, wlmutils: "conftest.WLMUtils", single_db: "conftest.single_db") -> None:
+def test_orc_is_active_functions(
+    test_dir: str, wlmutils: "conftest.WLMUtils", single_db: "conftest.single_db"
+) -> None:
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     db = exp.reconnect_orchestrator(single_db.checkpoint_file)

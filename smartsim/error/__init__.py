@@ -32,10 +32,10 @@ from .errors import (
     ShellError,
     SmartSimError,
     SSConfigError,
+    SSDBFilesNotParseable,
     SSDBIDConflictError,
     SSInternalError,
     SSReservedKeywordError,
     SSUnsupportedError,
     UserStrategyError,
-    SSDBFilesNotParseable
 )

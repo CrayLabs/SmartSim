@@ -27,10 +27,10 @@
 # pylint: disable=too-many-lines
 
 import itertools
+import os.path as osp
 import sys
 import typing as t
 from os import environ, getcwd, getenv
-import os.path as osp
 from shlex import split as sh_split
 
 import psutil
@@ -42,7 +42,12 @@ from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList, TelemetryConfiguration
-from ..error import SmartSimError, SSConfigError, SSUnsupportedError, SSDBFilesNotParseable
+from ..error import (
+    SmartSimError,
+    SSConfigError,
+    SSDBFilesNotParseable,
+    SSUnsupportedError,
+)
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (

@@ -212,6 +212,7 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils, single_db):
     statuses = exp.get_status(ensemble)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
+
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
 def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB"""
