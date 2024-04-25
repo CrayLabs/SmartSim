@@ -1,84 +1,84 @@
-# #
-# # BSD 2-Clause License
-# #
-# # Copyright (c) 2021-2024, Hewlett Packard Enterprise
-# # All rights reserved.
-# #
-# # Redistribution and use in source and binary forms, with or without
-# # modification, are permitted provided that the following conditions are met:
-# #
-# # 1. Redistributions of source code must retain the above copyright notice, this
-# #    list of conditions and the following disclaimer.
-# #
-# # 2. Redistributions in binary form must reproduce the above copyright notice,
-# #    this list of conditions and the following disclaimer in the documentation
-# #    and/or other materials provided with the distribution.
-# #
-# # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# # DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# # FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# # DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# #
+#
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-# name: deploy_dev_docs
+name: deploy_dev_docs
 
-# on:
-#   push:
-#     branches:
-#       - develop
+on:
+  push:
+    branches:
+      - develop
 
-# jobs:
-#   build_docs:
-#     name: build_dev_docs
-#     runs-on: ubuntu-latest
+jobs:
+  build_docs:
+    name: build_dev_docs
+    runs-on: ubuntu-latest
 
-#     steps:
+    steps:
       
-#       # Maximize the space in this image
-#       - name: Maximize build space
-#         uses: easimon/maximize-build-space@v10
-#         with:
-#           root-reserve-mb: 30720
-#           remove-dotnet: true
-#           remove-android: true
-#           remove-haskell: true
-#           remove-codeql: true
-#           remove-docker-images: true
+      # Maximize the space in this image
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 30720
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
 
-#       - uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
 
-#       - uses: actions/checkout@v4
-#         with:
-#           ref: doc
-#           path: doc-branch
+      - uses: actions/checkout@v4
+        with:
+          ref: doc
+          path: doc-branch
 
-#       - name: Copy over other doc versions from doc branch
-#         run: |
-#           rm -rf doc-branch/docs/develop/
-#           mkdir -p ./docs
-#           cp -r doc-branch/docs/* ./docs/
-#           rm -rf doc-branch
+      - name: Copy over other doc versions from doc branch
+        run: |
+          rm -rf doc-branch/docs/develop/
+          mkdir -p ./docs
+          cp -r doc-branch/docs/* ./docs/
+          rm -rf doc-branch
 
-#       - name: Build documentation with docker
-#         run: make docks
+      - name: Build documentation with docker
+        run: make docks
 
-#       - name: Commit files
-#         run: |
-#           git add -Af
-#           git config --local user.email "action@github.com"
-#           git config --local user.name "GitHub Action"
-#           git commit -m "Update develop documentation"
+      - name: Commit files
+        run: |
+          git add -Af
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Update develop documentation"
 
-#       - uses: ad-m/github-push-action@v0.6.0
-#         with:
-#           github_token: ${{ secrets.GITHUB_TOKEN }}
-#           branch: doc
-#           force: true
+      - uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: doc
+          force: true
