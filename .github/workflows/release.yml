@@ -48,8 +48,7 @@ env:
 changelog:
   categories:
     - title: plz work
-      labels:
-        - smartsim
+      labels: repo-smartsim
 
 jobs:
   build_wheels:
