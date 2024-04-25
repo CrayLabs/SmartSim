@@ -66,17 +66,12 @@ def get_allocation(
 
     - exclusive=None
 
-    :param nodes: number of nodes for the allocation, defaults to 1
-    :type nodes: int, optional
-    :param time: wall time of the allocation, HH:MM:SS format, defaults to None
-    :type time: str, optional
-    :param account: account id for allocation, defaults to None
-    :type account: str, optional
-    :param options: additional options for the slurm wlm, defaults to None
-    :type options: dict[str, str], optional
+    :param nodes: number of nodes for the allocation
+    :param time: wall time of the allocation, HH:MM:SS format
+    :param account: account id for allocation
+    :param options: additional options for the slurm wlm
     :raises LauncherError: if the allocation is not successful
     :return: the id of the allocation
-    :rtype: str
     """
     if not which("salloc"):
         raise LauncherError(
@@ -107,7 +102,6 @@ def release_allocation(alloc_id: str) -> None:
     """Free an allocation's resources
 
     :param alloc_id: allocation id
-    :type alloc_id: str
     :raises LauncherError: if allocation could not be freed
     """
     if not which("scancel"):
@@ -136,15 +130,11 @@ def validate(nodes: int = 1, ppn: int = 1, partition: t.Optional[str] = None) ->
 
     if no partition is provided, the default partition is found and used.
 
-    :param nodes: Override the default node count to validate, defaults to 1
-    :type nodes: int, optional
-    :param ppn: Override the default processes per node to validate, defaults to 1
-    :type ppn: int, optional
-    :param partition: partition to validate, defaults to None
-    :type partition: str, optional
+    :param nodes: Override the default node count to validate
+    :param ppn: Override the default processes per node to validate
+    :param partition: partition to validate
     :raises: LauncherError
     :returns: True if resources are available, False otherwise
-    :rtype: bool
     """
     sys_partitions = _get_system_partition_info()
 
@@ -188,7 +178,6 @@ def get_default_partition() -> str:
     a star following its partition name in sinfo output
 
     :returns: the name of the default partition
-    :rtype: str
     """
     sinfo_output, _ = sinfo(["--noheader", "--format", "%P"])
 
@@ -205,7 +194,6 @@ def get_default_partition() -> str:
 def _get_system_partition_info() -> t.Dict[str, Partition]:
     """Build a dictionary of slurm partitions
     :returns: dict of Partition objects
-    :rtype: dict
     """
 
     sinfo_output, _ = sinfo(["--noheader", "--format", "%R %n %c"])
@@ -279,9 +267,7 @@ def _validate_time_format(time: str) -> str:
     By defualt the formatted wall time is the total number of seconds.
 
     :param time: number of hours to run job
-    :type time: str
     :returns: Formatted walltime
-    :rtype: str
     """
     try:
         hours, minutes, seconds = map(int, time.split(":"))
@@ -301,7 +287,6 @@ def get_hosts() -> t.List[str]:
         on which it is run
 
     :returns: Names of the host nodes
-    :rtype: list[str]
     :raises LauncherError: Could not access ``scontrol``
     :raises SmartSimError: ``SLURM_JOB_NODELIST`` is not set
     """
@@ -324,7 +309,6 @@ def get_queue() -> str:
     """Get the name of queue in a slurm allocation.
 
     :returns: The name of the queue
-    :rtype: str
     :raises SmartSimError: ``SLURM_JOB_PARTITION`` is not set
     """
     if job_partition := os.environ.get("SLURM_JOB_PARTITION", None):
@@ -336,7 +320,6 @@ def get_tasks() -> int:
     """Get the number of tasks in a slurm allocation.
 
     :returns: Then number of tasks in the allocation
-    :rtype: int
     :raises SmartSimError: ``SLURM_NTASKS`` is not set
     """
     if ntasks_str := os.environ.get("SLURM_NTASKS", 0):
@@ -353,7 +336,6 @@ def get_tasks_per_node() -> t.Dict[str, int]:
         on which it is run
 
     :returns: Map of nodes to number of tasks on that node
-    :rtype: dict[str, int]
     :raises SmartSimError: ``SLURM_TASKS_PER_NODE`` is not set
     """
     if "SLURM_TASKS_PER_NODE" in os.environ:

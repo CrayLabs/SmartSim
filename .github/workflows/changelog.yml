@@ -45,5 +45,5 @@ jobs:
     - name: Changelog Enforcer
       uses: dangoslen/changelog-enforcer@v3.6.0
       with:
-        changeLogPath: './doc/changelog.rst'
-        missingUpdateErrorMessage: 'changelog.rst has not been updated'
+        changeLogPath: './doc/changelog.md'
+        missingUpdateErrorMessage: 'changelog.md has not been updated'

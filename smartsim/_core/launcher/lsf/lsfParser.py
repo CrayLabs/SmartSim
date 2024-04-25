@@ -31,9 +31,7 @@ def parse_bsub(output: str) -> str:
     """Parse bsub output and return job id.
 
     :param output: stdout of bsub command
-    :type output: str
     :returns: job id
-    :rtype: str
     """
     for line in output.split("\n"):
         if line.startswith("Job"):
@@ -45,9 +43,7 @@ def parse_bsub_error(output: str) -> str:
     """Parse and return error output of a failed bsub command.
 
     :param output: stderr of qsub command
-    :type output: str
     :returns: error message
-    :rtype: str
     """
     # Search for first non-empty line
     error_lines = []
@@ -77,11 +73,8 @@ def parse_jslist_stepid(output: str, step_id: str) -> t.Tuple[str, t.Optional[st
     options to obtain step status
 
     :param output: output of the bjobs command
-    :type output: str
     :param step_id: allocation id or job step id
-    :type step_id: str
     :return: status and return code
-    :rtype: (str, str)
     """
     result: t.Tuple[str, t.Optional[str]] = ("NOTFOUND", None)
 
@@ -101,11 +94,8 @@ def parse_bjobs_jobid(output: str, job_id: str) -> str:
     to obtain job status.
 
     :param output: output of the bjobs command
-    :type output: str
     :param job_id: allocation id or job step id
-    :type job_id: str
     :return: status
-    :rtype: str
     """
     result = "NOTFOUND"
     for line in output.split("\n"):
@@ -126,9 +116,7 @@ def parse_bjobs_nodes(output: str) -> t.List[str]:
     a job in a list with the duplicates removed.
 
     :param output: output of the `bjobs -w` command
-    :type output: str
     :return: compute nodes of the allocation or job
-    :rtype: list of str
     """
     nodes = []
 
@@ -146,11 +134,8 @@ def parse_max_step_id_from_jslist(output: str) -> t.Optional[str]:
     properly returned
 
     :param output: output bjobs
-    :type output: str
     :param step_name: the name of the step to query
-    :type step_name: str
     :return: the step_id
-    :rtype: str
     """
     max_step_id = None
 

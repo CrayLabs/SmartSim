@@ -78,7 +78,6 @@ def clean(core_path: Path, _all: bool = False) -> int:
     """Remove pre existing installations of ML runtimes
 
     :param _all: Remove all non-python dependencies
-    :type _all: bool, optional
     """
 
     build_temp = core_path / ".third-party"

@@ -75,9 +75,7 @@ def get_hosts(launcher: t.Optional[str] = None) -> t.List[str]:
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
                      is provided ``detect_launcher`` is used to select a launcher.
-    :type launcher: str | None
     :returns: Names of the hosts
-    :rtype: list[str]
     :raises SSUnsupportedError: User attempted to use an unsupported WLM
     """
     if launcher is None:
@@ -94,9 +92,7 @@ def get_queue(launcher: t.Optional[str] = None) -> str:
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
                      is provided ``detect_launcher`` is used to select a launcher.
-    :type launcher: str | None
     :returns: Name of the queue
-    :rtype: str
     :raises SSUnsupportedError: User attempted to use an unsupported WLM
     """
     if launcher is None:
@@ -113,9 +109,7 @@ def get_tasks(launcher: t.Optional[str] = None) -> int:
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
                      is provided ``detect_launcher`` is used to select a launcher.
-    :type launcher: str | None
     :returns: Number of tasks
-    :rtype: int
     :raises SSUnsupportedError: User attempted to use an unsupported WLM
     """
     if launcher is None:
@@ -132,9 +126,7 @@ def get_tasks_per_node(launcher: t.Optional[str] = None) -> t.Dict[str, int]:
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
                      is provided ``detect_launcher`` is used to select a launcher.
-    :type launcher: str | None
     :returns: Map of nodes to number of processes on that node
-    :rtype: dict[str, int]
     :raises SSUnsupportedError: User attempted to use an unsupported WLM
     """
     if launcher is None:
