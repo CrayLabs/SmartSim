@@ -295,7 +295,9 @@ class JobManager:
                 dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
                 dict_entry.extend(
                     f"{get_ip_from_host(host)}:{port}"
-                    for host, port in itertools.product(job.hosts, db_entity.ports)
+                    for host, port in itertools.product(
+                        db_entity.hosts, db_entity.ports
+                    )
                 )
                 address_dict[db_entity.db_identifier] = dict_entry
 

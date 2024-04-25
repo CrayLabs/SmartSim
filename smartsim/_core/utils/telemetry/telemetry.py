@@ -248,7 +248,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                         _dangerous_cast_entity_name_to_step_name(entity.name),
                         entity.step_id,
                         "",
-                        True
+                        True,
                     )
             self._tracked_runs[run.timestamp] = run
 

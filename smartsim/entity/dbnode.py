@@ -96,6 +96,14 @@ class DBNode(SmartSimEntity):
     def hosts(self) -> t.List[str]:
         if not self._hosts:
             self._hosts = self._parse_db_hosts()
+            #                  ^^^^^^^^^^^^^^^^^
+            # XXX: Why on earth is the entity responsible for determining on
+            #      which hosts it is running. Especially since this parsing
+            #      behavior will not be preformed if a user sets the hosts attr
+            #      using the `set_hosts` method on either the `DBNode` or the
+            #      `Orchestrator`.  Since the `Job` (theoretically) correlates
+            #      to a "launched" entity, shouldn't it be the one responsible
+            #      for knowing what hosts it is _actually_ running on??
         return self._hosts
 
     def clear_hosts(self) -> None:

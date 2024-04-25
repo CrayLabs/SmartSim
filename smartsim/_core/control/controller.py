@@ -521,26 +521,6 @@ class Controller:
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
-        # XXX: Why on earth does the launching process set the hosts attrs of
-        #      the launched job? Especially since `hosts` is a user writeable
-        #      attr on both the `Orchestrator` and the `DBNode` instances via
-        #      the `set_hosts` method.  Since the `Job` (theoretically)
-        #      correlates to a launched entity, shouldn't it be the one
-        #      responsible for knowing what hosts it is actually running on??
-        # XXX: IMO, it is a MASSIVE code smell that we need to query into the
-        #      `_entity_to_job_monitor_id` even though we assume that
-        #      `_launch_step` will make the insertion. If we need to modify the
-        #      `Job` why does `launch_step` not return a job? Why do we need to
-        #      modify the `Job` at all?
-        if orchestrator.batch:
-            self._job_manager[
-                self._entity_to_job_monitor_id[orchestrator.name]
-            ].hosts = orchestrator.hosts
-        else:
-            for dbnode in orchestrator.entities:
-                self._job_manager[self._entity_to_job_monitor_id[dbnode.name]].hosts = (
-                    dbnode.hosts
-                )
 
         # create the database cluster
         if orchestrator.num_shards > 2:

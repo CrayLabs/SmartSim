@@ -241,7 +241,6 @@ class Job:
         # output is only populated if it's system related (e.g. cmd failed immediately)
         self.output: t.Optional[str] = None
         self.error: t.Optional[str] = None  # same as output
-        self.hosts: t.List[str] = []  # currently only used for DB jobs
         self.launched_with: t.Final = launcher
         self.is_task = is_task
         self.start_time = time.time()
@@ -393,7 +392,6 @@ class Job:
         self.returncode = None
         self.output = None
         self.error = None
-        self.hosts = []
         self.is_task = is_task
         self.start_time = time.time()
         self.history.new_run()
