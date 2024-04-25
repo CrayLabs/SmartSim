@@ -45,12 +45,6 @@ env:
   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
-changelog:
-  categories:
-    - title: plz work
-      labels:
-        - refactor
-
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
