@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Update authentication in release workflow
 - Auto-generate type-hints into documentation
 - Auto-post release PR to develop
 - Bump manifest.json to version 0.0.4
@@ -49,6 +50,8 @@ Description
 
 Detailed Notes
 
+- Replace the developer created token with the GH_TOKEN environment variable.
+  (SmartSim-PR570_)
 - Add extension to auto-generate function type-hints into documentation.
   (SmartSim-PR561_)
 - Add to github release workflow to auto generate a pull request from master
@@ -132,6 +135,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR570: https://github.com/CrayLabs/SmartSim/pull/570
 .. _SmartSim-PR561: https://github.com/CrayLabs/SmartSim/pull/561
 .. _SmartSim-PR566: https://github.com/CrayLabs/SmartSim/pull/566
 .. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/563
