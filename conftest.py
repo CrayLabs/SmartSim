@@ -609,11 +609,8 @@ class FileUtils:
         """Create a dummy file in the test output directory.
 
         :param file_name: name of file to create, e.g. "file.txt"
-        :type file_name: str
         :param file_dir: path
-        :type file_dir: str
         :return: String path to test output file
-        :rtype: str
         """
         file_path = os.path.join(file_dir, file_name)
         os.makedirs(file_dir)

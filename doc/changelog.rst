@@ -18,6 +18,7 @@ To be released at some future point in time
 
 Description
 
+- Auto-generate type-hints into documentation
 - Auto-post release PR to develop
 - Bump manifest.json to version 0.0.4
 - Fix symlinking batch ensemble and model bug
@@ -48,6 +49,8 @@ Description
 
 Detailed Notes
 
+- Add extension to auto-generate function type-hints into documentation.
+  (SmartSim-PR561_)
 - Add to github release workflow to auto generate a pull request from master
   into develop for release. (SmartSim-PR566_)
 - The manifest.json version needs to match the SmartDashboard version, which is
@@ -129,6 +132,7 @@ Detailed Notes
   handler. SmartSim will now attempt to kill any launched jobs before calling
   the previously registered signal handler. (SmartSim-PR535_)
 
+.. _SmartSim-PR561: https://github.com/CrayLabs/SmartSim/pull/561
 .. _SmartSim-PR566: https://github.com/CrayLabs/SmartSim/pull/566
 .. _SmartSim-PR563: https://github.com/CrayLabs/SmartSim/pull/563
 .. _SmartSim-PR547: https://github.com/CrayLabs/SmartSim/pull/547

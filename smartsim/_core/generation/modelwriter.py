@@ -48,10 +48,8 @@ class ModelWriter:
 
         :param tag: tag for the modelwriter to search for,
                     defaults to semi-colon e.g. ";"
-        :type tag: str
         :param regex: full regex for the modelwriter to search for,
                      defaults to "(;.+;)"
-        :type regex: str, optional
         """
         if regex:
             self.regex = regex
@@ -69,13 +67,9 @@ class ModelWriter:
            instance.
 
         :param tagged_files: list of paths to tagged files
-        :type model: list[str]
         :param params: model parameters
-        :type params: dict[str, str]
         :param make_missing_tags_fatal: raise an error if a tag is missing
-        :type make_missing_tags_fatal: bool
         :returns: A dict connecting each file to its parameter settings
-        :rtype: dict[str,dict[str,str]]
         """
         files_to_tags: t.Dict[str, t.Dict[str, str]] = {}
         for tagged_file in tagged_files:
@@ -90,7 +84,6 @@ class ModelWriter:
         """Set the lines for the modelwrtter to iterate over
 
         :param file_path: path to the newly created and tagged file
-        :type file_path: str
         :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
@@ -118,12 +111,9 @@ class ModelWriter:
            model. The tag defaults to ";"
 
         :param model: The model instance
-        :type model: Model
         :param make_fatal: (Optional) Set to True to force a fatal error
             if a tag is not matched
-        :type make_fatal: bool
         :returns: A dict of parameter names and values set for the file
-        :rtype: dict[str,str]
         """
         edited = []
         unused_tags: t.DefaultDict[str, t.List[int]] = collections.defaultdict(list)

@@ -37,9 +37,7 @@ def get_ip_from_host(host: str) -> str:
     """Return the IP address for the interconnect.
 
     :param host: hostname of the compute node e.g. nid00004
-    :type host: str
     :returns: ip of host
-    :rtype: str
     """
     ip_address = socket.gethostbyname(host)
     return ip_address
@@ -50,11 +48,9 @@ def get_ip_from_interface(interface: str) -> str:  # pragma: no cover
     """Get IPV4 address of a network interface
 
     :param interface: interface name
-    :type interface: str
     :raises ValueError: if the interface does not exist
     :raises ValueError: if interface does not have an IPV4 address
     :return: ip address of interface
-    :rtype: str
     """
     net_if_addrs = psutil.net_if_addrs()
     if interface not in net_if_addrs:

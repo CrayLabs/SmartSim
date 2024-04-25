@@ -64,11 +64,8 @@ class Generator:
         collision between entities.
 
         :param gen_path: Path in which files need to be generated
-        :type gen_path: str
-        :param overwrite: toggle entity replacement, defaults to False
-        :type overwrite: bool, optional
+        :param overwrite: toggle entity replacement
         :param verbose: Whether generation information should be logged to std out
-        :type verbose: bool, optional
         """
         self._writer = ModelWriter()
         self.gen_path = gen_path
@@ -82,7 +79,6 @@ class Generator:
         of all generated entities.
 
         :returns: path to file with parameter settings
-        :rtype: str
         """
         return join(self.gen_path, "smartsim_params.txt")
 
@@ -129,11 +125,7 @@ class Generator:
 
         :param tag: A string of characters that signify
                     the string to be changed. Defaults to ``;``
-        :type tag: str
-
-        :param regex: full regex for the modelwriter to search for,
-                      defaults to None
-        :type regex: str | None
+        :param regex: full regex for the modelwriter to search for
         """
         self._writer.set_tag(tag, regex)
 
@@ -167,7 +159,6 @@ class Generator:
            configuration files for the orchestrator.
 
         :param orchestrator: Orchestrator instance
-        :type orchestrator: Orchestrator | None
         """
         # Loop through orchestrators
         for orchestrator in orchestrator_list:
@@ -183,7 +174,6 @@ class Generator:
         """Generate directories for Ensemble instances
 
         :param entity_lists: list of Ensemble instances
-        :type entity_lists: list
         """
 
         if not entity_lists:
@@ -209,9 +199,7 @@ class Generator:
         """Generate directories for Entity instances
 
         :param entities: list of Model instances
-        :type entities: list[Model]
-        :param entity_list: Ensemble instance, defaults to None
-        :type entity_list: Ensemble | None
+        :param entity_list: Ensemble instance
         :raises EntityExistsError: if a directory already exists for an
                                    entity by that name
         """
@@ -247,7 +235,6 @@ class Generator:
            an Ensemble.
 
         :param entity: a Model instance
-        :type entity: Model
         """
         if entity.files:
             to_write = []
@@ -258,7 +245,6 @@ class Generator:
 
                 :param tagged: a TaggedFileHierarchy to be built as a
                                directory structure
-                :type tagged: TaggedFilesHierarchy
                 """
                 for file in tagged.files:
                     dst_path = path.join(entity.path, tagged.base, path.basename(file))
@@ -291,9 +277,7 @@ class Generator:
         and what values were set to the parameters
 
         :param entity: the model being generated
-        :type entity: Model
         :param files_to_params: a dict connecting each file to its parameter settings
-        :type files_to_params: t.Dict[str, t.Dict[str, str]]
         """
         used_params: t.Dict[str, str] = {}
         file_to_tables: t.Dict[str, str] = {}
@@ -333,7 +317,6 @@ class Generator:
         """Copy the entity files and directories attached to this entity.
 
         :param entity: Model
-        :type entity: Model
         """
         if entity.files:
             for to_copy in entity.files.copy:
@@ -348,7 +331,6 @@ class Generator:
         """Symlink the entity files attached to this entity.
 
         :param entity: Model
-        :type entity: Model
         """
         if entity.files:
             for to_link in entity.files.link:

@@ -59,21 +59,15 @@ class Model(SmartSimEntity):
         """Initialize a ``Model``
 
         :param name: name of the model
-        :type name: str
         :param params: model parameters for writing into configuration files or
                        to be passed as command line arguments to executable.
-        :type params: dict
         :param path: path to output, error, and configuration files
-        :type path: str
         :param run_settings: launcher settings specified in the experiment
-        :type run_settings: RunSettings
         :param params_as_args: list of parameters which have to be
                                interpreted as command line arguments to
                                be added to run_settings
-        :type params_as_args: list[str]
         :param batch_settings: Launcher settings for running the individual
-                               model as a batch job, defaults to None
-        :type batch_settings: BatchSettings | None
+                               model as a batch job
         """
         super().__init__(name, str(path), run_settings)
         self.params = params
@@ -87,17 +81,26 @@ class Model(SmartSimEntity):
 
     @property
     def db_models(self) -> t.Iterable[DBModel]:
-        """Return an immutable collection of attached models"""
+        """Retrieve an immutable collection of attached models
+
+        :return: Return an immutable collection of attached models
+        """
         return (model for model in self._db_models)
 
     @property
     def db_scripts(self) -> t.Iterable[DBScript]:
-        """Return an immutable collection attached of scripts"""
+        """Retrieve an immutable collection attached of scripts
+
+        :return: Return an immutable collection of attached scripts
+        """
         return (script for script in self._db_scripts)
 
     @property
     def colocated(self) -> bool:
-        """Return True if this Model will run with a colocated Orchestrator"""
+        """Return True if this Model will run with a colocated Orchestrator
+
+        :return: Return True of the Model will run with a colocated Orchestrator
+        """
         return bool(self.run_settings.colocated_db_settings)
 
     def register_incoming_entity(self, incoming_entity: SmartSimEntity) -> None:
@@ -108,7 +111,6 @@ class Model(SmartSimEntity):
         with that entity
 
         :param incoming_entity: The entity that data will be received from
-        :type incoming_entity: SmartSimEntity
         :raises SmartSimError: if incoming entity has already been registered
         """
         if incoming_entity.name in [
@@ -130,7 +132,10 @@ class Model(SmartSimEntity):
         self._key_prefixing_enabled = False
 
     def query_key_prefixing(self) -> bool:
-        """Inquire as to whether this entity will prefix its keys with its name"""
+        """Inquire as to whether this entity will prefix its keys with its name
+
+        :return: Return True if entity will prefix its keys with its name
+        """
         return self._key_prefixing_enabled
 
     def attach_generator_files(
@@ -157,12 +162,9 @@ class Model(SmartSimEntity):
         would like to change. The tag is settable but defaults
         to a semicolon e.g. THERMO = ;10;
 
-        :param to_copy: files to copy, defaults to []
-        :type to_copy: list, optional
-        :param to_symlink: files to symlink, defaults to []
-        :type to_symlink: list, optional
-        :param to_configure: input files with tagged parameters, defaults to []
-        :type to_configure: list, optional
+        :param to_copy: files to copy
+        :param to_symlink: files to symlink
+        :param to_configure: input files with tagged parameters
         """
         to_copy = to_copy or []
         to_symlink = to_symlink or []
@@ -187,7 +189,6 @@ class Model(SmartSimEntity):
         """Return a list of attached files as a plain text table
 
         :returns: String version of table
-        :rtype: str
         """
         if not self.files:
             return "No file attached to this model."
@@ -241,18 +242,12 @@ class Model(SmartSimEntity):
         Generally these don't need to be changed.
 
         :param unix_socket: path to where the socket file will be created
-        :type unix_socket: str, optional
         :param socket_permissions: permissions for the socketfile
-        :type socket_permissions: int, optional
-        :param db_cpus: number of cpus to use for orchestrator, defaults to 1
-        :type db_cpus: int, optional
+        :param db_cpus: number of cpus to use for orchestrator
         :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
                                iterable disables pinning
-        :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
-        :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
-        :type kwargs: dict, optional
         """
 
         if not re.match(r"^[a-zA-Z0-9.:\,_\-/]*$", unix_socket):
@@ -307,20 +302,13 @@ class Model(SmartSimEntity):
 
         Generally these don't need to be changed.
 
-        :param port: port to use for orchestrator database, defaults to 6379
-        :type port: int, optional
-        :param ifname: interface to use for orchestrator, defaults to "lo"
-        :type ifname: str | list[str], optional
-        :param db_cpus: number of cpus to use for orchestrator, defaults to 1
-        :type db_cpus: int, optional
+        :param port: port to use for orchestrator database
+        :param ifname: interface to use for orchestrator
+        :param db_cpus: number of cpus to use for orchestrator
         :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
                                iterable disables pinning
-        :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
-        :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
-        :type kwargs: dict, optional
-
         """
 
         tcp_options = {"port": port, "ifname": ifname}
@@ -504,35 +492,22 @@ class Model(SmartSimEntity):
         must be provided
 
         :param name: key to store model under
-        :type name: str
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
         :param model: A model in memory (only supported for non-colocated orchestrators)
-        :type model: byte string, optional
         :param model_path: serialized model
-        :type model_path: file path to model
-        :param device: name of device for execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: name of device for execution
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
-        :type devices_per_node: int
         :param first_device: The first GPU device to use on the host.
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
-        :type first_device: int
-        :param batch_size: batch size for execution, defaults to 0
-        :type batch_size: int, optional
-        :param min_batch_size: minimum batch size for model execution, defaults to 0
-        :type min_batch_size: int, optional
-        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
-        :type min_batch_timeout: int, optional
-        :param tag: additional tag for model information, defaults to ""
-        :type tag: str, optional
-        :param inputs: model inputs (TF only), defaults to None
-        :type inputs: list[str], optional
-        :param outputs: model outupts (TF only), defaults to None
-        :type outputs: list[str], optional
+        :param batch_size: batch size for execution
+        :param min_batch_size: minimum batch size for model execution
+        :param min_batch_timeout: time to wait for minimum batch size
+        :param tag: additional tag for model information
+        :param inputs: model inputs (TF only)
+        :param outputs: model outupts (TF only)
         """
         db_model = DBModel(
             name=name,
@@ -578,21 +553,15 @@ class Model(SmartSimEntity):
         must be provided
 
         :param name: key to store script under
-        :type name: str
         :param script: TorchScript code (only supported for non-colocated orchestrators)
-        :type script: str, optional
         :param script_path: path to TorchScript code
-        :type script_path: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: device for script execution
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
-        :type devices_per_node: int
         :param first_device: The first GPU device to use on the host.
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
-        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -627,19 +596,14 @@ class Model(SmartSimEntity):
         in the model being stored in the first N devices of type ``device``.
 
         :param name: key to store function under
-        :type name: str
         :param function: TorchScript function code
-        :type function: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: device for script execution
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
-        :type devices_per_node: int
         :param first_device: The first GPU device to use on the host.
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
-        :type first_device: int
         """
         db_script = DBScript(
             name=name,

@@ -51,11 +51,8 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
     """Unpack the unformatted database identifier
     and format for env variable suffix using the token
     :param db_id: the unformatted database identifier eg. identifier_1
-    :type db_id: str
     :param token: character to use to construct the db suffix
-    :type token: str
     :return: db id suffix and formatted db_id e.g. ("_identifier_1", "identifier_1")
-    :rtype: (str, str)
     """
 
     if db_id == "orchestrator":
@@ -66,10 +63,9 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
 
 def unpack_colo_db_identifier(db_id: str) -> str:
     """Create database identifier suffix for colocated database
+
     :param db_id: the unformatted database identifier
-    :type db_id: str
     :return: db suffix
-    :rtype: str
     """
     return "_" + db_id if db_id else ""
 
@@ -100,10 +96,9 @@ def fmt_dict(value: t.Dict[str, t.Any]) -> str:
 
 def get_base_36_repr(positive_int: int) -> str:
     """Converts a positive integer to its base 36 representation
+
     :param positive_int: the positive integer to convert
-    :type positive_int: int
     :return: base 36 representation of the given positive int
-    :rtype: str
     """
     digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     result = []
@@ -120,7 +115,6 @@ def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
-    :type exe: str
     :raises TypeError: if file is not an executable
     :raises FileNotFoundError: if executable cannot be found
     """
@@ -182,9 +176,7 @@ def colorize(
 def delete_elements(dictionary: t.Dict[str, t.Any], key_list: t.List[str]) -> None:
     """Delete elements from a dictionary.
     :param dictionary: the dictionary from which the elements must be deleted.
-    :type dictionary: dict
     :param key_list: the list of keys to delete from the dictionary.
-    :type key: any
     """
     for key in key_list:
         if key in dictionary:
@@ -209,9 +201,7 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
       `-arg_name=value` (i.e., `-a val`)
 
     :param arg_name: the command line argument name
-    :type arg_name: str
     :param value: the command line argument value
-    :type value: str
     """
 
     if arg_name.startswith("--"):
@@ -255,10 +245,8 @@ def installed_redisai_backends(
     the backend directories (`redisai_tensorflow`, `redisai_torch`,
     `redisai_onnxruntime`, or `redisai_tflite`).
 
-    :param backends_path: path containing backends, defaults to None
-    :type backends_path: str, optional
+    :param backends_path: path containing backends
     :return: list of installed RedisAI backends
-    :rtype: set[str]
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
@@ -321,9 +309,7 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
             signal number via the `get` factory method.
 
         :param signalnum: The signal number to intercept
-        :type signalnum: int
         :param callbacks: A iterable of functions to call upon receiving the signal
-        :type callbacks: t.Iterable[_TSignalHandlerFn] | None
         """
         self._callbacks = list(callbacks) if callbacks else []
         self._original = signal.signal(signalnum, self)
@@ -333,7 +319,6 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         End by calling the originally registered signal hander (if present).
 
         :param frame: The current stack frame
-        :type frame: FrameType | None
         """
         for fn in self:
             fn(signalnum, frame)
@@ -356,9 +341,7 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
 
         :param signalnum: The singal number of the signal interception stack
                           should be registered
-        :type signalnum: int
         :returns: The existing or created signal interception stack
-        :rtype: SignalInterceptionStack
         """
         handler = signal.getsignal(signalnum)
         if isinstance(handler, cls):
@@ -369,7 +352,6 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         """Add a callback to the signal interception stack.
 
         :param fn: A callable to add to the unique signal stack
-        :type fn: _TSignalHandlerFn
         """
         self._callbacks.append(fn)
 
@@ -378,10 +360,8 @@ class SignalInterceptionStack(collections.abc.Collection[_TSignalHandlerFn]):
         callback is not already present.
 
         :param fn: A callable to add to the unique signal stack
-        :type fn: _TSignalHandlerFn
         :returns: True if the callback was added, False if the callback was
                   already present
-        :rtype: bool
         """
         if did_push := fn not in self:
             self.push(fn)
