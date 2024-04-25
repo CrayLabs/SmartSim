@@ -34,6 +34,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 import typing as t
 from pathlib import Path
 from threading import RLock
@@ -416,16 +417,8 @@ def _dragon_cleanup(
         if server_process_pid and psutil.pid_exists(server_process_pid):
             os.kill(server_process_pid, signal.SIGKILL)
     finally:
+        time.sleep(5)
         print("Sending shutdown request is complete")
-
-    try:
-        if server_authenticator is not None and server_authenticator.is_alive():
-            print("Shutting down ZMQ authenticator")
-            server_authenticator.stop()
-    except Exception:
-        print("Authenticator shutdown error")
-    finally:
-        print("Authenticator shutdown is complete")
 
     if server_process_pid:
         try:
@@ -436,6 +429,15 @@ def _dragon_cleanup(
             )
         except Exception as e:
             logger.debug(e)
+
+    try:
+        if server_authenticator is not None and server_authenticator.is_alive():
+            print("Shutting down ZMQ authenticator")
+            server_authenticator.stop()
+    except Exception:
+        print("Authenticator shutdown error")
+    finally:
+        print("Authenticator shutdown is complete")
 
 
 def _resolve_dragon_path(fallback: t.Union[str, "os.PathLike[str]"]) -> Path:

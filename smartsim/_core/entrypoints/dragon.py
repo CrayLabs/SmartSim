@@ -38,6 +38,7 @@ from types import FrameType
 import zmq
 import zmq.auth.thread
 
+from smartsim._core.config import get_config
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
@@ -84,8 +85,12 @@ def print_summary(network_interface: str, ip_address: str) -> None:
 def start_updater(
     backend: DragonBackend, updater: t.Optional[ContextThread]
 ) -> ContextThread:
+    # If the updater was started, check if it completed or died
     if updater is not None:
         updater.join(0.1)
+        # If it's alive, there is nothing to do
+        if updater.is_alive():
+            return updater
     updater = ContextThread(name="DragonBackend", daemon=True, target=backend.update)
     updater.start()
     return updater
@@ -127,7 +132,7 @@ def run(
             heartbeat_delay = (
                 dragon_backend.current_time - dragon_backend.last_heartbeat
             )
-            if heartbeat_delay > 10.0:
+            if heartbeat_delay > 30.0:
                 logger.debug(
                     f"Restarting updater after {heartbeat_delay:.2f} "
                     "seconds of inactivity."
@@ -155,10 +160,15 @@ def main(args: argparse.Namespace) -> int:
         raise ValueError("Net interface could not be determined")
     dragon_head_address = f"tcp://{address}"
 
+    smartsim_config = get_config()
     if args.launching_address:
         zmq_context = zmq.Context()
-        zmq_context.setsockopt(zmq.SNDTIMEO, value=30000)
-        zmq_context.setsockopt(zmq.RCVTIMEO, value=30000)
+        zmq_context.setsockopt(
+            zmq.SNDTIMEO, value=smartsim_config.dragon_server_timeout
+        )
+        zmq_context.setsockopt(
+            zmq.RCVTIMEO, value=smartsim_config.dragon_server_timeout
+        )
         zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
         zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
 
