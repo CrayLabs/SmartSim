@@ -38,7 +38,6 @@ def sstat(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]
     """Calls sstat with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of sstat
     """
     _, out, err = _execute_slurm_cmd("sstat", args, raise_on_err=raise_on_err)
@@ -49,7 +48,6 @@ def sacct(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]
     """Calls sacct with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of sacct
     """
     _, out, err = _execute_slurm_cmd("sacct", args, raise_on_err=raise_on_err)
@@ -60,7 +58,6 @@ def salloc(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str
     """Calls slurm salloc with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of salloc
     """
     _, out, err = _execute_slurm_cmd("salloc", args, raise_on_err=raise_on_err)
@@ -71,7 +68,6 @@ def sinfo(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, str]
     """Calls slurm sinfo with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of sinfo
     """
     _, out, err = _execute_slurm_cmd("sinfo", args, raise_on_err=raise_on_err)
@@ -82,7 +78,6 @@ def scontrol(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[str, s
     """Calls slurm scontrol with args
 
     :param args: List of command arguments
-    :type args: List of str
     :returns: Output and error of sinfo
     """
     _, out, err = _execute_slurm_cmd("scontrol", args, raise_on_err=raise_on_err)
@@ -95,9 +90,7 @@ def scancel(args: t.List[str], *, raise_on_err: bool = False) -> t.Tuple[int, st
     returncode is also supplied in this function.
 
     :param args: list of command arguments
-    :type args: list of str
     :return: output and error
-    :rtype: str
     """
     return _execute_slurm_cmd("scancel", args, raise_on_err=raise_on_err)
 

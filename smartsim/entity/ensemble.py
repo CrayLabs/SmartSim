@@ -75,27 +75,19 @@ class Ensemble(EntityList[Model]):
         parameters to the permutation strategy.
 
         :param name: name of the ensemble
-        :type name: str
         :param params: parameters to expand into ``Model`` members
-        :type params: dict[str, Any]
         :param params_as_args: list of params that should be used as command
             line arguments to the ``Model`` member executables and not written
             to generator files
-        :type params_as_args: list[str]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
-        :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
-        :type run_settings: RunSettings, optional
         :param replicas: number of ``Model`` replicas to create - a keyword
             argument of kwargs
-        :type replicas: int, optional
         :param perm_strategy: strategy for expanding ``params`` into
                              ``Model`` instances from params argument
                              options are "all_perm", "step", "random"
-                             or a callable function. Defaults to "all_perm".
-        :type perm_strategy: str
+                             or a callable function.
         :return: ``Ensemble`` instance
-        :rtype: ``Ensemble``
         """
         self.params = params or {}
         self.params_as_args = params_as_args or []
@@ -190,7 +182,6 @@ class Ensemble(EntityList[Model]):
         """Add a model to this ensemble
 
         :param model: model instance to be added
-        :type model: Model
         :raises TypeError: if model is not an instance of ``Model``
         :raises EntityExistsError: if model already exists in this ensemble
         """
@@ -221,7 +212,6 @@ class Ensemble(EntityList[Model]):
         Only python clients can have multiple incoming connections
 
         :param incoming_entity: The entity that data will be received from
-        :type incoming_entity: SmartSimEntity
         """
         for model in self.models:
             model.register_incoming_entity(incoming_entity)
@@ -237,7 +227,6 @@ class Ensemble(EntityList[Model]):
         """Inquire as to whether each model within the ensemble will prefix their keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
-        :rtype: bool
         """
         return all(model.query_key_prefixing() for model in self.models)
 
@@ -263,12 +252,9 @@ class Ensemble(EntityList[Model]):
         would like to change. The tag is settable but defaults
         to a semicolon e.g. THERMO = ;10;
 
-        :param to_copy: files to copy, defaults to []
-        :type to_copy: list, optional
-        :param to_symlink: files to symlink, defaults to []
-        :type to_symlink: list, optional
-        :param to_configure: input files with tagged parameters, defaults to []
-        :type to_configure: list, optional
+        :param to_copy: files to copy
+        :param to_symlink: files to symlink
+        :param to_configure: input files with tagged parameters
         """
         for model in self.models:
             model.attach_generator_files(
@@ -281,7 +267,6 @@ class Ensemble(EntityList[Model]):
         attached to models belonging to this ensemble.
 
         :returns: A table of all files attached to all models
-        :rtype: str
         """
         if not self.models:
             return "The ensemble is empty, no files to show."
@@ -304,10 +289,8 @@ class Ensemble(EntityList[Model]):
         the ensemble
 
         :param strategy: name of the strategy or callable function
-        :type strategy: str
         :raises SSUnsupportedError: if str name is not supported
         :return: strategy function
-        :rtype: callable
         """
         if strategy == "all_perm":
             return create_all_permutations
@@ -327,7 +310,6 @@ class Ensemble(EntityList[Model]):
 
         :raises TypeError: if params are of the wrong type
         :return: param names and values for permutation strategy
-        :rtype: tuple[list, list]
         """
 
         if not isinstance(self.params, dict):
@@ -378,33 +360,19 @@ class Ensemble(EntityList[Model]):
         must be provided
 
         :param name: key to store model under
-        :type name: str
         :param model: model in memory
-        :type model: str | bytes | None
         :param model_path: serialized model
-        :type model_path: file path to model
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
-        :param device: name of device for execution, defaults to "CPU"
-        :type device: str, optional
-        :param devices_per_node: number of GPUs per node in multiGPU nodes,
-                                 defaults to 1
-        :type devices_per_node: int, optional
+        :param device: name of device for execution
+        :param devices_per_node: number of GPUs per node in multiGPU nodes
         :param first_device: first device in multi-GPU nodes to use for execution,
                              defaults to 0; ignored if devices_per_node is 1
-        :type first_device: int, optional
-        :param batch_size: batch size for execution, defaults to 0
-        :type batch_size: int, optional
-        :param min_batch_size: minimum batch size for model execution, defaults to 0
-        :type min_batch_size: int, optional
-        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
-        :type min_batch_timeout: int, optional
-        :param tag: additional tag for model information, defaults to ""
-        :type tag: str, optional
-        :param inputs: model inputs (TF only), defaults to None
-        :type inputs: list[str], optional
-        :param outputs: model outupts (TF only), defaults to None
-        :type outputs: list[str], optional
+        :param batch_size: batch size for execution
+        :param min_batch_size: minimum batch size for model execution
+        :param min_batch_timeout: time to wait for minimum batch size
+        :param tag: additional tag for model information
+        :param inputs: model inputs (TF only)
+        :param outputs: model outupts (TF only)
         """
         db_model = DBModel(
             name=name,
@@ -462,17 +430,11 @@ class Ensemble(EntityList[Model]):
         must be provided
 
         :param name: key to store script under
-        :type name: str
         :param script: TorchScript code
-        :type script: str, optional
         :param script_path: path to TorchScript code
-        :type script_path: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: device for script execution
         :param devices_per_node: number of devices on each host
-        :type devices_per_node: int
         :param first_device: first device to use on each host
-        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -523,15 +485,10 @@ class Ensemble(EntityList[Model]):
         being stored on nodes M through M + N - 1.
 
         :param name: key to store function under
-        :type name: str
         :param function: TorchScript code
-        :type function: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: device for script execution
         :param devices_per_node: number of devices on each host
-        :type devices_per_node: int
         :param first_device: first device to use on each host
-        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -567,9 +524,7 @@ class Ensemble(EntityList[Model]):
         found. Otherwise, it appends the given list of DBModels to the Ensemble.
 
         :param model: SmartSim Model object.
-        :type model: Model
         :param db_models: List of DBModels to append to the Ensemble.
-        :type db_models: t.List[DBModel]
         """
         for add_ml_model in db_models:
             dupe = next(
@@ -597,9 +552,7 @@ class Ensemble(EntityList[Model]):
         Ensemble.
 
         :param model: SmartSim Model object.
-        :type model: Model
         :param db_scripts: List of DBScripts to append to the Ensemble.
-        :type db_scripts: t.List[DBScript]
         """
         for add_script in db_scripts:
             dupe = next(
