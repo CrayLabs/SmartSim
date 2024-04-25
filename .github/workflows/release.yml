@@ -45,6 +45,11 @@ env:
   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
+changelog:
+  categories:
+    - title: 👒 Dependencies
+      labels:
+        - smartsim
 
 jobs:
   build_wheels:
