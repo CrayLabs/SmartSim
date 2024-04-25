@@ -68,7 +68,7 @@ def pyv() -> str:
     return f"py{sys.version_info.major}.{sys.version_info.minor}"
 
 
-def retrieve_asset_info() -> GitReleaseAsset:
+def retrieve_asset_info(dragon_pin: str) -> GitReleaseAsset:
     def is_version_match(key: str) -> bool:
         "Return true if the supplied value contains a python version match"
         return pyv() in key
@@ -80,7 +80,7 @@ def retrieve_asset_info() -> GitReleaseAsset:
 
         return "cray" not in key.lower()
 
-    def get_latest_assets() -> t.Dict[str, GitReleaseAsset]:
+    def get_latest_assets(dragon_pin: str) -> t.Dict[str, GitReleaseAsset]:
         """Retrieve a dictionary mapping asset names to asset files from the
         latest Dragon release"""
         git = Github()
@@ -92,12 +92,19 @@ def retrieve_asset_info() -> GitReleaseAsset:
 
         # repo.get_latest_release fails if only pre-release results are returned
         all_releases = list(dragon_repo.get_releases())
-        all_releases = sorted(all_releases, key=lambda r: r.published_at, reverse=True)
+        pinned_releases = [
+            release
+            for release in all_releases
+            if any(dragon_pin in asset.name for asset in release.assets)
+        ]
+        all_releases = sorted(
+            pinned_releases, key=lambda r: r.published_at, reverse=True
+        )
 
         release = all_releases[0]
         assets = release.assets
 
-        asset_map = {asset.name: asset for asset in assets}
+        asset_map = {asset.name: asset for asset in assets if dragon_pin in asset.name}
         return asset_map
 
     def filter_assets(
@@ -127,7 +134,7 @@ def retrieve_asset_info() -> GitReleaseAsset:
 
         return assets.get(asset_key, None)
 
-    asset_map = get_latest_assets()
+    asset_map = get_latest_assets(dragon_pin)
     asset = filter_assets(asset_map)
     if asset is None:
         raise SmartSimCLIActionCancelled("No dragon runtime asset available to install")
@@ -196,14 +203,14 @@ def cleanup(
         logger.debug(f"Deleted asset directory: {asset_dir}")
 
 
-def install_dragon() -> int:
+def install_dragon(dragon_pin: str) -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment"""
     filename: t.Optional[pathlib.Path] = None
     asset_dir: t.Optional[pathlib.Path] = None
 
     try:
-        asset_info = retrieve_asset_info()
+        asset_info = retrieve_asset_info(dragon_pin)
         filename = retrieve_asset(asset_info)
         asset_dir = expand_archive(filename)
 
@@ -218,4 +225,4 @@ def install_dragon() -> int:
 
 
 if __name__ == "__main__":
-    install_dragon()
+    install_dragon("0.8")
