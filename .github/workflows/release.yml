@@ -47,7 +47,7 @@ env:
 
 changelog:
   categories:
-    - title: 👒 Dependencies
+    - title: plz work
       labels:
         - smartsim
 
