@@ -64,7 +64,7 @@
    :maxdepth: 2
    :caption: Reference
 
-   changelog
+   changelog.md
    code_of_conduct
    developer
    testing
