@@ -55,7 +55,7 @@ from ..._core.utils.redis import (
     shutdown_db_node,
 )
 from ...database import Orchestrator
-from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
+from ...entity import Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
@@ -70,6 +70,7 @@ from ..config import CONFIG
 from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
+from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
 from .job import Job
 from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
@@ -362,14 +363,17 @@ class Controller:
             entity_out.unlink()
             entity_err.unlink()
 
-        try:
+        historical_err.touch()
+        historical_out.touch()
+
+        if historical_err.exists() and historical_out.exists():
             entity_out.symlink_to(historical_out)
             entity_err.symlink_to(historical_err)
-        except FileNotFoundError as fnf:
+        else:
             raise FileNotFoundError(
                 f"Output files for {entity.name} could not be found. "
                 "Symlinking files failed."
-            ) from fnf
+            )
 
     def _launch(
         self, exp_name: str, exp_path: str, manifest: Manifest
@@ -415,6 +419,11 @@ class Controller:
         steps: t.List[
             t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
         ] = []
+
+        symlink_substeps: t.List[
+            t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
+        ] = []
+
         for elist in manifest.ensembles:
             ens_telem_dir = manifest_builder.run_telemetry_subdirectory / "ensemble"
             if elist.batch:
@@ -422,6 +431,11 @@ class Controller:
                 manifest_builder.add_ensemble(
                     elist, [(batch_step.name, step) for step in substeps]
                 )
+
+                # symlink substeps to maintain directory structure
+                for substep, substep_entity in zip(substeps, elist.models):
+                    symlink_substeps.append((substep, substep_entity))
+
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
@@ -439,19 +453,26 @@ class Controller:
             model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
             if model.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(model)
-                batch_step, _ = self._create_batch_job_step(
+                batch_step, substeps = self._create_batch_job_step(
                     anon_entity_list, model_telem_dir
                 )
                 manifest_builder.add_model(model, (batch_step.name, batch_step))
+
+                symlink_substeps.append((substeps[0], model))
                 steps.append((batch_step, model))
             else:
                 job_step = self._create_job_step(model, model_telem_dir)
                 manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
-        # launch steps
+        # launch and symlink steps
         for step, entity in steps:
             self._launch_step(step, entity)
+            self.symlink_output_files(step, entity)
+
+        # symlink substeps to maintain directory structure
+        for substep, entity in symlink_substeps:
+            self.symlink_output_files(substep, entity)
 
         return manifest_builder.finalize()
 
@@ -482,11 +503,12 @@ class Controller:
                 orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
 
+            self._launch_step(orc_batch_step, orchestrator)
+            self.symlink_output_files(orc_batch_step, orchestrator)
+
             # symlink substeps to maintain directory structure
             for substep, substep_entity in zip(substeps, orchestrator.entities):
                 self.symlink_output_files(substep, substep_entity)
-
-            self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
@@ -499,6 +521,7 @@ class Controller:
             )
             for db_step in db_steps:
                 self._launch_step(*db_step)
+                self.symlink_output_files(*db_step)
 
         # wait for orchestrator to spin up
         self._orchestrator_launch_wait(orchestrator)
@@ -551,7 +574,6 @@ class Controller:
         if completed_job is None and (
             entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
         ):
-            self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -560,10 +582,10 @@ class Controller:
                 msg += f"{entity}"
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+
         # if the completed job does exist and the entity passed in is the same
         # that has ran and completed, relaunch the entity.
         elif completed_job is not None and completed_job.entity is entity:
-            self.symlink_output_files(job_step, entity)
             try:
                 job_id = self._launcher.run(job_step)
             except LauncherError as e:
@@ -572,6 +594,7 @@ class Controller:
                 msg += f"{entity}"
                 logger.error(msg)
                 raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+
         # the entity is using a duplicate name of an existing entity in
         # the experiment, throw an error
         else:
@@ -907,42 +930,3 @@ class Controller:
                 cwd=str(pathlib.Path(__file__).parent.parent.parent),
                 shell=False,
             )
-
-
-class _AnonymousBatchJob(EntityList[Model]):
-    @staticmethod
-    def _validate(model: Model) -> None:
-        if model.batch_settings is None:
-            msg = "Unable to create _AnonymousBatchJob without batch_settings"
-            raise SmartSimError(msg)
-
-    def __init__(self, model: Model) -> None:
-        self._validate(model)
-        super().__init__(model.name, model.path)
-        self.entities = [model]
-        self.batch_settings = model.batch_settings
-
-    def _initialize_entities(self, **kwargs: t.Any) -> None: ...
-
-
-def _look_up_launched_data(
-    launcher: Launcher,
-) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
-    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
-        # NOTE: we cannot assume that the name of the launched step
-        # ``launched_step_name`` is equal to the name of the step referring to
-        # the entity ``step.name`` as is the case when an entity list is
-        # launched as a batch job
-        launched_step_name, step = data
-        launched_step_map = launcher.step_mapping[launched_step_name]
-        out_file, err_file = step.get_output_files()
-        return (
-            launched_step_map.step_id,
-            launched_step_map.task_id,
-            launched_step_map.managed,
-            out_file,
-            err_file,
-            pathlib.Path(step.meta.get("status_dir", step.cwd)),
-        )
-
-    return _unpack_launched_data

@@ -34,10 +34,10 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 
-def test_mpmd_errors(monkeypatch):
+def test_mpmd_errors(monkeypatch, test_dir):
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-het-job-errors"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp = Experiment(exp_name, exp_path=test_dir, launcher="slurm")
     rs: SrunSettings = exp.create_run_settings("sleep", "1", run_command="srun")
     rs2: SrunSettings = exp.create_run_settings("sleep", "1", run_command="srun")
     with pytest.raises(ValueError):
@@ -49,11 +49,11 @@ def test_mpmd_errors(monkeypatch):
         rs.set_het_group(1)
 
 
-def test_set_het_groups(monkeypatch):
+def test_set_het_groups(monkeypatch, test_dir):
     """Test ability to set one or more het groups to run setting"""
     monkeypatch.setenv("SLURM_HET_SIZE", "4")
     exp_name = "test-set-het-group"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp = Experiment(exp_name, exp_path=test_dir, launcher="slurm")
     rs: SrunSettings = exp.create_run_settings("sleep", "1", run_command="srun")
     rs.set_het_group([1])
     assert rs.run_args["het-group"] == "1"
@@ -63,11 +63,11 @@ def test_set_het_groups(monkeypatch):
         rs.set_het_group([4])
 
 
-def test_orch_single_cmd(monkeypatch, wlmutils):
+def test_orch_single_cmd(monkeypatch, wlmutils, test_dir):
     """Test that single cmd is rejected in a heterogeneous job"""
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-orch-single-cmd"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
     orc = exp.create_database(
         wlmutils.get_test_port(),
         db_nodes=3,
