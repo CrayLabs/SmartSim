@@ -33,6 +33,8 @@ changelog:
         - short task
     - title: Bug Fixes
       labels:
+        - 'bug: critical'
+        - 'bug: major'
         - 'bug: minor'
     - title: API Breaks
       labels:
