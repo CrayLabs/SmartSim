@@ -45,87 +45,93 @@ env:
   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
-changelog:
-  categories:
-    - title: test
-      labels:
-        - testing
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, macos-12]
-
+  createPullRequest:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel>=2.12.3
-
-      - name: Install build-essentials
-        if: contains(matrix.os, 'ubuntu')
+      - name: Create pull request
         run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
-          sudo apt-get install -y build-essential
-          sudo apt-get install -y wget
-
-      - name: Install GNU make for MacOS
-        if: contains(matrix.os, 'macos')
-        run: brew install make || true
-
-      - name: list target wheels
-        run: |
-          python -m cibuildwheel . --print-build-identifiers
-
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+          gh pr create -B develop -H master --title 'Merge master into develop' --body 'This PR brings develop up to date with master for release.'
         env:
-          CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
-          MACOSX_DEPLOYMENT_TARGET: "10.09"
+            GH_TOKEN: ${{ github.token }}
+  # build_wheels:
+  #   name: Build wheels on ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-22.04, macos-12]
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+
+  #     - name: Install cibuildwheel
+  #       run: python -m pip install cibuildwheel>=2.12.3
+
+  #     - name: Install build-essentials
+  #       if: contains(matrix.os, 'ubuntu')
+  #       run: |
+  #         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  #         sudo apt-get update
+  #         sudo apt-get install -y build-essential
+  #         sudo apt-get install -y wget
+
+  #     - name: Install GNU make for MacOS
+  #       if: contains(matrix.os, 'macos')
+  #       run: brew install make || true
+
+  #     - name: list target wheels
+  #       run: |
+  #         python -m cibuildwheel . --print-build-identifiers
+
+  #     - name: Build wheels
+  #       run: python -m cibuildwheel --output-dir wheelhouse
+  #       env:
+  #         CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+  #         MACOSX_DEPLOYMENT_TARGET: "10.09"
+
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         path: ./wheelhouse/*.whl
 
 
-  build_sdist:
-    name: Build source distribution
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build_sdist:
+  #   name: Build source distribution
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          python-version: '3.9'
+  #     - uses: actions/setup-python@v5
+  #       name: Install Python
+  #       with:
+  #         python-version: '3.9'
 
-      - name: Build sdist
-        run: |
-          python -m pip install cmake>=3.13
-          python setup.py sdist
+  #     - name: Build sdist
+  #       run: |
+  #         python -m pip install cmake>=3.13
+  #         python setup.py sdist
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: dist/*.tar.gz
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         path: dist/*.tar.gz
 
 
-  upload_pypi:
-    needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: artifact
-          path: dist
+  # upload_pypi:
+  #   needs: [build_wheels, build_sdist]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: artifact
+  #         path: dist
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI }}
-          #repository_url: https://test.pypi.org/legacy/
+  #     - uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.PYPI }}
+  #         #repository_url: https://test.pypi.org/legacy/
