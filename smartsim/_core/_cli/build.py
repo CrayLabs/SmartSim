@@ -45,6 +45,7 @@ from smartsim._core._install.buildenv import (
 )
 from smartsim._core._install.builder import BuildError, Device
 from smartsim._core.config import CONFIG
+from smartsim._core.entrypoints.dragon_install import install_dragon
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
@@ -377,7 +378,7 @@ def execute(
     verbose = args.v
     keydb = args.keydb
     device = Device(args.device.lower())
-    install_dragon = args.dragon
+    is_dragon_requested = args.dragon
 
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
@@ -409,8 +410,9 @@ def execute(
         logger.info("Version Information:")
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
-    if install_dragon:
-        install_dragon()
+    if is_dragon_requested:
+        install_dragon(CONFIG.dragon_pin)
+        print("Dragon installation complete")
 
     try:
         if not args.only_python_packages:

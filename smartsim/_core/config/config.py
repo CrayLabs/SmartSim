@@ -276,6 +276,10 @@ class Config:
         default_path = Path.home() / ".smartsim" / "keys"
         return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
 
+    @property
+    def dragon_pin(self) -> str:
+        return "0.8"
+
 
 @lru_cache(maxsize=128, typed=False)
 def get_config() -> Config:
