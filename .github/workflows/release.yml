@@ -48,7 +48,8 @@ env:
 changelog:
   categories:
     - title: plz work
-      labels: refactor
+      labels:
+        - refactor
 
 jobs:
   build_wheels:
