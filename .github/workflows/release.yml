@@ -47,15 +47,9 @@ env:
 
 changelog:
   categories:
-    - title: 🏕 Features
+    - title: test
       labels:
-        - '*'
-      exclude:
-        labels:
-          - dependencies
-    - title: 👒 Dependencies
-      labels:
-        - dependencies
+        - testing
 
 jobs:
   build_wheels:
