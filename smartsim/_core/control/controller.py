@@ -758,9 +758,7 @@ class Controller:
         else:
             job_names = [dbnode.name for dbnode in orchestrator.entities]
         db_jobs = {
-            job: self._jobs.db_jobs[job]
-            for job in self._jobs.db_jobs
-            if job in job_names
+            name: job for name, job in self._jobs.db_jobs.items() if name in job_names
         }
 
         # Extract the associated steps

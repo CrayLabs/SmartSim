@@ -376,13 +376,11 @@ class Orchestrator(EntityList[DBNode]):
 
         :return: True if database is active, False otherwise
         """
-        if not self.hosts:
-            return False
-
         try:
-            return db_is_active(self._hosts, self.ports, self.num_shards)
+            hosts = self.hosts
         except SSDBFilesNotParseable:
             return False
+        return db_is_active(self._hosts, self.ports, self.num_shards)
 
     @property
     def _rai_module(self) -> t.Tuple[str, ...]:
@@ -469,9 +467,8 @@ class Orchestrator(EntityList[DBNode]):
             raise TypeError("host_list argument must be list of strings")
         self._user_hostlist = host_list.copy()
         # TODO check length
-        if self.batch:
-            if hasattr(self, "batch_settings") and self.batch_settings:
-                self.batch_settings.set_hostlist(host_list)
+        if self.batch and hasattr(self, "batch_settings") and self.batch_settings:
+            self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
             for db in self.entities:

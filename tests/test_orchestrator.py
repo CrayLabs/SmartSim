@@ -75,18 +75,20 @@ def test_inactive_orc_get_address() -> None:
 
 
 def test_orc_is_active_functions(
-    test_dir: str, wlmutils: "conftest.WLMUtils", single_db: "conftest.single_db"
+    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"], local_db: Orchestrator
 ) -> None:
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    db = exp.reconnect_orchestrator(single_db.checkpoint_file)
+    db = exp.reconnect_orchestrator(local_db.checkpoint_file)
     assert db.is_active()
 
     # check if the orchestrator can get the address
     assert db.get_address() == [f"127.0.0.1:{db.ports[0]}"]
 
 
-def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+def test_multiple_interfaces(
+    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]
+) -> None:
     exp_name = "test_multiple_interfaces"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
@@ -133,7 +135,7 @@ def test_catch_local_db_errors() -> None:
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -152,7 +154,7 @@ def test_pbs_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
     )
 
 
-def test_pbs_set_batch_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -181,7 +183,7 @@ def test_pbs_set_batch_arg(wlmutils: "conftest.WLMUtils") -> None:
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -196,7 +198,7 @@ def test_slurm_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
     )
 
 
-def test_slurm_set_batch_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -252,7 +254,7 @@ def test_orc_results_in_correct_number_of_shards(single_cmd: bool) -> None:
 ###### LSF ######
 
 
-def test_catch_orc_errors_lsf(wlmutils: "conftest.WLMUtils") -> None:
+def test_catch_orc_errors_lsf(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     with pytest.raises(SSUnsupportedError):
         orc = Orchestrator(
             wlmutils.get_test_port(),
@@ -275,7 +277,7 @@ def test_catch_orc_errors_lsf(wlmutils: "conftest.WLMUtils") -> None:
         orc.set_batch_arg("P", "MYPROJECT")
 
 
-def test_lsf_set_run_args(wlmutils: "conftest.WLMUtils") -> None:
+def test_lsf_set_run_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -288,7 +290,7 @@ def test_lsf_set_run_args(wlmutils: "conftest.WLMUtils") -> None:
     assert all(["l" not in db.run_settings.run_args for db in orc.entities])
 
 
-def test_lsf_set_batch_args(wlmutils: "conftest.WLMUtils") -> None:
+def test_lsf_set_batch_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -303,7 +305,7 @@ def test_lsf_set_batch_args(wlmutils: "conftest.WLMUtils") -> None:
     assert orc.batch_settings.batch_args["D"] == "102400000"
 
 
-def test_orc_telemetry(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     """Ensure the default behavior for an orchestrator is to disable telemetry"""
     db = Orchestrator(port=wlmutils.get_test_port())
     db.set_path(test_dir)
