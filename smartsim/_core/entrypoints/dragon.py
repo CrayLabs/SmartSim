@@ -41,7 +41,11 @@ import zmq.auth.thread
 from smartsim._core.config import get_config
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
-from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
+from smartsim._core.schemas import (
+    DragonBootstrapRequest,
+    DragonBootstrapResponse,
+    DragonShutdownRequest,
+)
 from smartsim._core.utils.network import get_best_interface_and_address
 from smartsim.log import ContextThread, get_logger
 
@@ -82,7 +86,7 @@ def print_summary(network_interface: str, ip_address: str) -> None:
         )
 
 
-def start_updater(
+def restart_updater(
     backend: DragonBackend, updater: t.Optional[ContextThread]
 ) -> ContextThread:
     # If the updater was started, check if it completed or died
@@ -107,12 +111,12 @@ def run(
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
-    backend_updater = start_updater(dragon_backend, None)
+    backend_updater = restart_updater(dragon_backend, None)
     server = dragonSockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")
 
-    while not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+    while not dragon_backend.should_shutdown:
         try:
             req = server.recv()
             logger.debug(f"Received {type(req).__name__} {req}")
@@ -127,20 +131,23 @@ def run(
         except zmq.Again:
             logger.error("Could not send response back to launcher.")
 
-        if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+        # We can only check the heartbeat if the backend has not shut down
+        if not dragon_backend.should_shutdown:
             logger.debug(f"Listening to {dragon_head_address}")
             heartbeat_delay = (
                 dragon_backend.current_time - dragon_backend.last_heartbeat
             )
-            if heartbeat_delay > 30.0:
+            if heartbeat_delay > 30.0 + float(dragon_backend.cooldown_period):
                 logger.debug(
                     f"Restarting updater after {heartbeat_delay:.2f} "
                     "seconds of inactivity."
                 )
-                backend_updater = start_updater(dragon_backend, backend_updater)
-        else:
-            logger.info("Backend shutdown has been requested")
-            break
+                backend_updater = restart_updater(dragon_backend, backend_updater)
+
+        if SHUTDOWN_INITIATED:
+            dragon_backend.process_request(DragonShutdownRequest())
+
+    logger.info("Backend shutdown has been requested")
 
     if backend_updater.is_alive():
         backend_updater.join(1)

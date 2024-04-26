@@ -156,7 +156,9 @@ class DragonBackend:
         """The time at which the server initiated shutdown"""
         smartsim_config = get_config()
         self._cooldown_period = (
-            smartsim_config.jm_interval * 2 if smartsim_config.telemetry_enabled else 5
+            smartsim_config.telemetry_frequency * 2 + 5
+            if smartsim_config.telemetry_enabled
+            else 5
         )
         """Time in seconds needed to server to complete shutdown"""
         logger.debug(f"{host_string} available for execution: {self._hosts}")
@@ -187,6 +189,10 @@ class DragonBackend:
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time
+
+    @property
+    def cooldown_period(self) -> int:
+        return self._cooldown_period
 
     @property
     def _has_cooled_down(self) -> bool:
@@ -303,6 +309,7 @@ class DragonBackend:
         return grp_redir
 
     def _stop_steps(self) -> None:
+        self._heartbeat()
         with self._queue_lock:
             while len(self._stop_requests) > 0:
                 request = self._stop_requests.popleft()
@@ -343,6 +350,7 @@ class DragonBackend:
                     self._group_infos[step_id].return_codes = [-9]
 
     def _start_steps(self) -> None:
+        self._heartbeat()
         started = []
         with self._queue_lock:
             for step_id, request in self._queued_steps.items():
@@ -424,6 +432,7 @@ class DragonBackend:
                     )
 
     def _refresh_statuses(self) -> None:
+        self._heartbeat()
         terminated = []
         with self._queue_lock, self._group_info_lock:
             for step_id in self._running_steps:
@@ -480,6 +489,7 @@ class DragonBackend:
                     group_info.redir_workers = None
 
     def _update_shutdown_status(self) -> None:
+        self._heartbeat()
         with self._group_info_lock:
             self._can_shutdown |= all(
                 grp_info.status in TERMINAL_STATUSES
@@ -499,20 +509,15 @@ class DragonBackend:
         logger.debug("Dragon Backend update thread started")
         while not self.should_shutdown:
             try:
-                self._heartbeat()
                 self._stop_steps()
-                self._heartbeat()
                 self._start_steps()
-                self._heartbeat()
                 self._refresh_statuses()
-                self._heartbeat()
                 self._update_shutdown_status()
                 time.sleep(0.1)
             except Exception as e:
                 logger.error(e)
             if self._should_print_status():
                 try:
-                    self._heartbeat()
                     logger.debug(str(self))
                 except ValueError as e:
                     logger.error(e)

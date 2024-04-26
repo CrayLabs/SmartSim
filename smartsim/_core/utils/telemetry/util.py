@@ -69,7 +69,7 @@ def write_event(
     :param return_code: (optional) the return code of a completed task
     :type return_code: int|None"""
 
-    tgt_path = pathlib.Path(status_dir) / f"{event_type}.json"
+    tgt_path = status_dir / f"{event_type}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:

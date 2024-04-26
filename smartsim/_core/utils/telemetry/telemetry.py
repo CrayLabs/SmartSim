@@ -119,7 +119,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), lsf,
+        SmartSim currently supports Slurm, PBS(Pro), LSF, Dragon
         and local launching
 
         :param launcher: the name of the workload manager used by the experiment
@@ -145,7 +145,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self.job_manager.start()
 
     def set_launcher(self, launcher_type: str) -> None:
-        """Set the launcher for the experiment"""
+        """Set the launcher for the experiment
+
+        :param launcher_type: name of launcher type, e.g. 'slurm'
+        :type launcher_type: str
+        """
         self.init_launcher(launcher_type)
 
         if self._launcher is None:
