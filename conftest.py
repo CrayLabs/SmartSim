@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import pathlib
@@ -337,8 +338,8 @@ class WLMUtils:
     @staticmethod
     def get_test_port() -> int:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            for port in range(test_port, test_port+test_num_ports):
-                result = sock.connect_ex(('127.0.0.1',port))
+            for port in range(test_port, test_port + test_num_ports):
+                result = sock.connect_ex(("127.0.0.1", port))
                 if result:
                     return port
         raise SSInternalError("get_test_port: ran out of a open ports")
@@ -882,43 +883,66 @@ class CountingCallable:
     def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details
 
+
+@pytest.fixture(scope="session")
+def local_db(wlmutils):
+    with _create_and_launch_database(
+        "local_db_fixture",
+        launcher="local",
+        num_nodes=1,
+        interface="lo",
+        hostlist=None,
+        port=wlmutils.get_test_port() + 1,
+    ) as db:
+        yield db
+
+
 @pytest.fixture(scope="session")
 def single_db(wlmutils):
-
-    exp = Experiment(
+    with _create_and_launch_database(
         "single_db_fixture",
-        exp_path=pathlib.Path(test_output_root, "single_db_fixture"),
-        launcher=wlmutils.get_test_launcher()
-    )
-    orc = exp.create_database(
-        wlmutils.get_test_port()+1,
-        batch=False,
+        launcher=wlmutils.get_test_launcher(),
+        num_nodes=1,
         interface=wlmutils.get_test_interface(),
-        hosts=wlmutils.get_test_hostlist(),
-        db_nodes=1
-    )
-    exp.generate(orc, overwrite=True)
-    exp.start(orc)
-    yield orc
-    exp.stop(orc)
+        hostlist=wlmutils.get_test_hostlist(),
+        port=wlmutils.get_test_port() + 1,
+    ) as db:
+        yield db
+
 
 @pytest.fixture(scope="session")
 def clustered_db(wlmutils):
-
-    exp = Experiment(
+    with _create_and_launch_database(
         "clustered_db_fixture",
-        exp_path=pathlib.Path(test_output_root, "clustered_db_fixture"),
-        launcher=wlmutils.get_test_launcher()
+        launcher=wlmutils.get_test_launcher(),
+        num_nodes=3,
+        interface=wlmutils.get_test_interface(),
+        hostlist=wlmutils.get_test_hostlist(),
+        port=wlmutils.get_test_port() + 1,
+    ) as db:
+        yield db
+
+
+@contextlib.contextmanager
+def _create_and_launch_database(
+    exp_name: str,
+    launcher: str,
+    num_nodes: int,
+    interface: str,
+    hostlist: t.Optional[t.List[str]],
+    port: int,
+):
+    exp = Experiment(
+        exp_name,
+        exp_path=str(pathlib.Path(test_output_root, exp_name)),
+        launcher=launcher,
     )
     orc = exp.create_database(
-        wlmutils.get_test_port()+1,
-        batch=False,
-        interface=wlmutils.get_test_interface(),
-        hosts=wlmutils.get_test_hostlist(),
-        db_nodes=3
+        port, batch=False, interface=interface, hosts=hostlist, db_nodes=num_nodes
     )
     exp.generate(orc)
     exp.start(orc)
-
-    yield orc
-    exp.stop(orc)
+    try:
+        yield orc
+    finally:
+        exp.stop(orc)
