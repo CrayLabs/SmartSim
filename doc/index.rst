@@ -64,7 +64,8 @@
    :maxdepth: 2
    :caption: Reference
 
-   changelog.md
+.. automodule:: changelog
+   :members:
    code_of_conduct
    developer
    testing
