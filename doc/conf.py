@@ -80,7 +80,7 @@ mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints"]
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints", "tutorials/ml_training/surrogate/README.md", "./ml_training/surrogate/README.md", "README.md"]
 
 breathe_projects = {
         "c_client":"../smartredis/doc/c_client/xml",
