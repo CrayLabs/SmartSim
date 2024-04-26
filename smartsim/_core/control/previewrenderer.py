@@ -128,7 +128,7 @@ def render(
     :type output_format: _OutputFormatString
     """
 
-    Verbosity(verbosity_level)
+    verbosity_level = Verbosity(verbosity_level)
 
     _check_output_format(output_format)
 
