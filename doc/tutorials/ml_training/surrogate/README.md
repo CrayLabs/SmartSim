@@ -1,4 +1,4 @@
-
+:orphan:
 # Training a surrogate model
 
 In this example, a neural network is trained to act like a surrogate model and to solve a
