@@ -138,8 +138,7 @@ def _get_release_assets() -> t.Dict[str, GitReleaseAsset]:
 
     # repo.get_latest_release fails if only pre-release results are returned
     all_releases = list(dragon_repo.get_releases())
-    pinned_releases = [release for release in all_releases]
-    all_releases = sorted(pinned_releases, key=lambda r: r.published_at, reverse=True)
+    all_releases = sorted(all_releases, key=lambda r: r.published_at, reverse=True)
 
     release = all_releases[0]
     assets = release.assets
@@ -177,7 +176,7 @@ def filter_assets(assets: t.Dict[str, GitReleaseAsset]) -> t.Optional[GitRelease
 def retrieve_asset_info() -> GitReleaseAsset:
     """Find a release asset that meets all necessary filtering criteria
 
-    :param dragon_pin: A string identifying the dragon version to install (e.g. dragon-0.8)
+    :param dragon_pin: identify the dragon version to install (e.g. dragon-0.8)
     :type dragon_pin: str
     :returns: A GitHub release asset
     :rtype: GitReleaseAsset"""
@@ -293,4 +292,4 @@ def install_dragon() -> int:
 
 
 if __name__ == "__main__":
-    install_dragon(dragon_pin())
+    install_dragon()
