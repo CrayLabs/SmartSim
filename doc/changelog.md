@@ -886,8 +886,10 @@ Description:
 
 ## SmartRedis
 
-.. mdinclude:: ../smartredis/doc/changelog.md
+```{eval-rst}
+.. include:: ../smartredis/doc/changelog.md
 
 ## SmartDashboard
 
-.. mdinclude:: ../smartdashboard/doc/changelog.md
+```{eval-rst}
+.. include:: ../smartdashboard/doc/changelog.md
