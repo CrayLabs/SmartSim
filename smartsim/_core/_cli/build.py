@@ -411,7 +411,7 @@ def execute(
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     if is_dragon_requested:
-        install_dragon(CONFIG.dragon_pin)
+        install_dragon()
         print("Dragon installation complete")
 
     try:

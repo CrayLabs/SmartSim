@@ -144,7 +144,7 @@ def _get_release_assets() -> t.Dict[str, GitReleaseAsset]:
     release = all_releases[0]
     assets = release.assets
 
-    asset_map = {asset.name: asset for asset in assets if dragon_pin in asset.name}
+    asset_map = {asset.name: asset for asset in assets if dragon_pin() in asset.name}
     return asset_map
 
 
@@ -272,15 +272,15 @@ def cleanup(
         logger.debug(f"Deleted asset directory: {asset_dir}")
 
 
-def install_dragon(dragon_pin: str) -> int:
+def install_dragon() -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment"""
     filename: t.Optional[pathlib.Path] = None
     asset_dir: t.Optional[pathlib.Path] = None
 
     try:
-        asset_info = retrieve_asset_info(pathlib.Path.cwd(), dragon_pin)
-        filename = retrieve_asset(asset_info)
+        asset_info = retrieve_asset_info()
+        filename = retrieve_asset(pathlib.Path().cwd(), asset_info)
         asset_dir = expand_archive(filename)
 
         return install_package(asset_dir)
