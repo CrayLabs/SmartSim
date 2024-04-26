@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import dataclasses
 import json
 import os
 import signal
@@ -57,7 +58,13 @@ SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 SHUTDOWN_INITIATED = False
 
 
-def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+@dataclasses.dataclass
+class DragonEntrypointArgs:
+    launching_address: str
+    interface: str
+
+
+def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
     if not signo:
         logger.info("Received signal with no signo")
     else:
@@ -70,10 +77,16 @@ Dragon server entrypoint script
 """
 
 
+def get_log_path() -> str:
+    config = get_config()
+    return config.dragon_log_filename
+
+
 def print_summary(network_interface: str, ip_address: str) -> None:
     zmq_config = {"interface": network_interface, "address": ip_address}
 
-    with open("dragon_config.log", "w", encoding="utf-8") as dragon_config_log:
+    log_path = get_log_path()
+    with open(log_path, "w", encoding="utf-8") as dragon_config_log:
         dragon_config_log.write(
             textwrap.dedent(f"""\
                 -------- Dragon Configuration --------
@@ -159,7 +172,7 @@ def run(
             time.sleep(5)
 
 
-def main(args: argparse.Namespace) -> int:
+def execute_entrypoint(args: DragonEntrypointArgs) -> int:
     if_config = get_best_interface_and_address()
     interface = if_config.interface
     address = if_config.address
@@ -227,16 +240,31 @@ def main(args: argparse.Namespace) -> int:
     return 0
 
 
+def remove_config_log() -> None:
+    """Remove the Dragon `config_log` file from the file system. Used to
+    clean up after a dragon environment is shutdown to eliminate an
+    unnecessary attempt to connect to a stopped ZMQ server."""
+    log_path = get_log_path()
+    if os.path.exists(log_path):
+        os.remove(log_path)
+
+
 def cleanup() -> None:
     global SHUTDOWN_INITIATED  # pylint: disable=global-statement
     logger.debug("Cleaning up")
+    remove_config_log()
     SHUTDOWN_INITIATED = True
 
 
-if __name__ == "__main__":
-    os.environ["PYTHONUNBUFFERED"] = "1"
-    logger.info("Dragon server started")
+def register_signal_handlers() -> None:
+    # make sure to register the cleanup before the start
+    # the process so our signaller will be able to stop
+    # the database process.
+    for sig in SIGNALS:
+        signal.signal(sig, handle_signal)
 
+
+def parse_arguments(args: t.List[str]) -> DragonEntrypointArgs:
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Dragon Head Process"
     )
@@ -244,17 +272,42 @@ if __name__ == "__main__":
         "+launching_address",
         type=str,
         help="Address of launching process if a ZMQ connection can be established",
-        required=False,
+        required=True,
     )
     parser.add_argument(
-        "+interface", type=str, help="Network Interface name", required=False
+        "+interface",
+        type=str,
+        help="Network Interface name",
+        required=False,
     )
-    args_ = parser.parse_args()
+    args_ = parser.parse_args(args)
 
-    # make sure to register the cleanup before the start
-    # the process so our signaller will be able to stop
-    # the database process.
-    for sig in SIGNALS:
-        signal.signal(sig, handle_signal)
+    if not args_.launching_address:
+        raise ValueError("Empty launching address supplied.")
 
-    sys.exit(main(args_))
+    return DragonEntrypointArgs(args_.launching_address, args_.interface)
+
+
+def main(args_: t.List[str]) -> int:
+    """Execute the dragon entrypoint as a module"""
+    os.environ["PYTHONUNBUFFERED"] = "1"
+    logger.info("Dragon server started")
+
+    args = parse_arguments(args_)
+    register_signal_handlers()
+
+    try:
+        return_code = execute_entrypoint(args)
+        return return_code
+    except Exception:
+        logger.error(
+            "An unexpected error occurred in the Dragon entrypoint.", exc_info=True
+        )
+    finally:
+        cleanup()
+
+    return -1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
