@@ -59,6 +59,7 @@ extensions = [
     'sphinx_tabs.tabs',
     'sphinx_design',
     'sphinx.ext.mathjax',
+    'myst_parser'
 ]
 # sphinx_autodoc_typehints configurations
 always_use_bars_union = True
