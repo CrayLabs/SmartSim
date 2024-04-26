@@ -300,26 +300,6 @@ _reset_signal_interrupt = pytest.fixture(
 )
 
 
-def _reset_signal(signalnum: int):
-    """SmartSim will set/overwrite signals on occasion. This function will
-    return a generator that can be used as a fixture to automatically reset the
-    signal handler to what it was at the beginning of the test suite to keep
-    tests atomic.
-    """
-    original = signal.getsignal(signalnum)
-
-    def _reset():
-        yield
-        signal.signal(signalnum, original)
-
-    return _reset
-
-
-_reset_signal_interrupt = pytest.fixture(
-    _reset_signal(signal.SIGINT), autouse=True, scope="function"
-)
-
-
 @pytest.fixture(scope="session")
 def wlmutils() -> t.Type[WLMUtils]:
     return WLMUtils
