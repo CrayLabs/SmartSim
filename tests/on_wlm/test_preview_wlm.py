@@ -102,15 +102,13 @@ def test_preview_wlm_run_commands_cluster_orc_model(
     preview_manifest = Manifest(orc, smartsim_model)
 
     # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
-    print(output)
-
-    # # Evaluate output
-    # assert "Run Command" in output
-    # assert "Run Arguments" in output
-    # assert "ntasks" in output
-    # assert "nodes" in output
+    # Evaluate output
+    assert "Run Command" in output
+    assert "Run Arguments" in output
+    assert "ntasks" in output
+    assert "nodes" in output
 
 
 @pytest.mark.skipif(
@@ -359,3 +357,51 @@ def test_ensemble_batch(test_dir, wlmutils):
     assert "Database Identifier" in output
     assert "Database Backend" in output
     assert "Type" in output
+
+
+@pytest.mark.skipif(
+    pytest.test_launcher not in pytest.wlm_options,
+    reason="Not testing WLM integrations",
+)
+def test_preview_ensemble_db_script(wlmutils, test_dir):
+    """
+    Test preview of a torch script on a model in an ensemble.
+    """
+    # Initialize the Experiment and set the launcher to auto
+    test_launcher = wlmutils.get_test_launcher()
+    exp = Experiment("getting-started", launcher=test_launcher)
+
+    orch = exp.create_database(db_identifier="test_db1")
+    orch_2 = exp.create_database(db_identifier="test_db2", db_nodes=3)
+    # Initialize a RunSettings object
+    model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
+    model_settings_2 = exp.create_run_settings(exe="python", exe_args="params.py")
+    model_settings_3 = exp.create_run_settings(exe="python", exe_args="params.py")
+    # Initialize a Model object
+    model_instance = exp.create_model("model_name", model_settings)
+    model_instance_2 = exp.create_model("model_name_2", model_settings_2)
+    batch = exp.create_batch_settings(time="24:00:00", account="test")
+    ensemble = exp.create_ensemble(
+        "ensemble", batch_settings=batch, run_settings=model_settings_3, replicas=2
+    )
+    ensemble.add_model(model_instance)
+    ensemble.add_model(model_instance_2)
+
+    # TorchScript string
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+    # Attach TorchScript to Model
+    model_instance.add_script(
+        name="example_script",
+        script=torch_script_str,
+        device="GPU",
+        devices_per_node=2,
+        first_device=0,
+    )
+    preview_manifest = Manifest(ensemble, orch, orch_2)
+
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
+
+    # Evaluate output
+    assert "Torch Script" in output

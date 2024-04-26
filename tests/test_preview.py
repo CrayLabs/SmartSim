@@ -30,10 +30,9 @@ import sys
 import typing as t
 from os import path as osp
 
+import jinja2
 import numpy as np
 import pytest
-from jinja2 import Template
-from jinja2.filters import FILTERS
 
 import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
@@ -100,7 +99,6 @@ def preview_object_multidb(test_dir) -> t.Dict[str, Job]:
     job2 = Job("faux-name_2", "faux-step-id_2", s2, "slurm", True)
 
     active_dbjobs: t.Dict[str, Job] = {"mock_job": job, "mock_job2": job2}
-
     return active_dbjobs
 
 
@@ -110,7 +108,7 @@ def add_batch_resources(wlmutils, batch_settings):
             batch_settings.set_resource(key, value)
 
 
-def test_get_ifname_filter(wlmutils, test_dir, choose_host):
+def test_get_ifname_filter():
     """Test get_ifname filter"""
 
     # Test input and expected output
@@ -127,9 +125,16 @@ def test_get_ifname_filter(wlmutils, test_dir, choose_host):
     )
 
     template_str = "{{ value | get_ifname }}"
-    FILTERS["get_ifname"] = previewrenderer.get_ifname
+    template_dict = {"ts": template_str}
+
+    loader = jinja2.DictLoader(template_dict)
+    env = jinja2.Environment(loader=loader, autoescape=True)
+    env.filters["get_ifname"] = previewrenderer.get_ifname
+
+    t = env.get_template("ts")
+
     for input, expected_output in value_dict:
-        output = Template(template_str).render(value=input)
+        output = t.render(value=input)
         # assert that that filter output matches expected output
         assert output == expected_output
 
@@ -138,28 +143,34 @@ def test_get_dbtype_filter():
     """Test get_dbtype filter to extract database backend from config"""
 
     template_str = "{{ config | get_dbtype }}"
-    FILTERS["get_dbtype"] = previewrenderer.get_dbtype
-    output = Template(template_str).render(config=CONFIG.database_cli)
+    template_dict = {"ts": template_str}
+    loader = jinja2.DictLoader(template_dict)
+    env = jinja2.Environment(loader=loader, autoescape=True)
+    env.filters["get_dbtype"] = previewrenderer.get_dbtype
+
+    t = env.get_template("ts")
+    output = t.render(config=CONFIG.database_cli)
+
     assert output in CONFIG.database_cli
     # Test empty input
     test_string = ""
-    output = Template(template_str).render(config=test_string)
+    output = t.render(config=test_string)
     assert output == ""
     # Test empty path
     test_string = "SmartSim/smartsim/_core/bin/"
-    output = Template(template_str).render(config=test_string)
+    output = t.render(config=test_string)
     assert output == ""
     # Test no hyphen
     test_string = "SmartSim/smartsim/_core/bin/rediscli"
-    output = Template(template_str).render(config=test_string)
+    output = t.render(config=test_string)
     assert output == ""
     # Test no LHS
     test_string = "SmartSim/smartsim/_core/bin/redis-"
-    output = Template(template_str).render(config=test_string)
+    output = t.render(config=test_string)
     assert output == ""
     # Test no RHS
     test_string = "SmartSim/smartsim/_core/bin/-cli"
-    output = Template(template_str).render(config=test_string)
+    output = t.render(config=test_string)
     assert output == ""
 
 
@@ -1324,49 +1335,6 @@ def test_preview_db_script(wlmutils, test_dir):
         first_device=0,
     )
     preview_manifest = Manifest(model_instance)
-
-    # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    # Evaluate output
-    assert "Torch Script" in output
-
-
-def test_preview_ensemble_db_script(wlmutils, test_dir):
-    """
-    Test preview of a torch script on a model in an ensemble.
-    """
-    # Initialize the Experiment and set the launcher to auto
-    exp = Experiment("getting-started", launcher="auto")
-
-    orch = exp.create_database(db_identifier="test_db1")
-    orch_2 = exp.create_database(db_identifier="test_db2", db_nodes=3)
-    # Initialize a RunSettings object
-    model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
-    model_settings_2 = exp.create_run_settings(exe="python", exe_args="params.py")
-    model_settings_3 = exp.create_run_settings(exe="python", exe_args="params.py")
-    # Initialize a Model object
-    model_instance = exp.create_model("model_name", model_settings)
-    model_instance_2 = exp.create_model("model_name_2", model_settings_2)
-    batch = exp.create_batch_settings(time="24:00:00", account="test")
-    ensemble = exp.create_ensemble(
-        "ensemble", batch_settings=batch, run_settings=model_settings_3, replicas=2
-    )
-    ensemble.add_model(model_instance)
-    ensemble.add_model(model_instance_2)
-
-    # TorchScript string
-    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
-
-    # Attach TorchScript to Model
-    model_instance.add_script(
-        name="example_script",
-        script=torch_script_str,
-        device="GPU",
-        devices_per_node=2,
-        first_device=0,
-    )
-    preview_manifest = Manifest(ensemble, orch, orch_2)
 
     # Call preview renderer for testing output
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
