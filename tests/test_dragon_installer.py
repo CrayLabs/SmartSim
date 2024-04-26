@@ -507,7 +507,6 @@ def test_is_cray_ex(monkeypatch: pytest.MonkeyPatch, is_cray: bool) -> None:
 
 def test_install_package__no_wheel(test_dir: str):
     """Verify that a missing wheel does not blow up and has a failure retcode"""
-    # archive_path = pathlib.Path(test_dir) / mock_archive_name
     exp_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
 
     result = install_package(exp_path)
