@@ -359,7 +359,7 @@ def _format_incompatible_python_env_message(
     )
 
 
-def _configure_redis_build(versions: Versioner) -> None:
+def _configure_keydb_build(versions: Versioner) -> None:
     """Configure the redis versions to be used during the build operation"""
     versions.REDIS = Version_("6.2.0")
     versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
@@ -400,7 +400,7 @@ def execute(
         print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
 
     if keydb:
-        _configure_redis_build(versions)
+        _configure_keydb_build(versions)
 
     db_name: DbEngine = "KEYDB" if keydb else "REDIS"
     vers = versions.as_dict(db_name=db_name)
