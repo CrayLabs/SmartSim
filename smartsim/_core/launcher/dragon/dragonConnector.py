@@ -195,7 +195,7 @@ class DragonConnector:
                 )
                 try:
                     self._reset_timeout()
-                    self._get_new_authenticator()
+                    self._get_new_authenticator(-1)
                     self._handshake(dragon_conf["address"])
                 except SmartSimError as e:
                     logger.error(e)
@@ -209,7 +209,7 @@ class DragonConnector:
         config = get_config()
         connector_socket: t.Optional[zmq.Socket[t.Any]] = None
         self._reset_timeout(config.dragon_server_startup_timeout)
-        self._get_new_authenticator(config.dragon_server_startup_timeout)
+        self._get_new_authenticator(-1)
         connector_socket = dragonSockets.get_secure_socket(self._context, zmq.REP, True)
         logger.debug(f"Binding connector to {socket_addr}")
         connector_socket.bind(socket_addr)
