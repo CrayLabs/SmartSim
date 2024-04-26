@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import logging
 import pathlib
 import sys
 import typing as t
@@ -34,10 +33,12 @@ import jinja2
 import numpy as np
 import pytest
 
+import smartsim
 import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
+from smartsim._core.control.controller import Controller
 from smartsim._core.control.job import Job
 from smartsim.database import Orchestrator
 from smartsim.entity.entity import SmartSimEntity
@@ -267,7 +268,9 @@ def test_preview_to_file(test_dir, wlmutils):
     path = pathlib.Path(test_dir) / filename
     # Execute preview method
     exp.preview(
-        output_format="plain_text", output_filename=str(path), verbosity_level="debug"
+        output_format=previewrenderer.Format.PLAINTEXT,
+        output_filename=str(path),
+        verbosity_level="debug",
     )
 
     # Evaluate output
@@ -774,8 +777,9 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
+    expected_torch_script = "torchscript.py"
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-    torch_script = fileutils.get_test_conf_path("torchscript.py")
+    torch_script = fileutils.get_test_conf_path(expected_torch_script)
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -862,7 +866,7 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert "Devices Per Node" in output
 
     assert cm_name2 in output
-    assert torch_script in output
+    assert expected_torch_script in output
     assert test_device in output
     assert cm_name1 in output
 
@@ -966,7 +970,7 @@ def test_preview_multidb_active_infrastructure(
 
 
 def test_preview_active_infrastructure_orchestrator_error(
-    wlmutils, test_dir, choose_host
+    wlmutils, test_dir, choose_host, monkeypatch: pytest.MonkeyPatch
 ):
     """Demo error when trying to preview a started orchestrator"""
     # Prepare entities
@@ -976,16 +980,16 @@ def test_preview_active_infrastructure_orchestrator_error(
     exp_name = "test_active_infrastructure_preview_orch_error"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
+    monkeypatch.setattr(
+        smartsim.database.orchestrator.Orchestrator, "is_active", lambda x: True
+    )
+
     orc = exp.create_database(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
         db_identifier="orc_1",
     )
-    # Start the orchestrator
-    exp.start(orc)
-
-    assert orc.is_active() == True
 
     # Retrieve any active jobs
     active_dbjobs = exp._control.active_orchestrator_jobs
@@ -999,17 +1003,17 @@ def test_preview_active_infrastructure_orchestrator_error(
 
     assert "WARNING: Cannot preview orc_1, because it is already started" in output
 
-    exp.stop(orc)
 
-
-def test_active_orchestrator_jobs_property(wlmutils, test_dir, choose_host):
+def test_active_orchestrator_jobs_property(
+    wlmutils,
+    test_dir,
+    preview_object,
+):
     """Ensure db_jobs remaines unchanged after deletion
     of active_orchestrator_jobs property stays intact when retrieving db_jobs"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
 
     # start a new Experiment for this section
     exp = Experiment(
@@ -1018,32 +1022,15 @@ def test_active_orchestrator_jobs_property(wlmutils, test_dir, choose_host):
         launcher=test_launcher,
     )
 
-    # create and start an instance of the Orchestrator database
-    db = exp.create_database(
-        port=test_port + 3,
-        interface=test_interface,
-        db_identifier="testdb_reg",
-        hosts=choose_host(wlmutils, 1),
-    )
+    controller = Controller()
+    controller._jobs.db_jobs = preview_object
 
-    # create database with different db_id
-    db2 = exp.create_database(
-        port=test_port + 5,
-        interface=test_interface,
-        db_identifier="testdb_reg2",
-        hosts=choose_host(wlmutils, 2),
-    )
-    exp.start(db, db2)
-
-    # Remove a job from active_orchestrator_jobs
+    # Modify the returned job collection
     active_orchestrator_jobs = exp._control.active_orchestrator_jobs
-    del active_orchestrator_jobs["testdb_reg2_0"]
+    active_orchestrator_jobs["test"] = "test_value"
 
-    # assert that db_jobs is not affected by deletion
-    assert len(active_orchestrator_jobs) == 1
-    assert len(exp._control._jobs.db_jobs) == 2
-
-    exp.stop(db, db2)
+    # Verify original collection is not also modified
+    assert not exp._control.active_orchestrator_jobs.get("test", None)
 
 
 def test_verbosity_info_ensemble(test_dir, wlmutils):

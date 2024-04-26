@@ -141,7 +141,7 @@ def render(
     env.filters["is_list"] = is_list
     env.globals["Verbosity"] = Verbosity
 
-    tpl_path = f"preview/{output_format}/base.template"
+    tpl_path = f"preview/{output_format.value}/base.template"
 
     tpl = env.get_template(tpl_path)
 
