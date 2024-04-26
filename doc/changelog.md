@@ -1,10 +1,7 @@
 # Changelog
 
-Listed here are the changes between each release of SmartSim and
-SmartRedis.
-
-Jump to `SmartRedis Changelog <sr_changelog>`{.interpreted-text
-role="ref"}
+Listed here are the changes between each release of SmartSim,
+SmartRedis and SmartDashboard.
 
 ## SmartSim
 
@@ -887,4 +884,10 @@ Description:
 
 ------------------------------------------------------------------------
 
-## SmartRedis {#sr_changelog}
+## SmartRedis
+
+.. mdinclude:: ../smartredis/doc/changelog.md
+
+## SmartDashboard
+
+.. mdinclude:: ../smartdashboard/doc/changelog.md
