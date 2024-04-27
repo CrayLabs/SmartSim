@@ -130,13 +130,16 @@ class MockAuthenticator:
 def mock_dragon_env(test_dir, *args, **kwargs):
     """Create a mock dragon environment that can talk to the launcher through ZMQ"""
     logger = logging.getLogger(__name__)
+    config = get_config()
     logging.basicConfig(level=logging.DEBUG)
     try:
         addr = "127.0.0.1"
         callback_port = kwargs["port"]
         head_port = find_free_port(start=callback_port + 1)
         context = zmq.Context.instance()
-        authenticator = get_authenticator(context)
+        context.setsockopt(zmq.SNDTIMEO, config.dragon_server_timeout)
+        context.setsockopt(zmq.RCVTIMEO, config.dragon_server_timeout)
+        authenticator = get_authenticator(context, -1)
 
         callback_socket = get_secure_socket(context, zmq.REQ, False)
         dragon_head_socket = get_secure_socket(context, zmq.REP, True)
@@ -187,6 +190,7 @@ def mock_dragon_env(test_dir, *args, **kwargs):
 
     except Exception as ex:
         logger.info(f"exception occurred while configuring mock handshaker: {ex}")
+        raise ex from None
 
 
 def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: str):
@@ -349,6 +353,11 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
             lambda: IFConfig("faux_interface", addr),
         )
 
+        ctx.setattr(
+            "smartsim._core.launcher.dragon.dragonConnector._dragon_cleanup",
+            lambda server_socket, server_process_pid, server_authenticator: server_authenticator.stop(),
+        )
+
         # start up a faux dragon env that knows how to do the handshake process
         # but uses secure sockets for all communication.
         mock_dragon = mp.Process(
@@ -369,5 +378,5 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
             # connect executes the complete handshake and raises an exception if comms fails
             connector.connect_to_dragon()
         finally:
-            connector.cleanup(False)
+            connector.cleanup()
             ...
