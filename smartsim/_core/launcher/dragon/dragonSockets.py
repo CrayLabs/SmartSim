@@ -139,7 +139,7 @@ def get_authenticator(
     server_keys, client_keys = key_manager.get_keys()
     logger.debug(f"Applying keys to authenticator: {server_keys}, {client_keys}")
 
-    AUTHENTICATOR = zmq.auth.thread.ThreadAuthenticator(context)
+    AUTHENTICATOR = zmq.auth.thread.ThreadAuthenticator(context, log=logger)
 
     ctx_sndtimeo = context.getsockopt(zmq.SNDTIMEO)
     ctx_rcvtimeo = context.getsockopt(zmq.RCVTIMEO)

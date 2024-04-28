@@ -120,5 +120,5 @@ class SocketSchemaTranslator(t.Generic[_SendT, _RecvT]):
     def send(self, schema: _SendT, flags: int = 0) -> None:
         self.socket.send_string(self._send_registry.to_string(schema), flags)
 
-    def recv(self) -> _RecvT:
-        return self._recv_registry.from_string(self.socket.recv_string())
+    def recv(self, flags: int = 0) -> _RecvT:
+        return self._recv_registry.from_string(self.socket.recv_string(flags))

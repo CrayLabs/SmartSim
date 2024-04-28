@@ -28,6 +28,8 @@ import functools
 import time
 import typing as t
 from dataclasses import dataclass, field
+
+from tabulate import tabulate
 from threading import RLock
 
 # pylint: disable=import-error
@@ -88,6 +90,21 @@ class ProcessGroupInfo:
         """Information needed by SmartSim Launcher and Job Manager"""
         return (self.status, self.return_codes)
 
+    def __str__(self) -> str:
+        if self.process_group is not None and self.redir_workers is not None:
+            msg = [f"Active Group ({self.status})"]
+            if self.puids is not None:
+                msg.append(f"Number processes: {len(self.puids)}")
+        else:
+            msg = [f"Inactive Group ({self.status})"]
+
+        if self.hosts is not None:
+            msg.append(f"Hosts: {','.join(self.hosts)}")
+        if self.return_codes is not None:
+            msg.append(f"{self.return_codes}")
+
+        return ", ".join(msg)
+
 
 # Thanks to Colin Wahl from HPE HPC Dragon Team
 def redir_worker(io_conn: Connection, file_path: str) -> None:
@@ -98,6 +115,8 @@ def redir_worker(io_conn: Connection, file_path: str) -> None:
     :param file_path: path to file to write to
     :type file_path: str
     """
+    while io_conn is None or not io_conn.readable:
+        time.sleep(0.1)
     try:
         with open(file_path, "a", encoding="utf-8") as file_to_write:
             while True:
@@ -105,6 +124,8 @@ def redir_worker(io_conn: Connection, file_path: str) -> None:
                 print(output, flush=True, file=file_to_write, end="")
     except EOFError:
         pass
+    except Exception as e:
+        print(e)
     finally:
         io_conn.close()
 
@@ -123,8 +144,6 @@ class DragonBackend:
         """ProcessGroup execution state information"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
-        self._group_info_lock = RLock()
-        """Lock that needs to be acquired to access _group_infos"""
         self._step_id: int = 0
         """Incremental ID to assign to new steps prior to execution"""
 
@@ -163,6 +182,49 @@ class DragonBackend:
         """Time in seconds needed to server to complete shutdown"""
         logger.debug(f"{host_string} available for execution: {self._hosts}")
 
+    @staticmethod
+    def _proc_group_info_table_line(step_id: str, proc_group_info: ProcessGroupInfo) -> t.List[str]:
+        table_line = [step_id, f"{str(proc_group_info.status)}"]
+
+        if proc_group_info.hosts is not None:
+            table_line.append(f"{','.join(proc_group_info.hosts)}")
+        else:
+            table_line.append("")
+
+        if proc_group_info.return_codes is not None:
+            table_line.append(f"{','.join(str(ret) for ret in proc_group_info.return_codes)}")
+        else:
+            table_line.append("")
+
+        if proc_group_info.puids is not None:
+            table_line.append(f"{len(proc_group_info.puids)}")
+        else:
+            table_line.append("")
+
+        return table_line
+
+    @property
+    def step_table(self) -> str:
+        headers = ["Step", "Status", "Hosts", "Return codes", "PUIDS"]
+        values = []
+
+        with self._queue_lock:
+            for step, group_info in self._group_infos.items():
+                values.append(DragonBackend._proc_group_info_table_line(step, group_info))
+
+        return tabulate(values, headers, disable_numparse=True, tablefmt="github")
+
+    @property
+    def host_table(self) -> str:
+        headers = ["Host", "State"]
+        values = []
+
+        with self._queue_lock:
+            for host in self._hosts:
+                values.append([host, "Free" if host in self._free_hosts else "Busy"])
+
+        return tabulate(values, headers, disable_numparse=True, tablefmt="githbu")
+
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
             self._hosts: t.List[str] = sorted(
@@ -179,12 +241,8 @@ class DragonBackend:
 
     def get_status_message(self) -> str:
         msg = ["Dragon server backend update"]
-        msg.append(f"System hosts: {self._hosts}")
-        msg.append(f"Free hosts: {list(self._free_hosts)}")
-        msg.append(f"Allocated hosts: {self._allocated_hosts}")
-        msg.append(f"Running steps: {self._running_steps}")
-        msg.append(f"Group infos: {self._group_infos}")
-        msg.append(f"There are {len(self._queued_steps)} queued steps")
+        msg.append(self.host_table)
+        msg.append(self.step_table)
         return "\n".join(msg)
 
     def _heartbeat(self) -> None:
@@ -197,6 +255,7 @@ class DragonBackend:
     @property
     def _has_cooled_down(self) -> bool:
         if self._shutdown_initiation_time is None:
+            logger.debug(f"Starting cooldown period of {self._cooldown_period} seconds")
             self._shutdown_initiation_time = self.current_time
         return (
             self.current_time - self._shutdown_initiation_time > self._cooldown_period
@@ -267,14 +326,14 @@ class DragonBackend:
         return step_id
 
     @staticmethod
-    def _start_redirect_workers(
+    def _create_redirect_workers(
         global_policy: Policy,
         policies: t.List[Policy],
         puids: t.List[int],
         out_file: t.Optional[str],
         err_file: t.Optional[str],
     ) -> ProcessGroup:
-        grp_redir = ProcessGroup(restart=False, policy=global_policy)
+        grp_redir = ProcessGroup(restart=False, policy=global_policy, pmi_enabled=False)
         for pol, puid in zip(policies, puids):
             proc = Process(None, ident=puid)
             if out_file:
@@ -297,14 +356,6 @@ class DragonBackend:
                         policy=pol,
                     ),
                 )
-        try:
-            grp_redir.init()
-            time.sleep(0.1)
-            grp_redir.start()
-        except Exception as e:
-            raise IOError(
-                f"Could not redirect stdout and stderr for PUIDS {puids}"
-            ) from e
 
         return grp_redir
 
@@ -324,35 +375,33 @@ class DragonBackend:
                 else:
                     # Technically we could just terminate, but what if
                     # the application intercepts that and ignores it?
-                    with self._group_info_lock:
-                        proc_group = self._group_infos[step_id].process_group
-                        if (
-                            proc_group is not None
-                            and proc_group.status == DRG_RUNNING_STATUS
-                        ):
+                    proc_group = self._group_infos[step_id].process_group
+                    if (
+                        proc_group is not None
+                        and proc_group.status == DRG_RUNNING_STATUS
+                    ):
+                        try:
+                            proc_group.kill()
+                        except DragonProcessGroupError:
                             try:
-                                proc_group.kill()
+                                proc_group.stop()
                             except DragonProcessGroupError:
-                                try:
-                                    proc_group.stop()
-                                except DragonProcessGroupError:
-                                    logger.error("Process group already stopped")
-                        redir_group = self._group_infos[step_id].redir_workers
-                        if redir_group is not None:
-                            try:
-                                redir_group.join(0.1)
-                                del redir_group
-                            except Exception as e:
-                                logger.error(e)
+                                logger.error("Process group already stopped")
+                    redir_group = self._group_infos[step_id].redir_workers
+                    if redir_group is not None:
+                        try:
+                            redir_group.join(0.1)
+                            redir_group = None
+                        except Exception as e:
+                            logger.error(e)
 
-                with self._group_info_lock:
-                    self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
-                    self._group_infos[step_id].return_codes = [-9]
+                self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
+                self._group_infos[step_id].return_codes = [-9]
 
     def _start_steps(self) -> None:
         self._heartbeat()
-        started = []
         with self._queue_lock:
+            started = []
             for step_id, request in self._queued_steps.items():
                 hosts = self._allocate_step(step_id, self._queued_steps[step_id])
                 if not hosts:
@@ -387,38 +436,48 @@ class DragonBackend:
                 try:
                     grp.init()
                     grp.start()
+                    grp_status = SmartSimStatus.STATUS_RUNNING
                 except Exception as e:
                     logger.error(e)
+                    grp_status = SmartSimStatus.STATUS_FAILED
 
                 puids = None
                 try:
-                    puids = grp.puids
-                    with self._group_info_lock:
-                        self._group_infos[step_id] = ProcessGroupInfo(
-                            process_group=grp,
-                            puids=puids,
-                            return_codes=[],
-                            status=SmartSimStatus.STATUS_RUNNING,
-                            hosts=hosts,
-                        )
+                    puids = list(
+                        set(grp.puids + [puid for puid, retcode in grp.inactive_puids])
+                    )
+                    self._group_infos[step_id] = ProcessGroupInfo(
+                        process_group=grp,
+                        puids=puids,
+                        return_codes=[],
+                        status=grp_status,
+                        hosts=hosts,
+                    )
                     self._running_steps.append(step_id)
                     started.append(step_id)
                 except Exception as e:
                     logger.error(e)
 
-                if puids is not None:
+                if (
+                    puids is not None
+                    and len(puids) == len(policies)
+                    and grp_status == SmartSimStatus.STATUS_RUNNING
+                ):
+                    redir_grp = DragonBackend._create_redirect_workers(
+                        global_policy,
+                        policies,
+                        puids,
+                        request.output_file,
+                        request.error_file,
+                    )
                     try:
-                        redir_grp = DragonBackend._start_redirect_workers(
-                            global_policy,
-                            policies,
-                            puids,
-                            request.output_file,
-                            request.error_file,
-                        )
-                        with self._group_info_lock:
-                            self._group_infos[step_id].redir_workers = redir_grp
+                        redir_grp.init()
+                        redir_grp.start()
                     except Exception as e:
-                        logger.error(e)
+                        raise IOError(
+                            f"Could not redirect stdout and stderr for PUIDS {puids}"
+                        ) from e
+                    self._group_infos[step_id].redir_workers = redir_grp
 
             if started:
                 logger.debug(f"{started=}")
@@ -430,11 +489,13 @@ class DragonBackend:
                     logger.error(
                         f"Tried to allocate the same step twice, step id {step_id}"
                     )
+                except Exception as e:
+                    logger.error(e)
 
     def _refresh_statuses(self) -> None:
         self._heartbeat()
-        terminated = []
-        with self._queue_lock, self._group_info_lock:
+        with self._queue_lock:
+            terminated = []
             for step_id in self._running_steps:
                 group_info = self._group_infos[step_id]
                 grp = group_info.process_group
@@ -483,14 +544,14 @@ class DragonBackend:
                         try:
                             self._allocated_hosts.pop(host)
                         except KeyError:
-                            logger.error(f"Tried to free same host twice: {host}")
+                            logger.error(f"Tried to free a non-allocated host: {host}")
                         self._free_hosts.append(host)
                     group_info.process_group = None
                     group_info.redir_workers = None
 
     def _update_shutdown_status(self) -> None:
         self._heartbeat()
-        with self._group_info_lock:
+        with self._queue_lock:
             self._can_shutdown |= all(
                 grp_info.status in TERMINAL_STATUSES
                 and grp_info.process_group is None
@@ -499,8 +560,8 @@ class DragonBackend:
             )
 
     def _should_print_status(self) -> bool:
-        if self._last_beat - self._last_update_time > 10:
-            self._last_update_time = self._last_beat
+        if self.current_time - self._last_update_time > 10:
+            self._last_update_time = self.current_time
             return True
         return False
 
@@ -533,25 +594,22 @@ class DragonBackend:
     @process_request.register
     def _(self, request: DragonRunRequest) -> DragonRunResponse:
         step_id = self._get_new_id()
-        honorable, err = self._can_honor(request)
-        if not honorable:
-            with self._group_info_lock:
+        with self._queue_lock:
+            honorable, err = self._can_honor(request)
+            if not honorable:
                 self._group_infos[step_id] = ProcessGroupInfo(
                     status=SmartSimStatus.STATUS_FAILED, return_codes=[-1]
                 )
-                return DragonRunResponse(step_id=step_id, error_message=err)
-
-        with self._queue_lock:
-            self._queued_steps[step_id] = request
-        with self._group_info_lock:
-            self._group_infos[step_id] = ProcessGroupInfo(
-                status=SmartSimStatus.STATUS_NEVER_STARTED
-            )
-            return DragonRunResponse(step_id=step_id)
+            else:
+                self._queued_steps[step_id] = request
+                self._group_infos[step_id] = ProcessGroupInfo(
+                    status=SmartSimStatus.STATUS_NEVER_STARTED
+                )
+            return DragonRunResponse(step_id=step_id, error_message=err)
 
     @process_request.register
     def _(self, request: DragonUpdateStatusRequest) -> DragonUpdateStatusResponse:
-        with self._group_info_lock:
+        with self._queue_lock:
             return DragonUpdateStatusResponse(
                 statuses={
                     step_id: self._group_infos[step_id].smartsim_info

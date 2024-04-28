@@ -31,7 +31,6 @@ import fileinput
 import itertools
 import json
 import os
-import signal
 import subprocess
 import sys
 import time
@@ -372,13 +371,16 @@ class DragonConnector:
 
     @staticmethod
     def _send_req_with_socket(
-        socket: zmq.Socket[t.Any], request: DragonRequest, flags: int = 0
+        socket: zmq.Socket[t.Any],
+        request: DragonRequest,
+        send_flags: int = 0,
+        recv_flags: int = 0,
     ) -> DragonResponse:
         client = dragonSockets.as_client(socket)
         with DRG_LOCK:
             logger.debug(f"Sending {type(request).__name__}: {request}")
-            client.send(request, flags)
-            response = client.recv()
+            client.send(request, send_flags)
+            response = client.recv(flags=recv_flags)
 
             logger.debug(f"Received {type(response).__name__}: {response}")
             return response
@@ -408,19 +410,18 @@ def _dragon_cleanup(
             print("Sending shutdown request to dragon environment")
             # pylint: disable-next=protected-access
             DragonConnector._send_req_with_socket(
-                server_socket, DragonShutdownRequest()
+                server_socket, DragonShutdownRequest(), recv_flags=zmq.NOBLOCK
             )
     except (zmq.error.ZMQError, zmq.Again) as e:
         # Can't use the logger as I/O file may be closed
         print("Could not send shutdown request to dragon server")
         print(f"ZMQ error: {e}", flush=True)
-        if server_process_pid and psutil.pid_exists(server_process_pid):
-            os.kill(server_process_pid, signal.SIGKILL)
+
     finally:
         time.sleep(5)
         print("Sending shutdown request is complete")
 
-    if server_process_pid:
+    if server_process_pid and psutil.pid_exists(server_process_pid):
         try:
             _, retcode = os.waitpid(server_process_pid, 0)
             print(

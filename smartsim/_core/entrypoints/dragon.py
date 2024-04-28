@@ -113,6 +113,23 @@ def restart_updater(
     return updater
 
 
+def is_updater_healthy(backend: DragonBackend) -> bool:
+
+    heartbeat_delay = backend.current_time - backend.last_heartbeat
+    if heartbeat_delay > 30.0 + float(backend.cooldown_period):
+        logger.debug(
+            f"Updater inactive for {heartbeat_delay:.2f} seconds, will request restart."
+        )
+        return False
+    return True
+
+
+def updater_fallback(backend: DragonBackend, updater: ContextThread) -> ContextThread:
+    if is_updater_healthy(backend):
+        return updater
+    return restart_updater(backend, updater)
+
+
 # pylint: disable-next=too-many-statements
 def run(
     zmq_context: "zmq.Context[t.Any]",
@@ -134,6 +151,7 @@ def run(
             req = server.recv()
             logger.debug(f"Received {type(req).__name__} {req}")
         except zmq.Again:
+            backend_updater = updater_fallback(dragon_backend, backend_updater)
             continue
 
         resp = dragon_backend.process_request(req)
@@ -143,19 +161,12 @@ def run(
             server.send(resp)
         except zmq.Again:
             logger.error("Could not send response back to launcher.")
+            backend_updater = updater_fallback(dragon_backend, backend_updater)
 
         # We can only check the heartbeat if the backend has not shut down
         if not dragon_backend.should_shutdown:
             logger.debug(f"Listening to {dragon_head_address}")
-            heartbeat_delay = (
-                dragon_backend.current_time - dragon_backend.last_heartbeat
-            )
-            if heartbeat_delay > 30.0 + float(dragon_backend.cooldown_period):
-                logger.debug(
-                    f"Restarting updater after {heartbeat_delay:.2f} "
-                    "seconds of inactivity."
-                )
-                backend_updater = restart_updater(dragon_backend, backend_updater)
+            backend_updater = updater_fallback(dragon_backend, backend_updater)
 
         if SHUTDOWN_INITIATED:
             dragon_backend.process_request(DragonShutdownRequest())
