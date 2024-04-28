@@ -773,7 +773,7 @@ class ColoUtils:
             db_args["port"] = port
             db_args["ifname"] = "lo"
         if db_type == "uds" and colo_model_name is not None:
-            tmp_dir = "/var/tmp"
+            tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
             socket_name = f"{colo_model_name}_{socket_suffix}.socket"
             db_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
