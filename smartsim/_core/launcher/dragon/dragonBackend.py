@@ -229,7 +229,7 @@ class DragonBackend:
             for host in self._hosts:
                 values.append([host, "Free" if host in self._free_hosts else "Busy"])
 
-        return tabulate(values, headers, disable_numparse=True, tablefmt="githbu")
+        return tabulate(values, headers, disable_numparse=True, tablefmt="github")
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
