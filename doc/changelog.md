@@ -888,8 +888,10 @@ Description:
 
 ```{eval-rst}
 .. include:: ../smartredis/doc/changelog.md
+```
 
 ## SmartDashboard
 
 ```{eval-rst}
 .. include:: ../smartdashboard/doc/changelog.md
+```
