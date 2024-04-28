@@ -28,9 +28,9 @@ import functools
 import time
 import typing as t
 from dataclasses import dataclass, field
+from threading import RLock
 
 from tabulate import tabulate
-from threading import RLock
 
 # pylint: disable=import-error
 # isort: off
@@ -183,7 +183,9 @@ class DragonBackend:
         logger.debug(f"{host_string} available for execution: {self._hosts}")
 
     @staticmethod
-    def _proc_group_info_table_line(step_id: str, proc_group_info: ProcessGroupInfo) -> t.List[str]:
+    def _proc_group_info_table_line(
+        step_id: str, proc_group_info: ProcessGroupInfo
+    ) -> t.List[str]:
         table_line = [step_id, f"{str(proc_group_info.status)}"]
 
         if proc_group_info.hosts is not None:
@@ -192,7 +194,9 @@ class DragonBackend:
             table_line.append("")
 
         if proc_group_info.return_codes is not None:
-            table_line.append(f"{','.join(str(ret) for ret in proc_group_info.return_codes)}")
+            table_line.append(
+                f"{','.join(str(ret) for ret in proc_group_info.return_codes)}"
+            )
         else:
             table_line.append("")
 
@@ -210,7 +214,9 @@ class DragonBackend:
 
         with self._queue_lock:
             for step, group_info in self._group_infos.items():
-                values.append(DragonBackend._proc_group_info_table_line(step, group_info))
+                values.append(
+                    DragonBackend._proc_group_info_table_line(step, group_info)
+                )
 
         return tabulate(values, headers, disable_numparse=True, tablefmt="github")
 

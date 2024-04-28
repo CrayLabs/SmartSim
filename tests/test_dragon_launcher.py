@@ -85,7 +85,7 @@ class MockSocket:
     def bind(self, addr: str) -> None:
         self._bind_address = addr
 
-    def recv_string(self) -> str:
+    def recv_string(self, flags: int) -> str:
         dbr = DragonBootstrapRequest(address=self._bind_address)
         return f"bootstrap|{dbr.json()}"
 
@@ -105,7 +105,7 @@ class MockSocket:
 
 
 class MockAuthenticator:
-    def __init__(self, context: zmq.Context) -> None:
+    def __init__(self, context: zmq.Context, log: t.Any) -> None:
         self.num_starts: int = 0
         self.num_stops: int = 0
         self.num_configure_curves: int = 0
