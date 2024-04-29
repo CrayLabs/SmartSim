@@ -879,12 +879,14 @@ def local_db(wlmutils):
 
 @pytest.fixture(scope="session")
 def single_db(wlmutils):
+    hostlist = wlmutils.get_test_hostlist()
+    hostlist = hostlist[-1:] if hostlist is not None else None
     with _create_and_launch_database(
         "single_db_fixture",
         launcher=wlmutils.get_test_launcher(),
         num_nodes=1,
         interface=wlmutils.get_test_interface(),
-        hostlist=wlmutils.get_test_hostlist(),
+        hostlist=hostlist,
         port=wlmutils.get_test_port() + 1,
     ) as db:
         yield db
@@ -892,12 +894,14 @@ def single_db(wlmutils):
 
 @pytest.fixture(scope="session")
 def clustered_db(wlmutils):
+    hostlist = wlmutils.get_test_hostlist()
+    hostlist = hostlist[-4:-1] if hostlist is not None else None
     with _create_and_launch_database(
         "clustered_db_fixture",
         launcher=wlmutils.get_test_launcher(),
         num_nodes=3,
         interface=wlmutils.get_test_interface(),
-        hostlist=wlmutils.get_test_hostlist(),
+        hostlist=hostlist,
         port=wlmutils.get_test_port() + 1,
     ) as db:
         yield db
