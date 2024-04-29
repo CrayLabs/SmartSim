@@ -379,7 +379,6 @@ def execute(
     keydb = args.keydb
     device = Device(args.device.lower())
     is_dragon_requested = args.dragon
-
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name
@@ -392,7 +391,7 @@ def execute(
     versions = Versioner()
 
     logger.info("Checking for build tools...")
-    
+
     if verbose:
         logger.info("Build Environment:")
         env = build_env.as_dict()
