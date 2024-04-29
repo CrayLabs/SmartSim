@@ -57,25 +57,34 @@ def is_crayex_platform() -> bool:
     ldconfig = check_for_utility("ldconfig")
     fi_info = check_for_utility("fi_info")
     if not all((ldconfig, fi_info)):
+        logger.warning("Unable to validate Cray EX platform. Aborting dragon install")
         return False
+
+    locate_msg = "Unable to locate %s. Aborting dragon install"
 
     ldconfig1 = f"{ldconfig} -p"
     ldc_out1, _ = _execute_platform_cmd(ldconfig1)
+    target = "pmi.so"
     candidates = [x for x in ldc_out1.split("\n") if "cray" in x]
-    pmi1 = any(x for x in candidates if "pmi.so" in x)
+    pmi1 = any(x for x in candidates if target in x)
     if not pmi1:
+        logger.warning(locate_msg, target)
         return False
 
     ldconfig2 = f"{ldconfig} -p"
     ldc_out2, _ = _execute_platform_cmd(ldconfig2)
+    target = "pmi2.so"
     candidates = [x for x in ldc_out2.split("\n") if "cray" in x]
-    pmi2 = any(x for x in candidates if "pmi2.so" in x)
+    pmi2 = any(x for x in candidates if target in x)
     if not pmi2:
+        logger.warning(locate_msg, target)
         return False
 
     fi_info_out, _ = _execute_platform_cmd(fi_info)
-    cxi = any(x for x in fi_info_out.split("\n") if "cxi" in x)
+    target = "cxi"
+    cxi = any(x for x in fi_info_out.split("\n") if target in x)
     if not cxi:
+        logger.warning(locate_msg, target)
         return False
 
     return True
