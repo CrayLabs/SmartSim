@@ -392,11 +392,11 @@ def execute(
     versions = Versioner()
 
     logger.info("Checking for build tools...")
-    env = build_env.as_dict()
-    env_vars = list(env.keys())
-
+    
     if verbose:
         logger.info("Build Environment:")
+        env = build_env.as_dict()
+        env_vars = list(env.keys())
         print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
 
     if keydb:
