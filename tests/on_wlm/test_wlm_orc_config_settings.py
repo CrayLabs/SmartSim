@@ -43,7 +43,7 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm_single(dbutils, db):
+def test_config_methods_on_wlm_single(dbutils, single_db):
     """Test all configuration file edit methods on single node WLM db"""
 
     # test the happy path and ensure all configuration file edit methods
@@ -51,7 +51,7 @@ def test_config_methods_on_wlm_single(dbutils, db):
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
         logger.debug(f"Setting {setting}={value}")
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = dbutils.get_config_edit_method(single_db, setting)
         config_set_method(value)
 
     # ensure SmartSimError is raised when a clustered database's
@@ -60,7 +60,7 @@ def test_config_methods_on_wlm_single(dbutils, db):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                db.set_db_conf(key, value)
+                single_db.set_db_conf(key, value)
 
     # ensure TypeError is raised when a clustered database's
     # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
@@ -68,10 +68,10 @@ def test_config_methods_on_wlm_single(dbutils, db):
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                db.set_db_conf(key, value)
+                single_db.set_db_conf(key, value)
 
 
-def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
+def test_config_methods_on_wlm_cluster(dbutils, clustered_db):
     """Test all configuration file edit methods on an active clustered db"""
 
     # test the happy path and ensure all configuration file edit methods
@@ -79,7 +79,7 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
         logger.debug(f"Setting {setting}={value}")
-        config_set_method = dbutils.get_config_edit_method(db_cluster, setting)
+        config_set_method = dbutils.get_config_edit_method(clustered_db, setting)
         config_set_method(value)
 
     # ensure SmartSimError is raised when a clustered database's
@@ -89,7 +89,7 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
         for value in value_list:
             with pytest.raises(SmartSimError):
                 logger.debug(f"Setting {key}={value}")
-                db_cluster.set_db_conf(key, value)
+                clustered_db.set_db_conf(key, value)
 
     # ensure TypeError is raised when a clustered database's
     # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
@@ -98,4 +98,4 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
         for value in value_list:
             with pytest.raises(TypeError):
                 logger.debug(f"Setting {key}={value}")
-                db_cluster.set_db_conf(key, value)
+                clustered_db.set_db_conf(key, value)
