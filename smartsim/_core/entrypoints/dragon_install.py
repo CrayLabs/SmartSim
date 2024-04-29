@@ -29,7 +29,7 @@ def check_for_utility(util_name: str) -> str:
     return utility or ""
 
 
-def _execute_platform_cmd(cmd: str) -> bool:
+def _execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     """Execute the platform check command as a subprocess
 
     :param cmd: the command to execute
@@ -38,18 +38,10 @@ def _execute_platform_cmd(cmd: str) -> bool:
     :rtype: bool"""
     with subprocess.Popen(
         cmd.split(),
-        stdout=sys.stdout,
-        stderr=sys.stderr,
+        stdout=subprocess.PIPE,
     ) as popen:
-
-        stdout, stderr = popen.communicate()
-        outputs = stdout.decode("utf-8")
-        errors = stderr.decode("utf-8")
-
-        if len(outputs) == 0 or len(errors) > 0:
-            return False
-
-        return True
+        out, _ = popen.communicate()
+        return out.decode("utf-8"), popen.returncode
 
 
 def is_crayex_platform() -> bool:
@@ -67,13 +59,26 @@ def is_crayex_platform() -> bool:
     if not all((ldconfig, fi_info)):
         return False
 
-    cray_pmi1 = f"{ldconfig} -p | grep cray | grep pmi.so"
-    cray_pmi2 = f"{ldconfig} -p | grep cray | grep pmi2.so"
-    cxi = f"{fi_info} | grep cxi"
-    cmd = f"{cray_pmi1} && {cray_pmi2} && {cxi}"
+    ldconfig1 = f"{ldconfig} -p"
+    ldc_out1, _ = _execute_platform_cmd(ldconfig1)
+    candidates = [x for x in ldc_out1.split("\n") if "cray" in x]
+    pmi1 = any(x for x in candidates if "pmi.so" in x)
+    if not pmi1:
+        return False
 
-    logger.debug(f"Checking for Cray EX platform: {cmd}")
-    return _execute_platform_cmd(cmd)
+    ldconfig2 = f"{ldconfig} -p"
+    ldc_out2, _ = _execute_platform_cmd(ldconfig2)
+    candidates = [x for x in ldc_out2.split("\n") if "cray" in x]
+    pmi2 = any(x for x in candidates if "pmi2.so" in x)
+    if not pmi2:
+        return False
+
+    fi_info_out, _ = _execute_platform_cmd(fi_info)
+    cxi = any(x for x in fi_info_out.split("\n") if "cxi" in x)
+    if not cxi:
+        return False
+
+    return True
 
 
 def python_version() -> str:

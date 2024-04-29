@@ -474,13 +474,19 @@ def test_is_crayex_missing_fi_info(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize(
-    "is_cray",
+    "is_cray,output,return_code",
     [
-        pytest.param(True, id="CrayEX"),
-        pytest.param(False, id="Non-CrayEX"),
+        pytest.param(True, "cray pmi2.so\ncxi\ncray pmi.so\npni.so", 0, id="CrayEX"),
+        pytest.param(False, "cray pmi2.so\ncxi\npni.so", 0, id="No PMI"),
+        pytest.param(False, "cxi\ncray pmi.so\npni.so", 0, id="No PMI 2"),
+        pytest.param(False, "cray pmi2.so\ncray pmi.so\npni.so", 0, id="No CXI"),
+        pytest.param(False, "pmi.so\ncray pmi2.so\ncxi", 0, id="Non Cray PMI"),
+        pytest.param(False, "cray pmi.so\npmi2.so\ncxi", 0, id="Non Cray PMI2"),
     ],
 )
-def test_is_cray_ex(monkeypatch: pytest.MonkeyPatch, is_cray: bool) -> None:
+def test_is_cray_ex(
+    monkeypatch: pytest.MonkeyPatch, is_cray: bool, output: str, return_code: int
+) -> None:
     """Test that cray ex platform check result is returned as expected"""
 
     def mock_util_check(util: str) -> bool:
@@ -498,7 +504,7 @@ def test_is_cray_ex(monkeypatch: pytest.MonkeyPatch, is_cray: bool) -> None:
         ctx.setattr(
             smartsim._core.entrypoints.dragon_install,
             "_execute_platform_cmd",
-            lambda x: is_cray,
+            lambda x: (output, return_code),
         )
 
         platform_result = is_crayex_platform()
