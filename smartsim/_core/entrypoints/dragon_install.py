@@ -169,7 +169,7 @@ def filter_assets(assets: t.Dict[str, GitReleaseAsset]) -> t.Optional[GitRelease
     :type assets: t.Dict[str, GitReleaseAsset]
     :returns: An asset meeting platform & version filtering requirements
     :rtype: Optional[GitReleaseAsset]"""
-    # We'll have a cray & non-cray assets to filter, e.g.
+    # Expect cray & non-cray assets that require a filter, e.g.
     # 'dragon-0.8-py3.9.4.1-bafaa887f.tar.gz',
     # 'dragon-0.8-py3.9.4.1-CRAYEX-ac132fe95.tar.gz'
 
