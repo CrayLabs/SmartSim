@@ -24,29 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
-import json
 import pathlib
-import random
-import string
 import tarfile
-import textwrap
 import typing as t
 from collections import namedtuple
 
 import pytest
-from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
 from github.Requester import Requester
 
 import smartsim
-from conftest import FileUtils
 from smartsim._core.entrypoints.dragon_install import (
     check_for_utility,
     cleanup,
     expand_archive,
-    filter_assets,
-    install_dragon,
     install_package,
     is_crayex_platform,
     retrieve_asset,
@@ -63,7 +54,33 @@ _git_attr = namedtuple("_git_attr", "value")
 
 
 @pytest.fixture
-def asset_list() -> t.Dict[str, GitReleaseAsset]:
+def test_archive(test_dir: str, archive_path: pathlib.Path) -> pathlib.Path:
+    """Fixture for returning a simple tarfile to test on"""
+    num_files = 10
+    with tarfile.TarFile.open(archive_path, mode="w:gz") as tar:
+        for i in range(num_files):
+            content = pathlib.Path(test_dir) / f"{i:04}.txt"
+            content.write_text(f"i am file {i}\n")
+            tar.add(content)
+    return archive_path
+
+
+@pytest.fixture
+def archive_path(test_dir: str) -> pathlib.Path:
+    """Fixture for returning a dir path based on the default mock asset archive name"""
+    path = pathlib.Path(test_dir) / mock_archive_name
+    return path
+
+
+@pytest.fixture
+def extraction_dir(test_dir: str) -> pathlib.Path:
+    """Fixture for returning a dir path based on the default mock asset archive name"""
+    path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
+    return path
+
+
+@pytest.fixture
+def asset_map() -> t.Dict[str, GitReleaseAsset]:
     requester = Requester(
         auth=None,
         base_url="https://github.com",
@@ -79,135 +96,132 @@ def asset_list() -> t.Dict[str, GitReleaseAsset]:
     completed = True
 
     assets: t.Dict[str, GitReleaseAsset] = {}
+    mock_archive_name_tpl = "{}-{}.4.1-{}ac132fe95.tar.gz"
 
     for python_version in ["py3.9", "py3.10", "py3.11"]:
         for dragon_version in ["dragon-0.8", "dragon-0.9", "dragon-0.10"]:
             for platform in ["", "CRAYEX-"]:
 
-                asset1 = GitReleaseAsset(requester, headers, attributes, completed)
+                asset = GitReleaseAsset(requester, headers, attributes, completed)
 
-                asset1_name = mock_archive_name
-                asset1_name = asset1_name.replace("py3.9", python_version)
-                asset1_name = asset1_name.replace("dragon-0.8", dragon_version)
-                asset1_name = asset1_name.replace("CRAYEX-", platform)
+                archive_name = mock_archive_name_tpl.format(
+                    dragon_version, python_version, platform
+                )
 
                 setattr(
-                    asset1,
+                    asset,
                     "_browser_download_url",
-                    _git_attr(value=f"http://foo/{asset1_name}"),
+                    _git_attr(value=f"http://foo/{archive_name}"),
                 )
-                setattr(asset1, "_name", _git_attr(value=asset1_name))
-                assets[asset1_name] = asset1
+                setattr(asset, "_name", _git_attr(value=archive_name))
+                assets[archive_name] = asset
 
     return assets
 
 
-def test_cleanup_no_op(test_dir: str) -> None:
+def test_cleanup_no_op(
+    extraction_dir: pathlib.Path, archive_path: pathlib.Path
+) -> None:
     """Ensure that the cleanup method doesn't bomb when called with
     missing archive path and extraction directory; simulate a failed
     download"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-    extract_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
-
     # confirm assets do not exist
     assert not archive_path.exists()
-    assert not extract_path.exists()
+    assert not extraction_dir.exists()
 
     # call cleanup. any exceptions should break test...
-    cleanup(archive_path, extract_path)
+    cleanup(archive_path, extraction_dir)
 
 
-def test_cleanup_empty_extraction_directory(test_dir: str) -> None:
+def test_cleanup_empty_extraction_directory(
+    extraction_dir: str, archive_path: pathlib.Path
+) -> None:
     """Ensure that the cleanup method works when the extraction directory
     is empty"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-    extract_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
-    extract_path.mkdir()
+    extraction_dir.mkdir()
 
     # verify archive doesn't exist & folder does
     assert not archive_path.exists()
-    assert extract_path.exists()
+    assert extraction_dir.exists()
 
-    cleanup(archive_path, extract_path)
+    cleanup(archive_path, extraction_dir)
 
     # verify folder is gone after cleanup
     assert not archive_path.exists()
-    assert not extract_path.exists()
+    assert not extraction_dir.exists()
 
 
-def test_cleanup_nonempty_extraction_directory(test_dir: str) -> None:
+def test_cleanup_nonempty_extraction_directory(
+    extraction_dir: pathlib.Path,
+    archive_path: pathlib.Path,
+) -> None:
     """Ensure that the cleanup method works when the extraction directory
     is NOT empty"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-    extract_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
-    extract_path.mkdir()
+    extraction_dir.mkdir()
 
-    num_files = 10
-    for i in range(num_files):
-        content = extract_path / f"{i:04}.txt"
-        content.write_text(f"i am file {i}\n")
+    something = extraction_dir / "file.txt"
+    something.write_text("bump!")
 
-    files = list(extract_path.rglob("*.txt"))
+    files = list(extraction_dir.rglob("*.txt"))
+    assert len(files) > 0
 
-    assert len(files) == num_files
-
-    cleanup(archive_path, extract_path)
+    cleanup(archive_path, extraction_dir)
 
     # verify folder is gone after cleanup
     assert not archive_path.exists()
-    assert not extract_path.exists()
+    assert not extraction_dir.exists()
 
 
-def test_cleanup_no_extract_path(test_dir: str) -> None:
+def test_cleanup_no_extract_path(
+    test_dir: str,
+    archive_path: pathlib.Path,
+    test_archive: pathlib.Path,
+) -> None:
     """Ensure that the cleanup method doesn't bomb when called with
     missing extraction directory; simulate failed extract"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-    extract_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
 
     # create an archive to clean up
-    with tarfile.TarFile.open(archive_path, mode="w:gz") as tar:
-        tar.add(__file__)  # add current file to avoid empty tar
+    assert test_archive.exists()
 
     # verify archive exists before cleanup
     assert archive_path.exists()
 
-    cleanup(archive_path, extract_path)
+    extraction_dir = pathlib.Path(test_dir) / "not-there"
+    cleanup(archive_path, extraction_dir)
 
     # verify archive is gone after cleanup
     assert not archive_path.exists()
-    assert not extract_path.exists()
+    assert not extraction_dir.exists()
 
 
-def test_cleanup_no_archive(test_dir: str) -> None:
+def test_cleanup_no_archive(
+    extraction_dir: pathlib.Path, archive_path: pathlib.Path
+) -> None:
     """Ensure that the cleanup method doesn't bomb when called with
     missing archive"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-    extract_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
-
-    extract_path.mkdir()
+    extraction_dir.mkdir()
 
     # verify archive exists before cleanup
-    assert extract_path.exists()
+    assert extraction_dir.exists()
 
-    cleanup(archive_path, extract_path)
+    cleanup(archive_path, extraction_dir)
 
     # verify archive is gone after cleanup
     assert not archive_path.exists()
-    assert not extract_path.exists()
+    assert not extraction_dir.exists()
 
 
-def test_expand_archive(test_dir: str) -> None:
+def test_expand_archive(
+    extraction_dir: pathlib.Path,
+    archive_path: pathlib.Path,
+    test_archive: pathlib.Path,
+) -> None:
     """Verify archive is expanded into expected location w/correct content"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-    exp_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
+    exp_path = extraction_dir
     num_files = 10
 
     # create an archive to clean up
-    with tarfile.TarFile.open(archive_path, mode="w:gz") as tar:
-        for i in range(num_files):
-            content = pathlib.Path(test_dir) / f"{i:04}.txt"
-            content.write_text(f"i am file {i}\n")
-            tar.add(content)
+    assert test_archive.exists()
 
     extract_path = expand_archive(archive_path)
 
@@ -217,28 +231,22 @@ def test_expand_archive(test_dir: str) -> None:
     assert extract_path == exp_path
 
 
-def test_expand_archive_path_path(test_dir: str) -> None:
+def test_expand_archive_path_path(archive_path: pathlib.Path) -> None:
     """Verify the expand method responds to a bad path with a ValueError"""
-    archive_path = pathlib.Path(test_dir) / mock_archive_name
-
     with pytest.raises(ValueError) as ex:
         expand_archive(archive_path)
 
     assert str(archive_path) in str(ex.value.args[0])
 
 
-def test_retrieve_cached(test_dir: str) -> None:
+def test_retrieve_cached(
+    test_dir: str,
+    archive_path: pathlib.Path,
+    test_archive: pathlib.Path,
+) -> None:
     """Verify that a previously retrieved asset archive is re-used"""
     working_dir = pathlib.Path(test_dir)
-    archive_path = working_dir / mock_archive_name
     num_files = 10
-
-    # create an archive to simulate re-use
-    with tarfile.TarFile.open(archive_path, mode="w:gz") as tar:
-        for i in range(num_files):
-            content = working_dir / f"{i:04}.txt"
-            content.write_text(f"i am file {i}\n")
-            tar.add(content)
 
     ts1 = archive_path.stat().st_ctime
 
@@ -299,83 +307,15 @@ def test_retrieve_cached(test_dir: str) -> None:
         pytest.param("dragon-0.7", "py3.9", False, True, id="0.7,python 3.9,CrayEX"),
     ],
 )
-def test_filter_assets(
-    asset_list: t.Dict[str, GitReleaseAsset],
-    monkeypatch: pytest.MonkeyPatch,
-    dragon_pin: str,
-    pyv: str,
-    is_found: bool,
-    is_crayex: bool,
-) -> None:
-    """Verify that an asset list is filtered correctly based on the python
-    version, platform (e.g. CrayEX, !CrayEx), and target dragon pin"""
-
-    with monkeypatch.context() as ctx:
-        ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
-            "python_version",
-            lambda: pyv,
-        )
-        ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
-            "is_crayex_platform",
-            lambda: is_crayex,
-        )
-        ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
-            "dragon_pin",
-            lambda: dragon_pin,
-        )
-        chosen_asset = filter_assets(asset_list)
-
-        if is_found:
-            assert chosen_asset
-            assert pyv in chosen_asset.name
-            assert dragon_pin in chosen_asset.name
-
-            if is_crayex:
-                assert "crayex" in chosen_asset.name.lower()
-        else:
-            assert not chosen_asset
-
-
-@pytest.mark.parametrize(
-    "dragon_pin,pyv,is_found,is_crayex",
-    [
-        pytest.param("dragon-0.8", "py3.8", False, False, id="0.8,python 3.8"),
-        pytest.param("dragon-0.8", "py3.9", True, False, id="0.8,python 3.9"),
-        pytest.param("dragon-0.8", "py3.10", True, False, id="0.8,python 3.10"),
-        pytest.param("dragon-0.8", "py3.11", True, False, id="0.8,python 3.11"),
-        pytest.param("dragon-0.8", "py3.12", False, False, id="0.8,python 3.12"),
-        pytest.param("dragon-0.8", "py3.8", False, True, id="0.8,python 3.8,CrayEX"),
-        pytest.param("dragon-0.8", "py3.9", True, True, id="0.8,python 3.9,CrayEX"),
-        pytest.param("dragon-0.8", "py3.10", True, True, id="0.8,python 3.10,CrayEX"),
-        pytest.param("dragon-0.8", "py3.11", True, True, id="0.8,python 3.11,CrayEX"),
-        pytest.param("dragon-0.8", "py3.12", False, True, id="0.8,python 3.12,CrayEX"),
-        pytest.param("dragon-0.9", "py3.8", False, False, id="0.9,python 3.8"),
-        pytest.param("dragon-0.9", "py3.9", True, False, id="0.9,python 3.9"),
-        pytest.param("dragon-0.9", "py3.10", True, False, id="0.9,python 3.10"),
-        pytest.param("dragon-0.9", "py3.11", True, False, id="0.9,python 3.11"),
-        pytest.param("dragon-0.9", "py3.12", False, False, id="0.9,python 3.12"),
-        pytest.param("dragon-0.9", "py3.8", False, True, id="0.9,python 3.8,CrayEX"),
-        pytest.param("dragon-0.9", "py3.9", True, True, id="0.9,python 3.9,CrayEX"),
-        pytest.param("dragon-0.9", "py3.10", True, True, id="0.9,python 3.10,CrayEX"),
-        pytest.param("dragon-0.9", "py3.11", True, True, id="0.9,python 3.11,CrayEX"),
-        pytest.param("dragon-0.9", "py3.12", False, True, id="0.9,python 3.12,CrayEX"),
-        # add a couple variants for a dragon version that isn't in the asset list
-        pytest.param("dragon-0.7", "py3.9", False, False, id="0.7,python 3.9"),
-        pytest.param("dragon-0.7", "py3.9", False, True, id="0.7,python 3.9,CrayEX"),
-    ],
-)
 def test_retrieve_asset_info(
-    asset_list: t.Dict[str, GitReleaseAsset],
+    asset_map: t.Dict[str, GitReleaseAsset],
     monkeypatch: pytest.MonkeyPatch,
     dragon_pin: str,
     pyv: str,
     is_found: bool,
     is_crayex: bool,
 ) -> None:
-    """Verify that an asset list is filtered correctly based on the python
+    """Verify that an information is retrieved correctly based on the python
     version, platform (e.g. CrayEX, !CrayEx), and target dragon pin"""
 
     with monkeypatch.context() as ctx:
@@ -398,7 +338,7 @@ def test_retrieve_asset_info(
         ctx.setattr(
             smartsim._core.entrypoints.dragon_install,
             "_get_release_assets",
-            lambda: asset_list,
+            lambda: asset_map,
         )
 
         if is_found:
@@ -410,6 +350,8 @@ def test_retrieve_asset_info(
 
             if is_crayex:
                 assert "crayex" in chosen_asset.name.lower()
+            else:
+                assert "crayex" not in chosen_asset.name.lower()
         else:
             with pytest.raises(SmartSimCLIActionCancelled):
                 retrieve_asset_info()
@@ -435,10 +377,10 @@ def test_is_crayex_missing_ldconfig(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure the cray ex platform check doesn't fail when ldconfig isn't
     available for use"""
 
-    def mock_util_check(util: str) -> bool:
+    def mock_util_check(util: str) -> str:
         if util == "ldconfig":
-            return False
-        return True
+            return ""
+        return "w00t!"
 
     with monkeypatch.context() as ctx:
         # mock utility existence
@@ -456,10 +398,10 @@ def test_is_crayex_missing_fi_info(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure the cray ex platform check doesn't fail when fi_info isn't
     available for use"""
 
-    def mock_util_check(util: str) -> bool:
+    def mock_util_check(util: str) -> str:
         if util == "fi_info":
-            return False
-        return True
+            return ""
+        return "w00t!"
 
     with monkeypatch.context() as ctx:
         # mock utility existence
@@ -511,9 +453,9 @@ def test_is_cray_ex(
         assert is_cray == platform_result
 
 
-def test_install_package__no_wheel(test_dir: str):
+def test_install_package_no_wheel(test_dir: str, extraction_dir: pathlib.Path):
     """Verify that a missing wheel does not blow up and has a failure retcode"""
-    exp_path = pathlib.Path(test_dir) / mock_archive_name.replace(".tar.gz", "")
+    exp_path = extraction_dir
 
     result = install_package(exp_path)
     assert result != 0

@@ -20,9 +20,7 @@ def check_for_utility(util_name: str) -> str:
     """Check for existence of the provided CLI utility.
 
     :param util_name: CLI utility to locate
-    :type util_name: str
-    :returns: Full path to executable if found. Otherwise, empty string
-    :rtype: str"""
+    :returns: Full path to executable if found. Otherwise, empty string"""
     utility = shutil.which(util_name)
     if not utility:
         logger.debug(f"{util_name} not available for Cray EX platform check.")
@@ -33,23 +31,19 @@ def _execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     """Execute the platform check command as a subprocess
 
     :param cmd: the command to execute
-    :type cmd: str:
-    :returns: True if platform is cray ex, False otherwise
-    :rtype: bool"""
-    with subprocess.Popen(
+    :returns: True if platform is cray ex, False otherwise"""
+    process = subprocess.run(
         cmd.split(),
-        stdout=subprocess.PIPE,
-    ) as popen:
-        out, _ = popen.communicate()
-        return out.decode("utf-8"), popen.returncode
+        capture_output=True,
+    )
+    return process.stdout.decode("utf-8"), process.returncode
 
 
 def is_crayex_platform() -> bool:
     """Returns True if the current platform is identified as Cray EX and
     HSTA-aware dragon package can be installed, False otherwise.
 
-    :returns: True if current platform is Cray EX, False otherwise
-    :rtype: bool"""
+    :returns: True if current platform is Cray EX, False otherwise"""
 
     # ldconfig -p | grep cray | grep pmi.so &&
     # ldconfig -p | grep cray | grep pmi2.so &&
@@ -107,9 +101,7 @@ def _platform_filter(value: str) -> bool:
     current platform is Cray, False otherwise.
 
     :param value: A value to inspect for keywords indicating a Cray EX asset
-    :type value: str
-    :returns: True if supplied value is correct for current platform
-    :rtype: bool"""
+    :returns: True if supplied value is correct for current platform"""
     key = "crayex"
     is_cray = key in value.lower()
     if is_crayex_platform():
@@ -121,9 +113,7 @@ def _version_filter(value: str) -> bool:
     """Return true if the supplied value contains a python version match
 
     :param value: A value to inspect for keywords indicating a python version
-    :type value: str
-    :returns: True if supplied value is correct for current python version
-    :rtype: bool"""
+    :returns: True if supplied value is correct for current python version"""
     return python_version() in value
 
 
@@ -131,9 +121,7 @@ def _pin_filter(value: str) -> bool:
     """Return true if the supplied value contains a dragon version pin match
 
     :param value: A value to inspect for keywords indicating a dragon version
-    :type value: str
-    :returns: True if supplied value is correct for current dragon version
-    :rtype: bool"""
+    :returns: True if supplied value is correct for current dragon version"""
     return dragon_pin() in value
 
 
@@ -141,8 +129,7 @@ def _get_release_assets() -> t.Dict[str, GitReleaseAsset]:
     """Retrieve a dictionary mapping asset names to asset files from the
     latest Dragon release
 
-    :returns: A dictionary containing latest assets matching the supplied pin
-    :rtype: Dict[str, GitReleaseAsset]"""
+    :returns: A dictionary containing latest assets matching the supplied pin"""
     git = Github()
 
     dragon_repo = git.get_repo("DragonHPC/dragon")
@@ -166,9 +153,7 @@ def filter_assets(assets: t.Dict[str, GitReleaseAsset]) -> t.Optional[GitRelease
     when run on a Cray EX platform
 
     :param assets: The collection of dragon release assets to filter
-    :type assets: t.Dict[str, GitReleaseAsset]
-    :returns: An asset meeting platform & version filtering requirements
-    :rtype: Optional[GitReleaseAsset]"""
+    :returns: An asset meeting platform & version filtering requirements"""
     # Expect cray & non-cray assets that require a filter, e.g.
     # 'dragon-0.8-py3.9.4.1-bafaa887f.tar.gz',
     # 'dragon-0.8-py3.9.4.1-CRAYEX-ac132fe95.tar.gz'
@@ -191,9 +176,7 @@ def retrieve_asset_info() -> GitReleaseAsset:
     """Find a release asset that meets all necessary filtering criteria
 
     :param dragon_pin: identify the dragon version to install (e.g. dragon-0.8)
-    :type dragon_pin: str
-    :returns: A GitHub release asset
-    :rtype: GitReleaseAsset"""
+    :returns: A GitHub release asset"""
     asset_map = _get_release_assets()
     asset = filter_assets(asset_map)
     if asset is None:
@@ -206,10 +189,9 @@ def retrieve_asset_info() -> GitReleaseAsset:
 def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib.Path:
     """Retrieve the physical file associated to a given GitHub release asset
 
+    :param working_dir: location in file system where assets should be written
     :param asset: GitHub release asset to retrieve
-    :type asset: GitReleaseAsset
-    :returns: path to the downloaded asset
-    :rtype: pathlib.Path"""
+    :returns: path to the downloaded asset"""
     output_path = working_dir / asset.name
     if output_path.exists():
         return output_path
@@ -225,15 +207,14 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
     with open(output_path, "wb") as asset_file:
         asset_file.write(request.content)
 
-    logger.debug("Selected asset: {filename}")
+    logger.debug(f"Retrieving {asset.browser_download_url} to {output_path}")
     return output_path
 
 
 def expand_archive(archive_path: pathlib.Path) -> pathlib.Path:
     """Expand the archive file from the asset
 
-    :param archive_path: path to a downloaded archive for a release asset
-    :type archive_path: Optional[pathlib.Path]"""
+    :param archive_path: path to a downloaded archive for a release asset"""
     if not archive_path.exists():
         raise ValueError(f"Archive {archive_path} does not exist")
 
@@ -243,15 +224,14 @@ def expand_archive(archive_path: pathlib.Path) -> pathlib.Path:
     with tarfile.TarFile.open(archive_path, "r") as archive:
         archive.extractall(expand_to)
 
-    logger.debug("Asset expanded into: {expand_to}")
+    logger.debug(f"Asset expanded into: {expand_to}")
     return pathlib.Path(expand_to)
 
 
 def install_package(asset_dir: pathlib.Path) -> int:
     """Install the package found in `asset_dir` into the current python environment
 
-    :param asset_dir: path to a decompressed archive contents for a release asset
-    :type asset_dir: Optional[pathlib.Path]"""
+    :param asset_dir: path to a decompressed archive contents for a release asset"""
     package_path = next(asset_dir.rglob("*.whl"), None)
     if not package_path:
         logger.error(f"No wheel found for package in {asset_dir}")
@@ -260,10 +240,9 @@ def install_package(asset_dir: pathlib.Path) -> int:
     cmd = f"python -m pip install --force-reinstall {package_path}"
     logger.info(f"Executing installation: {cmd}")
 
-    with subprocess.Popen(cmd.split()) as installer:
-        result = installer.wait()
-        logger.debug(f"Installation completed with return code: {result}")
-        return result
+    process = subprocess.run(cmd.split())
+    logger.debug(f"Installation completed with return code: {process.returncode}")
+    return process.returncode
 
 
 def cleanup(
@@ -273,10 +252,7 @@ def cleanup(
     """Delete the downloaded asset and any files extracted during installation
 
     :param archive_path: path to a downloaded archive for a release asset
-    :type archive_path: Optional[pathlib.Path]
-    :param asset_dir: path to a decompressed archive contents for a release asset
-    :type asset_dir: Optional[pathlib.Path]
-    """
+    :param asset_dir: path to a decompressed archive contents for a release asset"""
     if archive_path:
         archive_path.unlink(missing_ok=True)
         logger.debug(f"Deleted archive: {archive_path}")
@@ -287,7 +263,8 @@ def cleanup(
 
 def install_dragon() -> int:
     """Retrieve a dragon runtime appropriate for the current platform
-    and install to the current python environment"""
+    and install to the current python environment
+    :returns: Integer return code, 0 for success, non-zero on failures"""
     filename: t.Optional[pathlib.Path] = None
     asset_dir: t.Optional[pathlib.Path] = None
 
@@ -306,4 +283,5 @@ def install_dragon() -> int:
 
 
 if __name__ == "__main__":
-    install_dragon()
+    return_code = install_dragon()
+    sys.exit(return_code)
