@@ -29,16 +29,28 @@
 changelog:
   exclude:
     labels:
-      - non-user-facing
+      - ignore-for-release
   categories:
     - title: Features
       labels:
         - 'type: feature'
+      exclude:
+        labels:
+          - non-user-facing
     - title: Bug Fixes
       labels:
         - 'bug: critical'
         - 'bug: major'
         - 'bug: minor'
+      exclude:
+        labels:
+          - non-user-facing
     - title: API Breaks
       labels:
         - 'API break'
+      exclude:
+        labels:
+          - non-user-facing
+    - title: Miscellaneous Improvements
+      labels:
+        - "*"
