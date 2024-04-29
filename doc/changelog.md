@@ -3,9 +3,9 @@
 Listed here are the changes between each release of SmartSim,
 SmartRedis and SmartDashboard.
 
-Jump to {ref}`SmartRedis changelog<SmartRedis changelog>` or {ref}`SmartDashboard changelog<SmartDashboard changelog>`
+Jump to {ref}`SmartRedis changelog<smartredis-changelog>` or {ref}`SmartDashboard Changelog<smartdashboard-changelog>`
 
-## SmartSim changelog
+## SmartSim
 
 ### Development branch
 
@@ -906,7 +906,8 @@ Description:
 
 ------------------------------------------------------------------------
 
-## SmartRedis changelog
+(smartredis-changelog)=
+## SmartRedis
 
 ```{eval-rst}
 .. include:: ../smartredis/doc/changelog.md
@@ -915,7 +916,8 @@ Description:
 
 ------------------------------------------------------------------------
 
-## SmartDashboard changelog
+(smartdashboard-changelog)=
+## SmartDashboard
 
 ```{eval-rst}
 .. include:: ../smartdashboard/doc/changelog.md
