@@ -671,10 +671,10 @@ Launcher improvements
     ([SmartSim-PR166](https://github.com/CrayLabs/SmartSim/pull/166))
     ([SmartSim-PR170](https://github.com/CrayLabs/SmartSim/pull/170))
 -   Better support for [mpirun]{.title-ref}, [mpiexec]{.title-ref},
-     and [orterun]{.title-ref} as launchers
-     ([SmartSim-PR186](https://github.com/CrayLabs/SmartSim/pull/186))
+    and [orterun]{.title-ref} as launchers
+    ([SmartSim-PR186](https://github.com/CrayLabs/SmartSim/pull/186))
 -   Experimental: add support for running models via Singularity
-     ([SmartSim-PR204](https://github.com/CrayLabs/SmartSim/pull/204))
+    ([SmartSim-PR204](https://github.com/CrayLabs/SmartSim/pull/204))
 
 Documentation and tutorials
 
