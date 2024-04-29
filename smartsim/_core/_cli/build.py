@@ -402,12 +402,11 @@ def execute(
     if keydb:
         _configure_keydb_build(versions)
 
-    db_name: DbEngine = "KEYDB" if keydb else "REDIS"
-    vers = versions.as_dict(db_name=db_name)
-    version_names = list(vers.keys())
-
     if verbose:
+        db_name: DbEngine = "KEYDB" if keydb else "REDIS"
         logger.info("Version Information:")
+        vers = versions.as_dict(db_name=db_name)
+        version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     if is_dragon_requested:
