@@ -75,6 +75,7 @@ def test_db_identifier_standard_then_colo_error(
 ):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
+
     # Set experiment name
     exp_name = "test_db_identifier_standard_then_colo"
 
@@ -127,7 +128,7 @@ def test_db_identifier_standard_then_colo_error(
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_colo_then_standard(
-    fileutils, wlmutils, coloutils, db_type, test_dir, single_db
+    fileutils, wlmutils, coloutils, db_type, test_dir
 ):
     """Test colocate_db_uds/colocate_db_tcp then create_database with database
     identifiers.
@@ -174,11 +175,21 @@ def test_db_identifier_colo_then_standard(
         == "testdb_colo"
     )
 
-    with make_entity_context(exp, smartsim_model):
-        exp.start(smartsim_model, block=True)
-        exp.reconnect_orchestrator(single_db.checkpoint_file)
+    # Create Database
+    orc = exp.create_database(
+        port=test_port + 1,
+        interface=test_interface,
+        db_identifier="testdb_colo",
+        hosts=choose_host(wlmutils),
+    )
 
-    check_not_failed(exp, smartsim_model)
+    assert orc.name == "testdb_colo"
+
+    with make_entity_context(exp, orc), make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model, block=True)
+        exp.start(orc)
+
+    check_not_failed(exp, orc, smartsim_model)
 
 
 def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
@@ -392,7 +403,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
 
-    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_script = fileutils.get_test_conf_path(
+        "smartredis/multidbid_colo_env_vars_only.py"
+    )
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
 
@@ -422,8 +435,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     )
 
     with make_entity_context(exp, db), make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model, block=False)
         exp.start(db)
-        exp.start(smartsim_model, block=True)
+        exp.poll(smartsim_model)
 
     check_not_failed(exp, db, smartsim_model)
 
