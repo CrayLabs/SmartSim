@@ -9,41 +9,55 @@ SmartRedis and SmartDashboard.
 
 To be released at some future point in time
 
-Description
+Description 521, 524, 520
 
+-   Update authentication in release workflow
+-   Auto-generate type-hints into documentation
 -   Auto-post release PR to develop
 -   Bump manifest.json to version 0.0.4
 -   Fix symlinking batch ensemble and model bug
+-   Fix noisy failing WLM test
 -   Remove defensive regexp in .gitignore
 -   Upgrade ubuntu to 22.04
 -   Remove helper function `init_default`
--   Fix telemetry monitor logging errrors for task history
+-   Fix telemetry monitor logging errors for task history
 -   Change default path for entities
 -   Drop Python 3.8 support
 -   Update watchdog dependency
 -   Historical output files stored under .smartsim directory
+-   Fixes unfalsifiable test that tests SmartSim's custom SIGINT signal
+    handler
 -   Add option to build Torch backend without the Intel Math Kernel
     Library
 -   Fix ReadTheDocs build issue
+-   Disallow uninitialized variable use
 -   Promote device options to an Enum
 -   Update telemetry monitor, add telemetry collectors
 -   Add method to specify node features for a Slurm job
 -   Colo Orchestrator setup now blocks application start until setup
     finished
+-   Refactor areas of the code where mypy potential errors
+-   Minor enhancements to test suite
 -   ExecArgs handling correction
 -   ReadTheDocs config file added and enabled on PRs
 -   Enforce changelog updates
+-   Fix Jupyter notebook math expressions
 -   Remove deprecated SmartSim modules
 -   SmartSim Documentation refactor
+-   Promote SmartSim statuses to a dedicated type
 -   Update the version of Redis from [7.0.4]{.title-ref} to
     [7.2.4]{.title-ref}
--   Fix publishing of development docs
+-   Increase disk space in doc builder container
 -   Update Experiment API typing
--   Minor enhancements to test suite
--   Improve SmartSim experiment signal handlers
+-   Prevent duplicate entity names
+-   Fix publishing of development docs
 
 Detailed Notes
 
+-   Replace the developer created token with the GH_TOKEN environment variable.
+    ([SmartSim-PR570](https://github.com/CrayLabs/SmartSim/pull/570))
+-   Add extension to auto-generate function type-hints into documentation.
+    ([SmartSim-PR561](https://github.com/CrayLabs/SmartSim/pull/561))
 -   Add to github release workflow to auto generate a pull request from
     master into develop for release.
     ([SmartSim-PR566](https://github.com/CrayLabs/SmartSim/pull/566))
@@ -118,11 +132,16 @@ Detailed Notes
 -   Add Github Actions workflow that checks if changelog is edited on
     pull requests into develop.
     ([SmartSim-PR518](https://github.com/CrayLabs/SmartSim/pull/518))
+-   Add path to MathJax.js file so that Sphinx will use to render math
+    expressions.
+    ([SmartSim-PR516](https://github.com/CrayLabs/SmartSim/pull/516))
 -   Removed deprecated SmartSim modules: slurm and mpirunSettings.
     ([SmartSim-PR514](https://github.com/CrayLabs/SmartSim/pull/514))
 -   Implemented new structure of SmartSim documentation. Added examples
     images and further detail of SmartSim components.
     ([SmartSim-PR463](https://github.com/CrayLabs/SmartSim/pull/463))
+-   Promote SmartSim statuses to a dedicated type named SmartSimStatus.
+    ([SmartSim-PR509](https://github.com/CrayLabs/SmartSim/pull/509))
 -   Update Redis version to [7.2.4]{.title-ref}. This change fixes an
     issue in the Redis build scripts causing failures on Apple Silicon
     hosts.
@@ -138,6 +157,9 @@ Detailed Notes
 -   The CI will fail static analysis if common erroneous truthy checks
     are detected.
     ([SmartSim-PR524](https://github.com/CrayLabs/SmartSim/pull/524))
+-   Prevent the launch of duplicate named entities. Allow completed
+    entities to run.
+    ([SmartSim-PR480](https://github.com/CrayLabs/SmartSim/pull/480))
 -   The CI will fail static analysis if a local variable used while
     potentially undefined.
     ([SmartSim-PR521](https://github.com/CrayLabs/SmartSim/pull/521))
@@ -149,7 +171,7 @@ Detailed Notes
     test suite failures. Update path to pickle file in
     `tests/full_wlm/test_generic_orc_launch_batch.py::test_launch_cluster_orc_reconnect`
     to conform with changes made in
-    [SmartSim-PR533](https://github.com/CrayLabs/SmartSim/pull/533).
+    ([SmartSim-PR533](https://github.com/CrayLabs/SmartSim/pull/533)).
     ([SmartSim-PR559](https://github.com/CrayLabs/SmartSim/pull/559))
 -   When calling `Experiment.start` SmartSim would register a signal
     handler that would capture an interrupt signal (\^C) to kill any

@@ -125,6 +125,7 @@ jobs:
           password: ${{ secrets.PYPI }}
           #repository_url: https://test.pypi.org/legacy/
 
+
   createPullRequest:
     runs-on: ubuntu-latest
     steps:
@@ -135,4 +136,4 @@ jobs:
         run: |
           gh pr create -B develop -H master --title 'Merge master into develop' --body 'This PR brings develop up to date with master for release.'
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ github.token }}
