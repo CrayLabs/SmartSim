@@ -3,13 +3,13 @@
 Listed here are the changes between each release of SmartSim,
 SmartRedis and SmartDashboard.
 
-## SmartSim
+Jump to {ref}`SmartRedis changelog<SmartRedis changelog>` or {ref}`SmartDashboard changelog<SmartDashboard changelog>`
+
+## SmartSim changelog
 
 ### Development branch
 
 To be released at some future point in time
-
-Description 521, 524, 520
 
 -   Update authentication in release workflow
 -   Auto-generate type-hints into documentation
@@ -103,7 +103,7 @@ Detailed Notes
     ([SmartSim-PR537](https://github.com/CrayLabs/SmartSim/pull/537))
 -   Promote devices to a dedicated Enum type throughout the SmartSim
     code base.
-    ([SmartSim-PR498](https://github.com/CrayLabs/SmartSim/pull/498))
+    ([SmartSim-PR527](https://github.com/CrayLabs/SmartSim/pull/527))
 -   Update the telemetry monitor to enable retrieval of metrics on a
     scheduled interval. Switch basic experiment tracking telemetry to
     default to on. Add database metric collectors. Improve telemetry
@@ -906,14 +906,18 @@ Description:
 
 ------------------------------------------------------------------------
 
-## SmartRedis
+## SmartRedis changelog
 
 ```{eval-rst}
 .. include:: ../smartredis/doc/changelog.md
+   :parser: myst_parser.sphinx_
 ```
 
-## SmartDashboard
+------------------------------------------------------------------------
+
+## SmartDashboard changelog
 
 ```{eval-rst}
 .. include:: ../smartdashboard/doc/changelog.md
+   :parser: myst_parser.sphinx_
 ```
