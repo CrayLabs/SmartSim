@@ -1,5 +1,8 @@
 
     {%- if model is defined %}
+        {%- if model.path %}
+        Path: {{ model.path }}
+        {%- endif %}
         Executable: {{ model.run_settings.exe[0] }}
         Executable Arguments:
         {%- for param in model.run_settings.exe_args %}
@@ -66,25 +69,29 @@
           Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
           {%- endif %}
           {%- if model.run_settings.colocated_db_settings.ifname %}
+          {%- if model.run_settings.colocated_db_settings.ifname | is_list %}
           Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+          {%- else %}
+          Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname }}
+          {%- endif %}
           {%- endif %}
           CPUs: {{ model.run_settings.colocated_db_settings.cpus }}
           Custom Pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
           {%- endif %}
-        {%- if model.run_settings.colocated_db_settings['db_scripts'] %}
+        {%- if model._db_scripts %}
         Torch Scripts:
-        {%- for script in model.run_settings.colocated_db_settings['db_scripts'] %}
+        {%- for script in model._db_scripts%}
           Name: {{ script.name }}
-            Path: {{ script.script_path }}
+            Path: {{ script.file }}
             Backend: {{ script.device }}
             Devices Per Node: {{ script.devices_per_node }}
         {%- endfor %}
         {%- endif %}
-        {%- if model.run_settings.colocated_db_settings['db_models'] %}
+        {%- if model._db_models %}
         ML Models:
-        {%- for mlmodel in model.run_settings.colocated_db_settings['db_models'] %}
+        {%- for mlmodel in model._db_models %}
           Name: {{ mlmodel.name }}
-            Path: {{ mlmodel.model_file }}
+            Path: {{ mlmodel.file }}
             Backend: {{ mlmodel.backend }}
             Device: {{ mlmodel.device }}
             Devices Per Node: {{ mlmodel.devices_per_node }}
@@ -99,9 +106,9 @@
             Outputs:
               {{ output }}
               {%- endfor %}
-    {%- endfor %}
-    {%- endif %}
-    {%- if model.query_key_prefixing()%}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.query_key_prefixing()%}
         Key Prefix: {{ model.name }}
-    {%- endif %}
+        {%- endif %}
 {%- endif %}

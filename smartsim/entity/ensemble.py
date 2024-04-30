@@ -103,6 +103,7 @@ class Ensemble(EntityList[Model]):
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
+        self.replicas: str
 
         super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
 
@@ -120,6 +121,7 @@ class Ensemble(EntityList[Model]):
         """
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
         replicas = kwargs.pop("replicas", None)
+        self.replicas = replicas
 
         # if a ensemble has parameters and run settings, create
         # the ensemble and assign run_settings to each member

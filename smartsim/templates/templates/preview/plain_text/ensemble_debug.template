@@ -1,12 +1,20 @@
 
-    {%- for ensemble in manifest.ensembles %}
+    {% for ensemble in manifest.ensembles %}
     = Ensemble Name: {{ ensemble.name }} =
+        {%- if ensemble.path %}
+        Path: {{ ensemble.path }}
+        {%- endif %}
         Members: {{ ensemble|length }}
         {%- if ensemble.params %}
         Ensemble Parameters:
           {%- for key, value in ensemble.params.items() %}
           {{ key }}: {{ value | join(", ") | wordwrap(150) | safe | replace('\n', '\n              ') }}
-        {%- endfor %}
+          {%- endfor %}
+        {%- endif %}
+        {%- if ensemble.replicas %}
+        Replicas: {{ ensemble.replicas }}
+        {%- elif ensemble.perm_strat %}
+        Permutation Strategy: {{ ensemble.perm_strat }}
         {%- endif %}
         {%- if ensemble.batch_settings %}
         Batch Launch: True
@@ -23,34 +31,32 @@
     {%- for model in ensemble.entities %}
 
     - Model Name: {{ model.name }} -
-    {%- include 'preview/model_plain_text.template' %}
+    {%- include 'preview/plain_text/model.template' %}
         {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
-
         Client Configuration:
             {%- if model.run_settings.colocated_db_settings %}
-            {%- include "preview/clientconfigcolo_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/clientconfig_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfig.template" %}
             {%- endif %}
     {%- endif %}
-  {%- endfor %}
+    {%- endfor %}
     {%- endif %}
     {%- if verbosity_level == Verbosity.DEVELOPER %}
     {%- for model in ensemble.entities %}
 
     - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text_debug.template' %}
+        {%- include 'preview/plain_text/model_debug.template' %}
         {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
-
         Client Configuration:
             {%- if model.run_settings.colocated_db_settings %}
-            {%- include "preview/clientconfigcolo_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/clientconfig_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfig.template" %}
             {%- endif %}
         {%- endif %}
 {%- endfor %}
 {%- endif %}
-{%- endfor %}
+{% endfor %}

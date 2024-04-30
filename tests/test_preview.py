@@ -26,22 +26,26 @@
 
 import pathlib
 import sys
+import typing as t
 from os import path as osp
 
+import jinja2
 import numpy as np
 import pytest
-from jinja2 import Template
-from jinja2.filters import FILTERS
 
+import smartsim
 import smartsim._core._cli.utils as _utils
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
+from smartsim._core.control.controller import Controller
+from smartsim._core.control.job import Job
 from smartsim.database import Orchestrator
+from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import PreviewFormatError
 from smartsim.settings import QsubBatchSettings, RunSettings
 
-on_wlm = (pytest.test_launcher in pytest.wlm_options,)
+pytestmark = pytest.mark.group_b
 
 
 @pytest.fixture
@@ -55,10 +59,120 @@ def choose_host():
     return _choose_host
 
 
+@pytest.fixture
+def preview_object(test_dir) -> t.Dict[str, Job]:
+    """
+    Bare bones orch
+    """
+    rs = RunSettings(exe="echo", exe_args="ifname=lo")
+    s = SmartSimEntity(name="faux-name", path=test_dir, run_settings=rs)
+    o = Orchestrator()
+    o.entity = s
+    s.db_identifier = "test_db_id"
+    s.ports = [1235]
+    s.num_shards = 1
+    job = Job("faux-name", "faux-step-id", s, "slurm", True)
+    active_dbjobs: t.Dict[str, Job] = {"mock_job": job}
+    return active_dbjobs
+
+
+@pytest.fixture
+def preview_object_multidb(test_dir) -> t.Dict[str, Job]:
+    """
+    Bare bones orch
+    """
+    rs = RunSettings(exe="echo", exe_args="ifname=lo")
+    s = SmartSimEntity(name="faux-name", path=test_dir, run_settings=rs)
+    o = Orchestrator()
+    o.entity = s
+    s.db_identifier = "testdb_reg"
+    s.ports = [8750]
+    s.num_shards = 1
+    job = Job("faux-name", "faux-step-id", s, "slurm", True)
+
+    rs2 = RunSettings(exe="echo", exe_args="ifname=lo")
+    s2 = SmartSimEntity(name="faux-name_2", path=test_dir, run_settings=rs)
+    o2 = Orchestrator()
+    o2.entity = s2
+    s2.db_identifier = "testdb_reg2"
+    s2.ports = [8752]
+    s2.num_shards = 1
+    job2 = Job("faux-name_2", "faux-step-id_2", s2, "slurm", True)
+
+    active_dbjobs: t.Dict[str, Job] = {"mock_job": job, "mock_job2": job2}
+    return active_dbjobs
+
+
 def add_batch_resources(wlmutils, batch_settings):
     if isinstance(batch_settings, QsubBatchSettings):
         for key, value in wlmutils.get_batch_resources().items():
             batch_settings.set_resource(key, value)
+
+
+def test_get_ifname_filter():
+    """Test get_ifname filter"""
+
+    # Test input and expected output
+    value_dict = (
+        (["+ifname=ib0"], "ib0"),
+        ("", ""),
+        ("+ifnameib0", ""),
+        ("=ib0", ""),
+        (["_ifname=bad_if_key"], "bad_if_key"),
+        (["ifname=mock_if_name"], "mock_if_name"),
+        ("IFname=case_sensitive_key", ""),
+        ("xfname=not_splittable", ""),
+        (None, ""),
+    )
+
+    template_str = "{{ value | get_ifname }}"
+    template_dict = {"ts": template_str}
+
+    loader = jinja2.DictLoader(template_dict)
+    env = jinja2.Environment(loader=loader, autoescape=True)
+    env.filters["get_ifname"] = previewrenderer.get_ifname
+
+    t = env.get_template("ts")
+
+    for input, expected_output in value_dict:
+        output = t.render(value=input)
+        # assert that that filter output matches expected output
+        assert output == expected_output
+
+
+def test_get_dbtype_filter():
+    """Test get_dbtype filter to extract database backend from config"""
+
+    template_str = "{{ config | get_dbtype }}"
+    template_dict = {"ts": template_str}
+    loader = jinja2.DictLoader(template_dict)
+    env = jinja2.Environment(loader=loader, autoescape=True)
+    env.filters["get_dbtype"] = previewrenderer.get_dbtype
+
+    t = env.get_template("ts")
+    output = t.render(config=CONFIG.database_cli)
+
+    assert output in CONFIG.database_cli
+    # Test empty input
+    test_string = ""
+    output = t.render(config=test_string)
+    assert output == ""
+    # Test empty path
+    test_string = "SmartSim/smartsim/_core/bin/"
+    output = t.render(config=test_string)
+    assert output == ""
+    # Test no hyphen
+    test_string = "SmartSim/smartsim/_core/bin/rediscli"
+    output = t.render(config=test_string)
+    assert output == ""
+    # Test no LHS
+    test_string = "SmartSim/smartsim/_core/bin/redis-"
+    output = t.render(config=test_string)
+    assert output == ""
+    # Test no RHS
+    test_string = "SmartSim/smartsim/_core/bin/-cli"
+    output = t.render(config=test_string)
+    assert output == ""
 
 
 def test_experiment_preview(test_dir, wlmutils):
@@ -154,242 +268,14 @@ def test_preview_to_file(test_dir, wlmutils):
     path = pathlib.Path(test_dir) / filename
     # Execute preview method
     exp.preview(
-        output_format="plain_text", output_filename=str(path), verbosity_level="debug"
+        output_format=previewrenderer.Format.PLAINTEXT,
+        output_filename=str(path),
+        verbosity_level="debug",
     )
 
     # Evaluate output
     assert path.exists()
     assert path.is_file()
-
-
-def test_active_orch_dict_property(wlmutils, test_dir, choose_host):
-    """Ensure db_jobs remaines unchanched after deletion
-    of active_orch_dict property stays intace when retrieving db_jobs"""
-
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-
-    # start a new Experiment for this section
-    exp = Experiment(
-        "test-active-orch-dict-property", exp_path=test_dir, launcher=test_launcher
-    )
-
-    # create and start an instance of the Orchestrator database
-    db = exp.create_database(
-        port=test_port + 3,
-        interface=test_interface,
-        db_identifier="testdb_reg",
-        hosts=choose_host(wlmutils, 1),
-    )
-
-    # create database with different db_id
-    db2 = exp.create_database(
-        port=test_port + 5,
-        interface=test_interface,
-        db_identifier="testdb_reg2",
-        hosts=choose_host(wlmutils, 2),
-    )
-    exp.start(db, db2)
-
-    # Remove a job from active_orch_dict
-    active_orch_dict = exp._control.active_orch_dict
-    del active_orch_dict["testdb_reg2_0"]
-
-    # assert that db_jobs is not affected by deletion
-    assert len(active_orch_dict) == 1
-    assert len(exp._control._jobs.db_jobs) == 2
-
-    exp.stop(db, db2)
-
-
-def test_preview_active_infrastructure(wlmutils, test_dir, choose_host):
-    """Test active infrastructure without other orchestrators"""
-
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    exp_name = "test_active_infrastructure_preview"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
-    orc = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-        db_identifier="orc_1",
-    )
-
-    # Start the orchestrator
-    exp.start(orc)
-
-    assert orc.is_active() == True
-
-    # Retrieve started manifest from experiment
-    active_dbjobs = exp._control.active_orch_dict
-
-    # Execute method for template rendering
-    output = previewrenderer.render(
-        exp, active_dbjobs=active_dbjobs, verbosity_level="debug"
-    )
-
-    assert "Active Infrastructure" in output
-    assert "Database Identifier" in output
-    assert "Shards" in output
-    assert "Network Interface" in output
-    assert "Type" in output
-    assert "TCP/IP" in output
-
-    exp.stop(orc)
-
-
-def test_preview_orch_active_infrastructure(wlmutils, test_dir, choose_host):
-    """
-    Test correct preview output properties for active infrastructure preview
-    with other orchestrators
-    """
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    exp_name = "test_orchestrator_active_infrastructure_preview"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
-    orc = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-        db_identifier="orc_1",
-    )
-
-    exp.start(orc)
-
-    assert orc.is_active() == True
-
-    orc2 = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-        db_identifier="orc_2",
-    )
-
-    orc3 = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-        db_identifier="orc_3",
-    )
-
-    # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_dict
-
-    preview_manifest = Manifest(orc2, orc3)
-
-    # Execute method for template rendering
-    output = previewrenderer.render(
-        exp, preview_manifest, active_dbjobs=active_dbjobs, verbosity_level="debug"
-    )
-
-    assert "Active Infrastructure" in output
-    assert "Database Identifier" in output
-    assert "Shards" in output
-    assert "Network Interface" in output
-    assert "Type" in output
-    assert "TCP/IP" in output
-
-    exp.stop(orc)
-
-
-def test_preview_multidb_active_infrastructure(wlmutils, test_dir, choose_host):
-    """multiple started databases active infrastructure"""
-
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-
-    # start a new Experiment for this section
-    exp = Experiment(
-        "test_preview_multidb_active_infrastructure",
-        exp_path=test_dir,
-        launcher=test_launcher,
-    )
-
-    # create and start an instance of the Orchestrator database
-    db = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        db_identifier="testdb_reg",
-        hosts=choose_host(wlmutils, 1),
-    )
-
-    # create database with different db_id
-    db2 = exp.create_database(
-        port=test_port + 1,
-        interface=test_interface,
-        db_identifier="testdb_reg2",
-        hosts=choose_host(wlmutils, 2),
-    )
-    exp.start(db, db2)
-
-    # Retreive any active jobs
-    active_dbjobs = exp._control.active_orch_dict
-
-    # Execute method for template rendering
-    output = previewrenderer.render(
-        exp, active_dbjobs=active_dbjobs, verbosity_level="debug"
-    )
-
-    assert "Active Infrastructure" in output
-    assert "Database Identifier" in output
-    assert "Shards" in output
-    assert "Network Interface" in output
-    assert "Type" in output
-    assert "TCP/IP" in output
-
-    assert "testdb_reg" in output
-    assert "testdb_reg2" in output
-    assert "Ochestrators" not in output
-
-    exp.stop(db, db2)
-
-
-def test_preview_active_infrastructure_orchestrator_error(
-    wlmutils, test_dir, choose_host
-):
-    """Demo error when trying to preview a started orchestrator"""
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    exp_name = "test_active_infrastructure_preview_orch_error"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
-    orc = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-        db_identifier="orc_1",
-    )
-    # Start the orchestrator
-    exp.start(orc)
-
-    assert orc.is_active() == True
-
-    # Retrieve any active jobs
-    active_dbjobs = exp._control.active_orch_dict
-
-    preview_manifest = Manifest(orc)
-
-    # Execute method for template rendering
-    output = previewrenderer.render(
-        exp, preview_manifest, active_dbjobs=active_dbjobs, verbosity_level="debug"
-    )
-
-    assert "WARNING: Cannot preview orc_1, because it is already started" in output
-
-    exp.stop(orc)
 
 
 def test_model_preview(test_dir, wlmutils):
@@ -891,8 +777,9 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
+    expected_torch_script = "torchscript.py"
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-    torch_script = fileutils.get_test_conf_path("torchscript.py")
+    torch_script = fileutils.get_test_conf_path(expected_torch_script)
 
     # Create SmartSim Experiment
     exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
@@ -979,9 +866,171 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     assert "Devices Per Node" in output
 
     assert cm_name2 in output
-    assert torch_script in output
+    assert expected_torch_script in output
     assert test_device in output
     assert cm_name1 in output
+
+
+def test_preview_active_infrastructure(wlmutils, test_dir, preview_object):
+    """Test active infrastructure without other orchestrators"""
+
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    exp_name = "test_active_infrastructure_preview"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(
+        exp, active_dbjobs=preview_object, verbosity_level="debug"
+    )
+
+    assert "Active Infrastructure" in output
+    assert "Database Identifier" in output
+    assert "Shards" in output
+    assert "Network Interface" in output
+    assert "Type" in output
+    assert "TCP/IP" in output
+
+
+def test_preview_orch_active_infrastructure(
+    wlmutils, test_dir, choose_host, preview_object
+):
+    """
+    Test correct preview output properties for active infrastructure preview
+    with other orchestrators
+    """
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_orchestrator_active_infrastructure_preview"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    orc2 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_2",
+    )
+
+    orc3 = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_3",
+    )
+
+    preview_manifest = Manifest(orc2, orc3)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(
+        exp, preview_manifest, active_dbjobs=preview_object, verbosity_level="debug"
+    )
+
+    assert "Active Infrastructure" in output
+    assert "Database Identifier" in output
+    assert "Shards" in output
+    assert "Network Interface" in output
+    assert "Type" in output
+    assert "TCP/IP" in output
+
+
+def test_preview_multidb_active_infrastructure(
+    wlmutils, test_dir, choose_host, preview_object_multidb
+):
+    """multiple started databases active infrastructure"""
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+
+    # start a new Experiment for this section
+    exp = Experiment(
+        "test_preview_multidb_active_infrastructure",
+        exp_path=test_dir,
+        launcher=test_launcher,
+    )
+
+    # Execute method for template rendering
+    output = previewrenderer.render(
+        exp, active_dbjobs=preview_object_multidb, verbosity_level="debug"
+    )
+
+    assert "Active Infrastructure" in output
+    assert "Database Identifier" in output
+    assert "Shards" in output
+    assert "Network Interface" in output
+    assert "Type" in output
+    assert "TCP/IP" in output
+
+    assert "testdb_reg" in output
+    assert "testdb_reg2" in output
+    assert "Ochestrators" not in output
+
+
+def test_preview_active_infrastructure_orchestrator_error(
+    wlmutils, test_dir, choose_host, monkeypatch: pytest.MonkeyPatch
+):
+    """Demo error when trying to preview a started orchestrator"""
+    # Prepare entities
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    exp_name = "test_active_infrastructure_preview_orch_error"
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    monkeypatch.setattr(
+        smartsim.database.orchestrator.Orchestrator, "is_active", lambda x: True
+    )
+
+    orc = exp.create_database(
+        port=test_port,
+        interface=test_interface,
+        hosts=choose_host(wlmutils),
+        db_identifier="orc_1",
+    )
+
+    # Retrieve any active jobs
+    active_dbjobs = exp._control.active_orchestrator_jobs
+
+    preview_manifest = Manifest(orc)
+
+    # Execute method for template rendering
+    output = previewrenderer.render(
+        exp, preview_manifest, active_dbjobs=active_dbjobs, verbosity_level="debug"
+    )
+
+    assert "WARNING: Cannot preview orc_1, because it is already started" in output
+
+
+def test_active_orchestrator_jobs_property(
+    wlmutils,
+    test_dir,
+    preview_object,
+):
+    """Ensure db_jobs remaines unchanged after deletion
+    of active_orchestrator_jobs property stays intact when retrieving db_jobs"""
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+
+    # start a new Experiment for this section
+    exp = Experiment(
+        "test-active_orchestrator_jobs-property",
+        exp_path=test_dir,
+        launcher=test_launcher,
+    )
+
+    controller = Controller()
+    controller._jobs.db_jobs = preview_object
+
+    # Modify the returned job collection
+    active_orchestrator_jobs = exp._control.active_orchestrator_jobs
+    active_orchestrator_jobs["test"] = "test_value"
+
+    # Verify original collection is not also modified
+    assert not exp._control.active_orchestrator_jobs.get("test", None)
 
 
 def test_verbosity_info_ensemble(test_dir, wlmutils):
@@ -1175,158 +1224,7 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     assert "Outgoing Key Collision Prevention (Key Prefixing)" in output
 
 
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_preview_wlm_run_commands_cluster_orc_model(
-    test_dir, coloutils, fileutils, wlmutils
-):
-    """
-    Test preview of wlm run command and run aruguments on a
-    orchestrator and model
-    """
-
-    exp_name = "test-preview-orc-model"
-    launcher = wlmutils.get_test_launcher()
-    test_port = wlmutils.get_test_port()
-    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-
-    network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
-        wlmutils.get_test_port(),
-        db_nodes=3,
-        batch=False,
-        interface=network_interface,
-        single_cmd=True,
-        hosts=wlmutils.get_test_hostlist(),
-        db_identifier="testdb_reg",
-    )
-
-    db_args = {
-        "port": test_port,
-        "db_cpus": 1,
-        "debug": True,
-        "db_identifier": "testdb_colo",
-    }
-
-    # Create model with colocated database
-    smartsim_model = coloutils.setup_test_colo(
-        fileutils, "uds", exp, test_script, db_args, on_wlm=on_wlm
-    )
-
-    preview_manifest = Manifest(orc, smartsim_model)
-
-    # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    # Evaluate output
-    assert "Run Command" in output
-    assert "Run Arguments" in output
-    assert "ntasks" in output
-    assert "nodes" in output
-
-
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_preview_model_on_wlm(fileutils, test_dir, wlmutils):
-    """
-    Test preview of wlm run command and run aruguments for a model
-    """
-    exp_name = "test-preview-model-wlm"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    settings1 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
-    settings2 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings1)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings2)
-
-    preview_manifest = Manifest(M1, M2)
-
-    # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    assert "Run Command" in output
-    assert "Run Arguments" in output
-    assert "nodes" in output
-    assert "ntasks" in output
-    assert "time" in output
-
-
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_preview_batch_model(fileutils, test_dir, wlmutils):
-    """Test the preview of a model with batch settings"""
-
-    exp_name = "test-batch-model"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
-
-    batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, batch_settings)
-    run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    model = exp.create_model(
-        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
-    )
-    model.set_path(test_dir)
-
-    preview_manifest = Manifest(model)
-
-    # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    assert "Batch Launch: True" in output
-    assert "Batch Command" in output
-    assert "Batch Arguments" in output
-    assert "nodes" in output
-    assert "time" in output
-
-
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
-    """Test preview of a batch ensemble"""
-
-    exp_name = "test-preview-batch-ensemble"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
-
-    batch = exp.create_batch_settings(nodes=1, time="00:01:00")
-    add_batch_resources(wlmutils, batch)
-
-    batch.set_account(wlmutils.get_test_account())
-    ensemble = exp.create_ensemble("batch-ens", batch_settings=batch)
-    ensemble.add_model(M1)
-    ensemble.add_model(M2)
-    ensemble.set_path(test_dir)
-
-    preview_manifest = Manifest(ensemble)
-
-    # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    assert "Batch Launch: True" in output
-    assert "Batch Command" in output
-    assert "Batch Arguments" in output
-    assert "nodes" in output
-    assert "time" in output
-
-
-def test_output_format_error():
+def test_check_output_format_error():
     """
     Test error when invalid ouput format is given.
     """
@@ -1343,165 +1241,34 @@ def test_output_format_error():
     )
 
 
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_preview_launch_command(test_dir, wlmutils, choose_host):
-    """Test preview launch command for orchestrator, models, and
-    ensembles"""
-    # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    exp_name = "test_preview_launch_command"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # create regular database
-    orc = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-    )
-
-    model_params = {"port": 6379, "password": "unbreakable_password"}
-    rs1 = RunSettings("bash", "multi_tags_template.sh")
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-
-    hello_world_model = exp.create_model(
-        "echo-hello", run_settings=rs1, params=model_params
-    )
-
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
-
-    # setup ensemble parameter space
-    learning_rate = list(np.linspace(0.01, 0.5))
-    train_params = {"LR": learning_rate}
-
-    run = exp.create_run_settings(exe="python", exe_args="./train-model.py")
-
-    ensemble = exp.create_ensemble(
-        "Training-Ensemble",
-        params=train_params,
-        params_as_args=["LR"],
-        run_settings=run,
-        perm_strategy="random",
-        n_models=4,
-    )
-
-    preview_manifest = Manifest(orc, spam_eggs_model, hello_world_model, ensemble)
-
-    # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    assert "orchestrator" in output
-    assert "echo-spam" in output
-    assert "echo-hello" in output
-
-    assert "Training-Ensemble" in output
-    assert "me: Training-Ensemble_0" in output
-    assert "Training-Ensemble_1" in output
-    assert "Training-Ensemble_2" in output
-    assert "Training-Ensemble_3" in output
-
-
-def add_batch_resources(wlmutils, batch_settings):
-    if isinstance(batch_settings, QsubBatchSettings):
-        for key, value in wlmutils.get_batch_resources().items():
-            batch_settings.set_resource(key, value)
-
-
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_preview_batch_launch_command(fileutils, test_dir, wlmutils):
-    """Test the preview of a model with batch settings"""
-
-    exp_name = "test-batch-entities"
-    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
-
-    batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, batch_settings)
-    run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    model = exp.create_model(
-        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
-    )
-    model.set_path(test_dir)
-
-    orc = Orchestrator(
-        wlmutils.get_test_port(),
-        db_nodes=3,
-        batch=True,
-        interface="lo",
-        launcher="slurm",
-        run_command="srun",
-    )
-    orc.set_batch_arg("account", "ACCOUNT")
-
-    preview_manifest = Manifest(orc, model)
-    # Execute preview method
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    # Evaluate output
-    assert "Batch Launch: True" in output
-    assert "Batch Command" in output
-    assert "Batch Arguments" in output
-
-
-@pytest.mark.skipif(
-    pytest.test_launcher not in pytest.wlm_options,
-    reason="Not testing WLM integrations",
-)
-def test_ensemble_batch(test_dir, wlmutils):
+def test_check_verbosity_level_error():
     """
-    Test preview of client configuration and key prefixing in Ensemble preview
+    Testing that an error does occur when a string verbosity is passed
     """
     # Prepare entities
-    test_launcher = wlmutils.get_test_launcher()
-    exp = Experiment(
-        "test-preview-ensemble-clientconfig", exp_path=test_dir, launcher=test_launcher
-    )
-    # Create Orchestrator
-    db = exp.create_database(port=6780, interface="lo")
-    exp.generate(db, overwrite=True)
-    rs1 = exp.create_run_settings("echo", ["hello", "world"])
-    # Create ensemble
-    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
-    batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, batch_settings)
-    ensemble = exp.create_ensemble(
-        "fd_simulation", run_settings=rs1, batch_settings=batch_settings, replicas=2
-    )
-    # enable key prefixing on ensemble
-    ensemble.enable_key_prefixing()
-    exp.generate(ensemble, overwrite=True)
-    rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
-    # Create model
-    ml_model = exp.create_model("tf_training", rs2)
+    exp_name = "test_verbosity_level_error"
+    exp = Experiment(exp_name)
 
-    for sim in ensemble.entities:
-        ml_model.register_incoming_entity(sim)
+    # Execute preview method
+    with pytest.raises(ValueError) as ex:
+        exp.preview(verbosity_level="hello")
 
-    exp.generate(ml_model, overwrite=True)
 
-    preview_manifest = Manifest(db, ml_model, ensemble)
+def test_check_verbosity_level():
+    """
+    Testing that an error doesnt occur when a string verbosity is passed
+    """
+    # Prepare entities
+    exp_name = "test_verbosity_level"
+    exp = Experiment(exp_name)
 
-    # Call preview renderer for testing output
-    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
-
-    # Evaluate output
-    assert "Client Configuration" in output
-    assert "Database Identifier" in output
-    assert "Database Backend" in output
-    assert "Type" in output
+    # Execute preview method
+    exp.preview(verbosity_level="info")
 
 
 def test_preview_colocated_db_singular_model(wlmutils, test_dir):
     """Test preview behavior when a colocated db is only added to
-    one model. The expected behviour is that
+    one model. The expected behviour is that both models are colocated
     """
 
     test_launcher = wlmutils.get_test_launcher()
@@ -1527,87 +1294,37 @@ def test_preview_colocated_db_singular_model(wlmutils, test_dir):
     assert "Client Configuration" in output
 
 
-def test_get_dbtype_filter():
-    """Test get_dbtype filter to extract database backend from config"""
-
-    template_str = "{{ config | get_dbtype }}"
-    FILTERS["get_dbtype"] = previewrenderer.get_dbtype
-    output = Template(template_str).render(config=CONFIG.database_cli)
-    assert output in CONFIG.database_cli
-    # Test empty input
-    test_string = ""
-    output = Template(template_str).render(config=test_string)
-    assert output == ""
-    # Test empty path
-    test_string = "SmartSim/smartsim/_core/bin/"
-    output = Template(template_str).render(config=test_string)
-    assert output == ""
-    # Test no hyphen
-    test_string = "SmartSim/smartsim/_core/bin/rediscli"
-    output = Template(template_str).render(config=test_string)
-    assert output == ""
-    # Test no LHS
-    test_string = "SmartSim/smartsim/_core/bin/redis-"
-    output = Template(template_str).render(config=test_string)
-    assert output == ""
-    # Test no RHS
-    test_string = "SmartSim/smartsim/_core/bin/-cli"
-    output = Template(template_str).render(config=test_string)
-    assert output == ""
-
-
-def test_get_ifname_filter(wlmutils, test_dir, choose_host):
-    """Test get_ifname filter"""
-    # Prepare entities
+def test_preview_db_script(wlmutils, test_dir):
+    """
+    Test preview of model instance with a torch script.
+    """
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    exp_name = "test-get-ifname-filter"
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    # Initialize the Experiment and set the launcher to auto
 
-    orc = exp.create_database(
-        port=test_port,
-        interface=test_interface,
-        hosts=choose_host(wlmutils),
-        db_identifier="orc_1",
+    exp = Experiment("getting-started", launcher=test_launcher)
+
+    # Initialize a RunSettings object
+    model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
+
+    # Initialize a Model object
+    model_instance = exp.create_model("model_name", model_settings)
+    model_instance.colocate_db_tcp()
+
+    # TorchScript string
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+    # Attach TorchScript to Model
+    model_instance.add_script(
+        name="example_script",
+        script=torch_script_str,
+        device="GPU",
+        devices_per_node=2,
+        first_device=0,
     )
-    # Start the orchestrator
-    exp.start(orc)
+    preview_manifest = Manifest(model_instance)
 
-    assert orc.is_active() == True
+    # Call preview renderer for testing output
+    output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
-    active_dbjobs = exp._control.active_orch_dict
-
-    template_str = "{{db_exe_args | get_ifname}}"
-
-    for db in active_dbjobs.values():
-        FILTERS["get_ifname"] = previewrenderer.get_ifname
-        output = Template(template_str).render(
-            db_exe_args=db.entity.run_settings.exe_args
-        )
-        assert output == test_interface[0]
-        # Test empty input string
-        test_string = ""
-        output = Template(template_str).render(db_exe_args=test_string)
-        assert output == ""
-        # Test input with no '=' delimiter
-        test_string = ["+ifnameib0"]
-        output = Template(template_str).render(db_exe_args=test_string)
-        assert output == ""
-        # Test input with empty RHS
-        test_string = ["=ib0"]
-        output = Template(template_str).render(db_exe_args=test_string)
-        assert output == ""
-        # Test input with empty LHS
-        test_string = ["+ifname="]
-        output = Template(template_str).render(db_exe_args=test_string)
-        assert output == ""
-        # Test input with no matching item
-        test_string = [
-            "+name=orc_1_0",
-            "+port=6780",
-        ]
-        output = Template(template_str).render(db_exe_args=test_string)
-        assert output == ""
-
-    exp.stop(orc)
+    # Evaluate output
+    assert "Torch Script" in output

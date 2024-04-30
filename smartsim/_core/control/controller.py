@@ -145,7 +145,8 @@ class Controller:
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
-    def active_orch_dict(self) -> t.Dict[str, Job]:
+    def active_orchestrator_jobs(self) -> t.Dict[str, Job]:
+        """Return active orchestrator jobs."""
         return {**self._jobs.db_jobs}
 
     @property

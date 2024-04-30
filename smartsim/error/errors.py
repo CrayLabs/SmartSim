@@ -151,8 +151,8 @@ class SmartSimCLIActionCancelled(SmartSimError):
     """Raised when a `smart` CLI command is terminated"""
 
 
-class PreviewException(Exception):
-    """Raised when a part of preview isn't support by SmartSim yet"""
+class PreviewException(SSUnsupportedError):
+    """Raised when a part of preview isn't supported by SmartSim yet"""
 
 
 class PreviewFormatError(PreviewException):

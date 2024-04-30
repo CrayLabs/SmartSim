@@ -9,11 +9,7 @@
             {%- for port in db.ports %}
               {{ port }}
             {%- endfor %}
-            {%- if db.num_shards > 2 %}
-            Type: Clustered
-            {%- else %}
             Type: Standalone
-            {%- endif %}
             {%- endif %}
             {%- endfor %}
           {%- if model.incoming_entities %}

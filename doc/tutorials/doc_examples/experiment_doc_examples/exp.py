@@ -17,6 +17,9 @@ model = exp.create_model("hello_world", settings)
 # Generate the output directory
 exp.generate(standalone_database, model, overwrite=True)
 
+# Preview the experiment
+exp.preview(standalone_database, model, verbosity_level="debug")
+
 # Launch the Orchestrator then Model instance
 exp.start(standalone_database, model)
 

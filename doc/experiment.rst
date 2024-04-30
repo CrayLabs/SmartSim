@@ -126,6 +126,9 @@ the ``Experiment`` post-creation methods.
    * - ``get_status``
      - ``exp.get_status(*args)``
      - Retrieve Entity Status
+   * - ``preview``
+     - ``exp.preview(*args, ...)``
+     - Preview an experiment
 
 .. _orchestrator_exp_docs:
 
@@ -329,6 +332,9 @@ Example
   *Generating*
    - the ``Orchestrator`` output directory
    - the ``Model`` output directory
+  *Preview*
+   - the ``Orchestrator`` contents
+   - the ``Model`` contents
   *Starting*
    - an in-memory database (standalone ``Orchestrator``)
    - an application (``Model``)
@@ -418,6 +424,68 @@ Generating
   The ``Experiment.generate`` call places the `.err` and `.out` log files in the entity
   subdirectories within the main ``Experiment`` directory.
 
+Preview
+=======
+.. compound::
+  Optionally, we preview the Experiment. The ``Experiment.preview`` aggregates multiple pieces of information to give users
+  insight into what and how entities will be launched before the experiment is started. Any instance of ``Model``, ``Ensemble``,
+  or ``Orchestrator`` created by the Experiment can be passed as an argument to the preview method.
+  We preview the ``Orchestrator`` and ``Model`` entities by passing the ``Orchestrator`` and ``Model`` instances to ``exp.preview``:
+
+  .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 20-21
+
+  *  `verbosity_level="info"` instructs preview to display user-defined fields and entities.
+  *  `verbosity_level="debug"` instructs preview to display user-defined field and entities and auto-generated fields.
+  *  `verbosity_level="developer"` instructs preview to display user-defined field and entities, auto-generated fields, and run commands.
+  *  `output_format="plain_text"` sets the output format. The only accepted output format is 'plain_text'.
+  *  `output_filename="test_name.txt"` specifies name of file and extension to write preview data to. If no output filename is set, the preview will be output to stdout.
+
+When executed, the preview shows the following in stdout:
+
+::
+
+  === Experiment Overview ===
+
+    Experiment Name: example-experiment
+      Experiment Path: absolute/path/to/SmartSim/example-experiment
+      Launcher: local
+
+  === Entity Preview ===
+
+    == Orchestrators ==
+
+      = Database Identifier: orchestrator =
+          Path: absolute/path/to/SmartSim/example-experiment/orchestrator
+          Shards: 1
+          TCP/IP Port(s):
+            6379
+          Network Interface: ib0
+          Type: redis
+          Executable: absolute/path/to/SmartSim/smartsim/_core/bin/redis-server
+
+    == Models ==
+
+      = Model Name: hello_world =
+          Path: absolute/path/to/SmartSim/example-experiment/hello_world
+          Executable: /bin/echo
+          Executable Arguments:
+            Hello
+            World
+          Client Configuration:
+            Database Identifier: orchestrator
+              Database Backend: redis
+              TCP/IP Port(s):
+                6379
+              Type: Standalone
+            Outgoing Key Collision Prevention (Key Prefixing):
+              Tensors: Off
+              Datasets: Off
+              ML Models/Torch Scripts: Off
+              Aggregation Lists: Off
+
 Starting
 ========
 .. compound::
@@ -428,7 +496,7 @@ Starting
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 20-21
+    :lines: 23-24
 
 Stopping
 ========
@@ -439,7 +507,7 @@ Stopping
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 23-26
+    :lines: 26-27
 
   Notice that we use the ``Experiment.summary`` function to print
   the summary of the workflow.

@@ -1,4 +1,3 @@
-
     = Ensemble Name: {{ ensemble.name }} =
         Members: {{ ensemble|length }}
         {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
@@ -12,41 +11,40 @@
     {%- if ensemble.models | length > 2 %}
     {% set model = ensemble.models[0] %}
     - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text.template' %}
+        {%- include 'preview/plain_text/model.template' %}
         {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
-
         Client Configuration:
             {%- if model.run_settings.colocated_db_settings %}
-            {%- include "preview/clientconfigcolo_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/clientconfig_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfig.template" %}
             {%- endif %}
             {%- endif %}
         ...
         {% set model = ensemble.models[(ensemble.models | length)-1] %}
     - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text.template' %}
+        {%- include 'preview/plain_text/model.template' %}
             {% if model.run_settings.colocated_db_settings or manifest.dbs %}
         Client Configuration:
             {%- if model.run_settings.colocated_db_settings %}
-            {%- include "preview/clientconfigcolo_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/clientconfig_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfig.template" %}
             {%- endif %}
             {%- endif %}
         {%- else %}
     {% for model in ensemble %}
     - Model Name: {{ model.name }} -
-        {%- include 'preview/model_plain_text.template' %}
+        {%- include 'preview/plain_text/model.template' %}
         {% if model.run_settings.colocated_db_settings or manifest.dbs %}
         Client Configuration:
               {%- if model.run_settings.colocated_db_settings %}
-                {%- include "preview/clientconfigcolo_plain_text.template" %}
+                {%- include "preview/plain_text/clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/clientconfig_plain_text.template" %}
+            {%- include "preview/plain_text/clientconfig.template" %}
             {%- endif %}
             {%- endif %}
         {% endfor %}

@@ -1,7 +1,7 @@
 
     = Database Identifier: {{ db.entity.db_identifier }} =
         Shards: {{ db.entity.num_shards }}
-        TCP/IP Port(s): 
+        TCP/IP Port(s):
           {%- for port in db.entity.ports %}
           {{ port }}
           {%- endfor %}
