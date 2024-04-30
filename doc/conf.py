@@ -59,6 +59,7 @@ extensions = [
     'sphinx_tabs.tabs',
     'sphinx_design',
     'sphinx.ext.mathjax',
+    'myst_parser'
 ]
 # sphinx_autodoc_typehints configurations
 always_use_bars_union = True
@@ -72,6 +73,14 @@ suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
+linkcheck_ignore = [
+    'Redis::set_model_multigpu',
+]
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
@@ -79,7 +88,7 @@ mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints"]
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints", "tutorials/ml_training/surrogate/README.md", "tutorials/online_analysis/lattice/README.md"]
 
 breathe_projects = {
         "c_client":"../smartredis/doc/c_client/xml",

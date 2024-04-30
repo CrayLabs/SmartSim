@@ -26,24 +26,31 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-name: enforce_changelog
-
-on:
-  pull_request:
-  push:
-    branches:
-      - develop
-
-jobs:
-  changelog:
-    name: check_changelog
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Changelog Enforcer
-      uses: dangoslen/changelog-enforcer@v3.6.0
-      with:
-        changeLogPath: './doc/changelog.md'
-        missingUpdateErrorMessage: 'changelog.md has not been updated'
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: Features
+      labels:
+        - 'type: feature'
+      exclude:
+        labels:
+          - non-user-facing
+    - title: Bug Fixes
+      labels:
+        - 'bug: critical'
+        - 'bug: major'
+        - 'bug: minor'
+      exclude:
+        labels:
+          - non-user-facing
+    - title: API Breaks
+      labels:
+        - 'API break'
+      exclude:
+        labels:
+          - non-user-facing
+    - title: Miscellaneous Improvements
+      labels:
+        - "*"
