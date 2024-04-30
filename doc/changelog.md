@@ -3,7 +3,9 @@
 Listed here are the changes between each release of SmartSim,
 SmartRedis and SmartDashboard.
 
-Jump to {ref}`SmartRedis changelog<smartredis-changelog>` or {ref}`SmartDashboard Changelog<smartdashboard-changelog>`
+Jump to:
+- {ref}`SmartRedis changelog<smartredis-changelog>`
+- {ref}`SmartDashboard changelog<smartdashboard-changelog>`
 
 ## SmartSim
 
