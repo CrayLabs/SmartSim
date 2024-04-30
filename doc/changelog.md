@@ -912,7 +912,7 @@ Description:
 ## SmartRedis
 
 ```{include} ../smartredis/doc/changelog.md
-:start-line: 2
+:start-line: 3
 ```
 
 ------------------------------------------------------------------------
@@ -921,5 +921,5 @@ Description:
 ## SmartDashboard
 
 ```{include} ../smartdashboard/doc/changelog.md
-:start-line: 2
+:start-line: 3
 ```
