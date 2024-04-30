@@ -13,9 +13,9 @@ from smartsim._core._cli.utils import pip
 from smartsim._core._install.builder import WebTGZ
 from smartsim._core.utils.helpers import expand_exe_path
 from smartsim.error.errors import SmartSimCLIActionCancelled
+from smartsim.log import get_logger
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logger = get_logger(__name__)
 
 
 def check_for_utility(util_name: str) -> str:
