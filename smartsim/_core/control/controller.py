@@ -797,12 +797,9 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if (
-                    all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
-                    and orchestrator.is_active()
-                ):
+                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
-                    # TODO remove in favor of by node status check
+                    # TODO: Add a node status check
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
