@@ -60,6 +60,7 @@ Description
 Detailed Notes
 -   Add `--dragon` option to `smart build`. Install appropriate Dragon
     runtime from Dragon GitHub release assets. (SmartSim-PR569_)
+    ([SmartSim-PR569](https://github.com/CrayLabs/SmartSim/pull/569))
 -   Replace the developer created token with the GH_TOKEN environment variable.
     ([SmartSim-PR570](https://github.com/CrayLabs/SmartSim/pull/570))
 -   Add extension to auto-generate function type-hints into documentation.
