@@ -409,8 +409,11 @@ def execute(
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     if is_dragon_requested:
-        install_dragon()
-        print("Dragon installation complete")
+        return_code = install_dragon()
+        if return_code == 0:
+            print("Dragon installation complete")
+        else:
+            print("Dragon installation failed")
 
     try:
         if not args.only_python_packages:
