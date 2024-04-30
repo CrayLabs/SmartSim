@@ -33,6 +33,7 @@ from pathlib import Path
 
 from tabulate import tabulate
 
+from smartsim._core._cli.scripts.dragon_install import install_dragon
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
@@ -45,7 +46,6 @@ from smartsim._core._install.buildenv import (
 )
 from smartsim._core._install.builder import BuildError, Device
 from smartsim._core.config import CONFIG
-from smartsim._core.entrypoints.dragon_install import install_dragon
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
@@ -410,7 +410,7 @@ def execute(
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     if is_dragon_requested:
-        return_code = install_dragon(os.curdir)
+        return_code = install_dragon(Path(os.curdir) / "dragon")
         if return_code == 0:
             logger.info("Dragon installation complete")
         elif return_code == 1:

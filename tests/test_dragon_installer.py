@@ -35,7 +35,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 from github.Requester import Requester
 
 import smartsim
-from smartsim._core.entrypoints.dragon_install import (
+from smartsim._core._cli.scripts.dragon_install import (
     check_for_utility,
     cleanup,
     install_dragon,
@@ -297,23 +297,23 @@ def test_retrieve_asset_info(
 
     with monkeypatch.context() as ctx:
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "python_version",
             lambda: pyv,
         )
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "is_crayex_platform",
             lambda: is_crayex,
         )
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "dragon_pin",
             lambda: dragon_pin,
         )
         # avoid hitting github API
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "_get_release_assets",
             lambda: test_assets,
         )
@@ -361,7 +361,7 @@ def test_is_crayex_missing_ldconfig(monkeypatch: pytest.MonkeyPatch) -> None:
     with monkeypatch.context() as ctx:
         # mock utility existence
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "check_for_utility",
             mock_util_check,
         )
@@ -382,7 +382,7 @@ def test_is_crayex_missing_fi_info(monkeypatch: pytest.MonkeyPatch) -> None:
     with monkeypatch.context() as ctx:
         # mock utility existence
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "check_for_utility",
             mock_util_check,
         )
@@ -414,13 +414,13 @@ def test_is_cray_ex(
     with monkeypatch.context() as ctx:
         # make it look like the utilies always exist
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "check_for_utility",
             mock_util_check,
         )
         # mock
         ctx.setattr(
-            smartsim._core.entrypoints.dragon_install,
+            smartsim._core._cli.scripts.dragon_install,
             "_execute_platform_cmd",
             lambda x: (output, return_code),
         )
