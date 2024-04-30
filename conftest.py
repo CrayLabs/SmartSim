@@ -82,6 +82,7 @@ test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_num_ports = CONFIG.test_num_ports
+test_available_ports = list(range(test_port, test_port + test_num_ports))
 test_account = CONFIG.test_account or ""
 test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
 test_output_dirs = 0
@@ -112,9 +113,7 @@ def print_test_configuration() -> None:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_output_root)
     print("Test output will be located in TEST_DIR if there is a failure")
-    print(
-        "TEST_PORTS:", ", ".join(str(port) for port in range(test_port, test_port + 3))
-    )
+    print("TEST_PORTS:", ", ".join(str(port) for port in test_available_ports))
     if test_batch_resources:
         print("TEST_BATCH_RESOURCES: ")
         print(json.dumps(test_batch_resources, indent=2))
@@ -300,6 +299,22 @@ _reset_signal_interrupt = pytest.fixture(
 )
 
 
+def _find_free_port(ports: t.Collection[int]) -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        for port in ports:
+            try:
+                sock.bind(("127.0.0.1", port))
+            except socket.error:
+                continue
+            else:
+                _, port_ = sock.getsockname()
+                return int(port_)
+    raise SSInternalError(
+        "Could not find a free port out of a options: "
+        f"{', '.join(str(port) for port in sorted(ports))}"
+    )
+
+
 @pytest.fixture(scope="session")
 def wlmutils() -> t.Type[WLMUtils]:
     return WLMUtils
@@ -317,12 +332,9 @@ class WLMUtils:
 
     @staticmethod
     def get_test_port() -> int:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            for port in range(test_port, test_port + test_num_ports):
-                result = sock.connect_ex(("127.0.0.1", port))
-                if result:
-                    return port
-        raise SSInternalError("get_test_port: ran out of a open ports")
+        # TODO: Ideally this should find a free port on the correct host(s),
+        #       but this is good enough for now
+        return _find_free_port(test_available_ports)
 
     @staticmethod
     def get_test_account() -> str:
@@ -872,7 +884,7 @@ def local_db(wlmutils):
         num_nodes=1,
         interface="lo",
         hostlist=None,
-        port=wlmutils.get_test_port() + 1,
+        port=_find_free_port(tuple(reversed(test_available_ports))),
     ) as db:
         yield db
 
@@ -887,7 +899,7 @@ def single_db(wlmutils):
         num_nodes=1,
         interface=wlmutils.get_test_interface(),
         hostlist=hostlist,
-        port=wlmutils.get_test_port() + 1,
+        port=_find_free_port(tuple(reversed(test_available_ports))),
     ) as db:
         yield db
 
@@ -902,7 +914,7 @@ def clustered_db(wlmutils):
         num_nodes=3,
         interface=wlmutils.get_test_interface(),
         hostlist=hostlist,
-        port=wlmutils.get_test_port() + 1,
+        port=_find_free_port(tuple(reversed(test_available_ports))),
     ) as db:
         yield db
 

@@ -208,7 +208,10 @@ class Config:
 
     @property
     def test_num_ports(self) -> int:  # pragma: no cover
-        return int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", 10))
+        num_ports = int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", 10))
+        if num_ports < 3:
+            return 3
+        return num_ports
 
     @property
     def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
