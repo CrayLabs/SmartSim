@@ -1,4 +1,5 @@
 import logging
+import os
 import pathlib
 import shutil
 import subprocess
@@ -218,7 +219,12 @@ def install_package(asset_dir: pathlib.Path) -> int:
 
     logger.info(f"Executing dragon installation: {package_path}")
 
-    return pip("install", "--force-reinstall", package_path)
+    try:
+        pip("install", "--force-reinstall", str(package_path))
+        return 0
+    except Exception:
+        logger.error(f"Unable to install from {asset_dir}")
+        return 1
 
 
 def cleanup(
@@ -237,7 +243,7 @@ def cleanup(
         logger.debug(f"Deleted asset directory: {asset_dir}")
 
 
-def install_dragon(extraction_dir: pathlib.Path) -> int:
+def install_dragon(extraction_dir: t.Union[str, os.PathLike[str]]) -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment
     :param extraction_dir: path for download and extraction of assets
@@ -246,6 +252,7 @@ def install_dragon(extraction_dir: pathlib.Path) -> int:
         logger.debug(f"Dragon not supported on platform: {sys.platform}")
         return 1
 
+    extraction_dir = pathlib.Path(extraction_dir)
     filename: t.Optional[pathlib.Path] = None
     asset_dir: t.Optional[pathlib.Path] = None
 
@@ -263,5 +270,4 @@ def install_dragon(extraction_dir: pathlib.Path) -> int:
 
 
 if __name__ == "__main__":
-    return_code = install_dragon(pathlib.Path().cwd())
-    sys.exit(return_code)
+    sys.exit(install_dragon(pathlib.Path().cwd()))
