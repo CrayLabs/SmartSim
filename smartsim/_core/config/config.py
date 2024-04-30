@@ -203,15 +203,10 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
-    def test_port(self) -> int:  # pragma: no cover
-        return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
-
-    @property
-    def test_num_ports(self) -> int:  # pragma: no cover
-        num_ports = int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", 10))
-        if num_ports < 3:
-            return 3
-        return num_ports
+    def test_ports(self) -> t.Tuple[int, ...]:  # pragma: no cover
+        first_port = int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
+        num_ports = max(int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", 10)), 3)
+        return tuple(range(first_port, first_port + num_ports))
 
     @property
     def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover

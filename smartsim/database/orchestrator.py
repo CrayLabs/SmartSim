@@ -153,6 +153,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
         raise SmartSimError(msg)
 
 
+# pylint: disable-next=too-many-public-methods
 class Orchestrator(EntityList[DBNode]):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
@@ -380,7 +381,7 @@ class Orchestrator(EntityList[DBNode]):
             hosts = self.hosts
         except SSDBFilesNotParseable:
             return False
-        return db_is_active(self._hosts, self.ports, self.num_shards)
+        return db_is_active(hosts, self.ports, self.num_shards)
 
     @property
     def _rai_module(self) -> t.Tuple[str, ...]:
