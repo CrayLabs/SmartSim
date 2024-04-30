@@ -372,6 +372,7 @@ def _configure_keydb_build(versions: Versioner) -> None:
         )
 
 
+# pylint: disable-next=too-many-statements
 def execute(
     args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:

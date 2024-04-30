@@ -35,6 +35,7 @@ def _execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     process = subprocess.run(
         cmd.split(),
         capture_output=True,
+        check=False,
     )
     return process.stdout.decode("utf-8"), process.returncode
 
@@ -240,7 +241,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
     cmd = f"python -m pip install --force-reinstall {package_path}"
     logger.info(f"Executing installation: {cmd}")
 
-    process = subprocess.run(cmd.split())
+    process = subprocess.run(cmd.split(), check=False)
     logger.debug(f"Installation completed with return code: {process.returncode}")
     return process.returncode
 
