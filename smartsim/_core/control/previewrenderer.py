@@ -189,7 +189,5 @@ def _check_output_format(output_format: Format) -> None:
     Check that a valid file output format is given.
     """
     if not output_format == Format.PLAINTEXT:
-        raise PreviewFormatError(
-            f"The only valid output format currently available \
-is {Format.PLAINTEXT.value}"
-        )
+        raise PreviewFormatError(f"The only valid output format currently available \
+is {Format.PLAINTEXT.value}")
