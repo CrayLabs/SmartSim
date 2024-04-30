@@ -34,14 +34,20 @@ from tabulate import tabulate
 
 # pylint: disable=import-error
 # isort: off
-from dragon.infrastructure.connection import Connection
-from dragon.infrastructure.policy import Policy
-from dragon.native.process import Process, ProcessTemplate, Popen
-from dragon.native.process_group import (
-    ProcessGroup,
-    DragonProcessGroupError,
-)
-from dragon.native.machine import System, Node
+import dragon.infrastructure.connection as dragon_connection
+import dragon.infrastructure.policy as dragon_policy
+import dragon.native.process as dragon_process
+import dragon.native.process_group as dragon_process_group
+import dragon.native.machine as dragon_machine
+
+# from dragon.infrastructure.connection import Connection
+# from dragon.infrastructure.policy import Policy
+# from dragon.native.process import Process, ProcessTemplate, Popen
+# from dragon.native.process_group import (
+#     ProcessGroup,
+#     DragonProcessGroupError,
+# )
+# from dragon.native.machine import System, Node
 
 # pylint: enable=import-error
 # isort: on
@@ -74,7 +80,7 @@ logger = get_logger(__name__)
 class ProcessGroupInfo:
     status: SmartSimStatus
     """Status of step"""
-    process_group: t.Optional[ProcessGroup] = None
+    process_group: t.Optional[dragon_process_group.ProcessGroup] = None
     """Internal Process Group object, None for finished or not started steps"""
     puids: t.Optional[t.List[t.Optional[int]]] = None  # puids can be None
     """List of Process UIDS belonging to the ProcessGroup"""
@@ -82,7 +88,7 @@ class ProcessGroupInfo:
     """List of return codes of completed processes"""
     hosts: t.List[str] = field(default_factory=list)
     """List of hosts on which the Process Group """
-    redir_workers: t.Optional[ProcessGroup] = None
+    redir_workers: t.Optional[dragon_process_group.ProcessGroup] = None
     """Workers used to redirect stdout and stderr to file"""
 
     @property
@@ -107,11 +113,11 @@ class ProcessGroupInfo:
 
 
 # Thanks to Colin Wahl from HPE HPC Dragon Team
-def redir_worker(io_conn: Connection, file_path: str) -> None:
+def redir_worker(io_conn: dragon_connection.Connection, file_path: str) -> None:
     """Read stdout/stderr from the Dragon connection.
 
     :param io_conn: Dragon connection to stdout or stderr
-    :type io_conn: Connection
+    :type io_conn: dragon.infrastructure.connection.Connection
     :param file_path: path to file to write to
     :type file_path: str
     """
@@ -164,7 +170,7 @@ class DragonBackend:
         self._last_update_time = self._last_beat
         """Time at which the status update was printed the last time"""
         num_hosts = len(self._hosts)
-        host_string = str(num_hosts) + (" hosts" if num_hosts > 1 else " host")
+        host_string = str(num_hosts) + (" hosts" if num_hosts != 1 else " host")
         self._shutdown_requested = False
         """Whether the shutdown was requested to this server"""
         self._can_shutdown = False
@@ -234,7 +240,8 @@ class DragonBackend:
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
             self._hosts: t.List[str] = sorted(
-                Node(node).hostname for node in System().nodes
+                dragon_machine.Node(node).hostname
+                for node in dragon_machine.System().nodes
             )
             """List of hosts available in allocation"""
             self._free_hosts: t.Deque[str] = collections.deque(self._hosts)
@@ -282,7 +289,7 @@ class DragonBackend:
 
     @property
     def should_shutdown(self) -> bool:
-        """ "Whether the server should shut down
+        """Whether the server should shut down
 
         A server should shut down if a DragonShutdownRequest was received
         and it requested immediate shutdown, or if it did not request immediate
@@ -333,32 +340,34 @@ class DragonBackend:
 
     @staticmethod
     def _create_redirect_workers(
-        global_policy: Policy,
-        policies: t.List[Policy],
+        global_policy: dragon_policy.Policy,
+        policies: t.List[dragon_policy.Policy],
         puids: t.List[int],
         out_file: t.Optional[str],
         err_file: t.Optional[str],
-    ) -> ProcessGroup:
-        grp_redir = ProcessGroup(restart=False, policy=global_policy, pmi_enabled=False)
+    ) -> dragon_process_group.ProcessGroup:
+        grp_redir = dragon_process_group.ProcessGroup(
+            restart=False, policy=global_policy, pmi_enabled=False
+        )
         for pol, puid in zip(policies, puids):
-            proc = Process(None, ident=puid)
+            proc = dragon_process.Process(None, ident=puid)
             if out_file:
                 grp_redir.add_process(
                     nproc=1,
-                    template=ProcessTemplate(
+                    template=dragon_process.ProcessTemplate(
                         target=redir_worker,
                         args=(proc.stdout_conn, out_file),
-                        stdout=Popen.DEVNULL,
+                        stdout=dragon_process.Popen.DEVNULL,
                         policy=pol,
                     ),
                 )
             if err_file:
                 grp_redir.add_process(
                     nproc=1,
-                    template=ProcessTemplate(
+                    template=dragon_process.ProcessTemplate(
                         target=redir_worker,
                         args=(proc.stderr_conn, err_file),
-                        stdout=Popen.DEVNULL,
+                        stdout=dragon_process.Popen.DEVNULL,
                         policy=pol,
                     ),
                 )
@@ -388,10 +397,10 @@ class DragonBackend:
                     ):
                         try:
                             proc_group.kill()
-                        except DragonProcessGroupError:
+                        except dragon_process_group.DragonProcessGroupError:
                             try:
                                 proc_group.stop()
-                            except DragonProcessGroupError:
+                            except dragon_process_group.DragonProcessGroupError:
                                 logger.error("Process group already stopped")
                     redir_group = self._group_infos[step_id].redir_workers
                     if redir_group is not None:
@@ -415,26 +424,28 @@ class DragonBackend:
 
                 logger.debug(f"Step id {step_id} allocated on {hosts}")
 
-                global_policy = Policy(
-                    placement=Policy.Placement.HOST_NAME, host_name=hosts[0]
+                global_policy = dragon_policy.Policy(
+                    placement=dragon_policy.Policy.Placement.HOST_NAME,
+                    host_name=hosts[0],
                 )
-                grp = ProcessGroup(
+                grp = dragon_process_group.ProcessGroup(
                     restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
                 )
 
                 policies = []
                 for node_name in hosts:
-                    local_policy = Policy(
-                        placement=Policy.Placement.HOST_NAME, host_name=node_name
+                    local_policy = dragon_policy.Policy(
+                        placement=dragon_policy.Policy.Placement.HOST_NAME,
+                        host_name=node_name,
                     )
                     policies.extend([local_policy] * request.tasks_per_node)
-                    tmp_proc = ProcessTemplate(
+                    tmp_proc = dragon_process.ProcessTemplate(
                         target=request.exe,
                         args=request.exe_args,
                         cwd=request.path,
                         env={**request.current_env, **request.env},
-                        stdout=Popen.PIPE,
-                        stderr=Popen.PIPE,
+                        stdout=dragon_process.Popen.PIPE,
+                        stderr=dragon_process.Popen.PIPE,
                         policy=local_policy,
                     )
                     grp.add_process(nproc=request.tasks_per_node, template=tmp_proc)
@@ -518,7 +529,7 @@ class DragonBackend:
                         ):
                             try:
                                 group_info.return_codes = [
-                                    Process(None, ident=puid).returncode
+                                    dragon_process.Process(None, ident=puid).returncode
                                     for puid in puids
                                 ]
                             except (ValueError, TypeError) as e:
@@ -571,15 +582,18 @@ class DragonBackend:
             return True
         return False
 
+    def _update(self) -> None:
+        self._stop_steps()
+        self._start_steps()
+        self._refresh_statuses()
+        self._update_shutdown_status()
+
     def update(self) -> None:
         """Update internal data structures, queues, and job statuses"""
         logger.debug("Dragon Backend update thread started")
         while not self.should_shutdown:
             try:
-                self._stop_steps()
-                self._start_steps()
-                self._refresh_statuses()
-                self._update_shutdown_status()
+                self._update()
                 time.sleep(0.1)
             except Exception as e:
                 logger.error(e)
