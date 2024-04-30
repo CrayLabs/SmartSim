@@ -217,7 +217,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.error(f"No wheel found for package in {asset_dir}")
         return 1
 
-    logger.info(f"Executing dragon installation: {package_path}")
+    logger.info(f"Installing dragon from: {package_path.absolute()}")
 
     try:
         pip("install", "--force-reinstall", str(package_path))
