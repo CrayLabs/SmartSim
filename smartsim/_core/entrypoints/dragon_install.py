@@ -97,36 +97,36 @@ def dragon_pin() -> str:
     return "dragon-0.8"
 
 
-def _platform_filter(value: str) -> bool:
-    """Return True if the supplied value contains a `Cray EX` keyword and the
-    current platform is Cray, False otherwise.
+def _platform_filter(asset_name: str) -> bool:
+    """Return True if the asset name matches naming standard for current
+    platform (Cray or non-Cray). Otherwise, returns False.
 
-    :param value: A value to inspect for keywords indicating a Cray EX asset
+    :param asset_name: A value to inspect for keywords indicating a Cray EX asset
     :returns: True if supplied value is correct for current platform"""
     key = "crayex"
-    is_cray = key in value.lower()
+    is_cray = key in asset_name.lower()
     if is_crayex_platform():
         return is_cray
     return not is_cray
 
 
-def _version_filter(value: str) -> bool:
+def _version_filter(asset_name: str) -> bool:
     """Return true if the supplied value contains a python version match
 
-    :param value: A value to inspect for keywords indicating a python version
+    :param asset_name: A value to inspect for keywords indicating a python version
     :returns: True if supplied value is correct for current python version"""
-    return python_version() in value
+    return python_version() in asset_name
 
 
-def _pin_filter(value: str) -> bool:
+def _pin_filter(asset_name: str) -> bool:
     """Return true if the supplied value contains a dragon version pin match
 
-    :param value: A value to inspect for keywords indicating a dragon version
+    :param asset_name: A value to inspect for keywords indicating a dragon version
     :returns: True if supplied value is correct for current dragon version"""
-    return dragon_pin() in value
+    return dragon_pin() in asset_name
 
 
-def _get_release_assets() -> t.Dict[str, GitReleaseAsset]:
+def _get_release_assets() -> t.Collection[GitReleaseAsset]:
     """Retrieve a dictionary mapping asset names to asset files from the
     latest Dragon release
 
@@ -145,11 +145,10 @@ def _get_release_assets() -> t.Dict[str, GitReleaseAsset]:
     release = all_releases[0]
     assets = release.assets
 
-    asset_map = {asset.name: asset for asset in assets if dragon_pin() in asset.name}
-    return asset_map
+    return assets
 
 
-def filter_assets(assets: t.Dict[str, GitReleaseAsset]) -> t.Optional[GitReleaseAsset]:
+def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleaseAsset]:
     """Filter the available release assets so that HSTA agents are used
     when run on a Cray EX platform
 
@@ -158,19 +157,16 @@ def filter_assets(assets: t.Dict[str, GitReleaseAsset]) -> t.Optional[GitRelease
     # Expect cray & non-cray assets that require a filter, e.g.
     # 'dragon-0.8-py3.9.4.1-bafaa887f.tar.gz',
     # 'dragon-0.8-py3.9.4.1-CRAYEX-ac132fe95.tar.gz'
-
-    iterable = iter(
-        k
-        for k in assets
-        if _version_filter(k) and _platform_filter(k) and _pin_filter(k)
+    return next(
+        (
+            asset
+            for asset in assets
+            if _version_filter(asset.name)
+            and _platform_filter(asset.name)
+            and _pin_filter(asset.name)
+        ),
+        None,
     )
-
-    asset_key = next(iterable, None)
-    if not asset_key:
-        logger.error(f"Unable to find a release asset for {python_version()}")
-        return None
-
-    return assets.get(asset_key, None)
 
 
 def retrieve_asset_info() -> GitReleaseAsset:
@@ -178,8 +174,8 @@ def retrieve_asset_info() -> GitReleaseAsset:
 
     :param dragon_pin: identify the dragon version to install (e.g. dragon-0.8)
     :returns: A GitHub release asset"""
-    asset_map = _get_release_assets()
-    asset = filter_assets(asset_map)
+    assets = _get_release_assets()
+    asset = filter_assets(assets)
     if asset is None:
         raise SmartSimCLIActionCancelled("No dragon runtime asset available to install")
 

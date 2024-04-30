@@ -80,7 +80,7 @@ def extraction_dir(test_dir: str) -> pathlib.Path:
 
 
 @pytest.fixture
-def asset_map() -> t.Dict[str, GitReleaseAsset]:
+def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]:
     requester = Requester(
         auth=None,
         base_url="https://github.com",
@@ -95,7 +95,7 @@ def asset_map() -> t.Dict[str, GitReleaseAsset]:
     attributes = {"mock-attr": "mock-attr-value"}
     completed = True
 
-    assets: t.Dict[str, GitReleaseAsset] = {}
+    assets: t.List[GitReleaseAsset] = []
     mock_archive_name_tpl = "{}-{}.4.1-{}ac132fe95.tar.gz"
 
     for python_version in ["py3.9", "py3.10", "py3.11"]:
@@ -108,13 +108,13 @@ def asset_map() -> t.Dict[str, GitReleaseAsset]:
                     dragon_version, python_version, platform
                 )
 
-                setattr(
+                monkeypatch.setattr(
                     asset,
                     "_browser_download_url",
                     _git_attr(value=f"http://foo/{archive_name}"),
                 )
-                setattr(asset, "_name", _git_attr(value=archive_name))
-                assets[archive_name] = asset
+                monkeypatch.setattr(asset, "_name", _git_attr(value=archive_name))
+                assets.append(asset)
 
     return assets
 
@@ -243,6 +243,7 @@ def test_retrieve_cached(
     test_dir: str,
     archive_path: pathlib.Path,
     test_archive: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verify that a previously retrieved asset archive is re-used"""
     working_dir = pathlib.Path(test_dir)
@@ -267,8 +268,8 @@ def test_retrieve_cached(
     asset = GitReleaseAsset(requester, headers, attributes, completed)
 
     # ensure mocked asset has values that we use...
-    setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
-    setattr(asset, "_name", _git_attr(value=mock_archive_name))
+    monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
+    monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
 
     asset_path = retrieve_asset(working_dir, asset)
     ts2 = asset_path.stat().st_ctime
@@ -308,7 +309,7 @@ def test_retrieve_cached(
     ],
 )
 def test_retrieve_asset_info(
-    asset_map: t.Dict[str, GitReleaseAsset],
+    test_assets: t.Collection[GitReleaseAsset],
     monkeypatch: pytest.MonkeyPatch,
     dragon_pin: str,
     pyv: str,
@@ -338,7 +339,7 @@ def test_retrieve_asset_info(
         ctx.setattr(
             smartsim._core.entrypoints.dragon_install,
             "_get_release_assets",
-            lambda: asset_map,
+            lambda: test_assets,
         )
 
         if is_found:
