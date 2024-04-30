@@ -11,6 +11,8 @@ Jump to {ref}`SmartRedis changelog<smartredis-changelog>` or {ref}`SmartDashboar
 
 To be released at some future point in time
 
+Description
+
 -   Update authentication in release workflow
 -   Auto-generate type-hints into documentation
 -   Auto-post release PR to develop
@@ -909,9 +911,7 @@ Description:
 (smartredis-changelog)=
 ## SmartRedis
 
-```{eval-rst}
-.. include:: ../smartredis/doc/changelog.md
-   :parser: myst_parser.sphinx_
+```{include} ../smartredis/doc/changelog.md
 ```
 
 ------------------------------------------------------------------------
@@ -919,7 +919,5 @@ Description:
 (smartdashboard-changelog)=
 ## SmartDashboard
 
-```{eval-rst}
-.. include:: ../smartdashboard/doc/changelog.md
-   :parser: myst_parser.sphinx_
+```{include} ../smartdashboard/doc/changelog.md
 ```
