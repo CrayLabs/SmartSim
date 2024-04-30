@@ -27,6 +27,7 @@ Experiment
    Experiment.reconnect_orchestrator
    Experiment.preview
    Experiment.summary
+   Experiment.telemetry
 
 .. autoclass:: Experiment
    :show-inheritance:
@@ -408,6 +409,7 @@ Orchestrator
    Orchestrator.set_max_clients
    Orchestrator.set_max_message_size
    Orchestrator.set_db_conf
+   Orchestrator.telemetry
 
 Orchestrator
 ------------

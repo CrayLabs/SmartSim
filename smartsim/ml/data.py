@@ -57,13 +57,9 @@ class DataInfo:
     can be accessed in ``DataInfo.sample_name`` and ``DataInfo.target_name``.
 
     :param list_name: Name of the aggregation list used for sample datasets
-    :type list_name: str
     :param sample_name: Name of tensor holding training samples in stored datasets.
-    :type sample_name: str
     :param target_name: Name of tensor holding targets or labels in stored datasets.
-    :type target_name: str
     :num_classes: Number of classes (for categorical data).
-    :type num_classes: int | None
     """
 
     def __init__(
@@ -86,7 +82,6 @@ class DataInfo:
         stored as metastrings and integers stored as metascalars.
 
         :param client: Client to connect to Database
-        :type client: SmartRedis.Client
         """
         info_ds = Dataset(self._ds_name)
         info_ds.add_meta_string("sample_name", self.sample_name)
@@ -104,7 +99,6 @@ class DataInfo:
         on the DB, the object members are not modified.
 
         :param client: Client to connect to Database
-        :type client: SmartRedis.Client
         """
         try:
             info_ds = client.get_dataset(self._ds_name)
@@ -148,21 +142,13 @@ class TrainingDataUploader:
     by the attributes of this class.
 
     :param list_name: Name of the dataset as stored on the Orchestrator
-    :type list_name: str
     :param sample_name: Name of samples tensor in uploaded Datasets
-    :type sample_name: str
     :param target_name: Name of targets tensor (if needed) in uploaded Datasets
-    :type target_name: str
     :param num_classes: Number of classes of targets, if categorical
-    :type num_classes: int
     :param cluster: Whether the SmartSim Orchestrator is being run as a cluster
-    :type cluster: bool
     :param address: Address of Redis DB as <ip_address>:<port>
-    :type address: str
     :param rank: Rank of DataUploader in multi-process application (e.g. MPI rank).
-    :type rank: int
     :param verbose: If output should be logged to screen.
-    :type verbose: bool
 
     """
 
@@ -266,35 +252,23 @@ class DataDownloader:
      - shuffle the dataset if `shuffle` is set to ``True``.
 
     :param batch_size: Size of batches obtained with __iter__
-    :type batch_size: int
     :param dynamic: Whether new batches should be donwnloaded when ``update_data``
         is called.
-    :type dtnamic: bool
     :param shuffle: whether order of samples has to be shuffled when
         calling `update_data`
-    :type shuffle: bool
     :param data_info_or_list_name: DataInfo object with details about dataset to
         download, if a string is passed, it is used to download DataInfo data
         from DB, assuming it was stored with ``list_name=data_info_or_list_name``
-    :type data_info_or_list_name: DataInfo | str
     :param list_name: Name of aggregation list used to upload data
-    :type list_name: str
     :param cluster: Whether the Orchestrator will be run as a cluster
-    :type cluster: bool
     :param address: Address of Redis client as <ip_address>:<port>
-    :type address: str
     :param replica_rank: When StaticDataDownloader is used distributedly,
         indicates the rank of this object
-    :type replica_rank: int
     :param num_replicas: When BatchDownlaoder is used distributedly, indicates
                          the total number of ranks
-    :type num_replicas: int
     :param verbose: Whether log messages should be printed
-    :type verbose: bool
     :param init_samples: whether samples should be initialized in the constructor
-    :type init_samples: bool
     :param max_fetch_trials: maximum number of attempts to initialize data
-    :type max_fetch_trials: int
     """
 
     def __init__(
@@ -378,7 +352,6 @@ class DataDownloader:
         """Compute if targets have to be downloaded.
 
         :return: Whether targets (or labels) should be downloaded
-        :rtype: bool
         """
         return bool(self.target_name) and not self.autoencoding
 
@@ -409,8 +382,8 @@ class DataDownloader:
 
         A new attempt to download samples will be made every ten seconds,
         for ``init_trials`` times.
+
         :param init_trials: maximum number of attempts to fetch data
-        :type init_trials: int
         """
         self._client = Client(self.cluster, self.address)
 

@@ -32,10 +32,5 @@ smartsim/_core/bin/*-cli
 # created upon install
 smartsim/_core/lib
 
-**/manifest/
-**/*.err
-**/*.out
-**/.smartsim/*
-
 # optional dev tools
 .pre-commit-config.yaml

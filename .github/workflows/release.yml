@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-12]
+        os: [ubuntu-22.04, macos-12]
 
     steps:
       - uses: actions/checkout@v4
@@ -124,3 +124,16 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI }}
           #repository_url: https://test.pypi.org/legacy/
+
+
+  createPullRequest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create pull request
+        run: |
+          gh pr create -B develop -H master --title 'Merge master into develop' --body 'This PR brings develop up to date with master for release.'
+        env:
+            GH_TOKEN: ${{ github.token }}

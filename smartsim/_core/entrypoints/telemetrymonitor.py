@@ -53,7 +53,7 @@ def register_signal_handlers(
     """Register a signal handling function for all termination events
 
     :param handle_signal: the function to execute when a term signal is received
-    :type handle_signal: Callable[[int, FrameType | None], None]"""
+    """
     # NOTE: omitting kill because it is not catchable
     term_signals = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
     for signal_num in term_signals:
@@ -64,7 +64,7 @@ def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments
 
     :returns: An argument parser ready to accept required telemetry monitor parameters
-    :rtype: argparse.ArgumentParser"""
+    """
     arg_parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     arg_parser.add_argument(
         "-exp_dir",
@@ -98,7 +98,7 @@ def parse_arguments() -> TelemetryMonitorArgs:
     of TelemetryMonitorArgs populated with the CLI inputs
 
     :returns: `TelemetryMonitorArgs` instance populated with command line arguments
-    :rtype: TelemetryMonitorArgs"""
+    """
     parser = get_parser()
     parsed_args = parser.parse_args()
     return TelemetryMonitorArgs(
@@ -114,11 +114,9 @@ def configure_logger(logger_: logging.Logger, log_level_: int, exp_dir: str) -> 
     target output file path passed as an argument to the entrypoint
 
     :param logger_: logger to configure
-    :type logger_: logging.Logger
     :param log_level_: log level to apply to the python logging system
-    :type log_level_: logging._Level
     :param exp_dir: root path to experiment outputs
-    :type exp_dir: str"""
+    """
     logger_.setLevel(log_level_)
     logger_.propagate = False
 

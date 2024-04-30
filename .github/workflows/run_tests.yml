@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         subset: [backends, slow_tests, group_a, group_b]
-        os: [macos-12, macos-14, ubuntu-20.04] # Operating systems
+        os: [macos-12, macos-14, ubuntu-22.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
         py_v: ["3.9", "3.10", "3.11"] # Python versions

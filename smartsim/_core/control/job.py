@@ -116,9 +116,8 @@ class JobEntity:
         """Map DB-specific properties from a runtime manifest onto a `JobEntity`
 
         :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
         :param entity: The entity instance to modify
-        :type entity: JobEntity"""
+        """
         if entity.is_db:
             # add collectors if they're configured to be enabled in the manifest
             entity.collectors = {
@@ -141,13 +140,10 @@ class JobEntity:
         """Map universal properties from a runtime manifest onto a `JobEntity`
 
         :param entity_type: The type of the associated `SmartSimEntity`
-        :type entity_type: str
         :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
         :param entity: The entity instance to modify
-        :type entity: JobEntity
         :param exp_dir: The path to the experiment working directory
-        :type exp_dir: str"""
+        """
         metadata = entity_dict["telemetry_metadata"]
         status_dir = pathlib.Path(metadata.get("status_dir"))
 
@@ -167,11 +163,9 @@ class JobEntity:
         """Instantiate a `JobEntity` from the dictionary deserialized from manifest JSON
 
         :param entity_type: The type of the associated `SmartSimEntity`
-        :type entity_type: str
         :param entity_dict: The raw dictionary deserialized from manifest JSON
-        :type entity_dict: Dict[str, Any]
         :param exp_dir: The path to the experiment working directory
-        :type exp_dir: str"""
+        """
         entity = JobEntity()
 
         cls._map_standard_metadata(entity_type, entity_dict, entity, exp_dir)
@@ -198,15 +192,10 @@ class Job:
         """Initialize a Job.
 
         :param job_name: Name of the job step
-        :type job_name: str
         :param job_id: The id associated with the job
-        :type job_id: str
         :param entity: The SmartSim entity(list) associated with the job
-        :type entity: SmartSimEntity | EntitySequence | JobEntity
         :param launcher: Launcher job was started with
-        :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
-        :type is_task: bool
         """
         self.name = job_name
         self.jid = job_id
@@ -240,15 +229,10 @@ class Job:
         """Set the status  of a job.
 
         :param new_status: The new status of the job
-        :type new_status: SmartSimStatus
         :param raw_status: The raw status of the launcher
-        :type raw_status: str
         :param returncode: The return code for the job
-        :type return_code: int|None
         :param error: Content produced by stderr
-        :type error: str
         :param output: Content produced by stdout
-        :type output: str
         """
         self.status = new_status
         self.raw_status = raw_status
@@ -270,11 +254,8 @@ class Job:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
-        :type new_job_name: str
         :param new_job_id: new job id to launch under
-        :type new_job_id: int
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
-        :type is_task: bool
         """
         self.name = new_job_name
         self.jid = new_job_id
@@ -291,7 +272,6 @@ class Job:
         """A descriptive error report based on job fields
 
         :return: error report for display in terminal
-        :rtype: str
         """
         warning = f"{self.ename} failed. See below for details \n"
         if self.error:
@@ -311,7 +291,6 @@ class Job:
         """Return user-readable string of the Job
 
         :returns: A user-readable string of the Job
-        :rtype: str
         """
         if self.jid:
             job = "{}({}): {}"
@@ -329,8 +308,7 @@ class History:
     def __init__(self, runs: int = 0) -> None:
         """Init a history object for a job
 
-        :param runs: number of runs so far, defaults to 0
-        :type runs: int, optional
+        :param runs: number of runs so far
         """
         self.runs = runs
         self.jids: t.Dict[int, t.Optional[str]] = {}
