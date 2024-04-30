@@ -215,7 +215,7 @@ class DragonBackend:
 
     @property
     def step_table(self) -> str:
-        headers = ["Step", "Status", "Hosts", "Return codes", "PUIDS"]
+        headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
         values = []
 
         with self._queue_lock:
