@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pathlib
+import sys
 import tarfile
 import typing as t
 from collections import namedtuple
@@ -37,7 +38,7 @@ import smartsim
 from smartsim._core.entrypoints.dragon_install import (
     check_for_utility,
     cleanup,
-    expand_archive,
+    install_dragon,
     install_package,
     is_crayex_platform,
     retrieve_asset,
@@ -58,6 +59,9 @@ def test_archive(test_dir: str, archive_path: pathlib.Path) -> pathlib.Path:
     """Fixture for returning a simple tarfile to test on"""
     num_files = 10
     with tarfile.TarFile.open(archive_path, mode="w:gz") as tar:
+        mock_whl = pathlib.Path(test_dir) / "mock.whl"
+        mock_whl.touch()
+
         for i in range(num_files):
             content = pathlib.Path(test_dir) / f"{i:04}.txt"
             content.write_text(f"i am file {i}\n")
@@ -211,45 +215,17 @@ def test_cleanup_no_archive(
     assert not extraction_dir.exists()
 
 
-def test_expand_archive(
-    extraction_dir: pathlib.Path,
-    archive_path: pathlib.Path,
-    test_archive: pathlib.Path,
-) -> None:
-    """Verify archive is expanded into expected location w/correct content"""
-    exp_path = extraction_dir
-    num_files = 10
-
-    # create an archive to clean up
-    assert test_archive.exists()
-
-    extract_path = expand_archive(archive_path)
-
-    files = list(extract_path.rglob("*.txt"))
-
-    assert len(files) == num_files
-    assert extract_path == exp_path
-
-
-def test_expand_archive_path_path(archive_path: pathlib.Path) -> None:
-    """Verify the expand method responds to a bad path with a ValueError"""
-    with pytest.raises(ValueError) as ex:
-        expand_archive(archive_path)
-
-    assert str(archive_path) in str(ex.value.args[0])
-
-
 def test_retrieve_cached(
     test_dir: str,
-    archive_path: pathlib.Path,
+    # archive_path: pathlib.Path,
     test_archive: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verify that a previously retrieved asset archive is re-used"""
-    working_dir = pathlib.Path(test_dir)
-    num_files = 10
+    with tarfile.TarFile.open(test_archive) as tar:
+        tar.extractall(test_dir)
 
-    ts1 = archive_path.stat().st_ctime
+    ts1 = test_archive.parent.stat().st_ctime
 
     requester = Requester(
         auth=None,
@@ -271,11 +247,11 @@ def test_retrieve_cached(
     monkeypatch.setattr(asset, "_browser_download_url", _git_attr(value="http://foo"))
     monkeypatch.setattr(asset, "_name", _git_attr(value=mock_archive_name))
 
-    asset_path = retrieve_asset(working_dir, asset)
+    asset_path = retrieve_asset(test_archive.parent, asset)
     ts2 = asset_path.stat().st_ctime
 
     assert (
-        asset_path == archive_path
+        asset_path == test_archive.parent
     )  # show that the expected path matches the output path
     assert ts1 == ts2  # show that the file wasn't changed...
 
@@ -367,10 +343,9 @@ def test_check_for_utility_missing(test_dir: str) -> None:
     assert not utility
 
 
-def test_check_for_utility_exists(test_dir: str) -> None:
+def test_check_for_utility_exists() -> None:
     """Ensure that looking for an existing utility returns a non-empty path"""
     utility = check_for_utility("ls")
-
     assert utility
 
 
@@ -454,9 +429,18 @@ def test_is_cray_ex(
         assert is_cray == platform_result
 
 
-def test_install_package_no_wheel(test_dir: str, extraction_dir: pathlib.Path):
+def test_install_package_no_wheel(extraction_dir: pathlib.Path):
     """Verify that a missing wheel does not blow up and has a failure retcode"""
     exp_path = extraction_dir
 
     result = install_package(exp_path)
     assert result != 0
+
+
+def test_install_macos(monkeypatch: pytest.MonkeyPatch, extraction_dir: pathlib.Path):
+    """Verify that installation exits cleanly if installing on unsupported platform"""
+    with monkeypatch.context() as ctx:
+        ctx.setattr(sys, "platform", "darwin")
+
+        result = install_dragon(extraction_dir)
+        assert result == 1

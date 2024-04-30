@@ -410,11 +410,13 @@ def execute(
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     if is_dragon_requested:
-        return_code = install_dragon()
+        return_code = install_dragon(os.curdir)
         if return_code == 0:
-            print("Dragon installation complete")
+            logger.info("Dragon installation complete")
+        elif return_code == 1:
+            logger.info("Dragon installation not supported on platform")
         else:
-            print("Dragon installation failed")
+            logger.warning("Dragon installation failed")
 
     try:
         if not args.only_python_packages:

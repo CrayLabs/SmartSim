@@ -825,6 +825,15 @@ class _WebZip(_ExtractableWebArchive):
             zip_file.extractall(target)
 
 
+class WebTGZ(_WebTGZ):
+    def __init__(self, url: str) -> None:
+        self._url = url
+
+    @property
+    def url(self) -> str:
+        return self._url
+
+
 @dataclass(frozen=True)
 class _PTArchive(_WebZip, _RAIBuildDependency):
     architecture: Architecture

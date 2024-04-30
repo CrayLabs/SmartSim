@@ -178,7 +178,6 @@ deps = [
     "pydantic==1.10.14",
     "pyzmq>=25.1.2",
     "pygithub>=2.3.0",
-    "requests>=2.31.0",
 ]
 
 # Add SmartRedis at specific version
@@ -198,7 +197,6 @@ extras_require = {
         "mypy>=1.3.0",
         "types-psutil",
         "types-redis",
-        "types-requests",
         "types-tabulate",
         "types-tqdm",
         "types-tensorflow==2.12.0.9",

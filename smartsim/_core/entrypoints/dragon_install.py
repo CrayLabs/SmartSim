@@ -3,13 +3,14 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import tarfile
 import typing as t
 
-import requests
 from github import Github
 from github.GitReleaseAsset import GitReleaseAsset
 
+from smartsim._core._cli.utils import pip
+from smartsim._core._install.builder import WebTGZ
+from smartsim._core.utils.helpers import expand_exe_path
 from smartsim.error.errors import SmartSimCLIActionCancelled
 
 logger = logging.getLogger(__name__)
@@ -21,9 +22,13 @@ def check_for_utility(util_name: str) -> str:
 
     :param util_name: CLI utility to locate
     :returns: Full path to executable if found. Otherwise, empty string"""
-    utility = shutil.which(util_name)
-    if not utility:
+    utility = ""
+
+    try:
+        utility = expand_exe_path(util_name)
+    except FileNotFoundError:
         logger.debug(f"{util_name} not available for Cray EX platform check.")
+
     return utility or ""
 
 
@@ -52,10 +57,12 @@ def is_crayex_platform() -> bool:
     ldconfig = check_for_utility("ldconfig")
     fi_info = check_for_utility("fi_info")
     if not all((ldconfig, fi_info)):
-        logger.warning("Unable to validate Cray EX platform. Aborting dragon install")
+        logger.warning(
+            "Unable to validate Cray EX platform. Installing standard version"
+        )
         return False
 
-    locate_msg = "Unable to locate %s. Aborting dragon install"
+    locate_msg = "Unable to locate %s. Installing standard version"
 
     ldconfig1 = f"{ldconfig} -p"
     ldc_out1, _ = _execute_platform_cmd(ldconfig1)
@@ -157,7 +164,7 @@ def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleas
     # Expect cray & non-cray assets that require a filter, e.g.
     # 'dragon-0.8-py3.9.4.1-bafaa887f.tar.gz',
     # 'dragon-0.8-py3.9.4.1-CRAYEX-ac132fe95.tar.gz'
-    return next(
+    asset = next(
         (
             asset
             for asset in assets
@@ -167,6 +174,7 @@ def filter_assets(assets: t.Collection[GitReleaseAsset]) -> t.Optional[GitReleas
         ),
         None,
     )
+    return asset
 
 
 def retrieve_asset_info() -> GitReleaseAsset:
@@ -189,40 +197,14 @@ def retrieve_asset(working_dir: pathlib.Path, asset: GitReleaseAsset) -> pathlib
     :param working_dir: location in file system where assets should be written
     :param asset: GitHub release asset to retrieve
     :returns: path to the downloaded asset"""
-    output_path = working_dir / asset.name
-    if output_path.exists():
-        return output_path
+    if working_dir.exists() and list(working_dir.rglob("*.whl")):
+        return working_dir
 
-    request = requests.get(asset.browser_download_url, timeout=60)
-    status_code = request.status_code
+    archive = WebTGZ(asset.browser_download_url)
+    archive.extract(working_dir)
 
-    if status_code != 200:
-        raise SmartSimCLIActionCancelled(
-            f"Unable to retrieve asset. Request status {status_code}"
-        )
-
-    with open(output_path, "wb") as asset_file:
-        asset_file.write(request.content)
-
-    logger.debug(f"Retrieving {asset.browser_download_url} to {output_path}")
-    return output_path
-
-
-def expand_archive(archive_path: pathlib.Path) -> pathlib.Path:
-    """Expand the archive file from the asset
-
-    :param archive_path: path to a downloaded archive for a release asset"""
-    if not archive_path.exists():
-        raise ValueError(f"Archive {archive_path} does not exist")
-
-    # create a target dir that excludes the .tar.gz suffixes
-    expand_to = str(archive_path.absolute()).replace(".tar.gz", "")
-
-    with tarfile.TarFile.open(archive_path, "r") as archive:
-        archive.extractall(expand_to)
-
-    logger.debug(f"Asset expanded into: {expand_to}")
-    return pathlib.Path(expand_to)
+    logger.debug(f"Retrieved {asset.browser_download_url} to {working_dir}")
+    return working_dir
 
 
 def install_package(asset_dir: pathlib.Path) -> int:
@@ -234,12 +216,9 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.error(f"No wheel found for package in {asset_dir}")
         return 1
 
-    cmd = f"python -m pip install --force-reinstall {package_path}"
-    logger.info(f"Executing installation: {cmd}")
+    logger.info(f"Executing dragon installation: {package_path}")
 
-    process = subprocess.run(cmd.split(), check=False)
-    logger.debug(f"Installation completed with return code: {process.returncode}")
-    return process.returncode
+    return pip("install", "--force-reinstall", package_path)
 
 
 def cleanup(
@@ -258,17 +237,21 @@ def cleanup(
         logger.debug(f"Deleted asset directory: {asset_dir}")
 
 
-def install_dragon() -> int:
+def install_dragon(extraction_dir: pathlib.Path) -> int:
     """Retrieve a dragon runtime appropriate for the current platform
     and install to the current python environment
+    :param extraction_dir: path for download and extraction of assets
     :returns: Integer return code, 0 for success, non-zero on failures"""
+    if sys.platform == "darwin":
+        logger.debug(f"Dragon not supported on platform: {sys.platform}")
+        return 1
+
     filename: t.Optional[pathlib.Path] = None
     asset_dir: t.Optional[pathlib.Path] = None
 
     try:
         asset_info = retrieve_asset_info()
-        filename = retrieve_asset(pathlib.Path().cwd(), asset_info)
-        asset_dir = expand_archive(filename)
+        asset_dir = retrieve_asset(extraction_dir, asset_info)
 
         return install_package(asset_dir)
     except Exception as ex:
@@ -276,9 +259,9 @@ def install_dragon() -> int:
     finally:
         cleanup(filename, asset_dir)
 
-    return 1
+    return 2
 
 
 if __name__ == "__main__":
-    return_code = install_dragon()
+    return_code = install_dragon(pathlib.Path().cwd())
     sys.exit(return_code)
