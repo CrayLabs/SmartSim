@@ -15,3 +15,4 @@ numpy
 sphinx-design
 pypandoc
 sphinx-autodoc-typehints
+myst_parser
