@@ -215,6 +215,8 @@ class DragonBackend:
 
     @property
     def step_table(self) -> str:
+        """Table representation of all jobs which have been started on the server.
+        """
         headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
         values = []
 
@@ -228,6 +230,8 @@ class DragonBackend:
 
     @property
     def host_table(self) -> str:
+        """Table representation of current state of nodes available in the allocation.
+        """
         headers = ["Host", "State"]
         values = []
 
@@ -253,6 +257,10 @@ class DragonBackend:
         return self.get_status_message()
 
     def get_status_message(self) -> str:
+        """Message with status of available nodes and history of launched jobs.
+
+        :returns: Status message
+        """
         msg = ["Dragon server backend update"]
         msg.append(self.host_table)
         msg.append(self.step_table)
@@ -263,6 +271,10 @@ class DragonBackend:
 
     @property
     def cooldown_period(self) -> int:
+        """Time (in seconds) the server will wait before shutting down
+
+        when exit conditions are met (see ``should_shutdown()`` for further details).
+        """
         return self._cooldown_period
 
     @property
