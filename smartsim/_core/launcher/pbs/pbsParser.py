@@ -99,8 +99,7 @@ def parse_qstat_jobid_json(output: str, job_id: str) -> str:
     job: t.Optional[dict[str, t.Any]] = jobs.get(job_id, None)
     if job is None:
         return "NOTFOUND"
-    else:
-        return job.get("job_state", "NOTFOUND")
+    return str(job.get("job_state", "NOTFOUND"))
 
 
 def parse_qstat_nodes(output: str) -> t.List[str]:

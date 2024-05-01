@@ -215,8 +215,7 @@ class DragonBackend:
 
     @property
     def step_table(self) -> str:
-        """Table representation of all jobs which have been started on the server.
-        """
+        """Table representation of all jobs which have been started on the server."""
         headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
         values = []
 
@@ -230,7 +229,9 @@ class DragonBackend:
 
     @property
     def host_table(self) -> str:
-        """Table representation of current state of nodes available in the allocation.
+        """Table representation of current state of nodes available
+
+        in the allocation.
         """
         headers = ["Host", "State"]
         values = []
