@@ -229,18 +229,13 @@ def install_package(asset_dir: pathlib.Path) -> int:
 
 def cleanup(
     archive_path: t.Optional[pathlib.Path] = None,
-    asset_dir: t.Optional[pathlib.Path] = None,
 ) -> None:
     """Delete the downloaded asset and any files extracted during installation
 
-    :param archive_path: path to a downloaded archive for a release asset
-    :param asset_dir: path to a decompressed archive contents for a release asset"""
+    :param archive_path: path to a downloaded archive for a release asset"""
     if archive_path:
         archive_path.unlink(missing_ok=True)
         logger.debug(f"Deleted archive: {archive_path}")
-    if asset_dir:
-        shutil.rmtree(asset_dir, ignore_errors=True)
-        logger.debug(f"Deleted asset directory: {asset_dir}")
 
 
 def install_dragon(extraction_dir: t.Union[str, os.PathLike[str]]) -> int:
@@ -264,7 +259,7 @@ def install_dragon(extraction_dir: t.Union[str, os.PathLike[str]]) -> int:
     except Exception as ex:
         logger.error("Unable to install dragon runtime", exc_info=ex)
     finally:
-        cleanup(filename, asset_dir)
+        cleanup(filename)
 
     return 2
 

@@ -123,96 +123,24 @@ def test_assets(monkeypatch: pytest.MonkeyPatch) -> t.Dict[str, GitReleaseAsset]
     return assets
 
 
-def test_cleanup_no_op(
-    extraction_dir: pathlib.Path, archive_path: pathlib.Path
-) -> None:
+def test_cleanup_no_op(archive_path: pathlib.Path) -> None:
     """Ensure that the cleanup method doesn't bomb when called with
-    missing archive path and extraction directory; simulate a failed
-    download"""
+    missing archive path; simulate a failed download"""
     # confirm assets do not exist
     assert not archive_path.exists()
-    assert not extraction_dir.exists()
 
     # call cleanup. any exceptions should break test...
-    cleanup(archive_path, extraction_dir)
+    cleanup(archive_path)
 
 
-def test_cleanup_empty_extraction_directory(
-    extraction_dir: str, archive_path: pathlib.Path
-) -> None:
-    """Ensure that the cleanup method works when the extraction directory
-    is empty"""
-    extraction_dir.mkdir()
-
-    # verify archive doesn't exist & folder does
-    assert not archive_path.exists()
-    assert extraction_dir.exists()
-
-    cleanup(archive_path, extraction_dir)
-
-    # verify folder is gone after cleanup
-    assert not archive_path.exists()
-    assert not extraction_dir.exists()
-
-
-def test_cleanup_nonempty_extraction_directory(
-    extraction_dir: pathlib.Path,
-    archive_path: pathlib.Path,
-) -> None:
-    """Ensure that the cleanup method works when the extraction directory
-    is NOT empty"""
-    extraction_dir.mkdir()
-
-    something = extraction_dir / "file.txt"
-    something.write_text("bump!")
-
-    files = list(extraction_dir.rglob("*.txt"))
-    assert len(files) > 0
-
-    cleanup(archive_path, extraction_dir)
-
-    # verify folder is gone after cleanup
-    assert not archive_path.exists()
-    assert not extraction_dir.exists()
-
-
-def test_cleanup_no_extract_path(
-    test_dir: str,
-    archive_path: pathlib.Path,
-    test_archive: pathlib.Path,
-) -> None:
-    """Ensure that the cleanup method doesn't bomb when called with
-    missing extraction directory; simulate failed extract"""
-
-    # create an archive to clean up
+def test_cleanup_archive_exists(test_archive: pathlib.Path) -> None:
+    """Ensure that the cleanup method removes the archive"""
     assert test_archive.exists()
 
-    # verify archive exists before cleanup
-    assert archive_path.exists()
-
-    extraction_dir = pathlib.Path(test_dir) / "not-there"
-    cleanup(archive_path, extraction_dir)
+    cleanup(test_archive)
 
     # verify archive is gone after cleanup
-    assert not archive_path.exists()
-    assert not extraction_dir.exists()
-
-
-def test_cleanup_no_archive(
-    extraction_dir: pathlib.Path, archive_path: pathlib.Path
-) -> None:
-    """Ensure that the cleanup method doesn't bomb when called with
-    missing archive"""
-    extraction_dir.mkdir()
-
-    # verify archive exists before cleanup
-    assert extraction_dir.exists()
-
-    cleanup(archive_path, extraction_dir)
-
-    # verify archive is gone after cleanup
-    assert not archive_path.exists()
-    assert not extraction_dir.exists()
+    assert not test_archive.exists()
 
 
 def test_retrieve_cached(
