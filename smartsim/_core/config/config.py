@@ -204,8 +204,12 @@ class Config:
 
     @property
     def test_ports(self) -> t.Tuple[int, ...]:  # pragma: no cover
+        min_required_ports = 10
         first_port = int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
-        num_ports = max(int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", 10)), 3)
+        num_ports = max(
+            int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", min_required_ports)),
+            min_required_ports,
+        )
         return tuple(range(first_port, first_port + num_ports))
 
     @property
