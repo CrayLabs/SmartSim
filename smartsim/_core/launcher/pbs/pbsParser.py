@@ -83,6 +83,26 @@ def parse_qstat_jobid(output: str, job_id: str) -> str:
     return result
 
 
+def parse_qstat_jobid_json(output: str, job_id: str) -> str:
+    """Parse and return output of the qstat command run with JSON options
+    to obtain job status.
+
+    :param output: output of the qstat command in JSON format
+    :param job_id: allocation id or job step id
+    :return: status
+    """
+    out_json = load_and_clean_json(output)
+
+    if "Jobs" not in out_json:
+        return "NOTFOUND"
+    jobs: dict[str, t.Any] = out_json["Jobs"]
+    job: t.Optional[dict[str, t.Any]] = jobs.get(job_id, None)
+    if job is None:
+        return "NOTFOUND"
+    else:
+        return job.get("job_state", "NOTFOUND")
+
+
 def parse_qstat_nodes(output: str) -> t.List[str]:
     """Parse and return the qstat command run with
     options to obtain node list.

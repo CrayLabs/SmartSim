@@ -53,7 +53,11 @@ from ..step import (
 )
 from ..stepInfo import PBSStepInfo, StepInfo
 from .pbsCommands import qdel, qstat
-from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
+from .pbsParser import (
+    parse_qstat_jobid,
+    parse_qstat_jobid_json,
+    parse_step_id_from_qstat,
+)
 
 logger = get_logger(__name__)
 
@@ -188,6 +192,17 @@ class PBSLauncher(WLMLauncher):
 
         qstat_out, _ = qstat(step_ids)
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
+
+        # Fallback: if all jobs result as NOTFOUND, it might be an issue
+        # with truncated names, we resort to json format which does not truncate
+        # information
+        if all(stat == "NOTFOUND" for stat in stats):
+            qstat_out_json, _ = qstat(["-f", "-F", "json"] + step_ids)
+            stats = [
+                parse_qstat_jobid_json(qstat_out_json, str(step_id))
+                for step_id in step_ids
+            ]
+
         # create PBSStepInfo objects to return
 
         for stat, _ in zip(stats, step_ids):
