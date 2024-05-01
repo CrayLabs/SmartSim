@@ -926,9 +926,11 @@ def _create_and_launch_database(
     hostlist: t.Optional[t.List[str]],
     port: int,
 ):
+    exp_path = pathlib.Path(test_output_root, exp_name)
+    exp_path.mkdir()
     exp = Experiment(
         exp_name,
-        exp_path=str(pathlib.Path(test_output_root, exp_name)),
+        exp_path=str(exp_path),
         launcher=launcher,
     )
     orc = exp.create_database(
