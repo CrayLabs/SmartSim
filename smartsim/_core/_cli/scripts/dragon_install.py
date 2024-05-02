@@ -212,19 +212,23 @@ def install_package(asset_dir: pathlib.Path) -> int:
     """Install the package found in `asset_dir` into the current python environment
 
     :param asset_dir: path to a decompressed archive contents for a release asset"""
-    package_path = next(asset_dir.rglob("*.whl"), None)
-    if not package_path:
+    wheels = asset_dir.rglob("*.whl")
+    wheel_path = next(wheels, None)
+    if not wheel_path:
         logger.error(f"No wheel found for package in {asset_dir}")
         return 1
 
-    logger.info(f"Installing dragon from: {package_path.absolute()}")
+    while wheel_path is not None:
+        logger.info(f"Installing dragon from: {wheel_path.absolute()}")
 
-    try:
-        pip("install", "--force-reinstall", str(package_path))
-        return 0
-    except Exception:
-        logger.error(f"Unable to install from {asset_dir}")
-        return 1
+        try:
+            pip("install", "--force-reinstall", str(wheel_path))
+            wheel_path = next(wheels, None)
+        except Exception:
+            logger.error(f"Unable to install from {asset_dir}")
+            return 1
+
+    return 0
 
 
 def cleanup(
