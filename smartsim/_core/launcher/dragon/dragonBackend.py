@@ -150,7 +150,8 @@ class DragonBackend:
         """ProcessGroup execution state information"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
-        self._step_id: int = 0
+        self._step_ids = (f"{create_short_id_str()}-{id}"
+                          for id in itertools.count())
         """Incremental ID to assign to new steps prior to execution"""
 
         self._initialize_hosts()
