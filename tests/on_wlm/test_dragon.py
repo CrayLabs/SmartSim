@@ -93,8 +93,6 @@ def test_dragon_cannot_honor(wlmutils, test_dir):
 
     try:
         assert exp.get_status(model)[0] == SmartSimStatus.STATUS_FAILED
-    except Exception as e:
-        raise e from None
     finally:
         launcher: DragonLauncher = exp._control._launcher
         launcher.cleanup()
