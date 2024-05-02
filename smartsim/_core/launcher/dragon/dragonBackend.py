@@ -148,7 +148,8 @@ class DragonBackend:
         """Lock used to atomically create new step ids"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
-        self._step_id: int = 0
+        self._step_ids = (f"{create_short_id_str()}-{id}"
+                          for id in itertools.count())
         """Incremental ID to assign to new steps prior to execution"""
 
         self._initialize_hosts()
@@ -215,13 +216,11 @@ class DragonBackend:
     def step_table(self) -> str:
         """Table representation of all jobs which have been started on the server."""
         headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
-        values = []
-
         with self._queue_lock:
-            for step, group_info in self._group_infos.items():
-                values.append(
-                    DragonBackend._proc_group_info_table_line(step, group_info)
-                )
+            values = [
+                self._proc_group_info_table_line(step, group_info)
+                for step, group_info in self._group_infos.items()
+            ]
 
         return tabulate(values, headers, disable_numparse=True, tablefmt="github")
 
@@ -232,11 +231,11 @@ class DragonBackend:
         in the allocation.
         """
         headers = ["Host", "State"]
-        values = []
-
         with self._queue_lock:
-            for host in self._hosts:
-                values.append([host, "Free" if host in self._free_hosts else "Busy"])
+            values = [
+                self._proc_group_info_table_line(step, group_info)
+                for step, group_info in self._group_infos.items()
+            ]
 
         return tabulate(values, headers, disable_numparse=True, tablefmt="github")
 
@@ -250,7 +249,7 @@ class DragonBackend:
             self._free_hosts: t.Deque[str] = collections.deque(self._hosts)
             """List of hosts on which steps can be launched"""
             self._allocated_hosts: t.Dict[str, str] = {}
-            """List of hosts on which a step is already running"""
+            """Mapping of hosts on which a step is already running to step ID"""
 
     def __str__(self) -> str:
         return self.get_status_message()
@@ -260,10 +259,10 @@ class DragonBackend:
 
         :returns: Status message
         """
-        msg = ["Dragon server backend update"]
-        msg.append(self.host_table)
-        msg.append(self.step_table)
-        return "\n".join(msg)
+        return textwrap.dedent(f"""\
+            Dragon server backend update
+            {self.host_table}
+            {self.step_table}""")
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time
