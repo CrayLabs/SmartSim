@@ -59,6 +59,7 @@ SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 class DragonClientEntrypointArgs:
     submit: Path
 
+
 def cleanup() -> None:
     logger.debug("Cleaning up")
 
@@ -117,8 +118,8 @@ def execute_entrypoint(args: DragonClientEntrypointArgs) -> int:
 
     try:
         requests = parse_requests(args.submit)
-    except Exception as e:
-        logger.error(f"Dragon client failed to parse request file", exc_info=True)
+    except Exception:
+        logger.error("Dragon client failed to parse request file", exc_info=True)
         return os.EX_OSFILE
 
     requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=True))

@@ -26,6 +26,7 @@
 import collections
 import functools
 import itertools
+import textwrap
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -33,7 +34,6 @@ from enum import Enum
 from threading import RLock
 
 from tabulate import tabulate
-import textwrap
 
 # pylint: disable=import-error
 # isort: off
@@ -71,8 +71,10 @@ logger = get_logger(__name__)
 class DragonStatus(str, Enum):
     ERROR = str(dragon_group_state.Error())
     RUNNING = str(dragon_group_state.Running())
+
     def __str__(self) -> str:
         return self.value
+
 
 @dataclass
 class ProcessGroupInfo:
@@ -148,8 +150,7 @@ class DragonBackend:
         """ProcessGroup execution state information"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
-        self._step_ids = (f"{create_short_id_str()}-{id}"
-                          for id in itertools.count())
+        self._step_ids = (f"{create_short_id_str()}-{id}" for id in itertools.count())
         """Incremental ID to assign to new steps prior to execution"""
 
         self._initialize_hosts()
@@ -343,7 +344,6 @@ class DragonBackend:
                 to_allocate.append(host)
             return to_allocate
 
-
     @staticmethod
     def _create_redirect_workers(
         global_policy: dragon_policy.Policy,
@@ -503,8 +503,6 @@ class DragonBackend:
                     self._group_infos[step_id].redir_workers = redir_grp
                 elif puids is not None and grp_status == SmartSimStatus.STATUS_RUNNING:
                     logger.error("Cannot redirect workers: some PUIDS are missing")
-
-
 
             if started:
                 logger.debug(f"{started=}")

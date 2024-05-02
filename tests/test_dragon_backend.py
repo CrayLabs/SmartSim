@@ -48,6 +48,7 @@ class NodeMock(MagicMock):
     def hostname(self) -> str:
         return create_short_id_str()
 
+
 class GroupStateMock(MagicMock):
     def Running(self) -> MagicMock:
         running = MagicMock(**{"__str__.return_value": "Running"})
@@ -198,7 +199,7 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     step_id = run_resp.step_id
     assert dragon_backend._queued_steps[step_id] == run_req
 
-    dragon_backend._group_infos[step_id].puids = [123,124]
+    dragon_backend._group_infos[step_id].puids = [123, 124]
     dragon_backend._start_steps()
 
     assert dragon_backend._running_steps == [step_id]

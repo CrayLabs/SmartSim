@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import atexit
-from collections import defaultdict
 import fileinput
 import itertools
 import json
@@ -36,6 +35,7 @@ import subprocess
 import sys
 import time
 import typing as t
+from collections import defaultdict
 from pathlib import Path
 from threading import RLock
 
@@ -348,7 +348,9 @@ class DragonConnector:
         )
         dragon_envs = (json.loads(config_dict) for config_dict in dragon_env_jsons)
 
-        dragon_envs = (dragon_env for dragon_env in dragon_envs if "address" in dragon_env)
+        dragon_envs = (
+            dragon_env for dragon_env in dragon_envs if "address" in dragon_env
+        )
 
         if num_dragon_envs:
             sliced_dragon_envs = itertools.islice(dragon_envs, num_dragon_envs)

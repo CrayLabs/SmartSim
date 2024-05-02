@@ -37,7 +37,6 @@ import psutil
 
 from smartsim._core.utils.network import current_ip
 from smartsim.entity.dbnode import LaunchedShardData
-from smartsim.error import SSInternalError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -120,9 +119,9 @@ def main(args: argparse.Namespace) -> int:
 
         for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
-    except Exception as e:
+    except Exception:
         cleanup()
-        logger.error(f"Database process starter raised an exception", exc_info=True)
+        logger.error("Database process starter raised an exception", exc_info=True)
         return 1
     return 0
 
