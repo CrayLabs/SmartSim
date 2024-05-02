@@ -47,8 +47,6 @@ class RunSettings(SettingsBase):
 
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_command: str = "",
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -82,8 +80,6 @@ class RunSettings(SettingsBase):
         :param container: container type for workload (e.g. "singularity")
         """
         # Do not expand executable if running within a container
-        self.exe = [exe] if container else [expand_exe_path(exe)]
-        self.exe_args = exe_args or []
         self.run_args = run_args or {}
         self.env_vars = env_vars or {}
         self.container = container
@@ -106,22 +102,6 @@ class RunSettings(SettingsBase):
                 ],
             ]
         ] = None
-
-    @property
-    def exe_args(self) -> t.Union[str, t.List[str]]:
-        """Return an immutable list of attached executable arguments.
-
-        :returns: attached executable arguments
-        """
-        return self._exe_args
-
-    @exe_args.setter
-    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
-        """Set the executable arguments.
-
-        :param value: executable arguments
-        """
-        self._exe_args = self._build_exe_args(value)
 
     @property
     def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
@@ -443,14 +423,6 @@ class RunSettings(SettingsBase):
 
             self.env_vars[env] = str(val)
 
-    def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
-        """Add executable arguments to executable
-
-        :param args: executable arguments
-        """
-        args = self._build_exe_args(args)
-        self._exe_args.extend(args)
-
     def set(
         self, arg: str, value: t.Optional[str] = None, condition: bool = True
     ) -> None:
@@ -521,29 +493,6 @@ class RunSettings(SettingsBase):
         if arg in self.run_args and value != self.run_args[arg]:
             logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
         self.run_args[arg] = value
-
-    @staticmethod
-    def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
-        """Check and convert exe_args input to a desired collection format"""
-        if not exe_args:
-            return []
-
-        if isinstance(exe_args, list):
-            exe_args = copy.deepcopy(exe_args)
-
-        if not (
-            isinstance(exe_args, str)
-            or (
-                isinstance(exe_args, list)
-                and all(isinstance(arg, str) for arg in exe_args)
-            )
-        ):
-            raise TypeError("Executable arguments were not a list of str or a str.")
-
-        if isinstance(exe_args, str):
-            return exe_args.split()
-
-        return exe_args
 
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments

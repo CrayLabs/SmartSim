@@ -417,6 +417,8 @@ class Experiment:
     def create_ensemble(
         self,
         name: str,
+        exe: t.Optional[str] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
         run_settings: t.Optional[base.RunSettings] = None,
@@ -475,6 +477,8 @@ class Experiment:
         try:
             new_ensemble = Ensemble(
                 name=name,
+                exe=exe,
+                exe_args=exe_args,
                 params=params or {},
                 path=entity_path,
                 batch_settings=batch_settings,
@@ -492,7 +496,9 @@ class Experiment:
     def create_model(
         self,
         name: str,
+        exe: str,
         run_settings: base.RunSettings,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         path: t.Optional[str] = None,
         enable_key_prefixing: bool = False,
@@ -585,6 +591,8 @@ class Experiment:
         try:
             new_model = Model(
                 name=name,
+                exe=exe,
+                exe_args=exe_args,
                 params=params,
                 path=entity_path,
                 run_settings=run_settings,
@@ -600,8 +608,6 @@ class Experiment:
     @_contextualize
     def create_run_settings(
         self,
-        exe: str,
-        exe_args: t.Optional[t.List[str]] = None,
         run_command: str = "auto",
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -643,8 +649,6 @@ class Experiment:
         try:
             return settings.create_run_settings(
                 self._launcher,
-                exe,
-                exe_args=exe_args,
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,

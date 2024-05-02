@@ -30,14 +30,18 @@ import typing as t
 
 from ....settings import Singularity
 from ....settings.base import RunSettings
+from ....entity import SmartSimEntity, Model
 from .step import Step, proxyable_launch_cmd
 
 
 class LocalStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
-        super().__init__(name, cwd, run_settings)
-        self.run_settings = run_settings
-        self._env = self._set_env()
+    def __init__(self, entity: SmartSimEntity):
+        super().__init__(entity)
+        self.run_settings = entity.run_settings
+        if entity.run_settings is not None:
+            self._env = self._set_env()
+        else:
+            self._env = None
 
     @property
     def env(self) -> t.Dict[str, str]:
@@ -46,31 +50,31 @@ class LocalStep(Step):
     @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
         cmd = []
+        if self.entity.run_settings is not None:
+            # Add run command and args if user specified
+            # default is no run command for local job steps
+            if self.run_settings.run_command:
+                cmd.append(self.run_settings.run_command)
+                run_args = self.run_settings.format_run_args()
+                cmd.extend(run_args)
 
-        # Add run command and args if user specified
-        # default is no run command for local job steps
-        if self.run_settings.run_command:
-            cmd.append(self.run_settings.run_command)
-            run_args = self.run_settings.format_run_args()
-            cmd.extend(run_args)
+            if self.run_settings.colocated_db_settings:
+                # Replace the command with the entrypoint wrapper script
+                if not (bash := shutil.which("bash")):
+                    raise RuntimeError("Unable to locate bash interpreter")
 
-        if self.run_settings.colocated_db_settings:
-            # Replace the command with the entrypoint wrapper script
-            if not (bash := shutil.which("bash")):
-                raise RuntimeError("Unable to locate bash interpreter")
+                launch_script_path = self.get_colocated_launch_script()
+                cmd.extend([bash, launch_script_path])
 
-            launch_script_path = self.get_colocated_launch_script()
-            cmd.extend([bash, launch_script_path])
-
-        container = self.run_settings.container
-        if container and isinstance(container, Singularity):
-            # pylint: disable-next=protected-access
-            cmd += container._container_cmds(self.cwd)
+            container = self.run_settings.container
+            if container and isinstance(container, Singularity):
+                # pylint: disable-next=protected-access
+                cmd += container._container_cmds(self.cwd)
 
         # build executable
-        cmd.extend(self.run_settings.exe)
-        if self.run_settings.exe_args:
-            cmd.extend(self.run_settings.exe_args)
+        cmd.extend(self.entity.exe)
+        if self.entity.exe_args:
+            cmd.extend(self.entity.exe_args)
         return cmd
 
     def _set_env(self) -> t.Dict[str, str]:

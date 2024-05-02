@@ -106,8 +106,6 @@ def create_batch_settings(
 
 def create_run_settings(
     launcher: str,
-    exe: str,
-    exe_args: t.Optional[t.List[str]] = None,
     run_command: str = "auto",
     run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
     env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -181,12 +179,12 @@ def create_run_settings(
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
         return supported[run_command](launcher)(
-            exe, exe_args, run_args, env_vars, container=container, **kwargs
+            run_args, env_vars, container=container, **kwargs
         )
 
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None
     # 3) local launcher being used and default of "auto" was passed.
     return RunSettings(
-        exe, exe_args, run_command, run_args, env_vars, container=container
+        run_command, run_args, env_vars, container=container
     )

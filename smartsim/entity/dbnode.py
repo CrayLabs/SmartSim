@@ -55,6 +55,8 @@ class DBNode(SmartSimEntity):
         self,
         name: str,
         path: str,
+        exe: str,
+        exe_args: t.List[str],
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
@@ -62,6 +64,8 @@ class DBNode(SmartSimEntity):
     ) -> None:
         """Initialize a database node within an orchestrator."""
         super().__init__(name, path, run_settings)
+        self.exe = exe
+        self.exe_args = exe_args
         self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 
