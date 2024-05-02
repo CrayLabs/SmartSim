@@ -97,7 +97,7 @@ def main(args: argparse.Namespace) -> int:
             logger.debug("Could not reach server, assuming backend has shut down")
             break
 
-    logger.info("Server has finished.")
+    logger.info("Client has finished.")
 
     return 0
 
