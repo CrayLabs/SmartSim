@@ -217,13 +217,11 @@ class DragonBackend:
     def step_table(self) -> str:
         """Table representation of all jobs which have been started on the server."""
         headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
-        values = []
-
         with self._queue_lock:
-            for step, group_info in self._group_infos.items():
-                values.append(
-                    DragonBackend._proc_group_info_table_line(step, group_info)
-                )
+            values = [
+                self._proc_group_info_table_line(step, group_info)
+                for step, group_info in self._group_infos.items()
+            ]
 
         return tabulate(values, headers, disable_numparse=True, tablefmt="github")
 
