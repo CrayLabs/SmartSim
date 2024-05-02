@@ -287,7 +287,7 @@ class DragonLauncher(WLMLauncher):
                     logger.error(msg)
                     info = StepInfo(
                         SmartSimStatus.STATUS_FAILED,
-                        str(SmartSimStatus.STATUS_FAILED),
+                        SmartSimStatus.STATUS_FAILED.value,
                         -1,
                     )
                 else:
@@ -302,7 +302,7 @@ class DragonLauncher(WLMLauncher):
                             logger.error(_err_msg)
                     else:
                         grp_ret_code = None
-                    info = StepInfo(status, str(status), grp_ret_code)
+                    info = StepInfo(status, status.value, grp_ret_code)
 
                 step_id_updates[step_id] = info
 

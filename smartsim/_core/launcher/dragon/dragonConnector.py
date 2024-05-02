@@ -346,14 +346,14 @@ class DragonConnector:
             for first, config_dict in tokenized
             if "DRAGON_SERVER_CONFIG" in first
         )
-        dragon_envs = [json.loads(config_dict) for config_dict in dragon_env_jsons]
+        dragon_envs = (json.loads(config_dict) for config_dict in dragon_env_jsons)
 
         dragon_envs = [dragon_env for dragon_env in dragon_envs if "address" in dragon_env]
 
         if num_dragon_envs:
             sliced_dragon_envs = itertools.islice(dragon_envs, num_dragon_envs)
             return list(sliced_dragon_envs)
-        return dragon_envs
+        return list(dragon_envs)
 
     @classmethod
     def _parse_launched_dragon_server_info_from_files(
