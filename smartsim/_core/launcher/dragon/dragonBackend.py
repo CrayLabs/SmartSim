@@ -234,11 +234,11 @@ class DragonBackend:
         in the allocation.
         """
         headers = ["Host", "State"]
-        values = []
-
         with self._queue_lock:
-            for host in self._hosts:
-                values.append([host, "Free" if host in self._free_hosts else "Busy"])
+            values = [
+                self._proc_group_info_table_line(step, group_info)
+                for step, group_info in self._group_infos.items()
+            ]
 
         return tabulate(values, headers, disable_numparse=True, tablefmt="github")
 
