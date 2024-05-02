@@ -219,7 +219,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
         return 1
 
     while wheel_path is not None:
-        logger.info(f"Installing dragon from: {wheel_path.absolute()}")
+        logger.info(f"Installing package: {wheel_path.absolute()}")
 
         try:
             pip("install", "--force-reinstall", str(wheel_path))
