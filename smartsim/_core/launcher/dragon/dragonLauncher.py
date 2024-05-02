@@ -302,7 +302,7 @@ class DragonLauncher(WLMLauncher):
                             logger.error(_err_msg)
                     else:
                         grp_ret_code = None
-                    info = StepInfo(status, str(status), grp_ret_code)
+                    info = StepInfo(status, status.value, grp_ret_code)
 
                 step_id_updates[step_id] = info
 
