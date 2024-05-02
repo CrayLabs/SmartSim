@@ -1,7 +1,5 @@
-import logging
 import os
 import pathlib
-import shutil
 import subprocess
 import sys
 import typing as t
@@ -16,6 +14,25 @@ from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
+
+
+def config_dir() -> pathlib.Path:
+    """Return a directory path where SmartSim configuration files can be written
+
+    :returns: path to the configuration directory"""
+    return pathlib.Path(__file__).parents[2] / "config"
+
+
+def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
+    """Create a .env file with required environment variables for the Dragon runtime"""
+    dotenv_path = config_dir() / ".env"
+    dragon_vars = {"DRAGON_ROOT_DIR": str(dragon_root_dir)}
+
+    lines = [f"{k}={v}" for k, v in dragon_vars.items()]
+    lines.append("\n")
+
+    with dotenv_path.open("w") as dotenv:
+        dotenv.writelines(lines)
 
 
 def check_for_utility(util_name: str) -> str:
@@ -102,7 +119,7 @@ def python_version() -> str:
 def dragon_pin() -> str:
     """Return a string indicating the pinned major/minor version of the dragon
     package to install"""
-    return "dragon-0.9"
+    return "0.9"
 
 
 def _platform_filter(asset_name: str) -> bool:
@@ -131,12 +148,11 @@ def _pin_filter(asset_name: str) -> bool:
 
     :param asset_name: A value to inspect for keywords indicating a dragon version
     :returns: True if supplied value is correct for current dragon version"""
-    return dragon_pin() in asset_name
+    return f"dragon-{dragon_pin()}" in asset_name
 
 
 def _get_release_assets() -> t.Collection[GitReleaseAsset]:
-    """Retrieve a dictionary mapping asset names to asset files from the
-    latest Dragon release
+    """Retrieve a collection of available assets
 
     :returns: A dictionary containing latest assets matching the supplied pin"""
     git = Github()
@@ -146,12 +162,14 @@ def _get_release_assets() -> t.Collection[GitReleaseAsset]:
     if dragon_repo is None:
         raise SmartSimCLIActionCancelled("Unable to locate dragon repo")
 
+    # find any releases matching our pinned version requirement
+    tags = [tag for tag in dragon_repo.get_tags() if dragon_pin() in tag.name]
     # repo.get_latest_release fails if only pre-release results are returned
-    all_releases = list(dragon_repo.get_releases())
-    all_releases = sorted(all_releases, key=lambda r: r.published_at, reverse=True)
+    pin_releases = list(dragon_repo.get_release(tag.name) for tag in tags)
+    releases = sorted(pin_releases, key=lambda r: r.published_at, reverse=True)
 
-    release = all_releases[0]
-    assets = release.assets
+    # take the most recent release for the given pin
+    assets = releases[0].assets
 
     return assets
 
@@ -217,6 +235,8 @@ def install_package(asset_dir: pathlib.Path) -> int:
     if not wheel_path:
         logger.error(f"No wheel found for package in {asset_dir}")
         return 1
+
+    create_dotenv(wheel_path.parent)
 
     while wheel_path is not None:
         logger.info(f"Installing package: {wheel_path.absolute()}")
