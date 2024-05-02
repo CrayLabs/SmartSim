@@ -438,7 +438,7 @@ def _dragon_cleanup(
             server_authenticator.stop()
     except Exception:
         print("Authenticator shutdown error")
-    finally:
+    else:
         print("Authenticator shutdown is complete")
 
 
