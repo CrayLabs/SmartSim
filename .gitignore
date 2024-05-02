@@ -22,6 +22,7 @@ venv/
 .venv/
 env/
 .env/
+smartsim/_core/config/.env
 
 # written upon install
 smartsim/version.py
