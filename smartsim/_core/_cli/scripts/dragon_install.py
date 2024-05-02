@@ -152,9 +152,10 @@ def _pin_filter(asset_name: str) -> bool:
 
 
 def _get_release_assets() -> t.Collection[GitReleaseAsset]:
-    """Retrieve a collection of available assets
+    """Retrieve a collection of available assets for all releases that satisfy
+    the dragon version pin
 
-    :returns: A dictionary containing latest assets matching the supplied pin"""
+    :returns: A collection of release assets"""
     git = Github()
 
     dragon_repo = git.get_repo("DragonHPC/dragon")
