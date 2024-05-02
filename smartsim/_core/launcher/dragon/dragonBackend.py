@@ -250,7 +250,7 @@ class DragonBackend:
             self._free_hosts: t.Deque[str] = collections.deque(self._hosts)
             """List of hosts on which steps can be launched"""
             self._allocated_hosts: t.Dict[str, str] = {}
-            """List of hosts on which a step is already running"""
+            """Mapping of hosts on which a step is already running to step ID"""
 
     def __str__(self) -> str:
         return self.get_status_message()
