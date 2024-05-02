@@ -102,7 +102,7 @@ def python_version() -> str:
 def dragon_pin() -> str:
     """Return a string indicating the pinned major/minor version of the dragon
     package to install"""
-    return "dragon-0.8"
+    return "dragon-0.9"
 
 
 def _platform_filter(asset_name: str) -> bool:
