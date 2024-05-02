@@ -1,5 +1,5 @@
 
-{% include "preview/plain_text/experiment.template" %}
+{% include "experiment.template" %}
 {%- if manifest.has_deployable or active_dbjobs %}
 
 === Entity Preview ===
@@ -8,7 +8,7 @@
 
   == Active Infrastructure ==
   {%- for name, db in active_dbjobs.items() %}
-      {% include "preview/plain_text/activeinfra.template" %}
+      {% include "activeinfra.template" %}
   {%- endfor %}
   {%- endif %}
   {%- if manifest.dbs %}
@@ -18,7 +18,7 @@
     {%- if db.is_active() %}
     WARNING: Cannot preview {{ db.name }}, because it is already started.
     {%- else %}
-        {% include "preview/plain_text/orchestrator.template" %}
+        {% include "orchestrator.template" %}
     {%- endif %}
     {%- endfor %}
   {%- endif %}
@@ -28,14 +28,14 @@
     {%- for model in manifest.models %}
 
     = Model Name: {{ model.name }} =
-    {%- include "preview/plain_text/model.template" %}
+    {%- include "model.template" %}
       {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
         Client Configuration:
         {%- if model.run_settings.colocated_db_settings %}
-        {%- include "preview/plain_text/clientconfigcolo.template" %}
+        {%- include "clientconfigcolo.template" %}
         {%- endif %}
         {%- if manifest.dbs %}
-        {%- include "preview/plain_text/clientconfig.template" %}
+        {%- include "clientconfig.template" %}
         {%- endif %}
         {%- endif %}
       {%- endfor %}
@@ -45,7 +45,7 @@
 
   == Ensembles ==
     {%- for ensemble in manifest.ensembles %}
-    {%- include "preview/plain_text/ensemble.template" %}
+    {%- include "ensemble.template" %}
     {%- endfor %}
     {%- endif %}
 

@@ -132,7 +132,9 @@ def render(
 
     _check_output_format(output_format)
 
-    loader = jinja2.PackageLoader("smartsim.templates")
+    loader = jinja2.PackageLoader(
+        "smartsim.templates.templates.preview", output_format.value
+    )
     env = jinja2.Environment(loader=loader, autoescape=True)
 
     env.filters["as_toggle"] = as_toggle
@@ -141,7 +143,7 @@ def render(
     env.filters["is_list"] = is_list
     env.globals["Verbosity"] = Verbosity
 
-    tpl_path = f"preview/{output_format.value}/base.template"
+    tpl_path = "base.template"
 
     tpl = env.get_template(tpl_path)
 

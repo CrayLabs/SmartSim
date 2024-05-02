@@ -1,7 +1,7 @@
 
 {%- if verbosity_level == Verbosity.INFO %}
-{%- include "preview/plain_text/orchestrator_info.template" -%}
+{%- include "orchestrator_info.template" -%}
 {%- endif %}
 {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
-{%- include "preview/plain_text/orchestrator_debug.template" -%}
+{%- include "orchestrator_debug.template" -%}
 {%- endif %}
