@@ -49,8 +49,6 @@ def test_dragon_global_path(global_dragon_teardown, wlmutils, test_dir, monkeypa
 
     try:
         assert exp.get_status(model)[0] == SmartSimStatus.STATUS_COMPLETED
-    except Exception as e:
-        raise e from None
     finally:
         launcher: DragonLauncher = exp._control._launcher
         launcher.cleanup()
