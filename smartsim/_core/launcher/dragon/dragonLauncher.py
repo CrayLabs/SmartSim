@@ -287,7 +287,7 @@ class DragonLauncher(WLMLauncher):
                     logger.error(msg)
                     info = StepInfo(
                         SmartSimStatus.STATUS_FAILED,
-                        str(SmartSimStatus.STATUS_FAILED),
+                        SmartSimStatus.STATUS_FAILED.value,
                         -1,
                     )
                 else:
