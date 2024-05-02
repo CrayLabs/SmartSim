@@ -213,15 +213,11 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
     dragon_backend._update()
 
-    print("-----____--_-_-_----__\n--__--___--_--__-------")
-
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend._free_hosts) == 1
     assert dragon_backend._allocated_hosts["node1"] == step_id
     assert dragon_backend._allocated_hosts["node2"] == step_id
-
-    print(dragon_backend._group_infos)
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -352,7 +348,7 @@ def test_can_honor(monkeypatch: pytest.MonkeyPatch, num_nodes: int) -> None:
 
 def test_get_id(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend = get_mock_backend(monkeypatch)
-    step_id = dragon_backend._get_new_id()
+    step_id = next(dragon_backend._step_ids)
 
     assert step_id.endswith("0")
-    assert step_id != dragon_backend._get_new_id()
+    assert step_id != next(dragon_backend._step_ids)

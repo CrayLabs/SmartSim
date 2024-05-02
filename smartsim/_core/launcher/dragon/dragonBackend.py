@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import collections
 import functools
+import itertools
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -32,6 +33,7 @@ from enum import Enum
 from threading import RLock
 
 from tabulate import tabulate
+import textwrap
 
 # pylint: disable=import-error
 # isort: off
@@ -144,8 +146,6 @@ class DragonBackend:
         """PID of dragon executable which launched this server"""
         self._group_infos: t.Dict[str, ProcessGroupInfo] = {}
         """ProcessGroup execution state information"""
-        self._step_id_lock = RLock()
-        """Lock used to atomically create new step ids"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
         self._step_ids = (f"{create_short_id_str()}-{id}"
@@ -313,7 +313,7 @@ class DragonBackend:
     @property
     def current_time(self) -> float:
         """Current time for DragonBackend object, in seconds since the Epoch"""
-        return time.time_ns() / 1e9
+        return time.time()
 
     def _can_honor(self, request: DragonRunRequest) -> t.Tuple[bool, t.Optional[str]]:
         """Check if request can be honored with resources available in the allocation.
@@ -343,11 +343,6 @@ class DragonBackend:
                 to_allocate.append(host)
             return to_allocate
 
-    def _get_new_id(self) -> str:
-        with self._step_id_lock:
-            step_id = create_short_id_str() + "-" + str(self._step_id)
-            self._step_id += 1
-            return step_id
 
     @staticmethod
     def _create_redirect_workers(
@@ -535,7 +530,6 @@ class DragonBackend:
                     group_info.status = SmartSimStatus.STATUS_FAILED
                     group_info.return_codes = [-1]
                 elif group_info.status not in TERMINAL_STATUSES:
-                    print(grp.status, str(DragonStatus.RUNNING), grp.status==str(DragonStatus.RUNNING))
                     if grp.status == str(DragonStatus.RUNNING):
                         group_info.status = SmartSimStatus.STATUS_RUNNING
                     else:
@@ -629,7 +623,7 @@ class DragonBackend:
 
     @process_request.register
     def _(self, request: DragonRunRequest) -> DragonRunResponse:
-        step_id = self._get_new_id()
+        step_id = next(self._step_ids)
         with self._queue_lock:
             honorable, err = self._can_honor(request)
             if not honorable:

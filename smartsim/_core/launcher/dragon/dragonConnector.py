@@ -324,7 +324,7 @@ class DragonConnector:
                 server_authenticator=self._authenticator,
             )
             self._dragon_head_socket = None
-            self._dragon_head_pid = 0
+            self._dragon_head_pid = None
             self._authenticator = None
 
     def send_request(self, request: DragonRequest, flags: int = 0) -> DragonResponse:
