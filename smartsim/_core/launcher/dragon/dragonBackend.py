@@ -260,10 +260,10 @@ class DragonBackend:
 
         :returns: Status message
         """
-        msg = ["Dragon server backend update"]
-        msg.append(self.host_table)
-        msg.append(self.step_table)
-        return "\n".join(msg)
+        return textwrap.dedent(f"""\
+            Dragon server backend update
+            {self.host_table}
+            {self.step_table}""")
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time
