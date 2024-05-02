@@ -154,11 +154,11 @@ class DragonBatchStep(Step):
     def _dragon_entrypoint_cmd(request_file: str) -> str:
         """Return command needed to run the Dragon entrypoint"""
         cmd = [
-            f"{sys.executable}",
+            sys.executable,
             "-m",
             "smartsim._core.entrypoints.dragon_client",
             "+submit",
-            f"{request_file}",
+            request_file,
         ]
         return " ".join(cmd)
 

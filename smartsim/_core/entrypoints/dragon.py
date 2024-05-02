@@ -50,6 +50,10 @@ from smartsim._core.schemas import (
 from smartsim._core.utils.network import get_best_interface_and_address
 from smartsim.log import ContextThread, get_logger
 
+"""
+Dragon server entrypoint script
+"""
+
 logger = get_logger("Dragon Server")
 
 # kill is not catchable
@@ -70,11 +74,6 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
     else:
         logger.info(f"Received signal {signo}")
     cleanup()
-
-
-"""
-Dragon server entrypoint script
-"""
 
 
 def get_log_path() -> str:
@@ -99,9 +98,18 @@ def print_summary(network_interface: str, ip_address: str) -> None:
         )
 
 
-def restart_updater(
+def start_updater(
     backend: DragonBackend, updater: t.Optional[ContextThread]
 ) -> ContextThread:
+    """Start the ``DragonBackend`` updater thread.
+
+    If ``updater`` is not None, then it is first checked and if it
+    alive, no other thread is started.
+
+    :param backend: The dragon backend for which the thread will be started
+    :param updater: An existing updater thread that might have to be replaced
+    :return: Running updater thread
+    """
     # If the updater was started, check if it completed or died
     if updater is not None:
         updater.join(0.1)
@@ -114,9 +122,22 @@ def restart_updater(
 
 
 def is_updater_healthy(backend: DragonBackend) -> bool:
+    """Check if the backend has been updated recently.
+
+    The acceptable delay is defined as the server timeout plus the backend's cooldown
+    period. If the server timeout is set to `-1`, then the acceptable delay is set to
+    one minute plus the cooldown period.
+
+    :param backend: The backend for which the updater's health is checked
+    :return: Whether the backend was updated recently
+    """
+    server_timeout = get_config().dragon_server_timeout / 1000
+    acceptable_delay = backend.cooldown_period + (
+        60.0 if server_timeout == -1 else server_timeout
+    )
 
     heartbeat_delay = backend.current_time - backend.last_heartbeat
-    if heartbeat_delay > 30.0 + float(backend.cooldown_period):
+    if heartbeat_delay > acceptable_delay:
         logger.debug(
             f"Updater inactive for {heartbeat_delay:.2f} seconds, will request restart."
         )
@@ -125,9 +146,15 @@ def is_updater_healthy(backend: DragonBackend) -> bool:
 
 
 def updater_fallback(backend: DragonBackend, updater: ContextThread) -> ContextThread:
+    """Check if updater has updated the backend recently, if not, check its status
+    and start a new one if it is not alive.
+    :param backend: The dragon backend for which the udpater's health must be checked
+    :param updater: The updater thread which has to be checked and (possibly) replaced
+    :return: Running updater thread
+    """
     if is_updater_healthy(backend):
         return updater
-    return restart_updater(backend, updater)
+    return start_updater(backend, updater)
 
 
 # pylint: disable-next=too-many-statements
@@ -141,7 +168,7 @@ def run(
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
-    backend_updater = restart_updater(dragon_backend, None)
+    backend_updater = start_updater(dragon_backend, None)
     server = dragonSockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")

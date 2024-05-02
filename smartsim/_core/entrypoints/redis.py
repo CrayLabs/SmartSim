@@ -122,7 +122,8 @@ def main(args: argparse.Namespace) -> int:
             print(line.decode("utf-8").rstrip(), flush=True)
     except Exception as e:
         cleanup()
-        raise SSInternalError("Database process starter raised an exception") from e
+        logger.error(f"Database process starter raised an exception", exc_info=True)
+        return 1
     return 0
 
 

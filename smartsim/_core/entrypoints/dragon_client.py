@@ -25,12 +25,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import dataclasses
 import json
 import os
 import signal
 import sys
 import time
 import typing as t
+from pathlib import Path
+from types import FrameType
 
 import zmq
 
@@ -43,34 +46,80 @@ from smartsim._core.schemas import (
 )
 from smartsim.log import get_logger
 
-SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+"""
+Dragon server entrypoint script
+"""
 
 logger = get_logger("Dragon Client")
 
+SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+
+
+@dataclasses.dataclass
+class DragonClientEntrypointArgs:
+    submit: Path
 
 def cleanup() -> None:
     logger.debug("Cleaning up")
 
 
-def main(args: argparse.Namespace) -> int:
-
+def parse_requests(request_filepath: Path) -> t.List[DragonRequest]:
     requests: t.List[DragonRequest] = []
-
     try:
-        with open(args.submit, "r", encoding="utf-8") as request_file:
+        with open(request_filepath, "r", encoding="utf-8") as request_file:
             req_strings = json.load(fp=request_file)
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         logger.error(
             "Could not find file with run requests,"
-            f"please check whether {args.submit} exists."
+            f"please check whether {request_filepath} exists."
         )
-        return 1
-    except json.JSONDecodeError:
-        logger.error(f"Could not decode request file {args.submit}.")
-        return 1
+        raise e from None
+    except json.JSONDecodeError as e:
+        logger.error(f"Could not decode request file {request_filepath}.")
+        raise e from None
 
-    for req_str in req_strings:
-        requests.append(request_registry.from_string(req_str))
+    requests = [request_registry.from_string(req_str) for req_str in req_strings]
+
+    return requests
+
+
+def parse_arguments(args: t.List[str]) -> DragonClientEntrypointArgs:
+    parser = argparse.ArgumentParser(
+        prefix_chars="+",
+        description="SmartSim Dragon Client Process, to be used in batch scripts",
+    )
+    parser.add_argument("+submit", type=str, help="Path to request file", required=True)
+    args_ = parser.parse_args(args)
+
+    if not args_.submit:
+        raise ValueError("Empty request file.")
+
+    return DragonClientEntrypointArgs(submit=Path(args_.submit))
+
+
+def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
+    if not signo:
+        logger.info("Received signal with no signo")
+    else:
+        logger.info(f"Received signal {signo}")
+    cleanup()
+
+
+def register_signal_handlers() -> None:
+    # make sure to register the cleanup before the start
+    # the process so our signaller will be able to stop
+    # the database process.
+    for sig in SIGNALS:
+        signal.signal(sig, handle_signal)
+
+
+def execute_entrypoint(args: DragonClientEntrypointArgs) -> int:
+
+    try:
+        requests = parse_requests(args.submit)
+    except Exception as e:
+        logger.error(f"Dragon client failed to parse request file", exc_info=True)
+        return os.EX_OSFILE
 
     requests.append(DragonShutdownRequest(immediate=False, frontend_shutdown=True))
 
@@ -87,7 +136,7 @@ def main(args: argparse.Namespace) -> int:
         logger.error(
             "Could not get Dragon Server PID and will not be able to monitor it."
         )
-        return 1
+        return os.EX_IOERR
 
     while True:
         try:
@@ -97,20 +146,33 @@ def main(args: argparse.Namespace) -> int:
             logger.debug("Could not reach server, assuming backend has shut down")
             break
 
-    logger.info("Server has finished.")
+    logger.info("Client has finished.")
 
-    return 0
+    return os.EX_OK
 
 
-if __name__ == "__main__":
+def main(args_: t.List[str]) -> int:
+    """Execute the dragon client entrypoint as a module"""
+
     os.environ["PYTHONUNBUFFERED"] = "1"
     logger.info("Dragon client started")
 
-    parser = argparse.ArgumentParser(
-        prefix_chars="+",
-        description="SmartSim Dragon Client Process, to be used in batch scripts",
-    )
-    parser.add_argument("+submit", type=str, help="Path to request file", required=True)
-    args_ = parser.parse_args()
+    args = parse_arguments(args_)
+    register_signal_handlers()
 
-    sys.exit(main(args_))
+    try:
+        return execute_entrypoint(args)
+    except Exception:
+        logger.error(
+            "An unexpected error occurred in the Dragon client entrypoint",
+            exc_info=True,
+        )
+    finally:
+        cleanup()
+
+    return os.EX_SOFTWARE
+
+
+if __name__ == "__main__":
+
+    sys.exit(main(sys.argv[1:]))

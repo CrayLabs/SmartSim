@@ -89,7 +89,7 @@ def create_batch_settings(
     if launcher in ["auto", "dragon"]:
         launcher = detect_launcher()
         if launcher == "dragon":
-            by_launcher["dragon"] = by_launcher["launcher"]
+            by_launcher["dragon"] = by_launcher[launcher]
 
     if launcher == "local":
         raise SmartSimError("Local launcher does not support batch workloads")

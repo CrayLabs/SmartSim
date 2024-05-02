@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import atexit
+from collections import defaultdict
 import fileinput
 import itertools
 import json
@@ -167,42 +168,38 @@ class DragonConnector:
 
     @staticmethod
     def _get_dragon_log_level() -> str:
-        smartsim_to_dragon = {
-            "developer": "INFO",
-            "debug": "NONE",
-            "info": "NONE",
-            "quiet": "NONE",
-        }
+        smartsim_to_dragon = defaultdict(lambda: "NONE")
+        smartsim_to_dragon["developer"] = "INFO"
         return smartsim_to_dragon.get(get_config().log_level, "NONE")
 
     def _connect_to_existing_server(self, path: Path) -> None:
         config = get_config()
         dragon_config_log = path / config.dragon_log_filename
 
-        if dragon_config_log.is_file():
+        if not dragon_config_log.is_file():
+            return
 
-            dragon_confs = self._parse_launched_dragon_server_info_from_files(
-                [dragon_config_log]
+        dragon_confs = self._parse_launched_dragon_server_info_from_files(
+            [dragon_config_log]
+        )
+        logger.debug(dragon_confs)
+
+        for dragon_conf in dragon_confs:
+            logger.debug(
+                "Found dragon server config file. Checking if the server"
+                f" is still up at address {dragon_conf['address']}."
             )
-            logger.debug(dragon_confs)
-            for dragon_conf in dragon_confs:
-                if not "address" in dragon_conf:
-                    continue
-                logger.debug(
-                    "Found dragon server config file. Checking if the server"
-                    f" is still up at address {dragon_conf['address']}."
-                )
-                try:
-                    self._reset_timeout()
-                    self._get_new_authenticator(-1)
-                    self._handshake(dragon_conf["address"])
-                except SmartSimError as e:
-                    logger.error(e)
-                finally:
-                    self._reset_timeout(config.dragon_server_timeout)
-                if self.is_connected:
-                    logger.debug("Connected to existing Dragon server")
-                    return
+            try:
+                self._reset_timeout()
+                self._get_new_authenticator(-1)
+                self._handshake(dragon_conf["address"])
+            except SmartSimError as e:
+                logger.error(e)
+            finally:
+                self._reset_timeout(config.dragon_server_timeout)
+            if self.is_connected:
+                logger.debug("Connected to existing Dragon server")
+                return
 
     def _start_connector_socket(self, socket_addr: str) -> zmq.Socket[t.Any]:
         config = get_config()
@@ -350,6 +347,8 @@ class DragonConnector:
             if "DRAGON_SERVER_CONFIG" in first
         )
         dragon_envs = [json.loads(config_dict) for config_dict in dragon_env_jsons]
+
+        dragon_envs = [dragon_env for dragon_env in dragon_envs if "address" in dragon_env]
 
         if num_dragon_envs:
             sliced_dragon_envs = itertools.islice(dragon_envs, num_dragon_envs)

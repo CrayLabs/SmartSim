@@ -28,6 +28,7 @@ import functools
 import time
 import typing as t
 from dataclasses import dataclass, field
+from enum import Enum
 from threading import RLock
 
 from tabulate import tabulate
@@ -36,18 +37,10 @@ from tabulate import tabulate
 # isort: off
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
+import dragon.native.group_state as dragon_group_state
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
-
-# from dragon.infrastructure.connection import Connection
-# from dragon.infrastructure.policy import Policy
-# from dragon.native.process import Process, ProcessTemplate, Popen
-# from dragon.native.process_group import (
-#     ProcessGroup,
-#     DragonProcessGroupError,
-# )
-# from dragon.native.machine import System, Node
 
 # pylint: enable=import-error
 # isort: on
@@ -70,11 +63,14 @@ from ...._core.utils.helpers import create_short_id_str
 from ....log import get_logger
 from ....status import TERMINAL_STATUSES, SmartSimStatus
 
-DRG_ERROR_STATUS = "Error"
-DRG_RUNNING_STATUS = "Running"
-
 logger = get_logger(__name__)
 
+
+class DragonStatus(str, Enum):
+    ERROR = str(dragon_group_state.Error())
+    RUNNING = str(dragon_group_state.Running())
+    def __str__(self) -> str:
+        return self.value
 
 @dataclass
 class ProcessGroupInfo:
@@ -148,6 +144,8 @@ class DragonBackend:
         """PID of dragon executable which launched this server"""
         self._group_infos: t.Dict[str, ProcessGroupInfo] = {}
         """ProcessGroup execution state information"""
+        self._step_id_lock = RLock()
+        """Lock used to atomically create new step ids"""
         self._queue_lock = RLock()
         """Lock that needs to be acquired to access internal queues"""
         self._step_id: int = 0
@@ -347,9 +345,10 @@ class DragonBackend:
             return to_allocate
 
     def _get_new_id(self) -> str:
-        step_id = create_short_id_str() + "-" + str(self._step_id)
-        self._step_id += 1
-        return step_id
+        with self._step_id_lock:
+            step_id = create_short_id_str() + "-" + str(self._step_id)
+            self._step_id += 1
+            return step_id
 
     @staticmethod
     def _create_redirect_workers(
@@ -406,7 +405,7 @@ class DragonBackend:
                     proc_group = self._group_infos[step_id].process_group
                     if (
                         proc_group is not None
-                        and proc_group.status == DRG_RUNNING_STATUS
+                        and proc_group.status == DragonStatus.RUNNING
                     ):
                         try:
                             proc_group.kill()
@@ -508,6 +507,10 @@ class DragonBackend:
                             f"Could not redirect stdout and stderr for PUIDS {puids}"
                         ) from e
                     self._group_infos[step_id].redir_workers = redir_grp
+                elif puids is not None and grp_status == SmartSimStatus.STATUS_RUNNING:
+                    logger.error("Cannot redirect workers: some PUIDS are missing")
+
+
 
             if started:
                 logger.debug(f"{started=}")
@@ -533,7 +536,8 @@ class DragonBackend:
                     group_info.status = SmartSimStatus.STATUS_FAILED
                     group_info.return_codes = [-1]
                 elif group_info.status not in TERMINAL_STATUSES:
-                    if grp.status == DRG_RUNNING_STATUS:
+                    print(grp.status, str(DragonStatus.RUNNING), grp.status==str(DragonStatus.RUNNING))
+                    if grp.status == str(DragonStatus.RUNNING):
                         group_info.status = SmartSimStatus.STATUS_RUNNING
                     else:
                         puids = group_info.puids
@@ -554,7 +558,7 @@ class DragonBackend:
                             group_info.status = (
                                 SmartSimStatus.STATUS_FAILED
                                 if any(group_info.return_codes)
-                                or grp.status == DRG_ERROR_STATUS
+                                or grp.status == DragonStatus.ERROR
                                 else SmartSimStatus.STATUS_COMPLETED
                             )
 
