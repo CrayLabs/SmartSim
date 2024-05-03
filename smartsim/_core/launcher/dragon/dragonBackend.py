@@ -26,7 +26,6 @@
 import collections
 import functools
 import itertools
-import textwrap
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -192,7 +191,7 @@ class DragonBackend:
     def _proc_group_info_table_line(
         step_id: str, proc_group_info: ProcessGroupInfo
     ) -> t.List[str]:
-        table_line = [step_id, f"{str(proc_group_info.status)}"]
+        table_line = [step_id, f"{proc_group_info.status.value}"]
 
         if proc_group_info.hosts is not None:
             table_line.append(f"{','.join(proc_group_info.hosts)}")
@@ -218,6 +217,11 @@ class DragonBackend:
         """Table representation of all jobs which have been started on the server."""
         headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
         with self._queue_lock:
+            colalign = (
+                ["left", "left", "left", "center", "center"]
+                if len(self._group_infos) > 0
+                else None
+            )
             values = [
                 self._proc_group_info_table_line(step, group_info)
                 for step, group_info in self._group_infos.items()
@@ -228,7 +232,7 @@ class DragonBackend:
             headers,
             disable_numparse=True,
             tablefmt="github",
-            colalign=["left", "left", "left", "center", "center"],
+            colalign=colalign,
         )
 
     @property
@@ -243,9 +247,12 @@ class DragonBackend:
             return [host, "Free" if host in self._free_hosts else "Busy"]
 
         with self._queue_lock:
+            colalign = ["left", "center"] if len(self._hosts) > 0 else None
             values = [_host_table_line(host) for host in self._hosts]
 
-        return tabulate(values, headers, disable_numparse=True, tablefmt="github", colalign=["left", "center"])
+        return tabulate(
+            values, headers, disable_numparse=True, tablefmt="github", colalign=colalign
+        )
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
