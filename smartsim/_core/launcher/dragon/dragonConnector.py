@@ -413,13 +413,12 @@ def _dragon_cleanup(
             DragonConnector._send_req_with_socket(
                 server_socket, DragonShutdownRequest(), recv_flags=zmq.NOBLOCK
             )
-    except (zmq.error.ZMQError, zmq.Again) as e:
+    except zmq.error.ZMQError as e:
         # Can't use the logger as I/O file may be closed
-        print("Could not send shutdown request to dragon server")
-        print(f"ZMQ error: {e}", flush=True)
-
+        if not isinstance(e, zmq.Again):
+            print("Could not send shutdown request to dragon server")
+            print(f"ZMQ error: {e}", flush=True)
     finally:
-        time.sleep(5)
         print("Sending shutdown request is complete")
 
     if server_process_pid and psutil.pid_exists(server_process_pid):
