@@ -187,8 +187,6 @@ class DragonBackend:
         self._view = DragonBackendView(self)
         logger.debug(self._view.host_desc)
 
-
-
     @property
     def hosts(self) -> list[str]:
         with self._queue_lock:
@@ -230,7 +228,10 @@ class DragonBackend:
 
         :returns: Status message
         """
-        return f"Dragon server backend update\n{self._view.host_table}\n{self._view.step_table}"
+        return (
+            "Dragon server backend update\n"
+            f"{self._view.host_table}\n{self._view.step_table}"
+        )
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time

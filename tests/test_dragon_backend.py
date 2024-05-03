@@ -60,9 +60,14 @@ class GroupStateMock(MagicMock):
         return error
 
 
+class ProcessGroupMock(MagicMock):
+    puids = [121, 122]
+
+
 def get_mock_backend(monkeypatch: pytest.MonkeyPatch) -> "DragonBackend":
 
     process_mock = MagicMock(returncode=0)
+    process_group_mock = MagicMock(**{"Process.return_value": ProcessGroupMock()})
     process_module_mock = MagicMock()
     process_module_mock.Process = process_mock
     node_mock = NodeMock()
@@ -75,6 +80,7 @@ def get_mock_backend(monkeypatch: pytest.MonkeyPatch) -> "DragonBackend":
                 "native.machine.Node.return_value": node_mock,
                 "native.machine.System.return_value": system_mock,
                 "native.group_state": GroupStateMock(),
+                "native.process_group.ProcessGroup.return_value": ProcessGroupMock(),
             }
         ),
     )
@@ -89,7 +95,7 @@ def get_mock_backend(monkeypatch: pytest.MonkeyPatch) -> "DragonBackend":
         MagicMock(**{"Policy.return_value": MagicMock()}),
     )
     monkeypatch.setitem(sys.modules, "dragon.native.process", process_module_mock)
-    monkeypatch.setitem(sys.modules, "dragon.native.process_group", MagicMock())
+    monkeypatch.setitem(sys.modules, "dragon.native.process_group", process_group_mock)
 
     monkeypatch.setitem(sys.modules, "dragon.native.group_state", GroupStateMock())
     monkeypatch.setitem(
@@ -199,7 +205,7 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     step_id = run_resp.step_id
     assert dragon_backend._queued_steps[step_id] == run_req
 
-    mock_process_group = MagicMock(puids=[123,124])
+    mock_process_group = MagicMock(puids=[123, 124])
 
     dragon_backend._group_infos[step_id].process_group = mock_process_group
     dragon_backend._group_infos[step_id].puids = [123, 124]
