@@ -243,7 +243,7 @@ class DragonBackend:
         """
         headers = ["Host", "Status"]
 
-        def _host_table_line(host):
+        def _host_table_line(host: str) -> list[str]:
             return [host, "Free" if host in self._free_hosts else "Busy"]
 
         with self._queue_lock:
