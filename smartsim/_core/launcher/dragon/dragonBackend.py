@@ -168,8 +168,6 @@ class DragonBackend:
         self._heartbeat()
         self._last_update_time = self._last_beat
         """Time at which the status update was printed the last time"""
-        num_hosts = len(self._hosts)
-        host_string = str(num_hosts) + (" hosts" if num_hosts != 1 else " host")
         self._shutdown_requested = False
         """Whether the shutdown was requested to this server"""
         self._can_shutdown = False
@@ -185,74 +183,31 @@ class DragonBackend:
             else 5
         )
         """Time in seconds needed to server to complete shutdown"""
-        logger.debug(f"{host_string} available for execution: {self._hosts}")
 
-    @staticmethod
-    def _proc_group_info_table_line(
-        step_id: str, proc_group_info: ProcessGroupInfo
-    ) -> t.List[str]:
-        table_line = [step_id, f"{proc_group_info.status.value}"]
+        self._view = DragonBackendView(self)
+        logger.debug(self._view.host_desc)
 
-        if proc_group_info.hosts is not None:
-            table_line.append(f"{','.join(proc_group_info.hosts)}")
-        else:
-            table_line.append("")
 
-        if proc_group_info.return_codes is not None:
-            table_line.append(
-                f"{','.join(str(ret) for ret in proc_group_info.return_codes)}"
-            )
-        else:
-            table_line.append("")
-
-        if proc_group_info.puids is not None:
-            table_line.append(f"{len(proc_group_info.puids)}")
-        else:
-            table_line.append("")
-
-        return table_line
 
     @property
-    def step_table(self) -> str:
-        """Table representation of all jobs which have been started on the server."""
-        headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
+    def hosts(self) -> list[str]:
         with self._queue_lock:
-            colalign = (
-                ["left", "left", "left", "center", "center"]
-                if len(self._group_infos) > 0
-                else None
-            )
-            values = [
-                self._proc_group_info_table_line(step, group_info)
-                for step, group_info in self._group_infos.items()
-            ]
-
-        return tabulate(
-            values,
-            headers,
-            disable_numparse=True,
-            tablefmt="github",
-            colalign=colalign,
-        )
+            return self._hosts
 
     @property
-    def host_table(self) -> str:
-        """Table representation of current state of nodes available
-
-        in the allocation.
-        """
-        headers = ["Host", "Status"]
-
-        def _host_table_line(host: str) -> list[str]:
-            return [host, "Free" if host in self._free_hosts else "Busy"]
-
+    def allocated_hosts(self) -> dict[str, str]:
         with self._queue_lock:
-            colalign = ["left", "center"] if len(self._hosts) > 0 else None
-            values = [_host_table_line(host) for host in self._hosts]
+            return self._allocated_hosts
 
-        return tabulate(
-            values, headers, disable_numparse=True, tablefmt="github", colalign=colalign
-        )
+    @property
+    def free_hosts(self) -> t.Deque[str]:
+        with self._queue_lock:
+            return self._free_hosts
+
+    @property
+    def group_infos(self) -> dict[str, ProcessGroupInfo]:
+        with self._queue_lock:
+            return self._group_infos
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
@@ -267,14 +222,15 @@ class DragonBackend:
             """Mapping of hosts on which a step is already running to step ID"""
 
     def __str__(self) -> str:
-        return self.get_status_message()
+        return self.status_message
 
-    def get_status_message(self) -> str:
+    @property
+    def status_message(self) -> str:
         """Message with status of available nodes and history of launched jobs.
 
         :returns: Status message
         """
-        return f"Dragon server backend update\n{self.host_table}\n{self.step_table}"
+        return f"Dragon server backend update\n{self._view.host_table}\n{self._view.step_table}"
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time
@@ -678,3 +634,85 @@ class DragonBackend:
         self._can_shutdown |= request.immediate
         self._frontend_shutdown = request.frontend_shutdown
         return DragonShutdownResponse()
+
+
+class DragonBackendView:
+    def __init__(self, backend: DragonBackend):
+        self._backend = backend
+
+    @property
+    def host_desc(self) -> str:
+        hosts = self._backend.hosts
+        num_hosts = len(hosts)
+        host_string = str(num_hosts) + (" hosts" if num_hosts != 1 else " host")
+        return f"{host_string} available for execution: {hosts}"
+
+    @staticmethod
+    def _proc_group_info_table_line(
+        step_id: str, proc_group_info: ProcessGroupInfo
+    ) -> t.List[str]:
+        table_line = [step_id, f"{proc_group_info.status.value}"]
+
+        if proc_group_info.hosts is not None:
+            table_line.append(f"{','.join(proc_group_info.hosts)}")
+        else:
+            table_line.append("")
+
+        if proc_group_info.return_codes is not None:
+            table_line.append(
+                f"{','.join(str(ret) for ret in proc_group_info.return_codes)}"
+            )
+        else:
+            table_line.append("")
+
+        if proc_group_info.puids is not None:
+            table_line.append(f"{len(proc_group_info.puids)}")
+        else:
+            table_line.append("")
+
+        return table_line
+
+    @property
+    def step_table(self) -> str:
+        """Table representation of all jobs which have been started on the server."""
+        headers = ["Step", "Status", "Hosts", "Return codes", "Num procs"]
+
+        group_infos = self._backend.group_infos
+
+        colalign = (
+            ["left", "left", "left", "center", "center"]
+            if len(group_infos) > 0
+            else None
+        )
+        values = [
+            self._proc_group_info_table_line(step, group_info)
+            for step, group_info in group_infos.items()
+        ]
+
+        return tabulate(
+            values,
+            headers,
+            disable_numparse=True,
+            tablefmt="github",
+            colalign=colalign,
+        )
+
+    @property
+    def host_table(self) -> str:
+        """Table representation of current state of nodes available
+
+        in the allocation.
+        """
+        headers = ["Host", "Status"]
+        hosts = self._backend.hosts
+        free_hosts = self._backend.free_hosts
+
+        def _host_table_line(host: str) -> list[str]:
+            return [host, "Free" if host in free_hosts else "Busy"]
+
+        colalign = ["left", "center"] if len(hosts) > 0 else None
+        values = [_host_table_line(host) for host in hosts]
+
+        return tabulate(
+            values, headers, disable_numparse=True, tablefmt="github", colalign=colalign
+        )

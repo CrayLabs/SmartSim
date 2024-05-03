@@ -26,6 +26,7 @@
 
 import collections
 import sys
+import textwrap
 import time
 from unittest.mock import MagicMock
 
@@ -101,7 +102,6 @@ def get_mock_backend(monkeypatch: pytest.MonkeyPatch) -> "DragonBackend":
     from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
 
     dragon_backend = DragonBackend(pid=99999)
-    monkeypatch.setattr(dragon_backend, "_hosts", ["node1", "node2", "node3"])
     monkeypatch.setattr(
         dragon_backend, "_free_hosts", collections.deque(dragon_backend._hosts)
     )
@@ -140,7 +140,7 @@ def set_mock_group_infos(
             hosts[1:2],
             MagicMock(),
         ),
-        "c1091vz-3": ProcessGroupInfo(
+        "c101vz-3": ProcessGroupInfo(
             SmartSimStatus.STATUS_COMPLETED,
             MagicMock(),
             [125, 126],
@@ -199,14 +199,17 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     step_id = run_resp.step_id
     assert dragon_backend._queued_steps[step_id] == run_req
 
+    mock_process_group = MagicMock(puids=[123,124])
+
+    dragon_backend._group_infos[step_id].process_group = mock_process_group
     dragon_backend._group_infos[step_id].puids = [123, 124]
     dragon_backend._start_steps()
 
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend._free_hosts) == 1
-    assert dragon_backend._allocated_hosts["node1"] == step_id
-    assert dragon_backend._allocated_hosts["node2"] == step_id
+    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
+    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
     monkeypatch.setattr(
         dragon_backend._group_infos[step_id].process_group, "status", "Running"
@@ -217,8 +220,8 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dragon_backend._running_steps == [step_id]
     assert len(dragon_backend._queued_steps) == 0
     assert len(dragon_backend._free_hosts) == 1
-    assert dragon_backend._allocated_hosts["node1"] == step_id
-    assert dragon_backend._allocated_hosts["node2"] == step_id
+    assert dragon_backend._allocated_hosts[dragon_backend.hosts[0]] == step_id
+    assert dragon_backend._allocated_hosts[dragon_backend.hosts[1]] == step_id
 
     dragon_backend._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
 
@@ -283,7 +286,7 @@ def test_shutdown_request(
     monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     dragon_backend = get_mock_backend(monkeypatch)
     monkeypatch.setattr(dragon_backend, "_cooldown_period", 1)
-    _ = set_mock_group_infos(monkeypatch, dragon_backend)
+    set_mock_group_infos(monkeypatch, dragon_backend)
 
     shutdown_req = DragonShutdownRequest(
         immediate=immediate, frontend_shutdown=frontend_shutdown
@@ -353,3 +356,26 @@ def test_get_id(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert step_id.endswith("0")
     assert step_id != next(dragon_backend._step_ids)
+
+
+def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
+    dragon_backend = get_mock_backend(monkeypatch)
+    set_mock_group_infos(monkeypatch, dragon_backend)
+    hosts = dragon_backend.hosts
+
+    expected_message = textwrap.dedent(f"""\
+        Dragon server backend update
+        | Host    |  Status  |
+        |---------|----------|
+        | {hosts[0]} |   Busy   |
+        | {hosts[1]} |   Free   |
+        | {hosts[2]} |   Free   |
+        | Step     | Status       | Hosts           |  Return codes  |  Num procs  |
+        |----------|--------------|-----------------|----------------|-------------|
+        | abc123-1 | Running      | {hosts[0]}         |                |      1      |
+        | del999-2 | Cancelled    | {hosts[1]}         |       -9       |      1      |
+        | c101vz-3 | Completed    | {hosts[1]},{hosts[2]} |       0        |      2      |
+        | 0ghjk1-4 | Failed       | {hosts[2]}         |       -1       |      1      |
+        | ljace0-5 | NeverStarted |                 |                |      0      |""")
+
+    assert dragon_backend.status_message == expected_message
