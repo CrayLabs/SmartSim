@@ -1,7 +1,7 @@
 
 {%- if verbosity_level == Verbosity.INFO %}
-{%- include "preview/plain_text/clientconfigcolo_info.template" %}
+{%- include "clientconfigcolo_info.template" %}
 {% endif %}
 {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
-{%- include "preview/plain_text/clientconfigcolo_debug.template" %}
+{%- include "clientconfigcolo_debug.template" %}
 {%- endif %}

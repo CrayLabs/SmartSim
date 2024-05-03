@@ -31,14 +31,14 @@
     {%- for model in ensemble.entities %}
 
     - Model Name: {{ model.name }} -
-    {%- include 'preview/plain_text/model.template' %}
+    {%- include 'model.template' %}
         {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
         Client Configuration:
             {%- if model.run_settings.colocated_db_settings %}
-            {%- include "preview/plain_text/clientconfigcolo.template" %}
+            {%- include "clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/plain_text/clientconfig.template" %}
+            {%- include "clientconfig.template" %}
             {%- endif %}
     {%- endif %}
     {%- endfor %}
@@ -47,14 +47,14 @@
     {%- for model in ensemble.entities %}
 
     - Model Name: {{ model.name }} -
-        {%- include 'preview/plain_text/model_debug.template' %}
+        {%- include 'model_debug.template' %}
         {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
         Client Configuration:
             {%- if model.run_settings.colocated_db_settings %}
-            {%- include "preview/plain_text/clientconfigcolo.template" %}
+            {%- include "clientconfigcolo.template" %}
             {%- endif %}
             {%- if manifest.dbs %}
-            {%- include "preview/plain_text/clientconfig.template" %}
+            {%- include "clientconfig.template" %}
             {%- endif %}
         {%- endif %}
 {%- endfor %}
