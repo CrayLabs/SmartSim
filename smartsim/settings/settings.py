@@ -84,6 +84,7 @@ def create_batch_settings(
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
         "lsf": BsubBatchSettings,
+        "pals": QsubBatchSettings,
     }
 
     if launcher in ["auto", "dragon"]:
