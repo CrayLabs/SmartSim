@@ -30,6 +30,7 @@ import time
 import pytest
 
 from smartsim import Experiment
+from smartsim.settings.pbsSettings import QsubBatchSettings
 from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
@@ -40,6 +41,15 @@ if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
     pytestmark = pytest.mark.skip(
         reason="Launching orchestrators in a batch job is not supported on PBS without ALPS"
     )
+
+
+def add_batch_resources(wlmutils, batch_settings):
+    if isinstance(batch_settings, QsubBatchSettings):
+        for key, value in wlmutils.get_batch_resources().items():
+            if key == "queue":
+                batch_settings.set_queue(value)
+            else:
+                batch_settings.set_resource(key, value)
 
 
 def test_launch_orc_auto_batch(test_dir, wlmutils):
@@ -59,8 +69,9 @@ def test_launch_orc_auto_batch(test_dir, wlmutils):
     )
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, orc.batch_settings)
 
-    orc.batch_settings.set_walltime("00:02:00")
+    orc.batch_settings.set_walltime("00:05:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -95,8 +106,9 @@ def test_launch_cluster_orc_batch_single(test_dir, wlmutils):
     )
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, orc.batch_settings)
 
-    orc.batch_settings.set_walltime("00:02:00")
+    orc.batch_settings.set_walltime("00:05:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -131,8 +143,9 @@ def test_launch_cluster_orc_batch_multi(test_dir, wlmutils):
     )
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, orc.batch_settings)
 
-    orc.batch_settings.set_walltime("00:03:00")
+    orc.batch_settings.set_walltime("00:05:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -162,8 +175,9 @@ def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
     orc.set_path(test_dir)
 
     orc.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, orc.batch_settings)
 
-    orc.batch_settings.set_walltime("00:02:00")
+    orc.batch_settings.set_walltime("00:05:00")
 
     exp.start(orc, block=True)
 

@@ -196,7 +196,7 @@ class PBSLauncher(WLMLauncher):
         # Fallback: if all jobs result as NOTFOUND, it might be an issue
         # with truncated names, we resort to json format which does not truncate
         # information
-        if all(stat == "NOTFOUND" for stat in stats):
+        if all(stat is None for stat in stats):
             qstat_out_json, _ = qstat(["-f", "-F", "json"] + step_ids)
             stats = [
                 parse_qstat_jobid_json(qstat_out_json, str(step_id))
@@ -206,7 +206,7 @@ class PBSLauncher(WLMLauncher):
         # create PBSStepInfo objects to return
 
         for stat, _ in zip(stats, step_ids):
-            info = PBSStepInfo(stat, None)
+            info = PBSStepInfo(stat or "NOTFOUND", None)
             # account for case where job history is not logged by PBS
             if info.status == SmartSimStatus.STATUS_COMPLETED:
                 info.returncode = 0
