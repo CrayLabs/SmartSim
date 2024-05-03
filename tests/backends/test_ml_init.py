@@ -31,13 +31,12 @@ import pytest
 pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
 
-__author__ = "Sam Partee"
-
-
-def test_import_ss(monkeypatch):
+def test_import_ss_ml(monkeypatch):
     with tempfile.TemporaryDirectory() as empty_dir:
         # Move to an empty directory so `smartsim` dir is not in cwd
         monkeypatch.chdir(empty_dir)
 
-        # Make sure SmartSim is importable
-        import smartsim
+        # Make sure SmartSim ML modules are importable
+        import smartsim.ml
+        import smartsim.ml.tf
+        import smartsim.ml.torch
