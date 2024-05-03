@@ -128,7 +128,7 @@ the ``Experiment`` post-creation methods.
      - Retrieve Entity Status
    * - ``preview``
      - ``exp.preview(*args, ...)``
-     - Preview an experiment
+     - Preview an Entity
 
 .. _orchestrator_exp_docs:
 
@@ -332,7 +332,7 @@ Example
   *Generating*
    - the ``Orchestrator`` output directory
    - the ``Model`` output directory
-  *Preview*
+  *Previewing*
    - the ``Orchestrator`` contents
    - the ``Model`` contents
   *Starting*
@@ -360,7 +360,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 1-7
+    :lines: 1-8
 
   We also initialize a SmartSim :ref:`logger<ss_logger>`. We will use the logger to log the ``Experiment``
   summary.
@@ -375,7 +375,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 9-10
+    :lines: 10-11
 
 .. compound::
   Before invoking the factory method to create a ``Model``,
@@ -390,7 +390,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 12-13
+    :lines: 13-14
 
   After creating the ``RunSettings`` object, initialize the ``Model`` object by passing the `name`
   and `settings` to ``create_model``.
@@ -398,7 +398,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 14-15
+    :lines: 15-16
 
 Generating
 ==========
@@ -411,7 +411,7 @@ Generating
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 17-18
+    :lines: 18-19
 
   `Overwrite=True` instructs SmartSim to overwrite entity contents if files and subdirectories
   already exist within the ``Experiment`` directory.
@@ -424,18 +424,16 @@ Generating
   The ``Experiment.generate`` call places the `.err` and `.out` log files in the entity
   subdirectories within the main ``Experiment`` directory.
 
-Preview
+Previewing
 =======
 .. compound::
-  Optionally, we preview the Experiment. The ``Experiment.preview`` aggregates multiple pieces of information to give users
-  insight into what and how entities will be launched before the experiment is started. Any instance of ``Model``, ``Ensemble``,
-  or ``Orchestrator`` created by the Experiment can be passed as an argument to the preview method.
-  We preview the ``Orchestrator`` and ``Model`` entities by passing the ``Orchestrator`` and ``Model`` instances to ``exp.preview``:
+  Optionally, users can preview an ``Experiment`` entity. The ``Experiment.preview`` method displays the entity summaries during runtime
+  to offer additional insight into the launch details. Any instance of a ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
+  ``Experiment`` can be passed as an argument to the preview method. Additionally, users may specify the name of a file to write preview data to
+  via the ``output_filename`` argument, as well as the text format through the ``output_format`` argument. Users can also specify how verbose
+  the preview is via the ``verbosity_level`` argument.
 
-  .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
-    :language: python
-    :linenos:
-    :lines: 20-21
+  The following options are available when configuring preview:
 
   *  `verbosity_level="info"` instructs preview to display user-defined fields and entities.
   *  `verbosity_level="debug"` instructs preview to display user-defined field and entities and auto-generated fields.
@@ -443,7 +441,14 @@ Preview
   *  `output_format="plain_text"` sets the output format. The only accepted output format is 'plain_text'.
   *  `output_filename="test_name.txt"` specifies name of file and extension to write preview data to. If no output filename is set, the preview will be output to stdout.
 
-When executed, the preview shows the following in stdout:
+  In the example below, we preview the ``Orchestrator`` and ``Model`` entities by passing their instances to ``Experiment.preview``:
+
+  .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 21-22
+
+When executed, the preview logs the following in stdout:
 
 ::
 
@@ -496,7 +501,7 @@ Starting
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 23-24
+    :lines: 24-25
 
 Stopping
 ========
@@ -507,7 +512,7 @@ Stopping
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 26-27
+    :lines: 27-28
 
   Notice that we use the ``Experiment.summary`` function to print
   the summary of the workflow.

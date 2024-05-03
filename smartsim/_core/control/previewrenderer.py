@@ -172,7 +172,10 @@ def render(
 
 def find_available_filename(filename: str) -> str:
     """Iterate through potentially unique names until one is found that does
-    not already exist. Return an unused name variation"""
+    not already exist. Return an unused name variation
+    :param filename: The name of the file to write the preview to.
+    :type filename: str
+    """
 
     path = pathlib.Path(filename)
     candidate_path = pathlib.Path(filename)

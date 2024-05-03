@@ -1,4 +1,5 @@
 from smartsim import Experiment
+from smartsim._core.control.previewrenderer import Verbosity
 from smartsim.log import get_logger
 
 # Initialize an Experiment
@@ -18,7 +19,7 @@ model = exp.create_model("hello_world", settings)
 exp.generate(standalone_database, model, overwrite=True)
 
 # Preview the experiment
-exp.preview(standalone_database, model, verbosity_level="debug")
+exp.preview(standalone_database, model, verbosity_level=Verbosity.DEBUG)
 
 # Launch the Orchestrator then Model instance
 exp.start(standalone_database, model)
