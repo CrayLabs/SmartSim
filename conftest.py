@@ -671,11 +671,10 @@ class ColoUtils:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
 
-        port = port if port is not None else _find_free_port(test_ports)
         colo_model = exp.create_model(colo_model_name, colo_settings)
 
         if db_type in ["tcp", "deprecated"]:
-            db_args["port"] = port
+            db_args["port"] = port if port is not None else _find_free_port(test_ports)
             db_args["ifname"] = "lo"
         if db_type == "uds" and colo_model_name is not None:
             tmp_dir = tempfile.gettempdir()
