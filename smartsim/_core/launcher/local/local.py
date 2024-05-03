@@ -48,11 +48,11 @@ class LocalLauncher(Launcher):
         :return: Step object
         """
         # probably need to instead change this to exe and exe_args
-        # if not isinstance(step_settings, RunSettings):
-        #     raise TypeError(
-        #         "Local Launcher only supports entities with RunSettings, "
-        #         f"not {type(step_settings)}"
-        #     )
+        if not isinstance(entity.run_settings, RunSettings):
+            raise TypeError(
+                "Local Launcher only supports entities with RunSettings, "
+                f"not {type(entity.run_settings)}"
+            )
         return LocalStep(entity)
 
     def get_step_update(

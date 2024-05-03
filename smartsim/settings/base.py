@@ -72,8 +72,6 @@ class RunSettings(SettingsBase):
 
             rs = RunSettings("echo", "hello", "mpirun", run_args={"-np": "2"})
 
-        :param exe: executable to run
-        :param exe_args: executable arguments
         :param run_command: launch binary (e.g. "srun")
         :param run_args: arguments for run command (e.g. `-np` for `mpiexec`)
         :param env_vars: environment vars to launch job with
@@ -522,8 +520,8 @@ class RunSettings(SettingsBase):
         return formatted
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"Executable: {self.exe[0]}\n"
-        string += f"Executable Arguments: {' '.join((self.exe_args))}"
+        # string = f"Executable: {self.exe[0]}\n"
+        # string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
             string += f"\nRun Command: {self.run_command}"
         if self.run_args:

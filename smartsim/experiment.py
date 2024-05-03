@@ -418,7 +418,7 @@ class Experiment:
         self,
         name: str,
         exe: t.Optional[str] = None,
-        exe_args: t.Optional[t.List[str]] = None,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
         run_settings: t.Optional[base.RunSettings] = None,
@@ -459,6 +459,8 @@ class Experiment:
 
         :param name: name of the ``Ensemble``
         :param params: parameters to expand into ``Model`` members
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :param run_settings: describes how each ``Model`` should be executed
         :param replicas: number of replicas to create
@@ -571,6 +573,8 @@ class Experiment:
         for backward compatibility.
 
         :param name: name of the ``Model``
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param run_settings: defines how ``Model`` should be run
         :param params: ``Model`` parameters for writing into configuration files
         :param path: path to where the ``Model`` should be executed at runtime

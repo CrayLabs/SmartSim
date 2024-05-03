@@ -64,7 +64,7 @@ class Ensemble(EntityList[Model]):
         name: str,
         params: t.Dict[str, t.Any],
         exe: t.Optional[str] = None,
-        exe_args: t.Optional[t.List[str]] = None,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
@@ -78,6 +78,8 @@ class Ensemble(EntityList[Model]):
         parameters to the permutation strategy.
 
         :param name: name of the ensemble
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param params: parameters to expand into ``Model`` members
         :param params_as_args: list of params that should be used as command
             line arguments to the ``Model`` member executables and not written
@@ -120,7 +122,7 @@ class Ensemble(EntityList[Model]):
         # if a ensemble has parameters and run settings, create
         # the ensemble and assign run_settings to each member
         if self.params:
-            if self.exe:
+            if self.run_settings and self.exe:
                 param_names, params = self._read_model_parameters()
 
                 # Compute all combinations of model parameters and arguments
@@ -132,6 +134,7 @@ class Ensemble(EntityList[Model]):
                 for i, param_set in enumerate(all_model_params):
                     if not isinstance(param_set, dict):
                         raise UserStrategyError(strategy)
+                    run_settings = deepcopy(self.run_settings)
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
                         name=model_name,
@@ -139,7 +142,7 @@ class Ensemble(EntityList[Model]):
                         exe_args=self.exe_args,
                         params=param_set,
                         path=osp.join(self.path, model_name),
-                        run_settings=deepcopy(self.run_settings),
+                        run_settings=run_settings,
                         params_as_args=self.params_as_args,
                     )
                     model.enable_key_prefixing()
@@ -155,15 +158,15 @@ class Ensemble(EntityList[Model]):
                     "expand into members cannot be given run settings"
                 )
         else:
-            if self.exe:
+            if self.run_settings and self.exe:
                 if replicas:
                     for i in range(replicas):
                         model_name = "_".join((self.name, str(i)))
                         model = Model(
                             name=model_name,
+                            params={},
                             exe=self.exe,
                             exe_args=self.exe_args,
-                            params={},
                             path=osp.join(self.path, model_name),
                             run_settings=deepcopy(self.run_settings),
                         )

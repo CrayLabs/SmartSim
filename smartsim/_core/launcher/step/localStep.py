@@ -38,10 +38,7 @@ class LocalStep(Step):
     def __init__(self, entity: SmartSimEntity):
         super().__init__(entity)
         self.run_settings = entity.run_settings
-        if entity.run_settings is not None:
-            self._env = self._set_env()
-        else:
-            self._env = None
+        self._env = self._set_env()
 
     @property
     def env(self) -> t.Dict[str, str]:
@@ -50,26 +47,26 @@ class LocalStep(Step):
     @proxyable_launch_cmd
     def get_launch_cmd(self) -> t.List[str]:
         cmd = []
-        if self.entity.run_settings is not None:
-            # Add run command and args if user specified
-            # default is no run command for local job steps
-            if self.run_settings.run_command:
-                cmd.append(self.run_settings.run_command)
-                run_args = self.run_settings.format_run_args()
-                cmd.extend(run_args)
 
-            if self.run_settings.colocated_db_settings:
-                # Replace the command with the entrypoint wrapper script
-                if not (bash := shutil.which("bash")):
-                    raise RuntimeError("Unable to locate bash interpreter")
+        # Add run command and args if user specified
+        # default is no run command for local job steps
+        if self.run_settings.run_command:
+            cmd.append(self.run_settings.run_command)
+            run_args = self.run_settings.format_run_args()
+            cmd.extend(run_args)
 
-                launch_script_path = self.get_colocated_launch_script()
-                cmd.extend([bash, launch_script_path])
+        if self.run_settings.colocated_db_settings:
+            # Replace the command with the entrypoint wrapper script
+            if not (bash := shutil.which("bash")):
+                raise RuntimeError("Unable to locate bash interpreter")
 
-            container = self.run_settings.container
-            if container and isinstance(container, Singularity):
-                # pylint: disable-next=protected-access
-                cmd += container._container_cmds(self.cwd)
+            launch_script_path = self.get_colocated_launch_script()
+            cmd.extend([bash, launch_script_path])
+
+        container = self.run_settings.container
+        if container and isinstance(container, Singularity):
+            # pylint: disable-next=protected-access
+            cmd += container._container_cmds(self.cwd)
 
         # build executable
         cmd.extend(self.entity.exe)

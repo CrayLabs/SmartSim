@@ -119,8 +119,6 @@ def create_run_settings(
     :param launcher: launcher to create settings for, if set to 'auto',
                      an attempt will be made to find an available launcher on the system
     :param run_command: command to run the executable
-    :param exe: executable to run
-    :param exe_args: arguments to pass to the executable
     :param run_args: arguments to pass to the ``run_command``
     :param env_vars: environment variables to pass to the executable
     :param container: container type for workload (e.g. "singularity")

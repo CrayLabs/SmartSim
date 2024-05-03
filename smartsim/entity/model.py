@@ -54,7 +54,7 @@ class Model(SmartSimEntity):
         exe: str,
         params: t.Dict[str, str],
         run_settings: RunSettings,
-        exe_args: t.Optional[t.List[str]] = None,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
@@ -62,6 +62,8 @@ class Model(SmartSimEntity):
         """Initialize a ``Model``
 
         :param name: name of the model
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param params: model parameters for writing into configuration files or
                        to be passed as command line arguments to executable.
         :param path: path to output, error, and configuration files
@@ -72,10 +74,9 @@ class Model(SmartSimEntity):
         :param batch_settings: Launcher settings for running the individual
                                model as a batch job
         """
-        super().__init__(name, str(path))
+        super().__init__(name, str(path), run_settings)
         self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
-        self.run_settings = run_settings
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []

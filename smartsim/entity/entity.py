@@ -91,7 +91,7 @@ class TelemetryConfiguration:
 
 class SmartSimEntity:
     def __init__(
-        self, name: str, path: str
+        self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"
     ) -> None:
         """Initialize a SmartSim entity.
 
@@ -103,6 +103,7 @@ class SmartSimEntity:
         :param path: path to output, error, and configuration files
         """
         self.name = name
+        self.run_settings = run_settings
         self.path = path
 
     @property

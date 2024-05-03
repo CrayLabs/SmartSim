@@ -52,7 +52,7 @@ class Step:
         self.entity_name = entity.name
         self.cwd = entity.path
         self.managed = False
-        self.step_settings = entity.run_settings # might need to change here when the type changes!
+        self.step_settings = entity.run_settings # this might cause problems but not sure
         self.meta: t.Dict[str, str] = {}
 
     @property

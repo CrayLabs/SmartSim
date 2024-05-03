@@ -658,11 +658,11 @@ class Controller:
         :return: the job step
         """
         # get SSDB, SSIN, SSOUT and add to entity run settings
-        if isinstance(entity, Model) and entity.run_settings: # do not need to worry about this line
+        if isinstance(entity, Model):
             self._prep_entity_client_env(entity)
 
         # creating job step through the created launcher
-        step = self._launcher.create_step(entity) # for now we are testing this with local launcher
+        step = self._launcher.create_step(entity)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         step.meta["status_dir"] = str(telemetry_dir / entity.name)
@@ -675,7 +675,6 @@ class Controller:
 
         :param entity: The entity to retrieve connections from
         """
-        print("got to here")
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         address_dict = self._jobs.get_db_host_addresses()
 
@@ -727,7 +726,6 @@ class Controller:
                         "Colocated database was not configured for either TCP or UDS"
                     )
                 client_env[f"SR_DB_TYPE{db_name_colo}"] = STANDALONE
-        print(f"merp: {client_env}")
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
