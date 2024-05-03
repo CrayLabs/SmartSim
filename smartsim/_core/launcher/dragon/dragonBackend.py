@@ -223,7 +223,13 @@ class DragonBackend:
                 for step, group_info in self._group_infos.items()
             ]
 
-        return tabulate(values, headers, disable_numparse=True, tablefmt="github")
+        return tabulate(
+            values,
+            headers,
+            disable_numparse=True,
+            tablefmt="github",
+            colalign=["left", "left", "left", "center", "center"],
+        )
 
     @property
     def host_table(self) -> str:
@@ -231,14 +237,15 @@ class DragonBackend:
 
         in the allocation.
         """
-        headers = ["Host", "State"]
-        with self._queue_lock:
-            values = [
-                self._proc_group_info_table_line(step, group_info)
-                for step, group_info in self._group_infos.items()
-            ]
+        headers = ["Host", "Status"]
 
-        return tabulate(values, headers, disable_numparse=True, tablefmt="github")
+        def _host_table_line(host):
+            return [host, "Free" if host in self._free_hosts else "Busy"]
+
+        with self._queue_lock:
+            values = [_host_table_line(host) for host in self._hosts]
+
+        return tabulate(values, headers, disable_numparse=True, tablefmt="github", colalign=["left", "center"])
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
@@ -260,10 +267,7 @@ class DragonBackend:
 
         :returns: Status message
         """
-        return textwrap.dedent(f"""\
-            Dragon server backend update
-            {self.host_table}
-            {self.step_table}""")
+        return f"Dragon server backend update\n{self.host_table}\n{self.step_table}"
 
     def _heartbeat(self) -> None:
         self._last_beat = self.current_time
