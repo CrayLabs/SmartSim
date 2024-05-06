@@ -828,8 +828,8 @@ class Experiment:
 
         :param verbosity_level: verbosity level specified by user, defaults to info.
         :param output_format: Set output format. The possible accepted
-            output formats are 'plain_text'.
-            Defaults to 'plain_text'.
+            output formats are ``plain_text``.
+            Defaults to ``plain_text``.
         :param output_filename: Specify name of file and extension to write
             preview data to. If no output filename is set, the preview will be
             output to stdout. Defaults to None.
