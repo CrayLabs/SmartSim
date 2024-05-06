@@ -550,7 +550,7 @@ class DragonBackend:
                 and grp_info.process_group is None
                 and grp_info.redir_workers is None
                 for grp_info in self._group_infos.values()
-            )
+            ) and self._shutdown_requested
 
     def _should_print_status(self) -> bool:
         if self.current_time - self._last_update_time > 10:
