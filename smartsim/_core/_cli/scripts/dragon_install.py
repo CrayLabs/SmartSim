@@ -28,8 +28,7 @@ def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
     dotenv_path = config_dir() / ".env"
     dragon_vars = {"DRAGON_ROOT_DIR": str(dragon_root_dir)}
 
-    lines = [f"{k}={v}" for k, v in dragon_vars.items()]
-    lines.append("\n")
+    lines = [f"{k}={v}\n" for k, v in dragon_vars.items()]
 
     with dotenv_path.open("w") as dotenv:
         dotenv.writelines(lines)
@@ -47,7 +46,7 @@ def check_for_utility(util_name: str) -> str:
     except FileNotFoundError:
         logger.debug(f"{util_name} not available for Cray EX platform check.")
 
-    return utility or ""
+    return utility
 
 
 def _execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
