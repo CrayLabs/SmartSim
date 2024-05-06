@@ -819,23 +819,20 @@ class Experiment:
         ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
         Experiment can be passed as an argument to the preview method.
 
-        Verbosity levels:
-            - info: Display user-defined fields and entities
-            - debug: Display user-defined field and entities and auto-generated
+          Verbosity levels:
+         - info: Display user-defined fields and entities
+         - debug: Display user-defined field and entities and auto-generated
             fields.
-            - developer: Display user-defined field and entities, auto-generated
+         - developer: Display user-defined field and entities, auto-generated
             fields, and run commands.
 
         :param verbosity_level: verbosity level specified by user, defaults to info.
-        :type verbosity_level: str
         :param output_format: Set output format. The possible accepted
             output formats are 'plain_text'.
             Defaults to 'plain_text'.
-        :type output_format: str
         :param output_filename: Specify name of file and extension to write
             preview data to. If no output filename is set, the preview will be
             output to stdout. Defaults to None.
-        :type output_filename: str
         """
 
         # Retrieve any active orchestrator jobs

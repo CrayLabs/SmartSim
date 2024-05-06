@@ -98,9 +98,7 @@ def render_to_file(content: str, filename: str) -> None:
     is specified.
 
     :param content: The rendered preview.
-    :type content: str
     :param filename: The name of the file to write the preview to.
-    "type filename: str
     """
     filename = find_available_filename(filename)
 
@@ -119,13 +117,9 @@ def render(
     """
     Render the template from the supplied entities.
     :param experiment: the experiment to be previewed.
-    :type experiment: Experiment
     :param manifest: the manifest to be previewed.
-    :type manifest: Manifest
     :param verbosity_level: the verbosity level
-    :type verbosity_level: Verbosity
     :param output_format: the output format.
-    :type output_format: _OutputFormatString
     """
 
     verbosity_level = Verbosity(verbosity_level)
@@ -175,8 +169,8 @@ def render(
 def find_available_filename(filename: str) -> str:
     """Iterate through potentially unique names until one is found that does
     not already exist. Return an unused name variation
+
     :param filename: The name of the file to write the preview to.
-    :type filename: str
     """
 
     path = pathlib.Path(filename)

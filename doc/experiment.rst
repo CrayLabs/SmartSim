@@ -425,7 +425,7 @@ Generating
   subdirectories within the main ``Experiment`` directory.
 
 Previewing
-=======
+==========
 .. compound::
   Optionally, users can preview an ``Experiment`` entity. The ``Experiment.preview`` method displays the entity summaries during runtime
   to offer additional insight into the launch details. Any instance of a ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
