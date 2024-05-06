@@ -64,16 +64,22 @@ class DragonLauncher(WLMLauncher):
 
     All WLM launchers are capable of launching managed and unmanaged
     jobs. Managed jobs are queried through interaction with with WLM,
-    in this case Dragon. Unmanaged jobs are held in the TaskManager
+    in this case the Dragon server. Unmanaged jobs are held in the TaskManager
     and are managed through references to their launching process ID
-    i.e. a psutil.Popen object
+    i.e. a psutil.Popen object.
+    Batch Jobs are routed to either Slurm or PBS and their step ID
+    is stored, prefixed with the name of the scheduler, to allow
+    the Job Manager to interact with it.
     """
 
     def __init__(self) -> None:
         super().__init__()
         self._connector = DragonConnector()
+        """Connector used to start and interact with the Dragon server"""
         self._slurm_launcher = SlurmLauncher()
+        """Slurm sub-launcher, used only for batch jobs"""
         self._pbs_launcher = PBSLauncher()
+        """PBS sub-launcher, used only for batch jobs"""
 
     @property
     def is_connected(self) -> bool:
