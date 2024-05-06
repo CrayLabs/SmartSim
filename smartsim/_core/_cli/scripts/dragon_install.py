@@ -26,7 +26,13 @@ def config_dir() -> pathlib.Path:
 def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
     """Create a .env file with required environment variables for the Dragon runtime"""
     dotenv_path = config_dir() / ".env"
-    dragon_vars = {"DRAGON_ROOT_DIR": str(dragon_root_dir)}
+    dragon_vars = {
+        "DRAGON_BASE_DIR": str(dragon_root_dir),
+        "DRAGON_ROOT_DIR": str(dragon_root_dir),  # note: same as base_dir
+        "DRAGON_INCLUDE_DIR": str(dragon_root_dir / "include"),
+        "DRAGON_LIB_DIR": str(dragon_root_dir / "lib"),
+        "DRAGON_VERSION": dragon_pin(),
+    }
 
     lines = [f"{k}={v}\n" for k, v in dragon_vars.items()]
 
