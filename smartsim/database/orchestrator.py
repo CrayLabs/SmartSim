@@ -412,7 +412,6 @@ class Orchestrator(EntityList[DBNode]):
         """Get the path to the checkpoint file for this Orchestrator
 
         :return: Path to the checkpoint file if it exists, otherwise a None
-        :rtype: str or None
         """
         return osp.join(self.path, "smartsim_db.dat")
 
