@@ -101,6 +101,7 @@ class DragonLauncher(WLMLauncher):
         # but process was started by another launcher
         self._dragon_head_pid: t.Optional[int] = None
         self._authenticator: t.Optional[zmq.auth.thread.ThreadAuthenticator] = None
+        self._env_vars: t.Dict[str, str] = {}
 
         self._set_timeout(self._timeout)
 
@@ -137,6 +138,20 @@ class DragonLauncher(WLMLauncher):
         self._connect_to_dragon(path)
         if not self.is_connected:
             raise LauncherError("Could not connect to Dragon server")
+
+    def _load_persisted_env(self) -> t.Dict[str, str]:
+        """Load key-value pairs from a .env file created during dragon installation"""
+        if self._env_vars:
+            # use previously loaded env vars.
+            return self._env_vars
+
+        with open(Path(__file__).parents[2] / ".env", encoding="utf-8") as dot_env:
+            for kvp in dot_env.readlines():
+                split = kvp.split("=", maxsplit=1)
+                key, value = split[0], split[-1]
+                self._env_vars[key] = value
+
+        return self._env_vars
 
     # pylint: disable-next=too-many-statements,too-many-locals
     def _connect_to_dragon(self, path: t.Union[str, "os.PathLike[str]"]) -> None:
@@ -207,11 +222,12 @@ class DragonLauncher(WLMLauncher):
             dragon_out_file = path / "dragon_head.out"
             dragon_err_file = path / "dragon_head.err"
 
-            with open(dragon_out_file, "w", encoding="utf-8") as dragon_out, open(
-                dragon_err_file, "w", encoding="utf-8"
-            ) as dragon_err:
+            with (
+                open(dragon_out_file, "w", encoding="utf-8") as dragon_out,
+                open(dragon_err_file, "w", encoding="utf-8") as dragon_err,
+            ):
                 current_env = os.environ.copy()
-                current_env.update({"PYTHONUNBUFFERED": "1"})
+                current_env.update(self._load_persisted_env())
                 logger.debug(f"Starting Dragon environment: {' '.join(cmd)}")
 
                 # pylint: disable-next=consider-using-with

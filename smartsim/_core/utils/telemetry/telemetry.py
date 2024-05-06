@@ -172,7 +172,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         exp_dir = pathlib.Path(manifest_path).parent.parent.parent
         if self._launcher is None:
-            self.set_launcher(manifest.launcher, exp_dir)
+            self.set_launcher(manifest.launcher)
 
         if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")

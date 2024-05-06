@@ -32,11 +32,12 @@ def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
         "DRAGON_INCLUDE_DIR": str(dragon_root_dir / "include"),
         "DRAGON_LIB_DIR": str(dragon_root_dir / "lib"),
         "DRAGON_VERSION": dragon_pin(),
+        "PYTHONUNBUFFERED": "1",
     }
 
     lines = [f"{k}={v}\n" for k, v in dragon_vars.items()]
 
-    with dotenv_path.open("w") as dotenv:
+    with dotenv_path.open("w", encoding="utf-8") as dotenv:
         dotenv.writelines(lines)
 
 

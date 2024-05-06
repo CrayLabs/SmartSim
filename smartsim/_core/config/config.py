@@ -89,6 +89,7 @@ from ..utils.helpers import expand_exe_path
 #  - Default: None
 
 
+# pylint: disable-next=too-many-public-methods
 class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
