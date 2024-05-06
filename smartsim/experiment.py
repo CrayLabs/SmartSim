@@ -820,10 +820,10 @@ class Experiment:
         Experiment can be passed as an argument to the preview method.
 
         Verbosity levels:
-        - info: Display user-defined fields and entities.
-        - debug: Display user-defined field and entities and auto-generated
+         - info: Display user-defined fields and entities.
+         - debug: Display user-defined field and entities and auto-generated
             fields.
-        - developer: Display user-defined field and entities, auto-generated
+         - developer: Display user-defined field and entities, auto-generated
             fields, and run commands.
 
         :param verbosity_level: verbosity level specified by user, defaults to info.
