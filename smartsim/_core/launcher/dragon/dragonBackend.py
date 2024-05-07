@@ -545,12 +545,15 @@ class DragonBackend:
     def _update_shutdown_status(self) -> None:
         self._heartbeat()
         with self._queue_lock:
-            self._can_shutdown |= all(
-                grp_info.status in TERMINAL_STATUSES
-                and grp_info.process_group is None
-                and grp_info.redir_workers is None
-                for grp_info in self._group_infos.values()
-            ) and self._shutdown_requested
+            self._can_shutdown |= (
+                all(
+                    grp_info.status in TERMINAL_STATUSES
+                    and grp_info.process_group is None
+                    and grp_info.redir_workers is None
+                    for grp_info in self._group_infos.values()
+                )
+                and self._shutdown_requested
+            )
 
     def _should_print_status(self) -> bool:
         if self.current_time - self._last_update_time > 10:
