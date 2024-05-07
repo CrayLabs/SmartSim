@@ -140,13 +140,22 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
 
-    def set_launcher(self, launcher_type: str) -> None:
+    def set_launcher(
+        self, launcher_type: str, exp_dir: t.Union[str, "os.PathLike[str]"]
+    ) -> None:
         """Set the launcher for the experiment
-
         :param launcher_type: the name of the workload manager used by the experiment
         """
         self.init_launcher(launcher_type)
-        self.init_job_manager()
+
+        if self._launcher is None:
+            raise SmartSimError("Launcher init failed")
+
+        if isinstance(self._launcher, DragonLauncher):
+            self._launcher.connect_to_dragon(exp_dir)
+
+        self.job_manager.set_launcher(self._launcher)
+        self.job_manager.start()
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
@@ -172,7 +181,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         exp_dir = pathlib.Path(manifest_path).parent.parent.parent
         if self._launcher is None:
-            self.set_launcher(manifest.launcher)
+            self.set_launcher(manifest.launcher, exp_dir)
 
         if not self._launcher:
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
