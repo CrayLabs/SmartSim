@@ -4,13 +4,13 @@ from smartredis import Client
 def calc_svd(input_tensor):
     # svd function from TorchScript API
     # torch isn't imported since we don't need that dependency
-    # in the client code to call this function in the database.
+    # in the client code to call this function in the feature store.
     return input_tensor.svd()
 
 
-# connect a client to the database
+# connect a client to the feature store
 # no address required since this `Model` was launched through SmartSim
-# Cluster=False since colocated databases are never clustered.
+# Cluster=False since colocated feature stores are never clustered.
 client = Client(cluster=False)
 
 tensor = np.random.randint(0, 100, size=(5, 3, 2)).astype(np.float32)

@@ -30,7 +30,7 @@ from os import path as osp
 import numpy as np
 import pytest
 
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
 from smartsim.log import get_logger
@@ -171,12 +171,12 @@ def test_tf_dataloaders(test_dir, wlmutils):
     exp = Experiment(
         "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
     )
-    orc: Orchestrator = wlmutils.get_orchestrator()
-    exp.generate(orc)
-    exp.start(orc)
+    feature_store: FeatureStore = wlmutils.get_feature_store()
+    exp.generate(feature_store)
+    exp.start(feature_store)
 
     try:
-        os.environ["SSDB"] = orc.get_address()[0]
+        os.environ["SSDB"] = feature_store.get_address()[0]
         data_info = run_local_uploaders(mpi_size=2, format="tf")
 
         os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
@@ -212,7 +212,7 @@ def test_tf_dataloaders(test_dir, wlmutils):
     except Exception as e:
         raise e
     finally:
-        exp.stop(orc)
+        exp.stop(feature_store)
         os.environ.pop("SSDB", "")
         os.environ.pop("SSKEYIN", "")
         os.environ.pop("SSKEYOUT", "")
@@ -238,13 +238,13 @@ def test_torch_dataloaders(fileutils, test_dir, wlmutils):
     exp = Experiment(
         "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
     )
-    orc: Orchestrator = wlmutils.get_orchestrator()
+    feature_store: FeatureStore = wlmutils.get_feature_store()
     config_dir = fileutils.get_test_dir_path("ml")
-    exp.generate(orc)
-    exp.start(orc)
+    exp.generate(feature_store)
+    exp.start(feature_store)
 
     try:
-        os.environ["SSDB"] = orc.get_address()[0]
+        os.environ["SSDB"] = feature_store.get_address()[0]
         data_info = run_local_uploaders(mpi_size=2)
 
         os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
@@ -294,7 +294,7 @@ def test_torch_dataloaders(fileutils, test_dir, wlmutils):
     except Exception as e:
         raise e
     finally:
-        exp.stop(orc)
+        exp.stop(feature_store)
         os.environ.pop("SSDB", "")
         os.environ.pop("SSKEYIN", "")
         os.environ.pop("SSKEYOUT", "")
@@ -337,22 +337,22 @@ def test_wrong_dataloaders(test_dir, wlmutils):
         exp_path=test_dir,
         launcher=wlmutils.get_test_launcher(),
     )
-    orc = wlmutils.get_orchestrator()
-    exp.generate(orc)
-    exp.start(orc)
+    feature_store = wlmutils.get_feature_store()
+    exp.generate(feature_store)
+    exp.start(feature_store)
 
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
             _ = TFDataGenerator(
                 data_info_or_list_name="test_data_list",
-                address=orc.get_address()[0],
+                address=feature_store.get_address()[0],
                 cluster=False,
                 max_fetch_trials=1,
             )
         with pytest.raises(TypeError):
             _ = TFStaticDataGenerator(
                 test_data_info_repr=1,
-                address=orc.get_address()[0],
+                address=feature_store.get_address()[0],
                 cluster=False,
                 max_fetch_trials=1,
             )
@@ -361,9 +361,9 @@ def test_wrong_dataloaders(test_dir, wlmutils):
         with pytest.raises(SSInternalError):
             torch_data_gen = TorchDataGenerator(
                 data_info_or_list_name="test_data_list",
-                address=orc.get_address()[0],
+                address=feature_store.get_address()[0],
                 cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)
 
-    exp.stop(orc)
+    exp.stop(feature_store)

@@ -33,7 +33,7 @@ from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
-from smartsim.database.orchestrator import Orchestrator
+from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.model import Model
 from smartsim.settings.base import RunSettings
@@ -50,7 +50,7 @@ bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
 model = Model("test_model", params={}, path="", run_settings=rs)
 batch_model = Model(
     "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
@@ -115,7 +115,7 @@ def test_get_output_files_with_create_job_step(test_dir):
 
 @pytest.mark.parametrize(
     "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(orc, id="orchestrator")],
+    [pytest.param(ens, id="ensemble"), pytest.param(feature_store, id="featurestore")],
 )
 def test_get_output_files_with_create_batch_job_step(entity, test_dir):
     """Testing output files through _create_batch_job_step"""

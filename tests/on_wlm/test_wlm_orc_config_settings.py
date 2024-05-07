@@ -40,55 +40,55 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm_single(dbutils, db):
-    """Test all configuration file edit methods on single node WLM db"""
+def test_config_methods_on_wlm_single(fsutils, fs):
+    """Test all configuration file edit methods on single node WLM fs"""
 
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
-    configs = dbutils.get_db_configs()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
-    # ensure SmartSimError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    # ensure SmartSimError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    ss_error_configs = fsutils.get_smartsim_error_fs_configs()
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)
 
-    # ensure TypeError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    type_error_configs = dbutils.get_type_error_db_configs()
+    # ensure TypeError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    type_error_configs = fsutils.get_type_error_fs_configs()
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)
 
 
-def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
-    """Test all configuration file edit methods on an active clustered db"""
+def test_config_methods_on_wlm_cluster(fsutils, fs_cluster):
+    """Test all configuration file edit methods on an active clustered fs"""
 
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
-    configs = dbutils.get_db_configs()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db_cluster, setting)
+        config_set_method = fsutils.get_config_edit_method(fs_cluster, setting)
         config_set_method(value)
 
-    # ensure SmartSimError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    # ensure SmartSimError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    ss_error_configs = fsutils.get_smartsim_error_fs_configs()
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                db_cluster.set_db_conf(key, value)
+                fs_cluster.set_fs_conf(key, value)
 
-    # ensure TypeError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    type_error_configs = dbutils.get_type_error_db_configs()
+    # ensure TypeError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    type_error_configs = fsutils.get_type_error_fs_configs()
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                db_cluster.set_db_conf(key, value)
+                fs_cluster.set_fs_conf(key, value)

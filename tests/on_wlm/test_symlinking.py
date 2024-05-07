@@ -134,8 +134,8 @@ def test_batch_orchestrator_symlinks(test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     port = 2424
-    db = exp.create_database(
-        db_nodes=3,
+    db = exp.create_feature_store(
+        fs_nodes=3,
         port=port,
         batch=True,
         interface=wlmutils.get_test_interface(),
@@ -149,7 +149,7 @@ def test_batch_orchestrator_symlinks(test_dir, wlmutils):
     _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.out"), False)
     _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.err"), False)
 
-    for i in range(db.db_nodes):
+    for i in range(db.fs_nodes):
         _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.out"), False)
         _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.err"), False)
         _should_not_be_symlinked(

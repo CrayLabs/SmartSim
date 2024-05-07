@@ -75,9 +75,9 @@ def test_interrupt_blocked_jobs(test_dir):
 
     time.sleep(2)  # allow time for jobs to be stopped
     active_jobs = exp._control._jobs.jobs
-    active_db_jobs = exp._control._jobs.db_jobs
+    active_fs_jobs = exp._control._jobs.fs_jobs
     completed_jobs = exp._control._jobs.completed
-    assert len(active_jobs) + len(active_db_jobs) == 0
+    assert len(active_jobs) + len(active_fs_jobs) == 0
     assert len(completed_jobs) == num_jobs
 
 
@@ -120,7 +120,7 @@ def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
     time.sleep(2)  # allow time for jobs to be stopped
     for i, experiment in enumerate(experiments):
         active_jobs = experiment._control._jobs.jobs
-        active_db_jobs = experiment._control._jobs.db_jobs
+        active_fs_jobs = experiment._control._jobs.fs_jobs
         completed_jobs = experiment._control._jobs.completed
-        assert len(active_jobs) + len(active_db_jobs) == 0
+        assert len(active_jobs) + len(active_fs_jobs) == 0
         assert len(completed_jobs) == jobs_per_experiment[i]

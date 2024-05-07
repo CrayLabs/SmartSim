@@ -73,9 +73,9 @@ class _BaseMPIStep(Step):
         # add mpi settings to command
         mpi_cmd.extend(self.run_settings.format_run_args())
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
+            # for the application and feature store process now
             # mpi_cmd.extend(["--cpu-bind", "none"])
 
             # Replace the command with the entrypoint wrapper script

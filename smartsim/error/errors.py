@@ -82,8 +82,8 @@ class SSReservedKeywordError(SmartSimError):
 
 
 class SSDBIDConflictError(SmartSimError):
-    """Raised in the event that a database identifier
-    is not unique when multiple databases are created
+    """Raised in the event that a feature store identifier
+    is not unique when multiple feature stores are created
     """
 
 

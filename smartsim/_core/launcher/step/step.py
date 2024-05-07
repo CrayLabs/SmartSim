@@ -105,20 +105,20 @@ class Step:
         )
         makedirs(osp.dirname(script_path), exist_ok=True)
 
-        db_settings = {}
+        fs_settings = {}
         if isinstance(self.step_settings, RunSettings):
-            db_settings = self.step_settings.colocated_db_settings or {}
+            fs_settings = self.step_settings.colocated_fs_settings or {}
 
-        # db log file causes write contention and kills performance so by
+        # fs log file causes write contention and kills performance so by
         # default we turn off logging unless user specified debug=True
-        if db_settings.get("debug", False):
-            db_log_file = self.get_step_file(ending="-db.log")
+        if fs_settings.get("debug", False):
+            fs_log_file = self.get_step_file(ending="-fs.log")
         else:
-            db_log_file = "/dev/null"
+            fs_log_file = "/dev/null"
 
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch
-        write_colocated_launch_script(script_path, db_log_file, db_settings)
+        write_colocated_launch_script(script_path, fs_log_file, fs_settings)
         return script_path
 
     # pylint: disable=no-self-use

@@ -108,7 +108,7 @@ def simulate(steps, size):
 
 def create_dataset(idx, u_init, u_steady):
     """Create SmartRedis Dataset containing multiple NumPy arrays
-    to be stored at a single key within the database"""
+    to be stored at a single key within the feature store"""
     dataset = Dataset(f"sim_data_{idx}")
     dataset.add_tensor("u_steady", np.expand_dims(u_steady, axis=[0,-1]))
     dataset.add_tensor("u_init", np.expand_dims(u_init, axis=[0,-1]))

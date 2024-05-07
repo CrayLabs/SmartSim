@@ -33,38 +33,38 @@ import textwrap
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
-from smartsim.entity.dbnode import DBNode, LaunchedShardData
+from smartsim.database import FeatureStore
+from smartsim.entity.dbnode import FSNode, LaunchedShardData
 from smartsim.error.errors import SmartSimError
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
 
-def test_parse_db_host_error():
-    orc = Orchestrator()
-    orc.entities[0].path = "not/a/path"
-    # Fail to obtain database hostname
+def test_parse_fs_host_error():
+    feature_store = FeatureStore()
+    feature_store.entities[0].path = "not/a/path"
+    # Fail to obtain feature store hostname
     with pytest.raises(SmartSimError):
-        orc.entities[0].host
+        feature_store.entities[0].host
 
 
 def test_hosts(test_dir, wlmutils):
     exp_name = "test_hosts"
     exp = Experiment(exp_name, exp_path=test_dir)
 
-    orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
-    orc.set_path(test_dir)
-    exp.start(orc)
+    feature_store = FeatureStore(port=wlmutils.get_test_port(), interface="lo", launcher="local")
+    feature_store.set_path(test_dir)
+    exp.start(feature_store)
 
     hosts = []
     try:
-        hosts = orc.hosts
-        assert len(hosts) == orc.db_nodes == 1
+        hosts = feature_store.hosts
+        assert len(hosts) == feature_store.fs_nodes == 1
     finally:
-        # stop the database even if there is an error raised
-        exp.stop(orc)
-        orc.remove_stale_files()
+        # stop the feature store even if there is an error raised
+        exp.stop(feature_store)
+        feature_store.remove_stale_files()
 
 
 def _random_shard_info():
@@ -91,7 +91,7 @@ def test_launched_shard_info_can_be_serialized():
 
 
 @pytest.mark.parametrize("limit", [None, 1])
-def test_db_node_can_parse_launched_shard_info(limit):
+def test_fs_node_can_parse_launched_shard_info(limit):
     rand_shards = [_random_shard_info() for _ in range(3)]
     with io.StringIO(textwrap.dedent("""\
             This is some file like str
@@ -100,7 +100,7 @@ def test_db_node_can_parse_launched_shard_info(limit):
             SMARTSIM_ORC_SHARD_INFO: {}
             ^^^^^^^^^^^^^^^^^^^^^^^
             We should be able to parse the serialized
-            launched db info from this file if the line is
+            launched fs info from this file if the line is
             prefixed with this tag.
 
             Here are two more for good measure:
@@ -109,28 +109,28 @@ def test_db_node_can_parse_launched_shard_info(limit):
 
             All other lines should be ignored.
             """).format(*(json.dumps(s.to_dict()) for s in rand_shards))) as stream:
-        parsed_shards = DBNode._parse_launched_shard_info_from_iterable(stream, limit)
+        parsed_shards = FSNode._parse_launched_shard_info_from_iterable(stream, limit)
     if limit is not None:
         rand_shards = rand_shards[:limit]
     assert rand_shards == parsed_shards
 
 
 def test_set_host():
-    orc = Orchestrator()
-    orc.entities[0].set_hosts(["host"])
-    assert orc.entities[0].host == "host"
+    feature_store = FeatureStore()
+    feature_store.entities[0].set_hosts(["host"])
+    assert feature_store.entities[0].host == "host"
 
 
 @pytest.mark.parametrize("nodes, mpmd", [[3, False], [3, True], [1, False]])
-def test_db_id_and_name(mpmd, nodes, wlmutils):
+def test_fs_id_and_name(mpmd, nodes, wlmutils):
     if nodes > 1 and wlmutils.get_test_launcher() not in pytest.wlm_options:
-        pytest.skip(reason="Clustered DB can only be checked on WLMs")
-    orc = Orchestrator(
-        db_identifier="test_db",
-        db_nodes=nodes,
+        pytest.skip(reason="Clustered fs can only be checked on WLMs")
+    feature_store = FeatureStore(
+        fs_identifier="test_fs",
+        fs_nodes=nodes,
         single_cmd=mpmd,
         launcher=wlmutils.get_test_launcher(),
     )
-    for i, node in enumerate(orc.entities):
-        assert node.name == f"{orc.name}_{i}"
-        assert node.db_identifier == orc.db_identifier
+    for i, node in enumerate(feature_store.entities):
+        assert node.name == f"{feature_store.name}_{i}"
+        assert node.fs_identifier == feature_store.fs_identifier

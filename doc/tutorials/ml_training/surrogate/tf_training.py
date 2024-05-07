@@ -11,7 +11,7 @@ import numpy as np
 
 def create_dataset(idx, F):
     """Create SmartRedis Dataset containing multiple NumPy arrays
-    to be stored at a single key within the database"""
+    to be stored at a single key within the feature store"""
 
     dataset = Dataset(f"ml_data_{idx}")
     dataset.add_tensor("steady", F)

@@ -140,7 +140,7 @@ class SrunStep(Step):
 
         srun_cmd += self.run_settings.format_run_args()
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             if not bash:

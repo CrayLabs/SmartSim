@@ -5,8 +5,8 @@ logger = get_logger("Experiment Log")
 # Initialize the Experiment
 exp = Experiment("getting-started", launcher="auto")
 
-# Initialize a standalone Orchestrator
-standalone_orch = exp.create_database(db_nodes=1)
+# Initialize a standalone Feature Store
+standalone_feature_store = exp.create_feature_store(fs_nodes=1)
 
 # Initialize a RunSettings object for Ensemble
 ensemble_settings = exp.create_run_settings(exe="/path/to/executable_producer_simulation")
@@ -23,10 +23,10 @@ model_settings = exp.create_run_settings(exe="/path/to/executable_consumer_simul
 consumer_model = exp.create_model("consumer", model_settings)
 
 # Generate SmartSim entity folder tree
-exp.generate(standalone_orch, producer_ensemble, consumer_model, overwrite=True)
+exp.generate(standalone_feature_store, producer_ensemble, consumer_model, overwrite=True)
 
-# Launch Orchestrator
-exp.start(standalone_orch, summary=True)
+# Launch Feature Store
+exp.start(standalone_feature_store, summary=True)
 
 # Launch Ensemble
 exp.start(producer_ensemble, block=True, summary=True)
@@ -38,5 +38,5 @@ for model in producer_ensemble:
 # Launch consumer Model
 exp.start(consumer_model, block=True, summary=True)
 
-# Clobber Orchestrator
-exp.stop(standalone_orch)
+# Clobber Feature Store
+exp.stop(standalone_feature_store)

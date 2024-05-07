@@ -6,8 +6,8 @@ exp = Experiment("example-experiment", launcher="auto")
 # Initialize a SmartSim logger
 smartsim_logger = get_logger("logger")
 
-# Initialize an Orchestrator
-standalone_database = exp.create_database(db_nodes=3, port=6379, interface="ib0")
+# Initialize an Feature Store
+standalone_feature_store = exp.create_feature_store(fs_nodes=3, port=6379, interface="ib0")
 
 # Initialize the Model RunSettings
 settings = exp.create_run_settings("echo", exe_args="Hello World")
@@ -15,12 +15,12 @@ settings = exp.create_run_settings("echo", exe_args="Hello World")
 model = exp.create_model("hello_world", settings)
 
 # Generate the output directory
-exp.generate(standalone_database, model, overwrite=True)
+exp.generate(standalone_feature_store, model, overwrite=True)
 
-# Launch the Orchestrator then Model instance
-exp.start(standalone_database, model)
+# Launch the Feature Store then Model instance
+exp.start(standalone_feature_store, model)
 
-# Clobber the Orchestrator
-exp.stop(standalone_database)
+# Clobber the Feature Store
+exp.stop(standalone_feature_store)
 # Log the summary of the Experiment
 smartsim_logger.info(exp.summary())

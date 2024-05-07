@@ -17,7 +17,7 @@ model_settings.set_nodes(1)
 model = exp.create_model("colo_model", model_settings)
 
 # Colocate the Model
-model.colocate_db_uds()
+model.colocate_fs_uds()
 
 # Generate output files
 exp.generate(model)

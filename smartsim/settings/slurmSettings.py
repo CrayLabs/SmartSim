@@ -90,7 +90,7 @@ class SrunSettings(RunSettings):
 
         :param settings: SrunSettings instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )

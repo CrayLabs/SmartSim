@@ -29,7 +29,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.entity import Ensemble, Model
 from smartsim.status import SmartSimStatus
 
@@ -70,10 +70,10 @@ def test_exchange(fileutils, test_dir, wlmutils):
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )
 
-    # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    # create and start a feature store
+    feature_store = FeatureStore(port=wlmutils.get_test_port())
+    exp.generate(feature_store)
+    exp.start(feature_store, block=False)
 
     rs = exp.create_run_settings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
@@ -100,8 +100,8 @@ def test_exchange(fileutils, test_dir, wlmutils):
     try:
         assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
-        # stop the orchestrator
-        exp.stop(orc)
+        # stop the FeatureStore
+        exp.stop(feature_store)
 
 
 def test_consumer(fileutils, test_dir, wlmutils):
@@ -116,10 +116,10 @@ def test_consumer(fileutils, test_dir, wlmutils):
         "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
     )
 
-    # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    # create and start a feature store
+    feature_store = FeatureStore(port=wlmutils.get_test_port())
+    exp.generate(feature_store)
+    exp.start(feature_store, block=False)
 
     rs_prod = exp.create_run_settings("python", "producer.py")
     rs_consumer = exp.create_run_settings("python", "consumer.py")
@@ -149,5 +149,5 @@ def test_consumer(fileutils, test_dir, wlmutils):
     try:
         assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
     finally:
-        # stop the orchestrator
-        exp.stop(orc)
+        # stop the FeatureStore
+        exp.stop(feature_store)

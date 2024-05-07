@@ -4,7 +4,7 @@ import numpy as np
 # Initialize a SmartRedis Client
 application_client = Client(cluster=True)
 
-# Retrieve the driver script tensor from Orchestrator
+# Retrieve the driver script tensor from FeatureStore
 driver_script_tensor = application_client.get_tensor("tensor_1")
 # Log the tensor
 application_client.log_data(LLInfo, f"The multi-sharded db tensor is: {driver_script_tensor}")

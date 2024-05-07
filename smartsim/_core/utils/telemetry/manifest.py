@@ -45,8 +45,8 @@ class Run:
     """the timestamp at the time the `Experiment.start` is called"""
     models: t.List[JobEntity]
     """models started in this run"""
-    orchestrators: t.List[JobEntity]
-    """orchestrators started in this run"""
+    featurestores: t.List[JobEntity]
+    """featurestores started in this run"""
     ensembles: t.List[JobEntity]
     """ensembles started in this run"""
 
@@ -58,7 +58,7 @@ class Run:
         :param filter_fn: optional boolean filter that returns
         True for entities to include in the result
         """
-        entities = self.models + self.orchestrators + self.ensembles
+        entities = self.models + self.featurestores + self.ensembles
         if filter_fn:
             entities = [entity for entity in entities if filter_fn(entity)]
         return entities
@@ -84,7 +84,7 @@ class Run:
         parent_keys = parent_keys.intersection(entity_dict.keys())
         if parent_keys:
             container = "shards" if "shards" in parent_keys else "models"
-            child_type = "orchestrator" if container == "shards" else "model"
+            child_type = "featurestore" if container == "shards" else "model"
             for child_entity in entity_dict[container]:
                 entity = JobEntity.from_manifest(child_type, child_entity, str(exp_dir))
                 entities.append(entity)
@@ -111,7 +111,7 @@ class Run:
         """
         persisted: t.Dict[str, t.List[JobEntity]] = {
             "model": [],
-            "orchestrator": [],
+            "featurestore": [],
         }
         for item in run[entity_type]:
             entities = Run.load_entity(entity_type, item, exp_dir)
@@ -132,7 +132,7 @@ class Run:
         # create an output mapping to hold the deserialized entities
         run_entities: t.Dict[str, t.List[JobEntity]] = {
             "model": [],
-            "orchestrator": [],
+            "featurestore": [],
             "ensemble": [],
         }
 
@@ -152,7 +152,7 @@ class Run:
         loaded_run = Run(
             raw_run["timestamp"],
             run_entities["model"],
-            run_entities["orchestrator"],
+            run_entities["featurestore"],
             run_entities["ensemble"],
         )
         return loaded_run

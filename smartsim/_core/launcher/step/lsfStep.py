@@ -170,9 +170,9 @@ class JsrunStep(Step):
 
         jsrun_cmd.extend(self.run_settings.format_run_args())
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
+            # for the application and feature store process now
             jsrun_cmd.extend(["--bind", "none"])
 
             # Replace the command with the entrypoint wrapper script

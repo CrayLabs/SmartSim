@@ -171,12 +171,12 @@ async def test_dbmemcollector_collect(
 async def test_dbmemcollector_integration(
     mock_entity: MockCollectorEntityFunc,
     mock_sink: MockSink,
-    local_db: smartsim.experiment.Orchestrator,
+    local_fs: smartsim.experiment.FeatureStore,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Integration test with a real orchestrator instance to ensure
+    """Integration test with a real feature store instance to ensure
     output data matches expectations and proper db client API uage"""
-    entity = mock_entity(port=local_db.ports[0], telemetry_on=True)
+    entity = mock_entity(port=local_fs.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBMemoryCollector(entity, sink)
@@ -268,12 +268,12 @@ async def test_dbconn_count_collector_collect(
 async def test_dbconncollector_integration(
     mock_entity: MockCollectorEntityFunc,
     mock_sink: MockSink,
-    local_db: smartsim.experiment.Orchestrator,
+    local_fs: smartsim.experiment.FeatureStore,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Integration test with a real orchestrator instance to ensure
+    """Integration test with a real feature store instance to ensure
     output data matches expectations and proper db client API uage"""
-    entity = mock_entity(port=local_db.ports[0], telemetry_on=True)
+    entity = mock_entity(port=local_fs.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBConnectionCollector(entity, sink)

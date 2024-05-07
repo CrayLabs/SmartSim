@@ -32,7 +32,7 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
 from smartsim.status import SmartSimStatus
@@ -155,10 +155,10 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )
 
-    # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    # create and start a feature store
+    feature_store = FeatureStore(port=wlmutils.get_test_port())
+    exp.generate(feature_store)
+    exp.start(feature_store, block=False)
 
     container = Singularity(containerURI)
 
@@ -187,10 +187,10 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
     if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False  # client ensemble failed
 
-    # stop the orchestrator
-    exp.stop(orc)
+    # stop the FeatureStore
+    exp.stop(feature_store)
 
     print(exp.summary())

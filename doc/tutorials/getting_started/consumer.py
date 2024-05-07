@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description="SmartRedis ensemble consumer proce
 parser.add_argument("--redis-port")
 args = parser.parse_args()
 
-# get model and set into database
+# get model and set into feature store
 address = "127.0.0.1:" + str(args.redis_port)
 os.environ["SSDB"] = address
 c = Client(None, logger_name="SmartSim")
@@ -21,5 +21,5 @@ data_sources.sort()
 for key in data_sources:
     c.set_data_source(key)
     input_exists = c.poll_tensor("product", 100, 100)
-    db_tensor = c.get_tensor("product")
-    print(f"Tensor for {key} is:", db_tensor)
+    fs_tensor = c.get_tensor("product")
+    print(f"Tensor for {key} is:", fs_tensor)

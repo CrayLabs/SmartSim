@@ -23,7 +23,7 @@ def finite_volume_simulation(steps=4000, x_res=400, y_res=100,
     for i in idxs:
         F[:,:,i] *= rho0 / rho
 
-    # save cylinder location to database
+    # save cylinder location to feature store
     cylinder = (X - x_res/4)**2 + (Y - y_res/2)**2 < (y_res/4)**2 # bool array
     client.put_tensor("cylinder", cylinder.astype(np.int8))
 
@@ -59,7 +59,7 @@ def finite_volume_simulation(steps=4000, x_res=400, y_res=100,
 
 def create_dataset(time_step, ux, uy):
     """Create SmartRedis Dataset containing multiple NumPy arrays
-    to be stored at a single key within the database"""
+    to be stored at a single key within the feature store"""
     dataset = Dataset(f"data_{time_step}")
     dataset.add_tensor("ux", ux)
     dataset.add_tensor("uy", uy)

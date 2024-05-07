@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 
 from smartredis import Client
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.settings import RunSettings
 
 exp = Experiment("finite_volume_simulation", launcher="local")
-db = Orchestrator(port=6780)
+db = FeatureStore(port=6780)
 
 # simulation parameters and plot settings
 fig = plt.figure(figsize=(12,6), dpi=80)
@@ -27,7 +27,7 @@ model.attach_generator_files(to_copy="fv_sim.py")
 # generate directories for output, error and results
 exp.generate(db, model, overwrite=True)
 
-# start the database and connect client to get data
+# start the feature store and connect client to get data
 exp.start(db)
 client = Client(address="127.0.0.1:6780", cluster=False)
 

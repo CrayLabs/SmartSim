@@ -32,7 +32,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
-from smartsim.database.orchestrator import Orchestrator
+from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.ensemble import Ensemble
 from smartsim.entity.model import Model
 from smartsim.settings.base import RunSettings
@@ -49,7 +49,7 @@ bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
 model = Model("test_model", params={}, path="", run_settings=rs)
 batch_model = Model(
     "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
@@ -92,7 +92,7 @@ def symlink_with_create_job_step(test_dir, entity):
     "entity",
     [
         pytest.param(ens, id="ensemble"),
-        pytest.param(orc, id="orchestrator"),
+        pytest.param(feature_store, id="featurestore"),
         pytest.param(anon_batch_model, id="model"),
     ],
 )
@@ -221,15 +221,15 @@ def test_non_batch_model_symlinks(test_dir):
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-def test_non_batch_orchestrator_symlinks(test_dir):
-    exp = Experiment("test-non-batch-orc", exp_path=test_dir)
+def test_non_batch_feature_store_symlinks(test_dir):
+    exp = Experiment("test-non-batch-feature-store", exp_path=test_dir)
 
-    db = exp.create_database(interface="lo")
+    db = exp.create_feature_store(interface="lo")
     exp.generate(db)
     exp.start(db, block=True)
     exp.stop(db)
 
-    for i in range(db.db_nodes):
+    for i in range(db.fs_nodes):
         _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.out"), False)
         _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.err"), False)
 

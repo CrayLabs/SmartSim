@@ -6,5 +6,5 @@ client = Client(cluster=False)
 
 # Create NumPy array
 array = np.array([1, 2, 3, 4])
-# Use SmartRedis Client to place tensor in standalone Orchestrator
+# Use SmartRedis Client to place tensor in standalone Feature Store
 client.put_tensor("tensor", array)

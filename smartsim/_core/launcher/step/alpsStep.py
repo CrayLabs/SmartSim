@@ -74,9 +74,9 @@ class AprunStep(Step):
         aprun_cmd.extend(self.run_settings.format_env_vars())
         aprun_cmd.extend(self.run_settings.format_run_args())
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
+            # for the application and feature store process now
             aprun_cmd.extend(["--cc", "none"])
 
             # Replace the command with the entrypoint wrapper script

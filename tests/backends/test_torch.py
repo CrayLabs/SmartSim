@@ -65,7 +65,7 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 
-    db = wlmutils.get_orchestrator(nodes=1)
+    db = wlmutils.get_feature_store(nodes=1)
     db.set_path(test_dir)
     exp.start(db)
 

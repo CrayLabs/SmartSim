@@ -54,7 +54,7 @@ class LocalStep(Step):
             run_args = self.run_settings.format_run_args()
             cmd.extend(run_args)
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # Replace the command with the entrypoint wrapper script
             if not (bash := shutil.which("bash")):
                 raise RuntimeError("Unable to locate bash interpreter")

@@ -75,7 +75,7 @@ def calc_svd(input_tensor):
 
 
 def run(device):
-    # connect a client to the database
+    # connect a client to the feature store
     client = Client(cluster=False)
 
     # test the SVD function

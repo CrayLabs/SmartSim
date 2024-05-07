@@ -71,7 +71,7 @@ def test_catch_colo_mpmd_model():
 
     # make it colocated which should raise and error
     with pytest.raises(SSUnsupportedError):
-        model.colocate_db()
+        model.colocate_fs()
 
 
 def test_attach_batch_settings_to_model():

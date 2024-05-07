@@ -231,12 +231,12 @@ def test_parse_sacct_step_id_2():
         "extern|119225.extern|\n"
         "m1-119225.0|119225.0|\n"
         "m2-119225.1|119225.1|\n"
-        "orchestrator_0-119225.2|119225.2|\n"
+        "featurestore_0-119225.2|119225.2|\n"
         "n1-119225.3|119225.3|"
     )
     step_id = "119225.2"
     parsed_step_id = slurmParser.parse_step_id_from_sacct(
-        output, "orchestrator_0-119225.2"
+        output, "featurestore_0-119225.2"
     )
     assert step_id == parsed_step_id
 

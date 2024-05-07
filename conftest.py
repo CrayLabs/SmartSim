@@ -47,7 +47,7 @@ from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.entity import Model
 from smartsim.error import SSConfigError
 from smartsim.settings import (
@@ -340,14 +340,14 @@ class WLMUtils:
         return RunSettings(exe, args)
 
     @staticmethod
-    def get_orchestrator(nodes: int = 1, batch: bool = False) -> Orchestrator:
+    def get_feature_store(nodes: int = 1, batch: bool = False) -> FeatureStore:
         if test_launcher == "pbs":
             if not shutil.which("aprun"):
                 hostlist = get_hostlist()
             else:
                 hostlist = None
-            return Orchestrator(
-                db_nodes=nodes,
+            return FeatureStore(
+                fs_nodes=nodes,
                 port=test_port,
                 batch=batch,
                 interface=test_nic,
@@ -356,8 +356,8 @@ class WLMUtils:
             )
         if test_launcher == "pals":
             hostlist = get_hostlist()
-            return Orchestrator(
-                db_nodes=nodes,
+            return FeatureStore(
+                fs_nodes=nodes,
                 port=test_port,
                 batch=batch,
                 interface=test_nic,
@@ -365,16 +365,16 @@ class WLMUtils:
                 hosts=hostlist,
             )
         if test_launcher == "slurm":
-            return Orchestrator(
-                db_nodes=nodes,
+            return FeatureStore(
+                fs_nodes=nodes,
                 port=test_port,
                 batch=batch,
                 interface=test_nic,
                 launcher=test_launcher,
             )
         if test_launcher == "lsf":
-            return Orchestrator(
-                db_nodes=nodes,
+            return FeatureStore(
+                fs_nodes=nodes,
                 port=test_port,
                 batch=batch,
                 cpus_per_shard=4,
@@ -384,7 +384,7 @@ class WLMUtils:
                 launcher=test_launcher,
             )
 
-        return Orchestrator(port=test_port, interface="lo")
+        return FeatureStore(port=test_port, interface="lo")
 
     @staticmethod
     def choose_host(rs: RunSettings) -> t.Optional[str]:
@@ -397,62 +397,62 @@ class WLMUtils:
 
 
 @pytest.fixture
-def local_db(
+def local_fs(
     request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
-) -> t.Generator[Orchestrator, None, None]:
-    """Yield fixture for startup and teardown of an local orchestrator"""
+) -> t.Generator[FeatureStore, None, None]:
+    """Yield fixture for startup and teardown of an local feature_store"""
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
-    db.set_path(test_dir)
-    exp.start(db)
+    fs = FeatureStore(port=wlmutils.get_test_port(), interface="lo")
+    fs.set_path(test_dir)
+    exp.start(fs)
 
-    yield db
+    yield fs
     # pass or fail, the teardown code below is ran after the
     # completion of a test case that uses this fixture
-    exp.stop(db)
+    exp.stop(fs)
 
 
 @pytest.fixture
-def db(
+def fs(
     request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
-) -> t.Generator[Orchestrator, None, None]:
-    """Yield fixture for startup and teardown of an orchestrator"""
+) -> t.Generator[FeatureStore, None, None]:
+    """Yield fixture for startup and teardown of an feature_store"""
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-    db = wlmutils.get_orchestrator()
-    db.set_path(test_dir)
-    exp.start(db)
+    fs = wlmutils.get_feature_store()
+    fs.set_path(test_dir)
+    exp.start(fs)
 
-    yield db
+    yield fs
     # pass or fail, the teardown code below is ran after the
     # completion of a test case that uses this fixture
-    exp.stop(db)
+    exp.stop(fs)
 
 
 @pytest.fixture
-def db_cluster(
+def fs_cluster(
     test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
-) -> t.Generator[Orchestrator, None, None]:
+) -> t.Generator[FeatureStore, None, None]:
     """
-    Yield fixture for startup and teardown of a clustered orchestrator.
+    Yield fixture for startup and teardown of a clustered feature_store.
     This should only be used in on_wlm and full_wlm tests.
     """
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-    db = wlmutils.get_orchestrator(nodes=3)
-    db.set_path(test_dir)
-    exp.start(db)
+    fs = wlmutils.get_feature_store(nodes=3)
+    fs.set_path(test_dir)
+    exp.start(fs)
 
-    yield db
+    yield fs
     # pass or fail, the teardown code below is ran after the
     # completion of a test case that uses this fixture
-    exp.stop(db)
+    exp.stop(fs)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -465,13 +465,13 @@ def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def dbutils() -> t.Type[DBUtils]:
-    return DBUtils
+def fsutils() -> t.Type[FSUtils]:
+    return FSUtils
 
 
-class DBUtils:
+class FSUtils:
     @staticmethod
-    def get_db_configs() -> t.Dict[str, t.Any]:
+    def get_fs_configs() -> t.Dict[str, t.Any]:
         config_settings = {
             "enable_checkpoints": 1,
             "set_max_memory": "3gb",
@@ -485,7 +485,7 @@ class DBUtils:
         return config_settings
 
     @staticmethod
-    def get_smartsim_error_db_configs() -> t.Dict[str, t.Any]:
+    def get_smartsim_error_fs_configs() -> t.Dict[str, t.Any]:
         bad_configs = {
             "save": [
                 "-1",  # frequency must be positive
@@ -512,7 +512,7 @@ class DBUtils:
         return bad_configs
 
     @staticmethod
-    def get_type_error_db_configs() -> t.Dict[t.Union[int, str], t.Any]:
+    def get_type_error_fs_configs() -> t.Dict[t.Union[int, str], t.Any]:
         bad_configs: t.Dict[t.Union[int, str], t.Any] = {
             "save": [2, True, ["2"]],  # frequency must be specified as a string
             "maxmemory": [99, True, ["99"]],  # memory form must be a string
@@ -533,15 +533,15 @@ class DBUtils:
 
     @staticmethod
     def get_config_edit_method(
-        db: Orchestrator, config_setting: str
+        fs: FeatureStore, config_setting: str
     ) -> t.Optional[t.Callable[..., None]]:
-        """Get a db configuration file edit method from a str"""
+        """Get a fs configuration file edit method from a str"""
         config_edit_methods: t.Dict[str, t.Callable[..., None]] = {
-            "enable_checkpoints": db.enable_checkpoints,
-            "set_max_memory": db.set_max_memory,
-            "set_eviction_strategy": db.set_eviction_strategy,
-            "set_max_clients": db.set_max_clients,
-            "set_max_message_size": db.set_max_message_size,
+            "enable_checkpoints": fs.enable_checkpoints,
+            "set_max_memory": fs.set_max_memory,
+            "set_eviction_strategy": fs.set_eviction_strategy,
+            "set_max_clients": fs.set_max_clients,
+            "set_max_message_size": fs.set_max_message_size,
         }
         return config_edit_methods.get(config_setting, None)
 
@@ -647,21 +647,21 @@ class ColoUtils:
     @staticmethod
     def setup_test_colo(
         fileutils: t.Type[FileUtils],
-        db_type: str,
+        fs_type: str,
         exp: Experiment,
         application_file: str,
-        db_args: t.Dict[str, t.Any],
+        fs_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[RunSettings] = None,
         colo_model_name: str = "colocated_model",
         port: int = test_port,
         on_wlm: bool = False,
     ) -> Model:
-        """Setup database needed for the colo pinning tests"""
+        """Setup feature store needed for the colo pinning tests"""
 
         # get test setup
         sr_test_script = fileutils.get_test_conf_path(application_file)
 
-        # Create an app with a colo_db which uses 1 db_cpu
+        # Create an app with a colo_fs which uses 1 fs_cpu
         if colo_settings is None:
             colo_settings = exp.create_run_settings(
                 exe=sys.executable, exe_args=[sr_test_script]
@@ -671,28 +671,28 @@ class ColoUtils:
             colo_settings.set_nodes(1)
         colo_model = exp.create_model(colo_model_name, colo_settings)
 
-        if db_type in ["tcp", "deprecated"]:
-            db_args["port"] = port
-            db_args["ifname"] = "lo"
-        if db_type == "uds" and colo_model_name is not None:
+        if fs_type in ["tcp", "deprecated"]:
+            fs_args["port"] = port
+            fs_args["ifname"] = "lo"
+        if fs_type == "uds" and colo_model_name is not None:
             tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
             socket_name = f"{colo_model_name}_{socket_suffix}.socket"
-            db_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
+            fs_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
-            "tcp": colo_model.colocate_db_tcp,
-            "deprecated": colo_model.colocate_db,
-            "uds": colo_model.colocate_db_uds,
+            "tcp": colo_model.colocate_fs_tcp,
+            "deprecated": colo_model.colocate_fs,
+            "uds": colo_model.colocate_fs_uds,
         }
         with warnings.catch_warnings():
-            if db_type == "deprecated":
-                message = "`colocate_db` has been deprecated"
+            if fs_type == "deprecated":
+                message = "`colocate_fs` has been deprecated"
                 warnings.filterwarnings("ignore", message=message)
-            colocate_fun[db_type](**db_args)
-        # assert model will launch with colocated db
+            colocate_fun[fs_type](**fs_args)
+        # assert model will launch with colocated fs
         assert colo_model.colocated
-        # Check to make sure that limit_db_cpus made it into the colo settings
+        # Check to make sure that limit_fs_cpus made it into the colo settings
         return colo_model
 
 
@@ -726,7 +726,7 @@ def mock_sink() -> t.Type[MockSink]:
 
 @pytest.fixture
 def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
-    """Generates mock db connection telemetry"""
+    """Generates mock fs connection telemetry"""
 
     def _mock_con(min: int = 1, max: int = 254) -> t.Iterable[t.Any]:
         for i in range(min, max):
@@ -740,7 +740,7 @@ def mock_con() -> t.Callable[[int, int], t.Iterable[t.Any]]:
 
 @pytest.fixture
 def mock_mem() -> t.Callable[[int, int], t.Iterable[t.Any]]:
-    """Generates mock db memory usage telemetry"""
+    """Generates mock fs memory usage telemetry"""
 
     def _mock_mem(min: int = 1, max: int = 1000) -> t.Iterable[t.Any]:
         for i in range(min, max):

@@ -40,40 +40,40 @@ except AttributeError:
 pytestmark = pytest.mark.group_b
 
 
-def test_config_methods(dbutils, local_db):
-    """Test all configuration file edit methods on an active db"""
+def test_config_methods(fsutils, local_fs):
+    """Test all configuration file edit methods on an active fs"""
 
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
-    configs = dbutils.get_db_configs()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(local_db, setting)
+        config_set_method = fsutils.get_config_edit_method(local_fs, setting)
         config_set_method(value)
 
-    # ensure SmartSimError is raised when Orchestrator.set_db_conf
+    # ensure SmartSimError is raised when FeatureStore.set_fs_conf
     # is given invalid CONFIG key-value pairs
-    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    ss_error_configs = fsutils.get_smartsim_error_fs_configs()
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                local_db.set_db_conf(key, value)
+                local_fs.set_fs_conf(key, value)
 
-    # ensure TypeError is raised when Orchestrator.set_db_conf
+    # ensure TypeError is raised when FeatureStore.set_fs_conf
     # is given either a key or a value that is not a string
-    type_error_configs = dbutils.get_type_error_db_configs()
+    type_error_configs = fsutils.get_type_error_fs_configs()
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                local_db.set_db_conf(key, value)
+                local_fs.set_fs_conf(key, value)
 
 
-def test_config_methods_inactive(wlmutils, dbutils):
+def test_config_methods_inactive(wlmutils, fsutils):
     """Ensure a SmartSimError is raised when trying to
-    set configurations on an inactive database
+    set configurations on an inactive feature store
     """
-    db = wlmutils.get_orchestrator()
-    configs = dbutils.get_db_configs()
+    fs = wlmutils.get_feature_store()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         with pytest.raises(SmartSimError):
             config_set_method(value)

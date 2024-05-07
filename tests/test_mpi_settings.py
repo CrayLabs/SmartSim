@@ -173,7 +173,7 @@ def test_mpi_add_mpmd():
 
 def test_catch_colo_mpmd():
     settings = _BaseMPISettings(*default_mpi_args, **default_mpi_kwargs)
-    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
+    settings.colocated_fs_settings = {"port": 6379, "cpus": 1}
     settings_2 = _BaseMPISettings(*default_mpi_args, **default_mpi_kwargs)
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
