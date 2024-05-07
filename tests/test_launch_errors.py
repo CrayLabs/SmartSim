@@ -37,9 +37,9 @@ from smartsim.status import SmartSimStatus
 pytestmark = pytest.mark.group_a
 
 
-def test_unsupported_run_settings():
+def test_unsupported_run_settings(test_dir):
     exp_name = "test-unsupported-run-settings"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
     bad_settings = JsrunSettings("echo", "hello")
     model = exp.create_model("bad_rs", bad_settings)
 

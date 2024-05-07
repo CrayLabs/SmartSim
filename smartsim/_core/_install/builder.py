@@ -63,7 +63,6 @@ def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
-    :type exe: str
     :raises TypeError: if file is not an executable
     :raises FileNotFoundError: if executable cannot be found
     """
@@ -283,9 +282,7 @@ class DatabaseBuilder(Builder):
     ) -> None:
         """Build Redis from git
         :param git_url: url from which to retrieve Redis
-        :type git_url: str
         :param branch: branch to checkout
-        :type branch: str
         """
         # pylint: disable=too-many-locals
         database_name = "keydb" if "KeyDB" in git_url else "redis"
@@ -534,7 +531,6 @@ class RedisAIBuilder(Builder):
         """Add symbolic link to available libtensorflow in RedisAI deps.
 
         :param device: cpu or gpu
-        :type device: str
         """
         rai_deps_path = sorted(
             self.rai_build_path.glob(os.path.join("deps", f"*{device.value}*"))
@@ -591,11 +587,8 @@ class RedisAIBuilder(Builder):
         """Build RedisAI from git
 
         :param git_url: url from which to retrieve RedisAI
-        :type git_url: str
         :param branch: branch to checkout
-        :type branch: str
         :param device: cpu or gpu
-        :type device: str
         """
         # delete previous build dir (should never be there)
         if self.rai_build_path.is_dir():
@@ -705,7 +698,6 @@ class RedisAIBuilder(Builder):
     def _install_backends(self, device: Device) -> None:
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
-        :type device: str
         """
         self.rai_install_path = self.rai_build_path.joinpath(
             f"install-{device.value}"

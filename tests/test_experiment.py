@@ -24,7 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+import os.path as osp
 import pathlib
+import shutil
 import typing as t
 
 import pytest
@@ -33,6 +35,7 @@ from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils import serialize
+from smartsim.database import Orchestrator
 from smartsim.entity import Model
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
@@ -58,6 +61,20 @@ def test_model_prefix(test_dir: str) -> None:
         enable_key_prefixing=True,
     )
     assert model._key_prefixing_enabled == True
+
+
+def test_model_no_name():
+    exp = Experiment("test_model_no_name")
+    with pytest.raises(AttributeError):
+        _ = exp.create_model(name=None, run_settings=RunSettings("python"))
+
+
+def test_ensemble_no_name():
+    exp = Experiment("test_ensemble_no_name")
+    with pytest.raises(AttributeError):
+        _ = exp.create_ensemble(
+            name=None, run_settings=RunSettings("python"), replicas=2
+        )
 
 
 def test_bad_exp_path() -> None:
@@ -231,3 +248,123 @@ def test_telemetry_default(
 def test_error_on_cobalt() -> None:
     with pytest.raises(SSUnsupportedError):
         exp = Experiment("cobalt_exp", launcher="cobalt")
+
+
+def test_default_orch_path(
+    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
+) -> None:
+    """Ensure the default file structure is created for Orchestrator"""
+
+    exp_name = "default-orch-path"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
+    db = exp.create_database(
+        port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface()
+    )
+    exp.start(db)
+    orch_path = pathlib.Path(test_dir) / db.name
+    assert orch_path.exists()
+    assert db.path == str(orch_path)
+
+
+def test_default_model_path(
+    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
+) -> None:
+    """Ensure the default file structure is created for Model"""
+
+    exp_name = "default-model-path"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
+    settings = exp.create_run_settings(exe="echo", exe_args="hello")
+    model = exp.create_model(name="model_name", run_settings=settings)
+    exp.start(model)
+    model_path = pathlib.Path(test_dir) / model.name
+    assert model_path.exists()
+    assert model.path == str(model_path)
+
+
+def test_default_ensemble_path(
+    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
+) -> None:
+    """Ensure the default file structure is created for Ensemble"""
+
+    exp_name = "default-ensemble-path"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
+    settings = exp.create_run_settings(exe="echo", exe_args="hello")
+    ensemble = exp.create_ensemble(
+        name="ensemble_name", run_settings=settings, replicas=2
+    )
+    exp.start(ensemble)
+    ensemble_path = pathlib.Path(test_dir) / ensemble.name
+    assert ensemble_path.exists()
+    assert ensemble.path == str(ensemble_path)
+    for member in ensemble.models:
+        member_path = ensemble_path / member.name
+        assert member_path.exists()
+        assert member.path == str(ensemble_path / member.name)
+
+
+def test_user_orch_path(
+    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
+) -> None:
+    """Ensure a relative path is used to created Orchestrator folder"""
+
+    exp_name = "default-orch-path"
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
+    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
+    db = exp.create_database(
+        port=wlmutils.get_test_port(),
+        interface=wlmutils.get_test_interface(),
+        path="./testing_folder1234",
+    )
+    exp.start(db)
+    orch_path = pathlib.Path(osp.abspath("./testing_folder1234"))
+    assert orch_path.exists()
+    assert db.path == str(orch_path)
+    shutil.rmtree(orch_path)
+
+
+def test_default_model_with_path(
+    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
+) -> None:
+    """Ensure a relative path is used to created Model folder"""
+
+    exp_name = "default-ensemble-path"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
+    settings = exp.create_run_settings(exe="echo", exe_args="hello")
+    model = exp.create_model(
+        name="model_name", run_settings=settings, path="./testing_folder1234"
+    )
+    exp.start(model)
+    model_path = pathlib.Path(osp.abspath("./testing_folder1234"))
+    assert model_path.exists()
+    assert model.path == str(model_path)
+    shutil.rmtree(model_path)
+
+
+def test_default_ensemble_with_path(
+    monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
+) -> None:
+    """Ensure a relative path is used to created Ensemble folder"""
+
+    exp_name = "default-ensemble-path"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
+    settings = exp.create_run_settings(exe="echo", exe_args="hello")
+    ensemble = exp.create_ensemble(
+        name="ensemble_name",
+        run_settings=settings,
+        path="./testing_folder1234",
+        replicas=2,
+    )
+    exp.start(ensemble)
+    ensemble_path = pathlib.Path(osp.abspath("./testing_folder1234"))
+    assert ensemble_path.exists()
+    assert ensemble.path == str(ensemble_path)
+    for member in ensemble.models:
+        member_path = ensemble_path / member.name
+        assert member_path.exists()
+        assert member.path == str(member_path)
+    shutil.rmtree(ensemble_path)

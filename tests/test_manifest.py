@@ -61,7 +61,6 @@ ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
-model_no_name = exp.create_model(name=None, run_settings=rs)
 
 db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
 db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
@@ -74,11 +73,6 @@ def test_separate():
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.dbs[0] == orc
-
-
-def test_no_name():
-    with pytest.raises(AttributeError):
-        _ = Manifest(model_no_name)
 
 
 def test_separate_type():

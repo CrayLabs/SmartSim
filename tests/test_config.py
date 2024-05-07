@@ -61,9 +61,7 @@ def get_redisai_env(
     """Convenience method to create a set of environment variables
     that include RedisAI-specific variables
     :param rai_path: The path to the RedisAI library
-    :type: str (optional)
     :param lib_path: The path to the SMARTSIM_DEP_INSTALL_PATH
-    :type: str (optional)
     :return: A dictionary containing an updated set of environment variables
     """
     env = os.environ.copy()

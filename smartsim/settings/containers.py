@@ -39,13 +39,9 @@ class Container:
     launch a workload within a container into a single object.
 
     :param image: local or remote path to container image
-    :type image: str
     :param args: arguments to container command
-    :type args: str | list[str], optional
     :param mount: paths to mount (bind) from host machine into image.
-    :type mount: str | list[str] | dict[str, str], optional
     :param working_directory: path of the working directory within the container
-    :type working_directory: str
     """
 
     def __init__(
@@ -70,7 +66,6 @@ class Container:
         """Return modified run_command with container commands prepended.
 
         :param run_command: run command from a RunSettings class
-        :type run_command: str
         """
         raise NotImplementedError(
             "Containerized run command specification not implemented for this "
@@ -99,11 +94,8 @@ class Singularity(Container):
 
     :param image: local or remote path to container image,
         e.g. ``docker://sylabsio/lolcow``
-    :type image: str
     :param args: arguments to 'singularity exec' command
-    :type args: str | list[str], optional
     :param mount: paths to mount (bind) from host machine into image.
-    :type mount: str | list[str] | dict[str, str], optional
     """
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:

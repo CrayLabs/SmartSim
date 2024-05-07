@@ -50,7 +50,6 @@ def test_launch_orc_auto(test_dir, wlmutils):
         single_cmd=False,
         hosts=wlmutils.get_test_hostlist(),
     )
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
@@ -83,7 +82,6 @@ def test_launch_cluster_orc_single(test_dir, wlmutils):
         single_cmd=True,
         hosts=wlmutils.get_test_hostlist(),
     )
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
@@ -116,7 +114,6 @@ def test_launch_cluster_orc_multi(test_dir, wlmutils):
         single_cmd=False,
         hosts=wlmutils.get_test_hostlist(),
     )
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)

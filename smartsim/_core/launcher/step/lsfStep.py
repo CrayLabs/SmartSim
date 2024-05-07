@@ -42,11 +42,8 @@ class BsubBatchStep(Step):
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BsubBatchSettings
         """
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
@@ -57,7 +54,6 @@ class BsubBatchStep(Step):
         """Get the launch command for the batch
 
         :return: launch command for the batch
-        :rtype: list[str]
         """
         script = self._write_script()
         return [self.batch_settings.batch_cmd, script]
@@ -66,7 +62,6 @@ class BsubBatchStep(Step):
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
-        :type step: Step
         """
         launch_cmd = step.get_launch_cmd()
         self.step_cmds.append(launch_cmd)
@@ -76,7 +71,6 @@ class BsubBatchStep(Step):
         """Write the batch script
 
         :return: batch script path after writing
-        :rtype: str
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
@@ -113,11 +107,8 @@ class JsrunStep(Step):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
         """
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
@@ -155,7 +146,6 @@ class JsrunStep(Step):
         """Get the command to launch this step
 
         :return: launch command
-        :rtype: list[str]
         """
         jsrun = self.run_settings.run_command
         if not jsrun:
@@ -223,7 +213,6 @@ class JsrunStep(Step):
         """Build the executable for this step
 
         :return: executable list
-        :rtype: list[str]
         """
         exe = self.run_settings.exe
         args = self.run_settings._exe_args  # pylint: disable=protected-access

@@ -40,7 +40,7 @@ class Sink(abc.ABC):
         """Save the args passed to this method to the underlying sink
 
         :param args: variadic list of values to save
-        :type args:  Any"""
+        """
 
 
 class FileSink(Sink):
@@ -50,7 +50,7 @@ class FileSink(Sink):
         """Initialize the FileSink
 
         :param filename: path to a file backing this `Sink`
-        :type filename: str"""
+        """
         super().__init__()
         self._check_init(path)
         self._path = pathlib.Path(path)
@@ -61,7 +61,7 @@ class FileSink(Sink):
         if an invalid filename is passed
 
         :param filename: path to a file backing this `Sink`
-        :type filename: str"""
+        """
         if not filename:
             raise ValueError("No filename provided to FileSink")
 
@@ -70,7 +70,7 @@ class FileSink(Sink):
         """The path to the file this FileSink writes
 
         :return: path to a file backing this `Sink`
-        :rtype: pathlib.Path"""
+        """
         return self._path
 
     async def save(self, *args: t.Any) -> None:

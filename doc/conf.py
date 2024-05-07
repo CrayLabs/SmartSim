@@ -14,6 +14,9 @@
 
 import os
 import sys
+import logging
+import inspect
+from sphinx.util.logging import SphinxLoggerAdapter
 sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
@@ -39,6 +42,7 @@ release = version
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx_autodoc_typehints',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -55,13 +59,28 @@ extensions = [
     'sphinx_tabs.tabs',
     'sphinx_design',
     'sphinx.ext.mathjax',
+    'myst_parser'
 ]
+# sphinx_autodoc_typehints configurations
+always_use_bars_union = True
+typehints_document_rtype = True
+typehints_use_signature = True
+typehints_use_signature_return = True
+typehints_defaults = 'comma'
 
 autodoc_mock_imports = ["smartredis.smartredisPy"]
 suppress_warnings = ['autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
+linkcheck_ignore = [
+    'Redis::set_model_multigpu',
+]
 
 # The path to the MathJax.js file that Sphinx will use to render math expressions
 mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
@@ -69,7 +88,7 @@ mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints"]
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**.ipynb_checkpoints", "tutorials/ml_training/surrogate/README.md", "tutorials/online_analysis/lattice/README.md"]
 
 breathe_projects = {
         "c_client":"../smartredis/doc/c_client/xml",
@@ -144,3 +163,15 @@ def ensure_pandoc_installed(_):
 
 def setup(app):
     app.connect("builder-inited", ensure_pandoc_installed)
+
+    # Below code from https://github.com/sphinx-doc/sphinx/issues/10219
+    def _is_sphinx_logger_adapter(obj):
+        return isinstance(obj, SphinxLoggerAdapter)
+    class ForwardReferenceFilter(logging.Filter):
+        def filter(self, record):
+            # Suppress the warning related to forward references
+            return "Cannot resolve forward reference in type annotations" not in record.getMessage()
+
+    members = inspect.getmembers(app.extensions['sphinx_autodoc_typehints'].module, _is_sphinx_logger_adapter)
+    for _, adapter in members:
+        adapter.logger.addFilter(ForwardReferenceFilter())
