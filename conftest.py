@@ -168,6 +168,8 @@ def pytest_sessionfinish(
                 break
     else:
         # kill all spawned processes
+        if CONFIG.test_launcher == "dragon":
+            time.sleep(5)
         kill_all_test_spawned_processes()
 
 
