@@ -27,10 +27,8 @@ env/
 # written upon install
 smartsim/version.py
 
-smartsim/_core/bin/*-server
-smartsim/_core/bin/*-cli
-
 # created upon install
+smartsim/_core/bin
 smartsim/_core/lib
 
 # optional dev tools
