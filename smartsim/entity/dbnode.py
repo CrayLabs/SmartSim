@@ -32,7 +32,7 @@ import os.path as osp
 import time
 import typing as t
 from dataclasses import dataclass
-
+from .._core.utils.helpers import expand_exe_path
 from .._core.config import CONFIG
 from ..error import SmartSimError
 from ..log import get_logger
@@ -64,8 +64,8 @@ class DBNode(SmartSimEntity):
     ) -> None:
         """Initialize a database node within an orchestrator."""
         super().__init__(name, path, run_settings)
-        self.exe = exe
-        self.exe_args = exe_args
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 

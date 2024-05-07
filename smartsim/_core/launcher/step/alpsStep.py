@@ -33,19 +33,21 @@ from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
 from .step import Step, proxyable_launch_cmd
+from ....entity import Model, Ensemble
+from ....database import Orchestrator
 
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: AprunSettings) -> None:
+    def __init__(self, entity: t.Union[Model, Ensemble, Orchestrator], run_settings: AprunSettings) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched
         :param cwd: path to launch dir
         :param run_settings: run settings for entity
         """
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)
         self.alloc: t.Optional[str] = None
         if not run_settings.in_batch:
             self._set_alloc()
@@ -122,15 +124,15 @@ class AprunStep(Step):
         if self._get_mpmd():
             return self._make_mpmd()
 
-        exe = self.run_settings.exe
-        args = self.run_settings._exe_args  # pylint: disable=protected-access
+        exe = self.entity.exe
+        args = self.entity._exe_args  # pylint: disable=protected-access
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build Aprun (MPMD) executable"""
 
-        exe = self.run_settings.exe
-        exe_args = self.run_settings._exe_args  # pylint: disable=protected-access
+        exe = self.entity.exe
+        exe_args = self.entity._exe_args  # pylint: disable=protected-access
         cmd = exe + exe_args
 
         for mpmd in self._get_mpmd():

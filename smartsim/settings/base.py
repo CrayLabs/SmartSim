@@ -520,8 +520,7 @@ class RunSettings(SettingsBase):
         return formatted
 
     def __str__(self) -> str:  # pragma: no-cover
-        # string = f"Executable: {self.exe[0]}\n"
-        # string += f"Executable Arguments: {' '.join((self.exe_args))}"
+        string = ""
         if self.run_command:
             string += f"\nRun Command: {self.run_command}"
         if self.run_args:

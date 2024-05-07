@@ -30,13 +30,14 @@ import typing as t
 
 from ....settings import Singularity
 from ....settings.base import RunSettings
-from ....entity import SmartSimEntity, Model
+from ....entity import Model, Ensemble
+from ....database import Orchestrator
 from .step import Step, proxyable_launch_cmd
 
 
 class LocalStep(Step):
-    def __init__(self, entity: SmartSimEntity):
-        super().__init__(entity)
+    def __init__(self, entity: t.Union[Model, Ensemble, Orchestrator], run_settings: RunSettings):
+        super().__init__(entity, run_settings)
         self.run_settings = entity.run_settings
         self._env = self._set_env()
 

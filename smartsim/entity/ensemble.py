@@ -62,9 +62,9 @@ class Ensemble(EntityList[Model]):
     def __init__(
         self,
         name: str,
-        params: t.Dict[str, t.Any],
+        params: t.Optional[t.Dict[str, t.Any]] = None,
         exe: t.Optional[str] = None,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
@@ -94,7 +94,7 @@ class Ensemble(EntityList[Model]):
                              or a callable function.
         :return: ``Ensemble`` instance
         """
-        self.exe = exe
+        self.exe = exe or ""
         self.exe_args = exe_args or []
         self.params = params or {}
         self.params_as_args = params_as_args or []

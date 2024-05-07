@@ -52,9 +52,9 @@ class Model(SmartSimEntity):
         self,
         name: str,
         exe: str,
-        params: t.Dict[str, str],
         run_settings: RunSettings,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        params: t.Optional[t.Dict[str, str]] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
@@ -496,7 +496,7 @@ class Model(SmartSimEntity):
                         "Tried to configure command line parameter for Model "
                         f"{self.name}, but no RunSettings are set."
                     )
-                self.run_settings.add_exe_args(
+                self.add_exe_args(
                     cat_arg_and_value(param, self.params[param])
                 )
 

@@ -611,7 +611,7 @@ class Controller:
             self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
         else:
             logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(job_step.name, job_id, entity, is_task)
+            self._jobs.add_job(job_step, job_id, is_task)
 
     def _create_batch_job_step(
         self,
@@ -633,7 +633,7 @@ class Controller:
 
         telemetry_dir = telemetry_dir / entity_list.name
         batch_step = self._launcher.create_step(
-            entity_list.name, entity_list.path, entity_list.batch_settings
+            entity, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
         batch_step.meta["status_dir"] = str(telemetry_dir)
@@ -662,7 +662,7 @@ class Controller:
             self._prep_entity_client_env(entity)
 
         # creating job step through the created launcher
-        step = self._launcher.create_step(entity)
+        step = self._launcher.create_step(entity, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         step.meta["status_dir"] = str(telemetry_dir / entity.name)

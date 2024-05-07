@@ -42,18 +42,18 @@ class LocalLauncher(Launcher):
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def create_step(self, entity: SmartSimEntity) -> Step:
+    def create_step(self, entity: SmartSimEntity, step_settings: SettingsBase) -> Step:
         """Create a job step to launch an entity locally
 
         :return: Step object
         """
         # probably need to instead change this to exe and exe_args
-        if not isinstance(entity.run_settings, RunSettings):
+        if not isinstance(step_settings, RunSettings):
             raise TypeError(
                 "Local Launcher only supports entities with RunSettings, "
-                f"not {type(entity.run_settings)}"
+                f"not {type(step_settings)}"
             )
-        return LocalStep(entity)
+        return LocalStep(entity, step_settings)
 
     def get_step_update(
         self, step_names: t.List[str]
