@@ -32,6 +32,16 @@ from unittest.mock import MagicMock
 
 import pytest
 
+try:
+    import dragon
+except ImportError:
+    pass
+else:
+    pytest.skip(
+        reason="Using dragon as launcher, not running Dragon unit tests",
+        allow_module_level=True
+    )
+
 from smartsim._core.config import CONFIG
 from smartsim._core.schemas.dragonRequests import *
 from smartsim._core.schemas.dragonResponses import *

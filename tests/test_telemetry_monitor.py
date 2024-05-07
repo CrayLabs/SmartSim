@@ -1295,7 +1295,7 @@ async def test_wlm_completion_handling(
         ctx.setattr(SlurmLauncher, "get_step_update", get_faux_update(status_in))
 
         mani_handler = ManifestEventHandler("xyz", logger)
-        mani_handler.set_launcher("slurm")
+        mani_handler.set_launcher("slurm", test_dir)
 
         # prep a fake job to request updates for
         job_entity = JobEntity()

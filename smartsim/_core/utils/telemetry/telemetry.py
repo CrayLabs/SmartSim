@@ -151,9 +151,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if self._launcher is None:
             raise SmartSimError("Launcher init failed")
 
-        if isinstance(self._launcher, DragonLauncher):
-            self._launcher.connect_to_dragon(exp_dir)
-
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
 
