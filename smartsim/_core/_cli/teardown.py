@@ -38,20 +38,31 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--dragon",
         action="store_true",
         default=False,
-        help="Terminate Dragon environment resources if any remain after experiment completion",
+        help="Terminate Dragon environment resources if"
+        "any remain after experiment completion",
     )
+
+
+def _do_dragon_teardown() -> int:
+    """Run dragon-cleanup script to destroy all remaining dragon resources"""
+    env = os.environ.copy()
+    smart_bin = CONFIG.core_path / "bin"
+
+    # ensure dragon tools are available on the path
+    env["PATH"] = f"{smart_bin}:{env['PATH']}"
+
+    process = subprocess.run(
+        "dragon-cleanup",
+        env=env,
+        check=False,
+    )
+    return process.returncode
 
 
 def execute(
     args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     if args.dragon:
-        # ensure dragon tools are available in the path
-        dragon_path = CONFIG.core_path / ".third-party"
-        env = os.environ.copy()
-        env["PATH"] = f"{dragon_path}:{env['PATH']}"
+        return _do_dragon_teardown()
 
-        return subprocess.run(
-            "dragon-cleanup",
-            env=env,
-        )
+    return 0

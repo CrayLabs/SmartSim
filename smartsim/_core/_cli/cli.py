@@ -39,8 +39,8 @@ from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.info import execute as info_execute
 from smartsim._core._cli.plugin import plugins
 from smartsim._core._cli.site import execute as site_execute
-from smartsim._core._cli.teardown import execute as teardown_execute
 from smartsim._core._cli.teardown import configure_parser as teardown_parser
+from smartsim._core._cli.teardown import execute as teardown_execute
 from smartsim._core._cli.utils import MenuItemConfig
 from smartsim._core._cli.validate import configure_parser as validate_parser
 from smartsim._core._cli.validate import execute as validate_execute
