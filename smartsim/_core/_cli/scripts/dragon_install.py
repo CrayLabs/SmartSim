@@ -9,6 +9,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 
 from smartsim._core._cli.utils import pip
 from smartsim._core._install.builder import WebTGZ
+from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import expand_exe_path
 from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
@@ -16,16 +17,8 @@ from smartsim.log import get_logger
 logger = get_logger(__name__)
 
 
-def config_dir() -> pathlib.Path:
-    """Return a directory path where SmartSim configuration files can be written
-
-    :returns: path to the configuration directory"""
-    return pathlib.Path(__file__).parents[2] / "config"
-
-
 def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
     """Create a .env file with required environment variables for the Dragon runtime"""
-    dotenv_path = config_dir() / ".env"
     dragon_vars = {
         "DRAGON_BASE_DIR": str(dragon_root_dir),
         "DRAGON_ROOT_DIR": str(dragon_root_dir),  # note: same as base_dir
@@ -36,7 +29,10 @@ def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
 
     lines = [f"{k}={v}\n" for k, v in dragon_vars.items()]
 
-    with dotenv_path.open("w", encoding="utf-8") as dotenv:
+    if not CONFIG.dragon_dotenv.parent.exists():
+        CONFIG.dragon_dotenv.parent.mkdir(parents=True)
+
+    with CONFIG.dragon_dotenv.open("w", encoding="utf-8") as dotenv:
         dotenv.writelines(lines)
 
 

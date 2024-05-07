@@ -100,6 +100,7 @@ class Config:
         self.lib_path = Path(dependency_path, "lib").resolve()
         self.bin_path = Path(dependency_path, "bin").resolve()
         self.conf_path = Path(dependency_path, "config", "redis.conf")
+        self.conf_dir = Path(self.core_path, "config")
 
     @property
     def redisai(self) -> str:
@@ -152,6 +153,11 @@ class Config:
     @property
     def database_file_parse_interval(self) -> int:
         return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
+
+    @property
+    def dragon_dotenv(self) -> Path:
+        """Returns the path to a .env file containing dragon environment variables"""
+        return self.conf_dir / "dragon" / ".env"
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:

@@ -38,6 +38,7 @@ import smartsim
 from smartsim._core._cli.scripts.dragon_install import (
     check_for_utility,
     cleanup,
+    create_dotenv,
     install_dragon,
     install_package,
     is_crayex_platform,
@@ -372,3 +373,100 @@ def test_install_macos(monkeypatch: pytest.MonkeyPatch, extraction_dir: pathlib.
 
         result = install_dragon(extraction_dir)
         assert result == 1
+
+
+def test_create_dotenv(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Verify that attempting to create a .env file without any existing
+    file or container directory works"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+    exp_env_path = pathlib.Path(test_dir) / "dragon" / ".env"
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+
+        # ensure no .env exists before trying to create it.
+        assert not exp_env_path.exists()
+
+        create_dotenv(mock_dragon_root)
+
+        # ensure the .env is created as side-effect of create_dotenv
+        assert exp_env_path.exists()
+
+
+def test_create_dotenv_existing_dir(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Verify that attempting to create a .env file in an existing
+    target dir works"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+    exp_env_path = pathlib.Path(test_dir) / "dragon" / ".env"
+
+    # set up the parent directory that will contain the .env
+    exp_env_path.parent.mkdir(parents=True)
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+
+        # ensure no .env exists before trying to create it.
+        assert not exp_env_path.exists()
+
+        create_dotenv(mock_dragon_root)
+
+        # ensure the .env is created as side-effect of create_dotenv
+        assert exp_env_path.exists()
+
+
+def test_create_dotenv_existing_dotenv(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Verify that attempting to create a .env file when one exists works as expected"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+    exp_env_path = pathlib.Path(test_dir) / "dragon" / ".env"
+
+    # set up the parent directory that will contain the .env
+    exp_env_path.parent.mkdir(parents=True)
+
+    # write something into file to verify it is overwritten
+    var_name = "DRAGON_BASE_DIR"
+    exp_env_path.write_text(f"{var_name}=/foo/bar")
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+
+        # ensure .env exists so we can update it
+        assert exp_env_path.exists()
+
+        create_dotenv(mock_dragon_root)
+
+        # ensure the .env is created as side-effect of create_dotenv
+        assert exp_env_path.exists()
+
+        # ensure file was overwritten and env vars are not duplicated
+        dotenv_content = exp_env_path.read_text(encoding="utf-8")
+        split_content = dotenv_content.split(var_name)
+
+        # split to confirm env var only appars once
+        assert len(split_content) == 2
+
+
+def test_create_dotenv_format(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Verify that created .env files are correctly formatted"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+    exp_env_path = pathlib.Path(test_dir) / "dragon" / ".env"
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+
+        create_dotenv(mock_dragon_root)
+
+        # ensure the .env is created as side-effect of create_dotenv
+        content = exp_env_path.read_text(encoding="utf-8")
+
+        # ensure we have values written, but ignore empty lines
+        lines = [line for line in content.split("\n") if line]
+        assert lines
+
+        # ensure each line is formatted as key=value
+        for line in lines:
+            line_split = line.split("=")
+            assert len(line_split) == 2

@@ -27,12 +27,15 @@
 import logging
 import multiprocessing as mp
 import os
+import pathlib
 import sys
 import typing as t
 
 import pytest
 import zmq
 
+import smartsim._core.config
+from smartsim._core._cli.scripts.dragon_install import create_dotenv
 from smartsim._core.config.config import get_config
 from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.dragon.dragonSockets import (
@@ -52,7 +55,13 @@ is_mac = sys.platform == "darwin"
 
 
 class MockPopen:
-    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None: ...
+    calls = []
+
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
+        self.args = args
+        self.kwargs = kwargs
+
+        MockPopen.calls.append((args, kwargs))
 
     @property
     def pid(self) -> int:
@@ -177,9 +186,10 @@ def mock_dragon_env(test_dir, *args, **kwargs):
         logger.info(f"exception occurred while configuring mock handshaker: {ex}")
 
 
-def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+def test_dragon_connect_attributes(monkeypatch: pytest.MonkeyPatch, test_dir: str):
     """Test the connection to a dragon environment dynamically selects an open port
-    in the range supplied"""
+    in the range supplied and passes the correct environment"""
+    test_path = pathlib.Path(test_dir)
 
     with monkeypatch.context() as ctx:
         # make sure we don't touch "real keys" during a test
@@ -204,13 +214,29 @@ def test_dragon_connect_bind_address(monkeypatch: pytest.MonkeyPatch, test_dir: 
         # avoid starting a real zmq socket
         ctx.setattr("zmq.Context.socket", mock_socket)
         # avoid starting a real process for dragon entrypoint
-        ctx.setattr("subprocess.Popen", lambda *args, **kwargs: MockPopen())
+        ctx.setattr(
+            "subprocess.Popen", lambda *args, **kwargs: MockPopen(*args, **kwargs)
+        )
+
+        # avoid reading "real" config in test...
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+        dotenv_path = smartsim._core.config.CONFIG.dragon_dotenv
+        dotenv_path.parent.mkdir(parents=True)
+        dotenv_path.write_text("FOO=BAR\nBAZ=BOO")
 
         dragon_launcher = DragonLauncher()
         dragon_launcher.connect_to_dragon(test_dir)
 
         chosen_port = int(mock_socket.bind_address.split(":")[-1])
         assert chosen_port >= 5995
+
+        # grab the kwargs env=xxx from the mocked popen to check what was passed
+        env = MockPopen.calls[0][1].get("env", None)
+
+        # confirm the environment values were passed from .env file to dragon process
+        assert "PYTHONUNBUFFERED" in env
+        assert "FOO" in env
+        assert "BAZ" in env
 
 
 @pytest.mark.parametrize(
@@ -355,4 +381,66 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
             launcher.connect_to_dragon(test_dir)
         finally:
             launcher.cleanup()
-            ...
+
+
+def test_load_env_no_file(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Ensure an empty dragon .env file doesn't break the launcher"""
+    test_path = pathlib.Path(test_dir)
+    # mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+    # exp_env_path = pathlib.Path(test_dir) / "dragon" / ".env"
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+
+        dragon_conf = smartsim._core.config.CONFIG.dragon_dotenv
+        # verify config doesn't exist
+        assert not dragon_conf.exists()
+
+        launcher = DragonLauncher()
+
+        loaded_env = launcher._load_persisted_env()
+        assert not loaded_env
+
+
+def test_load_env_env_file_created(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Ensure a populated dragon .env file is loaded correctly by the launcher"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+        create_dotenv(mock_dragon_root)
+        dragon_conf = smartsim._core.config.CONFIG.dragon_dotenv
+
+        # verify config does exist
+        assert dragon_conf.exists()
+
+        # load config w/launcher
+        launcher = DragonLauncher()
+        loaded_env = launcher._load_persisted_env()
+        assert loaded_env
+
+        # confirm .env was parsed as expected by inspecting a key
+        assert "DRAGON_ROOT_DIR" in loaded_env
+
+
+def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Ensure repeated attempts to use dragon env don't hit file system"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+        create_dotenv(mock_dragon_root)
+
+        # load config w/launcher
+        launcher = DragonLauncher()
+        loaded_env = launcher._load_persisted_env()
+        assert loaded_env
+
+        # ensure attempting to reload would bomb
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", None)
+
+        # attempt to load and if it doesn't blow up, it used the cached copy
+        loaded_env = launcher._load_persisted_env()
+        assert loaded_env

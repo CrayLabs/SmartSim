@@ -145,14 +145,13 @@ class DragonLauncher(WLMLauncher):
             # use previously loaded env vars.
             return self._env_vars
 
-        dotenv_path = Path(__file__).parents[2] / ".env"
-        if not dotenv_path.exists():
+        if not CONFIG.dragon_dotenv.exists():
             self._env_vars = {}
             return self._env_vars
 
-        with open(dotenv_path, encoding="utf-8") as dot_env:
+        with open(CONFIG.dragon_dotenv, encoding="utf-8") as dot_env:
             for kvp in dot_env.readlines():
-                split = kvp.split("=", maxsplit=1)
+                split = kvp.strip().split("=", maxsplit=1)
                 key, value = split[0], split[-1]
                 self._env_vars[key] = value
 
