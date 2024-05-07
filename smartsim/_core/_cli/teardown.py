@@ -24,12 +24,34 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .helpers import (
-    check_for_utility,
-    colorize,
-    delete_elements,
-    execute_platform_cmd,
-    installed_redisai_backends,
-    is_crayex_platform,
-)
-from .redis import check_cluster_status, create_cluster, db_is_active
+import argparse
+import os
+import subprocess
+import typing as t
+
+from smartsim._core.config import CONFIG
+
+
+def configure_parser(parser: argparse.ArgumentParser) -> None:
+    """Builds the parser for the command"""
+    parser.add_argument(
+        "--dragon",
+        action="store_true",
+        default=False,
+        help="Terminate Dragon environment resources if any remain after experiment completion",
+    )
+
+
+def execute(
+    args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
+) -> int:
+    if args.dragon:
+        # ensure dragon tools are available in the path
+        dragon_path = CONFIG.core_path / ".third-party"
+        env = os.environ.copy()
+        env["PATH"] = f"{dragon_path}:{env['PATH']}"
+
+        return subprocess.run(
+            "dragon-cleanup",
+            env=env,
+        )

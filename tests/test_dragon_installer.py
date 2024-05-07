@@ -35,13 +35,12 @@ from github.GitReleaseAsset import GitReleaseAsset
 from github.Requester import Requester
 
 import smartsim
+import smartsim._core.utils.helpers as helpers
 from smartsim._core._cli.scripts.dragon_install import (
-    check_for_utility,
     cleanup,
     create_dotenv,
     install_dragon,
     install_package,
-    is_crayex_platform,
     retrieve_asset,
     retrieve_asset_info,
 )
@@ -267,14 +266,14 @@ def test_check_for_utility_missing(test_dir: str) -> None:
     """Ensure that looking for a missing utility doesn't raise an exception"""
     ld_config = pathlib.Path(test_dir) / "ldconfig"
 
-    utility = check_for_utility(ld_config)
+    utility = helpers.check_for_utility(ld_config)
 
     assert not utility
 
 
 def test_check_for_utility_exists() -> None:
     """Ensure that looking for an existing utility returns a non-empty path"""
-    utility = check_for_utility("ls")
+    utility = helpers.check_for_utility("ls")
     assert utility
 
 
@@ -290,12 +289,12 @@ def test_is_crayex_missing_ldconfig(monkeypatch: pytest.MonkeyPatch) -> None:
     with monkeypatch.context() as ctx:
         # mock utility existence
         ctx.setattr(
-            smartsim._core._cli.scripts.dragon_install,
+            helpers,
             "check_for_utility",
             mock_util_check,
         )
 
-        is_cray = is_crayex_platform()
+        is_cray = helpers.is_crayex_platform()
         assert not is_cray
 
 
@@ -311,12 +310,12 @@ def test_is_crayex_missing_fi_info(monkeypatch: pytest.MonkeyPatch) -> None:
     with monkeypatch.context() as ctx:
         # mock utility existence
         ctx.setattr(
-            smartsim._core._cli.scripts.dragon_install,
+            helpers,
             "check_for_utility",
             mock_util_check,
         )
 
-        is_cray = is_crayex_platform()
+        is_cray = helpers.is_crayex_platform()
         assert not is_cray
 
 
@@ -343,18 +342,18 @@ def test_is_cray_ex(
     with monkeypatch.context() as ctx:
         # make it look like the utilies always exist
         ctx.setattr(
-            smartsim._core._cli.scripts.dragon_install,
+            helpers,
             "check_for_utility",
             mock_util_check,
         )
         # mock
         ctx.setattr(
-            smartsim._core._cli.scripts.dragon_install,
-            "_execute_platform_cmd",
+            helpers,
+            "execute_platform_cmd",
             lambda x: (output, return_code),
         )
 
-        platform_result = is_crayex_platform()
+        platform_result = helpers.is_crayex_platform()
         assert is_cray == platform_result
 
 

@@ -1,6 +1,5 @@
 import os
 import pathlib
-import subprocess
 import sys
 import typing as t
 
@@ -10,7 +9,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 from smartsim._core._cli.utils import pip
 from smartsim._core._install.builder import WebTGZ
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import expand_exe_path
+from smartsim._core.utils.helpers import is_crayex_platform
 from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
 
@@ -34,81 +33,6 @@ def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
 
     with CONFIG.dragon_dotenv.open("w", encoding="utf-8") as dotenv:
         dotenv.writelines(lines)
-
-
-def check_for_utility(util_name: str) -> str:
-    """Check for existence of the provided CLI utility.
-
-    :param util_name: CLI utility to locate
-    :returns: Full path to executable if found. Otherwise, empty string"""
-    utility = ""
-
-    try:
-        utility = expand_exe_path(util_name)
-    except FileNotFoundError:
-        logger.debug(f"{util_name} not available for Cray EX platform check.")
-
-    return utility
-
-
-def _execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
-    """Execute the platform check command as a subprocess
-
-    :param cmd: the command to execute
-    :returns: True if platform is cray ex, False otherwise"""
-    process = subprocess.run(
-        cmd.split(),
-        capture_output=True,
-        check=False,
-    )
-    return process.stdout.decode("utf-8"), process.returncode
-
-
-def is_crayex_platform() -> bool:
-    """Returns True if the current platform is identified as Cray EX and
-    HSTA-aware dragon package can be installed, False otherwise.
-
-    :returns: True if current platform is Cray EX, False otherwise"""
-
-    # ldconfig -p | grep cray | grep pmi.so &&
-    # ldconfig -p | grep cray | grep pmi2.so &&
-    # fi_info | grep cxi\
-    ldconfig = check_for_utility("ldconfig")
-    fi_info = check_for_utility("fi_info")
-    if not all((ldconfig, fi_info)):
-        logger.warning(
-            "Unable to validate Cray EX platform. Installing standard version"
-        )
-        return False
-
-    locate_msg = "Unable to locate %s. Installing standard version"
-
-    ldconfig1 = f"{ldconfig} -p"
-    ldc_out1, _ = _execute_platform_cmd(ldconfig1)
-    target = "pmi.so"
-    candidates = [x for x in ldc_out1.split("\n") if "cray" in x]
-    pmi1 = any(x for x in candidates if target in x)
-    if not pmi1:
-        logger.warning(locate_msg, target)
-        return False
-
-    ldconfig2 = f"{ldconfig} -p"
-    ldc_out2, _ = _execute_platform_cmd(ldconfig2)
-    target = "pmi2.so"
-    candidates = [x for x in ldc_out2.split("\n") if "cray" in x]
-    pmi2 = any(x for x in candidates if target in x)
-    if not pmi2:
-        logger.warning(locate_msg, target)
-        return False
-
-    fi_info_out, _ = _execute_platform_cmd(fi_info)
-    target = "cxi"
-    cxi = any(x for x in fi_info_out.split("\n") if target in x)
-    if not cxi:
-        logger.warning(locate_msg, target)
-        return False
-
-    return True
 
 
 def python_version() -> str:
@@ -238,6 +162,7 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.error(f"No wheel found for package in {asset_dir}")
         return 1
 
+    # asset_dir.rglob("*/lib")
     create_dotenv(wheel_path.parent)
 
     while wheel_path is not None:
