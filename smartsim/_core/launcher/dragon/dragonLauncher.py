@@ -228,6 +228,10 @@ class DragonLauncher(WLMLauncher):
             ):
                 current_env = os.environ.copy()
                 current_env.update(self._load_persisted_env())
+                
+                env_update = {"PYTHONUNBUFFERED": "1"}
+                current_env.update(env_update)
+                
                 logger.debug(f"Starting Dragon environment: {' '.join(cmd)}")
 
                 # pylint: disable-next=consider-using-with
