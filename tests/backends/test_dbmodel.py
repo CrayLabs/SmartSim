@@ -558,7 +558,6 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
 
     # Create a third model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
@@ -757,7 +756,6 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
 
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
@@ -814,7 +812,6 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     colo_ensemble2 = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings2, replicas=2
     )
-    colo_ensemble2.set_path(test_dir)
     colo_ensemble2.add_ml_model(
         "cnn",
         "TF",

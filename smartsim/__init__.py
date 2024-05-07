@@ -30,8 +30,8 @@ import sys
 # pylint: disable-next=useless-import-alias
 from .version import __version__ as __version__
 
-if sys.version_info < (3, 8):  # pragma: no cover
-    sys.exit("Python 3.8 or greater must be used with SmartSim.")
+if sys.version_info < (3, 9):  # pragma: no cover
+    sys.exit("Python 3.9 or greater must be used with SmartSim.")
 
 # Main API module
 # pylint: disable=wrong-import-position

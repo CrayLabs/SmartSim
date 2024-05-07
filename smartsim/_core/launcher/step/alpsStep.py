@@ -42,11 +42,8 @@ class AprunStep(Step):
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: AprunSettings
         """
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
@@ -65,7 +62,6 @@ class AprunStep(Step):
         """Get the command to launch this step
 
         :return: launch command
-        :rtype: list[str]
         """
         aprun = self.run_settings.run_command
         if not aprun:
@@ -122,7 +118,6 @@ class AprunStep(Step):
         """Build the executable for this step
 
         :return: executable list
-        :rtype: list[str]
         """
         if self._get_mpmd():
             return self._make_mpmd()

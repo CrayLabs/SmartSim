@@ -105,7 +105,6 @@ def test_ensemble(fileutils, test_dir, wlmutils):
     settings.set_tasks(1)
 
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
-    ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)

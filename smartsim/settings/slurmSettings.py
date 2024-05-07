@@ -55,15 +55,10 @@ class SrunSettings(RunSettings):
         parameters will launch on that allocation.
 
         :param exe: executable to run
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: list[str] | str, optional
-        :param run_args: srun arguments without dashes, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment variables for job, defaults to None
-        :type env_vars: dict[str, str], optional
-        :param alloc: allocation ID if running on existing alloc, defaults to None
-        :type alloc: str, optional
+        :param exe_args: executable arguments
+        :param run_args: srun arguments without dashes
+        :param env_vars: environment variables for job
+        :param alloc: allocation ID if running on existing alloc
         """
         super().__init__(
             exe,
@@ -84,7 +79,6 @@ class SrunSettings(RunSettings):
         Effectively this is setting: ``srun --nodes <num_nodes>``
 
         :param nodes: number of nodes to run with
-        :type nodes: int
         """
         self.run_args["nodes"] = int(nodes)
 
@@ -95,7 +89,6 @@ class SrunSettings(RunSettings):
         Model instance
 
         :param settings: SrunSettings instance
-        :type settings: SrunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -117,7 +110,6 @@ class SrunSettings(RunSettings):
         This sets ``--nodelist``
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -134,7 +126,6 @@ class SrunSettings(RunSettings):
         This sets ``--nodefile``
 
         :param file_path: Path to the hostlist file
-        :type file_path: str
         """
         self.run_args["nodefile"] = file_path
 
@@ -142,7 +133,6 @@ class SrunSettings(RunSettings):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
-        :type host_list: list[str]
         :raises TypeError:
         """
         if isinstance(host_list, str):
@@ -159,7 +149,6 @@ class SrunSettings(RunSettings):
         This sets ``--cpus-per-task``
 
         :param num_cpus: number of cpus to use per task
-        :type num_cpus: int
         """
         self.run_args["cpus-per-task"] = int(cpus_per_task)
 
@@ -169,7 +158,6 @@ class SrunSettings(RunSettings):
         This sets ``--ntasks``
 
         :param tasks: number of tasks
-        :type tasks: int
         """
         self.run_args["ntasks"] = int(tasks)
 
@@ -179,7 +167,6 @@ class SrunSettings(RunSettings):
         This sets ``--ntasks-per-node``
 
         :param tasks_per_node: number of tasks per node
-        :type tasks_per_node: int
         """
         self.run_args["ntasks-per-node"] = int(tasks_per_node)
 
@@ -189,7 +176,6 @@ class SrunSettings(RunSettings):
         This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
 
         :param bindings: List specifing the cores to which MPI processes are bound
-        :type bindings: list[int] | int
         """
         if isinstance(bindings, int):
             bindings = [bindings]
@@ -203,7 +189,6 @@ class SrunSettings(RunSettings):
         This sets ``--mem`` in megabytes
 
         :param memory_per_node: Amount of memory per node in megabytes
-        :type memory_per_node: int
         """
         self.run_args["mem"] = f"{int(memory_per_node)}M"
 
@@ -213,7 +198,6 @@ class SrunSettings(RunSettings):
         This sets ``--verbose``
 
         :param verbose: Whether the job should be run verbosely
-        :type verbose: bool
         """
         if verbose:
             self.run_args["verbose"] = None
@@ -226,7 +210,6 @@ class SrunSettings(RunSettings):
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool
         """
         if quiet:
             self.run_args["quiet"] = None
@@ -239,7 +222,6 @@ class SrunSettings(RunSettings):
         This sets ``--bcast``
 
         :param dest_path: Path to copy an executable file
-        :type dest_path: str | None
         """
         self.run_args["bcast"] = dest_path
 
@@ -249,7 +231,6 @@ class SrunSettings(RunSettings):
         This sets ``-C``
 
         :param feature_list: node feature to launch on
-        :type feature_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(feature_list, str):
@@ -265,13 +246,9 @@ class SrunSettings(RunSettings):
         Converts time to format HH:MM:SS
 
         :param hours: number of hours to run job
-        :type hours: int
         :param minutes: number of minutes to run job
-        :type minutes: int
         :param seconds: number of seconds to run job
-        :type seconds: int
         :returns: Formatted walltime
-        :rtype: str
         """
         return fmt_walltime(hours, minutes, seconds)
 
@@ -281,7 +258,6 @@ class SrunSettings(RunSettings):
         format = "HH:MM:SS"
 
         :param walltime: wall time
-        :type walltime: str
         """
         self.run_args["time"] = str(walltime)
 
@@ -291,7 +267,6 @@ class SrunSettings(RunSettings):
         this sets `--het-group`
 
         :param het_group: list of heterogeneous groups
-        :type het_group: int or iterable of ints
         """
         het_size_env = os.getenv("SLURM_HET_SIZE")
         if het_size_env is None:
@@ -320,7 +295,6 @@ class SrunSettings(RunSettings):
         """Return a list of slurm formatted run arguments
 
         :return: list of slurm arguments for these settings
-        :rtype: list[str]
         """
         # add additional slurm arguments based on key length
         opts = []
@@ -361,7 +335,6 @@ class SrunSettings(RunSettings):
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables
-        :rtype: list[str]
         """
         self.check_env_vars()
         return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
@@ -374,7 +347,6 @@ class SrunSettings(RunSettings):
         for more information on this, see the slurm documentation for srun
 
         :returns: the formatted string of environment variables
-        :rtype: tuple[str, list[str]]
         """
         self.check_env_vars()
         exportable_env, compound_env, key_only = [], [], []
@@ -407,13 +379,9 @@ def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
     Converts time to format HH:MM:SS
 
     :param hours: number of hours to run job
-    :type hours: int
     :param minutes: number of minutes to run job
-    :type minutes: int
     :param seconds: number of seconds to run job
-    :type seconds: int
     :returns: Formatted walltime
-    :rtype: str
     """
     delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
     fmt_str = str(delta)
@@ -442,14 +410,10 @@ class SbatchSettings(BatchSettings):
         Initialization values provided (nodes, time, account)
         will overwrite the same arguments in ``batch_args`` if present
 
-        :param nodes: number of nodes, defaults to None
-        :type nodes: int, optional
+        :param nodes: number of nodes
         :param time: walltime for job, e.g. "10:00:00" for 10 hours
-        :type time: str, optional
-        :param account: account for job, defaults to None
-        :type account: str, optional
-        :param batch_args: extra batch arguments, defaults to None
-        :type batch_args: dict[str, str], optional
+        :param account: account for job
+        :param batch_args: extra batch arguments
         """
         super().__init__(
             "sbatch",
@@ -466,7 +430,6 @@ class SbatchSettings(BatchSettings):
         format = "HH:MM:SS"
 
         :param walltime: wall time
-        :type walltime: str
         """
         # TODO check for formatting here
         if walltime:
@@ -476,7 +439,6 @@ class SbatchSettings(BatchSettings):
         """Set the number of nodes for this batch job
 
         :param num_nodes: number of nodes
-        :type num_nodes: int
         """
         if num_nodes:
             self.batch_args["nodes"] = str(int(num_nodes))
@@ -485,7 +447,6 @@ class SbatchSettings(BatchSettings):
         """Set the account for this batch job
 
         :param account: account id
-        :type account: str
         """
         if account:
             self.batch_args["account"] = account
@@ -494,7 +455,6 @@ class SbatchSettings(BatchSettings):
         """Set the partition for the batch job
 
         :param partition: partition name
-        :type partition: str
         """
         self.batch_args["partition"] = str(partition)
 
@@ -504,7 +464,6 @@ class SbatchSettings(BatchSettings):
         Sets the partition for the slurm batch job
 
         :param queue: the partition to run the batch job on
-        :type queue: str
         """
         if queue:
             self.set_partition(queue)
@@ -515,7 +474,6 @@ class SbatchSettings(BatchSettings):
         This sets ``--cpus-per-task``
 
         :param num_cpus: number of cpus to use per task
-        :type num_cpus: int
         """
         self.batch_args["cpus-per-task"] = str(int(cpus_per_task))
 
@@ -523,7 +481,6 @@ class SbatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -538,7 +495,6 @@ class SbatchSettings(BatchSettings):
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Sbatch
-        :rtype: list[str]
         """
         opts = []
         # TODO add restricted here

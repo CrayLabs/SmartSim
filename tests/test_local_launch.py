@@ -61,7 +61,6 @@ def test_ensemble(fileutils, test_dir):
     settings = exp.create_run_settings("python", f"{script} --time=3")
 
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
-    ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=True, summary=True)
     statuses = exp.get_status(ensemble)

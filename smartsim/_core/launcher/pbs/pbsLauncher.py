@@ -92,10 +92,8 @@ class PBSLauncher(WLMLauncher):
         """Run a job step through PBSPro
 
         :param step: a job step instance
-        :type step: Step
         :raises LauncherError: if launch fails
         :return: job step id if job is managed
-        :rtype: str
         """
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
@@ -135,9 +133,7 @@ class PBSLauncher(WLMLauncher):
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
-        :type step_name: str
         :return: update for job due to cancel
-        :rtype: StepInfo
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
@@ -184,9 +180,7 @@ class PBSLauncher(WLMLauncher):
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
-        :type step_ids: list[str]
         :return: list of updates for managed jobs
-        :rtype: list[StepInfo]
         """
         updates: t.List[StepInfo] = []
 

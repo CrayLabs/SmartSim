@@ -267,7 +267,7 @@ class Versioner:
     """
 
     # compatible Python version
-    PYTHON_MIN = Version_("3.8.0")
+    PYTHON_MIN = Version_("3.9.0")
 
     # Versions
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.2"))

@@ -114,17 +114,11 @@ class TaskManager:
         by a workload manager
 
         :param cmd_list: command to run
-        :type cmd_list: list[str]
         :param cwd: current working directory
-        :type cwd: str
         :param env: environment to launch with
-        :type env: dict[str, str], optional. If None, calling environment is inherited
-        :param out: output file, defaults to PIPE
-        :type out: file, optional
-        :param err: error file, defaults to PIPE
-        :type err: file, optional
+        :param out: output file
+        :param err: error file
         :return: task id
-        :rtype: int
         """
         with self._lock:
             proc = execute_async_cmd(cmd_list, cwd, env=env, out=out, err=err)
@@ -150,15 +144,10 @@ class TaskManager:
         This is primarily used for batch job launches
 
         :param cmd_list: command to run
-        :type cmd_list: list[str]
         :param cwd: current working directory
-        :type cwd: str
         :param env: environment to launch with
-        :type env: dict[str, str], optional
-        :param timeout: time to wait, defaults to None
-        :type timeout: int, optional
+        :param timeout: time to wait
         :return: returncode, output, and err
-        :rtype: int, str, str
         """
         returncode, out, err = execute_cmd(cmd_list, cwd=cwd, env=env, timeout=timeout)
         if VERBOSE_TM:
@@ -169,7 +158,6 @@ class TaskManager:
         """Add existing task to be managed by the TaskManager
 
         :param task_id: task id of existing task
-        :type task_id: str
         :raises LauncherError: If task cannot be found
         """
         with self._lock:
@@ -186,7 +174,6 @@ class TaskManager:
         """Remove a task from the TaskManager
 
         :param task_id: id of the task to remove
-        :type task_id: str
         """
         with self._lock:
             if VERBOSE_TM:
@@ -210,9 +197,7 @@ class TaskManager:
         """Get the update of a task
 
         :param task_id: task id
-        :type task_id: str
         :return: status, returncode, output, error
-        :rtype: str, int, str, str
         """
         with self._lock:
             try:
@@ -251,13 +236,9 @@ class TaskManager:
         Add a task to record its future returncode, output and error
 
         :param task_id: id of the task
-        :type task_id: str
         :param returncode: returncode
-        :type returncode: int, defaults to None
-        :param out: output, defaults to None
-        :type out: str, optional
-        :param err: output, defaults to None
-        :type err: str, optional
+        :param out: output
+        :param err: output
         """
         self.task_history[task_id] = (returncode, out, err)
 
@@ -278,7 +259,6 @@ class Task:
         """Initialize a task
 
         :param process: Popen object
-        :type process: psutil.Process
         """
         self.process = process
         self.pid = str(self.process.pid)
@@ -287,7 +267,6 @@ class Task:
         """Ping the job and return the returncode if finished
 
         :return: returncode if finished otherwise None
-        :rtype: int
         """
         if self.owned and isinstance(self.process, psutil.Popen):
             poll_result = self.process.poll()
@@ -302,7 +281,6 @@ class Task:
         """Get the IO from the subprocess
 
         :return: output and error from the Popen
-        :rtype: str, str
         """
         # Process class does not implement communicate
         if not self.owned or not isinstance(self.process, psutil.Popen):
@@ -335,8 +313,7 @@ class Task:
     def terminate(self, timeout: int = 10) -> None:
         """Terminate a this process and all children.
 
-        :param timeout: time to wait for task death, defaults to 10
-        :type timeout: int, optional
+        :param timeout: time to wait for task death
         """
 
         def terminate_callback(proc: psutil.Process) -> None:

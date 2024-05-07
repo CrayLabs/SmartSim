@@ -80,18 +80,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         :param pattern: a pattern that identifies the files whose
         events are of interest by matching their name
-        :type pattern:  str
         :param ignore_patterns: a pattern that identifies the files whose
         events should be ignored
-        :type ignore_patterns:  Optional[List[str]]
         :param ignore_directories: set to `True` to avoid directory events
-        :type ignore_directories:  bool
         :param case_sensitive: set to `True` to require case sensitivity in
         resource names in order to match input patterns
-        :type case_sensitive:  bool
         :param timeout_ms: maximum duration (in ms) of a call to the event
         loop prior to cancelling tasks
-        :type timeout_ms: int"""
+        """
         super().__init__(
             [pattern], ignore_patterns, ignore_directories, case_sensitive
         )  # type: ignore
@@ -114,7 +110,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """The collection of `JobEntity` that are actively being monitored
 
         :return: the collection
-        :rtype: Sequence[JobEntity]"""
+        """
         return list(self._tracked_jobs.values())
 
     def init_launcher(self, launcher: str) -> None:
@@ -123,10 +119,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         and local launching
 
         :param launcher: the name of the workload manager used by the experiment
-        :type launcher: str
         :raises ValueError: if a string is passed that is not
         a supported launcher
-        :raises TypeError: if no launcher argument is provided."""
+        :raises TypeError: if no launcher argument is provided.
+        """
         if not launcher:
             raise TypeError("Must provide a 'launcher' argument")
 
@@ -147,16 +143,10 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment
 
-        :param launcher_type: name of launcher type, e.g. 'slurm'
-        :type launcher_type: str
+        :param launcher_type: the name of the workload manager used by the experiment
         """
         self.init_launcher(launcher_type)
-
-        if self._launcher is None:
-            raise SmartSimError("Launcher init failed")
-
-        self.job_manager.set_launcher(self._launcher)
-        self.job_manager.start()
+        self.init_job_manager()
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
@@ -164,7 +154,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         and registered collectors
 
         :param manifest_path: full path to the manifest file
-        :type manifest_path: str"""
+        """
         try:
             # it is possible to read the manifest prior to a completed
             # write due to no access locking mechanism. log the issue
@@ -221,14 +211,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     # status updates but does not try to start a new copy
                     self.job_manager.add_job(
                         entity.name,
-                        entity.task_id,
+                        entity.step_id,
                         entity,
                         False,
                     )
                     # Tell the launcher it's managed so it doesn't attempt
                     # to look for a PID that may no longer exist
                     self._launcher.step_mapping.add(
-                        entity.name, entity.step_id, entity.task_id, True
+                        entity.name, entity.step_id, "", True
                     )
             self._tracked_runs[run.timestamp] = run
 
@@ -236,7 +226,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Event handler for when a file or directory is modified.
 
         :param event: event representing file/directory modification.
-        :type event: FileSystemEvent"""
+        """
         super().on_modified(event)
         logger.debug(f"Processing manifest modified @ {event.src_path}")
         self.process_manifest(event.src_path)
@@ -245,7 +235,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """Event handler for when a file or directory is created.
 
         :param event: event representing file/directory creation.
-        :type event: FileSystemEvent"""
+        """
         super().on_created(event)
         logger.debug(f"processing manifest created @ {event.src_path}")
         self.process_manifest(event.src_path)
@@ -260,13 +250,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         stop monitoring for updates during timesteps.
 
         :param timestamp: current timestamp for event logging
-        :type timestamp: int
         :param entity: running SmartSim Job
-        :type entity: JobEntity
         :param step_info: `StepInfo` received when requesting a Job status update
-        :type step_info: StepInfo"""
-        logger.debug(f"Moving entity {entity.key} to completed status")
-
+        """
         # remember completed entities to ignore them after manifest updates
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
@@ -300,7 +286,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         monitored entities
 
         :param timestamp: current timestamp for event logging
-        :type timestamp: int"""
+        """
         if not self._launcher:
             return
 
@@ -357,13 +343,10 @@ class TelemetryMonitorArgs:
         """Initialize the instance with inputs and defaults
 
         :param exp_dir: root path to experiment outputs
-        :type exp_dir:  str
         :param frequency: desired frequency of metric & status updates (in seconds)
-        :type frequency:  int
         :param frequency: cooldown period (in seconds) before automatic shutdown
-        :type frequency:  int
         :param log_level: log level to apply to python logging
-        :type log_level: logging._Level"""
+        """
         self.exp_dir: str = exp_dir
         self.frequency: int = frequency  # freq in seconds
         self.cooldown: int = cooldown  # cooldown in seconds
@@ -455,7 +438,6 @@ class TelemetryMonitor:
         """Initialize the telemetry monitor instance
 
         :param telemetry_monitor_args: configuration for the telemetry monitor
-        :type telemetry_monitor_args: TelemetryMonitorArgs
         """
         self._observer: BaseObserver = Observer()
         """an observer object that triggers the action handler"""
@@ -477,7 +459,7 @@ class TelemetryMonitor:
         are stored in the job manager
 
         :return: return True if capable of automatically shutting down
-        :rtype: bool"""
+        """
         managed_jobs = (
             list(self._action_handler.job_manager.jobs.values())
             if self._action_handler
@@ -557,7 +539,7 @@ class TelemetryMonitor:
         will poll for telemetry data
 
         :return: return code for the process
-        :rtype: int"""
+        """
         logger.info("Executing telemetry monitor")
         logger.info(f"Polling frequency: {self._args.frequency}s")
         logger.info(f"Experiment directory: {self._experiment_dir}")

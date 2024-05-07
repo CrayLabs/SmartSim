@@ -156,6 +156,7 @@ class Orchestrator(EntityList[DBNode]):
 
     def __init__(
         self,
+        path: t.Optional[str] = getcwd(),
         port: int = 6379,
         interface: t.Union[str, t.List[str]] = "lo",
         launcher: str = "local",
@@ -174,23 +175,32 @@ class Orchestrator(EntityList[DBNode]):
         db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> None:
-        """Initialize an Orchestrator reference for local launch
-
-        :param port: TCP/IP port, defaults to 6379
-        :type port: int, optional
-        :param interface: network interface(s), defaults to "lo"
-        :type interface: str, list[str], optional
+        """Initialize an ``Orchestrator`` reference for local launch
 
         Extra configurations for RedisAI
 
         See https://oss.redis.com/redisai/configuration/
 
+        :param path: path to location of ``Orchestrator`` directory
+        :param port: TCP/IP port
+        :param interface: network interface(s)
+        :param launcher: type of launcher being used, options are "slurm", "pbs",
+                         "lsf", or "local". If set to "auto",
+                         an attempt will be made to find an available launcher
+                         on the system.
+        :param run_command: specify launch binary or detect automatically
+        :param db_nodes: number of database shards
+        :param batch: run as a batch workload
+        :param hosts: specify hosts to launch on
+        :param account: account to run batch on
+        :param time: walltime for batch 'HH:MM:SS' format
+        :param alloc: allocation to launch database on
+        :param single_cmd: run all shards with one (MPMD) command
         :param threads_per_queue: threads per GPU device
-        :type threads_per_queue: int, optional
         :param inter_op_threads: threads across CPU operations
-        :type inter_op_threads: int, optional
         :param intra_op_threads: threads per CPU operation
-        :type intra_op_threads: int, optional
+        :param db_identifier: an identifier to distinguish this orchestrator in
+            multiple-database experiments
         """
         self.launcher, self.run_command = _autodetect(launcher, run_command)
         _check_run_command(self.launcher, self.run_command)
@@ -215,10 +225,9 @@ class Orchestrator(EntityList[DBNode]):
         if self.launcher == "lsf":
             gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
-
         super().__init__(
             name=db_identifier,
-            path=getcwd(),
+            path=str(path),
             port=port,
             interface=interface,
             db_nodes=db_nodes,
@@ -277,18 +286,16 @@ class Orchestrator(EntityList[DBNode]):
         """Return the DB identifier, which is common to a DB and all of its nodes
 
         :return: DB identifier
-        :rtype: str
         """
         return self.name
 
     @property
     def num_shards(self) -> int:
-        """Return the number of DB shards contained in the orchestrator.
+        """Return the number of DB shards contained in the Orchestrator.
         This might differ from the number of ``DBNode`` objects, as each
         ``DBNode`` may start more than one shard (e.g. with MPMD).
 
-        :returns: num_shards
-        :rtype: int
+        :returns: the number of DB shards contained in the Orchestrator
         """
         return sum(node.num_shards for node in self.entities)
 
@@ -300,19 +307,17 @@ class Orchestrator(EntityList[DBNode]):
         an alias to the ``num_shards`` attribute.
 
         :returns: Number of database nodes
-        :rtype: int
         """
         return self.num_shards
 
     @property
     def hosts(self) -> t.List[str]:
-        """Return the hostnames of orchestrator instance hosts
+        """Return the hostnames of Orchestrator instance hosts
 
         Note that this will only be populated after the orchestrator
         has been launched by SmartSim.
 
-        :return: hostnames
-        :rtype: list[str]
+        :return: the hostnames of Orchestrator instance hosts
         """
         if not self._hosts:
             self._hosts = self._get_db_hosts()
@@ -323,7 +328,7 @@ class Orchestrator(EntityList[DBNode]):
         """Return the telemetry configuration for this entity.
 
         :returns: configuration of telemetry for this entity
-        :rtype: TelemetryConfiguration"""
+        """
         return self._telemetry_cfg
 
     def reset_hosts(self) -> None:
@@ -345,7 +350,6 @@ class Orchestrator(EntityList[DBNode]):
         """Return database addresses
 
         :return: addresses
-        :rtype: list[str]
 
         :raises SmartSimError: If database address cannot be found or is not active
         """
@@ -365,7 +369,6 @@ class Orchestrator(EntityList[DBNode]):
         """Check if the database is active
 
         :return: True if database is active, False otherwise
-        :rtype: bool
         """
         if not self._hosts:
             return False
@@ -378,7 +381,6 @@ class Orchestrator(EntityList[DBNode]):
 
         :return: Tuple of args to pass to the orchestrator exe
                  to load and configure the RedisAI
-        :rtype: tuple[str]
         """
         module = ["--loadmodule", CONFIG.redisai]
         if self.queue_threads:
@@ -404,7 +406,6 @@ class Orchestrator(EntityList[DBNode]):
         compute threads, background threads, and network I/O.
 
         :param num_cpus: number of cpus to set
-        :type num_cpus: int
         """
         if self.batch:
             if self.launcher == "pbs":
@@ -428,7 +429,6 @@ class Orchestrator(EntityList[DBNode]):
         Note: This will only effect orchestrators launched as a batch
 
         :param walltime: amount of time e.g. 10 hours is 10:00:00
-        :type walltime: str
         :raises SmartSimError: if orchestrator isn't launching as batch
         """
         if not self.batch:
@@ -441,7 +441,6 @@ class Orchestrator(EntityList[DBNode]):
         """Specify the hosts for the ``Orchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
-        :type host_list: str, list[str]
         :raises TypeError: if wrong type
         """
         if isinstance(host_list, str):
@@ -485,9 +484,7 @@ class Orchestrator(EntityList[DBNode]):
         by SmartSim and will not be allowed to be set.
 
         :param arg: batch argument to set e.g. "exclusive"
-        :type arg: str
         :param value: batch param - set to None if no param value
-        :type value: str | None
         :raises SmartSimError: if orchestrator not launching as batch
         """
         if not hasattr(self, "batch_settings") or not self.batch_settings:
@@ -510,9 +507,7 @@ class Orchestrator(EntityList[DBNode]):
         For example, "n", "N", etc.
 
         :param arg: run argument to set
-        :type arg: str
         :param value: run parameter - set to None if no parameter value
-        :type value: str | None
         """
         if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
             logger.warning(
@@ -533,7 +528,6 @@ class Orchestrator(EntityList[DBNode]):
         after 900 seconds if there is at least 1 change to the dataset.
 
         :param frequency: the given number of seconds before the DB saves
-        :type frequency: int
         """
         self.set_db_conf("save", f"{frequency} 1")
 
@@ -542,15 +536,15 @@ class Orchestrator(EntityList[DBNode]):
         Setting max memory to zero also results in no memory limit. Once a limit is
         surpassed, keys will be removed according to the eviction strategy. The
         specified memory size is case insensitive and supports the typical forms of:
-        1k => 1000 bytes
-        1kb => 1024 bytes
-        1m => 1000000 bytes
-        1mb => 1024*1024 bytes
-        1g => 1000000000 bytes
+
+        1k => 1000 bytes \n
+        1kb => 1024 bytes \n
+        1m => 1000000 bytes \n
+        1mb => 1024*1024 bytes \n
+        1g => 1000000000 bytes \n
         1gb => 1024*1024*1024 bytes
 
         :param mem: the desired max memory size e.g. 3gb
-        :type mem: str
         :raises SmartSimError: If 'mem' is an invalid memory value
         :raises SmartSimError: If database is not active
         """
@@ -562,7 +556,6 @@ class Orchestrator(EntityList[DBNode]):
 
         :param strategy: The max memory policy to use
             e.g. "volatile-lru", "allkeys-lru", etc.
-        :type strategy: str
         :raises SmartSimError: If 'strategy' is an invalid maxmemory policy
         :raises SmartSimError: If database is not active
         """
@@ -575,7 +568,6 @@ class Orchestrator(EntityList[DBNode]):
         incoming and another outgoing.
 
         :param clients: the maximum number of connected clients
-        :type clients: int, optional
         """
         self.set_db_conf("maxclients", str(clients))
 
@@ -588,7 +580,6 @@ class Orchestrator(EntityList[DBNode]):
         to 1gb, use 1024*1024*1024.
 
         :param size: maximum message size in bytes
-        :type size: int, optional
         """
         self.set_db_conf("proto-max-bulk-len", str(size))
 
@@ -599,9 +590,7 @@ class Orchestrator(EntityList[DBNode]):
         will take effect starting with the next command executed.
 
         :param key: the configuration parameter
-        :type key: str
         :param value: the database configuration parameter's new value
-        :type value: str
         """
         if self.is_active():
             addresses = []

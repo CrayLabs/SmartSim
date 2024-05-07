@@ -38,7 +38,6 @@ def get_hosts() -> t.List[str]:
     """Get the name of the hosts used in a PBS allocation.
 
     :returns: Names of the host nodes
-    :rtype: list[str]
     :raises SmartSimError: ``PBS_NODEFILE`` is not set
     """
     hosts = []
@@ -59,7 +58,6 @@ def get_queue() -> str:
     """Get the name of queue in a PBS allocation.
 
     :returns: The name of the queue
-    :rtype: str
     :raises SmartSimError: ``PBS_QUEUE`` is not set
     """
     if "PBS_QUEUE" in os.environ:
@@ -76,7 +74,6 @@ def get_tasks() -> int:
         node from which it is run.
 
     :returns: Then number of tasks in the allocation
-    :rtype: int
     :raises LauncherError: Could not access ``qstat``
     :raises SmartSimError: ``PBS_JOBID`` is not set
     """
@@ -103,8 +100,7 @@ def get_tasks_per_node() -> t.Dict[str, int]:
         This method requires ``qstat`` be installed on the
         node from which it is run.
 
-    :returns: Map of chunks to number of processes on that chunck
-    :rtype: dict[str, int]
+    :returns: Map of chunks to number of processes on that chunk
     :raises LauncherError: Could not access ``qstat``
     :raises SmartSimError: ``PBS_JOBID`` is not set
     """

@@ -51,7 +51,7 @@ def test_local_orchestrator(test_dir, wlmutils):
     first_dir = test_dir
 
     orc = Orchestrator(port=wlmutils.get_test_port())
-    orc.set_path(test_dir)
+    orc.set_path(osp.join(test_dir, "orchestrator"))
 
     exp.start(orc)
     statuses = exp.get_status(orc)
@@ -69,7 +69,7 @@ def test_reconnect_local_orc(test_dir):
     exp_name = "test-orc-local-reconnect-2nd"
     exp_2 = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    checkpoint = osp.join(first_dir, "smartsim_db.dat")
+    checkpoint = osp.join(first_dir, "orchestrator", "smartsim_db.dat")
     reloaded_orc = exp_2.reconnect_orchestrator(checkpoint)
 
     # let statuses update once
