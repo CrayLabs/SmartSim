@@ -115,14 +115,17 @@ def main(args: argparse.Namespace) -> int:
 
     # Prevent redirection of stdout and stderr
     with (
-        open(shard_data.name + ".out", "w", encoding="utf-8")
-        if args.redirect_output
-        else sys.stdout
-    ) as sys.stdout, (
-        open(shard_data.name + ".err", "w", encoding="utf-8")
-        if args.redirect_output
-        else sys.stderr
-    ) as sys.stderr:
+        (
+            open(shard_data.name + ".out", "w", encoding="utf-8")
+            if args.redirect_output
+            else sys.stdout
+        ) as sys.stdout,
+        (
+            open(shard_data.name + ".err", "w", encoding="utf-8")
+            if args.redirect_output
+            else sys.stderr
+        ) as sys.stderr,
+    ):
         print_summary(cmd, args.ifname, shard_data)
 
         try:
