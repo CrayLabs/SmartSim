@@ -258,9 +258,10 @@ class DragonConnector:
             dragon_out_file = path / "dragon_head.out"
             dragon_err_file = path / "dragon_head.err"
 
-            with open(dragon_out_file, "w", encoding="utf-8") as dragon_out, open(
-                dragon_err_file, "w", encoding="utf-8"
-            ) as dragon_err:
+            with (
+                open(dragon_out_file, "w", encoding="utf-8") as dragon_out,
+                open(dragon_err_file, "w", encoding="utf-8") as dragon_err,
+            ):
                 current_env = os.environ.copy()
                 current_env.update({"PYTHONUNBUFFERED": "1"})
                 logger.debug(f"Starting Dragon environment: {' '.join(cmd)}")
