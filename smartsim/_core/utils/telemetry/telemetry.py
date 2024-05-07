@@ -142,7 +142,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment
-        
+
         :param launcher_type: the name of the workload manager used by the experiment
         """
         self.init_launcher(launcher_type)
