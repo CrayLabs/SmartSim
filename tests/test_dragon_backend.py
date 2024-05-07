@@ -39,7 +39,7 @@ except ImportError:
 else:
     pytest.skip(
         reason="Using dragon as launcher, not running Dragon unit tests",
-        allow_module_level=True
+        allow_module_level=True,
     )
 
 from smartsim._core.config import CONFIG
