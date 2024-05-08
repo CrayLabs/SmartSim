@@ -46,15 +46,16 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
 def _do_dragon_teardown() -> int:
     """Run dragon-cleanup script to destroy all remaining dragon resources"""
     env = os.environ.copy()
-    smart_bin = CONFIG.core_path / "bin"
-
-    # ensure dragon tools are available on the path
-    env["PATH"] = f"{smart_bin}:{env['PATH']}"
+    dragon_cleanup = next(CONFIG.core_path.rglob("dragon-cleanup"), None)
+    if dragon_cleanup is None:
+        print("dragon-cleanup not found. Skipping cleanup")
+        return 0
 
     process = subprocess.run(
-        "dragon-cleanup",
+        [str(dragon_cleanup.absolute())],
         env=env,
         check=False,
+        capture_output=True,
     )
     return process.returncode
 
