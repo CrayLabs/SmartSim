@@ -284,7 +284,7 @@ class Config:
 
     @property
     def dragon_pin(self) -> str:
-        return "0.8"
+        return "0.9"
 
 
 @lru_cache(maxsize=128, typed=False)
