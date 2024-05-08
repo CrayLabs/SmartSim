@@ -104,9 +104,7 @@ def find_free_port(start: int = 0) -> int:
     """A 'good enough' way to find an open port to bind to
 
     :param start: The first port number to consider
-    :type start: int
     :returns: The first open port found
-    :rtype: int
     """
     port_num = -1
     while port_num < 0:

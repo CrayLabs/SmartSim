@@ -49,11 +49,8 @@ class DragonStep(Step):
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: SrunSettings
         """
         super().__init__(name, cwd, run_settings)
         self.managed = True
@@ -67,7 +64,6 @@ class DragonStep(Step):
          needed to launch this step
 
         :return: launch command
-        :rtype: list[str]
         """
         run_settings = self.run_settings
         exe_cmd = []
@@ -112,11 +108,8 @@ class DragonBatchStep(Step):
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: SbatchSettings
         """
         super().__init__(name, cwd, batch_settings)
         self.steps: t.List[Step] = []
@@ -128,7 +121,6 @@ class DragonBatchStep(Step):
         """Get the launch command for the batch
 
         :return: launch command for the batch
-        :rtype: list[str]
         """
         if isinstance(self.batch_settings, SbatchSettings):
             script = self._write_sbatch_script()
@@ -145,7 +137,6 @@ class DragonBatchStep(Step):
         """Add a job step to this batch
 
         :param step: a job step instance e.g. DragonStep
-        :type step: Step
         """
         self.steps.append(step)
         logger.debug(f"Added step command to batch for {step.name}")
@@ -199,7 +190,6 @@ class DragonBatchStep(Step):
         """Write the PBS batch script
 
         :return: batch script path after writing
-        :rtype: str
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
@@ -231,7 +221,6 @@ class DragonBatchStep(Step):
         """Write the Slurm batch script
 
         :return: batch script path after writing
-        :rtype: str
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()

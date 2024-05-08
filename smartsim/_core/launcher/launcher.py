@@ -75,9 +75,7 @@ class Launcher(abc.ABC):  # pragma: no cover
         making it monitor the step.
 
         :param name: name of step to be added
-        :type name: str
         :param step_map: step map of added step
-        :type step_map: StepMap
         """
         self.step_mapping[name] = step_map
 

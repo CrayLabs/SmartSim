@@ -93,14 +93,10 @@ class _KeyLocator:
         """Initiailize a `KeyLocator`
 
         :param root_dir: root path where keys are persisted to disk
-        :type root_dir: pathlib.Path
         :param filename: the stem name of the key file
-        :type filename: str
         :param category: the category or use-case for the key (e.g. server)
-        :type category: str
         :param separate_keys: flag indicating if public and private keys should
         be persisted in separate, corresponding directories
-        :type separate_keys: bool
         """
 
         # constants for standardized paths.
@@ -170,13 +166,11 @@ class KeyManager:
     ) -> None:
         """Initialize a KeyManager instance.
         :param config: SmartSim configuration
-        :type config: Config
         :param as_server: flag to indicate when executing in the server context;
         set to `True` to avoid loading client secret key
-        :type as_server: bool
         :param as_client: flag to indicate when executing in the client context;
         set to `True` to avoid loading server secret key
-        :type as_client: bool"""
+        """
 
         self._as_server = as_server
         """Set to `True` to return keys appropriate for the server context"""
@@ -213,13 +207,10 @@ class KeyManager:
         """Load a specific `KeyPair` from disk
 
         :param locator: a `KeyLocator` that specifies the path to an existing key
-        :type locator: KeyLocator
         :param in_context: Boolean flag indicating if the keypair is the active
         context; ensures the public and private keys are both loaded when `True`.
         Only the public key is loaded when `False`
-        :type in_context: bool
         :returns: a KeyPair containing the loaded public/private key
-        :rtype: KeyPair
         """
         # private keys contain public & private key parts
         key_path = locator.private if in_context else locator.public
@@ -241,7 +232,7 @@ class KeyManager:
         components from the standard key paths for the associated experiment
 
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
-        :rtype: Tuple[KeyPair, KeyPair]"""
+        ]"""
         try:
             server_keys = self._load_keypair(self._server_locator, self._as_server)
             client_keys = self._load_keypair(self._client_locator, self._as_client)
@@ -260,7 +251,7 @@ class KeyManager:
 
         :param locator: `KeyLocator` that determines the path to the
         key pair persisted in the same directory.
-        :type locator: KeyLocator"""
+        """
         new_path = locator.private.with_suffix(locator.public.suffix)
         if new_path != locator.public:
             logger.debug(f"Moving key file from {locator.public} to {new_path}")
@@ -286,7 +277,6 @@ class KeyManager:
         :param no_create: pass `no_create=True` to ensure keys are not
         created and only pre-existing keys can be loaded
         :returns: 2-tuple of `KeyPair` (server_keypair, client_keypair)
-        :rtype: Tuple[KeyPair, KeyPair]
         """
         logger.debug(f"Loading keys, creation {'is' if create else 'not'} allowed")
         server_keys, client_keys = self._load_keys()

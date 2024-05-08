@@ -116,9 +116,7 @@ def redir_worker(io_conn: dragon_connection.Connection, file_path: str) -> None:
     """Read stdout/stderr from the Dragon connection.
 
     :param io_conn: Dragon connection to stdout or stderr
-    :type io_conn: dragon.infrastructure.connection.Connection
     :param file_path: path to file to write to
-    :type file_path: str
     """
     while io_conn is None or not io_conn.readable:
         time.sleep(0.1)

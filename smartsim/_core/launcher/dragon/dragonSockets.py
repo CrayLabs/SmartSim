@@ -75,14 +75,11 @@ def get_secure_socket(
     """Create secured socket that consumes & produces encrypted messages
 
     :param context: ZMQ context object
-    :type context: zmq.Context
     :param socket_type: Type of ZMQ socket to create
-    :type socket_type: zmq.SocketType
     :param is_server: Pass `True` to secure the socket as server. Pass `False`
     to secure the socket as a client.
-    :type is_server: bool
     :returns: the secured socket prepared for sending encrypted messages
-    :rtype: zmq.Socket"""
+    """
     config = get_config()
     socket: "Socket[t.Any]" = context.socket(socket_type)
 
@@ -114,9 +111,8 @@ def get_authenticator(
     """Create an authenticator to handle encryption of ZMQ communications
 
     :param context: ZMQ context object
-    :type context: zmq.Context
     :returns: the activated `Authenticator`
-    :rtype: zmq.auth.thread.ThreadAuthenticator"""
+    """
     # pylint: disable-next=global-statement
     global AUTHENTICATOR
 

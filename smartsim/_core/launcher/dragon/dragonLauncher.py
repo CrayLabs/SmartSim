@@ -123,10 +123,8 @@ class DragonLauncher(WLMLauncher):
         """Run a job step through Slurm
 
         :param step: a job step instance
-        :type step: Step
         :raises LauncherError: if launch fails
         :return: job step id if job is managed
-        :rtype: str
         """
 
         if not self.task_manager.actively_monitoring:
@@ -204,9 +202,7 @@ class DragonLauncher(WLMLauncher):
         """Step a job step
 
         :param step_name: name of the job to stop
-        :type step_name: str
         :return: update for job due to cancel
-        :rtype: StepInfo
         """
 
         stepmap = self.step_mapping[step_name]
@@ -241,9 +237,7 @@ class DragonLauncher(WLMLauncher):
         """Get step updates for Dragon-managed jobs
 
         :param step_ids: list of job step ids
-        :type step_ids: list[str]
         :return: list of updates for managed jobs
-        :rtype: list[StepInfo]
         """
 
         step_id_updates: dict[str, StepInfo] = {}

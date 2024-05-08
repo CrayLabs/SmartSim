@@ -275,7 +275,7 @@ class Config:
         variable `SMARTSIM_KEY_PATH`.
 
         :returns: The configured key path.
-        :rtype: str"""
+        """
         default_path = Path.home() / ".smartsim" / "keys"
         return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
 

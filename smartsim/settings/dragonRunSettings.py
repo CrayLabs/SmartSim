@@ -53,15 +53,10 @@ class DragonRunSettings(RunSettings):
         parameters will launch on that allocation.
 
         :param exe: executable to run
-        :type exe: str
         :param exe_args: executable arguments, defaults to None
-        :type exe_args: list[str] | str, optional
         :param run_args: srun arguments without dashes, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment variables for job, defaults to None
-        :type env_vars: dict[str, str], optional
         :param alloc: allocation ID if running on existing alloc, defaults to None
-        :type alloc: str, optional
         """
         super().__init__(
             exe,
@@ -78,7 +73,6 @@ class DragonRunSettings(RunSettings):
         """Set the number of nodes
 
         :param nodes: number of nodes to run with
-        :type nodes: int
         """
         self.run_args["nodes"] = nodes
 
@@ -86,7 +80,6 @@ class DragonRunSettings(RunSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -101,7 +94,6 @@ class DragonRunSettings(RunSettings):
         """Use the contents of a file to set the node list
 
         :param file_path: Path to the hostlist file
-        :type file_path: str
         """
         self.run_args["nodefile"] = file_path
 
@@ -109,7 +101,6 @@ class DragonRunSettings(RunSettings):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
-        :type host_list: list[str]
         :raises TypeError:
         """
         if isinstance(host_list, str):
@@ -124,7 +115,6 @@ class DragonRunSettings(RunSettings):
         """Set the number of cpus to use per task
 
         :param num_cpus: number of cpus to use per task
-        :type num_cpus: int
         """
         self.run_args["cpus-per-task"] = cpus_per_task
 
@@ -132,7 +122,6 @@ class DragonRunSettings(RunSettings):
         """Set the number of tasks for this job
 
         :param tasks: number of tasks
-        :type tasks: int
         """
         self.run_args["ntasks"] = tasks
 
@@ -140,7 +129,6 @@ class DragonRunSettings(RunSettings):
         """Set the number of tasks for this job
 
         :param tasks_per_node: number of tasks per node
-        :type tasks_per_node: int
         """
         self.run_args["tasks-per-node"] = tasks_per_node
 
@@ -148,7 +136,6 @@ class DragonRunSettings(RunSettings):
         """Specify the real memory required per node
 
         :param memory_per_node: Amount of memory per node in megabytes
-        :type memory_per_node: int
         """
         self.run_args["mem"] = f"{memory_per_node}M"
 
@@ -158,7 +145,6 @@ class DragonRunSettings(RunSettings):
         This sets ``--verbose``
 
         :param verbose: Whether the job should be run verbosely
-        :type verbose: bool
         """
         if verbose:
             self.run_args["verbose"] = None
@@ -171,6 +157,5 @@ class DragonRunSettings(RunSettings):
         format = "HH:MM:SS"
 
         :param walltime: wall time
-        :type walltime: str
         """
         self.run_args["time"] = str(walltime)
