@@ -140,9 +140,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
 
-    def set_launcher(
-        self, launcher_type: str
-    ) -> None:
+    def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment
         :param launcher_type: the name of the workload manager used by the experiment
         """
