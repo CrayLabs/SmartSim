@@ -157,6 +157,27 @@ class DragonLauncher(WLMLauncher):
 
         return self._env_vars
 
+    def _merge_persisted_env(self, current_env: t.Dict[str, str]) -> t.Dict[str, str]:
+        """Combine the current environment variable set with the dragon .env by adding
+        Dragon-specific values and prepending any new values to existing keys"""
+        # ensure we start w/a complete env from current env state
+        merged_env: t.Dict[str, str] = {**current_env}
+
+        # copy all the values for dragon straight into merged_env
+        merged_env.update(
+            {k: v for k, v in self._env_vars.items() if k.startswith("DRAGON")}
+        )
+
+        # prepend dragon env updates into existing env vars
+        for key, value in self._env_vars.items():
+            if not key.startswith("DRAGON"):
+                if current_value := current_env.get(key, None):
+                    # when a key is not dragon specific, don't overwrite the current
+                    # value. instead, prepend the value dragon needs to/current env
+                    value = f"{value}:{current_value}"
+                merged_env[key] = value
+        return merged_env
+
     # pylint: disable-next=too-many-statements,too-many-locals
     def _connect_to_dragon(self, path: t.Union[str, "os.PathLike[str]"]) -> None:
         with DRG_LOCK:
@@ -231,7 +252,9 @@ class DragonLauncher(WLMLauncher):
                 open(dragon_err_file, "w", encoding="utf-8") as dragon_err,
             ):
                 current_env = os.environ.copy()
-                current_env.update(self._load_persisted_env())
+                self._load_persisted_env()
+                merged_env = self._merge_persisted_env(current_env)
+                current_env.update(merged_env)
 
                 env_update = {"PYTHONUNBUFFERED": "1"}
                 current_env.update(env_update)

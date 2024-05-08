@@ -18,13 +18,19 @@ logger = get_logger(__name__)
 
 def create_dotenv(dragon_root_dir: pathlib.Path) -> None:
     """Create a .env file with required environment variables for the Dragon runtime"""
+    dragon_root = str(dragon_root_dir)
+    dragon_inc_dir = str(dragon_root_dir / "include")
+    dragon_lib_dir = str(dragon_root_dir / "lib")
+    dragon_bin_dir = str(dragon_root_dir / "bin")
+
     dragon_vars = {
-        "DRAGON_BASE_DIR": str(dragon_root_dir),
-        "DRAGON_ROOT_DIR": str(dragon_root_dir),  # note: same as base_dir
-        "DRAGON_INCLUDE_DIR": str(dragon_root_dir / "include"),
-        "DRAGON_LIB_DIR": str(dragon_root_dir / "lib"),
-        "DRAGON_BIN_DIR": str(dragon_root_dir / "bin"),
+        "DRAGON_BASE_DIR": dragon_root,
+        "DRAGON_ROOT_DIR": dragon_root,  # note: same as base_dir
+        "DRAGON_INCLUDE_DIR": dragon_inc_dir,
+        "DRAGON_LIB_DIR": dragon_lib_dir,
         "DRAGON_VERSION": dragon_pin(),
+        "PATH": dragon_bin_dir,
+        "LD_LIBRARY_PATH": dragon_lib_dir,
     }
 
     lines = [f"{k}={v}\n" for k, v in dragon_vars.items()]

@@ -444,3 +444,52 @@ def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         # attempt to load and if it doesn't blow up, it used the cached copy
         loaded_env = launcher._load_persisted_env()
         assert loaded_env
+
+
+def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
+    """Ensure that merging dragon .env file into current env has correct precedences"""
+    test_path = pathlib.Path(test_dir)
+    mock_dragon_root = pathlib.Path(test_dir) / "dragon"
+
+    with monkeypatch.context() as ctx:
+        ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", test_path)
+        create_dotenv(mock_dragon_root)
+
+        # load config w/launcher
+        launcher = DragonLauncher()
+        loaded_env = {**launcher._load_persisted_env()}
+        assert loaded_env
+
+        curr_base_dir = "/foo"
+        curr_path = "/foo:/bar"
+        curr_only = "some-value"
+
+        loaded_path = loaded_env.get("PATH", "")
+
+        # ensure some non-dragon value exists in env; we want
+        # to see that it is in merged output without empty prepending
+        non_dragon_key = "NON_DRAGON_KEY"
+        non_dragon_value = "non_dragon_value"
+        launcher._env_vars[non_dragon_key] = non_dragon_value
+
+        curr_env = {
+            "DRAGON_BASE_DIR": curr_base_dir,  # expect overwrite
+            "PATH": curr_path,  # expect prepend
+            "ONLY_IN_CURRENT": curr_only,  # expect pass-through
+        }
+
+        merged_env = launcher._merge_persisted_env(curr_env)
+
+        # any dragon env vars should be overwritten
+        assert merged_env["DRAGON_BASE_DIR"] != curr_base_dir
+
+        # any non-dragon collisions should result in prepending
+        assert merged_env["PATH"] == f"{loaded_path}:{curr_path}"
+        # ensure we actually see a change
+        assert merged_env["PATH"] != loaded_env["PATH"]
+
+        # any keys that were in curr env should still exist, unchanged
+        assert merged_env["ONLY_IN_CURRENT"] == curr_only
+
+        # any non-dragon keys that didn't exist avoid unnecessary prepending
+        assert merged_env[non_dragon_key] == non_dragon_value
