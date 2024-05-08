@@ -36,7 +36,34 @@ from smartsim.error.errors import SSUnsupportedError
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+# def test_single_db_fixture(single_db):
+#     experiment = Experiment("test_single_fixture")
+#     experiment.reconnect_orchestrator(single_db.checkpoint_file)
+#     assert single_db.is_active()
 
-def test_single_db_fixture(single_db):
-    experiment = Experiment("test_single_fixture")
-    experiment.reconnect_orchestrator(single_db.checkpoint_file)
+# def test_local_db_fixture(local_db):
+#     experiment = Experiment("test_local_fixture")
+#     experiment.reconnect_orchestrator(local_db.checkpoint_file)
+#     assert local_db.is_active()
+
+#Stage 1
+def test_restart_cancelled_local_db_fixture1(factory_experiment, prepare_db_fixture):
+    experiment = Experiment("test_restart_cancelled_local_db_fixture1")
+    db = prepare_db_fixture
+    experiment.reconnect_orchestrator(db.checkpoint_file)
+    experiment.stop(db)
+
+#Stage 2
+def test_restart_cancelled_local_db_fixture2(factory_experiment, prepare_db_fixture):
+    experiment = Experiment("test_restart_cancelled_local_db_fixture2")
+    db = prepare_db_fixture
+    experiment.reconnect_orchestrator(db.checkpoint_file)
+    assert db.is_active()
+
+def test_with_local_db_fixture(factory_experiment, prepare_db_fixture):
+    experiment = Experiment("test_restart_cancelled_local_db_fixture")
+    experiment.reconnect_orchestrator(prepare_db_fixture.checkpoint_file)
+
+def test_with_local_db_fixture2(factory_experiment, prepare_db_fixture):
+    experiment = Experiment("test_restart_cancelled_local_db_fixture")
+    experiment.reconnect_orchestrator(prepare_db_fixture.checkpoint_file)

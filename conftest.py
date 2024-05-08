@@ -875,6 +875,60 @@ class CountingCallable:
         return self._details
 
 
+# @pytest.fixture(scope="function")
+# def prepare_db_fixture():
+#     db_constructors = {
+#         "local_db":local_db,
+#         "single_db":single_db,
+#         "clustered_db":clustered_db
+#     }
+#     def _prepare_db_fixture(db_fixture, db_type, wlmutils):
+#         try:
+#             db_up = db_fixture.is_active()
+#         except:
+#             db_up = False
+#         if not db_up:
+#             return db_constructors[db_type](wlmutils)
+#         else:
+#             # TODO: Connect a client and flush the database
+#             return db_fixture
+#     return _prepare_db_fixture
+
+global_local_db = None
+
+@pytest.fixture(scope="function")
+def factory_experiment(test_dir):
+    # def _factory_experiment(*args, **kwargs):
+    return smartsim.Experiment("foo", exp_path=test_dir)
+    # return _factory_experiment
+
+@pytest.fixture(scope="function")
+#def prepare_db_fixture(local_db, construct_local_db, wlmutils):
+def prepare_db_fixture(factory_experiment):
+    global global_local_db
+    try:
+        db_up = global_local_db.is_active()
+    except:
+        db_up = False
+    if not db_up:
+        global_local_db = _create_and_launch_database2(
+            "local_db_fixture",
+            launcher="local",
+            num_nodes=1,
+            interface="lo",
+            hostlist=None,
+            port=_find_free_port(tuple(reversed(test_ports))),
+        )
+    # yield global_local_db
+    factory_experiment.reconnect_orchestrator(global_local_db.checkpoint_file)
+    return global_local_db
+    # return global_local_db
+
+@pytest.fixture(scope="session")
+def construct_local_db(wlmutils):
+    global global_local_db
+    yield global_local_db
+
 @pytest.fixture(scope="session")
 def local_db(wlmutils):
     with _create_and_launch_database(
@@ -943,3 +997,26 @@ def _create_and_launch_database(
         yield orc
     finally:
         exp.stop(orc)
+
+def _create_and_launch_database2(
+    exp_name: str,
+    launcher: str,
+    num_nodes: int,
+    interface: str,
+    hostlist: t.Optional[t.List[str]],
+    port: int,
+):
+    exp_path = pathlib.Path(test_output_root, exp_name)
+    exp_path.mkdir(exist_ok=True)
+    exp = Experiment(
+        exp_name,
+        exp_path=str(exp_path),
+        launcher=launcher,
+    )
+    orc = exp.create_database(
+        port, batch=False, interface=interface, hosts=hostlist, db_nodes=num_nodes
+    )
+    exp.generate(orc, overwrite=True)
+    exp.start(orc)
+    print("NEW ORCEHSTARAT")
+    return orc
