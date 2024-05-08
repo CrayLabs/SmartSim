@@ -169,21 +169,6 @@ def install_package(asset_dir: pathlib.Path) -> int:
         logger.error(f"No wheel found for package in {asset_dir}")
         return 1
 
-    executables = list(asset_dir.rglob("bin/*"))
-    libraries = list(asset_dir.rglob("lib/*"))
-
-    # make all the dragon executables accessible in <root>/bin
-    bin_dir = CONFIG.core_path / "bin"
-    for exe in executables:
-        symlink = bin_dir / exe.name
-        symlink.symlink_to(exe)
-
-    # make all the dragon libraries accessible in <root>/lib
-    lib_dir = CONFIG.core_path / "lib"
-    for lib in libraries:
-        symlink = lib_dir / lib.name
-        symlink.symlink_to(lib)
-
     create_dotenv(wheel_path.parent)
 
     while wheel_path is not None:
