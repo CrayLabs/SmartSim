@@ -9,7 +9,7 @@ from github.GitReleaseAsset import GitReleaseAsset
 from smartsim._core._cli.utils import pip
 from smartsim._core._install.builder import WebTGZ
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import is_crayex_platform
+from smartsim._core.utils.helpers import check_platform, is_crayex_platform
 from smartsim.error.errors import SmartSimCLIActionCancelled
 from smartsim.log import get_logger
 
@@ -136,6 +136,13 @@ def retrieve_asset_info() -> GitReleaseAsset:
     :returns: A GitHub release asset"""
     assets = _get_release_assets()
     asset = filter_assets(assets)
+
+    platform_result = check_platform()
+    if not platform_result.is_cray:
+        logger.warning("Installing Dragon without HSTA support")
+        for msg in platform_result.failures:
+            logger.warning(msg)
+
     if asset is None:
         raise SmartSimCLIActionCancelled("No dragon runtime asset available to install")
 

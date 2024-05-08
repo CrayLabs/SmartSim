@@ -391,7 +391,7 @@ def execute(
     logger.info("Checking requested versions...")
     versions = Versioner()
 
-    logger.info("Checking for build tools...")
+    logger.debug("Checking for build tools...")
 
     if verbose:
         logger.info("Build Environment:")

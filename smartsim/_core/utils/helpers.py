@@ -299,7 +299,7 @@ def check_for_utility(util_name: str) -> str:
     try:
         utility = expand_exe_path(util_name)
     except FileNotFoundError:
-        print(f"{util_name} not available for Cray EX platform check.")
+        ...
 
     return utility
 
@@ -317,7 +317,59 @@ def execute_platform_cmd(cmd: str) -> t.Tuple[str, int]:
     return process.stdout.decode("utf-8"), process.returncode
 
 
-def is_crayex_platform() -> bool:
+class CrayExPlatformResult:
+    locate_msg = "Unable to locate `{0}`."
+
+    def __init__(self, ldconfig: t.Optional[str], fi_info: t.Optional[str]) -> None:
+        self.ldconfig: t.Optional[str] = ldconfig
+        self.fi_info: t.Optional[str] = fi_info
+        self.has_pmi: bool = False
+        self.has_pmi2: bool = False
+        self.has_cxi: bool = False
+
+    @property
+    def has_ldconfig(self) -> bool:
+        return bool(self.ldconfig)
+
+    @property
+    def has_fi_info(self) -> bool:
+        return bool(self.fi_info)
+
+    @property
+    def is_cray(self) -> bool:
+        return all(
+            (
+                self.has_ldconfig,
+                self.has_fi_info,
+                self.has_pmi,
+                self.has_pmi2,
+                self.has_cxi,
+            )
+        )
+
+    @property
+    def failures(self) -> t.List[str]:
+        """Return a list of messages describing all failed validations"""
+        failure_messages = []
+
+        if not self.has_ldconfig:
+            failure_messages.append(self.locate_msg.format("ldconfig"))
+
+        if not self.has_fi_info:
+            failure_messages.append(self.locate_msg.format("fi_info"))
+
+        if self.has_ldconfig and self.has_fi_info:
+            if not self.has_pmi:
+                failure_messages.append(self.locate_msg.format("pmi.so"))
+            if not self.has_pmi2:
+                failure_messages.append(self.locate_msg.format("pmi2.so"))
+            if not self.has_cxi:
+                failure_messages.append(self.locate_msg.format("cxi.so"))
+
+        return failure_messages
+
+
+def check_platform() -> CrayExPlatformResult:
     """Returns True if the current platform is identified as Cray EX and
     HSTA-aware dragon package can be installed, False otherwise.
 
@@ -325,41 +377,38 @@ def is_crayex_platform() -> bool:
 
     # ldconfig -p | grep cray | grep pmi.so &&
     # ldconfig -p | grep cray | grep pmi2.so &&
-    # fi_info | grep cxi\
+    # fi_info | grep cxi
+
     ldconfig = check_for_utility("ldconfig")
     fi_info = check_for_utility("fi_info")
-    if not all((ldconfig, fi_info)):
-        print("Unable to validate Cray EX platform. Installing standard version")
-        return False
 
-    locate_msg = "Unable to locate %s. Installing standard version"
+    result = CrayExPlatformResult(ldconfig, fi_info)
+    if not all((result.has_ldconfig, result.has_fi_info)):
+        return result
 
     ldconfig1 = f"{ldconfig} -p"
     ldc_out1, _ = execute_platform_cmd(ldconfig1)
-    target = "pmi.so"
     candidates = [x for x in ldc_out1.split("\n") if "cray" in x]
-    pmi1 = any(x for x in candidates if target in x)
-    if not pmi1:
-        print(locate_msg, target)
-        return False
+    result.has_pmi = any(x for x in candidates if "pmi.so" in x)
 
     ldconfig2 = f"{ldconfig} -p"
     ldc_out2, _ = execute_platform_cmd(ldconfig2)
-    target = "pmi2.so"
     candidates = [x for x in ldc_out2.split("\n") if "cray" in x]
-    pmi2 = any(x for x in candidates if target in x)
-    if not pmi2:
-        print(locate_msg, target)
-        return False
+    result.has_pmi2 = any(x for x in candidates if "pmi2.so" in x)
 
     fi_info_out, _ = execute_platform_cmd(fi_info)
-    target = "cxi"
-    cxi = any(x for x in fi_info_out.split("\n") if target in x)
-    if not cxi:
-        print(locate_msg, target)
-        return False
+    result.has_cxi = any(x for x in fi_info_out.split("\n") if "cxi" in x)
 
-    return True
+    return result
+
+
+def is_crayex_platform() -> bool:
+    """Returns True if the current platform is identified as Cray EX and
+    HSTA-aware dragon package can be installed, False otherwise.
+
+    :returns: True if current platform is Cray EX, False otherwise"""
+    result = check_platform()
+    return result.is_cray
 
 
 @t.final
