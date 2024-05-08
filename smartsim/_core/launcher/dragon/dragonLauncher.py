@@ -247,18 +247,14 @@ class DragonLauncher(WLMLauncher):
             dragon_out_file = path / "dragon_head.out"
             dragon_err_file = path / "dragon_head.err"
 
+            self._load_persisted_env()
+            merged_env = self._merge_persisted_env(os.environ.copy())
+            merged_env.update({"PYTHONUNBUFFERED": "1"})
+
             with (
                 open(dragon_out_file, "w", encoding="utf-8") as dragon_out,
                 open(dragon_err_file, "w", encoding="utf-8") as dragon_err,
             ):
-                current_env = os.environ.copy()
-                self._load_persisted_env()
-                merged_env = self._merge_persisted_env(current_env)
-                current_env.update(merged_env)
-
-                env_update = {"PYTHONUNBUFFERED": "1"}
-                current_env.update(env_update)
-
                 logger.debug(f"Starting Dragon environment: {' '.join(cmd)}")
 
                 # pylint: disable-next=consider-using-with
@@ -269,7 +265,7 @@ class DragonLauncher(WLMLauncher):
                     stdout=dragon_out.fileno(),
                     cwd=path,
                     shell=False,
-                    env=current_env,
+                    env=merged_env,
                     start_new_session=True,
                 )
 
