@@ -33,14 +33,13 @@ from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
 from .step import Step, proxyable_launch_cmd
-from ....entity import Model, Ensemble
-from ....database import Orchestrator
+from ....entity import Model, DBNode
 
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, entity: t.Union[Model, Ensemble, Orchestrator], run_settings: AprunSettings) -> None:
+    def __init__(self, entity: t.Union[Model, DBNode], run_settings: AprunSettings) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched
@@ -125,7 +124,7 @@ class AprunStep(Step):
             return self._make_mpmd()
 
         exe = self.entity.exe
-        args = self.entity._exe_args  # pylint: disable=protected-access
+        args = self.entity.exe_args  # pylint: disable=protected-access
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:

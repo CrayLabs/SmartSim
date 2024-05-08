@@ -33,14 +33,13 @@ from ....log import get_logger
 from ....settings import BsubBatchSettings, JsrunSettings
 from ....settings.base import RunSettings
 from .step import Step
-from ....entity import Model, Ensemble
-from ....database import Orchestrator
+from ....entity import Model, DBNode
 
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, entity: t.Union[Model, Ensemble, Orchestrator], batch_settings: BsubBatchSettings) -> None:
+    def __init__(self, entity: t.Union[Model, DBNode], batch_settings: BsubBatchSettings) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
@@ -105,7 +104,7 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, entity: t.Union[Model, Ensemble, Orchestrator], run_settings: RunSettings):
+    def __init__(self, entity: t.Union[Model, DBNode], run_settings: RunSettings):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched
@@ -217,7 +216,7 @@ class JsrunStep(Step):
         :return: executable list
         """
         exe = self.entity.exe
-        args = self.entity._exe_args  # pylint: disable=protected-access
+        args = self.entity.exe_args  # pylint: disable=protected-access
 
         if self._get_mpmd():
             erf_file = self.get_step_file(ending=".mpmd")
