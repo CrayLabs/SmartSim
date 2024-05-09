@@ -25,6 +25,7 @@ Experiment
    Experiment.finished
    Experiment.get_status
    Experiment.reconnect_orchestrator
+   Experiment.preview
    Experiment.summary
    Experiment.telemetry
 

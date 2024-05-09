@@ -1,0 +1,7 @@
+
+{%- if verbosity_level == Verbosity.INFO %}
+{%- include "ensemble_info.template" -%}
+{%- endif %}
+{%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+{%- include "ensemble_debug.template" -%}
+{%- endif %}
