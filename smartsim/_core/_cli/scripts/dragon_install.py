@@ -229,4 +229,4 @@ def install_dragon(extraction_dir: t.Union[str, os.PathLike[str]]) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(install_dragon(pathlib.Path().cwd()))
+    sys.exit(install_dragon(CONFIG.core_path / ".dragon"))

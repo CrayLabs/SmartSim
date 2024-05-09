@@ -410,7 +410,7 @@ def execute(
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     if is_dragon_requested:
-        install_to = CONFIG.core_path / ".third-party"
+        install_to = CONFIG.core_path / ".dragon"
         return_code = install_dragon(install_to)
 
         if return_code == 0:
