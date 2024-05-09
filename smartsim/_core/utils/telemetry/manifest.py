@@ -136,7 +136,7 @@ class Run:
     ) -> "Run":
         """Map run data persisted in a manifest file to an object
 
-        :param runs: raw dictionary containing `Run` data deserialized from JSON
+        :param raw_run: raw dictionary containing `Run` data deserialized from JSON
         :param exp_dir: root path to experiment outputs
         :param raw_experiment: raw experiment deserialized from manifest JSON
         :return: populated `Run` instance

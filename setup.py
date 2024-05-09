@@ -177,6 +177,7 @@ deps = [
     "watchdog>=4.0.0",
     "pydantic==1.10.14",
     "pyzmq>=25.1.2",
+    "pygithub>=2.3.0",
 ]
 
 # Add SmartRedis at specific version

@@ -33,6 +33,7 @@ from pathlib import Path
 
 from tabulate import tabulate
 
+from smartsim._core._cli.scripts.dragon_install import install_dragon
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
@@ -358,12 +359,27 @@ def _format_incompatible_python_env_message(
     )
 
 
+def _configure_keydb_build(versions: Versioner) -> None:
+    """Configure the redis versions to be used during the build operation"""
+    versions.REDIS = Version_("6.2.0")
+    versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
+    versions.REDIS_BRANCH = "v6.2.0"
+
+    CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
+    if not CONFIG.conf_path.resolve().is_file():
+        raise SSConfigError(
+            "Database configuration file at REDIS_CONF could not be found"
+        )
+
+
+# pylint: disable-next=too-many-statements
 def execute(
     args: argparse.Namespace, _unparsed_args: t.Optional[t.List[str]] = None, /
 ) -> int:
     verbose = args.v
     keydb = args.keydb
     device = Device(args.device.lower())
+    is_dragon_requested = args.dragon
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name
@@ -375,7 +391,7 @@ def execute(
     logger.info("Checking requested versions...")
     versions = Versioner()
 
-    logger.info("Checking for build tools...")
+    logger.debug("Checking for build tools...")
 
     if verbose:
         logger.info("Build Environment:")
@@ -384,14 +400,7 @@ def execute(
         print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
 
     if keydb:
-        versions.REDIS = Version_("6.2.0")
-        versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
-        versions.REDIS_BRANCH = "v6.2.0"
-        CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
-        if not CONFIG.conf_path.resolve().is_file():
-            raise SSConfigError(
-                "Database configuration file at REDIS_CONF could not be found"
-            )
+        _configure_keydb_build(versions)
 
     if verbose:
         db_name: DbEngine = "KEYDB" if keydb else "REDIS"
@@ -399,6 +408,17 @@ def execute(
         vers = versions.as_dict(db_name=db_name)
         version_names = list(vers.keys())
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
+
+    if is_dragon_requested:
+        install_to = CONFIG.core_path / ".dragon"
+        return_code = install_dragon(install_to)
+
+        if return_code == 0:
+            logger.info("Dragon installation complete")
+        elif return_code == 1:
+            logger.info("Dragon installation not supported on platform")
+        else:
+            logger.warning("Dragon installation failed")
 
     try:
         if not args.only_python_packages:
@@ -458,6 +478,12 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Device to build ML runtimes for",
     )
     parser.add_argument(
+        "--dragon",
+        action="store_true",
+        default=False,
+        help="Install the dragon runtime",
+    )
+    parser.add_argument(
         "--only_python_packages",
         action="store_true",
         default=False,
@@ -499,7 +525,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default=False,
         help="Build KeyDB instead of Redis",
     )
-
     parser.add_argument(
         "--no_torch_with_mkl",
         dest="torch_with_mkl",

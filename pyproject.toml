@@ -45,8 +45,15 @@ exclude = '''
   | build
   | dist
   | setup.py
+  | .*\.py
 )
 '''
+force-exclude = '''
+(
+  .*\.dragon/*
+)
+'''
+
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -61,6 +68,7 @@ markers = [
 # supress circular import warning
 profile = "black"
 skip = ["tests/test_configs/circular_config"]
+skip_glob="smartsim/_core/.dragon/*"
 
 [tool.coverage.run]
 source = ["smartsim"]
