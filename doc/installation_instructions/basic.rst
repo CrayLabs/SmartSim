@@ -257,7 +257,7 @@ For example, to install dragon alongside the RedisAI CPU backends, you can run
 
 .. note::
   Dragon is only supported on Linux systems. For further information, you
-  can read the dedicated documentation section.
+  can read :ref:`the dedicated documentation page <dragon>`.
 
 ==========
 SmartRedis

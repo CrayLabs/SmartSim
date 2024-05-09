@@ -21,7 +21,7 @@ Usage
 =====
 To be able to use Dragon, you will have to install it in your current Python
 environment. This can be done as part of the ``smart build`` step, as explained
-in `_dragon_install`.
+in :ref:`Dragon Install <dragon_install>`.
 
 Once installed, Dragon can be selected as launcher when creating an ``Experiment``:
 
@@ -68,11 +68,12 @@ Sharing the Dragon Server across Experiments
 ============================================
 
 Currently, SmartSim only supports one Dragon server per allocation. For this reason,
-if multiple ``Experiment``s need to run in the same allocation, the Dragon server needs
+if multiple ``Experiments`` need to run in the same allocation, the Dragon server needs
 to be shared among them. By default, the server is started from a subdirectory of the
 ``Experiment`` path. To make it possible to share the server, it is possible to
-specify a path from which the Server should be started through the environment variable
-``SMARTSIM_DRAGON_SERVER_PATH``: every ``Experiment`` will look for the running
+specify a path from which the Server should be started. This can be done
+by setting the environment variable
+``SMARTSIM_DRAGON_SERVER_PATH`` to an existing path: every ``Experiment`` will look for the running
 server in the given path and only start a new server instance if there is none running.
 
 Dragon's High-Speed Transport Agents
@@ -91,19 +92,19 @@ Communcation
 
 SmartSim and the Dragon Server communicate using `ZeroMQ <https://zeromq.org/>`_.
 
-As with any communication protocol, some timeouts for send and receive must be defined.
+As with any communication protocol, some timeouts for send and receive operations must be defined.
 SmartSim sets some default timeouts that have been tested to work on most available systems,
 but if you see failed communication attempts, you may want to try to adjust the
 timeouts by setting the corresponding environment variable.
 The timeouts are given in milliseconds and they are defined as follows:
 
-- server start-up timeout: the time waited by the SmartSim ``Experiment`` when the server
+- *server start-up timeout*: the time waited by the SmartSim ``Experiment`` when the server
   is first started. This timeout must account for the time it takes Dragon to set up the
   infrastructure, which depends on the system's workload manager response time.
   Defaults to ``"300000"`` (i.e. five minutes) and can be overridden with the environment variable
   ``SMARTSIM_DRAGON_STARTUP_TIMEOUT``.
 
-- server send and receive timeout: the time waited by SmartSim and the Dragon server to send or
+- *server send and receive timeout*: the time waited by SmartSim and the Dragon server to send or
   receive a message. Defaults to ``"30000"`` (i.e. 30 seconds) and can be overridden with the
   environment variable ``SMARTSIM_DRAGON_TIMEOUT``.
 
@@ -117,14 +118,14 @@ user's home directory, unless another path is specified through the environment 
 ``SMARTSIM_KEY_PATH``.
 
 
-..dragon_known_issues_:
+.. _dragon_known_issues:
 
 ============
 Known issues
 ============
 
 As previosuly remarked, the SmartSim-Dragon integration is at an early development stage
-and there are some known issues that can lead to errors during runs.
+and there are some known issues that can lead to unexpected behavior during runs.
 
 - *Incomplete cleanup of Dragon resources*: when SmartSim exits, it ensures that the dragon
   infrastructure is correctly shut down, so that all the associated resources (such as
@@ -149,6 +150,5 @@ and there are some known issues that can lead to errors during runs.
   2. System or Workload Manager too busy: try setting the environment variable
      ``SMARTSIM_DRAGON_STARTUP_TIMEOUT`` to a larger value or to ``"-1"``.
 
-
 - *MPI-based applications hanging*: to run MPI-based applications on Dragon, Cray PMI or Cray PALS
-  must be available on the system. This is a current limitation and is actively been worked on.
+  must be available on the system. This is a current limitation and is actively being worked on.

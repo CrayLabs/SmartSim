@@ -60,7 +60,7 @@ manage, and monitor. Currently, SmartSim supports 7 `launcher` options:
 4. ``pals``: for systems using the PALS scheduler
 5. ``lsf``: for systems using the LSF scheduler
 6. ``auto``: have SmartSim auto-detect the launcher to use from the above
-7. ``dragon``: if Dragon was installed in the current Python environment
+7. ``dragon``: if Dragon was installed in the current Python environment, see :ref:`Dragon Install <dragon_install>`
 
 If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
 `"local"` will be assigned which will start all ``Experiment`` launched entities on the
