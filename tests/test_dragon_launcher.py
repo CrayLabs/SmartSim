@@ -470,8 +470,6 @@ def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
         # attempt to load and if it doesn't blow up, it used the cached copy
 
-        connector = DragonConnector()
-
         loaded_env = connector._load_persisted_env()
         assert loaded_env
 
