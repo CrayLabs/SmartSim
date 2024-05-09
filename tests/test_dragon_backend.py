@@ -32,6 +32,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_a
+
 try:
     import dragon
 except ImportError:
