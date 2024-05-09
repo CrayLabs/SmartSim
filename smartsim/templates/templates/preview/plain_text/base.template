@@ -1,0 +1,52 @@
+
+{% include "experiment.template" %}
+{%- if manifest.has_deployable or active_dbjobs %}
+
+=== Entity Preview ===
+
+  {%- if active_dbjobs %}
+
+  == Active Infrastructure ==
+  {%- for name, db in active_dbjobs.items() %}
+      {% include "activeinfra.template" %}
+  {%- endfor %}
+  {%- endif %}
+  {%- if manifest.dbs %}
+
+  == Orchestrators ==
+    {%- for db in manifest.dbs %}
+    {%- if db.is_active() %}
+    WARNING: Cannot preview {{ db.name }}, because it is already started.
+    {%- else %}
+        {% include "orchestrator.template" %}
+    {%- endif %}
+    {%- endfor %}
+  {%- endif %}
+  {%- if manifest.models %}
+
+  == Models ==
+    {%- for model in manifest.models %}
+
+    = Model Name: {{ model.name }} =
+    {%- include "model.template" %}
+      {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+        Client Configuration:
+        {%- if model.run_settings.colocated_db_settings %}
+        {%- include "clientconfigcolo.template" %}
+        {%- endif %}
+        {%- if manifest.dbs %}
+        {%- include "clientconfig.template" %}
+        {%- endif %}
+        {%- endif %}
+      {%- endfor %}
+      {%- endif %}
+
+  {%- if manifest.ensembles %}
+
+  == Ensembles ==
+    {%- for ensemble in manifest.ensembles %}
+    {%- include "ensemble.template" %}
+    {%- endfor %}
+    {%- endif %}
+
+{%- endif %}
