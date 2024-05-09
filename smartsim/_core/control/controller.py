@@ -55,7 +55,7 @@ from ..._core.utils.redis import (
     shutdown_db_node,
 )
 from ...database import Orchestrator
-from ...entity import Ensemble, EntitySequence, Model, SmartSimEntity
+from ...entity import Ensemble, EntitySequence, Application, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
@@ -213,7 +213,7 @@ class Controller:
             if job.status not in TERMINAL_STATUSES:
                 logger.info(
                     " ".join(
-                        ("Stopping model", entity.name, "with job name", str(job.name))
+                        ("Stopping application", entity.name, "with job name", str(job.name))
                     )
                 )
                 status = self._launcher.stop(job.name)
@@ -433,7 +433,7 @@ class Controller:
                 )
 
                 # symlink substeps to maintain directory structure
-                for substep, substep_entity in zip(substeps, elist.models):
+                for substep, substep_entity in zip(substeps, elist.applications):
                     symlink_substeps.append((substep, substep_entity))
 
                 steps.append((batch_step, elist))
@@ -447,23 +447,23 @@ class Controller:
                     elist, [(step.name, step) for step, _ in job_steps]
                 )
                 steps.extend(job_steps)
-        # models themselves cannot be batch steps. If batch settings are
+        # applications themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
-        for model in manifest.models:
-            model_telem_dir = manifest_builder.run_telemetry_subdirectory / "model"
-            if model.batch_settings:
-                anon_entity_list = _AnonymousBatchJob(model)
+        for application in manifest.applications:
+            application_telem_dir = manifest_builder.run_telemetry_subdirectory / "application"
+            if application.batch_settings:
+                anon_entity_list = _AnonymousBatchJob(application)
                 batch_step, substeps = self._create_batch_job_step(
-                    anon_entity_list, model_telem_dir
+                    anon_entity_list, application_telem_dir
                 )
-                manifest_builder.add_model(model, (batch_step.name, batch_step))
+                manifest_builder.add_application(application, (batch_step.name, batch_step))
 
-                symlink_substeps.append((substeps[0], model))
-                steps.append((batch_step, model))
+                symlink_substeps.append((substeps[0], application))
+                steps.append((batch_step, application))
             else:
-                job_step = self._create_job_step(model, model_telem_dir)
-                manifest_builder.add_model(model, (job_step.name, job_step))
-                steps.append((job_step, model))
+                job_step = self._create_job_step(application, application_telem_dir)
+                manifest_builder.add_application(application, (job_step.name, job_step))
+                steps.append((job_step, application))
 
         # launch and symlink steps
         for step, entity in steps:
@@ -657,7 +657,7 @@ class Controller:
         :return: the job step
         """
         # get SSDB, SSIN, SSOUT and add to entity run settings
-        if isinstance(entity, Model):
+        if isinstance(entity, Application):
             self._prep_entity_client_env(entity)
 
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
@@ -667,7 +667,7 @@ class Controller:
 
         return step
 
-    def _prep_entity_client_env(self, entity: Model) -> None:
+    def _prep_entity_client_env(self, entity: Application) -> None:
         """Retrieve all connections registered to this entity
 
         :param entity: The entity to retrieve connections from
@@ -694,7 +694,7 @@ class Controller:
         if entity.query_key_prefixing():
             client_env["SSKEYOUT"] = entity.name
 
-        # Set address to local if it's a colocated model
+        # Set address to local if it's a colocated application
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
             db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
             assert isinstance(db_name_colo, str)
@@ -875,11 +875,11 @@ class Controller:
             options = ConfigOptions.create_from_environment(name)
             client = Client(options, logger_name="SmartSim")
 
-            for model in manifest.models:
-                if not model.colocated:
-                    for db_model in model.db_models:
+            for application in manifest.applications:
+                if not application.colocated:
+                    for db_model in application.db_models:
                         set_ml_model(db_model, client)
-                    for db_script in model.db_scripts:
+                    for db_script in application.db_scripts:
                         set_script(db_script, client)
 
             for ensemble in manifest.ensembles:
@@ -887,7 +887,7 @@ class Controller:
                     set_ml_model(db_model, client)
                 for db_script in ensemble.db_scripts:
                     set_script(db_script, client)
-                for entity in ensemble.models:
+                for entity in ensemble.applications:
                     if not entity.colocated:
                         # Set models which could belong only
                         # to the entities and not to the ensemble

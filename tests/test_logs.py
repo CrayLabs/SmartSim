@@ -204,7 +204,7 @@ def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
             sleep_rs.set_nodes(1)
             sleep_rs.set_tasks(1)
 
-            sleep = exp.create_model("SleepModel", sleep_rs)
+            sleep = exp.create_application("SleepModel", sleep_rs)
             exp.generate(sleep)
             exp.start(sleep, block=True)
     except Exception as ex:

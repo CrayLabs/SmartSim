@@ -30,7 +30,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
-from smartsim.entity import Ensemble, Model
+from smartsim.entity import Ensemble, Application
 from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
@@ -63,7 +63,7 @@ pytestmark = pytest.mark.skipif(
 def test_exchange(fileutils, test_dir, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
-    Finally, the tensor is used to run a model.
+    Finally, the tensor is used to run a application.
     """
 
     exp = Experiment(
@@ -92,7 +92,7 @@ def test_exchange(fileutils, test_dir, wlmutils):
 
     exp.generate(ensemble)
 
-    # start the models
+    # start the applications
     exp.start(ensemble, summary=False)
 
     # get and confirm statuses
@@ -108,7 +108,7 @@ def test_consumer(fileutils, test_dir, wlmutils):
     """Run three processes, each one of the first two processes
     puts a tensor on the DB; the third process accesses the
     tensors put by the two producers.
-    Finally, the tensor is used to run a model by each producer
+    Finally, the tensor is used to run a application by each producer
     and the consumer accesses the two results.
     """
 
@@ -128,10 +128,10 @@ def test_consumer(fileutils, test_dir, wlmutils):
         name="producer", params=params, run_settings=rs_prod, perm_strat="step"
     )
 
-    consumer = Model(
+    consumer = Application(
         "consumer", params={}, path=ensemble.path, run_settings=rs_consumer
     )
-    ensemble.add_model(consumer)
+    ensemble.add_application(consumer)
 
     ensemble.register_incoming_entity(ensemble["producer_0"])
     ensemble.register_incoming_entity(ensemble["producer_1"])
@@ -141,7 +141,7 @@ def test_consumer(fileutils, test_dir, wlmutils):
 
     exp.generate(ensemble)
 
-    # start the models
+    # start the applications
     exp.start(ensemble, summary=False)
 
     # get and confirm statuses

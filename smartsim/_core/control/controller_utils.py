@@ -30,7 +30,7 @@ import pathlib
 import typing as t
 
 from ..._core.launcher.step import Step
-from ...entity import EntityList, Model
+from ...entity import EntityList, Application
 from ...error import SmartSimError
 from ..launcher.launcher import Launcher
 
@@ -38,18 +38,18 @@ if t.TYPE_CHECKING:
     from ..utils.serialize import TStepLaunchMetaData
 
 
-class _AnonymousBatchJob(EntityList[Model]):
+class _AnonymousBatchJob(EntityList[Application]):
     @staticmethod
-    def _validate(model: Model) -> None:
-        if model.batch_settings is None:
+    def _validate(application: Application) -> None:
+        if application.batch_settings is None:
             msg = "Unable to create _AnonymousBatchJob without batch_settings"
             raise SmartSimError(msg)
 
-    def __init__(self, model: Model) -> None:
-        self._validate(model)
-        super().__init__(model.name, model.path)
-        self.entities = [model]
-        self.batch_settings = model.batch_settings
+    def __init__(self, application: Application) -> None:
+        self._validate(application)
+        super().__init__(application.name, application.path)
+        self.entities = [application]
+        self.batch_settings = application.batch_settings
 
     def _initialize_entities(self, **kwargs: t.Any) -> None: ...
 

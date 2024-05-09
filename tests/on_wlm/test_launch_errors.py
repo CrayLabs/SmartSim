@@ -38,7 +38,7 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 
 def test_failed_status(fileutils, test_dir, wlmutils):
-    """Test when a failure occurs deep into model execution"""
+    """Test when a failure occurs deep into application execution"""
 
     exp_name = "test-report-failure"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
@@ -48,12 +48,12 @@ def test_failed_status(fileutils, test_dir, wlmutils):
         "python", f"{script} --time=7", run_comamnd="auto"
     )
 
-    model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
+    application = exp.create_application("bad-application", path=test_dir, run_settings=settings)
 
-    exp.start(model, block=False)
-    while not exp.finished(model):
+    exp.start(application, block=False)
+    while not exp.finished(application):
         time.sleep(2)
-    stat = exp.get_status(model)
+    stat = exp.get_status(application)
     assert len(stat) == 1
     assert stat[0] == SmartSimStatus.STATUS_FAILED
 
@@ -79,7 +79,7 @@ def test_bad_run_command_args(fileutils, test_dir, wlmutils):
         "python", f"{script} --time=5", run_args={"badarg": "badvalue"}
     )
 
-    model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
+    application = exp.create_application("bad-application", path=test_dir, run_settings=settings)
 
     with pytest.raises(SmartSimError):
-        exp.start(model)
+        exp.start(application)

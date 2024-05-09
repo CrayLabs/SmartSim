@@ -93,13 +93,13 @@ class _BaseMPISettings(RunSettings):
         """Make a mpmd workload by combining two ``mpirun`` commands
 
         This connects the two settings to be executed with a single
-        Model instance
+        Application instance
 
         :param settings: MpirunSettings instance
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
-                "Colocated models cannot be run as a mpmd workload"
+                "Colocated applications cannot be run as a mpmd workload"
             )
         self.mpmd.append(settings)
 

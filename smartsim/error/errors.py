@@ -44,7 +44,7 @@ class EntityExistsError(SmartSimError):
 
 
 class UserStrategyError(SmartSimError):
-    """Raised when there is an error with model creation inside an ensemble
+    """Raised when there is an error with application creation inside an ensemble
     that is from a user provided permutation strategy
     """
 
@@ -60,7 +60,7 @@ class UserStrategyError(SmartSimError):
 
 
 class ParameterWriterError(SmartSimError):
-    """Raised in the event that input parameter files for a model
+    """Raised in the event that input parameter files for a application
     could not be written.
     """
 

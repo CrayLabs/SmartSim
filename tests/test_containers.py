@@ -100,16 +100,16 @@ def test_singularity_basic(fileutils, test_dir):
     run_settings = exp.create_run_settings(
         "python3", "sleep.py --time=3", container=container
     )
-    model = exp.create_model("singularity_basic", run_settings)
+    application = exp.create_application("singularity_basic", run_settings)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    model.attach_generator_files(to_copy=[script])
-    exp.generate(model)
+    application.attach_generator_files(to_copy=[script])
+    exp.generate(application)
 
-    exp.start(model, summary=False)
+    exp.start(application, summary=False)
 
     # get and confirm status
-    stat = exp.get_status(model)[0]
+    stat = exp.get_status(application)[0]
     assert stat == SmartSimStatus.STATUS_COMPLETED
 
     print(exp.summary())
@@ -128,15 +128,15 @@ def test_singularity_args(fileutils, test_dir):
     run_settings = exp.create_run_settings(
         "python3", "test/check_dirs.py", container=container
     )
-    model = exp.create_model("singularity_args", run_settings)
+    application = exp.create_application("singularity_args", run_settings)
     script = fileutils.get_test_conf_path("check_dirs.py")
-    model.attach_generator_files(to_copy=[script])
-    exp.generate(model)
+    application.attach_generator_files(to_copy=[script])
+    exp.generate(application)
 
-    exp.start(model, summary=False)
+    exp.start(application, summary=False)
 
     # get and confirm status
-    stat = exp.get_status(model)[0]
+    stat = exp.get_status(application)[0]
     assert stat == SmartSimStatus.STATUS_COMPLETED
 
     print(exp.summary())
@@ -146,7 +146,7 @@ def test_singularity_args(fileutils, test_dir):
 def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
-    Finally, the tensor is used to run a model.
+    Finally, the tensor is used to run a application.
 
     Note: This is a containerized port of test_smartredis.py
     """
@@ -181,7 +181,7 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
 
     exp.generate(ensemble)
 
-    # start the models
+    # start the applications
     exp.start(ensemble, summary=False)
 
     # get and confirm statuses

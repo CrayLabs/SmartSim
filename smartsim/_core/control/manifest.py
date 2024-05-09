@@ -30,7 +30,7 @@ import typing as t
 from dataclasses import dataclass, field
 
 from ...database import Orchestrator
-from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
+from ...entity import DBNode, Ensemble, EntitySequence, Application, SmartSimEntity
 from ...error import SmartSimError
 from ..config import CONFIG
 from ..utils import helpers as _helpers
@@ -38,7 +38,7 @@ from ..utils import serialize as _serialize
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
-_AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Model, DBNode)
+_AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Application, DBNode)
 
 if t.TYPE_CHECKING:
     import os
@@ -50,7 +50,7 @@ class Manifest:
     `SmartSimEntity`-derived objects or `EntitySequence`-derived objects) can
     be accessed by using the corresponding accessor.
 
-    Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+    Instances of ``Application``, ``Ensemble`` and ``Orchestrator``
     can all be passed as arguments
     """
 
@@ -73,15 +73,15 @@ class Manifest:
         return dbs
 
     @property
-    def models(self) -> t.List[Model]:
-        """Return Model instances in Manifest
+    def applications(self) -> t.List[Application]:
+        """Return Application instances in Manifest
 
-        :return: model instances
+        :return: application instances
         """
-        _models: t.List[Model] = [
-            item for item in self._deployables if isinstance(item, Model)
+        _applications: t.List[Application] = [
+            item for item in self._deployables if isinstance(item, Application)
         ]
-        return _models
+        return _applications
 
     @property
     def ensembles(self) -> t.List[Ensemble]:
@@ -135,7 +135,7 @@ class Manifest:
     def __str__(self) -> str:
         output = ""
         e_header = "=== Ensembles ===\n"
-        m_header = "=== Models ===\n"
+        m_header = "=== Applications ===\n"
         db_header = "=== Database ===\n"
         if self.ensembles:
             output += e_header
@@ -149,15 +149,15 @@ class Manifest:
                     output += f"{str(ensemble.batch_settings)}\n"
             output += "\n"
 
-        if self.models:
+        if self.applications:
             output += m_header
-            for model in self.models:
-                output += f"{model.name}\n"
-                if model.batch_settings:
-                    output += f"{model.batch_settings}\n"
-                output += f"{model.run_settings}\n"
-                if model.params:
-                    output += f"Parameters: \n{_helpers.fmt_dict(model.params)}\n"
+            for application in self.applications:
+                output += f"{application.name}\n"
+                if application.batch_settings:
+                    output += f"{application.batch_settings}\n"
+                output += f"{application.run_settings}\n"
+                if application.params:
+                    output += f"Parameters: \n{_helpers.fmt_dict(application.params)}\n"
             output += "\n"
 
         for adb in self.dbs:
@@ -175,8 +175,8 @@ class Manifest:
     @property
     def has_db_objects(self) -> bool:
         """Check if any entity has DBObjects to set"""
-        ents: t.Iterable[t.Union[Model, Ensemble]] = itertools.chain(
-            self.models,
+        ents: t.Iterable[t.Union[Application, Ensemble]] = itertools.chain(
+            self.applications,
             self.ensembles,
             (member for ens in self.ensembles for member in ens.entities),
         )
@@ -212,8 +212,8 @@ class LaunchedManifest(t.Generic[_T]):
     """
 
     metadata: _LaunchedManifestMetadata
-    models: t.Tuple[t.Tuple[Model, _T], ...]
-    ensembles: t.Tuple[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]], ...]
+    applications: t.Tuple[t.Tuple[Application, _T], ...]
+    ensembles: t.Tuple[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]], ...]
     databases: t.Tuple[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]], ...]
 
     def map(self, func: t.Callable[[_T], _U]) -> "LaunchedManifest[_U]":
@@ -225,10 +225,10 @@ class LaunchedManifest(t.Generic[_T]):
 
         return LaunchedManifest(
             metadata=self.metadata,
-            models=_map_entity_data(func, self.models),
+            applications=_map_entity_data(func, self.applications),
             ensembles=tuple(
-                (ens, _map_entity_data(func, model_data))
-                for ens, model_data in self.ensembles
+                (ens, _map_entity_data(func, application_data))
+                for ens, application_data in self.ensembles
             ),
             databases=tuple(
                 (db_, _map_entity_data(func, node_data))
@@ -249,8 +249,8 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     launcher_name: str
     run_id: str = field(default_factory=_helpers.create_short_id_str)
 
-    _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list, init=False)
-    _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
+    _applications: t.List[t.Tuple[Application, _T]] = field(default_factory=list, init=False)
+    _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]]] = field(
         default_factory=list, init=False
     )
     _databases: t.List[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]] = (
@@ -265,8 +265,8 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def run_telemetry_subdirectory(self) -> pathlib.Path:
         return _format_run_telemetry_path(self.exp_path, self.exp_name, self.run_id)
 
-    def add_model(self, model: Model, data: _T) -> None:
-        self._models.append((model, data))
+    def add_application(self, application: Application, data: _T) -> None:
+        self._applications.append((application, data))
 
     def add_ensemble(self, ens: Ensemble, data: t.Sequence[_T]) -> None:
         self._ensembles.append((ens, self._entities_to_data(ens.entities, data)))
@@ -295,7 +295,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
                 self.exp_path,
                 self.launcher_name,
             ),
-            models=tuple(self._models),
+            applications=tuple(self._applications),
             ensembles=tuple(self._ensembles),
             databases=tuple(self._databases),
         )

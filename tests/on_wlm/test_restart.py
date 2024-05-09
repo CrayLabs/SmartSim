@@ -44,8 +44,8 @@ def test_restart(fileutils, test_dir, wlmutils):
     settings = exp.create_run_settings("python", f"{script} --time=5")
     settings.set_tasks(1)
 
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=deepcopy(settings))
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
+    M2 = exp.create_application("m2", path=test_dir, run_settings=deepcopy(settings))
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)

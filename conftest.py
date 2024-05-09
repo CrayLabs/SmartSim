@@ -48,7 +48,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
-from smartsim.entity import Model
+from smartsim.entity import Application
 from smartsim.error import SSConfigError
 from smartsim.settings import (
     AprunSettings,
@@ -652,10 +652,10 @@ class ColoUtils:
         application_file: str,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[RunSettings] = None,
-        colo_model_name: str = "colocated_model",
+        colo_application_name: str = "colocated_application",
         port: int = test_port,
         on_wlm: bool = False,
-    ) -> Model:
+    ) -> Application:
         """Setup database needed for the colo pinning tests"""
 
         # get test setup
@@ -669,31 +669,31 @@ class ColoUtils:
         if on_wlm:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
-        colo_model = exp.create_model(colo_model_name, colo_settings)
+        colo_application = exp.create_application(colo_application_name, colo_settings)
 
         if db_type in ["tcp", "deprecated"]:
             db_args["port"] = port
             db_args["ifname"] = "lo"
-        if db_type == "uds" and colo_model_name is not None:
+        if db_type == "uds" and colo_application_name is not None:
             tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
-            socket_name = f"{colo_model_name}_{socket_suffix}.socket"
+            socket_name = f"{colo_application_name}_{socket_suffix}.socket"
             db_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
-            "tcp": colo_model.colocate_db_tcp,
-            "deprecated": colo_model.colocate_db,
-            "uds": colo_model.colocate_db_uds,
+            "tcp": colo_application.colocate_db_tcp,
+            "deprecated": colo_application.colocate_db,
+            "uds": colo_application.colocate_db_uds,
         }
         with warnings.catch_warnings():
             if db_type == "deprecated":
                 message = "`colocate_db` has been deprecated"
                 warnings.filterwarnings("ignore", message=message)
             colocate_fun[db_type](**db_args)
-        # assert model will launch with colocated db
-        assert colo_model.colocated
+        # assert application will launch with colocated db
+        assert colo_application.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
-        return colo_model
+        return colo_application
 
 
 @pytest.fixture

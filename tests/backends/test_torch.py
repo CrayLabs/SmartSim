@@ -74,7 +74,7 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
     )
     if wlmutils.get_test_launcher() != "local":
         run_settings.set_tasks(1)
-    model = exp.create_model("torch_script", run_settings)
+    model = exp.create_application("torch_script", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     script_path = Path(script_dir, "run_torch.py").resolve()
