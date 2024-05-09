@@ -1,0 +1,51 @@
+    = Ensemble Name: {{ ensemble.name }} =
+        Members: {{ ensemble|length }}
+        {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+        {%- if ensemble.params %}
+        Ensemble Parameters:
+            {%- for key, value in ensemble.params.items() %}
+          {{ key }}: {{ '{:^9}'.format(value|string)|truncate(81,true,'...')}}
+                {%- endfor %}
+    {%- endif %}
+    {%- endif %}
+    {%- if ensemble.models | length > 2 %}
+    {% set model = ensemble.models[0] %}
+    - Model Name: {{ model.name }} -
+        {%- include 'model.template' %}
+        {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+        Client Configuration:
+            {%- if model.run_settings.colocated_db_settings %}
+            {%- include "clientconfigcolo.template" %}
+            {%- endif %}
+            {%- if manifest.dbs %}
+            {%- include "clientconfig.template" %}
+            {%- endif %}
+            {%- endif %}
+        ...
+        {% set model = ensemble.models[(ensemble.models | length)-1] %}
+    - Model Name: {{ model.name }} -
+        {%- include 'model.template' %}
+            {% if model.run_settings.colocated_db_settings or manifest.dbs %}
+        Client Configuration:
+            {%- if model.run_settings.colocated_db_settings %}
+            {%- include "clientconfigcolo.template" %}
+            {%- endif %}
+            {%- if manifest.dbs %}
+            {%- include "clientconfig.template" %}
+            {%- endif %}
+            {%- endif %}
+        {%- else %}
+    {% for model in ensemble %}
+    - Model Name: {{ model.name }} -
+        {%- include 'model.template' %}
+        {% if model.run_settings.colocated_db_settings or manifest.dbs %}
+        Client Configuration:
+              {%- if model.run_settings.colocated_db_settings %}
+                {%- include "clientconfigcolo.template" %}
+            {%- endif %}
+            {%- if manifest.dbs %}
+            {%- include "clientconfig.template" %}
+            {%- endif %}
+            {%- endif %}
+        {% endfor %}
+    {%- endif %}

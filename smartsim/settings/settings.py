@@ -63,19 +63,12 @@ def create_batch_settings(
 
     :param launcher: launcher for this experiment, if set to 'auto',
                      an attempt will be made to find an available launcher on the system
-    :type launcher: str
-    :param nodes: number of nodes for batch job, defaults to 1
-    :type nodes: int, optional
-    :param time: length of batch job, defaults to ""
-    :type time: str, optional
-    :param queue: queue or partition (if slurm), defaults to ""
-    :type queue: str, optional
-    :param account: user account name for batch system, defaults to ""
-    :type account: str, optional
-    :param batch_args: additional batch arguments, defaults to None
-    :type batch_args: dict[str, str], optional
+    :param nodes: number of nodes for batch job
+    :param time: length of batch job
+    :param queue: queue or partition (if slurm)
+    :param account: user account name for batch system
+    :param batch_args: additional batch arguments
     :return: a newly created BatchSettings instance
-    :rtype: BatchSettings
     :raises SmartSimError: if batch creation fails
     """
     # all supported batch class implementations
@@ -127,21 +120,13 @@ def create_run_settings(
 
     :param launcher: launcher to create settings for, if set to 'auto',
                      an attempt will be made to find an available launcher on the system
-    :type launcher: str
     :param run_command: command to run the executable
-    :type run_command: str
     :param exe: executable to run
-    :type exe: str
     :param exe_args: arguments to pass to the executable
-    :type exe_args: list[str], optional
     :param run_args: arguments to pass to the ``run_command``
-    :type run_args: list[str], optional
     :param env_vars: environment variables to pass to the executable
-    :type env_vars: dict[str, str], optional
-    :param container: container type for workload (e.g. "singularity"), defaults to None
-    :type container: Container, optional
+    :param container: container type for workload (e.g. "singularity")
     :return: the created ``RunSettings``
-    :rtype: RunSettings
     :raises SmartSimError: if run_command=="auto" and detection fails
     """
     # all supported RunSettings child classes

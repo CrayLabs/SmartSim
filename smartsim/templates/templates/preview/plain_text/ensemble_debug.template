@@ -1,0 +1,62 @@
+
+    {% for ensemble in manifest.ensembles %}
+    = Ensemble Name: {{ ensemble.name }} =
+        {%- if ensemble.path %}
+        Path: {{ ensemble.path }}
+        {%- endif %}
+        Members: {{ ensemble|length }}
+        {%- if ensemble.params %}
+        Ensemble Parameters:
+          {%- for key, value in ensemble.params.items() %}
+          {{ key }}: {{ value | join(", ") | wordwrap(150) | safe | replace('\n', '\n              ') }}
+          {%- endfor %}
+        {%- endif %}
+        {%- if ensemble.replicas %}
+        Replicas: {{ ensemble.replicas }}
+        {%- elif ensemble.perm_strat %}
+        Permutation Strategy: {{ ensemble.perm_strat }}
+        {%- endif %}
+        {%- if ensemble.batch_settings %}
+        Batch Launch: True
+        Batch Command: {{ ensemble.batch_settings.batch_cmd }}
+        {%- endif %}
+        {%- if ensemble.batch_settings.batch_args %}
+        Batch Arguments:
+        {%- for key, value in ensemble.batch_settings.batch_args.items() %}
+          {{ key }}: {{ value }}
+        {%- endfor %}
+        {%- endif %}
+
+    {%- if verbosity_level == Verbosity.DEBUG %}
+    {%- for model in ensemble.entities %}
+
+    - Model Name: {{ model.name }} -
+    {%- include 'model.template' %}
+        {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+        Client Configuration:
+            {%- if model.run_settings.colocated_db_settings %}
+            {%- include "clientconfigcolo.template" %}
+            {%- endif %}
+            {%- if manifest.dbs %}
+            {%- include "clientconfig.template" %}
+            {%- endif %}
+    {%- endif %}
+    {%- endfor %}
+    {%- endif %}
+    {%- if verbosity_level == Verbosity.DEVELOPER %}
+    {%- for model in ensemble.entities %}
+
+    - Model Name: {{ model.name }} -
+        {%- include 'model_debug.template' %}
+        {%- if model.run_settings.colocated_db_settings or manifest.dbs %}
+        Client Configuration:
+            {%- if model.run_settings.colocated_db_settings %}
+            {%- include "clientconfigcolo.template" %}
+            {%- endif %}
+            {%- if manifest.dbs %}
+            {%- include "clientconfig.template" %}
+            {%- endif %}
+        {%- endif %}
+{%- endfor %}
+{%- endif %}
+{% endfor %}

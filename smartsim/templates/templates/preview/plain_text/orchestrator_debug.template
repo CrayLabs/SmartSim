@@ -1,0 +1,33 @@
+
+    = Database Identifier: {{ db.name }} =
+        {%- if db.path %}
+        Path: {{ db.path }}
+        {%- endif %}
+        Shards: {{ db.num_shards }}
+        TCP/IP Port(s):
+          {%- for port in db.ports %}
+          {{ port }}
+          {%- endfor %}
+        Network Interface: {{ db._interfaces[0] }}
+        Type: {{ config.database_cli | get_dbtype }}
+        Executable: {{ config.database_exe }}
+        {%- if db.run_settings %}
+        Run Command: {{ db.run_settings.run_command }}
+        {%- if db.run_settings.run_args %}
+        Run Arguments:
+        {%- for key, value in db.run_settings.run_args.items() %}
+          {{ key }}: {{ value }}
+        {%- endfor %}
+        {%- endif %}
+        {%- endif %}
+        {%- if db.run_command %}
+        Run Command: {{ db.run_command }}
+        {%- endif %}
+        {%- if db.batch_settings %}
+        Batch Launch: True
+        Batch Command: {{ db.batch_settings.batch_cmd }}
+        Batch Arguments:
+        {%- for key, value in db.batch_settings.batch_args.items() %}
+          {{ key }}: {{ value }}
+        {%- endfor %}
+        {%- endif %}

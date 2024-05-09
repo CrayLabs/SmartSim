@@ -45,13 +45,9 @@ class PalsMpiexecSettings(_BaseMPISettings):
     None can be provided for arguments that do not have values.
 
     :param exe: executable
-    :type exe: str
-    :param exe_args: executable arguments, defaults to None
-    :type exe_args: str | list[str], optional
-    :param run_args: arguments for run command, defaults to None
-    :type run_args: dict[str, str], optional
-    :param env_vars: environment vars to launch job with, defaults to None
-    :type env_vars: dict[str, str], optional
+    :param exe_args: executable arguments
+    :param run_args: arguments for run command
+    :param env_vars: environment vars to launch job with
     """
 
     def __init__(
@@ -74,16 +70,11 @@ class PalsMpiexecSettings(_BaseMPISettings):
         None can be provided for arguments that do not have values.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         :param fail_if_missing_exec: Throw an exception of the MPI command
                                      is missing. Otherwise, throw a warning
-        :type fail_if_missing_exec: bool, optional
         """
         super().__init__(
             exe,
@@ -103,7 +94,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         For examples, see the man page for ``mpirun``
 
         :param task_mapping: task mapping
-        :type task_mapping: str
         """
         logger.warning("set_task_map not supported under PALS")
 
@@ -116,7 +106,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         and will soon be replaced.
 
         :param cpus_per_task: number of tasks
-        :type cpus_per_task: int
         """
         logger.warning("set_cpus_per_task not supported under PALS")
 
@@ -126,7 +115,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         This sets ``--bind-to`` for MPI compliant implementations
 
         :param bind_type: binding type
-        :type bind_type: str
         """
         self.run_args["cpu-bind"] = bind_type
 
@@ -134,7 +122,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """Set the number of tasks
 
         :param tasks: number of total tasks to launch
-        :type tasks: int
         """
         self.run_args["np"] = int(tasks)
 
@@ -142,7 +129,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node
-        :type tasks_per_node: int
         """
         self.run_args["ppn"] = int(tasks_per_node)
 
@@ -152,7 +138,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool
         """
 
         logger.warning("set_quiet_launch not supported under PALS")
@@ -163,7 +148,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         This sets ``--preload-binary``
 
         :param dest_path: Destination path (Ignored)
-        :type dest_path: str | None
         """
         if dest_path is not None and isinstance(dest_path, str):
             logger.warning(
@@ -178,7 +162,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """Set the maximum number of seconds that a job will run
 
         :param walltime: number like string of seconds that a job will run in secs
-        :type walltime: str
         """
         logger.warning("set_walltime not supported under PALS")
 
@@ -186,7 +169,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """Set the GPU affinity through a bash script
 
         :param affinity: path to the affinity script
-        :type affinity: str
         """
         self.affinity_script.append(str(affinity))
         for arg in args:
@@ -196,7 +178,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
-        :rtype: list[str]
         """
         # args launcher uses
         args = []
@@ -219,7 +200,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """Format the environment variables for mpirun
 
         :return: list of env vars
-        :rtype: list[str]
         """
         formatted = []
 
@@ -242,7 +222,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         This sets ``--hosts``
 
         :param host_list: list of host names
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):

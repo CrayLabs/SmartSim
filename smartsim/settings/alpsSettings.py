@@ -46,13 +46,9 @@ class AprunSettings(RunSettings):
         ``AprunSettings`` can be used for the `pbs` launcher.
 
         :param exe: executable
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
+        :param exe_args: executable arguments
+        :param run_args: arguments for run command
+        :param env_vars: environment vars to launch job with
         """
         super().__init__(
             exe,
@@ -71,7 +67,6 @@ class AprunSettings(RunSettings):
         into a single MPMD command joined with ':'
 
         :param settings: ``AprunSettings`` instance
-        :type settings: AprunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -89,7 +84,6 @@ class AprunSettings(RunSettings):
         This sets ``--cpus-per-pe``
 
         :param cpus_per_task: number of cpus to use per task
-        :type cpus_per_task: int
         """
         self.run_args["cpus-per-pe"] = int(cpus_per_task)
 
@@ -99,7 +93,6 @@ class AprunSettings(RunSettings):
         This sets ``--pes``
 
         :param tasks: number of tasks
-        :type tasks: int
         """
         self.run_args["pes"] = int(tasks)
 
@@ -109,7 +102,6 @@ class AprunSettings(RunSettings):
         This sets ``--pes-per-node``
 
         :param tasks_per_node: number of tasks per node
-        :type tasks_per_node: int
         """
         self.run_args["pes-per-node"] = int(tasks_per_node)
 
@@ -117,7 +109,6 @@ class AprunSettings(RunSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -134,7 +125,6 @@ class AprunSettings(RunSettings):
         This sets ``--node-list-file``
 
         :param file_path: Path to the hostlist file
-        :type file_path: str
         """
         self.run_args["node-list-file"] = file_path
 
@@ -142,7 +132,6 @@ class AprunSettings(RunSettings):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
-        :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
@@ -159,7 +148,6 @@ class AprunSettings(RunSettings):
         This sets ``--cpu-binding``
 
         :param bindings: List of cpu numbers
-        :type bindings: list[int] | int
         """
         if isinstance(bindings, int):
             bindings = [bindings]
@@ -171,7 +159,6 @@ class AprunSettings(RunSettings):
         This sets ``--memory-per-pe`` in megabytes
 
         :param memory_per_node: Per PE memory limit in megabytes
-        :type memory_per_node: int
         """
         self.run_args["memory-per-pe"] = int(memory_per_node)
 
@@ -181,7 +168,6 @@ class AprunSettings(RunSettings):
         This sets ``--debug`` arg to the highest level
 
         :param verbose: Whether the job should be run verbosely
-        :type verbose: bool
         """
         if verbose:
             self.run_args["debug"] = 7
@@ -194,7 +180,6 @@ class AprunSettings(RunSettings):
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool
         """
         if quiet:
             self.run_args["quiet"] = None
@@ -205,7 +190,6 @@ class AprunSettings(RunSettings):
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings
-        :rtype: list[str]
         """
         # args launcher uses
         args = []
@@ -228,7 +212,6 @@ class AprunSettings(RunSettings):
         """Format the environment variables for aprun
 
         :return: list of env vars
-        :rtype: list[str]
         """
         formatted = []
         if self.env_vars:
@@ -242,6 +225,5 @@ class AprunSettings(RunSettings):
         Walltime is given in total number of seconds
 
         :param walltime: wall time
-        :type walltime: str
         """
         self.run_args["cpu-time-limit"] = str(walltime)

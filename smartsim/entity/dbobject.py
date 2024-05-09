@@ -110,9 +110,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         """Enumerate devices for a DBObject
 
         :param dbobject: DBObject to enumerate
-        :type dbobject: DBObject
         :return: list of device names
-        :rtype: list[str]
         """
 
         if self.device == "GPU" and self.devices_per_node > 1:
@@ -175,17 +173,11 @@ class DBScript(DBObject[str]):
         must be provided
 
         :param name: key to store script under
-        :type name: str
         :param script: TorchScript code
-        :type script: str, optional
-        :param script_path: path to TorchScript code, defaults to None
-        :type script_path: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param script_path: path to TorchScript code
+        :param device: device for script execution
         :param devices_per_node: number of devices to store the script on
-        :type devices_per_node: int
         :param first_device: first devices to store the script on
-        :type first_device: int
         """
         super().__init__(
             name, script, script_path, device, devices_per_node, first_device
@@ -235,31 +227,18 @@ class DBModel(DBObject[bytes]):
         must be provided
 
         :param name: key to store model under
-        :type name: str
         :param model: model in memory
-        :type model: str, optional
         :param model_file: serialized model
-        :type model_file: file path to model, optional
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
-        :param device: name of device for execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: name of device for execution
         :param devices_per_node: number of devices to store the model on
-        :type devices_per_node: int
         :param first_device: The first device to store the model on
-        :type first_device: int
-        :param batch_size: batch size for execution, defaults to 0
-        :type batch_size: int, optional
-        :param min_batch_size: minimum batch size for model execution, defaults to 0
-        :type min_batch_size: int, optional
-        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
-        :type min_batch_timeout: int, optional
-        :param tag: additional tag for model information, defaults to ""
-        :type tag: str, optional
-        :param inputs: model inputs (TF only), defaults to None
-        :type inputs: list[str], optional
-        :param outputs: model outupts (TF only), defaults to None
-        :type outputs: list[str], optional
+        :param batch_size: batch size for execution
+        :param min_batch_size: minimum batch size for model execution
+        :param min_batch_timeout: time to wait for minimum batch size
+        :param tag: additional tag for model information
+        :param inputs: model inputs (TF only)
+        :param outputs: model outupts (TF only)
         """
         super().__init__(
             name, model, model_file, device, devices_per_node, first_device

@@ -1,0 +1,7 @@
+
+{%- if verbosity_level == Verbosity.INFO %}
+{%- include "orchestrator_info.template" -%}
+{%- endif %}
+{%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+{%- include "orchestrator_debug.template" -%}
+{%- endif %}
