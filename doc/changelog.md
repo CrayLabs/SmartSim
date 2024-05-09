@@ -16,6 +16,7 @@ To be released at some future point in time
 Description
 
 -   Add dragon runtime installer
+-   Preview entities on experiment before start
 -   Update authentication in release workflow
 -   Auto-generate type-hints into documentation
 -   Auto-post release PR to develop
@@ -61,6 +62,9 @@ Detailed Notes
 -   Add `--dragon` option to `smart build`. Install appropriate Dragon
     runtime from Dragon GitHub release assets. (SmartSim-PR569_)
     ([SmartSim-PR569](https://github.com/CrayLabs/SmartSim/pull/569))
+
+-   Added preview functionality to Experiment, including preview of all entities, active infrastructure and
+    client configuration. ([SmartSim-PR525](https://github.com/CrayLabs/SmartSim/pull/525))
 -   Replace the developer created token with the GH_TOKEN environment variable.
     ([SmartSim-PR570](https://github.com/CrayLabs/SmartSim/pull/570))
 -   Add extension to auto-generate function type-hints into documentation.

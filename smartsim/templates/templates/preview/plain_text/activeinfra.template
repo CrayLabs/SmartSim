@@ -1,0 +1,9 @@
+
+    = Database Identifier: {{ db.entity.db_identifier }} =
+        Shards: {{ db.entity.num_shards }}
+        TCP/IP Port(s):
+          {%- for port in db.entity.ports %}
+          {{ port }}
+          {%- endfor %}
+        Network Interface: {{ db.entity.run_settings.exe_args | get_ifname }}
+        Type: {{ config.database_cli | get_dbtype }}
