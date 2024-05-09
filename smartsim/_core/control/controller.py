@@ -814,12 +814,12 @@ class Controller:
             err_message = (
                 "The SmartSim feature store checkpoint is incomplete or corrupted. "
             )
-            if not "db" in fs_config:
+            if not "fs" in fs_config:
                 raise SmartSimError(
                     err_message + "Could not find the featurestore object."
                 )
 
-            if not "db_jobs" in fs_config:
+            if not "fs_jobs" in fs_config:
                 raise SmartSimError(
                     err_message + "Could not find feature store job objects."
                 )
@@ -828,11 +828,11 @@ class Controller:
                 raise SmartSimError(
                     err_message + "Could not find feature store job objects."
                 )
-            feature_store: FeatureStore = fs_config["db"]
+            feature_store: FeatureStore = fs_config["fs"]
 
             # TODO check that each fs_object is running
 
-            job_steps = zip(fs_config["db_jobs"].values(), fs_config["steps"])
+            job_steps = zip(fs_config["fs_jobs"].values(), fs_config["steps"])
             try:
                 for fs_job, step in job_steps:
                     self._jobs.fs_jobs[fs_job.ename] = fs_job

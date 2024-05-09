@@ -69,7 +69,7 @@ def test_reconnect_local_feature_store(test_dir):
     exp_name = "test-feature-store-local-reconnect-2nd"
     exp_2 = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    checkpoint = osp.join(first_dir, "orchestrator", "smartsim_db.dat")
+    checkpoint = osp.join(first_dir, "feature_store", "smartsim_db.dat")
 
     reloaded_feature_store = exp_2.reconnect_feature_store(checkpoint)
 

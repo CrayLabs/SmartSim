@@ -129,7 +129,7 @@ def test_batch_model_symlinks(test_dir, wlmutils):
     _should_not_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.sh"))
 
 
-def test_batch_orchestrator_symlinks(test_dir, wlmutils):
+def test_batch_feature_store_symlinks(test_dir, wlmutils):
     exp_name = "test-batch-orc"
     launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
