@@ -55,14 +55,14 @@ def _do_dragon_teardown() -> int:
     # python processes, terminating `smart teardown`, and the
     # subprocess handling `dragon-cleanup`. Child processes using
     # subprocess.run are killed and cleanup is interrupted
-    process = subprocess.Popen(
+    with subprocess.Popen(
         [str(dragon_cleanup.absolute())],
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
-    process.wait()
-    return process.returncode
+    ) as process:
+        process.wait()
+        return process.returncode
 
 
 def execute(
