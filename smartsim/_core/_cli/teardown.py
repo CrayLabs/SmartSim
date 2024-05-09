@@ -51,12 +51,17 @@ def _do_dragon_teardown() -> int:
         print("dragon-cleanup not found. Skipping cleanup")
         return 0
 
-    process = subprocess.run(
+    # Use popen to avoid `dragon-cleanup` doing a kill on all
+    # python processes, terminating `smart teardown`, and the
+    # subprocess handling `dragon-cleanup`. Child processes using
+    # subprocess.run are killed and cleanup is interrupted
+    process = subprocess.Popen(
         [str(dragon_cleanup.absolute())],
         env=env,
-        check=False,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
+    process.wait()
     return process.returncode
 
 
