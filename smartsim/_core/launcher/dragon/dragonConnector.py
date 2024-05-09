@@ -222,6 +222,9 @@ class DragonConnector:
             if self._dragon_server_path is None:
                 raise SmartSimError("Path to Dragon server not set.")
 
+            logger.info("Establishing connection with Dragon server"
+                        "or starting a new one...")
+
             path = _resolve_dragon_path(self._dragon_server_path)
 
             self._connect_to_existing_server(path)

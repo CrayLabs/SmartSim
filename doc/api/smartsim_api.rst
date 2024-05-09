@@ -162,6 +162,28 @@ and within batch launches (e.g., ``QsubBatchSettings``)
     :members:
 
 
+.. _dragonsettings_api:
+
+DragonRunSettings
+-----------------
+
+``DragonRunSettings`` can be used on systems that support Slurm or
+PBS, if Dragon is available in the Python environment (see `_dragon_install`
+for instructions on how to install it through ``smart``).
+
+``DragonRunSettings`` can be used in interactive sessions (on allcation)
+and within batch launches (i.e. ``SbatchSettings`` or ``QsubBatchSettings``,
+for Slurm and PBS sessions, respectively).
+
+.. autosummary::
+    DragonRunSettings.set_nodes
+    DragonRunSettings.set_tasks_per_node
+
+.. autoclass:: DragonRunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
 
 .. _jsrun_api:
 
