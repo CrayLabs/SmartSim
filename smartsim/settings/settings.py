@@ -185,7 +185,7 @@ def create_run_settings(
 
     if launcher == "dragon":
         return DragonRunSettings(
-            exe, exe_args, run_args, env_vars, container=container, **kwargs
+            exe=exe, exe_args=exe_args, env_vars=env_vars, container=container, **kwargs
         )
 
     # if user specified and supported or auto detection worked
