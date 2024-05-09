@@ -150,5 +150,5 @@ and there are some known issues that can lead to errors during runs.
      ``SMARTSIM_DRAGON_STARTUP_TIMEOUT`` to a larger value or to ``"-1"``.
 
 
-- *MPI-based applications hanging*: to run MPI-based applications on Dragon, PMI must be
-  available on the system. This is a current limitation and is actively been worked on.
+- *MPI-based applications hanging*: to run MPI-based applications on Dragon, Cray PMI or Cray PALS
+  must be available on the system. This is a current limitation and is actively been worked on.
