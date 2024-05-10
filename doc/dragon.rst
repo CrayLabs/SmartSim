@@ -15,7 +15,7 @@ Dragon can be used as a launcher, within a Slurm or PBS allocation or batch job.
     a prototype implementation. Your assistance is invaluable in identifying any issues
     encountered during usage and suggesting missing features for implementation. Please
     provide feedback in the form of a created issue on the
-    `SmartSim issues page <https://github.com/CrayLabs/SmartSim/issues/new/chooses>`_ on github.
+    `SmartSim issues page <https://github.com/CrayLabs/SmartSim/issues>`_ on github.
 
 =====
 Usage
