@@ -58,4 +58,7 @@ RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --
 RUN python -m pip install -r doc/requirements-doc.txt \
     && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
 
+# Note this is needed to ensure that the Sphinx builds. Can be removed with newer Tensorflow
+RUN python -m pip install typing_extensions==4.6.1
+
 RUN make docs
