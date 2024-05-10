@@ -9,13 +9,20 @@ Overview
 `Dragon <https://dragonhpc.github.io/dragon/doc/_build/html/index.html>`_ is a
 composable distributed run-time targeting HPC workflows. In SmartSim,
 Dragon can be used as a launcher, within a Slurm or PBS allocation or batch job.
+The SmartSim team collaborates with the Dragon team to develop an efficient
+launcher which will enable fast, interactive, and customized execution of
+complex workflows on large HPC systems. As Dragon is scheduler-agonstic,
+the same SmartSim script using Dragon as a launcher can be run indifferently
+on a Slurm or PBS system. Support for other schedulers is coming soon.
 
 .. warning::
     The Dragon launcher is currently in its early development stage and should be treated as
     a prototype implementation. Your assistance is invaluable in identifying any issues
     encountered during usage and suggesting missing features for implementation. Please
     provide feedback in the form of a created issue on the
-    `SmartSim issues page <https://github.com/CrayLabs/SmartSim/issues>`_ on github.
+    `SmartSim issues page <https://github.com/CrayLabs/SmartSim/issues>`_ on GitHub.
+    The :ref:`Known Issues section<dragon_known_issues>` is also a good starting
+    point when troubleshooting workflows run through the Dragon launcher.
 
 =====
 Usage
@@ -76,12 +83,13 @@ Sharing the Dragon Server across Experiments
 
 Currently, SmartSim supports only one Dragon server per allocation. Consequently,
 if multiple Experiments need to run within the same allocation, the Dragon server
-must be shared among them. By default, the server is initiated from a subdirectory
-of the ``Experiment`` path. To enable server sharing, users can specify a custom path
+must be shared among them. By default, the server starts from a subdirectory
+of the ``Experiment`` path, where it creates a configuration file.
+To enable server sharing, users can specify a custom path
 from which the server should be launched. This can be achieved by setting the
-environment variable ``SMARTSIM_DRAGON_SERVER_PATH`` to an existing path. Each ``Experiment``
-will then search for the running server in the specified path and initiate a new
-server instance only if none is already running.
+environment variable ``SMARTSIM_DRAGON_SERVER_PATH`` to an existing absolute path.
+Each ``Experiment`` will then search for the configuration file in the specified path
+and initiate a new server instance only if the file is not found.
 
 Dragon's High-Speed Transport Agents
 ====================================
@@ -90,7 +98,8 @@ On systems equipped with the HPE Slingshot interconnect, Dragon utilizes High-Sp
 Transport Agents (HSTA) by default for internal messaging within the infrastructure
 launched by SmartSim. On systems without the HPE Slingshot interconnect,
 TCP agents are employed. To specify the use of TCP agents, users must set the environment
-variable ``SMARTSIM_DRAGON_TRANSPORT`` to tcp prior to executing the Experiment.
+variable ``SMARTSIM_DRAGON_TRANSPORT`` to ``tcp`` prior to executing the Experiment.
+To specify HSTA, ``SMARTSIM_DRAGON_TRANSPORT`` can be set to ``hsta`` or left unset.
 
 =============
 Communication
@@ -100,7 +109,8 @@ SmartSim and the Dragon Server communicate using `ZeroMQ <https://zeromq.org/>`_
 
 Similar to other communication protocols, defining timeouts for send and receive operations
 is crucial in SmartSim. SmartSim configures default timeouts that have been tested on various
-systems. However, if you encounter failed communication attempts, adjusting the timeouts may
+systems, such as Polaris, Perlmutter, and other HPE Cray EX and Apollo systems.
+However, if you encounter failed communication attempts, adjusting the timeouts may
 be necessary. You can adjust these timeouts by setting the corresponding environment variables:
 
 - **Server Start-up Timeout**: This timeout specifies the duration the SmartSim ``Experiment``
@@ -116,10 +126,10 @@ be necessary. You can adjust these timeouts by setting the corresponding environ
 Setting any timeout to "-1" will result in an infinite waiting time, causing the execution to
 block until the communication is completed, potentially hanging indefinitely if issues occur.
 
-It's important to note that all communications are secured with elliptic curve cryptography.
+It's important to note that all communications are secured with `elliptic curve cryptography <http://curvezmq.org/>`_.
 SmartSim generates the necessary key-pairs and stores them in the user's home directory by
-default. However, you can specify an alternative path using the ``SMARTSIM_KEY_PATH`` environment
-variable.
+default. However, you can specify an alternative absolute path using the ``SMARTSIM_KEY_PATH``
+environment variable.
 
 .. _dragon_known_issues:
 
