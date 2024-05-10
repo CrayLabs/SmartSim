@@ -164,7 +164,7 @@ class DragonLauncher(WLMLauncher):
         elif isinstance(step, DragonStep):
             run_args = step.run_settings.run_args
             req_env = step.run_settings.env_vars
-            self._connector._load_persisted_env()
+            self._connector.load_persisted_env()
             merged_env = self._connector.merge_persisted_env(os.environ.copy())
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)

@@ -229,7 +229,7 @@ class DragonConnector:
 
         return connector_socket
 
-    def _load_persisted_env(self) -> t.Dict[str, str]:
+    def load_persisted_env(self) -> t.Dict[str, str]:
         """Load key-value pairs from a .env file created during dragon installation
 
         :return: Key-value pairs stored in .env file"""
@@ -329,7 +329,7 @@ class DragonConnector:
             dragon_out_file = path / "dragon_head.out"
             dragon_err_file = path / "dragon_head.err"
 
-            self._load_persisted_env()
+            self.load_persisted_env()
             merged_env = self.merge_persisted_env(os.environ.copy())
             merged_env.update({"PYTHONUNBUFFERED": "1"})
 
@@ -393,8 +393,7 @@ class DragonConnector:
                 logger.warning("Could not start Dragon server as subprocess")
 
     def cleanup(self) -> None:
-        """Shut down Dragon server and authenticator thread
-        """
+        """Shut down Dragon server and authenticator thread"""
         if self._dragon_head_socket is not None and self._dragon_head_pid is not None:
             _dragon_cleanup(
                 server_socket=self._dragon_head_socket,

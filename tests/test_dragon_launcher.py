@@ -423,7 +423,7 @@ def test_load_env_no_file(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
         connector = DragonConnector()
 
-        loaded_env = connector._load_persisted_env()
+        loaded_env = connector.load_persisted_env()
         assert not loaded_env
 
 
@@ -443,7 +443,7 @@ def test_load_env_env_file_created(monkeypatch: pytest.MonkeyPatch, test_dir: st
         # load config w/launcher
         connector = DragonConnector()
 
-        loaded_env = connector._load_persisted_env()
+        loaded_env = connector.load_persisted_env()
         assert loaded_env
 
         # confirm .env was parsed as expected by inspecting a key
@@ -462,7 +462,7 @@ def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         # load config w/launcher
         connector = DragonConnector()
 
-        loaded_env = connector._load_persisted_env()
+        loaded_env = connector.load_persisted_env()
         assert loaded_env
 
         # ensure attempting to reload would bomb
@@ -470,7 +470,7 @@ def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
         # attempt to load and if it doesn't blow up, it used the cached copy
 
-        loaded_env = connector._load_persisted_env()
+        loaded_env = connector.load_persisted_env()
         assert loaded_env
 
 
@@ -485,7 +485,7 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
 
         # load config w/launcher
         connector = DragonConnector()
-        loaded_env = {**connector._load_persisted_env()}
+        loaded_env = {**connector.load_persisted_env()}
         assert loaded_env
 
         curr_base_dir = "/foo"

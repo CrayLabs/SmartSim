@@ -125,8 +125,7 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
 
 
 def register_signal_handlers() -> None:
-    """Register signal handlers prior to execution
-    """
+    """Register signal handlers prior to execution"""
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
     # the server process.
