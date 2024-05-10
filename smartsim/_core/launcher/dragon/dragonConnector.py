@@ -333,9 +333,6 @@ class DragonConnector:
             merged_env = self.merge_persisted_env(os.environ.copy())
             merged_env.update({"PYTHONUNBUFFERED": "1"})
 
-            logger.debug(merged_env["PATH"])
-            logger.debug(merged_env["LD_LIBRARY_PATH"])
-
             with (
                 open(dragon_out_file, "w", encoding="utf-8") as dragon_out,
                 open(dragon_err_file, "w", encoding="utf-8") as dragon_err,
