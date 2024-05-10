@@ -47,7 +47,8 @@ from smartsim._core.schemas import (
 from smartsim.log import get_logger
 
 """
-Dragon server entrypoint script
+Dragon client entrypoint script, used to start a server, send requests to it
+and then shut it down.
 """
 
 logger = get_logger("Dragon Client")
@@ -61,10 +62,16 @@ class DragonClientEntrypointArgs:
 
 
 def cleanup() -> None:
+    """Cleanup resources"""
     logger.debug("Cleaning up")
 
 
 def parse_requests(request_filepath: Path) -> t.List[DragonRequest]:
+    """Parse serialized requests from file
+
+    :param request_filepath: Path to file with serialized requests
+    :return: Deserialized requests
+    """
     requests: t.List[DragonRequest] = []
     try:
         with open(request_filepath, "r", encoding="utf-8") as request_file:
@@ -85,6 +92,12 @@ def parse_requests(request_filepath: Path) -> t.List[DragonRequest]:
 
 
 def parse_arguments(args: t.List[str]) -> DragonClientEntrypointArgs:
+    """Parse arguments used to run entrypoint script
+
+    :param args: Arguments without name of executable
+    :raises ValueError: If the request file is not specified
+    :return: Parsed arguments
+    """
     parser = argparse.ArgumentParser(
         prefix_chars="+",
         description="SmartSim Dragon Client Process, to be used in batch scripts",
@@ -93,12 +106,17 @@ def parse_arguments(args: t.List[str]) -> DragonClientEntrypointArgs:
     args_ = parser.parse_args(args)
 
     if not args_.submit:
-        raise ValueError("Empty request file.")
+        raise ValueError("Request file not provided.")
 
     return DragonClientEntrypointArgs(submit=Path(args_.submit))
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
+    """Handle signals sent to this process
+
+    :param signo: Signal number
+    :param _frame: Frame, defaults to None
+    """
     if not signo:
         logger.info("Received signal with no signo")
     else:
@@ -107,14 +125,21 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
 
 
 def register_signal_handlers() -> None:
+    """Register signal handlers prior to execution
+    """
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
-    # the database process.
+    # the server process.
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 
 
 def execute_entrypoint(args: DragonClientEntrypointArgs) -> int:
+    """Execute the entrypoint with specified arguments
+
+    :param args: Parsed arguments
+    :return: Return code
+    """
 
     try:
         requests = parse_requests(args.submit)

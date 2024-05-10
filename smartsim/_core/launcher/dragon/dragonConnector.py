@@ -95,10 +95,18 @@ class DragonConnector:
 
     @property
     def is_connected(self) -> bool:
+        """Whether the Connector established a connection to the server
+
+        :return: True if connected
+        """
         return self._dragon_head_socket is not None
 
     @property
     def can_monitor(self) -> bool:
+        """Whether the Connector knows the PID of the dragon server head process
+        and can monitor its status
+
+        :return: True if the server can be monitored"""
         return self._dragon_head_pid is not None
 
     def _handshake(self, address: str) -> None:
@@ -138,6 +146,13 @@ class DragonConnector:
                 pass
 
     def ensure_connected(self) -> None:
+        """Ensure that the Connector established a connection to the server
+
+        If the Connector is not connected, attempt to connect and raise an error
+        on failure.
+
+        :raises SmartSimError: if connection cannot be established
+        """
         if not self.is_connected:
             self.connect_to_dragon()
         if not self.is_connected:
@@ -215,7 +230,9 @@ class DragonConnector:
         return connector_socket
 
     def _load_persisted_env(self) -> t.Dict[str, str]:
-        """Load key-value pairs from a .env file created during dragon installation"""
+        """Load key-value pairs from a .env file created during dragon installation
+
+        :return: Key-value pairs stored in .env file"""
         if self._env_vars:
             # use previously loaded env vars.
             return self._env_vars
@@ -236,7 +253,11 @@ class DragonConnector:
 
     def merge_persisted_env(self, current_env: t.Dict[str, str]) -> t.Dict[str, str]:
         """Combine the current environment variable set with the dragon .env by adding
-        Dragon-specific values and prepending any new values to existing keys"""
+        Dragon-specific values and prepending any new values to existing keys
+
+        :param current_env: Environment which has to be merged with .env variables
+        :return: Merged environment
+        """
         # ensure we start w/a complete env from current env state
         merged_env: t.Dict[str, str] = {**current_env}
 
@@ -256,6 +277,10 @@ class DragonConnector:
         return merged_env
 
     def connect_to_dragon(self) -> None:
+        """Connect to Dragon server
+
+        :raises SmartSimError: If connection cannot be established
+        """
         config = get_config()
         with DRG_LOCK:
             # TODO use manager instead
@@ -368,6 +393,8 @@ class DragonConnector:
                 logger.warning("Could not start Dragon server as subprocess")
 
     def cleanup(self) -> None:
+        """Shut down Dragon server and authenticator thread
+        """
         if self._dragon_head_socket is not None and self._dragon_head_pid is not None:
             _dragon_cleanup(
                 server_socket=self._dragon_head_socket,
@@ -379,6 +406,13 @@ class DragonConnector:
             self._authenticator = None
 
     def send_request(self, request: DragonRequest, flags: int = 0) -> DragonResponse:
+        """Send a request to the Dragon server using a secure socket
+
+        :param request: The request to send
+        :param flags: 0MQ flags, defaults to 0
+        :raises SmartSimError: If not connected to Dragon server
+        :return: Response from server
+        """
         self.ensure_connected()
         if (socket := self._dragon_head_socket) is None:
             raise SmartSimError("Not connected to Dragon")
