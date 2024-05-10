@@ -32,6 +32,7 @@ import signal
 import socket
 import sys
 import textwrap
+import time
 import typing as t
 from types import FrameType
 
@@ -41,9 +42,17 @@ import zmq.auth.thread
 from smartsim._core.config import get_config
 from smartsim._core.launcher.dragon import dragonSockets
 from smartsim._core.launcher.dragon.dragonBackend import DragonBackend
-from smartsim._core.schemas import DragonBootstrapRequest, DragonBootstrapResponse
+from smartsim._core.schemas import (
+    DragonBootstrapRequest,
+    DragonBootstrapResponse,
+    DragonShutdownRequest,
+)
 from smartsim._core.utils.network import get_best_interface_and_address
-from smartsim.log import get_logger
+from smartsim.log import ContextThread, get_logger
+
+"""
+Dragon server entrypoint script
+"""
 
 logger = get_logger("Dragon Server")
 
@@ -67,11 +76,6 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType] = None) -> None:
     cleanup()
 
 
-"""
-Dragon server entrypoint script
-"""
-
-
 def get_log_path() -> str:
     config = get_config()
     return config.dragon_log_filename
@@ -90,39 +94,91 @@ def print_summary(network_interface: str, ip_address: str) -> None:
                 HOSTNAME: {socket.gethostname()}
                 DRAGON_SERVER_CONFIG: {json.dumps(zmq_config)}
                 --------------------------------------
-
-                --------------- Output ---------------
-
                 """),
         )
 
 
+def start_updater(
+    backend: DragonBackend, updater: t.Optional[ContextThread]
+) -> ContextThread:
+    """Start the ``DragonBackend`` updater thread.
+
+    If ``updater`` is not None, then it is first checked and if it
+    alive, no other thread is started.
+
+    :param backend: The dragon backend for which the thread will be started
+    :param updater: An existing updater thread that might have to be replaced
+    :return: Running updater thread
+    """
+    # If the updater was started, check if it completed or died
+    if updater is not None:
+        updater.join(0.1)
+        # If it's alive, there is nothing to do
+        if updater.is_alive():
+            return updater
+    updater = ContextThread(name="DragonBackend", daemon=True, target=backend.update)
+    updater.start()
+    return updater
+
+
+def is_updater_healthy(backend: DragonBackend) -> bool:
+    """Check if the backend has been updated recently.
+
+    The acceptable delay is defined as the server timeout plus the backend's cooldown
+    period. If the server timeout is set to `-1`, then the acceptable delay is set to
+    one minute plus the cooldown period.
+
+    :param backend: The backend for which the updater's health is checked
+    :return: Whether the backend was updated recently
+    """
+    server_timeout = get_config().dragon_server_timeout / 1000
+    acceptable_delay = backend.cooldown_period + (
+        60.0 if server_timeout == -1 else server_timeout
+    )
+
+    heartbeat_delay = backend.current_time - backend.last_heartbeat
+    if heartbeat_delay > acceptable_delay:
+        logger.debug(
+            f"Updater inactive for {heartbeat_delay:.2f} seconds, will request restart."
+        )
+        return False
+    return True
+
+
+def updater_fallback(backend: DragonBackend, updater: ContextThread) -> ContextThread:
+    """Check if updater has updated the backend recently, if not, check its status
+    and start a new one if it is not alive.
+    :param backend: The dragon backend for which the udpater's health must be checked
+    :param updater: The updater thread which has to be checked and (possibly) replaced
+    :return: Running updater thread
+    """
+    if is_updater_healthy(backend):
+        return updater
+    return start_updater(backend, updater)
+
+
+# pylint: disable-next=too-many-statements
 def run(
     zmq_context: "zmq.Context[t.Any]",
     dragon_head_address: str,
     dragon_pid: int,
 ) -> None:
     logger.debug(f"Opening socket {dragon_head_address}")
-
-    zmq_context.setsockopt(zmq.SNDTIMEO, value=1000)
-    zmq_context.setsockopt(zmq.RCVTIMEO, value=1000)
-    zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
-    zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
-
     dragon_head_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REP, True)
     dragon_head_socket.bind(dragon_head_address)
     dragon_backend = DragonBackend(pid=dragon_pid)
 
+    backend_updater = start_updater(dragon_backend, None)
     server = dragonSockets.as_server(dragon_head_socket)
 
     logger.debug(f"Listening to {dragon_head_address}")
-    while not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+
+    while not dragon_backend.should_shutdown:
         try:
             req = server.recv()
             logger.debug(f"Received {type(req).__name__} {req}")
         except zmq.Again:
-            # dragon_backend.print_status()
-            dragon_backend.update()
+            backend_updater = updater_fallback(dragon_backend, backend_updater)
             continue
 
         resp = dragon_backend.process_request(req)
@@ -132,14 +188,26 @@ def run(
             server.send(resp)
         except zmq.Again:
             logger.error("Could not send response back to launcher.")
+            backend_updater = updater_fallback(dragon_backend, backend_updater)
 
-        dragon_backend.print_status()
-        dragon_backend.update()
-        if not (dragon_backend.should_shutdown or SHUTDOWN_INITIATED):
+        # We can only check the heartbeat if the backend has not shut down
+        if not dragon_backend.should_shutdown:
             logger.debug(f"Listening to {dragon_head_address}")
-        else:
-            logger.info("Shutdown has been requested")
-            break
+            backend_updater = updater_fallback(dragon_backend, backend_updater)
+
+        if SHUTDOWN_INITIATED:
+            dragon_backend.process_request(DragonShutdownRequest())
+
+    logger.info("Backend shutdown has been requested")
+
+    if backend_updater.is_alive():
+        backend_updater.join(1)
+
+    if not dragon_backend.frontend_shutdown:
+        logger.info("Frontend will have to be shut down externally")
+        while True:
+            logger.info("Waiting for external shutdown")
+            time.sleep(5)
 
 
 def execute_entrypoint(args: DragonEntrypointArgs) -> int:
@@ -150,8 +218,17 @@ def execute_entrypoint(args: DragonEntrypointArgs) -> int:
         raise ValueError("Net interface could not be determined")
     dragon_head_address = f"tcp://{address}"
 
+    smartsim_config = get_config()
     if args.launching_address:
         zmq_context = zmq.Context()
+        zmq_context.setsockopt(
+            zmq.SNDTIMEO, value=smartsim_config.dragon_server_timeout
+        )
+        zmq_context.setsockopt(
+            zmq.RCVTIMEO, value=smartsim_config.dragon_server_timeout
+        )
+        zmq_context.setsockopt(zmq.REQ_CORRELATE, 1)
+        zmq_context.setsockopt(zmq.REQ_RELAXED, 1)
 
         if str(args.launching_address).split(":", maxsplit=1)[0] == dragon_head_address:
             address = "localhost"
@@ -159,7 +236,7 @@ def execute_entrypoint(args: DragonEntrypointArgs) -> int:
         else:
             dragon_head_address += ":5555"
 
-        zmq_authenticator = dragonSockets.get_authenticator(zmq_context)
+        zmq_authenticator = dragonSockets.get_authenticator(zmq_context, timeout=-1)
 
         logger.debug("Getting launcher socket")
         launcher_socket = dragonSockets.get_secure_socket(zmq_context, zmq.REQ, False)
@@ -197,6 +274,7 @@ def execute_entrypoint(args: DragonEntrypointArgs) -> int:
                 zmq_authenticator.stop()
 
     logger.info("Shutting down! Bye bye!")
+
     return 0
 
 
@@ -270,4 +348,4 @@ def main(args_: t.List[str]) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

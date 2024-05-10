@@ -161,6 +161,8 @@ def proxyable_launch_cmd(
         entity_type = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
 
+        logger.debug(f"Encoding command{' '.join(original_cmd_list)}")
+
         # encode the original cmd to avoid potential collisions and escaping
         # errors when passing it using CLI arguments to the indirect entrypoint
         encoded_cmd = encode_cmd(original_cmd_list)

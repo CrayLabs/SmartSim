@@ -161,19 +161,22 @@ class Config:
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:
-        return os.getenv("SMARTSIM_DRAGON_SERVER_PATH")
-
-    @property
-    def dragon_server_reconnect_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_RECONNECT_TIMEOUT", "5000"))
+        return os.getenv(
+            "SMARTSIM_DRAGON_SERVER_PATH",
+            os.getenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
+        )
 
     @property
     def dragon_server_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "5000"))
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "30000"))
 
     @property
     def dragon_server_startup_timeout(self) -> int:
-        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", "-1"))
+        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", "300000"))
+
+    @property
+    def dragon_transport(self) -> str:
+        return os.getenv("SMARTSIM_DRAGON_TRANSPORT", "hsta")
 
     @property
     def log_level(self) -> str:
@@ -278,7 +281,7 @@ class Config:
         variable `SMARTSIM_KEY_PATH`.
 
         :returns: The configured key path.
-        :rtype: str"""
+        """
         default_path = Path.home() / ".smartsim" / "keys"
         return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
 

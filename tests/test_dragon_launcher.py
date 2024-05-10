@@ -29,6 +29,7 @@ import multiprocessing as mp
 import os
 import pathlib
 import sys
+import time
 import typing as t
 
 import pytest
@@ -37,7 +38,7 @@ import zmq
 import smartsim._core.config
 from smartsim._core._cli.scripts.dragon_install import create_dotenv
 from smartsim._core.config.config import get_config
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
+from smartsim._core.launcher.dragon.dragonLauncher import DragonConnector
 from smartsim._core.launcher.dragon.dragonSockets import (
     get_authenticator,
     get_secure_socket,
@@ -71,6 +72,17 @@ class MockPopen:
     def returncode(self) -> int:
         return 0
 
+    @property
+    def stdout(self):
+        return None
+
+    @property
+    def stderr(self):
+        return None
+
+    def wait(self, timeout: float) -> None:
+        time.sleep(timeout)
+
 
 class MockSocket:
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
@@ -82,7 +94,7 @@ class MockSocket:
     def bind(self, addr: str) -> None:
         self._bind_address = addr
 
-    def recv_string(self) -> str:
+    def recv_string(self, flags: int) -> str:
         dbr = DragonBootstrapRequest(address=self._bind_address)
         return f"bootstrap|{dbr.json()}"
 
@@ -102,11 +114,12 @@ class MockSocket:
 
 
 class MockAuthenticator:
-    def __init__(self, context: zmq.Context) -> None:
+    def __init__(self, context: zmq.Context, log: t.Any) -> None:
         self.num_starts: int = 0
         self.num_stops: int = 0
         self.num_configure_curves: int = 0
         self.context = context
+        self.thread = None
 
     def configure_curve(self, *args, **kwargs) -> None:
         self.cfg_args = args
@@ -126,14 +139,16 @@ class MockAuthenticator:
 def mock_dragon_env(test_dir, *args, **kwargs):
     """Create a mock dragon environment that can talk to the launcher through ZMQ"""
     logger = logging.getLogger(__name__)
+    config = get_config()
     logging.basicConfig(level=logging.DEBUG)
-
     try:
         addr = "127.0.0.1"
         callback_port = kwargs["port"]
         head_port = find_free_port(start=callback_port + 1)
         context = zmq.Context.instance()
-        authenticator = get_authenticator(context)
+        context.setsockopt(zmq.SNDTIMEO, config.dragon_server_timeout)
+        context.setsockopt(zmq.RCVTIMEO, config.dragon_server_timeout)
+        authenticator = get_authenticator(context, -1)
 
         callback_socket = get_secure_socket(context, zmq.REQ, False)
         dragon_head_socket = get_secure_socket(context, zmq.REP, True)
@@ -184,6 +199,7 @@ def mock_dragon_env(test_dir, *args, **kwargs):
 
     except Exception as ex:
         logger.info(f"exception occurred while configuring mock handshaker: {ex}")
+        raise ex from None
 
 
 def test_dragon_connect_attributes(monkeypatch: pytest.MonkeyPatch, test_dir: str):
@@ -201,13 +217,13 @@ def test_dragon_connect_attributes(monkeypatch: pytest.MonkeyPatch, test_dir: st
         ctx.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
         # avoid finding real interface
         ctx.setattr(
-            "smartsim._core.launcher.dragon.dragonLauncher.get_best_interface_and_address",
+            "smartsim._core.launcher.dragon.dragonConnector.get_best_interface_and_address",
             lambda: IFConfig(interface="faux_interface", address="127.0.0.1"),
         )
         # we need to set the socket value or is_connected returns False
         ctx.setattr(
-            "smartsim._core.launcher.dragon.dragonLauncher.DragonLauncher._handshake",
-            lambda self, address: setattr(self, "_dragon_head_socket", mock_socket),
+            "smartsim._core.launcher.dragon.dragonLauncher.DragonConnector._handshake",
+            lambda self, address: ...,
         )
         # avoid starting a real authenticator thread
         ctx.setattr("zmq.auth.thread.ThreadAuthenticator", MockAuthenticator)
@@ -224,8 +240,8 @@ def test_dragon_connect_attributes(monkeypatch: pytest.MonkeyPatch, test_dir: st
         dotenv_path.parent.mkdir(parents=True)
         dotenv_path.write_text("FOO=BAR\nBAZ=BOO")
 
-        dragon_launcher = DragonLauncher()
-        dragon_launcher.connect_to_dragon(test_dir)
+        dragon_connector = DragonConnector()
+        dragon_connector.connect_to_dragon()
 
         chosen_port = int(mock_socket.bind_address.split(":")[-1])
         assert chosen_port >= 5995
@@ -237,6 +253,8 @@ def test_dragon_connect_attributes(monkeypatch: pytest.MonkeyPatch, test_dir: st
         assert "PYTHONUNBUFFERED" in env
         assert "FOO" in env
         assert "BAZ" in env
+
+        dragon_connector._authenticator.stop()
 
 
 @pytest.mark.parametrize(
@@ -274,6 +292,8 @@ def test_secure_socket_authenticator_setup(
         # ensure authenticator is using the expected set of keys
         assert authenticator.cfg_kwargs.get("location", "") == km.client_keys_dir
 
+        authenticator.stop()
+
 
 @pytest.mark.parametrize(
     "as_server",
@@ -308,7 +328,8 @@ def test_secure_socket_setup(
 def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
     """Ensure the authenticator created by the secure socket factory method
     is fully configured and started when returned to a client"""
-
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG)
     with monkeypatch.context() as ctx:
         # make sure we don't touch "real keys" during a test
         ctx.setenv("SMARTSIM_KEY_PATH", test_dir)
@@ -330,7 +351,7 @@ def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
 
             received_msg = server.recv_string()
             assert received_msg == to_send
-            print("server receieved: ", received_msg)
+            logger.debug(f"server received: {received_msg}")
         finally:
             if authenticator:
                 authenticator.stop()
@@ -344,7 +365,6 @@ def test_secure_socket(test_dir: str, monkeypatch: pytest.MonkeyPatch):
 def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: str):
     """Test that a real handshake between a launcher & dragon environment
     completes successfully using secure sockets"""
-    context = zmq.Context()
     addr = "127.0.0.1"
     bootstrap_port = find_free_port(start=5995)
 
@@ -356,8 +376,13 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
         ctx.setenv("SMARTSIM_DRAGON_SERVER_PATH", test_dir)
         # avoid finding real interface since we may not be on a super
         ctx.setattr(
-            "smartsim._core.launcher.dragon.dragonLauncher.get_best_interface_and_address",
+            "smartsim._core.launcher.dragon.dragonConnector.get_best_interface_and_address",
             lambda: IFConfig("faux_interface", addr),
+        )
+
+        ctx.setattr(
+            "smartsim._core.launcher.dragon.dragonConnector._dragon_cleanup",
+            lambda server_socket, server_process_pid, server_authenticator: server_authenticator.stop(),
         )
 
         # start up a faux dragon env that knows how to do the handshake process
@@ -374,13 +399,13 @@ def test_dragon_launcher_handshake(monkeypatch: pytest.MonkeyPatch, test_dir: st
 
         ctx.setattr("subprocess.Popen", fn)
 
-        launcher = DragonLauncher()
+        connector = DragonConnector()
 
         try:
             # connect executes the complete handshake and raises an exception if comms fails
-            launcher.connect_to_dragon(test_dir)
+            connector.connect_to_dragon()
         finally:
-            launcher.cleanup()
+            connector.cleanup()
 
 
 def test_load_env_no_file(monkeypatch: pytest.MonkeyPatch, test_dir: str):
@@ -396,9 +421,9 @@ def test_load_env_no_file(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         # verify config doesn't exist
         assert not dragon_conf.exists()
 
-        launcher = DragonLauncher()
+        connector = DragonConnector()
 
-        loaded_env = launcher._load_persisted_env()
+        loaded_env = connector.load_persisted_env()
         assert not loaded_env
 
 
@@ -416,8 +441,9 @@ def test_load_env_env_file_created(monkeypatch: pytest.MonkeyPatch, test_dir: st
         assert dragon_conf.exists()
 
         # load config w/launcher
-        launcher = DragonLauncher()
-        loaded_env = launcher._load_persisted_env()
+        connector = DragonConnector()
+
+        loaded_env = connector.load_persisted_env()
         assert loaded_env
 
         # confirm .env was parsed as expected by inspecting a key
@@ -434,15 +460,17 @@ def test_load_env_cached_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         create_dotenv(mock_dragon_root)
 
         # load config w/launcher
-        launcher = DragonLauncher()
-        loaded_env = launcher._load_persisted_env()
+        connector = DragonConnector()
+
+        loaded_env = connector.load_persisted_env()
         assert loaded_env
 
         # ensure attempting to reload would bomb
         ctx.setattr(smartsim._core.config.CONFIG, "conf_dir", None)
 
         # attempt to load and if it doesn't blow up, it used the cached copy
-        loaded_env = launcher._load_persisted_env()
+
+        loaded_env = connector.load_persisted_env()
         assert loaded_env
 
 
@@ -456,8 +484,8 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         create_dotenv(mock_dragon_root)
 
         # load config w/launcher
-        launcher = DragonLauncher()
-        loaded_env = {**launcher._load_persisted_env()}
+        connector = DragonConnector()
+        loaded_env = {**connector.load_persisted_env()}
         assert loaded_env
 
         curr_base_dir = "/foo"
@@ -470,7 +498,7 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
         # to see that it is in merged output without empty prepending
         non_dragon_key = "NON_DRAGON_KEY"
         non_dragon_value = "non_dragon_value"
-        launcher._env_vars[non_dragon_key] = non_dragon_value
+        connector._env_vars[non_dragon_key] = non_dragon_value
 
         curr_env = {
             "DRAGON_BASE_DIR": curr_base_dir,  # expect overwrite
@@ -478,7 +506,7 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
             "ONLY_IN_CURRENT": curr_only,  # expect pass-through
         }
 
-        merged_env = launcher._merge_persisted_env(curr_env)
+        merged_env = connector.merge_persisted_env(curr_env)
 
         # any dragon env vars should be overwritten
         assert merged_env["DRAGON_BASE_DIR"] != curr_base_dir

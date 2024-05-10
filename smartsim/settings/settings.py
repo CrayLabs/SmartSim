@@ -77,10 +77,13 @@ def create_batch_settings(
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
         "lsf": BsubBatchSettings,
+        "pals": QsubBatchSettings,
     }
 
-    if launcher == "auto":
+    if launcher in ["auto", "dragon"]:
         launcher = detect_launcher()
+        if launcher == "dragon":
+            by_launcher["dragon"] = by_launcher[launcher]
 
     if launcher == "local":
         raise SmartSimError("Local launcher does not support batch workloads")
@@ -182,7 +185,7 @@ def create_run_settings(
 
     if launcher == "dragon":
         return DragonRunSettings(
-            exe, exe_args, run_args, env_vars, container=container, **kwargs
+            exe=exe, exe_args=exe_args, env_vars=env_vars, container=container, **kwargs
         )
 
     # if user specified and supported or auto detection worked

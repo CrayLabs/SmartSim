@@ -26,6 +26,7 @@
 
 import typing as t
 
+import zmq
 import zmq.auth.thread
 
 from smartsim._core.config.config import get_config
@@ -39,8 +40,9 @@ if t.TYPE_CHECKING:
     from zmq import Context
     from zmq.sugar.socket import Socket
 
-
 logger = get_logger(__name__)
+
+AUTHENTICATOR: t.Optional["zmq.auth.thread.ThreadAuthenticator"] = None
 
 
 def as_server(
@@ -73,14 +75,11 @@ def get_secure_socket(
     """Create secured socket that consumes & produces encrypted messages
 
     :param context: ZMQ context object
-    :type context: zmq.Context
     :param socket_type: Type of ZMQ socket to create
-    :type socket_type: zmq.SocketType
     :param is_server: Pass `True` to secure the socket as server. Pass `False`
     to secure the socket as a client.
-    :type is_server: bool
     :returns: the secured socket prepared for sending encrypted messages
-    :rtype: zmq.Socket"""
+    """
     config = get_config()
     socket: "Socket[t.Any]" = context.socket(socket_type)
 
@@ -107,28 +106,53 @@ def get_secure_socket(
 
 
 def get_authenticator(
-    context: "zmq.Context[t.Any]",
+    context: "zmq.Context[t.Any]", timeout: int = get_config().dragon_server_timeout
 ) -> "zmq.auth.thread.ThreadAuthenticator":
     """Create an authenticator to handle encryption of ZMQ communications
 
     :param context: ZMQ context object
-    :type context: zmq.Context
     :returns: the activated `Authenticator`
-    :rtype: zmq.auth.thread.ThreadAuthenticator"""
+    """
+    # pylint: disable-next=global-statement
+    global AUTHENTICATOR
+
+    if AUTHENTICATOR is not None:
+        if AUTHENTICATOR.is_alive():
+            return AUTHENTICATOR
+        try:
+            logger.debug("Stopping authenticator")
+            AUTHENTICATOR.thread.authenticator.zap_socket.close()
+            AUTHENTICATOR.thread.join(0.1)
+            AUTHENTICATOR = None
+        except Exception as e:
+            logger.debug(e)
+        finally:
+            logger.debug("Stopped authenticator")
+
     config = get_config()
 
     key_manager = KeyManager(config, as_client=True)
     server_keys, client_keys = key_manager.get_keys()
     logger.debug(f"Applying keys to authenticator: {server_keys}, {client_keys}")
 
-    authenticator = zmq.auth.thread.ThreadAuthenticator(context)
+    AUTHENTICATOR = zmq.auth.thread.ThreadAuthenticator(context, log=logger)
+
+    ctx_sndtimeo = context.getsockopt(zmq.SNDTIMEO)
+    ctx_rcvtimeo = context.getsockopt(zmq.RCVTIMEO)
+
+    AUTHENTICATOR.context.setsockopt(zmq.SNDTIMEO, timeout)
+    AUTHENTICATOR.context.setsockopt(zmq.RCVTIMEO, timeout)
+    AUTHENTICATOR.context.setsockopt(zmq.REQ_CORRELATE, 1)
+    AUTHENTICATOR.context.setsockopt(zmq.REQ_RELAXED, 1)
 
     # allow all keys in the client key directory to connect
     logger.debug(f"Securing with client keys in {key_manager.client_keys_dir}")
-    authenticator.configure_curve(domain="*", location=key_manager.client_keys_dir)
+    AUTHENTICATOR.configure_curve(domain="*", location=key_manager.client_keys_dir)
 
-    if not authenticator.is_alive():
-        logger.debug("Starting authenticator")
-        authenticator.start()
+    logger.debug("Starting authenticator")
+    AUTHENTICATOR.start()
 
-    return authenticator
+    context.setsockopt(zmq.SNDTIMEO, ctx_sndtimeo)
+    context.setsockopt(zmq.RCVTIMEO, ctx_rcvtimeo)
+
+    return AUTHENTICATOR

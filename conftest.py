@@ -46,7 +46,8 @@ import pytest
 
 import smartsim
 from smartsim import Experiment
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher, _dragon_cleanup
+from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
@@ -165,9 +166,11 @@ def pytest_sessionfinish(
                     raise
             else:
                 break
-
-    # kill all spawned processes
-    kill_all_test_spawned_processes()
+    else:
+        # kill all spawned processes
+        if CONFIG.test_launcher == "dragon":
+            time.sleep(5)
+        kill_all_test_spawned_processes()
 
 
 def build_mpi_app() -> t.Optional[pathlib.Path]:
@@ -342,8 +345,9 @@ class WLMUtils:
             return settings
         if test_launcher == "dragon":
             run_args = {"nodes": nodes}
+            run_args = {"ntasks": ntasks}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="", run_args=run_args)
+            settings = DragonRunSettings(exe, args, run_args=run_args)
             return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
@@ -798,17 +802,10 @@ def global_dragon_teardown() -> None:
     """
     if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
         return
-    exp_path = os.path.join(test_output_root, "dragon_teardown")
-    os.makedirs(exp_path, exist_ok=True)
-    exp: Experiment = Experiment("dragon_shutdown", exp_path=exp_path, launcher=test_launcher)
-    rs = exp.create_run_settings("sleep", ["0.1"])
-    model = exp.create_model("dummy", run_settings=rs)
-    exp.generate(model, overwrite=True)
-    exp.start(model, block=True)
-
-    launcher: DragonLauncher = exp._control._launcher
-    launcher.cleanup()
-    time.sleep(5)
+    logger.debug(f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}")
+    dragon_connector = DragonConnector()
+    dragon_connector.ensure_connected()
+    dragon_connector.cleanup()
 
 
 @pytest.fixture

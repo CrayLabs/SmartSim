@@ -84,7 +84,7 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def write_stop_file(entity: JobEntity, test_dir: str, duration: int):
+def write_stop_file(entity: JobEntity, test_dir: pathlib.Path, duration: int):
     time.sleep(duration)
     write_event(
         get_ts_ms(),
@@ -583,7 +583,8 @@ async def test_auto_shutdown__has_db(
     entity.status_dir = test_dir
 
     p = mp.Process(
-        target=write_stop_file, args=(entity, test_dir, (task_duration_ms / 1000))
+        target=write_stop_file,
+        args=(entity, pathlib.Path(test_dir), (task_duration_ms / 1000)),
     )
 
     frequency = 1000
@@ -1294,7 +1295,7 @@ async def test_wlm_completion_handling(
         ctx.setattr(SlurmLauncher, "get_step_update", get_faux_update(status_in))
 
         mani_handler = ManifestEventHandler("xyz", logger)
-        mani_handler.set_launcher("slurm", test_dir)
+        mani_handler.set_launcher("slurm")
 
         # prep a fake job to request updates for
         job_entity = JobEntity()

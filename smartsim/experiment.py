@@ -167,10 +167,20 @@ class Experiment:
         if self._launcher == "cobalt":
             raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
+        if launcher == "dragon":
+            self._set_dragon_server_path()
+
         self._control = Controller(launcher=self._launcher)
 
         self.db_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
+
+    def _set_dragon_server_path(self) -> None:
+        """Set path for dragon server through environment varialbes"""
+        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
+            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
+                self.exp_path, CONFIG.dragon_default_subdir
+            )
 
     @_contextualize
     def start(

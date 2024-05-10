@@ -161,14 +161,11 @@ def test_duplicate_running_entity(test_dir, wlmutils, entity):
 def test_restarting_entity(test_dir, wlmutils, entity):
     """Validate restarting a completed Model/Ensemble job"""
     step_settings = RunSettings("echo")
+    test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
     step.meta["status_dir"] = test_dir
     entity.path = test_dir
-    test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
-    if test_launcher == "dragon":
-        step = DragonStep("mock-step", test_dir, step_settings)
-        controller._launcher.connect_to_dragon(test_dir)
     controller._jobs.add_job(entity.name, job_id="1234", entity=entity)
     controller._jobs.move_to_completed(controller._jobs.jobs.get(entity.name))
     controller._launch_step(step, entity=entity)
@@ -177,14 +174,11 @@ def test_restarting_entity(test_dir, wlmutils, entity):
 def test_restarting_orch(test_dir, wlmutils):
     """Validate restarting a completed Orchestrator job"""
     step_settings = RunSettings("echo")
+    test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
     step.meta["status_dir"] = test_dir
     orc.path = test_dir
-    test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
-    if test_launcher == "dragon":
-        step = DragonStep("mock-step", test_dir, step_settings)
-        controller._launcher.connect_to_dragon(test_dir)
     controller._jobs.add_job(orc.name, job_id="1234", entity=orc)
     controller._jobs.move_to_completed(controller._jobs.db_jobs.get(orc.name))
     controller._launch_step(step, entity=orc)
@@ -202,8 +196,6 @@ def test_starting_entity(test_dir, wlmutils, entity, entity_2):
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
     test_launcher = wlmutils.get_test_launcher()
-    if test_launcher == "dragon":
-        step = DragonStep("mock-step", test_dir, step_settings)
     controller = Controller(test_launcher)
     controller._jobs.add_job(entity.name, job_id="1234", entity=entity)
     controller._jobs.move_to_completed(controller._jobs.jobs.get(entity.name))
