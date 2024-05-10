@@ -506,7 +506,7 @@ def test_merge_env(monkeypatch: pytest.MonkeyPatch, test_dir: str):
             "ONLY_IN_CURRENT": curr_only,  # expect pass-through
         }
 
-        merged_env = connector._merge_persisted_env(curr_env)
+        merged_env = connector.merge_persisted_env(curr_env)
 
         # any dragon env vars should be overwritten
         assert merged_env["DRAGON_BASE_DIR"] != curr_base_dir

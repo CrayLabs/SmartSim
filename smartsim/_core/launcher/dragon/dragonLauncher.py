@@ -163,7 +163,9 @@ class DragonLauncher(WLMLauncher):
                 step_id = "PBS-" + sublauncher_step_id
         elif isinstance(step, DragonStep):
             run_args = step.run_settings.run_args
-            env = step.run_settings.env_vars
+            req_env = step.run_settings.env_vars
+            self._connector._load_persisted_env()
+            merged_env = self._connector.merge_persisted_env(os.environ.copy())
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
             response = _assert_schema_type(
@@ -175,8 +177,8 @@ class DragonLauncher(WLMLauncher):
                         name=step.name,
                         nodes=nodes,
                         tasks_per_node=tasks_per_node,
-                        env=env,
-                        current_env=os.environ,
+                        env=req_env,
+                        current_env=merged_env,
                         output_file=out,
                         error_file=err,
                     )

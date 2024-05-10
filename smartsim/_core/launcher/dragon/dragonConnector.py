@@ -234,7 +234,7 @@ class DragonConnector:
 
         return self._env_vars
 
-    def _merge_persisted_env(self, current_env: t.Dict[str, str]) -> t.Dict[str, str]:
+    def merge_persisted_env(self, current_env: t.Dict[str, str]) -> t.Dict[str, str]:
         """Combine the current environment variable set with the dragon .env by adding
         Dragon-specific values and prepending any new values to existing keys"""
         # ensure we start w/a complete env from current env state
@@ -305,8 +305,11 @@ class DragonConnector:
             dragon_err_file = path / "dragon_head.err"
 
             self._load_persisted_env()
-            merged_env = self._merge_persisted_env(os.environ.copy())
+            merged_env = self.merge_persisted_env(os.environ.copy())
             merged_env.update({"PYTHONUNBUFFERED": "1"})
+
+            logger.debug(merged_env["PATH"])
+            logger.debug(merged_env["LD_LIBRARY_PATH"])
 
             with (
                 open(dragon_out_file, "w", encoding="utf-8") as dragon_out,
