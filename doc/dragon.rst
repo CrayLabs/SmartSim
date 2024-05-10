@@ -6,23 +6,22 @@ Dragon
 Overview
 ========
 
-`Dragon <https://dragonhpc.github.io/dragon/doc/_build/html/index.html>`_ is a
-composable distributed run-time targeting HPC workflows. In SmartSim,
+Dragon is a composable distributed run-time targeting HPC workflows. In SmartSim,
 Dragon can be used as a launcher, within a Slurm or PBS allocation or batch job.
 The SmartSim team collaborates with the Dragon team to develop an efficient
 launcher which will enable fast, interactive, and customized execution of
-complex workflows on large HPC systems. As Dragon is scheduler-agonstic,
+complex workflows on large HPC systems. As Dragon is scheduler-agnostic,
 the same SmartSim script using Dragon as a launcher can be run indifferently
-on a Slurm or PBS system. Support for other schedulers is coming soon.
+on a Slurm or PBS system. Support for additional schedulers is coming soon.
 
 .. warning::
     The Dragon launcher is currently in its early development stage and should be treated as
     a prototype implementation. Your assistance is invaluable in identifying any issues
     encountered during usage and suggesting missing features for implementation. Please
     provide feedback in the form of a created issue on the
-    `SmartSim issues page <https://github.com/CrayLabs/SmartSim/issues>`_ on GitHub.
+    `SmartSim issues GitHub page <https://github.com/CrayLabs/SmartSim/issues>`_.
     The :ref:`Known Issues section<dragon_known_issues>` is also a good starting
-    point when troubleshooting workflows run through the Dragon launcher.
+    point when troubleshooting workflows run using the Dragon launcher.
 
 =====
 Usage
@@ -76,7 +75,6 @@ it until the parent ``Experiment`` concludes. To facilitate interaction with pro
 Dragon, SmartSim establishes a command server within the Dragon infrastructure. This server,
 known as the `Dragon Server`, is responsible for executing commands to start or stop processes
 and to query their status.
-
 
 Sharing the Dragon Server across Experiments
 ============================================
@@ -165,3 +163,7 @@ during runs:
 
 - **MPI-based applications hanging**: To run MPI-based applications on Dragon, Cray PMI or
   Cray PALS must be available on the system. This limitation is currently being addressed.
+
+
+Interested users can learn more about the Dragon project at the external
+`Dragon documentation page <https://dragonhpc.github.io/dragon/doc/_build/html/index.html>`_.
