@@ -60,6 +60,7 @@ Types of Settings:
     MpiexecSettings
     OrterunSettings
     JsrunSettings
+    DragonRunSettings
     SbatchSettings
     QsubBatchSettings
     BsubBatchSettings

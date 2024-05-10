@@ -2,121 +2,124 @@
 Dragon
 ******
 
-============
-Introduction
-============
+========
+Overview
+========
 
 `Dragon <https://dragonhpc.github.io/dragon/doc/_build/html/index.html>`_ is a
 composable distributed run-time targeting HPC workflows. In SmartSim,
 Dragon can be used as a launcher, within a Slurm or PBS allocation or batch job.
 
-.. note::
-    The Dragon launcher is at an early development stage and should be considered
-    a prototype implementation. Please report any issue you encounter while using
-    it and provide feedback about missing features you would like to see
-    implemented.
+.. warning::
+    The Dragon launcher is currently in its early development stage and should be treated as
+    a prototype implementation. Your assistance is invaluable in identifying any issues
+    encountered during usage and suggesting missing features for implementation. Please
+    provide feedback in the form of a created issue on the
+    `SmartSim issues page <https://github.com/CrayLabs/SmartSim/issues/new/chooses>`_ on github.
 
 =====
 Usage
 =====
-To be able to use Dragon, you will have to install it in your current Python
-environment. This can be done as part of the ``smart build`` step, as explained
-in :ref:`Dragon Install <dragon_install>`.
+To use Dragon, you need to install it in your current Python environment. This can
+be accomplished by providing the ``--dragon`` flag to the ``smart build`` command, as
+detailed in the :ref:`Dragon Install <dragon_install>`. Note that specifying the device
+configuration is also required for a proper build.
 
-Once installed, Dragon can be selected as launcher when creating an ``Experiment``:
+After installation, specify Dragon as the launcher when creating an ``Experiment``:
 
 .. code-block:: python
 
     exp = Experiment(name="dragon-example", launcher="dragon")
 
-
-Dragon has its own run settings class, ``DragonRunSettings``,
-which can be used to specify nodes and tasks per node for a ``Model``,
-for example, continuing from the previous example:
+Dragon introduces its own run settings class, ``DragonRunSettings``, which allows users to
+specify nodes and tasks per node for a ``Model``. For instance, continuing from the previous
+example:
 
 .. code-block:: python
 
+    # Because "dragon" was specified as the launcher during Experiment initialization,
+    # create_run_settings will return a DragonRunSettings object
     rs = exp.create_run_settings(exe="mpi_app",
                                  exe_args=["--option", "value"],
                                  env_vars={"MYVAR": "VALUE"})
+    # Above we specify the executable (exe), executable arguments (exe_args)
+    # and environment variables (env_vars)
+
+    # Sets the number of nodes for this job
     rs.set_nodes(4)
+    # Set the tasks per node for this job
     rs.set_tasks_per_node(3)
+    # Initialize the Model and pass in the DragonRunSettings object
     mpi_app = exp.create_model("MPI_APP", run_settings=rs)
+    # Start the Model
     exp.start(mpi_app)
 
+SmartSim supports ``DragonRunSettings`` with ``Model``, ``Ensemble`` and ``Orchestrator`` entities.
+In the next sections, we detail how Dragon is integrated into SmartSim.
 
-All types of SmartSim entities are supported, including ``Ensemble``
-and ``Orchestrator``, and the underlying Dragon launcher is completely
-transparent to the user. In the next sections, we will explain
-how Dragon is integrated into SmartSim.
+For more information on HPC launchers, visit the :ref:`Run Settings<run_settings_hpc_ex>` page.
 
 =================
 The Dragon Server
 =================
 
-Dragon can start processes on any resource available within an allocation.
-To do this, the so-called Dragon infrastructure needs to be started. SmartSim
-instantiates the Dragon infrastructure whenever a ``Model`` needs to be started
-and will keep it up and running until the parent ``Experiment`` is active.
-To be able to interact with processes started through Dragon,
-SmartSim spins up a command server in the Dragon infrastructure and sends commands
-to it every time a process needs to be started or stopped, and to query its status.
-We call this server the `Dragon Server`, and its lifecycle is managed by SmartSim.
+Dragon can initiate processes on any available resource within an allocation. To facilitate
+this, SmartSim initializes the Dragon infrastructure whenever a ``Model`` is launched and maintains
+it until the parent ``Experiment`` concludes. To facilitate interaction with processes managed by
+Dragon, SmartSim establishes a command server within the Dragon infrastructure. This server,
+known as the `Dragon Server`, is responsible for executing commands to start or stop processes
+and to query their status.
 
 
 Sharing the Dragon Server across Experiments
 ============================================
 
-Currently, SmartSim only supports one Dragon server per allocation. For this reason,
-if multiple ``Experiments`` need to run in the same allocation, the Dragon server needs
-to be shared among them. By default, the server is started from a subdirectory of the
-``Experiment`` path. To make it possible to share the server, it is possible to
-specify a path from which the Server should be started. This can be done
-by setting the environment variable
-``SMARTSIM_DRAGON_SERVER_PATH`` to an existing path: every ``Experiment`` will look for the running
-server in the given path and only start a new server instance if there is none running.
+Currently, SmartSim supports only one Dragon server per allocation. Consequently,
+if multiple Experiments need to run within the same allocation, the Dragon server
+must be shared among them. By default, the server is initiated from a subdirectory
+of the ``Experiment`` path. To enable server sharing, users can specify a custom path
+from which the server should be launched. This can be achieved by setting the
+environment variable ``SMARTSIM_DRAGON_SERVER_PATH`` to an existing path. Each ``Experiment``
+will then search for the running server in the specified path and initiate a new
+server instance only if none is already running.
 
 Dragon's High-Speed Transport Agents
 ====================================
 
-On systems where the HPE Slingshot interconnect is available, Dragon can use
-Higs-Speed Transport Agents (HSTA) to send internal messages. This is the default
-choice for messages sent in the Dragon infrastructure started by SmartSim. On
-systems where the HPE Slingshot interconnect is not available, TCP agents must be
-used. To specify TCP agents, the environment variable ``SMARTSIM_DRAGON_TRANSPORT``
-must be set to ``tcp`` prior to the ``Experiment`` execution.
+On systems equipped with the HPE Slingshot interconnect, Dragon utilizes High-Speed
+Transport Agents (HSTA) by default for internal messaging within the infrastructure
+launched by SmartSim. On systems without the HPE Slingshot interconnect,
+TCP agents are employed. To specify the use of TCP agents, users must set the environment
+variable ``SMARTSIM_DRAGON_TRANSPORT`` to tcp prior to executing the Experiment.
 
-============
-Communcation
-============
+=============
+Communication
+=============
 
 SmartSim and the Dragon Server communicate using `ZeroMQ <https://zeromq.org/>`_.
 
-As with any communication protocol, some timeouts for send and receive operations must be defined.
-SmartSim sets some default timeouts that have been tested to work on most available systems,
-but if you see failed communication attempts, you may want to try to adjust the
-timeouts by setting the corresponding environment variable.
-The timeouts are given in milliseconds and they are defined as follows:
+Similar to other communication protocols, defining timeouts for send and receive operations
+is crucial in SmartSim. SmartSim configures default timeouts that have been tested on various
+systems. However, if you encounter failed communication attempts, adjusting the timeouts may
+be necessary. You can adjust these timeouts by setting the corresponding environment variables:
 
-- *server start-up timeout*: the time waited by the SmartSim ``Experiment`` when the server
-  is first started. This timeout must account for the time it takes Dragon to set up the
-  infrastructure, which depends on the system's workload manager response time.
-  Defaults to ``"300000"`` (i.e. five minutes) and can be overridden with the environment variable
-  ``SMARTSIM_DRAGON_STARTUP_TIMEOUT``.
+- **Server Start-up Timeout**: This timeout specifies the duration the SmartSim ``Experiment``
+  waits when the server is initially started. It must accommodate the time required for
+  Dragon to set up the infrastructure, which varies based on the system's workload manager
+  response time. The default timeout is `"300000"` milliseconds (i.e., five minutes), and you can override
+  it using the ``SMARTSIM_DRAGON_STARTUP_TIMEOUT`` environment variable.
 
-- *server send and receive timeout*: the time waited by SmartSim and the Dragon server to send or
-  receive a message. Defaults to ``"30000"`` (i.e. 30 seconds) and can be overridden with the
-  environment variable ``SMARTSIM_DRAGON_TIMEOUT``.
+- **Server Send and Receive Timeout**: This timeout dictates how long SmartSim and the Dragon
+  server wait to send or receive a message. The default timeout is `"30000"` milliseconds (i.e., 30 seconds),
+  and you can modify it using the ``SMARTSIM_DRAGON_TIMEOUT`` environment variable.
 
-Setting any timeout to ``"-1"`` will result in infinite waiting time, which means that the
-execution will block until the communication is completed, and hang indefinitely if something went wrong.
+Setting any timeout to "-1" will result in an infinite waiting time, causing the execution to
+block until the communication is completed, potentially hanging indefinitely if issues occur.
 
-
-All communications are secured with elliptic curve cryptography,
-and the key-pairs needed by the protocol are created by SmartSim and stored in the
-user's home directory, unless another path is specified through the environment variable
-``SMARTSIM_KEY_PATH``.
-
+It's important to note that all communications are secured with elliptic curve cryptography.
+SmartSim generates the necessary key-pairs and stores them in the user's home directory by
+default. However, you can specify an alternative path using the ``SMARTSIM_KEY_PATH`` environment
+variable.
 
 .. _dragon_known_issues:
 
@@ -124,31 +127,31 @@ user's home directory, unless another path is specified through the environment 
 Known issues
 ============
 
-As previosuly remarked, the SmartSim-Dragon integration is at an early development stage
-and there are some known issues that can lead to unexpected behavior during runs.
+As previously noted, the integration of SmartSim with Dragon is still in its early
+development stage, and there are known issues that may result in unexpected behavior
+during runs:
 
-- *Incomplete cleanup of Dragon resources*: when SmartSim exits, it ensures that the dragon
-  infrastructure is correctly shut down, so that all the associated resources (such as
-  shared memory segments) are cleaned up and all processes are terminated. Nevertheless,
-  in some rare cases, when the execution is interrupted abruptly (for example by terminating
-  SmartSim with ``SIGKILL``), the cleanup process can be incomplete and processes
-  such as the Dragon overlay network will remain active on the node where SmartSim was
-  executed (which could be a login node, especially on Slurm systems). If that happens
-  you can run
+- **Incomplete cleanup of Dragon resources**: When SmartSim exits, it attempts to properly
+  shut down the Dragon infrastructure to clean up associated resources, such as shared memory
+  segments, and terminate all processes. However, in rare cases, if the execution is
+  abruptly interrupted (e.g., by terminating SmartSim with ``SIGKILL``), the cleanup process
+  may be incomplete, leaving processes like the Dragon overlay network active on the node
+  where SmartSim was executed (which could be a login node, particularly on Slurm systems).
+  If this occurs, you can use the following command to address the issue:
 
   .. code-block::
 
     smart teardown --dragon
 
-  which will kill all Dragon related processes, return shared memory segments, but also
-  kill all Python processes (associated to your user name).
+  This command will terminate all Dragon-related processes, release shared memory segments,
+  but also terminate all Python processes associated with your username.
 
-- *Dragon server not starting*: this can happen because of two main reasons
+- **Dragon server not starting**: This issue may arise due to two main reasons:
 
-  1. HSTA not available on the system: try setting the environment variable
-     ``SMARTSIM_DRAGON_TRANSPORT`` to ``tcp``
-  2. System or Workload Manager too busy: try setting the environment variable
-     ``SMARTSIM_DRAGON_STARTUP_TIMEOUT`` to a larger value or to ``"-1"``.
+  1. *HSTA not available on the system*: Try setting the environment variable
+     ``SMARTSIM_DRAGON_TRANSPORT`` to ``tcp``.
+  2. *System or Workload Manager too busy*: Attempt to mitigate this by setting the environment
+     variable ``SMARTSIM_DRAGON_STARTUP_TIMEOUT`` to a larger value or ``"-1"``.
 
-- *MPI-based applications hanging*: to run MPI-based applications on Dragon, Cray PMI or Cray PALS
-  must be available on the system. This is a current limitation and is actively being worked on.
+- **MPI-based applications hanging**: To run MPI-based applications on Dragon, Cray PMI or
+  Cray PALS must be available on the system. This limitation is currently being addressed.

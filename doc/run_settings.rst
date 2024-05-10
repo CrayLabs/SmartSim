@@ -304,6 +304,28 @@ for each job scheduler.
 
       Users may replace `mpirun` with `mpiexec` or `orterun`.
 
+    .. group-tab:: Dragon
+      The Dragon `launcher` does not support any launch binary. Below we step through initializing a ``DragonRunSettings`` instance on a Slurm
+      based machine.
+
+      **DragonRunSettings**
+
+      Run a job with the `dragon` launcher.
+
+      .. code-block:: python
+
+            from smartsim import Experiment
+
+            # Initialize the experiment and provide launcher dragon
+            exp = Experiment("name-of-experiment", launcher="dragon")
+
+            # Initialize a DragonRunSettings object
+            run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World")
+            # Set the number of nodes for this job
+            run_settings.set_nodes(4)
+            # Set the number of tasks per node for this job
+            run_settings.set_tasks_per_node(10)
+
 .. note::
       SmartSim will look for an allocation by accessing the associated WLM job ID environment variable. If an allocation
       is present, the entity will be launched on the reserved compute resources. A user may also specify the allocation ID
