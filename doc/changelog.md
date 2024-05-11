@@ -17,6 +17,7 @@ Description
 
 -   Add dragon runtime installer
 -   Add launcher based on Dragon
+-   Reuse Orchestrators within the testing suite to improve performance.
 -   Fix building of documentation
 -   Preview entities on experiment before start
 -   Update authentication in release workflow
@@ -70,6 +71,10 @@ Detailed Notes
     or by using ``DragonRunSettings`` to launch a job. The Dragon launcher
     is at an early stage of development: early adopters are referred to the
     dedicated documentation section to learn more about it. ([SmartSim-PR580](https://github.com/CrayLabs/SmartSim/pull/580))
+-   Tests may now request a given configuration and will reconnect to
+    the existing orchestrator instead of building up and tearing down
+    a new one each test.
+    ([SmartSim-PR567](https://github.com/CrayLabs/SmartSim/pull/567))
 -   Manually ensure that typing_extensions==4.6.1 in Dockerfile used to build
     docs. This fixes the deploy_dev_docs Github action ([SmartSim-PR564](https://github.com/CrayLabs/SmartSim/pull/564))
 -   Added preview functionality to Experiment, including preview of all entities, active infrastructure and
