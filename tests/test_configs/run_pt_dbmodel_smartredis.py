@@ -26,6 +26,7 @@
 
 
 import numpy as np
+
 from smartredis import Client
 
 

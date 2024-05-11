@@ -146,7 +146,9 @@ def save_torch_cnn(path, file_name):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_tf_db_model(wlm_experiment, prepare_db, single_db, fileutils, test_dir, mlutils):
+def test_tf_db_model(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, mlutils
+):
     """Test TensorFlow DB Models on remote DB"""
 
     # Retrieve parameters from testing environment
@@ -156,7 +158,9 @@ def test_tf_db_model(wlm_experiment, prepare_db, single_db, fileutils, test_dir,
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create RunSettings
-    run_settings = wlm_experiment.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
@@ -213,7 +217,9 @@ def test_tf_db_model(wlm_experiment, prepare_db, single_db, fileutils, test_dir,
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_pt_db_model(wlm_experiment, prepare_db, single_db, fileutils, test_dir, mlutils):
+def test_pt_db_model(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, mlutils
+):
     """Test PyTorch DB Models on remote DB"""
 
     # Retrieve parameters from testing environment
@@ -223,7 +229,9 @@ def test_pt_db_model(wlm_experiment, prepare_db, single_db, fileutils, test_dir,
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create RunSettings
-    run_settings = wlm_experiment.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
@@ -267,7 +275,9 @@ def test_pt_db_model(wlm_experiment, prepare_db, single_db, fileutils, test_dir,
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_db_model_ensemble(wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, mlutils):
+def test_db_model_ensemble(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, mlutils
+):
     """Test DBModels on remote DB, with an ensemble"""
 
     # Retrieve parameters from testing environment
@@ -277,7 +287,9 @@ def test_db_model_ensemble(wlm_experiment, prepare_db, single_db, fileutils, tes
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create RunSettings
-    run_settings = wlm_experiment.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 

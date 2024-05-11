@@ -29,6 +29,7 @@ import typing as t
 from os import environ
 
 import numpy as np
+
 from smartredis import Client, Dataset
 from smartredis.error import RedisReplyError
 
@@ -285,7 +286,7 @@ class DataDownloader:
         verbose: bool = False,
         init_samples: bool = True,
         max_fetch_trials: int = -1,
-        wait_interval: float = 10.
+        wait_interval: float = 10.0,
     ) -> None:
         self.address = address
         self.cluster = cluster
@@ -379,7 +380,7 @@ class DataDownloader:
             self._data_generation(self._calc_indices(idx)) for idx in range(len(self))
         )
 
-    def init_samples(self, init_trials: int = -1, wait_interval: float = 10.) -> None:
+    def init_samples(self, init_trials: int = -1, wait_interval: float = 10.0) -> None:
         """Initialize samples (and targets, if needed).
 
         A new attempt to download samples will be made every ten seconds,

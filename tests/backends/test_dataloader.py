@@ -187,7 +187,7 @@ def test_tf_dataloaders(wlm_experiment, prepare_db, single_db, monkeypatch):
                 batch_size=4,
                 max_fetch_trials=5,
                 dynamic=False,  # catch wrong arg
-                wait_interval= 0.1
+                wait_interval=0.1,
             )
             train_tf(tf_dynamic)
             assert len(tf_dynamic) == 4
@@ -202,7 +202,7 @@ def test_tf_dataloaders(wlm_experiment, prepare_db, single_db, monkeypatch):
                 batch_size=4,
                 max_fetch_trials=5,
                 dynamic=True,  # catch wrong arg
-                wait_interval= 0.1
+                wait_interval=0.1,
             )
             train_tf(tf_static)
             assert len(tf_static) == 4
@@ -228,7 +228,9 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
 
 
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
-def test_torch_dataloaders(wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, monkeypatch):
+def test_torch_dataloaders(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, monkeypatch
+):
     config_dir = fileutils.get_test_dir_path("ml")
     db = prepare_db(single_db).orchestrator
     orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
@@ -249,7 +251,7 @@ def test_torch_dataloaders(wlm_experiment, prepare_db, single_db, fileutils, tes
                 max_fetch_trials=5,
                 dynamic=False,  # catch wrong arg
                 init_samples=True,
-                wait_interval= 0.1
+                wait_interval=0.1,
             )
             check_dataloader(torch_dynamic, rank, dynamic=True)
 
@@ -269,7 +271,7 @@ def test_torch_dataloaders(wlm_experiment, prepare_db, single_db, fileutils, tes
                 max_fetch_trials=5,
                 dynamic=True,  # catch wrong arg
                 init_samples=True,  # catch wrong arg
-                wait_interval= 0.1
+                wait_interval=0.1,
             )
             check_dataloader(torch_static, rank, dynamic=False)
 

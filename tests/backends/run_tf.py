@@ -27,9 +27,9 @@
 import os
 
 import numpy as np
-from smartredis import Client
 from tensorflow import keras
 
+from smartredis import Client
 from smartsim.ml.tf import freeze_model, serialize_model
 
 

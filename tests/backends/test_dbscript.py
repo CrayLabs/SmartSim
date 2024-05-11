@@ -28,8 +28,8 @@ import os
 import sys
 
 import pytest
-from smartredis import *
 
+from smartredis import *
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity.dbobject import DBScript
@@ -67,7 +67,9 @@ def test_db_script(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create the RunSettings
-    run_settings = wlm_experiment.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
@@ -133,7 +135,9 @@ def test_db_script_ensemble(wlm_experiment, prepare_db, single_db, fileutils, ml
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create RunSettings
-    run_settings = wlm_experiment.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 

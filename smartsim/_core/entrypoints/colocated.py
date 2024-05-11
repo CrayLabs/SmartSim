@@ -37,9 +37,9 @@ from types import FrameType
 
 import filelock
 import psutil
+
 from smartredis import Client, ConfigOptions
 from smartredis.error import RedisConnectionError, RedisReplyError
-
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger

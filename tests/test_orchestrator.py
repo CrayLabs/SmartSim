@@ -75,9 +75,9 @@ def test_inactive_orc_get_address() -> None:
 
 
 def test_orc_is_active_functions(
-        local_experiment,
-        prepare_db,
-        local_db,
+    local_experiment,
+    prepare_db,
+    local_db,
 ) -> None:
     db = prepare_db(local_db).orchestrator
     db = local_experiment.reconnect_orchestrator(db.checkpoint_file)

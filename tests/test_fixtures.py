@@ -36,11 +36,13 @@ from smartsim.error.errors import SSUnsupportedError
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
+
 def test_db_fixtures(local_experiment, local_db, prepare_db):
     db = prepare_db(local_db).orchestrator
     local_experiment.reconnect_orchestrator(db.checkpoint_file)
     assert db.is_active()
     local_experiment.stop(db)
+
 
 def test_create_new_db_fixture_if_stopped(local_experiment, local_db, prepare_db):
     # Run this twice to make sure that there is a stopped database

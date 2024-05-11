@@ -31,6 +31,7 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
+
 from smartredis import Client
 
 if __name__ == "__main__":
