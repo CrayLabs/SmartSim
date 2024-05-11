@@ -28,8 +28,8 @@ import os
 import sys
 
 import pytest
-
 from smartredis import *
+
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity.dbobject import DBScript

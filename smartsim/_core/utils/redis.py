@@ -32,7 +32,6 @@ from itertools import product
 import redis
 from redis.cluster import ClusterNode, RedisCluster
 from redis.exceptions import ClusterDownError, RedisClusterException
-
 from smartredis import Client
 from smartredis.error import RedisReplyError
 

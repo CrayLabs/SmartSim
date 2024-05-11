@@ -39,6 +39,7 @@ import time
 import typing as t
 
 from smartredis import Client, ConfigOptions
+
 from smartsim._core.utils.network import get_ip_from_host
 
 from ..._core.launcher.step import Step

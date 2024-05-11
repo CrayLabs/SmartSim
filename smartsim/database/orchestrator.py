@@ -34,7 +34,6 @@ from os import environ, getcwd, getenv
 from shlex import split as sh_split
 
 import psutil
-
 from smartredis import Client, ConfigOptions
 from smartredis.error import RedisReplyError
 
