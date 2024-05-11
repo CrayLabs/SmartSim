@@ -123,7 +123,7 @@ Detailed Notes
     Torch will unconditionally try to link in this library, however
     fails because the linking flags are incorrect.
     ([SmartSim-PR538](https://github.com/CrayLabs/SmartSim/pull/538))
--   Change type_extension and pydantic versions in readthedocs
+-   Change typing\_extensions and pydantic versions in readthedocs
     environment to enable docs build.
     ([SmartSim-PR537](https://github.com/CrayLabs/SmartSim/pull/537))
 -   Promote devices to a dedicated Enum type throughout the SmartSim

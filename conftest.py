@@ -654,7 +654,7 @@ class ColoUtils:
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[RunSettings] = None,
         colo_model_name: str = "colocated_model",
-        port: int = test_ports[0],
+        port: t.Optional[int] = None,
         on_wlm: bool = False,
     ) -> Model:
         """Setup database needed for the colo pinning tests"""
@@ -670,6 +670,8 @@ class ColoUtils:
         if on_wlm:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
+
+        port = port if port is not None else _find_free_port(test_ports)
         colo_model = exp.create_model(colo_model_name, colo_settings)
 
         if db_type in ["tcp", "deprecated"]:
