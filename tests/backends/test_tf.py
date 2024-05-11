@@ -64,7 +64,7 @@ def test_keras_model(test_dir, mlutils, wlmutils, single_db):
 
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
-    db = exp.reconnect_orchestrator(single_db.checkpoint_file)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     run_settings = exp.create_run_settings(
         "python", f"run_tf.py --device={test_device}"

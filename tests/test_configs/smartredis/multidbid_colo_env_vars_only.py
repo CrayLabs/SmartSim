@@ -30,7 +30,11 @@ import os
 from smartredis import Client, ConfigOptions
 
 if __name__ == "__main__":
-    """For inclusion in test with two unique database identifiers with multiple databases"""
+    """For inclusion in test with two unique database identifiers with multiple
+    databases where one (presumably colocated) database is started before the
+    other, and thus only one DB ID is known at application runtime and
+    available via environment variable.
+    """
 
     parser = argparse.ArgumentParser(description="SmartRedis")
     parser.add_argument("--exchange", action="store_true")
