@@ -142,7 +142,7 @@ def test_singularity_args(fileutils, test_dir):
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_smartredis(test_dir, fileutils, single_db):
+def test_singularity_smartredis(local_experiment, prepare_db, local_db, fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -150,16 +150,13 @@ def test_singularity_smartredis(test_dir, fileutils, single_db):
     Note: This is a containerized port of test_smartredis.py
     """
 
-    exp = Experiment(
-        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
-    )
-
     # create and start a database
-    exp.reconnect_orchestrator(single_db.checkpoint_file)
+    db = prepare_db(local_db).orchestrator
+    local_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     container = Singularity(containerURI)
 
-    rs = exp.create_run_settings(
+    rs = local_experiment.create_run_settings(
         "python3", "producer.py --exchange", container=container
     )
     params = {"mult": [1, -10]}
@@ -176,13 +173,12 @@ def test_singularity_smartredis(test_dir, fileutils, single_db):
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
-    exp.generate(ensemble)
+    local_experiment.generate(ensemble)
 
     # start the models
-    exp.start(ensemble, summary=False)
+    local_experiment.start(ensemble, summary=False)
 
     # get and confirm statuses
-    statuses = exp.get_status(ensemble)
+    statuses = local_experiment.get_status(ensemble)
     if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
-        exp.stop(orc)
         assert False  # client ensemble failed

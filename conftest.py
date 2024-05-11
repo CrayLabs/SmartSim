@@ -27,7 +27,8 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
+from collections import defaultdict
+from dataclasses import dataclass
 import json
 import os
 import pathlib
@@ -42,6 +43,7 @@ import typing as t
 import uuid
 import warnings
 from subprocess import run
+import time
 
 import psutil
 import pytest
@@ -874,149 +876,131 @@ class CountingCallable:
     def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details
 
+## Reuse database across tests
 
-# @pytest.fixture(scope="function")
-# def prepare_db_fixture():
-#     db_constructors = {
-#         "local_db":local_db,
-#         "single_db":single_db,
-#         "clustered_db":clustered_db
-#     }
-#     def _prepare_db_fixture(db_fixture, db_type, wlmutils):
-#         try:
-#             db_up = db_fixture.is_active()
-#         except:
-#             db_up = False
-#         if not db_up:
-#             return db_constructors[db_type](wlmutils)
-#         else:
-#             # TODO: Connect a client and flush the database
-#             return db_fixture
-#     return _prepare_db_fixture
-
-global_local_db = None
+database_registry = defaultdict(lambda: None)
 
 @pytest.fixture(scope="function")
-def factory_experiment(test_dir):
-    # def _factory_experiment(*args, **kwargs):
-    return smartsim.Experiment("foo", exp_path=test_dir)
-    # return _factory_experiment
+def local_experiment(test_dir, wlmutils):
+    """Create a default experiment that uses the requested launcher"""
+    name = pathlib.Path(test_dir).stem
+    return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
 
 @pytest.fixture(scope="function")
-#def prepare_db_fixture(local_db, construct_local_db, wlmutils):
-def prepare_db_fixture(factory_experiment):
-    global global_local_db
-    try:
-        db_up = global_local_db.is_active()
-    except:
-        db_up = False
-    if not db_up:
-        global_local_db = _create_and_launch_database2(
-            "local_db_fixture",
-            launcher="local",
-            num_nodes=1,
-            interface="lo",
-            hostlist=None,
-            port=_find_free_port(tuple(reversed(test_ports))),
-        )
-    # yield global_local_db
-    factory_experiment.reconnect_orchestrator(global_local_db.checkpoint_file)
-    return global_local_db
-    # return global_local_db
+def wlm_experiment(test_dir, wlmutils):
+    """Create a default experiment that uses the requested launcher"""
+    name = pathlib.Path(test_dir).stem
+    return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
 
+def _cleanup_db(name):
+    global database_registry
+    db = database_registry[name]
+    if db and db.is_active():
+        exp = Experiment("cleanup")
+        try:
+            db = exp.reconnect_orchestrator(db.checkpoint_file)
+            exp.stop(db)
+        except:
+            pass
+
+# Reuse databases
 @pytest.fixture(scope="session")
-def construct_local_db(wlmutils):
-    global global_local_db
-    yield global_local_db
-
-@pytest.fixture(scope="session")
-def local_db(wlmutils):
-    with _create_and_launch_database(
-        "local_db_fixture",
-        launcher="local",
-        num_nodes=1,
-        interface="lo",
-        hostlist=None,
-        port=_find_free_port(tuple(reversed(test_ports))),
-    ) as db:
-        yield db
-
+def local_db():
+    name = "local_db_fixture"
+    config = dict(
+        name = name,
+        launcher = "local",
+        num_nodes = 1,
+        interface = "lo",
+        hostlist = None,
+        port = _find_free_port(tuple(reversed(test_ports))),
+    )
+    yield config
+    _cleanup_db(name)
 
 @pytest.fixture(scope="session")
 def single_db(wlmutils):
     hostlist = wlmutils.get_test_hostlist()
     hostlist = hostlist[-1:] if hostlist is not None else None
-    with _create_and_launch_database(
-        "single_db_fixture",
-        launcher=wlmutils.get_test_launcher(),
-        num_nodes=1,
-        interface=wlmutils.get_test_interface(),
-        hostlist=hostlist,
-        port=_find_free_port(tuple(reversed(test_ports))),
-    ) as db:
-        yield db
+    name = "single_db_fixture"
+    config = dict(
+        name = name,
+        launcher = wlmutils.get_test_launcher(),
+        num_nodes = 1,
+        interface = wlmutils.get_test_interface(),
+        hostlist = hostlist,
+        port = _find_free_port(tuple(reversed(test_ports)))
+    )
+    yield config
+    _cleanup_db(name)
 
 
 @pytest.fixture(scope="session")
 def clustered_db(wlmutils):
     hostlist = wlmutils.get_test_hostlist()
     hostlist = hostlist[-4:-1] if hostlist is not None else None
-    with _create_and_launch_database(
-        "clustered_db_fixture",
-        launcher=wlmutils.get_test_launcher(),
-        num_nodes=3,
-        interface=wlmutils.get_test_interface(),
-        hostlist=hostlist,
-        port=_find_free_port(tuple(reversed(test_ports))),
-    ) as db:
-        yield db
+    name = "clustered_db_fixture"
+    config = dict(
+        name = name,
+        launcher = wlmutils.get_test_launcher(),
+        num_nodes = 3,
+        interface = wlmutils.get_test_interface(),
+        hostlist = hostlist,
+        port = _find_free_port(tuple(reversed(test_ports))),
+    )
+    yield config
+    _cleanup_db(name)
 
 
-@contextlib.contextmanager
-def _create_and_launch_database(
-    exp_name: str,
-    launcher: str,
-    num_nodes: int,
-    interface: str,
-    hostlist: t.Optional[t.List[str]],
-    port: int,
-):
-    exp_path = pathlib.Path(test_output_root, exp_name)
-    exp_path.mkdir()
-    exp = Experiment(
-        exp_name,
-        exp_path=str(exp_path),
-        launcher=launcher,
-    )
-    orc = exp.create_database(
-        port, batch=False, interface=interface, hosts=hostlist, db_nodes=num_nodes
-    )
-    exp.generate(orc)
-    exp.start(orc)
-    try:
-        yield orc
-    finally:
-        exp.stop(orc)
+@pytest.fixture
+def register_new_db():
+    def _register_new_db(
+        name: str,
+        launcher: str,
+        num_nodes: int,
+        interface: str,
+        hostlist: t.Optional[t.List[str]],
+        port: int,
+    ):
+        exp_path = pathlib.Path(test_output_root, name)
+        exp_path.mkdir(exist_ok=True)
+        exp = Experiment(
+            name,
+            exp_path=str(exp_path),
+            launcher=launcher,
+        )
+        orc = exp.create_database(
+            port, batch=False, interface=interface, hosts=hostlist, db_nodes=num_nodes
+        )
+        exp.generate(orc, overwrite=True)
+        exp.start(orc)
+        global database_registry
+        database_registry[name] = orc
+        return orc
+    return _register_new_db
 
-def _create_and_launch_database2(
-    exp_name: str,
-    launcher: str,
-    num_nodes: int,
-    interface: str,
-    hostlist: t.Optional[t.List[str]],
-    port: int,
-):
-    exp_path = pathlib.Path(test_output_root, exp_name)
-    exp_path.mkdir(exist_ok=True)
-    exp = Experiment(
-        exp_name,
-        exp_path=str(exp_path),
-        launcher=launcher,
-    )
-    orc = exp.create_database(
-        port, batch=False, interface=interface, hosts=hostlist, db_nodes=num_nodes
-    )
-    exp.generate(orc, overwrite=True)
-    exp.start(orc)
-    print("NEW ORCEHSTARAT")
-    return orc
+
+@dataclass
+class PrepareDatabaseOutput:
+    orchestrator: Orchestrator # The actual orchestrator object
+    new_db: bool     # True if a new database was created when calling prepare_db
+
+
+@pytest.fixture(scope="function")
+def prepare_db(register_new_db):
+    def _prepare_db(db_config: dict):
+        global database_registry
+        db = database_registry[db_config["name"]]
+
+        new_db = False
+        db_up = False
+
+        if db:
+            db_up = db.is_active()
+
+        if not db_up or db is None:
+            db = register_new_db(**db_config)
+            new_db = True
+
+        return PrepareDatabaseOutput(db, new_db)
+    return _prepare_db

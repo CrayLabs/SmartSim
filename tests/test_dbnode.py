@@ -49,10 +49,9 @@ def test_parse_db_host_error():
         orc.entities[0].host
 
 
-def test_hosts(test_dir, single_db):
-    exp_name = "test_hosts"
-    exp = Experiment(exp_name, exp_path=test_dir)
-    orc = exp.reconnect_orchestrator(single_db.checkpoint_file)
+def test_hosts(local_experiment, prepare_db, local_db):
+    db = prepare_db(local_db).orchestrator
+    orc = local_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     hosts = orc.hosts
     assert len(hosts) == orc.db_nodes == 1

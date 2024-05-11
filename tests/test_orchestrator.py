@@ -75,11 +75,12 @@ def test_inactive_orc_get_address() -> None:
 
 
 def test_orc_is_active_functions(
-    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"], local_db: Orchestrator
+        local_experiment,
+        prepare_db,
+        local_db,
 ) -> None:
-    exp_name = "test_orc_active_functions"
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    db = exp.reconnect_orchestrator(local_db.checkpoint_file)
+    db = prepare_db(local_db).orchestrator
+    db = local_experiment.reconnect_orchestrator(db.checkpoint_file)
     assert db.is_active()
 
     # check if the orchestrator can get the address

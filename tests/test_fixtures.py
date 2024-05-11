@@ -36,34 +36,19 @@ from smartsim.error.errors import SSUnsupportedError
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-# def test_single_db_fixture(single_db):
-#     experiment = Experiment("test_single_fixture")
-#     experiment.reconnect_orchestrator(single_db.checkpoint_file)
-#     assert single_db.is_active()
-
-# def test_local_db_fixture(local_db):
-#     experiment = Experiment("test_local_fixture")
-#     experiment.reconnect_orchestrator(local_db.checkpoint_file)
-#     assert local_db.is_active()
-
-#Stage 1
-def test_restart_cancelled_local_db_fixture1(factory_experiment, prepare_db_fixture):
-    experiment = Experiment("test_restart_cancelled_local_db_fixture1")
-    db = prepare_db_fixture
-    experiment.reconnect_orchestrator(db.checkpoint_file)
-    experiment.stop(db)
-
-#Stage 2
-def test_restart_cancelled_local_db_fixture2(factory_experiment, prepare_db_fixture):
-    experiment = Experiment("test_restart_cancelled_local_db_fixture2")
-    db = prepare_db_fixture
-    experiment.reconnect_orchestrator(db.checkpoint_file)
+def test_db_fixtures(local_experiment, local_db, prepare_db):
+    db = prepare_db(local_db).orchestrator
+    local_experiment.reconnect_orchestrator(db.checkpoint_file)
     assert db.is_active()
+    local_experiment.stop(db)
 
-def test_with_local_db_fixture(factory_experiment, prepare_db_fixture):
-    experiment = Experiment("test_restart_cancelled_local_db_fixture")
-    experiment.reconnect_orchestrator(prepare_db_fixture.checkpoint_file)
+def test_create_new_db_fixture_if_stopped(local_experiment, local_db, prepare_db):
+    # Run this twice to make sure that there is a stopped database
+    output = prepare_db(local_db)
+    local_experiment.reconnect_orchestrator(output.orchestrator.checkpoint_file)
+    local_experiment.stop(output.orchestrator)
 
-def test_with_local_db_fixture2(factory_experiment, prepare_db_fixture):
-    experiment = Experiment("test_restart_cancelled_local_db_fixture")
-    experiment.reconnect_orchestrator(prepare_db_fixture.checkpoint_file)
+    output = prepare_db(local_db)
+    assert output.new_db
+    local_experiment.reconnect_orchestrator(output.orchestrator.checkpoint_file)
+    assert output.orchestrator.is_active()
