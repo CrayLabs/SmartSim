@@ -28,11 +28,11 @@
 
 name: enforce_changelog
 
-# on:
-#   pull_request:
-#   push:
-#     branches:
-#       - develop
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
 
 jobs:
   changelog:
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - name: Changelog Enforcer
       uses: dangoslen/changelog-enforcer@v3.6.0
