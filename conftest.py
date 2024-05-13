@@ -139,7 +139,7 @@ def pytest_sessionstart(
     while not os.path.isdir(test_output_root):
         time.sleep(0.1)
 
-    if CONFIG.test_launcher == "dragon" and CONFIG.dragon_server_path is None:
+    if CONFIG.dragon_server_path is None:
         dragon_server_path =  os.path.join(test_output_root, "dragon_server")
         os.makedirs(dragon_server_path)
         os.environ["SMARTSIM_DRAGON_SERVER_PATH"] = dragon_server_path
