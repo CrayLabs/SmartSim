@@ -881,7 +881,7 @@ class CountingCallable:
 database_registry = defaultdict(lambda: None)
 
 @pytest.fixture(scope="function")
-def local_experiment(test_dir, wlmutils):
+def local_experiment(test_dir):
     """Create a default experiment that uses the requested launcher"""
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
@@ -890,7 +890,11 @@ def local_experiment(test_dir, wlmutils):
 def wlm_experiment(test_dir, wlmutils):
     """Create a default experiment that uses the requested launcher"""
     name = pathlib.Path(test_dir).stem
-    return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
+    return smartsim.Experiment(
+        name,
+        exp_path=test_dir,
+        launcher=wlmutils.get_test_launcher()
+    )
 
 def _cleanup_db(name):
     global database_registry
