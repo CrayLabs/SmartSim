@@ -733,7 +733,7 @@ class Experiment:
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
-        interface: str = "ipogif0",
+        interface: t.Union[str, t.List[str]] = "ipogif0",
         account: t.Optional[str] = None,
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,

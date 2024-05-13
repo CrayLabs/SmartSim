@@ -93,7 +93,6 @@ built_mpi_app = False
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
 
-
 def get_account() -> str:
     return test_account
 
@@ -878,16 +877,16 @@ class CountingCallable:
 
 ## Reuse database across tests
 
-database_registry = defaultdict(lambda: None)
+database_registry: t.DefaultDict[str, t.Optional[Orchestrator]] = defaultdict(lambda: None)
 
 @pytest.fixture(scope="function")
-def local_experiment(test_dir):
+def local_experiment(test_dir: str) -> smartsim.Experiment:
     """Create a default experiment that uses the requested launcher"""
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
 
 @pytest.fixture(scope="function")
-def wlm_experiment(test_dir, wlmutils):
+def wlm_experiment(test_dir: str, wlmutils: WLMUtils) -> smartsim.Experiment:
     """Create a default experiment that uses the requested launcher"""
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(
@@ -896,7 +895,7 @@ def wlm_experiment(test_dir, wlmutils):
         launcher=wlmutils.get_test_launcher()
     )
 
-def _cleanup_db(name):
+def _cleanup_db(name: str) -> None:
     global database_registry
     db = database_registry[name]
     if db and db.is_active():
@@ -907,94 +906,109 @@ def _cleanup_db(name):
         except:
             pass
 
+@dataclass
+class DBConfiguration:
+    name: str
+    launcher: str
+    num_nodes: int
+    interface: t.Union[str,t.List[str]]
+    hostlist: t.Optional[t.List[str]]
+    port: int
+
+@dataclass
+class PrepareDatabaseOutput:
+    orchestrator: t.Optional[Orchestrator] # The actual orchestrator object
+    new_db: bool     # True if a new database was created when calling prepare_db
+
 # Reuse databases
 @pytest.fixture(scope="session")
-def local_db():
+def local_db() -> t.Generator[DBConfiguration, None, None]:
     name = "local_db_fixture"
-    config = dict(
-        name = name,
-        launcher = "local",
-        num_nodes = 1,
-        interface = "lo",
-        hostlist = None,
-        port = _find_free_port(tuple(reversed(test_ports))),
+    config = DBConfiguration(
+        name,
+        "local",
+        1,
+        "lo",
+        None,
+        _find_free_port(tuple(reversed(test_ports))),
     )
     yield config
     _cleanup_db(name)
 
 @pytest.fixture(scope="session")
-def single_db(wlmutils):
+def single_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
     hostlist = wlmutils.get_test_hostlist()
     hostlist = hostlist[-1:] if hostlist is not None else None
     name = "single_db_fixture"
-    config = dict(
-        name = name,
-        launcher = wlmutils.get_test_launcher(),
-        num_nodes = 1,
-        interface = wlmutils.get_test_interface(),
-        hostlist = hostlist,
-        port = _find_free_port(tuple(reversed(test_ports)))
+    config = DBConfiguration(
+        name,
+        wlmutils.get_test_launcher(),
+        1,
+        wlmutils.get_test_interface(),
+        hostlist,
+        _find_free_port(tuple(reversed(test_ports)))
     )
     yield config
     _cleanup_db(name)
 
 
 @pytest.fixture(scope="session")
-def clustered_db(wlmutils):
+def clustered_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
     hostlist = wlmutils.get_test_hostlist()
     hostlist = hostlist[-4:-1] if hostlist is not None else None
     name = "clustered_db_fixture"
-    config = dict(
-        name = name,
-        launcher = wlmutils.get_test_launcher(),
-        num_nodes = 3,
-        interface = wlmutils.get_test_interface(),
-        hostlist = hostlist,
-        port = _find_free_port(tuple(reversed(test_ports))),
+    config = DBConfiguration(
+        name,
+        wlmutils.get_test_launcher(),
+        3,
+        wlmutils.get_test_interface(),
+        hostlist,
+        _find_free_port(tuple(reversed(test_ports))),
     )
     yield config
     _cleanup_db(name)
 
 
 @pytest.fixture
-def register_new_db():
+def register_new_db() -> t.Callable[[DBConfiguration], Orchestrator]:
     def _register_new_db(
-        name: str,
-        launcher: str,
-        num_nodes: int,
-        interface: str,
-        hostlist: t.Optional[t.List[str]],
-        port: int,
-    ):
-        exp_path = pathlib.Path(test_output_root, name)
+        config: DBConfiguration
+    ) -> Orchestrator:
+        exp_path = pathlib.Path(test_output_root, config.name)
         exp_path.mkdir(exist_ok=True)
         exp = Experiment(
-            name,
+            config.name,
             exp_path=str(exp_path),
-            launcher=launcher,
+            launcher=config.launcher,
         )
         orc = exp.create_database(
-            port, batch=False, interface=interface, hosts=hostlist, db_nodes=num_nodes
+            port=config.port,
+            batch=False,
+            interface=config.interface,
+            hosts=config.hostlist,
+            db_nodes=config.num_nodes
         )
         exp.generate(orc, overwrite=True)
         exp.start(orc)
         global database_registry
-        database_registry[name] = orc
+        database_registry[config.name] = orc
         return orc
     return _register_new_db
 
 
-@dataclass
-class PrepareDatabaseOutput:
-    orchestrator: Orchestrator # The actual orchestrator object
-    new_db: bool     # True if a new database was created when calling prepare_db
-
-
 @pytest.fixture(scope="function")
-def prepare_db(register_new_db):
-    def _prepare_db(db_config: dict):
+def prepare_db(
+    register_new_db: t.Callable[
+        [DBConfiguration],
+        Orchestrator
+    ]
+) -> t.Callable[
+    [DBConfiguration],
+    PrepareDatabaseOutput
+]:
+    def _prepare_db(db_config: DBConfiguration) -> PrepareDatabaseOutput:
         global database_registry
-        db = database_registry[db_config["name"]]
+        db = database_registry[db_config.name]
 
         new_db = False
         db_up = False
@@ -1003,7 +1017,7 @@ def prepare_db(register_new_db):
             db_up = db.is_active()
 
         if not db_up or db is None:
-            db = register_new_db(**db_config)
+            db = register_new_db(db_config)
             new_db = True
 
         return PrepareDatabaseOutput(db, new_db)
