@@ -67,7 +67,13 @@ from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
-from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import (
+    DragonLauncher,
+    LocalLauncher,
+    LSFLauncher,
+    PBSLauncher,
+    SlurmLauncher,
+)
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
 from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
@@ -118,6 +124,10 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
+        # launch a telemetry monitor to track job progress
+        if CONFIG.telemetry_enabled:
+            self._start_telemetry_monitor(exp_path)
+
         self._jobs.kill_on_interrupt = kill_on_interrupt
 
         # register custom signal handler for ^C (SIGINT)
@@ -133,10 +143,6 @@ class Controller:
         serialize.save_launch_manifest(
             launched.map(_look_up_launched_data(self._launcher))
         )
-
-        # launch a telemetry monitor to track job progress
-        if CONFIG.telemetry_enabled:
-            self._start_telemetry_monitor(exp_path)
 
         # block until all non-database jobs are complete
         if block:
@@ -336,6 +342,7 @@ class Controller:
             "pals": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
 
         if launcher is not None:
@@ -842,7 +849,7 @@ class Controller:
             try:
                 for db_job, step in job_steps:
                     self._jobs.db_jobs[db_job.ename] = db_job
-                    self._launcher.step_mapping[db_job.name] = step
+                    self._launcher.add_step_to_mapping_table(db_job.name, step)
                     if step.task_id:
                         self._launcher.task_manager.add_existing(int(step.task_id))
             except LauncherError as e:
@@ -914,7 +921,6 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
-
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,

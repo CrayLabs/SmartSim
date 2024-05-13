@@ -105,9 +105,10 @@ def test_preview_wlm_run_commands_cluster_orc_model(
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
-    assert "Run Command" in output
+    if pytest.test_launcher != "dragon":
+        assert "Run Command" in output
+        assert "ntasks" in output
     assert "Run Arguments" in output
-    assert "ntasks" in output
     assert "nodes" in output
 
 
@@ -133,11 +134,12 @@ def test_preview_model_on_wlm(fileutils, test_dir, wlmutils):
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
-    assert "Run Command" in output
+    if pytest.test_launcher != "dragon":
+        assert "Run Command" in output
+        assert "ntasks" in output
+        assert "time" in output
+        assert "nodes" in output
     assert "Run Arguments" in output
-    assert "nodes" in output
-    assert "ntasks" in output
-    assert "time" in output
 
 
 @pytest.mark.skipif(

@@ -57,7 +57,7 @@ def parse_qsub_error(output: str) -> str:
     return base_err
 
 
-def parse_qstat_jobid(output: str, job_id: str) -> str:
+def parse_qstat_jobid(output: str, job_id: str) -> t.Optional[str]:
     """Parse and return output of the qstat command run with options
     to obtain job status.
 
@@ -65,7 +65,7 @@ def parse_qstat_jobid(output: str, job_id: str) -> str:
     :param job_id: allocation id or job step id
     :return: status
     """
-    result = "NOTFOUND"
+    result = None
     for line in output.split("\n"):
         fields = line.split()
         if len(fields) >= 5:
@@ -74,6 +74,25 @@ def parse_qstat_jobid(output: str, job_id: str) -> str:
                 result = stat
                 break
     return result
+
+
+def parse_qstat_jobid_json(output: str, job_id: str) -> t.Optional[str]:
+    """Parse and return output of the qstat command run with JSON options
+    to obtain job status.
+
+    :param output: output of the qstat command in JSON format
+    :param job_id: allocation id or job step id
+    :return: status
+    """
+    out_json = load_and_clean_json(output)
+
+    if "Jobs" not in out_json:
+        return None
+    jobs: dict[str, t.Any] = out_json["Jobs"]
+    job: t.Optional[dict[str, t.Any]] = jobs.get(job_id, None)
+    if job is None:
+        return None
+    return str(job.get("job_state", None))
 
 
 def parse_qstat_nodes(output: str) -> t.List[str]:

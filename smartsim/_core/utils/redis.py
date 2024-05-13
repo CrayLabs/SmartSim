@@ -201,7 +201,7 @@ def set_script(db_script: DBScript, client: Client) -> None:
                     client.set_script(
                         name=db_script.name, script=db_script.script, device=device
                     )
-                else:
+                elif callable(db_script.script):
                     client.set_function(
                         name=db_script.name, function=db_script.script, device=device
                     )
@@ -229,7 +229,9 @@ def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
 
     if returncode != 0:
         logger.error(out)
-        logger.error(err)
+        err_msg = "Error while shutting down DB node. "
+        err_msg += f"Return code: {returncode}, err: {err}"
+        logger.error(err_msg)
     elif out:
         logger.debug(out)
 

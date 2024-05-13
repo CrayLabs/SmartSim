@@ -102,12 +102,13 @@ class DataInfo:
         """
         try:
             info_ds = client.get_dataset(self._ds_name)
-        except RedisReplyError:
+        except RedisReplyError as e:
             # If the info was not published, proceed with default parameters
             logger.warning(
                 "Could not retrieve data for DataInfo object, the following "
                 "values will be kept."
             )
+            logger.error(f"Original error from Redis was {e}")
             logger.warning(str(self))
             return
         self.sample_name = info_ds.get_meta_strings("sample_name")[0]

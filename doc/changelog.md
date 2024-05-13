@@ -15,6 +15,8 @@ To be released at some future point in time
 
 Description
 
+-   Add dragon runtime installer
+-   Add launcher based on Dragon
 -   Fix building of documentation
 -   Preview entities on experiment before start
 -   Update authentication in release workflow
@@ -59,7 +61,15 @@ Description
 -   Fix publishing of development docs
 
 Detailed Notes
-
+-   Add `--dragon` option to `smart build`. Install appropriate Dragon
+    runtime from Dragon GitHub release assets.
+    ([SmartSim-PR580](https://github.com/CrayLabs/SmartSim/pull/580))
+-   Add new launcher, based on [Dragon](https://dragonhpc.github.io/dragon/doc/_build/html/index.html).
+    The new launcher is compatible with the Slurm and PBS schedulers and can
+    be selected by specifying ``launcher="dragon"`` when creating an `Experiment`,
+    or by using ``DragonRunSettings`` to launch a job. The Dragon launcher
+    is at an early stage of development: early adopters are referred to the
+    dedicated documentation section to learn more about it. ([SmartSim-PR580](https://github.com/CrayLabs/SmartSim/pull/580))
 -   Manually ensure that typing_extensions==4.6.1 in Dockerfile used to build
     docs. This fixes the deploy_dev_docs Github action ([SmartSim-PR564](https://github.com/CrayLabs/SmartSim/pull/564))
 -   Added preview functionality to Experiment, including preview of all entities, active infrastructure and
