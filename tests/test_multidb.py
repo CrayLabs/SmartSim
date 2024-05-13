@@ -75,8 +75,7 @@ def test_db_identifier_standard_then_colo_error(
 ):
     """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
     with unique db_identifiers"""
-
-    # Set experiment name
+        # Set experiment name
     exp_name = "test_db_identifier_standard_then_colo"
 
     # Retrieve parameters from testing environment
@@ -128,7 +127,7 @@ def test_db_identifier_standard_then_colo_error(
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_colo_then_standard(
-    fileutils, wlmutils, coloutils, db_type, test_dir
+    fileutils, wlmutils, coloutils, db_type, test_dir, single_db
 ):
     """Test colocate_db_uds/colocate_db_tcp then create_database with database
     identifiers.
@@ -175,21 +174,11 @@ def test_db_identifier_colo_then_standard(
         == "testdb_colo"
     )
 
-    # Create Database
-    orc = exp.create_database(
-        port=test_port + 1,
-        interface=test_interface,
-        db_identifier="testdb_colo",
-        hosts=choose_host(wlmutils),
-    )
-
-    assert orc.name == "testdb_colo"
-
-    with make_entity_context(exp, orc), make_entity_context(exp, smartsim_model):
+    with make_entity_context(exp, smartsim_model):
         exp.start(smartsim_model, block=True)
-        exp.start(orc)
+        exp.reconnect_orchestrator(single_db.checkpoint_file)
 
-    check_not_failed(exp, orc, smartsim_model)
+    check_not_failed(exp, smartsim_model)
 
 
 def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):

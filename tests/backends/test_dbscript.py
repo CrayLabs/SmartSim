@@ -57,7 +57,7 @@ def timestwo(x):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script(fileutils, test_dir, wlmutils, mlutils):
+def test_db_script(fileutils, test_dir, wlmutils, mlutils, single_db):
     """Test DB scripts on remote DB"""
 
     # Set experiment name
@@ -65,8 +65,6 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
@@ -85,9 +83,8 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create the SmartSim database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db, smartsim_model)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
+    exp.generate(smartsim_model)
 
     # Define the torch script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -123,16 +120,13 @@ def test_db_script(fileutils, test_dir, wlmutils, mlutils):
     assert len(smartsim_model._db_scripts) == 3
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_model, block=True)
-        statuses = exp.get_status(smartsim_model)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
-    finally:
-        exp.stop(db)
+    exp.start(smartsim_model, block=True)
+    statuses = exp.get_status(smartsim_model)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
+def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils, single_db):
     """Test DB scripts on remote DB"""
 
     # Set experiment name
@@ -140,8 +134,6 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
@@ -156,6 +148,8 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
+
     # Create Ensemble with two identical models
     ensemble = exp.create_ensemble(
         "dbscript_ensemble", run_settings=run_settings, replicas=2
@@ -163,11 +157,6 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
 
     # Create SmartSim model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-
-    # Create SmartSim database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
 
     # Create the script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -219,13 +208,9 @@ def test_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
 
     exp.generate(ensemble)
 
-    try:
-        exp.start(db, ensemble, block=True)
-        statuses = exp.get_status(ensemble)
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
-    finally:
-        exp.stop(db)
-
+    exp.start(ensemble, block=True)
+    statuses = exp.get_status(ensemble)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
 def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):

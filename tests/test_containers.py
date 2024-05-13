@@ -31,8 +31,7 @@ from shutil import which
 
 import pytest
 
-from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim import Experiment, status
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
 from smartsim.status import SmartSimStatus
@@ -143,7 +142,7 @@ def test_singularity_args(fileutils, test_dir):
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_smartredis(test_dir, fileutils, wlmutils):
+def test_singularity_smartredis(test_dir, fileutils, single_db):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -156,9 +155,7 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     )
 
     # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     container = Singularity(containerURI)
 
@@ -189,8 +186,3 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
-
-    # stop the orchestrator
-    exp.stop(orc)
-
-    print(exp.summary())

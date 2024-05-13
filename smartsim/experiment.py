@@ -150,10 +150,6 @@ class Experiment:
         """
         self.name = name
         if exp_path:
-            if not isinstance(exp_path, str):
-                raise TypeError("exp_path argument was not of type str")
-            if not osp.isdir(osp.abspath(exp_path)):
-                raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
         else:
             exp_path = osp.join(getcwd(), name)

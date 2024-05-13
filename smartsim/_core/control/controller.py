@@ -749,14 +749,30 @@ class Controller:
         :param orchestrator: Orchestrator configuration to be saved
         """
 
-        dat_file = "/".join((orchestrator.path, "smartsim_db.dat"))
-        db_jobs = self._jobs.db_jobs
-        orc_data = {"db": orchestrator, "db_jobs": db_jobs}
-        steps = []
-        for db_job in db_jobs.values():
-            steps.append(self._launcher.step_mapping[db_job.name])
-        orc_data["steps"] = steps
-        with open(dat_file, "wb") as pickle_file:
+        if not orchestrator.is_active():
+            raise Exception("Orchestrator is not running")
+
+        # Extract only the db_jobs associated with this particular orchestrator
+        if orchestrator.batch:
+            job_names = [orchestrator.name]
+        else:
+            job_names = [dbnode.name for dbnode in orchestrator.entities]
+        db_jobs = {
+            job: self._jobs.db_jobs[job] for job in self._jobs.db_jobs if job in job_names
+        }
+
+        # Extract the associated steps
+        steps = [
+            self._launcher.step_mapping[db_job.name] for db_job in db_jobs.values()
+        ]
+
+        orc_data = {
+            "db": orchestrator,
+            "db_jobs": db_jobs,
+            "steps": steps
+        }
+
+        with open(orchestrator.checkpoint_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
 
     def _orchestrator_launch_wait(self, orchestrator: Orchestrator) -> None:
@@ -785,10 +801,10 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
+                if (all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
+                     and orchestrator.is_active()):
                     ready = True
                     # TODO remove in favor of by node status check
-                    time.sleep(CONFIG.jm_interval)
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
@@ -806,10 +822,8 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
+    def reload_saved_db(self, checkpoint_file: pathlib.Path) -> Orchestrator:
         with JM_LOCK:
-            if self.orchestrator_active:
-                raise SmartSimError("Orchestrator exists and is active")
 
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(

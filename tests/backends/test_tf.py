@@ -50,7 +50,7 @@ tf_backend_available = "tensorflow" in installed_redisai_backends()
     (not tf_backend_available) or (not tf_available),
     reason="Requires RedisAI TF backend",
 )
-def test_keras_model(test_dir, mlutils, wlmutils):
+def test_keras_model(test_dir, mlutils, wlmutils, single_db):
     """This test needs two free nodes, 1 for the db and 1 for a keras model script
 
     this test can run on CPU/GPU by setting SMARTSIM_TEST_DEVICE=GPU
@@ -64,10 +64,9 @@ def test_keras_model(test_dir, mlutils, wlmutils):
 
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
+    db = exp.reconnect_orchestrator(single_db.checkpoint_file)
 
-    db = wlmutils.get_orchestrator(nodes=1)
-    db.set_path(test_dir)
-    exp.start(db)
+
 
     run_settings = exp.create_run_settings(
         "python", f"run_tf.py --device={test_device}"
@@ -84,7 +83,6 @@ def test_keras_model(test_dir, mlutils, wlmutils):
 
     exp.start(model, block=True)
 
-    exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)[0]
     assert model_status != SmartSimStatus.STATUS_FAILED

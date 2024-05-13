@@ -167,19 +167,17 @@ def train_tf(generator):
 
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
-def test_tf_dataloaders(test_dir, wlmutils):
+def test_tf_dataloaders(test_dir, wlmutils, monkeypatch, single_db):
     exp = Experiment(
         "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
     )
-    orc: Orchestrator = wlmutils.get_orchestrator()
-    exp.generate(orc)
-    exp.start(orc)
+    orc = exp.reconnect_orchestrator(single_db.checkpoint_file)
+    monkeypatch.setenv("SSDB", orc.get_address()[0])
+    monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")
 
     try:
-        os.environ["SSDB"] = orc.get_address()[0]
         data_info = run_local_uploaders(mpi_size=2, format="tf")
 
-        os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
         for rank in range(2):
             tf_dynamic = TFDataGenerator(
                 data_info_or_list_name="test_data_list",
@@ -211,11 +209,6 @@ def test_tf_dataloaders(test_dir, wlmutils):
 
     except Exception as e:
         raise e
-    finally:
-        exp.stop(orc)
-        os.environ.pop("SSDB", "")
-        os.environ.pop("SSKEYIN", "")
-        os.environ.pop("SSKEYOUT", "")
 
 
 def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
@@ -234,20 +227,18 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
 
 
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
-def test_torch_dataloaders(fileutils, test_dir, wlmutils):
+def test_torch_dataloaders(fileutils, test_dir, wlmutils, monkeypatch, single_db):
     exp = Experiment(
         "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
     )
-    orc: Orchestrator = wlmutils.get_orchestrator()
     config_dir = fileutils.get_test_dir_path("ml")
-    exp.generate(orc)
-    exp.start(orc)
+    orc = exp.reconnect_orchestrator(single_db.checkpoint_file)
+    monkeypatch.setenv("SSDB", orc.get_address()[0])
+    monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")
 
     try:
-        os.environ["SSDB"] = orc.get_address()[0]
         data_info = run_local_uploaders(mpi_size=2)
 
-        os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
         for rank in range(2):
             torch_dynamic = TorchDataGenerator(
                 data_info_or_list_name="test_data_list",
@@ -293,11 +284,6 @@ def test_torch_dataloaders(fileutils, test_dir, wlmutils):
 
     except Exception as e:
         raise e
-    finally:
-        exp.stop(orc)
-        os.environ.pop("SSDB", "")
-        os.environ.pop("SSKEYIN", "")
-        os.environ.pop("SSKEYOUT", "")
 
 
 def test_data_info_repr():
@@ -331,15 +317,13 @@ def test_data_info_repr():
 @pytest.mark.skipif(
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
 )
-def test_wrong_dataloaders(test_dir, wlmutils):
+def test_wrong_dataloaders(test_dir, wlmutils, single_db):
     exp = Experiment(
         "test-wrong-dataloaders",
         exp_path=test_dir,
         launcher=wlmutils.get_test_launcher(),
     )
-    orc = wlmutils.get_orchestrator()
-    exp.generate(orc)
-    exp.start(orc)
+    orc = exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
@@ -366,4 +350,3 @@ def test_wrong_dataloaders(test_dir, wlmutils):
             )
             torch_data_gen.init_samples(init_trials=1)
 
-    exp.stop(orc)

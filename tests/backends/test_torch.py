@@ -48,7 +48,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_torch_model_and_script(test_dir, mlutils, wlmutils):
+def test_torch_model_and_script(test_dir, mlutils, wlmutils, single_db):
     """This test needs two free nodes, 1 for the db and 1 for a torch model script
 
      Here we test both the torchscipt API and the NN API from torch
@@ -63,11 +63,8 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
     exp_name = "test_torch_model_and_script"
 
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
     test_device = mlutils.get_test_device()
-
-    db = wlmutils.get_orchestrator(nodes=1)
-    db.set_path(test_dir)
-    exp.start(db)
 
     run_settings = exp.create_run_settings(
         "python", f"run_torch.py --device={test_device}"
@@ -83,7 +80,6 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
 
     exp.start(model, block=True)
 
-    exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)[0]
     assert model_status != SmartSimStatus.STATUS_FAILED

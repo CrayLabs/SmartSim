@@ -27,6 +27,7 @@
 
 import pytest
 
+from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 
 try:
@@ -67,11 +68,11 @@ def test_config_methods(dbutils, local_db):
                 local_db.set_db_conf(key, value)
 
 
-def test_config_methods_inactive(wlmutils, dbutils):
+def test_config_methods_inactive(dbutils):
     """Ensure a SmartSimError is raised when trying to
     set configurations on an inactive database
     """
-    db = wlmutils.get_orchestrator()
+    db = Orchestrator()
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
         config_set_method = dbutils.get_config_edit_method(db, setting)

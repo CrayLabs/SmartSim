@@ -74,31 +74,14 @@ def test_inactive_orc_get_address() -> None:
         db.get_address()
 
 
-def test_orc_active_functions(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+def test_orc_is_active_functions(test_dir: str, wlmutils: "conftest.WLMUtils", single_db: "conftest.single_db") -> None:
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-
-    db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
-
-    exp.start(db)
-
-    # check if the orchestrator is active
+    db = exp.reconnect_orchestrator(single_db.checkpoint_file)
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
-        exp.stop(db)
-        assert False
-
-    exp.stop(db)
-
-    assert not db.is_active()
-
-    # check if orchestrator.get_address() raises an exception
-    with pytest.raises(SmartSimError):
-        db.get_address()
+    assert db.get_address() == [f"127.0.0.1:{db.ports[0]}"]
 
 
 def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
@@ -112,7 +95,8 @@ def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> No
 
     net_if_addrs = ["lo", net_if_addrs[0]]
 
-    db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
+    port = wlmutils.get_test_port()
+    db = Orchestrator(port=port, interface=net_if_addrs)
     db.set_path(test_dir)
 
     exp.start(db)
@@ -121,8 +105,9 @@ def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> No
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
+    correct_address = [f"127.0.0.1:{port}"]
+
+    if not correct_address == db.get_address():
         exp.stop(db)
         assert False
 

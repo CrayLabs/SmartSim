@@ -146,7 +146,7 @@ def save_torch_cnn(path, file_name):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
+def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils, single_db):
     """Test TensorFlow DB Models on remote DB"""
 
     # Set experiment name
@@ -154,8 +154,6 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = 1  # TF backend fails on multiple GPUs
 
@@ -173,9 +171,7 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
@@ -215,18 +211,15 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     exp.generate(smartsim_model)
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_model, block=True)
-        statuses = exp.get_status(smartsim_model)
-        assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
-        ), f"Statuses: {statuses}"
-    finally:
-        exp.stop(db)
+    exp.start(smartsim_model, block=True)
+    statuses = exp.get_status(smartsim_model)
+    assert all(
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses: {statuses}"
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
+def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils, single_db):
     """Test PyTorch DB Models on remote DB"""
 
     # Set experiment name
@@ -253,9 +246,7 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     # Create and save ML model to filesystem
     save_torch_cnn(test_dir, "model1.pt")
@@ -282,18 +273,15 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     exp.generate(smartsim_model)
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_model, block=True)
-        statuses = exp.get_status(smartsim_model)
-        assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
-        ), f"Statuses: {statuses}"
-    finally:
-        exp.stop(db)
+    exp.start(smartsim_model, block=True)
+    statuses = exp.get_status(smartsim_model)
+    assert all(
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses: {statuses}"
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
+def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils, single_db):
     """Test DBModels on remote DB, with an ensemble"""
 
     # Set experiment name
@@ -325,9 +313,7 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     smartsim_model = exp.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
@@ -383,14 +369,11 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     exp.generate(smartsim_ensemble)
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_ensemble, block=True)
-        statuses = exp.get_status(smartsim_ensemble)
-        assert all(
-            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
-        ), f"Statuses: {statuses}"
-    finally:
-        exp.stop(db)
+    exp.start(smartsim_ensemble, block=True)
+    statuses = exp.get_status(smartsim_ensemble)
+    assert all(
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses: {statuses}"
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")

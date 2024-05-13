@@ -33,6 +33,7 @@ import pathlib
 import shutil
 import subprocess
 import signal
+import socket
 import sys
 import tempfile
 import time
@@ -53,7 +54,7 @@ from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
-from smartsim.error import SSConfigError
+from smartsim.error import SSConfigError, SSInternalError
 from smartsim.log import get_logger
 from smartsim.settings import (
     AprunSettings,
@@ -79,6 +80,7 @@ test_num_gpus = CONFIG.test_num_gpus
 test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
+test_num_ports = CONFIG.test_num_ports
 test_account = CONFIG.test_account or ""
 test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
 test_output_dirs = 0
@@ -297,7 +299,27 @@ _reset_signal_interrupt = pytest.fixture(
 )
 
 
-@pytest.fixture
+def _reset_signal(signalnum: int):
+    """SmartSim will set/overwrite signals on occasion. This function will
+    return a generator that can be used as a fixture to automatically reset the
+    signal handler to what it was at the beginning of the test suite to keep
+    tests atomic.
+    """
+    original = signal.getsignal(signalnum)
+
+    def _reset():
+        yield
+        signal.signal(signalnum, original)
+
+    return _reset
+
+
+_reset_signal_interrupt = pytest.fixture(
+    _reset_signal(signal.SIGINT), autouse=True, scope="function"
+)
+
+
+@pytest.fixture(scope="session")
 def wlmutils() -> t.Type[WLMUtils]:
     return WLMUtils
 
@@ -314,7 +336,12 @@ class WLMUtils:
 
     @staticmethod
     def get_test_port() -> int:
-        return test_port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            for port in range(test_port, test_port+test_num_ports):
+                result = sock.connect_ex(('127.0.0.1',port))
+                if result:
+                    return port
+        raise SSInternalError("get_test_port: ran out of a open ports")
 
     @staticmethod
     def get_test_account() -> str:
@@ -421,61 +448,6 @@ class WLMUtils:
         return RunSettings(exe, args)
 
     @staticmethod
-    def get_orchestrator(nodes: int = 1, batch: bool = False) -> Orchestrator:
-        if test_launcher == "pbs":
-            if not shutil.which("aprun"):
-                hostlist = get_hostlist()
-            else:
-                hostlist = None
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-                hosts=hostlist,
-            )
-        if test_launcher == "pals":
-            hostlist = get_hostlist()
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-                hosts=hostlist,
-            )
-        if test_launcher == "slurm":
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-            )
-        if test_launcher == "dragon":
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-            )
-        if test_launcher == "lsf":
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                cpus_per_shard=4,
-                gpus_per_shard=2 if test_device == "GPU" else 0,
-                project=get_account(),
-                interface=test_nic,
-                launcher=test_launcher,
-            )
-
-        return Orchestrator(port=test_port, interface="lo")
-
-    @staticmethod
     def choose_host(rs: RunSettings) -> t.Optional[str]:
         if isinstance(rs, (MpirunSettings, MpiexecSettings)):
             hl = get_hostlist()
@@ -483,65 +455,6 @@ class WLMUtils:
                 return hl[0]
 
         return None
-
-
-@pytest.fixture
-def local_db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
-) -> t.Generator[Orchestrator, None, None]:
-    """Yield fixture for startup and teardown of an local orchestrator"""
-
-    exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
-    db.set_path(test_dir)
-    exp.start(db)
-
-    yield db
-    # pass or fail, the teardown code below is ran after the
-    # completion of a test case that uses this fixture
-    exp.stop(db)
-
-
-@pytest.fixture
-def db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
-) -> t.Generator[Orchestrator, None, None]:
-    """Yield fixture for startup and teardown of an orchestrator"""
-    launcher = wlmutils.get_test_launcher()
-
-    exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-    db = wlmutils.get_orchestrator()
-    db.set_path(test_dir)
-    exp.start(db)
-
-    yield db
-    # pass or fail, the teardown code below is ran after the
-    # completion of a test case that uses this fixture
-    exp.stop(db)
-
-
-@pytest.fixture
-def db_cluster(
-    test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
-) -> t.Generator[Orchestrator, None, None]:
-    """
-    Yield fixture for startup and teardown of a clustered orchestrator.
-    This should only be used in on_wlm and full_wlm tests.
-    """
-    launcher = wlmutils.get_test_launcher()
-
-    exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-    db = wlmutils.get_orchestrator(nodes=3)
-    db.set_path(test_dir)
-    exp.start(db)
-
-    yield db
-    # pass or fail, the teardown code below is ran after the
-    # completion of a test case that uses this fixture
-    exp.stop(db)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -968,3 +881,44 @@ class CountingCallable:
     @property
     def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details
+
+@pytest.fixture(scope="session")
+def single_db(wlmutils):
+
+    exp = Experiment(
+        "single_db_fixture",
+        exp_path=pathlib.Path(test_output_root, "single_db_fixture"),
+        launcher=wlmutils.get_test_launcher()
+    )
+    orc = exp.create_database(
+        wlmutils.get_test_port()+1,
+        batch=False,
+        interface=wlmutils.get_test_interface(),
+        hosts=wlmutils.get_test_hostlist(),
+        db_nodes=1
+    )
+    exp.generate(orc, overwrite=True)
+    exp.start(orc)
+    yield orc
+    exp.stop(orc)
+
+@pytest.fixture(scope="session")
+def clustered_db(wlmutils):
+
+    exp = Experiment(
+        "clustered_db_fixture",
+        exp_path=pathlib.Path(test_output_root, "clustered_db_fixture"),
+        launcher=wlmutils.get_test_launcher()
+    )
+    orc = exp.create_database(
+        wlmutils.get_test_port()+1,
+        batch=False,
+        interface=wlmutils.get_test_interface(),
+        hosts=wlmutils.get_test_hostlist(),
+        db_nodes=3
+    )
+    exp.generate(orc)
+    exp.start(orc)
+
+    yield orc
+    exp.stop(orc)

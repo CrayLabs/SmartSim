@@ -49,22 +49,13 @@ def test_parse_db_host_error():
         orc.entities[0].host
 
 
-def test_hosts(test_dir, wlmutils):
+def test_hosts(test_dir, single_db):
     exp_name = "test_hosts"
     exp = Experiment(exp_name, exp_path=test_dir)
+    orc = exp.reconnect_orchestrator(single_db.checkpoint_file)
 
-    orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
-    orc.set_path(test_dir)
-    exp.start(orc)
-
-    hosts = []
-    try:
-        hosts = orc.hosts
-        assert len(hosts) == orc.db_nodes == 1
-    finally:
-        # stop the database even if there is an error raised
-        exp.stop(orc)
-        orc.remove_stale_files()
+    hosts = orc.hosts
+    assert len(hosts) == orc.db_nodes == 1
 
 
 def _random_shard_info():

@@ -30,6 +30,7 @@ import itertools
 import sys
 import typing as t
 from os import environ, getcwd, getenv
+import os.path as osp
 from shlex import split as sh_split
 
 import psutil
@@ -370,7 +371,7 @@ class Orchestrator(EntityList[DBNode]):
 
         :return: True if database is active, False otherwise
         """
-        if not self._hosts:
+        if not self.hosts:
             return False
 
         return db_is_active(self._hosts, self.ports, self.num_shards)
@@ -398,6 +399,15 @@ class Orchestrator(EntityList[DBNode]):
     @property
     def _redis_conf(self) -> str:
         return CONFIG.database_conf
+
+    @property
+    def checkpoint_file(self) -> str:
+        """Get the path to the checkpoint file for this Orchestrator
+
+        :return: Path to the checkpoint file if it exists, otherwise a None
+        :rtype: str or None
+        """
+        return osp.join(self.path, "smartsim_db.dat")
 
     def set_cpus(self, num_cpus: int) -> None:
         """Set the number of CPUs available to each database shard

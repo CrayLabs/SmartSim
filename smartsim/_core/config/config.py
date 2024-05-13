@@ -207,6 +207,10 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
+    def test_num_ports(self) -> int:  # pragma: no cover
+        return int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", 10))
+
+    @property
     def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
         resource_str = os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}")
         resources = json.loads(resource_str)

@@ -60,7 +60,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_exchange(fileutils, test_dir, wlmutils):
+def test_exchange(fileutils, test_dir, single_db):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -71,9 +71,7 @@ def test_exchange(fileutils, test_dir, wlmutils):
     )
 
     # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     rs = exp.create_run_settings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
@@ -97,14 +95,10 @@ def test_exchange(fileutils, test_dir, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    try:
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
-    finally:
-        # stop the orchestrator
-        exp.stop(orc)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
-def test_consumer(fileutils, test_dir, wlmutils):
+def test_consumer(fileutils, test_dir, single_db):
     """Run three processes, each one of the first two processes
     puts a tensor on the DB; the third process accesses the
     tensors put by the two producers.
@@ -115,11 +109,7 @@ def test_consumer(fileutils, test_dir, wlmutils):
     exp = Experiment(
         "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
     )
-
-    # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    exp.reconnect_orchestrator(single_db.checkpoint_file)
 
     rs_prod = exp.create_run_settings("python", "producer.py")
     rs_consumer = exp.create_run_settings("python", "consumer.py")
@@ -146,8 +136,4 @@ def test_consumer(fileutils, test_dir, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    try:
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
-    finally:
-        # stop the orchestrator
-        exp.stop(orc)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
