@@ -338,8 +338,6 @@ def test_shutdown_request(
     time.sleep(dragon_backend._cooldown_period + 0.1)
     dragon_backend._update()
 
-    print(immediate, kill_jobs, immediate and kill_jobs)
-
     assert dragon_backend._can_shutdown == kill_jobs
     assert dragon_backend.should_shutdown == kill_jobs
     assert dragon_backend._has_cooled_down == kill_jobs
