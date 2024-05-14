@@ -249,6 +249,30 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not dragon_backend._running_steps
 
 
+def test_deny_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    dragon_backend = get_mock_backend(monkeypatch)
+
+    dragon_backend._shutdown_requested = True
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=2,
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+    )
+
+    run_resp = dragon_backend.process_request(run_req)
+    assert isinstance(run_resp, DragonRunResponse)
+    assert run_resp.error_message == "Cannot satisfy request, server is shutting down."
+    step_id = run_resp.step_id
+
+    assert dragon_backend.group_infos[step_id].status == SmartSimStatus.STATUS_FAILED
+
 def test_udpate_status_request(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend = get_mock_backend(monkeypatch)
 
