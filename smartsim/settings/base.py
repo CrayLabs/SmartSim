@@ -452,7 +452,10 @@ class RunSettings(SettingsBase):
         self._exe_args.extend(args)
 
     def set(
-        self, arg: str, value: t.Optional[str] = None, condition: bool = True
+        self,
+        arg: t.Union[str, int],
+        value: t.Optional[str] = None,
+        condition: bool = True,
     ) -> None:
         """Allows users to set individual run arguments.
 
@@ -502,9 +505,17 @@ class RunSettings(SettingsBase):
         """
         if not isinstance(arg, str):
             raise TypeError("Argument name should be of type str")
-        if value is not None and not isinstance(value, str):
-            raise TypeError("Argument value should be of type str or None")
+        if value is not None and not isinstance(value, (str, int)):
+            raise TypeError("Argument value should be of type str, int, or None")
+
+        res_arg = arg
         arg = arg.strip().lstrip("-")
+
+        if arg != res_arg:
+            logger.warning(
+                "One or more leading `-` characters were provided to the run argument. \
+Leading dashes were stripped and the arguments were passed to the run_command."
+            )
 
         if not condition:
             logger.info(f"Could not set argument '{arg}': condition not met")
@@ -520,6 +531,7 @@ class RunSettings(SettingsBase):
 
         if arg in self.run_args and value != self.run_args[arg]:
             logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
+
         self.run_args[arg] = value
 
     @staticmethod
