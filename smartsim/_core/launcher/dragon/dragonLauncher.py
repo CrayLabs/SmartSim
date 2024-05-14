@@ -110,7 +110,7 @@ class DragonLauncher(WLMLauncher):
         elif step_map.step_id.startswith("PBS-"):
             sublauncher = self._pbs_launcher
         else:
-            raise ValueError(f"Step id {step_map.step_id} is not valid.")
+            return
 
         sublauncher_step_map = StepMap(
             step_id=DragonLauncher._unprefix_step_id(step_map.step_id),
