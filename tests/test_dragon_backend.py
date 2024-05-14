@@ -273,6 +273,7 @@ def test_deny_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert dragon_backend.group_infos[step_id].status == SmartSimStatus.STATUS_FAILED
 
+
 def test_udpate_status_request(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend = get_mock_backend(monkeypatch)
 
