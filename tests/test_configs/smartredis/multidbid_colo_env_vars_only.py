@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,18 +24,29 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .errors import (
-    AllocationError,
-    EntityExistsError,
-    LauncherError,
-    ParameterWriterError,
-    ShellError,
-    SmartSimError,
-    SSConfigError,
-    SSDBFilesNotParseable,
-    SSDBIDConflictError,
-    SSInternalError,
-    SSReservedKeywordError,
-    SSUnsupportedError,
-    UserStrategyError,
-)
+import argparse
+import os
+
+from smartredis import Client, ConfigOptions
+
+if __name__ == "__main__":
+    """For inclusion in test with two unique database identifiers with multiple
+    databases where one (presumably colocated) database is started before the
+    other, and thus only one DB ID is known at application runtime and
+    available via environment variable.
+    """
+
+    parser = argparse.ArgumentParser(description="SmartRedis")
+    parser.add_argument("--exchange", action="store_true")
+    parser.add_argument("--should-see-reg-db", action="store_true")
+    args = parser.parse_args()
+
+    env_vars = [
+        "SSDB_testdb_colo",
+        "SR_DB_TYPE_testdb_colo",
+    ]
+
+    assert all([var in os.environ for var in env_vars])
+
+    opts = ConfigOptions.create_from_environment("testdb_colo")
+    Client(opts, logger_name="SmartSim")

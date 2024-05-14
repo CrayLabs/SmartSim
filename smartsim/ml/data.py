@@ -285,6 +285,7 @@ class DataDownloader:
         verbose: bool = False,
         init_samples: bool = True,
         max_fetch_trials: int = -1,
+        wait_interval: float = 10.0,
     ) -> None:
         self.address = address
         self.cluster = cluster
@@ -311,7 +312,7 @@ class DataDownloader:
         self.set_replica_parameters(replica_rank, num_replicas)
 
         if init_samples:
-            self.init_samples(max_fetch_trials)
+            self.init_samples(max_fetch_trials, wait_interval)
 
     @property
     def client(self) -> Client:
@@ -378,7 +379,7 @@ class DataDownloader:
             self._data_generation(self._calc_indices(idx)) for idx in range(len(self))
         )
 
-    def init_samples(self, init_trials: int = -1) -> None:
+    def init_samples(self, init_trials: int = -1, wait_interval: float = 10.0) -> None:
         """Initialize samples (and targets, if needed).
 
         A new attempt to download samples will be made every ten seconds,
@@ -392,10 +393,10 @@ class DataDownloader:
         max_trials = init_trials or -1
         while not self and num_trials != max_trials:
             self._update_samples_and_targets()
-            self.log(
-                "DataLoader could not download samples, will try again in 10 seconds"
-            )
-            time.sleep(10)
+            msg = "DataLoader could not download samples, will try again in "
+            msg += f"{wait_interval} seconds"
+            self.log(msg)
+            time.sleep(wait_interval)
             num_trials += 1
 
         if not self:

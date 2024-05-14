@@ -433,6 +433,8 @@ Orchestrator
    Orchestrator.set_max_message_size
    Orchestrator.set_db_conf
    Orchestrator.telemetry
+   Orchestrator.checkpoint_file
+   Orchestrator.batch
 
 Orchestrator
 ------------

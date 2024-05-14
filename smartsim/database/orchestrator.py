@@ -27,6 +27,7 @@
 # pylint: disable=too-many-lines
 
 import itertools
+import os.path as osp
 import sys
 import typing as t
 from os import environ, getcwd, getenv
@@ -41,7 +42,12 @@ from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList, TelemetryConfiguration
-from ..error import SmartSimError, SSConfigError, SSUnsupportedError
+from ..error import (
+    SmartSimError,
+    SSConfigError,
+    SSDBFilesNotParseable,
+    SSUnsupportedError,
+)
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
@@ -147,6 +153,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
         raise SmartSimError(msg)
 
 
+# pylint: disable-next=too-many-public-methods
 class Orchestrator(EntityList[DBNode]):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
@@ -370,10 +377,11 @@ class Orchestrator(EntityList[DBNode]):
 
         :return: True if database is active, False otherwise
         """
-        if not self._hosts:
+        try:
+            hosts = self.hosts
+        except SSDBFilesNotParseable:
             return False
-
-        return db_is_active(self._hosts, self.ports, self.num_shards)
+        return db_is_active(hosts, self.ports, self.num_shards)
 
     @property
     def _rai_module(self) -> t.Tuple[str, ...]:
@@ -398,6 +406,14 @@ class Orchestrator(EntityList[DBNode]):
     @property
     def _redis_conf(self) -> str:
         return CONFIG.database_conf
+
+    @property
+    def checkpoint_file(self) -> str:
+        """Get the path to the checkpoint file for this Orchestrator
+
+        :return: Path to the checkpoint file if it exists, otherwise a None
+        """
+        return osp.join(self.path, "smartsim_db.dat")
 
     def set_cpus(self, num_cpus: int) -> None:
         """Set the number of CPUs available to each database shard
@@ -451,9 +467,8 @@ class Orchestrator(EntityList[DBNode]):
             raise TypeError("host_list argument must be list of strings")
         self._user_hostlist = host_list.copy()
         # TODO check length
-        if self.batch:
-            if hasattr(self, "batch_settings") and self.batch_settings:
-                self.batch_settings.set_hostlist(host_list)
+        if self.batch and hasattr(self, "batch_settings") and self.batch_settings:
+            self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
             for db in self.entities:

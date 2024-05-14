@@ -23,19 +23,34 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 
-from .errors import (
-    AllocationError,
-    EntityExistsError,
-    LauncherError,
-    ParameterWriterError,
-    ShellError,
-    SmartSimError,
-    SSConfigError,
-    SSDBFilesNotParseable,
-    SSDBIDConflictError,
-    SSInternalError,
-    SSReservedKeywordError,
-    SSUnsupportedError,
-    UserStrategyError,
-)
+import psutil
+import pytest
+
+from smartsim import Experiment
+from smartsim.database import Orchestrator
+from smartsim.error import SmartSimError
+from smartsim.error.errors import SSUnsupportedError
+
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
+
+def test_db_fixtures(local_experiment, local_db, prepare_db):
+    db = prepare_db(local_db).orchestrator
+    local_experiment.reconnect_orchestrator(db.checkpoint_file)
+    assert db.is_active()
+    local_experiment.stop(db)
+
+
+def test_create_new_db_fixture_if_stopped(local_experiment, local_db, prepare_db):
+    # Run this twice to make sure that there is a stopped database
+    output = prepare_db(local_db)
+    local_experiment.reconnect_orchestrator(output.orchestrator.checkpoint_file)
+    local_experiment.stop(output.orchestrator)
+
+    output = prepare_db(local_db)
+    assert output.new_db
+    local_experiment.reconnect_orchestrator(output.orchestrator.checkpoint_file)
+    assert output.orchestrator.is_active()

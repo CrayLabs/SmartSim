@@ -185,7 +185,7 @@ class DragonLauncher(WLMLauncher):
                 ),
                 DragonRunResponse,
             )
-            step_id = task_id = str(response.step_id)
+            step_id = str(response.step_id)
         else:
             # pylint: disable-next=consider-using-with
             out_strm = open(out, "w+", encoding="utf-8")

@@ -403,7 +403,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
 
-    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_script = fileutils.get_test_conf_path(
+        "smartredis/multidbid_colo_env_vars_only.py"
+    )
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
 
@@ -433,8 +435,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     )
 
     with make_entity_context(exp, db), make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model, block=False)
         exp.start(db)
-        exp.start(smartsim_model, block=True)
+        exp.poll(smartsim_model)
 
     check_not_failed(exp, db, smartsim_model)
 
