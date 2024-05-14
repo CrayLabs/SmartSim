@@ -49,7 +49,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.schemas.dragonRequests import *
 from smartsim._core.schemas.dragonResponses import *
 from smartsim._core.utils.helpers import create_short_id_str
-from smartsim.status import SmartSimStatus, TERMINAL_STATUSES
+from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
 
 if t.TYPE_CHECKING:
     from smartsim._core.launcher.dragon.dragonBackend import (
@@ -298,10 +298,20 @@ def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.parametrize(
     "immediate, kill_jobs, frontend_shutdown",
-    [[True, True, True], [True, True, False], [True, False, True], [True, False, False], [False, True, True], [False, True, False]],
+    [
+        [True, True, True],
+        [True, True, False],
+        [True, False, True],
+        [True, False, False],
+        [False, True, True],
+        [False, True, False],
+    ],
 )
 def test_shutdown_request(
-    monkeypatch: pytest.MonkeyPatch, immediate: bool, kill_jobs: bool, frontend_shutdown: bool
+    monkeypatch: pytest.MonkeyPatch,
+    immediate: bool,
+    kill_jobs: bool,
+    frontend_shutdown: bool,
 ) -> None:
     monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     dragon_backend = get_mock_backend(monkeypatch)
@@ -317,14 +327,15 @@ def test_shutdown_request(
             group_info.redir_workers = None
         dragon_backend._running_steps.clear()
 
-
     shutdown_req = DragonShutdownRequest(
         immediate=immediate, frontend_shutdown=frontend_shutdown
     )
     shutdown_resp = dragon_backend.process_request(shutdown_req)
 
     if not kill_jobs:
-        stop_request_ids = (stop_request.step_id for stop_request in dragon_backend._stop_requests)
+        stop_request_ids = (
+            stop_request.step_id for stop_request in dragon_backend._stop_requests
+        )
         for step_id, group_info in dragon_backend.group_infos.items():
             if not group_info.status in TERMINAL_STATUSES:
                 assert step_id in stop_request_ids
