@@ -9,9 +9,9 @@ Jump to:
 
 ## SmartSim
 
-### Development branch
+### 0.7.0
 
-To be released at some future point in time
+Released on 14 May, 2024
 
 Description
 
