@@ -130,7 +130,10 @@ def redir_worker(io_conn: dragon_connection.Connection, file_path: str) -> None:
     except Exception as e:
         print(e)
     finally:
-        io_conn.close()
+        try:
+            io_conn.close()
+        except Exception as e:
+            print(e)
 
 
 class DragonBackend:
@@ -292,6 +295,9 @@ class DragonBackend:
         if request.nodes > len(self._hosts):
             message = f"Cannot satisfy request. Requested {request.nodes} nodes, "
             message += f"but only {len(self._hosts)} nodes are available."
+            return False, message
+        if self._shutdown_requested:
+            message = "Cannot satisfy request, server is shutting down."
             return False, message
         return True, None
 
@@ -565,6 +571,12 @@ class DragonBackend:
         self._refresh_statuses()
         self._update_shutdown_status()
 
+    def _kill_all_running_jobs(self) -> None:
+        with self._queue_lock:
+            for step_id, group_info in self._group_infos.items():
+                if group_info.status not in TERMINAL_STATUSES:
+                    self._stop_requests.append(DragonStopRequest(step_id=step_id))
+
     def update(self) -> None:
         """Update internal data structures, queues, and job statuses"""
         logger.debug("Dragon Backend update thread started")
@@ -579,6 +591,7 @@ class DragonBackend:
                     logger.debug(str(self))
                 except ValueError as e:
                     logger.error(e)
+
         logger.debug("Dragon Backend update thread stopping")
 
     @functools.singledispatchmethod
@@ -633,7 +646,8 @@ class DragonBackend:
     def _(self, request: DragonShutdownRequest) -> DragonShutdownResponse:
         self._shutdown_requested = True
         self._update_shutdown_status()
-        self._can_shutdown |= request.immediate
+        if request.immediate:
+            self._kill_all_running_jobs()
         self._frontend_shutdown = request.frontend_shutdown
         return DragonShutdownResponse()
 

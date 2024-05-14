@@ -15,6 +15,7 @@ Released on 14 May, 2024
 
 Description
 
+-   Improve Dragon server shutdown
 -   Add dragon runtime installer
 -   Add launcher based on Dragon
 -   Reuse Orchestrators within the testing suite to improve performance.
@@ -62,6 +63,9 @@ Description
 -   Fix publishing of development docs
 
 Detailed Notes
+
+-   The Dragon server will now terminate any process which is still running
+    when a request of an immediate shutdown is sent. ([SmartSim-PR582](https://github.com/CrayLabs/SmartSim/pull/582))
 -   Add `--dragon` option to `smart build`. Install appropriate Dragon
     runtime from Dragon GitHub release assets.
     ([SmartSim-PR580](https://github.com/CrayLabs/SmartSim/pull/580))

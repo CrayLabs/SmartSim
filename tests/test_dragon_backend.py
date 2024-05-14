@@ -49,6 +49,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.schemas.dragonRequests import *
 from smartsim._core.schemas.dragonResponses import *
 from smartsim._core.utils.helpers import create_short_id_str
+from smartsim.status import TERMINAL_STATUSES, SmartSimStatus
 
 if t.TYPE_CHECKING:
     from smartsim._core.launcher.dragon.dragonBackend import (
@@ -248,6 +249,31 @@ def test_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not dragon_backend._running_steps
 
 
+def test_deny_run_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    dragon_backend = get_mock_backend(monkeypatch)
+
+    dragon_backend._shutdown_requested = True
+
+    run_req = DragonRunRequest(
+        exe="sleep",
+        exe_args=["5"],
+        path="/a/fake/path",
+        nodes=2,
+        tasks=1,
+        tasks_per_node=1,
+        env={},
+        current_env={},
+        pmi_enabled=False,
+    )
+
+    run_resp = dragon_backend.process_request(run_req)
+    assert isinstance(run_resp, DragonRunResponse)
+    assert run_resp.error_message == "Cannot satisfy request, server is shutting down."
+    step_id = run_resp.step_id
+
+    assert dragon_backend.group_infos[step_id].status == SmartSimStatus.STATUS_FAILED
+
+
 def test_udpate_status_request(monkeypatch: pytest.MonkeyPatch) -> None:
     dragon_backend = get_mock_backend(monkeypatch)
 
@@ -296,25 +322,51 @@ def test_stop_request(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize(
-    "immediate, frontend_shutdown",
-    [[True, True], [True, False], [False, True], [False, False]],
+    "immediate, kill_jobs, frontend_shutdown",
+    [
+        [True, True, True],
+        [True, True, False],
+        [True, False, True],
+        [True, False, False],
+        [False, True, True],
+        [False, True, False],
+    ],
 )
 def test_shutdown_request(
-    monkeypatch: pytest.MonkeyPatch, immediate: bool, frontend_shutdown: bool
+    monkeypatch: pytest.MonkeyPatch,
+    immediate: bool,
+    kill_jobs: bool,
+    frontend_shutdown: bool,
 ) -> None:
     monkeypatch.setenv("SMARTSIM_FLAG_TELEMETRY", "0")
     dragon_backend = get_mock_backend(monkeypatch)
     monkeypatch.setattr(dragon_backend, "_cooldown_period", 1)
     set_mock_group_infos(monkeypatch, dragon_backend)
 
+    if kill_jobs:
+        for group_info in dragon_backend.group_infos.values():
+            if not group_info.status in TERMINAL_STATUSES:
+                group_info.status = SmartSimStatus.STATUS_FAILED
+                group_info.return_codes = [-9]
+            group_info.process_group = None
+            group_info.redir_workers = None
+        dragon_backend._running_steps.clear()
+
     shutdown_req = DragonShutdownRequest(
         immediate=immediate, frontend_shutdown=frontend_shutdown
     )
     shutdown_resp = dragon_backend.process_request(shutdown_req)
 
-    assert dragon_backend._shutdown_requested
+    if not kill_jobs:
+        stop_request_ids = (
+            stop_request.step_id for stop_request in dragon_backend._stop_requests
+        )
+        for step_id, group_info in dragon_backend.group_infos.items():
+            if not group_info.status in TERMINAL_STATUSES:
+                assert step_id in stop_request_ids
+
     assert isinstance(shutdown_resp, DragonShutdownResponse)
-    assert dragon_backend._can_shutdown == immediate
+    assert dragon_backend._shutdown_requested
     assert dragon_backend.frontend_shutdown == frontend_shutdown
 
     dragon_backend._update()
@@ -322,8 +374,9 @@ def test_shutdown_request(
     time.sleep(dragon_backend._cooldown_period + 0.1)
     dragon_backend._update()
 
-    assert dragon_backend.should_shutdown == immediate
-    assert dragon_backend._has_cooled_down == immediate
+    assert dragon_backend._can_shutdown == kill_jobs
+    assert dragon_backend.should_shutdown == kill_jobs
+    assert dragon_backend._has_cooled_down == kill_jobs
 
 
 @pytest.mark.parametrize("telemetry_flag", ["0", "1"])
