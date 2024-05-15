@@ -1,946 +1,945 @@
 {
-    "experiment": {
-      "name": "my-exp",
-      "path": "/path/to/my-exp",
-      "launcher": "Slurm"
+  "experiment": {
+    "name": "my-exp",
+    "path": "/path/to/my-exp",
+    "launcher": "Slurm"
+  },
+  "runs": [
+    {
+      "run_id": "d999ad89-020f-4e6a-b834-dbd88658ce84",
+      "timestamp": 1697824072792854287,
+      "model": [
+        {
+          "name": "my-model",
+          "path": "/path/to/my-exp/my-model",
+          "exe_args": [
+            "hello",
+            "world"
+          ],
+          "run_settings": {
+            "exe": [
+              "/usr/bin/echo"
+            ],
+            "run_command": "/opt/slurm/20.11.5/bin/srun",
+            "run_args": {
+              "nodes": 1,
+              "ntasks": 1
+            }
+          },
+          "batch_settings": {},
+          "params": {},
+          "files": {
+            "Symlink": [],
+            "Configure": [],
+            "Copy": []
+          },
+          "colocated_db": {
+            "settings": {
+              "port": 5757,
+              "ifname": "lo",
+              "cpus": 1,
+              "custom_pinning": "0",
+              "debug": false,
+              "db_identifier": "COLO",
+              "rai_args": {
+                "threads_per_queue": null,
+                "inter_op_parallelism": null,
+                "intra_op_parallelism": null
+              },
+              "extra_db_args": {}
+            },
+            "scripts": [],
+            "models": [
+              {
+                "cnn": {
+                  "backend": "TORCH",
+                  "device": "CPU"
+                }
+              }
+            ]
+          },
+          "telemetry_metadata": {
+            "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d999ad89-020f-4e6a-b834-dbd88658ce84/model/my-model",
+            "step_id": "4121050.30",
+            "task_id": "25230",
+            "managed": true
+          },
+          "out_file": "/path/to/my-exp/my-model/my-model.out",
+          "err_file": "/path/to/my-exp/my-model/my-model.err"
+        }
+      ],
+      "orchestrator": [],
+      "ensemble": []
     },
-    "runs": [
-      {
-        "run_id": "d999ad89-020f-4e6a-b834-dbd88658ce84",
-        "timestamp": 1697824072792854287,
-        "model": [
-          {
-            "name": "my-model",
-            "path": "/path/to/my-exp/my-model",
-            "exe_args": [
-              "hello",
-              "world"
-            ],
-            "run_settings": {
-              "exe": [
-                "/usr/bin/echo"
-              ],
-              "run_command": "/opt/slurm/20.11.5/bin/srun",
-              "run_args": {
-                "nodes": 1,
-                "ntasks": 1
+    {
+      "run_id": "fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa",
+      "timestamp": 1697824102122439975,
+      "model": [],
+      "orchestrator": [
+        {
+          "name": "orchestrator",
+          "type": "redis",
+          "interface": [
+            "ipogif0"
+          ],
+          "shards": [
+            {
+              "name": "orchestrator_1",
+              "hostname": "10.128.0.70",
+              "port": 2424,
+              "cluster": true,
+              "conf_file": "nodes-orchestrator_1-2424.conf",
+              "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+              "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
+                "step_id": "4121050.31+2",
+                "task_id": "25241",
+                "managed": true
               }
             },
-            "batch_settings": {},
-            "params": {},
-            "files": {
-              "Symlink": [],
-              "Configure": [],
-              "Copy": []
-            },
-            "colocated_db": {
-              "settings": {
-                "port": 5757,
-                "ifname": "lo",
-                "cpus": 1,
-                "custom_pinning": "0",
-                "debug": false,
-                "db_identifier": "COLO",
-                "rai_args": {
-                  "threads_per_queue": null,
-                  "inter_op_parallelism": null,
-                  "intra_op_parallelism": null
-                },
-                "extra_db_args": {}
-              },
-              "scripts": [],
-              "models": [
-                {
-                  "cnn": {
-                    "backend": "TORCH",
-                    "device": "CPU"
-                  }
-                }
-              ]
-            },
-            "telemetry_metadata": {
-              "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d999ad89-020f-4e6a-b834-dbd88658ce84/model/my-model",
-              "step_id": "4121050.30",
-              "task_id": "25230",
-              "managed": true
-            },
-            "out_file": "/path/to/my-exp/my-model/my-model.out",
-            "err_file": "/path/to/my-exp/my-model/my-model.err"
-          }
-        ],
-        "orchestrator": [],
-        "ensemble": []
-      },
-      {
-        "run_id": "fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa",
-        "timestamp": 1697824102122439975,
-        "model": [],
-        "orchestrator": [
-          {
-            "name": "orchestrator",
-            "type": "redis",
-            "interface": [
-              "ipogif0"
-            ],
-            "shards": [
-              {
-                "name": "orchestrator_1",
-                "hostname": "10.128.0.70",
-                "port": 2424,
-                "cluster": true,
-                "conf_file": "nodes-orchestrator_1-2424.conf",
-                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
-                  "step_id": "4121050.31+2",
-                  "task_id": "25241",
-                  "managed": true
-                }
-              },
-              {
-                "name": "orchestrator_2",
-                "hostname": "10.128.0.71",
-                "port": 2424,
-                "cluster": true,
-                "conf_file": "nodes-orchestrator_2-2424.conf",
-                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
-                  "step_id": "4121050.31+2",
-                  "task_id": "25241",
-                  "managed": true
-                }
-              },
-              {
-                "name": "orchestrator_0",
-                "hostname": "10.128.0.69",
-                "port": 2424,
-                "cluster": true,
-                "conf_file": "nodes-orchestrator_0-2424.conf",
-                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
-                  "step_id": "4121050.31+2",
-                  "task_id": "25241",
-                  "managed": true
-                }
+            {
+              "name": "orchestrator_2",
+              "hostname": "10.128.0.71",
+              "port": 2424,
+              "cluster": true,
+              "conf_file": "nodes-orchestrator_2-2424.conf",
+              "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+              "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
+                "step_id": "4121050.31+2",
+                "task_id": "25241",
+                "managed": true
               }
+            },
+            {
+              "name": "orchestrator_0",
+              "hostname": "10.128.0.69",
+              "port": 2424,
+              "cluster": true,
+              "conf_file": "nodes-orchestrator_0-2424.conf",
+              "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+              "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/fd3cd1a8-cb8f-4f61-b847-73a8eb0881fa/database/orchestrator/orchestrator",
+                "step_id": "4121050.31+2",
+                "task_id": "25241",
+                "managed": true
+              }
+            }
+          ]
+        }
+      ],
+      "ensemble": []
+    },
+    {
+      "run_id": "d65ae1df-cb5e-45d9-ab09-6fa641755997",
+      "timestamp": 1697824127962219505,
+      "model": [],
+      "orchestrator": [],
+      "ensemble": [
+        {
+          "name": "my-ens",
+          "params": {
+            "START": [
+              "spam",
+              "foo"
+            ],
+            "MID": [
+              "eggs",
+              "bar"
+            ],
+            "END": [
+              "ham",
+              "baz"
             ]
-          }
-        ],
-        "ensemble": []
-      },
-      {
-        "run_id": "d65ae1df-cb5e-45d9-ab09-6fa641755997",
-        "timestamp": 1697824127962219505,
-        "model": [],
-        "orchestrator": [],
-        "ensemble": [
-          {
-            "name": "my-ens",
-            "params": {
-              "START": [
-                "spam",
-                "foo"
+          },
+          "batch_settings": {},
+          "models": [
+            {
+              "name": "my-ens_0",
+              "path": "/path/to/my-exp/my-ens/my-ens_0",
+              "exe_args": [
+                "yo.py"
               ],
-              "MID": [
-                "eggs",
-                "bar"
-              ],
-              "END": [
-                "ham",
-                "baz"
-              ]
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "eggs",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_0",
+                "step_id": "4121050.32",
+                "task_id": "25639",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.err"
             },
-            "batch_settings": {},
+            {
+              "name": "my-ens_1",
+              "path": "/path/to/my-exp/my-ens/my-ens_1",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "eggs",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_1",
+                "step_id": "4121050.33",
+                "task_id": "25768",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.err"
+            },
+            {
+              "name": "my-ens_2",
+              "path": "/path/to/my-exp/my-ens/my-ens_2",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "bar",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_2",
+                "step_id": "4121050.34",
+                "task_id": "25817",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.err"
+            },
+            {
+              "name": "my-ens_3",
+              "path": "/path/to/my-exp/my-ens/my-ens_3",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "bar",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_3",
+                "step_id": "4121050.35",
+                "task_id": "25837",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.err"
+            },
+            {
+              "name": "my-ens_4",
+              "path": "/path/to/my-exp/my-ens/my-ens_4",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "eggs",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_4",
+                "step_id": "4121050.36",
+                "task_id": "25872",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.err"
+            },
+            {
+              "name": "my-ens_5",
+              "path": "/path/to/my-exp/my-ens/my-ens_5",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "eggs",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_5",
+                "step_id": "4121050.37",
+                "task_id": "25930",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.err"
+            },
+            {
+              "name": "my-ens_6",
+              "path": "/path/to/my-exp/my-ens/my-ens_6",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "bar",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_6",
+                "step_id": "4121050.38",
+                "task_id": "25945",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.err"
+            },
+            {
+              "name": "my-ens_7",
+              "path": "/path/to/my-exp/my-ens/my-ens_7",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "bar",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_7",
+                "step_id": "4121050.39",
+                "task_id": "25967",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.err"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "e41f8e17-c4b2-441d-adf9-707443ee2c72",
+      "timestamp": 1697835227560376025,
+      "model": [
+        {
+          "name": "my-model",
+          "path": "/path/to/my-exp/my-model",
+          "exe_args": [
+            "hello",
+            "world"
+          ],
+          "run_settings": {
+            "exe": [
+              "/usr/bin/echo"
+            ],
+            "run_command": "/opt/slurm/20.11.5/bin/srun",
+            "run_args": {
+              "nodes": 1,
+              "ntasks": 1
+            }
+          },
+          "batch_settings": {},
+          "params": {},
+          "files": {
+            "Symlink": [],
+            "Configure": [],
+            "Copy": []
+          },
+          "colocated_db": {
+            "settings": {
+              "port": 5757,
+              "ifname": "lo",
+              "cpus": 1,
+              "custom_pinning": "0",
+              "debug": false,
+              "db_identifier": "COLO",
+              "rai_args": {
+                "threads_per_queue": null,
+                "inter_op_parallelism": null,
+                "intra_op_parallelism": null
+              },
+              "extra_db_args": {}
+            },
+            "scripts": [],
             "models": [
               {
-                "name": "my-ens_0",
-                "path": "/path/to/my-exp/my-ens/my-ens_0",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "eggs",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_0",
-                  "step_id": "4121050.32",
-                  "task_id": "25639",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.err"
-              },
-              {
-                "name": "my-ens_1",
-                "path": "/path/to/my-exp/my-ens/my-ens_1",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "eggs",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_1",
-                  "step_id": "4121050.33",
-                  "task_id": "25768",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.err"
-              },
-              {
-                "name": "my-ens_2",
-                "path": "/path/to/my-exp/my-ens/my-ens_2",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "bar",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_2",
-                  "step_id": "4121050.34",
-                  "task_id": "25817",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.err"
-              },
-              {
-                "name": "my-ens_3",
-                "path": "/path/to/my-exp/my-ens/my-ens_3",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "bar",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_3",
-                  "step_id": "4121050.35",
-                  "task_id": "25837",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.err"
-              },
-              {
-                "name": "my-ens_4",
-                "path": "/path/to/my-exp/my-ens/my-ens_4",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "eggs",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_4",
-                  "step_id": "4121050.36",
-                  "task_id": "25872",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.err"
-              },
-              {
-                "name": "my-ens_5",
-                "path": "/path/to/my-exp/my-ens/my-ens_5",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "eggs",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_5",
-                  "step_id": "4121050.37",
-                  "task_id": "25930",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.err"
-              },
-              {
-                "name": "my-ens_6",
-                "path": "/path/to/my-exp/my-ens/my-ens_6",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "bar",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_6",
-                  "step_id": "4121050.38",
-                  "task_id": "25945",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.err"
-              },
-              {
-                "name": "my-ens_7",
-                "path": "/path/to/my-exp/my-ens/my-ens_7",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "bar",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/d65ae1df-cb5e-45d9-ab09-6fa641755997/ensemble/my-ens/my-ens_7",
-                  "step_id": "4121050.39",
-                  "task_id": "25967",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.err"
+                "cnn": {
+                  "backend": "TORCH",
+                  "device": "CPU"
+                }
               }
             ]
-          }
-        ]
-      },
-      {
-        "run_id": "e41f8e17-c4b2-441d-adf9-707443ee2c72",
-        "timestamp": 1697835227560376025,
-        "model": [
-          {
-            "name": "my-model",
-            "path": "/path/to/my-exp/my-model",
-            "exe_args": [
-              "hello",
-              "world"
+          },
+          "telemetry_metadata": {
+            "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/e41f8e17-c4b2-441d-adf9-707443ee2c72/model/my-model",
+            "step_id": "4121904.0",
+            "task_id": "28277",
+            "managed": true
+          },
+          "out_file": "/path/to/my-exp/my-model/my-model.out",
+          "err_file": "/path/to/my-exp/my-model/my-model.err"
+        }
+      ],
+      "orchestrator": [],
+      "ensemble": []
+    },
+    {
+      "run_id": "b33a5d27-6822-4795-8e0e-cfea18551fa4",
+      "timestamp": 1697835261956135240,
+      "model": [],
+      "orchestrator": [
+        {
+          "name": "orchestrator",
+          "type": "redis",
+          "interface": [
+            "ipogif0"
+          ],
+          "shards": [
+            {
+              "name": "orchestrator_0",
+              "hostname": "10.128.0.2",
+              "port": 2424,
+              "cluster": true,
+              "conf_file": "nodes-orchestrator_0-2424.conf",
+              "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+              "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
+                "step_id": "4121904.1+2",
+                "task_id": "28289",
+                "managed": true
+              }
+            },
+            {
+              "name": "orchestrator_2",
+              "hostname": "10.128.0.4",
+              "port": 2424,
+              "cluster": true,
+              "conf_file": "nodes-orchestrator_2-2424.conf",
+              "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+              "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
+                "step_id": "4121904.1+2",
+                "task_id": "28289",
+                "managed": true
+              }
+            },
+            {
+              "name": "orchestrator_1",
+              "hostname": "10.128.0.3",
+              "port": 2424,
+              "cluster": true,
+              "conf_file": "nodes-orchestrator_1-2424.conf",
+              "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
+              "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
+                "step_id": "4121904.1+2",
+                "task_id": "28289",
+                "managed": true
+              }
+            }
+          ]
+        }
+      ],
+      "ensemble": []
+    },
+    {
+      "run_id": "45772df2-fd80-43fd-adf0-d5e319870182",
+      "timestamp": 1697835287798613875,
+      "model": [],
+      "orchestrator": [],
+      "ensemble": [
+        {
+          "name": "my-ens",
+          "params": {
+            "START": [
+              "spam",
+              "foo"
             ],
-            "run_settings": {
-              "exe": [
-                "/usr/bin/echo"
-              ],
-              "run_command": "/opt/slurm/20.11.5/bin/srun",
-              "run_args": {
-                "nodes": 1,
-                "ntasks": 1
-              }
-            },
-            "batch_settings": {},
-            "params": {},
-            "files": {
-              "Symlink": [],
-              "Configure": [],
-              "Copy": []
-            },
-            "colocated_db": {
-              "settings": {
-                "port": 5757,
-                "ifname": "lo",
-                "cpus": 1,
-                "custom_pinning": "0",
-                "debug": false,
-                "db_identifier": "COLO",
-                "rai_args": {
-                  "threads_per_queue": null,
-                  "inter_op_parallelism": null,
-                  "intra_op_parallelism": null
-                },
-                "extra_db_args": {}
-              },
-              "scripts": [],
-              "models": [
-                {
-                  "cnn": {
-                    "backend": "TORCH",
-                    "device": "CPU"
-                  }
-                }
-              ]
-            },
-            "telemetry_metadata": {
-              "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/e41f8e17-c4b2-441d-adf9-707443ee2c72/model/my-model",
-              "step_id": "4121904.0",
-              "task_id": "28277",
-              "managed": true
-            },
-            "out_file": "/path/to/my-exp/my-model/my-model.out",
-            "err_file": "/path/to/my-exp/my-model/my-model.err"
-          }
-        ],
-        "orchestrator": [],
-        "ensemble": []
-      },
-      {
-        "run_id": "b33a5d27-6822-4795-8e0e-cfea18551fa4",
-        "timestamp": 1697835261956135240,
-        "model": [],
-        "orchestrator": [
-          {
-            "name": "orchestrator",
-            "type": "redis",
-            "interface": [
-              "ipogif0"
+            "MID": [
+              "eggs",
+              "bar"
             ],
-            "shards": [
-              {
-                "name": "orchestrator_0",
-                "hostname": "10.128.0.2",
-                "port": 2424,
-                "cluster": true,
-                "conf_file": "nodes-orchestrator_0-2424.conf",
-                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
-                  "step_id": "4121904.1+2",
-                  "task_id": "28289",
-                  "managed": true
-                }
-              },
-              {
-                "name": "orchestrator_2",
-                "hostname": "10.128.0.4",
-                "port": 2424,
-                "cluster": true,
-                "conf_file": "nodes-orchestrator_2-2424.conf",
-                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
-                  "step_id": "4121904.1+2",
-                  "task_id": "28289",
-                  "managed": true
-                }
-              },
-              {
-                "name": "orchestrator_1",
-                "hostname": "10.128.0.3",
-                "port": 2424,
-                "cluster": true,
-                "conf_file": "nodes-orchestrator_1-2424.conf",
-                "out_file": "/path/to/my-exp/orchestrator/orchestrator.out",
-                "err_file": "/path/to/my-exp/orchestrator/orchestrator.err",
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/b33a5d27-6822-4795-8e0e-cfea18551fa4/database/orchestrator/orchestrator",
-                  "step_id": "4121904.1+2",
-                  "task_id": "28289",
-                  "managed": true
-                }
-              }
+            "END": [
+              "ham",
+              "baz"
             ]
-          }
-        ],
-        "ensemble": []
-      },
-      {
-        "run_id": "45772df2-fd80-43fd-adf0-d5e319870182",
-        "timestamp": 1697835287798613875,
-        "model": [],
-        "orchestrator": [],
-        "ensemble": [
-          {
-            "name": "my-ens",
-            "params": {
-              "START": [
-                "spam",
-                "foo"
+          },
+          "batch_settings": {},
+          "models": [
+            {
+              "name": "my-ens_0",
+              "path": "/path/to/my-exp/my-ens/my-ens_0",
+              "exe_args": [
+                "yo.py"
               ],
-              "MID": [
-                "eggs",
-                "bar"
-              ],
-              "END": [
-                "ham",
-                "baz"
-              ]
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "eggs",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_0",
+                "step_id": "4121904.2",
+                "task_id": "28333",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.err"
             },
-            "batch_settings": {},
-            "models": [
-              {
-                "name": "my-ens_0",
-                "path": "/path/to/my-exp/my-ens/my-ens_0",
-                "exe_args": [
-                  "yo.py"
+            {
+              "name": "my-ens_1",
+              "path": "/path/to/my-exp/my-ens/my-ens_1",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
                 ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "eggs",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_0",
-                  "step_id": "4121904.2",
-                  "task_id": "28333",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_0/my-ens_0.err"
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
               },
-              {
-                "name": "my-ens_1",
-                "path": "/path/to/my-exp/my-ens/my-ens_1",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "eggs",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_1",
-                  "step_id": "4121904.3",
-                  "task_id": "28342",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.err"
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "eggs",
+                "END": "baz"
               },
-              {
-                "name": "my-ens_2",
-                "path": "/path/to/my-exp/my-ens/my-ens_2",
-                "exe_args": [
-                  "yo.py"
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
                 ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "bar",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_2",
-                  "step_id": "4121904.4",
-                  "task_id": "28353",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.err"
+                "Copy": []
               },
-              {
-                "name": "my-ens_3",
-                "path": "/path/to/my-exp/my-ens/my-ens_3",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "spam",
-                  "MID": "bar",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_3",
-                  "step_id": "4121904.5",
-                  "task_id": "28362",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.err"
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_1",
+                "step_id": "4121904.3",
+                "task_id": "28342",
+                "managed": true
               },
-              {
-                "name": "my-ens_4",
-                "path": "/path/to/my-exp/my-ens/my-ens_4",
-                "exe_args": [
-                  "yo.py"
+              "out_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_1/my-ens_1.err"
+            },
+            {
+              "name": "my-ens_2",
+              "path": "/path/to/my-exp/my-ens/my-ens_2",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
                 ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "eggs",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_4",
-                  "step_id": "4121904.6",
-                  "task_id": "28371",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.err"
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
               },
-              {
-                "name": "my-ens_5",
-                "path": "/path/to/my-exp/my-ens/my-ens_5",
-                "exe_args": [
-                  "yo.py"
-                ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "eggs",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_5",
-                  "step_id": "4121904.7",
-                  "task_id": "28380",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.err"
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "bar",
+                "END": "ham"
               },
-              {
-                "name": "my-ens_6",
-                "path": "/path/to/my-exp/my-ens/my-ens_6",
-                "exe_args": [
-                  "yo.py"
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
                 ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "bar",
-                  "END": "ham"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_6",
-                  "step_id": "4121904.8",
-                  "task_id": "28389",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.err"
+                "Copy": []
               },
-              {
-                "name": "my-ens_7",
-                "path": "/path/to/my-exp/my-ens/my-ens_7",
-                "exe_args": [
-                  "yo.py"
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_2",
+                "step_id": "4121904.4",
+                "task_id": "28353",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_2/my-ens_2.err"
+            },
+            {
+              "name": "my-ens_3",
+              "path": "/path/to/my-exp/my-ens/my-ens_3",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
                 ],
-                "run_settings": {
-                  "exe": [
-                    "/path/to/my/python3"
-                  ],
-                  "run_command": "/opt/slurm/20.11.5/bin/srun",
-                  "run_args": {
-                    "nodes": 1,
-                    "ntasks": 1
-                  }
-                },
-                "batch_settings": {},
-                "params": {
-                  "START": "foo",
-                  "MID": "bar",
-                  "END": "baz"
-                },
-                "files": {
-                  "Symlink": [],
-                  "Configure": [
-                    "/path/to/yo.py"
-                  ],
-                  "Copy": []
-                },
-                "colocated_db": {},
-                "telemetry_metadata": {
-                  "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_7",
-                  "step_id": "4121904.9",
-                  "task_id": "28398",
-                  "managed": true
-                },
-                "out_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.out",
-                "err_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.err"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-  
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "spam",
+                "MID": "bar",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_3",
+                "step_id": "4121904.5",
+                "task_id": "28362",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_3/my-ens_3.err"
+            },
+            {
+              "name": "my-ens_4",
+              "path": "/path/to/my-exp/my-ens/my-ens_4",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "eggs",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_4",
+                "step_id": "4121904.6",
+                "task_id": "28371",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_4/my-ens_4.err"
+            },
+            {
+              "name": "my-ens_5",
+              "path": "/path/to/my-exp/my-ens/my-ens_5",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "eggs",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_5",
+                "step_id": "4121904.7",
+                "task_id": "28380",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_5/my-ens_5.err"
+            },
+            {
+              "name": "my-ens_6",
+              "path": "/path/to/my-exp/my-ens/my-ens_6",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "bar",
+                "END": "ham"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_6",
+                "step_id": "4121904.8",
+                "task_id": "28389",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_6/my-ens_6.err"
+            },
+            {
+              "name": "my-ens_7",
+              "path": "/path/to/my-exp/my-ens/my-ens_7",
+              "exe_args": [
+                "yo.py"
+              ],
+              "run_settings": {
+                "exe": [
+                  "/path/to/my/python3"
+                ],
+                "run_command": "/opt/slurm/20.11.5/bin/srun",
+                "run_args": {
+                  "nodes": 1,
+                  "ntasks": 1
+                }
+              },
+              "batch_settings": {},
+              "params": {
+                "START": "foo",
+                "MID": "bar",
+                "END": "baz"
+              },
+              "files": {
+                "Symlink": [],
+                "Configure": [
+                  "/path/to/yo.py"
+                ],
+                "Copy": []
+              },
+              "colocated_db": {},
+              "telemetry_metadata": {
+                "status_dir": "/path/to/my-exp/.smartsim/telemetry/my-exp/45772df2-fd80-43fd-adf0-d5e319870182/ensemble/my-ens/my-ens_7",
+                "step_id": "4121904.9",
+                "task_id": "28398",
+                "managed": true
+              },
+              "out_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.out",
+              "err_file": "/path/to/my-exp/my-ens/my-ens_7/my-ens_7.err"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

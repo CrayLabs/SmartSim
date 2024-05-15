@@ -78,12 +78,16 @@ def clean(core_path: Path, _all: bool = False) -> int:
     """Remove pre existing installations of ML runtimes
 
     :param _all: Remove all non-python dependencies
-    :type _all: bool, optional
     """
 
     build_temp = core_path / ".third-party"
     if build_temp.is_dir():
         shutil.rmtree(build_temp, ignore_errors=True)
+
+    dragon_temp = core_path / ".dragon"
+    if dragon_temp.is_dir():
+        shutil.rmtree(dragon_temp, ignore_errors=True)
+        logger.info("Successfully removed dragon installation")
 
     lib_path = core_path / "lib"
     if lib_path.is_dir():

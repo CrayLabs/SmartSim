@@ -40,7 +40,7 @@ from ....settings import (
     SettingsBase,
     SrunSettings,
 )
-from ....status import STATUS_CANCELLED
+from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -100,10 +100,8 @@ class SlurmLauncher(WLMLauncher):
         would return nid00034
 
         :param step_names: list of job step names
-        :type step_names: list[str]
         :raises LauncherError: if nodelist aquisition fails
         :return: list of hostnames
-        :rtype: list[str]
         """
         _, step_ids = self.step_mapping.get_ids(step_names, managed=True)
         step_str = _create_step_id_str([val for val in step_ids if val is not None])
@@ -122,10 +120,8 @@ class SlurmLauncher(WLMLauncher):
         """Run a job step through Slurm
 
         :param step: a job step instance
-        :type step: Step
         :raises LauncherError: if launch fails
         :return: job step id if job is managed
-        :rtype: str
         """
         self.check_for_slurm()
         if not self.task_manager.actively_monitoring:
@@ -175,9 +171,7 @@ class SlurmLauncher(WLMLauncher):
         """Step a job step
 
         :param step_name: name of the job to stop
-        :type step_name: str
         :return: update for job due to cancel
-        :rtype: StepInfo
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
@@ -218,7 +212,9 @@ class SlurmLauncher(WLMLauncher):
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
-        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
+        step_info.status = (
+            SmartSimStatus.STATUS_CANCELLED
+        )  # set status to cancelled instead of failed
         return step_info
 
     @staticmethod
@@ -255,9 +251,7 @@ class SlurmLauncher(WLMLauncher):
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
-        :type step_ids: list[str]
         :return: list of updates for managed jobs
-        :rtype: list[StepInfo]
         """
         step_str = _create_step_id_str(step_ids)
         sacct_out, _ = sacct(

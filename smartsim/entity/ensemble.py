@@ -24,13 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os.path as osp
 import typing as t
 from copy import deepcopy
 from os import getcwd
 
 from tabulate import tabulate
 
-from .._core.utils.helpers import init_default
+from .._core._install.builder import Device
 from ..error import (
     EntityExistsError,
     SmartSimError,
@@ -61,6 +62,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         params: t.Dict[str, t.Any],
+        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
@@ -73,43 +75,33 @@ class Ensemble(EntityList[Model]):
         parameters to the permutation strategy.
 
         :param name: name of the ensemble
-        :type name: str
         :param params: parameters to expand into ``Model`` members
-        :type params: dict[str, Any]
         :param params_as_args: list of params that should be used as command
             line arguments to the ``Model`` member executables and not written
             to generator files
-        :type params_as_args: list[str]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
-        :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
-        :type run_settings: RunSettings, optional
         :param replicas: number of ``Model`` replicas to create - a keyword
             argument of kwargs
-        :type replicas: int, optional
         :param perm_strategy: strategy for expanding ``params`` into
                              ``Model`` instances from params argument
                              options are "all_perm", "step", "random"
-                             or a callable function. Defaults to "all_perm".
-        :type perm_strategy: str
+                             or a callable function.
         :return: ``Ensemble`` instance
-        :rtype: ``Ensemble``
         """
-        self.params = init_default({}, params, dict)
-        self.params_as_args = init_default({}, params_as_args, (list, str))
+        self.params = params or {}
+        self.params_as_args = params_as_args or []
         self._key_prefixing_enabled = True
-        self.batch_settings = init_default({}, batch_settings, BatchSettings)
-        self.run_settings = init_default({}, run_settings, RunSettings)
+        self.batch_settings = batch_settings
+        self.run_settings = run_settings
+        self.replicas: str
 
-        super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
+        super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self) -> t.Iterable[Model]:
-        """
-        Helper property to cast self.entities to Model type for type correctness
-        """
-        model_entities = [node for node in self.entities if isinstance(node, Model)]
-        return model_entities
+    def models(self) -> t.Collection[Model]:
+        """An alias for a shallow copy of the ``entities`` attribute"""
+        return list(self.entities)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize all the models within the ensemble based
@@ -120,6 +112,7 @@ class Ensemble(EntityList[Model]):
         """
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
         replicas = kwargs.pop("replicas", None)
+        self.replicas = replicas
 
         # if a ensemble has parameters and run settings, create
         # the ensemble and assign run_settings to each member
@@ -139,9 +132,9 @@ class Ensemble(EntityList[Model]):
                     run_settings = deepcopy(self.run_settings)
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
-                        model_name,
-                        param_set,
-                        self.path,
+                        name=model_name,
+                        params=param_set,
+                        path=osp.join(self.path, model_name),
                         run_settings=run_settings,
                         params_as_args=self.params_as_args,
                     )
@@ -163,9 +156,9 @@ class Ensemble(EntityList[Model]):
                     for i in range(replicas):
                         model_name = "_".join((self.name, str(i)))
                         model = Model(
-                            model_name,
-                            {},
-                            self.path,
+                            name=model_name,
+                            params={},
+                            path=osp.join(self.path, model_name),
                             run_settings=deepcopy(self.run_settings),
                         )
                         model.enable_key_prefixing()
@@ -191,7 +184,6 @@ class Ensemble(EntityList[Model]):
         """Add a model to this ensemble
 
         :param model: model instance to be added
-        :type model: Model
         :raises TypeError: if model is not an instance of ``Model``
         :raises EntityExistsError: if model already exists in this ensemble
         """
@@ -222,7 +214,6 @@ class Ensemble(EntityList[Model]):
         Only python clients can have multiple incoming connections
 
         :param incoming_entity: The entity that data will be received from
-        :type incoming_entity: SmartSimEntity
         """
         for model in self.models:
             model.register_incoming_entity(incoming_entity)
@@ -238,7 +229,6 @@ class Ensemble(EntityList[Model]):
         """Inquire as to whether each model within the ensemble will prefix their keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
-        :rtype: bool
         """
         return all(model.query_key_prefixing() for model in self.models)
 
@@ -264,12 +254,9 @@ class Ensemble(EntityList[Model]):
         would like to change. The tag is settable but defaults
         to a semicolon e.g. THERMO = ;10;
 
-        :param to_copy: files to copy, defaults to []
-        :type to_copy: list, optional
-        :param to_symlink: files to symlink, defaults to []
-        :type to_symlink: list, optional
-        :param to_configure: input files with tagged parameters, defaults to []
-        :type to_configure: list, optional
+        :param to_copy: files to copy
+        :param to_symlink: files to symlink
+        :param to_configure: input files with tagged parameters
         """
         for model in self.models:
             model.attach_generator_files(
@@ -282,7 +269,6 @@ class Ensemble(EntityList[Model]):
         attached to models belonging to this ensemble.
 
         :returns: A table of all files attached to all models
-        :rtype: str
         """
         if not self.models:
             return "The ensemble is empty, no files to show."
@@ -305,10 +291,8 @@ class Ensemble(EntityList[Model]):
         the ensemble
 
         :param strategy: name of the strategy or callable function
-        :type strategy: str
         :raises SSUnsupportedError: if str name is not supported
         :return: strategy function
-        :rtype: callable
         """
         if strategy == "all_perm":
             return create_all_permutations
@@ -328,7 +312,6 @@ class Ensemble(EntityList[Model]):
 
         :raises TypeError: if params are of the wrong type
         :return: param names and values for permutation strategy
-        :rtype: tuple[list, list]
         """
 
         if not isinstance(self.params, dict):
@@ -359,7 +342,7 @@ class Ensemble(EntityList[Model]):
         backend: str,
         model: t.Optional[bytes] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -379,33 +362,19 @@ class Ensemble(EntityList[Model]):
         must be provided
 
         :param name: key to store model under
-        :type name: str
         :param model: model in memory
-        :type model: str | bytes | None
         :param model_path: serialized model
-        :type model_path: file path to model
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
-        :param device: name of device for execution, defaults to "CPU"
-        :type device: str, optional
-        :param devices_per_node: number of GPUs per node in multiGPU nodes,
-                                 defaults to 1
-        :type devices_per_node: int, optional
+        :param device: name of device for execution
+        :param devices_per_node: number of GPUs per node in multiGPU nodes
         :param first_device: first device in multi-GPU nodes to use for execution,
                              defaults to 0; ignored if devices_per_node is 1
-        :type first_device: int, optional
-        :param batch_size: batch size for execution, defaults to 0
-        :type batch_size: int, optional
-        :param min_batch_size: minimum batch size for model execution, defaults to 0
-        :type min_batch_size: int, optional
-        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
-        :type min_batch_timeout: int, optional
-        :param tag: additional tag for model information, defaults to ""
-        :type tag: str, optional
-        :param inputs: model inputs (TF only), defaults to None
-        :type inputs: list[str], optional
-        :param outputs: model outupts (TF only), defaults to None
-        :type outputs: list[str], optional
+        :param batch_size: batch size for execution
+        :param min_batch_size: minimum batch size for model execution
+        :param min_batch_timeout: time to wait for minimum batch size
+        :param tag: additional tag for model information
+        :param inputs: model inputs (TF only)
+        :param outputs: model outupts (TF only)
         """
         db_model = DBModel(
             name=name,
@@ -443,7 +412,7 @@ class Ensemble(EntityList[Model]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -463,17 +432,11 @@ class Ensemble(EntityList[Model]):
         must be provided
 
         :param name: key to store script under
-        :type name: str
         :param script: TorchScript code
-        :type script: str, optional
         :param script_path: path to TorchScript code
-        :type script_path: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: device for script execution
         :param devices_per_node: number of devices on each host
-        :type devices_per_node: int
         :param first_device: first device to use on each host
-        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -503,7 +466,7 @@ class Ensemble(EntityList[Model]):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
@@ -524,15 +487,10 @@ class Ensemble(EntityList[Model]):
         being stored on nodes M through M + N - 1.
 
         :param name: key to store function under
-        :type name: str
         :param function: TorchScript code
-        :type function: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: device for script execution
         :param devices_per_node: number of devices on each host
-        :type devices_per_node: int
         :param first_device: first device to use on each host
-        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -568,9 +526,7 @@ class Ensemble(EntityList[Model]):
         found. Otherwise, it appends the given list of DBModels to the Ensemble.
 
         :param model: SmartSim Model object.
-        :type model: Model
         :param db_models: List of DBModels to append to the Ensemble.
-        :type db_models: t.List[DBModel]
         """
         for add_ml_model in db_models:
             dupe = next(
@@ -598,9 +554,7 @@ class Ensemble(EntityList[Model]):
         Ensemble.
 
         :param model: SmartSim Model object.
-        :type model: Model
         :param db_scripts: List of DBScripts to append to the Ensemble.
-        :type db_scripts: t.List[DBScript]
         """
         for add_script in db_scripts:
             dupe = next(

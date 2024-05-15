@@ -64,6 +64,7 @@
 #
 # This future is needed to print Python2 EOL message
 from __future__ import print_function
+
 import sys
 
 if sys.version_info < (3,):
@@ -71,14 +72,14 @@ if sys.version_info < (3,):
     sys.exit(-1)
 
 
-import os
 import importlib.util
+import os
 from pathlib import Path
 
 from setuptools import setup
-from setuptools.dist import Distribution
-from setuptools.command.install import install
 from setuptools.command.build_py import build_py
+from setuptools.command.install import install
+from setuptools.dist import Distribution
 
 # Some necessary evils we have to do to be able to use
 # the _install tools in smartsim/smartsim/_core/_install
@@ -107,8 +108,11 @@ versions = buildenv.Versioner()
 
 # check for compatible python versions
 if not build_env.is_compatible_python(versions.PYTHON_MIN):
-    print("You are using Python {}. Python >={} is required.".format(build_env.python_version,
-                                                                     ".".join((versions.PYTHON_MIN))))
+    print(
+        "You are using Python {}. Python >={} is required.".format(
+            build_env.python_version, ".".join((versions.PYTHON_MIN))
+        )
+    )
     sys.exit(-1)
 
 if build_env.is_windows():
@@ -120,8 +124,10 @@ if build_env.is_windows():
 # __version__ in smartsim/__init__.py
 smartsim_version = versions.write_version(setup_path)
 
+
 class BuildError(Exception):
     pass
+
 
 # Hacky workaround for solving CI build "purelib" issue
 # see https://github.com/google/or-tools/issues/616
@@ -131,15 +137,14 @@ class InstallPlatlib(install):
         if self.distribution.has_ext_modules():
             self.install_lib = self.install_platlib
 
-class SmartSimBuild(build_py):
 
+class SmartSimBuild(build_py):
     def run(self):
-        database_builder = builder.DatabaseBuilder(build_env(),
-                                             build_env.MALLOC,
-                                             build_env.JOBS)
+        database_builder = builder.DatabaseBuilder(
+            build_env(), build_env.MALLOC, build_env.JOBS
+        )
         if not database_builder.is_built:
-            database_builder.build_from_git(versions.REDIS_URL,
-                                         versions.REDIS)
+            database_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
 
             database_builder.cleanup()
 
@@ -151,9 +156,10 @@ class SmartSimBuild(build_py):
 class BinaryDistribution(Distribution):
     """Distribution which always forces a binary package with platform name
 
-       We use this because we want to pre-package Redis for certain
-       platforms to use.
+    We use this because we want to pre-package Redis for certain
+    platforms to use.
     """
+
     def has_ext_modules(_placeholder):
         return True
 
@@ -167,7 +173,11 @@ deps = [
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
-    "watchdog>=3.0.0,<4.0.0",
+    "jinja2>=3.1.2",
+    "watchdog>=4.0.0",
+    "pydantic==1.10.14",
+    "pyzmq>=25.1.2",
+    "pygithub>=2.3.0",
 ]
 
 # Add SmartRedis at specific version
@@ -181,6 +191,7 @@ extras_require = {
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
+        "pytest-asyncio>=0.23.3",
     ],
     "mypy": [
         "mypy>=1.3.0",
@@ -193,7 +204,7 @@ extras_require = {
         "typing_extensions>=4.1.0",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
-    **versions.ml_extras_required()
+    **versions.ml_extras_required(),
 }
 
 
@@ -212,5 +223,5 @@ setup(
         "console_scripts": [
             "smart = smartsim._core._cli.__main__:main",
         ]
-    }
+    },
 )

@@ -26,6 +26,7 @@
 
 
 import logging
+import multiprocessing as mp
 import pathlib
 import sys
 import time
@@ -39,32 +40,23 @@ from conftest import FileUtils, WLMUtils
 from smartsim import Experiment
 from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.control.jobmanager import JobManager
-from smartsim._core.entrypoints.telemetrymonitor import (
-    ManifestEventHandler,
-    can_shutdown,
-    event_loop,
-    faux_return_code,
-    get_parser,
-    get_ts,
-    hydrate_persistable,
-    load_manifest,
-    track_event,
-)
+from smartsim._core.entrypoints.telemetrymonitor import get_parser
 from smartsim._core.launcher.launcher import WLMLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
 from smartsim._core.launcher.step.step import Step, proxyable_launch_cmd
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils import serialize
+from smartsim._core.utils.helpers import get_ts_ms
+from smartsim._core.utils.telemetry.manifest import Run, RuntimeManifest
+from smartsim._core.utils.telemetry.telemetry import (
+    ManifestEventHandler,
+    TelemetryMonitor,
+    TelemetryMonitorArgs,
+)
+from smartsim._core.utils.telemetry.util import map_return_code, write_event
 from smartsim.error.errors import UnproxyableStepError
 from smartsim.settings.base import RunSettings
-from smartsim.status import (
-    STATUS_CANCELLED,
-    STATUS_COMPLETED,
-    STATUS_FAILED,
-    STATUS_NEW,
-    STATUS_PAUSED,
-    STATUS_RUNNING,
-)
+from smartsim.status import SmartSimStatus
 
 ALL_ARGS = {"-exp_dir", "-frequency"}
 PROXY_ENTRY_POINT = "smartsim._core.entrypoints.indirect"
@@ -80,8 +72,7 @@ requires_wlm = pytest.mark.skipif(
     pytest.test_launcher == "local", reason="Test requires WLM"
 )
 
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -93,7 +84,21 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def snooze_nonblocking(
+def write_stop_file(entity: JobEntity, test_dir: pathlib.Path, duration: int):
+    time.sleep(duration)
+    write_event(
+        get_ts_ms(),
+        entity.task_id,
+        entity.step_id,
+        entity.type,
+        "stop",
+        test_dir,
+        "mock stop event",
+        0,
+    )
+
+
+def snooze_blocking(
     test_dir: pathlib.Path, max_delay: int = 20, post_data_delay: int = 2
 ):
     # let the non-blocking experiment complete.
@@ -151,18 +156,56 @@ def test_parser():
 
 def test_ts():
     """Ensure expected output type"""
-    ts = get_ts()
+    ts = get_ts_ms()
     assert isinstance(ts, int)
+
+
+@pytest.mark.parametrize(
+    ["freq"],
+    [
+        pytest.param("1", id="1s delay"),
+        pytest.param("1.0", id="1s (float) freq"),
+        pytest.param("1.5", id="1.5s (float) freq"),
+        pytest.param("60", id="upper bound freq"),
+        pytest.param("60.0", id="upper bound (float) freq"),
+    ],
+)
+def test_valid_frequencies(freq: t.Union[int, float], test_dir: str):
+    """Ensure validation does not raise an exception on values in valid range"""
+    # check_frequency(float(freq))
+    telmon_args = TelemetryMonitorArgs(test_dir, float(freq), 30, logging.DEBUG)
+    # telmon_args raises ValueError on bad inputs
+    assert telmon_args is not None
+
+
+@pytest.mark.parametrize(
+    ["freq"],
+    [
+        pytest.param("-1", id="negative freq"),
+        pytest.param("0", id="0s freq"),
+        pytest.param("0.9", id="0.9s freq"),
+        pytest.param("0.9999", id="lower bound"),
+        pytest.param("600.0001", id="just over upper"),
+        pytest.param("3600", id="too high"),
+        pytest.param("100000", id="bonkers high"),
+    ],
+)
+def test_invalid_frequencies(freq: t.Union[int, float], test_dir: str):
+    """Ensure validation raises an exception on values outside valid range"""
+    exp_err_msg = "in the range"
+    with pytest.raises(ValueError) as ex:
+        TelemetryMonitorArgs(test_dir, float(freq), 30, logging.DEBUG)
+    assert exp_err_msg in "".join(ex.value.args)
 
 
 @pytest.mark.parametrize(
     ["etype", "task_id", "step_id", "timestamp", "evt_type"],
     [
-        pytest.param("ensemble", "", "123", get_ts(), "start", id="start event"),
-        pytest.param("ensemble", "", "123", get_ts(), "stop", id="stop event"),
+        pytest.param("ensemble", "", "123", get_ts_ms(), "start", id="start event"),
+        pytest.param("ensemble", "", "123", get_ts_ms(), "stop", id="stop event"),
     ],
 )
-def test_track_event(
+def test_write_event(
     etype: str,
     task_id: str,
     step_id: str,
@@ -172,12 +215,65 @@ def test_track_event(
 ):
     """Ensure that track event writes a file to the expected location"""
     exp_path = pathlib.Path(test_dir)
-    track_event(timestamp, task_id, step_id, etype, evt_type, exp_path, logger)
+    write_event(timestamp, task_id, step_id, etype, evt_type, exp_path)
 
     expected_output = exp_path / f"{evt_type}.json"
 
     assert expected_output.exists()
     assert expected_output.is_file()
+
+
+@pytest.mark.parametrize(
+    ["entity_type", "task_id", "step_id", "timestamp", "evt_type"],
+    [
+        pytest.param("ensemble", "", "123", get_ts_ms(), "start", id="start event"),
+        pytest.param("ensemble", "", "123", get_ts_ms(), "stop", id="stop event"),
+    ],
+)
+def test_write_event_overwrite(
+    entity_type: str,
+    task_id: str,
+    step_id: str,
+    timestamp: int,
+    evt_type: str,
+    test_dir: str,
+):
+    """Ensure that `write_event` does not overwrite an existing file if called more than once"""
+    exp_path = pathlib.Path(test_dir)
+    write_event(timestamp, task_id, step_id, entity_type, evt_type, exp_path)
+
+    expected_output = exp_path / f"{evt_type}.json"
+
+    assert expected_output.exists()
+    assert expected_output.is_file()
+
+    # grab whatever is in the file now to compare against
+    original_content = expected_output.read_text()
+
+    updated_timestamp = get_ts_ms()
+    updated_task_id = task_id + "xxx"
+    updated_step_id = step_id + "xxx"
+    updated_entity = entity_type + "xxx"
+
+    # write to the same location
+    write_event(
+        updated_timestamp,
+        updated_task_id,
+        updated_step_id,
+        updated_entity,
+        evt_type,
+        exp_path,
+    )
+
+    # read in file content after attempted overwrite
+    with open(expected_output, "r") as validate_fp:
+        validate_output = validate_fp.read()
+
+    # verify the content matches the old content
+    assert str(timestamp) in validate_output
+    assert str(updated_timestamp) not in validate_output
+    assert "xxx" not in validate_output
+    assert validate_output == original_content
 
 
 def test_load_manifest(fileutils: FileUtils, test_dir: str, config: cfg.Config):
@@ -194,7 +290,7 @@ def test_load_manifest(fileutils: FileUtils, test_dir: str, config: cfg.Config):
     test_manifest = pathlib.Path(test_manifest_path)
     assert test_manifest.exists()
 
-    manifest = load_manifest(test_manifest_path)
+    manifest = RuntimeManifest.load_manifest(test_manifest_path)
     assert manifest.name == "my-exp"
     assert str(manifest.path) == "/path/to/my-exp"
     assert manifest.launcher == "Slurm"
@@ -213,7 +309,7 @@ def test_load_manifest_colo_model(fileutils: FileUtils):
     sample_manifest = pathlib.Path(sample_manifest_path)
     assert sample_manifest.exists()
 
-    manifest = load_manifest(sample_manifest_path)
+    manifest = RuntimeManifest.load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
     assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
@@ -229,7 +325,7 @@ def test_load_manifest_serial_models(fileutils: FileUtils):
     sample_manifest = pathlib.Path(sample_manifest_path)
     assert sample_manifest.exists()
 
-    manifest = load_manifest(sample_manifest_path)
+    manifest = RuntimeManifest.load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
     assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
@@ -246,7 +342,7 @@ def test_load_manifest_db_and_models(fileutils: FileUtils):
     sample_manifest = pathlib.Path(sample_manifest_path)
     assert sample_manifest.exists()
 
-    manifest = load_manifest(sample_manifest_path)
+    manifest = RuntimeManifest.load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
     assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
@@ -254,6 +350,12 @@ def test_load_manifest_db_and_models(fileutils: FileUtils):
 
     assert len(manifest.runs[0].orchestrators) == 1
     assert len(manifest.runs[1].models) == 1
+
+    # verify collector paths from manifest are deserialized to collector config
+    assert manifest.runs[0].orchestrators[0].collectors["client"]
+    assert manifest.runs[0].orchestrators[0].collectors["memory"]
+    # verify collector paths missing from manifest are empty
+    assert not manifest.runs[0].orchestrators[0].collectors["client_count"]
 
 
 def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
@@ -266,7 +368,7 @@ def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
     sample_manifest = pathlib.Path(sample_manifest_path)
     assert sample_manifest.exists()
 
-    manifest = load_manifest(sample_manifest_path)
+    manifest = RuntimeManifest.load_manifest(sample_manifest_path)
     assert manifest.name == "my-exp"
     assert str(manifest.path) == "/tmp/my-exp"
     assert manifest.launcher == "Slurm"
@@ -289,7 +391,7 @@ def test_persistable_computed_properties(
     task_id: str, step_id: str, etype: str, exp_isorch: bool, exp_ismanaged: bool
 ):
     name = f"test-{etype}-{uuid.uuid4()}"
-    timestamp = get_ts()
+    timestamp = get_ts_ms()
     exp_dir = pathlib.Path("/foo/bar")
     stored = {
         "name": name,
@@ -300,7 +402,8 @@ def test_persistable_computed_properties(
             "step_id": step_id,
         },
     }
-    persistables = hydrate_persistable(etype, stored, exp_dir)
+    faux_experiment = {"launcher": "local"}
+    persistables = Run.load_entity(etype, stored, exp_dir, faux_experiment)
     persistable = persistables[0] if persistables else None
 
     assert persistable.is_managed == exp_ismanaged
@@ -314,7 +417,7 @@ def test_deserialize_ensemble(fileutils: FileUtils):
     sample_manifest = pathlib.Path(sample_manifest_path)
     assert sample_manifest.exists()
 
-    manifest = load_manifest(sample_manifest_path)
+    manifest = RuntimeManifest.load_manifest(sample_manifest_path)
     assert manifest
 
     assert len(manifest.runs) == 1
@@ -324,70 +427,85 @@ def test_deserialize_ensemble(fileutils: FileUtils):
     assert len(manifest.runs[0].models) == 8
 
 
-def test_shutdown_conditions():
-    """Ensure conditions to shutdown telemetry monitor are correctly evaluated"""
+def test_shutdown_conditions__no_monitored_jobs(test_dir: str):
+    """Show that an event handler w/no monitored jobs can shutdown"""
     job_entity1 = JobEntity()
     job_entity1.name = "xyz"
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
 
-    logger = logging.getLogger()
+    mani_handler = ManifestEventHandler("xyz")
 
-    # show that an event handler w/no monitored jobs can shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
-    assert can_shutdown(mani_handler, logger)
+    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, logging.DEBUG)
+    telmon = TelemetryMonitor(tm_args)
+    telmon._action_handler = mani_handler  # replace w/mock handler
 
-    # show that an event handler w/a monitored job cannot shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
+    assert telmon._can_shutdown()
+
+
+def test_shutdown_conditions__has_monitored_job(test_dir: str):
+    """Show that an event handler w/a monitored job cannot shutdown"""
+    job_entity1 = JobEntity()
+    job_entity1.name = "xyz"
+    job_entity1.step_id = "123"
+    job_entity1.task_id = ""
+
+    mani_handler = ManifestEventHandler("xyz")
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
     )
-    assert not can_shutdown(mani_handler, logger)
+    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, logging.DEBUG)
+    telmon = TelemetryMonitor(tm_args)
+    telmon._action_handler = mani_handler
+
+    assert not telmon._can_shutdown()
     assert not bool(mani_handler.job_manager.db_jobs)
     assert bool(mani_handler.job_manager.jobs)
 
-    # show that an event handler w/a monitored db cannot shutdown
-    mani_handler = ManifestEventHandler("xyz", logger)
-    job_entity1.type = "orchestrator"
+
+def test_shutdown_conditions__has_db(test_dir: str):
+    """Show that an event handler w/a monitored db cannot shutdown"""
+    job_entity1 = JobEntity()
+    job_entity1.name = "xyz"
+    job_entity1.step_id = "123"
+    job_entity1.task_id = ""
+    job_entity1.type = "orchestrator"  # <---- make entity appear as db
+
+    mani_handler = ManifestEventHandler("xyz")
+    ## TODO: see next comment and combine an add_job method on manieventhandler
+    # and _use within_ manieventhandler
+    # PROBABLY just encapsulating the body of for run in runs: for entity in run.flatten()...
     mani_handler.job_manager.add_job(
         job_entity1.name, job_entity1.step_id, job_entity1, False
     )
-    assert not can_shutdown(mani_handler, logger)
-    assert bool(mani_handler.job_manager.db_jobs)
+    ## TODO: !!!!!! shouldn't add_job (or something on mani_handler)
+    # allow me to add a job to "all the places" in one call... even a private one?
+    mani_handler._tracked_jobs[job_entity1.key] = job_entity1
+    tm_args = TelemetryMonitorArgs(test_dir, 1, 10, logging.DEBUG)
+    telmon = TelemetryMonitor(tm_args)
+    telmon._action_handler = mani_handler  # replace w/mock handler
+
+    assert not telmon._can_shutdown()
+    assert bool([j for j in mani_handler._tracked_jobs.values() if j.is_db])
     assert not bool(mani_handler.job_manager.jobs)
 
-    # show that an event handler w/a dbs & tasks cannot shutdown
-    job_entity2 = JobEntity()
-    job_entity2.name = "xyz"
-    job_entity2.step_id = "123"
-    job_entity2.task_id = ""
 
-    mani_handler = ManifestEventHandler("xyz", logger)
-    job_entity1.type = "orchestrator"
-    mani_handler.job_manager.add_job(
-        job_entity1.name, job_entity1.step_id, job_entity1, False
-    )
-
-    mani_handler.job_manager.add_job(
-        job_entity2.name, job_entity2.step_id, job_entity2, False
-    )
-    assert not can_shutdown(mani_handler, logger)
-    assert bool(mani_handler.job_manager.db_jobs)
-    assert bool(mani_handler.job_manager.jobs)
-
-    # ... now, show that removing 1 of 2 jobs still doesn't shutdown
-    mani_handler.job_manager.db_jobs.popitem()
-    assert not can_shutdown(mani_handler, logger)
-
-    # ... now, show that removing final job will allow shutdown
-    mani_handler.job_manager.jobs.popitem()
-    assert can_shutdown(mani_handler, logger)
-
-
-def test_auto_shutdown():
+@pytest.mark.parametrize(
+    "expected_duration",
+    [
+        pytest.param(2000, id="2s cooldown"),
+        pytest.param(3000, id="3s cooldown"),
+        pytest.param(5000, id="5s cooldown"),
+        pytest.param(10000, id="10s cooldown"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_auto_shutdown__no_jobs(test_dir: str, expected_duration: int):
     """Ensure that the cooldown timer is respected"""
 
     class FauxObserver:
+        """Mock for the watchdog file system event listener"""
+
         def __init__(self):
             self.stop_count = 0
 
@@ -400,35 +518,96 @@ def test_auto_shutdown():
 
             return True
 
-    job_entity1 = JobEntity()
-    job_entity1.name = "xyz"
-    job_entity1.step_id = "123"
-    job_entity1.task_id = ""
+    frequency = 1000
 
-    frequency = 1
-
+    # monitor_pattern = f"{test_dir}/mock_mani.json"
     # show that an event handler w/out a monitored task will automatically stop
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    duration = 2
+    expected_duration = 2000
 
-    ts0 = get_ts()
-    event_loop(observer, mani_handler, frequency, logger, cooldown_duration=duration)
-    ts1 = get_ts()
+    ts0 = get_ts_ms()
+    tm_args = TelemetryMonitorArgs(
+        test_dir, frequency / 1000, expected_duration / 1000, logging.DEBUG
+    )
+    telmon = TelemetryMonitor(tm_args)
+    telmon._observer = observer  # replace w/mock observer
+    telmon._action_handler = mani_handler  # replace w/mock handler
 
-    assert ts1 - ts0 >= duration
+    # with NO jobs registered, monitor should notice that it can
+    # shutdown immediately but wait for the cooldown period
+    await telmon.monitor()  # observer, mani_handler, frequency, duration)
+    ts1 = get_ts_ms()
+
+    test_duration = ts1 - ts0
+    assert test_duration >= expected_duration
     assert observer.stop_count == 1
 
-    # show that the new cooldown duration is respected
+
+@pytest.mark.parametrize(
+    "cooldown_ms, task_duration_ms",
+    [
+        pytest.param(2000, 2000, id="2s task + 2s cooldown"),
+        pytest.param(3000, 4000, id="3s task + 4s cooldown"),
+        pytest.param(5000, 5000, id="5s task + 5s cooldown"),
+        pytest.param(5000, 10000, id="5s task + 10s cooldown"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_auto_shutdown__has_db(
+    test_dir: str, cooldown_ms: int, task_duration_ms: int
+):
+    """Ensure that the cooldown timer is respected with a running db"""
+
+    class FauxObserver:
+        """Mock for the watchdog file system event listener"""
+
+        def __init__(self):
+            self.stop_count = 0
+
+        def stop(self):
+            self.stop_count += 1
+
+        def is_alive(self) -> bool:
+            if self.stop_count > 0:
+                return False
+
+            return True
+
+    entity = JobEntity()
+    entity.name = "db_0"
+    entity.step_id = "123"
+    entity.task_id = ""
+    entity.type = "orchestrator"
+    entity.telemetry_on = True
+    entity.status_dir = test_dir
+
+    p = mp.Process(
+        target=write_stop_file,
+        args=(entity, pathlib.Path(test_dir), (task_duration_ms / 1000)),
+    )
+
+    frequency = 1000
+
+    # show that when a monitored task completes,the telmon automatically stops
     mani_handler = ManifestEventHandler("xyz", logger)
     observer = FauxObserver()
-    duration = 5
+    expected_duration = (cooldown_ms / 1000) + (task_duration_ms / 1000)
 
-    ts0 = get_ts()
-    event_loop(observer, mani_handler, frequency, logger, cooldown_duration=duration)
-    ts1 = get_ts()
+    tm_args = TelemetryMonitorArgs(
+        test_dir, frequency / 1000, (cooldown_ms / 1000), logging.DEBUG
+    )
+    telmon = TelemetryMonitor(tm_args)
+    telmon._observer = observer  # replace w/mock observer
+    telmon._action_handler = mani_handler  # replace w/mock handler
 
-    assert ts1 - ts0 >= duration
+    ts0 = get_ts_ms()
+    p.start()  # another process write the stop.json and telmon picks it up
+    await telmon.monitor()
+    ts1 = get_ts_ms()
+
+    test_duration = ts1 - ts0
+    assert test_duration >= expected_duration
     assert observer.stop_count == 1
 
 
@@ -455,7 +634,7 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     smartsim_model = exp.create_model("perroquet", app_settings)
     exp.generate(smartsim_model)
     exp.start(smartsim_model, block=True)
-    assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
+    assert exp.get_status(smartsim_model)[0] == SmartSimStatus.STATUS_COMPLETED
 
     telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
     start_events = list(telemetry_output_path.rglob("start.json"))
@@ -494,9 +673,9 @@ def test_telemetry_single_model_nonblocking(
         exp.start(smartsim_model)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+        snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
+        assert exp.get_status(smartsim_model)[0] == SmartSimStatus.STATUS_COMPLETED
 
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -534,7 +713,10 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, con
         exp.generate(*smartsim_models)
         exp.start(*smartsim_models, block=True)
         assert all(
-            [status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(*smartsim_models)
+            ]
         )
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
@@ -578,10 +760,13 @@ def test_telemetry_serial_models_nonblocking(
         exp.start(*smartsim_models)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+        snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
         assert all(
-            [status == STATUS_COMPLETED for status in exp.get_status(*smartsim_models)]
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(*smartsim_models)
+            ]
         )
 
         start_events = list(telemetry_output_path.rglob("start.json"))
@@ -618,7 +803,7 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config
         try:
             exp.start(orc, block=True)
 
-            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+            snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -627,9 +812,9 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config
             assert len(stop_events) <= 1
         finally:
             exp.stop(orc)
-            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
+            snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(orc)[0] == STATUS_CANCELLED
+        assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
@@ -655,13 +840,12 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
 
         # create regular database
         orc = exp.create_database(port=test_port, interface=test_interface)
-        orc.set_path(test_dir)
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
         try:
             exp.start(orc)
 
-            snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+            snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
             start_events = list(telemetry_output_path.rglob("start.json"))
             stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -671,8 +855,8 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
         finally:
             exp.stop(orc)
 
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=10)
-        assert exp.get_status(orc)[0] == STATUS_CANCELLED
+        snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
+        assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
@@ -717,10 +901,10 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
             exp.stop(orc)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+        snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(orc)[0] == STATUS_CANCELLED
-        assert exp.get_status(smartsim_model)[0] == STATUS_COMPLETED
+        assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
+        assert exp.get_status(smartsim_model)[0] == SmartSimStatus.STATUS_COMPLETED
 
         start_events = list(telemetry_output_path.rglob("database/**/start.json"))
         stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
@@ -759,10 +943,15 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
         ens = exp.create_ensemble("troupeau", run_settings=app_settings, replicas=5)
         exp.generate(ens)
         exp.start(ens, block=True)
-        assert all([status == STATUS_COMPLETED for status in exp.get_status(ens)])
+        assert all(
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(ens)
+            ]
+        )
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
-        snooze_nonblocking(telemetry_output_path, max_delay=60, post_data_delay=30)
+        snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
@@ -798,7 +987,10 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
         exp.generate(smartsim_model)
         exp.start(smartsim_model, block=True)
         assert all(
-            [status == STATUS_COMPLETED for status in exp.get_status(smartsim_model)]
+            [
+                status == SmartSimStatus.STATUS_COMPLETED
+                for status in exp.get_status(smartsim_model)
+            ]
         )
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
@@ -819,7 +1011,12 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
     ],
 )
 def test_telemetry_autoshutdown(
-    test_dir, wlmutils, monkeypatch, frequency, cooldown, config
+    test_dir: str,
+    wlmutils,
+    monkeypatch: pytest.MonkeyPatch,
+    frequency: int,
+    cooldown: int,
+    config: cfg.Config,
 ):
     """
     Ensure that the telemetry monitor process shuts down after the desired
@@ -830,6 +1027,8 @@ def test_telemetry_autoshutdown(
         ctx.setattr(cfg.Config, "telemetry_frequency", frequency)
         ctx.setattr(cfg.Config, "telemetry_cooldown", cooldown)
 
+        cooldown_ms = cooldown * 1000
+
         # Set experiment name
         exp_name = "telemetry_ensemble"
 
@@ -839,9 +1038,11 @@ def test_telemetry_autoshutdown(
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        start_time = get_ts()
-        stop_time = start_time
-        exp.start(block=False)
+        rs = RunSettings("python", exe_args=["sleep.py", "1"])
+        model = exp.create_model("model", run_settings=rs)
+
+        start_time = get_ts_ms()
+        exp.start(model, block=True)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         empty_mani = list(telemetry_output_path.rglob("manifest.json"))
@@ -854,13 +1055,15 @@ def test_telemetry_autoshutdown(
         # give some leeway during testing for the cooldown to get hit
         for i in range(10):
             if popen.poll() is not None:
-                stop_time = get_ts()
                 print(f"Completed polling for telemetry shutdown after {i} attempts")
                 break
-            time.sleep(3)
+            time.sleep(2)
+
+        stop_time = get_ts_ms()
+        duration = stop_time - start_time
 
         assert popen.returncode is not None
-        assert stop_time >= (start_time + cooldown)
+        assert duration >= cooldown_ms
 
 
 class MockStep(Step):
@@ -935,7 +1138,7 @@ def test_unmanaged_steps_are_proxyed_through_indirect(
 
 
 @for_all_wlm_launchers
-def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
+def test_unmanaged_steps_are_not_proxyed_if_the_telemetry_monitor_is_disabled(
     wlm_launcher, mock_step_meta_dict, test_dir, monkeypatch
 ):
     monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, False)
@@ -1026,52 +1229,53 @@ def test_multistart_experiment(
     telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
     db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
-    db_stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
     assert len(db_start_events) == 1
-    assert len(db_stop_events) == 1
 
     m_start_events = list(telemetry_output_path.rglob("model/**/start.json"))
-    m_stop_events = list(telemetry_output_path.rglob("model/**/stop.json"))
     assert len(m_start_events) == 1
-    assert len(m_stop_events) == 1
 
     e_start_events = list(telemetry_output_path.rglob("ensemble/**/start.json"))
-    e_stop_events = list(telemetry_output_path.rglob("ensemble/**/stop.json"))
     assert len(e_start_events) == 2
-    assert len(e_stop_events) == 2
 
 
 @pytest.mark.parametrize(
     "status_in, expected_out",
     [
-        pytest.param(STATUS_CANCELLED, 1, id="failure on cancellation"),
-        pytest.param(STATUS_COMPLETED, 0, id="success on completion"),
-        pytest.param(STATUS_FAILED, 1, id="failure on failed"),
-        pytest.param(STATUS_NEW, None, id="failure on new"),
-        pytest.param(STATUS_PAUSED, None, id="failure on paused"),
-        pytest.param(STATUS_RUNNING, None, id="failure on running"),
+        pytest.param(SmartSimStatus.STATUS_CANCELLED, 1, id="failure on cancellation"),
+        pytest.param(SmartSimStatus.STATUS_COMPLETED, 0, id="success on completion"),
+        pytest.param(SmartSimStatus.STATUS_FAILED, 1, id="failure on failed"),
+        pytest.param(SmartSimStatus.STATUS_NEW, None, id="failure on new"),
+        pytest.param(SmartSimStatus.STATUS_PAUSED, None, id="failure on paused"),
+        pytest.param(SmartSimStatus.STATUS_RUNNING, None, id="failure on running"),
     ],
 )
 def test_faux_rc(status_in: str, expected_out: t.Optional[int]):
     """Ensure faux response codes match expectations."""
     step_info = StepInfo(status=status_in)
 
-    rc = faux_return_code(step_info)
+    rc = map_return_code(step_info)
     assert rc == expected_out
 
 
 @pytest.mark.parametrize(
     "status_in, expected_out, expected_has_jobs",
     [
-        pytest.param(STATUS_CANCELLED, 1, False, id="failure on cancellation"),
-        pytest.param(STATUS_COMPLETED, 0, False, id="success on completion"),
-        pytest.param(STATUS_FAILED, 1, False, id="failure on failed"),
-        pytest.param(STATUS_NEW, None, True, id="failure on new"),
-        pytest.param(STATUS_PAUSED, None, True, id="failure on paused"),
-        pytest.param(STATUS_RUNNING, None, True, id="failure on running"),
+        pytest.param(
+            SmartSimStatus.STATUS_CANCELLED, 1, False, id="failure on cancellation"
+        ),
+        pytest.param(
+            SmartSimStatus.STATUS_COMPLETED, 0, False, id="success on completion"
+        ),
+        pytest.param(SmartSimStatus.STATUS_FAILED, 1, False, id="failure on failed"),
+        pytest.param(SmartSimStatus.STATUS_NEW, None, True, id="failure on new"),
+        pytest.param(SmartSimStatus.STATUS_PAUSED, None, True, id="failure on paused"),
+        pytest.param(
+            SmartSimStatus.STATUS_RUNNING, None, True, id="failure on running"
+        ),
     ],
 )
-def test_wlm_completion_handling(
+@pytest.mark.asyncio
+async def test_wlm_completion_handling(
     test_dir: str,
     monkeypatch: pytest.MonkeyPatch,
     status_in: str,
@@ -1084,7 +1288,7 @@ def test_wlm_completion_handling(
 
         return _faux_updates
 
-    ts = get_ts()
+    ts = get_ts_ms()
     with monkeypatch.context() as ctx:
         # don't actually start a job manager
         ctx.setattr(JobManager, "start", lambda x: ...)
@@ -1107,7 +1311,7 @@ def test_wlm_completion_handling(
         mani_handler._tracked_jobs = {job_entity.key: job_entity}
         mani_handler.job_manager.jobs[job.name] = job
 
-        mani_handler.on_timestep(ts)
+        await mani_handler.on_timestep(ts)
 
         # see that the job queue was properly manipulated
         has_jobs = bool(mani_handler._tracked_jobs)

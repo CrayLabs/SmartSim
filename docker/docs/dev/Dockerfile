@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 LABEL maintainer="Cray Labs"
 
@@ -58,9 +58,7 @@ RUN git clone https://github.com/CrayLabs/SmartDashboard.git --branch develop --
 RUN python -m pip install -r doc/requirements-doc.txt \
     && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
 
-RUN mkdir -p doc/tutorials/ \
-    && cd doc/tutorials/ \
-    && rm -rf * \
-    && ln -s ../../tutorials/* .
+# Note this is needed to ensure that the Sphinx builds. Can be removed with newer Tensorflow
+RUN python -m pip install typing_extensions==4.6.1
 
 RUN make docs

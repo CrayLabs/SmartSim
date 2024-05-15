@@ -1,0 +1,43 @@
+# Required
+version: 2
+
+# Set the OS, Python version and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.10"
+  jobs:
+    post_checkout:
+      # Cancel building pull requests when there aren't changed in the docs directory or YAML file.
+      # You can add any other files or directories that you'd like here as well,
+      # like your docs requirements file, or other files that will change your docs build.
+      #
+      # If there are no changes (git diff exits with 0) we force the command to return with 183.
+      # This is a special exit code on Read the Docs that will cancel the build immediately.
+      - |
+        if [ "$READTHEDOCS_VERSION_TYPE" = "external" ] && git diff --quiet origin/main -- doc/ .readthedocs.yaml;
+        then
+          exit 183;
+        fi
+    pre_create_environment:
+      - git clone --depth 1 https://github.com/CrayLabs/SmartRedis.git smartredis
+      - git clone --depth 1 https://github.com/CrayLabs/SmartDashboard.git smartdashboard
+    post_create_environment:
+      - python -m pip install .[dev]
+      - cd smartredis; python -m pip install .
+      - cd smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran
+      - ln -s smartredis/examples ./examples
+      - cd smartdashboard; python -m pip install .
+    pre_build:
+      - pip install typing_extensions==4.8.0
+      - pip install pydantic==1.10.13
+      - python -m sphinx -b linkcheck doc/ $READTHEDOCS_OUTPUT/linkcheck
+
+# Build documentation in the "docs/" directory with Sphinx
+sphinx:
+  configuration: doc/conf.py
+  fail_on_warning: true
+
+python:
+   install:
+   - requirements: doc/requirements-doc.txt

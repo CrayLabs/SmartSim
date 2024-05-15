@@ -33,9 +33,7 @@ def parse_qsub(output: str) -> str:
     output is the job id itself.
 
     :param output: stdout of qsub command
-    :type output: str
     :returns: job id
-    :rtype: str
     """
     return output
 
@@ -44,9 +42,7 @@ def parse_qsub_error(output: str) -> str:
     """Parse and return error output of a failed qsub command.
 
     :param output: stderr of qsub command
-    :type output: str
     :returns: error message
-    :rtype: str
     """
     # look for error first
     for line in output.split("\n"):
@@ -61,18 +57,15 @@ def parse_qsub_error(output: str) -> str:
     return base_err
 
 
-def parse_qstat_jobid(output: str, job_id: str) -> str:
+def parse_qstat_jobid(output: str, job_id: str) -> t.Optional[str]:
     """Parse and return output of the qstat command run with options
     to obtain job status.
 
     :param output: output of the qstat command
-    :type output: str
     :param job_id: allocation id or job step id
-    :type job_id: str
     :return: status
-    :rtype: str
     """
-    result = "NOTFOUND"
+    result = None
     for line in output.split("\n"):
         fields = line.split()
         if len(fields) >= 5:
@@ -81,6 +74,25 @@ def parse_qstat_jobid(output: str, job_id: str) -> str:
                 result = stat
                 break
     return result
+
+
+def parse_qstat_jobid_json(output: str, job_id: str) -> t.Optional[str]:
+    """Parse and return output of the qstat command run with JSON options
+    to obtain job status.
+
+    :param output: output of the qstat command in JSON format
+    :param job_id: allocation id or job step id
+    :return: status
+    """
+    out_json = load_and_clean_json(output)
+
+    if "Jobs" not in out_json:
+        return None
+    jobs: dict[str, t.Any] = out_json["Jobs"]
+    job: t.Optional[dict[str, t.Any]] = jobs.get(job_id, None)
+    if job is None:
+        return None
+    return str(job.get("job_state", None))
 
 
 def parse_qstat_nodes(output: str) -> t.List[str]:
@@ -93,9 +105,7 @@ def parse_qstat_nodes(output: str) -> t.List[str]:
     The `output` parameter must be in JSON format.
 
     :param output: output of the qstat command in JSON format
-    :type output: str
     :return: compute nodes of the allocation or job
-    :rtype: list of str
     """
     nodes: t.List[str] = []
     out_json = load_and_clean_json(output)
@@ -116,11 +126,8 @@ def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
     """Parse and return the step id from a qstat command
 
     :param output: output qstat
-    :type output: str
     :param step_name: the name of the step to query
-    :type step_name: str
     :return: the step_id
-    :rtype: str
     """
     step_id: t.Optional[str] = None
     out_json = load_and_clean_json(output)

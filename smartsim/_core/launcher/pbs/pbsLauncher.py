@@ -39,7 +39,7 @@ from ....settings import (
     RunSettings,
     SettingsBase,
 )
-from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -53,7 +53,11 @@ from ..step import (
 )
 from ..stepInfo import PBSStepInfo, StepInfo
 from .pbsCommands import qdel, qstat
-from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
+from .pbsParser import (
+    parse_qstat_jobid,
+    parse_qstat_jobid_json,
+    parse_step_id_from_qstat,
+)
 
 logger = get_logger(__name__)
 
@@ -88,10 +92,8 @@ class PBSLauncher(WLMLauncher):
         """Run a job step through PBSPro
 
         :param step: a job step instance
-        :type step: Step
         :raises LauncherError: if launch fails
         :return: job step id if job is managed
-        :rtype: str
         """
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
@@ -131,9 +133,7 @@ class PBSLauncher(WLMLauncher):
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
-        :type step_name: str
         :return: update for job due to cancel
-        :rtype: StepInfo
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
@@ -149,7 +149,9 @@ class PBSLauncher(WLMLauncher):
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
-        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
+        step_info.status = (
+            SmartSimStatus.STATUS_CANCELLED
+        )  # set status to cancelled instead of failed
         return step_info
 
     @staticmethod
@@ -178,20 +180,29 @@ class PBSLauncher(WLMLauncher):
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
-        :type step_ids: list[str]
         :return: list of updates for managed jobs
-        :rtype: list[StepInfo]
         """
         updates: t.List[StepInfo] = []
 
         qstat_out, _ = qstat(step_ids)
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
+
+        # Fallback: if all jobs result as NOTFOUND, it might be an issue
+        # with truncated names, we resort to json format which does not truncate
+        # information
+        if all(stat is None for stat in stats):
+            qstat_out_json, _ = qstat(["-f", "-F", "json"] + step_ids)
+            stats = [
+                parse_qstat_jobid_json(qstat_out_json, str(step_id))
+                for step_id in step_ids
+            ]
+
         # create PBSStepInfo objects to return
 
         for stat, _ in zip(stats, step_ids):
-            info = PBSStepInfo(stat, None)
+            info = PBSStepInfo(stat or "NOTFOUND", None)
             # account for case where job history is not logged by PBS
-            if info.status == STATUS_COMPLETED:
+            if info.status == SmartSimStatus.STATUS_COMPLETED:
                 info.returncode = 0
 
             updates.append(info)

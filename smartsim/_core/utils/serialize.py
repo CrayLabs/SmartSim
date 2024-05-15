@@ -33,10 +33,8 @@ from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
 import smartsim.log
-from smartsim._core.config import CONFIG
 
 if t.TYPE_CHECKING:
-    from smartsim import Experiment
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import Orchestrator
     from smartsim.entity import DBNode, Ensemble, Model
@@ -54,9 +52,6 @@ _LOGGER = smartsim.log.get_logger(__name__)
 
 
 def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
-    if not CONFIG.telemetry_enabled:
-        return
-
     manifest.metadata.run_telemetry_subdirectory.mkdir(parents=True, exist_ok=True)
     exp_out, exp_err = smartsim.log.get_exp_log_paths()
 
@@ -82,7 +77,7 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
         manifest_dict = {
             "schema info": {
                 "schema_name": "entity manifest",
-                "version": "0.0.3",
+                "version": "0.0.4",
             },
             "experiment": {
                 "name": manifest.metadata.exp_name,
@@ -228,6 +223,7 @@ def _dictify_db(
         db_type, _ = db_path.name.split("-", 1)
     else:
         db_type = "Unknown"
+
     return {
         "name": db.name,
         "type": db_type,
@@ -238,6 +234,17 @@ def _dictify_db(
                 "conf_file": shard.cluster_conf_file,
                 "out_file": out_file,
                 "err_file": err_file,
+                "memory_file": (
+                    str(status_dir / "memory.csv") if db.telemetry.is_enabled else ""
+                ),
+                "client_file": (
+                    str(status_dir / "client.csv") if db.telemetry.is_enabled else ""
+                ),
+                "client_count_file": (
+                    str(status_dir / "client_count.csv")
+                    if db.telemetry.is_enabled
+                    else ""
+                ),
                 "telemetry_metadata": {
                     "status_dir": str(status_dir),
                     "step_id": step_id,

@@ -39,6 +39,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      
+      # Maximize the space in this image
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 30720
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.

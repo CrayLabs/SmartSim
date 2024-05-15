@@ -35,7 +35,7 @@ from types import FrameType
 from ...database import Orchestrator
 from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import ContextThread, get_logger
-from ...status import STATUS_NEVER_STARTED, TERMINAL_STATUSES
+from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
 from ..launcher import Launcher, LocalLauncher
 from ..utils.network import get_ip_from_host
@@ -61,7 +61,6 @@ class JobManager:
         """Initialize a Jobmanager
 
         :param launcher: a Launcher object to manage jobs
-        :type: SmartSim.Launcher
         """
         self.monitor: t.Optional[Thread] = None
 
@@ -124,7 +123,6 @@ class JobManager:
            actively monitored by the job manager
 
         :param job: job instance we are transitioning
-        :type job: Job
         """
         with self._lock:
             self.completed[job.ename] = job
@@ -141,9 +139,7 @@ class JobManager:
         from which it was created.
 
         :param entity_name: The name of the entity of a job
-        :type entity_name: str
         :returns: the Job associated with the entity_name
-        :rtype: Job
         """
         with self._lock:
             entities = ChainMap(self.db_jobs, self.jobs, self.completed)
@@ -153,7 +149,6 @@ class JobManager:
         """Returns dictionary all jobs for () operator
 
         :returns: Dictionary of all jobs
-        :rtype: dictionary
         """
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
@@ -175,13 +170,9 @@ class JobManager:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
-        :type job_name: str
         :param job_id: job step id created by launcher
-        :type job_id: str
         :param entity: entity that was launched on job step
-        :type entity: SmartSimEntity | EntitySequence
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
-        :type is_task: bool
         """
         launcher = str(self._launcher)
         # all operations here should be atomic
@@ -197,9 +188,7 @@ class JobManager:
         """Detect if a job has completed
 
         :param entity: entity to check
-        :type entity: SmartSimEntity
         :return: True if finished
-        :rtype: bool
         """
         with self._lock:
             job = self[entity.name]  # locked operation
@@ -239,12 +228,11 @@ class JobManager:
     def get_status(
         self,
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-    ) -> str:
+    ) -> SmartSimStatus:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
-        :type entity: SmartSimEntity | EntitySequence
-        :returns: tuple of status
+        :returns: a SmartSimStatus status
         """
         with self._lock:
             if entity.name in self.completed:
@@ -254,13 +242,12 @@ class JobManager:
                 job: Job = self[entity.name]  # locked
                 return job.status
 
-            return STATUS_NEVER_STARTED
+            return SmartSimStatus.STATUS_NEVER_STARTED
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
 
         :param launcher: child of Launcher
-        :type launcher: Launcher instance
         """
         self._launcher = launcher
 
@@ -268,9 +255,7 @@ class JobManager:
         """See if the job just started should be restarted or not.
 
         :param entity_name: name of entity to check for a job for
-        :type entity_name: str
         :return: if job should be restarted instead of started
-        :rtype: bool
         """
         if entity_name in self.completed:
             return True
@@ -287,13 +272,9 @@ class JobManager:
         ready to launch again.
 
         :param job_name: new job step name
-        :type job_name: str
         :param job_id: new job id
-        :type job_id: str
         :param entity_name: name of the entity of the job
-        :type entity_name: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
-        :type is_task: bool
 
         """
         with self._lock:
@@ -311,7 +292,6 @@ class JobManager:
         for corresponding database identifiers
 
         :return: dictionary of host ip addresses
-        :rtype: Dict[str, list]
         """
 
         address_dict: t.Dict[str, t.List[str]] = {}
@@ -333,7 +313,6 @@ class JobManager:
         """Set the DB hosts in db_jobs so future entities can query this
 
         :param orchestrator: orchestrator instance
-        :type orchestrator: Orchestrator
         """
         # should only be called during launch in the controller
 
@@ -349,9 +328,9 @@ class JobManager:
                         self.db_jobs[dbnode.name].hosts = dbnode.hosts
 
     def signal_interrupt(self, signo: int, _frame: t.Optional[FrameType]) -> None:
+        """Custom handler for whenever SIGINT is received"""
         if not signo:
             logger.warning("Received SIGINT with no signal number")
-        """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():

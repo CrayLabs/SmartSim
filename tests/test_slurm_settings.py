@@ -105,6 +105,7 @@ def test_mpmd_compound_env_exports():
 
     step = SrunStep("teststep", "./", srun)
 
+    step.meta["status_dir"] = ""
     launch_cmd = step.get_launch_cmd()
     env_cmds = [v for v in launch_cmd if v == "env"]
     assert "env" in launch_cmd and len(env_cmds) == 1
@@ -164,6 +165,7 @@ def test_mpmd_non_compound_env_exports():
 
     step = SrunStep("teststep", "./", srun)
 
+    step.meta["status_dir"] = ""
     launch_cmd = step.get_launch_cmd()
     env_cmds = [v for v in launch_cmd if v == "env"]
     assert "env" not in launch_cmd and len(env_cmds) == 0
@@ -223,6 +225,7 @@ def test_mpmd_non_compound_no_exports():
 
     step = SrunStep("teststep", "./", srun)
 
+    step.meta["status_dir"] = ""
     launch_cmd = step.get_launch_cmd()
     env_cmds = [v for v in launch_cmd if v == "env"]
     assert "env" not in launch_cmd and len(env_cmds) == 0
@@ -336,6 +339,21 @@ def test_set_hostlist():
 
     with pytest.raises(TypeError):
         rs.set_hostlist([5])
+
+
+def test_set_node_feature():
+    rs = SrunSettings("python")
+    rs.set_node_feature(["P100", "V100"])
+    assert rs.run_args["C"] == "P100,V100"
+
+    rs.set_node_feature("P100")
+    assert rs.run_args["C"] == "P100"
+
+    with pytest.raises(TypeError):
+        rs.set_node_feature(5)
+
+    with pytest.raises(TypeError):
+        rs.set_node_feature(["P100", 5])
 
 
 def test_set_hostlist_from_file():

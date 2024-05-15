@@ -54,10 +54,13 @@ jobs:
       fail-fast: false
       matrix:
         subset: [backends, slow_tests, group_a, group_b]
-        os: [macos-12, ubuntu-20.04] # Operating systems
+        os: [macos-12, macos-14, ubuntu-22.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.7] # Redis AI versions
-        py_v: ['3.8', '3.9', '3.10', '3.11'] # Python versions
+        py_v: ["3.9", "3.10", "3.11"] # Python versions
+        exclude:
+          - os: macos-14
+            py_v: "3.9"
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
@@ -108,7 +111,12 @@ jobs:
           python -m pip install .[dev,ml]
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
+        if: contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')
         run: smart build --device cpu --onnx -v
+
+      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
+        if: contains( matrix.os, 'macos-14' )
+        run: smart build --device cpu --no_tf -v
 
       - name: Run mypy
         run: |

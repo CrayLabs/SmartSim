@@ -27,7 +27,7 @@
 from .dbnode import DBNode
 from .dbobject import *
 from .ensemble import Ensemble
-from .entity import SmartSimEntity
+from .entity import SmartSimEntity, TelemetryConfiguration
 from .entityList import EntityList, EntitySequence
 from .files import TaggedFilesHierarchy
 from .model import Model

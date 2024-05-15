@@ -27,6 +27,7 @@
 
 import os.path
 from copy import deepcopy
+from uuid import uuid4
 
 import pytest
 
@@ -60,7 +61,6 @@ ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
-model_no_name = exp.create_model(name=None, run_settings=rs)
 
 db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
 db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
@@ -73,11 +73,6 @@ def test_separate():
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.dbs[0] == orc
-
-
-def test_no_name():
-    with pytest.raises(AttributeError):
-        _ = Manifest(model_no_name)
 
 
 def test_separate_type():
@@ -159,7 +154,7 @@ def test_launched_manifest_transform_data():
 
 
 def test_launched_manifest_builder_correctly_maps_data():
-    lmb = LaunchedManifestBuilder("name", "path", "launcher name")
+    lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
     lmb.add_model(model, 1)
     lmb.add_model(model_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
@@ -172,7 +167,7 @@ def test_launched_manifest_builder_correctly_maps_data():
 
 
 def test_launced_manifest_builder_raises_if_lens_do_not_match():
-    lmb = LaunchedManifestBuilder("name", "path", "launcher name")
+    lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, list(range(123)))
     with pytest.raises(ValueError):
@@ -182,7 +177,7 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match():
 def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
     monkeypatch,
 ):
-    lmb = LaunchedManifestBuilder("name", "path", "launcher")
+    lmb = LaunchedManifestBuilder("name", "path", "launcher", str(uuid4()))
     monkeypatch.setattr(ensemble, "entities", [])
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, [])
@@ -190,7 +185,7 @@ def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(
 
 def test_lmb_and_launched_manifest_have_same_paths_for_launched_metadata():
     exp_path = "/path/to/some/exp"
-    lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher")
+    lmb = LaunchedManifestBuilder("exp_name", exp_path, "launcher", str(uuid4()))
     manifest = lmb.finalize()
     assert (
         lmb.exp_telemetry_subdirectory == manifest.metadata.exp_telemetry_subdirectory

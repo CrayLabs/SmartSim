@@ -28,8 +28,9 @@ import sys
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.entity import Model
+from smartsim.status import SmartSimStatus
 
 if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
@@ -60,14 +61,14 @@ def test_launch_colocated_model_defaults(fileutils, test_dir, coloutils, db_type
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -91,7 +92,7 @@ def test_colocated_model_disable_pinning(fileutils, test_dir, coloutils, db_type
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -114,7 +115,7 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, test_dir, coloutils, db_ty
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -139,7 +140,7 @@ def test_colocated_model_pinning_range(fileutils, test_dir, coloutils, db_type):
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -164,7 +165,7 @@ def test_colocated_model_pinning_list(fileutils, test_dir, coloutils, db_type):
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"
 
 
@@ -189,5 +190,5 @@ def test_colocated_model_pinning_mixed(fileutils, test_dir, coloutils, db_type):
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all(
-        stat == status.STATUS_COMPLETED for stat in statuses
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses: {statuses}"

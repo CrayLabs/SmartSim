@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import functools
 import os.path as osp
+import pathlib
 import sys
 import time
 import typing as t
@@ -66,10 +67,21 @@ class Step:
         step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
+    @staticmethod
+    def _ensure_output_directory_exists(output_dir: str) -> None:
+        """Create the directory for the step output if it doesn't exist already"""
+        if not osp.exists(output_dir):
+            pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+
     def get_output_files(self) -> t.Tuple[str, str]:
-        """Return two paths to error and output files based on cwd"""
-        output = self.get_step_file(ending=".out")
-        error = self.get_step_file(ending=".err")
+        """Return two paths to error and output files based on metadata directory"""
+        try:
+            output_dir = self.meta["status_dir"]
+        except KeyError as exc:
+            raise KeyError("Status directory for this step has not been set.") from exc
+        self._ensure_output_directory_exists(output_dir)
+        output = osp.join(output_dir, f"{self.entity_name}.out")
+        error = osp.join(output_dir, f"{self.entity_name}.err")
         return output, error
 
     def get_step_file(
@@ -114,7 +126,6 @@ class Step:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
-        :type step: Step
         """
         raise SmartSimError("add_to_batch not implemented for this step type")
 
@@ -127,6 +138,14 @@ def proxyable_launch_cmd(
 ) -> t.Callable[[_StepT], t.List[str]]:
     @functools.wraps(fn)
     def _get_launch_cmd(self: _StepT) -> t.List[str]:
+        """
+        Generate a launch command that executes the `JobStep` with the
+        indirect launching entrypoint instead of directly. The original
+        command is passed to the proxy as a base64 encoded string.
+
+        Steps implementing `get_launch_cmd` and decorated with
+        `proxyable_launch_cmd` will generate status updates that can be consumed
+        by the telemetry monitor and dashboard"""
         original_cmd_list = fn(self)
 
         if not CONFIG.telemetry_enabled:
@@ -134,18 +153,22 @@ def proxyable_launch_cmd(
 
         if self.managed:
             raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)}"
+                f"Attempting to proxy managed step of type {type(self)} "
                 "through the unmanaged step proxy entry point"
             )
 
         proxy_module = "smartsim._core.entrypoints.indirect"
-        etype = self.meta["entity_type"]
+        entity_type = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
+
+        logger.debug(f"Encoding command{' '.join(original_cmd_list)}")
+
+        # encode the original cmd to avoid potential collisions and escaping
+        # errors when passing it using CLI arguments to the indirect entrypoint
         encoded_cmd = encode_cmd(original_cmd_list)
 
-        # NOTE: this is NOT safe. should either 1) sign cmd and verify OR 2)
-        #       serialize step and let the indirect entrypoint rebuild the
-        #       cmd... for now, test away...
+        # return a new command that executes the proxy and passes
+        # the original command as an argument
         return [
             sys.executable,
             "-m",
@@ -155,7 +178,7 @@ def proxyable_launch_cmd(
             "+command",
             encoded_cmd,
             "+entity_type",
-            etype,
+            entity_type,
             "+telemetry_dir",
             status_dir,
             "+working_dir",

@@ -38,7 +38,7 @@ from ....settings import (
     RunSettings,
     SettingsBase,
 )
-from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
@@ -91,10 +91,8 @@ class LSFLauncher(WLMLauncher):
         """Run a job step through LSF
 
         :param step: a job step instance
-        :type step: Step
         :raises LauncherError: if launch fails
         :return: job step id if job is managed
-        :rtype: str
         """
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
@@ -134,9 +132,7 @@ class LSFLauncher(WLMLauncher):
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
-        :type step_name: str
         :return: update for job due to cancel
-        :rtype: StepInfo
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
@@ -155,7 +151,9 @@ class LSFLauncher(WLMLauncher):
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
 
-        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
+        step_info.status = (
+            SmartSimStatus.STATUS_CANCELLED
+        )  # set status to cancelled instead of failed
         return step_info
 
     @staticmethod
@@ -183,9 +181,7 @@ class LSFLauncher(WLMLauncher):
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
-        :type step_ids: list[str]
         :return: list of updates for managed jobs
-        :rtype: list[StepInfo]
         """
         updates: t.List[StepInfo] = []
 
@@ -207,7 +203,7 @@ class LSFLauncher(WLMLauncher):
                 # create LSFBatchStepInfo objects to return
                 batch_info = LSFBatchStepInfo(stat, None)
                 # account for case where job history is not logged by LSF
-                if batch_info.status == STATUS_COMPLETED:
+                if batch_info.status == SmartSimStatus.STATUS_COMPLETED:
                     batch_info.returncode = 0
                 updates.append(batch_info)
         return updates

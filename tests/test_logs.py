@@ -27,6 +27,7 @@
 import io
 import logging
 import pathlib
+import socket
 
 import pytest
 
@@ -91,8 +92,10 @@ def test_add_exp_loggers(test_dir):
     logger = logging.getLogger("smartsim_test_add_exp_loggers")
     logger.addHandler(logging.StreamHandler(faux_out_stream))
 
-    out_file = pathlib.Path(test_dir) / "smartsim.out"
-    err_file = pathlib.Path(test_dir) / "smartsim.err"
+    logger.addFilter(smartsim.log.HostnameFilter())
+
+    out_file = pathlib.Path(test_dir) / "logs/smartsim.out"
+    err_file = pathlib.Path(test_dir) / "logs/smartsim.err"
 
     filter_fn = lambda x: True
 
@@ -210,3 +213,35 @@ def test_context_leak(test_dir: str, turn_on_tm, monkeypatch):
         assert ctx_var.get() == original_ctx_value
         ctx_var.reset(token)
         assert ctx_var.get() == ""
+
+
+def test_hostname_filter_results() -> None:
+    """Ensure the hostname filter returns true for all records, even if not enriched"""
+    filter = smartsim.log.HostnameFilter("test-filter")
+    record = logging.LogRecord(
+        "name", logging.INFO, "/foo/bar", 42, "this is your message", None, None
+    )
+
+    # no hostname, will be enriched.
+    passes_filter = filter.filter(record)
+    assert passes_filter
+
+    # has hostname, will NOT be enriched.
+    passes_filter = filter.filter(record)
+    assert passes_filter
+
+
+def test_hostname_filter() -> None:
+    """Ensure the hostname filter adds a hostname to the log record"""
+    filter = smartsim.log.HostnameFilter("test-filter")
+
+    exp_name = socket.gethostname()
+    record = logging.LogRecord(
+        "name", logging.INFO, "/foo/bar", 42, "this is your message", None, None
+    )
+
+    filter.filter(record)
+    assert hasattr(record, "hostname")
+
+    name = getattr(record, "hostname")
+    assert exp_name == name

@@ -28,9 +28,10 @@ from shutil import which
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
+from smartsim.status import SmartSimStatus
 
 """Test SmartRedis container integration on a supercomputer with a WLM."""
 
@@ -49,10 +50,9 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
     """
 
     launcher = wlmutils.get_test_launcher()
-    print(launcher)
-    if launcher not in ["pbs", "slurm"]:
+    if launcher not in ["pbs", "slurm", "dragon"]:
         pytest.skip(
-            f"Test only runs on systems with PBS or Slurm as WLM. Current launcher: {launcher}"
+            f"Test only runs on systems with PBS, Dragon, or Slurm as WLM. Current launcher: {launcher}"
         )
 
     exp = Experiment(
@@ -92,7 +92,7 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
 

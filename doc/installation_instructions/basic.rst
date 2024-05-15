@@ -1,3 +1,5 @@
+.. _basic_install_SS:
+
 ******************
 Basic Installation
 ******************
@@ -18,7 +20,7 @@ Basic
 
 The base prerequisites to install SmartSim and SmartRedis are:
 
-  - Python 3.8-3.11
+  - Python 3.9-3.11
   - Pip
   - Cmake 3.13.x (or later)
   - C compiler
@@ -27,7 +29,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - git
   - `git-lfs`_
 
-.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing
+.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs
 
 .. note::
 
@@ -48,7 +50,7 @@ The machine-learning backends have additional requirements in order to
 use GPUs for inference
 
   - `CUDA Toolkit 11 (tested with 11.8) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
-  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
+  - `cuDNN 8 (tested with 8.9.1) <https://docs.nvidia.com/deeplearning/cudnn/installation/overview.html>`_
   - OS: Linux
   - GPU: Nvidia
 
@@ -72,11 +74,11 @@ Supported Versions
    * - MacOS
      - x86_64, aarch64
      - Not supported
-     - 3.8 - 3.11
+     - 3.9 - 3.11
    * - Linux
      - x86_64
      - Nvidia
-     - 3.8 - 3.11
+     - 3.9 - 3.11
 
 
 .. note::
@@ -235,6 +237,28 @@ to building SmartSim with GPU support is to specify a different ``device``
   backends look for the CUDA Toolkit and cuDNN libraries. Please see the
   :ref:`Platform Installation Section <install-notes>` section for guidance.
 
+
+.. _dragon_install:
+
+Dragon Install
+--------------
+
+`Dragon <https://dragonhpc.github.io/dragon/doc/_build/html/index.html>`_ is
+an HPC-native library for distributed computing. SmartSim can use Dragon as a
+launcher on systems with Slurm or PBS as schedulers. To install the correct
+version of Dragon, you can add the ``--dragon`` option to ``smart build``.
+For example, to install dragon alongside the RedisAI CPU backends, you can run
+
+.. code-block:: bash
+
+    # run one of the following
+    smart build --device cpu --dragon           # install Dragon, PT and TF for cpu
+    smart build --device cpu --onnx --dragon    # install Dragon and all backends (PT, TF, ONNX) on cpu
+
+.. note::
+  Dragon is only supported on Linux systems. For further information, you
+  can read :ref:`the dedicated documentation page <dragon>`.
+
 ==========
 SmartRedis
 ==========
@@ -254,9 +278,9 @@ SmartSim does.
    * - Platform
      - Python Versions
    * - MacOS
-     - 3.8 - 3.11
+     - 3.9 - 3.11
    * - Linux
-     - 3.8 - 3.11
+     - 3.9 - 3.11
 
 The Python client for SmartRedis is installed through ``pip`` as follows:
 
@@ -298,7 +322,7 @@ source remains at the site of the clone instead of in site-packages.
   pip install -e .[dev,ml]    # for bash users
   pip install -e .\[dev,ml\]  # for zsh users
 
-Use the now installed ``smart`` cli to install the machine learning runtimes.
+Use the now installed ``smart`` cli to install the machine learning runtimes and dragon.
 
 .. tabs::
 
@@ -307,8 +331,8 @@ Use the now installed ``smart`` cli to install the machine learning runtimes.
     .. code-block:: bash
 
       # run one of the following
-      smart build --device cpu --onnx  # install with cpu-only support
-      smart build --device gpu --onnx  # install with both cpu and gpu support
+      smart build --device cpu --onnx --dragon  # install with cpu-only support
+      smart build --device gpu --onnx --dragon  # install with both cpu and gpu support
 
 
   .. tab:: MacOS (Intel x64)

@@ -26,7 +26,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -48,12 +49,12 @@ def test_restart(fileutils, test_dir):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
     # restart the model
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 def test_ensemble(fileutils, test_dir):
@@ -64,13 +65,12 @@ def test_ensemble(fileutils, test_dir):
     settings = exp.create_run_settings("python", f"{script} --time=3")
 
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
-    ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
     # restart the ensemble
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

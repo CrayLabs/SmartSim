@@ -26,7 +26,8 @@
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
+from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -49,19 +50,18 @@ def test_launch_orc_auto(test_dir, wlmutils):
         single_cmd=False,
         hosts=wlmutils.get_test_hostlist(),
     )
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
 
     # don't use assert so that we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_single(test_dir, wlmutils):
@@ -82,19 +82,18 @@ def test_launch_cluster_orc_single(test_dir, wlmutils):
         single_cmd=True,
         hosts=wlmutils.get_test_hostlist(),
     )
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cluster_orc_multi(test_dir, wlmutils):
@@ -115,16 +114,15 @@ def test_launch_cluster_orc_multi(test_dir, wlmutils):
         single_cmd=False,
         hosts=wlmutils.get_test_hostlist(),
     )
-    orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in statuses:
+    if SmartSimStatus.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     statuses = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
+    assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])

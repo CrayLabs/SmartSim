@@ -75,19 +75,11 @@ class RunSettings(SettingsBase):
             rs = RunSettings("echo", "hello", "mpirun", run_args={"-np": "2"})
 
         :param exe: executable to run
-        :type exe: str
-        :param exe_args: executable arguments, defaults to None
-        :type exe_args: str | list[str], optional
-        :param run_command: launch binary (e.g. "srun"), defaults to empty str
-        :type run_command: str, optional
-        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`),
-            defaults to None
-        :type run_args: dict[str, str], optional
-        :param env_vars: environment vars to launch job with, defaults to None
-        :type env_vars: dict[str, str], optional
-        :param container: container type for workload (e.g. "singularity"),
-            defaults to None
-        :type container: Container, optional
+        :param exe_args: executable arguments
+        :param run_command: launch binary (e.g. "srun")
+        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`)
+        :param env_vars: environment vars to launch job with
+        :param container: container type for workload (e.g. "singularity")
         """
         # Do not expand executable if running within a container
         self.exe = [exe] if container else [expand_exe_path(exe)]
@@ -117,26 +109,50 @@ class RunSettings(SettingsBase):
 
     @property
     def exe_args(self) -> t.Union[str, t.List[str]]:
+        """Return an immutable list of attached executable arguments.
+
+        :returns: attached executable arguments
+        """
         return self._exe_args
 
     @exe_args.setter
     def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
+        """Set the executable arguments.
+
+        :param value: executable arguments
+        """
         self._exe_args = self._build_exe_args(value)
 
     @property
     def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
+        """Return an immutable list of attached run arguments.
+
+        :returns: attached run arguments
+        """
         return self._run_args
 
     @run_args.setter
     def run_args(self, value: t.Dict[str, t.Union[int, str, float, None]]) -> None:
+        """Set the run arguments.
+
+        :param value: run arguments
+        """
         self._run_args = copy.deepcopy(value)
 
     @property
     def env_vars(self) -> t.Dict[str, t.Optional[str]]:
+        """Return an immutable list of attached environment variables.
+
+        :returns: attached environment variables
+        """
         return self._env_vars
 
     @env_vars.setter
     def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
+        """Set the environment variables.
+
+        :param value: environment variables
+        """
         self._env_vars = copy.deepcopy(value)
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
@@ -146,7 +162,6 @@ class RunSettings(SettingsBase):
         """Set the number of nodes
 
         :param nodes: number of nodes to run with
-        :type nodes: int
         """
         logger.warning(
             (
@@ -159,7 +174,6 @@ class RunSettings(SettingsBase):
         """Set the number of tasks to launch
 
         :param tasks: number of tasks to launch
-        :type tasks: int
         """
         logger.warning(
             (
@@ -172,7 +186,6 @@ class RunSettings(SettingsBase):
         """Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node
-        :type tasks_per_node: int
         """
         logger.warning(
             (
@@ -185,7 +198,6 @@ class RunSettings(SettingsBase):
         """Set a task mapping
 
         :param task_mapping: task mapping
-        :type task_mapping: str
         """
         logger.warning(
             (
@@ -198,7 +210,6 @@ class RunSettings(SettingsBase):
         """Set the number of cpus per task
 
         :param cpus_per_task: number of cpus per task
-        :type cpus_per_task: int
         """
         logger.warning(
             (
@@ -211,7 +222,6 @@ class RunSettings(SettingsBase):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: str | list[str]
         """
         logger.warning(
             (
@@ -224,7 +234,6 @@ class RunSettings(SettingsBase):
         """Use the contents of a file to specify the hostlist for this job
 
         :param file_path: Path to the hostlist file
-        :type file_path: str
         """
         logger.warning(
             (
@@ -237,7 +246,6 @@ class RunSettings(SettingsBase):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
-        :type host_list: str | list[str]
         """
         logger.warning(
             (
@@ -250,7 +258,6 @@ class RunSettings(SettingsBase):
         """Set the cores to which MPI processes are bound
 
         :param bindings: List specifing the cores to which MPI processes are bound
-        :type bindings: list[int] | int
         """
         logger.warning(
             (
@@ -263,7 +270,6 @@ class RunSettings(SettingsBase):
         """Set the amount of memory required per node in megabytes
 
         :param memory_per_node: Number of megabytes per node
-        :type memory_per_node: int
         """
         logger.warning(
             (
@@ -276,7 +282,6 @@ class RunSettings(SettingsBase):
         """Set the job to run in verbose mode
 
         :param verbose: Whether the job should be run verbosely
-        :type verbose: bool
         """
         logger.warning(
             (
@@ -289,7 +294,6 @@ class RunSettings(SettingsBase):
         """Set the job to run in quiet mode
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool
         """
         logger.warning(
             (
@@ -302,7 +306,6 @@ class RunSettings(SettingsBase):
         """Copy executable file to allocated compute nodes
 
         :param dest_path: Path to copy an executable file
-        :type dest_path: str | None
         """
         logger.warning(
             (
@@ -315,14 +318,23 @@ class RunSettings(SettingsBase):
         """Automatically format and set wall time
 
         :param hours: number of hours to run job
-        :type hours: int
         :param minutes: number of minutes to run job
-        :type minutes: int
         :param seconds: number of seconds to run job
-        :type seconds: int
         """
         return self.set_walltime(
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
+        )
+
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        :param feature_list: node feature to launch on
+        """
+        logger.warning(
+            (
+                "Feature specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     @staticmethod
@@ -332,13 +344,9 @@ class RunSettings(SettingsBase):
         By defualt the formatted wall time is the total number of seconds.
 
         :param hours: number of hours to run job
-        :type hours: int
         :param minutes: number of minutes to run job
-        :type minutes: int
         :param seconds: number of seconds to run job
-        :type seconds: int
         :returns: Formatted walltime
-        :rtype: str
         """
         time_ = hours * 3600
         time_ += minutes * 60
@@ -349,7 +357,6 @@ class RunSettings(SettingsBase):
         """Set the formatted walltime
 
         :param walltime: Time in format required by launcher``
-        :type walltime: str
         """
         logger.warning(
             (
@@ -362,7 +369,6 @@ class RunSettings(SettingsBase):
         """Set binding
 
         :param binding: Binding
-        :type binding: str
         """
         logger.warning(
             (
@@ -375,7 +381,6 @@ class RunSettings(SettingsBase):
         """Set preamble to a file to make a job MPMD
 
         :param preamble_lines: lines to put at the beginning of a file.
-        :type preamble_lines: list[str]
         """
         logger.warning(
             (
@@ -388,7 +393,6 @@ class RunSettings(SettingsBase):
         """Make job an MPMD job
 
         :param settings: ``RunSettings`` instance
-        :type settings: RunSettings
         """
         logger.warning(
             (
@@ -404,7 +408,6 @@ class RunSettings(SettingsBase):
         Attempt to expand the path to the executable if possible
 
         :returns: launch binary e.g. mpiexec
-        :type: str | None
         """
         cmd = self._run_command
 
@@ -428,7 +431,6 @@ class RunSettings(SettingsBase):
 
 
         :param env_vars: environment variables to update or add
-        :type env_vars: dict[str, Union[str, int, float, bool]]
         :raises TypeError: if env_vars values cannot be coerced to strings
         """
         val_types = (str, int, float, bool)
@@ -445,16 +447,8 @@ class RunSettings(SettingsBase):
         """Add executable arguments to executable
 
         :param args: executable arguments
-        :type args: str | list[str]
-        :raises TypeError: if exe args are not strings
         """
-        if isinstance(args, str):
-            args = args.split()
-
-        for arg in args:
-            if not isinstance(arg, str):
-                raise TypeError("Executable arguments should be a list of str")
-
+        args = self._build_exe_args(args)
         self._exe_args.extend(args)
 
     def set(
@@ -503,11 +497,8 @@ class RunSettings(SettingsBase):
             # otherwise returns ["exclusive", "None"]
 
         :param arg: name of the argument
-        :type arg: str
         :param value: value of the argument
-        :type value: str | None
         :param conditon: set the argument if condition evaluates to True
-        :type condition: bool
         """
         if not isinstance(arg, str):
             raise TypeError("Argument name should be of type str")
@@ -533,26 +524,26 @@ class RunSettings(SettingsBase):
 
     @staticmethod
     def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
-        """Convert exe_args input to a desired collection format"""
-        if exe_args:
-            if isinstance(exe_args, str):
-                return exe_args.split()
-            if isinstance(exe_args, list):
-                exe_args = copy.deepcopy(exe_args)
-                plain_type = all(isinstance(arg, (str)) for arg in exe_args)
-                if not plain_type:
-                    nested_type = all(
-                        all(isinstance(arg, (str)) for arg in exe_args_list)
-                        for exe_args_list in exe_args
-                    )
-                    if not nested_type:
-                        raise TypeError(
-                            "Executable arguments were not list of str or str"
-                        )
-                    return exe_args
-                return exe_args
-            raise TypeError("Executable arguments were not list of str or str")
-        return []
+        """Check and convert exe_args input to a desired collection format"""
+        if not exe_args:
+            return []
+
+        if isinstance(exe_args, list):
+            exe_args = copy.deepcopy(exe_args)
+
+        if not (
+            isinstance(exe_args, str)
+            or (
+                isinstance(exe_args, list)
+                and all(isinstance(arg, str) for arg in exe_args)
+            )
+        ):
+            raise TypeError("Executable arguments were not a list of str or a str.")
+
+        if isinstance(exe_args, str):
+            return exe_args.split()
+
+        return exe_args
 
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments
@@ -561,7 +552,6 @@ class RunSettings(SettingsBase):
         literally with no formatting.
 
         :return: list run arguments for these settings
-        :rtype: list[str]
         """
         formatted = []
         for arg, value in self.run_args.items():
@@ -573,7 +563,6 @@ class RunSettings(SettingsBase):
         """Build environment variable string
 
         :returns: formatted list of strings to export variables
-        :rtype: list[str]
         """
         formatted = []
         for key, val in self.env_vars.items():
@@ -619,7 +608,6 @@ class BatchSettings(SettingsBase):
         command. If we cannot, returns the batch command as is.
 
         :returns: batch command
-        :type: str
         """
         if is_valid_cmd(self._batch_cmd):
             return expand_exe_path(self._batch_cmd)
@@ -628,10 +616,18 @@ class BatchSettings(SettingsBase):
 
     @property
     def batch_args(self) -> t.Dict[str, t.Optional[str]]:
+        """Retrieve attached batch arguments
+
+        :returns: attached batch arguments
+        """
         return self._batch_args
 
     @batch_args.setter
     def batch_args(self, value: t.Dict[str, t.Optional[str]]) -> None:
+        """Attach batch arguments
+
+        :param value: dictionary of batch arguments
+        """
         self._batch_args = copy.deepcopy(value) if value else {}
 
     def set_nodes(self, num_nodes: int) -> None:
@@ -656,7 +652,6 @@ class BatchSettings(SettingsBase):
         """Set the command used to launch the batch e.g. ``sbatch``
 
         :param command: batch command
-        :type command: str
         """
         self._batch_cmd = command
 
@@ -667,7 +662,6 @@ class BatchSettings(SettingsBase):
         start virtual environments before running the executables.
 
         :param line: lines to add to preamble.
-        :type line: str or list[str]
         """
         if isinstance(lines, str):
             self._preamble += [lines]
@@ -678,7 +672,10 @@ class BatchSettings(SettingsBase):
 
     @property
     def preamble(self) -> t.Iterable[str]:
-        """Return an iterable of preamble clauses to be prepended to the batch file"""
+        """Return an iterable of preamble clauses to be prepended to the batch file
+
+        :return: attached preamble clauses
+        """
         return (clause for clause in self._preamble)
 
     def __str__(self) -> str:  # pragma: no-cover

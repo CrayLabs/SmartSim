@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import collections
 import re
 import typing as t
 
@@ -47,10 +48,8 @@ class ModelWriter:
 
         :param tag: tag for the modelwriter to search for,
                     defaults to semi-colon e.g. ";"
-        :type tag: str
         :param regex: full regex for the modelwriter to search for,
                      defaults to "(;.+;)"
-        :type regex: str, optional
         """
         if regex:
             self.regex = regex
@@ -68,13 +67,9 @@ class ModelWriter:
            instance.
 
         :param tagged_files: list of paths to tagged files
-        :type model: list[str]
         :param params: model parameters
-        :type params: dict[str, str]
         :param make_missing_tags_fatal: raise an error if a tag is missing
-        :type make_missing_tags_fatal: bool
         :returns: A dict connecting each file to its parameter settings
-        :rtype: dict[str,dict[str,str]]
         """
         files_to_tags: t.Dict[str, t.Dict[str, str]] = {}
         for tagged_file in tagged_files:
@@ -89,7 +84,6 @@ class ModelWriter:
         """Set the lines for the modelwrtter to iterate over
 
         :param file_path: path to the newly created and tagged file
-        :type file_path: str
         :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
@@ -117,43 +111,31 @@ class ModelWriter:
            model. The tag defaults to ";"
 
         :param model: The model instance
-        :type model: Model
         :param make_fatal: (Optional) Set to True to force a fatal error
             if a tag is not matched
-        :type make_fatal: bool
         :returns: A dict of parameter names and values set for the file
-        :rtype: dict[str,str]
         """
         edited = []
-        unused_tags: t.Dict[str, t.List[int]] = {}
+        unused_tags: t.DefaultDict[str, t.List[int]] = collections.defaultdict(list)
         used_params: t.Dict[str, str] = {}
-        for i, line in enumerate(self.lines):
-            search = re.search(self.regex, line)
-            if search:
-                while search:
-                    tagged_line = search.group(0)
-                    previous_value = self._get_prev_value(tagged_line)
-                    if self._is_ensemble_spec(tagged_line, params):
-                        new_val = str(params[previous_value])
-                        new_line = re.sub(self.regex, new_val, line, 1)
-                        search = re.search(self.regex, new_line)
-                        used_params[previous_value] = new_val
-                        if not search:
-                            edited.append(new_line)
-                        else:
-                            line = new_line
+        for i, line in enumerate(self.lines, 1):
+            while search := re.search(self.regex, line):
+                tagged_line = search.group(0)
+                previous_value = self._get_prev_value(tagged_line)
+                if self._is_ensemble_spec(tagged_line, params):
+                    new_val = str(params[previous_value])
+                    line = re.sub(self.regex, new_val, line, 1)
+                    used_params[previous_value] = new_val
 
-                    # if a tag is found but is not in this model's configurations
-                    # put in placeholder value
-                    else:
-                        tag = tagged_line.split(self.tag)[1]
-                        if tag not in unused_tags:
-                            unused_tags[tag] = []
-                        unused_tags[tag].append(i + 1)
-                        edited.append(re.sub(self.regex, previous_value, line))
-                        search = None  # Move on to the next tag
-            else:
-                edited.append(line)
+                # if a tag is found but is not in this model's configurations
+                # put in placeholder value
+                else:
+                    tag = tagged_line.split(self.tag)[1]
+                    unused_tags[tag].append(i)
+                    line = re.sub(self.regex, previous_value, line)
+                    break
+            edited.append(line)
+
         for tag, value in unused_tags.items():
             missing_tag_message = f"Unused tag {tag} on line(s): {str(value)}"
             if make_fatal:

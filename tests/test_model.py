@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from uuid import uuid4
+
 import pytest
 
 from smartsim import Experiment
@@ -114,8 +116,10 @@ def monkeypatch_exp_controller(monkeypatch):
     return _monkeypatch_exp_controller
 
 
-def test_model_with_batch_settings_makes_batch_step(monkeypatch_exp_controller):
-    exp = Experiment("experiment", launcher="slurm")
+def test_model_with_batch_settings_makes_batch_step(
+    monkeypatch_exp_controller, test_dir
+):
+    exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     bs = SbatchSettings()
     rs = SrunSettings("python", exe_args="sleep.py")
     model = exp.create_model("test_model", run_settings=rs, batch_settings=bs)
@@ -130,9 +134,9 @@ def test_model_with_batch_settings_makes_batch_step(monkeypatch_exp_controller):
 
 
 def test_model_without_batch_settings_makes_run_step(
-    monkeypatch, monkeypatch_exp_controller
+    monkeypatch, monkeypatch_exp_controller, test_dir
 ):
-    exp = Experiment("experiment", launcher="slurm")
+    exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     rs = SrunSettings("python", exe_args="sleep.py")
     model = exp.create_model("test_model", run_settings=rs)
 
@@ -148,8 +152,10 @@ def test_model_without_batch_settings_makes_run_step(
     assert isinstance(step, SrunStep)
 
 
-def test_models_batch_settings_are_ignored_in_ensemble(monkeypatch_exp_controller):
-    exp = Experiment("experiment", launcher="slurm")
+def test_models_batch_settings_are_ignored_in_ensemble(
+    monkeypatch_exp_controller, test_dir
+):
+    exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     bs_1 = SbatchSettings(nodes=5)
     rs = SrunSettings("python", exe_args="sleep.py")
     model = exp.create_model("test_model", run_settings=rs, batch_settings=bs_1)

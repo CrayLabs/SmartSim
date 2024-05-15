@@ -32,9 +32,9 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment, status
-from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
@@ -109,7 +109,7 @@ def test_singularity_basic(fileutils, test_dir):
 
     # get and confirm status
     stat = exp.get_status(model)[0]
-    assert stat == status.STATUS_COMPLETED
+    assert stat == SmartSimStatus.STATUS_COMPLETED
 
     print(exp.summary())
 
@@ -136,13 +136,13 @@ def test_singularity_args(fileutils, test_dir):
 
     # get and confirm status
     stat = exp.get_status(model)[0]
-    assert stat == status.STATUS_COMPLETED
+    assert stat == SmartSimStatus.STATUS_COMPLETED
 
     print(exp.summary())
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_smartredis(test_dir, fileutils, wlmutils):
+def test_singularity_smartredis(local_experiment, prepare_db, local_db, fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -150,18 +150,13 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     Note: This is a containerized port of test_smartredis.py
     """
 
-    exp = Experiment(
-        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
-    )
-
     # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    db = prepare_db(local_db).orchestrator
+    local_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     container = Singularity(containerURI)
 
-    rs = exp.create_run_settings(
+    rs = local_experiment.create_run_settings(
         "python3", "producer.py --exchange", container=container
     )
     params = {"mult": [1, -10]}
@@ -178,18 +173,12 @@ def test_singularity_smartredis(test_dir, fileutils, wlmutils):
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
-    exp.generate(ensemble)
+    local_experiment.generate(ensemble)
 
     # start the models
-    exp.start(ensemble, summary=False)
+    local_experiment.start(ensemble, summary=False)
 
     # get and confirm statuses
-    statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
-        exp.stop(orc)
+    statuses = local_experiment.get_status(ensemble)
+    if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
         assert False  # client ensemble failed
-
-    # stop the orchestrator
-    exp.stop(orc)
-
-    print(exp.summary())

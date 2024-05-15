@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,18 +24,29 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from warnings import simplefilter, warn
+import argparse
+import os
 
-from ..log import get_logger
+from smartredis import Client, ConfigOptions
 
-# pylint: disable-next=unused-import
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
+if __name__ == "__main__":
+    """For inclusion in test with two unique database identifiers with multiple
+    databases where one (presumably colocated) database is started before the
+    other, and thus only one DB ID is known at application runtime and
+    available via environment variable.
+    """
 
-logger = get_logger(__name__)
+    parser = argparse.ArgumentParser(description="SmartRedis")
+    parser.add_argument("--exchange", action="store_true")
+    parser.add_argument("--should-see-reg-db", action="store_true")
+    args = parser.parse_args()
 
-simplefilter("once", DeprecationWarning)
-warn(
-    "mpirunSettings will be deprecated; use mpiSettings instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+    env_vars = [
+        "SSDB_testdb_colo",
+        "SR_DB_TYPE_testdb_colo",
+    ]
+
+    assert all([var in os.environ for var in env_vars])
+
+    opts = ConfigOptions.create_from_environment("testdb_colo")
+    Client(opts, logger_name="SmartSim")

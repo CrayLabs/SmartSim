@@ -27,7 +27,7 @@
 import typing as t
 from pathlib import Path
 
-from .._core.utils import init_default
+from .._core._install.builder import Device
 from ..error import SSUnsupportedError
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
@@ -46,7 +46,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         name: str,
         func: t.Optional[_DBObjectFuncT],
         file_path: t.Optional[str],
-        device: t.Literal["CPU", "GPU"],
+        device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
@@ -75,9 +75,6 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         inputs: t.Union[str, t.Optional[t.List[str]]],
         outputs: t.Union[str, t.Optional[t.List[str]]],
     ) -> t.Tuple[t.List[str], t.List[str]]:
-        inputs = init_default([], inputs, (list, str))
-        outputs = init_default([], outputs, (list, str))
-
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
@@ -103,9 +100,9 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         return file_path
 
     @staticmethod
-    def _check_device(device: t.Literal["CPU", "GPU"]) -> str:
-        device = t.cast(t.Literal["CPU", "GPU"], device.upper())
-        if not device.startswith("CPU") and not device.startswith("GPU"):
+    def _check_device(device: str) -> str:
+        valid_devices = [Device.CPU.value, Device.GPU.value]
+        if not any(device.lower().startswith(dev) for dev in valid_devices):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
@@ -113,9 +110,7 @@ class DBObject(t.Generic[_DBObjectFuncT]):
         """Enumerate devices for a DBObject
 
         :param dbobject: DBObject to enumerate
-        :type dbobject: DBObject
         :return: list of device names
-        :rtype: list[str]
         """
 
         if self.device == "GPU" and self.devices_per_node > 1:
@@ -130,16 +125,16 @@ class DBObject(t.Generic[_DBObjectFuncT]):
 
     @staticmethod
     def _check_devices(
-        device: t.Literal["CPU", "GPU"],
+        device: str,
         devices_per_node: int,
         first_device: int,
     ) -> None:
-        if device == "CPU" and devices_per_node > 1:
+        if device.lower() == Device.CPU.value and devices_per_node > 1:
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
 
-        if device == "CPU" and first_device > 0:
+        if device.lower() == Device.CPU.value and first_device > 0:
             raise SSUnsupportedError(
                 "Cannot set first_device>0 if CPU is specified under devices"
             )
@@ -160,7 +155,7 @@ class DBScript(DBObject[str]):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
     ):
@@ -178,17 +173,11 @@ class DBScript(DBObject[str]):
         must be provided
 
         :param name: key to store script under
-        :type name: str
         :param script: TorchScript code
-        :type script: str, optional
-        :param script_path: path to TorchScript code, defaults to None
-        :type script_path: str, optional
-        :param device: device for script execution, defaults to "CPU"
-        :type device: str, optional
+        :param script_path: path to TorchScript code
+        :param device: device for script execution
         :param devices_per_node: number of devices to store the script on
-        :type devices_per_node: int
         :param first_device: first devices to store the script on
-        :type first_device: int
         """
         super().__init__(
             name, script, script_path, device, devices_per_node, first_device
@@ -197,13 +186,13 @@ class DBScript(DBObject[str]):
             raise ValueError("Either script or script_path must be provided")
 
     @property
-    def script(self) -> t.Optional[str]:
+    def script(self) -> t.Optional[t.Union[bytes, str]]:
         return self.func
 
     def __str__(self) -> str:
         desc_str = "Name: " + self.name + "\n"
         if self.func:
-            desc_str += "Func: " + self.func + "\n"
+            desc_str += "Func: " + str(self.func) + "\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
         devices_str = self.device + (
@@ -222,7 +211,7 @@ class DBModel(DBObject[bytes]):
         backend: str,
         model: t.Optional[bytes] = None,
         model_file: t.Optional[str] = None,
-        device: t.Literal["CPU", "GPU"] = "CPU",
+        device: str = Device.CPU.value.upper(),
         devices_per_node: int = 1,
         first_device: int = 0,
         batch_size: int = 0,
@@ -238,31 +227,18 @@ class DBModel(DBObject[bytes]):
         must be provided
 
         :param name: key to store model under
-        :type name: str
         :param model: model in memory
-        :type model: str, optional
         :param model_file: serialized model
-        :type model_file: file path to model, optional
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
-        :param device: name of device for execution, defaults to "CPU"
-        :type device: str, optional
+        :param device: name of device for execution
         :param devices_per_node: number of devices to store the model on
-        :type devices_per_node: int
         :param first_device: The first device to store the model on
-        :type first_device: int
-        :param batch_size: batch size for execution, defaults to 0
-        :type batch_size: int, optional
-        :param min_batch_size: minimum batch size for model execution, defaults to 0
-        :type min_batch_size: int, optional
-        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
-        :type min_batch_timeout: int, optional
-        :param tag: additional tag for model information, defaults to ""
-        :type tag: str, optional
-        :param inputs: model inputs (TF only), defaults to None
-        :type inputs: list[str], optional
-        :param outputs: model outupts (TF only), defaults to None
-        :type outputs: list[str], optional
+        :param batch_size: batch size for execution
+        :param min_batch_size: minimum batch size for model execution
+        :param min_batch_timeout: time to wait for minimum batch size
+        :param tag: additional tag for model information
+        :param inputs: model inputs (TF only)
+        :param outputs: model outupts (TF only)
         """
         super().__init__(
             name, model, model_file, device, devices_per_node, first_device

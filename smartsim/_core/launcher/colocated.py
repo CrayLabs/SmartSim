@@ -42,11 +42,8 @@ def write_colocated_launch_script(
     is created for this entity.
 
     :param file_name: name of the script to write
-    :type file_name: str
     :param db_log: log file for the db
-    :type db_log: str
     :param colocated_settings: db settings from entity run_settings
-    :type colocated_settings: dict[str, Any]
     """
 
     colocated_cmd = _build_colocated_wrapper_cmd(db_log, **colocated_settings)
@@ -67,9 +64,14 @@ def write_colocated_launch_script(
         # STDOUT of the job
         if colocated_settings["debug"]:
             script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
-
-        script_file.write(f"{colocated_cmd}\n")
-        script_file.write("DBPID=$!\n\n")
+        script_file.write(f"db_stdout=$({colocated_cmd})\n")
+        # extract and set DBPID within the shell script that is
+        # enclosed between __PID__ and sent to stdout by the colocated
+        # entrypoints file
+        script_file.write(
+            "DBPID=$(echo $db_stdout | sed -n "
+            "'s/.*__PID__\\([0-9]*\\)__PID__.*/\\1/p')\n"
+        )
 
         # Write the actual launch command for the app
         script_file.write("$@\n\n")
@@ -88,21 +90,13 @@ def _build_colocated_wrapper_cmd(
     """Build the command use to run a colocated DB application
 
     :param db_log: log file for the db
-    :type db_log: str
-    :param cpus: db cpus, defaults to 1
-    :type cpus: int, optional
-    :param rai_args: redisai args, defaults to None
-    :type rai_args: dict[str, str], optional
-    :param extra_db_args: extra redis args, defaults to None
-    :type extra_db_args: dict[str, str], optional
+    :param cpus: db cpus
+    :param rai_args: redisai args
+    :param extra_db_args: extra redis args
     :param port: port to bind DB to
-    :type port: int
     :param ifname: network interface(s) to bind DB to
-    :type ifname: str | list[str], optional
     :param db_cpu_list: The list of CPUs that the database should be limited to
-    :type db_cpu_list: str, optional
     :return: the command to run
-    :rtype: str
     """
     # pylint: disable=too-many-locals
 
@@ -190,10 +184,8 @@ def _build_colocated_wrapper_cmd(
         db_script_cmd = _build_db_script_cmd(db_scripts)
         db_cmd.extend(db_script_cmd)
 
-    # run colocated db in the background
-    db_cmd.append("&")
-
     cmd.extend(db_cmd)
+
     return " ".join(cmd)
 
 
@@ -235,7 +227,8 @@ def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
         if db_script.func:
             # Notice that here db_script.func is guaranteed to be a str
             # because we don't allow the user to pass a serialized function
-            sanitized_func = db_script.func.replace("\n", "\\n")
+            func = db_script.func
+            sanitized_func = func.replace("\n", "\\n")
             if not (
                 sanitized_func.startswith("'")
                 and sanitized_func.endswith("'")

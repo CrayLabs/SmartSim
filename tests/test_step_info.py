@@ -26,8 +26,8 @@
 
 import pytest
 
-from smartsim import status
 from smartsim._core.launcher.stepInfo import *
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -35,7 +35,9 @@ pytestmark = pytest.mark.group_b
 
 def test_str():
     step_info = StepInfo(
-        status=status.STATUS_COMPLETED, launcher_status="COMPLETED", returncode=0
+        status=SmartSimStatus.STATUS_COMPLETED,
+        launcher_status="COMPLETED",
+        returncode=0,
     )
     expected_output = "Status: Completed | Launcher Status COMPLETED | Returncode 0"
 
@@ -45,4 +47,4 @@ def test_str():
 def test_default():
     step_info = UnmanagedStepInfo()
 
-    assert step_info._get_smartsim_status(None) == status.STATUS_FAILED
+    assert step_info._get_smartsim_status(None) == SmartSimStatus.STATUS_FAILED

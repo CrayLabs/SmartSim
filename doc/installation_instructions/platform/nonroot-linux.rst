@@ -13,6 +13,6 @@ a user is possible.
     ./cuda_11.4.4_470.82.01_linux.run --toolkit  --silent --toolkitpath=/path/to/install/location/
 
 For cuDNN, follow `Nvidia's instructions
-<https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_,
+<https://docs.nvidia.com/deeplearning/cudnn/installation/overview.html>`_,
 and copy the cuDNN libraries to the `lib64` directory at the CUDA Toolkit
 location specified above.

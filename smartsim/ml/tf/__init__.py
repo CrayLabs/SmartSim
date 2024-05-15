@@ -35,21 +35,20 @@ TF_VERSION = vers.TENSORFLOW
 
 try:
     import tensorflow as tf
-
-    installed_tf = Version_(tf.__version__)
-    assert installed_tf >= "2.4.0"
-
 except ImportError:  # pragma: no cover
     raise ModuleNotFoundError(
         f"TensorFlow {TF_VERSION} is not installed. "
-        "Please install it to use smartsim.tf"
+        "Please install it to use smartsim.ml.tf"
     ) from None
+
+try:
+    installed_tf = Version_(tf.__version__)
+    assert installed_tf >= TF_VERSION
 except AssertionError:  # pragma: no cover
-    msg = (
+    raise SmartSimError(
         f"TensorFlow >= {TF_VERSION} is required for smartsim. "
         f"tf, you have {tf.__version__}"
-    )
-    raise SmartSimError() from None
+    ) from None
 
 
 # pylint: disable=wrong-import-position

@@ -24,19 +24,28 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=too-many-lines
+
 import os
 import os.path as osp
 import typing as t
-from os import getcwd
+from os import environ, getcwd
 
 from tabulate import tabulate
 
+from smartsim._core.config import CONFIG
 from smartsim.error.errors import SSUnsupportedError
+from smartsim.status import SmartSimStatus
 
-from ._core import Controller, Generator, Manifest
-from ._core.utils import init_default
+from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import Orchestrator
-from .entity import Ensemble, Model, SmartSimEntity
+from .entity import (
+    Ensemble,
+    EntitySequence,
+    Model,
+    SmartSimEntity,
+    TelemetryConfiguration,
+)
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import Container, base, settings
@@ -54,11 +63,26 @@ def _exp_path_map(exp: "Experiment") -> str:
 _contextualize = method_contextualizer(ctx_exp_path, _exp_path_map)
 
 
+class ExperimentTelemetryConfiguration(TelemetryConfiguration):
+    """Customized telemetry configuration for an `Experiment`. Ensures
+    backwards compatible behavior with drivers using environment variables
+    to enable experiment telemetry"""
+
+    def __init__(self) -> None:
+        super().__init__(enabled=CONFIG.telemetry_enabled)
+
+    def _on_enable(self) -> None:
+        """Modify the environment variable to enable telemetry."""
+        environ["SMARTSIM_FLAG_TELEMETRY"] = "1"
+
+    def _on_disable(self) -> None:
+        """Modify the environment variable to disable telemetry."""
+        environ["SMARTSIM_FLAG_TELEMETRY"] = "0"
+
+
 # pylint: disable=no-self-use
 class Experiment:
-    """Experiments are the Python user interface for SmartSim.
-
-    Experiment is a factory class that creates stages of a workflow
+    """Experiment is a factory class that creates stages of a workflow
     and manages their execution.
 
     The instances created by an Experiment represent executable code
@@ -80,7 +104,7 @@ class Experiment:
         exp_path: t.Optional[str] = None,
         launcher: str = "local",
     ):
-        """Initialize an Experiment instance
+        """Initialize an Experiment instance.
 
         With the default settings, the Experiment will use the
         local launcher, which will start all Experiment created
@@ -101,10 +125,10 @@ class Experiment:
 
             exp = Experiment(name="my_exp", launcher="slurm")
 
-        If you wish your driver script and Experiment to be run across
+        If you want your Experiment driver script to be run across
         multiple system with different schedulers (workload managers)
-        you can also use the `auto` argument to have the Experiment guess
-        which launcher to use based on system installed binaries and libraries
+        you can also use the `auto` argument to have the Experiment detect
+        which launcher to use based on system installed binaries and libraries.
 
         .. highlight:: python
         .. code-block:: python
@@ -118,15 +142,11 @@ class Experiment:
         from the Experiment.
 
         :param name: name for the ``Experiment``
-        :type name: str
-        :param exp_path: path to location of ``Experiment`` directory if generated
-        :type exp_path: str, optional
+        :param exp_path: path to location of ``Experiment`` directory
         :param launcher: type of launcher being used, options are "slurm", "pbs",
                          "lsf", or "local". If set to "auto",
                          an attempt will be made to find an available launcher
                          on the system.
-                         Defaults to "local"
-        :type launcher: str, optional
         """
         self.name = name
         if exp_path:
@@ -135,21 +155,37 @@ class Experiment:
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path: str = init_default(osp.join(getcwd(), name), exp_path, str)
+        else:
+            exp_path = osp.join(getcwd(), name)
 
-        if launcher == "auto":
-            launcher = detect_launcher()
-        if launcher == "cobalt":
+        self.exp_path = exp_path
+
+        self._launcher = launcher.lower()
+
+        if self._launcher == "auto":
+            self._launcher = detect_launcher()
+        if self._launcher == "cobalt":
             raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
-        self._control = Controller(launcher=launcher)
-        self._launcher = launcher.lower()
+        if launcher == "dragon":
+            self._set_dragon_server_path()
+
+        self._control = Controller(launcher=self._launcher)
+
         self.db_identifiers: t.Set[str] = set()
+        self._telemetry_cfg = ExperimentTelemetryConfiguration()
+
+    def _set_dragon_server_path(self) -> None:
+        """Set path for dragon server through environment varialbes"""
+        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
+            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
+                self.exp_path, CONFIG.dragon_default_subdir
+            )
 
     @_contextualize
     def start(
         self,
-        *args: t.Any,
+        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         block: bool = True,
         summary: bool = False,
         kill_on_interrupt: bool = True,
@@ -168,7 +204,7 @@ class Experiment:
             model = exp.create_model("my_model", settings)
             exp.start(model)
 
-        Multiple instance can also be passed to the start method
+        Multiple entity instances can also be passed to the start method
         at once no matter which type of instance they are. These will
         all be launched together.
 
@@ -194,18 +230,13 @@ class Experiment:
         zombie processes will need to be manually killed.
 
         :param block: block execution until all non-database
-                      jobs are finished, defaults to True
-        :type block: bool, optional
-        :param summary: print a launch summary prior to launch,
-                        defaults to False
-        :type summary: bool, optional
+                       jobs are finished
+        :param summary: print a launch summary prior to launch
         :param kill_on_interrupt: flag for killing jobs when ^C (SIGINT)
                                   signal is received.
-
-        :type kill_on_interrupt: bool, optional
         """
-
         start_manifest = Manifest(*args)
+        self._create_entity_dir(start_manifest)
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -221,7 +252,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def stop(self, *args: t.Any) -> None:
+    def stop(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
         """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
@@ -241,6 +274,7 @@ class Experiment:
             # multiple
             exp.stop(model_1, model_2, db, ensemble)
 
+        :param args: One or more SmartSimEntity or EntitySequence objects.
         :raises TypeError: if wrong type
         :raises SmartSimError: if stop request fails
         """
@@ -260,15 +294,15 @@ class Experiment:
     @_contextualize
     def generate(
         self,
-        *args: t.Any,
+        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         tag: t.Optional[str] = None,
         overwrite: bool = False,
         verbose: bool = False,
     ) -> None:
         """Generate the file structure for an ``Experiment``
 
-        ``Experiment.generate`` creates directories for each instance
-        passed to organize Experiments that launch many instances.
+        ``Experiment.generate`` creates directories for each entity
+        passed to organize Experiments that launch many entities.
 
         If files or directories are attached to ``Model`` objects
         using ``Model.attach_generator_files()``, those files or
@@ -279,12 +313,8 @@ class Experiment:
         can all be passed as arguments to the generate method.
 
         :param tag: tag used in `to_configure` generator files
-        :type tag: str, optional
-        :param overwrite: overwrite existing folders and contents,
-               defaults to False
-        :type overwrite: bool, optional
+        :param overwrite: overwrite existing folders and contents
         :param verbose: log parameter settings to std out
-        :type verbose: bool
         """
         try:
             generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
@@ -324,14 +354,10 @@ class Experiment:
         that all jobs launched by this experiment will be killed, and the
         zombie processes will need to be manually killed.
 
-        :param interval: frequency (in seconds) of logging to stdout,
-                         defaults to 10 seconds
-        :type interval: int, optional
-        :param verbose: set verbosity, defaults to True
-        :type verbose: bool, optional
+        :param interval: frequency (in seconds) of logging to stdout
+        :param verbose: set verbosity
         :param kill_on_interrupt: flag for killing jobs when SIGINT is received
-        :type kill_on_interrupt: bool, optional
-        :raises SmartSimError:
+        :raises SmartSimError: if poll request fails
         """
         try:
             self._control.poll(interval, verbose, kill_on_interrupt=kill_on_interrupt)
@@ -351,9 +377,7 @@ class Experiment:
         by the user.
 
         :param entity: object launched by this ``Experiment``
-        :type entity: Model | Ensemble
-        :returns: True if job has completed, False otherwise
-        :rtype: bool
+        :returns: True if the job has finished, False otherwise
         :raises SmartSimError: if entity has not been launched
                                by this ``Experiment``
         """
@@ -364,8 +388,10 @@ class Experiment:
             raise
 
     @_contextualize
-    def get_status(self, *args: t.Any) -> t.List[str]:
-        """Query the status of launched instances
+    def get_status(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> t.List[SmartSimStatus]:
+        """Query the status of launched entity instances
 
         Return a smartsim.status string representing
         the status of the launched instance.
@@ -387,12 +413,11 @@ class Experiment:
             assert all(complete)
 
         :returns: status of the instances passed as arguments
-        :rtype: list[str]
         :raises SmartSimError: if status retrieval fails
         """
         try:
             manifest = Manifest(*args)
-            statuses: t.List[str] = []
+            statuses: t.List[SmartSimStatus] = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:
@@ -411,6 +436,7 @@ class Experiment:
         run_settings: t.Optional[base.RunSettings] = None,
         replicas: t.Optional[int] = None,
         perm_strategy: str = "all_perm",
+        path: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> Ensemble:
         """Create an ``Ensemble`` of ``Model`` instances
@@ -419,7 +445,7 @@ class Experiment:
         if using a non-local launcher. e.g. slurm
 
         Ensembles require one of the following combinations
-        of arguments
+        of arguments:
 
             - ``run_settings`` and ``params``
             - ``run_settings`` and ``replicas``
@@ -428,44 +454,43 @@ class Experiment:
             - ``batch_settings``, ``run_settings``, and ``replicas``
 
         If given solely batch settings, an empty ensemble
-        will be created that models can be added to manually
+        will be created that Models can be added to manually
         through ``Ensemble.add_model()``.
-        The entire ensemble will launch as one batch.
+        The entire Ensemble will launch as one batch.
 
         Provided batch and run settings, either ``params``
         or ``replicas`` must be passed and the entire ensemble
         will launch as a single batch.
 
         Provided solely run settings, either ``params``
-        or ``replicas`` must be passed and the ensemble members
+        or ``replicas`` must be passed and the Ensemble members
         will each launch sequentially.
 
         The kwargs argument can be used to pass custom input
         parameters to the permutation strategy.
 
-        :param name: name of the ensemble
-        :type name: str
+        :param name: name of the ``Ensemble``
         :param params: parameters to expand into ``Model`` members
-        :type params: dict[str, Any]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
-        :type batch_settings: BatchSettings
         :param run_settings: describes how each ``Model`` should be executed
-        :type run_settings: RunSettings
         :param replicas: number of replicas to create
-        :type replicas: int
         :param perm_strategy: strategy for expanding ``params`` into
                               ``Model`` instances from params argument
                               options are "all_perm", "step", "random"
-                              or a callable function. Default is "all_perm".
-        :type perm_strategy: str, optional
+                              or a callable function.
         :raises SmartSimError: if initialization fails
         :return: ``Ensemble`` instance
-        :rtype: Ensemble
         """
+        if name is None:
+            raise AttributeError("Entity has no name. Please set name attribute.")
+        check_path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(check_path)
+
         try:
             new_ensemble = Ensemble(
-                name,
-                params or {},
+                name=name,
+                params=params or {},
+                path=entity_path,
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -497,27 +522,27 @@ class Experiment:
         ``Model`` instances can be launched sequentially, as a batch job,
         or as a group by adding them into an ``Ensemble``.
 
-        All models require a reference to run settings to specify which
+        All ``Models`` require a reference to run settings to specify which
         executable to launch as well provide options for how to launch
         the executable with the underlying WLM. Furthermore, batch a
-        reference to a batch settings can be added to launch the model
-        as a batch job through ``Experiment.start``. If a model with
+        reference to a batch settings can be added to launch the ``Model``
+        as a batch job through ``Experiment.start``. If a ``Model`` with
         a reference to a set of batch settings is added to a larger
         entity with its own set of batch settings (for e.g. an
         ``Ensemble``) the batch settings of the larger entity will take
-        precedence and the batch setting of the model will be
+        precedence and the batch setting of the ``Model`` will be
         strategically ignored.
 
         Parameters supplied in the `params` argument can be written into
-        configuration files supplied at runtime to the model through
+        configuration files supplied at runtime to the ``Model`` through
         ``Model.attach_generator_files``. `params` can also be turned
         into executable arguments by calling ``Model.params_to_args``
 
         By default, ``Model`` instances will be executed in the
-        current working directory if no `path` argument is supplied.
+        exp_path/model_name directory if no `path` argument is supplied.
         If a ``Model`` instance is passed to ``Experiment.generate``,
         a directory within the ``Experiment`` directory will be created
-        to house the input and output files from the model.
+        to house the input and output files from the ``Model``.
 
         Example initialization of a ``Model`` instance
 
@@ -553,36 +578,31 @@ class Experiment:
         deprecated, but remains as an alias for ``Model.colocate_db_tcp``
         for backward compatibility.
 
-        :param name: name of the model
-        :type name: str
+        :param name: name of the ``Model``
         :param run_settings: defines how ``Model`` should be run
-        :type run_settings: RunSettings
-        :param params: model parameters for writing into configuration files
-        :type params: dict, optional
-        :param path: path to where the model should be executed at runtime
-        :type path: str, optional
-        :param enable_key_prefixing: If True, data sent to the Orchestrator
+        :param params: ``Model`` parameters for writing into configuration files
+        :param path: path to where the ``Model`` should be executed at runtime
+        :param enable_key_prefixing: If True, data sent to the ``Orchestrator``
                                      using SmartRedis from this ``Model`` will
                                      be prefixed with the ``Model`` name.
-                                     Default is True.
-        :type enable_key_prefixing: bool, optional
-        :param batch_settings: Settings to run model individually as a batch job,
-                               defaults to None
-        :type batch_settings: BatchSettings | None
+        :param batch_settings: Settings to run ``Model`` individually as a batch job.
         :raises SmartSimError: if initialization fails
         :return: the created ``Model``
-        :rtype: Model
         """
-        path = init_default(getcwd(), path, str)
-
-        if path is None:
-            path = getcwd()
+        if name is None:
+            raise AttributeError("Entity has no name. Please set name attribute.")
+        check_path = path or osp.join(self.exp_path, name)
+        entity_path: str = osp.abspath(check_path)
         if params is None:
             params = {}
 
         try:
             new_model = Model(
-                name, params, path, run_settings, batch_settings=batch_settings
+                name=name,
+                params=params,
+                path=entity_path,
+                run_settings=run_settings,
+                batch_settings=batch_settings,
             )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
@@ -605,7 +625,7 @@ class Experiment:
         """Create a ``RunSettings`` instance.
 
         run_command="auto" will attempt to automatically
-        match a run command on the system with a RunSettings
+        match a run command on the system with a ``RunSettings``
         class in SmartSim. If found, the class corresponding
         to that run_command will be created and returned.
 
@@ -626,19 +646,12 @@ class Experiment:
          - jsrun (LSF)
 
         :param run_command: command to run the executable
-        :type run_command: str
         :param exe: executable to run
-        :type exe: str
         :param exe_args: arguments to pass to the executable
-        :type exe_args: list[str], optional
         :param run_args: arguments to pass to the ``run_command``
-        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment variables to pass to the executable
-        :type env_vars: dict[str, str], optional
         :param container: if execution environment is containerized
-        :type container: Container, optional
         :return: the created ``RunSettings``
-        :rtype: RunSettings
         """
 
         try:
@@ -689,18 +702,12 @@ class Experiment:
                                            batch_args=batch_args)
             bs.set_account("default")
 
-        :param nodes: number of nodes for batch job, defaults to 1
-        :type nodes: int, optional
-        :param time: length of batch job, defaults to ""
-        :type time: str, optional
-        :param queue: queue or partition (if slurm), defaults to ""
-        :type queue: str, optional
-        :param account: user account name for batch system, defaults to ""
-        :type account: str, optional
-        :param batch_args: additional batch arguments, defaults to None
-        :type batch_args: dict[str, str], optional
+        :param nodes: number of nodes for batch job
+        :param time: length of batch job
+        :param queue: queue or partition (if slurm)
+        :param account: user account name for batch system
+        :param batch_args: additional batch arguments
         :return: a newly created BatchSettings instance
-        :rtype: BatchSettings
         :raises SmartSimError: if batch creation fails
         """
         try:
@@ -721,11 +728,12 @@ class Experiment:
     def create_database(
         self,
         port: int = 6379,
+        path: t.Optional[str] = None,
         db_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
-        interface: str = "ipogif0",
+        interface: t.Union[str, t.List[str]] = "ipogif0",
         account: t.Optional[str] = None,
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
@@ -733,60 +741,49 @@ class Experiment:
         db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> Orchestrator:
-        """Initialize an Orchestrator database
+        """Initialize an ``Orchestrator`` database
 
         The ``Orchestrator`` database is a key-value store based
-        on Redis that can be launched together with other Experiment
+        on Redis that can be launched together with other ``Experiment``
         created instances for online data storage.
 
         When launched, ``Orchestrator`` can be used to communicate
         data between Fortran, Python, C, and C++ applications.
 
         Machine Learning models in Pytorch, Tensorflow, and ONNX (i.e. scikit-learn)
-        can also be stored within the Orchestrator database where they
+        can also be stored within the ``Orchestrator`` database where they
         can be called remotely and executed on CPU or GPU where
         the database is hosted.
 
         To enable a SmartSim ``Model`` to communicate with the database
         the workload must utilize the SmartRedis clients. For more
         information on the database, and SmartRedis clients see the
-        documentation at www.craylabs.org
+        documentation at https://www.craylabs.org/docs/smartredis.html
 
-        :param port: TCP/IP port, defaults to 6379
-        :type port: int, optional
-        :param db_nodes: number of database shards, defaults to 1
-        :type db_nodes: int, optional
-        :param batch: run as a batch workload, defaults to False
-        :type batch: bool, optional
-        :param hosts: specify hosts to launch on, defaults to None
-        :type hosts: list[str], optional
-        :param run_command: specify launch binary or detect automatically,
-            defaults to "auto"
-        :type run_command: str, optional
-        :param interface: Network interface, defaults to "ipogif0"
-        :type interface: str, optional
-        :param account: account to run batch on, defaults to None
-        :type account: str, optional
-        :param time: walltime for batch 'HH:MM:SS' format, defaults to None
-        :type time: str, optional
-        :param queue: queue to run the batch on, defaults to None
-        :type queue: str, optional
-        :param single_cmd: run all shards with one (MPMD) command, defaults to True
-        :type single_cmd: bool, optional
+        :param port: TCP/IP port
+        :param db_nodes: number of database shards
+        :param batch: run as a batch workload
+        :param hosts: specify hosts to launch on
+        :param run_command: specify launch binary or detect automatically
+        :param interface: Network interface
+        :param account: account to run batch on
+        :param time: walltime for batch 'HH:MM:SS' format
+        :param queue: queue to run the batch on
+        :param single_cmd: run all shards with one (MPMD) command
         :param db_identifier: an identifier to distinguish this orchestrator in
-            multiple-database experiments, defaults to "orchestrator"
-        :type db_identifier: str, optional
+            multiple-database experiments
         :raises SmartSimError: if detection of launcher or of run command fails
         :raises SmartSimError: if user indicated an incompatible run command
             for the launcher
-        :return: Orchestrator
-        :rtype: Orchestrator or derived class
+        :return: Orchestrator or derived class
         """
 
-        self.append_to_db_identifier_list(db_identifier)
-
+        self._append_to_db_identifier_list(db_identifier)
+        check_path = path or osp.join(self.exp_path, db_identifier)
+        entity_path: str = osp.abspath(check_path)
         return Orchestrator(
             port=port,
+            path=entity_path,
             db_nodes=db_nodes,
             batch=batch,
             hosts=hosts,
@@ -813,7 +810,6 @@ class Experiment:
 
         :param checkpoint: the `smartsim_db.dat` file created
                            when an ``Orchestrator`` is launched
-        :type checkpoint: str
         """
         try:
             orc = self._control.reload_saved_db(checkpoint)
@@ -821,6 +817,53 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    def preview(
+        self,
+        *args: t.Any,
+        verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
+        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
+        output_filename: t.Optional[str] = None,
+    ) -> None:
+        """Preview entity information prior to launch. This method
+        aggregates multiple pieces of information to give users insight
+        into what and how entities will be launched.  Any instance of
+        ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
+        Experiment can be passed as an argument to the preview method.
+
+        Verbosity levels:
+         - info: Display user-defined fields and entities.
+         - debug: Display user-defined field and entities and auto-generated
+            fields.
+         - developer: Display user-defined field and entities, auto-generated
+            fields, and run commands.
+
+        :param verbosity_level: verbosity level specified by user, defaults to info.
+        :param output_format: Set output format. The possible accepted
+            output formats are ``plain_text``.
+            Defaults to ``plain_text``.
+        :param output_filename: Specify name of file and extension to write
+            preview data to. If no output filename is set, the preview will be
+            output to stdout. Defaults to None.
+        """
+
+        # Retrieve any active orchestrator jobs
+        active_dbjobs = self._control.active_orchestrator_jobs
+
+        preview_manifest = Manifest(*args)
+
+        previewrenderer.render(
+            self,
+            preview_manifest,
+            verbosity_level,
+            output_format,
+            output_filename,
+            active_dbjobs,
+        )
+
+    @property
+    def launcher(self) -> str:
+        return self._launcher
 
     @_contextualize
     def summary(self, style: str = "github") -> str:
@@ -830,12 +873,9 @@ class Experiment:
         launched and completed in this ``Experiment``
 
         :param style: the style in which the summary table is formatted,
-                       for a full list of styles see:
-                       https://github.com/astanin/python-tabulate#table-format,
-                       defaults to "github"
-        :type style: str, optional
+                       for a full list of styles see the table-format section of:
+                       https://github.com/astanin/python-tabulate
         :return: tabulate string of ``Experiment`` history
-        :rtype: str
         """
         values = []
         headers = [
@@ -869,11 +909,18 @@ class Experiment:
             disable_numparse=True,
         )
 
+    @property
+    def telemetry(self) -> TelemetryConfiguration:
+        """Return the telemetry configuration for this entity.
+
+        :returns: configuration of telemetry for this entity
+        """
+        return self._telemetry_cfg
+
     def _launch_summary(self, manifest: Manifest) -> None:
         """Experiment pre-launch summary of entities that will be launched
 
         :param manifest: Manifest of deployables.
-        :type manifest: Manifest
         """
 
         summary = "\n\n=== Launch Summary ===\n"
@@ -894,10 +941,27 @@ class Experiment:
 
         logger.info(summary)
 
+    def _create_entity_dir(self, start_manifest: Manifest) -> None:
+        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+            if not os.path.isdir(entity.path):
+                os.makedirs(entity.path)
+
+        for model in start_manifest.models:
+            create_entity_dir(model)
+
+        for orch in start_manifest.dbs:
+            create_entity_dir(orch)
+
+        for ensemble in start_manifest.ensembles:
+            create_entity_dir(ensemble)
+
+            for member in ensemble.models:
+                create_entity_dir(member)
+
     def __str__(self) -> str:
         return self.name
 
-    def append_to_db_identifier_list(self, db_identifier: str) -> None:
+    def _append_to_db_identifier_list(self, db_identifier: str) -> None:
         """Check if db_identifier already exists when calling create_database"""
         if db_identifier in self.db_identifiers:
             logger.warning(
@@ -907,35 +971,3 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
-
-    def enable_telemetry(self) -> None:
-        """Experiments will start producing telemetry for all entities run
-        through ``Experiment.start``
-
-        .. warning::
-
-            This method is currently implemented so that ALL ``Experiment``
-            instances will begin producing telemetry data. In the future it
-            is planned to have this method work on a "per instance" basis!
-        """
-        self._set_telemetry(True)
-
-    def disable_telemetry(self) -> None:
-        """Experiments will stop producing telemetry for all entities run
-        through ``Experiment.start``
-
-        .. warning::
-
-            This method is currently implemented so that ALL ``Experiment``
-            instances will stop producing telemetry data. In the future it
-            is planned to have this method work on a "per instance" basis!
-        """
-        self._set_telemetry(False)
-
-    @staticmethod
-    def _set_telemetry(switch: bool, /) -> None:
-        tm_key = "SMARTSIM_FLAG_TELEMETRY"
-        if switch:
-            os.environ[tm_key] = "1"
-        else:
-            os.environ[tm_key] = "0"

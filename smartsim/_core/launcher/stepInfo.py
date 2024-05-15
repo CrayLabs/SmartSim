@@ -28,20 +28,13 @@ import typing as t
 
 import psutil
 
-from ...status import (
-    SMARTSIM_STATUS,
-    STATUS_CANCELLED,
-    STATUS_COMPLETED,
-    STATUS_FAILED,
-    STATUS_PAUSED,
-    STATUS_RUNNING,
-)
+from ...status import SmartSimStatus
 
 
 class StepInfo:
     def __init__(
         self,
-        status: str = "",
+        status: SmartSimStatus,
         launcher_status: str = "",
         returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
@@ -54,48 +47,50 @@ class StepInfo:
         self.error = error
 
     def __str__(self) -> str:
-        info_str = f"Status: {self.status}"
+        info_str = f"Status: {self.status.value}"
         info_str += f" | Launcher Status {self.launcher_status}"
         info_str += f" | Returncode {str(self.returncode)}"
         return info_str
 
     @property
-    def mapping(self) -> t.Dict[str, str]:
+    def mapping(self) -> t.Dict[str, SmartSimStatus]:
         raise NotImplementedError
 
     def _get_smartsim_status(
         self, status: str, returncode: t.Optional[int] = None
-    ) -> str:
+    ) -> SmartSimStatus:
         """
         Map the status of the WLM step to a smartsim-specific status
         """
-        if status in SMARTSIM_STATUS:
-            return SMARTSIM_STATUS[status]
+        if any(ss_status.value == status for ss_status in SmartSimStatus):
+            return SmartSimStatus(status)
 
         if status in self.mapping and returncode in [None, 0]:
             return self.mapping[status]
 
-        return STATUS_FAILED
+        return SmartSimStatus.STATUS_FAILED
 
 
 class UnmanagedStepInfo(StepInfo):
     @property
-    def mapping(self) -> t.Dict[str, str]:
+    def mapping(self) -> t.Dict[str, SmartSimStatus]:
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
         return {
-            psutil.STATUS_RUNNING: STATUS_RUNNING,
-            psutil.STATUS_SLEEPING: STATUS_RUNNING,  # sleeping thread is still alive
-            psutil.STATUS_WAKING: STATUS_RUNNING,
-            psutil.STATUS_DISK_SLEEP: STATUS_RUNNING,
-            psutil.STATUS_DEAD: STATUS_FAILED,
-            psutil.STATUS_TRACING_STOP: STATUS_PAUSED,
-            psutil.STATUS_WAITING: STATUS_PAUSED,
-            psutil.STATUS_STOPPED: STATUS_PAUSED,
-            psutil.STATUS_LOCKED: STATUS_PAUSED,
-            psutil.STATUS_PARKED: STATUS_PAUSED,
-            psutil.STATUS_IDLE: STATUS_PAUSED,
-            psutil.STATUS_ZOMBIE: STATUS_COMPLETED,
+            psutil.STATUS_RUNNING: SmartSimStatus.STATUS_RUNNING,
+            psutil.STATUS_SLEEPING: (
+                SmartSimStatus.STATUS_RUNNING
+            ),  # sleeping thread is still alive
+            psutil.STATUS_WAKING: SmartSimStatus.STATUS_RUNNING,
+            psutil.STATUS_DISK_SLEEP: SmartSimStatus.STATUS_RUNNING,
+            psutil.STATUS_DEAD: SmartSimStatus.STATUS_FAILED,
+            psutil.STATUS_TRACING_STOP: SmartSimStatus.STATUS_PAUSED,
+            psutil.STATUS_WAITING: SmartSimStatus.STATUS_PAUSED,
+            psutil.STATUS_STOPPED: SmartSimStatus.STATUS_PAUSED,
+            psutil.STATUS_LOCKED: SmartSimStatus.STATUS_PAUSED,
+            psutil.STATUS_PARKED: SmartSimStatus.STATUS_PAUSED,
+            psutil.STATUS_IDLE: SmartSimStatus.STATUS_PAUSED,
+            psutil.STATUS_ZOMBIE: SmartSimStatus.STATUS_COMPLETED,
         }
 
     def __init__(
@@ -114,30 +109,30 @@ class UnmanagedStepInfo(StepInfo):
 class SlurmStepInfo(StepInfo):  # cov-slurm
     # see https://slurm.schedmd.com/squeue.html#lbAG
     mapping = {
-        "RUNNING": STATUS_RUNNING,
-        "CONFIGURING": STATUS_RUNNING,
-        "STAGE_OUT": STATUS_RUNNING,
-        "COMPLETED": STATUS_COMPLETED,
-        "DEADLINE": STATUS_COMPLETED,
-        "TIMEOUT": STATUS_COMPLETED,
-        "BOOT_FAIL": STATUS_FAILED,
-        "FAILED": STATUS_FAILED,
-        "NODE_FAIL": STATUS_FAILED,
-        "OUT_OF_MEMORY": STATUS_FAILED,
-        "CANCELLED": STATUS_CANCELLED,
-        "CANCELLED+": STATUS_CANCELLED,
-        "REVOKED": STATUS_CANCELLED,
-        "PENDING": STATUS_PAUSED,
-        "PREEMPTED": STATUS_PAUSED,
-        "RESV_DEL_HOLD": STATUS_PAUSED,
-        "REQUEUE_FED": STATUS_PAUSED,
-        "REQUEUE_HOLD": STATUS_PAUSED,
-        "REQUEUED": STATUS_PAUSED,
-        "RESIZING": STATUS_PAUSED,
-        "SIGNALING": STATUS_PAUSED,
-        "SPECIAL_EXIT": STATUS_PAUSED,
-        "STOPPED": STATUS_PAUSED,
-        "SUSPENDED": STATUS_PAUSED,
+        "RUNNING": SmartSimStatus.STATUS_RUNNING,
+        "CONFIGURING": SmartSimStatus.STATUS_RUNNING,
+        "STAGE_OUT": SmartSimStatus.STATUS_RUNNING,
+        "COMPLETED": SmartSimStatus.STATUS_COMPLETED,
+        "DEADLINE": SmartSimStatus.STATUS_COMPLETED,
+        "TIMEOUT": SmartSimStatus.STATUS_COMPLETED,
+        "BOOT_FAIL": SmartSimStatus.STATUS_FAILED,
+        "FAILED": SmartSimStatus.STATUS_FAILED,
+        "NODE_FAIL": SmartSimStatus.STATUS_FAILED,
+        "OUT_OF_MEMORY": SmartSimStatus.STATUS_FAILED,
+        "CANCELLED": SmartSimStatus.STATUS_CANCELLED,
+        "CANCELLED+": SmartSimStatus.STATUS_CANCELLED,
+        "REVOKED": SmartSimStatus.STATUS_CANCELLED,
+        "PENDING": SmartSimStatus.STATUS_PAUSED,
+        "PREEMPTED": SmartSimStatus.STATUS_PAUSED,
+        "RESV_DEL_HOLD": SmartSimStatus.STATUS_PAUSED,
+        "REQUEUE_FED": SmartSimStatus.STATUS_PAUSED,
+        "REQUEUE_HOLD": SmartSimStatus.STATUS_PAUSED,
+        "REQUEUED": SmartSimStatus.STATUS_PAUSED,
+        "RESIZING": SmartSimStatus.STATUS_PAUSED,
+        "SIGNALING": SmartSimStatus.STATUS_PAUSED,
+        "SPECIAL_EXIT": SmartSimStatus.STATUS_PAUSED,
+        "STOPPED": SmartSimStatus.STATUS_PAUSED,
+        "SUSPENDED": SmartSimStatus.STATUS_PAUSED,
     }
 
     def __init__(
@@ -155,23 +150,27 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
 
 class PBSStepInfo(StepInfo):  # cov-pbs
     @property
-    def mapping(self) -> t.Dict[str, str]:
+    def mapping(self) -> t.Dict[str, SmartSimStatus]:
         # pylint: disable=line-too-long
         # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
         return {
-            "R": STATUS_RUNNING,
-            "B": STATUS_RUNNING,
-            "H": STATUS_PAUSED,
-            "M": STATUS_PAUSED,  # Actually means that it was moved to another server,
+            "R": SmartSimStatus.STATUS_RUNNING,
+            "B": SmartSimStatus.STATUS_RUNNING,
+            "H": SmartSimStatus.STATUS_PAUSED,
+            "M": (
+                SmartSimStatus.STATUS_PAUSED
+            ),  # Actually means that it was moved to another server,
             # TODO: understand what this implies
-            "Q": STATUS_PAUSED,
-            "S": STATUS_PAUSED,
-            "T": STATUS_PAUSED,  # This means in transition, see above for comment
-            "U": STATUS_PAUSED,
-            "W": STATUS_PAUSED,
-            "E": STATUS_COMPLETED,
-            "F": STATUS_COMPLETED,
-            "X": STATUS_COMPLETED,
+            "Q": SmartSimStatus.STATUS_PAUSED,
+            "S": SmartSimStatus.STATUS_PAUSED,
+            "T": (
+                SmartSimStatus.STATUS_PAUSED
+            ),  # This means in transition, see above for comment
+            "U": SmartSimStatus.STATUS_PAUSED,
+            "W": SmartSimStatus.STATUS_PAUSED,
+            "E": SmartSimStatus.STATUS_COMPLETED,
+            "F": SmartSimStatus.STATUS_COMPLETED,
+            "X": SmartSimStatus.STATUS_COMPLETED,
         }
 
     def __init__(
@@ -183,10 +182,14 @@ class PBSStepInfo(StepInfo):  # cov-pbs
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
-                smartsim_status = "Completed" if returncode == 0 else "Failed"
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
             else:
                 # if PBS job history isnt available, and job isnt in queue
-                smartsim_status = "Completed"
+                smartsim_status = SmartSimStatus.STATUS_COMPLETED
                 returncode = 0
         else:
             smartsim_status = self._get_smartsim_status(status)
@@ -197,16 +200,16 @@ class PBSStepInfo(StepInfo):  # cov-pbs
 
 class LSFBatchStepInfo(StepInfo):  # cov-lsf
     @property
-    def mapping(self) -> t.Dict[str, str]:
+    def mapping(self) -> t.Dict[str, SmartSimStatus]:
         # pylint: disable=line-too-long
         # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
-            "RUN": STATUS_RUNNING,
-            "PSUSP": STATUS_PAUSED,
-            "USUSP": STATUS_PAUSED,
-            "SSUSP": STATUS_PAUSED,
-            "PEND": STATUS_PAUSED,
-            "DONE": STATUS_COMPLETED,
+            "RUN": SmartSimStatus.STATUS_RUNNING,
+            "PSUSP": SmartSimStatus.STATUS_PAUSED,
+            "USUSP": SmartSimStatus.STATUS_PAUSED,
+            "SSUSP": SmartSimStatus.STATUS_PAUSED,
+            "PEND": SmartSimStatus.STATUS_PAUSED,
+            "DONE": SmartSimStatus.STATUS_COMPLETED,
         }
 
     def __init__(
@@ -218,9 +221,13 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
-                smartsim_status = "Completed" if returncode == 0 else "Failed"
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
             else:
-                smartsim_status = "Completed"
+                smartsim_status = SmartSimStatus.STATUS_COMPLETED
                 returncode = 0
         else:
             smartsim_status = self._get_smartsim_status(status)
@@ -231,14 +238,14 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
 
 class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     @property
-    def mapping(self) -> t.Dict[str, str]:
+    def mapping(self) -> t.Dict[str, SmartSimStatus]:
         # pylint: disable=line-too-long
         # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
-            "Killed": STATUS_COMPLETED,
-            "Running": STATUS_RUNNING,
-            "Queued": STATUS_PAUSED,
-            "Complete": STATUS_COMPLETED,
+            "Killed": SmartSimStatus.STATUS_COMPLETED,
+            "Running": SmartSimStatus.STATUS_RUNNING,
+            "Queued": SmartSimStatus.STATUS_PAUSED,
+            "Complete": SmartSimStatus.STATUS_COMPLETED,
         }
 
     def __init__(
@@ -250,9 +257,13 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
-                smartsim_status = "Completed" if returncode == 0 else "Failed"
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
             else:
-                smartsim_status = "Completed"
+                smartsim_status = SmartSimStatus.STATUS_COMPLETED
                 returncode = 0
         else:
             smartsim_status = self._get_smartsim_status(status, returncode)

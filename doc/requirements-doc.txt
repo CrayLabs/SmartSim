@@ -12,3 +12,7 @@ ipython
 jinja2==3.1.2
 protobuf
 numpy
+sphinx-design
+pypandoc
+sphinx-autodoc-typehints
+myst_parser

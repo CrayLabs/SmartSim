@@ -28,7 +28,11 @@
 import pytest
 
 from smartsim.error.errors import LauncherError
-from smartsim.slurm import _get_system_partition_info, get_default_partition, validate
+from smartsim.wlm.slurm import (
+    _get_system_partition_info,
+    get_default_partition,
+    validate,
+)
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b

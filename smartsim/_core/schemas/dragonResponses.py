@@ -24,22 +24,50 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 
-from warnings import simplefilter, warn
+from pydantic import BaseModel, Field
 
-# pylint: disable-next=unused-import
-from .wlm.slurm import (
-    _get_alloc_cmd,
-    _get_system_partition_info,
-    get_allocation,
-    get_default_partition,
-    release_allocation,
-    validate,
-)
+import smartsim._core.schemas.utils as _utils
+from smartsim.status import SmartSimStatus
 
-simplefilter("once", category=DeprecationWarning)
-DEPRECATION_MSG = (
-    "`smartsim.slurm` has been deprecated and will be removed in a future release.\n"
-    "Please update your code to use `smartsim.wlm.slurm`"
-)
-warn(DEPRECATION_MSG, category=DeprecationWarning, stacklevel=2)
+# Black and Pylint disagree about where to put the `...`
+# pylint: disable=multiple-statements
+
+response_registry = _utils.SchemaRegistry["DragonResponse"]()
+
+
+class DragonResponse(BaseModel):
+    error_message: t.Optional[str] = None
+
+
+@response_registry.register("run")
+class DragonRunResponse(DragonResponse):
+    step_id: t.Annotated[str, Field(min_length=1)]
+
+
+@response_registry.register("status_update")
+class DragonUpdateStatusResponse(DragonResponse):
+    # status is a dict: {step_id: (is_alive, returncode)}
+    statuses: t.Mapping[
+        t.Annotated[str, Field(min_length=1)],
+        t.Tuple[SmartSimStatus, t.Optional[t.List[int]]],
+    ] = {}
+
+
+@response_registry.register("stop")
+class DragonStopResponse(DragonResponse): ...
+
+
+@response_registry.register("handshake")
+class DragonHandshakeResponse(DragonResponse):
+    dragon_pid: int
+
+
+@response_registry.register("bootstrap")
+class DragonBootstrapResponse(DragonResponse):
+    dragon_pid: int
+
+
+@response_registry.register("shutdown")
+class DragonShutdownResponse(DragonResponse): ...

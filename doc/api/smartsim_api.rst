@@ -1,17 +1,15 @@
-
 *************
 SmartSim API
 *************
-
 
 .. _experiment_api:
 
 Experiment
 ==========
 
-
 .. currentmodule:: smartsim.experiment
 
+.. _exp_init:
 .. autosummary::
 
    Experiment.__init__
@@ -27,12 +25,16 @@ Experiment
    Experiment.finished
    Experiment.get_status
    Experiment.reconnect_orchestrator
+   Experiment.preview
    Experiment.summary
+   Experiment.telemetry
 
 .. autoclass:: Experiment
    :show-inheritance:
    :members:
 
+
+.. _settings-info:
 
 Settings
 ========
@@ -58,6 +60,7 @@ Types of Settings:
     MpiexecSettings
     OrterunSettings
     JsrunSettings
+    DragonRunSettings
     SbatchSettings
     QsubBatchSettings
     BsubBatchSettings
@@ -111,6 +114,7 @@ steps to a batch.
 .. autosummary::
 
     SrunSettings.set_nodes
+    SrunSettings.set_node_feature
     SrunSettings.set_tasks
     SrunSettings.set_tasks_per_node
     SrunSettings.set_walltime
@@ -159,6 +163,28 @@ and within batch launches (e.g., ``QsubBatchSettings``)
     :undoc-members:
     :members:
 
+
+.. _dragonsettings_api:
+
+DragonRunSettings
+-----------------
+
+``DragonRunSettings`` can be used on systems that support Slurm or
+PBS, if Dragon is available in the Python environment (see `_dragon_install`
+for instructions on how to install it through ``smart``).
+
+``DragonRunSettings`` can be used in interactive sessions (on allcation)
+and within batch launches (i.e. ``SbatchSettings`` or ``QsubBatchSettings``,
+for Slurm and PBS sessions, respectively).
+
+.. autosummary::
+    DragonRunSettings.set_nodes
+    DragonRunSettings.set_tasks_per_node
+
+.. autoclass:: DragonRunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
 
 .. _jsrun_api:
@@ -377,23 +403,50 @@ container.
     :undoc-members:
     :members:
 
+.. _orc_api:
 
 Orchestrator
 ============
 
 .. currentmodule:: smartsim.database
 
-.. _orc_api:
+.. autosummary::
+
+   Orchestrator.__init__
+   Orchestrator.db_identifier
+   Orchestrator.num_shards
+   Orchestrator.db_nodes
+   Orchestrator.hosts
+   Orchestrator.reset_hosts
+   Orchestrator.remove_stale_files
+   Orchestrator.get_address
+   Orchestrator.is_active
+   Orchestrator.set_cpus
+   Orchestrator.set_walltime
+   Orchestrator.set_hosts
+   Orchestrator.set_batch_arg
+   Orchestrator.set_run_arg
+   Orchestrator.enable_checkpoints
+   Orchestrator.set_max_memory
+   Orchestrator.set_eviction_strategy
+   Orchestrator.set_max_clients
+   Orchestrator.set_max_message_size
+   Orchestrator.set_db_conf
+   Orchestrator.telemetry
+   Orchestrator.checkpoint_file
+   Orchestrator.batch
 
 Orchestrator
 ------------
 
+.. _orchestrator_api:
 
 .. autoclass:: Orchestrator
    :members:
    :inherited-members:
    :undoc-members:
 
+.. _model_api:
 
 Model
 =====
@@ -417,16 +470,16 @@ Model
    Model.disable_key_prefixing
    Model.query_key_prefixing
 
+Model
+-----
+
 .. autoclass:: Model
    :members:
    :show-inheritance:
    :inherited-members:
 
-.. _ensemble_api:
-
 Ensemble
 ========
-
 
 .. currentmodule:: smartsim.entity.ensemble
 
@@ -442,6 +495,11 @@ Ensemble
    Ensemble.models
    Ensemble.query_key_prefixing
    Ensemble.register_incoming_entity
+
+Ensemble
+--------
+
+.. _ensemble_api:
 
 .. autoclass:: Ensemble
    :members:
@@ -460,7 +518,6 @@ SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytor
 
 TensorFlow
 ----------
-
 
 SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
 
@@ -510,13 +567,18 @@ SmartSim includes built-in utilities for supporting PyTorch in training and infe
 Slurm
 =====
 
-
-.. currentmodule:: smartsim.slurm
+.. currentmodule:: smartsim.wlm.slurm
 
 .. autosummary::
 
     get_allocation
     release_allocation
+    validate
+    get_default_partition
+    get_hosts
+    get_queue
+    get_tasks
+    get_tasks_per_node
 
-.. automodule:: smartsim.slurm
+.. automodule:: smartsim.wlm.slurm
     :members:

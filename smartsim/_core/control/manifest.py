@@ -68,7 +68,6 @@ class Manifest:
 
         :raises SmartSimError: if user added to databases to manifest
         :return: List of orchestrator instances
-        :rtype: list[Orchestrator]
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
         return dbs
@@ -78,7 +77,6 @@ class Manifest:
         """Return Model instances in Manifest
 
         :return: model instances
-        :rtype: List[Model]
         """
         _models: t.List[Model] = [
             item for item in self._deployables if isinstance(item, Model)
@@ -90,7 +88,6 @@ class Manifest:
         """Return Ensemble instances in Manifest
 
         :return: list of ensembles
-        :rtype: List[Ensemble]
         """
         return [e for e in self._deployables if isinstance(e, Ensemble)]
 
@@ -100,7 +97,6 @@ class Manifest:
         exceptional ones like Orchestrator
 
         :return: list of entity lists
-        :rtype: List[EntitySequence[SmartSimEntity]]
         """
         _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
 
@@ -108,6 +104,14 @@ class Manifest:
             _all_entity_lists.append(db)
 
         return _all_entity_lists
+
+    @property
+    def has_deployable(self) -> bool:
+        """
+        Return True if the manifest contains entities that
+        must be physically deployed
+        """
+        return bool(self._deployables)
 
     @staticmethod
     def _check_names(deployables: t.List[t.Any]) -> None:
@@ -294,7 +298,10 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def finalize(self) -> LaunchedManifest[_T]:
         return LaunchedManifest(
             metadata=_LaunchedManifestMetadata(
-                self.run_id, self.exp_name, self.exp_path, self.launcher_name
+                self.run_id,
+                self.exp_name,
+                self.exp_path,
+                self.launcher_name,
             ),
             models=tuple(self._models),
             ensembles=tuple(self._ensembles),

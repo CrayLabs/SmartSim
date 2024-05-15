@@ -27,6 +27,7 @@
 import functools
 import logging
 import pathlib
+import socket
 import sys
 import threading
 import typing as t
@@ -39,7 +40,8 @@ from smartsim._core.config import CONFIG
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
 DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+    "%(asctime)s %(hostname)s %(name)s[%(process)d:%(threadName)s] "
+    "%(levelname)s %(message)s"
 )
 EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 
@@ -74,9 +76,7 @@ def _translate_log_level(user_log_level: str = "info") -> str:
                       extremely verbose logging.
 
     :param user_log_level: log level specified by user, defaults to info
-    :type user_log_level: str
     :returns: Log level for coloredlogs
-    :rtype: str
     """
     user_log_level = user_log_level.lower()
     if user_log_level in ["info", "debug", "warning"]:
@@ -94,17 +94,12 @@ def get_exp_log_paths() -> t.Tuple[t.Optional[pathlib.Path], t.Optional[pathlib.
     Returns None for both paths if experiment context is unavailable.
 
     :returns: 2-tuple of paths to experiment logs in form (output_path, error_path)
-    if telemetry is enabled, a 2-tuple of None otherwise
-    :rtype: Tuple[pathlib.Path | None, pathlib.Path | None]
     """
     default_paths = None, None
 
-    if not CONFIG.telemetry_enabled:
-        return default_paths
-
-    if _exp_path := ctx_exp_path.get():
-        file_out = pathlib.Path(_exp_path) / CONFIG.telemetry_subdir / "smartsim.out"
-        file_err = pathlib.Path(_exp_path) / CONFIG.telemetry_subdir / "smartsim.err"
+    if _path := ctx_exp_path.get():
+        file_out = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.out"
+        file_err = pathlib.Path(_path) / CONFIG.telemetry_subdir / "logs/smartsim.err"
         return file_out, file_err
 
     return default_paths
@@ -127,11 +122,31 @@ class ContextInjectingLogFilter(logging.Filter):
         """Enrich log records with active experiment context
 
         :param record: the record to evaluate for filtering
-        :type record: logging.LogRecord
         :returns: always True
-        :rtype: bool
         """
         record.exp_path = ctx_exp_path.get()
+        return True
+
+
+class HostnameFilter(logging.Filter):
+    """Filter that performs enrichment of a log record by adding
+    the hostname of the machine executing the code"""
+
+    def __init__(self, name: str = "") -> None:
+        super().__init__(name)
+        self._hostname = ""
+
+    @property
+    @functools.lru_cache
+    def hostname(self) -> str:
+        """Returns the hostname of the machine executing the code"""
+        self._hostname = socket.gethostname()
+        return self._hostname
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # the hostname may already added if using the `ColoredLogs` plugin
+        if not hasattr(record, "hostname"):
+            record.hostname = self.hostname
         return True
 
 
@@ -194,13 +209,9 @@ def get_logger(
         logger.warning("This is a warning message")
 
     :param name: the name of the desired logger
-    :type name: str
     :param log_level: what level to set the logger to
-    :type log_level: str
     :param fmt: the format of the log messages
-    :type fmt: str
     :returns: logger instance
-    :rtype: logging.Logger
     """
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file without prefix.
@@ -225,7 +236,6 @@ class LowPassFilter(logging.Filter):
         """Create a low-pass log filter allowing messages below a specific log level
 
         :param maximum_level: The maximum log level to be passed by the filter
-        :type maximum_level: str
         """
         super().__init__()
         self.max = maximum_level
@@ -234,9 +244,7 @@ class LowPassFilter(logging.Filter):
         """Filter log records; pass those less than or equal to the maximum level
 
         :param record: the record to evaluate for filtering
-        :type record: logging.LogRecord
         :returns: True if record level passes filter, False otherwise
-        :rtype: bool
         """
         # If a string representation of the level is passed in,
         # the corresponding numeric value is returned.
@@ -249,12 +257,9 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
     allowing subsequent logging calls to be sent to filename.
 
     :param filename: the name of the desired log file.
-    :type filename: str
-
     :param log_level: as defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
-    :type log_level: str
     """
     logger = logging.getLogger("SmartSim")
     stream = open(  # pylint: disable=consider-using-with
@@ -274,19 +279,13 @@ def log_to_exp_file(
     allowing subsequent logging calls to be sent to filename.
 
     :param filename: the name of the desired log file.
-    :type filename: str
     :param log_level: as defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
-    :type log_level: int | str
     :param logger: an existing logger to add the handler to
-    :type logger: (optional) logging.Logger
     :param fmt: a log format for the handler (otherwise, EXPERIMENT_LOG_FORMAT)
-    :type fmt: (optional) str
     :param log_filter: log filter to attach to handler
-    :type log_filter: (optional) logging.Filter
     :return: logging.Handler
-    :rtype: logging.Handler
     """
     # ensure logs are written even if specified dir doesn't exist
     log_path = pathlib.Path(filename)
@@ -322,9 +321,8 @@ def method_contextualizer(
     must accept an instance of matching type.
 
     :param ctx_var: The ContextVar that will be modified
-    :type ctx_var: ContextVar
     :param ctx_map: A function that returns the value to be set to ctx_var
-    :type ctx_map: t.Callable[[_T], _ContextT]"""
+    """
 
     def _contextualize(
         fn: "t.Callable[Concatenate[_T, _PR], _RT]", /

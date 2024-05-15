@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py39', 'py310', 'py311']
 exclude = '''
 (
   | \.egg
@@ -45,8 +45,15 @@ exclude = '''
   | build
   | dist
   | setup.py
+  | .*\.py
 )
 '''
+force-exclude = '''
+(
+  .*\.dragon/*
+)
+'''
+
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -61,6 +68,7 @@ markers = [
 # supress circular import warning
 profile = "black"
 skip = ["tests/test_configs/circular_config"]
+skip_glob="smartsim/_core/.dragon/*"
 
 [tool.coverage.run]
 source = ["smartsim"]
@@ -78,7 +86,7 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = []
+plugins = ["pydantic.mypy"]
 ignore_errors = false
 
 # Dynamic typing
@@ -107,10 +115,12 @@ strict_equality = true
 # Additional Error Codes
 enable_error_code = [
     # "redundant-expr",
-    # "possibly-undefined",
+    "possibly-undefined",
     # "unused-awaitable",
     # "ignore-without-code",
     # "mutable-override",
+    "truthy-bool",
+    "truthy-iterable",
 ]
 
 [[tool.mypy.overrides]]
@@ -122,6 +132,7 @@ module = [
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
   "watchdog",
+  "dragon.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true

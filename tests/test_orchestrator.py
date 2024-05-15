@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import typing as t
+
 import psutil
 import pytest
 
@@ -37,7 +39,11 @@ from smartsim.error.errors import SSUnsupportedError
 pytestmark = pytest.mark.slow_tests
 
 
-def test_orc_parameters():
+if t.TYPE_CHECKING:
+    import conftest
+
+
+def test_orc_parameters() -> None:
     threads_per_queue = 2
     inter_op_threads = 2
     intra_op_threads = 2
@@ -57,45 +63,33 @@ def test_orc_parameters():
     assert "INTER_OP_PARALLELISM" in module_str
 
 
-def test_is_not_active():
+def test_is_not_active() -> None:
     db = Orchestrator(db_nodes=1)
     assert not db.is_active()
 
 
-def test_inactive_orc_get_address():
+def test_inactive_orc_get_address() -> None:
     db = Orchestrator()
     with pytest.raises(SmartSimError):
         db.get_address()
 
 
-def test_orc_active_functions(test_dir, wlmutils):
-    exp_name = "test_orc_active_functions"
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-
-    db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
-
-    exp.start(db)
-
-    # check if the orchestrator is active
+def test_orc_is_active_functions(
+    local_experiment,
+    prepare_db,
+    local_db,
+) -> None:
+    db = prepare_db(local_db).orchestrator
+    db = local_experiment.reconnect_orchestrator(db.checkpoint_file)
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
-        exp.stop(db)
-        assert False
-
-    exp.stop(db)
-
-    assert not db.is_active()
-
-    # check if orchestrator.get_address() raises an exception
-    with pytest.raises(SmartSimError):
-        db.get_address()
+    assert db.get_address() == [f"127.0.0.1:{db.ports[0]}"]
 
 
-def test_multiple_interfaces(test_dir, wlmutils):
+def test_multiple_interfaces(
+    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]
+) -> None:
     exp_name = "test_multiple_interfaces"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
@@ -106,7 +100,8 @@ def test_multiple_interfaces(test_dir, wlmutils):
 
     net_if_addrs = ["lo", net_if_addrs[0]]
 
-    db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
+    port = wlmutils.get_test_port()
+    db = Orchestrator(port=port, interface=net_if_addrs)
     db.set_path(test_dir)
 
     exp.start(db)
@@ -115,15 +110,16 @@ def test_multiple_interfaces(test_dir, wlmutils):
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
+    correct_address = [f"127.0.0.1:{port}"]
+
+    if not correct_address == db.get_address():
         exp.stop(db)
         assert False
 
     exp.stop(db)
 
 
-def test_catch_local_db_errors():
+def test_catch_local_db_errors() -> None:
     # local database with more than one node not allowed
     with pytest.raises(SSUnsupportedError):
         db = Orchestrator(db_nodes=2)
@@ -140,7 +136,7 @@ def test_catch_local_db_errors():
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg(wlmutils):
+def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -159,7 +155,7 @@ def test_pbs_set_run_arg(wlmutils):
     )
 
 
-def test_pbs_set_batch_arg(wlmutils):
+def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -188,7 +184,7 @@ def test_pbs_set_batch_arg(wlmutils):
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg(wlmutils):
+def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -203,7 +199,7 @@ def test_slurm_set_run_arg(wlmutils):
     )
 
 
-def test_slurm_set_batch_arg(wlmutils):
+def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -234,7 +230,7 @@ def test_slurm_set_batch_arg(wlmutils):
         pytest.param(False, id="Multiple `srun`s"),
     ],
 )
-def test_orc_results_in_correct_number_of_shards(single_cmd):
+def test_orc_results_in_correct_number_of_shards(single_cmd: bool) -> None:
     num_shards = 5
     orc = Orchestrator(
         port=12345,
@@ -259,7 +255,7 @@ def test_orc_results_in_correct_number_of_shards(single_cmd):
 ###### LSF ######
 
 
-def test_catch_orc_errors_lsf(wlmutils):
+def test_catch_orc_errors_lsf(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     with pytest.raises(SSUnsupportedError):
         orc = Orchestrator(
             wlmutils.get_test_port(),
@@ -282,7 +278,7 @@ def test_catch_orc_errors_lsf(wlmutils):
         orc.set_batch_arg("P", "MYPROJECT")
 
 
-def test_lsf_set_run_args(wlmutils):
+def test_lsf_set_run_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -295,7 +291,7 @@ def test_lsf_set_run_args(wlmutils):
     assert all(["l" not in db.run_settings.run_args for db in orc.entities])
 
 
-def test_lsf_set_batch_args(wlmutils):
+def test_lsf_set_batch_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -308,3 +304,24 @@ def test_lsf_set_batch_args(wlmutils):
     assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
     orc.set_batch_arg("D", "102400000")
     assert orc.batch_settings.batch_args["D"] == "102400000"
+
+
+def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+    """Ensure the default behavior for an orchestrator is to disable telemetry"""
+    db = Orchestrator(port=wlmutils.get_test_port())
+    db.set_path(test_dir)
+
+    # default is disabled
+    assert not db.telemetry.is_enabled
+
+    # ensure updating value works as expected
+    db.telemetry.enable()
+    assert db.telemetry.is_enabled
+
+    # toggle back
+    db.telemetry.disable()
+    assert not db.telemetry.is_enabled
+
+    # toggle one more time
+    db.telemetry.enable()
+    assert db.telemetry.is_enabled

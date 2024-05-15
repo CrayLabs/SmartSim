@@ -29,12 +29,13 @@ import sys
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity import Ensemble
 from smartsim.entity.dbobject import DBModel
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
+from smartsim.status import SmartSimStatus
 
 logger = get_logger(__name__)
 
@@ -145,36 +146,30 @@ def save_torch_cnn(path, file_name):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
+def test_tf_db_model(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, mlutils
+):
     """Test TensorFlow DB Models on remote DB"""
 
-    # Set experiment name
-    exp_name = "test-tf-db-model"
-
     # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = 1  # TF backend fails on multiple GPUs
 
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    # Create the SmartSim Experiment
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
     # Create RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
     # Create Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model = wlm_experiment.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    db = prepare_db(single_db).orchestrator
+    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
@@ -211,50 +206,41 @@ def test_tf_db_model(fileutils, test_dir, wlmutils, mlutils):
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 2
 
-    exp.generate(smartsim_model)
+    wlm_experiment.generate(smartsim_model)
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_model, block=True)
-        statuses = exp.get_status(smartsim_model)
-        assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
-        ), f"Statuses: {statuses}"
-    finally:
-        exp.stop(db)
+    wlm_experiment.start(smartsim_model, block=True)
+    statuses = wlm_experiment.get_status(smartsim_model)
+    assert all(
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses: {statuses}"
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
+def test_pt_db_model(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, mlutils
+):
     """Test PyTorch DB Models on remote DB"""
 
-    # Set experiment name
-    exp_name = "test-pt-db-model"
-
     # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
-    # Create the SmartSim Experiment
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
     # Create RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
     # Create Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model = wlm_experiment.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    db = prepare_db(single_db).orchestrator
+    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     # Create and save ML model to filesystem
     save_torch_cnn(test_dir, "model1.pt")
@@ -278,55 +264,46 @@ def test_pt_db_model(fileutils, test_dir, wlmutils, mlutils):
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 1
 
-    exp.generate(smartsim_model)
+    wlm_experiment.generate(smartsim_model)
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_model, block=True)
-        statuses = exp.get_status(smartsim_model)
-        assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
-        ), f"Statuses: {statuses}"
-    finally:
-        exp.stop(db)
+    wlm_experiment.start(smartsim_model, block=True)
+    statuses = wlm_experiment.get_status(smartsim_model)
+    assert all(
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses: {statuses}"
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
+def test_db_model_ensemble(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, mlutils
+):
     """Test DBModels on remote DB, with an ensemble"""
 
-    # Set experiment name
-    exp_name = "test-db-model-ensemble"
-
     # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = 1  # TF backend fails on multiple GPUs
 
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    # Create the SmartSim Experiment
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-
     # Create RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings = wlm_experiment.create_run_settings(
+        exe=sys.executable, exe_args=test_script
+    )
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
     # Create ensemble
-    smartsim_ensemble = exp.create_ensemble(
+    smartsim_ensemble = wlm_experiment.create_ensemble(
         "smartsim_model", run_settings=run_settings, replicas=2
     )
 
     # Create Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model = wlm_experiment.create_model("smartsim_model", run_settings)
 
     # Create database
-    host = wlmutils.choose_host(run_settings)
-    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
-    exp.generate(db)
+    db = prepare_db(single_db).orchestrator
+    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
@@ -379,17 +356,14 @@ def test_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     # Assert we have added two models to each entity
     assert all([len(entity._db_models) == 2 for entity in smartsim_ensemble])
 
-    exp.generate(smartsim_ensemble)
+    wlm_experiment.generate(smartsim_ensemble)
 
     # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_ensemble, block=True)
-        statuses = exp.get_status(smartsim_ensemble)
-        assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
-        ), f"Statuses: {statuses}"
-    finally:
-        exp.stop(db)
+    wlm_experiment.start(smartsim_ensemble, block=True)
+    statuses = wlm_experiment.get_status(smartsim_ensemble)
+    assert all(
+        stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
+    ), f"Statuses: {statuses}"
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
@@ -458,7 +432,7 @@ def test_colocated_db_model_tf(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
@@ -518,7 +492,7 @@ def test_colocated_db_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_model, block=True)
         statuses = exp.get_status(colo_model)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_model)
@@ -557,7 +531,6 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
 
     # Create a third model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
@@ -620,7 +593,7 @@ def test_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
@@ -724,7 +697,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         exp.start(colo_ensemble, block=True)
         statuses = exp.get_status(colo_ensemble)
         assert all(
-            stat == status.STATUS_COMPLETED for stat in statuses
+            stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
         ), f"Statuses: {statuses}"
     finally:
         exp.stop(colo_ensemble)
@@ -756,7 +729,6 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
 
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
         port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
@@ -813,7 +785,6 @@ def test_colocated_db_model_errors(fileutils, test_dir, wlmutils, mlutils):
     colo_ensemble2 = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings2, replicas=2
     )
-    colo_ensemble2.set_path(test_dir)
     colo_ensemble2.add_ml_model(
         "cnn",
         "TF",

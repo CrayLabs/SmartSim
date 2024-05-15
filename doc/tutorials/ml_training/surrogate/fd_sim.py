@@ -18,12 +18,9 @@ def augment_batch(samples, targets):
     following NWHC ordering.
 
     :param samples: Samples to augment
-    :type samples: np.ndarray
     :param targets: Targets to augment
-    :type targets: np.ndarray
 
     :returns: Tuple of augmented samples and targets
-    :rtype: (np.ndarray, np.ndarray)
     """
     batch_size = samples.shape[0]
     augmented_samples = np.empty((batch_size*8, *samples.shape[1:]))
@@ -83,9 +80,7 @@ def simulate(steps, size):
     both as tensors and as augmented samples for training.
 
     :param steps: Number of simulations to run
-    :type steps: int
     :param size: lateral size of the discretized domain
-    :type size: int
     """
     batch_size = 50
     samples = np.zeros((batch_size,size,size,1)).astype(np.single)

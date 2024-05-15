@@ -27,6 +27,7 @@
 import abc
 import typing as t
 
+from ..._core.launcher.stepMapping import StepMap
 from ...error import AllocationError, LauncherError, SSUnsupportedError
 from ...settings import SettingsBase
 from .step import Step
@@ -69,6 +70,15 @@ class Launcher(abc.ABC):  # pragma: no cover
     def stop(self, step_name: str) -> StepInfo:
         raise NotImplementedError
 
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
+        """Add a StepMap to the Launcher step mapping table
+        making it monitor the step.
+
+        :param name: name of step to be added
+        :param step_map: step map of added step
+        """
+        self.step_mapping[name] = step_map
+
 
 class WLMLauncher(Launcher):  # cov-wlm
     """The base class for any Launcher that utilizes workload
@@ -94,15 +104,11 @@ class WLMLauncher(Launcher):  # cov-wlm
         """Create a WLM job step
 
         :param name: name of the entity to be launched
-        :type name: str
         :param cwd: path to launch dir
-        :type cwd: str
         :param step_settings: batch or run settings for entity
-        :type step_settings: BatchSettings | RunSettings
         :raises SSUnsupportedError: if batch or run settings type isnt supported
         :raises LauncherError: if step creation fails
         :return: step instance
-        :rtype: Step
         """
         try:
             step_class = self.supported_rs[type(step_settings)]
@@ -129,9 +135,7 @@ class WLMLauncher(Launcher):  # cov-wlm
         """Get update for a list of job steps
 
         :param step_names: list of job steps to get updates for
-        :type step_names: list[str]
         :return: list of name, job update tuples
-        :rtype: list[(str, StepInfo)]
         """
         updates: t.List[t.Tuple[str, t.Union[StepInfo, None]]] = []
 
@@ -162,9 +166,7 @@ class WLMLauncher(Launcher):  # cov-wlm
         """Get step updates for Popen managed jobs
 
         :param task_ids: task id to check
-        :type task_ids: list[str]
         :return: list of step updates
-        :rtype: list[StepInfo]
         """
         updates = []
         for task_id in task_ids:

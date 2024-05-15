@@ -27,11 +27,12 @@ from contextlib import contextmanager
 
 import pytest
 
-from smartsim import Experiment, status
+from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
@@ -51,7 +52,7 @@ def make_entity_context(exp: Experiment, entity: SmartSimEntity):
     try:
         yield entity
     finally:
-        if exp.get_status(entity)[0] == status.STATUS_RUNNING:
+        if exp.get_status(entity)[0] == SmartSimStatus.STATUS_RUNNING:
             exp.stop(entity)
 
 
@@ -65,7 +66,7 @@ def choose_host(wlmutils, index=0):
 
 def check_not_failed(exp, *args):
     statuses = exp.get_status(*args)
-    assert all(stat is not status.STATUS_FAILED for stat in statuses)
+    assert all(stat is not SmartSimStatus.STATUS_FAILED for stat in statuses)
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -152,7 +153,6 @@ def test_db_identifier_colo_then_standard(
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("colocated_model", colo_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port,
@@ -227,7 +227,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    with make_entity_context(exp, orc), make_entity_context(exp, orc2):
+    with make_entity_context(exp, orc2), make_entity_context(exp, orc):
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(orc2)
@@ -325,7 +325,6 @@ def test_multidb_colo_once(fileutils, test_dir, wlmutils, coloutils, db_type):
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port + 1,
@@ -404,7 +403,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
 
-    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_script = fileutils.get_test_conf_path(
+        "smartredis/multidbid_colo_env_vars_only.py"
+    )
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
 
@@ -434,8 +435,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     )
 
     with make_entity_context(exp, db), make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model, block=False)
         exp.start(db)
-        exp.start(smartsim_model, block=True)
+        exp.poll(smartsim_model)
 
     check_not_failed(exp, db, smartsim_model)
 
