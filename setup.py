@@ -139,7 +139,6 @@ class InstallPlatlib(install):
 
 
 class SmartSimBuild(build_py):
-
     def run(self):
         database_builder = builder.DatabaseBuilder(
             build_env(), build_env.MALLOC, build_env.JOBS
@@ -174,7 +173,11 @@ deps = [
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
+    "jinja2>=3.1.2",
     "watchdog>=4.0.0",
+    "pydantic==1.10.14",
+    "pyzmq>=25.1.2",
+    "pygithub>=2.3.0",
 ]
 
 # Add SmartRedis at specific version

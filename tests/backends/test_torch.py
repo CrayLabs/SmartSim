@@ -48,7 +48,9 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_torch_model_and_script(test_dir, mlutils, wlmutils):
+def test_torch_model_and_script(
+    wlm_experiment, prepare_db, single_db, mlutils, wlmutils
+):
     """This test needs two free nodes, 1 for the db and 1 for a torch model script
 
      Here we test both the torchscipt API and the NN API from torch
@@ -60,30 +62,24 @@ def test_torch_model_and_script(test_dir, mlutils, wlmutils):
     You may need to put CUDNN in your LD_LIBRARY_PATH if running on GPU
     """
 
-    exp_name = "test_torch_model_and_script"
-
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
+    db = prepare_db(single_db).orchestrator
+    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
     test_device = mlutils.get_test_device()
 
-    db = wlmutils.get_orchestrator(nodes=1)
-    db.set_path(test_dir)
-    exp.start(db)
-
-    run_settings = exp.create_run_settings(
+    run_settings = wlm_experiment.create_run_settings(
         "python", f"run_torch.py --device={test_device}"
     )
     if wlmutils.get_test_launcher() != "local":
         run_settings.set_tasks(1)
-    model = exp.create_model("torch_script", run_settings)
+    model = wlm_experiment.create_model("torch_script", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     script_path = Path(script_dir, "run_torch.py").resolve()
     model.attach_generator_files(to_copy=str(script_path))
-    exp.generate(model)
+    wlm_experiment.generate(model)
 
-    exp.start(model, block=True)
+    wlm_experiment.start(model, block=True)
 
-    exp.stop(db)
     # if model failed, test will fail
-    model_status = exp.get_status(model)[0]
+    model_status = wlm_experiment.get_status(model)[0]
     assert model_status != SmartSimStatus.STATUS_FAILED

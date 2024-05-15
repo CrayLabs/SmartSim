@@ -11,6 +11,7 @@ tests/test_output
 
 # Dependencies
 smartsim/_core/.third-party
+smartsim/_core/.dragon
 
 # Docs
 _build
@@ -22,14 +23,13 @@ venv/
 .venv/
 env/
 .env/
+**/.env
 
 # written upon install
 smartsim/version.py
 
-smartsim/_core/bin/*-server
-smartsim/_core/bin/*-cli
-
 # created upon install
+smartsim/_core/bin
 smartsim/_core/lib
 
 # optional dev tools

@@ -40,7 +40,8 @@ from smartsim._core.config import CONFIG
 # constants
 DEFAULT_DATE_FORMAT: t.Final[str] = "%H:%M:%S"
 DEFAULT_LOG_FORMAT: t.Final[str] = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
+    "%(asctime)s %(hostname)s %(name)s[%(process)d:%(threadName)s] "
+    "%(levelname)s %(message)s"
 )
 EXPERIMENT_LOG_FORMAT = DEFAULT_LOG_FORMAT.replace("s[%", "s {%(exp_path)s} [%")
 

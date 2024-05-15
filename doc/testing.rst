@@ -66,20 +66,20 @@ of the tests located within the ``on_wlm`` directory.
 
 To run the ``on_wlm`` test suite, users will have to be on a system
 with one of the supported workload managers. Additionally, users will
-need to obtain an allocation of **at least 4 nodes**.
+need to obtain an allocation of **at least 8 nodes**.
 
 Examples of how to obtain allocations on systems with the launchers:
 
 .. code:: bash
 
   # for slurm (with srun)
-  salloc -N 4 -A account --exclusive -t 00:10:00
+  salloc -N 8 -A account --exclusive -t 00:10:00
 
   # for PBSPro (with aprun)
-  qsub -l select=4 -l place=scatter -l walltime=00:10:00 -q queue
+  qsub -l select=8 -l place=scatter -l walltime=00:10:00 -q queue
 
   # for LSF (with jsrun)
-  bsub -Is -W 00:30 -nnodes 4 -P project $SHELL
+  bsub -Is -W 00:30 -nnodes 8 -P project $SHELL
 
 Values for queue, account, or project should be substituted appropriately.
 
@@ -119,7 +119,7 @@ A full example on an internal SLURM system
 
 .. code:: bash
 
-  salloc -N 4 -A account --exclusive -t 03:00:00
+  salloc -N 8 -A account --exclusive -t 03:00:00
   export SMARTSIM_TEST_LAUNCHER=slurm
   export SMARTSIM_TEST_INTERFACE=ipogif0
   export SMARTSIM_TEST_DEVICE=gpu

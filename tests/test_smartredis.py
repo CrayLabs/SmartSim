@@ -60,22 +60,17 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_exchange(fileutils, test_dir, wlmutils):
+def test_exchange(local_experiment, local_db, prepare_db, fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
     """
 
-    exp = Experiment(
-        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
-    )
-
+    db = prepare_db(local_db).orchestrator
     # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    local_experiment.reconnect_orchestrator(db.checkpoint_file)
 
-    rs = exp.create_run_settings("python", "producer.py --exchange")
+    rs = local_experiment.create_run_settings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
     ensemble = Ensemble(
         name="producer",
@@ -90,21 +85,17 @@ def test_exchange(fileutils, test_dir, wlmutils):
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
-    exp.generate(ensemble)
+    local_experiment.generate(ensemble)
 
     # start the models
-    exp.start(ensemble, summary=False)
+    local_experiment.start(ensemble, summary=False)
 
     # get and confirm statuses
-    statuses = exp.get_status(ensemble)
-    try:
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
-    finally:
-        # stop the orchestrator
-        exp.stop(orc)
+    statuses = local_experiment.get_status(ensemble)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
-def test_consumer(fileutils, test_dir, wlmutils):
+def test_consumer(local_experiment, local_db, prepare_db, fileutils):
     """Run three processes, each one of the first two processes
     puts a tensor on the DB; the third process accesses the
     tensors put by the two producers.
@@ -112,17 +103,11 @@ def test_consumer(fileutils, test_dir, wlmutils):
     and the consumer accesses the two results.
     """
 
-    exp = Experiment(
-        "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
-    )
+    db = prepare_db(local_db).orchestrator
+    local_experiment.reconnect_orchestrator(db.checkpoint_file)
 
-    # create and start a database
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc, block=False)
-
-    rs_prod = exp.create_run_settings("python", "producer.py")
-    rs_consumer = exp.create_run_settings("python", "consumer.py")
+    rs_prod = local_experiment.create_run_settings("python", "producer.py")
+    rs_consumer = local_experiment.create_run_settings("python", "consumer.py")
     params = {"mult": [1, -10]}
     ensemble = Ensemble(
         name="producer", params=params, run_settings=rs_prod, perm_strat="step"
@@ -139,15 +124,11 @@ def test_consumer(fileutils, test_dir, wlmutils):
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
-    exp.generate(ensemble)
+    local_experiment.generate(ensemble)
 
     # start the models
-    exp.start(ensemble, summary=False)
+    local_experiment.start(ensemble, summary=False)
 
     # get and confirm statuses
-    statuses = exp.get_status(ensemble)
-    try:
-        assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
-    finally:
-        # stop the orchestrator
-        exp.stop(orc)
+    statuses = local_experiment.get_status(ensemble)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

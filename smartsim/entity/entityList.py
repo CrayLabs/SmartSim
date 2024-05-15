@@ -91,16 +91,14 @@ class EntitySequence(t.Generic[_T_co]):
 
     @property
     def batch(self) -> bool:
-        try:
-            if not hasattr(self, "batch_settings"):
-                return False
+        """Property indicating whether or not the entity sequence should be
+        launched as a batch job
 
-            if self.batch_settings:
-                return True
-            return False
-        # local orchestrator cannot launch with batches
-        except AttributeError:
-            return False
+        :return: ``True`` if entity sequence should be launched as a batch job,
+                 ``False`` if the members will be launched individually.
+        """
+        # pylint: disable-next=no-member
+        return hasattr(self, "batch_settings") and self.batch_settings
 
     @property
     def type(self) -> str:

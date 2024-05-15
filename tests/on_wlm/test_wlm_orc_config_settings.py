@@ -27,6 +27,9 @@
 import pytest
 
 from smartsim.error import SmartSimError
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -40,13 +43,15 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm_single(dbutils, db):
+def test_config_methods_on_wlm_single(dbutils, prepare_db, single_db):
     """Test all configuration file edit methods on single node WLM db"""
 
+    db = prepare_db(single_db).orchestrator
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
+        logger.debug(f"Setting {setting}={value}")
         config_set_method = dbutils.get_config_edit_method(db, setting)
         config_set_method(value)
 
@@ -67,14 +72,16 @@ def test_config_methods_on_wlm_single(dbutils, db):
                 db.set_db_conf(key, value)
 
 
-def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
+def test_config_methods_on_wlm_cluster(dbutils, prepare_db, clustered_db):
     """Test all configuration file edit methods on an active clustered db"""
 
+    db = prepare_db(clustered_db).orchestrator
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db_cluster, setting)
+        logger.debug(f"Setting {setting}={value}")
+        config_set_method = dbutils.get_config_edit_method(db, setting)
         config_set_method(value)
 
     # ensure SmartSimError is raised when a clustered database's
@@ -83,7 +90,8 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                db_cluster.set_db_conf(key, value)
+                logger.debug(f"Setting {key}={value}")
+                db.set_db_conf(key, value)
 
     # ensure TypeError is raised when a clustered database's
     # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
@@ -91,4 +99,5 @@ def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                db_cluster.set_db_conf(key, value)
+                logger.debug(f"Setting {key}={value}")
+                db.set_db_conf(key, value)

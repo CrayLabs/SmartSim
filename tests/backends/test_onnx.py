@@ -57,7 +57,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_sklearn_onnx(test_dir, mlutils, wlmutils):
+def test_sklearn_onnx(wlm_experiment, prepare_db, single_db, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 some sklearn models
 
      here we test the following sklearn models:
@@ -74,33 +74,24 @@ def test_sklearn_onnx(test_dir, mlutils, wlmutils):
 
     You may need to put CUDNN in your LD_LIBRARY_PATH if running on GPU
     """
-
-    exp_name = "test_sklearn_onnx"
-
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
+    db = prepare_db(single_db).orchestrator
+    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
 
-    db = wlmutils.get_orchestrator(nodes=1)
-    db.set_path(test_dir)
+    run_settings = wlm_experiment.create_run_settings(
+        sys.executable, f"run_sklearn_onnx.py --device={test_device}"
+    )
+    if wlmutils.get_test_launcher() != "local":
+        run_settings.set_tasks(1)
+    model = wlm_experiment.create_model("onnx_models", run_settings)
 
-    exp.start(db)
-    try:
-        run_settings = exp.create_run_settings(
-            sys.executable, f"run_sklearn_onnx.py --device={test_device}"
-        )
-        if wlmutils.get_test_launcher() != "local":
-            run_settings.set_tasks(1)
-        model = exp.create_model("onnx_models", run_settings)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_path = Path(script_dir, "run_sklearn_onnx.py").resolve()
+    model.attach_generator_files(to_copy=str(script_path))
+    wlm_experiment.generate(model)
 
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        script_path = Path(script_dir, "run_sklearn_onnx.py").resolve()
-        model.attach_generator_files(to_copy=str(script_path))
-        exp.generate(model)
-
-        exp.start(model, block=True)
-    finally:
-        exp.stop(db)
+    wlm_experiment.start(model, block=True)
 
     # if model failed, test will fail
-    model_status = exp.get_status(model)
+    model_status = wlm_experiment.get_status(model)
     assert model_status[0] != SmartSimStatus.STATUS_FAILED

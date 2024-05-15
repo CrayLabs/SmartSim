@@ -24,7 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os.path
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -63,6 +65,37 @@ def test_models(fileutils, test_dir, wlmutils):
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
+def test_multinode_app(mpi_app_path, test_dir, wlmutils):
+
+    if not mpi_app_path:
+        pytest.skip("Test needs MPI to run")
+
+    exp_name = "test-mpi-app"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+
+    settings = exp.create_run_settings(str(mpi_app_path), [])
+    settings.set_nodes(3)
+
+    model = exp.create_model("mpi_app", run_settings=settings)
+    exp.generate(model)
+
+    exp.start(model, block=True)
+
+    p = Path(model.path)
+    output_files = sorted([str(path) for path in p.glob("mpi_hello*")])
+    expected_files = sorted(
+        [os.path.join(model.path, f"mpi_hello.{idx}.log") for idx in range(3)]
+    )
+
+    assert output_files == expected_files
+
+    for index, file in enumerate(output_files):
+        with open(file) as f:
+            assert f.readlines() == [
+                f"Hello world from rank {index} out of 3 processors\n"
+            ]
+
+
 def test_ensemble(fileutils, test_dir, wlmutils):
     exp_name = "test-ensemble-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
@@ -84,21 +117,21 @@ def test_summary(fileutils, test_dir, wlmutils):
     exp_name = "test-launch-summary"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
-    sleep = fileutils.get_test_conf_path("sleep.py")
+    sleep_exp = fileutils.get_test_conf_path("sleep.py")
     bad = fileutils.get_test_conf_path("bad.py")
 
-    sleep_settings = exp.create_run_settings("python", f"{sleep} --time=3")
+    sleep_settings = exp.create_run_settings("python", f"{sleep_exp} --time=3")
     sleep_settings.set_tasks(1)
     bad_settings = exp.create_run_settings("python", f"{bad} --time=6")
     bad_settings.set_tasks(1)
 
-    sleep = exp.create_model("sleep", path=test_dir, run_settings=sleep_settings)
+    sleep_exp = exp.create_model("sleep", path=test_dir, run_settings=sleep_settings)
     bad = exp.create_model("bad", path=test_dir, run_settings=bad_settings)
 
     # start and poll
-    exp.start(sleep, bad)
+    exp.start(sleep_exp, bad)
     assert exp.get_status(bad)[0] == SmartSimStatus.STATUS_FAILED
-    assert exp.get_status(sleep)[0] == SmartSimStatus.STATUS_COMPLETED
+    assert exp.get_status(sleep_exp)[0] == SmartSimStatus.STATUS_COMPLETED
 
     summary_str = exp.summary(style="plain")
     print(summary_str)
@@ -106,13 +139,18 @@ def test_summary(fileutils, test_dir, wlmutils):
     rows = [s.split() for s in summary_str.split("\n")]
     headers = ["Index"] + rows.pop(0)
 
+    # There is no guarantee that the order of
+    # the rows will be sleep, bad
     row = dict(zip(headers, rows[0]))
-    assert sleep.name == row["Name"]
-    assert sleep.type == row["Entity-Type"]
+    row_1 = dict(zip(headers, rows[1]))
+    if row["Name"] != sleep_exp.name:
+        row_1, row = row, row_1
+
+    assert sleep_exp.name == row["Name"]
+    assert sleep_exp.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 
-    row_1 = dict(zip(headers, rows[1]))
     assert bad.name == row_1["Name"]
     assert bad.type == row_1["Entity-Type"]
     assert 0 == int(row_1["RunID"])

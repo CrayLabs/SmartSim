@@ -167,19 +167,16 @@ def train_tf(generator):
 
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
-def test_tf_dataloaders(test_dir, wlmutils):
-    exp = Experiment(
-        "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
-    )
-    orc: Orchestrator = wlmutils.get_orchestrator()
-    exp.generate(orc)
-    exp.start(orc)
+def test_tf_dataloaders(wlm_experiment, prepare_db, single_db, monkeypatch):
+
+    db = prepare_db(single_db).orchestrator
+    orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+    monkeypatch.setenv("SSDB", orc.get_address()[0])
+    monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")
 
     try:
-        os.environ["SSDB"] = orc.get_address()[0]
         data_info = run_local_uploaders(mpi_size=2, format="tf")
 
-        os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
         for rank in range(2):
             tf_dynamic = TFDataGenerator(
                 data_info_or_list_name="test_data_list",
@@ -190,6 +187,7 @@ def test_tf_dataloaders(test_dir, wlmutils):
                 batch_size=4,
                 max_fetch_trials=5,
                 dynamic=False,  # catch wrong arg
+                wait_interval=0.1,
             )
             train_tf(tf_dynamic)
             assert len(tf_dynamic) == 4
@@ -204,6 +202,7 @@ def test_tf_dataloaders(test_dir, wlmutils):
                 batch_size=4,
                 max_fetch_trials=5,
                 dynamic=True,  # catch wrong arg
+                wait_interval=0.1,
             )
             train_tf(tf_static)
             assert len(tf_static) == 4
@@ -211,11 +210,6 @@ def test_tf_dataloaders(test_dir, wlmutils):
 
     except Exception as e:
         raise e
-    finally:
-        exp.stop(orc)
-        os.environ.pop("SSDB", "")
-        os.environ.pop("SSKEYIN", "")
-        os.environ.pop("SSKEYOUT", "")
 
 
 def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
@@ -234,20 +228,18 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
 
 
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
-def test_torch_dataloaders(fileutils, test_dir, wlmutils):
-    exp = Experiment(
-        "test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher()
-    )
-    orc: Orchestrator = wlmutils.get_orchestrator()
+def test_torch_dataloaders(
+    wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, monkeypatch
+):
     config_dir = fileutils.get_test_dir_path("ml")
-    exp.generate(orc)
-    exp.start(orc)
+    db = prepare_db(single_db).orchestrator
+    orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+    monkeypatch.setenv("SSDB", orc.get_address()[0])
+    monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")
 
     try:
-        os.environ["SSDB"] = orc.get_address()[0]
         data_info = run_local_uploaders(mpi_size=2)
 
-        os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
         for rank in range(2):
             torch_dynamic = TorchDataGenerator(
                 data_info_or_list_name="test_data_list",
@@ -258,11 +250,12 @@ def test_torch_dataloaders(fileutils, test_dir, wlmutils):
                 batch_size=4,
                 max_fetch_trials=5,
                 dynamic=False,  # catch wrong arg
-                init_samples=True,  # catch wrong arg
+                init_samples=True,
+                wait_interval=0.1,
             )
             check_dataloader(torch_dynamic, rank, dynamic=True)
 
-            torch_dynamic.init_samples(5)
+            torch_dynamic.init_samples(5, 0.1)
             for _ in range(2):
                 for _ in torch_dynamic:
                     continue
@@ -278,26 +271,22 @@ def test_torch_dataloaders(fileutils, test_dir, wlmutils):
                 max_fetch_trials=5,
                 dynamic=True,  # catch wrong arg
                 init_samples=True,  # catch wrong arg
+                wait_interval=0.1,
             )
             check_dataloader(torch_static, rank, dynamic=False)
 
-            torch_static.init_samples(5)
+            torch_static.init_samples(5, 0.1)
             for _ in range(2):
                 for _ in torch_static:
                     continue
 
-        trainer = create_trainer_torch(exp, config_dir, wlmutils)
-        exp.start(trainer, block=True)
+        trainer = create_trainer_torch(wlm_experiment, config_dir, wlmutils)
+        wlm_experiment.start(trainer, block=True)
 
-        assert exp.get_status(trainer)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert wlm_experiment.get_status(trainer)[0] == SmartSimStatus.STATUS_COMPLETED
 
     except Exception as e:
         raise e
-    finally:
-        exp.stop(orc)
-        os.environ.pop("SSDB", "")
-        os.environ.pop("SSKEYIN", "")
-        os.environ.pop("SSKEYOUT", "")
 
 
 def test_data_info_repr():
@@ -331,15 +320,9 @@ def test_data_info_repr():
 @pytest.mark.skipif(
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
 )
-def test_wrong_dataloaders(test_dir, wlmutils):
-    exp = Experiment(
-        "test-wrong-dataloaders",
-        exp_path=test_dir,
-        launcher=wlmutils.get_test_launcher(),
-    )
-    orc = wlmutils.get_orchestrator()
-    exp.generate(orc)
-    exp.start(orc)
+def test_wrong_dataloaders(wlm_experiment, prepare_db, single_db):
+    db = prepare_db(single_db).orchestrator
+    orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
 
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
@@ -365,5 +348,3 @@ def test_wrong_dataloaders(test_dir, wlmutils):
                 cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)
-
-    exp.stop(orc)
