@@ -1,8 +1,14 @@
 from smartsim.settingshold import LaunchSettings
 from smartsim.settingshold.translators.launch.dragon import DragonArgTranslator
+from smartsim.settingshold.launchCommand import LauncherType
 import pytest
 import logging
-    
+
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
+    assert dragonLauncher.launcher_str() == LauncherType.DragonLauncher.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [
@@ -11,8 +17,8 @@ import logging
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    dragonLauncher = LaunchSettings(launcher="dragon")
-    assert dragonLauncher.launcher == "dragon"
+    dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
+    assert dragonLauncher.launcher.value == LauncherType.DragonLauncher.value
     assert isinstance(dragonLauncher.arg_translator,DragonArgTranslator)
     getattr(dragonLauncher, function)(*value)
     assert dragonLauncher.launcher_args[flag] == result
@@ -34,6 +40,12 @@ def test_update_env_initialized(function, value, flag, result):
         pytest.param("set_executable_broadcast", ("/tmp/some/path",),id="set_broadcast"),
         pytest.param("set_walltime", ("10:00:00",),id="set_walltime"),
         pytest.param("set_node_feature", ("P100",),id="set_node_feature"),
+        pytest.param("set_memory_per_node", ("1000",),id="set_memory_per_node"),
+        pytest.param("set_tasks", (2,),id="set_tasks"),
+        pytest.param("set_binding", ("bind",),id="set_tasks"),
+        pytest.param("format_comma_sep_env_vars", (), id="format_comma_sep_env_vars"),
+        pytest.param("format_launcher_args", (), id="format_launcher_args"),
+        pytest.param("format_env_vars", (), id="format_env_vars"),
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
@@ -44,7 +56,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
 
     with caplog.at_level(logging.WARNING):
         caplog.clear()
-        dragonLauncher = LaunchSettings(launcher="dragon")
+        dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
         try:
             getattr(dragonLauncher, method)(*params)
         finally:
@@ -53,7 +65,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and ("not supported" and "dragon") in rec.msg
+                and (method and "not supported" and "dragon") in rec.msg
             ):
                 break
         else:
