@@ -1,0 +1,79 @@
+from smartsim.settingshold import LaunchSettings
+from smartsim.settingshold.translators.launch.pals import PalsMpiexecArgTranslator
+import pytest
+import logging
+    
+@pytest.mark.parametrize(
+    "function,value,result,flag",
+    [
+        pytest.param("set_cpu_binding_type", ("bind",),"bind","bind-to",id="set_cpu_binding_type"),
+        pytest.param("set_tasks", (2,),2,"np",id="set_tasks"),
+        pytest.param("set_tasks_per_node", (2,),2,"ppn",id="set_tasks_per_node"),
+        pytest.param("set_hostlist", ("host_A",),"host_A","hosts",id="set_hostlist_str"),
+        pytest.param("set_hostlist", (["host_A","host_B"],),"host_A,host_B","hosts",id="set_hostlist_list[str]"),
+        pytest.param("set_executable_broadcast", ("broadcast",),"broadcast","transfer",id="set_executable_broadcast"),
+    ],
+)
+def test_update_env_initialized(function, value, flag, result):
+    palsLauncher = LaunchSettings(launcher="pals")
+    getattr(palsLauncher, function)(*value)
+    assert palsLauncher.launcher == "pals"
+    assert isinstance(palsLauncher.arg_translator,PalsMpiexecArgTranslator)
+    assert palsLauncher.launcher_args[flag] == result
+    assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]
+
+def test_format_env_vars():
+    env_vars = {"FOO_VERSION": "3.14", "PATH": None, "LD_LIBRARY_PATH": None}
+    palsLauncher = LaunchSettings(launcher="pals", env_vars=env_vars)
+    formatted = " ".join(palsLauncher.format_env_vars())
+    expected = "--env FOO_VERSION=3.14 --envlist PATH,LD_LIBRARY_PATH"
+    assert formatted == expected
+
+def test_invalid_hostlist_format():
+    """Test invalid hostlist formats"""
+    palsLauncher = LaunchSettings(launcher="pals")
+    with pytest.raises(TypeError):
+        palsLauncher.set_hostlist(["test",5])
+    with pytest.raises(TypeError):
+        palsLauncher.set_hostlist([5])
+    with pytest.raises(TypeError):
+        palsLauncher.set_hostlist(5)
+
+@pytest.mark.parametrize(
+    "method,params",
+    [
+        pytest.param("set_cpu_binding_type", ("bind",), id="set_cpu_binding_type"),
+        pytest.param("set_task_map", ("task:map",), id="set_task_map"),
+        pytest.param("set_cpus_per_task", ("task:map",), id="set_cpus_per_task"),
+        pytest.param("set_quiet_launch", ("task:map",), id="set_quiet_launch"),
+        pytest.param("set_walltime", ("task:map",), id="set_walltime"),
+        pytest.param("set_node_feature", ("P100",),id="set_node_feature"),
+    ],
+)
+def test_unimplimented_setters_throw_warning(caplog, method, params):
+    from smartsim.settings.base import logger
+
+    prev_prop = logger.propagate
+    logger.propagate = True
+
+    with caplog.at_level(logging.WARNING):
+        caplog.clear()
+        palsLauncher = LaunchSettings(launcher="pals")
+        try:
+            getattr(palsLauncher, method)(*params)
+        finally:
+            logger.propagate = prev_prop
+
+        for rec in caplog.records:
+            if (
+                logging.WARNING <= rec.levelno < logging.ERROR
+                and ("not supported" and "pals") in rec.msg
+            ):
+                break
+        else:
+            pytest.fail(
+                (
+                    f"No message stating method `{method}` is not "
+                    "implemented at `warning` level"
+                )
+            )
