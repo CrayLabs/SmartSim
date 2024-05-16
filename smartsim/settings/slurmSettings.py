@@ -327,7 +327,7 @@ class SrunSettings(RunSettings):
                         "environment. If the job is running in an interactive "
                         f"allocation, the value {v} will not be set. Please "
                         "consider removing the variable from the environment "
-                        "and re-run the experiment."
+                        "and re-running the experiment."
                     )
                     logger.warning(msg)
 

@@ -27,6 +27,7 @@
 import abc
 import typing as t
 
+from ..._core.launcher.stepMapping import StepMap
 from ...error import AllocationError, LauncherError, SSUnsupportedError
 from ...settings import SettingsBase
 from .step import Step
@@ -68,6 +69,15 @@ class Launcher(abc.ABC):  # pragma: no cover
     @abc.abstractmethod
     def stop(self, step_name: str) -> StepInfo:
         raise NotImplementedError
+
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
+        """Add a StepMap to the Launcher step mapping table
+        making it monitor the step.
+
+        :param name: name of step to be added
+        :param step_map: step map of added step
+        """
+        self.step_mapping[name] = step_map
 
 
 class WLMLauncher(Launcher):  # cov-wlm

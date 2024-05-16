@@ -140,7 +140,7 @@ class Generator:
             )
         if not path.isdir(self.gen_path):
             # keep exists ok for race conditions on NFS
-            pathlib.Path(self.gen_path).mkdir(exist_ok=True)
+            pathlib.Path(self.gen_path).mkdir(exist_ok=True, parents=True)
         else:
             logger.log(
                 level=self.log_level, msg="Working in previously created experiment"
@@ -168,7 +168,7 @@ class Generator:
             # Always remove orchestrator files if present.
             if path.isdir(orc_path):
                 shutil.rmtree(orc_path, ignore_errors=True)
-            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite)
+            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite, parents=True)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for Ensemble instances

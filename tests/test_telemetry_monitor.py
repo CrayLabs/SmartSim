@@ -72,8 +72,7 @@ requires_wlm = pytest.mark.skipif(
     pytest.test_launcher == "local", reason="Test requires WLM"
 )
 
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -85,7 +84,7 @@ def turn_on_tm(monkeypatch):
     yield
 
 
-def write_stop_file(entity: JobEntity, test_dir: str, duration: int):
+def write_stop_file(entity: JobEntity, test_dir: pathlib.Path, duration: int):
     time.sleep(duration)
     write_event(
         get_ts_ms(),
@@ -403,7 +402,8 @@ def test_persistable_computed_properties(
             "step_id": step_id,
         },
     }
-    persistables = Run.load_entity(etype, stored, exp_dir)
+    faux_experiment = {"launcher": "local"}
+    persistables = Run.load_entity(etype, stored, exp_dir, faux_experiment)
     persistable = persistables[0] if persistables else None
 
     assert persistable.is_managed == exp_ismanaged
@@ -583,7 +583,8 @@ async def test_auto_shutdown__has_db(
     entity.status_dir = test_dir
 
     p = mp.Process(
-        target=write_stop_file, args=(entity, test_dir, (task_duration_ms / 1000))
+        target=write_stop_file,
+        args=(entity, pathlib.Path(test_dir), (task_duration_ms / 1000)),
     )
 
     frequency = 1000
@@ -1137,7 +1138,7 @@ def test_unmanaged_steps_are_proxyed_through_indirect(
 
 
 @for_all_wlm_launchers
-def test_unmanaged_steps_are_not_proxied_if_the_telemetry_monitor_is_disabled(
+def test_unmanaged_steps_are_not_proxyed_if_the_telemetry_monitor_is_disabled(
     wlm_launcher, mock_step_meta_dict, test_dir, monkeypatch
 ):
     monkeypatch.setattr(cfg.Config, CFG_TM_ENABLED_ATTR, False)

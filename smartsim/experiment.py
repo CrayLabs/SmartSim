@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=too-many-lines
+
 import os
 import os.path as osp
 import typing as t
@@ -35,7 +37,7 @@ from smartsim._core.config import CONFIG
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.status import SmartSimStatus
 
-from ._core import Controller, Generator, Manifest
+from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import Orchestrator
 from .entity import (
     Ensemble,
@@ -158,15 +160,27 @@ class Experiment:
 
         self.exp_path = exp_path
 
-        if launcher == "auto":
-            launcher = detect_launcher()
-        if launcher == "cobalt":
+        self._launcher = launcher.lower()
+
+        if self._launcher == "auto":
+            self._launcher = detect_launcher()
+        if self._launcher == "cobalt":
             raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
-        self._control = Controller(launcher=launcher)
-        self._launcher = launcher.lower()
+        if launcher == "dragon":
+            self._set_dragon_server_path()
+
+        self._control = Controller(launcher=self._launcher)
+
         self.db_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
+
+    def _set_dragon_server_path(self) -> None:
+        """Set path for dragon server through environment varialbes"""
+        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
+            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
+                self.exp_path, CONFIG.dragon_default_subdir
+            )
 
     @_contextualize
     def start(
@@ -719,7 +733,7 @@ class Experiment:
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
-        interface: str = "ipogif0",
+        interface: t.Union[str, t.List[str]] = "ipogif0",
         account: t.Optional[str] = None,
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
@@ -803,6 +817,53 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    def preview(
+        self,
+        *args: t.Any,
+        verbosity_level: previewrenderer.Verbosity = previewrenderer.Verbosity.INFO,
+        output_format: previewrenderer.Format = previewrenderer.Format.PLAINTEXT,
+        output_filename: t.Optional[str] = None,
+    ) -> None:
+        """Preview entity information prior to launch. This method
+        aggregates multiple pieces of information to give users insight
+        into what and how entities will be launched.  Any instance of
+        ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
+        Experiment can be passed as an argument to the preview method.
+
+        Verbosity levels:
+         - info: Display user-defined fields and entities.
+         - debug: Display user-defined field and entities and auto-generated
+            fields.
+         - developer: Display user-defined field and entities, auto-generated
+            fields, and run commands.
+
+        :param verbosity_level: verbosity level specified by user, defaults to info.
+        :param output_format: Set output format. The possible accepted
+            output formats are ``plain_text``.
+            Defaults to ``plain_text``.
+        :param output_filename: Specify name of file and extension to write
+            preview data to. If no output filename is set, the preview will be
+            output to stdout. Defaults to None.
+        """
+
+        # Retrieve any active orchestrator jobs
+        active_dbjobs = self._control.active_orchestrator_jobs
+
+        preview_manifest = Manifest(*args)
+
+        previewrenderer.render(
+            self,
+            preview_manifest,
+            verbosity_level,
+            output_format,
+            output_filename,
+            active_dbjobs,
+        )
+
+    @property
+    def launcher(self) -> str:
+        return self._launcher
 
     @_contextualize
     def summary(self, style: str = "github") -> str:

@@ -25,6 +25,7 @@ Experiment
    Experiment.finished
    Experiment.get_status
    Experiment.reconnect_orchestrator
+   Experiment.preview
    Experiment.summary
    Experiment.telemetry
 
@@ -59,6 +60,7 @@ Types of Settings:
     MpiexecSettings
     OrterunSettings
     JsrunSettings
+    DragonRunSettings
     SbatchSettings
     QsubBatchSettings
     BsubBatchSettings
@@ -161,6 +163,28 @@ and within batch launches (e.g., ``QsubBatchSettings``)
     :undoc-members:
     :members:
 
+
+.. _dragonsettings_api:
+
+DragonRunSettings
+-----------------
+
+``DragonRunSettings`` can be used on systems that support Slurm or
+PBS, if Dragon is available in the Python environment (see `_dragon_install`
+for instructions on how to install it through ``smart``).
+
+``DragonRunSettings`` can be used in interactive sessions (on allcation)
+and within batch launches (i.e. ``SbatchSettings`` or ``QsubBatchSettings``,
+for Slurm and PBS sessions, respectively).
+
+.. autosummary::
+    DragonRunSettings.set_nodes
+    DragonRunSettings.set_tasks_per_node
+
+.. autoclass:: DragonRunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
 
 
 .. _jsrun_api:
@@ -409,6 +433,8 @@ Orchestrator
    Orchestrator.set_max_message_size
    Orchestrator.set_db_conf
    Orchestrator.telemetry
+   Orchestrator.checkpoint_file
+   Orchestrator.batch
 
 Orchestrator
 ------------
