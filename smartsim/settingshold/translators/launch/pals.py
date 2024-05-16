@@ -104,3 +104,22 @@ class PalsMpiexecArgTranslator(LaunchArgTranslator):
             formatted += ["--envlist", ",".join(export_vars)]
 
         return formatted
+
+    def format_launcher_args(self, launch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+        """Return a list of MPI-standard formatted launcher arguments
+
+        :return: list of MPI-standard arguments for these settings
+        """
+        # args launcher uses
+        args = []
+        restricted = ["wdir", "wd"]
+
+        for opt, value in launch_args.items():
+            if opt not in restricted:
+                prefix = "--"
+                if not value:
+                    args += [prefix + opt]
+                else:
+                    args += [prefix + opt, str(value)]
+
+        return args

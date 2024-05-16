@@ -1,5 +1,6 @@
 from smartsim.settingshold import LaunchSettings
 from smartsim.settingshold.translators.launch.slurm import SlurmArgTranslator
+from smartsim.settingshold.launchCommand import LauncherType
 import pytest
 import logging
     
@@ -25,15 +26,15 @@ import logging
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    slurmLauncher = LaunchSettings(launcher="slurm")
-    assert slurmLauncher.launcher == "slurm"
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
+    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     getattr(slurmLauncher, function)(*value)
     assert slurmLauncher.launcher_args[flag] == result
 
 def test_set_verbose_launch():
-    slurmLauncher = LaunchSettings(launcher="slurm")
-    assert slurmLauncher.launcher == "slurm"
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
+    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     slurmLauncher.set_verbose_launch(True)
     assert slurmLauncher.launcher_args == {'verbose': None}
@@ -41,8 +42,8 @@ def test_set_verbose_launch():
     assert slurmLauncher.launcher_args == {}
 
 def test_set_quiet_launch():
-    slurmLauncher = LaunchSettings(launcher="slurm")
-    assert slurmLauncher.launcher == "slurm"
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
+    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     slurmLauncher.set_quiet_launch(True)
     assert slurmLauncher.launcher_args == {'quiet': None}
@@ -56,8 +57,8 @@ def test_format_env_vars():
         "LOGGING": "verbose",
         "SSKEYIN": "name_0,name_1",
     }
-    slurmLauncher = LaunchSettings(launcher="slurm", env_vars=env_vars)
-    assert slurmLauncher.launcher == "slurm"
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher, env_vars=env_vars)
+    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     formatted = slurmLauncher.format_env_vars()
     assert "OMP_NUM_THREADS=20" in formatted
@@ -67,7 +68,7 @@ def test_format_env_vars():
 def test_format_comma_sep_env_vars():
     """Test format_comma_sep_env_vars runs correctly"""
     env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose", "SSKEYIN": "name_0,name_1"}
-    slurmLauncher = LaunchSettings(launcher="slurm", env_vars=env_vars)
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher, env_vars=env_vars)
     formatted, comma_separated_formatted = slurmLauncher.format_comma_sep_env_vars()
     assert "OMP_NUM_THREADS" in formatted
     assert "LOGGING" in formatted
@@ -77,7 +78,7 @@ def test_format_comma_sep_env_vars():
 
 def test_srun_settings():
     """Test format_launcher_args runs correctly"""
-    slurmLauncher = LaunchSettings(launcher="slurm")
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     slurmLauncher.set_nodes(5)
     slurmLauncher.set_cpus_per_task(2)
     slurmLauncher.set_tasks(100)
@@ -95,7 +96,7 @@ def test_srun_launcher_args():
         "nodes": 10,
         "ntasks": 100,
     }
-    slurmLauncher = LaunchSettings(launcher="slurm", launcher_args=launcher_args)
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher, launcher_args=launcher_args)
     formatted = slurmLauncher.format_launcher_args()
     result = [
         "--account=A3123",
@@ -109,7 +110,7 @@ def test_srun_launcher_args():
 
 def test_invalid_hostlist_format():
     """Test invalid hostlist formats"""
-    slurmLauncher = LaunchSettings(launcher="slurm")
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     with pytest.raises(TypeError):
         slurmLauncher.set_hostlist(["test",5])
     with pytest.raises(TypeError):
@@ -119,7 +120,7 @@ def test_invalid_hostlist_format():
 
 def test_invalid_exclude_hostlist_format():
     """Test invalid hostlist formats"""
-    slurmLauncher = LaunchSettings(launcher="slurm")
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     with pytest.raises(TypeError):
         slurmLauncher.set_excluded_hosts(["test",5])
     with pytest.raises(TypeError):
@@ -129,7 +130,7 @@ def test_invalid_exclude_hostlist_format():
 
 def test_invalid_node_feature_format():
     """Test invalid node feature formats"""
-    slurmLauncher = LaunchSettings(launcher="slurm")
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     with pytest.raises(TypeError):
         slurmLauncher.set_node_feature(["test",5])
     with pytest.raises(TypeError):
@@ -139,7 +140,7 @@ def test_invalid_node_feature_format():
 
 def test_invalid_walltime_format():
     """Test invalid walltime formats"""
-    slurmLauncher = LaunchSettings(launcher="slurm")
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     with pytest.raises(ValueError):
         slurmLauncher.set_walltime("11:11")
     with pytest.raises(ValueError):
@@ -166,7 +167,7 @@ def test_unimplimented_methods_throw_warning(caplog, method, params):
 
     with caplog.at_level(logging.WARNING):
         caplog.clear()
-        slurmLauncher = LaunchSettings(launcher="slurm")
+        slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
         try:
             getattr(slurmLauncher, method)(*params)
         finally:
@@ -175,7 +176,7 @@ def test_unimplimented_methods_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and ("not supported" and "slurm") in rec.msg
+                and (method and "not supported" and "slurm") in rec.msg
             ):
                 break
         else:
