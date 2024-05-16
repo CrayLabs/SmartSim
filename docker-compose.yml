@@ -1,7 +1,3 @@
-
-
-version: '3'
-
 services:
   docs-dev:
     image: smartsim-docs:dev-latest
