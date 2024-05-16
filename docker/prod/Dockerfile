@@ -41,7 +41,7 @@ RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs &&
     && ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /home/craylabs
-COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
+COPY --chown=craylabs:root ./doc/tutorials/ /home/craylabs/tutorials/
 
 USER craylabs
 RUN export PATH=/home/craylabs/.local/bin:$PATH && \
@@ -50,5 +50,7 @@ RUN export PATH=/home/craylabs/.local/bin:$PATH && \
     smart build --device cpu -v && \
     chown craylabs:root -R /home/craylabs/.local && \
     rm -rf ~/.cache/pip
+
+WORKDIR /home/craylabs/tutorials/
 
 CMD ["/bin/bash", "-c", "PATH=/home/craylabs/.local/bin:$PATH /home/craylabs/.local/bin/jupyter lab --port 8888 --no-browser --ip=0.0.0.0"]
