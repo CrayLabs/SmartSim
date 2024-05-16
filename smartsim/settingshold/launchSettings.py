@@ -5,7 +5,7 @@ import copy
 
 
 from smartsim.log import get_logger
-
+from .._core.utils.helpers import fmt_dict
 from .launchCommand import LauncherType
 from .translators.launch.alps import AprunArgTranslator
 from .translators.launch.lsf import JsrunArgTranslator
@@ -19,20 +19,6 @@ from .translators import LaunchArgTranslator
 from .common import process_env_vars, IntegerArgument, StringArgument, FloatArgument                                                           
 
 logger = get_logger(__name__)
-
-class SupportedLaunchers(Enum):
-    """ Launchers that are supported by
-    SmartSim.
-    """
-    local = "local"
-    dragon = "dragon"
-    slurm = "slurm"
-    mpiexec = "mpiexec"
-    mpirun = "mpirun"
-    orterun = "orterun"
-    aprun = "aprun"
-    jsrun = "jsrun"
-    pals = "pals"
 
 class LaunchSettings():
     def __init__(
@@ -53,22 +39,22 @@ class LaunchSettings():
             'dragon': DragonArgTranslator(),
             'local': LocalArgTranslator(),
         }
-        if launcher in launcher_to_translator:
+        if launcher.value in launcher_to_translator:
             self.launcher = launcher
         else:
             raise ValueError(f"'{launcher}' is not a valid launcher name.")
 
-        process_env_vars(env_vars)
+        #process_env_vars(env_vars)
         self.env_vars = env_vars or {}
 
         # TODO check and preporcess launcher_args
         self.launcher_args = launcher_args or {}
 
-        self.arg_translator = t.cast(LaunchArgTranslator,launcher_to_translator.get(launcher))
+        self.arg_translator = t.cast(LaunchArgTranslator,launcher_to_translator.get(launcher.value))
 
     @property
     def launcher_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
-        """Return an immutable list of attached run arguments.
+        """Return an immutable list of attached launcher arguments.
 
         :returns: attached run arguments
         """
@@ -76,11 +62,27 @@ class LaunchSettings():
 
     @launcher_args.setter
     def launcher_args(self, value: t.Dict[str, t.Union[int, str, float,None]]) -> None:
-        """Set the run arguments.
+        """Set the launcher arguments.
 
         :param value: run arguments
         """
         self._launcher_args = copy.deepcopy(value)
+
+    @property
+    def env_vars(self) -> t.Dict[str, t.Optional[str]]:
+        """Return an immutable list of attached environment variables.
+
+        :returns: attached environment variables
+        """
+        return self._env_vars
+
+    @env_vars.setter
+    def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
+        """Set the environment variables.
+
+        :param value: environment variables
+        """
+        self._env_vars = copy.deepcopy(value)
 
     def launcher_str(self) -> str:
         """ Get the string representation of the launcher
@@ -340,10 +342,20 @@ class LaunchSettings():
             raise TypeError("Argument name should be of type str")
         # if value is not None and not isinstance(value, str):
         #     raise TypeError("Argument value should be of type str or None")
-        # arg = arg.strip().lstrip("-")
+        #arg = arg.strip().lstrip("-")
         # if not condition:
         #     logger.info(f"Could not set argument '{arg}': condition not met")
         #     return
         if key in self.launcher_args and arg != self.launcher_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{arg}'")
         self.launcher_args[key] = arg
+    
+    def __str__(self) -> str:  # pragma: no-cover
+        string = ""
+        if self.launcher:
+            string += f"\nLauncher: {self.launcher}"
+        if self.launcher_args:
+            string += f"\Launch Arguments:\n{fmt_dict(self.launcher_args)}"
+        if self.env_vars:
+            string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
+        return string

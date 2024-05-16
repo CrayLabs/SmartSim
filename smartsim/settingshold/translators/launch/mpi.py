@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from enum import Enum
 import typing as t
 from ..launchArgTranslator import LaunchArgTranslator
-from ...common import IntegerArgument, StringArgument, FloatArgument
+from ...common import IntegerArgument, StringArgument
 from ...launchCommand import LauncherType
 from smartsim.log import get_logger                                                                                
 
@@ -109,6 +108,15 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
         """
         return {"verbose": None}
 
+    def set_walltime(self, walltime: str) -> None:
+        """Set the maximum number of seconds that a job will run
+
+        This sets ``--timeout``
+
+        :param walltime: number like string of seconds that a job will run in secs
+        """
+        return {"timeout": walltime}
+
     def set_quiet_launch(self, quiet: bool) ->  t.Union[t.Dict[str,None], None]:
         """ Set the job to run in quiet mode
 
@@ -134,6 +142,24 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
                     formatted += [env_string, name]
         return formatted
     
+    def format_launcher_args(self, launcher_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+        """Return a list of MPI-standard formatted run arguments
+
+        :return: list of MPI-standard arguments for these settings
+        """
+        # args launcher uses
+        args = []
+        restricted = ["wdir", "wd"]
+
+        for opt, value in launcher_args.items():
+            if opt not in restricted:
+                prefix = "--"
+                if not value:
+                    args += [prefix + opt]
+                else:
+                    args += [prefix + opt, str(value)]
+        return args
+
 class MpiArgTranslator(_BaseMPIArgTranslator):
 
     def launcher_str(self) -> str:

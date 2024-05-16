@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 from ..common import IntegerArgument, StringArgument, FloatArgument   
 
 
-class LaunchArgTranslator(ABC): #ArgTranslator - LaunchArgTranslatro and BatchArgTranslator
+class LaunchArgTranslator(ABC):
     """Abstract base class that defines all generic launcher
     argument methods that are not supported.  It is the
     responsibility of child classes for each launcher to translate

@@ -11,8 +11,8 @@ logger = get_logger(__name__)
 
 from ..common import IntegerArgument, StringArgument, FloatArgument 
 
-class BatchArgTranslator(ABC): #ArgTranslator - LaunchArgTranslatro and BatchArgTranslator
-    """Abstract base class that defines all generic launcher
+class BatchArgTranslator(ABC):
+    """Abstract base class that defines all generic scheduler
     argument methods that are not supported.  It is the
     responsibility of child classes for each launcher to translate
     the input parameter to a properly formatted launcher argument.

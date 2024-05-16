@@ -1,12 +1,13 @@
 from smartsim.settingshold import LaunchSettings
 from smartsim.settingshold.translators.launch.local import LocalArgTranslator
+from smartsim.settingshold.launchCommand import LauncherType
 import pytest
 import logging
 
 def test_launcher_str():
     """Ensure launcher_str returns appropriate value"""
-    localLauncher = LaunchSettings(launcher="local")
-    assert localLauncher.launcher_str() == "local"
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
+    assert localLauncher.launcher_str() == LauncherType.LocalLauncher.value
 
 def test_launch_args_input_mutation():
     # Tests that the run args passed in are not modified after initialization
@@ -18,7 +19,7 @@ def test_launch_args_input_mutation():
         key1: val1,
         key2: val2,
     }
-    localLauncher = LaunchSettings(launcher="local", launcher_args=default_launcher_args)
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, launcher_args=default_launcher_args)
 
     # Confirm initial values are set
     assert localLauncher.launcher_args[key0] == val0
@@ -43,16 +44,15 @@ def test_launch_args_input_mutation():
 )
 def test_update_env(env_vars):
     """Ensure non-initialized env vars update correctly"""
-    localLauncher = LaunchSettings(launcher="local")
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
     localLauncher.update_env(env_vars)
 
     assert len(localLauncher.env_vars) == len(env_vars.keys())
 
-def test_format_run_args():
-    localLauncher = LaunchSettings(launcher="local", launcher_args={"-np": 2})
-    launch_args = localLauncher.format_launch_args()
-    assert type(launch_args) == type(list())
-    assert launch_args == ["-np", "2"]
+def test_format_launcher_args():
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, launcher_args={"-np": 2})
+    launcher_args = localLauncher.format_launcher_args()
+    assert launcher_args == ["-np", "2"]
 
 @pytest.mark.parametrize(
     "env_vars",
@@ -67,7 +67,7 @@ def test_update_env_null_valued(env_vars):
     orig_env = {}
 
     with pytest.raises(TypeError) as ex:
-        localLauncher = LaunchSettings(launcher="local", env_vars=orig_env)
+        localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars=orig_env)
         localLauncher.update_env(env_vars)
 
 @pytest.mark.parametrize(
@@ -82,7 +82,7 @@ def test_update_env_null_valued(env_vars):
 def test_update_env_initialized(env_vars):
     """Ensure update of initialized env vars does not overwrite"""
     orig_env = {"key": "value"}
-    localLauncher = LaunchSettings(launcher="local", env_vars=orig_env)
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars=orig_env)
     localLauncher.update_env(env_vars)
 
     combined_keys = {k for k in env_vars.keys()}
@@ -98,8 +98,8 @@ def test_format_env_vars():
             "C": "",
             "D": 12,
         }
-    localLauncher = LaunchSettings(launcher="local", env_vars=env_vars)
-    assert localLauncher.launcher == "local"
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars=env_vars)
+    assert localLauncher.launcher.value == LauncherType.LocalLauncher.value
     assert isinstance(localLauncher.arg_translator, LocalArgTranslator)
     assert localLauncher.format_env_vars() == ["A=a", "B=", "C=", "D=12"]
 
@@ -121,8 +121,8 @@ def test_format_env_vars():
         pytest.param("set_memory_per_node", (16_000,), id="set_memory_per_node"),
         pytest.param("set_verbose_launch", (False,), id="set_verbose_launch"),
         pytest.param("set_quiet_launch", (True,), id="set_quiet_launch"),
-        pytest.param("set_broadcast", ("/tmp",), id="set_broadcast"),
         pytest.param("set_walltime", ("00:55:00",), id="set_walltime"),
+        pytest.param("set_executable_broadcast", ("broad",), id="set_executable_broadcast"),
         pytest.param("set_binding", ("packed:21",), id="set_binding"),
         pytest.param("set_cpu_binding_type", ("bind",), id="set_cpu_binding_type"),
         pytest.param("format_comma_sep_env_vars", (), id="format_comma_sep_env_vars"),
@@ -136,7 +136,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
 
     with caplog.at_level(logging.WARNING):
         caplog.clear()
-        localLauncher = LaunchSettings(launcher="local")
+        localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
         try:
             getattr(localLauncher, method)(*params)
         finally:
@@ -145,7 +145,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and ("not supported" and "local") in rec.msg
+                and ("method" and "not supported" and "local") in rec.msg
             ):
                 break
         else:
