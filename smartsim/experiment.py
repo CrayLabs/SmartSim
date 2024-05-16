@@ -160,15 +160,27 @@ class Experiment:
 
         self.exp_path = exp_path
 
-        if launcher == "auto":
-            launcher = detect_launcher()
-        if launcher == "cobalt":
+        self._launcher = launcher.lower()
+
+        if self._launcher == "auto":
+            self._launcher = detect_launcher()
+        if self._launcher == "cobalt":
             raise SSUnsupportedError("Cobalt launcher is no longer supported.")
 
-        self._control = Controller(launcher=launcher)
-        self._launcher = launcher.lower()
+        if launcher == "dragon":
+            self._set_dragon_server_path()
+
+        self._control = Controller(launcher=self._launcher)
+
         self.db_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
+
+    def _set_dragon_server_path(self) -> None:
+        """Set path for dragon server through environment varialbes"""
+        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
+            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
+                self.exp_path, CONFIG.dragon_default_subdir
+            )
 
     @_contextualize
     def start(
@@ -721,7 +733,7 @@ class Experiment:
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
-        interface: str = "ipogif0",
+        interface: t.Union[str, t.List[str]] = "ipogif0",
         account: t.Optional[str] = None,
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,

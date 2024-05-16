@@ -68,12 +68,14 @@ class Run:
         entity_type: str,
         entity_dict: t.Dict[str, t.Any],
         exp_dir: pathlib.Path,
+        raw_experiment: t.Dict[str, t.Any],
     ) -> t.List[JobEntity]:
         """Map entity data persisted in a manifest file to an object
 
         :param entity_type: type of the associated `SmartSimEntity`
-        :param entity_dict: raw dictionary deserialized from manifest JSON
+        :param entity_dict: raw dictionary deserialized from entity in manifest JSON
         :param exp_dir: root path to experiment outputs
+        :param raw_experiment: raw experiment deserialized from manifest JSON
         :return: list of loaded `JobEntity` instances
         """
         entities = []
@@ -86,13 +88,17 @@ class Run:
             container = "shards" if "shards" in parent_keys else "models"
             child_type = "orchestrator" if container == "shards" else "model"
             for child_entity in entity_dict[container]:
-                entity = JobEntity.from_manifest(child_type, child_entity, str(exp_dir))
+                entity = JobEntity.from_manifest(
+                    child_type, child_entity, str(exp_dir), raw_experiment
+                )
                 entities.append(entity)
 
             return entities
 
         # not a parent type, just create the entity w/the entity_type passed in
-        entity = JobEntity.from_manifest(entity_type, entity_dict, str(exp_dir))
+        entity = JobEntity.from_manifest(
+            entity_type, entity_dict, str(exp_dir), raw_experiment
+        )
         entities.append(entity)
         return entities
 
@@ -101,12 +107,14 @@ class Run:
         entity_type: str,
         run: t.Dict[str, t.Any],
         exp_dir: pathlib.Path,
+        raw_experiment: t.Dict[str, t.Any],
     ) -> t.Dict[str, t.List[JobEntity]]:
         """Map a collection of entity data persisted in a manifest file to an object
 
         :param entity_type: type of the associated `SmartSimEntity`
         :param run: raw dictionary containing `Run` data deserialized from JSON
         :param exp_dir: root path to experiment outputs
+        :param raw_experiment: raw experiment deserialized from manifest JSON
         :return: list of loaded `JobEntity` instances
         """
         persisted: t.Dict[str, t.List[JobEntity]] = {
@@ -114,18 +122,23 @@ class Run:
             "orchestrator": [],
         }
         for item in run[entity_type]:
-            entities = Run.load_entity(entity_type, item, exp_dir)
+            entities = Run.load_entity(entity_type, item, exp_dir, raw_experiment)
             for new_entity in entities:
                 persisted[new_entity.type].append(new_entity)
 
         return persisted
 
     @staticmethod
-    def load_run(raw_run: t.Dict[str, t.Any], exp_dir: pathlib.Path) -> "Run":
+    def load_run(
+        raw_run: t.Dict[str, t.Any],
+        exp_dir: pathlib.Path,
+        raw_experiment: t.Dict[str, t.Any],
+    ) -> "Run":
         """Map run data persisted in a manifest file to an object
 
-        :param runs: raw dictionary containing `Run` data deserialized from JSON
+        :param raw_run: raw dictionary containing `Run` data deserialized from JSON
         :param exp_dir: root path to experiment outputs
+        :param raw_experiment: raw experiment deserialized from manifest JSON
         :return: populated `Run` instance
         """
 
@@ -139,7 +152,7 @@ class Run:
         # use the output mapping keys to load all the target
         # entities from the deserialized JSON
         for entity_type in run_entities:
-            _entities = Run.load_entities(entity_type, raw_run, exp_dir)
+            _entities = Run.load_entities(entity_type, raw_run, exp_dir, raw_experiment)
 
             # load_entities may return a mapping containing types different from
             # entity_type IF it was a parent entity. Iterate through the keys in
@@ -218,7 +231,7 @@ class RuntimeManifest:
             raise ValueError("Manifest missing required runs")
 
         exp_dir = pathlib.Path(exp["path"])
-        runs = [Run.load_run(raw_run, exp_dir) for raw_run in runs]
+        runs = [Run.load_run(raw_run, exp_dir, exp) for raw_run in runs]
 
         manifest = RuntimeManifest(
             name=exp["name"],

@@ -227,7 +227,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils, test_dir):
     assert orc2.name == "my_db"
 
     # CREATE DATABASE with db_identifier
-    with make_entity_context(exp, orc), make_entity_context(exp, orc2):
+    with make_entity_context(exp, orc2), make_entity_context(exp, orc):
         exp.start(orc)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(orc2)
@@ -403,7 +403,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
 
-    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_script = fileutils.get_test_conf_path(
+        "smartredis/multidbid_colo_env_vars_only.py"
+    )
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
 
@@ -433,8 +435,9 @@ def test_multidb_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, db
     )
 
     with make_entity_context(exp, db), make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model, block=False)
         exp.start(db)
-        exp.start(smartsim_model, block=True)
+        exp.poll(smartsim_model)
 
     check_not_failed(exp, db, smartsim_model)
 

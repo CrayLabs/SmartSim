@@ -46,7 +46,7 @@ COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
 USER craylabs
 RUN export PATH=/home/craylabs/.local/bin:$PATH && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
-    python -m pip install smartsim[ml]==0.6.2 jupyter jupyterlab matplotlib && \
+    python -m pip install smartsim[ml]==0.7.0 jupyter jupyterlab matplotlib && \
     smart build --device cpu -v && \
     chown craylabs:root -R /home/craylabs/.local && \
     rm -rf ~/.cache/pip

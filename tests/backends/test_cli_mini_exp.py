@@ -48,6 +48,7 @@ except ImportError:
 
 
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
+    prepare_db,
     local_db,
     test_dir,
     monkeypatch,
@@ -57,9 +58,11 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     to ensure that it does not accidentally report false positive/negatives
     """
 
+    db = prepare_db(local_db).orchestrator
+
     @contextmanager
     def _mock_make_managed_local_orc(*a, **kw):
-        (client_addr,) = local_db.get_address()
+        (client_addr,) = db.get_address()
         yield smartredis.Client(False, address=client_addr)
 
     monkeypatch.setattr(
@@ -68,7 +71,7 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         _mock_make_managed_local_orc,
     )
     backends = installed_redisai_backends()
-    (db_port,) = local_db.ports
+    (db_port,) = db.ports
 
     smartsim._core._cli.validate.test_install(
         # Shouldn't matter bc we are stubbing creation of orc

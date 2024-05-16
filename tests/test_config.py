@@ -253,3 +253,31 @@ def test_telemetry_cooldown(
         monkeypatch.delenv("SMARTSIM_TELEMETRY_COOLDOWN", raising=False)
     config = Config()
     assert config.telemetry_cooldown == exp_result
+
+
+def test_key_path_unset(monkeypatch: pytest.MonkeyPatch):
+    """Ensure that the default value of the key path meets expectations"""
+    monkeypatch.delenv("SMARTSIM_KEY_PATH", raising=False)
+
+    config = Config()
+
+    key_path = config.smartsim_key_path
+
+    exp_default = Path.home() / ".smartsim" / "keys"
+    assert str(exp_default) == key_path, "Unexpected default key path"
+
+
+def test_key_path_non_default(monkeypatch: pytest.MonkeyPatch):
+    """Ensure that the environment variable for key path overrides
+    the default when it is set"""
+    key_path1 = "/foo/bar"
+    key_path2 = "/foo/baz"
+    config = Config()
+
+    monkeypatch.setenv("SMARTSIM_KEY_PATH", key_path1)
+    actual_value = config.smartsim_key_path
+    assert key_path1 == actual_value, "Key path 1 didn't match overridden value"
+
+    monkeypatch.setenv("SMARTSIM_KEY_PATH", key_path2)
+    actual_value = config.smartsim_key_path
+    assert key_path2 == actual_value, "Key path 2 didn't match overridden value"

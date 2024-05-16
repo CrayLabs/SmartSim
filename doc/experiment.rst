@@ -52,14 +52,18 @@ SmartSim supports launching AI-enabled workflows on a wide variety of systems, i
 Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS Pro, and LSF). When creating a SmartSim
 ``Experiment``, the user has the opportunity to specify the `launcher` type or defer to automatic `launcher` selection.
 `Launcher` selection determines how SmartSim translates entity configurations into system calls to launch,
-manage, and monitor. Currently, SmartSim supports 5 `launchers`:
+manage, and monitor. Currently, SmartSim supports 7 `launcher` options:
 
 1. ``local`` **[default]**: for single-node, workstation, or laptop
 2. ``slurm``: for systems using the Slurm scheduler
 3. ``pbs``: for systems using the PBS Pro scheduler
 4. ``pals``: for systems using the PALS scheduler
 5. ``lsf``: for systems using the LSF scheduler
-6. ``auto``: have SmartSim auto-detect the launcher to use
+6. ``dragon``: if Dragon is installed in the current Python environment, see :ref:`Dragon Install <dragon_install>`
+7. ``auto``: have SmartSim auto-detect the launcher to use (will not detect ``dragon``)
+
+The :ref:`Dragon-based launcher <dragon>` can be run on PBS- or Slurm-based systems
+(MPI applications are supported only when Cray PMI or Cray PALS are available).
 
 If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
 `"local"` will be assigned which will start all ``Experiment`` launched entities on the
