@@ -34,7 +34,7 @@ class BatchSettings():
     ) -> None:
         scheduler_to_translator = {
             'sbatch' : SlurmBatchArgTranslator(),
-            'jsrun' : BsubBatchArgTranslator(),
+            'bsub' : BsubBatchArgTranslator(),
             'qsub' : QsubBatchArgTranslator(),
         }
         if scheduler.value in scheduler_to_translator:

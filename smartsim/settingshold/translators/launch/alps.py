@@ -1,6 +1,6 @@
 from ..launchArgTranslator import LaunchArgTranslator
 import typing as t
-from ...common import IntegerArgument, StringArgument, FloatArgument
+from ...common import IntegerArgument, StringArgument
 from ...launchCommand import LauncherType
 from smartsim.log import get_logger                                                                                
 

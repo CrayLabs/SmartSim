@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum
 import re
 import typing as t
 from ..batchArgTranslator import BatchArgTranslator
-from ...common import IntegerArgument, StringArgument, FloatArgument  
+from ...common import IntegerArgument, StringArgument 
 from ...batchCommand import SchedulerType
 from smartsim.log import get_logger                                                                                
 

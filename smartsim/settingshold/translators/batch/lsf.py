@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 import typing as t
 from ..batchArgTranslator import BatchArgTranslator
-from ...common import IntegerArgument, StringArgument, FloatArgument 
+from ...common import IntegerArgument, StringArgument
 from smartsim.log import get_logger   
 from ...batchCommand import SchedulerType                                                                             
 
@@ -14,7 +14,7 @@ class BsubBatchArgTranslator(BatchArgTranslator):
     def scheduler_str(self) -> str:
         """ Get the string representation of the launcher
         """
-        return SchedulerType.LsfLauncher.value
+        return SchedulerType.LsfScheduler.value
 
     def set_walltime(self, walltime: str) -> t.Union[StringArgument,None]:
         """Set the walltime

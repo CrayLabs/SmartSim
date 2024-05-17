@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from enum import Enum
 from copy import deepcopy
 import typing as t
 from ..batchArgTranslator import BatchArgTranslator
 from ....error import SSConfigError
-from ...common import IntegerArgument, StringArgument, FloatArgument 
+from ...common import IntegerArgument, StringArgument
 from smartsim.log import get_logger                                                                                
 from ...batchCommand import SchedulerType
 logger = get_logger(__name__)
@@ -15,7 +14,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
     def scheduler_str(self) -> str:
         """ Get the string representation of the launcher
         """
-        return SchedulerType.PbsLauncher.value
+        return SchedulerType.PbsScheduler.value
 
     def set_nodes(self, num_nodes: int) -> t.Union[IntegerArgument,None]:
         """Set the number of nodes for this batch job

@@ -2,14 +2,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import typing as t
-# from launchcommand import LauncherType
-from ..common import IntegerArgument, StringArgument, FloatArgument  
+from ..common import IntegerArgument, StringArgument
 
 from smartsim.log import get_logger                                                                                    
 
 logger = get_logger(__name__)
-
-from ..common import IntegerArgument, StringArgument, FloatArgument 
 
 class BatchArgTranslator(ABC):
     """Abstract base class that defines all generic scheduler
