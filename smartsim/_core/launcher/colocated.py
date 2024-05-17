@@ -227,7 +227,8 @@ def _build_fs_script_cmd(fs_scripts: t.List[FSScript]) -> t.List[str]:
         if fs_script.func:
             # Notice that here fs_script.func is guaranteed to be a str
             # because we don't allow the user to pass a serialized function
-            sanitized_func = fs_script.func.replace("\n", "\\n")
+            func = fs_script.func
+            sanitized_func = func.replace("\n", "\\n")
             if not (
                 sanitized_func.startswith("'")
                 and sanitized_func.endswith("'")

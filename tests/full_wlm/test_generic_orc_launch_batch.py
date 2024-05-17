@@ -31,6 +31,7 @@ import time
 import pytest
 
 from smartsim import Experiment
+from smartsim.settings.pbsSettings import QsubBatchSettings
 from smartsim.status import SmartSimStatus
 
 # retrieved from pytest fixtures
@@ -41,6 +42,15 @@ if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
     pytestmark = pytest.mark.skip(
         reason="Launching feature stores in a batch job is not supported on PBS without ALPS"
     )
+
+
+def add_batch_resources(wlmutils, batch_settings):
+    if isinstance(batch_settings, QsubBatchSettings):
+        for key, value in wlmutils.get_batch_resources().items():
+            if key == "queue":
+                batch_settings.set_queue(value)
+            else:
+                batch_settings.set_resource(key, value)
 
 
 def test_launch_feature_store_auto_batch(test_dir, wlmutils):
@@ -60,8 +70,10 @@ def test_launch_feature_store_auto_batch(test_dir, wlmutils):
     )
 
     feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    feature_store.batch_settings.set_walltime("00:02:00")
+    feature_store.batch_settings.set_walltime("00:05:00")
+    feature_store.set_path(test_dir)
 
     exp.start(feature_store, block=True)
     statuses = exp.get_status(feature_store)
@@ -95,8 +107,10 @@ def test_launch_cluster_feature_store_batch_single(test_dir, wlmutils):
     )
 
     feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    feature_store.batch_settings.set_walltime("00:02:00")
+    feature_store.batch_settings.set_walltime("00:05:00")
+    feature_store.set_path(test_dir)
 
     exp.start(feature_store, block=True)
     statuses = exp.get_status(feature_store)
@@ -130,8 +144,10 @@ def test_launch_cluster_feature_store_batch_multi(test_dir, wlmutils):
     )
 
     feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    feature_store.batch_settings.set_walltime("00:03:00")
+    feature_store.batch_settings.set_walltime("00:05:00")
+    feature_store.set_path(test_dir)
 
     exp.start(feature_store, block=True)
     statuses = exp.get_status(feature_store)
@@ -162,8 +178,9 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
     )
 
     feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    feature_store.batch_settings.set_walltime("00:03:00")
+    feature_store.batch_settings.set_walltime("00:05:00")
 
     exp.start(feature_store, block=True)
 
@@ -189,25 +206,25 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
         statuses = exp_2.get_status(reloaded_feature_store)
         assert all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
     except Exception:
-        # Something went wrong! Let the experiment that started the DB
-        # clean up the DB
+        # Something went wrong! Let the experiment that started the FS
+        # clean up the FS
         exp.stop(feature_store)
         raise
 
     try:
-        # Test experiment 2 can stop the DB
+        # Test experiment 2 can stop the FS
         exp_2.stop(reloaded_feature_store)
         assert all(
             stat == SmartSimStatus.STATUS_CANCELLED
             for stat in exp_2.get_status(reloaded_feature_store)
         )
     except Exception:
-        # Something went wrong! Let the experiment that started the DB
-        # clean up the DB
+        # Something went wrong! Let the experiment that started the FS
+        # clean up the FS
         exp.stop(feature_store)
         raise
     else:
-        # Ensure  it is the same DB that Experiment 1 was tracking
+        # Ensure  it is the same FS that Experiment 1 was tracking
         time.sleep(5)
         assert not any(
             stat == SmartSimStatus.STATUS_RUNNING for stat in exp.get_status(feature_store)

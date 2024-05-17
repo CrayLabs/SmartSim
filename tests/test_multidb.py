@@ -227,7 +227,7 @@ def test_fs_identifier_standard_twice_not_unique(wlmutils, test_dir):
     assert feature_store2.name == "my_fs"
 
     # CREATE feature store with fs_identifier
-    with make_entity_context(exp, feature_store), make_entity_context(exp, feature_store2):
+    with make_entity_context(exp, feature_store2), make_entity_context(exp, feature_store):
         exp.start(feature_store)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(feature_store)
@@ -403,7 +403,9 @@ def test_multifs_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, fs
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
 
-    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_script = fileutils.get_test_conf_path(
+        "smartredis/multidbid_colo_env_vars_only.py"
+    )
     test_interface = wlmutils.get_test_interface()
     test_launcher = wlmutils.get_test_launcher()
 
@@ -433,8 +435,9 @@ def test_multifs_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, fs
     )
 
     with make_entity_context(exp, fs), make_entity_context(exp, smartsim_model):
+        exp.start(smartsim_model, block=False)
         exp.start(fs)
-        exp.start(smartsim_model, block=True)
+        exp.poll(smartsim_model)
 
     check_not_failed(exp, fs, smartsim_model)
 
@@ -444,13 +447,13 @@ def test_multifs_colo_then_standard(fileutils, test_dir, wlmutils, coloutils, fs
     reason="Not testing WLM integrations",
 )
 @pytest.mark.parametrize("fs_type", supported_fss)
-def test_launch_cluster_feature_store_single_dbid(
+def test_launch_cluster_feature_store_single_fsid(
     test_dir, coloutils, fileutils, wlmutils, fs_type
 ):
     """test clustered 3-node FeatureStore with single command with a feature store identifier"""
     # TODO detect number of nodes in allocation and skip if not sufficent
 
-    exp_name = "test_launch_cluster_feature_store_single_dbid"
+    exp_name = "test_launch_cluster_feature_store_single_fsid"
     launcher = wlmutils.get_test_launcher()
     test_port = wlmutils.get_test_port()
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")

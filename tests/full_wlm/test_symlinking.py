@@ -28,7 +28,12 @@ import os
 import pathlib
 import time
 
+import pytest
+
 from smartsim import Experiment
+
+if pytest.test_launcher not in pytest.wlm_options:
+    pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
 def test_batch_model_and_ensemble(test_dir, wlmutils):

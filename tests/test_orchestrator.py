@@ -74,34 +74,22 @@ def test_inactive_feature_store_get_address() -> None:
         fs.get_address()
 
 
-def test_feature_store_active_functions(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
-    exp_name = "test_feature_store_active_functions"
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-
-    fs = FeatureStore(port=wlmutils.get_test_port())
-    fs.set_path(test_dir)
-
-    exp.start(fs)
-
-    # check if the FeatureStore is active
+def test_feature_store_is_active_functions(
+    local_experiment,
+    prepare_fs,
+    local_fs,
+) -> None:
+    fs = prepare_fs(local_fs).featurestore
+    fs = local_experiment.reconnect_feature_store(fs.checkpoint_file)
     assert fs.is_active()
 
-    # check if the FeatureStore can get the address
-    correct_address = fs.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
-        exp.stop(fs)
-        assert False
-
-    exp.stop(fs)
-
-    assert not fs.is_active()
-
-    # check if FeatureStore.get_address() raises an exception
-    with pytest.raises(SmartSimError):
-        fs.get_address()
+    # check if the featurestore can get the address
+    assert fs.get_address() == [f"127.0.0.1:{fs.ports[0]}"]
 
 
-def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
+def test_multiple_interfaces(
+    test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]
+) -> None:
     exp_name = "test_multiple_interfaces"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
@@ -112,7 +100,8 @@ def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> No
 
     net_if_addrs = ["lo", net_if_addrs[0]]
 
-    fs = FeatureStore(port=wlmutils.get_test_port(), interface=net_if_addrs)
+    port = wlmutils.get_test_port()
+    fs = FeatureStore(port=port, interface=net_if_addrs)
     fs.set_path(test_dir)
 
     exp.start(fs)
@@ -120,9 +109,10 @@ def test_multiple_interfaces(test_dir: str, wlmutils: "conftest.WLMUtils") -> No
     # check if the FeatureStore is active
     assert fs.is_active()
 
-    # check if the FeatureStore can get the address
-    correct_address = fs.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
+    # check if the feature store can get the address
+    correct_address = [f"127.0.0.1:{port}"]
+
+    if not correct_address == fs.get_address():
         exp.stop(fs)
         assert False
 
@@ -146,7 +136,7 @@ def test_catch_local_feature_store_errors() -> None:
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     feature_store = FeatureStore(
         wlmutils.get_test_port(),
         fs_nodes=3,
@@ -165,7 +155,7 @@ def test_pbs_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
     )
 
 
-def test_pbs_set_batch_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     feature_store = FeatureStore(
         wlmutils.get_test_port(),
         fs_nodes=3,
@@ -194,7 +184,7 @@ def test_pbs_set_batch_arg(wlmutils: "conftest.WLMUtils") -> None:
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     feature_store = FeatureStore(
         wlmutils.get_test_port(),
         fs_nodes=3,
@@ -209,7 +199,7 @@ def test_slurm_set_run_arg(wlmutils: "conftest.WLMUtils") -> None:
     )
 
 
-def test_slurm_set_batch_arg(wlmutils: "conftest.WLMUtils") -> None:
+def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     feature_store = FeatureStore(
         wlmutils.get_test_port(),
         fs_nodes=3,
@@ -265,7 +255,7 @@ def test_feature_store_results_in_correct_number_of_shards(single_cmd: bool) -> 
 ###### LSF ######
 
 
-def test_catch_feature_store_errors_lsf(wlmutils: "conftest.WLMUtils") -> None:
+def test_catch_feature_store_errors_lsf(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     with pytest.raises(SSUnsupportedError):
         feature_store = FeatureStore(
             wlmutils.get_test_port(),
@@ -288,7 +278,7 @@ def test_catch_feature_store_errors_lsf(wlmutils: "conftest.WLMUtils") -> None:
         feature_store.set_batch_arg("P", "MYPROJECT")
 
 
-def test_lsf_set_run_args(wlmutils: "conftest.WLMUtils") -> None:
+def test_lsf_set_run_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     feature_store = FeatureStore(
         wlmutils.get_test_port(),
         fs_nodes=3,
@@ -301,7 +291,7 @@ def test_lsf_set_run_args(wlmutils: "conftest.WLMUtils") -> None:
     assert all(["l" not in fs.run_settings.run_args for fs in feature_store.entities])
 
 
-def test_lsf_set_batch_args(wlmutils: "conftest.WLMUtils") -> None:
+def test_lsf_set_batch_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     feature_store = FeatureStore(
         wlmutils.get_test_port(),
         fs_nodes=3,
@@ -316,8 +306,8 @@ def test_lsf_set_batch_args(wlmutils: "conftest.WLMUtils") -> None:
     assert feature_store.batch_settings.batch_args["D"] == "102400000"
 
 
-def test_feature_store_telemetry(test_dir: str, wlmutils: "conftest.WLMUtils") -> None:
-    """Ensure the default behavior for an FeatureStore is to disable telemetry"""
+def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+    """Ensure the default behavior for an feature store is to disable telemetry"""
     fs = FeatureStore(port=wlmutils.get_test_port())
     fs.set_path(test_dir)
 

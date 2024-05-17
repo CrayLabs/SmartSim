@@ -48,6 +48,7 @@ except ImportError:
 
 
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
+    prepare_fs,
     local_fs,
     test_dir,
     monkeypatch,
@@ -57,9 +58,11 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     to ensure that it does not accidentally report false positive/negatives
     """
 
+    fs = prepare_fs(local_fs).featurestore
+
     @contextmanager
     def _mock_make_managed_local_feature_store(*a, **kw):
-        (client_addr,) = local_fs.get_address()
+        (client_addr,) = fs.get_address()
         yield smartredis.Client(False, address=client_addr)
 
     monkeypatch.setattr(
@@ -68,7 +71,7 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         _mock_make_managed_local_feature_store,
     )
     backends = installed_redisai_backends()
-    (fs_port,) = local_fs.ports
+    (fs_port,) = fs.ports
 
     smartsim._core._cli.validate.test_install(
         # Shouldn't matter bc we are stubbing creation of orc

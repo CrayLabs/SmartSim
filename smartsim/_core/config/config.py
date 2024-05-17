@@ -89,6 +89,7 @@ from ..utils.helpers import expand_exe_path
 #  - Default: None
 
 
+# pylint: disable-next=too-many-public-methods
 class Config:
     def __init__(self) -> None:
         # SmartSim/smartsim/_core
@@ -99,6 +100,7 @@ class Config:
         self.lib_path = Path(dependency_path, "lib").resolve()
         self.bin_path = Path(dependency_path, "bin").resolve()
         self.conf_path = Path(dependency_path, "config", "redis.conf")
+        self.conf_dir = Path(self.core_path, "config")
 
     @property
     def redisai(self) -> str:
@@ -153,6 +155,30 @@ class Config:
         return int(os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL", "2"))
 
     @property
+    def dragon_dotenv(self) -> Path:
+        """Returns the path to a .env file containing dragon environment variables"""
+        return self.conf_dir / "dragon" / ".env"
+
+    @property
+    def dragon_server_path(self) -> t.Optional[str]:
+        return os.getenv(
+            "SMARTSIM_DRAGON_SERVER_PATH",
+            os.getenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
+        )
+
+    @property
+    def dragon_server_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_TIMEOUT", "30000"))
+
+    @property
+    def dragon_server_startup_timeout(self) -> int:
+        return int(os.getenv("SMARTSIM_DRAGON_STARTUP_TIMEOUT", "300000"))
+
+    @property
+    def dragon_transport(self) -> str:
+        return os.getenv("SMARTSIM_DRAGON_TRANSPORT", "hsta")
+
+    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 
@@ -177,8 +203,14 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
-    def test_port(self) -> int:  # pragma: no cover
-        return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
+    def test_ports(self) -> t.Sequence[int]:  # pragma: no cover
+        min_required_ports = 25
+        first_port = int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
+        num_ports = max(
+            int(os.environ.get("SMARTSIM_TEST_NUM_PORTS", min_required_ports)),
+            min_required_ports,
+        )
+        return range(first_port, first_port + num_ports)
 
     @property
     def test_batch_resources(self) -> t.Dict[t.Any, t.Any]:  # pragma: no cover
@@ -220,6 +252,11 @@ class Config:
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
 
     @property
+    def test_mpi(self) -> bool:  # pragma: no cover
+        # By default, test MPI app if it compiles
+        return int(os.environ.get("SMARTSIM_TEST_MPI", "1")) > 0
+
+    @property
     def telemetry_frequency(self) -> int:
         return int(os.environ.get("SMARTSIM_TELEMETRY_FREQUENCY", 5))
 
@@ -234,6 +271,29 @@ class Config:
     @property
     def telemetry_subdir(self) -> str:
         return ".smartsim/telemetry"
+
+    @property
+    def dragon_default_subdir(self) -> str:
+        return ".smartsim/dragon"
+
+    @property
+    def dragon_log_filename(self) -> str:
+        return "dragon_config.log"
+
+    @property
+    def smartsim_key_path(self) -> str:
+        """Path to a root directory used for persistence of key files. Default
+        value `$HOME/.smartsim/keys`. User-overrideable by setting the environment
+        variable `SMARTSIM_KEY_PATH`.
+
+        :returns: The configured key path.
+        """
+        default_path = Path.home() / ".smartsim" / "keys"
+        return os.environ.get("SMARTSIM_KEY_PATH", str(default_path))
+
+    @property
+    def dragon_pin(self) -> str:
+        return "0.9"
 
 
 @lru_cache(maxsize=128, typed=False)

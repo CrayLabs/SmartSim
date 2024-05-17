@@ -105,6 +105,14 @@ class Manifest:
 
         return _all_entity_lists
 
+    @property
+    def has_deployable(self) -> bool:
+        """
+        Return True if the manifest contains entities that
+        must be physically deployed
+        """
+        return bool(self._deployables)
+
     @staticmethod
     def _check_names(deployables: t.List[t.Any]) -> None:
         used = []

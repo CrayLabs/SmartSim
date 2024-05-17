@@ -42,6 +42,7 @@ from watchdog.observers.api import BaseObserver
 from smartsim._core.config import CONFIG
 from smartsim._core.control.job import JobEntity, _JobKey
 from smartsim._core.control.jobmanager import JobManager
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.launcher.launcher import Launcher
 from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
@@ -100,6 +101,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "pbs": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
         self._collector_mgr = CollectorManager(timeout_ms)
 
@@ -113,7 +115,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
-        SmartSim currently supports slurm, pbs(pro), lsf,
+        SmartSim currently supports Slurm, PBS(Pro), LSF, Dragon
         and local launching
 
         :param launcher: the name of the workload manager used by the experiment
@@ -138,13 +140,17 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self.job_manager.set_launcher(self._launcher)
         self.job_manager.start()
 
-    def set_launcher(self, launcher: str) -> None:
-        """Initialize all required dependencies
-
-        :param launcher: the name of the workload manager used by the experiment
+    def set_launcher(self, launcher_type: str) -> None:
+        """Set the launcher for the experiment
+        :param launcher_type: the name of the workload manager used by the experiment
         """
-        self.init_launcher(launcher)
-        self.init_job_manager()
+        self.init_launcher(launcher_type)
+
+        if self._launcher is None:
+            raise SmartSimError("Launcher init failed")
+
+        self.job_manager.set_launcher(self._launcher)
+        self.job_manager.start()
 
     def process_manifest(self, manifest_path: str) -> None:
         """Read the manifest for the experiment. Process the
@@ -300,12 +306,24 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         # consider not using name to avoid collisions
         m_jobs = [job for job in self._tracked_jobs.values() if job.is_managed]
         if names := {entity.name: entity for entity in m_jobs}:
-            step_updates = self._launcher.get_step_update(list(names.keys()))
+            step_updates: t.List[t.Tuple[str, t.Optional[StepInfo]]] = []
 
-            for step_name, step_info in step_updates:
-                if step_info and step_info.status in TERMINAL_STATUSES:
-                    completed_entity = names[step_name]
-                    await self._to_completed(timestamp, completed_entity, step_info)
+            try:
+                task_names = list(names.keys())
+                updates = self._launcher.get_step_update(task_names)
+                step_updates.extend(updates)
+                logger.debug(f"Retrieved updates for: {task_names}")
+            except Exception:
+                logger.warning(f"Telemetry step updates failed for {names.keys()}")
+
+            try:
+                for step_name, step_info in step_updates:
+                    if step_info and step_info.status in TERMINAL_STATUSES:
+                        completed_entity = names[step_name]
+                        await self._to_completed(timestamp, completed_entity, step_info)
+            except Exception as ex:
+                msg = f"An error occurred getting step updates on {names}"
+                logger.error(msg, exc_info=ex)
 
     async def shutdown(self) -> None:
         """Release all resources owned by the `ManifestEventHandler`"""

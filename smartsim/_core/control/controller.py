@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import os.path as osp
 import pathlib
 import pickle
@@ -36,7 +37,6 @@ import sys
 import threading
 import time
 import typing as t
-from os import environ
 
 from smartredis import Client, ConfigOptions
 
@@ -67,7 +67,13 @@ from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
-from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import (
+    DragonLauncher,
+    LocalLauncher,
+    LSFLauncher,
+    PBSLauncher,
+    SlurmLauncher,
+)
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
 from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
@@ -118,6 +124,10 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
+        # launch a telemetry monitor to track job progress
+        if CONFIG.telemetry_enabled:
+            self._start_telemetry_monitor(exp_path)
+
         self._jobs.kill_on_interrupt = kill_on_interrupt
 
         # register custom signal handler for ^C (SIGINT)
@@ -134,15 +144,16 @@ class Controller:
             launched.map(_look_up_launched_data(self._launcher))
         )
 
-        # launch a telemetry monitor to track job progress
-        if CONFIG.telemetry_enabled:
-            self._start_telemetry_monitor(exp_path)
-
         # block until all non-feature store jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
             # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
+
+    @property
+    def active_feature_store_jobs(self) -> t.Dict[str, Job]:
+        """Return active feature store jobs."""
+        return {**self._jobs.fs_jobs}
 
     @property
     def feature_store_active(self) -> bool:
@@ -331,6 +342,7 @@ class Controller:
             "pals": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
 
         if launcher is not None:
@@ -727,7 +739,7 @@ class Controller:
 
         entity.run_settings.update_env(client_env)
 
-    def _save_feature_store(self, featurestore: FeatureStore) -> None:
+    def _save_feature_store(self, feature_store: FeatureStore) -> None:
         """Save the FeatureStore object via pickle
 
         This function saves the feature store information to a pickle
@@ -736,14 +748,27 @@ class Controller:
 
         :param featurestore: FeatureStore configuration to be saved
         """
-        dat_file = "/".join((featurestore.path, "smartsim_db.dat"))
-        fs_jobs = self._jobs.fs_jobs
-        feature_store_data = {"fs": featurestore, "fs_jobs": fs_jobs}
-        steps = []
-        for fs_job in fs_jobs.values():
-            steps.append(self._launcher.step_mapping[fs_job.name])
-        feature_store_data["steps"] = steps
-        with open(dat_file, "wb") as pickle_file:
+
+        if not feature_store.is_active():
+            raise Exception("Feature store is not running")
+
+        # Extract only the fs_jobs associated with this particular featurestore
+        if feature_store.batch:
+            job_names = [feature_store.name]
+        else:
+            job_names = [fsnode.name for fsnode in feature_store.entities]
+        fs_jobs = {
+            name: job for name, job in self._jobs.fs_jobs.items() if name in job_names
+        }
+
+        # Extract the associated steps
+        steps = [
+            self._launcher.step_mapping[fs_job.name] for fs_job in fs_jobs.values()
+        ]
+
+        feature_store_data = {"fs": feature_store, "fs_jobs": fs_jobs, "steps": steps}
+
+        with open(feature_store.checkpoint_file, "wb") as pickle_file:
             pickle.dump(feature_store_data, pickle_file)
 
     def _feature_store_launch_wait(self, featurestore: FeatureStore) -> None:
@@ -774,8 +799,7 @@ class Controller:
                 statuses = self.get_entity_list_status(featurestore)
                 if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
-                    # TODO remove in favor of by node status check
-                    time.sleep(CONFIG.jm_interval)
+                    # TODO: Add a node status check
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_fs(featurestore)
                     msg = "FeatureStore failed during startup"
@@ -793,14 +817,14 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_fs(self, checkpoint_file: str) -> FeatureStore:
+    def reload_saved_fs(
+        self, checkpoint_file: t.Union[str, os.PathLike[str]]
+    ) -> FeatureStore:
         with JM_LOCK:
-            if self.feature_store_active:
-                raise SmartSimError("FeatureStore exists and is active")
 
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(
-                    f"The SmartSim feature store config file {checkpoint_file} "
+                    f"The SmartSim feature store config file {os.fspath(checkpoint_file)} "
                     "cannot be found."
                 )
 
@@ -836,7 +860,7 @@ class Controller:
             try:
                 for fs_job, step in job_steps:
                     self._jobs.fs_jobs[fs_job.ename] = fs_job
-                    self._launcher.step_mapping[fs_job.name] = step
+                    self._launcher.add_step_to_mapping_table(fs_job.name, step)
                     if step.task_id:
                         self._launcher.task_manager.add_existing(int(step.task_id))
             except LauncherError as e:
@@ -865,9 +889,9 @@ class Controller:
             if not fs_is_active(hosts=hosts, ports=ports, num_shards=len(fs_addresses)):
                 raise SSInternalError("Cannot set FS Objects, FS is not running")
 
-            environ[f"SSDB{fs_name}"] = fs_addresses[0]
+            os.environ[f"SSDB{fs_name}"] = fs_addresses[0]
 
-            environ[f"SR_DB_TYPE{fs_name}"] = (
+            os.environ[f"SR_DB_TYPE{fs_name}"] = (
                 CLUSTERED if len(fs_addresses) > 1 else STANDALONE
             )
 
@@ -908,7 +932,6 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
-
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,

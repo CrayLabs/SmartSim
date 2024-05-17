@@ -29,6 +29,7 @@ import pytest
 
 from smartsim._core.control import Controller, Manifest
 from smartsim._core.launcher.step import Step
+from smartsim._core.launcher.step.dragonStep import DragonStep
 from smartsim.database import FeatureStore
 from smartsim.entity import Model
 from smartsim.entity.ensemble import Ensemble
@@ -160,23 +161,23 @@ def test_duplicate_running_entity(test_dir, wlmutils, entity):
 def test_restarting_entity(test_dir, wlmutils, entity):
     """Validate restarting a completed Model/Ensemble job"""
     step_settings = RunSettings("echo")
+    test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
     step.meta["status_dir"] = test_dir
     entity.path = test_dir
-    test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
     controller._jobs.add_job(entity.name, job_id="1234", entity=entity)
     controller._jobs.move_to_completed(controller._jobs.jobs.get(entity.name))
     controller._launch_step(step, entity=entity)
 
 
-def test_restarting_feature_storeh(test_dir, wlmutils):
+def test_restarting_feature_store(test_dir, wlmutils):
     """Validate restarting a completed FeatureStore job"""
     step_settings = RunSettings("echo")
+    test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
     step.meta["status_dir"] = test_dir
     feature_store.path = test_dir
-    test_launcher = wlmutils.get_test_launcher()
     controller = Controller(test_launcher)
     controller._jobs.add_job(feature_store.name, job_id="1234", entity=feature_store)
     controller._jobs.move_to_completed(controller._jobs.fs_jobs.get(feature_store.name))

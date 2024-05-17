@@ -237,6 +237,28 @@ to building SmartSim with GPU support is to specify a different ``device``
   backends look for the CUDA Toolkit and cuDNN libraries. Please see the
   :ref:`Platform Installation Section <install-notes>` section for guidance.
 
+
+.. _dragon_install:
+
+Dragon Install
+--------------
+
+`Dragon <https://dragonhpc.github.io/dragon/doc/_build/html/index.html>`_ is
+an HPC-native library for distributed computing. SmartSim can use Dragon as a
+launcher on systems with Slurm or PBS as schedulers. To install the correct
+version of Dragon, you can add the ``--dragon`` option to ``smart build``.
+For example, to install dragon alongside the RedisAI CPU backends, you can run
+
+.. code-block:: bash
+
+    # run one of the following
+    smart build --device cpu --dragon           # install Dragon, PT and TF for cpu
+    smart build --device cpu --onnx --dragon    # install Dragon and all backends (PT, TF, ONNX) on cpu
+
+.. note::
+  Dragon is only supported on Linux systems. For further information, you
+  can read :ref:`the dedicated documentation page <dragon>`.
+
 ==========
 SmartRedis
 ==========
@@ -300,7 +322,7 @@ source remains at the site of the clone instead of in site-packages.
   pip install -e .[dev,ml]    # for bash users
   pip install -e .\[dev,ml\]  # for zsh users
 
-Use the now installed ``smart`` cli to install the machine learning runtimes.
+Use the now installed ``smart`` cli to install the machine learning runtimes and dragon.
 
 .. tabs::
 
@@ -309,8 +331,8 @@ Use the now installed ``smart`` cli to install the machine learning runtimes.
     .. code-block:: bash
 
       # run one of the following
-      smart build --device cpu --onnx  # install with cpu-only support
-      smart build --device gpu --onnx  # install with both cpu and gpu support
+      smart build --device cpu --onnx --dragon  # install with cpu-only support
+      smart build --device gpu --onnx --dragon  # install with both cpu and gpu support
 
 
   .. tab:: MacOS (Intel x64)

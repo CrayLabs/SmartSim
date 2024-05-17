@@ -49,22 +49,12 @@ def test_parse_fs_host_error():
         feature_store.entities[0].host
 
 
-def test_hosts(test_dir, wlmutils):
-    exp_name = "test_hosts"
-    exp = Experiment(exp_name, exp_path=test_dir)
+def test_hosts(local_experiment, prepare_fs, local_fs):
+    fs = prepare_fs(local_fs).featurestore
+    feature_store = local_experiment.reconnect_feature_store(fs.checkpoint_file)
 
-    feature_store = FeatureStore(port=wlmutils.get_test_port(), interface="lo", launcher="local")
-    feature_store.set_path(test_dir)
-    exp.start(feature_store)
-
-    hosts = []
-    try:
-        hosts = feature_store.hosts
-        assert len(hosts) == feature_store.fs_nodes == 1
-    finally:
-        # stop the feature store even if there is an error raised
-        exp.stop(feature_store)
-        feature_store.remove_stale_files()
+    hosts = feature_store.hosts
+    assert len(hosts) == feature_store.fs_nodes == 1
 
 
 def _random_shard_info():

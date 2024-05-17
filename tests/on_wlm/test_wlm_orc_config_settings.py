@@ -27,6 +27,9 @@
 import pytest
 
 from smartsim.error import SmartSimError
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -40,13 +43,15 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm_single(fsutils, fs):
+def test_config_methods_on_wlm_single(fsutils, prepare_fs, single_fs):
     """Test all configuration file edit methods on single node WLM fs"""
 
+    fs = prepare_fs(single_fs).featurestore
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
     configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
+        logger.debug(f"Setting {setting}={value}")
         config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
@@ -67,14 +72,16 @@ def test_config_methods_on_wlm_single(fsutils, fs):
                 fs.set_fs_conf(key, value)
 
 
-def test_config_methods_on_wlm_cluster(fsutils, fs_cluster):
+def test_config_methods_on_wlm_cluster(fsutils, prepare_fs, clustered_fs):
     """Test all configuration file edit methods on an active clustered fs"""
 
+    fs = prepare_fs(clustered_fs).featurestore
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
     configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = fsutils.get_config_edit_method(fs_cluster, setting)
+        logger.debug(f"Setting {setting}={value}")
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
     # ensure SmartSimError is raised when a clustered feature store's
@@ -83,7 +90,8 @@ def test_config_methods_on_wlm_cluster(fsutils, fs_cluster):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                fs_cluster.set_fs_conf(key, value)
+                logger.debug(f"Setting {key}={value}")
+                fs.set_fs_conf(key, value)
 
     # ensure TypeError is raised when a clustered feature store's
     # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
@@ -91,4 +99,5 @@ def test_config_methods_on_wlm_cluster(fsutils, fs_cluster):
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                fs_cluster.set_fs_conf(key, value)
+                logger.debug(f"Setting {key}={value}")
+                fs.set_fs_conf(key, value)

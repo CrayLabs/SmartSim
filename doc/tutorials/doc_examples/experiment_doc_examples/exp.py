@@ -1,4 +1,5 @@
 from smartsim import Experiment
+from smartsim._core.control.previewrenderer import Verbosity
 from smartsim.log import get_logger
 
 # Initialize an Experiment
@@ -17,7 +18,10 @@ model = exp.create_model("hello_world", settings)
 # Generate the output directory
 exp.generate(standalone_feature_store, model, overwrite=True)
 
-# Launch the Feature Store then Model instance
+# Preview the experiment
+exp.preview(standalone_feature_store, model, verbosity_level=Verbosity.DEBUG)
+
+# Launch the Orchestrator then Model instance
 exp.start(standalone_feature_store, model)
 
 # Clobber the Feature Store

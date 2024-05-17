@@ -1,0 +1,29 @@
+
+          {%- for fs in manifest.fss %}
+          {%- if fs.name %}
+          Feature Store Identifier: {{ fs.name }}
+            {%- endif %}
+          {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+            Feature Store Backend: {{ config.database_cli | get_fstype }}
+            TCP/IP Port(s):
+            {%- for port in fs.ports %}
+              {{ port }}
+            {%- endfor %}
+            Type: Standalone
+            {%- endif %}
+            {%- endfor %}
+          {%- if model.incoming_entities %}
+          {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+          Incoming Entities (Available Data Sources):
+            {%- for incoming in model.incoming_entities %}
+            {{ incoming.name }}
+            {%- endfor %}
+            {%- endif %}
+            {%- endif %}
+          {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
+          Outgoing Key Collision Prevention (Key Prefixing):
+            Tensors: {{ model.query_key_prefixing() | as_toggle }}
+            Datasets: {{ model.query_key_prefixing() | as_toggle }}
+            ML Models/Torch Scripts: {{ False | as_toggle }}
+            Aggregation Lists: {{ model.query_key_prefixing() | as_toggle }}
+          {%- endif %}

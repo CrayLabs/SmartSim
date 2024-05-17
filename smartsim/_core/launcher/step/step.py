@@ -153,13 +153,15 @@ def proxyable_launch_cmd(
 
         if self.managed:
             raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)}"
+                f"Attempting to proxy managed step of type {type(self)} "
                 "through the unmanaged step proxy entry point"
             )
 
         proxy_module = "smartsim._core.entrypoints.indirect"
         entity_type = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
+
+        logger.debug(f"Encoding command{' '.join(original_cmd_list)}")
 
         # encode the original cmd to avoid potential collisions and escaping
         # errors when passing it using CLI arguments to the indirect entrypoint

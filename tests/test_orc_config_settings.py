@@ -27,6 +27,7 @@
 
 import pytest
 
+from smartsim.database import FeatureStore
 from smartsim.error import SmartSimError
 
 try:
@@ -40,14 +41,15 @@ except AttributeError:
 pytestmark = pytest.mark.group_b
 
 
-def test_config_methods(fsutils, local_fs):
-    """Test all configuration file edit methods on an active fs"""
+def test_config_methods(fsutils, prepare_fs, local_fs):
+    """Test all configuration file edit methods on an active feature store"""
+    fs = prepare_fs(local_fs).featurestore
 
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
     configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = fsutils.get_config_edit_method(local_fs, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
     # ensure SmartSimError is raised when FeatureStore.set_fs_conf
@@ -56,7 +58,7 @@ def test_config_methods(fsutils, local_fs):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                local_fs.set_fs_conf(key, value)
+                fs.set_fs_conf(key, value)
 
     # ensure TypeError is raised when FeatureStore.set_fs_conf
     # is given either a key or a value that is not a string
@@ -64,14 +66,14 @@ def test_config_methods(fsutils, local_fs):
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                local_fs.set_fs_conf(key, value)
+                fs.set_fs_conf(key, value)
 
 
-def test_config_methods_inactive(wlmutils, fsutils):
+def test_config_methods_inactive(fsutils):
     """Ensure a SmartSimError is raised when trying to
     set configurations on an inactive feature store
     """
-    fs = wlmutils.get_feature_store()
+    fs = FeatureStore()
     configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
         config_set_method = fsutils.get_config_edit_method(fs, setting)

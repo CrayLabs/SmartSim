@@ -201,7 +201,7 @@ def set_script(fs_script: FSScript, client: Client) -> None:
                     client.set_script(
                         name=fs_script.name, script=fs_script.script, device=device
                     )
-                else:
+                elif callable(fs_script.script):
                     client.set_function(
                         name=fs_script.name, function=fs_script.script, device=device
                     )
@@ -229,7 +229,9 @@ def shutdown_fs_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-
 
     if returncode != 0:
         logger.error(out)
-        logger.error(err)
+        err_msg = "Error while shutting down DB node. "
+        err_msg += f"Return code: {returncode}, err: {err}"
+        logger.error(err_msg)
     elif out:
         logger.debug(out)
 

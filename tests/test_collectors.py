@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@ from smartsim._core.utils.telemetry.collector import (
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
+
+PrepareFS = t.Callable[[dict], smartsim.experiment.FeatureStore]
 
 
 @pytest.mark.asyncio
@@ -171,12 +173,15 @@ async def test_dbmemcollector_collect(
 async def test_dbmemcollector_integration(
     mock_entity: MockCollectorEntityFunc,
     mock_sink: MockSink,
-    local_fs: smartsim.experiment.FeatureStore,
+    prepare_fs: PrepareFS,
+    local_fs: dict,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Integration test with a real feature store instance to ensure
     output data matches expectations and proper db client API uage"""
-    entity = mock_entity(port=local_fs.ports[0], telemetry_on=True)
+
+    fs = prepare_fs(local_fs).featurestore
+    entity = mock_entity(port=fs.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBMemoryCollector(entity, sink)
@@ -268,12 +273,15 @@ async def test_dbconn_count_collector_collect(
 async def test_dbconncollector_integration(
     mock_entity: MockCollectorEntityFunc,
     mock_sink: MockSink,
-    local_fs: smartsim.experiment.FeatureStore,
+    prepare_fs: PrepareFS,
+    local_fs: dict,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Integration test with a real feature store instance to ensure
     output data matches expectations and proper db client API uage"""
-    entity = mock_entity(port=local_fs.ports[0], telemetry_on=True)
+
+    fs = prepare_fs(local_fs).featurestore
+    entity = mock_entity(port=fs.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBConnectionCollector(entity, sink)

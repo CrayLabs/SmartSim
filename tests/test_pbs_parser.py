@@ -72,3 +72,23 @@ def test_parse_qstat_status():
     status = "R"
     parsed_status = pbsParser.parse_qstat_jobid(output, "1289903.sdb")
     assert status == parsed_status
+
+
+def test_parse_qstat_status_not_found():
+    output = (
+        "Job id            Name             User              Time Use S Queue\n"
+        "----------------  ---------------- ----------------  -------- - -----\n"
+        "1289903.sdb       jobname          username          00:00:00 R queue\n"
+    )
+    parsed_status = pbsParser.parse_qstat_jobid(output, "9999999.sdb")
+
+    assert parsed_status is None
+
+
+def test_parse_qstat_status_json(fileutils):
+    """Parse nodes from qsub called with -f -F json"""
+    file_path = fileutils.get_test_conf_path("qstat.json")
+    output = Path(file_path).read_text()
+    status = "R"
+    parsed_status = pbsParser.parse_qstat_jobid_json(output, "16705.sdb")
+    assert status == parsed_status

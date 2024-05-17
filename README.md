@@ -174,12 +174,16 @@ system with which it has a corresponding `RunSettings` class. If one can be foun
 ## Experiments on HPC Systems
 
 SmartSim integrates with common HPC schedulers providing batch and interactive
-launch capabilities for all applications.
+launch capabilities for all applications:
 
  - Slurm
  - LSF
  - PBSPro
  - Local (for laptops/single node, no batch)
+
+In addition, on Slurm and PBS systems, [Dragon](https://dragonhpc.github.io/dragon/doc/_build/html/index.html)
+can be used as a launcher. Please refer to the documentation for instructions on
+how to insall it on your system and use it in SmartSim.
 
 
 ### Interactive Launch Example

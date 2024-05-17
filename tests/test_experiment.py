@@ -189,6 +189,8 @@ def test_launcher_detection(
         pytest.skip(reason="Launcher detection cannot currently detect pbs vs pals")
     if wlmutils.get_test_launcher() == "local":
         monkeypatch.setenv("PATH", "")  # Remove all WLMs from PATH
+    if wlmutils.get_test_launcher() == "dragon":
+        pytest.skip(reason="Launcher detection cannot currently detect dragon")
 
     exp = Experiment("test-launcher-detection", launcher="auto")
 

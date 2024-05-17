@@ -176,6 +176,13 @@ for each job scheduler.
 
       Users may replace `mpirun` with `mpiexec` or `orterun`.
 
+
+      .. note::
+            SmartSim will look for an allocation by accessing the associated WLM job ID environment variable. If an allocation
+            is present, the entity will be launched on the reserved compute resources. A user may also specify the allocation ID
+            when initializing a run settings object via the `alloc` argument. If an allocation is specified, the entity receiving
+            these run parameters will launch on that allocation.
+
     .. group-tab:: PBS Pro
       The PBS Pro `launcher` supports the :ref:`AprunSettings API <aprun_api>` as well as the :ref:`MpirunSettings API <openmpi_run_api>`,
       :ref:`MpiexecSettings API <openmpi_exec_api>` and :ref:`OrterunSettings API <openmpi_orte_api>` that each can be used to run executables
@@ -304,8 +311,24 @@ for each job scheduler.
 
       Users may replace `mpirun` with `mpiexec` or `orterun`.
 
-.. note::
-      SmartSim will look for an allocation by accessing the associated WLM job ID environment variable. If an allocation
-      is present, the entity will be launched on the reserved compute resources. A user may also specify the allocation ID
-      when initializing a run settings object via the `alloc` argument. If an allocation is specified, the entity receiving
-      these run parameters will launch on that allocation.
+    .. group-tab:: Dragon
+      The Dragon `launcher` does not need any launch binary. Below we step through initializing a ``DragonRunSettings`` instance on a Slurm-
+      or PBS-based machine.
+
+      **DragonRunSettings**
+
+      Run a job with the `dragon` launcher.
+
+      .. code-block:: python
+
+            from smartsim import Experiment
+
+            # Initialize the experiment and provide launcher dragon
+            exp = Experiment("name-of-experiment", launcher="dragon")
+
+            # Initialize a DragonRunSettings object
+            run_settings = exp.create_run_settings(exe="echo", exe_args="Hello World")
+            # Set the number of nodes for this job
+            run_settings.set_nodes(4)
+            # Set the number of tasks per node for this job
+            run_settings.set_tasks_per_node(10)
