@@ -1,8 +1,14 @@
 from smartsim.settingshold import BatchSettings
 from smartsim.settingshold.translators.batch.slurm import SlurmBatchArgTranslator
+from smartsim.settingshold.batchCommand import SchedulerType
 import pytest
 import logging
-    
+
+def test_scheduler_str():
+    """Ensure launcher_str returns appropriate value"""
+    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+    assert slurmScheduler.scheduler_str() == SchedulerType.SlurmScheduler.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [
@@ -17,13 +23,13 @@ import logging
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    slurmScheduler = BatchSettings(scheduler="slurm")
+    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
     getattr(slurmScheduler, function)(*value)
     assert slurmScheduler.scheduler_args[flag] == result
 
 def test_create_sbatch():
     batch_args = {"exclusive": None, "oversubscribe": None}
-    slurmScheduler = BatchSettings(scheduler="slurm", scheduler_args=batch_args)
+    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler, scheduler_args=batch_args)
     assert isinstance(slurmScheduler.arg_translator, SlurmBatchArgTranslator)
     #assert slurmScheduler.batch_args["partition"] == "default"
     args = slurmScheduler.format_batch_args()
@@ -42,7 +48,7 @@ def test_launch_args_input_mutation():
         key1: val1,
         key2: val2,
     }
-    slurmScheduler = BatchSettings(scheduler="slurm", scheduler_args=default_scheduler_args)
+    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler, scheduler_args=default_scheduler_args)
 
     # Confirm initial values are set
     assert slurmScheduler.scheduler_args[key0] == val0
@@ -58,52 +64,54 @@ def test_launch_args_input_mutation():
 
 def test_sbatch_settings():
     scheduler_args = {"nodes": 1, "time": "10:00:00", "account": "A3123"}
-    sbatch = BatchSettings(scheduler="slurm",scheduler_args=scheduler_args)
-    formatted = sbatch.format_batch_args()
+    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler,scheduler_args=scheduler_args)
+    formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=1", "--time=10:00:00", "--account=A3123"]
     assert formatted == result
 
 
 def test_sbatch_manual():
-    sbatch = BatchSettings(scheduler="slurm")
-    sbatch.set_nodes(5)
-    sbatch.set_account("A3531")
-    sbatch.set_walltime("10:00:00")
-    formatted = sbatch.format_batch_args()
+    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+    slurmScheduler.set_nodes(5)
+    slurmScheduler.set_account("A3531")
+    slurmScheduler.set_walltime("10:00:00")
+    formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=5", "--account=A3531", "--time=10:00:00"]
     assert formatted == result
 
-# @pytest.mark.parametrize(
-#     "method,params",
-#     [
-#         pytest.param("set_cpu_binding_type", ("bind",), id="set_cpu_binding_type"),
-#         pytest.param("set_task_map", ("task:map",), id="set_task_map"),
-#     ],
-# )
-# def test_unimplimented_setters_throw_warning(caplog, method, params):
-#     from smartsim.settings.base import logger
+@pytest.mark.parametrize(
+    "method,params",
+    [
+        pytest.param("set_tasks", (3,), id="set_tasks"),
+        pytest.param("set_smts", ("smts",), id="set_smts"),
+        pytest.param("set_ncpus", (2,), id="set_ncpus"),
+        pytest.param("set_project", ("project",), id="set_project"),
+    ],
+)
+def test_unimplimented_setters_throw_warning(caplog, method, params):
+    from smartsim.settings.base import logger
 
-#     prev_prop = logger.propagate
-#     logger.propagate = True
+    prev_prop = logger.propagate
+    logger.propagate = True
 
-#     with caplog.at_level(logging.WARNING):
-#         caplog.clear()
-#         launcher = BatchSettings(scheduler="slurm")
-#         try:
-#             getattr(launcher, method)(*params)
-#         finally:
-#             logger.propagate = prev_prop
+    with caplog.at_level(logging.WARNING):
+        caplog.clear()
+        slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+        try:
+            getattr(slurmScheduler, method)(*params)
+        finally:
+            logger.propagate = prev_prop
 
-#         for rec in caplog.records:
-#             if (
-#                 logging.WARNING <= rec.levelno < logging.ERROR
-#                 and ("not supported" and "slurm") in rec.msg
-#             ):
-#                 break
-#         else:
-#             pytest.fail(
-#                 (
-#                     f"No message stating method `{method}` is not "
-#                     "implemented at `warning` level"
-#                 )
-#             )
+        for rec in caplog.records:
+            if (
+                logging.WARNING <= rec.levelno < logging.ERROR
+                and (method and "not supported" and "sbatch") in rec.msg
+            ):
+                break
+        else:
+            pytest.fail(
+                (
+                    f"No message stating method `{method}` is not "
+                    "implemented at `warning` level"
+                )
+            )

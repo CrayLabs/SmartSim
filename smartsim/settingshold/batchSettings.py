@@ -4,7 +4,7 @@ import typing as t
 import copy
 
 from smartsim.log import get_logger 
-
+from .batchCommand import SchedulerType
 from .translators.batch.pbs import QsubBatchArgTranslator
 from .translators.batch.slurm import SlurmBatchArgTranslator
 from .translators.batch.lsf import BsubBatchArgTranslator
@@ -27,7 +27,7 @@ class SupportedLaunchers(Enum):
 class BatchSettings():
     def __init__(
         self,
-        scheduler: str,
+        scheduler: SchedulerType,
         scheduler_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
@@ -37,7 +37,7 @@ class BatchSettings():
             'jsrun' : BsubBatchArgTranslator(),
             'qsub' : QsubBatchArgTranslator(),
         }
-        if scheduler in scheduler_to_translator:
+        if scheduler.value in scheduler_to_translator:
             self.scheduler = scheduler
         else:
             raise ValueError(f"'{scheduler}' is not a valid scheduler name.")
@@ -47,7 +47,7 @@ class BatchSettings():
 
         # TODO check and preporcess launcher_args
         self.scheduler_args = scheduler_args or {}
-        self.arg_translator = t.cast(BatchArgTranslator,scheduler_to_translator.get(self.scheduler))
+        self.arg_translator = t.cast(BatchArgTranslator,scheduler_to_translator.get(scheduler.value))
 
     @property
     def scheduler_args(self) -> t.Dict[str, t.Optional[str]]:
@@ -64,6 +64,11 @@ class BatchSettings():
         :param value: dictionary of batch arguments
         """
         self._scheduler_args = copy.deepcopy(value) if value else {}
+
+    def scheduler_str(self) -> str:
+        """ Get the string representation of the scheduler
+        """
+        return self.arg_translator.scheduler_str()
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job

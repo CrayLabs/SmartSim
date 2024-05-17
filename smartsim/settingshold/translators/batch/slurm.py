@@ -15,7 +15,7 @@ class SlurmBatchArgTranslator(BatchArgTranslator):
     def scheduler_str(self) -> str:
         """ Get the string representation of the scheduler
         """
-        return SchedulerType.SlurmLauncher.value
+        return SchedulerType.SlurmScheduler.value
 
     def set_walltime(self, walltime: str) -> t.Union[StringArgument,None]:
         """Set the walltime of the job

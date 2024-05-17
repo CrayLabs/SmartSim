@@ -4,6 +4,6 @@ class SchedulerType(Enum):
     """ Schedulers that are supported by
     SmartSim.
     """
-    SlurmLauncher = "sbatch"
-    PbsLauncher = "qsub"
-    LsfLauncher = "bsub"
+    SlurmScheduler = "sbatch"
+    PbsScheduler = "qsub"
+    LsfScheduler = "bsub"
