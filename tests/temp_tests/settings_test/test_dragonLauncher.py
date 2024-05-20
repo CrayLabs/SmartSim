@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
-    assert dragonLauncher._reserved_launch_args == {}
+    assert dragonLauncher._reserved_launch_args == set()
 
 @pytest.mark.parametrize(
     "function,value,result,flag",

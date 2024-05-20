@@ -16,6 +16,8 @@ class JsrunArgTranslator(LaunchArgTranslator):
         return LauncherType.LsfLauncher.value
 
     def _set_reserved_launch_args(self) -> set[str]:
+        """ Return reserved launch arguments.
+        """
         return {"chdir", "h"}
 
     def set_tasks(self, tasks: int) -> t.Union[IntegerArgument, None]:

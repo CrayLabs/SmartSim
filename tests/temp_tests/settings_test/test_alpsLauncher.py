@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert alpsLauncher._reserved_launch_args == {}
+    assert alpsLauncher._reserved_launch_args == set()
 
 @pytest.mark.parametrize(
     "function,value,result,flag",
@@ -59,10 +59,10 @@ def test_set_quiet_launch():
     assert aprunLauncher.launcher_args == {}
     
 def test_format_env_vars():
-    env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}
+    env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
     aprunLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher, env_vars=env_vars)
     assert aprunLauncher.launcher.value == LauncherType.AlpsLauncher.value
-    aprunLauncher.update_env({"OMP_NUM_THREADS": 10})
+    aprunLauncher.update_env({"OMP_NUM_THREADS": "10"})
     formatted = aprunLauncher.format_env_vars()
     result = ["-e", "OMP_NUM_THREADS=10", "-e", "LOGGING=verbose"]
     assert formatted == result

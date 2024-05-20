@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import Enum
 import typing as t
 from ..batchArgTranslator import BatchArgTranslator
 from ...common import IntegerArgument, StringArgument
@@ -12,7 +11,7 @@ logger = get_logger(__name__)
 class BsubBatchArgTranslator(BatchArgTranslator):
 
     def scheduler_str(self) -> str:
-        """ Get the string representation of the launcher
+        """ Get the string representation of the scheduler
         """
         return SchedulerType.LsfScheduler.value
 
@@ -94,6 +93,8 @@ class BsubBatchArgTranslator(BatchArgTranslator):
 
     def set_queue(self, queue: str) -> t.Union[StringArgument,None]:
         """Set the queue for this job
+        
+        This sets ``-q``
 
         :param queue: The queue to submit the job on
         """

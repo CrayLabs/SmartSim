@@ -11,6 +11,8 @@ logger = get_logger(__name__)
 class _BaseMPIArgTranslator(LaunchArgTranslator):
 
     def _set_reserved_launch_args(self) -> set[str]:
+        """ Return reserved launch arguments.
+        """
         return {"wd", "wdir"}
 
     def set_task_map(self, task_mapping: str) -> t.Union[StringArgument, None]:
@@ -111,7 +113,7 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
         """
         return {"verbose": None}
 
-    def set_walltime(self, walltime: str) -> None:
+    def set_walltime(self, walltime: str) -> t.Union[StringArgument, None]:
         """Set the maximum number of seconds that a job will run
 
         This sets ``--timeout``

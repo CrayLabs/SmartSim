@@ -68,8 +68,8 @@ def test_update_env_initialized(l,function, value, flag, result):
         pytest.param(LauncherType.OrterunLauncher, id="format_env_orterun"),
     ],
 )
-def test_format_env(launcher):
-    env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}
+def test_format_env_vars(launcher):
+    env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
     mpiSettings = LaunchSettings(launcher=launcher, env_vars=env_vars)
     assert mpiSettings.launcher.value == launcher.value
     formatted = mpiSettings.format_env_vars()

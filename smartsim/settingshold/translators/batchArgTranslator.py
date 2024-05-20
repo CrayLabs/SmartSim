@@ -27,8 +27,7 @@ class BatchArgTranslator(ABC):
 
         :param account: account id
         """
-        logger.warning(f"set_account() not supported for {self.scheduler_str()}.")
-        return None
+        pass
 
     def set_partition(self, partition: str) -> t.Union[StringArgument,None]:
         """Set the partition for the batch job
@@ -46,8 +45,7 @@ class BatchArgTranslator(ABC):
 
         :param queue: the partition to run the batch job on
         """
-        logger.warning(f"set_queue() not supported for {self.scheduler_str()}.")
-        return None
+        pass
 
     def set_smts(self, smts: int) -> t.Union[IntegerArgument,None]:
         """Set SMTs
@@ -77,8 +75,7 @@ class BatchArgTranslator(ABC):
 
         :param walltime: wall time
         """
-        logger.warning(f"set_walltime() not supported for {self.scheduler_str()}.")
-        return None
+        pass
 
     @abstractmethod
     def set_nodes(self, num_nodes: int) -> t.Union[IntegerArgument,None]:
@@ -86,8 +83,7 @@ class BatchArgTranslator(ABC):
 
         :param num_nodes: number of nodes
         """
-        logger.warning(f"set_nodes() not supported for {self.scheduler_str()}.")
-        return None
+        pass
 
     def set_cpus_per_task(self, cpus_per_task: int) -> t.Union[IntegerArgument,None]:
         """Set the number of cpus to use per task
@@ -104,8 +100,7 @@ class BatchArgTranslator(ABC):
         :param host_list: hosts to launch on
         :raises TypeError: if not str or list of str
         """
-        logger.warning(f"set_hostlist() not supported for {self.scheduler_str()}.")
-        return None
+        pass
 
     @abstractmethod
     def format_batch_args(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:

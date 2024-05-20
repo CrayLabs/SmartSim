@@ -1,35 +1,25 @@
 from __future__ import annotations
-from enum import Enum
 import typing as t
 import copy
 
-from smartsim.log import get_logger 
+from smartsim.log import get_logger
+from .._core.utils.helpers import fmt_dict
+from .common import process_env_vars, process_args, StringArgument
 from .batchCommand import SchedulerType
 from .translators.batch.pbs import QsubBatchArgTranslator
 from .translators.batch.slurm import SlurmBatchArgTranslator
 from .translators.batch.lsf import BsubBatchArgTranslator
-from .translators import BatchArgTranslator 
-
-IntegerArgument_1 = t.Dict[str, t.Optional[int]]
-FloatArgument_1 = t.Dict[str, t.Optional[float]]
-StringArgument_1 = t.Dict[str, t.Optional[str]]                                                                             
+from .translators import BatchArgTranslator
+from .baseSettings import BaseSettings
 
 logger = get_logger(__name__)
 
-class SupportedLaunchers(Enum):
-    """ Launchers that are supported by
-    SmartSim.
-    """
-    pbs = "qsub"
-    lsf = "bsub"
-    slurm = "sbatch"
-
-class BatchSettings():
+class BatchSettings(BaseSettings):
     def __init__(
         self,
         scheduler: SchedulerType,
         scheduler_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        env_vars: t.Optional[StringArgument] = None,
         **kwargs: t.Any,
     ) -> None:
         scheduler_to_translator = {
@@ -42,15 +32,18 @@ class BatchSettings():
         else:
             raise ValueError(f"'{scheduler}' is not a valid scheduler name.")
 
-        # TODO check and preprocess env_vars
+        if env_vars:
+            process_env_vars(env_vars)
         self.env_vars = env_vars or {}
 
-        # TODO check and preporcess launcher_args
+        if scheduler_args:
+            process_args(scheduler_args)
         self.scheduler_args = scheduler_args or {}
+
         self.arg_translator = t.cast(BatchArgTranslator,scheduler_to_translator.get(scheduler.value))
 
     @property
-    def scheduler_args(self) -> t.Dict[str, t.Optional[str]]:
+    def scheduler_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
         """Retrieve attached batch arguments
 
         :returns: attached batch arguments
@@ -58,7 +51,7 @@ class BatchSettings():
         return self._scheduler_args
 
     @scheduler_args.setter
-    def scheduler_args(self, value: t.Dict[str, t.Optional[str]]) -> None:
+    def scheduler_args(self, value: t.Dict[str, t.Union[int, str, float,None]]) -> None:
         """Attach batch arguments
 
         :param value: dictionary of batch arguments
@@ -208,3 +201,12 @@ class BatchSettings():
     def set(self, key: str, arg: t.Union[str,int,float,None]) -> None:
         # Store custom arguments in the launcher_args
         self.scheduler_args[key] = arg
+
+    def __str__(self) -> str:  # pragma: no-cover
+        string = ""
+        string += f"\Scheduler: {self.arg_translator.scheduler_str}"
+        if self.scheduler_args:
+            string += f"\Scheduler Arguments:\n{fmt_dict(self.scheduler_args)}"
+        if self.env_vars:
+            string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
+        return string

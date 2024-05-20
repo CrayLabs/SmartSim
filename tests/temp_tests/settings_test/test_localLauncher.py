@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
-    assert localLauncher._reserved_launch_args == {}
+    assert localLauncher._reserved_launch_args == set()
 
 def test_launch_args_input_mutation():
     # Tests that the run args passed in are not modified after initialization
@@ -101,7 +101,7 @@ def test_format_env_vars():
             "A": "a",
             "B": None,
             "C": "",
-            "D": 12,
+            "D": "12",
         }
     localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars=env_vars)
     assert localLauncher.launcher.value == LauncherType.LocalLauncher.value

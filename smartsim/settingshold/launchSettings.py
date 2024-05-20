@@ -5,6 +5,7 @@ import copy
 
 from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
+from .common import process_env_vars, process_args, StringArgument
 from .launchCommand import LauncherType
 from .translators.launch.alps import AprunArgTranslator
 from .translators.launch.lsf import JsrunArgTranslator
@@ -13,16 +14,17 @@ from .translators.launch.pals import PalsMpiexecArgTranslator
 from .translators.launch.slurm import SlurmArgTranslator      
 from .translators.launch.dragon import DragonArgTranslator  
 from .translators.launch.local import LocalArgTranslator 
-from .translators import LaunchArgTranslator                                                           
+from .translators import LaunchArgTranslator   
+from .baseSettings import BaseSettings                                                        
 
 logger = get_logger(__name__)
 
-class LaunchSettings():
+class LaunchSettings(BaseSettings):
     def __init__(
         self,
         launcher: LauncherType,
         launcher_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        env_vars: t.Optional[StringArgument] = None,
         **kwargs: t.Any,
     ) -> None:
         launcher_to_translator : t.Dict[str,LaunchArgTranslator] = {
@@ -40,13 +42,17 @@ class LaunchSettings():
             self.launcher = launcher
         else:
             raise ValueError(f"'{launcher}' is not a valid launcher name.")
-
-        #process_env_vars(env_vars)
+        
+        if env_vars:
+            process_env_vars(env_vars)
         self.env_vars = env_vars or {}
 
-        # TODO check and preporcess launcher_args
+        if launcher_args:
+            process_args(launcher_args)
         self.launcher_args = launcher_args or {}
+
         self.arg_translator = t.cast(LaunchArgTranslator,launcher_to_translator.get(launcher.value))
+        # Set the reserved launch arguments per LauncherType
         self._reserved_launch_args = self.arg_translator._set_reserved_launch_args()
 
     @property
@@ -66,7 +72,7 @@ class LaunchSettings():
         self._launcher_args = copy.deepcopy(value)
 
     @property
-    def env_vars(self) -> t.Dict[str, t.Optional[str]]:
+    def env_vars(self) -> StringArgument:
         """Return an immutable list of attached environment variables.
 
         :returns: attached environment variables
@@ -74,7 +80,7 @@ class LaunchSettings():
         return self._env_vars
 
     @env_vars.setter
-    def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
+    def env_vars(self, value: StringArgument) -> None:
         """Set the environment variables.
 
         :param value: environment variables
@@ -352,8 +358,7 @@ class LaunchSettings():
     
     def __str__(self) -> str:  # pragma: no-cover
         string = ""
-        if self.launcher:
-            string += f"\nLauncher: {self.launcher}"
+        string += f"\nLauncher: {self.arg_translator.launcher_str}"
         if self.launcher_args:
             string += f"\Launch Arguments:\n{fmt_dict(self.launcher_args)}"
         if self.env_vars:

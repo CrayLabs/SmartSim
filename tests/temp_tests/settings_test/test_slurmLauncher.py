@@ -63,7 +63,7 @@ def test_set_quiet_launch():
 def test_format_env_vars():
     """Test format_env_vars runs correctly"""
     env_vars={
-        "OMP_NUM_THREADS": 20,
+        "OMP_NUM_THREADS": "20",
         "LOGGING": "verbose",
         "SSKEYIN": "name_0,name_1",
     }
@@ -77,7 +77,7 @@ def test_format_env_vars():
 
 def test_format_comma_sep_env_vars():
     """Test format_comma_sep_env_vars runs correctly"""
-    env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose", "SSKEYIN": "name_0,name_1"}
+    env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose", "SSKEYIN": "name_0,name_1"}
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher, env_vars=env_vars)
     formatted, comma_separated_formatted = slurmLauncher.format_comma_sep_env_vars()
     assert "OMP_NUM_THREADS" in formatted

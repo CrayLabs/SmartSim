@@ -14,7 +14,6 @@ def test_set_launch_args():
     assert "nothing" in launchSettings.launcher_args
     assert launchSettings.launcher_args["nothing"] is None
 
-
 @pytest.mark.parametrize(
     "set_str,val,key",
     [
@@ -34,7 +33,20 @@ def test_set_raises_key_error():
     launchSettings = LaunchSettings(launcher=LauncherType.LocalLauncher)
     with pytest.raises(TypeError):
         launchSettings.set(1, "test")
-        
+
+def test_incorrect_env_var_type():
+    with pytest.raises(TypeError):
+        _ = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars={"str": 2})
+    with pytest.raises(TypeError):
+        _ = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars={"str": 2.0})
+    with pytest.raises(TypeError):
+        _ = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars={"str": "str", "str": 2.0})
+
+def test_incorrect_launch_arg_type():
+    with pytest.raises(TypeError):
+        _ = LaunchSettings(launcher=LauncherType.LocalLauncher, launcher_args={"str": [1,2]})
+    with pytest.raises(TypeError):
+        _ = LaunchSettings(launcher=LauncherType.LocalLauncher, launcher_args={"str": LauncherType.LocalLauncher})
 
 @pytest.mark.parametrize(
     "launcher,key",

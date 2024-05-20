@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class QsubBatchArgTranslator(BatchArgTranslator):
 
     def scheduler_str(self) -> str:
-        """ Get the string representation of the launcher
+        """ Get the string representation of the scheduler
         """
         return SchedulerType.PbsScheduler.value
 
@@ -89,7 +89,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         :raises ValueError: if options are supplied without values
         """
         opts, batch_arg_copy = self._create_resource_list(batch_args)
-        t.cast(t.List,batch_arg_copy)
+        t.cast(t.List[str],batch_arg_copy)
         for opt, value in batch_arg_copy.items():
             prefix = "-"
             if not value:
@@ -126,16 +126,16 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         for key, value in checked_resources.items():
             if not isinstance(key, str):
                 raise TypeError(
-                    f"The type of {key=} is {type(key)}. Only int and str "
+                    f"The type of {key} is {type(key)}. Only int and str "
                     "are allowed."
                 )
             if not isinstance(value, (str, int)):
                 raise TypeError(
-                    f"The value associated with {key=} is {type(value)}. Only int "
+                    f"The value associated with {key} is {type(value)}. Only int "
                     "and str are allowed."
                 )
 
-    def _create_resource_list(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+    def _create_resource_list(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.Tuple[t.List[str],t.Dict[str, t.Union[str,int,float,None]]]:
         self._sanity_check_resources(batch_args)
         res = []
 

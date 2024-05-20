@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     palsLauncher = LaunchSettings(launcher=LauncherType.PalsLauncher)
-    assert palsLauncher._reserved_launch_args == {}
+    assert palsLauncher._reserved_launch_args == set()
 
 @pytest.mark.parametrize(
     "function,value,result,flag",

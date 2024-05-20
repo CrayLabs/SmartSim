@@ -31,6 +31,8 @@ class SlurmBatchArgTranslator(BatchArgTranslator):
 
     def set_nodes(self, num_nodes: int) -> t.Union[IntegerArgument,None]:
         """Set the number of nodes for this batch job
+        
+        This sets ``--nodes``.
 
         :param num_nodes: number of nodes
         """
@@ -38,6 +40,8 @@ class SlurmBatchArgTranslator(BatchArgTranslator):
 
     def set_account(self, account: str) -> t.Union[StringArgument,None]:
         """Set the account for this batch job
+        
+        This sets ``--account``.
 
         :param account: account id
         """
@@ -45,6 +49,8 @@ class SlurmBatchArgTranslator(BatchArgTranslator):
 
     def set_partition(self, partition: str) -> t.Union[StringArgument,None]:
         """Set the partition for the batch job
+        
+        This sets ``--partition``.
 
         :param partition: partition name
         """
@@ -70,6 +76,8 @@ class SlurmBatchArgTranslator(BatchArgTranslator):
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument,None]:
         """Specify the hostlist for this job
+        
+        This sets ``--nodelist``.
 
         :param host_list: hosts to launch on
         :raises TypeError: if not str or list of str
