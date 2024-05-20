@@ -337,12 +337,15 @@ class LaunchSettings():
         # Store custom arguments in the launcher_args
         if not isinstance(key, str):
             raise TypeError("Argument name should be of type str")
-        # if value is not None and not isinstance(value, str):
-        #     raise TypeError("Argument value should be of type str or None")
-        #arg = arg.strip().lstrip("-")
-        # if not condition:
-        #     logger.info(f"Could not set argument '{arg}': condition not met")
-        #     return
+        key = key.strip().lstrip("-")
+        if key in self._reserved_launch_args:
+            logger.warning(
+                (
+                    f"Could not set argument '{arg}': "
+                    f"it is a reserved arguement of '{type(self).__name__}'"
+                )
+            )
+            return
         if key in self.launcher_args and arg != self.launcher_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{arg}'")
         self.launcher_args[key] = arg
