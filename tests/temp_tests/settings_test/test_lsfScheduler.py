@@ -1,5 +1,4 @@
 from smartsim.settingshold import BatchSettings
-from smartsim.settingshold.translators.batch.lsf import BsubBatchArgTranslator
 import pytest
 import logging
 from smartsim.settingshold.batchCommand import SchedulerType
@@ -37,39 +36,38 @@ def test_create_bsub():
     args = lsfScheduler.format_batch_args()
     assert args == ["-core_isolation", "-nnodes 1", "-W 10:10", "-q default"]
 
-# @pytest.mark.parametrize(
-#     "method,params",
-#     [
-#         pytest.param("set_tasks", (3,), id="set_tasks"),
-#         pytest.param("set_smts", (10,), id="set_smts"),
-#         pytest.param("set_ncpus", (2,), id="set_ncpus"),
-#         pytest.param("set_project", ("project",), id="set_project"),
-#     ],
-# )
-# def test_unimplimented_setters_throw_warning(caplog, method, params):
-#     from smartsim.settings.base import logger
+@pytest.mark.parametrize(
+    "method,params",
+    [
+        pytest.param("set_partition", (3,), id="set_tasks"),
+        pytest.param("set_cpus_per_task", (10,), id="set_smts"),
+        pytest.param("set_ncpus", (2,), id="set_ncpus"),
+    ],
+)
+def test_unimplimented_setters_throw_warning(caplog, method, params):
+    from smartsim.settings.base import logger
 
-#     prev_prop = logger.propagate
-#     logger.propagate = True
+    prev_prop = logger.propagate
+    logger.propagate = True
 
-#     with caplog.at_level(logging.WARNING):
-#         caplog.clear()
-#         slurmScheduler = BatchSettings(scheduler=SchedulerType.LsfScheduler)
-#         try:
-#             getattr(slurmScheduler, method)(*params)
-#         finally:
-#             logger.propagate = prev_prop
+    with caplog.at_level(logging.WARNING):
+        caplog.clear()
+        slurmScheduler = BatchSettings(scheduler=SchedulerType.LsfScheduler)
+        try:
+            getattr(slurmScheduler, method)(*params)
+        finally:
+            logger.propagate = prev_prop
 
-#         for rec in caplog.records:
-#             if (
-#                 logging.WARNING <= rec.levelno < logging.ERROR
-#                 and (method and "not supported" and "bsub") in rec.msg
-#             ):
-#                 break
-#         else:
-#             pytest.fail(
-#                 (
-#                     f"No message stating method `{method}` is not "
-#                     "implemented at `warning` level"
-#                 )
-#             )
+        for rec in caplog.records:
+            if (
+                logging.WARNING <= rec.levelno < logging.ERROR
+                and (method and "not supported" and "bsub") in rec.msg
+            ):
+                break
+        else:
+            pytest.fail(
+                (
+                    f"No message stating method `{method}` is not "
+                    "implemented at `warning` level"
+                )
+            )
