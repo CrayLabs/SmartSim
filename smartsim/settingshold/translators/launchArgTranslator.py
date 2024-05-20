@@ -22,13 +22,12 @@ class LaunchArgTranslator(ABC):
         """ Get the string representation of the launcher
         """
         pass
-
-    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
-        """ Convert the provide number of nodes into a properly formatted launcher 
-        argument.
+    
+    @abstractmethod
+    def _set_reserved_launch_args(self) -> set[str]:
+        """ Reserved launch keys per Launcher.
         """
-        logger.warning(f"set_nodes() not supported for {self.launcher_str()}.")
-        return None
+        pass
 
     def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
         """ Convert the provide number of nodes into a properly formatted launcher 

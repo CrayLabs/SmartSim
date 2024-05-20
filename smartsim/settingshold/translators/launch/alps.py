@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ..launchArgTranslator import LaunchArgTranslator
 import typing as t
 from ...common import IntegerArgument, StringArgument
@@ -13,8 +14,8 @@ class AprunArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.AlpsLauncher.value
 
-    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
-        return {}
+    def _set_reserved_launch_args(self) -> set[str]:
+        return set()
 
     def set_cpus_per_task(self, cpus_per_task: int) -> t.Union[IntegerArgument, None]:
         """Set the number of cpus to use per task

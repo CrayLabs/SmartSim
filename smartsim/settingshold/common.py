@@ -4,7 +4,7 @@ IntegerArgument = t.Dict[str, t.Optional[int]]
 FloatArgument = t.Dict[str, t.Optional[float]]
 StringArgument = t.Dict[str, t.Optional[str]]
 
-def process_env_vars(env_vars: StringArgument):
+def process_env_vars(env_vars: StringArgument) -> None:
     for key, value in env_vars.items():
         if not isinstance(value, str):
             raise ValueError(f"Value for '{key}' must be a string.")

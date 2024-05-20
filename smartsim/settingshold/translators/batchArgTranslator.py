@@ -113,8 +113,7 @@ class BatchArgTranslator(ABC):
 
         :return: batch arguments for Sbatch
         """
-        logger.warning(f"format_batch_args() not supported for {self.scheduler_str()}.")
-        return None
+        pass
 
     def set_tasks(self, tasks: int) -> t.Union[IntegerArgument,None]:
         """Set the number of tasks for this job

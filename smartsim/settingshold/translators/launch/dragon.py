@@ -15,8 +15,8 @@ class DragonArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.DragonLauncher.value
 
-    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
-        return {}
+    def _set_reserved_launch_args(self) -> set[str]:
+        return set()
 
     def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
         """Set the number of nodes

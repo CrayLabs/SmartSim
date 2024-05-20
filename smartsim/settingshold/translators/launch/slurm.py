@@ -18,7 +18,7 @@ class SlurmArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.SlurmLauncher.value
     
-    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+    def _set_reserved_launch_args(self) -> set[str]:
         return {"chdir", "D"}
 
     def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
