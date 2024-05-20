@@ -341,8 +341,8 @@ class LaunchSettings():
         if key in self._reserved_launch_args:
             logger.warning(
                 (
-                    f"Could not set argument '{arg}': "
-                    f"it is a reserved arguement of '{type(self).__name__}'"
+                    f"Could not set argument '{key}': "
+                    f"it is a reserved argument of '{type(self).__name__}'"
                 )
             )
             return
