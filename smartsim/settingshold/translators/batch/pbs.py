@@ -152,7 +152,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         if ncpus := batch_arg_copy.pop("ppn", None):
             select_command += f":ncpus={ncpus}"
         if hosts := batch_arg_copy.pop("hostname", None):
-            hosts_list = ["=".join(hosts)]
+            hosts_list = ["=".join(str(hosts))]
             t.cast(str,hosts_list)
             select_command += f":{'+'.join(hosts_list)}"
         res += [select_command]
