@@ -46,8 +46,8 @@ class LaunchSettings():
 
         # TODO check and preporcess launcher_args
         self.launcher_args = launcher_args or {}
-
         self.arg_translator = t.cast(LaunchArgTranslator,launcher_to_translator.get(launcher.value))
+        self._reserved_launch_args = self.arg_translator._set_reserved_launch_args()
 
     @property
     def launcher_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:

@@ -12,7 +12,10 @@ class AprunArgTranslator(LaunchArgTranslator):
         """ Get the string representation of the launcher
         """
         return LauncherType.AlpsLauncher.value
-    
+
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        return {}
+
     def set_cpus_per_task(self, cpus_per_task: int) -> t.Union[IntegerArgument, None]:
         """Set the number of cpus to use per task
 

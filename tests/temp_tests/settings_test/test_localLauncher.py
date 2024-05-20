@@ -9,6 +9,11 @@ def test_launcher_str():
     localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
     assert localLauncher.launcher_str() == LauncherType.LocalLauncher.value
 
+def test_set_reserved_launcher_args():
+    """Ensure launcher_str returns appropriate value"""
+    localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
+    assert localLauncher._reserved_launch_args == {}
+
 def test_launch_args_input_mutation():
     # Tests that the run args passed in are not modified after initialization
     key0, key1, key2 = "arg0", "arg1", "arg2"

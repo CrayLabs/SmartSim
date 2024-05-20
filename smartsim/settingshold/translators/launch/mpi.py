@@ -10,6 +10,9 @@ logger = get_logger(__name__)
 
 class _BaseMPIArgTranslator(LaunchArgTranslator):
 
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        return {"wd", "wdir"}
+
     def set_task_map(self, task_mapping: str) -> t.Union[StringArgument, None]:
         """ Set ``mpirun`` task mapping
 

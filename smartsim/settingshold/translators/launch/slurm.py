@@ -17,6 +17,9 @@ class SlurmArgTranslator(LaunchArgTranslator):
         """ Get the string representation of the launcher
         """
         return LauncherType.SlurmLauncher.value
+    
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        return {"chdir", "D"}
 
     def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
         """ Set the number of nodes

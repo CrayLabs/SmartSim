@@ -21,6 +21,7 @@ class BatchArgTranslator(ABC):
         """
         pass
 
+    @abstractmethod
     def set_account(self, account: str) -> t.Union[StringArgument,None]:
         """Set the account for this batch job
 
@@ -37,6 +38,7 @@ class BatchArgTranslator(ABC):
         logger.warning(f"set_partition() not supported for {self.scheduler_str()}.")
         return None
 
+    @abstractmethod
     def set_queue(self, queue: str) -> t.Union[StringArgument,None]:
         """alias for set_partition
 
@@ -69,6 +71,7 @@ class BatchArgTranslator(ABC):
         logger.warning(f"set_project() not supported for {self.scheduler_str()}.")
         return None
 
+    @abstractmethod
     def set_walltime(self, walltime: str) -> t.Union[StringArgument,None]:
         """Set the walltime of the job
 
@@ -77,6 +80,7 @@ class BatchArgTranslator(ABC):
         logger.warning(f"set_walltime() not supported for {self.scheduler_str()}.")
         return None
 
+    @abstractmethod
     def set_nodes(self, num_nodes: int) -> t.Union[IntegerArgument,None]:
         """Set the number of nodes for this batch job
 
@@ -93,6 +97,7 @@ class BatchArgTranslator(ABC):
         logger.warning(f"set_cpus_per_task() not supported for {self.scheduler_str()}.")
         return None
 
+    @abstractmethod
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument,None]:
         """Specify the hostlist for this job
 
@@ -102,6 +107,7 @@ class BatchArgTranslator(ABC):
         logger.warning(f"set_hostlist() not supported for {self.scheduler_str()}.")
         return None
 
+    @abstractmethod
     def format_batch_args(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 

@@ -9,6 +9,11 @@ def test_launcher_str():
     lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher)
     assert lsfLauncher.launcher_str() == LauncherType.LsfLauncher.value
 
+def test_set_reserved_launcher_args():
+    """Ensure launcher_str returns appropriate value"""
+    lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher)
+    assert lsfLauncher._reserved_launch_args == {"chdir", "h"}
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

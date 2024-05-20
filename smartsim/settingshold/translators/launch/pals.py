@@ -15,6 +15,9 @@ class PalsMpiexecArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.PalsLauncher.value
 
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        return {}
+
     def set_cpu_binding_type(self, bind_type: str) -> t.Union[StringArgument,None]:
         """ Specifies the cores to which MPI processes are bound
 

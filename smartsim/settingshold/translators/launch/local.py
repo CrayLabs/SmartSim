@@ -15,6 +15,9 @@ class LocalArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.LocalLauncher.value
 
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        return {}
+
     def format_env_vars(self, env_vars: StringArgument) -> t.Union[t.List[str],None]:
         """Build environment variable string
 

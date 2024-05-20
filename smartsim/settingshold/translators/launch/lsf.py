@@ -15,6 +15,9 @@ class JsrunArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.LsfLauncher.value
 
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        return {"chdir", "h"}
+
     def set_tasks(self, tasks: int) -> t.Union[IntegerArgument, None]:
         """Set the number of tasks for this job
 

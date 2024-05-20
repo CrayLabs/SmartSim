@@ -4,7 +4,33 @@ import pytest
 import logging
 import itertools
 from smartsim.settingshold.launchCommand import LauncherType
-    
+
+@pytest.mark.parametrize(
+    "launcher",
+    [
+        pytest.param(LauncherType.MpirunLauncher, id="format_launcher_args_mpirun"),
+        pytest.param(LauncherType.MpiexecLauncher, id="format_launcher_args_mpiexec"),
+        pytest.param(LauncherType.OrterunLauncher, id="format_launcher_args_orterun"),
+    ],
+)
+def test_launcher_str(launcher):
+    """Ensure launcher_str returns appropriate value"""
+    mpiSettings = LaunchSettings(launcher=launcher)
+    assert mpiSettings.launcher_str() == LauncherType.PalsLauncher.value
+
+@pytest.mark.parametrize(
+    "launcher",
+    [
+        pytest.param(LauncherType.MpirunLauncher, id="format_launcher_args_mpirun"),
+        pytest.param(LauncherType.MpiexecLauncher, id="format_launcher_args_mpiexec"),
+        pytest.param(LauncherType.OrterunLauncher, id="format_launcher_args_orterun"),
+    ],
+)
+def test_set_reserved_launcher_args(launcher):
+    """Ensure launcher_str returns appropriate value"""
+    mpiSettings = LaunchSettings(launcher=launcher)
+    assert mpiSettings._reserved_launch_args == {"wd", "wdir"}
+
 @pytest.mark.parametrize(
     "l,function,value,result,flag",
     [

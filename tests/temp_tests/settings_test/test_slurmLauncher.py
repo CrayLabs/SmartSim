@@ -9,6 +9,11 @@ def test_launcher_str():
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     assert slurmLauncher.launcher_str() == LauncherType.SlurmLauncher.value
 
+def test_set_reserved_launcher_args():
+    """Ensure launcher_str returns appropriate value"""
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
+    assert slurmLauncher._reserved_launch_args == {"chdir", "D"}
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

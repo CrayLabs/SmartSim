@@ -23,6 +23,13 @@ class LaunchArgTranslator(ABC):
         """
         pass
 
+    def _set_reserved_launch_args(self) -> t.Dict[str,str]:
+        """ Convert the provide number of nodes into a properly formatted launcher 
+        argument.
+        """
+        logger.warning(f"set_nodes() not supported for {self.launcher_str()}.")
+        return None
+
     def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
         """ Convert the provide number of nodes into a properly formatted launcher 
         argument.
