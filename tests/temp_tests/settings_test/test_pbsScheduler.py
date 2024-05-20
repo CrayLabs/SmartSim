@@ -42,40 +42,40 @@ def test_create_pbs_batch():
         "-A myproject",
     ]
 
-# @pytest.mark.parametrize(
-#     "method,params",
-#     [
-#         pytest.param("set_tasks", (3,), id="set_tasks"),
-#         pytest.param("set_smts", ("smts",), id="set_smts"),
-#         pytest.param("set_cpus_per_task", (2,), id="set_cpus_per_task"),
-#         pytest.param("set_project", ("project",), id="set_project"),
-#         pytest.param("set_partition", ("project",), id="set_partition"),
-#     ],
-# )
-# def test_unimplimented_setters_throw_warning(caplog, method, params):
-#     from smartsim.settings.base import logger
+@pytest.mark.parametrize(
+    "method,params",
+    [
+        pytest.param("set_tasks", (3,), id="set_tasks"),
+        pytest.param("set_smts", ("smts",), id="set_smts"),
+        pytest.param("set_cpus_per_task", (2,), id="set_cpus_per_task"),
+        pytest.param("set_project", ("project",), id="set_project"),
+        pytest.param("set_partition", ("project",), id="set_partition"),
+    ],
+)
+def test_unimplimented_setters_throw_warning(caplog, method, params):
+    from smartsim.settings.base import logger
 
-#     prev_prop = logger.propagate
-#     logger.propagate = True
+    prev_prop = logger.propagate
+    logger.propagate = True
 
-#     with caplog.at_level(logging.WARNING):
-#         caplog.clear()
-#         pbsScheduler = BatchSettings(scheduler=SchedulerType.PbsScheduler)
-#         try:
-#             getattr(pbsScheduler, method)(*params)
-#         finally:
-#             logger.propagate = prev_prop
+    with caplog.at_level(logging.WARNING):
+        caplog.clear()
+        pbsScheduler = BatchSettings(scheduler=SchedulerType.PbsScheduler)
+        try:
+            getattr(pbsScheduler, method)(*params)
+        finally:
+            logger.propagate = prev_prop
 
-#         for rec in caplog.records:
-#             if (
-#                 logging.WARNING <= rec.levelno < logging.ERROR
-#                 and (method and "not supported" and "qsub") in rec.msg
-#             ):
-#                 break
-#         else:
-#             pytest.fail(
-#                 (
-#                     f"No message stating method `{method}` is not "
-#                     "implemented at `warning` level"
-#                 )
-#             )
+        for rec in caplog.records:
+            if (
+                logging.WARNING <= rec.levelno < logging.ERROR
+                and (method and "not supported" and "qsub") in rec.msg
+            ):
+                break
+        else:
+            pytest.fail(
+                (
+                    f"No message stating method `{method}` is not "
+                    "implemented at `warning` level"
+                )
+            )

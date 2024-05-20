@@ -105,7 +105,6 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         Note: For PBS Pro, nodes is equivalent to 'select' and 'place' so
         they are not quite synonyms. Here we assume that
         """
-        # Note: isinstance check here to avoid collision with default
         checked_resources = batch_args
 
         has_select = checked_resources.get("select", None)
@@ -139,7 +138,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         self._sanity_check_resources(batch_args)
         res = []
 
-        batch_arg_copy = deepcopy(batch_args)
+        batch_arg_copy = batch_args
         # Construct the basic select/nodes statement
         if select := batch_arg_copy.pop("select", None):
             select_command = f"-l select={select}"
@@ -159,7 +158,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         if walltime := batch_arg_copy.pop("walltime", None):
             res += [f"-l walltime={walltime}"]
 
-        # All other "standard" resource specs
+        # # All other "standard" resource specs
         # for resource, value in batch_arg_copy.items():
         #     res += [f"-l {resource}={value}"]
 
