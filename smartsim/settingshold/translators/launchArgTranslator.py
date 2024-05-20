@@ -136,6 +136,16 @@ class LaunchArgTranslator(ABC):
         logger.warning(f"set_task_map() not supported for {self.launcher_str()}.")
         return None
 
+    def set_het_group(self, het_group: t.Iterable[int]) -> t.Union[StringArgument, None]:
+        """Set the heterogeneous group for this job
+
+        this sets `--het-group`
+
+        :param het_group: list of heterogeneous groups
+        """
+        logger.warning(f"set_het_group() not supported for {self.launcher_str()}.")
+        return None
+
     def set_quiet_launch(self, quiet: bool) -> t.Union[t.Dict[str, None], None]:
         """Set the job to run in quiet mode
 

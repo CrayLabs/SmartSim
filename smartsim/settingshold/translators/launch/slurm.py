@@ -155,6 +155,26 @@ class SlurmArgTranslator(LaunchArgTranslator):
         else:
             raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
 
+    def set_het_group(self, het_group: t.Iterable[int]) -> t.Union[StringArgument,None]:
+        """Set the heterogeneous group for this job
+
+        this sets `--het-group`
+
+        :param het_group: list of heterogeneous groups
+        """
+        het_size_env = os.getenv("SLURM_HET_SIZE")
+        if het_size_env is None:
+            msg = "Requested to set het group, but the allocation is not a het job"
+            raise ValueError(msg)
+        het_size = int(het_size_env)
+        if any(group >= het_size for group in het_group):
+            msg = (
+                f"Het group {max(het_group)} requested, "
+                f"but max het group in allocation is {het_size-1}"
+            )
+            raise ValueError(msg)
+        return {"het-group": ",".join(str(group) for group in het_group)}
+
     def set_verbose_launch(self, verbose: bool) -> t.Union[t.Dict[str, None], t.Dict[str, int], None]:
         """ Set the job to run in verbose mode
 

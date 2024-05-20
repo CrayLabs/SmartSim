@@ -173,6 +173,7 @@ def test_launcher_str(launcher):
             pytest.param(l, "set_binding", ("bind",), id="set_binding"),
             pytest.param(l, "set_node_feature", ("P100",), id="set_node_feature"),
             pytest.param(l, "format_comma_sep_env_vars", (), id="format_comma_sep_env_vars"),
+            pytest.param(l, "set_het_group", ([1,2,3,4],), id="set_het_group"),
             )
             for l in (LauncherType.MpirunLauncher, LauncherType.MpiexecLauncher, LauncherType.OrterunLauncher)
             ))

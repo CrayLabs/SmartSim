@@ -131,6 +131,7 @@ def test_format_env_vars():
         pytest.param("set_binding", ("packed:21",), id="set_binding"),
         pytest.param("set_cpu_binding_type", ("bind",), id="set_cpu_binding_type"),
         pytest.param("format_comma_sep_env_vars", (), id="format_comma_sep_env_vars"),
+        pytest.param("set_het_group", ([1,2,3,4],), id="set_het_group"),
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):

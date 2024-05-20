@@ -106,6 +106,7 @@ def test_invalid_exclude_hostlist_format():
         pytest.param("set_task_map", ("task:map",), id="set_task_map"),
         pytest.param("set_binding", ("bind",), id="set_binding"),
         pytest.param("format_comma_sep_env_vars", (), id="format_comma_sep_env_vars"),
+        pytest.param("set_het_group", ([1,2,3,4],), id="set_het_group"),
     ],
 )
 def test_unimplimented_methods_throw_warning(caplog, method, params):

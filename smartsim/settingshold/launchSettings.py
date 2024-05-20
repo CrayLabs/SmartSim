@@ -261,6 +261,18 @@ class LaunchSettings(BaseSettings):
             for key, value in args.items():
                 self.set(key, value)
 
+    def set_het_group(self, het_group: t.Iterable[int]) -> None:
+        """Set the heterogeneous group for this job
+
+        this sets `--het-group`
+
+        :param het_group: list of heterogeneous groups
+        """
+        args = self.arg_translator.set_het_group(het_group)
+        if args:
+            for key, value in args.items():
+                self.set(key, value)
+
     def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
 

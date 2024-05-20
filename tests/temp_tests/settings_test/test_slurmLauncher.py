@@ -196,3 +196,14 @@ def test_unimplimented_methods_throw_warning(caplog, method, params):
                     "implemented at `warning` level"
                 )
             )
+
+def test_set_het_groups(monkeypatch):
+    """Test ability to set one or more het groups to run setting"""
+    monkeypatch.setenv("SLURM_HET_SIZE", "4")
+    slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
+    slurmLauncher.set_het_group([1])
+    assert slurmLauncher.launcher_args["het-group"] == "1"
+    slurmLauncher.set_het_group([3, 2])
+    assert slurmLauncher.launcher_args["het-group"] == "3,2"
+    with pytest.raises(ValueError):
+        slurmLauncher.set_het_group([4])

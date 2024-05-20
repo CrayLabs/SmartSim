@@ -51,6 +51,7 @@ def test_update_env_initialized(function, value, flag, result):
         pytest.param("format_comma_sep_env_vars", (), id="format_comma_sep_env_vars"),
         pytest.param("format_launcher_args", (), id="format_launcher_args"),
         pytest.param("format_env_vars", (), id="format_env_vars"),
+        pytest.param("set_het_group", ([1,2,3,4],), id="set_het_group"),
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
