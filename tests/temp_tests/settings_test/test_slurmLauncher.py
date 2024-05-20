@@ -35,7 +35,7 @@ def test_set_reserved_launcher_args():
         pytest.param("set_verbose_launch", (True,),None,"verbose",id="set_walltime"),
     ],
 )
-def test_update_env_initialized(function, value, flag, result):
+def test_slurm_class_methods(function, value, flag, result):
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
@@ -75,6 +75,36 @@ def test_format_env_vars():
     assert "LOGGING=verbose" in formatted
     assert all("SSKEYIN" not in x for x in formatted)
 
+def test_catch_existing_env_var(caplog, monkeypatch):
+    slurmSettings = LaunchSettings(
+        launcher=LauncherType.SlurmLauncher,
+        env_vars={
+            "SMARTSIM_TEST_VAR": "B",
+        },
+    )
+    monkeypatch.setenv("SMARTSIM_TEST_VAR", "A")
+    monkeypatch.setenv("SMARTSIM_TEST_CSVAR", "A,B")
+    caplog.clear()
+    slurmSettings.format_env_vars()
+
+    msg = f"Variable SMARTSIM_TEST_VAR is set to A in current environment. "
+    msg += f"If the job is running in an interactive allocation, the value B will not be set. "
+    msg += "Please consider removing the variable from the environment and re-running the experiment."
+
+    for record in caplog.records:
+        assert record.levelname == "WARNING"
+        assert record.message == msg
+
+    caplog.clear()
+
+    env_vars = {"SMARTSIM_TEST_VAR": "B", "SMARTSIM_TEST_CSVAR": "C,D"}
+    settings = LaunchSettings(launcher=LauncherType.SlurmLauncher, env_vars=env_vars)
+    settings.format_comma_sep_env_vars()
+
+    for record in caplog.records:
+        assert record.levelname == "WARNING"
+        assert record.message == msg
+
 def test_format_comma_sep_env_vars():
     """Test format_comma_sep_env_vars runs correctly"""
     env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose", "SSKEYIN": "name_0,name_1"}
@@ -86,7 +116,7 @@ def test_format_comma_sep_env_vars():
     assert "name_0,name_1" not in formatted
     assert "SSKEYIN=name_0,name_1" in comma_separated_formatted
 
-def test_srun_settings():
+def test_slurmSettings_settings():
     """Test format_launcher_args runs correctly"""
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
     slurmLauncher.set_nodes(5)
@@ -97,7 +127,7 @@ def test_srun_settings():
     result = ["--nodes=5", "--cpus-per-task=2", "--ntasks=100", "--ntasks-per-node=20"]
     assert formatted == result
 
-def test_srun_launcher_args():
+def test_slurmSettings_launcher_args():
     """Test the possible user overrides through run_args"""
     launcher_args = {
         "account": "A3123",

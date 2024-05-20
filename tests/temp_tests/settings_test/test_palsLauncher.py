@@ -25,7 +25,7 @@ def test_set_reserved_launcher_args():
         pytest.param("set_executable_broadcast", ("broadcast",),"broadcast","transfer",id="set_executable_broadcast"),
     ],
 )
-def test_update_env_initialized(function, value, flag, result):
+def test_pals_class_methods(function, value, flag, result):
     palsLauncher = LaunchSettings(launcher=LauncherType.PalsLauncher)
     getattr(palsLauncher, function)(*value)
     assert palsLauncher.launcher == LauncherType.PalsLauncher

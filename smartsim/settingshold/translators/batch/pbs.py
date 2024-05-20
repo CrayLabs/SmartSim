@@ -138,7 +138,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         self._sanity_check_resources(batch_args)
         res = []
 
-        batch_arg_copy = batch_args
+        batch_arg_copy = deepcopy(batch_args)
         # Construct the basic select/nodes statement
         if select := batch_arg_copy.pop("select", None):
             select_command = f"-l select={select}"

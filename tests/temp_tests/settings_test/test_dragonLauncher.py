@@ -21,7 +21,7 @@ def test_set_reserved_launcher_args():
         pytest.param("set_tasks_per_node", (2,),2,"tasks-per-node",id="set_tasks_per_node"),
     ],
 )
-def test_update_env_initialized(function, value, flag, result):
+def test_dragon_class_methods(function, value, flag, result):
     dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
     assert dragonLauncher.launcher.value == LauncherType.DragonLauncher.value
     assert isinstance(dragonLauncher.arg_translator,DragonArgTranslator)

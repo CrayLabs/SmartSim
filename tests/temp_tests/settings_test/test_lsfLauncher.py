@@ -21,7 +21,7 @@ def test_set_reserved_launcher_args():
         pytest.param("set_binding", ("packed:21",),"packed:21","bind",id="set_binding"),
     ],
 )
-def test_update_env_initialized(function, value, flag, result):
+def test_lsf_class_methods(function, value, flag, result):
     lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher)
     assert lsfLauncher.launcher.value == LauncherType.LsfLauncher.value
     assert isinstance(lsfLauncher.arg_translator,JsrunArgTranslator)

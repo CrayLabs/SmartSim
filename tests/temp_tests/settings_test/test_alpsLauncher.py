@@ -33,7 +33,7 @@ def test_set_reserved_launcher_args():
         pytest.param("set_quiet_launch", (True,),None,"quiet",id="set_quiet_launch"),
     ],
 )
-def test_update_env_initialized(function, value, flag, result):
+def test_alps_class_methods(function, value, flag, result):
     alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
     assert alpsLauncher.launcher.value == LauncherType.AlpsLauncher.value
     assert isinstance(alpsLauncher.arg_translator,AprunArgTranslator)

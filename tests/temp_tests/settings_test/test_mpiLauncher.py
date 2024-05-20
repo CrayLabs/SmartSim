@@ -53,7 +53,7 @@ def test_set_reserved_launcher_args(launcher):
             ))
     ],
 )
-def test_update_env_initialized(l,function, value, flag, result):
+def test_mpi_class_methods(l,function, value, flag, result):
     mpiSettings = LaunchSettings(launcher=l[0])
     assert isinstance(mpiSettings.arg_translator,l[1])
     assert mpiSettings.launcher.value == l[0].value
