@@ -42,7 +42,7 @@ pytestmark = pytest.mark.group_b
 
 
 def test_config_methods(fsutils, prepare_fs, local_fs):
-    """Test all configuration file edit methods on an active feature store"""
+    """Test all configuration file edit methods on an active db"""
     fs = prepare_fs(local_fs).featurestore
 
     # test the happy path and ensure all configuration file edit methods
@@ -66,7 +66,7 @@ def test_config_methods(fsutils, prepare_fs, local_fs):
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                fs.set_fs_conf(key, value)
+                fs.set_db_conf(key, value)
 
 
 def test_config_methods_inactive(fsutils):

@@ -58,7 +58,7 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_sklearn_onnx(wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils):
-    """This test needs two free nodes, 1 for the db and 1 some sklearn models
+    """This test needs two free nodes, 1 for the fs and 1 some sklearn models
 
      here we test the following sklearn models:
        - LinearRegression

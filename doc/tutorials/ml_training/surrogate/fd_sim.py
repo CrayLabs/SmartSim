@@ -9,8 +9,8 @@ from steady_state import fd2d_heat_steady_test01
 
 def augment_batch(samples, targets):
     """Augment samples and targets
-    
-    by exploiting rotational and axial symmetry. Each sample is 
+
+    by exploiting rotational and axial symmetry. Each sample is
     rotated and reflected to obtain 8 valid samples. The same
     transformations are applied to targets.
 
@@ -76,7 +76,7 @@ def augment_batch(samples, targets):
 
 def simulate(steps, size):
     """Run multiple simulations and upload results
-    
+
     both as tensors and as augmented samples for training.
 
     :param steps: Number of simulations to run
@@ -85,13 +85,13 @@ def simulate(steps, size):
     batch_size = 50
     samples = np.zeros((batch_size,size,size,1)).astype(np.single)
     targets = np.zeros_like(samples).astype(np.single)
-    client = Client(None, False)
+    client = Client(address=None, cluster=False)
 
     training_data_uploader = TrainingDataUploader(cluster=False, verbose=True)
     training_data_uploader.publish_info()
 
     for i in tqdm(range(steps)):
-        
+
         u_init, u_steady = fd2d_heat_steady_test01(samples.shape[1], samples.shape[2])
         u_init = u_init.astype(np.single)
         u_steady = u_steady.astype(np.single)

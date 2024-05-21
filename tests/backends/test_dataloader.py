@@ -232,7 +232,7 @@ def test_torch_dataloaders(
     wlm_experiment, prepare_fs, single_fs, fileutils, test_dir, wlmutils, monkeypatch
 ):
     config_dir = fileutils.get_test_dir_path("ml")
-    fs = prepare_fs(single_fs).featurestore
+    fs = prepare_fs(single_fs).orchestrator
     feature_store = wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
     monkeypatch.setenv("SSDB", feature_store.get_address()[0])
     monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")

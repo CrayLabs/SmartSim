@@ -83,7 +83,7 @@ def test_feature_store_is_active_functions(
     fs = local_experiment.reconnect_feature_store(fs.checkpoint_file)
     assert fs.is_active()
 
-    # check if the featurestore can get the address
+    # check if the feature store can get the address
     assert fs.get_address() == [f"127.0.0.1:{fs.ports[0]}"]
 
 
@@ -307,7 +307,7 @@ def test_lsf_set_batch_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
 
 
 def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    """Ensure the default behavior for an feature store is to disable telemetry"""
+    """Ensure the default behavior for a feature store is to disable telemetry"""
     fs = FeatureStore(port=wlmutils.get_test_port())
     fs.set_path(test_dir)
 

@@ -155,7 +155,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
 
 # pylint: disable-next=too-many-public-methods
 class FeatureStore(EntityList[FSNode]):
-    """The FeatureStore is an in-memory feature store that can be launched
+    """The FeatureStore is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
     entities by using one of the Python, C, C++ or Fortran clients
     within an entity.
@@ -805,10 +805,12 @@ class FeatureStore(EntityList[FSNode]):
                 node = FSNode(
                     fs_node_name,
                     self.path,
-                    run_settings,
-                    [port],
-                    [fs_node_name + ".out"],
-                    self.fs_identifier,
+                    exe=sys.executable,
+                    exe_args=[start_script_args],
+                    run_settings=run_settings,
+                    ports=[port],
+                    output_files=[fs_node_name + ".out"],
+                    fs_identifier=self.fs_identifier,
                 )
                 self.entities.append(node)
 

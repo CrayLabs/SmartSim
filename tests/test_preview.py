@@ -79,7 +79,7 @@ def preview_object(test_dir) -> t.Dict[str, Job]:
 @pytest.fixture
 def preview_object_multifs(test_dir) -> t.Dict[str, Job]:
     """
-    Bare bones orch
+    Bare bones feature store
     """
     rs = RunSettings(exe="echo", exe_args="ifname=lo")
     s = SmartSimEntity(name="faux-name", path=test_dir, run_settings=rs)
@@ -141,7 +141,7 @@ def test_get_ifname_filter():
 
 
 def test_get_fstype_filter():
-    """Test get_fstype filter to extract feature store backend from config"""
+    """Test get_fstype filter to extract database backend from config"""
 
     template_str = "{{ config | get_fstype }}"
     template_dict = {"ts": template_str}
@@ -223,13 +223,13 @@ def test_feature_store_preview_render(test_dir, wlmutils, choose_host):
     test_port = wlmutils.get_test_port()
     exp_name = "test_feature_store_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # create regular feature store
-    orc = exp.create_feature_store(
+    # create regular database
+    feature_store = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
     )
-    preview_manifest = Manifest(orc)
+    preview_manifest = Manifest(feature_store)
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
@@ -242,17 +242,17 @@ def test_feature_store_preview_render(test_dir, wlmutils, choose_host):
     assert "Type" in output
     assert "Executable" in output
 
-    fs_path = _utils.get_fs_path()
+    fs_path = _utils.get_db_path()
     if fs_path:
         fs_type, _ = fs_path.name.split("-", 1)
 
-    assert orc.fs_identifier in output
-    assert str(orc.num_shards) in output
-    assert orc._interfaces[0] in output
+    assert feature_store.fs_identifier in output
+    assert str(feature_store.num_shards) in output
+    assert feature_store._interfaces[0] in output
     assert fs_type in output
     assert CONFIG.database_exe in output
-    assert orc.run_command in output
-    assert str(orc.fs_nodes) in output
+    assert feature_store.run_command in output
+    assert str(feature_store.fs_nodes) in output
 
 
 def test_preview_to_file(test_dir, wlmutils):
@@ -519,7 +519,7 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
     exp = Experiment(
         "test-preview-ensemble-clientconfig", exp_path=test_dir, launcher=test_launcher
     )
-    # Create Feature Store
+    # Create Orchestrator
     fs = exp.create_feature_store(port=6780, interface="lo")
     exp.generate(fs, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
@@ -906,21 +906,21 @@ def test_preview_orch_active_infrastructure(
     exp_name = "test_feature_store_active_infrastructure_preview"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
-    orc2 = exp.create_feature_store(
+    feature_store2 = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
-        fs_identifier="orc_2",
+        fs_identifier="fs_2",
     )
 
-    orc3 = exp.create_feature_store(
+    feature_store3 = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
-        fs_identifier="orc_3",
+        fs_identifier="fs_3",
     )
 
-    preview_manifest = Manifest(orc2, orc3)
+    preview_manifest = Manifest(feature_store2, feature_store3)
 
     # Execute method for template rendering
     output = previewrenderer.render(
@@ -936,7 +936,7 @@ def test_preview_orch_active_infrastructure(
 
 
 def test_preview_multifs_active_infrastructure(
-    wlmutils, test_dir, choose_host, preview_object_multifs
+    wlmutils, test_dir, choose_host, preview_object_multidb
 ):
     """multiple started feature stores active infrastructure"""
 
@@ -966,7 +966,7 @@ def test_preview_multifs_active_infrastructure(
 
     assert "testfs_reg" in output
     assert "testfs_reg2" in output
-    assert "Ochestrators" not in output
+    assert "Feature Stores" not in output
 
 
 def test_preview_active_infrastructure_feature_store_error(
@@ -1004,7 +1004,7 @@ def test_preview_active_infrastructure_feature_store_error(
     assert "WARNING: Cannot preview orc_1, because it is already started" in output
 
 
-def test_active_feature_stpre_jobs_property(
+def test_active_feature_store_jobs_property(
     wlmutils,
     test_dir,
     preview_object,
@@ -1176,12 +1176,12 @@ def test_verbosity_info_feature_store(test_dir, wlmutils, choose_host):
     exp_name = "test_feature_store_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     # create regular feature store
-    orc = exp.create_feature_store(
+    feature_store = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
     )
-    preview_manifest = Manifest(orc)
+    preview_manifest = Manifest(feature_store)
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")

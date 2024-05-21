@@ -11,7 +11,7 @@ def plot_lattice_vorticity(timestep, ux, uy, cylinder):
         np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1)
     )
     vorticity[cylinder] = np.nan
-    cmap = plt.cm.get_cmap("bwr").copy()
+    cmap = plt.get_cmap("bwr").copy()
     cmap.set_bad(color="black")
     plt.imshow(vorticity, cmap=cmap)
     plt.clim(-0.1, 0.1)
@@ -30,7 +30,7 @@ def plot_lattice_norm(timestep, u, cylinder):
     plt.cla()
 
     u[cylinder] = np.nan
-    cmap = plt.cm.get_cmap("jet").copy()
+    cmap = plt.get_cmap("jet").copy()
     cmap.set_bad(color="black")
     plt.contour(u, cmap=cmap)
     plt.clim(-0.1, 0.1)
@@ -47,7 +47,7 @@ def plot_lattice_probes(timestep, probe_x, probe_y, probe_u):
     fig = plt.figure(figsize=(12, 6), dpi=80)
 
     plt.cla()
-    cmap = plt.cm.get_cmap("binary").copy()
+    cmap = plt.get_cmap("binary").copy()
     cmap.set_bad(color="black")
     plt.quiver(
         probe_x,

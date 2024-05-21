@@ -939,7 +939,7 @@ def local_fs() -> t.Generator[DBConfiguration, None, None]:
 def single_fs(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
     hostlist = wlmutils.get_test_hostlist()
     hostlist = hostlist[-1:] if hostlist is not None else None
-    name = "single_fs_fixture"
+    name = "single_fx_fixture"
     config = DBConfiguration(
         name,
         wlmutils.get_test_launcher(),

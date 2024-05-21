@@ -32,7 +32,7 @@ import os.path as osp
 import time
 import typing as t
 from dataclasses import dataclass
-
+from .._core.utils.helpers import expand_exe_path
 from .._core.config import CONFIG
 from ..error import SSDBFilesNotParseable
 from ..log import get_logger
@@ -55,6 +55,8 @@ class FSNode(SmartSimEntity):
         self,
         name: str,
         path: str,
+        exe: str,
+        exe_args: t.List[str],
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
@@ -62,6 +64,8 @@ class FSNode(SmartSimEntity):
     ) -> None:
         """Initialize a feature store node within an feature store."""
         super().__init__(name, path, run_settings)
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 

@@ -76,7 +76,7 @@ def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
 
 @pass_eval_context
 def get_fstype(_eval_ctx: u.F, value: str) -> str:
-    """Extract data base type."""
+    """Extract feature store type."""
     if value:
         if "-cli" in value:
             fs_type, _ = value.split("/")[-1].split("-", 1)
@@ -150,7 +150,7 @@ def render(
 
     rendered_preview = tpl.render(
         exp_entity=exp,
-        active_fsjobs=active_fsjobs,
+        active_dbjobs=active_fsjobs,
         manifest=manifest,
         config=CONFIG,
         verbosity_level=verbosity_level,

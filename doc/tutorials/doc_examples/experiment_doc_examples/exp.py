@@ -21,6 +21,9 @@ exp.generate(standalone_feature_store, model, overwrite=True)
 # Preview the experiment
 exp.preview(standalone_feature_store, model, verbosity_level=Verbosity.DEBUG)
 
+# Preview the experiment
+exp.preview(standalone_database, model, verbosity_level=Verbosity.DEBUG)
+
 # Launch the Orchestrator then Model instance
 exp.start(standalone_feature_store, model)
 

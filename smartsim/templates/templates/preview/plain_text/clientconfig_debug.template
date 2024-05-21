@@ -1,7 +1,7 @@
 
           {%- for fs in manifest.fss %}
           {%- if fs.name %}
-          Feature Store Identifier: {{ fs.name }}
+          Feature StoreIdentifier: {{ fs.name }}
             {%- endif %}
           {%- if verbosity_level == Verbosity.DEBUG or verbosity_level == Verbosity.DEVELOPER %}
             Feature Store Backend: {{ config.database_cli | get_fstype }}

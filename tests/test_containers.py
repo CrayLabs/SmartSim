@@ -150,7 +150,7 @@ def test_singularity_smartredis(local_experiment, prepare_fs, local_fs, fileutil
     Note: This is a containerized port of test_smartredis.py
     """
 
-    # create and start a feature store
+    # create and start a database
     fs = prepare_fs(local_fs).featurestore
     local_experiment.reconnect_feature_store(fs.checkpoint_file)
 

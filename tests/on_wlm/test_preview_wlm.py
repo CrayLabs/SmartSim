@@ -77,7 +77,7 @@ def test_preview_wlm_run_commands_cluster_feature_store_model(
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     network_interface = wlmutils.get_test_interface()
-    feature_store = exp.create_featurestore(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
         fs_nodes=3,
         batch=False,
@@ -94,7 +94,7 @@ def test_preview_wlm_run_commands_cluster_feature_store_model(
         "fs_identifier": "testfs_colo",
     }
 
-    # Create model with colocated feature store
+    # Create model with colocated database
     smartsim_model = coloutils.setup_test_colo(
         fileutils, "uds", exp, test_script, fs_args, on_wlm=on_wlm
     )
@@ -224,8 +224,8 @@ def test_preview_launch_command(test_dir, wlmutils, choose_host):
     test_port = wlmutils.get_test_port()
     exp_name = "test_preview_launch_command"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # create regular feature store
-    feature_store = exp.create_featurestore(
+    # create regular database
+    feature_store = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
@@ -327,7 +327,7 @@ def test_ensemble_batch(test_dir, wlmutils):
         "test-preview-ensemble-clientconfig", exp_path=test_dir, launcher=test_launcher
     )
     # Create feature store
-    fs = exp.create_featurestore(port=6780, interface="lo")
+    fs = exp.create_feature_store(port=6780, interface="lo")
     exp.generate(fs, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     # Create ensemble
@@ -373,8 +373,8 @@ def test_preview_ensemble_fs_script(wlmutils, test_dir):
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment("getting-started", launcher=test_launcher)
 
-    feature_store = exp.create_featurestore(fs_identifier="test_fs1")
-    feature_store_2 = exp.create_featurestore(fs_identifier="test_fs2", fs_nodes=3)
+    feature_store = exp.create_feature_store(fs_identifier="test_fs1")
+    feature_store_2 = exp.create_feature_store(fs_identifier="test_fs2", fs_nodes=3)
     # Initialize a RunSettings object
     model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
     model_settings_2 = exp.create_run_settings(exe="python", exe_args="params.py")

@@ -165,7 +165,7 @@ class Generator:
             feature_store_path = path.join(self.gen_path, featurestore.name)
 
             featurestore.set_path(feature_store_path)
-            # Always remove feature store files if present.
+            # Always remove featurestore files if present.
             if path.isdir(feature_store_path):
                 shutil.rmtree(feature_store_path, ignore_errors=True)
             pathlib.Path(feature_store_path).mkdir(exist_ok=self.overwrite, parents=True)

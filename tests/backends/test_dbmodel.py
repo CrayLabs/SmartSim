@@ -275,7 +275,7 @@ def test_pt_fs_model(
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_ds_model_ensemble(
+def test_fs_model_ensemble(
     wlm_experiment, prepare_fs, single_fs, fileutils, test_dir, wlmutils, mlutils
 ):
     """Test FSModels on remote FS, with an ensemble"""

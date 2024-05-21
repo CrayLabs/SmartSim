@@ -58,7 +58,7 @@ def timestwo(x):
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
 def test_fs_script(wlm_experiment, prepare_fs, single_fs, fileutils, mlutils):
-    """Test FS scripts on remote FS"""
+    """Test FS scripts on remote Fs"""
 
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1

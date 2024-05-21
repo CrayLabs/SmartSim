@@ -43,8 +43,8 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm_single(fsutils, prepare_fs, single_fs):
-    """Test all configuration file edit methods on single node WLM fs"""
+def test_config_methods_on_wlm_single(fsutils, prepare_db, single_db):
+    """Test all configuration file edit methods on single node WLM db"""
 
     fs = prepare_fs(single_fs).featurestore
     # test the happy path and ensure all configuration file edit methods
@@ -73,7 +73,7 @@ def test_config_methods_on_wlm_single(fsutils, prepare_fs, single_fs):
 
 
 def test_config_methods_on_wlm_cluster(fsutils, prepare_fs, clustered_fs):
-    """Test all configuration file edit methods on an active clustered fs"""
+    """Test all configuration file edit methods on an active clustered db"""
 
     fs = prepare_fs(clustered_fs).featurestore
     # test the happy path and ensure all configuration file edit methods

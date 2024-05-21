@@ -93,6 +93,12 @@ class SSDBFilesNotParseable(SmartSimError):
     """
 
 
+class SSDBFilesNotParseable(SmartSimError):
+    """Raised when the files related to the database cannot be parsed.
+    Includes the case when the files do not exist.
+    """
+
+
 # Internal Exceptions
 
 

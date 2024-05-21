@@ -51,7 +51,7 @@ pytestmark = pytest.mark.skipif(
 def test_torch_model_and_script(
     wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils
 ):
-    """This test needs two free nodes, 1 for the db and 1 for a torch model script
+    """This test needs two free nodes, 1 for the fs and 1 for a torch model script
 
      Here we test both the torchscipt API and the NN API from torch
 
