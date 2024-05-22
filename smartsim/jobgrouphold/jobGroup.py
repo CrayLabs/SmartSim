@@ -13,12 +13,11 @@ class JobGroup(BaseJobGroup):
         jobs: t.List[BaseJob],
     ) -> None:
         super().__init__()
-        # TODO we should be doing deep copies of objects (i.e. Job objets)
-        self.jobs = deepcopy(jobs)
+        self._jobs = jobs
 
     @property
     def jobs(self) -> t.List[BaseJob]:
-         return self.jobs
+         return self._jobs
     
     def __str__(self):  # pragma: no-cover
         string = ""

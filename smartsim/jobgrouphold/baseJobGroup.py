@@ -25,9 +25,12 @@ class BaseJobGroup(Launchable, MutableSequence):
 
     def __delitem__(self, idx) -> None:
         del self.jobs[idx]
-# after that just need to do dunder string
+
     def __len__(self) -> int:
         return len(self.jobs)
+
+    def __insert__(self) -> int:
+        pass
 
     def __str__(self):  # pragma: no-cover
         string = ""
