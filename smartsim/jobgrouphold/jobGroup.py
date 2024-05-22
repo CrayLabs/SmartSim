@@ -17,8 +17,14 @@ class JobGroup(BaseJobGroup):
 
     @property
     def jobs(self) -> t.List[BaseJob]:
-         return self._jobs
+        """This property method returns a list of BaseJob objects.
+        It represents the collection of jobs associated with an
+        instance of the BaseJobGroup abstract class.
+        """
+        return self._jobs
     
     def __str__(self):  # pragma: no-cover
+        """Returns a string representation of the collection of jobs.
+        """
         string = ""
         string += f"Jobs: {self.jobs}"
