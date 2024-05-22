@@ -16,21 +16,27 @@ class BaseJobGroup(Launchable, MutableSequence):
     @abstractmethod
     def jobs(self) -> t.List[BaseJob]:
         pass
+    
+    def insert(self, idx: int, value: BaseJob) -> None:
+        if 0 <= idx <= len(self.jobs):
+            self.jobs.insert(idx, value)
+        else:
+            print(f"Invalid index {idx}. Cannot insert value: {value}.")
 
+    def __iter__(self) -> t.Iterator[BaseJob]:
+        return iter(self.jobs)
+    
     def __getitem__(self, idx: int) -> BaseJob:
         return self.jobs[idx]
 
     def __setitem__(self, idx: int, value: BaseJob) -> None:
-        self.jobs[idx] = deepcopy(value)
+        self.jobs[idx] = value
 
     def __delitem__(self, idx: int) -> None:
         del self.jobs[idx]
 
     def __len__(self) -> int:
         return len(self.jobs)
-
-    def __insert__(self, index: int, value: BaseJob) -> int:
-        self.jobs.insert(index, value)
 
     def __str__(self):  # pragma: no-cover
         string = ""
