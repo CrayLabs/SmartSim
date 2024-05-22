@@ -29,14 +29,14 @@ import typing as t
 from ....log import get_logger
 from ....settings import QsubBatchSettings
 from .step import Step
-from ....entity import Model, DBNode
+from ....entity import Model, FSNode
 
 
 logger = get_logger(__name__)
 
 
 class QsubBatchStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], batch_settings: QsubBatchSettings) -> None:
+    def __init__(self, entity: t.Union[Model, FSNode], batch_settings: QsubBatchSettings) -> None:
         """Initialize a PBSpro qsub step
 
         :param name: name of the entity to launch

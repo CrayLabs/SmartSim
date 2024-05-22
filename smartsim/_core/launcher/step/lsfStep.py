@@ -33,13 +33,13 @@ from ....log import get_logger
 from ....settings import BsubBatchSettings, JsrunSettings
 from ....settings.base import RunSettings
 from .step import Step
-from ....entity import Model, DBNode
+from ....entity import Model, FSNode
 
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], batch_settings: BsubBatchSettings) -> None:
+    def __init__(self, entity: t.Union[Model, FSNode], batch_settings: BsubBatchSettings) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
@@ -104,7 +104,7 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: RunSettings):
+    def __init__(self, entity: t.Union[Model, FSNode], run_settings: RunSettings):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched

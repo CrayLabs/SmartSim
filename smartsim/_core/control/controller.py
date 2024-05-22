@@ -152,7 +152,7 @@ class Controller:
 
     @property
     def active_feature_store_jobs(self) -> t.Dict[str, Job]:
-        """Return active orchestrator jobs."""
+        """Return active feature store jobs."""
         return {**self._jobs.fs_jobs}
 
     @property

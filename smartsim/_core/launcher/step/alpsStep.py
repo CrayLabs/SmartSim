@@ -33,13 +33,13 @@ from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
 from .step import Step, proxyable_launch_cmd
-from ....entity import Model, DBNode
+from ....entity import Model, FSNode
 
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: AprunSettings) -> None:
+    def __init__(self, entity: t.Union[Model, FSNode], run_settings: AprunSettings) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched

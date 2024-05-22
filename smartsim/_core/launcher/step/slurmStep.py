@@ -33,13 +33,13 @@ from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
 from .step import Step
-from ....entity import Model, Ensemble, DBNode
+from ....entity import Model, Ensemble, FSNode
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], batch_settings: SbatchSettings) -> None:
+    def __init__(self, entity: t.Union[Model, FSNode], batch_settings: SbatchSettings) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -99,7 +99,7 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: SrunSettings) -> None:
+    def __init__(self, entity: t.Union[Model, FSNode], run_settings: SrunSettings) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -186,7 +186,7 @@ class SrunStep(Step):
         return self.run_settings.mpmd
 
     @staticmethod
-    def _get_exe_args_list(entity: t.Union[Model, DBNode]) -> t.List[str]:
+    def _get_exe_args_list(entity: t.Union[Model, FSNode]) -> t.List[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """
