@@ -24,11 +24,58 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+from __future__ import annotations
+
+import abc
+import copy
+import itertools
+import pathlib
 import typing as t
 
+from smartsim.entity import strategies
+from smartsim.entity.files import EntityFiles
+
 if t.TYPE_CHECKING:
-    # pylint: disable-next=unused-import
+    import os
+
     import smartsim.settings.base
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# TODO: Mocks to be removed later
+# ------------------------------------------------------------------------------
+# pylint: disable=multiple-statements
+
+
+class _Mock:
+    def __init__(self, *_: t.Any, **__: t.Any): ...
+    def __getattr__(self, _: str) -> "_Mock":
+        return _Mock()
+
+
+# Remove with merge of #579
+# https://github.com/CrayLabs/SmartSim/pull/579
+class Application(_Mock): ...
+
+
+# Remove with merge of #603
+# https://github.com/CrayLabs/SmartSim/pull/603
+class Job(_Mock): ...
+
+
+# Remove with merge of #599
+# https://github.com/CrayLabs/SmartSim/pull/599
+class JobGroup(_Mock): ...
+
+
+# Remove with merge of #587
+# https://github.com/CrayLabs/SmartSim/pull/587
+class LaunchSettings(_Mock): ...
+
+
+# pylint: enable=multiple-statements
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 class TelemetryConfiguration:
@@ -118,3 +165,59 @@ class SmartSimEntity:
 
     def __repr__(self) -> str:
         return self.name
+
+
+class CompoundEntity(abc.ABC):
+    @abc.abstractmethod
+    def as_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
+    def as_job_group(self, settings: LaunchSettings) -> JobGroup:
+        return JobGroup(self.as_jobs(settings))
+
+
+# TODO: If we like this design, we need to:
+#         1) Move this to the `smartsim._core.entity.ensemble` module
+#         2) Decide what to do witht the original `Ensemble` impl
+class Ensemble(CompoundEntity):
+    def __init__(
+        self,
+        name: str,
+        exe: str | os.PathLike[str],
+        exe_args: t.Sequence[str] | None = None,
+        files: EntityFiles | None = None,
+        parameters: t.Mapping[str, t.Sequence[str]] | None = None,
+        permutation_strategy: str | strategies.TPermutationStrategy = "all_perm",
+        max_permutations: int = 0,
+        replicas: int = 1,
+    ) -> None:
+        self.name = name
+        self.exe = pathlib.Path(exe)
+        self.exe_args = list(exe_args) if exe_args else []
+        self.files = copy.deepcopy(files) if files else EntityFiles()
+        self.parameters = dict(parameters) if parameters else {}
+        self.permutation_strategy = permutation_strategy
+        self.max_permutations = max_permutations
+        self.replicas = replicas
+
+    def _create_applications(self) -> tuple[Application, ...]:
+        permutation_strategy = strategies.resolve(self.permutation_strategy)
+        permutations = permutation_strategy(self.parameters, self.max_permutations)
+        permutations = permutations if permutations else [{}]
+        permutations_ = itertools.chain.from_iterable(
+            itertools.repeat(permutation, self.replicas) for permutation in permutations
+        )
+        return tuple(
+            Application(
+                name=f"{self.name}-{i}",
+                exe=self.exe,
+                exe_args=self.exe_args,
+                files=self.files,
+                params=permutation,
+            )
+            for i, permutation in enumerate(permutations_)
+        )
+
+    def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
+        apps = self._create_applications()
+        if not apps:
+            raise ValueError("There are no members as part of this ensemble")
+        return tuple(Job(app, settings) for app in apps)

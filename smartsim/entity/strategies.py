@@ -25,40 +25,94 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Generation Strategies
+
+import itertools
 import random
 import typing as t
-from itertools import product
+
+from smartsim.error import errors
+
+TPermutationStrategy = t.Callable[
+    [t.Mapping[str, t.Sequence[str]], int], list[dict[str, str]]
+]
+
+_REGISTERED_STRATEGIES: t.Final[dict[str, TPermutationStrategy]] = {}
+
+
+def _register(name: str) -> t.Callable[
+    [TPermutationStrategy],
+    TPermutationStrategy,
+]:
+    def _impl(fn: TPermutationStrategy) -> TPermutationStrategy:
+        if name in _REGISTERED_STRATEGIES:
+            raise ValueError(
+                f"A strategy with the name '{name}' has already been registered"
+            )
+        _REGISTERED_STRATEGIES[name] = fn
+        return fn
+
+    return _impl
+
+
+def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
+    if callable(strategy):
+        return _make_safe_custom_strategy(strategy)
+    try:
+        return _REGISTERED_STRATEGIES[strategy]
+    except KeyError:
+        raise ValueError(
+            f"Failed to find an ensembling strategy by the name of '{strategy}'."
+            f"All known strategies are:\n{', '.join(_REGISTERED_STRATEGIES)}"
+        ) from None
+
+
+def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy:
+    def _impl(
+        params: t.Mapping[str, t.Sequence[str]], n_permutations: int
+    ) -> list[dict[str, str]]:
+        try:
+            permutations = fn(params, n_permutations)
+        except Exception as e:
+            raise errors.UserStrategyError(str(fn)) from e
+        if not isinstance(permutations, list) or not all(
+            isinstance(permutation, dict) for permutation in permutations
+        ):
+            raise errors.UserStrategyError(str(fn))
+        return permutations
+
+    return _impl
 
 
 # create permutations of all parameters
 # single model if parameters only have one value
+@_register("all_perm")
 def create_all_permutations(
-    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
-) -> t.List[t.Dict[str, str]]:
-    perms = list(product(*param_values))
-    all_permutations = []
-    for permutation in perms:
-        temp_model = dict(zip(param_names, permutation))
-        all_permutations.append(temp_model)
-    return all_permutations
+    params: t.Mapping[str, t.Sequence[str]],
+    _n_permutations: int = 0,
+    # ^^^^^^^^^^^^^
+    # TODO: Really don't like that this attr is ignored, but going to leave it
+    #       as the original impl for now. Will change if requested!
+) -> list[dict[str, str]]:
+    permutations = itertools.product(*params.values())
+    return [dict(zip(params, permutation)) for permutation in permutations]
 
 
+@_register("step")
 def step_values(
-    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
-) -> t.List[t.Dict[str, str]]:
-    permutations = []
-    for param_value in zip(*param_values):
-        permutations.append(dict(zip(param_names, param_value)))
-    return permutations
+    params: t.Mapping[str, t.Sequence[str]], _n_permutations: int = 0
+) -> list[dict[str, str]]:
+    steps = zip(*params.values())
+    return [dict(zip(params, step)) for step in steps]
 
 
+@_register("random")
 def random_permutations(
-    param_names: t.List[str], param_values: t.List[t.List[str]], n_models: int = 0
-) -> t.List[t.Dict[str, str]]:
-    permutations = create_all_permutations(param_names, param_values)
+    params: t.Mapping[str, t.Sequence[str]], n_permutations: int = 0
+) -> list[dict[str, str]]:
+    permutations = create_all_permutations(params, 0)
 
-    # sample from available permutations if n_models is specified
-    if n_models and n_models < len(permutations):
-        permutations = random.sample(permutations, n_models)
+    # sample from available permutations if n_permutations is specified
+    if 0 < n_permutations < len(permutations):
+        permutations = random.sample(permutations, n_permutations)
 
     return permutations
