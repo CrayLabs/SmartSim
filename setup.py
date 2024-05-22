@@ -166,6 +166,7 @@ class BinaryDistribution(Distribution):
 
 # Define needed dependencies for the installation
 deps = [
+    "packaging>=24.0",
     "psutil>=5.7.2",
     "coloredlogs>=10.0",
     "tabulate>=0.8.9",
@@ -185,7 +186,6 @@ deps.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
-        "packaging>=24.0",
         "black==24.1a1",
         "isort>=5.6.4",
         "pylint>=2.10.0,<3",
