@@ -15,22 +15,22 @@ class BaseJobGroup(Launchable, MutableSequence):
     @property
     @abstractmethod
     def jobs(self) -> t.List[BaseJob]:
-        return self.jobs
+        pass
 
-    def __getitem___(self, idx) -> BaseJob:
+    def __getitem__(self, idx: int) -> BaseJob:
         return self.jobs[idx]
 
-    def __setitem__(self, idx, value) -> None:
+    def __setitem__(self, idx: int, value: BaseJob) -> None:
         self.jobs[idx] = deepcopy(value)
 
-    def __delitem__(self, idx) -> None:
+    def __delitem__(self, idx: int) -> None:
         del self.jobs[idx]
 
     def __len__(self) -> int:
         return len(self.jobs)
 
-    def __insert__(self) -> int:
-        pass
+    def __insert__(self, index: int, value: BaseJob) -> int:
+        self.jobs.insert(index, value)
 
     def __str__(self):  # pragma: no-cover
         string = ""
