@@ -473,6 +473,7 @@ class Controller:
                 symlink_substeps.append((substeps[0], application))
                 steps.append((batch_step, application))
             else:
+                # create job step for aapplication with run settings
                 job_step = self._create_job_step(application, application_telem_dir)
                 manifest_builder.add_application(application, (job_step.name, job_step))
                 steps.append((job_step, application))
@@ -622,7 +623,7 @@ class Controller:
             self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
         else:
             logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(job_step.name, job_id, entity, is_task)
+            self._jobs.add_job(job_step, job_id, is_task)
 
     def _create_batch_job_step(
         self,
@@ -644,7 +645,7 @@ class Controller:
 
         telemetry_dir = telemetry_dir / entity_list.name
         batch_step = self._launcher.create_step(
-            entity_list.name, entity_list.path, entity_list.batch_settings
+            entity, entity_list.batch_settings
         )
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
         batch_step.meta["status_dir"] = str(telemetry_dir)
@@ -672,11 +673,13 @@ class Controller:
         if isinstance(entity, Application):
             self._prep_entity_client_env(entity)
 
-        step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
+        # creating job step through the created launcher
+        step = self._launcher.create_step(entity, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         step.meta["status_dir"] = str(telemetry_dir / entity.name)
 
+        # return the job step that was created using the launcher since the launcher is defined in the exp
         return step
 
     def _prep_entity_client_env(self, entity: Application) -> None:
@@ -684,7 +687,6 @@ class Controller:
 
         :param entity: The entity to retrieve connections from
         """
-
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         address_dict = self._jobs.get_db_host_addresses()
 
@@ -736,7 +738,6 @@ class Controller:
                         "Colocated database was not configured for either TCP or UDS"
                     )
                 client_env[f"SR_DB_TYPE{db_name_colo}"] = STANDALONE
-
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:

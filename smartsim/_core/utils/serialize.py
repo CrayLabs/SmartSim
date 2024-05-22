@@ -104,13 +104,17 @@ def _dictify_application(
     err_file: str,
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
-    colo_settings = (application.run_settings.colocated_db_settings or {}).copy()
+    if application.run_settings is not None:
+        colo_settings = (application.run_settings.colocated_db_settings or {}).copy()
+    else:
+        colo_settings = ({}).copy()
     db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
     db_models = t.cast("t.List[DBModel]", colo_settings.pop("db_models", []))
     return {
         "name": application.name,
         "path": application.path,
-        "exe_args": application.run_settings.exe_args,
+        "exe_args": application.exe_args,
+        "exe": application.exe,
         "run_settings": _dictify_run_settings(application.run_settings),
         "batch_settings": (
             _dictify_batch_settings(application.batch_settings)
@@ -196,11 +200,10 @@ def _dictify_run_settings(run_settings: RunSettings) -> t.Dict[str, t.Any]:
             "MPMD run settings"
         )
     return {
-        "exe": run_settings.exe,
         # TODO: We should try to move this back
         # "exe_args": run_settings.exe_args,
-        "run_command": run_settings.run_command,
-        "run_args": run_settings.run_args,
+        "run_command": run_settings.run_command if run_settings else "",
+        "run_args": run_settings.run_args if run_settings else None,
         # TODO: We currently do not have a way to represent MPMD commands!
         #       Maybe add a ``"mpmd"`` key here that is a
         #       ``list[TDictifiedRunSettings]``?

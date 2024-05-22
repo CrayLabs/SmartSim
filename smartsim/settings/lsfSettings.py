@@ -40,8 +40,6 @@ logger = get_logger(__name__)
 class JsrunSettings(RunSettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **_kwargs: t.Any,
@@ -56,8 +54,6 @@ class JsrunSettings(RunSettings):
         :param env_vars: environment vars to launch job with
         """
         super().__init__(
-            exe,
-            exe_args,
             run_command="jsrun",
             run_args=run_args,
             env_vars=env_vars,

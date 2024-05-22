@@ -32,6 +32,7 @@ from os import getcwd
 from tabulate import tabulate
 
 from .._core._install.builder import Device
+from .._core.utils.helpers import expand_exe_path
 from ..error import (
     EntityExistsError,
     SmartSimError,
@@ -61,7 +62,9 @@ class Ensemble(EntityList[Application]):
     def __init__(
         self,
         name: str,
-        params: t.Dict[str, t.Any],
+        params: t.Optional[t.Dict[str, t.Any]] = None,
+        exe: t.Optional[str] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
@@ -75,6 +78,8 @@ class Ensemble(EntityList[Application]):
         parameters to the permutation strategy.
 
         :param name: name of the ensemble
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param params: parameters to expand into ``Application`` members
         :param params_as_args: list of params that should be used as command
             line arguments to the ``Application`` member executables and not written
@@ -89,6 +94,8 @@ class Ensemble(EntityList[Application]):
                              or a callable function.
         :return: ``Ensemble`` instance
         """
+        self.exe = exe or ""
+        self.exe_args = exe_args or []
         self.params = params or {}
         self.params_as_args = params_as_args or []
         self._key_prefixing_enabled = True
@@ -96,7 +103,7 @@ class Ensemble(EntityList[Application]):
         self.run_settings = run_settings
         self.replicas: str
 
-        super().__init__(name, str(path), perm_strat=perm_strat, **kwargs)
+        super().__init__(name, path=str(path), perm_strat=perm_strat, **kwargs)
 
     @property
     def applications(self) -> t.Collection[Application]:
@@ -117,7 +124,7 @@ class Ensemble(EntityList[Application]):
         # if a ensemble has parameters and run settings, create
         # the ensemble and assign run_settings to each member
         if self.params:
-            if self.run_settings:
+            if self.run_settings and self.exe:
                 param_names, params = self._read_application_parameters()
 
                 # Compute all combinations of application parameters and arguments
@@ -133,6 +140,8 @@ class Ensemble(EntityList[Application]):
                     application_name = "_".join((self.name, str(i)))
                     application = Application(
                         name=application_name,
+                        exe=self.exe,
+                        exe_args=self.exe_args,
                         params=param_set,
                         path=osp.join(self.path, application_name),
                         run_settings=run_settings,
@@ -151,13 +160,15 @@ class Ensemble(EntityList[Application]):
                     "expand into members cannot be given run settings"
                 )
         else:
-            if self.run_settings:
+            if self.run_settings and self.exe:
                 if replicas:
                     for i in range(replicas):
                         application_name = "_".join((self.name, str(i)))
                         application = Application(
                             name=application_name,
                             params={},
+                            exe=self.exe,
+                            exe_args=self.exe_args,
                             path=osp.join(self.path, application_name),
                             run_settings=deepcopy(self.run_settings),
                         )

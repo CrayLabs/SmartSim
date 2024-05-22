@@ -122,6 +122,7 @@ def expand_exe_path(exe: str) -> str:
 
     # which returns none if not found
     in_path = which(exe)
+    print(f"hmm what is this: {in_path}")
     if not in_path:
         if os.path.isfile(exe) and os.access(exe, os.X_OK):
             return os.path.abspath(exe)
