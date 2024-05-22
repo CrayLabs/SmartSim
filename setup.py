@@ -185,6 +185,7 @@ deps.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
+        "packaging>=24.0",
         "black==24.1a1",
         "isort>=5.6.4",
         "pylint>=2.10.0,<3",
