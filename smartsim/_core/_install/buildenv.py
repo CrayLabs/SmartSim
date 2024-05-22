@@ -35,21 +35,7 @@ import typing as t
 from pathlib import Path
 from typing import Iterable
 
-# NOTE: This will be imported by setup.py and hence no
-#       smartsim related items or non-standand library
-#       items should be imported here.
-
-# TODO: pkg_resources has been deprecated by PyPA. Currently we use it for its
-#       packaging implementation, as we cannot assume a user will have `packaging`
-#       prior to `pip install` time. We really only use pkg_resources for their
-#       vendored version of `packaging.version.Version` so we should probably try
-#       to remove
-# https://setuptools.pypa.io/en/latest/pkg_resources.html
-
-# isort: off
-from packaging.version import Version, InvalidVersion, parse
-
-# isort: on
+from packaging.version import InvalidVersion, Version, parse
 
 DbEngine = t.Literal["REDIS", "KEYDB"]
 

@@ -25,10 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import packaging
 import pytest
 
-# from pkg_resources import packaging  # type: ignore
-import packaging
 from smartsim._core._install.buildenv import Version_
 
 # The tests in this file belong to the group_a group
