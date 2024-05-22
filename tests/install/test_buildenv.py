@@ -26,6 +26,7 @@
 
 
 import pytest
+
 # from pkg_resources import packaging  # type: ignore
 import packaging
 from smartsim._core._install.buildenv import Version_
@@ -83,7 +84,7 @@ def test_version_equality_ne():
         version.major
 
     version = Version_("3.0.")
-    
+
     with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
         version.major
 
@@ -97,6 +98,6 @@ def test_version_equality_ne():
 def test_version_bad_parse_fail():
     """Test behavior when trying to parse with an invalid input string"""
     # todo: ensure we can't take invalid input and have this IndexError occur.
+    version = Version_("abcdefg")
     with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
-        version = Version_("abcdefg")
-        version.minor
+        version.major
