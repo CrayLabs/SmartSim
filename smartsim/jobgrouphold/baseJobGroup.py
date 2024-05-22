@@ -26,10 +26,7 @@ class BaseJobGroup(Launchable, MutableSequence):
         the list of jobs. If the index is out of bounds, the method
         prints an error message.
         """
-        if 0 <= idx <= len(self.jobs):
-            self.jobs.insert(idx, value)
-        else:
-            print(f"Invalid index {idx}. Cannot insert value: {value}.")
+        self.jobs.insert(idx, value)
 
     def __iter__(self) -> t.Iterator[BaseJob]:
         """Allows iteration over the jobs in the collection.
