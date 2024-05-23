@@ -166,6 +166,7 @@ class BinaryDistribution(Distribution):
 
 # Define needed dependencies for the installation
 deps = [
+    "packaging>=24.0",
     "psutil>=5.7.2",
     "coloredlogs>=10.0",
     "tabulate>=0.8.9",
