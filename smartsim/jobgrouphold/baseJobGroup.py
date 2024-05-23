@@ -41,7 +41,7 @@ class BaseJobGroup(Launchable, MutableSequence):
     def __setitem__(self, idx: int, value: BaseJob) -> None:
         """Sets the job at the specified index (idx) to the given value.
         """
-        self.jobs[idx] = value
+        self.jobs[idx] = deepcopy(value)
 
     def __delitem__(self, idx: int) -> None:
         """Deletes the job at the specified index (idx).

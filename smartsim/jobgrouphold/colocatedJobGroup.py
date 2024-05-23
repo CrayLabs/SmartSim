@@ -2,8 +2,8 @@ import typing as t
 from .baseJobGroup import BaseJobGroup, BaseJob
 from copy import deepcopy
 
-class JobGroup(BaseJobGroup):
-    """A job group holds references to multiple jobs that
+class ColocatedJobGroup(BaseJobGroup):
+    """A colocated job group holds references to multiple jobs that
     will be executed all at the same time when resources
     permit. Execution is blocked until resources are available.
     """
@@ -24,7 +24,7 @@ class JobGroup(BaseJobGroup):
     
     def __str__(self):  # pragma: no-cover
         """Returns a string representation of the collection of
-        job groups.
+        colocated job groups.
         """
         string = ""
-        string += f"Job Groups: {self.jobs}"
+        string += f"Colocated Jobs: {self.jobs}"
