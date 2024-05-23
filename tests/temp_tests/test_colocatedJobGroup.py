@@ -5,6 +5,7 @@ def test_create_ColocatedJobGroup():
     job_group = ColocatedJobGroup([job_1])
     assert len(job_group) == 1
 
+# compare job names when Job class is up, handleful of other atts, not reused elsewhere
 # cannot test setitem until Job is implemented since there is no comparison bc of the deep copy
 # def test_getitem_ColocatedJobGroup():
 #     job_1 = BaseJob()
