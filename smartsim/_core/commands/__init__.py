@@ -25,3 +25,4 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .command import Command
+from .commandList import CommandList

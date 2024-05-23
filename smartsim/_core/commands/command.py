@@ -32,6 +32,8 @@ class Command(MutableSequence):
     """Basic container for command information
     """
     def __init__(self, launcher: LauncherType, command:t.List[str]) -> None:
+        """Command constructor
+        """
         self._launcher = launcher
         self._command = command
 
