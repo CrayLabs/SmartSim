@@ -24,22 +24,37 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from collections.abc import MutableSequence
+from ...settingshold.launchCommand import LauncherType
 import typing as t
 
-IntegerArgument = t.Dict[str, t.Optional[int]]
-StringArgument = t.Dict[str, t.Optional[str]]
-
-def process_env_vars(env_vars: StringArgument) -> None:
-    """Validate that user passed env vars are of correct type.
+class Command(MutableSequence):
+    """Basic container for command information
     """
-    for key, value in env_vars.items():
-        if not isinstance(value, str) and value is not None:
-            raise TypeError(f"Value for '{key}' must be a string.")
 
-def process_args(launch_args: t.Dict[str, t.Union[str,int,float,None]]) -> None:
-    """Validate that user passed launch args and scheduler args are of correct type.
-    """
-    for key, value in launch_args.items():
-        if not isinstance(value, (str,int,float)) and value is not None:
-            raise TypeError(f"Value for '{key}' must be a string.")
+    def __init__(self, launcher: LauncherType, command:t.List[str]) -> None:
+        self._launcher = launcher
+        self._command = command
+
+    @property
+    def launcher(self) -> LauncherType:
+        return self._launcher
     
+    @property
+    def command(self) -> t.List[str]:
+        return self._command
+    
+    def __getitem__(self, idx: int) -> str:
+        return self._command[idx]
+    
+    def __setitem__(self, idx: int, value: str) -> None:
+        self._command[idx] = value
+
+    def __delitem__(self, idx: int) -> None:
+        del self._command[idx]
+
+    def __len__(self) -> int:
+        return len(self._command)
+
+    def insert(self, idx: int, value: str) -> None:
+        self._command.insert(idx, value)
