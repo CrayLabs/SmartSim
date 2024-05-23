@@ -37,7 +37,6 @@ import psutil
 
 from smartsim._core.utils.network import current_ip
 from smartsim.entity.dbnode import LaunchedShardData
-from smartsim.error import SSInternalError
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -111,6 +110,7 @@ def main(args: argparse.Namespace) -> int:
         *build_cluster_args(shard_data),
         *build_bind_args(src_addr, *bind_addrs),
     ]
+
     print_summary(cmd, args.ifname, shard_data)
 
     try:
@@ -119,9 +119,10 @@ def main(args: argparse.Namespace) -> int:
 
         for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
-    except Exception as e:
+    except Exception:
         cleanup()
-        raise SSInternalError("Database process starter raised an exception") from e
+        logger.error("Database process starter raised an exception", exc_info=True)
+        return 1
     return 0
 
 
@@ -179,6 +180,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Specify if this orchestrator shard is part of a cluster",
     )
+
     args_ = parser.parse_args()
 
     # make sure to register the cleanup before the start

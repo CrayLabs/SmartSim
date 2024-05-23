@@ -68,7 +68,8 @@ def write_event(
         if task_id:
             task_id = int(task_id)
     except ValueError:
-        logger.exception(f"Unable to parse task_id: {task_id}")
+        if not isinstance(task_id, str):
+            logger.exception(f"Unable to parse task_id: {task_id}")
 
     entity_dict = {
         "timestamp": timestamp,

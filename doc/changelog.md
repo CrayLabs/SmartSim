@@ -15,6 +15,25 @@ To be released at some future point in time
 
 Description
 
+- Update packaging dependency
+
+Detailed Notes
+
+- Fix packaging failures due to deprecated `pkg_resources`. ([SmartSim-PR598](https://github.com/CrayLabs/SmartSim/pull/598))
+
+### 0.7.0
+
+Released on 14 May, 2024
+
+Description
+
+-   Update tutorials and tutorial containers
+-   Improve Dragon server shutdown
+-   Add dragon runtime installer
+-   Add launcher based on Dragon
+-   Reuse Orchestrators within the testing suite to improve performance.
+-   Fix building of documentation
+-   Preview entities on experiment before start
 -   Update authentication in release workflow
 -   Auto-generate type-hints into documentation
 -   Auto-post release PR to develop
@@ -58,6 +77,27 @@ Description
 
 Detailed Notes
 
+-   The tutorials are up-to date with SmartSim and SmartRedis APIs. Additionally,
+    the tutorial containers' Docker files are updated. ([SmartSim-PR589](https://github.com/CrayLabs/SmartSim/pull/589))
+-   The Dragon server will now terminate any process which is still running
+    when a request of an immediate shutdown is sent. ([SmartSim-PR582](https://github.com/CrayLabs/SmartSim/pull/582))
+-   Add `--dragon` option to `smart build`. Install appropriate Dragon
+    runtime from Dragon GitHub release assets.
+    ([SmartSim-PR580](https://github.com/CrayLabs/SmartSim/pull/580))
+-   Add new launcher, based on [Dragon](https://dragonhpc.github.io/dragon/doc/_build/html/index.html).
+    The new launcher is compatible with the Slurm and PBS schedulers and can
+    be selected by specifying ``launcher="dragon"`` when creating an `Experiment`,
+    or by using ``DragonRunSettings`` to launch a job. The Dragon launcher
+    is at an early stage of development: early adopters are referred to the
+    dedicated documentation section to learn more about it. ([SmartSim-PR580](https://github.com/CrayLabs/SmartSim/pull/580))
+-   Tests may now request a given configuration and will reconnect to
+    the existing orchestrator instead of building up and tearing down
+    a new one each test.
+    ([SmartSim-PR567](https://github.com/CrayLabs/SmartSim/pull/567))
+-   Manually ensure that typing_extensions==4.6.1 in Dockerfile used to build
+    docs. This fixes the deploy_dev_docs Github action ([SmartSim-PR564](https://github.com/CrayLabs/SmartSim/pull/564))
+-   Added preview functionality to Experiment, including preview of all entities, active infrastructure and
+    client configuration. ([SmartSim-PR525](https://github.com/CrayLabs/SmartSim/pull/525))
 -   Replace the developer created token with the GH_TOKEN environment variable.
     ([SmartSim-PR570](https://github.com/CrayLabs/SmartSim/pull/570))
 -   Add extension to auto-generate function type-hints into documentation.
@@ -102,7 +142,7 @@ Detailed Notes
     Torch will unconditionally try to link in this library, however
     fails because the linking flags are incorrect.
     ([SmartSim-PR538](https://github.com/CrayLabs/SmartSim/pull/538))
--   Change type_extension and pydantic versions in readthedocs
+-   Change typing\_extensions and pydantic versions in readthedocs
     environment to enable docs build.
     ([SmartSim-PR537](https://github.com/CrayLabs/SmartSim/pull/537))
 -   Promote devices to a dedicated Enum type throughout the SmartSim

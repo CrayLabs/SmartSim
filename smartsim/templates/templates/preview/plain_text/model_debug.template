@@ -1,0 +1,114 @@
+
+    {%- if model is defined %}
+        {%- if model.path %}
+        Path: {{ model.path }}
+        {%- endif %}
+        Executable: {{ model.run_settings.exe[0] }}
+        Executable Arguments:
+        {%- for param in model.run_settings.exe_args %}
+          {{ param }}
+        {%- endfor %}
+        {%- if model.run_settings.run_command %}
+        Run Command: {{ model.run_settings.run_command }}
+        {%- endif %}
+        {%- if model.run_settings.run_args %}
+        Run Arguments:
+        {%- for key, value in model.run_settings.run_args.items() %}
+          {{ key }} {{ value }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.batch_settings %}
+        Batch Launch: True
+        Batch Command: {{ model.batch_settings.batch_cmd }}
+        Batch Arguments:
+        {%- for key, value in model.batch_settings.batch_args.items() %}
+          {{ key }}: {{ value }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.params %}
+        Model Parameters:
+        {%- for param, value in model.params.items() %}
+          {{ param }}: {{ value }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.files %}
+        {%- if model.files.tagged %}
+        Tagged Files for Model Configuration:
+        {%- for tagged in model.files.tagged %}
+          {{ tagged }}
+          -> {{ model.path }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.files.copy %}
+        Copy Files:
+        {%- for copy in model.files.copy %}
+          {{ copy }}
+          -> {{ model.path }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.files.link %}
+        Symlink Files:
+        {%- for link in model.files.link %}
+          {{ link }}
+          -> {{ model.path }}
+        {%- endfor %}
+        {%- endif %}
+        {%- endif %}
+        {%- if model.run_settings.colocated_db_settings %}
+        Colocated:
+        {%- if model.run_settings.colocated_db_settings.db_identifier %}
+          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+        {%- endif %}
+          {%- if model.run_settings.colocated_db_settings.port %}
+          Connection Type: TCP
+          TCP/IP Port(s):
+            {{ model.run_settings.colocated_db_settings.port }}
+          {%- endif %}
+          {%- if model.run_settings.colocated_db_settings.unix_socket %}
+          Connection Type: UDS
+          Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+          {%- endif %}
+          {%- if model.run_settings.colocated_db_settings.ifname %}
+          {%- if model.run_settings.colocated_db_settings.ifname | is_list %}
+          Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+          {%- else %}
+          Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname }}
+          {%- endif %}
+          {%- endif %}
+          CPUs: {{ model.run_settings.colocated_db_settings.cpus }}
+          Custom Pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
+          {%- endif %}
+        {%- if model._db_scripts %}
+        Torch Scripts:
+        {%- for script in model._db_scripts%}
+          Name: {{ script.name }}
+            Path: {{ script.file }}
+            Backend: {{ script.device }}
+            Devices Per Node: {{ script.devices_per_node }}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model._db_models %}
+        ML Models:
+        {%- for mlmodel in model._db_models %}
+          Name: {{ mlmodel.name }}
+            Path: {{ mlmodel.file }}
+            Backend: {{ mlmodel.backend }}
+            Device: {{ mlmodel.device }}
+            Devices Per Node: {{ mlmodel.devices_per_node }}
+            {%- if mlmodel.device == "GPU" %}
+            First Device: {{ mlmodel.first_device }}
+            {%- endif %}
+            {%- for input in mlmodel.inputs %}
+            Inputs:
+              {{ input }}
+              {%- endfor %}
+              {%- for output in mlmodel.outputs %}
+            Outputs:
+              {{ output }}
+              {%- endfor %}
+        {%- endfor %}
+        {%- endif %}
+        {%- if model.query_key_prefixing()%}
+        Key Prefix: {{ model.name }}
+        {%- endif %}
+{%- endif %}

@@ -34,7 +34,7 @@ import typing as t
 from dataclasses import dataclass
 from .._core.utils.helpers import expand_exe_path
 from .._core.config import CONFIG
-from ..error import SmartSimError
+from ..error import SSDBFilesNotParseable
 from ..log import get_logger
 from ..settings.base import RunSettings
 from .entity import SmartSimEntity
@@ -188,7 +188,7 @@ class DBNode(SmartSimEntity):
     def get_launched_shard_info(self) -> "t.List[LaunchedShardData]":
         """Parse the launched database shard info from the output files
 
-        :raises SmartSimError: if all shard info could not be found
+        :raises SSDBFilesNotParseable: if all shard info could not be found
         :return: The found launched shard info
         """
         ips: "t.List[LaunchedShardData]" = []
@@ -215,7 +215,7 @@ class DBNode(SmartSimEntity):
                 f"{len(ips)} out of {self.num_shards} DB shards."
             )
             logger.error(msg)
-            raise SmartSimError(msg)
+            raise SSDBFilesNotParseable(msg)
         return ips
 
     def _parse_db_hosts(self) -> t.List[str]:
@@ -224,7 +224,7 @@ class DBNode(SmartSimEntity):
         The IP address is preferred, but if hostname is only present
         then a lookup to /etc/hosts is done through the socket library.
 
-        :raises SmartSimError: if host/ip could not be found
+        :raises SSDBFilesNotParseable: if host/ip could not be found
         :return: ip addresses | hostnames
         """
         return list({shard.hostname for shard in self.get_launched_shard_info()})

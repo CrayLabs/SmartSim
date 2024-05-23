@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -246,11 +246,13 @@ async def test_collector_manager_collect_filesink(
 
 @pytest.mark.asyncio
 async def test_collector_manager_collect_integration(
-    test_dir: str, mock_entity: MockCollectorEntityFunc, local_db, mock_sink
+    test_dir: str, mock_entity: MockCollectorEntityFunc, prepare_db, local_db, mock_sink
 ) -> None:
     """Ensure that all collectors are executed and some metric is retrieved"""
-    entity1 = mock_entity(port=local_db.ports[0], name="e1", telemetry_on=True)
-    entity2 = mock_entity(port=local_db.ports[0], name="e2", telemetry_on=True)
+
+    db = prepare_db(local_db).orchestrator
+    entity1 = mock_entity(port=db.ports[0], name="e1", telemetry_on=True)
+    entity2 = mock_entity(port=db.ports[0], name="e2", telemetry_on=True)
 
     # todo: consider a MockSink so i don't have to save the last value in the collector
     sinks = [mock_sink(), mock_sink(), mock_sink()]
