@@ -34,3 +34,7 @@ def test_command_insert():
     cmd_list = CommandList(commands=[salloc_cmd,srun_cmd])
     cmd_list.insert(0, sacct_cmd)
     assert cmd_list.commands == [sacct_cmd,salloc_cmd,srun_cmd]
+
+def test_command_str():
+    cmd_list = CommandList(commands=[salloc_cmd,srun_cmd])
+    print(cmd_list)

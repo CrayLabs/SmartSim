@@ -73,3 +73,9 @@ class Command(MutableSequence):
         """Insert a command at the specified index.
         """
         self._command.insert(idx, value)
+    
+    def __str__(self) -> str: # pragma: no cover
+        string = ""
+        string += f"\nLauncher: {self.launcher.value}\n"
+        string += f"Command: {' '.join(str(cmd) for cmd in self.command)}"
+        return string
