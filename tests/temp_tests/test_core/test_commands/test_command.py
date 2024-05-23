@@ -1,4 +1,3 @@
-import pytest
 from smartsim._core.commands.command import Command
 from smartsim.settingshold.launchCommand import LauncherType
 
