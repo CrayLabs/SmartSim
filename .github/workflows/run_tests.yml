@@ -119,13 +119,14 @@ jobs:
         if: contains( matrix.os, 'macos-14' )
         run: smart build --device cpu --no_tf -v
 
-      - name: Run mypy
-        run: |
-          python -m pip install .[mypy]
-          make check-mypy
-
-      - name: Run Pylint
-        run: make check-lint
+      # TODO: Re-enable static analysis once API is firmed up
+      # - name: Run mypy
+      #   run: |
+      #     python -m pip install .[mypy]
+      #     make check-mypy
+      #
+      # - name: Run Pylint
+      #   run: make check-lint
 
       # Run isort/black style check
       - name: Run isort

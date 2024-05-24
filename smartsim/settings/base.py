@@ -403,10 +403,8 @@ class RunSettings(SettingsBase):
         """Update the job environment variables
 
         To fully inherit the current user environment, add the
-        workload-manager-specific flag to the launch command through the
-        :meth:`add_exe_args` method. For example, ``--export=ALL`` for
-        slurm, or ``-V`` for PBS/aprun.
-
+        workload-manager-specific flag to the launch command. For example,
+        ``--export=ALL`` for slurm, or ``-V`` for PBS/aprun.
 
         :param env_vars: environment variables to update or add
         :raises TypeError: if env_vars values cannot be coerced to strings
