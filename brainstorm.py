@@ -10,8 +10,9 @@ import io
 import time
 from networkx import is_empty
 import torch
-import tensorflow
-from tensorflow import io as tfio
+
+# import tensorflow
+# from tensorflow import io as tfio
 import multiprocessing as mp
 
 
@@ -123,6 +124,7 @@ class FileSystemKey(ResourceKey):
     def __init__(self, path: pathlib.Path):
         super().__init__(path.absolute().as_posix().encode("utf-8"))
 
+    @property
     def path(self) -> pathlib.Path:
         return pathlib.Path(self._key.decode("utf-8"))
 
@@ -135,7 +137,7 @@ class FileSystemKey(ResourceKey):
         return self.path.read_bytes()
 
     def put(self, value: bytes) -> None:
-        with self.path() as write_to:
+        with self.path as write_to:
             write_to.write_bytes(value)
 
 
@@ -193,16 +195,16 @@ class TorchResource(ResourceDatum[torch.Tensor]):
         return raw_tensor.reshape(self._shape)
 
 
-class TensorflowResource(ResourceDatum[tensorflow.Tensor]):
-    def __init__(self, key: ResourceKey, shape: t.Tuple[int]):
-        super().__init__(key)
-        self._shape = shape
+# class TensorflowResource(ResourceDatum[tensorflow.Tensor]):
+#     def __init__(self, key: ResourceKey, shape: t.Tuple[int]):
+#         super().__init__(key)
+#         self._shape = shape
 
-    def _transform_raw_bytes(self, raw_bytes: bytes) -> tensorflow.Tensor:
-        raw_tensor: tensorflow.Tensor = tfio.decode_raw(
-            raw_bytes, tensorflow.float16
-        )  # <--- type must be from inputs...
-        return tensorflow.reshape(raw_tensor, self._shape)
+#     def _transform_raw_bytes(self, raw_bytes: bytes) -> tensorflow.Tensor:
+#         raw_tensor: tensorflow.Tensor = tfio.decode_raw(
+#             raw_bytes, tensorflow.float16
+#         )  # <--- type must be from inputs...
+#         return tensorflow.reshape(raw_tensor, self._shape)
 
 
 class AggregationAction(str, enum.Enum):
@@ -220,11 +222,11 @@ class CommChannel(ABC):
     @abstractmethod
     def send(self, value: bytes) -> None: ...
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def find(cls, key: bytes) -> "CommChannel":
         """A way to find a channel with only a serialized key/descriptor"""
-        ...
+        raise NotImplemented()
 
 
 class FileCommChannel(CommChannel):
@@ -235,11 +237,12 @@ class FileCommChannel(CommChannel):
         msg = f"Sending {value.decode('utf-8')} through file channel"
         self._path.write_text(msg)
 
-    @abstractmethod
     @classmethod
     def find(cls, key: bytes) -> "CommChannel":
         """A way to find a channel with only a serialized key/descriptor"""
         path = pathlib.Path(key.decode("utf-8"))
+        if not path.exists():
+            path.touch()
         return FileCommChannel(path)
 
 
@@ -393,7 +396,7 @@ class TorchWorker(MachineLearningWorker):
         return "PyTorch"
 
 
-class TensorflowWorker(MachineLearningWorker): ...
+# class TensorflowWorker(MachineLearningWorker): ...
 
 
 class ServiceHost(ABC):
@@ -532,18 +535,24 @@ class InferenceRequest:
     @classmethod
     def from_msg(cls, msg: bytes) -> "t.Optional[InferenceRequest]":
         msg_str = msg.decode("utf-8")
-        if not msg_str.contains("PyTorch"):
+        # todo: we'll need to filter properly ... or assume all messages are inference reqs
+        if not ":" in msg_str or not msg_str.startswith("PyTorch"):
             return None
 
-        prefix, model_name, serialized_input, serialized_channel = msg_str.split(
+        prefix, model_path, serialized_input, serialized_channel = msg_str.split(
             ":", maxsplit=3
         )
-        key = ResourceKey(f"{prefix}:{model_name}".encode("utf-8"))
+
+        # callback = CommChannel.find(serialized_channel)
+        # key = FileSystemKey(f"{prefix}:{model_name}".encode("utf-8"))
+
+        key = FileSystemKey(pathlib.Path(model_path))
+
+        persistence_path = pathlib.Path(serialized_channel)
+        callback = FileCommChannel(persistence_path)
+
         model = MachineLearningModel(prefix, key)
-        return InferenceRequest(
-            prefix,
-            model,
-        )
+        return InferenceRequest(prefix, model, callback, serialized_input)
 
 
 class WorkerManager(ServiceHost):
@@ -570,20 +579,23 @@ class WorkerManager(ServiceHost):
         msg: str = self.upstream_queue.get()
 
         if request := InferenceRequest.from_msg(msg):
+            existing_worker: t.Optional[MachineLearningWorker] = None
             if request.model.backend == "PyTorch":
-                existing_worker = self._workers.get(request.model._key, None)
+                existing_worker: t.Optional[MachineLearningWorker] = self._workers.get(
+                    request.model._key, None
+                )
                 model = self._feature_store[request.model._key]
 
                 if not model:
-                    resource_key = ResourceKey(request.model._key)
                     # START hack! this really needs to come from message but for now, i'll use demo model
-                    with pathlib.Path("./demo-model.pt") as model_file:
-                        resource_key.put(model_file)
+                    model_bytes = request.model._key.retrieve()
+                    # with pathlib.Path("./demo-model.pt") as model_file:
+                    #     resource_key.put(model_file)
                     # END hack!
 
                     model = MachineLearningModel(
                         "PyTorch",
-                        resource_key,
+                        request.model._key,
                     )
 
                     # note: if the req is direct inference, request.model could be
@@ -591,7 +603,7 @@ class WorkerManager(ServiceHost):
 
             if not existing_worker:
                 downstream_queue = mp.Queue()
-                self.add_worker(TorchWorker(downstream_queue), downstream_queue)
+                self.add_worker(TorchWorker(model, downstream_queue), downstream_queue)
                 return
 
         # perform the inference pipeline with a worker
@@ -609,11 +621,11 @@ class WorkerManager(ServiceHost):
         return self._upstream_queue
 
     @upstream_queue.setter
-    def _upstream_queue(self, value: mp.Queue) -> None:
+    def upstream_queue(self, value: mp.Queue) -> None:
         self._upstream_queue = value
 
     def add_worker(self, worker: MachineLearningWorker, work_queue: mp.Queue) -> None:
-        self._workers[worker.backend] = (worker, work_queue)
+        self._workers[worker.model.backend] = (worker, work_queue)
 
     def _deserialize_channel_descriptor(self, value: bytes) -> CommChannel:
         channel = FileCommChannel.find(value)
@@ -688,6 +700,12 @@ class TorchWorker(MachineLearningModelWorker):
             model_bytes = self._model._key.retrieve()
             self._torch_model: torch.Module = self._hydrate_model(model_bytes)
 
+    def _hydrate_model(self, raw_model: bytes) -> t.Any:
+        """Take the bytes of the model and convert to a model for the given backend"""
+        # todo: real hydrate from raw...
+        model = torch.nn.Sequential(torch.nn.Linear(2, 1))
+        return model
+
 
 def mock_work(worker_manager_queue: mp.Queue) -> None:
     while True:
@@ -695,8 +713,14 @@ def mock_work(worker_manager_queue: mp.Queue) -> None:
         # 1. for demo, ignore upstream and just put stuff into downstream
         # 2. for demo, only one downstream but we'd normally have to filter
         #       msg content and send to the correct downstream (worker) queue
-        mock_channel = "/lus/bnchlu1/mcbridch/code/ss/brainstorm.txt"
-        worker_manager_queue.put(f"PyTorch:DemoModel:MockInputToReplace:{mock_channel}")
+        ts = time.time_ns()
+        mock_channel = f"/lus/bnchlu1/mcbridch/code/ss/brainstorm-{ts}.txt"
+        mock_model = f"/lus/bnchlu1/mcbridch/code/ss/brainstorm.pt"
+        pathlib.Path(mock_model).touch()
+
+        worker_manager_queue.put(
+            f"PyTorch:{mock_model}:MockInputToReplace:{mock_channel}".encode("utf-8")
+        )
 
 
 if __name__ == "__main__":
