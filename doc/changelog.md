@@ -16,15 +16,10 @@ To be released at some future point in time
 Description
 
 - Update packaging dependency
-- **RM THIS ENTRY WHEN `tests/_legacy` DIR IS REMOVED** Remove SmartSim
-  V0.7.0 API style tests
 
 Detailed Notes
 
 - Fix packaging failures due to deprecated `pkg_resources`. ([SmartSim-PR598](https://github.com/CrayLabs/SmartSim/pull/598))
-- **RM THIS ENTRY WHEN `tests/_legacy` DIR IS REMOVED]** Move tests using a
-  the SmartSim V0.7.0 API to `tests/_legacy` directory.
-  ([SmartSim-PR575](https://github.com/CrayLabs/SmartSim/pull/575))
 
 
 ### 0.7.0
