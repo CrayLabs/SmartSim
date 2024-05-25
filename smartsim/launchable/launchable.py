@@ -24,10 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .smartsimobject import SmartSimObject
+
+class SmartSimObject:
+    """Base Class for SmartSim Objects"""
+
+    ...
 
 
 class Launchable(SmartSimObject):
-    ...
+    """Base Class for anything than can be passed
+    into Experiment.start()"""
 
-    ## empty abstract class
+    ...

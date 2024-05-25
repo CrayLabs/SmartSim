@@ -24,61 +24,40 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from abc import abstractmethod
+
+from smartsim.entity.entity import SmartSimEntity
 from smartsim.launchable.basejob import BaseJob
+from smartsim.settings import RunSettings
 
 
 class Job(BaseJob):
-
-    ## JOBS will have deep copies (not references) -- so when you change a job - it doesnt change other things
-    ## make sure to call this out in the docstring
-
-    # combination of a single entity and launch settings
-    # build out Job with all its parents
-
-    # these are all user level objects - that will be fed into exp.start()
-
-    # UNIT Testing for the Job
-    # what does unit testing look like for a bunch of nested classes
-
     """A Job holds a reference to a SmartSimEntity and associated
     LaunchSettings prior to launch.  It is responsible for turning
     the stored entity and launch settings into commands that can be
     executed by a launcher.
+
+    Jobs will hold a deep copy of launch settings.
     """
 
-    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings) -> None:
-
-        ## make sure these are all robust proper python classes
-        ## add all the dunder methods
-        # __string
-        # __ represents etc.
-        # and all the normal class things
+    def __init__(
+        self,
+        entity: SmartSimEntity,
+        launch_settings: RunSettings,  # rename to LaunchSettings
+    ) -> None:
         super().__init__()
-        self.entity = entity  # deepcopy(entity)?
-        self.launch_settings = launch_settings  # deepcopy(entity)?
+        self.entity = entity
+        self.launch_settings = launch_settings
+        # self.warehouse_runner = JobWarehouseRunner
 
-    # self.warehouse_runner = JobWarehouseRunner # omit for now
-
-    # make sure everything that is suppose to be a abstract method, property, or static method is tagged appropriatelyt
-
-    @abstractmethod
-    def get_launch_steps(self) -> LaunchCommands:
+    def get_launch_steps(self) -> None:  # -> LaunchCommands:
         """Return the launch steps corresponding to the
         internal data.
-
-        # Examples of launch steps might be
-        # Application, Slurm
-        #   -N 4 -n 80 /path/to/exe -i input_file -v
-        # Application, Dragon
-        #   JSON of a single entry to launch
-        # MLWorker, Dragon (inherently uses colocated)
-        #   3 JSON entries for entites to launch embedded in colocated descriptor
-        # FeatureStore, Dragon
-        #   JSON of one application to run
-
         """
-        return JobWarehouseRunner.run(self)
+        pass
+        # return JobWarehouseRunner.run(self)
 
-    def __str__(self) -> str: ...
-
-    def __repr__(self) -> str: ...
+    def __str__(self) -> str:
+        string = f"SmartSim Entity: {self.entity}"
+        string += f"Launch Settings: {self.launch_settings}"
+        return string

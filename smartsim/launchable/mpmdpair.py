@@ -24,16 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim._core.utils import helpers as _helpers
+from smartsim.entity.entity import SmartSimEntity
+from smartsim.settings.base import RunSettings
 
 
-class SmartSimObject:
-    """Generatic class with a global unique identifier attribute"""
+class MPMDPair:
+    """Class to store MPMD Pairs"""
 
-    ## hold a GUUID for tracking and debugging
-    object_id = _helpers.create_short_id_str
+    def __init__(
+        self, entity: SmartSimEntity, launch_settings: RunSettings
+    ):  # rename to LaunchSettings
+        self.entity = entity
+        self.launch_settings = launch_settings
 
-
-@property
-def get_id(self) -> str:
-    return self.object_id
+    def __iter__(self):
+        return self
