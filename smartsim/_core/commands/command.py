@@ -40,12 +40,14 @@ class Command(MutableSequence):
     @property
     def launcher(self) -> LauncherType:
         """Get the launcher type.
+        Return a reference to the LauncherType.
         """
         return self._launcher
     
     @property
     def command(self) -> t.List[str]:
         """Get the command list.
+        Return a reference to the command list.
         """
         return self._command
     

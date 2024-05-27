@@ -39,6 +39,7 @@ class CommandList(MutableSequence):
     @property
     def commands(self) -> t.List[Command]:
         """Get the Command list.
+        Return a reference to the Command list.
         """
         return self._commands
     

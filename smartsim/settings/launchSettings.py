@@ -31,7 +31,7 @@ import copy
 
 from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
-from .common import process_env_vars, process_args, StringArgument
+from .common import validate_env_vars, validate_args, StringArgument
 from .launchCommand import LauncherType
 from .translators.launch.alps import AprunArgTranslator
 from .translators.launch.lsf import JsrunArgTranslator
@@ -48,36 +48,41 @@ logger = get_logger(__name__)
 class LaunchSettings(BaseSettings):
     def __init__(
         self,
-        launcher: LauncherType,
+        launcher: t.Union[LauncherType, LaunchArgTranslator],
         launcher_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
         env_vars: t.Optional[StringArgument] = None,
-        **kwargs: t.Any,
     ) -> None:
-        launcher_to_translator : t.Dict[str,LaunchArgTranslator] = {
-            'slurm' : SlurmArgTranslator(),
-            'mpiexec' : MpiexecArgTranslator(),
-            'mpirun' : MpiArgTranslator(),
-            'orterun' : OrteArgTranslator(),
-            'aprun' : AprunArgTranslator(),
-            'jsrun' : JsrunArgTranslator(),
-            'pals' : PalsMpiexecArgTranslator(),
-            'dragon': DragonArgTranslator(),
-            'local': LocalArgTranslator(),
-        }
-        if launcher.value in launcher_to_translator:
-            self.launcher = launcher
+        if isinstance(launcher, LaunchArgTranslator):
+            self.arg_translator = launcher
+        elif launcher.value == 'slurm':
+            self.arg_translator = SlurmArgTranslator()
+        elif launcher.value == 'mpiexec':
+            self.arg_translator = MpiexecArgTranslator()
+        elif launcher.value == 'mpirun':
+            self.arg_translator = MpiArgTranslator()
+        elif launcher.value == 'orterun':
+            self.arg_translator = OrteArgTranslator()
+        elif launcher.value == 'aprun':
+            self.arg_translator = AprunArgTranslator()
+        elif launcher.value == 'jsrun':
+            self.arg_translator = JsrunArgTranslator()
+        elif launcher.value == 'pals':
+            self.arg_translator = PalsMpiexecArgTranslator()
+        elif launcher.value == 'dragon':
+            self.arg_translator = DragonArgTranslator()
+        elif launcher.value == 'local':
+            self.arg_translator = LocalArgTranslator()
         else:
-            raise ValueError(f"'{launcher}' is not a valid launcher name.")
+            raise ValueError(f"'{launcher}' is not valid input.")
         
         if env_vars:
-            process_env_vars(env_vars)
+            validate_env_vars(env_vars)
         self.env_vars = env_vars or {}
 
         if launcher_args:
-            process_args(launcher_args)
+            validate_args(launcher_args)
         self.launcher_args = launcher_args or {}
-
-        self.arg_translator = t.cast(LaunchArgTranslator,launcher_to_translator.get(launcher.value))
+        
         # Set the reserved launch arguments per LauncherType
         self._reserved_launch_args = self.arg_translator._set_reserved_launch_args()
 

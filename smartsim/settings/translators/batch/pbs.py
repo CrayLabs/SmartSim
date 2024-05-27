@@ -115,7 +115,6 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         :raises ValueError: if options are supplied without values
         """
         opts, batch_arg_copy = self._create_resource_list(batch_args)
-        t.cast(t.List[str],batch_arg_copy)
         for opt, value in batch_arg_copy.items():
             prefix = "-"
             if not value:
@@ -131,10 +130,9 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         Note: For PBS Pro, nodes is equivalent to 'select' and 'place' so
         they are not quite synonyms. Here we assume that
         """
-        checked_resources = batch_args
 
-        has_select = checked_resources.get("select", None)
-        has_nodes = checked_resources.get("nodes", None)
+        has_select = batch_args.get("select", None)
+        has_nodes = batch_args.get("nodes", None)
 
         if has_select and has_nodes:
             raise SSConfigError(
@@ -148,7 +146,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         if has_nodes and not isinstance(has_nodes, int):
             raise TypeError("The value for 'nodes' must be an integer")
 
-        for key, value in checked_resources.items():
+        for key, value in batch_args.items():
             if not isinstance(key, str):
                 raise TypeError(
                     f"The type of {key} is {type(key)}. Only int and str "
@@ -178,7 +176,6 @@ class QsubBatchArgTranslator(BatchArgTranslator):
             select_command += f":ncpus={ncpus}"
         if hosts := batch_arg_copy.pop("hostname", None):
             hosts_list = ["=".join(str(hosts))]
-            t.cast(str,hosts_list)
             select_command += f":{'+'.join(hosts_list)}"
         res += [select_command]
         if walltime := batch_arg_copy.pop("walltime", None):

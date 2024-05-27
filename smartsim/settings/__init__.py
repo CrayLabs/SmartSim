@@ -24,30 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsSettings import AprunSettings
-from .base import RunSettings, SettingsBase
-from .containers import Container, Singularity
-from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-from .palsSettings import PalsMpiexecSettings
-from .pbsSettings import QsubBatchSettings
-from .slurmSettings import SbatchSettings, SrunSettings
+from .launchSettings import LaunchSettings
+from .baseSettings import BaseSettings
+from .batchSettings import BatchSettings
 
 __all__ = [
-    "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
-    "MpirunSettings",
-    "MpiexecSettings",
-    "OrterunSettings",
-    "QsubBatchSettings",
-    "RunSettings",
-    "SettingsBase",
-    "SbatchSettings",
-    "SrunSettings",
-    "PalsMpiexecSettings",
-    "DragonRunSettings",
-    "Container",
-    "Singularity",
+    "LaunchSettings",
+    "BaseSettings",
+    "BatchSettings"
 ]

@@ -21,6 +21,7 @@ Detailed Notes
 
 - Fix packaging failures due to deprecated `pkg_resources`. ([SmartSim-PR598](https://github.com/CrayLabs/SmartSim/pull/598))
 
+
 ### 0.7.0
 
 Released on 14 May, 2024

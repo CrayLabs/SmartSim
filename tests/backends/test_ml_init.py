@@ -24,22 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
+import tempfile
 
-IntegerArgument = t.Dict[str, t.Optional[int]]
-StringArgument = t.Dict[str, t.Optional[str]]
+import pytest
 
-def process_env_vars(env_vars: StringArgument) -> None:
-    """Validate that user passed env vars are of correct type.
-    """
-    for key, value in env_vars.items():
-        if not isinstance(value, str) and value is not None:
-            raise TypeError(f"Value for '{key}' must be a string.")
+pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
-def process_args(launch_args: t.Dict[str, t.Union[str,int,float,None]]) -> None:
-    """Validate that user passed launch args and scheduler args are of correct type.
-    """
-    for key, value in launch_args.items():
-        if not isinstance(value, (str,int,float)) and value is not None:
-            raise TypeError(f"Value for '{key}' must be a string.")
-    
+
+def test_import_ss_ml(monkeypatch):
+    with tempfile.TemporaryDirectory() as empty_dir:
+        # Move to an empty directory so `smartsim` dir is not in cwd
+        monkeypatch.chdir(empty_dir)
+
+        # Make sure SmartSim ML modules are importable
+        import smartsim.ml
+        import smartsim.ml.tf
+        import smartsim.ml.torch

@@ -30,7 +30,7 @@ import copy
 
 from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
-from .common import process_env_vars, process_args, StringArgument
+from .common import validate_env_vars, validate_args, StringArgument
 from .batchCommand import SchedulerType
 from .translators.batch.pbs import QsubBatchArgTranslator
 from .translators.batch.slurm import SlurmBatchArgTranslator
@@ -43,30 +43,28 @@ logger = get_logger(__name__)
 class BatchSettings(BaseSettings):
     def __init__(
         self,
-        scheduler: SchedulerType,
+        batch_scheduler: t.Union[SchedulerType, BatchArgTranslator],
         scheduler_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
         env_vars: t.Optional[StringArgument] = None,
-        **kwargs: t.Any,
     ) -> None:
-        scheduler_to_translator = {
-            'sbatch' : SlurmBatchArgTranslator(),
-            'bsub' : BsubBatchArgTranslator(),
-            'qsub' : QsubBatchArgTranslator(),
-        }
-        if scheduler.value in scheduler_to_translator:
-            self.scheduler = scheduler
+        if isinstance(batch_scheduler, BatchArgTranslator):
+            self.arg_translator = batch_scheduler
+        elif batch_scheduler.value == 'sbatch':
+            self.arg_translator = SlurmBatchArgTranslator()
+        elif batch_scheduler.value == 'bsub':
+            self.arg_translator = BsubBatchArgTranslator()
+        elif batch_scheduler.value == 'qsub':
+            self.arg_translator = QsubBatchArgTranslator()
         else:
-            raise ValueError(f"'{scheduler}' is not a valid scheduler name.")
+            raise ValueError(f"'{batch_scheduler}' is not valid input.")
 
         if env_vars:
-            process_env_vars(env_vars)
+            validate_env_vars(env_vars)
         self.env_vars = env_vars or {}
 
         if scheduler_args:
-            process_args(scheduler_args)
+            validate_args(scheduler_args)
         self.scheduler_args = scheduler_args or {}
-
-        self.arg_translator = t.cast(BatchArgTranslator,scheduler_to_translator.get(scheduler.value))
 
     @property
     def scheduler_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
