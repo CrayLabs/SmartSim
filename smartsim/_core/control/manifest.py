@@ -30,7 +30,7 @@ import typing as t
 from dataclasses import dataclass, field
 
 from ...database import FeatureStore
-from ...entity import FSNode, Ensemble, EntitySequence, Model, SmartSimEntity
+from ...entity import Ensemble, EntitySequence, FSNode, Model, SmartSimEntity
 from ...error import SmartSimError
 from ..config import CONFIG
 from ..utils import helpers as _helpers

@@ -34,7 +34,7 @@ from types import FrameType
 
 from ..._core.launcher.step import Step
 from ...database import FeatureStore
-from ...entity import FSNode, EntitySequence, SmartSimEntity
+from ...entity import EntitySequence, FSNode, SmartSimEntity
 from ...log import ContextThread, get_logger
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG

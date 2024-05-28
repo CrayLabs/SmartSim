@@ -41,7 +41,7 @@ from .._core.config import CONFIG
 from .._core.utils import fs_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_fs_identifier
 from .._core.utils.network import get_ip_from_host
-from ..entity import FSNode, EntityList, TelemetryConfiguration
+from ..entity import EntityList, FSNode, TelemetryConfiguration
 from ..error import (
     SmartSimError,
     SSConfigError,
