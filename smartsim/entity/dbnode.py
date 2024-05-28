@@ -34,7 +34,8 @@ import typing as t
 from dataclasses import dataclass
 
 from .._core.config import CONFIG
-from ..error import SmartSimError
+from .._core.utils.helpers import expand_exe_path
+from ..error import SSDBFilesNotParseable
 from ..log import get_logger
 from ..settings.base import RunSettings
 from .entity import SmartSimEntity
@@ -55,6 +56,8 @@ class DBNode(SmartSimEntity):
         self,
         name: str,
         path: str,
+        exe: str,
+        exe_args: t.List[str],
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
@@ -62,6 +65,8 @@ class DBNode(SmartSimEntity):
     ) -> None:
         """Initialize a database node within an orchestrator."""
         super().__init__(name, path, run_settings)
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 
@@ -184,7 +189,7 @@ class DBNode(SmartSimEntity):
     def get_launched_shard_info(self) -> "t.List[LaunchedShardData]":
         """Parse the launched database shard info from the output files
 
-        :raises SmartSimError: if all shard info could not be found
+        :raises SSDBFilesNotParseable: if all shard info could not be found
         :return: The found launched shard info
         """
         ips: "t.List[LaunchedShardData]" = []
@@ -211,7 +216,7 @@ class DBNode(SmartSimEntity):
                 f"{len(ips)} out of {self.num_shards} DB shards."
             )
             logger.error(msg)
-            raise SmartSimError(msg)
+            raise SSDBFilesNotParseable(msg)
         return ips
 
     def _parse_db_hosts(self) -> t.List[str]:
@@ -220,7 +225,7 @@ class DBNode(SmartSimEntity):
         The IP address is preferred, but if hostname is only present
         then a lookup to /etc/hosts is done through the socket library.
 
-        :raises SmartSimError: if host/ip could not be found
+        :raises SSDBFilesNotParseable: if host/ip could not be found
         :return: ip addresses | hostnames
         """
         return list({shard.hostname for shard in self.get_launched_shard_info()})

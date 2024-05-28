@@ -52,14 +52,18 @@ SmartSim supports launching AI-enabled workflows on a wide variety of systems, i
 Linux machine or on HPC machines with a job scheduler (e.g. Slurm, PBS Pro, and LSF). When creating a SmartSim
 ``Experiment``, the user has the opportunity to specify the `launcher` type or defer to automatic `launcher` selection.
 `Launcher` selection determines how SmartSim translates entity configurations into system calls to launch,
-manage, and monitor. Currently, SmartSim supports 5 `launchers`:
+manage, and monitor. Currently, SmartSim supports 7 `launcher` options:
 
 1. ``local`` **[default]**: for single-node, workstation, or laptop
 2. ``slurm``: for systems using the Slurm scheduler
 3. ``pbs``: for systems using the PBS Pro scheduler
 4. ``pals``: for systems using the PALS scheduler
 5. ``lsf``: for systems using the LSF scheduler
-6. ``auto``: have SmartSim auto-detect the launcher to use
+6. ``dragon``: if Dragon is installed in the current Python environment, see :ref:`Dragon Install <dragon_install>`
+7. ``auto``: have SmartSim auto-detect the launcher to use (will not detect ``dragon``)
+
+The :ref:`Dragon-based launcher <dragon>` can be run on PBS- or Slurm-based systems
+(MPI applications are supported only when Cray PMI or Cray PALS are available).
 
 If the systems `launcher` cannot be found or no `launcher` argument is provided, the default value of
 `"local"` will be assigned which will start all ``Experiment`` launched entities on the
@@ -126,6 +130,9 @@ the ``Experiment`` post-creation methods.
    * - ``get_status``
      - ``exp.get_status(*args)``
      - Retrieve Entity Status
+   * - ``preview``
+     - ``exp.preview(*args, ...)``
+     - Preview an Entity
 
 .. _orchestrator_exp_docs:
 
@@ -329,6 +336,9 @@ Example
   *Generating*
    - the ``Orchestrator`` output directory
    - the ``Model`` output directory
+  *Previewing*
+   - the ``Orchestrator`` contents
+   - the ``Model`` contents
   *Starting*
    - an in-memory database (standalone ``Orchestrator``)
    - an application (``Model``)
@@ -354,7 +364,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 1-7
+    :lines: 1-8
 
   We also initialize a SmartSim :ref:`logger<ss_logger>`. We will use the logger to log the ``Experiment``
   summary.
@@ -369,7 +379,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 9-10
+    :lines: 10-11
 
 .. compound::
   Before invoking the factory method to create a ``Model``,
@@ -384,7 +394,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 12-13
+    :lines: 13-14
 
   After creating the ``RunSettings`` object, initialize the ``Model`` object by passing the `name`
   and `settings` to ``create_model``.
@@ -392,7 +402,7 @@ Initializing
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 14-15
+    :lines: 15-16
 
 Generating
 ==========
@@ -405,7 +415,7 @@ Generating
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 17-18
+    :lines: 18-19
 
   `Overwrite=True` instructs SmartSim to overwrite entity contents if files and subdirectories
   already exist within the ``Experiment`` directory.
@@ -418,6 +428,73 @@ Generating
   The ``Experiment.generate`` call places the `.err` and `.out` log files in the entity
   subdirectories within the main ``Experiment`` directory.
 
+Previewing
+==========
+.. compound::
+  Optionally, users can preview an ``Experiment`` entity. The ``Experiment.preview`` method displays the entity summaries during runtime
+  to offer additional insight into the launch details. Any instance of a ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
+  ``Experiment`` can be passed as an argument to the preview method. Additionally, users may specify the name of a file to write preview data to
+  via the ``output_filename`` argument, as well as the text format through the ``output_format`` argument. Users can also specify how verbose
+  the preview is via the ``verbosity_level`` argument.
+
+  The following options are available when configuring preview:
+
+  *  `verbosity_level="info"` instructs preview to display user-defined fields and entities.
+  *  `verbosity_level="debug"` instructs preview to display user-defined field and entities and auto-generated fields.
+  *  `verbosity_level="developer"` instructs preview to display user-defined field and entities, auto-generated fields, and run commands.
+  *  `output_format="plain_text"` sets the output format. The only accepted output format is 'plain_text'.
+  *  `output_filename="test_name.txt"` specifies name of file and extension to write preview data to. If no output filename is set, the preview will be output to stdout.
+
+  In the example below, we preview the ``Orchestrator`` and ``Model`` entities by passing their instances to ``Experiment.preview``:
+
+  .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
+    :language: python
+    :linenos:
+    :lines: 21-22
+
+When executed, the preview logs the following in stdout:
+
+::
+
+  === Experiment Overview ===
+
+    Experiment Name: example-experiment
+      Experiment Path: absolute/path/to/SmartSim/example-experiment
+      Launcher: local
+
+  === Entity Preview ===
+
+    == Orchestrators ==
+
+      = Database Identifier: orchestrator =
+          Path: absolute/path/to/SmartSim/example-experiment/orchestrator
+          Shards: 1
+          TCP/IP Port(s):
+            6379
+          Network Interface: ib0
+          Type: redis
+          Executable: absolute/path/to/SmartSim/smartsim/_core/bin/redis-server
+
+    == Models ==
+
+      = Model Name: hello_world =
+          Path: absolute/path/to/SmartSim/example-experiment/hello_world
+          Executable: /bin/echo
+          Executable Arguments:
+            Hello
+            World
+          Client Configuration:
+            Database Identifier: orchestrator
+              Database Backend: redis
+              TCP/IP Port(s):
+                6379
+              Type: Standalone
+            Outgoing Key Collision Prevention (Key Prefixing):
+              Tensors: Off
+              Datasets: Off
+              ML Models/Torch Scripts: Off
+              Aggregation Lists: Off
+
 Starting
 ========
 .. compound::
@@ -428,7 +505,7 @@ Starting
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 20-21
+    :lines: 24-25
 
 Stopping
 ========
@@ -439,7 +516,7 @@ Stopping
   .. literalinclude:: tutorials/doc_examples/experiment_doc_examples/exp.py
     :language: python
     :linenos:
-    :lines: 23-26
+    :lines: 27-28
 
   Notice that we use the ``Experiment.summary`` function to print
   the summary of the workflow.

@@ -30,7 +30,6 @@ import io
 import multiprocessing as mp
 import os
 import os.path
-import socket
 import tempfile
 import typing as t
 from types import TracebackType
@@ -42,6 +41,7 @@ from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim._core._install.builder import Device
 from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim._core.utils.network import find_free_port
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
@@ -152,8 +152,8 @@ def test_install(
 ) -> None:
     exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
     exp.telemetry.disable()
+    port = find_free_port() if port is None else port
 
-    port = _find_free_port() if port is None else port
     with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
@@ -204,14 +204,6 @@ def _make_managed_local_orc(
         yield Client(False, address=client_addr)
     finally:
         exp.stop(orc)
-
-
-def _find_free_port() -> int:
-    """A 'good enough' way to find an open port to bind to"""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("0.0.0.0", 0))
-        _, port = sock.getsockname()
-        return int(port)
 
 
 def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:

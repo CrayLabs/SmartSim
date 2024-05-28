@@ -40,8 +40,6 @@ logger = get_logger(__name__)
 class SrunSettings(RunSettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         alloc: t.Optional[str] = None,
@@ -54,15 +52,11 @@ class SrunSettings(RunSettings):
         If an allocation is specified, the instance receiving these run
         parameters will launch on that allocation.
 
-        :param exe: executable to run
-        :param exe_args: executable arguments
         :param run_args: srun arguments without dashes
         :param env_vars: environment variables for job
         :param alloc: allocation ID if running on existing alloc
         """
         super().__init__(
-            exe,
-            exe_args,
             run_command="srun",
             run_args=run_args,
             env_vars=env_vars,
@@ -327,7 +321,7 @@ class SrunSettings(RunSettings):
                         "environment. If the job is running in an interactive "
                         f"allocation, the value {v} will not be set. Please "
                         "consider removing the variable from the environment "
-                        "and re-run the experiment."
+                        "and re-running the experiment."
                     )
                     logger.warning(msg)
 

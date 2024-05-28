@@ -27,31 +27,41 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
+from dataclasses import dataclass
 import json
 import os
 import pathlib
 import shutil
+import subprocess
 import signal
+import socket
 import sys
 import tempfile
+import time
 import typing as t
 import uuid
 import warnings
 from subprocess import run
+import time
 
 import psutil
 import pytest
 
 import smartsim
 from smartsim import Experiment
+from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Model
-from smartsim.error import SSConfigError
+from smartsim.error import SSConfigError, SSInternalError
+from smartsim.log import get_logger
 from smartsim.settings import (
     AprunSettings,
+    DragonRunSettings,
     JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
@@ -59,6 +69,8 @@ from smartsim.settings import (
     RunSettings,
     SrunSettings,
 )
+
+logger = get_logger(__name__)
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
 
@@ -70,14 +82,16 @@ test_device = CONFIG.test_device.upper()
 test_num_gpus = CONFIG.test_num_gpus
 test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
-test_port = CONFIG.test_port
+test_ports = CONFIG.test_ports
 test_account = CONFIG.test_account or ""
 test_batch_resources: t.Dict[t.Any, t.Any] = CONFIG.test_batch_resources
+test_output_dirs = 0
+mpi_app_exe = None
+built_mpi_app = False
 
 # Fill this at runtime if needed
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
-
 
 def get_account() -> str:
     return test_account
@@ -98,9 +112,7 @@ def print_test_configuration() -> None:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_output_root)
     print("Test output will be located in TEST_DIR if there is a failure")
-    print(
-        "TEST_PORTS:", ", ".join(str(port) for port in range(test_port, test_port + 3))
-    )
+    print("TEST_PORTS:", ", ".join(str(port) for port in test_ports))
     if test_batch_resources:
         print("TEST_BATCH_RESOURCES: ")
         print(json.dumps(test_batch_resources, indent=2))
@@ -108,7 +120,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals"]
+    pytest.wlm_options = ["slurm", "pbs", "lsf", "pals", "dragon"]
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
@@ -125,6 +137,14 @@ def pytest_sessionstart(
     if os.path.isdir(test_output_root):
         shutil.rmtree(test_output_root)
     os.makedirs(test_output_root)
+    while not os.path.isdir(test_output_root):
+        time.sleep(0.1)
+
+    if CONFIG.dragon_server_path is None:
+        dragon_server_path =  os.path.join(test_output_root, "dragon_server")
+        os.makedirs(dragon_server_path)
+        os.environ["SMARTSIM_DRAGON_SERVER_PATH"] = dragon_server_path
+
     print_test_configuration()
 
 
@@ -136,10 +156,60 @@ def pytest_sessionfinish(
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_output_root)
+        cleanup_attempts = 5
+        while cleanup_attempts > 0:
+            try:
+                shutil.rmtree(test_output_root)
+            except OSError as e:
+                cleanup_attempts -= 1
+                time.sleep(1)
+                if not cleanup_attempts:
+                    raise
+            else:
+                break
     else:
-        # kill all spawned processes in case of error
+        # kill all spawned processes
+        if CONFIG.test_launcher == "dragon":
+            time.sleep(5)
         kill_all_test_spawned_processes()
+
+
+def build_mpi_app() -> t.Optional[pathlib.Path]:
+    global built_mpi_app
+    built_mpi_app = True
+    cc = shutil.which("cc")
+    if cc is None:
+        cc = shutil.which("gcc")
+    if cc is None:
+        return None
+
+    path_to_src =  pathlib.Path(FileUtils().get_test_conf_path("mpi"))
+    path_to_out = pathlib.Path(test_output_root) / "apps" / "mpi_app"
+    os.makedirs(path_to_out.parent, exist_ok=True)
+    cmd = [cc, str(path_to_src / "mpi_hello.c"), "-o", str(path_to_out)]
+    proc = subprocess.Popen(cmd)
+    proc.wait(timeout=1)
+    if proc.returncode == 0:
+        return path_to_out
+    else:
+        return None
+
+@pytest.fixture(scope="session")
+def mpi_app_path() -> t.Optional[pathlib.Path]:
+    """Return path to MPI app if it was built
+
+        return None if it could not or will not be built
+    """
+    if not CONFIG.test_mpi:
+        return None
+
+    # if we already tried to build, return what we have
+    if built_mpi_app:
+        return mpi_app_exe
+
+    # attempt to build, set global
+    mpi_app_exe = build_mpi_app()
+    return mpi_app_exe
 
 
 def kill_all_test_spawned_processes() -> None:
@@ -155,6 +225,7 @@ def kill_all_test_spawned_processes() -> None:
             child.kill()
     except Exception:
         print("Not all processes were killed after test")
+
 
 
 def get_hostlist() -> t.Optional[t.List[str]]:
@@ -227,7 +298,23 @@ _reset_signal_interrupt = pytest.fixture(
 )
 
 
-@pytest.fixture
+def _find_free_port(ports: t.Collection[int]) -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        for port in ports:
+            try:
+                sock.bind(("127.0.0.1", port))
+            except socket.error:
+                continue
+            else:
+                _, port_ = sock.getsockname()
+                return int(port_)
+    raise SSInternalError(
+        "Could not find a free port out of a options: "
+        f"{', '.join(str(port) for port in sorted(ports))}"
+    )
+
+
+@pytest.fixture(scope="session")
 def wlmutils() -> t.Type[WLMUtils]:
     return WLMUtils
 
@@ -244,7 +331,9 @@ class WLMUtils:
 
     @staticmethod
     def get_test_port() -> int:
-        return test_port
+        # TODO: Ideally this should find a free port on the correct host(s),
+        #       but this is good enough for now
+        return _find_free_port(test_ports)
 
     @staticmethod
     def get_test_account() -> str:
@@ -272,6 +361,12 @@ class WLMUtils:
             run_args = {"--nodes": nodes, "--ntasks": ntasks, "--time": "00:10:00"}
             run_args.update(kwargs)
             settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
+            return settings
+        if test_launcher == "dragon":
+            run_args = {"nodes": nodes}
+            run_args = {"ntasks": ntasks}
+            run_args.update(kwargs)
+            settings = DragonRunSettings(exe, args, run_args=run_args)
             return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
@@ -314,6 +409,11 @@ class WLMUtils:
             run_args = {"nodes": nodes, "ntasks": ntasks, "time": "00:10:00"}
             run_args.update(kwargs)
             return SrunSettings(exe, args, run_args=run_args)
+        if test_launcher == "dragon":
+            run_args = {"nodes": nodes}
+            run_args.update(kwargs)
+            settings = DragonRunSettings(exe, args, run_args=run_args)
+            return settings
         if test_launcher == "pbs":
             if shutil.which("aprun"):
                 run_args = {"pes": ntasks}
@@ -340,53 +440,6 @@ class WLMUtils:
         return RunSettings(exe, args)
 
     @staticmethod
-    def get_orchestrator(nodes: int = 1, batch: bool = False) -> Orchestrator:
-        if test_launcher == "pbs":
-            if not shutil.which("aprun"):
-                hostlist = get_hostlist()
-            else:
-                hostlist = None
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-                hosts=hostlist,
-            )
-        if test_launcher == "pals":
-            hostlist = get_hostlist()
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-                hosts=hostlist,
-            )
-        if test_launcher == "slurm":
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                interface=test_nic,
-                launcher=test_launcher,
-            )
-        if test_launcher == "lsf":
-            return Orchestrator(
-                db_nodes=nodes,
-                port=test_port,
-                batch=batch,
-                cpus_per_shard=4,
-                gpus_per_shard=2 if test_device == "GPU" else 0,
-                project=get_account(),
-                interface=test_nic,
-                launcher=test_launcher,
-            )
-
-        return Orchestrator(port=test_port, interface="lo")
-
-    @staticmethod
     def choose_host(rs: RunSettings) -> t.Optional[str]:
         if isinstance(rs, (MpirunSettings, MpiexecSettings)):
             hl = get_hostlist()
@@ -396,65 +449,6 @@ class WLMUtils:
         return None
 
 
-@pytest.fixture
-def local_db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
-) -> t.Generator[Orchestrator, None, None]:
-    """Yield fixture for startup and teardown of an local orchestrator"""
-
-    exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
-    db.set_path(test_dir)
-    exp.start(db)
-
-    yield db
-    # pass or fail, the teardown code below is ran after the
-    # completion of a test case that uses this fixture
-    exp.stop(db)
-
-
-@pytest.fixture
-def db(
-    request: t.Any, wlmutils: t.Type[WLMUtils], test_dir: str
-) -> t.Generator[Orchestrator, None, None]:
-    """Yield fixture for startup and teardown of an orchestrator"""
-    launcher = wlmutils.get_test_launcher()
-
-    exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-    db = wlmutils.get_orchestrator()
-    db.set_path(test_dir)
-    exp.start(db)
-
-    yield db
-    # pass or fail, the teardown code below is ran after the
-    # completion of a test case that uses this fixture
-    exp.stop(db)
-
-
-@pytest.fixture
-def db_cluster(
-    test_dir: str, wlmutils: t.Type[WLMUtils], request: t.Any
-) -> t.Generator[Orchestrator, None, None]:
-    """
-    Yield fixture for startup and teardown of a clustered orchestrator.
-    This should only be used in on_wlm and full_wlm tests.
-    """
-    launcher = wlmutils.get_test_launcher()
-
-    exp_name = request.function.__name__
-    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
-    db = wlmutils.get_orchestrator(nodes=3)
-    db.set_path(test_dir)
-    exp.start(db)
-
-    yield db
-    # pass or fail, the teardown code below is ran after the
-    # completion of a test case that uses this fixture
-    exp.stop(db)
-
-
 @pytest.fixture(scope="function", autouse=True)
 def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
     for key in os.environ.keys():
@@ -462,6 +456,14 @@ def environment_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
             monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv("SSKEYIN", raising=False)
     monkeypatch.delenv("SSKEYOUT", raising=False)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def check_output_dir() -> None:
+    global test_output_dirs
+    assert os.path.isdir(test_output_root)
+    assert len(os.listdir(test_output_root)) >= test_output_dirs
+    test_output_dirs = len(os.listdir(test_output_root))
 
 
 @pytest.fixture
@@ -653,7 +655,7 @@ class ColoUtils:
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[RunSettings] = None,
         colo_model_name: str = "colocated_model",
-        port: int = test_port,
+        port: t.Optional[int] = None,
         on_wlm: bool = False,
     ) -> Model:
         """Setup database needed for the colo pinning tests"""
@@ -669,10 +671,11 @@ class ColoUtils:
         if on_wlm:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
+
         colo_model = exp.create_model(colo_model_name, colo_settings)
 
         if db_type in ["tcp", "deprecated"]:
-            db_args["port"] = port
+            db_args["port"] = port if port is not None else _find_free_port(test_ports)
             db_args["ifname"] = "lo"
         if db_type == "uds" and colo_model_name is not None:
             tmp_dir = tempfile.gettempdir()
@@ -694,6 +697,21 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
+
+
+@pytest.fixture(scope="function")
+def global_dragon_teardown() -> None:
+    """Connect to a dragon server started at the path indicated by
+    the environment variable SMARTSIM_DRAGON_SERVER_PATH and
+    force its shutdown to bring down the runtime and allow a subsequent
+    allocation of a new runtime.
+    """
+    if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
+        return
+    logger.debug(f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}")
+    dragon_connector = DragonConnector()
+    dragon_connector.ensure_connected()
+    dragon_connector.cleanup()
 
 
 @pytest.fixture
@@ -856,3 +874,151 @@ class CountingCallable:
     @property
     def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details
+
+## Reuse database across tests
+
+database_registry: t.DefaultDict[str, t.Optional[Orchestrator]] = defaultdict(lambda: None)
+
+@pytest.fixture(scope="function")
+def local_experiment(test_dir: str) -> smartsim.Experiment:
+    """Create a default experiment that uses the requested launcher"""
+    name = pathlib.Path(test_dir).stem
+    return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
+
+@pytest.fixture(scope="function")
+def wlm_experiment(test_dir: str, wlmutils: WLMUtils) -> smartsim.Experiment:
+    """Create a default experiment that uses the requested launcher"""
+    name = pathlib.Path(test_dir).stem
+    return smartsim.Experiment(
+        name,
+        exp_path=test_dir,
+        launcher=wlmutils.get_test_launcher()
+    )
+
+def _cleanup_db(name: str) -> None:
+    global database_registry
+    db = database_registry[name]
+    if db and db.is_active():
+        exp = Experiment("cleanup")
+        try:
+            db = exp.reconnect_orchestrator(db.checkpoint_file)
+            exp.stop(db)
+        except:
+            pass
+
+@dataclass
+class DBConfiguration:
+    name: str
+    launcher: str
+    num_nodes: int
+    interface: t.Union[str,t.List[str]]
+    hostlist: t.Optional[t.List[str]]
+    port: int
+
+@dataclass
+class PrepareDatabaseOutput:
+    orchestrator: t.Optional[Orchestrator] # The actual orchestrator object
+    new_db: bool     # True if a new database was created when calling prepare_db
+
+# Reuse databases
+@pytest.fixture(scope="session")
+def local_db() -> t.Generator[DBConfiguration, None, None]:
+    name = "local_db_fixture"
+    config = DBConfiguration(
+        name,
+        "local",
+        1,
+        "lo",
+        None,
+        _find_free_port(tuple(reversed(test_ports))),
+    )
+    yield config
+    _cleanup_db(name)
+
+@pytest.fixture(scope="session")
+def single_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
+    hostlist = wlmutils.get_test_hostlist()
+    hostlist = hostlist[-1:] if hostlist is not None else None
+    name = "single_db_fixture"
+    config = DBConfiguration(
+        name,
+        wlmutils.get_test_launcher(),
+        1,
+        wlmutils.get_test_interface(),
+        hostlist,
+        _find_free_port(tuple(reversed(test_ports)))
+    )
+    yield config
+    _cleanup_db(name)
+
+
+@pytest.fixture(scope="session")
+def clustered_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
+    hostlist = wlmutils.get_test_hostlist()
+    hostlist = hostlist[-4:-1] if hostlist is not None else None
+    name = "clustered_db_fixture"
+    config = DBConfiguration(
+        name,
+        wlmutils.get_test_launcher(),
+        3,
+        wlmutils.get_test_interface(),
+        hostlist,
+        _find_free_port(tuple(reversed(test_ports))),
+    )
+    yield config
+    _cleanup_db(name)
+
+
+@pytest.fixture
+def register_new_db() -> t.Callable[[DBConfiguration], Orchestrator]:
+    def _register_new_db(
+        config: DBConfiguration
+    ) -> Orchestrator:
+        exp_path = pathlib.Path(test_output_root, config.name)
+        exp_path.mkdir(exist_ok=True)
+        exp = Experiment(
+            config.name,
+            exp_path=str(exp_path),
+            launcher=config.launcher,
+        )
+        orc = exp.create_database(
+            port=config.port,
+            batch=False,
+            interface=config.interface,
+            hosts=config.hostlist,
+            db_nodes=config.num_nodes
+        )
+        exp.generate(orc, overwrite=True)
+        exp.start(orc)
+        global database_registry
+        database_registry[config.name] = orc
+        return orc
+    return _register_new_db
+
+
+@pytest.fixture(scope="function")
+def prepare_db(
+    register_new_db: t.Callable[
+        [DBConfiguration],
+        Orchestrator
+    ]
+) -> t.Callable[
+    [DBConfiguration],
+    PrepareDatabaseOutput
+]:
+    def _prepare_db(db_config: DBConfiguration) -> PrepareDatabaseOutput:
+        global database_registry
+        db = database_registry[db_config.name]
+
+        new_db = False
+        db_up = False
+
+        if db:
+            db_up = db.is_active()
+
+        if not db_up or db is None:
+            db = register_new_db(db_config)
+            new_db = True
+
+        return PrepareDatabaseOutput(db, new_db)
+    return _prepare_db

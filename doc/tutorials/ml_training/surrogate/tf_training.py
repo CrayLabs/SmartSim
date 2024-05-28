@@ -20,7 +20,7 @@ def create_dataset(idx, F):
 
 def store_model(model, idx):
     serialized_model, inputs, outputs = serialize_model(model)
-    client = Client(None, False)
+    client = Client(address=None, cluster=False)
     client.set_model(f"{model.name}_{idx}", serialized_model, "TF", "CPU", inputs=inputs, outputs=outputs)
 
 def train_model(model, epochs):
@@ -43,7 +43,7 @@ def train_model(model, epochs):
 
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}")
-        model.fit(training_generator, steps_per_epoch=None, 
+        model.fit(training_generator, steps_per_epoch=None,
                   epochs=epoch+1, initial_epoch=epoch, batch_size=training_generator.batch_size,
                   verbose=2)
         if (epoch+1)%10 == 0:
@@ -68,11 +68,11 @@ def upload_inference_examples(model, num_examples):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Finite Difference Simulation")
-    parser.add_argument('--depth', type=int, default=4, 
+    parser.add_argument('--depth', type=int, default=4,
                         help="Half depth of residual network")
-    parser.add_argument('--epochs', type=int, default=100, 
+    parser.add_argument('--epochs', type=int, default=100,
                         help="Number of epochs to train the NN for")
-    parser.add_argument('--delay', type=int, default=0, 
+    parser.add_argument('--delay', type=int, default=0,
                         help="Seconds to wait before training")
     parser.add_argument('--size', type=int, default=100,
                         help='Size of sample side, each sample will be a (size, size, 1) image')

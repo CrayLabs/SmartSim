@@ -27,6 +27,8 @@
 import abc
 import typing as t
 
+from ..._core.launcher.stepMapping import StepMap
+from ...entity import SmartSimEntity
 from ...error import AllocationError, LauncherError, SSUnsupportedError
 from ...settings import SettingsBase
 from .step import Step
@@ -48,7 +50,7 @@ class Launcher(abc.ABC):  # pragma: no cover
     task_manager: TaskManager
 
     @abc.abstractmethod
-    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
+    def create_step(self, entity: SmartSimEntity, step_settings: SettingsBase) -> Step:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -68,6 +70,15 @@ class Launcher(abc.ABC):  # pragma: no cover
     @abc.abstractmethod
     def stop(self, step_name: str) -> StepInfo:
         raise NotImplementedError
+
+    def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
+        """Add a StepMap to the Launcher step mapping table
+        making it monitor the step.
+
+        :param name: name of step to be added
+        :param step_map: step map of added step
+        """
+        self.step_mapping[name] = step_map
 
 
 class WLMLauncher(Launcher):  # cov-wlm
@@ -89,7 +100,7 @@ class WLMLauncher(Launcher):  # cov-wlm
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
     def create_step(
-        self, name: str, cwd: str, step_settings: SettingsBase
+        self, entity: SmartSimEntity, step_settings: SettingsBase
     ) -> Step:  # cov-wlm
         """Create a WLM job step
 
@@ -107,7 +118,7 @@ class WLMLauncher(Launcher):  # cov-wlm
                 f"RunSettings type {type(step_settings)} not supported by this launcher"
             ) from None
         try:
-            return step_class(name, cwd, step_settings)
+            return step_class(entity, step_settings)
         except AllocationError as e:
             raise LauncherError("Step creation failed") from e
 

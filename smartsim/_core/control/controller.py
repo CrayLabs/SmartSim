@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import os.path as osp
 import pathlib
 import pickle
@@ -36,7 +37,6 @@ import sys
 import threading
 import time
 import typing as t
-from os import environ
 
 from smartredis import Client, ConfigOptions
 
@@ -67,7 +67,13 @@ from ...log import get_logger
 from ...servertype import CLUSTERED, STANDALONE
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
-from ..launcher import LocalLauncher, LSFLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import (
+    DragonLauncher,
+    LocalLauncher,
+    LSFLauncher,
+    PBSLauncher,
+    SlurmLauncher,
+)
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
 from .controller_utils import _AnonymousBatchJob, _look_up_launched_data
@@ -118,6 +124,10 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
+        # launch a telemetry monitor to track job progress
+        if CONFIG.telemetry_enabled:
+            self._start_telemetry_monitor(exp_path)
+
         self._jobs.kill_on_interrupt = kill_on_interrupt
 
         # register custom signal handler for ^C (SIGINT)
@@ -134,15 +144,16 @@ class Controller:
             launched.map(_look_up_launched_data(self._launcher))
         )
 
-        # launch a telemetry monitor to track job progress
-        if CONFIG.telemetry_enabled:
-            self._start_telemetry_monitor(exp_path)
-
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
             # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
+
+    @property
+    def active_orchestrator_jobs(self) -> t.Dict[str, Job]:
+        """Return active orchestrator jobs."""
+        return {**self._jobs.db_jobs}
 
     @property
     def orchestrator_active(self) -> bool:
@@ -331,6 +342,7 @@ class Controller:
             "pals": PBSLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "dragon": DragonLauncher,
         }
 
         if launcher is not None:
@@ -461,6 +473,7 @@ class Controller:
                 symlink_substeps.append((substeps[0], model))
                 steps.append((batch_step, model))
             else:
+                # create job step for a model with run settings
                 job_step = self._create_job_step(model, model_telem_dir)
                 manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
@@ -610,7 +623,7 @@ class Controller:
             self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
         else:
             logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(job_step.name, job_id, entity, is_task)
+            self._jobs.add_job(job_step, job_id, is_task)
 
     def _create_batch_job_step(
         self,
@@ -631,9 +644,7 @@ class Controller:
             )
 
         telemetry_dir = telemetry_dir / entity_list.name
-        batch_step = self._launcher.create_step(
-            entity_list.name, entity_list.path, entity_list.batch_settings
-        )
+        batch_step = self._launcher.create_step(entity, entity_list.batch_settings)
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
         batch_step.meta["status_dir"] = str(telemetry_dir)
 
@@ -660,11 +671,13 @@ class Controller:
         if isinstance(entity, Model):
             self._prep_entity_client_env(entity)
 
-        step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
+        # creating job step through the created launcher
+        step = self._launcher.create_step(entity, entity.run_settings)
 
         step.meta["entity_type"] = str(type(entity).__name__).lower()
         step.meta["status_dir"] = str(telemetry_dir / entity.name)
 
+        # return the job step that was created using the launcher since the launcher is defined in the exp
         return step
 
     def _prep_entity_client_env(self, entity: Model) -> None:
@@ -672,7 +685,6 @@ class Controller:
 
         :param entity: The entity to retrieve connections from
         """
-
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         address_dict = self._jobs.get_db_host_addresses()
 
@@ -724,7 +736,6 @@ class Controller:
                         "Colocated database was not configured for either TCP or UDS"
                     )
                 client_env[f"SR_DB_TYPE{db_name_colo}"] = STANDALONE
-
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
@@ -737,14 +748,26 @@ class Controller:
         :param orchestrator: Orchestrator configuration to be saved
         """
 
-        dat_file = "/".join((orchestrator.path, "smartsim_db.dat"))
-        db_jobs = self._jobs.db_jobs
-        orc_data = {"db": orchestrator, "db_jobs": db_jobs}
-        steps = []
-        for db_job in db_jobs.values():
-            steps.append(self._launcher.step_mapping[db_job.name])
-        orc_data["steps"] = steps
-        with open(dat_file, "wb") as pickle_file:
+        if not orchestrator.is_active():
+            raise Exception("Orchestrator is not running")
+
+        # Extract only the db_jobs associated with this particular orchestrator
+        if orchestrator.batch:
+            job_names = [orchestrator.name]
+        else:
+            job_names = [dbnode.name for dbnode in orchestrator.entities]
+        db_jobs = {
+            name: job for name, job in self._jobs.db_jobs.items() if name in job_names
+        }
+
+        # Extract the associated steps
+        steps = [
+            self._launcher.step_mapping[db_job.name] for db_job in db_jobs.values()
+        ]
+
+        orc_data = {"db": orchestrator, "db_jobs": db_jobs, "steps": steps}
+
+        with open(orchestrator.checkpoint_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
 
     def _orchestrator_launch_wait(self, orchestrator: Orchestrator) -> None:
@@ -775,8 +798,7 @@ class Controller:
                 statuses = self.get_entity_list_status(orchestrator)
                 if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
-                    # TODO remove in favor of by node status check
-                    time.sleep(CONFIG.jm_interval)
+                    # TODO: Add a node status check
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
@@ -794,14 +816,14 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
+    def reload_saved_db(
+        self, checkpoint_file: t.Union[str, os.PathLike[str]]
+    ) -> Orchestrator:
         with JM_LOCK:
-            if self.orchestrator_active:
-                raise SmartSimError("Orchestrator exists and is active")
 
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(
-                    f"The SmartSim database config file {checkpoint_file} "
+                    f"The SmartSim database config file {os.fspath(checkpoint_file)} "
                     "cannot be found."
                 )
 
@@ -837,7 +859,7 @@ class Controller:
             try:
                 for db_job, step in job_steps:
                     self._jobs.db_jobs[db_job.ename] = db_job
-                    self._launcher.step_mapping[db_job.name] = step
+                    self._launcher.add_step_to_mapping_table(db_job.name, step)
                     if step.task_id:
                         self._launcher.task_manager.add_existing(int(step.task_id))
             except LauncherError as e:
@@ -866,9 +888,9 @@ class Controller:
             if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
                 raise SSInternalError("Cannot set DB Objects, DB is not running")
 
-            environ[f"SSDB{db_name}"] = db_addresses[0]
+            os.environ[f"SSDB{db_name}"] = db_addresses[0]
 
-            environ[f"SR_DB_TYPE{db_name}"] = (
+            os.environ[f"SR_DB_TYPE{db_name}"] = (
                 CLUSTERED if len(db_addresses) > 1 else STANDALONE
             )
 
@@ -909,7 +931,6 @@ class Controller:
             self._telemetry_monitor is None
             or self._telemetry_monitor.returncode is not None
         ):
-
             logger.debug("Starting telemetry monitor process")
             cmd = [
                 sys.executable,

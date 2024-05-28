@@ -39,6 +39,8 @@ from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.info import execute as info_execute
 from smartsim._core._cli.plugin import plugins
 from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.teardown import configure_parser as teardown_parser
+from smartsim._core._cli.teardown import execute as teardown_execute
 from smartsim._core._cli.utils import MenuItemConfig
 from smartsim._core._cli.validate import configure_parser as validate_parser
 from smartsim._core._cli.validate import execute as validate_execute
@@ -106,7 +108,7 @@ def default_cli() -> SmartCli:
     menu = [
         MenuItemConfig(
             "build",
-            "Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
+            "Build SmartSim dependencies (Redis, RedisAI, Dragon, ML runtimes)",
             build_execute,
             build_parser,
         ),
@@ -141,6 +143,12 @@ def default_cli() -> SmartCli:
             "info",
             "Display information about the current SmartSim installation",
             info_execute,
+        ),
+        MenuItemConfig(
+            "teardown",
+            "Clean up allocated resources after an experiment terminates",
+            teardown_execute,
+            teardown_parser,
         ),
     ]
 

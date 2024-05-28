@@ -87,6 +87,12 @@ class SSDBIDConflictError(SmartSimError):
     """
 
 
+class SSDBFilesNotParseable(SmartSimError):
+    """Raised when the files related to the database cannot be parsed.
+    Includes the case when the files do not exist.
+    """
+
+
 # Internal Exceptions
 
 
@@ -149,3 +155,7 @@ class UnproxyableStepError(TelemetryError):
 
 class SmartSimCLIActionCancelled(SmartSimError):
     """Raised when a `smart` CLI command is terminated"""
+
+
+class PreviewFormatError(SSUnsupportedError):
+    """Raised when the output format of the preview method call is not supported"""

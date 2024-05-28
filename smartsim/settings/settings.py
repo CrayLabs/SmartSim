@@ -32,6 +32,7 @@ from ..settings import (
     AprunSettings,
     BsubBatchSettings,
     Container,
+    DragonRunSettings,
     JsrunSettings,
     MpiexecSettings,
     MpirunSettings,
@@ -76,10 +77,13 @@ def create_batch_settings(
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
         "lsf": BsubBatchSettings,
+        "pals": QsubBatchSettings,
     }
 
-    if launcher == "auto":
+    if launcher in ["auto", "dragon"]:
         launcher = detect_launcher()
+        if launcher == "dragon":
+            by_launcher["dragon"] = by_launcher[launcher]
 
     if launcher == "local":
         raise SmartSimError("Local launcher does not support batch workloads")
@@ -106,8 +110,6 @@ def create_batch_settings(
 
 def create_run_settings(
     launcher: str,
-    exe: str,
-    exe_args: t.Optional[t.List[str]] = None,
     run_command: str = "auto",
     run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
     env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -121,8 +123,6 @@ def create_run_settings(
     :param launcher: launcher to create settings for, if set to 'auto',
                      an attempt will be made to find an available launcher on the system
     :param run_command: command to run the executable
-    :param exe: executable to run
-    :param exe_args: arguments to pass to the executable
     :param run_args: arguments to pass to the ``run_command``
     :param env_vars: environment variables to pass to the executable
     :param container: container type for workload (e.g. "singularity")
@@ -144,6 +144,7 @@ def create_run_settings(
     # run commands supported by each launcher
     # in order of suspected user preference
     by_launcher = {
+        "dragon": [""],
         "slurm": ["srun", "mpirun", "mpiexec"],
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "pals": ["mpiexec"],
@@ -156,7 +157,7 @@ def create_run_settings(
 
     def _detect_command(launcher: str) -> str:
         if launcher in by_launcher:
-            if launcher == "local":
+            if launcher in ["local", "dragon"]:
                 return ""
 
             for cmd in by_launcher[launcher]:
@@ -178,15 +179,18 @@ def create_run_settings(
         # no auto detection for local, revert to false
         run_command = _detect_command(launcher)
 
+    if launcher == "dragon":
+        return DragonRunSettings(
+            exe=exe, exe_args=exe_args, env_vars=env_vars, container=container, **kwargs
+        )
+
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
         return supported[run_command](launcher)(
-            exe, exe_args, run_args, env_vars, container=container, **kwargs
+            run_args, env_vars, container=container, **kwargs
         )
 
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None
     # 3) local launcher being used and default of "auto" was passed.
-    return RunSettings(
-        exe, exe_args, run_command, run_args, env_vars, container=container
-    )
+    return RunSettings(run_command, run_args, env_vars, container=container)

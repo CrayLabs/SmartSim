@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import copy
 import itertools
 import re
 import sys
@@ -35,7 +36,7 @@ from os import getcwd
 from os import path as osp
 
 from .._core._install.builder import Device
-from .._core.utils.helpers import cat_arg_and_value
+from .._core.utils.helpers import cat_arg_and_value, expand_exe_path
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
@@ -50,8 +51,10 @@ class Model(SmartSimEntity):
     def __init__(
         self,
         name: str,
-        params: t.Dict[str, str],
+        exe: str,
         run_settings: RunSettings,
+        params: t.Optional[t.Dict[str, str]] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
@@ -59,6 +62,8 @@ class Model(SmartSimEntity):
         """Initialize a ``Model``
 
         :param name: name of the model
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param params: model parameters for writing into configuration files or
                        to be passed as command line arguments to executable.
         :param path: path to output, error, and configuration files
@@ -70,6 +75,8 @@ class Model(SmartSimEntity):
                                model as a batch job
         """
         super().__init__(name, str(path), run_settings)
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
@@ -78,6 +85,22 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
+
+    @property
+    def exe_args(self) -> t.Union[str, t.List[str]]:
+        """Return an immutable list of attached executable arguments.
+
+        :returns: attached executable arguments
+        """
+        return self._exe_args
+
+    @exe_args.setter
+    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
+        """Set the executable arguments.
+
+        :param value: executable arguments
+        """
+        self._exe_args = self._build_exe_args(value)
 
     @property
     def db_models(self) -> t.Iterable[DBModel]:
@@ -101,7 +124,18 @@ class Model(SmartSimEntity):
 
         :return: Return True of the Model will run with a colocated Orchestrator
         """
-        return bool(self.run_settings.colocated_db_settings)
+        if self.run_settings is None:
+            return False
+        else:
+            return bool(self.run_settings.colocated_db_settings)
+
+    def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
+        """Add executable arguments to executable
+
+        :param args: executable arguments
+        """
+        args = self._build_exe_args(args)
+        self._exe_args.extend(args)
 
     def register_incoming_entity(self, incoming_entity: SmartSimEntity) -> None:
         """Register future communication between entities.
@@ -462,9 +496,7 @@ class Model(SmartSimEntity):
                         "Tried to configure command line parameter for Model "
                         f"{self.name}, but no RunSettings are set."
                     )
-                self.run_settings.add_exe_args(
-                    cat_arg_and_value(param, self.params[param])
-                )
+                self.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def add_ml_model(
         self,
@@ -678,3 +710,26 @@ class Model(SmartSimEntity):
                         "file and add it to the SmartSim Model with add_script."
                     )
                     raise SSUnsupportedError(err_msg)
+
+    @staticmethod
+    def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
+        """Check and convert exe_args input to a desired collection format"""
+        if not exe_args:
+            return []
+
+        if isinstance(exe_args, list):
+            exe_args = copy.deepcopy(exe_args)
+
+        if not (
+            isinstance(exe_args, str)
+            or (
+                isinstance(exe_args, list)
+                and all(isinstance(arg, str) for arg in exe_args)
+            )
+        ):
+            raise TypeError("Executable arguments were not a list of str or a str.")
+
+        if isinstance(exe_args, str):
+            return exe_args.split()
+
+        return exe_args

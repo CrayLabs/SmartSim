@@ -101,8 +101,6 @@ class SmartSimEntity:
 
         :param name: Name of the entity
         :param path: path to output, error, and configuration files
-        :param run_settings: Launcher settings specified in the experiment
-                             entity
         """
         self.name = name
         self.run_settings = run_settings

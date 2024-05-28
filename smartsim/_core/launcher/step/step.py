@@ -37,6 +37,7 @@ from os import makedirs
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
+from ....entity import DBNode, Ensemble, Model
 from ....log import get_logger
 from ....settings.base import RunSettings, SettingsBase
 from ...utils.helpers import encode_cmd, get_base_36_repr
@@ -46,10 +47,13 @@ logger = get_logger(__name__)
 
 
 class Step:
-    def __init__(self, name: str, cwd: str, step_settings: SettingsBase) -> None:
-        self.name = self._create_unique_name(name)
-        self.entity_name = name
-        self.cwd = cwd
+    def __init__(
+        self, entity: t.Union[Model, DBNode], step_settings: SettingsBase
+    ) -> None:
+        self.name = self._create_unique_name(entity.name)
+        self.entity = entity
+        self.entity_name = entity.name
+        self.cwd = entity.path
         self.managed = False
         self.step_settings = step_settings
         self.meta: t.Dict[str, str] = {}
@@ -153,13 +157,15 @@ def proxyable_launch_cmd(
 
         if self.managed:
             raise UnproxyableStepError(
-                f"Attempting to proxy managed step of type {type(self)}"
+                f"Attempting to proxy managed step of type {type(self)} "
                 "through the unmanaged step proxy entry point"
             )
 
         proxy_module = "smartsim._core.entrypoints.indirect"
         entity_type = self.meta["entity_type"]
         status_dir = self.meta["status_dir"]
+
+        logger.debug(f"Encoding command{' '.join(original_cmd_list)}")
 
         # encode the original cmd to avoid potential collisions and escaping
         # errors when passing it using CLI arguments to the indirect entrypoint
