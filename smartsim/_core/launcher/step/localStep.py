@@ -28,14 +28,14 @@ import os
 import shutil
 import typing as t
 
-from ....entity import DBNode, Model
+from ....entity import DBNode, Application
 from ....settings import Singularity
 from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd
 
 
 class LocalStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: RunSettings):
+    def __init__(self, entity: t.Union[Application, DBNode], run_settings: RunSettings):
         super().__init__(entity, run_settings)
         self.run_settings = entity.run_settings
         self._env = self._set_env()
