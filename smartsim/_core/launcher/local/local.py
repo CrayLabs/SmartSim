@@ -26,13 +26,13 @@
 
 import typing as t
 
+from ....entity import SmartSimEntity
 from ....settings import RunSettings, SettingsBase
 from ..launcher import Launcher
 from ..step import LocalStep, Step
 from ..stepInfo import StepInfo, UnmanagedStepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
-from ....entity import SmartSimEntity
 
 
 class LocalLauncher(Launcher):

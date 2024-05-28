@@ -1,12 +1,27 @@
-from smartsim.settings import RunSettings, SrunSettings, PalsMpiexecSettings, MpirunSettings, MpiexecSettings, OrterunSettings, JsrunSettings, AprunSettings, BsubBatchSettings, QsubBatchSettings, SbatchSettings
-import os
-from shutil import which
-import pytest
 import itertools
+import os
 import os.path as osp
+from shutil import which
+
+import pytest
+
+from smartsim.settings import (
+    AprunSettings,
+    BsubBatchSettings,
+    JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    PalsMpiexecSettings,
+    QsubBatchSettings,
+    RunSettings,
+    SbatchSettings,
+    SrunSettings,
+)
 
 env_vars = {"k1": "v1", "k2": "v2"}
 run_args = {"envlist": "SPAM"}
+
 
 # Test that mpi RunSetting classes create without error
 @pytest.mark.parametrize(
@@ -23,16 +38,17 @@ run_args = {"envlist": "SPAM"}
             env_vars,
             run_args,
             id=f"orterun",
-        )
-    ]
+        ),
+    ],
 )
-def test_mpi_instantiate_run_settings(
-    settings_type, env_vars, run_args
-):
-    settings = settings_type(run_args=run_args, env_vars=env_vars, fail_if_missing_exec=False)
+def test_mpi_instantiate_run_settings(settings_type, env_vars, run_args):
+    settings = settings_type(
+        run_args=run_args, env_vars=env_vars, fail_if_missing_exec=False
+    )
     assert settings.env_vars == env_vars
     assert settings.run_args == run_args
     assert isinstance(settings, settings_type)
+
 
 # Test that RunSetting classes create without error
 @pytest.mark.parametrize(
@@ -67,20 +83,20 @@ def test_mpi_instantiate_run_settings(
             env_vars,
             run_args,
             id="aprun",
-        )
-    ]
+        ),
+    ],
 )
-def test_instantiate_run_settings(
-    settings_type, env_vars, run_args
-):
+def test_instantiate_run_settings(settings_type, env_vars, run_args):
     settings = settings_type(run_args=run_args, env_vars=env_vars)
     assert settings.env_vars == env_vars
     assert settings.run_args == run_args
     assert isinstance(settings, settings_type)
 
+
 nodes = 4
 time = "10:00:00"
 account = "1234"
+
 
 # Test that BatchSettings classes create without error
 # This currently does not work, need to unify how we treat each settings class
@@ -110,12 +126,10 @@ account = "1234"
             time,
             account,
             id="sbatch",
-        )
-    ]
+        ),
+    ],
 )
-def test_instantiate_batch_settings(
-    settings_type, nodes, node_flag, time, account
-):
+def test_instantiate_batch_settings(settings_type, nodes, node_flag, time, account):
     batch_settings = settings_type(nodes=nodes, time=time, account=account)
     assert batch_settings.resources[node_flag] == nodes
     assert batch_settings.batch_args["time"] == time

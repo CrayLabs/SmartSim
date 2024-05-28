@@ -193,6 +193,4 @@ def create_run_settings(
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None
     # 3) local launcher being used and default of "auto" was passed.
-    return RunSettings(
-        run_command, run_args, env_vars, container=container
-    )
+    return RunSettings(run_command, run_args, env_vars, container=container)
