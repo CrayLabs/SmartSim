@@ -29,18 +29,20 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
+from ....entity import DBNode, Model
 from ....error import AllocationError, SmartSimError
 from ....log import get_logger
 from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
 from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd
-from ....entity import Model, DBNode
 
 logger = get_logger(__name__)
 
 
 class _BaseMPIStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: RunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: RunSettings
+    ) -> None:
         """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
@@ -153,7 +155,9 @@ class _BaseMPIStep(Step):
 
 
 class MpiexecStep(_BaseMPIStep):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: MpiexecSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: MpiexecSettings
+    ) -> None:
         """Initialize an mpiexec job step
 
         :param name: name of the entity to be launched
@@ -167,7 +171,9 @@ class MpiexecStep(_BaseMPIStep):
 
 
 class MpirunStep(_BaseMPIStep):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: MpirunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: MpirunSettings
+    ) -> None:
         """Initialize an mpirun job step
 
         :param name: name of the entity to be launched
@@ -181,7 +187,9 @@ class MpirunStep(_BaseMPIStep):
 
 
 class OrterunStep(_BaseMPIStep):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: OrterunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: OrterunSettings
+    ) -> None:
         """Initialize an orterun job step
 
         :param name: name of the entity to be launched

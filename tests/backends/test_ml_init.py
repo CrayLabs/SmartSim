@@ -24,48 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[metadata]
-name = smartsim
-description = AI Workflows for Science
-long_description = file: README.md
-long_description_content_type=text/markdown
+import tempfile
 
-url = https://github.com/CrayLabs/SmartSim
-project_urls =
-    Source = https://github.com/CrayLabs/SmartSim
-    Documentation = https://www.craylabs.org
+import pytest
 
-author = CrayLabs, a Hewlett Packard Enterprise OSS Organization
-author_email = craylabs@hpe.com
-contact = CrayLabs, a Hewlett Packard Enterprise OSS Organization
-contact_email = craylabs@hpe.com
-license = BSD 2-Clause License
-keywords = scientific, ai, workflow, hpc, analysis
-classifiers =
-    Programming Language :: Python :: 3.9
-    Programming Language :: Python :: 3.10
-    Programming Language :: Python :: 3.11
-    License :: OSI Approved :: BSD License
-    Intended Audience :: Science/Research
-    Topic :: Scientific/Engineering
+pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
-[options]
-packages = find:
-include_package_data = True
-python_requires = >=3.9,<3.12
 
-[options.packages.find]
-include =
-    smartsim*
-exclude =
-    .third-party
-    .dragon
-    tests
-    doc
-    smartredis
+def test_import_ss_ml(monkeypatch):
+    with tempfile.TemporaryDirectory() as empty_dir:
+        # Move to an empty directory so `smartsim` dir is not in cwd
+        monkeypatch.chdir(empty_dir)
 
-[options.package_data]
-smartsim =
-    py.typed
-smartsim._core.bin =
-    *
+        # Make sure SmartSim ML modules are importable
+        import smartsim.ml
+        import smartsim.ml.tf
+        import smartsim.ml.torch

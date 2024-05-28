@@ -28,18 +28,20 @@ import os
 import shutil
 import typing as t
 
+from ....entity import DBNode, Model
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import BsubBatchSettings, JsrunSettings
 from ....settings.base import RunSettings
 from .step import Step
-from ....entity import Model, DBNode
 
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], batch_settings: BsubBatchSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], batch_settings: BsubBatchSettings
+    ) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
