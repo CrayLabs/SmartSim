@@ -9,6 +9,28 @@ Jump to:
 
 ## SmartSim
 
+### Development branch
+
+To be released at some future point in time
+
+Description
+
+- Improve support for building SmartSim without ML backends
+- Update packaging dependency
+
+Detailed Notes
+
+- Fix an error that would prevent ``smart build`` from moving a successfully
+  compiled RedisAI shared object to the install location expected by SmartSim
+  if no ML backend installations were found. Previously, this would effectively
+  require users to build and install an ML backend to use the SmartSim
+  orchestrator even if it was not necessary for their workflow. Users can
+  install SmartSim without ML backends by running
+  ``smart build --no_tf --no_pt`` and the RedisAI shared object will now be
+  placed in the expected location.
+  ([SmartSim-PR601](https://github.com/CrayLabs/SmartSim/pull/601))
+- Fix packaging failures due to deprecated `pkg_resources`. ([SmartSim-PR598](https://github.com/CrayLabs/SmartSim/pull/598))
+
 ### 0.7.0
 
 Released on 14 May, 2024
