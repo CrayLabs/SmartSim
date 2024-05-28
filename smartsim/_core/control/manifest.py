@@ -257,9 +257,11 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     launcher_name: str
     run_id: str = field(default_factory=_helpers.create_short_id_str)
 
-    _applications: t.List[t.Tuple[Application, _T]] = field(default_factory=list, init=False)
-    _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]]] = field(
+    _applications: t.List[t.Tuple[Application, _T]] = field(
         default_factory=list, init=False
+    )
+    _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]]] = (
+        field(default_factory=list, init=False)
     )
     _databases: t.List[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]] = (
         field(default_factory=list, init=False)

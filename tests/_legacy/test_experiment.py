@@ -140,7 +140,9 @@ def test_bad_ensemble_init_no_rs_bs(test_dir: str) -> None:
 def test_stop_entity(test_dir: str) -> None:
     exp_name = "test_stop_entity"
     exp = Experiment(exp_name, exp_path=test_dir)
-    m = exp.create_application("application", path=test_dir, run_settings=RunSettings("sleep", "5"))
+    m = exp.create_application(
+        "application", path=test_dir, run_settings=RunSettings("sleep", "5")
+    )
     exp.start(m, block=False)
     assert exp.finished(m) == False
     exp.stop(m)

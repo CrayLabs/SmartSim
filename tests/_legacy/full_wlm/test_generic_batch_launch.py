@@ -64,7 +64,10 @@ def test_batch_application(fileutils, test_dir, wlmutils):
     add_batch_resources(wlmutils, batch_settings)
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
     application = exp.create_application(
-        "application", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
+        "application",
+        path=test_dir,
+        run_settings=run_settings,
+        batch_settings=batch_settings,
     )
 
     exp.generate(application)

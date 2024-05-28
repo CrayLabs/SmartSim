@@ -675,7 +675,9 @@ def test_telemetry_single_application_nonblocking(
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert (
+            exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+        )
 
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -684,7 +686,9 @@ def test_telemetry_single_application_nonblocking(
         assert len(stop_events) == 1
 
 
-def test_telemetry_serial_applications(fileutils, test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_serial_applications(
+    fileutils, test_dir, wlmutils, monkeypatch, config
+):
     """
     Test telemetry with applications being run in serial (one after each other)
     """
@@ -862,7 +866,9 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_and_application(fileutils, test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_db_and_application(
+    fileutils, test_dir, wlmutils, monkeypatch, config
+):
     """
     Test telemetry with only a database and a application running
     """
@@ -904,7 +910,9 @@ def test_telemetry_db_and_application(fileutils, test_dir, wlmutils, monkeypatch
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
         assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
-        assert exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert (
+            exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+        )
 
         start_events = list(telemetry_output_path.rglob("database/**/start.json"))
         stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))

@@ -53,7 +53,11 @@ ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
 orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 application = Application("test_application", params={}, path="", run_settings=rs)
 batch_application = Application(
-    "batch_test_application", params={}, path="", run_settings=batch_rs, batch_settings=bs
+    "batch_test_application",
+    params={},
+    path="",
+    run_settings=batch_rs,
+    batch_settings=bs,
 )
 anon_batch_application = _AnonymousBatchJob(batch_application)
 
@@ -62,35 +66,53 @@ def test_mutated_application_output(test_dir):
     exp_name = "test-mutated-application-output"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    test_application = exp.create_application("test_application", path=test_dir, run_settings=rs)
+    test_application = exp.create_application(
+        "test_application", path=test_dir, run_settings=rs
+    )
     exp.generate(test_application)
     exp.start(test_application, block=True)
 
     assert pathlib.Path(test_application.path).exists()
-    assert pathlib.Path(test_application.path, f"{test_application.name}.out").is_symlink()
-    assert pathlib.Path(test_application.path, f"{test_application.name}.err").is_symlink()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.out"
+    ).is_symlink()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.err"
+    ).is_symlink()
 
-    with open(pathlib.Path(test_application.path, f"{test_application.name}.out"), "r") as file:
+    with open(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), "r"
+    ) as file:
         log_contents = file.read()
 
     assert "spam eggs" in log_contents
 
-    first_link = os.readlink(pathlib.Path(test_application.path, f"{test_application.name}.out"))
+    first_link = os.readlink(
+        pathlib.Path(test_application.path, f"{test_application.name}.out")
+    )
 
     test_application.run_settings.exe_args = ["hello", "world"]
     exp.generate(test_application, overwrite=True)
     exp.start(test_application, block=True)
 
     assert pathlib.Path(test_application.path).exists()
-    assert pathlib.Path(test_application.path, f"{test_application.name}.out").is_symlink()
-    assert pathlib.Path(test_application.path, f"{test_application.name}.err").is_symlink()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.out"
+    ).is_symlink()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.err"
+    ).is_symlink()
 
-    with open(pathlib.Path(test_application.path, f"{test_application.name}.out"), "r") as file:
+    with open(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), "r"
+    ) as file:
         log_contents = file.read()
 
     assert "hello world" in log_contents
 
-    second_link = os.readlink(pathlib.Path(test_application.path, f"{test_application.name}.out"))
+    second_link = os.readlink(
+        pathlib.Path(test_application.path, f"{test_application.name}.out")
+    )
 
     with open(first_link, "r") as file:
         first_historical_log = file.read()

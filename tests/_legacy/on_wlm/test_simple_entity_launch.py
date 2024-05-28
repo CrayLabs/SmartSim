@@ -125,7 +125,9 @@ def test_summary(fileutils, test_dir, wlmutils):
     bad_settings = exp.create_run_settings("python", f"{bad} --time=6")
     bad_settings.set_tasks(1)
 
-    sleep_exp = exp.create_application("sleep", path=test_dir, run_settings=sleep_settings)
+    sleep_exp = exp.create_application(
+        "sleep", path=test_dir, run_settings=sleep_settings
+    )
     bad = exp.create_application("bad", path=test_dir, run_settings=bad_settings)
 
     # start and poll

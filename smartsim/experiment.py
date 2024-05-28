@@ -950,7 +950,9 @@ class Experiment:
         logger.info(summary)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(entity: t.Union[Orchestrator, Application, Ensemble]) -> None:
+        def create_entity_dir(
+            entity: t.Union[Orchestrator, Application, Ensemble]
+        ) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 

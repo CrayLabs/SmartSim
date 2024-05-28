@@ -82,7 +82,9 @@ def test_attach_batch_settings_to_application():
     application_wo_bs = exp.create_application("test_application", run_settings=rs)
     assert application_wo_bs.batch_settings is None
 
-    application_w_bs = exp.create_application("test_application_2", run_settings=rs, batch_settings=bs)
+    application_w_bs = exp.create_application(
+        "test_application_2", run_settings=rs, batch_settings=bs
+    )
     assert isinstance(application_w_bs.batch_settings, SbatchSettings)
 
 
@@ -122,7 +124,9 @@ def test_application_with_batch_settings_makes_batch_step(
     exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     bs = SbatchSettings()
     rs = SrunSettings("python", exe_args="sleep.py")
-    application = exp.create_application("test_application", run_settings=rs, batch_settings=bs)
+    application = exp.create_application(
+        "test_application", run_settings=rs, batch_settings=bs
+    )
 
     entity_steps = monkeypatch_exp_controller(exp)
     exp.start(application)
@@ -158,7 +162,9 @@ def test_applications_batch_settings_are_ignored_in_ensemble(
     exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     bs_1 = SbatchSettings(nodes=5)
     rs = SrunSettings("python", exe_args="sleep.py")
-    application = exp.create_application("test_application", run_settings=rs, batch_settings=bs_1)
+    application = exp.create_application(
+        "test_application", run_settings=rs, batch_settings=bs_1
+    )
 
     bs_2 = SbatchSettings(nodes=10)
     ens = exp.create_ensemble("test_ensemble", batch_settings=bs_2)
@@ -174,5 +180,7 @@ def test_applications_batch_settings_are_ignored_in_ensemble(
     assert step.batch_settings.batch_args["nodes"] == "10"
     assert len(step.step_cmds) == 1
     step_cmd = step.step_cmds[0]
-    assert any("srun" in tok for tok in step_cmd)  # call the application using run settings
+    assert any(
+        "srun" in tok for tok in step_cmd
+    )  # call the application using run settings
     assert not any("sbatch" in tok for tok in step_cmd)  # no sbatch in sbatch

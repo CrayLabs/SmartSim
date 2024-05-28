@@ -52,7 +52,9 @@ def test_launch_colocated_application_defaults(fileutils, test_dir, coloutils, d
 
     db_args = {"debug": DEBUG_DB}
 
-    exp = Experiment("colocated_application_defaults", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher=launcher, exp_path=test_dir
+    )
     colo_application = coloutils.setup_test_colo(
         fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
     )
@@ -97,7 +99,9 @@ def test_colocated_application_disable_pinning(fileutils, test_dir, coloutils, d
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_application_pinning_auto_2cpu(fileutils, test_dir, coloutils, db_type):
+def test_colocated_application_pinning_auto_2cpu(
+    fileutils, test_dir, coloutils, db_type
+):
     exp = Experiment(
         "colocated_application_pinning_auto_2cpu",
         launcher=launcher,
@@ -110,7 +114,9 @@ def test_colocated_application_pinning_auto_2cpu(fileutils, test_dir, coloutils,
     colo_application = coloutils.setup_test_colo(
         fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    assert (
+        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
@@ -135,7 +141,10 @@ def test_colocated_application_pinning_range(fileutils, test_dir, coloutils, db_
     colo_application = coloutils.setup_test_colo(
         fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1,2,3"
+    assert (
+        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        == "0,1,2,3"
+    )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
@@ -160,7 +169,9 @@ def test_colocated_application_pinning_list(fileutils, test_dir, coloutils, db_t
     colo_application = coloutils.setup_test_colo(
         fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,2"
+    assert (
+        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,2"
+    )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
@@ -185,7 +196,9 @@ def test_colocated_application_pinning_mixed(fileutils, test_dir, coloutils, db_
     colo_application = coloutils.setup_test_colo(
         fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1,3"
+    assert (
+        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1,3"
+    )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)

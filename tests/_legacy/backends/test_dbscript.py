@@ -74,7 +74,9 @@ def test_db_script(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
     run_settings.set_tasks(1)
 
     # Create the SmartSim Application
-    smartsim_application = wlm_experiment.create_application("smartsim_application", run_settings)
+    smartsim_application = wlm_experiment.create_application(
+        "smartsim_application", run_settings
+    )
 
     # Create the SmartSim database
     db = prepare_db(single_db).orchestrator
@@ -150,7 +152,9 @@ def test_db_script_ensemble(wlm_experiment, prepare_db, single_db, fileutils, ml
     )
 
     # Create SmartSim application
-    smartsim_application = wlm_experiment.create_application("smartsim_application", run_settings)
+    smartsim_application = wlm_experiment.create_application(
+        "smartsim_application", run_settings
+    )
 
     # Create the script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -639,7 +643,9 @@ def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
     # Create SmartSim application
     smartsim_application = exp.create_application("smartsim_application", run_settings)
     # Create 2nd SmartSim application
-    smartsim_application_2 = exp.create_application("smartsim_application_2", run_settings)
+    smartsim_application_2 = exp.create_application(
+        "smartsim_application_2", run_settings
+    )
     # Create the script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
 

@@ -50,9 +50,15 @@ def test_batch_application_and_ensemble(test_dir, wlmutils):
     exp.start(test_application, block=True)
 
     assert pathlib.Path(test_application.path).exists()
-    _should_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.out"), True)
-    _should_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.err"), False)
-    _should_not_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.sh"))
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), True
+    )
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.err"), False
+    )
+    _should_not_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.sh")
+    )
 
     test_ensemble = exp.create_ensemble(
         "test_ensemble", params={}, batch_settings=bs, run_settings=rs, replicas=3
@@ -129,9 +135,15 @@ def test_batch_application_symlinks(test_dir, wlmutils):
 
     assert pathlib.Path(test_application.path).exists()
 
-    _should_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.out"), True)
-    _should_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.err"), False)
-    _should_not_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.sh"))
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), True
+    )
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.err"), False
+    )
+    _should_not_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.sh")
+    )
 
 
 def test_batch_orchestrator_symlinks(test_dir, wlmutils):

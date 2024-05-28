@@ -241,7 +241,9 @@ class Ensemble(EntityList[Application]):
 
         :returns: True if all applications have key prefixing enabled, False otherwise
         """
-        return all(application.query_key_prefixing() for application in self.applications)
+        return all(
+            application.query_key_prefixing() for application in self.applications
+        )
 
     def attach_generator_files(
         self,
@@ -285,7 +287,10 @@ class Ensemble(EntityList[Application]):
             return "The ensemble is empty, no files to show."
 
         table = tabulate(
-            [[application.name, application.attached_files_table] for application in self.applications],
+            [
+                [application.name, application.attached_files_table]
+                for application in self.applications
+            ],
             headers=["Application name", "Files"],
             tablefmt="grid",
         )
@@ -527,7 +532,9 @@ class Ensemble(EntityList[Application]):
             self._extend_entity_db_scripts(entity, [db_script])
 
     @staticmethod
-    def _extend_entity_db_models(application: Application, db_models: t.List[DBModel]) -> None:
+    def _extend_entity_db_models(
+        application: Application, db_models: t.List[DBModel]
+    ) -> None:
         """
         Ensures that the Machine Learning model names being added to the Ensemble
         are unique.
@@ -555,7 +562,9 @@ class Ensemble(EntityList[Application]):
             application.add_ml_model_object(add_ml_model)
 
     @staticmethod
-    def _extend_entity_db_scripts(application: Application, db_scripts: t.List[DBScript]) -> None:
+    def _extend_entity_db_scripts(
+        application: Application, db_scripts: t.List[DBScript]
+    ) -> None:
         """
         Ensures that the script/function names being added to the Ensemble are unique.
 

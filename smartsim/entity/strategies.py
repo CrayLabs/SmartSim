@@ -33,7 +33,9 @@ from itertools import product
 # create permutations of all parameters
 # single application if parameters only have one value
 def create_all_permutations(
-    param_names: t.List[str], param_values: t.List[t.List[str]], _n_applications: int = 0
+    param_names: t.List[str],
+    param_values: t.List[t.List[str]],
+    _n_applications: int = 0,
 ) -> t.List[t.Dict[str, str]]:
     perms = list(product(*param_values))
     all_permutations = []
@@ -44,7 +46,9 @@ def create_all_permutations(
 
 
 def step_values(
-    param_names: t.List[str], param_values: t.List[t.List[str]], _n_applications: int = 0
+    param_names: t.List[str],
+    param_values: t.List[t.List[str]],
+    _n_applications: int = 0,
 ) -> t.List[t.Dict[str, str]]:
     permutations = []
     for param_value in zip(*param_values):

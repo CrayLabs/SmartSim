@@ -54,7 +54,7 @@ pytestmark = pytest.mark.group_b
 rs = RunSettings("python", "sleep.py")
 
 exp = Experiment("util-test", launcher="local")
-application= exp.create_application("application_1", run_settings=rs)
+application = exp.create_application("application_1", run_settings=rs)
 application_2 = exp.create_application("application_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 
@@ -109,9 +109,13 @@ def test_corner_case():
     "patch, has_db_objects",
     [
         pytest.param((), False, id="No DB Objects"),
-        pytest.param((application, "_db_models", [db_model]), True, id="Application w/ DB Model"),
         pytest.param(
-            (application, "_db_scripts", [db_script]), True, id="Application w/ DB Script"
+            (application, "_db_models", [db_model]), True, id="Application w/ DB Model"
+        ),
+        pytest.param(
+            (application, "_db_scripts", [db_script]),
+            True,
+            id="Application w/ DB Script",
         ),
         pytest.param(
             (ensemble, "_db_models", [db_model]), True, id="Ensemble w/ DB Model"

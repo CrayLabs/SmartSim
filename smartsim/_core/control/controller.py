@@ -224,7 +224,12 @@ class Controller:
             if job.status not in TERMINAL_STATUSES:
                 logger.info(
                     " ".join(
-                        ("Stopping application", entity.name, "with job name", str(job.name))
+                        (
+                            "Stopping application",
+                            entity.name,
+                            "with job name",
+                            str(job.name),
+                        )
                     )
                 )
                 status = self._launcher.stop(job.name)
@@ -462,13 +467,17 @@ class Controller:
         # applications themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
         for application in manifest.applications:
-            application_telem_dir = manifest_builder.run_telemetry_subdirectory / "application"
+            application_telem_dir = (
+                manifest_builder.run_telemetry_subdirectory / "application"
+            )
             if application.batch_settings:
                 anon_entity_list = _AnonymousBatchJob(application)
                 batch_step, substeps = self._create_batch_job_step(
                     anon_entity_list, application_telem_dir
                 )
-                manifest_builder.add_application(application, (batch_step.name, batch_step))
+                manifest_builder.add_application(
+                    application, (batch_step.name, batch_step)
+                )
 
                 symlink_substeps.append((substeps[0], application))
                 steps.append((batch_step, application))

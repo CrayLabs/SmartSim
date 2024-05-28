@@ -283,4 +283,6 @@ def test_jsrun_prep_rs_per_host(
     )
 
     # NOTE: _prep_colocated_db sets this to a string & not an integer
-    assert str(colo_application.run_settings.run_args[exp_run_arg_key]) == str(exp_value)
+    assert str(colo_application.run_settings.run_args[exp_run_arg_key]) == str(
+        exp_value
+    )

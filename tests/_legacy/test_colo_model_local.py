@@ -50,7 +50,9 @@ def test_macosx_warning(fileutils, test_dir, coloutils):
     db_args = {"custom_pinning": [1]}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_application_defaults", launcher="local", exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher="local", exp_path=test_dir
+    )
     with pytest.warns(
         RuntimeWarning,
         match="CPU pinning is not supported on MacOSX. Ignoring pinning specification.",
@@ -68,7 +70,9 @@ def test_unsupported_limit_app(fileutils, test_dir, coloutils):
     db_args = {"limit_app_cpus": True}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_application_defaults", launcher="local", exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher="local", exp_path=test_dir
+    )
     with pytest.raises(SSUnsupportedError):
         coloutils.setup_test_colo(
             fileutils,
@@ -85,7 +89,9 @@ def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinni
     db_type = "uds"  # Test is insensitive to choice of db
     db_args = {"custom_pinning": custom_pinning}
 
-    exp = Experiment("colocated_application_defaults", launcher="local", exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher="local", exp_path=test_dir
+    )
     with pytest.raises(TypeError):
         coloutils.setup_test_colo(
             fileutils,
@@ -121,7 +127,9 @@ def test_launch_colocated_application_defaults(
 
     db_args = {}
 
-    exp = Experiment("colocated_application_defaults", launcher=launcher, exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher=launcher, exp_path=test_dir
+    )
     colo_application = coloutils.setup_test_colo(
         fileutils,
         db_type,
@@ -135,7 +143,8 @@ def test_launch_colocated_application_defaults(
     else:
         true_pinning = "0"
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
+        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        == true_pinning
     )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
@@ -241,7 +250,8 @@ def test_colocated_application_pinning_auto_2cpu(
     else:
         true_pinning = "0,1"
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
+        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        == true_pinning
     )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
@@ -269,7 +279,9 @@ def test_colocated_application_pinning_range(
         "send_data_local_smartredis.py",
         db_args,
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    assert (
+        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)

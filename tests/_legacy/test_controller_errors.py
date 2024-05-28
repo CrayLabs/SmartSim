@@ -42,9 +42,13 @@ pytestmark = pytest.mark.group_a
 
 entity_settings = SrunSettings("echo", ["spam", "eggs"])
 application_dup_setting = RunSettings("echo", ["spam_1", "eggs_2"])
-application = Application("application_name", run_settings=entity_settings, params={}, path="")
+application = Application(
+    "application_name", run_settings=entity_settings, params={}, path=""
+)
 # Application entity slightly different but with same name
-application_2 = Application("application_name", run_settings=application_dup_setting, params={}, path="")
+application_2 = Application(
+    "application_name", run_settings=application_dup_setting, params={}, path=""
+)
 ens = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=2)
 # Ensemble entity slightly different but with same name
 ens_2 = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=3)
@@ -156,7 +160,10 @@ def test_duplicate_running_entity(test_dir, wlmutils, entity):
 
 @pytest.mark.parametrize(
     "entity",
-    [pytest.param(ens, id="Ensemble_running"), pytest.param(application, id="Application_running")],
+    [
+        pytest.param(ens, id="Ensemble_running"),
+        pytest.param(application, id="Application_running"),
+    ],
 )
 def test_restarting_entity(test_dir, wlmutils, entity):
     """Validate restarting a completed Application/Ensemble job"""

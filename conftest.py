@@ -92,6 +92,7 @@ built_mpi_app = False
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
 
+
 def get_account() -> str:
     return test_account
 
@@ -140,7 +141,7 @@ def pytest_sessionstart(
         time.sleep(0.1)
 
     if CONFIG.dragon_server_path is None:
-        dragon_server_path =  os.path.join(test_output_root, "dragon_server")
+        dragon_server_path = os.path.join(test_output_root, "dragon_server")
         os.makedirs(dragon_server_path)
         os.environ["SMARTSIM_DRAGON_SERVER_PATH"] = dragon_server_path
 
@@ -182,7 +183,7 @@ def build_mpi_app() -> t.Optional[pathlib.Path]:
     if cc is None:
         return None
 
-    path_to_src =  pathlib.Path(FileUtils().get_test_conf_path("mpi"))
+    path_to_src = pathlib.Path(FileUtils().get_test_conf_path("mpi"))
     path_to_out = pathlib.Path(test_output_root) / "apps" / "mpi_app"
     os.makedirs(path_to_out.parent, exist_ok=True)
     cmd = [cc, str(path_to_src / "mpi_hello.c"), "-o", str(path_to_out)]
@@ -193,11 +194,12 @@ def build_mpi_app() -> t.Optional[pathlib.Path]:
     else:
         return None
 
+
 @pytest.fixture(scope="session")
 def mpi_app_path() -> t.Optional[pathlib.Path]:
     """Return path to MPI app if it was built
 
-        return None if it could not or will not be built
+    return None if it could not or will not be built
     """
     if not CONFIG.test_mpi:
         return None
@@ -224,7 +226,6 @@ def kill_all_test_spawned_processes() -> None:
             child.kill()
     except Exception:
         print("Not all processes were killed after test")
-
 
 
 def get_hostlist() -> t.Optional[t.List[str]]:
@@ -707,7 +708,9 @@ def global_dragon_teardown() -> None:
     """
     if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
         return
-    logger.debug(f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}")
+    logger.debug(
+        f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}"
+    )
     dragon_connector = DragonConnector()
     dragon_connector.ensure_connected()
     dragon_connector.cleanup()
@@ -874,9 +877,13 @@ class CountingCallable:
     def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details
 
+
 ## Reuse database across tests
 
-database_registry: t.DefaultDict[str, t.Optional[Orchestrator]] = defaultdict(lambda: None)
+database_registry: t.DefaultDict[str, t.Optional[Orchestrator]] = defaultdict(
+    lambda: None
+)
+
 
 @pytest.fixture(scope="function")
 def local_experiment(test_dir: str) -> smartsim.Experiment:
@@ -884,15 +891,15 @@ def local_experiment(test_dir: str) -> smartsim.Experiment:
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
 
+
 @pytest.fixture(scope="function")
 def wlm_experiment(test_dir: str, wlmutils: WLMUtils) -> smartsim.Experiment:
     """Create a default experiment that uses the requested launcher"""
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(
-        name,
-        exp_path=test_dir,
-        launcher=wlmutils.get_test_launcher()
+        name, exp_path=test_dir, launcher=wlmutils.get_test_launcher()
     )
+
 
 def _cleanup_db(name: str) -> None:
     global database_registry
@@ -905,19 +912,22 @@ def _cleanup_db(name: str) -> None:
         except:
             pass
 
+
 @dataclass
 class DBConfiguration:
     name: str
     launcher: str
     num_nodes: int
-    interface: t.Union[str,t.List[str]]
+    interface: t.Union[str, t.List[str]]
     hostlist: t.Optional[t.List[str]]
     port: int
 
+
 @dataclass
 class PrepareDatabaseOutput:
-    orchestrator: t.Optional[Orchestrator] # The actual orchestrator object
-    new_db: bool     # True if a new database was created when calling prepare_db
+    orchestrator: t.Optional[Orchestrator]  # The actual orchestrator object
+    new_db: bool  # True if a new database was created when calling prepare_db
+
 
 # Reuse databases
 @pytest.fixture(scope="session")
@@ -934,6 +944,7 @@ def local_db() -> t.Generator[DBConfiguration, None, None]:
     yield config
     _cleanup_db(name)
 
+
 @pytest.fixture(scope="session")
 def single_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
     hostlist = wlmutils.get_test_hostlist()
@@ -945,7 +956,7 @@ def single_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
         1,
         wlmutils.get_test_interface(),
         hostlist,
-        _find_free_port(tuple(reversed(test_ports)))
+        _find_free_port(tuple(reversed(test_ports))),
     )
     yield config
     _cleanup_db(name)
@@ -970,9 +981,7 @@ def clustered_db(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]
 
 @pytest.fixture
 def register_new_db() -> t.Callable[[DBConfiguration], Orchestrator]:
-    def _register_new_db(
-        config: DBConfiguration
-    ) -> Orchestrator:
+    def _register_new_db(config: DBConfiguration) -> Orchestrator:
         exp_path = pathlib.Path(test_output_root, config.name)
         exp_path.mkdir(exist_ok=True)
         exp = Experiment(
@@ -985,26 +994,21 @@ def register_new_db() -> t.Callable[[DBConfiguration], Orchestrator]:
             batch=False,
             interface=config.interface,
             hosts=config.hostlist,
-            db_nodes=config.num_nodes
+            db_nodes=config.num_nodes,
         )
         exp.generate(orc, overwrite=True)
         exp.start(orc)
         global database_registry
         database_registry[config.name] = orc
         return orc
+
     return _register_new_db
 
 
 @pytest.fixture(scope="function")
 def prepare_db(
-    register_new_db: t.Callable[
-        [DBConfiguration],
-        Orchestrator
-    ]
-) -> t.Callable[
-    [DBConfiguration],
-    PrepareDatabaseOutput
-]:
+    register_new_db: t.Callable[[DBConfiguration], Orchestrator]
+) -> t.Callable[[DBConfiguration], PrepareDatabaseOutput]:
     def _prepare_db(db_config: DBConfiguration) -> PrepareDatabaseOutput:
         global database_registry
         db = database_registry[db_config.name]
@@ -1020,4 +1024,5 @@ def prepare_db(
             new_db = True
 
         return PrepareDatabaseOutput(db, new_db)
+
     return _prepare_db

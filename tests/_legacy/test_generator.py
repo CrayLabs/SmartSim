@@ -230,7 +230,9 @@ def test_print_files(fileutils, test_dir, capsys):
         tablefmt="grid",
     )
 
-    assert all(str(application.files) == expected_out for application in ensemble.applications)
+    assert all(
+        str(application.files) == expected_out for application in ensemble.applications
+    )
 
     expected_out_multi = (
         tabulate(

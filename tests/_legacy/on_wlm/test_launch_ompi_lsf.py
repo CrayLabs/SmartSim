@@ -47,7 +47,9 @@ def test_launch_openmpi_lsf(fileutils, test_dir, wlmutils):
     settings.set_cpus_per_task(1)
     settings.set_tasks(1)
 
-    application = exp.create_application("ompi-application", path=test_dir, run_settings=settings)
+    application = exp.create_application(
+        "ompi-application", path=test_dir, run_settings=settings
+    )
     exp.start(application, block=True)
     statuses = exp.get_status(application)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

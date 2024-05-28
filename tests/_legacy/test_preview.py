@@ -333,7 +333,9 @@ def test_model_preview_properties(test_dir, wlmutils):
     se_param3 = "eggs"
     rs2 = exp.create_run_settings(se_param1, [se_param2, se_param3])
 
-    hello_world_model = exp.create_application(hw_name, run_settings=rs1, params=model_params)
+    hello_world_model = exp.create_application(
+        hw_name, run_settings=rs1, params=model_params
+    )
     spam_eggs_model = exp.create_application(se_name, run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)

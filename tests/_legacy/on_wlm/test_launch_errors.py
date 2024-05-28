@@ -48,7 +48,9 @@ def test_failed_status(fileutils, test_dir, wlmutils):
         "python", f"{script} --time=7", run_comamnd="auto"
     )
 
-    application = exp.create_application("bad-application", path=test_dir, run_settings=settings)
+    application = exp.create_application(
+        "bad-application", path=test_dir, run_settings=settings
+    )
 
     exp.start(application, block=False)
     while not exp.finished(application):
@@ -79,7 +81,9 @@ def test_bad_run_command_args(fileutils, test_dir, wlmutils):
         "python", f"{script} --time=5", run_args={"badarg": "badvalue"}
     )
 
-    application = exp.create_application("bad-application", path=test_dir, run_settings=settings)
+    application = exp.create_application(
+        "bad-application", path=test_dir, run_settings=settings
+    )
 
     with pytest.raises(SmartSimError):
         exp.start(application)

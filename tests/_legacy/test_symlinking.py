@@ -52,7 +52,11 @@ ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
 orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
 application = Application("test_application", params={}, path="", run_settings=rs)
 batch_application = Application(
-    "batch_test_application", params={}, path="", run_settings=batch_rs, batch_settings=bs
+    "batch_test_application",
+    params={},
+    path="",
+    run_settings=batch_rs,
+    batch_settings=bs,
 )
 anon_batch_application = _AnonymousBatchJob(batch_application)
 
@@ -139,8 +143,12 @@ def test_failed_application_launch_symlinks(test_dir):
         exp.start(test_application)
 
     _should_not_be_symlinked(pathlib.Path(test_application.path))
-    assert not pathlib.Path(test_application.path, f"{test_application.name}.out").is_symlink()
-    assert not pathlib.Path(test_application.path, f"{test_application.name}.err").is_symlink()
+    assert not pathlib.Path(
+        test_application.path, f"{test_application.name}.out"
+    ).is_symlink()
+    assert not pathlib.Path(
+        test_application.path, f"{test_application.name}.err"
+    ).is_symlink()
 
 
 def test_failed_ensemble_launch_symlinks(test_dir):
@@ -210,14 +218,20 @@ def test_non_batch_application_symlinks(test_dir):
     exp = Experiment(exp_name, exp_path=test_dir)
     rs = RunSettings("echo", ["spam", "eggs"])
 
-    test_application = exp.create_application("test_application", path=test_dir, run_settings=rs)
+    test_application = exp.create_application(
+        "test_application", path=test_dir, run_settings=rs
+    )
     exp.generate(test_application)
     exp.start(test_application, block=True)
 
     assert pathlib.Path(test_application.path).exists()
 
-    _should_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.out"), True)
-    _should_be_symlinked(pathlib.Path(test_application.path, f"{test_application.name}.err"), False)
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), True
+    )
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.err"), False
+    )
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
