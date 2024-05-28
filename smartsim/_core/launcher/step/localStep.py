@@ -28,9 +28,9 @@ import os
 import shutil
 import typing as t
 
+from ....entity import FSNode, Model
 from ....settings import Singularity
 from ....settings.base import RunSettings
-from ....entity import Model, FSNode
 from .step import Step, proxyable_launch_cmd
 
 

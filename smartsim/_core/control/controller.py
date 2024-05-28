@@ -644,9 +644,7 @@ class Controller:
             )
 
         telemetry_dir = telemetry_dir / entity_list.name
-        batch_step = self._launcher.create_step(
-            entity, entity_list.batch_settings
-        )
+        batch_step = self._launcher.create_step(entity, entity_list.batch_settings)
         batch_step.meta["entity_type"] = str(type(entity_list).__name__).lower()
         batch_step.meta["status_dir"] = str(telemetry_dir)
 

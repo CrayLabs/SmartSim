@@ -32,8 +32,8 @@ from collections import ChainMap
 from threading import RLock, Thread
 from types import FrameType
 
-from ...database import FeatureStore
 from ..._core.launcher.step import Step
+from ...database import FeatureStore
 from ...entity import FSNode, EntitySequence, SmartSimEntity
 from ...log import ContextThread, get_logger
 from ...status import TERMINAL_STATUSES, SmartSimStatus

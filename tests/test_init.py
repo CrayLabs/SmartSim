@@ -24,29 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import tempfile
 
 import pytest
 
-# The tests in this file belong to the group_a group
-pytestmark = pytest.mark.group_a
+pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
 
 __author__ = "Sam Partee"
 
 
-try:
-    from smartsim import *
+def test_import_ss(monkeypatch):
+    with tempfile.TemporaryDirectory() as empty_dir:
+        # Move to an empty directory so `smartsim` dir is not in cwd
+        monkeypatch.chdir(empty_dir)
 
-    _top_import_error = None
-except Exception as e:
-    _top_import_error = e
-
-
-def test_import_ss():
-    # Test either above import has failed for some reason
-    # "import *" is discouraged outside of the module level, hence we
-    # rely on setting up the variable above
-    assert _top_import_error is None
-
-
-test_import_ss()
+        # Make sure SmartSim is importable
+        import smartsim

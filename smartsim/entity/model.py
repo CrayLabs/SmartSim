@@ -26,10 +26,10 @@
 
 from __future__ import annotations
 
+import copy
 import itertools
 import re
 import sys
-import copy
 import typing as t
 import warnings
 from os import getcwd
@@ -496,9 +496,7 @@ class Model(SmartSimEntity):
                         "Tried to configure command line parameter for Model "
                         f"{self.name}, but no RunSettings are set."
                     )
-                self.add_exe_args(
-                    cat_arg_and_value(param, self.params[param])
-                )
+                self.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def add_ml_model(
         self,

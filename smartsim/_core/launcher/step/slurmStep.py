@@ -29,17 +29,19 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
+from ....entity import FSNode, Ensemble, Model
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
 from .step import Step
-from ....entity import Model, Ensemble, FSNode
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, entity: t.Union[Model, FSNode], batch_settings: SbatchSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, FSNode], batch_settings: SbatchSettings
+    ) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -99,7 +101,9 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, entity: t.Union[Model, FSNode], run_settings: SrunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, FSNode], run_settings: SrunSettings
+    ) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -216,7 +220,7 @@ class SrunStep(Step):
         cmd = exe + args
 
         compound_env_vars = []
-        for mpmd_rs in self._get_mpmd(): #returns a list of runsettings
+        for mpmd_rs in self._get_mpmd():  # returns a list of runsettings
             cmd += [" : "]
             cmd += mpmd_rs.format_run_args()
             cmd += ["--job-name", self.name]
