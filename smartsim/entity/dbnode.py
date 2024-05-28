@@ -34,6 +34,7 @@ import typing as t
 from dataclasses import dataclass
 
 from .._core.config import CONFIG
+from .._core.utils.helpers import expand_exe_path
 from ..error import SSDBFilesNotParseable
 from ..log import get_logger
 from ..settings.base import RunSettings
@@ -55,6 +56,8 @@ class DBNode(SmartSimEntity):
         self,
         name: str,
         path: str,
+        exe: str,
+        exe_args: t.List[str],
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
@@ -62,6 +65,8 @@ class DBNode(SmartSimEntity):
     ) -> None:
         """Initialize a database node within an orchestrator."""
         super().__init__(name, path, run_settings)
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 

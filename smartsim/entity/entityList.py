@@ -128,7 +128,7 @@ class EntityList(EntitySequence[_T]):
     """An invariant subclass of an ``EntitySequence`` with mutable containers"""
 
     def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
-        super().__init__(name, path, **kwargs)
+        super().__init__(name=name, path=path, **kwargs)
         # Change container types to be invariant ``list``s
         self.entities: t.List[_T] = list(self.entities)
         self._db_models: t.List["smartsim.entity.DBModel"] = list(self._db_models)
