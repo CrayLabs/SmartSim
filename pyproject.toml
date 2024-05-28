@@ -26,7 +26,7 @@
 
 
 [build-system]
-requires = ["setuptools", "wheel", "cmake>=3.13"]
+requires = ["packaging>=24.0", "setuptools>=70.0", "wheel", "cmake>=3.13"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
@@ -45,8 +45,15 @@ exclude = '''
   | build
   | dist
   | setup.py
+  | .*\.py
 )
 '''
+force-exclude = '''
+(
+  .*\.dragon/*
+)
+'''
+
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -61,6 +68,7 @@ markers = [
 # supress circular import warning
 profile = "black"
 skip = ["tests/test_configs/circular_config"]
+skip_glob="smartsim/_core/.dragon/*"
 
 [tool.coverage.run]
 source = ["smartsim"]
@@ -78,7 +86,7 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = []
+plugins = ["pydantic.mypy"]
 ignore_errors = false
 
 # Dynamic typing
@@ -124,6 +132,7 @@ module = [
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
   "watchdog",
+  "dragon.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true

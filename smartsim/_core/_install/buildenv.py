@@ -35,25 +35,8 @@ import typing as t
 from pathlib import Path
 from typing import Iterable
 
-# NOTE: This will be imported by setup.py and hence no
-#       smartsim related items or non-standand library
-#       items should be imported here.
+from packaging.version import InvalidVersion, Version, parse
 
-# TODO: pkg_resources has been deprecated by PyPA. Currently we use it for its
-#       packaging implementation, as we cannot assume a user will have `packaging`
-#       prior to `pip install` time. We really only use pkg_resources for their
-#       vendored version of `packaging.version.Version` so we should probably try
-#       to remove
-# https://setuptools.pypa.io/en/latest/pkg_resources.html
-
-# isort: off
-import pkg_resources
-from pkg_resources import packaging  # type: ignore
-
-# isort: on
-
-Version = packaging.version.Version
-InvalidVersion = packaging.version.InvalidVersion
 DbEngine = t.Literal["REDIS", "KEYDB"]
 
 
@@ -105,9 +88,7 @@ class Version_(str):
 
     @staticmethod
     def _convert_to_version(
-        vers: t.Union[
-            str, Iterable[packaging.version.Version], packaging.version.Version
-        ],
+        vers: t.Union[str, Iterable[Version], Version],
     ) -> t.Any:
         if isinstance(vers, Version):
             return vers
@@ -122,20 +103,20 @@ class Version_(str):
     def major(self) -> int:
         # Version(self).major doesn't work for all Python distributions
         # see https://github.com/lebedov/python-pdfbox/issues/28
-        return int(pkg_resources.parse_version(self).base_version.split(".")[0])
+        return int(parse(self).base_version.split(".", maxsplit=1)[0])
 
     @property
     def minor(self) -> int:
-        return int(pkg_resources.parse_version(self).base_version.split(".")[1])
+        return int(parse(self).base_version.split(".", maxsplit=2)[1])
 
     @property
     def micro(self) -> int:
-        return int(pkg_resources.parse_version(self).base_version.split(".")[2])
+        return int(parse(self).base_version.split(".", maxsplit=3)[2])
 
     @property
     def patch(self) -> str:
         # return micro with string modifier i.e. 1.2.3+cpu -> 3+cpu
-        return str(pkg_resources.parse_version(self)).split(".")[2]
+        return str(parse(self)).split(".")[2]
 
     def __gt__(self, cmp: t.Any) -> bool:
         try:
@@ -270,8 +251,8 @@ class Versioner:
     PYTHON_MIN = Version_("3.9.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.6.2"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.2"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.7.0"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.5.3"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis

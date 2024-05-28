@@ -24,5 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .helpers import colorize, delete_elements, installed_redisai_backends
+from .helpers import (
+    check_for_utility,
+    colorize,
+    delete_elements,
+    execute_platform_cmd,
+    installed_redisai_backends,
+    is_crayex_platform,
+)
 from .redis import check_cluster_status, create_cluster, db_is_active

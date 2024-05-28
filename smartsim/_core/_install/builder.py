@@ -705,8 +705,9 @@ class RedisAIBuilder(Builder):
         rai_lib = self.rai_install_path / "redisai.so"
         rai_backends = self.rai_install_path / "backends"
 
-        if rai_lib.is_file() and rai_backends.is_dir():
+        if rai_backends.is_dir():
             self.copy_dir(rai_backends, self.lib_path / "backends", set_exe=True)
+        if rai_lib.is_file():
             self.copy_file(rai_lib, self.lib_path / "redisai.so", set_exe=True)
 
     def _move_torch_libs(self) -> None:
@@ -823,6 +824,15 @@ class _WebZip(_ExtractableWebArchive):
     def _extract_download(self, download_path: Path, target: _PathLike) -> None:
         with zipfile.ZipFile(download_path, "r") as zip_file:
             zip_file.extractall(target)
+
+
+class WebTGZ(_WebTGZ):
+    def __init__(self, url: str) -> None:
+        self._url = url
+
+    @property
+    def url(self) -> str:
+        return self._url
 
 
 @dataclass(frozen=True)

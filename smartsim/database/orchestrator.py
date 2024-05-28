@@ -23,7 +23,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=too-many-lines
+
 import itertools
+import os.path as osp
 import sys
 import typing as t
 from os import environ, getcwd, getenv
@@ -38,7 +42,12 @@ from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList, TelemetryConfiguration
-from ..error import SmartSimError, SSConfigError, SSUnsupportedError
+from ..error import (
+    SmartSimError,
+    SSConfigError,
+    SSDBFilesNotParseable,
+    SSUnsupportedError,
+)
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
@@ -60,6 +69,7 @@ from ..wlm import detect_launcher
 logger = get_logger(__name__)
 
 by_launcher: t.Dict[str, t.List[str]] = {
+    "dragon": [""],
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
     "pals": ["mpiexec"],
@@ -71,7 +81,7 @@ by_launcher: t.Dict[str, t.List[str]] = {
 def _detect_command(launcher: str) -> str:
     if launcher in by_launcher:
         for cmd in by_launcher[launcher]:
-            if launcher == "local":
+            if launcher in ["local", "dragon"]:
                 return cmd
             if is_valid_cmd(cmd):
                 return cmd
@@ -105,9 +115,14 @@ def _check_run_command(launcher: str, run_command: str) -> None:
         raise SmartSimError(msg)
 
 
-def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
+def _get_single_command(
+    run_command: str, launcher: str, batch: bool, single_cmd: bool
+) -> bool:
     if not single_cmd:
         return single_cmd
+
+    if launcher == "dragon":
+        return False
 
     if run_command == "srun" and getenv("SLURM_HET_SIZE") is not None:
         msg = (
@@ -138,6 +153,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
         raise SmartSimError(msg)
 
 
+# pylint: disable-next=too-many-public-methods
 class Orchestrator(EntityList[DBNode]):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
@@ -196,7 +212,9 @@ class Orchestrator(EntityList[DBNode]):
         self.launcher, self.run_command = _autodetect(launcher, run_command)
         _check_run_command(self.launcher, self.run_command)
         _check_local_constraints(self.launcher, batch)
-        single_cmd = _get_single_command(self.run_command, batch, single_cmd)
+        single_cmd = _get_single_command(
+            self.run_command, self.launcher, batch, single_cmd
+        )
         self.ports: t.List[int] = []
         self._hosts: t.List[str] = []
         self._user_hostlist: t.List[str] = []
@@ -359,10 +377,11 @@ class Orchestrator(EntityList[DBNode]):
 
         :return: True if database is active, False otherwise
         """
-        if not self._hosts:
+        try:
+            hosts = self.hosts
+        except SSDBFilesNotParseable:
             return False
-
-        return db_is_active(self._hosts, self.ports, self.num_shards)
+        return db_is_active(hosts, self.ports, self.num_shards)
 
     @property
     def _rai_module(self) -> t.Tuple[str, ...]:
@@ -387,6 +406,14 @@ class Orchestrator(EntityList[DBNode]):
     @property
     def _redis_conf(self) -> str:
         return CONFIG.database_conf
+
+    @property
+    def checkpoint_file(self) -> str:
+        """Get the path to the checkpoint file for this Orchestrator
+
+        :return: Path to the checkpoint file if it exists, otherwise a None
+        """
+        return osp.join(self.path, "smartsim_db.dat")
 
     def set_cpus(self, num_cpus: int) -> None:
         """Set the number of CPUs available to each database shard
@@ -440,9 +467,8 @@ class Orchestrator(EntityList[DBNode]):
             raise TypeError("host_list argument must be list of strings")
         self._user_hostlist = host_list.copy()
         # TODO check length
-        if self.batch:
-            if hasattr(self, "batch_settings") and self.batch_settings:
-                self.batch_settings.set_hostlist(host_list)
+        if self.batch and hasattr(self, "batch_settings") and self.batch_settings:
+            self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
             for db in self.entities:
@@ -844,6 +870,7 @@ class Orchestrator(EntityList[DBNode]):
         ]
         if cluster:
             cmd.append("+cluster")  # is the shard part of a cluster
+
         return cmd
 
     def _get_db_hosts(self) -> t.List[str]:

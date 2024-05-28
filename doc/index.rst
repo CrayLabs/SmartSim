@@ -37,6 +37,7 @@
    orchestrator
    ss_logger
    ml_features
+   dragon
    api/smartsim_api
 
 .. toctree::

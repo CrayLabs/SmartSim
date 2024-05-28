@@ -186,13 +186,13 @@ class DBScript(DBObject[str]):
             raise ValueError("Either script or script_path must be provided")
 
     @property
-    def script(self) -> t.Optional[str]:
+    def script(self) -> t.Optional[t.Union[bytes, str]]:
         return self.func
 
     def __str__(self) -> str:
         desc_str = "Name: " + self.name + "\n"
         if self.func:
-            desc_str += "Func: " + self.func + "\n"
+            desc_str += "Func: " + str(self.func) + "\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
         devices_str = self.device + (

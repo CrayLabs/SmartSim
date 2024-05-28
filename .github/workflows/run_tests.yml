@@ -45,6 +45,7 @@ env:
   HOMEBREW_NO_GITHUB_API: "ON"
   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
   DEBIAN_FRONTEND: "noninteractive" # Disable interactive apt install sessions
+  GIT_CLONE_PROTECTION_ACTIVE: false
 
 jobs:
   run_tests:

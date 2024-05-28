@@ -6,10 +6,10 @@ Since SmartSim does not have a built PowerPC build, the build steps for an IBM
 system are slightly different than other systems.
 
 Luckily for us, a conda channel with all relevant packages is maintained as part
-of the `OpenCE <https://opence.mit.edu>`_ initiative.  Users can follow these
-instructions to get a working SmartSim build with PyTorch and TensorFlow for GPU
-on Summit.  Note that SmartSim and SmartRedis will be downloaded to the working
-directory from which these instructions are executed.
+of the `OpenCE <https://github.com/open-ce/open-ce>`_
+initiative.  Users can follow these instructions to get a working SmartSim build
+with PyTorch and TensorFlow for GPU on Summit.  Note that SmartSim and SmartRedis
+will be downloaded to the working directory from which these instructions are executed.
 
 Note that the available PyTorch version (1.10.2) does not match
 the one expected by RedisAI 1.2.7 (1.11): it is still compatible and should
@@ -19,7 +19,7 @@ into problems.
 .. code-block:: bash
 
   # setup Python and build environment
-  export ENV_NAME=smartsim-0.6.2
+  export ENV_NAME=smartsim-0.7.0
   git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
   conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.6.1/

@@ -45,7 +45,10 @@ if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
 def add_batch_resources(wlmutils, batch_settings):
     if isinstance(batch_settings, QsubBatchSettings):
         for key, value in wlmutils.get_batch_resources().items():
-            batch_settings.set_resource(key, value)
+            if key == "queue":
+                batch_settings.set_queue(value)
+            else:
+                batch_settings.set_resource(key, value)
 
 
 def test_batch_model(fileutils, test_dir, wlmutils):
@@ -55,7 +58,7 @@ def test_batch_model(fileutils, test_dir, wlmutils):
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
+    batch_settings = exp.create_batch_settings(nodes=1, time="00:05:00")
 
     batch_settings.set_account(wlmutils.get_test_account())
     add_batch_resources(wlmutils, batch_settings)
@@ -64,6 +67,7 @@ def test_batch_model(fileutils, test_dir, wlmutils):
         "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
     )
 
+    exp.generate(model)
     exp.start(model, block=True)
     statuses = exp.get_status(model)
     assert len(statuses) == 1
@@ -89,6 +93,7 @@ def test_batch_ensemble(fileutils, test_dir, wlmutils):
     ensemble.add_model(M1)
     ensemble.add_model(M2)
 
+    exp.generate(ensemble)
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
