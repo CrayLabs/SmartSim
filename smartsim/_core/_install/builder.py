@@ -705,8 +705,9 @@ class RedisAIBuilder(Builder):
         rai_lib = self.rai_install_path / "redisai.so"
         rai_backends = self.rai_install_path / "backends"
 
-        if rai_lib.is_file() and rai_backends.is_dir():
+        if rai_backends.is_dir():
             self.copy_dir(rai_backends, self.lib_path / "backends", set_exe=True)
+        if rai_lib.is_file():
             self.copy_file(rai_lib, self.lib_path / "redisai.so", set_exe=True)
 
     def _move_torch_libs(self) -> None:
