@@ -28,7 +28,7 @@ import os
 import shutil
 import typing as t
 
-from ....entity import DBNode, Application
+from ....entity import Application, DBNode
 from ....settings import Singularity
 from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd

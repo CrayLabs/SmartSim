@@ -1,6 +1,7 @@
 import numpy as np
 from smartredis import Client, Dataset
 
+
 def finite_volume_simulation(steps=4000, x_res=400, y_res=100,
                              rho0=100, tau=0.6, seed=42):
     """ Finite Volume simulation """

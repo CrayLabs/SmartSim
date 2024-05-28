@@ -1,8 +1,8 @@
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from smartredis import Client
+
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.settings import RunSettings

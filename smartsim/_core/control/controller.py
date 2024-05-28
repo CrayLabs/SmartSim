@@ -55,7 +55,7 @@ from ..._core.utils.redis import (
     shutdown_db_node,
 )
 from ...database import Orchestrator
-from ...entity import Ensemble, EntitySequence, Application, SmartSimEntity
+from ...entity import Application, Ensemble, EntitySequence, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,

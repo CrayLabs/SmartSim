@@ -26,7 +26,7 @@
 
 import typing as t
 
-from ....entity import DBNode, Application
+from ....entity import Application, DBNode
 from ....log import get_logger
 from ....settings import QsubBatchSettings
 from .step import Step

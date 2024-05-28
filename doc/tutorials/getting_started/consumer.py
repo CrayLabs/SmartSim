@@ -1,5 +1,6 @@
 import argparse
 import os
+
 from smartredis import Client, ConfigOptions
 
 parser = argparse.ArgumentParser(description="SmartRedis ensemble consumer process.")

@@ -113,69 +113,48 @@ def boundary ( nx, ny, x, y, A, rhs ):
 
 def fd2d_heat_steady ( nx, ny, x, y, d, f, source_centers):
 
-#*****************************************************************************80
-#
-## fd2d_heat_steady() solves the steady 2D heat equation.
-#
-#  Discussion:
-#
-#    Nodes are assigned a singled index K, which increases as:
-#
-#    (NY-1)*NX+1  (NY-1)*NX+2  ...  NY * NX
-#           ....         ....  ...    .....
-#           NX+1         NX+2  ...   2 * NX
-#              1            2  ...       NX
-#
-#    Therefore, the neighbors of an interior node numbered C are
-#
-#             C+NY
-#              |
-#      C-1 --- C --- C+1
-#              |
-#             C-NY
-#
-#    Nodes on the lower boundary satisfy:
-#      1 <= K <= NX
-#    Nodes on the upper boundary satisfy:
-#      (NY-1)*NX+1 <= K <= NY * NX
-#    Nodes on the left boundary satisfy:
-#      mod ( K, NX ) = 1
-#    Nodes on the right boundary satisfy:
-#      mod ( K, NX ) = 0
-#
-#    If we number rows from bottom I = 1 to top I = NY
-#    and columns from left J = 1 to right J = NX, we have
-#      K = ( I - 1 ) * NX + J
-#    and
-#      J = 1 + mod ( K - 1, NX )
-#      I = 1 + ( K - J ) / NX
-#      
-#  Licensing:
-#
-#    This code is distributed under the GNU LGPL license.
-#
-#  Modified:
-#
-#    12 March 2017
-#
-#  Author:
-#
-#    John Burkardt
-#
-#  Input:
-#
-#    integer NX, NY, the number of grid points in X and Y.
-#
-#    real X(NX), Y(NY), the coordinates of grid lines.
-#
-#    function D(X,Y), evaluates the thermal conductivity.
-#
-#    function F(X,Y), evaluates the heat source term.
-#
-#  Output:
-#
-#    real U(NX,NY), the approximation to the solution at the grid points.
-#
+****************************************************************************80
+   fd2d_heat_steady() solves the steady 2D heat equation.
+   Discussion:
+     Nodes are assigned a singled index K, which increases as:
+     (NY-1)*NX+1  (NY-1)*NX+2  ...  NY * NX
+            ....         ....  ...    .....
+            NX+1         NX+2  ...   2 * NX
+               1            2  ...       NX
+     Therefore, the neighbors of an interior node numbered C are
+              C+NY
+               |
+       C-1 --- C --- C+1
+               |
+              C-NY
+     Nodes on the lower boundary satisfy:
+       1 <= K <= NX
+     Nodes on the upper boundary satisfy:
+       (NY-1)*NX+1 <= K <= NY * NX
+     Nodes on the left boundary satisfy:
+       mod ( K, NX ) = 1
+     Nodes on the right boundary satisfy:
+       mod ( K, NX ) = 0
+     If we number rows from bottom I = 1 to top I = NY
+     and columns from left J = 1 to right J = NX, we have
+       K = ( I - 1 ) * NX + J
+     and
+       J = 1 + mod ( K - 1, NX )
+       I = 1 + ( K - J ) / NX
+     
+   Licensing:
+     This code is distributed under the GNU LGPL license.
+   Modified:
+     12 March 2017
+   Author:
+     John Burkardt
+   Input:
+     integer NX, NY, the number of grid points in X and Y.
+     real X(NX), Y(NY), the coordinates of grid lines.
+     function D(X,Y), evaluates the thermal conductivity.
+     function F(X,Y), evaluates the heat source term.
+   Output:
+     real U(NX,NY), the approximation to the solution at the grid points.
   import numpy as np
 #
 #  Set the total number of unknowns.
@@ -236,26 +215,18 @@ def fd2d_heat_steady_test ( ):
 
 def fd2d_heat_steady_test01 (nx, ny ):
 
-#*****************************************************************************80
-#
-## fd2d_heat_steady_test01() demonstrates the use of fd2d_heat_steady.
-#
-#  Licensing:
-#
-#    This code is distributed under the GNU LGPL license.
-#
-#  Modified:
-#
-#    12 March 2017
-#
-#  Author:
-#
-#    John Burkardt
-#
-  import numpy as np
-  from mpl_toolkits.mplot3d import Axes3D
+****************************************************************************80
+   fd2d_heat_steady_test01() demonstrates the use of fd2d_heat_steady.
+   Licensing:
+     This code is distributed under the GNU LGPL license.
+   Modified:
+     12 March 2017
+   Author:
+     John Burkardt
   import matplotlib.pyplot as plt
+  import numpy as np
   from matplotlib import cm
+  from mpl_toolkits.mplot3d import Axes3D
 #
 #  Specify the spatial grid.
 #
@@ -367,69 +338,46 @@ def f ( x, y , centers):
 
 def interior ( nx, ny, x, y, d, f, A, rhs, source_centers ):
 
-#*****************************************************************************80
-#
-## interior() sets up the matrix and right hand side at interior nodes.
-#
-#  Discussion:
-#
-#    Nodes are assigned a single index K, which increases as:
-#
-#    (NY-1)*NX+1  (NY-1)*NX+2  ...  NY * NX
-#           ....         ....  ...    .....
-#           NX+1         NX+2  ...   2 * NX
-#              1            2  ...       NX
-#
-#    Therefore, the neighbors of an interior node numbered C are
-#
-#             C+NY
-#              |
-#      C-1 --- C --- C+1
-#              |
-#             C-NY
-#
-#    If we number rows from bottom I = 1 to top I = NY
-#    and columns from left J = 1 to right J = NX, then the relationship
-#    between the single index K and the row and column indices I and J is:
-#      K = ( I - 1 ) * NX + J
-#    and
-#      J = 1 + mod ( K - 1, NX )
-#      I = 1 + ( K - J ) / NX
-#      
-#  Licensing:
-#
-#    This code is distributed under the GNU LGPL license.
-#
-#  Modified:
-#
-#    12 March 2017
-#
-#  Author:
-#
-#    John Burkardt
-#
-#  Input:
-#
-#    integer NX, NY, the number of grid points in X and Y.
-#
-#    real X(NX), Y(NY), the coordinates of grid lines.
-#
-#    function pointer @D(X,Y), evaluates the thermal conductivity.
-#
-#    function pointer @F(X,Y), evaluates the heat source term.
-#
-#    real sparse A(N,N), the system matrix, without any entries set.
-#
-#    real RHS(N), the system right hand side, without any entries set.
-#
-#  Output:
-#
-#    real sparse A(N,N), the system matrix, with the entries for the
-#    interior nodes filled in.
-#
-#    real RHS(N), the system right hand side, with the entries for the
-#    interior nodes filled in.
-#
+****************************************************************************80
+   interior() sets up the matrix and right hand side at interior nodes.
+   Discussion:
+     Nodes are assigned a single index K, which increases as:
+     (NY-1)*NX+1  (NY-1)*NX+2  ...  NY * NX
+            ....         ....  ...    .....
+            NX+1         NX+2  ...   2 * NX
+               1            2  ...       NX
+     Therefore, the neighbors of an interior node numbered C are
+              C+NY
+               |
+       C-1 --- C --- C+1
+               |
+              C-NY
+     If we number rows from bottom I = 1 to top I = NY
+     and columns from left J = 1 to right J = NX, then the relationship
+     between the single index K and the row and column indices I and J is:
+       K = ( I - 1 ) * NX + J
+     and
+       J = 1 + mod ( K - 1, NX )
+       I = 1 + ( K - J ) / NX
+     
+   Licensing:
+     This code is distributed under the GNU LGPL license.
+   Modified:
+     12 March 2017
+   Author:
+     John Burkardt
+   Input:
+     integer NX, NY, the number of grid points in X and Y.
+     real X(NX), Y(NY), the coordinates of grid lines.
+     function pointer @D(X,Y), evaluates the thermal conductivity.
+     function pointer @F(X,Y), evaluates the heat source term.
+     real sparse A(N,N), the system matrix, without any entries set.
+     real RHS(N), the system right hand side, without any entries set.
+   Output:
+     real sparse A(N,N), the system matrix, with the entries for the
+     interior nodes filled in.
+     real RHS(N), the system right hand side, with the entries for the
+     interior nodes filled in.
   import numpy as np
 #
 #  For now, assume X and Y are equally spaced.
@@ -474,22 +422,14 @@ def interior ( nx, ny, x, y, d, f, A, rhs, source_centers ):
 
 def timestamp ( ):
 
-#*****************************************************************************80
-#
-## timestamp() prints the date as a timestamp.
-#
-#  Licensing:
-#
-#    This code is distributed under the GNU LGPL license. 
-#
-#  Modified:
-#
-#    06 April 2013
-#
-#  Author:
-#
-#    John Burkardt
-#
+****************************************************************************80
+   timestamp() prints the date as a timestamp.
+   Licensing:
+     This code is distributed under the GNU LGPL license. 
+   Modified:
+     06 April 2013
+   Author:
+     John Burkardt
   import time
 
   t = time.time ( )

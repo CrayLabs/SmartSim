@@ -36,7 +36,7 @@ from os.path import join, relpath
 from tabulate import tabulate
 
 from ...database import Orchestrator
-from ...entity import Ensemble, Application, TaggedFilesHierarchy
+from ...entity import Application, Ensemble, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ApplicationWriter

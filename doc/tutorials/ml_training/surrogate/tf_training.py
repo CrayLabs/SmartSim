@@ -1,12 +1,12 @@
-from smartsim.ml.tf import DynamicDataGenerator, serialize_model
-from smartredis import Client, Dataset
+import time
 
+import numpy as np
+from smartredis import Client, Dataset
 from tensorflow import keras
 from tensorflow.keras.layers import Input
 from tf_model import DiffusionResNet
 
-import time
-import numpy as np
+from smartsim.ml.tf import DynamicDataGenerator, serialize_model
 
 
 def create_dataset(idx, F):

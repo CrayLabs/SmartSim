@@ -1,5 +1,6 @@
 import numpy as np
 from smartredis import Client
+
 from smartsim import Experiment
 from smartsim.log import get_logger
 

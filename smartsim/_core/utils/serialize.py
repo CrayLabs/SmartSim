@@ -37,7 +37,7 @@ import smartsim.log
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import Orchestrator
-    from smartsim.entity import DBNode, Ensemble, Application
+    from smartsim.entity import Application, DBNode, Ensemble
     from smartsim.entity.dbobject import DBModel, DBScript
     from smartsim.settings.base import BatchSettings, RunSettings
 

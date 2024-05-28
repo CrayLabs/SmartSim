@@ -1,5 +1,5 @@
-from smartredis import Client, LLInfo
 import numpy as np
+from smartredis import Client, LLInfo
 
 # Initialize a Client
 colo_client = Client(cluster=False)

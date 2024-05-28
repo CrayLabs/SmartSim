@@ -1,5 +1,5 @@
-from smartredis import Client
 import numpy as np
+from smartredis import Client
 
 # Initialize a Client
 client = Client(cluster=False)

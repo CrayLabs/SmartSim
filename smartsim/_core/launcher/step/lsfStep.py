@@ -28,7 +28,7 @@ import os
 import shutil
 import typing as t
 
-from ....entity import DBNode, Application
+from ....entity import Application, DBNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import BsubBatchSettings, JsrunSettings

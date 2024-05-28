@@ -30,7 +30,7 @@ import pathlib
 import typing as t
 
 from ..._core.launcher.step import Step
-from ...entity import EntityList, Application
+from ...entity import Application, EntityList
 from ...error import SmartSimError
 from ..launcher.launcher import Launcher
 

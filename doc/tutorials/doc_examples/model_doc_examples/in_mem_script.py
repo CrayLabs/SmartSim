@@ -1,5 +1,6 @@
 from smartsim import Experiment
 
+
 def timestwo(x):
     return 2*x
 

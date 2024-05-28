@@ -1,6 +1,7 @@
 import numpy as np
 from smartredis import Client
 
+
 def calc_svd(input_tensor):
     # svd function from TorchScript API
     # torch isn't imported since we don't need that dependency

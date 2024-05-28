@@ -12,11 +12,13 @@
 #
 # pylint: skip-file
 
+import inspect
+import logging
 import os
 import sys
-import logging
-import inspect
+
 from sphinx.util.logging import SphinxLoggerAdapter
+
 sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------

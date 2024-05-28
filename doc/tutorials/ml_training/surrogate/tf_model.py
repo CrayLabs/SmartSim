@@ -1,12 +1,17 @@
 
 # take code for VAE from Keras https://keras.io/examples/generative/vae/
-from tensorflow import keras
-
-from tensorflow.keras.layers import Conv2D, Conv2DTranspose, BatchNormalization, \
-                                    Add, SpatialDropout2D, Layer, InputLayer
-from tensorflow.keras.models import Model
-
 import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.layers import (
+    Add,
+    BatchNormalization,
+    Conv2D,
+    Conv2DTranspose,
+    InputLayer,
+    Layer,
+    SpatialDropout2D,
+)
+from tensorflow.keras.models import Model
 
 activation = "selu"
 padding = "same"

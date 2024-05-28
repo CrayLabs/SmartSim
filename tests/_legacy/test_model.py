@@ -31,7 +31,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
-from smartsim.entity import Ensemble, Application
+from smartsim.entity import Application, Ensemble
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings

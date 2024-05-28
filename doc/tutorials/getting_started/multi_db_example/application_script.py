@@ -1,5 +1,5 @@
-from smartredis import ConfigOptions, Client
 from smartredis import *
+from smartredis import Client, ConfigOptions
 from smartredis.error import *
 
 # Initialize a ConfigOptions object

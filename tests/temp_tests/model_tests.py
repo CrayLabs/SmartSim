@@ -1,6 +1,6 @@
 from smartsim import Experiment
 from smartsim.database import Orchestrator
-from smartsim.entity import Ensemble, Application
+from smartsim.entity import Application, Ensemble
 from smartsim.settings import RunSettings, SrunSettings
 from smartsim.status import SmartSimStatus
 

@@ -1,11 +1,10 @@
 import numpy as np
 from smartredis import Client, Dataset
-from smartsim.ml import TrainingDataUploader
-
-import numpy as np
+from steady_state import fd2d_heat_steady_test01
 from tqdm import tqdm
 
-from steady_state import fd2d_heat_steady_test01
+from smartsim.ml import TrainingDataUploader
+
 
 def augment_batch(samples, targets):
     """Augment samples and targets

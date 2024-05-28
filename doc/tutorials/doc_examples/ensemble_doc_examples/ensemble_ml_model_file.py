@@ -1,6 +1,8 @@
-from smartsim import Experiment
 from tensorflow import keras
 from tensorflow.keras.layers import Conv2D, Input
+
+from smartsim import Experiment
+
 
 class Net(keras.Model):
         def __init__(self):

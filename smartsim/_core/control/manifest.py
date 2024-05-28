@@ -30,7 +30,7 @@ import typing as t
 from dataclasses import dataclass, field
 
 from ...database import Orchestrator
-from ...entity import DBNode, Ensemble, EntitySequence, Application, SmartSimEntity
+from ...entity import Application, DBNode, Ensemble, EntitySequence, SmartSimEntity
 from ...error import SmartSimError
 from ..config import CONFIG
 from ..utils import helpers as _helpers

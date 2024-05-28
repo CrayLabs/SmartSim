@@ -40,9 +40,9 @@ from smartsim.status import SmartSimStatus
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import Orchestrator
 from .entity import (
+    Application,
     Ensemble,
     EntitySequence,
-    Application,
     SmartSimEntity,
     TelemetryConfiguration,
 )

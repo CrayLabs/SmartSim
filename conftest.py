@@ -27,33 +27,32 @@
 from __future__ import annotations
 
 import asyncio
-from collections import defaultdict
-from dataclasses import dataclass
 import json
 import os
 import pathlib
 import shutil
-import subprocess
 import signal
 import socket
+import subprocess
 import sys
 import tempfile
 import time
 import typing as t
 import uuid
 import warnings
+from collections import defaultdict
+from dataclasses import dataclass
 from subprocess import run
-import time
 
 import psutil
 import pytest
 
 import smartsim
 from smartsim import Experiment
-from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
-from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
+from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
+from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import Orchestrator
 from smartsim.entity import Application

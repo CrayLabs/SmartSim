@@ -30,7 +30,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
-from smartsim.entity import Ensemble, Application
+from smartsim.entity import Application, Ensemble
 from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
