@@ -9,12 +9,26 @@ Jump to:
 
 ## SmartSim
 
+### Development branch
+
+To be released at some future point in time
+
+Description
+
+- Update packaging dependency
+
+Detailed Notes
+
+- Fix packaging failures due to deprecated `pkg_resources`. ([SmartSim-PR598](https://github.com/CrayLabs/SmartSim/pull/598))
+
+
 ### 0.7.0
 
 Released on 14 May, 2024
 
 Description
 
+-   Update tutorials and tutorial containers
 -   Improve Dragon server shutdown
 -   Add dragon runtime installer
 -   Add launcher based on Dragon
@@ -64,6 +78,8 @@ Description
 
 Detailed Notes
 
+-   The tutorials are up-to date with SmartSim and SmartRedis APIs. Additionally,
+    the tutorial containers' Docker files are updated. ([SmartSim-PR589](https://github.com/CrayLabs/SmartSim/pull/589))
 -   The Dragon server will now terminate any process which is still running
     when a request of an immediate shutdown is sent. ([SmartSim-PR582](https://github.com/CrayLabs/SmartSim/pull/582))
 -   Add `--dragon` option to `smart build`. Install appropriate Dragon

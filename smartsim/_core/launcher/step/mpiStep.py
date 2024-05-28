@@ -29,6 +29,7 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
+from ....entity import DBNode, Model
 from ....error import AllocationError, SmartSimError
 from ....log import get_logger
 from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
@@ -39,7 +40,9 @@ logger = get_logger(__name__)
 
 
 class _BaseMPIStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: RunSettings
+    ) -> None:
         """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
@@ -47,7 +50,7 @@ class _BaseMPIStep(Step):
         :param run_settings: run settings for entity
         """
 
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)
 
         self.alloc: t.Optional[str] = None
         if not run_settings.in_batch:
@@ -130,14 +133,14 @@ class _BaseMPIStep(Step):
         if self._get_mpmd():
             return self._make_mpmd()
 
-        exe = self.run_settings.exe
-        args = self.run_settings._exe_args  # pylint: disable=protected-access
+        exe = self.entity.exe
+        args = self.entity.exe_args  # pylint: disable=protected-access
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build mpiexec (MPMD) executable"""
-        exe = self.run_settings.exe
-        args = self.run_settings._exe_args  # pylint: disable=protected-access
+        exe = self.entity.exe
+        args = self.entity.exe_args  # pylint: disable=protected-access
         cmd = exe + args
 
         for mpmd in self._get_mpmd():
@@ -145,14 +148,16 @@ class _BaseMPIStep(Step):
             cmd += mpmd.format_run_args()
             cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
-            cmd += mpmd._exe_args  # pylint: disable=protected-access
+            cmd += mpmd.exe_args  # pylint: disable=protected-access
 
         cmd = sh_split(" ".join(cmd))
         return cmd
 
 
 class MpiexecStep(_BaseMPIStep):
-    def __init__(self, name: str, cwd: str, run_settings: MpiexecSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: MpiexecSettings
+    ) -> None:
         """Initialize an mpiexec job step
 
         :param name: name of the entity to be launched
@@ -162,11 +167,13 @@ class MpiexecStep(_BaseMPIStep):
                                     application
         """
 
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)
 
 
 class MpirunStep(_BaseMPIStep):
-    def __init__(self, name: str, cwd: str, run_settings: MpirunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: MpirunSettings
+    ) -> None:
         """Initialize an mpirun job step
 
         :param name: name of the entity to be launched
@@ -176,11 +183,13 @@ class MpirunStep(_BaseMPIStep):
                                     application
         """
 
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)
 
 
 class OrterunStep(_BaseMPIStep):
-    def __init__(self, name: str, cwd: str, run_settings: OrterunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Model, DBNode], run_settings: OrterunSettings
+    ) -> None:
         """Initialize an orterun job step
 
         :param name: name of the entity to be launched
@@ -190,4 +199,4 @@ class OrterunStep(_BaseMPIStep):
                                     application
         """
 
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)

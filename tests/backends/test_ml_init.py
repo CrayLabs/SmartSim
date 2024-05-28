@@ -24,33 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM ubuntu:22.04
+import tempfile
 
-LABEL maintainer="Cray Labs"
-LABEL org.opencontainers.image.source https://github.com/CrayLabs/SmartSim
+import pytest
 
-ARG DEBIAN_FRONTEND="noninteractive"
-ENV TZ=US/Seattle
+pytestmark = [pytest.mark.group_a, pytest.mark.group_b, pytest.mark.slow_tests]
 
-RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs && \
-    apt-get update \
-    && apt-get install --no-install-recommends -y build-essential \
-    git gcc make git-lfs wget libopenmpi-dev openmpi-bin unzip \
-    python3-pip python3 python3-dev cmake \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/python3 /usr/bin/python
 
-WORKDIR /home/craylabs
-COPY --chown=craylabs:root ./doc/tutorials/ /home/craylabs/tutorials/
+def test_import_ss_ml(monkeypatch):
+    with tempfile.TemporaryDirectory() as empty_dir:
+        # Move to an empty directory so `smartsim` dir is not in cwd
+        monkeypatch.chdir(empty_dir)
 
-USER craylabs
-RUN export PATH=/home/craylabs/.local/bin:$PATH && \
-    echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
-    python -m pip install smartsim[ml]==0.7.0 jupyter jupyterlab "ipython<8" matplotlib && \
-    smart build --device cpu -v && \
-    chown craylabs:root -R /home/craylabs/.local && \
-    rm -rf ~/.cache/pip
-
-WORKDIR /home/craylabs/tutorials/
-
-CMD ["/bin/bash", "-c", "PATH=/home/craylabs/.local/bin:$PATH /home/craylabs/.local/bin/jupyter lab --port 8888 --no-browser --ip=0.0.0.0"]
+        # Make sure SmartSim ML modules are importable
+        import smartsim.ml
+        import smartsim.ml.tf
+        import smartsim.ml.torch
