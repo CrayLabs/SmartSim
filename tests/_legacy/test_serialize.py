@@ -144,7 +144,9 @@ def test_started_entities_are_serialized(test_dir, manifest_json):
         exp.stop(hello_world_model, spam_eggs_model, hello_ensemble)
 
 
-def test_serialzed_feature_store_does_not_break_if_using_a_non_standard_install(monkeypatch):
+def test_serialzed_feature_store_does_not_break_if_using_a_non_standard_install(
+    monkeypatch,
+):
     monkeypatch.setattr(utils, "get_fs_path", lambda: None)
     fs = FeatureStore()
     dict_ = serialize._dictify_fs(fs, [])

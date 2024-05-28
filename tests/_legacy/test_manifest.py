@@ -158,7 +158,9 @@ def test_launched_manifest_builder_correctly_maps_data():
     lmb.add_model(model, 1)
     lmb.add_model(model_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
-    lmb.add_feature_store(feature_store, [i for i in range(len(feature_store.entities))])
+    lmb.add_feature_store(
+        feature_store, [i for i in range(len(feature_store.entities))]
+    )
 
     manifest = lmb.finalize()
     assert len(manifest.models) == 2

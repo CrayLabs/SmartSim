@@ -40,7 +40,9 @@ rs = SrunSettings("echo", ["spam", "eggs"])
 bs = SbatchSettings()
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(
+    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+)
 
 
 class MockStep(Step):

@@ -114,7 +114,10 @@ def test_fs_identifier_standard_then_colo_error(
         == "testdb_colo"
     )
 
-    with make_entity_context(exp, feature_store), make_entity_context(exp, smartsim_model):
+    with (
+        make_entity_context(exp, feature_store),
+        make_entity_context(exp, smartsim_model),
+    ):
         exp.start(feature_store)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(smartsim_model)
@@ -185,7 +188,10 @@ def test_fs_identifier_colo_then_standard(
 
     assert feature_store.name == "testdb_colo"
 
-    with make_entity_context(exp, feature_store), make_entity_context(exp, smartsim_model):
+    with (
+        make_entity_context(exp, feature_store),
+        make_entity_context(exp, smartsim_model),
+    ):
         exp.start(smartsim_model, block=True)
         exp.start(feature_store)
 
@@ -227,7 +233,10 @@ def test_fs_identifier_standard_twice_not_unique(wlmutils, test_dir):
     assert feature_store2.name == "my_fs"
 
     # CREATE feature store with fs_identifier
-    with make_entity_context(exp, feature_store2), make_entity_context(exp, feature_store):
+    with (
+        make_entity_context(exp, feature_store2),
+        make_entity_context(exp, feature_store),
+    ):
         exp.start(feature_store)
         with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(feature_store)
@@ -483,7 +492,10 @@ def test_launch_cluster_feature_store_single_fsid(
         fileutils, fs_type, exp, test_script, fs_args, on_wlm=on_wlm
     )
 
-    with make_entity_context(exp, feature_store), make_entity_context(exp, smartsim_model):
+    with (
+        make_entity_context(exp, feature_store),
+        make_entity_context(exp, smartsim_model),
+    ):
         exp.start(feature_store, block=True)
         exp.start(smartsim_model, block=True)
         job_dict = exp._control._jobs.get_fs_host_addresses()

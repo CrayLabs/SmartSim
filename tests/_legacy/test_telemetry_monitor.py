@@ -381,14 +381,26 @@ def test_load_manifest_fs_and_models_1run(fileutils: FileUtils):
 @pytest.mark.parametrize(
     ["task_id", "step_id", "etype", "exp_isfeature_store", "exp_ismanaged"],
     [
-        pytest.param("123", "", "model", False, False, id="unmanaged, non-feature_store"),
-        pytest.param("456", "123", "ensemble", False, True, id="managed, non-feature_store"),
-        pytest.param("789", "987", "featurestore", True, True, id="managed, feature_store"),
-        pytest.param("987", "", "featurestore", True, False, id="unmanaged, feature_store"),
+        pytest.param(
+            "123", "", "model", False, False, id="unmanaged, non-feature_store"
+        ),
+        pytest.param(
+            "456", "123", "ensemble", False, True, id="managed, non-feature_store"
+        ),
+        pytest.param(
+            "789", "987", "featurestore", True, True, id="managed, feature_store"
+        ),
+        pytest.param(
+            "987", "", "featurestore", True, False, id="unmanaged, feature_store"
+        ),
     ],
 )
 def test_persistable_computed_properties(
-    task_id: str, step_id: str, etype: str, exp_isfeature_store: bool, exp_ismanaged: bool
+    task_id: str,
+    step_id: str,
+    etype: str,
+    exp_isfeature_store: bool,
+    exp_ismanaged: bool,
 ):
     name = f"test-{etype}-{uuid.uuid4()}"
     timestamp = get_ts_ms()
@@ -795,7 +807,9 @@ def test_telemetry_fs_only_with_generate(test_dir, wlmutils, monkeypatch, config
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create regular feature store
-        feature_store = exp.create_feature_store(port=test_port, interface=test_interface)
+        feature_store = exp.create_feature_store(
+            port=test_port, interface=test_interface
+        )
         exp.generate(feature_store)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
@@ -839,7 +853,9 @@ def test_telemetry_fs_only_without_generate(test_dir, wlmutils, monkeypatch, con
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create regular feature store
-        feature_store = exp.create_feature_store(port=test_port, interface=test_interface)
+        feature_store = exp.create_feature_store(
+            port=test_port, interface=test_interface
+        )
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
         try:
@@ -883,7 +899,9 @@ def test_telemetry_fs_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         # create regular feature store
-        feature_store = exp.create_feature_store(port=test_port, interface=test_interface)
+        feature_store = exp.create_feature_store(
+            port=test_port, interface=test_interface
+        )
         exp.generate(feature_store)
         try:
             exp.start(feature_store)

@@ -48,7 +48,9 @@ model_2 = Model("model_name", run_settings=model_dup_setting, params={}, path=""
 ens = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=2)
 # Ensemble entity slightly different but with same name
 ens_2 = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=3)
-feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(
+    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+)
 
 
 def test_finished_entity_feature_store_error():

@@ -733,7 +733,9 @@ def test_cli_full_build_execute(capsys, monkeypatch):
 
     # mock out the internal get_fs_path method so we don't actually do file system ops
     monkeypatch.setattr(smartsim._core._cli.build, "tabulate", mock_operation)
-    monkeypatch.setattr(smartsim._core._cli.build, "build_feature_store", mock_operation)
+    monkeypatch.setattr(
+        smartsim._core._cli.build, "build_feature_store", mock_operation
+    )
     monkeypatch.setattr(smartsim._core._cli.build, "build_redis_ai", mock_operation)
     monkeypatch.setattr(
         smartsim._core._cli.build, "check_py_torch_version", mock_operation

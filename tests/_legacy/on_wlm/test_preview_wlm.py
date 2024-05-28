@@ -256,7 +256,9 @@ def test_preview_launch_command(test_dir, wlmutils, choose_host):
         n_models=4,
     )
 
-    preview_manifest = Manifest(feature_store, spam_eggs_model, hello_world_model, ensemble)
+    preview_manifest = Manifest(
+        feature_store, spam_eggs_model, hello_world_model, ensemble
+    )
 
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")

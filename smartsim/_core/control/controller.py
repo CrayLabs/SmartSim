@@ -505,7 +505,9 @@ class Controller:
                                  names and `Step`s of the launched featurestore
         """
         featurestore.remove_stale_files()
-        feature_store_telem_dir = manifest_builder.run_telemetry_subdirectory / "database"
+        feature_store_telem_dir = (
+            manifest_builder.run_telemetry_subdirectory / "database"
+        )
 
         # if the featurestore was launched as a batch workload
         if featurestore.batch:
@@ -513,7 +515,8 @@ class Controller:
                 featurestore, feature_store_telem_dir
             )
             manifest_builder.add_feature_store(
-                featurestore, [(feature_store_batch_step.name, step) for step in substeps]
+                featurestore,
+                [(feature_store_batch_step.name, step) for step in substeps],
             )
 
             self._launch_step(feature_store_batch_step, featurestore)
@@ -526,7 +529,12 @@ class Controller:
         # if featurestore was run on existing allocation, locally, or in allocation
         else:
             fs_steps = [
-                (self._create_job_step(fs, feature_store_telem_dir / featurestore.name), fs)
+                (
+                    self._create_job_step(
+                        fs, feature_store_telem_dir / featurestore.name
+                    ),
+                    fs,
+                )
                 for fs in featurestore.entities
             ]
             manifest_builder.add_feature_store(
@@ -552,7 +560,9 @@ class Controller:
                     create_cluster(featurestore.hosts, featurestore.ports)
                     check_cluster_status(featurestore.hosts, featurestore.ports)
                     num_shards = featurestore.num_shards
-                    logger.info(f"Feature store cluster created with {num_shards} shards")
+                    logger.info(
+                        f"Feature store cluster created with {num_shards} shards"
+                    )
                     cluster_created = True
                 except SSInternalError:
                     if num_trials > 0:

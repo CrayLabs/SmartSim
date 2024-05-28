@@ -147,11 +147,17 @@ def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     )
     feature_store.set_run_arg("account", "ACCOUNT")
     assert all(
-        [fs.run_settings.run_args["account"] == "ACCOUNT" for fs in feature_store.entities]
+        [
+            fs.run_settings.run_args["account"] == "ACCOUNT"
+            for fs in feature_store.entities
+        ]
     )
     feature_store.set_run_arg("pes-per-numa-node", "5")
     assert all(
-        ["pes-per-numa-node" not in fs.run_settings.run_args for fs in feature_store.entities]
+        [
+            "pes-per-numa-node" not in fs.run_settings.run_args
+            for fs in feature_store.entities
+        ]
     )
 
 
@@ -195,7 +201,10 @@ def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     )
     feature_store.set_run_arg("account", "ACCOUNT")
     assert all(
-        [fs.run_settings.run_args["account"] == "ACCOUNT" for fs in feature_store.entities]
+        [
+            fs.run_settings.run_args["account"] == "ACCOUNT"
+            for fs in feature_store.entities
+        ]
     )
 
 
@@ -248,7 +257,9 @@ def test_feature_store_results_in_correct_number_of_shards(single_cmd: bool) -> 
         assert len(feature_store.entities) == num_shards
         assert all(node.run_settings.mpmd == [] for node in feature_store.entities)
     assert (
-        feature_store.num_shards == feature_store.fs_nodes == sum(node.num_shards for node in feature_store.entities)
+        feature_store.num_shards
+        == feature_store.fs_nodes
+        == sum(node.num_shards for node in feature_store.entities)
     )
 
 

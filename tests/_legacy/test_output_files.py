@@ -50,7 +50,9 @@ bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(
+    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+)
 model = Model("test_model", params={}, path="", run_settings=rs)
 batch_model = Model(
     "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs

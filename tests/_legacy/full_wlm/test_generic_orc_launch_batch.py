@@ -227,5 +227,6 @@ def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
         # Ensure  it is the same FS that Experiment 1 was tracking
         time.sleep(5)
         assert not any(
-            stat == SmartSimStatus.STATUS_RUNNING for stat in exp.get_status(feature_store)
+            stat == SmartSimStatus.STATUS_RUNNING
+            for stat in exp.get_status(feature_store)
         )

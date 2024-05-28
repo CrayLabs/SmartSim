@@ -92,6 +92,7 @@ built_mpi_app = False
 test_hostlist = None
 has_aprun = shutil.which("aprun") is not None
 
+
 def get_account() -> str:
     return test_account
 
@@ -140,7 +141,7 @@ def pytest_sessionstart(
         time.sleep(0.1)
 
     if CONFIG.dragon_server_path is None:
-        dragon_server_path =  os.path.join(test_output_root, "dragon_server")
+        dragon_server_path = os.path.join(test_output_root, "dragon_server")
         os.makedirs(dragon_server_path)
         os.environ["SMARTSIM_DRAGON_SERVER_PATH"] = dragon_server_path
 
@@ -182,7 +183,7 @@ def build_mpi_app() -> t.Optional[pathlib.Path]:
     if cc is None:
         return None
 
-    path_to_src =  pathlib.Path(FileUtils().get_test_conf_path("mpi"))
+    path_to_src = pathlib.Path(FileUtils().get_test_conf_path("mpi"))
     path_to_out = pathlib.Path(test_output_root) / "apps" / "mpi_app"
     os.makedirs(path_to_out.parent, exist_ok=True)
     cmd = [cc, str(path_to_src / "mpi_hello.c"), "-o", str(path_to_out)]
@@ -193,11 +194,12 @@ def build_mpi_app() -> t.Optional[pathlib.Path]:
     else:
         return None
 
+
 @pytest.fixture(scope="session")
 def mpi_app_path() -> t.Optional[pathlib.Path]:
     """Return path to MPI app if it was built
 
-        return None if it could not or will not be built
+    return None if it could not or will not be built
     """
     if not CONFIG.test_mpi:
         return None
@@ -224,7 +226,6 @@ def kill_all_test_spawned_processes() -> None:
             child.kill()
     except Exception:
         print("Not all processes were killed after test")
-
 
 
 def get_hostlist() -> t.Optional[t.List[str]]:
@@ -707,7 +708,9 @@ def global_dragon_teardown() -> None:
     """
     if test_launcher != "dragon" or CONFIG.dragon_server_path is None:
         return
-    logger.debug(f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}")
+    logger.debug(
+        f"Tearing down Dragon infrastructure, server path: {CONFIG.dragon_server_path}"
+    )
     dragon_connector = DragonConnector()
     dragon_connector.ensure_connected()
     dragon_connector.cleanup()
@@ -874,9 +877,13 @@ class CountingCallable:
     def details(self) -> t.List[t.Tuple[t.Tuple[t.Any, ...], t.Dict[str, t.Any]]]:
         return self._details
 
+
 ## Reuse feature store across tests
 
-feature_store_registry: t.DefaultDict[str, t.Optional[FeatureStore]] = defaultdict(lambda: None)
+feature_store_registry: t.DefaultDict[str, t.Optional[FeatureStore]] = defaultdict(
+    lambda: None
+)
+
 
 @pytest.fixture(scope="function")
 def local_experiment(test_dir: str) -> smartsim.Experiment:
@@ -884,15 +891,15 @@ def local_experiment(test_dir: str) -> smartsim.Experiment:
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(name, exp_path=test_dir, launcher="local")
 
+
 @pytest.fixture(scope="function")
 def wlm_experiment(test_dir: str, wlmutils: WLMUtils) -> smartsim.Experiment:
     """Create a default experiment that uses the requested launcher"""
     name = pathlib.Path(test_dir).stem
     return smartsim.Experiment(
-        name,
-        exp_path=test_dir,
-        launcher=wlmutils.get_test_launcher()
+        name, exp_path=test_dir, launcher=wlmutils.get_test_launcher()
     )
+
 
 def _cleanup_fs(name: str) -> None:
     global feature_store_registry
@@ -905,19 +912,22 @@ def _cleanup_fs(name: str) -> None:
         except:
             pass
 
+
 @dataclass
 class DBConfiguration:
     name: str
     launcher: str
     num_nodes: int
-    interface: t.Union[str,t.List[str]]
+    interface: t.Union[str, t.List[str]]
     hostlist: t.Optional[t.List[str]]
     port: int
 
+
 @dataclass
 class PrepareFeatureStoreOutput:
-    featurestore: t.Optional[FeatureStore] # The actual feature store object
-    new_fs: bool     # True if a new feature store was created when calling prepare_fs
+    featurestore: t.Optional[FeatureStore]  # The actual feature store object
+    new_fs: bool  # True if a new feature store was created when calling prepare_fs
+
 
 # Reuse feature stores
 @pytest.fixture(scope="session")
@@ -934,6 +944,7 @@ def local_fs() -> t.Generator[DBConfiguration, None, None]:
     yield config
     _cleanup_fs(name)
 
+
 @pytest.fixture(scope="session")
 def single_fs(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
     hostlist = wlmutils.get_test_hostlist()
@@ -945,7 +956,7 @@ def single_fs(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]:
         1,
         wlmutils.get_test_interface(),
         hostlist,
-        _find_free_port(tuple(reversed(test_ports)))
+        _find_free_port(tuple(reversed(test_ports))),
     )
     yield config
     _cleanup_fs(name)
@@ -970,9 +981,7 @@ def clustered_fs(wlmutils: WLMUtils) -> t.Generator[DBConfiguration, None, None]
 
 @pytest.fixture
 def register_new_fs() -> t.Callable[[DBConfiguration], FeatureStore]:
-    def _register_new_fs(
-        config: DBConfiguration
-    ) -> FeatureStore:
+    def _register_new_fs(config: DBConfiguration) -> FeatureStore:
         exp_path = pathlib.Path(test_output_root, config.name)
         exp_path.mkdir(exist_ok=True)
         exp = Experiment(
@@ -985,26 +994,21 @@ def register_new_fs() -> t.Callable[[DBConfiguration], FeatureStore]:
             batch=False,
             interface=config.interface,
             hosts=config.hostlist,
-            fs_nodes=config.num_nodes
+            fs_nodes=config.num_nodes,
         )
         exp.generate(feature_store, overwrite=True)
         exp.start(feature_store)
         global feature_store_registry
         feature_store_registry[config.name] = feature_store
         return feature_store
+
     return _register_new_fs
 
 
 @pytest.fixture(scope="function")
 def prepare_fs(
-    register_new_fs: t.Callable[
-        [DBConfiguration],
-        FeatureStore
-    ]
-) -> t.Callable[
-    [DBConfiguration],
-    PrepareFeatureStoreOutput
-]:
+    register_new_fs: t.Callable[[DBConfiguration], FeatureStore]
+) -> t.Callable[[DBConfiguration], PrepareFeatureStoreOutput]:
     def _prepare_fs(fs_config: DBConfiguration) -> PrepareFeatureStoreOutput:
         global feature_store_registry
         fs = feature_store_registry[fs_config.name]
@@ -1020,4 +1024,5 @@ def prepare_fs(
             new_fs = True
 
         return PrepareFeatureStoreOutput(fs, new_fs)
+
     return _prepare_fs

@@ -269,7 +269,9 @@ def cleanup() -> None:
         logger.warning("Couldn't find feature store process to kill.")
 
     except OSError as e:
-        logger.warning(f"Failed to clean up colocated feature store gracefully: {str(e)}")
+        logger.warning(
+            f"Failed to clean up colocated feature store gracefully: {str(e)}"
+        )
     finally:
         if LOCK.is_locked:
             LOCK.release()
@@ -325,7 +327,9 @@ if __name__ == "__main__":
 
         LOCK = filelock.FileLock(tmp_lockfile)
         LOCK.acquire(timeout=0.1)
-        logger.debug(f"Starting colocated feature store on host: {socket.gethostname()}")
+        logger.debug(
+            f"Starting colocated feature store on host: {socket.gethostname()}"
+        )
 
         # make sure to register the cleanup before we start
         # the proecss so our signaller will be able to stop

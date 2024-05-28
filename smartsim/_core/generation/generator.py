@@ -168,7 +168,9 @@ class Generator:
             # Always remove featurestore files if present.
             if path.isdir(feature_store_path):
                 shutil.rmtree(feature_store_path, ignore_errors=True)
-            pathlib.Path(feature_store_path).mkdir(exist_ok=self.overwrite, parents=True)
+            pathlib.Path(feature_store_path).mkdir(
+                exist_ok=self.overwrite, parents=True
+            )
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for Ensemble instances

@@ -669,7 +669,9 @@ class Model(SmartSimEntity):
 
     def add_ml_model_object(self, fs_model: FSModel) -> None:
         if not fs_model.is_file and self.colocated:
-            err_msg = "ML model can not be set from memory for colocated feature stores.\n"
+            err_msg = (
+                "ML model can not be set from memory for colocated feature stores.\n"
+            )
             err_msg += (
                 f"Please store the ML model named {fs_model.name} in binary format "
             )

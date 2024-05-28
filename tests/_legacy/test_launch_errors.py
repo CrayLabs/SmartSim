@@ -66,9 +66,13 @@ def test_feature_store_relaunch(test_dir, wlmutils):
     exp_name = "test-feature-store-on-relaunch"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    feature_store = FeatureStore(port=wlmutils.get_test_port(), fs_identifier="feature_store_1")
+    feature_store = FeatureStore(
+        port=wlmutils.get_test_port(), fs_identifier="feature_store_1"
+    )
     feature_store.set_path(test_dir)
-    feature_store_1 = FeatureStore(port=wlmutils.get_test_port() + 1, fs_identifier="feature_store_2")
+    feature_store_1 = FeatureStore(
+        port=wlmutils.get_test_port() + 1, fs_identifier="feature_store_2"
+    )
     feature_store_1.set_path(test_dir)
     try:
         exp.start(feature_store)
