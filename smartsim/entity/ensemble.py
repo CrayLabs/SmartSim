@@ -45,13 +45,11 @@ from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Model
-from .strategies import create_all_permutations, random_permutations, step_values
+from .strategies import (
+    create_all_permutations, random_permutations, step_values, TPermutationStrategy
+)
 
 logger = get_logger(__name__)
-
-StrategyFunction = t.Callable[
-    [t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]
-]
 
 
 class Ensemble(EntityList[Model]):
@@ -125,11 +123,9 @@ class Ensemble(EntityList[Model]):
         # the ensemble and assign run_settings to each member
         if self.params:
             if self.run_settings and self.exe:
-                param_names, params = self._read_model_parameters()
-
                 # Compute all combinations of model parameters and arguments
                 n_models = kwargs.get("n_models", 0)
-                all_model_params = strategy(param_names, params, n_models)
+                all_model_params = strategy(self.params, n_models)
                 if not isinstance(all_model_params, list):
                     raise UserStrategyError(strategy)
 
@@ -297,7 +293,7 @@ class Ensemble(EntityList[Model]):
         print(self.attached_files_table)
 
     @staticmethod
-    def _set_strategy(strategy: str) -> StrategyFunction:
+    def _set_strategy(strategy: str) -> TPermutationStrategy:
         """Set the permutation strategy for generating models within
         the ensemble
 
@@ -316,36 +312,6 @@ class Ensemble(EntityList[Model]):
         raise SSUnsupportedError(
             f"Permutation strategy given is not supported: {strategy}"
         )
-
-    def _read_model_parameters(self) -> t.Tuple[t.List[str], t.List[t.List[str]]]:
-        """Take in the parameters given to the ensemble and prepare to
-        create models for the ensemble
-
-        :raises TypeError: if params are of the wrong type
-        :return: param names and values for permutation strategy
-        """
-
-        if not isinstance(self.params, dict):
-            raise TypeError(
-                "Ensemble initialization argument 'params' must be of type dict"
-            )
-
-        param_names: t.List[str] = []
-        parameters: t.List[t.List[str]] = []
-        for name, val in self.params.items():
-            param_names.append(name)
-
-            if isinstance(val, list):
-                val = [str(v) for v in val]
-                parameters.append(val)
-            elif isinstance(val, (int, str)):
-                parameters.append([str(val)])
-            else:
-                raise TypeError(
-                    "Incorrect type for ensemble parameters\n"
-                    + "Must be list, int, or string."
-                )
-        return param_names, parameters
 
     def add_ml_model(
         self,
