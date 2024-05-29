@@ -46,7 +46,10 @@ from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Model
 from .strategies import (
-    create_all_permutations, random_permutations, step_values, TPermutationStrategy
+    TPermutationStrategy,
+    create_all_permutations,
+    random_permutations,
+    step_values,
 )
 
 logger = get_logger(__name__)

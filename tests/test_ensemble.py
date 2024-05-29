@@ -24,15 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import operator
 import itertools
 
 import pytest
 
-from smartsim.entity import entity
 from smartsim.entity.entity import Ensemble
-from smartsim.entity import strategies
-from smartsim.error import errors
 
 pytestmark = pytest.mark.group_a
 

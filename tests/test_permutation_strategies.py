@@ -31,6 +31,7 @@ from smartsim.error import errors
 
 pytestmark = pytest.mark.group_a
 
+
 def test_strategy_registration(monkeypatch):
     monkeypatch.setattr(strategies, "_REGISTERED_STRATEGIES", {})
     assert not strategies._REGISTERED_STRATEGIES
