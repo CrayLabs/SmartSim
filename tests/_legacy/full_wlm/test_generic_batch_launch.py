@@ -120,3 +120,26 @@ def test_batch_ensemble_replicas(fileutils, test_dir, wlmutils):
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+
+
+def test_batch_run_args_leading_dashes(fileutils, test_dir, wlmutils):
+    """
+    Test that batch args strip leading `-`
+    """
+    exp_name = "test-batch-run-args-leading-dashes"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+
+    script = fileutils.get_test_conf_path("sleep.py")
+    batch_args = {"--nodes": 1}
+    batch_settings = exp.create_batch_settings(time="00:01:00", batch_args=batch_args)
+
+    batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, batch_settings)
+    run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
+    model = exp.create_model(
+        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
+    )
+
+    exp.start(model, block=True)
+    statuses = exp.get_status(model)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
