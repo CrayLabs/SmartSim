@@ -26,6 +26,8 @@
 
 # Generation Strategies
 
+from __future__ import annotations
+
 import itertools
 import random
 import typing as t

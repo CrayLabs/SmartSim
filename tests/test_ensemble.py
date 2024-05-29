@@ -28,6 +28,7 @@ import itertools
 
 import pytest
 
+from smartsim.entity import entity
 from smartsim.entity.entity import Ensemble
 
 pytestmark = pytest.mark.group_a
