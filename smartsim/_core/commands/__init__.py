@@ -26,3 +26,4 @@
 
 from .command import Command
 from .commandList import CommandList
+from .launchCommands import LaunchCommands
