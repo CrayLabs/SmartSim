@@ -41,10 +41,10 @@ class JsrunArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.LsfLauncher.value
 
-    def _set_reserved_launch_args(self) -> set[str]:
+    def set_reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
-        return {"chdir", "h"}
+        return {"chdir", "h", "stdio_stdout", "o", "stdio_stderr", "k"}
 
     def set_tasks(self, tasks: int) -> t.Union[IntegerArgument, None]:
         """Set the number of tasks for this job
@@ -87,11 +87,12 @@ class JsrunArgTranslator(LaunchArgTranslator):
         # args launcher uses
         args = []
         restricted = ["chdir", "h", "stdio_stdout", "o", "stdio_stderr", "k"]
+        
         for opt, value in launcher_args.items():
             if opt not in restricted:
                 short_arg = bool(len(str(opt)) == 1)
                 prefix = "-" if short_arg else "--"
-                if not value:
+                if value is None:
                     args += [prefix + opt]
                 else:
                     if short_arg:

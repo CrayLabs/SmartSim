@@ -29,9 +29,13 @@ import shutil
 import typing as t
 
 from ....entity import DBNode, Model
-from ....settings import Singularity
-from ....settings.base import RunSettings
+# from ....settings import Singularity
+# from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd
+
+# Temperary mock imports
+class Singularity: pass
+class RunSettings: pass
 
 
 class LocalStep(Step):

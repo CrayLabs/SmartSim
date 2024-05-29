@@ -33,12 +33,18 @@ import typing as t
 from ...._core.schemas.dragonRequests import DragonRunRequest, request_registry
 from ....error.errors import SSUnsupportedError
 from ....log import get_logger
-from ....settings import (
-    DragonRunSettings,
-    QsubBatchSettings,
-    SbatchSettings,
-    Singularity,
-)
+# from ....settings import (
+#     DragonRunSettings,
+#     QsubBatchSettings,
+#     SbatchSettings,
+#     Singularity,
+# )
+# Temp mock imports
+class DragonRunSettings: pass
+class QsubBatchSettings: pass
+class SbatchSettings: pass
+class Singularity: pass
+
 from .step import Step
 
 logger = get_logger(__name__)

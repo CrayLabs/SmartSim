@@ -50,7 +50,7 @@ class LaunchArgTranslator(ABC):
         pass
     
     @abstractmethod
-    def _set_reserved_launch_args(self) -> set[str]:
+    def set_reserved_launch_args(self) -> set[str]:
         """ Reserved launch keys per Launcher.
         """
         pass

@@ -1,9 +1,9 @@
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.translators.launch.mpi import MpiArgTranslator, MpiexecArgTranslator, OrteArgTranslator
+from smartsim.settings import LaunchSettings
+from smartsim.settings.translators.launch.mpi import MpiArgTranslator, MpiexecArgTranslator, OrteArgTranslator
 import pytest
 import logging
 import itertools
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings.launchCommand import LauncherType
 
 @pytest.mark.parametrize(
     "launcher",
@@ -29,7 +29,7 @@ def test_launcher_str(launcher):
 def test_set_reserved_launcher_args(launcher):
     """Ensure launcher_str returns appropriate value"""
     mpiSettings = LaunchSettings(launcher=launcher)
-    assert mpiSettings._reserved_launch_args == {"wd", "wdir"}
+    assert mpiSettings.reserved_launch_args == {"wd", "wdir"}
 
 @pytest.mark.parametrize(
     "l,function,value,result,flag",
@@ -56,7 +56,6 @@ def test_set_reserved_launcher_args(launcher):
 def test_mpi_class_methods(l,function, value, flag, result):
     mpiSettings = LaunchSettings(launcher=l[0])
     assert isinstance(mpiSettings.arg_translator,l[1])
-    assert mpiSettings.launcher.value == l[0].value
     getattr(mpiSettings, function)(*value)
     assert mpiSettings.launcher_args[flag] == result
 
@@ -71,7 +70,6 @@ def test_mpi_class_methods(l,function, value, flag, result):
 def test_format_env_vars(launcher):
     env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
     mpiSettings = LaunchSettings(launcher=launcher, env_vars=env_vars)
-    assert mpiSettings.launcher.value == launcher.value
     formatted = mpiSettings.format_env_vars()
     result = [
         "-x",
@@ -108,7 +106,6 @@ def test_format_launcher_args(launcher):
 )
 def test_set_verbose_launch(launcher):
     mpiSettings = LaunchSettings(launcher=launcher)
-    assert mpiSettings.launcher.value == launcher.value
     mpiSettings.set_verbose_launch(True)
     assert mpiSettings.launcher_args == {'verbose': None}
     mpiSettings.set_verbose_launch(False)
@@ -124,7 +121,6 @@ def test_set_verbose_launch(launcher):
 )
 def test_set_quiet_launch(launcher):
     mpiSettings = LaunchSettings(launcher=launcher)
-    assert mpiSettings.launcher.value == launcher.value
     mpiSettings.set_quiet_launch(True)
     assert mpiSettings.launcher_args == {'quiet': None}
     mpiSettings.set_quiet_launch(False)
@@ -180,7 +176,7 @@ def test_launcher_str(launcher):
     ],
 )
 def test_unimplimented_methods_throw_warning(l, caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True

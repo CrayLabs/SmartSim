@@ -48,7 +48,11 @@ from .entity import (
 )
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
-from .settings import Container, base, settings
+# from .settings import Container, base, settings
+# Mock imports
+class Container: pass
+class BatchSettings: pass
+class RunSettings: pass
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -434,8 +438,8 @@ class Experiment:
         exe: t.Optional[str] = None,
         exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
-        batch_settings: t.Optional[base.BatchSettings] = None,
-        run_settings: t.Optional[base.RunSettings] = None,
+        batch_settings: t.Optional[BatchSettings] = None,
+        run_settings: t.Optional[RunSettings] = None,
         replicas: t.Optional[int] = None,
         perm_strategy: str = "all_perm",
         path: t.Optional[str] = None,
@@ -513,12 +517,12 @@ class Experiment:
         self,
         name: str,
         exe: str,
-        run_settings: base.RunSettings,
+        run_settings: RunSettings,
         exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         path: t.Optional[str] = None,
         enable_key_prefixing: bool = False,
-        batch_settings: t.Optional[base.BatchSettings] = None,
+        batch_settings: t.Optional[BatchSettings] = None,
     ) -> Model:
         """Create a general purpose ``Model``
 
@@ -619,115 +623,6 @@ class Experiment:
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
             return new_model
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    @_contextualize
-    def create_run_settings(
-        self,
-        run_command: str = "auto",
-        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
-        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
-        container: t.Optional[Container] = None,
-        **kwargs: t.Any,
-    ) -> settings.RunSettings:
-        """Create a ``RunSettings`` instance.
-
-        run_command="auto" will attempt to automatically
-        match a run command on the system with a ``RunSettings``
-        class in SmartSim. If found, the class corresponding
-        to that run_command will be created and returned.
-
-        If the local launcher is being used, auto detection will
-        be turned off.
-
-        If a recognized run command is passed, the ``RunSettings``
-        instance will be a child class such as ``SrunSettings``
-
-        If not supported by smartsim, the base ``RunSettings`` class
-        will be created and returned with the specified run_command and run_args
-        will be evaluated literally.
-
-        Run Commands with implemented helper classes:
-         - aprun (ALPS)
-         - srun (SLURM)
-         - mpirun (OpenMPI)
-         - jsrun (LSF)
-
-        :param run_command: command to run the executable
-        :param exe: executable to run
-        :param exe_args: arguments to pass to the executable
-        :param run_args: arguments to pass to the ``run_command``
-        :param env_vars: environment variables to pass to the executable
-        :param container: if execution environment is containerized
-        :return: the created ``RunSettings``
-        """
-
-        try:
-            return settings.create_run_settings(
-                self._launcher,
-                run_command=run_command,
-                run_args=run_args,
-                env_vars=env_vars,
-                container=container,
-                **kwargs,
-            )
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    @_contextualize
-    def create_batch_settings(
-        self,
-        nodes: int = 1,
-        time: str = "",
-        queue: str = "",
-        account: str = "",
-        batch_args: t.Optional[t.Dict[str, str]] = None,
-        **kwargs: t.Any,
-    ) -> base.BatchSettings:
-        """Create a ``BatchSettings`` instance
-
-        Batch settings parameterize batch workloads. The result of this
-        function can be passed to the ``Ensemble`` initialization.
-
-        the `batch_args` parameter can be used to pass in a dictionary
-        of additional batch command arguments that aren't supported through
-        the smartsim interface
-
-
-        .. highlight:: python
-        .. code-block:: python
-
-            # i.e. for Slurm
-            batch_args = {
-                "distribution": "block"
-                "exclusive": None
-            }
-            bs = exp.create_batch_settings(nodes=3,
-                                           time="10:00:00",
-                                           batch_args=batch_args)
-            bs.set_account("default")
-
-        :param nodes: number of nodes for batch job
-        :param time: length of batch job
-        :param queue: queue or partition (if slurm)
-        :param account: user account name for batch system
-        :param batch_args: additional batch arguments
-        :return: a newly created BatchSettings instance
-        :raises SmartSimError: if batch creation fails
-        """
-        try:
-            return settings.create_batch_settings(
-                self._launcher,
-                nodes=nodes,
-                time=time,
-                queue=queue,
-                account=account,
-                batch_args=batch_args,
-                **kwargs,
-            )
         except SmartSimError as e:
             logger.error(e)
             raise

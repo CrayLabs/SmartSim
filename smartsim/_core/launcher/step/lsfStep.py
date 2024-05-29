@@ -31,8 +31,13 @@ import typing as t
 from ....entity import DBNode, Model
 from ....error import AllocationError
 from ....log import get_logger
-from ....settings import BsubBatchSettings, JsrunSettings
-from ....settings.base import RunSettings
+# from ....settings import BsubBatchSettings, JsrunSettings
+# from ....settings.base import RunSettings
+# Temp mock imports
+class BsubBatchSettings: pass
+class JsrunSettings: pass
+class RunSettings: pass
+
 from .step import Step
 
 logger = get_logger(__name__)

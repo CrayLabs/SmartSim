@@ -31,15 +31,24 @@ from shutil import which
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import (
-    MpiexecSettings,
-    MpirunSettings,
-    OrterunSettings,
-    RunSettings,
-    SbatchSettings,
-    SettingsBase,
-    SrunSettings,
-)
+# from ....settings import (
+#     MpiexecSettings,
+#     MpirunSettings,
+#     OrterunSettings,
+#     RunSettings,
+#     SbatchSettings,
+#     SettingsBase,
+#     SrunSettings,
+# )
+# Mock imports
+class SrunSettings: pass
+class MpiexecSettings: pass
+class MpirunSettings: pass
+class OrterunSettings: pass
+class SbatchSettings: pass
+class RunSettings: pass
+class SettingsBase: pass
+
 from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher

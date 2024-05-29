@@ -1,7 +1,7 @@
 import pytest
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.translators.launch.alps import AprunArgTranslator
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings import LaunchSettings
+from smartsim.settings.translators.launch.alps import AprunArgTranslator
+from smartsim.settings.launchCommand import LauncherType
 import logging
 
 def test_launcher_str():
@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert alpsLauncher._reserved_launch_args == set()
+    assert alpsLauncher.reserved_launch_args == set()
 
 @pytest.mark.parametrize(
     "function,value,result,flag",
@@ -35,14 +35,12 @@ def test_set_reserved_launcher_args():
 )
 def test_alps_class_methods(function, value, flag, result):
     alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert alpsLauncher.launcher.value == LauncherType.AlpsLauncher.value
     assert isinstance(alpsLauncher.arg_translator,AprunArgTranslator)
     getattr(alpsLauncher, function)(*value)
     assert alpsLauncher.launcher_args[flag] == result
 
 def test_set_verbose_launch():
     alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert alpsLauncher.launcher.value == LauncherType.AlpsLauncher.value
     assert isinstance(alpsLauncher.arg_translator,AprunArgTranslator)
     alpsLauncher.set_verbose_launch(True)
     assert alpsLauncher.launcher_args == {'debug': 7}
@@ -51,7 +49,6 @@ def test_set_verbose_launch():
 
 def test_set_quiet_launch():
     aprunLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert aprunLauncher.launcher.value == LauncherType.AlpsLauncher.value
     assert isinstance(aprunLauncher.arg_translator,AprunArgTranslator)
     aprunLauncher.set_quiet_launch(True)
     assert aprunLauncher.launcher_args == {'quiet': None}
@@ -61,7 +58,7 @@ def test_set_quiet_launch():
 def test_format_env_vars():
     env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
     aprunLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher, env_vars=env_vars)
-    assert aprunLauncher.launcher.value == LauncherType.AlpsLauncher.value
+    assert isinstance(aprunLauncher.arg_translator,AprunArgTranslator)
     aprunLauncher.update_env({"OMP_NUM_THREADS": "10"})
     formatted = aprunLauncher.format_env_vars()
     result = ["-e", "OMP_NUM_THREADS=10", "-e", "LOGGING=verbose"]
@@ -111,7 +108,7 @@ def test_invalid_exclude_hostlist_format():
 )
 def test_unimplimented_methods_throw_warning(caplog, method, params):
     """Test methods not implemented throw warnings"""
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True
@@ -127,7 +124,7 @@ def test_unimplimented_methods_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and (method and "not supported" and "aprun") in rec.msg
+                and (method and "not supported" and "alps") in rec.msg
             ):
                 break
         else:

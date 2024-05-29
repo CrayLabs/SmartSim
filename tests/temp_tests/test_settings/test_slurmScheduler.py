@@ -1,12 +1,12 @@
-from smartsim.settingshold import BatchSettings
-from smartsim.settingshold.translators.batch.slurm import SlurmBatchArgTranslator
-from smartsim.settingshold.batchCommand import SchedulerType
+from smartsim.settings import BatchSettings
+from smartsim.settings.translators.batch.slurm import SlurmBatchArgTranslator
+from smartsim.settings.batchCommand import SchedulerType
 import pytest
 import logging
 
 def test_scheduler_str():
     """Ensure launcher_str returns appropriate value"""
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler)
     assert slurmScheduler.scheduler_str() == SchedulerType.SlurmScheduler.value
 
 @pytest.mark.parametrize(
@@ -23,13 +23,13 @@ def test_scheduler_str():
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler)
     getattr(slurmScheduler, function)(*value)
     assert slurmScheduler.scheduler_args[flag] == result
 
 def test_create_sbatch():
     batch_args = {"exclusive": None, "oversubscribe": None}
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler, scheduler_args=batch_args)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler, scheduler_args=batch_args)
     assert isinstance(slurmScheduler.arg_translator, SlurmBatchArgTranslator)
     #assert slurmScheduler.batch_args["partition"] == "default"
     args = slurmScheduler.format_batch_args()
@@ -48,7 +48,7 @@ def test_launch_args_input_mutation():
         key1: val1,
         key2: val2,
     }
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler, scheduler_args=default_scheduler_args)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler, scheduler_args=default_scheduler_args)
 
     # Confirm initial values are set
     assert slurmScheduler.scheduler_args[key0] == val0
@@ -64,14 +64,14 @@ def test_launch_args_input_mutation():
 
 def test_sbatch_settings():
     scheduler_args = {"nodes": 1, "time": "10:00:00", "account": "A3123"}
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler,scheduler_args=scheduler_args)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler,scheduler_args=scheduler_args)
     formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=1", "--time=10:00:00", "--account=A3123"]
     assert formatted == result
 
 
 def test_sbatch_manual():
-    slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler)
     slurmScheduler.set_nodes(5)
     slurmScheduler.set_account("A3531")
     slurmScheduler.set_walltime("10:00:00")
@@ -89,14 +89,14 @@ def test_sbatch_manual():
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True
 
     with caplog.at_level(logging.WARNING):
         caplog.clear()
-        slurmScheduler = BatchSettings(scheduler=SchedulerType.SlurmScheduler)
+        slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler)
         try:
             getattr(slurmScheduler, method)(*params)
         finally:
@@ -105,7 +105,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and (method and "not supported" and "sbatch") in rec.msg
+                and (method and "not supported" and "slurm") in rec.msg
             ):
                 break
         else:

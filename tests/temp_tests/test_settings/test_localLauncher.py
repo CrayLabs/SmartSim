@@ -1,6 +1,6 @@
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.translators.launch.local import LocalArgTranslator
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings import LaunchSettings
+from smartsim.settings.translators.launch.local import LocalArgTranslator
+from smartsim.settings.launchCommand import LauncherType
 import pytest
 import logging
 
@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher)
-    assert localLauncher._reserved_launch_args == set()
+    assert localLauncher.reserved_launch_args == set()
 
 def test_launch_args_input_mutation():
     # Tests that the run args passed in are not modified after initialization
@@ -104,7 +104,6 @@ def test_format_env_vars():
             "D": "12",
         }
     localLauncher = LaunchSettings(launcher=LauncherType.LocalLauncher, env_vars=env_vars)
-    assert localLauncher.launcher.value == LauncherType.LocalLauncher.value
     assert isinstance(localLauncher.arg_translator, LocalArgTranslator)
     assert localLauncher.format_env_vars() == ["A=a", "B=", "C=", "D=12"]
 
@@ -135,7 +134,7 @@ def test_format_env_vars():
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True

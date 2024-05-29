@@ -37,7 +37,7 @@ from .._core.config import CONFIG
 from .._core.utils.helpers import expand_exe_path
 from ..error import SSDBFilesNotParseable
 from ..log import get_logger
-from ..settings.base import RunSettings
+# from ..settings.base import RunSettings
 from .entity import SmartSimEntity
 
 logger = get_logger(__name__)
@@ -58,7 +58,7 @@ class DBNode(SmartSimEntity):
         path: str,
         exe: str,
         exe_args: t.List[str],
-        run_settings: RunSettings,
+        # run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
         db_identifier: str = "",

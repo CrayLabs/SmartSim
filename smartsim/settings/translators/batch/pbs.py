@@ -119,7 +119,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
             prefix = "-"
             if not value:
                 raise ValueError("PBS options without values are not allowed")
-            opts += [" ".join((prefix + opt, str(value)))]
+            opts += [f"{prefix}{opt}", str(value)]
         return opts
 
     def _sanity_check_resources(
@@ -177,9 +177,9 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         if hosts := batch_arg_copy.pop("hostname", None):
             hosts_list = ["=".join(str(hosts))]
             select_command += f":{'+'.join(hosts_list)}"
-        res += [select_command]
+        res += select_command.split()
         if walltime := batch_arg_copy.pop("walltime", None):
-            res += [f"-l walltime={walltime}"]
+            res += ["-l", f"walltime={walltime}"]
 
         # # All other "standard" resource specs
         # for resource, value in batch_arg_copy.items():

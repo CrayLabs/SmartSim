@@ -1,12 +1,12 @@
-from smartsim.settingshold import BatchSettings
-from smartsim.settingshold.translators.batch.pbs import QsubBatchArgTranslator
-from smartsim.settingshold.batchCommand import SchedulerType
+from smartsim.settings import BatchSettings
+from smartsim.settings.translators.batch.pbs import QsubBatchArgTranslator
+from smartsim.settings.batchCommand import SchedulerType
 import pytest
 import logging
 
 def test_scheduler_str():
     """Ensure launcher_str returns appropriate value"""
-    pbsScheduler = BatchSettings(scheduler=SchedulerType.PbsScheduler)
+    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.PbsScheduler)
     assert pbsScheduler.scheduler_str() == SchedulerType.PbsScheduler.value
 
 @pytest.mark.parametrize(
@@ -22,24 +22,23 @@ def test_scheduler_str():
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    pbsScheduler = BatchSettings(scheduler=SchedulerType.PbsScheduler)
+    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.PbsScheduler)
     getattr(pbsScheduler, function)(*value)
     assert pbsScheduler.scheduler_args[flag] == result
     
 def test_create_pbs_batch():
-    pbsScheduler = BatchSettings(scheduler=SchedulerType.PbsScheduler)
+    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.PbsScheduler)
     pbsScheduler.set_nodes(1)
     pbsScheduler.set_walltime("10:00:00")
     pbsScheduler.set_queue("default")
     pbsScheduler.set_account("myproject")
     pbsScheduler.set_ncpus(10)
     args = pbsScheduler.format_batch_args()
-    print(f"here: {args}")
     assert args == [
-        "-l nodes=1:ncpus=10",
-        "-l walltime=10:00:00",
-        "-q default",
-        "-A myproject",
+        "-l", "nodes=1:ncpus=10",
+        "-l", "walltime=10:00:00",
+        "-q", "default",
+        "-A", "myproject",
     ]
 
 @pytest.mark.parametrize(
@@ -53,14 +52,14 @@ def test_create_pbs_batch():
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True
 
     with caplog.at_level(logging.WARNING):
         caplog.clear()
-        pbsScheduler = BatchSettings(scheduler=SchedulerType.PbsScheduler)
+        pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.PbsScheduler)
         try:
             getattr(pbsScheduler, method)(*params)
         finally:
@@ -69,7 +68,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and (method and "not supported" and "qsub") in rec.msg
+                and (method and "not supported" and "pbs") in rec.msg
             ):
                 break
         else:

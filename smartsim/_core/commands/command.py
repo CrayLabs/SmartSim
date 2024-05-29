@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from collections.abc import MutableSequence
-from ...settingshold.launchCommand import LauncherType
+from ...settings.launchCommand import LauncherType
 import typing as t
 
 class Command(MutableSequence):
@@ -77,7 +77,6 @@ class Command(MutableSequence):
         self._command.insert(idx, value)
     
     def __str__(self) -> str: # pragma: no cover
-        string = ""
-        string += f"\nLauncher: {self.launcher.value}\n"
+        string = f"\nLauncher: {self.launcher.value}\n"
         string += f"Command: {' '.join(str(cmd) for cmd in self.command)}"
         return string

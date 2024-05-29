@@ -43,20 +43,15 @@ logger = get_logger(__name__)
 class BatchSettings(BaseSettings):
     def __init__(
         self,
-        batch_scheduler: t.Union[SchedulerType, BatchArgTranslator],
+        batch_scheduler: t.Union[SchedulerType, str],
         scheduler_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
         env_vars: t.Optional[StringArgument] = None,
     ) -> None:
-        if isinstance(batch_scheduler, BatchArgTranslator):
-            self.arg_translator = batch_scheduler
-        elif batch_scheduler.value == 'sbatch':
-            self.arg_translator = SlurmBatchArgTranslator()
-        elif batch_scheduler.value == 'bsub':
-            self.arg_translator = BsubBatchArgTranslator()
-        elif batch_scheduler.value == 'qsub':
-            self.arg_translator = QsubBatchArgTranslator()
-        else:
-            raise ValueError(f"'{batch_scheduler}' is not valid input.")
+        try:
+            self._batch_scheduler = SchedulerType(batch_scheduler)
+        except KeyError:
+            raise ValueError(f"Invalid scheduler type: {batch_scheduler}")
+        self._arg_translator = self._get_scheduler()
 
         if env_vars:
             validate_env_vars(env_vars)
@@ -65,6 +60,14 @@ class BatchSettings(BaseSettings):
         if scheduler_args:
             validate_args(scheduler_args)
         self.scheduler_args = scheduler_args or {}
+
+    @property
+    def batch_scheduler(self):
+        return self._batch_scheduler
+
+    @property
+    def arg_translator(self):
+        return self._arg_translator
 
     @property
     def scheduler_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
@@ -82,6 +85,16 @@ class BatchSettings(BaseSettings):
         """
         self._scheduler_args = copy.deepcopy(value) if value else {}
 
+    def _get_scheduler(self) -> BatchArgTranslator:
+        """ Map the Scheduler to the BatchArgTranslator
+        """
+        if self._batch_scheduler.value == 'slurm':
+            return SlurmBatchArgTranslator()
+        elif self._batch_scheduler.value == 'lsf':
+            return BsubBatchArgTranslator()
+        elif self._batch_scheduler.value == 'pbs':
+            return QsubBatchArgTranslator()
+
     def scheduler_str(self) -> str:
         """ Get the string representation of the scheduler
         """
@@ -97,8 +110,7 @@ class BatchSettings(BaseSettings):
         # TODO check for formatting here
         args = self.arg_translator.set_walltime(walltime)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
@@ -107,8 +119,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_nodes(num_nodes)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_account(self, account: str) -> None:
         """Set the account for this batch job
@@ -117,8 +128,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_account(account)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_partition(self, partition: str) -> None:
         """Set the partition for the batch job
@@ -127,8 +137,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_partition(partition)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
     
     def set_queue(self, queue: str) -> None:
         """alias for set_partition
@@ -139,8 +148,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_queue(queue)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of cpus to use per task
@@ -151,8 +159,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_cpus_per_task(cpus_per_task)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
@@ -162,8 +169,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_hostlist(host_list)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
     
     def set_smts(self, smts: int) -> None:
         """Set SMTs
@@ -176,8 +182,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_smts(smts)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_project(self, project: str) -> None:
         """Set the project
@@ -188,8 +193,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_project(project)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
@@ -200,8 +204,7 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_tasks(tasks)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
     
     def set_ncpus(self, num_cpus: int) -> None:
         """Set the number of cpus obtained in each node.
@@ -214,23 +217,24 @@ class BatchSettings(BaseSettings):
         """
         args = self.arg_translator.set_ncpus(num_cpus)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_scheduler_args(args)
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
         """
         return self.arg_translator.format_batch_args(self.scheduler_args)
 
+    def update_scheduler_args(self, args: t.Mapping[str, int | str | float | None]) -> None:
+        self.scheduler_args.update(args)
+
     def set(self, key: str, arg: t.Union[str,int,float,None]) -> None:
         # Store custom arguments in the launcher_args
         self.scheduler_args[key] = arg
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = ""
-        string += f"\Scheduler: {self.arg_translator.scheduler_str}"
+        string = f"\nScheduler: {self.arg_translator.scheduler_str}"
         if self.scheduler_args:
-            string += f"\Scheduler Arguments:\n{fmt_dict(self.scheduler_args)}"
+            string += f"\nScheduler Arguments:\n{fmt_dict(self.scheduler_args)}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

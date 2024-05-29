@@ -1,6 +1,6 @@
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.translators.launch.lsf import JsrunArgTranslator
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings import LaunchSettings
+from smartsim.settings.translators.launch.lsf import JsrunArgTranslator
+from smartsim.settings.launchCommand import LauncherType
 import pytest
 import logging
 
@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher)
-    assert lsfLauncher._reserved_launch_args == {"chdir", "h"}
+    assert lsfLauncher.reserved_launch_args == {"chdir", "h", "stdio_stdout", "o", "stdio_stderr", "k"}
 
 @pytest.mark.parametrize(
     "function,value,result,flag",
@@ -23,7 +23,6 @@ def test_set_reserved_launcher_args():
 )
 def test_lsf_class_methods(function, value, flag, result):
     lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher)
-    assert lsfLauncher.launcher.value == LauncherType.LsfLauncher.value
     assert isinstance(lsfLauncher.arg_translator,JsrunArgTranslator)
     getattr(lsfLauncher, function)(*value)
     assert lsfLauncher.launcher_args[flag] == result
@@ -31,7 +30,6 @@ def test_lsf_class_methods(function, value, flag, result):
 def test_format_env_vars():
     env_vars = {"OMP_NUM_THREADS": None, "LOGGING": "verbose"}
     lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher, env_vars=env_vars)
-    assert lsfLauncher.launcher.value == LauncherType.LsfLauncher.value
     assert isinstance(lsfLauncher.arg_translator,JsrunArgTranslator)
     formatted = lsfLauncher.format_env_vars()
     assert formatted == ["-E", "OMP_NUM_THREADS", "-E", "LOGGING=verbose"]
@@ -46,7 +44,7 @@ def test_launch_args():
         "np": 100,
     }
     lsfLauncher = LaunchSettings(launcher=LauncherType.LsfLauncher, launcher_args=launch_args)
-    assert lsfLauncher.launcher.value == "jsrun"
+    assert isinstance(lsfLauncher.arg_translator,JsrunArgTranslator)
     formatted = lsfLauncher.format_launcher_args()
     result = [
         "--latency_priority=gpu-gpu",
@@ -85,7 +83,7 @@ def test_launch_args():
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True
@@ -101,7 +99,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and (method and "not supported" and "jsrun") in rec.msg
+                and (method and "not supported" and "lsf") in rec.msg
             ):
                 break
         else:

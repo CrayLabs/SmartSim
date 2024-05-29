@@ -1,6 +1,6 @@
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.translators.launch.dragon import DragonArgTranslator
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings import LaunchSettings
+from smartsim.settings.translators.launch.dragon import DragonArgTranslator
+from smartsim.settings.launchCommand import LauncherType
 import pytest
 import logging
 
@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
-    assert dragonLauncher._reserved_launch_args == set()
+    assert dragonLauncher.reserved_launch_args == set()
 
 @pytest.mark.parametrize(
     "function,value,result,flag",
@@ -23,7 +23,6 @@ def test_set_reserved_launcher_args():
 )
 def test_dragon_class_methods(function, value, flag, result):
     dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
-    assert dragonLauncher.launcher.value == LauncherType.DragonLauncher.value
     assert isinstance(dragonLauncher.arg_translator,DragonArgTranslator)
     getattr(dragonLauncher, function)(*value)
     assert dragonLauncher.launcher_args[flag] == result
@@ -55,7 +54,7 @@ def test_dragon_class_methods(function, value, flag, result):
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True

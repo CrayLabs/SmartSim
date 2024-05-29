@@ -32,13 +32,20 @@ import typing as t
 from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
 from ....log import get_logger
-from ....settings import (
-    DragonRunSettings,
-    QsubBatchSettings,
-    RunSettings,
-    SbatchSettings,
-    SettingsBase,
-)
+# from ....settings import (
+#     DragonRunSettings,
+#     QsubBatchSettings,
+#     RunSettings,
+#     SbatchSettings,
+#     SettingsBase,
+# )
+# Mock imports for now
+class DragonRunSettings: pass
+class QsubBatchSettings: pass
+class RunSettings: pass
+class SbatchSettings: pass
+class SettingsBase: pass
+
 from ....status import SmartSimStatus
 from ...schemas import (
     DragonRunRequest,
@@ -89,15 +96,17 @@ class DragonLauncher(WLMLauncher):
         self._connector.cleanup()
 
     # RunSettings types supported by this launcher
+    # t.Type[SettingsBase]
     @property
-    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[Step]]:
         # RunSettings types supported by this launcher
-        return {
-            DragonRunSettings: DragonStep,
-            SbatchSettings: DragonBatchStep,
-            QsubBatchSettings: DragonBatchStep,
-            RunSettings: LocalStep,
-        }
+        pass
+        # return {
+        #     DragonRunSettings: DragonStep,
+        #     SbatchSettings: DragonBatchStep,
+        #     QsubBatchSettings: DragonBatchStep,
+        #     RunSettings: LocalStep,
+        # }
 
     def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
         super().add_step_to_mapping_table(name, step_map)

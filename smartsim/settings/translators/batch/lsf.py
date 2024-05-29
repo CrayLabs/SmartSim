@@ -137,9 +137,9 @@ class BsubBatchArgTranslator(BatchArgTranslator):
 
             prefix = "-"  # LSF only uses single dashses
 
-            if not value:
+            if value is None:
                 opts += [prefix + opt]
             else:
-                opts += [" ".join((prefix + opt, str(value)))]
+                opts += [f"{prefix}{opt}", str(value)]
 
         return opts

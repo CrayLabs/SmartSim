@@ -38,7 +38,9 @@ from ..error import (
     SSReservedKeywordError,
 )
 from ..log import get_logger
-from ..settings.slurmSettings import fmt_walltime
+# from ..settings.slurmSettings import fmt_walltime
+# Mock function
+def fmt_walltime() -> None: ...
 
 logger = get_logger(__name__)
 

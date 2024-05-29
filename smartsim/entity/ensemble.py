@@ -40,7 +40,7 @@ from ..error import (
     UserStrategyError,
 )
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
+# from ..settings.base import BatchSettings, RunSettings
 from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
@@ -67,8 +67,8 @@ class Ensemble(EntityList[Model]):
         exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
-        batch_settings: t.Optional[BatchSettings] = None,
-        run_settings: t.Optional[RunSettings] = None,
+        # batch_settings: t.Optional[BatchSettings] = None,
+        # run_settings: t.Optional[RunSettings] = None,
         perm_strat: str = "all_perm",
         **kwargs: t.Any,
     ) -> None:

@@ -1,7 +1,25 @@
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings import LaunchSettings
+from smartsim.settings.launchCommand import LauncherType
 import pytest
 import logging
+
+@pytest.mark.parametrize(
+    "str,launcher",
+    [
+        pytest.param("slurm", LauncherType.SlurmLauncher, id="slrum"),
+        pytest.param("dragon", LauncherType.DragonLauncher, id="dragon"),
+        pytest.param("pals", LauncherType.PalsLauncher, id="pals"),
+        pytest.param("alps", LauncherType.AlpsLauncher,id="alps"),
+        pytest.param("local", LauncherType.LocalLauncher,id="local"),
+        pytest.param("mpiexec", LauncherType.MpiexecLauncher,id="mpiexec"),
+        pytest.param("mpirun", LauncherType.MpirunLauncher,id="mpirun"),
+        pytest.param("orterun", LauncherType.OrterunLauncher,id="orterun"),
+        pytest.param("lsf", LauncherType.LsfLauncher,id="lsf"),
+    ],
+)
+def test_create_from_launcher_str(str, launcher):
+    launchSettings = LaunchSettings(launcher=str)
+    assert launchSettings.launcher == launcher
 
 def test_set_launch_args():
     launchSettings = LaunchSettings(launcher=LauncherType.LocalLauncher)
@@ -65,7 +83,7 @@ def test_incorrect_launch_arg_type():
 )
 def test_prevent_set_reserved_launch_args(caplog, launcher, key):
     """Test methods not implemented throw warnings"""
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True
@@ -94,7 +112,7 @@ def test_prevent_set_reserved_launch_args(caplog, launcher, key):
 
 def test_log_overwrite_set_warning_message(caplog):
     """Test methods not implemented throw warnings"""
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True

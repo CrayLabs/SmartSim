@@ -44,7 +44,7 @@ class SlurmArgTranslator(LaunchArgTranslator):
         """
         return LauncherType.SlurmLauncher.value
     
-    def _set_reserved_launch_args(self) -> set[str]:
+    def set_reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
         return {"chdir", "D"}

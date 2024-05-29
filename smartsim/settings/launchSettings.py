@@ -48,32 +48,15 @@ logger = get_logger(__name__)
 class LaunchSettings(BaseSettings):
     def __init__(
         self,
-        launcher: t.Union[LauncherType, LaunchArgTranslator],
+        launcher: t.Union[LauncherType, str],
         launcher_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
         env_vars: t.Optional[StringArgument] = None,
     ) -> None:
-        if isinstance(launcher, LaunchArgTranslator):
-            self.arg_translator = launcher
-        elif launcher.value == 'slurm':
-            self.arg_translator = SlurmArgTranslator()
-        elif launcher.value == 'mpiexec':
-            self.arg_translator = MpiexecArgTranslator()
-        elif launcher.value == 'mpirun':
-            self.arg_translator = MpiArgTranslator()
-        elif launcher.value == 'orterun':
-            self.arg_translator = OrteArgTranslator()
-        elif launcher.value == 'aprun':
-            self.arg_translator = AprunArgTranslator()
-        elif launcher.value == 'jsrun':
-            self.arg_translator = JsrunArgTranslator()
-        elif launcher.value == 'pals':
-            self.arg_translator = PalsMpiexecArgTranslator()
-        elif launcher.value == 'dragon':
-            self.arg_translator = DragonArgTranslator()
-        elif launcher.value == 'local':
-            self.arg_translator = LocalArgTranslator()
-        else:
-            raise ValueError(f"'{launcher}' is not valid input.")
+        try:
+            self._launcher = LauncherType(launcher)
+        except KeyError:
+            raise ValueError(f"Invalid launcher type: {launcher}")
+        self._arg_translator = self._get_launcher()
         
         if env_vars:
             validate_env_vars(env_vars)
@@ -82,9 +65,14 @@ class LaunchSettings(BaseSettings):
         if launcher_args:
             validate_args(launcher_args)
         self.launcher_args = launcher_args or {}
-        
-        # Set the reserved launch arguments per LauncherType
-        self._reserved_launch_args = self.arg_translator._set_reserved_launch_args()
+    
+    @property
+    def launcher(self):
+        return self._launcher
+
+    @property
+    def arg_translator(self):
+        return self._arg_translator
 
     @property
     def launcher_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
@@ -117,6 +105,32 @@ class LaunchSettings(BaseSettings):
         :param value: environment variables
         """
         self._env_vars = copy.deepcopy(value)
+    
+    @property
+    def reserved_launch_args(self):
+        return self.arg_translator.set_reserved_launch_args()
+    
+    def _get_launcher(self) -> LaunchArgTranslator:
+        """ Map the Launcher to the LaunchArgTranslator
+        """
+        if self._launcher.value == 'slurm':
+            return SlurmArgTranslator()
+        elif self._launcher.value == 'mpiexec':
+            return MpiexecArgTranslator()
+        elif self._launcher.value == 'mpirun':
+            return MpiArgTranslator()
+        elif self._launcher.value == 'orterun':
+            return OrteArgTranslator()
+        elif self._launcher.value == 'alps':
+            return AprunArgTranslator()
+        elif self._launcher.value == 'lsf':
+            return JsrunArgTranslator()
+        elif self._launcher.value == 'pals':
+            return PalsMpiexecArgTranslator()
+        elif self._launcher.value == 'dragon':
+            return DragonArgTranslator()
+        elif self._launcher.value == 'local':
+            return LocalArgTranslator()
 
     def launcher_str(self) -> str:
         """ Get the string representation of the launcher
@@ -132,8 +146,7 @@ class LaunchSettings(BaseSettings):
         args = self.arg_translator.set_nodes(nodes)
 
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """ Specify the hostlist for this job
@@ -144,8 +157,7 @@ class LaunchSettings(BaseSettings):
         args = self.arg_translator.set_hostlist(host_list)
 
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_hostlist_from_file(self, file_path: str) -> None:
         """ Use the contents of a file to set the node list
@@ -156,8 +168,7 @@ class LaunchSettings(BaseSettings):
         args = self.arg_translator.set_hostlist_from_file(file_path)
         
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """ Specify a list of hosts to exclude for launching this job
@@ -168,8 +179,7 @@ class LaunchSettings(BaseSettings):
         args = self.arg_translator.set_excluded_hosts(host_list)
 
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
     
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """ Set the number of cpus to use per task
@@ -180,8 +190,7 @@ class LaunchSettings(BaseSettings):
         args = self.arg_translator.set_cpus_per_task(cpus_per_task)
 
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_tasks(self, tasks: int) -> None:
         """ Set the number of tasks for this job
@@ -190,8 +199,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_tasks(tasks)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """ Set the number of tasks per node for this job
@@ -200,8 +208,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_tasks_per_node(tasks_per_node)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> None:
         """ Bind by setting CPU masks on tasks
@@ -210,8 +217,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_cpu_bindings(bindings)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_memory_per_node(self, memory_per_node: int) -> None:
         """ Specify the real memory required per node
@@ -220,8 +226,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_memory_per_node(memory_per_node)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_executable_broadcast(self, dest_path: str) -> None:
         """ Copy executable file to allocated compute nodes
@@ -230,8 +235,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_executable_broadcast(dest_path)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
         """Specify the node feature for this job
@@ -241,8 +245,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_node_feature(feature_list)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
@@ -251,8 +254,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_walltime(walltime)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_binding(self, binding: str) -> None:
         """Set binding
@@ -263,8 +265,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_binding(binding)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_cpu_binding_type(self, bind_type: str) -> None:
         """Specifies the cores to which MPI processes are bound
@@ -275,8 +276,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_cpu_binding_type(bind_type)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_task_map(self, task_mapping: str) -> None:
         """Set ``mpirun`` task mapping
@@ -289,8 +289,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_task_map(task_mapping)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_het_group(self, het_group: t.Iterable[int]) -> None:
         """Set the heterogeneous group for this job
@@ -301,8 +300,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_het_group(het_group)
         if args:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
 
     def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
@@ -313,8 +311,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_verbose_launch(verbose)
         if args and verbose:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
         if args and not verbose:
             self.launcher_args.pop(next(iter(args)))
 
@@ -327,8 +324,7 @@ class LaunchSettings(BaseSettings):
         """
         args = self.arg_translator.set_quiet_launch(quiet)
         if args and quiet:
-            for key, value in args.items():
-                self.set(key, value)
+            self.update_launcher_args(args)
         if args and not quiet:
             self.launcher_args.pop(next(iter(args)))
 
@@ -382,12 +378,15 @@ class LaunchSettings(BaseSettings):
 
             self.env_vars[env] = str(val)
 
+    def update_launcher_args(self, args: t.Mapping[str, int | str | float | None]) -> None:
+        self.launcher_args.update(args)
+    
     def set(self, key: str, arg: t.Union[str,int,float,None]) -> None:
         # Store custom arguments in the launcher_args
         if not isinstance(key, str):
             raise TypeError("Argument name should be of type str")
         key = key.strip().lstrip("-")
-        if key in self._reserved_launch_args:
+        if key in self.reserved_launch_args:
             logger.warning(
                 (
                     f"Could not set argument '{key}': "
@@ -400,10 +399,9 @@ class LaunchSettings(BaseSettings):
         self.launcher_args[key] = arg
     
     def __str__(self) -> str:  # pragma: no-cover
-        string = ""
-        string += f"\nLauncher: {self.arg_translator.launcher_str}"
+        string = f"\nLauncher: {self.arg_translator.launcher_str}"
         if self.launcher_args:
-            string += f"\Launch Arguments:\n{fmt_dict(self.launcher_args)}"
+            string += f"\nLaunch Arguments:\n{fmt_dict(self.launcher_args)}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

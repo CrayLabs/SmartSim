@@ -1,11 +1,11 @@
-from smartsim.settingshold import BatchSettings
+from smartsim.settings import BatchSettings
 import pytest
 import logging
-from smartsim.settingshold.batchCommand import SchedulerType
+from smartsim.settings.batchCommand import SchedulerType
 
 def test_scheduler_str():
     """Ensure launcher_str returns appropriate value"""
-    lsfScheduler = BatchSettings(scheduler=SchedulerType.LsfScheduler)
+    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.LsfScheduler)
     assert lsfScheduler.scheduler_str() == SchedulerType.LsfScheduler.value
 
 @pytest.mark.parametrize(
@@ -23,18 +23,18 @@ def test_scheduler_str():
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    lsfScheduler = BatchSettings(scheduler=SchedulerType.LsfScheduler)
+    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.LsfScheduler)
     getattr(lsfScheduler, function)(*value)
     assert lsfScheduler.scheduler_args[flag] == result
 
 def test_create_bsub():
     batch_args = {"core_isolation": None}
-    lsfScheduler = BatchSettings(scheduler=SchedulerType.LsfScheduler, scheduler_args=batch_args)
+    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.LsfScheduler, scheduler_args=batch_args)
     lsfScheduler.set_nodes(1)
     lsfScheduler.set_walltime("10:10:10")
     lsfScheduler.set_queue("default")
     args = lsfScheduler.format_batch_args()
-    assert args == ["-core_isolation", "-nnodes 1", "-W 10:10", "-q default"]
+    assert args == ["-core_isolation", "-nnodes", "1", "-W", "10:10", "-q", "default"]
 
 @pytest.mark.parametrize(
     "method,params",
@@ -45,14 +45,14 @@ def test_create_bsub():
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True
 
     with caplog.at_level(logging.WARNING):
         caplog.clear()
-        slurmScheduler = BatchSettings(scheduler=SchedulerType.LsfScheduler)
+        slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.LsfScheduler)
         try:
             getattr(slurmScheduler, method)(*params)
         finally:
@@ -61,7 +61,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
         for rec in caplog.records:
             if (
                 logging.WARNING <= rec.levelno < logging.ERROR
-                and (method and "not supported" and "bsub") in rec.msg
+                and (method and "not supported" and "lsf") in rec.msg
             ):
                 break
         else:

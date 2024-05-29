@@ -26,9 +26,9 @@
 
 import typing as t
 
-if t.TYPE_CHECKING:
+# if t.TYPE_CHECKING:
     # pylint: disable-next=unused-import
-    import smartsim.settings.base
+    # import smartsim.settings.base
 
 
 class TelemetryConfiguration:

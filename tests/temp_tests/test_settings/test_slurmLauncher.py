@@ -1,6 +1,6 @@
-from smartsim.settingshold import LaunchSettings
-from smartsim.settingshold.translators.launch.slurm import SlurmArgTranslator
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings import LaunchSettings
+from smartsim.settings.translators.launch.slurm import SlurmArgTranslator
+from smartsim.settings.launchCommand import LauncherType
 import pytest
 import logging
 
@@ -12,7 +12,7 @@ def test_launcher_str():
 def test_set_reserved_launcher_args():
     """Ensure launcher_str returns appropriate value"""
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
-    assert slurmLauncher._reserved_launch_args == {"chdir", "D"}
+    assert slurmLauncher.reserved_launch_args == {"chdir", "D"}
 
 @pytest.mark.parametrize(
     "function,value,result,flag",
@@ -37,14 +37,12 @@ def test_set_reserved_launcher_args():
 )
 def test_slurm_class_methods(function, value, flag, result):
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
-    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     getattr(slurmLauncher, function)(*value)
     assert slurmLauncher.launcher_args[flag] == result
 
 def test_set_verbose_launch():
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
-    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     slurmLauncher.set_verbose_launch(True)
     assert slurmLauncher.launcher_args == {'verbose': None}
@@ -53,7 +51,6 @@ def test_set_verbose_launch():
 
 def test_set_quiet_launch():
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher)
-    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     slurmLauncher.set_quiet_launch(True)
     assert slurmLauncher.launcher_args == {'quiet': None}
@@ -68,7 +65,6 @@ def test_format_env_vars():
         "SSKEYIN": "name_0,name_1",
     }
     slurmLauncher = LaunchSettings(launcher=LauncherType.SlurmLauncher, env_vars=env_vars)
-    assert slurmLauncher.launcher.value == LauncherType.SlurmLauncher.value
     assert isinstance(slurmLauncher.arg_translator,SlurmArgTranslator)
     formatted = slurmLauncher.format_env_vars()
     assert "OMP_NUM_THREADS=20" in formatted
@@ -200,7 +196,7 @@ def test_invalid_walltime_format():
 )
 def test_unimplimented_methods_throw_warning(caplog, method, params):
     """Test methods not implemented throw warnings"""
-    from smartsim.settings.base import logger
+    from smartsim.settings.launchSettings import logger
 
     prev_prop = logger.propagate
     logger.propagate = True

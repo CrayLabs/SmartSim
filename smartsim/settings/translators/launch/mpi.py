@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 class _BaseMPIArgTranslator(LaunchArgTranslator):
 
-    def _set_reserved_launch_args(self) -> set[str]:
+    def set_reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
         return {"wd", "wdir"}

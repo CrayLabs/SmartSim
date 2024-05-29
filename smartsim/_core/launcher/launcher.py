@@ -30,7 +30,10 @@ import typing as t
 from ..._core.launcher.stepMapping import StepMap
 from ...entity import SmartSimEntity
 from ...error import AllocationError, LauncherError, SSUnsupportedError
-from ...settings import SettingsBase
+# from ...settings import SettingsBase
+# Mock imports
+class SettingsBase: pass
+
 from .step import Step
 from .stepInfo import StepInfo, UnmanagedStepInfo
 from .stepMapping import StepMapping

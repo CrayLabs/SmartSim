@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from smartsim._core.commands.command import Command
-from smartsim.settingshold.launchCommand import LauncherType
+from smartsim.settings.launchCommand import LauncherType
 
 def test_command_init():
     cmd = Command(launcher=LauncherType.SlurmLauncher, command=["salloc", "-N", "1"])

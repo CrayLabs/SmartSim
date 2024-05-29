@@ -125,7 +125,7 @@ class SlurmBatchArgTranslator(BatchArgTranslator):
         # TODO add restricted here
         for opt, value in batch_args.items():
             # attach "-" prefix if argument is 1 character otherwise "--"
-            short_arg = bool(len(str(opt)) == 1)
+            short_arg = len(opt) == 1
             prefix = "-" if short_arg else "--"
 
             if not value:
