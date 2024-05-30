@@ -179,7 +179,7 @@
                     "err_file": "/tmp/my-exp/perroquet_4/perroquet_4.err"
                 }
             ],
-            "orchestrator": [],
+            "featurestore": [],
             "ensemble": []
         }
     ]

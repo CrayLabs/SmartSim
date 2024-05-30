@@ -35,8 +35,6 @@ from .base import RunSettings
 class AprunSettings(RunSettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
@@ -45,14 +43,10 @@ class AprunSettings(RunSettings):
 
         ``AprunSettings`` can be used for the `pbs` launcher.
 
-        :param exe: executable
-        :param exe_args: executable arguments
         :param run_args: arguments for run command
         :param env_vars: environment vars to launch job with
         """
         super().__init__(
-            exe,
-            exe_args,
             run_command="aprun",
             run_args=run_args,
             env_vars=env_vars,
@@ -68,7 +62,7 @@ class AprunSettings(RunSettings):
 
         :param settings: ``AprunSettings`` instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )

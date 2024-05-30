@@ -38,7 +38,7 @@ from smartsim.error.errors import SSUnsupportedError
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
-from .database import Orchestrator
+from .database import FeatureStore
 from .entity import (
     Ensemble,
     EntitySequence,
@@ -87,8 +87,8 @@ class Experiment:
 
     The instances created by an Experiment represent executable code
     that is either user-specified, like the ``Model`` instance created
-    by ``Experiment.create_model``, or pre-configured, like the ``Orchestrator``
-    instance created by ``Experiment.create_database``.
+    by ``Experiment.create_model``, or pre-configured, like the ``FeatureStore``
+    instance created by ``Experiment.create_feature_store``.
 
     Experiment methods that accept a variable list of arguments, such as
     ``Experiment.start`` or ``Experiment.stop``, accept any number of the
@@ -172,7 +172,7 @@ class Experiment:
 
         self._control = Controller(launcher=self._launcher)
 
-        self.db_identifiers: t.Set[str] = set()
+        self.fs_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
 
     def _set_dragon_server_path(self) -> None:
@@ -192,7 +192,7 @@ class Experiment:
     ) -> None:
         """Start passed instances using Experiment launcher
 
-        Any instance ``Model``, ``Ensemble`` or ``Orchestrator``
+        Any instance ``Model``, ``Ensemble`` or ``FeatureStore``
         instance created by the Experiment can be passed as
         an argument to the start method.
 
@@ -211,17 +211,17 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.start(model_1, model_2, db, ensemble, block=True)
+            exp.start(model_1, model_2, fs, ensemble, block=True)
             # alternatively
-            stage_1 = [model_1, model_2, db, ensemble]
+            stage_1 = [model_1, model_2, fs, ensemble]
             exp.start(*stage_1, block=True)
 
 
         If `block==True` the Experiment will poll the launched instances
-        at runtime until all non-database jobs have completed. Database
+        at runtime until all non-feature store jobs have completed. Feature store
         jobs *must* be killed by the user by passing them to
         ``Experiment.stop``. This allows for multiple stages of a workflow
-        to produce to and consume from the same Orchestrator database.
+        to produce to and consume from the same FeatureStore feature store.
 
         If `kill_on_interrupt=True`, then all jobs launched by this
         experiment are guaranteed to be killed when ^C (SIGINT) signal is
@@ -229,7 +229,7 @@ class Experiment:
         that all jobs launched by this experiment will be killed, and the
         zombie processes will need to be manually killed.
 
-        :param block: block execution until all non-database
+        :param block: block execution until all non-feature store
                        jobs are finished
         :param summary: print a launch summary prior to launch
         :param kill_on_interrupt: flag for killing jobs when ^C (SIGINT)
@@ -257,7 +257,7 @@ class Experiment:
     ) -> None:
         """Stop specific instances launched by this ``Experiment``
 
-        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        Instances of ``Model``, ``Ensemble`` and ``FeatureStore``
         can all be passed as arguments to the stop method.
 
         Whichever launcher was specified at Experiment initialization
@@ -272,7 +272,7 @@ class Experiment:
 
             exp.stop(model)
             # multiple
-            exp.stop(model_1, model_2, db, ensemble)
+            exp.stop(model_1, model_2, fs, ensemble)
 
         :param args: One or more SmartSimEntity or EntitySequence objects.
         :raises TypeError: if wrong type
@@ -284,9 +284,9 @@ class Experiment:
                 self._control.stop_entity(entity)
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
-            dbs = stop_manifest.dbs
-            for db in dbs:
-                self._control.stop_db(db)
+            fss = stop_manifest.fss
+            for fs in fss:
+                self._control.stop_fs(fs)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -309,7 +309,7 @@ class Experiment:
         directories will be symlinked, copied, or configured and
         written into the created directory for that instance.
 
-        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        Instances of ``Model``, ``Ensemble`` and ``FeatureStore``
         can all be passed as arguments to the generate method.
 
         :param tag: tag used in `to_configure` generator files
@@ -372,8 +372,8 @@ class Experiment:
         An instance of ``Model`` or ``Ensemble`` can be passed
         as an argument.
 
-        Passing ``Orchestrator`` will return an error as a
-        database deployment is never finished until stopped
+        Passing ``FeatureStore`` will return an error as a
+        feature store deployment is never finished until stopped
         by the user.
 
         :param entity: object launched by this ``Experiment``
@@ -408,7 +408,7 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            statuses = exp.get_status(model, ensemble, orchestrator)
+            statuses = exp.get_status(model, ensemble, featurestore)
             complete = [s == smartsim.status.STATUS_COMPLETED for s in statuses]
             assert all(complete)
 
@@ -431,6 +431,8 @@ class Experiment:
     def create_ensemble(
         self,
         name: str,
+        exe: t.Optional[str] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
         run_settings: t.Optional[base.RunSettings] = None,
@@ -471,6 +473,8 @@ class Experiment:
 
         :param name: name of the ``Ensemble``
         :param params: parameters to expand into ``Model`` members
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :param run_settings: describes how each ``Model`` should be executed
         :param replicas: number of replicas to create
@@ -489,6 +493,8 @@ class Experiment:
         try:
             new_ensemble = Ensemble(
                 name=name,
+                exe=exe,
+                exe_args=exe_args,
                 params=params or {},
                 path=entity_path,
                 batch_settings=batch_settings,
@@ -506,7 +512,9 @@ class Experiment:
     def create_model(
         self,
         name: str,
+        exe: str,
         run_settings: base.RunSettings,
+        exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         path: t.Optional[str] = None,
         enable_key_prefixing: bool = False,
@@ -565,24 +573,26 @@ class Experiment:
             exp.generate(model)
 
         New in 0.4.0, ``Model`` instances can be colocated with an
-        Orchestrator database shard through ``Model.colocate_db``. This
-        will launch a single ``Orchestrator`` instance on each compute
+        FeatureStore feature store shard through ``Model.colocate_fs``. This
+        will launch a single ``FeatureStore`` instance on each compute
         host used by the (possibly distributed) application. This is
         useful for performant online inference or processing
         at runtime.
 
         New in 0.4.2, ``Model`` instances can now be colocated with
-        an Orchestrator database over either TCP or UDS using the
-        ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` method
-        respectively. The original ``Model.colocate_db`` method is now
-        deprecated, but remains as an alias for ``Model.colocate_db_tcp``
+        an FeatureStore feature store over either TCP or UDS using the
+        ``Model.colocate_fs_tcp`` or ``Model.colocate_fs_uds`` method
+        respectively. The original ``Model.colocate_fs`` method is now
+        deprecated, but remains as an alias for ``Model.colocate_fs_tcp``
         for backward compatibility.
 
         :param name: name of the ``Model``
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param run_settings: defines how ``Model`` should be run
         :param params: ``Model`` parameters for writing into configuration files
         :param path: path to where the ``Model`` should be executed at runtime
-        :param enable_key_prefixing: If True, data sent to the ``Orchestrator``
+        :param enable_key_prefixing: If True, data sent to the ``FeatureStore``
                                      using SmartRedis from this ``Model`` will
                                      be prefixed with the ``Model`` name.
         :param batch_settings: Settings to run ``Model`` individually as a batch job.
@@ -599,6 +609,8 @@ class Experiment:
         try:
             new_model = Model(
                 name=name,
+                exe=exe,
+                exe_args=exe_args,
                 params=params,
                 path=entity_path,
                 run_settings=run_settings,
@@ -614,8 +626,6 @@ class Experiment:
     @_contextualize
     def create_run_settings(
         self,
-        exe: str,
-        exe_args: t.Optional[t.List[str]] = None,
         run_command: str = "auto",
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -657,8 +667,6 @@ class Experiment:
         try:
             return settings.create_run_settings(
                 self._launcher,
-                exe,
-                exe_args=exe_args,
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,
@@ -725,11 +733,11 @@ class Experiment:
             raise
 
     @_contextualize
-    def create_database(
+    def create_feature_store(
         self,
         port: int = 6379,
         path: t.Optional[str] = None,
-        db_nodes: int = 1,
+        fs_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.Union[t.List[str], str]] = None,
         run_command: str = "auto",
@@ -738,30 +746,30 @@ class Experiment:
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
-        db_identifier: str = "orchestrator",
+        fs_identifier: str = "featurestore",
         **kwargs: t.Any,
-    ) -> Orchestrator:
-        """Initialize an ``Orchestrator`` database
+    ) -> FeatureStore:
+        """Initialize a ``FeatureStore`` feature store
 
-        The ``Orchestrator`` database is a key-value store based
+        The ``FeatureStore`` feature store is a key-value store based
         on Redis that can be launched together with other ``Experiment``
         created instances for online data storage.
 
-        When launched, ``Orchestrator`` can be used to communicate
+        When launched, ``FeatureStore`` can be used to communicate
         data between Fortran, Python, C, and C++ applications.
 
         Machine Learning models in Pytorch, Tensorflow, and ONNX (i.e. scikit-learn)
-        can also be stored within the ``Orchestrator`` database where they
+        can also be stored within the ``FeatureStore`` feature store where they
         can be called remotely and executed on CPU or GPU where
-        the database is hosted.
+        the feature store is hosted.
 
-        To enable a SmartSim ``Model`` to communicate with the database
+        To enable a SmartSim ``Model`` to communicate with the feature store
         the workload must utilize the SmartRedis clients. For more
-        information on the database, and SmartRedis clients see the
+        information on the feature store, and SmartRedis clients see the
         documentation at https://www.craylabs.org/docs/smartredis.html
 
         :param port: TCP/IP port
-        :param db_nodes: number of database shards
+        :param fs_nodes: number of feature store shards
         :param batch: run as a batch workload
         :param hosts: specify hosts to launch on
         :param run_command: specify launch binary or detect automatically
@@ -770,21 +778,21 @@ class Experiment:
         :param time: walltime for batch 'HH:MM:SS' format
         :param queue: queue to run the batch on
         :param single_cmd: run all shards with one (MPMD) command
-        :param db_identifier: an identifier to distinguish this orchestrator in
-            multiple-database experiments
+        :param fs_identifier: an identifier to distinguish this feature stores in
+            multiple-feature store experiments
         :raises SmartSimError: if detection of launcher or of run command fails
         :raises SmartSimError: if user indicated an incompatible run command
             for the launcher
-        :return: Orchestrator or derived class
+        :return: FeatureStore or derived class
         """
 
-        self._append_to_db_identifier_list(db_identifier)
-        check_path = path or osp.join(self.exp_path, db_identifier)
+        self._append_to_fs_identifier_list(fs_identifier)
+        check_path = path or osp.join(self.exp_path, fs_identifier)
         entity_path: str = osp.abspath(check_path)
-        return Orchestrator(
+        return FeatureStore(
             port=port,
             path=entity_path,
-            db_nodes=db_nodes,
+            fs_nodes=fs_nodes,
             batch=batch,
             hosts=hosts,
             run_command=run_command,
@@ -794,26 +802,26 @@ class Experiment:
             queue=queue,
             single_cmd=single_cmd,
             launcher=self._launcher,
-            db_identifier=db_identifier,
+            fs_identifier=fs_identifier,
             **kwargs,
         )
 
     @_contextualize
-    def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
-        """Reconnect to a running ``Orchestrator``
+    def reconnect_feature_store(self, checkpoint: str) -> FeatureStore:
+        """Reconnect to a running ``FeatureStore``
 
-        This method can be used to connect to a ``Orchestrator`` deployment
+        This method can be used to connect to a ``FeatureStore`` deployment
         that was launched by a previous ``Experiment``. This can be
         helpful in the case where separate runs of an ``Experiment``
-        wish to use the same ``Orchestrator`` instance currently
+        wish to use the same ``FeatureStore`` instance currently
         running on a system.
 
         :param checkpoint: the `smartsim_db.dat` file created
-                           when an ``Orchestrator`` is launched
+                           when an ``FeatureStore`` is launched
         """
         try:
-            orc = self._control.reload_saved_db(checkpoint)
-            return orc
+            feature_store = self._control.reload_saved_fs(checkpoint)
+            return feature_store
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -828,7 +836,7 @@ class Experiment:
         """Preview entity information prior to launch. This method
         aggregates multiple pieces of information to give users insight
         into what and how entities will be launched.  Any instance of
-        ``Model``, ``Ensemble``, or ``Orchestrator`` created by the
+        ``Model``, ``Ensemble``, or ``Feature Store`` created by the
         Experiment can be passed as an argument to the preview method.
 
         Verbosity levels:
@@ -847,8 +855,8 @@ class Experiment:
             output to stdout. Defaults to None.
         """
 
-        # Retrieve any active orchestrator jobs
-        active_dbjobs = self._control.active_orchestrator_jobs
+        # Retrieve any active feature store jobs
+        active_fsjobs = self._control.active_active_feature_store_jobs
 
         preview_manifest = Manifest(*args)
 
@@ -858,7 +866,7 @@ class Experiment:
             verbosity_level,
             output_format,
             output_filename,
-            active_dbjobs,
+            active_fsjobs,
         )
 
     @property
@@ -930,27 +938,27 @@ class Experiment:
         if manifest.models:
             summary += f"Models: {len(manifest.models)}\n"
 
-        if self._control.orchestrator_active:
-            summary += "Database Status: active\n"
-        elif manifest.dbs:
-            summary += "Database Status: launching\n"
+        if self._control.feature_store_active:
+            summary += "Feature Store Status: active\n"
+        elif manifest.fss:
+            summary += "Feature Store Status: launching\n"
         else:
-            summary += "Database Status: inactive\n"
+            summary += "Feature Store Status: inactive\n"
 
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+        def create_entity_dir(entity: t.Union[FeatureStore, Model, Ensemble]) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 
         for model in start_manifest.models:
             create_entity_dir(model)
 
-        for orch in start_manifest.dbs:
-            create_entity_dir(orch)
+        for feature_store in start_manifest.fss:
+            create_entity_dir(feature_store)
 
         for ensemble in start_manifest.ensembles:
             create_entity_dir(ensemble)
@@ -961,13 +969,13 @@ class Experiment:
     def __str__(self) -> str:
         return self.name
 
-    def _append_to_db_identifier_list(self, db_identifier: str) -> None:
-        """Check if db_identifier already exists when calling create_database"""
-        if db_identifier in self.db_identifiers:
+    def _append_to_fs_identifier_list(self, fs_identifier: str) -> None:
+        """Check if fs_identifier already exists when calling create_feature_store"""
+        if fs_identifier in self.fs_identifiers:
             logger.warning(
-                f"A database with the identifier {db_identifier} has already been made "
-                "An error will be raised if multiple databases are started "
+                f"A feature store with the identifier {fs_identifier} has already been made "
+                "An error will be raised if multiple Feature Stores are started "
                 "with the same identifier"
             )
         # Otherwise, add
-        self.db_identifiers.add(db_identifier)
+        self.fs_identifiers.add(fs_identifier)
