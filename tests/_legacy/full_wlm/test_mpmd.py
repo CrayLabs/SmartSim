@@ -38,7 +38,7 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 
 def test_mpmd(fileutils, test_dir, wlmutils):
-    """Run an MPMD model twice
+    """Run an MPMD application twice
 
     and check that it always gets executed the same way.
     All MPMD-compatible run commands which do not
@@ -87,13 +87,13 @@ def test_mpmd(fileutils, test_dir, wlmutils):
         settings.make_mpmd(deepcopy(settings))
         settings.make_mpmd(deepcopy(settings))
 
-        mpmd_model = exp.create_model(
+        mpmd_application = exp.create_application(
             f"mpmd-{run_command}", path=test_dir, run_settings=settings
         )
-        exp.start(mpmd_model, block=True)
-        statuses = exp.get_status(mpmd_model)
+        exp.start(mpmd_application, block=True)
+        statuses = exp.get_status(mpmd_application)
         assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
-        exp.start(mpmd_model, block=True)
-        statuses = exp.get_status(mpmd_model)
+        exp.start(mpmd_application, block=True)
+        statuses = exp.get_status(mpmd_application)
         assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

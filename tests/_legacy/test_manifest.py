@@ -54,8 +54,8 @@ pytestmark = pytest.mark.group_b
 rs = RunSettings("python", "sleep.py")
 
 exp = Experiment("util-test", launcher="local")
-model = exp.create_model("model_1", run_settings=rs)
-model_2 = exp.create_model("model_1", run_settings=rs)
+application = exp.create_application("application_1", run_settings=rs)
+application_2 = exp.create_application("application_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 
 orc = Orchestrator()
@@ -67,9 +67,9 @@ db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
 
 
 def test_separate():
-    manifest = Manifest(model, ensemble, orc)
-    assert manifest.models[0] == model
-    assert len(manifest.models) == 1
+    manifest = Manifest(application, ensemble, orc)
+    assert manifest.applications[0] == application
+    assert len(manifest.applications) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.dbs[0] == orc
@@ -82,7 +82,7 @@ def test_separate_type():
 
 def test_name_collision():
     with pytest.raises(SmartSimError):
-        _ = Manifest(model, model_2)
+        _ = Manifest(application, application_2)
 
 
 def test_catch_empty_ensemble():
@@ -109,9 +109,13 @@ def test_corner_case():
     "patch, has_db_objects",
     [
         pytest.param((), False, id="No DB Objects"),
-        pytest.param((model, "_db_models", [db_model]), True, id="Model w/ DB Model"),
         pytest.param(
-            (model, "_db_scripts", [db_script]), True, id="Model w/ DB Script"
+            (application, "_db_models", [db_model]), True, id="Application w/ DB Model"
+        ),
+        pytest.param(
+            (application, "_db_scripts", [db_script]),
+            True,
+            id="Application w/ DB Script",
         ),
         pytest.param(
             (ensemble, "_db_models", [db_model]), True, id="Ensemble w/ DB Model"
@@ -134,34 +138,34 @@ def test_corner_case():
 def test_manifest_detects_db_objects(monkeypatch, patch, has_db_objects):
     if patch:
         monkeypatch.setattr(*patch)
-    assert Manifest(model, ensemble).has_db_objects == has_db_objects
+    assert Manifest(application, ensemble).has_db_objects == has_db_objects
 
 
 def test_launched_manifest_transform_data():
-    models = [(model, 1), (model_2, 2)]
+    applications = [(application, 1), (application_2, 2)]
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
     dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
     launched = LaunchedManifest(
         metadata=LaunchedManifestMetadata("name", "path", "launcher", "run_id"),
-        models=models,
+        applications=applications,
         ensembles=ensembles,
         databases=dbs,
     )
     transformed = launched.map(lambda x: str(x))
-    assert transformed.models == tuple((m, str(i)) for m, i in models)
+    assert transformed.applications == tuple((m, str(i)) for m, i in applications)
     assert transformed.ensembles[0][1] == tuple((m, str(i)) for m, i in ensembles[0][1])
     assert transformed.databases[0][1] == tuple((n, str(i)) for n, i in dbs[0][1])
 
 
 def test_launched_manifest_builder_correctly_maps_data():
     lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
-    lmb.add_model(model, 1)
-    lmb.add_model(model_2, 1)
+    lmb.add_application(application, 1)
+    lmb.add_application(application_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
     lmb.add_database(orc, [i for i in range(len(orc.entities))])
 
     manifest = lmb.finalize()
-    assert len(manifest.models) == 2
+    assert len(manifest.applications) == 2
     assert len(manifest.ensembles) == 1
     assert len(manifest.databases) == 1
 

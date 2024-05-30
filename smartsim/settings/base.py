@@ -53,7 +53,7 @@ class RunSettings(SettingsBase):
         container: t.Optional[Container] = None,
         **_kwargs: t.Any,
     ) -> None:
-        """Run parameters for a ``Model``
+        """Run parameters for a `Aapplication``
 
         The base ``RunSettings`` class should only be used with the `local`
         launcher on single node, workstations, or laptops.

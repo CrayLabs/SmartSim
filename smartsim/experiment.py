@@ -40,9 +40,9 @@ from smartsim.status import SmartSimStatus
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import Orchestrator
 from .entity import (
+    Application,
     Ensemble,
     EntitySequence,
-    Model,
     SmartSimEntity,
     TelemetryConfiguration,
 )
@@ -86,8 +86,8 @@ class Experiment:
     and manages their execution.
 
     The instances created by an Experiment represent executable code
-    that is either user-specified, like the ``Model`` instance created
-    by ``Experiment.create_model``, or pre-configured, like the ``Orchestrator``
+    that is either user-specified, like the ``Application`` instance created
+    by ``Experiment.create_application``, or pre-configured, like the ``Orchestrator``
     instance created by ``Experiment.create_database``.
 
     Experiment methods that accept a variable list of arguments, such as
@@ -192,7 +192,7 @@ class Experiment:
     ) -> None:
         """Start passed instances using Experiment launcher
 
-        Any instance ``Model``, ``Ensemble`` or ``Orchestrator``
+        Any instance ``Application``, ``Ensemble`` or ``Orchestrator``
         instance created by the Experiment can be passed as
         an argument to the start method.
 
@@ -201,8 +201,8 @@ class Experiment:
 
             exp = Experiment(name="my_exp", launcher="slurm")
             settings = exp.create_run_settings(exe="./path/to/binary")
-            model = exp.create_model("my_model", settings)
-            exp.start(model)
+            application = exp.create_application("my_application", settings)
+            exp.start(application)
 
         Multiple entity instances can also be passed to the start method
         at once no matter which type of instance they are. These will
@@ -211,9 +211,9 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.start(model_1, model_2, db, ensemble, block=True)
+            exp.start(application_1, application_2, db, ensemble, block=True)
             # alternatively
-            stage_1 = [model_1, model_2, db, ensemble]
+            stage_1 = [application_1, application_2, db, ensemble]
             exp.start(*stage_1, block=True)
 
 
@@ -257,7 +257,7 @@ class Experiment:
     ) -> None:
         """Stop specific instances launched by this ``Experiment``
 
-        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        Instances of ``Application``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the stop method.
 
         Whichever launcher was specified at Experiment initialization
@@ -270,9 +270,9 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.stop(model)
+            exp.stop(application)
             # multiple
-            exp.stop(model_1, model_2, db, ensemble)
+            exp.stop(application_1, application_2, db, ensemble)
 
         :param args: One or more SmartSimEntity or EntitySequence objects.
         :raises TypeError: if wrong type
@@ -280,7 +280,7 @@ class Experiment:
         """
         stop_manifest = Manifest(*args)
         try:
-            for entity in stop_manifest.models:
+            for entity in stop_manifest.applications:
                 self._control.stop_entity(entity)
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
@@ -304,12 +304,12 @@ class Experiment:
         ``Experiment.generate`` creates directories for each entity
         passed to organize Experiments that launch many entities.
 
-        If files or directories are attached to ``Model`` objects
-        using ``Model.attach_generator_files()``, those files or
+        If files or directories are attached to ``application`` objects
+        using ``application.attach_generator_files()``, those files or
         directories will be symlinked, copied, or configured and
         written into the created directory for that instance.
 
-        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        Instances of ``application``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the generate method.
 
         :param tag: tag used in `to_configure` generator files
@@ -369,7 +369,7 @@ class Experiment:
     def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
-        An instance of ``Model`` or ``Ensemble`` can be passed
+        An instance of ``application`` or ``Ensemble`` can be passed
         as an argument.
 
         Passing ``Orchestrator`` will return an error as a
@@ -399,7 +399,7 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.get_status(model)
+            exp.get_status(application)
 
         As with an Experiment method, multiple instance of
         varying types can be passed to and all statuses will
@@ -408,7 +408,7 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            statuses = exp.get_status(model, ensemble, orchestrator)
+            statuses = exp.get_status(application, ensemble, orchestrator)
             complete = [s == smartsim.status.STATUS_COMPLETED for s in statuses]
             assert all(complete)
 
@@ -418,7 +418,7 @@ class Experiment:
         try:
             manifest = Manifest(*args)
             statuses: t.List[SmartSimStatus] = []
-            for entity in manifest.models:
+            for entity in manifest.applications:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:
                 statuses.extend(self._control.get_entity_list_status(entity_list))
@@ -556,8 +556,8 @@ class Experiment:
         summary += f"Experiment: {self.name}\n"
         summary += f"Experiment Path: {self.exp_path}\n"
         summary += f"Launcher: {self._launcher}\n"
-        if manifest.models:
-            summary += f"Models: {len(manifest.models)}\n"
+        if manifest.applications:
+            summary += f"Applications: {len(manifest.applications)}\n"
 
         if self._control.orchestrator_active:
             summary += "Database Status: active\n"
@@ -571,12 +571,14 @@ class Experiment:
         logger.info(summary)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+        def create_entity_dir(
+            entity: t.Union[Orchestrator, Application, Ensemble]
+        ) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 
-        for model in start_manifest.models:
-            create_entity_dir(model)
+        for application in start_manifest.applications:
+            create_entity_dir(application)
 
         for orch in start_manifest.dbs:
             create_entity_dir(orch)
@@ -584,7 +586,7 @@ class Experiment:
         for ensemble in start_manifest.ensembles:
             create_entity_dir(ensemble)
 
-            for member in ensemble.models:
+            for member in ensemble.applications:
                 create_entity_dir(member)
 
     def __str__(self) -> str:
