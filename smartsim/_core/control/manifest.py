@@ -222,7 +222,9 @@ class LaunchedManifest(t.Generic[_T]):
     metadata: _LaunchedManifestMetadata
     applications: t.Tuple[t.Tuple[Application, _T], ...]
     ensembles: t.Tuple[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]], ...]
-    featurestores: t.Tuple[t.Tuple[FeatureStore, t.Tuple[t.Tuple[FSNode, _T], ...]], ...]
+    featurestores: t.Tuple[
+        t.Tuple[FeatureStore, t.Tuple[t.Tuple[FSNode, _T], ...]], ...
+    ]
 
     def map(self, func: t.Callable[[_T], _U]) -> "LaunchedManifest[_U]":
         def _map_entity_data(

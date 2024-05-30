@@ -381,10 +381,18 @@ def test_load_manifest_fs_and_applications_1run(fileutils: FileUtils):
 @pytest.mark.parametrize(
     ["task_id", "step_id", "etype", "exp_isfeature_store", "exp_ismanaged"],
     [
-        pytest.param("123", "", "application", False, False, id="unmanaged, non-feature_store"),
-        pytest.param("456", "123", "ensemble", False, True, id="managed, non-feature_store"),
-        pytest.param("789", "987", "featurestore", True, True, id="managed, feature_store"),
-        pytest.param("987", "", "featurestore", True, False, id="unmanaged, feature_store"),
+        pytest.param(
+            "123", "", "application", False, False, id="unmanaged, non-feature_store"
+        ),
+        pytest.param(
+            "456", "123", "ensemble", False, True, id="managed, non-feature_store"
+        ),
+        pytest.param(
+            "789", "987", "featurestore", True, True, id="managed, feature_store"
+        ),
+        pytest.param(
+            "987", "", "featurestore", True, False, id="unmanaged, feature_store"
+        ),
     ],
 )
 def test_persistable_computed_properties(
