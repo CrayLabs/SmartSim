@@ -70,7 +70,7 @@ def test_keras_model(wlm_experiment, prepare_db, single_db, mlutils, wlmutils):
 
     if wlmutils.get_test_launcher() != "local":
         run_settings.set_tasks(1)
-    model = wlm_experiment.create_model("tf_script", run_settings)
+    model = wlm_experiment.create_application("tf_script", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     script_path = Path(script_dir, "run_tf.py").resolve()

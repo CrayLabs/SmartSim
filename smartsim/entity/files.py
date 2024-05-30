@@ -32,16 +32,16 @@ from tabulate import tabulate
 
 class EntityFiles:
     """EntityFiles are the files a user wishes to have available to
-    models and nodes within SmartSim. Each entity has a method
+    applications and nodes within SmartSim. Each entity has a method
     `entity.attach_generator_files()` that creates one of these
     objects such that at generation time, each file type will be
-    present within the generated model or node directory.
+    present within the generated application or node directory.
 
-    Tagged files are the configuration files for a model that
-    can be searched through and edited by the ModelWriter.
+    Tagged files are the configuration files for a application that
+    can be searched through and edited by the ApplicationWriter.
 
     Copy files are files that a user wants to copy into the
-    model or node directory without searching through and
+    application or node directory without searching through and
     editing them for tags.
 
     Lastly, symlink can be used for big datasets or input
@@ -57,10 +57,10 @@ class EntityFiles:
     ) -> None:
         """Initialize an EntityFiles instance
 
-        :param tagged: tagged files for model configuration
-        :param copy: files or directories to copy into model
+        :param tagged: tagged files for application configuration
+        :param copy: files or directories to copy into application
                      or node directories
-        :param symlink: files to symlink into model or node
+        :param symlink: files to symlink into application or node
                         directories
         """
         self.tagged = tagged or []

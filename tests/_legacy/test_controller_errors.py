@@ -31,7 +31,7 @@ from smartsim._core.control import Controller, Manifest
 from smartsim._core.launcher.step import Step
 from smartsim._core.launcher.step.dragonStep import DragonStep
 from smartsim.database import Orchestrator
-from smartsim.entity import Model
+from smartsim.entity import Application
 from smartsim.entity.ensemble import Ensemble
 from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.error.errors import SSUnsupportedError
@@ -41,10 +41,14 @@ from smartsim.settings import RunSettings, SrunSettings
 pytestmark = pytest.mark.group_a
 
 entity_settings = SrunSettings("echo", ["spam", "eggs"])
-model_dup_setting = RunSettings("echo", ["spam_1", "eggs_2"])
-model = Model("model_name", run_settings=entity_settings, params={}, path="")
-# Model entity slightly different but with same name
-model_2 = Model("model_name", run_settings=model_dup_setting, params={}, path="")
+application_dup_setting = RunSettings("echo", ["spam_1", "eggs_2"])
+application = Application(
+    "application_name", run_settings=entity_settings, params={}, path=""
+)
+# Application entity slightly different but with same name
+application_2 = Application(
+    "application_name", run_settings=application_dup_setting, params={}, path=""
+)
 ens = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=2)
 # Ensemble entity slightly different but with same name
 ens_2 = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=3)
@@ -67,12 +71,12 @@ def test_finished_entity_wrong_type():
 
 
 def test_finished_not_found():
-    """Ask if model is finished that hasnt been launched by this experiment"""
+    """Ask if application is finished that hasnt been launched by this experiment"""
     rs = RunSettings("python")
-    model = Model("hello", {}, "./", rs)
+    application = Application("hello", {}, "./", rs)
     cont = Controller(launcher="local")
     with pytest.raises(ValueError):
-        cont.finished(model)
+        cont.finished(application)
 
 
 def test_entity_status_wrong_type():
@@ -136,7 +140,7 @@ class MockStep(Step):
     "entity",
     [
         pytest.param(ens, id="Ensemble_running"),
-        pytest.param(model, id="Model_running"),
+        pytest.param(application, id="Application_running"),
         pytest.param(orc, id="Orch_running"),
     ],
 )
@@ -156,10 +160,13 @@ def test_duplicate_running_entity(test_dir, wlmutils, entity):
 
 @pytest.mark.parametrize(
     "entity",
-    [pytest.param(ens, id="Ensemble_running"), pytest.param(model, id="Model_running")],
+    [
+        pytest.param(ens, id="Ensemble_running"),
+        pytest.param(application, id="Application_running"),
+    ],
 )
 def test_restarting_entity(test_dir, wlmutils, entity):
-    """Validate restarting a completed Model/Ensemble job"""
+    """Validate restarting a completed Application/Ensemble job"""
     step_settings = RunSettings("echo")
     test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
@@ -188,11 +195,11 @@ def test_restarting_orch(test_dir, wlmutils):
     "entity,entity_2",
     [
         pytest.param(ens, ens_2, id="Ensemble_running"),
-        pytest.param(model, model_2, id="Model_running"),
+        pytest.param(application, application_2, id="Application_running"),
     ],
 )
 def test_starting_entity(test_dir, wlmutils, entity, entity_2):
-    """Test launching a job of Model/Ensemble with same name in completed"""
+    """Test launching a job of Application/Ensemble with same name in completed"""
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
     test_launcher = wlmutils.get_test_launcher()

@@ -38,15 +38,15 @@ Test the launch of simple entity types with local launcher
 """
 
 
-def test_models(fileutils, test_dir):
-    exp_name = "test-models-local-launch"
+def test_applications(fileutils, test_dir):
+    exp_name = "test-applications-local-launch"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=3")
 
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
+    M2 = exp.create_application("m2", path=test_dir, run_settings=settings)
 
     exp.start(M1, M2, block=True, summary=True)
     statuses = exp.get_status(M1, M2)

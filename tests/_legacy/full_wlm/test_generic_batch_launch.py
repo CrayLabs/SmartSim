@@ -51,10 +51,10 @@ def add_batch_resources(wlmutils, batch_settings):
                 batch_settings.set_resource(key, value)
 
 
-def test_batch_model(fileutils, test_dir, wlmutils):
-    """Test the launch of a manually construced batch model"""
+def test_batch_application(fileutils, test_dir, wlmutils):
+    """Test the launch of a manually construced batch application"""
 
-    exp_name = "test-batch-model"
+    exp_name = "test-batch-application"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
@@ -63,13 +63,16 @@ def test_batch_model(fileutils, test_dir, wlmutils):
     batch_settings.set_account(wlmutils.get_test_account())
     add_batch_resources(wlmutils, batch_settings)
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    model = exp.create_model(
-        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
+    application = exp.create_application(
+        "application",
+        path=test_dir,
+        run_settings=run_settings,
+        batch_settings=batch_settings,
     )
 
-    exp.generate(model)
-    exp.start(model, block=True)
-    statuses = exp.get_status(model)
+    exp.generate(application)
+    exp.start(application, block=True)
+    statuses = exp.get_status(application)
     assert len(statuses) == 1
     assert statuses[0] == SmartSimStatus.STATUS_COMPLETED
 
@@ -82,16 +85,16 @@ def test_batch_ensemble(fileutils, test_dir, wlmutils):
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
+    M2 = exp.create_application("m2", path=test_dir, run_settings=settings)
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
     add_batch_resources(wlmutils, batch)
 
     batch.set_account(wlmutils.get_test_account())
     ensemble = exp.create_ensemble("batch-ens", batch_settings=batch)
-    ensemble.add_model(M1)
-    ensemble.add_model(M2)
+    ensemble.add_application(M1)
+    ensemble.add_application(M2)
 
     exp.generate(ensemble)
     exp.start(ensemble, block=True)

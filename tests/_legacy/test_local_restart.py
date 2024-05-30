@@ -34,24 +34,24 @@ pytestmark = pytest.mark.group_b
 
 
 """
-Test restarting ensembles and models.
+Test restarting ensembles and applications.
 """
 
 
 def test_restart(fileutils, test_dir):
-    exp_name = "test-models-local-restart"
+    exp_name = "test-applications-local-restart"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=3")
 
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
-    # restart the model
+    # restart the application
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
