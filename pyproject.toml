@@ -58,6 +58,13 @@ force-exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
+testpaths = [
+    "tests"
+]
+norecursedirs = [
+    "tests/test_configs",
+    "tests/_legacy",
+]
 markers = [
   "group_a: fast test subset a",
   "group_b: fast test subset b",

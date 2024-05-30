@@ -12,10 +12,10 @@
     {
       "run_id": "002816b",
       "timestamp": 1699037041106269774,
-      "model": [
+      "application": [
         {
-          "name": "colocated_model",
-          "path": "/tmp/my-exp/colocated_model",
+          "name": "colocated_application",
+          "path": "/tmp/my-exp/colocated_application",
           "exe_args": [
             "/path/to/my/script.py"
           ],
@@ -53,7 +53,7 @@
             "models": []
           },
           "telemetry_metadata": {
-            "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/model/colocated_model",
+            "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_ensemble/002816b/application/colocated_application",
             "step_id": "4139111.21",
             "task_id": "21529",
             "managed": true

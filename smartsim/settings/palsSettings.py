@@ -44,16 +44,12 @@ class PalsMpiexecSettings(_BaseMPISettings):
     into ``mpiexec`` arguments and prefixed with ``--``. Values of
     None can be provided for arguments that do not have values.
 
-    :param exe: executable
-    :param exe_args: executable arguments
     :param run_args: arguments for run command
     :param env_vars: environment vars to launch job with
     """
 
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         fail_if_missing_exec: bool = True,
@@ -77,8 +73,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
                                      is missing. Otherwise, throw a warning
         """
         super().__init__(
-            exe,
-            exe_args,
             run_command="mpiexec",
             run_args=run_args,
             env_vars=env_vars,

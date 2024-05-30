@@ -32,6 +32,7 @@ from collections import ChainMap
 from threading import RLock, Thread
 from types import FrameType
 
+from ..._core.launcher.step import Step
 from ...database import Orchestrator
 from ...entity import DBNode, EntitySequence, SmartSimEntity
 from ...log import ContextThread, get_logger
@@ -162,9 +163,8 @@ class JobManager:
 
     def add_job(
         self,
-        job_name: str,
+        step: Step,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -176,13 +176,13 @@ class JobManager:
         """
         launcher = str(self._launcher)
         # all operations here should be atomic
-        job = Job(job_name, job_id, entity, launcher, is_task)
-        if isinstance(entity, (DBNode, Orchestrator)):
-            self.db_jobs[entity.name] = job
-        elif isinstance(entity, JobEntity) and entity.is_db:
-            self.db_jobs[entity.name] = job
+        job = Job(step.name, job_id, step.entity, launcher, is_task)
+        if isinstance(step.entity, (DBNode, Orchestrator)):
+            self.db_jobs[step.entity.name] = job
+        elif isinstance(step.entity, JobEntity) and step.entity.is_db:
+            self.db_jobs[step.entity.name] = job
         else:
-            self.jobs[entity.name] = job
+            self.jobs[step.entity.name] = job
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed

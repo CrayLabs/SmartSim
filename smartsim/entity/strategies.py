@@ -31,20 +31,24 @@ from itertools import product
 
 
 # create permutations of all parameters
-# single model if parameters only have one value
+# single application if parameters only have one value
 def create_all_permutations(
-    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
+    param_names: t.List[str],
+    param_values: t.List[t.List[str]],
+    _n_applications: int = 0,
 ) -> t.List[t.Dict[str, str]]:
     perms = list(product(*param_values))
     all_permutations = []
     for permutation in perms:
-        temp_model = dict(zip(param_names, permutation))
-        all_permutations.append(temp_model)
+        temp_application = dict(zip(param_names, permutation))
+        all_permutations.append(temp_application)
     return all_permutations
 
 
 def step_values(
-    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
+    param_names: t.List[str],
+    param_values: t.List[t.List[str]],
+    _n_applications: int = 0,
 ) -> t.List[t.Dict[str, str]]:
     permutations = []
     for param_value in zip(*param_values):
@@ -53,12 +57,12 @@ def step_values(
 
 
 def random_permutations(
-    param_names: t.List[str], param_values: t.List[t.List[str]], n_models: int = 0
+    param_names: t.List[str], param_values: t.List[t.List[str]], n_applications: int = 0
 ) -> t.List[t.Dict[str, str]]:
     permutations = create_all_permutations(param_names, param_values)
 
-    # sample from available permutations if n_models is specified
-    if n_models and n_models < len(permutations):
-        permutations = random.sample(permutations, n_models)
+    # sample from available permutations if n_applications is specified
+    if n_applications and n_applications < len(permutations):
+        permutations = random.sample(permutations, n_applications)
 
     return permutations

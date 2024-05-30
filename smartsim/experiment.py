@@ -40,9 +40,9 @@ from smartsim.status import SmartSimStatus
 from ._core import Controller, Generator, Manifest, previewrenderer
 from .database import Orchestrator
 from .entity import (
+    Application,
     Ensemble,
     EntitySequence,
-    Model,
     SmartSimEntity,
     TelemetryConfiguration,
 )
@@ -86,8 +86,8 @@ class Experiment:
     and manages their execution.
 
     The instances created by an Experiment represent executable code
-    that is either user-specified, like the ``Model`` instance created
-    by ``Experiment.create_model``, or pre-configured, like the ``Orchestrator``
+    that is either user-specified, like the ``Application`` instance created
+    by ``Experiment.create_application``, or pre-configured, like the ``Orchestrator``
     instance created by ``Experiment.create_database``.
 
     Experiment methods that accept a variable list of arguments, such as
@@ -192,7 +192,7 @@ class Experiment:
     ) -> None:
         """Start passed instances using Experiment launcher
 
-        Any instance ``Model``, ``Ensemble`` or ``Orchestrator``
+        Any instance ``Application``, ``Ensemble`` or ``Orchestrator``
         instance created by the Experiment can be passed as
         an argument to the start method.
 
@@ -201,8 +201,8 @@ class Experiment:
 
             exp = Experiment(name="my_exp", launcher="slurm")
             settings = exp.create_run_settings(exe="./path/to/binary")
-            model = exp.create_model("my_model", settings)
-            exp.start(model)
+            application = exp.create_application("my_application", settings)
+            exp.start(application)
 
         Multiple entity instances can also be passed to the start method
         at once no matter which type of instance they are. These will
@@ -211,9 +211,9 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.start(model_1, model_2, db, ensemble, block=True)
+            exp.start(application_1, application_2, db, ensemble, block=True)
             # alternatively
-            stage_1 = [model_1, model_2, db, ensemble]
+            stage_1 = [application_1, application_2, db, ensemble]
             exp.start(*stage_1, block=True)
 
 
@@ -257,7 +257,7 @@ class Experiment:
     ) -> None:
         """Stop specific instances launched by this ``Experiment``
 
-        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        Instances of ``Application``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the stop method.
 
         Whichever launcher was specified at Experiment initialization
@@ -270,9 +270,9 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.stop(model)
+            exp.stop(application)
             # multiple
-            exp.stop(model_1, model_2, db, ensemble)
+            exp.stop(application_1, application_2, db, ensemble)
 
         :param args: One or more SmartSimEntity or EntitySequence objects.
         :raises TypeError: if wrong type
@@ -280,7 +280,7 @@ class Experiment:
         """
         stop_manifest = Manifest(*args)
         try:
-            for entity in stop_manifest.models:
+            for entity in stop_manifest.applications:
                 self._control.stop_entity(entity)
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
@@ -304,12 +304,12 @@ class Experiment:
         ``Experiment.generate`` creates directories for each entity
         passed to organize Experiments that launch many entities.
 
-        If files or directories are attached to ``Model`` objects
-        using ``Model.attach_generator_files()``, those files or
+        If files or directories are attached to ``application`` objects
+        using ``application.attach_generator_files()``, those files or
         directories will be symlinked, copied, or configured and
         written into the created directory for that instance.
 
-        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        Instances of ``application``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the generate method.
 
         :param tag: tag used in `to_configure` generator files
@@ -369,7 +369,7 @@ class Experiment:
     def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
-        An instance of ``Model`` or ``Ensemble`` can be passed
+        An instance of ``application`` or ``Ensemble`` can be passed
         as an argument.
 
         Passing ``Orchestrator`` will return an error as a
@@ -399,7 +399,7 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            exp.get_status(model)
+            exp.get_status(application)
 
         As with an Experiment method, multiple instance of
         varying types can be passed to and all statuses will
@@ -408,7 +408,7 @@ class Experiment:
         .. highlight:: python
         .. code-block:: python
 
-            statuses = exp.get_status(model, ensemble, orchestrator)
+            statuses = exp.get_status(application, ensemble, orchestrator)
             complete = [s == smartsim.status.STATUS_COMPLETED for s in statuses]
             assert all(complete)
 
@@ -418,7 +418,7 @@ class Experiment:
         try:
             manifest = Manifest(*args)
             statuses: t.List[SmartSimStatus] = []
-            for entity in manifest.models:
+            for entity in manifest.applications:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:
                 statuses.extend(self._control.get_entity_list_status(entity_list))
@@ -431,6 +431,8 @@ class Experiment:
     def create_ensemble(
         self,
         name: str,
+        exe: t.Optional[str] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
         run_settings: t.Optional[base.RunSettings] = None,
@@ -439,7 +441,7 @@ class Experiment:
         path: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> Ensemble:
-        """Create an ``Ensemble`` of ``Model`` instances
+        """Create an ``Ensemble`` of ``Application`` instances
 
         Ensembles can be launched sequentially or as a batch
         if using a non-local launcher. e.g. slurm
@@ -454,8 +456,8 @@ class Experiment:
             - ``batch_settings``, ``run_settings``, and ``replicas``
 
         If given solely batch settings, an empty ensemble
-        will be created that Models can be added to manually
-        through ``Ensemble.add_model()``.
+        will be created that applications can be added to manually
+        through ``Ensemble.add_application()``.
         The entire Ensemble will launch as one batch.
 
         Provided batch and run settings, either ``params``
@@ -470,12 +472,14 @@ class Experiment:
         parameters to the permutation strategy.
 
         :param name: name of the ``Ensemble``
-        :param params: parameters to expand into ``Model`` members
+        :param params: parameters to expand into ``Application`` members
+        :param exe: executable to run
+        :param exe_args: executable arguments
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
-        :param run_settings: describes how each ``Model`` should be executed
+        :param run_settings: describes how each ``Application`` should be executed
         :param replicas: number of replicas to create
         :param perm_strategy: strategy for expanding ``params`` into
-                              ``Model`` instances from params argument
+                              ``Application`` instances from params argument
                               options are "all_perm", "step", "random"
                               or a callable function.
         :raises SmartSimError: if initialization fails
@@ -489,6 +493,8 @@ class Experiment:
         try:
             new_ensemble = Ensemble(
                 name=name,
+                exe=exe,
+                exe_args=exe_args,
                 params=params or {},
                 path=entity_path,
                 batch_settings=batch_settings,
@@ -503,91 +509,95 @@ class Experiment:
             raise
 
     @_contextualize
-    def create_model(
+    def create_application(
         self,
         name: str,
+        exe: str,
         run_settings: base.RunSettings,
+        exe_args: t.Optional[t.List[str]] = None,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         path: t.Optional[str] = None,
         enable_key_prefixing: bool = False,
         batch_settings: t.Optional[base.BatchSettings] = None,
-    ) -> Model:
-        """Create a general purpose ``Model``
+    ) -> Application:
+        """Create a general purpose ``Application``
 
-        The ``Model`` class is the most general encapsulation of
-        executable code in SmartSim. ``Model`` instances are named
+        The ``Application`` class is the most general encapsulation of
+        executable code in SmartSim. ``Application`` instances are named
         references to pieces of a workflow that can be parameterized,
         and executed.
 
-        ``Model`` instances can be launched sequentially, as a batch job,
+        ``Application`` instances can be launched sequentially, as a batch job,
         or as a group by adding them into an ``Ensemble``.
 
-        All ``Models`` require a reference to run settings to specify which
+        All ``Applications`` require a reference to run settings to specify which
         executable to launch as well provide options for how to launch
         the executable with the underlying WLM. Furthermore, batch a
-        reference to a batch settings can be added to launch the ``Model``
-        as a batch job through ``Experiment.start``. If a ``Model`` with
+        reference to a batch settings can be added to launch the ``Application``
+        as a batch job through ``Experiment.start``. If a ``Application`` with
         a reference to a set of batch settings is added to a larger
         entity with its own set of batch settings (for e.g. an
         ``Ensemble``) the batch settings of the larger entity will take
-        precedence and the batch setting of the ``Model`` will be
+        precedence and the batch setting of the ``Application`` will be
         strategically ignored.
 
         Parameters supplied in the `params` argument can be written into
-        configuration files supplied at runtime to the ``Model`` through
-        ``Model.attach_generator_files``. `params` can also be turned
-        into executable arguments by calling ``Model.params_to_args``
+        configuration files supplied at runtime to the ``Application`` through
+        ``Application.attach_generator_files``. `params` can also be turned
+        into executable arguments by calling ``Application.params_to_args``
 
-        By default, ``Model`` instances will be executed in the
-        exp_path/model_name directory if no `path` argument is supplied.
-        If a ``Model`` instance is passed to ``Experiment.generate``,
+        By default, ``Application`` instances will be executed in the
+        exp_path/application_name directory if no `path` argument is supplied.
+        If a ``Application`` instance is passed to ``Experiment.generate``,
         a directory within the ``Experiment`` directory will be created
-        to house the input and output files from the ``Model``.
+        to house the input and output files from the ``Application``.
 
-        Example initialization of a ``Model`` instance
+        Example initialization of a ``Application`` instance
 
         .. highlight:: python
         .. code-block:: python
 
             from smartsim import Experiment
             run_settings = exp.create_run_settings("python", "run_pytorch_model.py")
-            model = exp.create_model("pytorch_model", run_settings)
+            application = exp.create_application("pytorch_model", run_settings)
 
-            # adding parameters to a model
+            # adding parameters to a application
             run_settings = exp.create_run_settings("python", "run_pytorch_model.py")
             train_params = {
                 "batch": 32,
                 "epoch": 10,
                 "lr": 0.001
             }
-            model = exp.create_model("pytorch_model", run_settings, params=train_params)
-            model.attach_generator_files(to_configure="./train.cfg")
-            exp.generate(model)
+            application = exp.create_application("pytorch_model", run_settings, params=train_params)
+            application.attach_generator_files(to_configure="./train.cfg")
+            exp.generate(application)
 
-        New in 0.4.0, ``Model`` instances can be colocated with an
-        Orchestrator database shard through ``Model.colocate_db``. This
+        New in 0.4.0, ``application`` instances can be colocated with an
+        Orchestrator database shard through ``application.colocate_db``. This
         will launch a single ``Orchestrator`` instance on each compute
         host used by the (possibly distributed) application. This is
         useful for performant online inference or processing
         at runtime.
 
-        New in 0.4.2, ``Model`` instances can now be colocated with
+        New in 0.4.2, ``Application`` instances can now be colocated with
         an Orchestrator database over either TCP or UDS using the
-        ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` method
-        respectively. The original ``Model.colocate_db`` method is now
-        deprecated, but remains as an alias for ``Model.colocate_db_tcp``
+        ``pplication.colocate_db_tcp`` or ``Application.colocate_db_uds`` method
+        respectively. The original ``Application.colocate_db`` method is now
+        deprecated, but remains as an alias for ``Application.colocate_db_tcp``
         for backward compatibility.
 
-        :param name: name of the ``Model``
-        :param run_settings: defines how ``Model`` should be run
-        :param params: ``Model`` parameters for writing into configuration files
-        :param path: path to where the ``Model`` should be executed at runtime
+        :param name: name of the ``Application``
+        :param exe: executable to run
+        :param exe_args: executable arguments
+        :param run_settings: defines how ``Application`` should be run
+        :param params: ``Application`` parameters for writing into configuration files
+        :param path: path to where the ``Application`` should be executed at runtime
         :param enable_key_prefixing: If True, data sent to the ``Orchestrator``
-                                     using SmartRedis from this ``Model`` will
-                                     be prefixed with the ``Model`` name.
-        :param batch_settings: Settings to run ``Model`` individually as a batch job.
+                                     using SmartRedis from this ``Application`` will
+                                     be prefixed with the ``Application`` name.
+        :param batch_settings: Settings to run ``Application`` individually as a batch job.
         :raises SmartSimError: if initialization fails
-        :return: the created ``Model``
+        :return: the created ``Application``
         """
         if name is None:
             raise AttributeError("Entity has no name. Please set name attribute.")
@@ -597,16 +607,18 @@ class Experiment:
             params = {}
 
         try:
-            new_model = Model(
+            new_application = Application(
                 name=name,
+                exe=exe,
+                exe_args=exe_args,
                 params=params,
                 path=entity_path,
                 run_settings=run_settings,
                 batch_settings=batch_settings,
             )
             if enable_key_prefixing:
-                new_model.enable_key_prefixing()
-            return new_model
+                new_application.enable_key_prefixing()
+            return new_application
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -614,8 +626,6 @@ class Experiment:
     @_contextualize
     def create_run_settings(
         self,
-        exe: str,
-        exe_args: t.Optional[t.List[str]] = None,
         run_command: str = "auto",
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -657,8 +667,6 @@ class Experiment:
         try:
             return settings.create_run_settings(
                 self._launcher,
-                exe,
-                exe_args=exe_args,
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,
@@ -750,12 +758,12 @@ class Experiment:
         When launched, ``Orchestrator`` can be used to communicate
         data between Fortran, Python, C, and C++ applications.
 
-        Machine Learning models in Pytorch, Tensorflow, and ONNX (i.e. scikit-learn)
+        Machine Learning model in Pytorch, Tensorflow, and ONNX (i.e. scikit-learn)
         can also be stored within the ``Orchestrator`` database where they
         can be called remotely and executed on CPU or GPU where
         the database is hosted.
 
-        To enable a SmartSim ``Model`` to communicate with the database
+        To enable a SmartSim ``Application`` to communicate with the database
         the workload must utilize the SmartRedis clients. For more
         information on the database, and SmartRedis clients see the
         documentation at https://www.craylabs.org/docs/smartredis.html
@@ -927,8 +935,8 @@ class Experiment:
         summary += f"Experiment: {self.name}\n"
         summary += f"Experiment Path: {self.exp_path}\n"
         summary += f"Launcher: {self._launcher}\n"
-        if manifest.models:
-            summary += f"Models: {len(manifest.models)}\n"
+        if manifest.applications:
+            summary += f"Applications: {len(manifest.applications)}\n"
 
         if self._control.orchestrator_active:
             summary += "Database Status: active\n"
@@ -942,12 +950,14 @@ class Experiment:
         logger.info(summary)
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(entity: t.Union[Orchestrator, Model, Ensemble]) -> None:
+        def create_entity_dir(
+            entity: t.Union[Orchestrator, Application, Ensemble]
+        ) -> None:
             if not os.path.isdir(entity.path):
                 os.makedirs(entity.path)
 
-        for model in start_manifest.models:
-            create_entity_dir(model)
+        for application in start_manifest.applications:
+            create_entity_dir(application)
 
         for orch in start_manifest.dbs:
             create_entity_dir(orch)
@@ -955,7 +965,7 @@ class Experiment:
         for ensemble in start_manifest.ensembles:
             create_entity_dir(ensemble)
 
-            for member in ensemble.models:
+            for member in ensemble.applications:
                 create_entity_dir(member)
 
     def __str__(self) -> str:

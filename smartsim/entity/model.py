@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import copy
 import itertools
 import re
 import sys
@@ -35,7 +36,7 @@ from os import getcwd
 from os import path as osp
 
 from .._core._install.builder import Device
-from .._core.utils.helpers import cat_arg_and_value
+from .._core.utils.helpers import cat_arg_and_value, expand_exe_path
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
@@ -46,20 +47,24 @@ from .files import EntityFiles
 logger = get_logger(__name__)
 
 
-class Model(SmartSimEntity):
+class Application(SmartSimEntity):
     def __init__(
         self,
         name: str,
-        params: t.Dict[str, str],
+        exe: str,
         run_settings: RunSettings,
+        params: t.Optional[t.Dict[str, str]] = None,
+        exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
     ):
-        """Initialize a ``Model``
+        """Initialize a ``Application``
 
-        :param name: name of the model
-        :param params: model parameters for writing into configuration files or
+        :param name: name of the application
+        :param exe: executable to run
+        :param exe_args: executable arguments
+        :param params: application parameters for writing into configuration files or
                        to be passed as command line arguments to executable.
         :param path: path to output, error, and configuration files
         :param run_settings: launcher settings specified in the experiment
@@ -67,9 +72,11 @@ class Model(SmartSimEntity):
                                interpreted as command line arguments to
                                be added to run_settings
         :param batch_settings: Launcher settings for running the individual
-                               model as a batch job
+                               application as a batch job
         """
         super().__init__(name, str(path), run_settings)
+        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
@@ -78,6 +85,22 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
+
+    @property
+    def exe_args(self) -> t.Union[str, t.List[str]]:
+        """Return an immutable list of attached executable arguments.
+
+        :returns: attached executable arguments
+        """
+        return self._exe_args
+
+    @exe_args.setter
+    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
+        """Set the executable arguments.
+
+        :param value: executable arguments
+        """
+        self._exe_args = self._build_exe_args(value)
 
     @property
     def db_models(self) -> t.Iterable[DBModel]:
@@ -101,7 +124,18 @@ class Model(SmartSimEntity):
 
         :return: Return True of the Model will run with a colocated Orchestrator
         """
-        return bool(self.run_settings.colocated_db_settings)
+        if self.run_settings is None:
+            return False
+        else:
+            return bool(self.run_settings.colocated_db_settings)
+
+    def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
+        """Add executable arguments to executable
+
+        :param args: executable arguments
+        """
+        args = self._build_exe_args(args)
+        self._exe_args.extend(args)
 
     def register_incoming_entity(self, incoming_entity: SmartSimEntity) -> None:
         """Register future communication between entities.
@@ -124,11 +158,11 @@ class Model(SmartSimEntity):
         self.incoming_entities.append(incoming_entity)
 
     def enable_key_prefixing(self) -> None:
-        """If called, the entity will prefix its keys with its own model name"""
+        """If called, the entity will prefix its keys with its own application name"""
         self._key_prefixing_enabled = True
 
     def disable_key_prefixing(self) -> None:
-        """If called, the entity will not prefix its keys with its own model name"""
+        """If called, the entity will not prefix its keys with its own application name"""
         self._key_prefixing_enabled = False
 
     def query_key_prefixing(self) -> bool:
@@ -155,8 +189,8 @@ class Model(SmartSimEntity):
         the path of the entity, and files "to_symlink" are
         symlinked into the path of the entity.
 
-        Files "to_configure" are text based model input files where
-        parameters for the model are set. Note that only models
+        Files "to_configure" are text based application input files where
+        parameters for the application are set. Note that only applications
         support the "to_configure" field. These files must have
         fields tagged that correspond to the values the user
         would like to change. The tag is settable but defaults
@@ -191,7 +225,7 @@ class Model(SmartSimEntity):
         :returns: String version of table
         """
         if not self.files:
-            return "No file attached to this model."
+            return "No file attached to this application."
         return str(self.files)
 
     def print_attached_files(self) -> None:
@@ -199,7 +233,7 @@ class Model(SmartSimEntity):
         print(self.attached_files_table)
 
     def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
-        """An alias for ``Model.colocate_db_tcp``"""
+        """An alias for ``Application.colocate_db_tcp``"""
         warnings.warn(
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
@@ -219,10 +253,10 @@ class Model(SmartSimEntity):
         db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
-        """Colocate an Orchestrator instance with this Model over UDS.
+        """Colocate an Orchestrator instance with this Application over UDS.
 
         This method will initialize settings which add an unsharded
-        database to this Model instance. Only this Model will be able to communicate
+        database to this Application instance. Only this Application will be able to communicate
         with this colocated database by using Unix Domain sockets.
 
         Extra parameters for the db can be passed through kwargs. This includes
@@ -246,7 +280,7 @@ class Model(SmartSimEntity):
         :param db_cpus: number of cpus to use for orchestrator
         :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
                                iterable disables pinning
-        :param debug: launch Model with extra debug information about the colocated db
+        :param debug: launch Application with extra debug information about the colocated db
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         """
 
@@ -280,10 +314,10 @@ class Model(SmartSimEntity):
         db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
-        """Colocate an Orchestrator instance with this Model over TCP/IP.
+        """Colocate an Orchestrator instance with this Application over TCP/IP.
 
         This method will initialize settings which add an unsharded
-        database to this Model instance. Only this Model will be able to communicate
+        database to this Application instance. Only this Application will be able to communicate
         with this colocated database by using the loopback TCP interface.
 
         Extra parameters for the db can be passed through kwargs. This includes
@@ -307,7 +341,7 @@ class Model(SmartSimEntity):
         :param db_cpus: number of cpus to use for orchestrator
         :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
                                iterable disables pinning
-        :param debug: launch Model with extra debug information about the colocated db
+        :param debug: launch Application with extra debug information about the colocated db
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         """
 
@@ -342,7 +376,7 @@ class Model(SmartSimEntity):
 
         if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
             raise SSUnsupportedError(
-                "Models colocated with databases cannot be run as a mpmd workload"
+                "Applications colocated with databases cannot be run as a mpmd workload"
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
@@ -454,17 +488,15 @@ class Model(SmartSimEntity):
             for param in self.params_as_args:
                 if not param in self.params:
                     raise ValueError(
-                        f"Tried to convert {param} to command line argument for Model "
-                        f"{self.name}, but its value was not found in model params"
+                        f"Tried to convert {param} to command line argument for Application "
+                        f"{self.name}, but its value was not found in application params"
                     )
                 if self.run_settings is None:
                     raise ValueError(
-                        "Tried to configure command line parameter for Model "
+                        "Tried to configure command line parameter for Application "
                         f"{self.name}, but no RunSettings are set."
                     )
-                self.run_settings.add_exe_args(
-                    cat_arg_and_value(param, self.params[param])
-                )
+                self.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def add_ml_model(
         self,
@@ -537,7 +569,7 @@ class Model(SmartSimEntity):
     ) -> None:
         """TorchScript to launch with this Model instance
 
-        Each script added to the model will be loaded into an
+        Each script added to the application will be loaded into an
         orchestrator (converged or not) prior to the execution
         of this Model instance
 
@@ -581,11 +613,11 @@ class Model(SmartSimEntity):
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
-        """TorchScript function to launch with this Model instance
+        """TorchScript function to launch with this Application instance
 
-        Each script function to the model will be loaded into a
+        Each script function to the application will be loaded into a
         non-converged orchestrator prior to the execution
-        of this Model instance.
+        of this Application instance.
 
         For converged orchestrators, the :meth:`add_script` method should be used.
 
@@ -593,7 +625,7 @@ class Model(SmartSimEntity):
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the application being stored in the first N devices of type ``device``.
 
         :param name: key to store function under
         :param function: TorchScript function code
@@ -618,7 +650,7 @@ class Model(SmartSimEntity):
         return hash(self.name)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Model):
+        if not isinstance(other, Application):
             return False
 
         if self.name == other.name:
@@ -641,7 +673,7 @@ class Model(SmartSimEntity):
             err_msg += (
                 f"Please store the ML model named {db_model.name} in binary format "
             )
-            err_msg += "and add it to the SmartSim Model as file."
+            err_msg += "and add it to the SmartSim Application as file."
             raise SSUnsupportedError(err_msg)
 
         self._db_models.append(db_model)
@@ -653,7 +685,7 @@ class Model(SmartSimEntity):
                     "Functions can not be set from memory for colocated databases.\n"
                     f"Please convert the function named {db_script.name} "
                     "to a string or store it as a text file and add it to the "
-                    "SmartSim Model with add_script."
+                    "SmartSim Application with add_script."
                 )
                 raise SSUnsupportedError(err_msg)
         self._db_scripts.append(db_script)
@@ -664,7 +696,7 @@ class Model(SmartSimEntity):
                 err_msg = (
                     "ML model can not be set from memory for colocated databases.\n"
                     f"Please store the ML model named {db_model.name} in binary "
-                    "format and add it to the SmartSim Model as file."
+                    "format and add it to the SmartSim Application as file."
                 )
                 raise SSUnsupportedError(err_msg)
 
@@ -675,6 +707,29 @@ class Model(SmartSimEntity):
                         "Functions can not be set from memory for colocated "
                         "databases.\nPlease convert the function named "
                         f"{db_script.name} to a string or store it as a text"
-                        "file and add it to the SmartSim Model with add_script."
+                        "file and add it to the SmartSim Application with add_script."
                     )
                     raise SSUnsupportedError(err_msg)
+
+    @staticmethod
+    def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
+        """Check and convert exe_args input to a desired collection format"""
+        if not exe_args:
+            return []
+
+        if isinstance(exe_args, list):
+            exe_args = copy.deepcopy(exe_args)
+
+        if not (
+            isinstance(exe_args, str)
+            or (
+                isinstance(exe_args, list)
+                and all(isinstance(arg, str) for arg in exe_args)
+            )
+        ):
+            raise TypeError("Executable arguments were not a list of str or a str.")
+
+        if isinstance(exe_args, str):
+            return exe_args.split()
+
+        return exe_args

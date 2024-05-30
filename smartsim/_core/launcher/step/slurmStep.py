@@ -29,6 +29,7 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
+from ....entity import Application, DBNode, Ensemble
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
@@ -38,14 +39,16 @@ logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: SbatchSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Application, DBNode], batch_settings: SbatchSettings
+    ) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
         :param cwd: path to launch dir
         :param batch_settings: batch settings for entity
         """
-        super().__init__(name, cwd, batch_settings)
+        super().__init__(entity, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
         self.batch_settings = batch_settings
@@ -98,16 +101,19 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: SrunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Application, DBNode], run_settings: SrunSettings
+    ) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
         :param cwd: path to launch dir
         :param run_settings: run settings for entity
         """
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)
         self.alloc: t.Optional[str] = None
         self.managed = True
+        self.entity = entity
         self.run_settings = run_settings
         if not self.run_settings.in_batch:
             self._set_alloc()
@@ -184,11 +190,11 @@ class SrunStep(Step):
         return self.run_settings.mpmd
 
     @staticmethod
-    def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:
+    def _get_exe_args_list(entity: t.Union[Application, DBNode]) -> t.List[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """
-        exe_args = run_setting.exe_args
+        exe_args = entity.exe_args
         args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
         return args
 
@@ -200,18 +206,21 @@ class SrunStep(Step):
         if self._get_mpmd():
             return self._make_mpmd()
 
-        exe = self.run_settings.exe
-        args = self._get_exe_args_list(self.run_settings)
+        exe = self.entity.exe
+        args = self._get_exe_args_list(self.entity)
         return exe + args
 
+    # There is an issue here, exe and exe_args are no longer attached to the runsettings
+    # This functions is looping through the list of run_settings.mpmd and build the variable
+    # cmd
     def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
-        exe = self.run_settings.exe
-        args = self._get_exe_args_list(self.run_settings)
+        exe = self.entity.exe
+        args = self._get_exe_args_list(self.entity)
         cmd = exe + args
 
         compound_env_vars = []
-        for mpmd_rs in self._get_mpmd():
+        for mpmd_rs in self._get_mpmd():  # returns a list of runsettings
             cmd += [" : "]
             cmd += mpmd_rs.format_run_args()
             cmd += ["--job-name", self.name]

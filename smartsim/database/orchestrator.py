@@ -805,10 +805,12 @@ class Orchestrator(EntityList[DBNode]):
                 node = DBNode(
                     db_node_name,
                     self.path,
-                    run_settings,
-                    [port],
-                    [db_node_name + ".out"],
-                    self.db_identifier,
+                    exe=sys.executable,
+                    exe_args=[start_script_args],
+                    run_settings=run_settings,
+                    ports=[port],
+                    output_files=[db_node_name + ".out"],
+                    db_identifier=self.db_identifier,
                 )
                 self.entities.append(node)
 

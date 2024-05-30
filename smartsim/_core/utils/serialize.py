@@ -37,7 +37,7 @@ import smartsim.log
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import Orchestrator
-    from smartsim.entity import DBNode, Ensemble, Model
+    from smartsim.entity import Application, DBNode, Ensemble
     from smartsim.entity.dbobject import DBModel, DBScript
     from smartsim.settings.base import BatchSettings, RunSettings
 
@@ -58,9 +58,9 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     new_run = {
         "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
-        "model": [
-            _dictify_model(model, *telemetry_metadata)
-            for model, telemetry_metadata in manifest.models
+        "application": [
+            _dictify_application(application, *telemetry_metadata)
+            for application, telemetry_metadata in manifest.applications
         ],
         "orchestrator": [
             _dictify_db(db, nodes_info) for db, nodes_info in manifest.databases
@@ -95,8 +95,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
             json.dump(manifest_dict, file, indent=2)
 
 
-def _dictify_model(
-    model: Model,
+def _dictify_application(
+    application: Application,
     step_id: t.Optional[str],
     task_id: t.Optional[str],
     managed: t.Optional[bool],
@@ -104,27 +104,31 @@ def _dictify_model(
     err_file: str,
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
-    colo_settings = (model.run_settings.colocated_db_settings or {}).copy()
+    if application.run_settings is not None:
+        colo_settings = (application.run_settings.colocated_db_settings or {}).copy()
+    else:
+        colo_settings = ({}).copy()
     db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
     db_models = t.cast("t.List[DBModel]", colo_settings.pop("db_models", []))
     return {
-        "name": model.name,
-        "path": model.path,
-        "exe_args": model.run_settings.exe_args,
-        "run_settings": _dictify_run_settings(model.run_settings),
+        "name": application.name,
+        "path": application.path,
+        "exe_args": application.exe_args,
+        "exe": application.exe,
+        "run_settings": _dictify_run_settings(application.run_settings),
         "batch_settings": (
-            _dictify_batch_settings(model.batch_settings)
-            if model.batch_settings
+            _dictify_batch_settings(application.batch_settings)
+            if application.batch_settings
             else {}
         ),
-        "params": model.params,
+        "params": application.params,
         "files": (
             {
-                "Symlink": model.files.link,
-                "Configure": model.files.tagged,
-                "Copy": model.files.copy,
+                "Symlink": application.files.link,
+                "Configure": application.files.tagged,
+                "Copy": application.files.copy,
             }
-            if model.files
+            if application.files
             else {
                 "Symlink": [],
                 "Configure": [],
@@ -169,7 +173,7 @@ def _dictify_model(
 
 def _dictify_ensemble(
     ens: Ensemble,
-    members: t.Sequence[t.Tuple[Model, TStepLaunchMetaData]],
+    members: t.Sequence[t.Tuple[Application, TStepLaunchMetaData]],
 ) -> t.Dict[str, t.Any]:
     return {
         "name": ens.name,
@@ -181,9 +185,9 @@ def _dictify_ensemble(
             if ens.batch_settings
             else {}
         ),
-        "models": [
-            _dictify_model(model, *launching_metadata)
-            for model, launching_metadata in members
+        "applications": [
+            _dictify_application(application, *launching_metadata)
+            for application, launching_metadata in members
         ],
     }
 
@@ -196,11 +200,10 @@ def _dictify_run_settings(run_settings: RunSettings) -> t.Dict[str, t.Any]:
             "MPMD run settings"
         )
     return {
-        "exe": run_settings.exe,
         # TODO: We should try to move this back
         # "exe_args": run_settings.exe_args,
-        "run_command": run_settings.run_command,
-        "run_args": run_settings.run_args,
+        "run_command": run_settings.run_command if run_settings else "",
+        "run_args": run_settings.run_args if run_settings else None,
         # TODO: We currently do not have a way to represent MPMD commands!
         #       Maybe add a ``"mpmd"`` key here that is a
         #       ``list[TDictifiedRunSettings]``?
