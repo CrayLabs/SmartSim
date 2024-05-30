@@ -49,16 +49,16 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_models(fileutils, test_dir, wlmutils):
-    exp_name = "test-models-launch"
+def test_applications(fileutils, test_dir, wlmutils):
+    exp_name = "test-applications-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
     settings.set_tasks(1)
 
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=deepcopy(settings))
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
+    M2 = exp.create_application("m2", path=test_dir, run_settings=deepcopy(settings))
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
@@ -76,7 +76,7 @@ def test_multinode_app(mpi_app_path, test_dir, wlmutils):
     settings = exp.create_run_settings(str(mpi_app_path), [])
     settings.set_nodes(3)
 
-    model = exp.create_model("mpi_app", run_settings=settings)
+    model = exp.create_application("mpi_app", run_settings=settings)
     exp.generate(model)
 
     exp.start(model, block=True)
@@ -125,8 +125,10 @@ def test_summary(fileutils, test_dir, wlmutils):
     bad_settings = exp.create_run_settings("python", f"{bad} --time=6")
     bad_settings.set_tasks(1)
 
-    sleep_exp = exp.create_model("sleep", path=test_dir, run_settings=sleep_settings)
-    bad = exp.create_model("bad", path=test_dir, run_settings=bad_settings)
+    sleep_exp = exp.create_application(
+        "sleep", path=test_dir, run_settings=sleep_settings
+    )
+    bad = exp.create_application("bad", path=test_dir, run_settings=bad_settings)
 
     # start and poll
     exp.start(sleep_exp, bad)

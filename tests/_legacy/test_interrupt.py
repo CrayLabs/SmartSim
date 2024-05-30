@@ -46,15 +46,15 @@ def keyboard_interrupt(pid):
 
 def test_interrupt_blocked_jobs(test_dir):
     """
-    Launches and polls a model and an ensemble with two more models.
+    Launches and polls a application and an ensemble with two more applications.
     Once polling starts, the SIGINT signal is sent to the main thread,
     and consequently, all running jobs are killed.
     """
 
     exp_name = "test_interrupt_blocked_jobs"
     exp = Experiment(exp_name, exp_path=test_dir)
-    model = exp.create_model(
-        "interrupt_blocked_model",
+    application = exp.create_application(
+        "interrupt_blocked_application",
         path=test_dir,
         run_settings=RunSettings("sleep", "100"),
     )
@@ -71,7 +71,7 @@ def test_interrupt_blocked_jobs(test_dir):
     keyboard_interrupt_thread.start()
 
     with pytest.raises(KeyboardInterrupt):
-        exp.start(model, ensemble, block=True, kill_on_interrupt=True)
+        exp.start(application, ensemble, block=True, kill_on_interrupt=True)
 
     time.sleep(2)  # allow time for jobs to be stopped
     active_jobs = exp._control._jobs.jobs
@@ -83,8 +83,8 @@ def test_interrupt_blocked_jobs(test_dir):
 
 def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
     """
-    Starts two Experiments, each having one model
-    and an ensemble with two more models. Since
+    Starts two Experiments, each having one application
+    and an ensemble with two more applications. Since
     blocking is False, the main thread sleeps until
     the SIGINT signal is sent, resulting in both
     Experiment's running jobs to be killed.
@@ -94,8 +94,8 @@ def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
     experiments = [Experiment(exp_names[i], exp_path=test_dir) for i in range(2)]
     jobs_per_experiment = [0] * len(experiments)
     for i, experiment in enumerate(experiments):
-        model = experiment.create_model(
-            "interrupt_model_" + str(i),
+        application = experiment.create_application(
+            "interrupt_application_" + str(i),
             path=test_dir,
             run_settings=RunSettings("sleep", "100"),
         )
@@ -114,7 +114,7 @@ def test_interrupt_multi_experiment_unblocked_jobs(test_dir):
 
     with pytest.raises(KeyboardInterrupt):
         for experiment in experiments:
-            experiment.start(model, ensemble, block=False, kill_on_interrupt=True)
+            experiment.start(application, ensemble, block=False, kill_on_interrupt=True)
         keyboard_interrupt_thread.join()  # since jobs aren't blocked, wait for SIGINT
 
     time.sleep(2)  # allow time for jobs to be stopped

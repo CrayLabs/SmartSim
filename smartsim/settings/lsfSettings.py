@@ -197,7 +197,7 @@ class JsrunSettings(RunSettings):
         """
         if self.colocated_fs_settings:
             raise SSUnsupportedError(
-                "Colocated models cannot be run as a mpmd workload"
+                "Colocated applications cannot be run as a mpmd workload"
             )
 
         self.mpmd.append(settings)

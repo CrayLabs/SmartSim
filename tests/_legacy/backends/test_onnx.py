@@ -83,7 +83,7 @@ def test_sklearn_onnx(wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils):
     )
     if wlmutils.get_test_launcher() != "local":
         run_settings.set_tasks(1)
-    model = wlm_experiment.create_model("onnx_models", run_settings)
+    model = wlm_experiment.create_application("onnx_models", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     script_path = Path(script_dir, "run_sklearn_onnx.py").resolve()

@@ -54,8 +54,8 @@ pytestmark = pytest.mark.group_b
 rs = RunSettings("python", "sleep.py")
 
 exp = Experiment("util-test", launcher="local")
-model = exp.create_model("model_1", run_settings=rs)
-model_2 = exp.create_model("model_1", run_settings=rs)
+application = exp.create_application("application_1", run_settings=rs)
+application_2 = exp.create_application("application_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 
 feature_store = FeatureStore()
@@ -67,9 +67,9 @@ fs_model = FSModel("some-model", "TORCH", b"some-model-bytes")
 
 
 def test_separate():
-    manifest = Manifest(model, ensemble, feature_store)
-    assert manifest.models[0] == model
-    assert len(manifest.models) == 1
+    manifest = Manifest(application, ensemble, feature_store)
+    assert manifest.applications[0] == application
+    assert len(manifest.applications) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.fss[0] == feature_store
@@ -82,7 +82,7 @@ def test_separate_type():
 
 def test_name_collision():
     with pytest.raises(SmartSimError):
-        _ = Manifest(model, model_2)
+        _ = Manifest(application, application_2)
 
 
 def test_catch_empty_ensemble():
@@ -108,10 +108,14 @@ def test_corner_case():
 @pytest.mark.parametrize(
     "patch, has_fs_objects",
     [
-        pytest.param((), False, id="No fs Objects"),
-        pytest.param((model, "_fs_models", [fs_model]), True, id="Model w/ fs Model"),
+        pytest.param((), False, id="No FS Objects"),
         pytest.param(
-            (model, "_fs_scripts", [fs_script]), True, id="Model w/ fs Script"
+            (application, "_fs_models", [fs_model]), True, id="Application w/ FS Model"
+        ),
+        pytest.param(
+            (application, "_fs_scripts", [fs_script]),
+            True,
+            id="Application w/ FS Script",
         ),
         pytest.param(
             (ensemble, "_fs_models", [fs_model]), True, id="Ensemble w/ fs Model"
@@ -134,36 +138,36 @@ def test_corner_case():
 def test_manifest_detects_fs_objects(monkeypatch, patch, has_fs_objects):
     if patch:
         monkeypatch.setattr(*patch)
-    assert Manifest(model, ensemble).has_fs_objects == has_fs_objects
+    assert Manifest(application, ensemble).has_fs_objects == has_fs_objects
 
 
 def test_launched_manifest_transform_data():
-    models = [(model, 1), (model_2, 2)]
+    applications = [(application, 1), (application_2, 2)]
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
     fss = [(feature_store, [(n, i) for i, n in enumerate(feature_store.entities)])]
     launched = LaunchedManifest(
         metadata=LaunchedManifestMetadata("name", "path", "launcher", "run_id"),
-        models=models,
+        applications=applications,
         ensembles=ensembles,
         featurestores=fss,
     )
     transformed = launched.map(lambda x: str(x))
-    assert transformed.models == tuple((m, str(i)) for m, i in models)
+    assert transformed.applications == tuple((m, str(i)) for m, i in applications)
     assert transformed.ensembles[0][1] == tuple((m, str(i)) for m, i in ensembles[0][1])
     assert transformed.featurestores[0][1] == tuple((n, str(i)) for n, i in fss[0][1])
 
 
 def test_launched_manifest_builder_correctly_maps_data():
     lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
-    lmb.add_model(model, 1)
-    lmb.add_model(model_2, 1)
+    lmb.add_application(application, 1)
+    lmb.add_application(application_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
     lmb.add_feature_store(
         feature_store, [i for i in range(len(feature_store.entities))]
     )
 
     manifest = lmb.finalize()
-    assert len(manifest.models) == 2
+    assert len(manifest.applications) == 2
     assert len(manifest.ensembles) == 1
     assert len(manifest.featurestores) == 1
 

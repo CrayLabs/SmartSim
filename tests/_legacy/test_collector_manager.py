@@ -337,8 +337,8 @@ async def test_collector_manager_timeout_db(
 @pytest.mark.parametrize(
     "e_type,telemetry_on",
     [
-        pytest.param("model", False, id="models"),
-        pytest.param("model", True, id="models, telemetry enabled"),
+        pytest.param("application", False, id="applications"),
+        pytest.param("application", True, id="applications, telemetry enabled"),
         pytest.param("ensemble", False, id="ensemble"),
         pytest.param("ensemble", True, id="ensemble, telemetry enabled"),
         pytest.param("featurestore", False, id="featurestore"),
@@ -371,7 +371,7 @@ async def test_collector_manager_find_nonfs(
 async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -> None:
     """Ensure that the manifest allows individually enabling a given collector"""
     entity: JobEntity = mock_entity(
-        port=1234, name="entity1", type="model", telemetry_on=True
+        port=1234, name="entity1", type="application", telemetry_on=True
     )
     manager = CollectorManager()
 
@@ -457,7 +457,7 @@ async def test_collector_manager_find_entity_unmapped(
 ) -> None:
     """Ensure that an entity type that is not mapped results in no collectors"""
     entity: JobEntity = mock_entity(
-        port=1234, name="entity1", type="model", telemetry_on=True
+        port=1234, name="entity1", type="application", telemetry_on=True
     )
     manager = CollectorManager()
 

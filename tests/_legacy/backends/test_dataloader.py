@@ -218,7 +218,7 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
         args=["training_service_torch.py"],
     )
 
-    trainer = experiment.create_model("trainer", run_settings=run_settings)
+    trainer = experiment.create_application("trainer", run_settings=run_settings)
 
     trainer.attach_generator_files(
         to_copy=[osp.join(filedir, "training_service_torch.py")]

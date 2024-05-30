@@ -165,7 +165,7 @@ def test_tf_fs_model(
     run_settings.set_tasks(1)
 
     # Create Model
-    smartsim_model = wlm_experiment.create_model("smartsim_model", run_settings)
+    smartsim_model = wlm_experiment.create_application("smartsim_model", run_settings)
 
     # Create feature store
     fs = prepare_fs(single_fs).featurestore
@@ -236,7 +236,7 @@ def test_pt_fs_model(
     run_settings.set_tasks(1)
 
     # Create Model
-    smartsim_model = wlm_experiment.create_model("smartsim_model", run_settings)
+    smartsim_model = wlm_experiment.create_applicationl("smartsim_model", run_settings)
 
     # Create feature store
     fs = prepare_fs(single_fs).featurestore
@@ -299,7 +299,7 @@ def test_fs_model_ensemble(
     )
 
     # Create Model
-    smartsim_model = wlm_experiment.create_model("smartsim_model", run_settings)
+    smartsim_model = wlm_experiment.create_application("smartsim_model", run_settings)
 
     # Create feature store
     fs = prepare_fs(single_fs).featurestore
@@ -336,7 +336,7 @@ def test_fs_model_ensemble(
         )
 
     # Add new ensemble member
-    smartsim_ensemble.add_model(smartsim_model)
+    smartsim_ensemble.add_application(smartsim_model)
 
     # Add the second ML model to the newly added entity.  This is
     # because the test script runs both ML models for all entities.
@@ -391,7 +391,7 @@ def test_colocated_fs_model_tf(fileutils, test_dir, wlmutils, mlutils):
     colo_settings.set_tasks(1)
 
     # Create colocated Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
     colo_model.colocate_fs_tcp(
         port=test_port, fs_cpus=1, debug=True, ifname=test_interface
     )
@@ -463,7 +463,7 @@ def test_colocated_fs_model_pytorch(fileutils, test_dir, wlmutils, mlutils):
     colo_settings.set_tasks(1)
 
     # Create colocated SmartSim Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
     colo_model.colocate_fs_tcp(
         port=test_port, fs_cpus=1, debug=True, ifname=test_interface
     )
@@ -530,7 +530,7 @@ def test_colocated_fs_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     )
 
     # Create a third model with a colocated feature store
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
     colo_model.colocate_fs_tcp(
         port=test_port, fs_cpus=1, debug=True, ifname=test_interface
     )
@@ -572,7 +572,7 @@ def test_colocated_fs_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     )
 
     # Add a new model to the ensemble
-    colo_ensemble.add_model(colo_model)
+    colo_ensemble.add_application(colo_model)
 
     # Add the ML model to SmartSim Model just added to the ensemble
     colo_model.add_ml_model(
@@ -631,7 +631,7 @@ def test_colocated_fs_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
     )
 
     # Create colocated SmartSim Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
 
     # Create and save ML model to filesystem
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
@@ -669,7 +669,7 @@ def test_colocated_fs_model_ensemble_reordered(fileutils, test_dir, wlmutils, ml
         entity.disable_key_prefixing()
 
     # Add another ensemble member
-    colo_ensemble.add_model(colo_model)
+    colo_ensemble.add_application(colo_model)
 
     # Colocate a feature store with the new ensemble member
     colo_model.colocate_fs_tcp(
@@ -728,7 +728,7 @@ def test_colocated_fs_model_errors(fileutils, test_dir, wlmutils, mlutils):
     colo_settings.set_tasks(1)
 
     # Create colocated SmartSim Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
     colo_model.colocate_fs_tcp(
         port=test_port, fs_cpus=1, debug=True, ifname=test_interface
     )
@@ -805,7 +805,7 @@ def test_colocated_fs_model_errors(fileutils, test_dir, wlmutils, mlutils):
             )
 
     with pytest.raises(SSUnsupportedError):
-        colo_ensemble.add_model(colo_model)
+        colo_ensemble.add_application(colo_model)
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TensorFlow to run")
@@ -862,7 +862,7 @@ def test_fs_model_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
     )
 
     # Create Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model = exp.create_application("smartsim_model", run_settings)
 
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
@@ -906,7 +906,7 @@ def test_fs_model_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
         outputs=outputs2,
     )
 
-    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_model()
+    # Attempt to add a duplicate ML model to Ensemble via Ensemble.add_application()
     with pytest.raises(SSUnsupportedError) as ex:
-        smartsim_ensemble.add_model(smartsim_model)
+        smartsim_ensemble.add_application(smartsim_model)
     assert ex.value.args[0] == 'An ML Model with name "cnn" already exists'

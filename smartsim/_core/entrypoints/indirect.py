@@ -61,7 +61,7 @@ def main(
 
     :param cmd: a base64 encoded cmd to execute
     :param entity_type: `SmartSimEntity` entity class. Valid values
-    include: feature store, fsnode, ensemble, model
+    include: feature store, fsnode, ensemble, application
     :param cwd: working directory to execute the cmd from
     :param status_dir: path to the output directory for status updates
     """

@@ -61,9 +61,9 @@ def test_local_env_pass_implicit(fileutils, test_dir) -> None:
     # NOTE: not passing env_args into run_settings here, relying on --export=ALL default
     settings = RunSettings(exe_name, exe_args, run_command="srun", run_args=run_args)
     app_name = "echo_app"
-    app = exp.create_model(app_name, settings)
+    app = exp.create_application(app_name, settings)
 
-    # generate the experiment structure and start the model
+    # generate the experiment structure and start the application
     exp.generate(app, overwrite=True)
     exp.start(app, block=True, summary=False)
 
@@ -100,9 +100,9 @@ def test_local_env_pass_explicit(fileutils, test_dir) -> None:
         exe_name, exe_args, run_command="srun", run_args=run_args, env_vars=env_vars
     )
     app_name = "echo_app"
-    app = exp.create_model(app_name, settings)
+    app = exp.create_application(app_name, settings)
 
-    # generate the experiment structure and start the model
+    # generate the experiment structure and start the application
     exp.generate(app, overwrite=True)
     exp.start(app, block=True, summary=False)
 

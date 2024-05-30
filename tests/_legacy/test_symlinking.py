@@ -34,7 +34,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.ensemble import Ensemble
-from smartsim.entity.model import Model
+from smartsim.entity.model import Application
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
@@ -49,25 +49,27 @@ bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-feature_store = FeatureStore(
-    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
+application = Application("test_application", params={}, path="", run_settings=rs)
+batch_application = Application(
+    "batch_test_application",
+    params={},
+    path="",
+    run_settings=batch_rs,
+    batch_settings=bs,
 )
-model = Model("test_model", params={}, path="", run_settings=rs)
-batch_model = Model(
-    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
-)
-anon_batch_model = _AnonymousBatchJob(batch_model)
+anon_batch_application = _AnonymousBatchJob(batch_application)
 
 
 @pytest.mark.parametrize(
     "entity",
-    [pytest.param(ens, id="ensemble"), pytest.param(model, id="model")],
+    [pytest.param(ens, id="ensemble"), pytest.param(application, id="application")],
 )
 def test_symlink(test_dir, entity):
     """Test symlinking historical output files"""
     entity.path = test_dir
     if entity.type == Ensemble:
-        for member in ens.models:
+        for member in ens.applications:
             symlink_with_create_job_step(test_dir, member)
     else:
         symlink_with_create_job_step(test_dir, entity)
@@ -95,7 +97,7 @@ def symlink_with_create_job_step(test_dir, entity):
     [
         pytest.param(ens, id="ensemble"),
         pytest.param(feature_store, id="featurestore"),
-        pytest.param(anon_batch_model, id="model"),
+        pytest.param(anon_batch_application, id="application"),
     ],
 )
 def test_batch_symlink(entity, test_dir):
@@ -118,31 +120,35 @@ def test_batch_symlink(entity, test_dir):
 
 def test_symlink_error(test_dir):
     """Ensure FileNotFoundError is thrown"""
-    bad_model = Model(
-        "bad_model",
+    bad_application = Application(
+        "bad_application",
         params={},
         path=pathlib.Path(test_dir, "badpath"),
         run_settings=RunSettings("echo"),
     )
-    telem_dir = pathlib.Path(test_dir, "bad_model_telemetry")
-    bad_step = controller._create_job_step(bad_model, telem_dir)
+    telem_dir = pathlib.Path(test_dir, "bad_application_telemetry")
+    bad_step = controller._create_job_step(bad_application, telem_dir)
     with pytest.raises(FileNotFoundError):
-        controller.symlink_output_files(bad_step, bad_model)
+        controller.symlink_output_files(bad_step, bad_application)
 
 
-def test_failed_model_launch_symlinks(test_dir):
+def test_failed_application_launch_symlinks(test_dir):
     exp_name = "failed-exp"
     exp = Experiment(exp_name, exp_path=test_dir)
-    test_model = exp.create_model(
-        "test_model", run_settings=batch_rs, batch_settings=bs
+    test_application = exp.create_application(
+        "test_application", run_settings=batch_rs, batch_settings=bs
     )
-    exp.generate(test_model)
+    exp.generate(test_application)
     with pytest.raises(TypeError):
-        exp.start(test_model)
+        exp.start(test_application)
 
-    _should_not_be_symlinked(pathlib.Path(test_model.path))
-    assert not pathlib.Path(test_model.path, f"{test_model.name}.out").is_symlink()
-    assert not pathlib.Path(test_model.path, f"{test_model.name}.err").is_symlink()
+    _should_not_be_symlinked(pathlib.Path(test_application.path))
+    assert not pathlib.Path(
+        test_application.path, f"{test_application.name}.out"
+    ).is_symlink()
+    assert not pathlib.Path(
+        test_application.path, f"{test_application.name}.err"
+    ).is_symlink()
 
 
 def test_failed_ensemble_launch_symlinks(test_dir):
@@ -163,7 +169,7 @@ def test_failed_ensemble_launch_symlinks(test_dir):
         test_ensemble.path, f"{test_ensemble.name}.err"
     ).is_symlink()
 
-    for i in range(len(test_ensemble.models)):
+    for i in range(len(test_ensemble.applications)):
         assert not pathlib.Path(
             test_ensemble.path,
             f"{test_ensemble.name}_{i}",
@@ -186,7 +192,7 @@ def test_non_batch_ensemble_symlinks(test_dir):
     exp.generate(test_ensemble)
     exp.start(test_ensemble, block=True)
 
-    for i in range(len(test_ensemble.models)):
+    for i in range(len(test_ensemble.applications)):
         _should_be_symlinked(
             pathlib.Path(
                 test_ensemble.path,
@@ -207,19 +213,25 @@ def test_non_batch_ensemble_symlinks(test_dir):
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-def test_non_batch_model_symlinks(test_dir):
-    exp_name = "test-non-batch-model"
+def test_non_batch_application_symlinks(test_dir):
+    exp_name = "test-non-batch-application"
     exp = Experiment(exp_name, exp_path=test_dir)
     rs = RunSettings("echo", ["spam", "eggs"])
 
-    test_model = exp.create_model("test_model", path=test_dir, run_settings=rs)
-    exp.generate(test_model)
-    exp.start(test_model, block=True)
+    test_application = exp.create_application(
+        "test_application", path=test_dir, run_settings=rs
+    )
+    exp.generate(test_application)
+    exp.start(test_application, block=True)
 
-    assert pathlib.Path(test_model.path).exists()
+    assert pathlib.Path(test_application.path).exists()
 
-    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.out"), True)
-    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.err"), False)
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), True
+    )
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.err"), False
+    )
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 

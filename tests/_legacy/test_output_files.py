@@ -35,7 +35,7 @@ from smartsim._core.control.controller import Controller, _AnonymousBatchJob
 from smartsim._core.launcher.step import Step
 from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.ensemble import Ensemble
-from smartsim.entity.model import Model
+from smartsim.entity.model import Application
 from smartsim.settings.base import RunSettings
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
@@ -50,49 +50,69 @@ bs = SbatchSettings()
 batch_rs = SrunSettings("echo", ["spam", "eggs"])
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-feature_store = FeatureStore(
-    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+feature_store = FeatureStore(fs_nodes=3, batch=True, launcher="slurm", run_command="srun")
+application = Application("test_application", params={}, path="", run_settings=rs)
+batch_application = Application(
+    "batch_test_application",
+    params={},
+    path="",
+    run_settings=batch_rs,
+    batch_settings=bs,
 )
-model = Model("test_model", params={}, path="", run_settings=rs)
-batch_model = Model(
-    "batch_test_model", params={}, path="", run_settings=batch_rs, batch_settings=bs
-)
-anon_batch_model = _AnonymousBatchJob(batch_model)
+anon_batch_application = _AnonymousBatchJob(batch_application)
 
 
-def test_mutated_model_output(test_dir):
-    exp_name = "test-mutated-model-output"
+def test_mutated_application_output(test_dir):
+    exp_name = "test-mutated-application-output"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    test_model = exp.create_model("test_model", path=test_dir, run_settings=rs)
-    exp.generate(test_model)
-    exp.start(test_model, block=True)
+    test_application = exp.create_application(
+        "test_application", path=test_dir, run_settings=rs
+    )
+    exp.generate(test_application)
+    exp.start(test_application, block=True)
 
-    assert pathlib.Path(test_model.path).exists()
-    assert pathlib.Path(test_model.path, f"{test_model.name}.out").is_symlink()
-    assert pathlib.Path(test_model.path, f"{test_model.name}.err").is_symlink()
+    assert pathlib.Path(test_application.path).exists()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.out"
+    ).is_symlink()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.err"
+    ).is_symlink()
 
-    with open(pathlib.Path(test_model.path, f"{test_model.name}.out"), "r") as file:
+    with open(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), "r"
+    ) as file:
         log_contents = file.read()
 
     assert "spam eggs" in log_contents
 
-    first_link = os.readlink(pathlib.Path(test_model.path, f"{test_model.name}.out"))
+    first_link = os.readlink(
+        pathlib.Path(test_application.path, f"{test_application.name}.out")
+    )
 
-    test_model.run_settings.exe_args = ["hello", "world"]
-    exp.generate(test_model, overwrite=True)
-    exp.start(test_model, block=True)
+    test_application.run_settings.exe_args = ["hello", "world"]
+    exp.generate(test_application, overwrite=True)
+    exp.start(test_application, block=True)
 
-    assert pathlib.Path(test_model.path).exists()
-    assert pathlib.Path(test_model.path, f"{test_model.name}.out").is_symlink()
-    assert pathlib.Path(test_model.path, f"{test_model.name}.err").is_symlink()
+    assert pathlib.Path(test_application.path).exists()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.out"
+    ).is_symlink()
+    assert pathlib.Path(
+        test_application.path, f"{test_application.name}.err"
+    ).is_symlink()
 
-    with open(pathlib.Path(test_model.path, f"{test_model.name}.out"), "r") as file:
+    with open(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), "r"
+    ) as file:
         log_contents = file.read()
 
     assert "hello world" in log_contents
 
-    second_link = os.readlink(pathlib.Path(test_model.path, f"{test_model.name}.out"))
+    second_link = os.readlink(
+        pathlib.Path(test_application.path, f"{test_application.name}.out")
+    )
 
     with open(first_link, "r") as file:
         first_historical_log = file.read()
@@ -108,10 +128,10 @@ def test_mutated_model_output(test_dir):
 def test_get_output_files_with_create_job_step(test_dir):
     """Testing output files through _create_job_step"""
     exp_dir = pathlib.Path(test_dir)
-    status_dir = exp_dir / CONFIG.telemetry_subdir / model.type
-    step = controller._create_job_step(model, status_dir)
-    expected_out_path = status_dir / model.name / (model.name + ".out")
-    expected_err_path = status_dir / model.name / (model.name + ".err")
+    status_dir = exp_dir / CONFIG.telemetry_subdir / application.type
+    step = controller._create_job_step(application, status_dir)
+    expected_out_path = status_dir / application.name / (application.name + ".out")
+    expected_err_path = status_dir / application.name / (application.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
@@ -139,20 +159,20 @@ def test_get_output_files_with_create_batch_job_step(entity, test_dir):
         )
 
 
-def test_model_get_output_files(test_dir):
-    """Testing model output files with manual step creation"""
+def test_application_get_output_files(test_dir):
+    """Testing application output files with manual step creation"""
     exp_dir = pathlib.Path(test_dir)
-    step = Step(model.name, model.path, model.run_settings)
+    step = Step(application.name, application.path, application.run_settings)
     step.meta["status_dir"] = exp_dir / "output_dir"
-    expected_out_path = step.meta["status_dir"] / (model.name + ".out")
-    expected_err_path = step.meta["status_dir"] / (model.name + ".err")
+    expected_out_path = step.meta["status_dir"] / (application.name + ".out")
+    expected_err_path = step.meta["status_dir"] / (application.name + ".err")
     assert step.get_output_files() == (str(expected_out_path), str(expected_err_path))
 
 
 def test_ensemble_get_output_files(test_dir):
     """Testing ensemble output files with manual step creation"""
     exp_dir = pathlib.Path(test_dir)
-    for member in ens.models:
+    for member in ens.applications:
         step = Step(member.name, member.path, member.run_settings)
         step.meta["status_dir"] = exp_dir / "output_dir"
         expected_out_path = step.meta["status_dir"] / (member.name + ".out")

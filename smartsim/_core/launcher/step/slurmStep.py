@@ -29,7 +29,7 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....entity import Ensemble, FSNode, Model
+from ....entity import Application, FSNode, Ensemble
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 class SbatchStep(Step):
     def __init__(
-        self, entity: t.Union[Model, FSNode], batch_settings: SbatchSettings
+        self, entity: t.Union[Application, FSNode], batch_settings: SbatchSettings
     ) -> None:
         """Initialize a Slurm Sbatch step
 
@@ -102,7 +102,7 @@ class SbatchStep(Step):
 
 class SrunStep(Step):
     def __init__(
-        self, entity: t.Union[Model, FSNode], run_settings: SrunSettings
+        self, entity: t.Union[Application, FSNode], run_settings: SrunSettings
     ) -> None:
         """Initialize a srun job step
 
@@ -190,7 +190,7 @@ class SrunStep(Step):
         return self.run_settings.mpmd
 
     @staticmethod
-    def _get_exe_args_list(entity: t.Union[Model, FSNode]) -> t.List[str]:
+    def _get_exe_args_list(entity: t.Union[Application, FSNode]) -> t.List[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """

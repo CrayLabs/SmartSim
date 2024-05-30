@@ -119,9 +119,9 @@ def test_ensemble_overwrite_error(fileutils, test_dir):
 def test_full_exp(fileutils, test_dir, wlmutils):
     exp = Experiment("gen-test", test_dir, launcher="local")
 
-    model = exp.create_model("model", run_settings=rs)
+    application = exp.create_application("application", run_settings=rs)
     script = fileutils.get_test_conf_path("sleep.py")
-    model.attach_generator_files(to_copy=script)
+    application.attach_generator_files(to_copy=script)
 
     feature_store = FeatureStore(wlmutils.get_test_port())
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -129,7 +129,7 @@ def test_full_exp(fileutils, test_dir, wlmutils):
 
     config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=config)
-    exp.generate(feature_store, ensemble, model)
+    exp.generate(feature_store, ensemble, application)
 
     # test for ensemble
     assert osp.isdir(osp.join(test_dir, "test_ens/"))
@@ -139,13 +139,13 @@ def test_full_exp(fileutils, test_dir, wlmutils):
     # test for feature_store dir
     assert osp.isdir(osp.join(test_dir, feature_store.name))
 
-    # test for model file
-    assert osp.isdir(osp.join(test_dir, "model"))
-    assert osp.isfile(osp.join(test_dir, "model/sleep.py"))
+    # test for application file
+    assert osp.isdir(osp.join(test_dir, "application"))
+    assert osp.isfile(osp.join(test_dir, "application/sleep.py"))
 
 
 def test_dir_files(fileutils, test_dir):
-    """test the generate of models with files that
+    """test the generate of applications with files that
     are directories with subdirectories and files
     """
 
@@ -160,10 +160,10 @@ def test_dir_files(fileutils, test_dir):
 
     assert osp.isdir(osp.join(test_dir, "dir_test/"))
     for i in range(9):
-        model_path = osp.join(test_dir, "dir_test/dir_test_" + str(i))
-        assert osp.isdir(model_path)
-        assert osp.isdir(osp.join(model_path, "test_dir_1"))
-        assert osp.isfile(osp.join(model_path, "test.in"))
+        application_path = osp.join(test_dir, "dir_test/dir_test_" + str(i))
+        assert osp.isdir(application_path)
+        assert osp.isdir(osp.join(application_path, "test_dir_1"))
+        assert osp.isfile(osp.join(application_path, "test.in"))
 
 
 def test_print_files(fileutils, test_dir, capsys):
@@ -189,10 +189,10 @@ def test_print_files(fileutils, test_dir, capsys):
     expected_out = (
         tabulate(
             [
-                [model.name, "No file attached to this model."]
-                for model in ensemble.models
+                [application.name, "No file attached to this application."]
+                for application in ensemble.applications
             ],
-            headers=["Model name", "Files"],
+            headers=["Application name", "Files"],
             tablefmt="grid",
         )
         + "\n"
@@ -206,10 +206,10 @@ def test_print_files(fileutils, test_dir, capsys):
     expected_out = (
         tabulate(
             [
-                [model.name, "No file attached to this entity."]
-                for model in ensemble.models
+                [application.name, "No file attached to this entity."]
+                for application in ensemble.applications
             ],
-            headers=["Model name", "Files"],
+            headers=["Application name", "Files"],
             tablefmt="grid",
         )
         + "\n"
@@ -230,12 +230,14 @@ def test_print_files(fileutils, test_dir, capsys):
         tablefmt="grid",
     )
 
-    assert all(str(model.files) == expected_out for model in ensemble.models)
+    assert all(
+        str(application.files) == expected_out for application in ensemble.applications
+    )
 
     expected_out_multi = (
         tabulate(
-            [[model.name, expected_out] for model in ensemble.models],
-            headers=["Model name", "Files"],
+            [[application.name, expected_out] for application in ensemble.applications],
+            headers=["Application name", "Files"],
             tablefmt="grid",
         )
         + "\n"
@@ -250,17 +252,17 @@ def test_multiple_tags(fileutils, test_dir):
     """Test substitution of multiple tagged parameters on same line"""
 
     exp = Experiment("test-multiple-tags", test_dir)
-    model_params = {"port": 6379, "password": "unbreakable_password"}
-    model_settings = RunSettings("bash", "multi_tags_template.sh")
-    parameterized_model = exp.create_model(
-        "multi-tags", run_settings=model_settings, params=model_params
+    application_params = {"port": 6379, "password": "unbreakable_password"}
+    application_settings = RunSettings("bash", "multi_tags_template.sh")
+    parameterized_application = exp.create_application(
+        "multi-tags", run_settings=application_settings, params=application_params
     )
     config = get_gen_file(fileutils, "multi_tags_template.sh")
-    parameterized_model.attach_generator_files(to_configure=[config])
-    exp.generate(parameterized_model, overwrite=True)
-    exp.start(parameterized_model, block=True)
+    parameterized_application.attach_generator_files(to_configure=[config])
+    exp.generate(parameterized_application, overwrite=True)
+    exp.start(parameterized_application, block=True)
 
-    with open(osp.join(parameterized_model.path, "multi-tags.out")) as f:
+    with open(osp.join(parameterized_application.path, "multi-tags.out")) as f:
         log_content = f.read()
         assert "My two parameters are 6379 and unbreakable_password, OK?" in log_content
 
@@ -303,7 +305,7 @@ def test_generation_log(fileutils, test_dir):
 
 
 def test_config_dir(fileutils, test_dir):
-    """Test the generation and configuration of models with
+    """Test the generation and configuration of applications with
     tagged files that are directories with subdirectories and files
     """
     exp = Experiment("config-dir", launcher="local")

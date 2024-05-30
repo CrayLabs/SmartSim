@@ -44,7 +44,7 @@ containerURI = "docker://alrigazzi/smartsim-testing:latest"
 def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
-    Finally, the tensor is used to run a model.
+    Finally, the tensor is used to run a application.
 
     Note: This is a containerized port of test_smartredis.py for WLM system
     """
@@ -87,7 +87,7 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
 
     exp.generate(ensemble)
 
-    # start the models
+    # start the applications
     exp.start(ensemble, summary=False)
 
     # get and confirm statuses

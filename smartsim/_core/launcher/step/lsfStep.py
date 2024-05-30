@@ -28,7 +28,7 @@ import os
 import shutil
 import typing as t
 
-from ....entity import FSNode, Model
+from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import BsubBatchSettings, JsrunSettings
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 class BsubBatchStep(Step):
     def __init__(
-        self, entity: t.Union[Model, FSNode], batch_settings: BsubBatchSettings
+        self, entity: t.Union[Application, FSNode], batch_settings: BsubBatchSettings
     ) -> None:
         """Initialize a LSF bsub step
 
@@ -106,7 +106,7 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, entity: t.Union[Model, FSNode], run_settings: RunSettings):
+    def __init__(self, entity: t.Union[Application, FSNode], run_settings: RunSettings):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched

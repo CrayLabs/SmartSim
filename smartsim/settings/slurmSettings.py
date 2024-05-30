@@ -80,13 +80,13 @@ class SrunSettings(RunSettings):
         """Make a mpmd workload by combining two ``srun`` commands
 
         This connects the two settings to be executed with a single
-        Model instance
+        Application instance
 
         :param settings: SrunSettings instance
         """
         if self.colocated_fs_settings:
             raise SSUnsupportedError(
-                "Colocated models cannot be run as a mpmd workload"
+                "Colocated applications cannot be run as a mpmd workload"
             )
         if self.container:
             raise SSUnsupportedError(

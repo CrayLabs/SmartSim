@@ -55,7 +55,7 @@ from smartsim._core.launcher.dragon.dragonConnector import DragonConnector
 from smartsim._core.launcher.dragon.dragonLauncher import DragonLauncher
 from smartsim._core.utils.telemetry.telemetry import JobEntity
 from smartsim.database import FeatureStore
-from smartsim.entity import Model
+from smartsim.entity import Application
 from smartsim.error import SSConfigError, SSInternalError
 from smartsim.log import get_logger
 from smartsim.settings import (
@@ -654,10 +654,10 @@ class ColoUtils:
         application_file: str,
         fs_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[RunSettings] = None,
-        colo_model_name: str = "colocated_model",
+        colo_application_name: str = "colocated_application",
         port: t.Optional[int] = None,
         on_wlm: bool = False,
-    ) -> Model:
+    ) -> Application:
         """Setup feature store needed for the colo pinning tests"""
 
         # get test setup
@@ -672,31 +672,31 @@ class ColoUtils:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
 
-        colo_model = exp.create_model(colo_model_name, colo_settings)
+        colo_application = exp.create_application(colo_application_name, colo_settings)
 
         if fs_type in ["tcp", "deprecated"]:
             fs_args["port"] = port if port is not None else _find_free_port(test_ports)
             fs_args["ifname"] = "lo"
-        if fs_type == "uds" and colo_model_name is not None:
+        if fs_type == "uds" and colo_application_name is not None:
             tmp_dir = tempfile.gettempdir()
             socket_suffix = str(uuid.uuid4())[:7]
-            socket_name = f"{colo_model_name}_{socket_suffix}.socket"
+            socket_name = f"{colo_application_name}_{socket_suffix}.socket"
             fs_args["unix_socket"] = os.path.join(tmp_dir, socket_name)
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
-            "tcp": colo_model.colocate_fs_tcp,
-            "deprecated": colo_model.colocate_fs,
-            "uds": colo_model.colocate_fs_uds,
+            "tcp": colo_application.colocate_fs_tcp,
+            "deprecated": colo_application.colocate_fs,
+            "uds": colo_application.colocate_fs_uds,
         }
         with warnings.catch_warnings():
             if fs_type == "deprecated":
                 message = "`colocate_fs` has been deprecated"
                 warnings.filterwarnings("ignore", message=message)
             colocate_fun[fs_type](**fs_args)
-        # assert model will launch with colocated fs
-        assert colo_model.colocated
+        # assert application will launch with colocated fs
+        assert colo_application.colocated
         # Check to make sure that limit_fs_cpus made it into the colo settings
-        return colo_model
+        return colo_application
 
 
 @pytest.fixture(scope="function")
@@ -943,6 +943,7 @@ def local_fs() -> t.Generator[DBConfiguration, None, None]:
     )
     yield config
     _cleanup_fs(name)
+
 
 
 @pytest.fixture(scope="session")

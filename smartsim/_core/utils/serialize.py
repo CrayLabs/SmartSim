@@ -37,7 +37,7 @@ import smartsim.log
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import FeatureStore
-    from smartsim.entity import Ensemble, FSNode, Model
+    from smartsim.entity import Application, FSNode, Ensemble
     from smartsim.entity.dbobject import FSModel, FSScript
     from smartsim.settings.base import BatchSettings, RunSettings
 
@@ -58,9 +58,9 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     new_run = {
         "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
-        "model": [
-            _dictify_model(model, *telemetry_metadata)
-            for model, telemetry_metadata in manifest.models
+        "application": [
+            _dictify_application(application, *telemetry_metadata)
+            for application, telemetry_metadata in manifest.applications
         ],
         "featurestore": [
             _dictify_fs(fs, nodes_info) for fs, nodes_info in manifest.featurestores
@@ -95,8 +95,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
             json.dump(manifest_dict, file, indent=2)
 
 
-def _dictify_model(
-    model: Model,
+def _dictify_application(
+    application: Application,
     step_id: t.Optional[str],
     task_id: t.Optional[str],
     managed: t.Optional[bool],
@@ -104,31 +104,31 @@ def _dictify_model(
     err_file: str,
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
-    if model.run_settings is not None:
-        colo_settings = (model.run_settings.colocated_fs_settings or {}).copy()
+    if application.run_settings is not None:
+        colo_settings = (application.run_settings.colocated_fs_settings or {}).copy()
     else:
         colo_settings = ({}).copy()
     fs_scripts = t.cast("t.List[FSScript]", colo_settings.pop("fs_scripts", []))
     fs_models = t.cast("t.List[FSModel]", colo_settings.pop("fs_models", []))
     return {
-        "name": model.name,
-        "path": model.path,
-        "exe_args": model.exe_args,
-        "exe": model.exe,
-        "run_settings": _dictify_run_settings(model.run_settings),
+        "name": application.name,
+        "path": application.path,
+        "exe_args": application.exe_args,
+        "exe": application.exe,
+        "run_settings": _dictify_run_settings(application.run_settings),
         "batch_settings": (
-            _dictify_batch_settings(model.batch_settings)
-            if model.batch_settings
+            _dictify_batch_settings(application.batch_settings)
+            if application.batch_settings
             else {}
         ),
-        "params": model.params,
+        "params": application.params,
         "files": (
             {
-                "Symlink": model.files.link,
-                "Configure": model.files.tagged,
-                "Copy": model.files.copy,
+                "Symlink": application.files.link,
+                "Configure": application.files.tagged,
+                "Copy": application.files.copy,
             }
-            if model.files
+            if application.files
             else {
                 "Symlink": [],
                 "Configure": [],
@@ -173,7 +173,7 @@ def _dictify_model(
 
 def _dictify_ensemble(
     ens: Ensemble,
-    members: t.Sequence[t.Tuple[Model, TStepLaunchMetaData]],
+    members: t.Sequence[t.Tuple[Application, TStepLaunchMetaData]],
 ) -> t.Dict[str, t.Any]:
     return {
         "name": ens.name,
@@ -185,9 +185,9 @@ def _dictify_ensemble(
             if ens.batch_settings
             else {}
         ),
-        "models": [
-            _dictify_model(model, *launching_metadata)
-            for model, launching_metadata in members
+        "applications": [
+            _dictify_application(application, *launching_metadata)
+            for application, launching_metadata in members
         ],
     }
 

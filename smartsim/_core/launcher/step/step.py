@@ -37,7 +37,7 @@ from os import makedirs
 from smartsim._core.config import CONFIG
 from smartsim.error.errors import SmartSimError, UnproxyableStepError
 
-from ....entity import Ensemble, FSNode, Model
+from ....entity import Application, FSNode, Ensemble
 from ....log import get_logger
 from ....settings.base import RunSettings, SettingsBase
 from ...utils.helpers import encode_cmd, get_base_36_repr
@@ -48,7 +48,7 @@ logger = get_logger(__name__)
 
 class Step:
     def __init__(
-        self, entity: t.Union[Model, FSNode], step_settings: SettingsBase
+        self, entity: t.Union[Application, FSNode], step_settings: SettingsBase
     ) -> None:
         self.name = self._create_unique_name(entity.name)
         self.entity = entity

@@ -42,7 +42,7 @@ def test_dragon_global_path(global_dragon_teardown, wlmutils, test_dir, monkeypa
         launcher=wlmutils.get_test_launcher(),
     )
     rs = exp.create_run_settings(exe="sleep", exe_args=["1"])
-    model = exp.create_model("sleep", run_settings=rs)
+    model = exp.create_application("sleep", run_settings=rs)
 
     exp.generate(model)
     exp.start(model, block=True)
@@ -63,7 +63,7 @@ def test_dragon_exp_path(global_dragon_teardown, wlmutils, test_dir, monkeypatch
         launcher=wlmutils.get_test_launcher(),
     )
     rs = exp.create_run_settings(exe="sleep", exe_args=["1"])
-    model = exp.create_model("sleep", run_settings=rs)
+    model = exp.create_application("sleep", run_settings=rs)
 
     exp.generate(model)
     exp.start(model, block=True)
@@ -82,7 +82,7 @@ def test_dragon_cannot_honor(wlmutils, test_dir):
     )
     rs = exp.create_run_settings(exe="sleep", exe_args=["1"])
     rs.set_nodes(100)
-    model = exp.create_model("sleep", run_settings=rs)
+    model = exp.create_application("sleep", run_settings=rs)
 
     exp.generate(model)
     exp.start(model, block=True)

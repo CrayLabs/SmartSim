@@ -126,8 +126,8 @@ def test_preview_model_on_wlm(fileutils, test_dir, wlmutils):
     script = fileutils.get_test_conf_path("sleep.py")
     settings1 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
     settings2 = wlmutils.get_base_run_settings("python", f"{script} --time=5")
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings1)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings2)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings1)
+    M2 = exp.create_application("m2", path=test_dir, run_settings=settings2)
 
     preview_manifest = Manifest(M1, M2)
 
@@ -158,7 +158,7 @@ def test_preview_batch_model(fileutils, test_dir, wlmutils):
     batch_settings.set_account(wlmutils.get_test_account())
     add_batch_resources(wlmutils, batch_settings)
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    model = exp.create_model(
+    model = exp.create_application(
         "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
     )
     model.set_path(test_dir)
@@ -187,8 +187,8 @@ def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
+    M2 = exp.create_application("m2", path=test_dir, run_settings=settings)
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
     add_batch_resources(wlmutils, batch)
@@ -235,11 +235,11 @@ def test_preview_launch_command(test_dir, wlmutils, choose_host):
     rs1 = RunSettings("bash", "multi_tags_template.sh")
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
 
-    hello_world_model = exp.create_model(
+    hello_world_model = exp.create_application(
         "echo-hello", run_settings=rs1, params=model_params
     )
 
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+    spam_eggs_model = exp.create_application("echo-spam", run_settings=rs2)
 
     # setup ensemble parameter space
     learning_rate = list(np.linspace(0.01, 0.5))
@@ -290,7 +290,7 @@ def test_preview_batch_launch_command(fileutils, test_dir, wlmutils):
     batch_settings.set_account(wlmutils.get_test_account())
     add_batch_resources(wlmutils, batch_settings)
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-    model = exp.create_model(
+    model = exp.create_application(
         "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
     )
     model.set_path(test_dir)
@@ -344,7 +344,7 @@ def test_ensemble_batch(test_dir, wlmutils):
     exp.generate(ensemble, overwrite=True)
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
     # Create model
-    ml_model = exp.create_model("tf_training", rs2)
+    ml_model = exp.create_application("tf_training", rs2)
 
     for sim in ensemble.entities:
         ml_model.register_incoming_entity(sim)
@@ -382,8 +382,8 @@ def test_preview_ensemble_fs_script(wlmutils, test_dir):
     model_settings_2 = exp.create_run_settings(exe="python", exe_args="params.py")
     model_settings_3 = exp.create_run_settings(exe="python", exe_args="params.py")
     # Initialize a Model object
-    model_instance = exp.create_model("model_name", model_settings)
-    model_instance_2 = exp.create_model("model_name_2", model_settings_2)
+    model_instance = exp.create_application("model_name", model_settings)
+    model_instance_2 = exp.create_application("model_name_2", model_settings_2)
     batch = exp.create_batch_settings(time="24:00:00", account="test")
     ensemble = exp.create_ensemble(
         "ensemble", batch_settings=batch, run_settings=model_settings_3, replicas=2

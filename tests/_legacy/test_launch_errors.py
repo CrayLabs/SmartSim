@@ -41,7 +41,7 @@ def test_unsupported_run_settings(test_dir):
     exp_name = "test-unsupported-run-settings"
     exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
     bad_settings = JsrunSettings("echo", "hello")
-    model = exp.create_model("bad_rs", bad_settings)
+    model = exp.create_application("bad_rs", bad_settings)
 
     with pytest.raises(SSUnsupportedError):
         exp.start(model)
@@ -54,7 +54,7 @@ def test_model_failure(fileutils, test_dir):
     script = fileutils.get_test_conf_path("bad.py")
     settings = RunSettings("python", f"{script} --time=3")
 
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)

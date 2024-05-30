@@ -12,7 +12,7 @@
         {
             "run_id": "2ca19ad",
             "timestamp": 1699038647234488933,
-            "model": [],
+            "application": [],
             "featurestore": [
                 {
                     "name": "featurestore",
@@ -47,7 +47,7 @@
         {
             "run_id": "4b5507a",
             "timestamp": 1699038661491043211,
-            "model": [
+            "application": [
                 {
                     "name": "perroquet",
                     "path": "/tmp/my-exp/perroquet",

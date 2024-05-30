@@ -155,7 +155,7 @@ def test_fs_identifier_colo_then_standard(
     colo_settings.set_tasks_per_node(1)
 
     # Create the SmartSim Model
-    smartsim_model = exp.create_model("colocated_model", colo_settings)
+    smartsim_model = exp.create_application("colocated_model", colo_settings)
 
     fs_args = {
         "port": test_port,
@@ -333,7 +333,7 @@ def test_multifs_colo_once(fileutils, test_dir, wlmutils, coloutils, fs_type):
     run_settings.set_tasks_per_node(1)
 
     # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model = exp.create_application("smartsim_model", run_settings)
 
     fs_args = {
         "port": test_port + 1,
