@@ -1,11 +1,19 @@
 """This is an automatically generated stub for `response.capnp`."""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
 from io import BufferedWriter
 from typing import Iterator, Literal, Sequence, overload
 
-from ..tensor.tensor_capnp import Tensor, TensorBuilder, TensorKey, TensorKeyBuilder, TensorKeyReader, TensorReader
+from ..tensor.tensor_capnp import (
+    Tensor,
+    TensorBuilder,
+    TensorKey,
+    TensorKeyBuilder,
+    TensorKeyReader,
+    TensorReader,
+)
 from .response_attributes.response_attributes_capnp import (
     TensorflowResponseAttributes,
     TensorflowResponseAttributesBuilder,
@@ -23,11 +31,15 @@ class Response:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Response.ResultReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Response.ResultReader: ...
         @staticmethod
         def new_message() -> Response.ResultBuilder: ...
@@ -54,8 +66,16 @@ class Response:
         def write_packed(file: BufferedWriter) -> None: ...
 
     class CustomAttributes:
-        torchCNN: TorchResponseAttributes | TorchResponseAttributesBuilder | TorchResponseAttributesReader
-        tfCNN: TensorflowResponseAttributes | TensorflowResponseAttributesBuilder | TensorflowResponseAttributesReader
+        torchCNN: (
+            TorchResponseAttributes
+            | TorchResponseAttributesBuilder
+            | TorchResponseAttributesReader
+        )
+        tfCNN: (
+            TensorflowResponseAttributes
+            | TensorflowResponseAttributesBuilder
+            | TensorflowResponseAttributesReader
+        )
         none: None
         def which(self) -> Literal["torchCNN", "tfCNN", "none"]: ...
         @overload
@@ -65,11 +85,15 @@ class Response:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Response.CustomAttributesReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Response.CustomAttributesReader: ...
         @staticmethod
         def new_message() -> Response.CustomAttributesBuilder: ...
@@ -81,8 +105,16 @@ class Response:
         def as_builder(self) -> Response.CustomAttributesBuilder: ...
 
     class CustomAttributesBuilder(Response.CustomAttributes):
-        torchCNN: TorchResponseAttributes | TorchResponseAttributesBuilder | TorchResponseAttributesReader
-        tfCNN: TensorflowResponseAttributes | TensorflowResponseAttributesBuilder | TensorflowResponseAttributesReader
+        torchCNN: (
+            TorchResponseAttributes
+            | TorchResponseAttributesBuilder
+            | TorchResponseAttributesReader
+        )
+        tfCNN: (
+            TensorflowResponseAttributes
+            | TensorflowResponseAttributesBuilder
+            | TensorflowResponseAttributesReader
+        )
         @staticmethod
         def from_dict(dictionary: dict) -> Response.CustomAttributesBuilder: ...
         def copy(self) -> Response.CustomAttributesBuilder: ...
@@ -97,7 +129,11 @@ class Response:
     status: int
     statusMessage: str
     result: Response.Result | Response.ResultBuilder | Response.ResultReader
-    customAttributes: Response.CustomAttributes | Response.CustomAttributesBuilder | Response.CustomAttributesReader
+    customAttributes: (
+        Response.CustomAttributes
+        | Response.CustomAttributesBuilder
+        | Response.CustomAttributesReader
+    )
     @overload
     def init(self, name: Literal["result"]) -> Result: ...
     @overload
@@ -105,11 +141,15 @@ class Response:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[ResponseReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> ResponseReader: ...
     @staticmethod
     def new_message() -> ResponseBuilder: ...
@@ -122,7 +162,11 @@ class ResponseReader(Response):
 
 class ResponseBuilder(Response):
     result: Response.Result | Response.ResultBuilder | Response.ResultReader
-    customAttributes: Response.CustomAttributes | Response.CustomAttributesBuilder | Response.CustomAttributesReader
+    customAttributes: (
+        Response.CustomAttributes
+        | Response.CustomAttributesBuilder
+        | Response.CustomAttributesReader
+    )
     @staticmethod
     def from_dict(dictionary: dict) -> ResponseBuilder: ...
     def copy(self) -> ResponseBuilder: ...

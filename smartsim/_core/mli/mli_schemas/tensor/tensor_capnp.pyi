@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `tensor.capnp`."""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -21,11 +22,15 @@ class TensorDescriptor:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TensorDescriptorReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TensorDescriptorReader: ...
     @staticmethod
     def new_message() -> TensorDescriptorBuilder: ...
@@ -49,16 +54,22 @@ class TensorDescriptorBuilder(TensorDescriptor):
 
 class Tensor:
     blob: bytes
-    tensorDescriptor: TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+    tensorDescriptor: (
+        TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+    )
     def init(self, name: Literal["tensorDescriptor"]) -> TensorDescriptor: ...
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TensorReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TensorReader: ...
     @staticmethod
     def new_message() -> TensorBuilder: ...
@@ -69,7 +80,9 @@ class TensorReader(Tensor):
     def as_builder(self) -> TensorBuilder: ...
 
 class TensorBuilder(Tensor):
-    tensorDescriptor: TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+    tensorDescriptor: (
+        TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+    )
     @staticmethod
     def from_dict(dictionary: dict) -> TensorBuilder: ...
     def copy(self) -> TensorBuilder: ...
@@ -87,11 +100,15 @@ class TensorKey:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TensorKeyReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TensorKeyReader: ...
     @staticmethod
     def new_message() -> TensorKeyBuilder: ...

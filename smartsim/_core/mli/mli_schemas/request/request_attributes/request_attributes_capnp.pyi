@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `request_attributes.capnp`."""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -19,11 +20,15 @@ class TorchRequestAttributes:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TorchRequestAttributesReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TorchRequestAttributesReader: ...
     @staticmethod
     def new_message() -> TorchRequestAttributesBuilder: ...
@@ -51,11 +56,15 @@ class TensorflowRequestAttributes:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TensorflowRequestAttributesReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TensorflowRequestAttributesReader: ...
     @staticmethod
     def new_message() -> TensorflowRequestAttributesBuilder: ...

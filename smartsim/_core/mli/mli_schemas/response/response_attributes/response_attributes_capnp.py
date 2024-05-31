@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `response_attributes.capnp`."""
+
 import os
 
 import capnp  # type: ignore

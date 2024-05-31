@@ -1,15 +1,13 @@
-from mli_schemas.enums.enums_capnp import *
-from mli_schemas.request.request_capnp import *
-from mli_schemas.request.request_attributes.request_attributes_capnp import *
-from mli_schemas.response.response_capnp import *
-from mli_schemas.response.response_attributes.response_attributes_capnp import *
-from mli_schemas.tensor.tensor_capnp import *
+from .mli_schemas.enums.enums_capnp import *
+from .mli_schemas.request.request_capnp import *
+from .mli_schemas.request.request_attributes.request_attributes_capnp import *
+from .mli_schemas.response.response_capnp import *
+from .mli_schemas.response.response_attributes.response_attributes_capnp import *
+from .mli_schemas.tensor.tensor_capnp import *
 import tensorflow as tf
 import typing as t
 import numpy as np
 import torch
-import time
-
 
 
 class MessageHandler:
@@ -17,7 +15,7 @@ class MessageHandler:
     # tensor info
     def build_tensor(
         self,
-        data: t.Union[torch.Tensor, tf.Tensor],  # should this be a byte string instead?
+        data: t.Union[torch.Tensor, tf.Tensor],
         order: "Order",
         data_type: "NumericalType",
         dimensions: t.List[int],
@@ -27,12 +25,8 @@ class MessageHandler:
         description.dataType = data_type
         description.dimensions = dimensions
         tensor = Tensor.new_message()
-        start_time = time.time()
         tensor.blob = data.numpy().tobytes()
-        end_time = time.time()
         tensor.tensorDescriptor = description
-        print("TIME")
-        print(end_time-start_time)
 
         return tensor
 
@@ -68,46 +62,75 @@ class MessageHandler:
     def build_request(
         self,
         reply_channel: t.ByteString,
-        model: t.Union[str, t.ByteString],
+        model: t.Union[ModelKey, t.ByteString],
         device: t.Union["Device", None],
-        input: t.Union[t.List[TensorKey], Tensor],
-        output: t.Union[t.List[TensorKey], Tensor],
-        # maybe we send in a dict?
-        custom_attributes: t.Union[
-            TorchRequestAttributes, TensorflowRequestAttributes
-        ],
+        input: t.Union[t.List[TensorKey], t.List[Tensor]],
+        output: t.Union[t.List[TensorKey], t.List[Tensor]],
+        custom_attributes: t.Union[TorchRequestAttributes, TensorflowRequestAttributes],
     ) -> RequestBuilder:
         channel = ChannelDescriptor.new_message()
         channel.reply = reply_channel
         request = Request.new_message()
         request.replyChannel = channel
 
-        if isinstance(model, str):
-            request.model.modelKey = model
-        else:
+        if isinstance(model, t.ByteString):
             request.model.modelData = model
+        else:
+            request.model.modelKey = model
 
         if device is None:
             request.device.noDevice = device
         else:
             request.device.deviceType = device
 
-        #print(type(input)) == <class 'capnp.lib.capnp._DynamicStructBuilder'> when using direct inference, not type Tensor
-        if isinstance(input, list):
-            request.input.inputKeys = input
-        else:
-            request.input.inputData = input
-    
 
-        if isinstance(output, list):
-            request.output.outputKeys = output
-        else:
-            request.output.outputData = output
+        try:
+            if input:
+                first_input = input[0]
+                input_class_name = first_input.schema.node.displayName.split(":")[-1]
+                print(input_class_name)
+                if input_class_name == "Tensor":
+                    request.input.inputData = input
+                elif input_class_name == "TensorKey":
+                    request.input.inputKeys = input
+                else:
+                    raise ValueError(
+                        "Invalid custom attribute class name. Expected 'Tensor' or 'TensorKey'."
+                    )
+        except Exception as e:
+            raise ValueError("Error accessing custom attribute information.") from e
 
-        # if isinstance(custom_attributes, type(TorchRequestAttributes)):
-        #     request.customAttributes.torchCNN = custom_attributes
-        # else:
-        #     request.customAttributes.tfCNN = custom_attributes
+        try:
+            if output:
+                first_output = output[0]
+                output_class_name = first_output.schema.node.displayName.split(":")[-1]
+                print(output_class_name)
+                if output_class_name == "Tensor":
+                    request.output.outputData = output
+                elif output_class_name == "TensorKey":
+                    request.output.outputKeys = output
+                else:
+                    raise ValueError(
+                        "Invalid custom attribute class name. Expected 'Tensor' or 'TensorKey'."
+                    )
+        except Exception as e:
+            raise ValueError("Error accessing custom attribute information.") from e
+
+        try:
+            custom_attribute_class_name = (
+                custom_attributes.schema.node.displayName.split(":")[-1]
+            )
+            print(custom_attribute_class_name)
+            if custom_attribute_class_name == "TorchRequestAttributes":
+                request.customAttributes.torchCNN = custom_attributes
+            elif custom_attribute_class_name == "TensorflowRequestAttributes":
+                request.customAttributes.tfCNN = custom_attributes
+            else:
+                raise ValueError(
+                    "Invalid custom attribute class name. Expected 'TensorflowRequestAttributes' or 'TorchRequestAttributes'."
+                )
+        except Exception as e:
+            raise ValueError("Error accessing custom attribute information.") from e
 
         return request
 
@@ -135,17 +158,40 @@ class MessageHandler:
         response.status = status
         response.statusMessage = message
 
-        if all(isinstance(item, type(Tensor)) for item in result):
-            response.result.data = result
-        else:
-            response.result.keys = result
+        try:
+            if result:
+                first_result = result[0]
+                result_class_name = first_result.schema.node.displayName.split(":")[-1]
+                print(result_class_name)
+                if result_class_name == "Tensor":
+                    response.result.data = result
+                elif result_class_name == "TensorKey":
+                    response.result.keys = result
+                else:
+                    raise ValueError(
+                        "Invalid custom attribute class name. Expected 'Tensor' or 'TensorKey'."
+                    )
+        except Exception as e:
+            raise ValueError("Error accessing custom attribute information.") from e
 
         if custom_attributes is None:
             response.customAttributes.none = custom_attributes
-        elif isinstance(custom_attributes, type(TorchResponseAttributes)):
-            response.customAttributes.torchCNN = custom_attributes
         else:
-            response.customAttributes.tfCNN = custom_attributes
+            try:
+                custom_attribute_class_name = (
+                    custom_attributes.schema.node.displayName.split(":")[-1]
+                )
+                print(custom_attribute_class_name)
+                if custom_attribute_class_name == "TorchResponseAttributes":
+                    response.customAttributes.torchCNN = custom_attributes
+                elif custom_attribute_class_name == "TensorflowResponseAttributes":
+                    response.customAttributes.tfCNN = custom_attributes
+                else:
+                    raise ValueError(
+                        "Invalid custom attribute class name. Expected 'TensorflowRequestAttributes' or 'TorchRequestAttributes'."
+                    )
+            except Exception as e:
+                raise ValueError("Error accessing custom attribute information.") from e
 
         return response
 
@@ -159,20 +205,21 @@ class MessageHandler:
             # return a Response dataclass?
             return message
 
+
 # helper functions to see if tensors can be used after being sent over
-def rehydrate_torch_tensor(tensor_dict: t.Dict):
+def rehydrate_torch_tensor(tensor: Tensor):
     tensor_data = np.frombuffer(
-        tensor_dict["tensorData"], dtype=tensor_dict["tensorDescriptor"]["dataType"]
+        tensor.blob, dtype=tensor.tensorDescriptor.dataType
     )
-    tensor_data = tensor_data.reshape(tensor_dict["tensorDescriptor"]["dimensions"])
+    tensor_data = tensor_data.reshape(tensor.tensorDescriptor.dimensions)
     return torch.tensor(tensor_data)
 
 
-def rehydrate_tf_tensor(tensor_dict: t.Dict):
+def rehydrate_tf_tensor(tensor: Tensor):
     tensor_data = np.frombuffer(
-        tensor_dict["tensorData"], dtype=tensor_dict["tensorDescriptor"]["dataType"]
+        tensor.blob, dtype=tensor.tensorDescriptor.dataType
     )
-    tensor_data = tensor_data.reshape(tensor_dict["tensorDescriptor"]["dimensions"])
+    tensor_data = tensor_data.reshape(tensor.tensorDescriptor.dimensions)
     return tf.constant(tensor_data)
 
 

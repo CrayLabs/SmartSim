@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `request.capnp`."""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -6,7 +7,14 @@ from io import BufferedWriter
 from typing import Iterator, Literal, Sequence, overload
 
 from ..enums.enums_capnp import Device, DeviceBuilder, DeviceReader
-from ..tensor.tensor_capnp import Tensor, TensorBuilder, TensorKey, TensorKeyBuilder, TensorKeyReader, TensorReader
+from ..tensor.tensor_capnp import (
+    Tensor,
+    TensorBuilder,
+    TensorKey,
+    TensorKeyBuilder,
+    TensorKeyReader,
+    TensorReader,
+)
 from .request_attributes.request_attributes_capnp import (
     TensorflowRequestAttributes,
     TensorflowRequestAttributesBuilder,
@@ -21,11 +29,15 @@ class ChannelDescriptor:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[ChannelDescriptorReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> ChannelDescriptorReader: ...
     @staticmethod
     def new_message() -> ChannelDescriptorBuilder: ...
@@ -52,11 +64,15 @@ class ModelKey:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[ModelKeyReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> ModelKeyReader: ...
     @staticmethod
     def new_message() -> ModelKeyBuilder: ...
@@ -87,11 +103,15 @@ class Request:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Request.ModelReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Request.ModelReader: ...
         @staticmethod
         def new_message() -> Request.ModelBuilder: ...
@@ -122,11 +142,15 @@ class Request:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Request.DeviceReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Request.DeviceReader: ...
         @staticmethod
         def new_message() -> Request.DeviceBuilder: ...
@@ -155,11 +179,15 @@ class Request:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Request.InputReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Request.InputReader: ...
         @staticmethod
         def new_message() -> Request.InputBuilder: ...
@@ -192,11 +220,15 @@ class Request:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Request.OutputReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Request.OutputReader: ...
         @staticmethod
         def new_message() -> Request.OutputBuilder: ...
@@ -223,8 +255,16 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
 
     class CustomAttributes:
-        torchCNN: TorchRequestAttributes | TorchRequestAttributesBuilder | TorchRequestAttributesReader
-        tfCNN: TensorflowRequestAttributes | TensorflowRequestAttributesBuilder | TensorflowRequestAttributesReader
+        torchCNN: (
+            TorchRequestAttributes
+            | TorchRequestAttributesBuilder
+            | TorchRequestAttributesReader
+        )
+        tfCNN: (
+            TensorflowRequestAttributes
+            | TensorflowRequestAttributesBuilder
+            | TensorflowRequestAttributesReader
+        )
         none: None
         def which(self) -> Literal["torchCNN", "tfCNN", "none"]: ...
         @overload
@@ -234,11 +274,15 @@ class Request:
         @staticmethod
         @contextmanager
         def from_bytes(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Iterator[Request.CustomAttributesReader]: ...
         @staticmethod
         def from_bytes_packed(
-            data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+            data: bytes,
+            traversal_limit_in_words: int | None = ...,
+            nesting_limit: int | None = ...,
         ) -> Request.CustomAttributesReader: ...
         @staticmethod
         def new_message() -> Request.CustomAttributesBuilder: ...
@@ -250,8 +294,16 @@ class Request:
         def as_builder(self) -> Request.CustomAttributesBuilder: ...
 
     class CustomAttributesBuilder(Request.CustomAttributes):
-        torchCNN: TorchRequestAttributes | TorchRequestAttributesBuilder | TorchRequestAttributesReader
-        tfCNN: TensorflowRequestAttributes | TensorflowRequestAttributesBuilder | TensorflowRequestAttributesReader
+        torchCNN: (
+            TorchRequestAttributes
+            | TorchRequestAttributesBuilder
+            | TorchRequestAttributesReader
+        )
+        tfCNN: (
+            TensorflowRequestAttributes
+            | TensorflowRequestAttributesBuilder
+            | TensorflowRequestAttributesReader
+        )
         @staticmethod
         def from_dict(dictionary: dict) -> Request.CustomAttributesBuilder: ...
         def copy(self) -> Request.CustomAttributesBuilder: ...
@@ -268,7 +320,11 @@ class Request:
     device: Request.Device | Request.DeviceBuilder | Request.DeviceReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
     output: Request.Output | Request.OutputBuilder | Request.OutputReader
-    customAttributes: Request.CustomAttributes | Request.CustomAttributesBuilder | Request.CustomAttributesReader
+    customAttributes: (
+        Request.CustomAttributes
+        | Request.CustomAttributesBuilder
+        | Request.CustomAttributesReader
+    )
     @overload
     def init(self, name: Literal["replyChannel"]) -> ChannelDescriptor: ...
     @overload
@@ -284,11 +340,15 @@ class Request:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[RequestReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> RequestReader: ...
     @staticmethod
     def new_message() -> RequestBuilder: ...
@@ -309,7 +369,11 @@ class RequestBuilder(Request):
     device: Request.Device | Request.DeviceBuilder | Request.DeviceReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
     output: Request.Output | Request.OutputBuilder | Request.OutputReader
-    customAttributes: Request.CustomAttributes | Request.CustomAttributesBuilder | Request.CustomAttributesReader
+    customAttributes: (
+        Request.CustomAttributes
+        | Request.CustomAttributesBuilder
+        | Request.CustomAttributesReader
+    )
     @staticmethod
     def from_dict(dictionary: dict) -> RequestBuilder: ...
     def copy(self) -> RequestBuilder: ...

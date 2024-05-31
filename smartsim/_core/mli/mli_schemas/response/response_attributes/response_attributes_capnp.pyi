@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `response_attributes.capnp`."""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -9,11 +10,15 @@ class TorchResponseAttributes:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TorchResponseAttributesReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TorchResponseAttributesReader: ...
     @staticmethod
     def new_message() -> TorchResponseAttributesBuilder: ...
@@ -39,11 +44,15 @@ class TensorflowResponseAttributes:
     @staticmethod
     @contextmanager
     def from_bytes(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> Iterator[TensorflowResponseAttributesReader]: ...
     @staticmethod
     def from_bytes_packed(
-        data: bytes, traversal_limit_in_words: int | None = ..., nesting_limit: int | None = ...
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
     ) -> TensorflowResponseAttributesReader: ...
     @staticmethod
     def new_message() -> TensorflowResponseAttributesBuilder: ...
