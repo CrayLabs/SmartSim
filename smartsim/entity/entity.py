@@ -30,15 +30,14 @@ from __future__ import annotations
 import abc
 import copy
 import itertools
-import pathlib
+import os
 import typing as t
 
 from smartsim.entity import strategies
 from smartsim.entity.files import EntityFiles
+from smartsim.entity.model import Application
 
 if t.TYPE_CHECKING:
-    import os
-
     import smartsim.settings.base
 
 
@@ -52,11 +51,6 @@ class _Mock:
     def __init__(self, *_: t.Any, **__: t.Any): ...
     def __getattr__(self, _: str) -> "_Mock":
         return _Mock()
-
-
-# Remove with merge of #579
-# https://github.com/CrayLabs/SmartSim/pull/579
-class Application(_Mock): ...
 
 
 # Remove with merge of #603
@@ -190,7 +184,7 @@ class Ensemble(CompoundEntity):
         replicas: int = 1,
     ) -> None:
         self.name = name
-        self.exe = pathlib.Path(exe)
+        self.exe = os.fspath(exe)
         self.exe_args = list(exe_args) if exe_args else []
         self.files = copy.deepcopy(files) if files else EntityFiles()
         self.parameters = dict(parameters) if parameters else {}
@@ -209,6 +203,9 @@ class Ensemble(CompoundEntity):
             Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
+                run_settings=_Mock(),  # type: ignore[arg-type]
+                # ^^^^^^^^^^^^^^^^^^^
+                # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
                 files=self.files,
                 params=permutation,

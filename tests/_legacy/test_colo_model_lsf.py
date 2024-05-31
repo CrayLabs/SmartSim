@@ -30,7 +30,7 @@ import pytest
 
 import smartsim.settings.base
 from smartsim import Experiment
-from smartsim.entity import Model
+from smartsim.entity import Application
 from smartsim.settings.lsfSettings import JsrunSettings
 
 # The tests in this file belong to the group_a group
@@ -59,7 +59,7 @@ def test_jsrun_prep(fileutils, coloutils, monkeypatch):
     db_args = {"custom_pinning": [1]}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_lsf", launcher="lsf")
+    exp = Experiment("colocated_application_lsf", launcher="lsf")
 
     with pytest.raises(ExpectationMet, match="mock._prep_colocated_db") as ex:
         run_settings = JsrunSettings("foo")
@@ -83,11 +83,11 @@ def test_non_js_run_prep(fileutils, coloutils, monkeypatch):
     db_args = {"custom_pinning": [1]}
     db_type = "tcp"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_lsf", launcher="lsf")
+    exp = Experiment("colocated_application_lsf", launcher="lsf")
 
     run_settings = smartsim.settings.base.RunSettings("foo")
 
-    colo_model: Model = coloutils.setup_test_colo(
+    colo_application: Application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -96,7 +96,7 @@ def test_non_js_run_prep(fileutils, coloutils, monkeypatch):
         colo_settings=run_settings,
     )
 
-    assert colo_model
+    assert colo_application
 
 
 @pytest.mark.parametrize(
@@ -128,12 +128,12 @@ def test_jsrun_prep_cpu_per_flag_set_check(
     db_args = {"custom_pinning": [1]}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_lsf", launcher="lsf")
+    exp = Experiment("colocated_application_lsf", launcher="lsf")
 
     run_args = {run_arg_key: test_value}
     run_settings = JsrunSettings("foo", run_args=run_args)
 
-    colo_model: Model = coloutils.setup_test_colo(
+    colo_application: Application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -142,7 +142,7 @@ def test_jsrun_prep_cpu_per_flag_set_check(
         colo_settings=run_settings,
     )
 
-    assert colo_model.run_settings.run_args[exp_run_arg_key] == exp_value
+    assert colo_application.run_settings.run_args[exp_run_arg_key] == exp_value
 
 
 @pytest.mark.parametrize(
@@ -174,12 +174,12 @@ def test_jsrun_prep_db_cpu_override(
     db_args = {"custom_pinning": [1], "db_cpus": 3}
     db_type = "tcp"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_lsf", launcher="lsf")
+    exp = Experiment("colocated_application_lsf", launcher="lsf")
 
     run_args = {run_arg_key: test_value}
     run_settings = JsrunSettings("foo", run_args=run_args)
 
-    colo_model: Model = coloutils.setup_test_colo(
+    colo_application: Application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -188,7 +188,7 @@ def test_jsrun_prep_db_cpu_override(
         colo_settings=run_settings,
     )
 
-    assert colo_model.run_settings.run_args[exp_run_arg_key] == exp_value
+    assert colo_application.run_settings.run_args[exp_run_arg_key] == exp_value
 
 
 @pytest.mark.parametrize(
@@ -218,12 +218,12 @@ def test_jsrun_prep_db_cpu_replacement(
     db_args = {"custom_pinning": [1], "db_cpus": 8}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_lsf", launcher="lsf")
+    exp = Experiment("colocated_application_lsf", launcher="lsf")
 
     run_args = {run_arg_key: test_value}
     run_settings = JsrunSettings("foo", run_args=run_args)
 
-    colo_model: Model = coloutils.setup_test_colo(
+    colo_application: Application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -232,7 +232,7 @@ def test_jsrun_prep_db_cpu_replacement(
         colo_settings=run_settings,
     )
 
-    assert colo_model.run_settings.run_args[exp_run_arg_key] == exp_value
+    assert colo_application.run_settings.run_args[exp_run_arg_key] == exp_value
 
 
 @pytest.mark.parametrize(
@@ -268,12 +268,12 @@ def test_jsrun_prep_rs_per_host(
     db_args = {"custom_pinning": [1]}
     db_type = "tcp"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_lsf", launcher="lsf")
+    exp = Experiment("colocated_application_lsf", launcher="lsf")
 
     run_args = {run_arg_key: test_value}
     run_settings = JsrunSettings("foo", run_args=run_args)
 
-    colo_model: Model = coloutils.setup_test_colo(
+    colo_application: Application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -283,4 +283,6 @@ def test_jsrun_prep_rs_per_host(
     )
 
     # NOTE: _prep_colocated_db sets this to a string & not an integer
-    assert str(colo_model.run_settings.run_args[exp_run_arg_key]) == str(exp_value)
+    assert str(colo_application.run_settings.run_args[exp_run_arg_key]) == str(
+        exp_value
+    )

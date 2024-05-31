@@ -29,7 +29,7 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....entity import DBNode, Model
+from ....entity import Application, DBNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 class AprunStep(Step):
     def __init__(
-        self, entity: t.Union[Model, DBNode], run_settings: AprunSettings
+        self, entity: t.Union[Application, DBNode], run_settings: AprunSettings
     ) -> None:
         """Initialize a ALPS aprun job step
 

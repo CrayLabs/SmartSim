@@ -36,7 +36,7 @@ from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils import serialize
 from smartsim.database import Orchestrator
-from smartsim.entity import Model
+from smartsim.entity import Application
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import RunSettings
@@ -50,23 +50,23 @@ if t.TYPE_CHECKING:
 pytestmark = pytest.mark.slow_tests
 
 
-def test_model_prefix(test_dir: str) -> None:
+def test_application_prefix(test_dir: str) -> None:
     exp_name = "test_prefix"
     exp = Experiment(exp_name)
 
-    model = exp.create_model(
-        "model",
+    application = exp.create_application(
+        "application",
         path=test_dir,
         run_settings=RunSettings("python"),
         enable_key_prefixing=True,
     )
-    assert model._key_prefixing_enabled == True
+    assert application._key_prefixing_enabled == True
 
 
-def test_model_no_name():
-    exp = Experiment("test_model_no_name")
+def test_application_no_name():
+    exp = Experiment("test_application_no_name")
     with pytest.raises(AttributeError):
-        _ = exp.create_model(name=None, run_settings=RunSettings("python"))
+        _ = exp.create_application(name=None, run_settings=RunSettings("python"))
 
 
 def test_ensemble_no_name():
@@ -91,17 +91,17 @@ def test_stop_type() -> None:
     """Wrong argument type given to stop"""
     exp = Experiment("name")
     with pytest.raises(TypeError):
-        exp.stop("model")
+        exp.stop("application")
 
 
-def test_finished_new_model() -> None:
-    # finished should fail as this model hasn't been
+def test_finished_new_application() -> None:
+    # finished should fail as this application hasn't been
     # launched yet.
 
-    model = Model("name", {}, "./", RunSettings("python"))
+    application = Application("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
     with pytest.raises(ValueError):
-        exp.finished(model)
+        exp.finished(application)
 
 
 def test_status_typeerror() -> None:
@@ -111,9 +111,9 @@ def test_status_typeerror() -> None:
 
 
 def test_status_pre_launch() -> None:
-    model = Model("name", {}, "./", RunSettings("python"))
+    application = Application("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    assert exp.get_status(model)[0] == SmartSimStatus.STATUS_NEVER_STARTED
+    assert exp.get_status(application)[0] == SmartSimStatus.STATUS_NEVER_STARTED
 
 
 def test_bad_ensemble_init_no_rs(test_dir: str) -> None:
@@ -140,7 +140,9 @@ def test_bad_ensemble_init_no_rs_bs(test_dir: str) -> None:
 def test_stop_entity(test_dir: str) -> None:
     exp_name = "test_stop_entity"
     exp = Experiment(exp_name, exp_path=test_dir)
-    m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
+    m = exp.create_application(
+        "application", path=test_dir, run_settings=RunSettings("sleep", "5")
+    )
     exp.start(m, block=False)
     assert exp.finished(m) == False
     exp.stop(m)
@@ -151,19 +153,19 @@ def test_poll(test_dir: str) -> None:
     # Ensure that a SmartSimError is not raised
     exp_name = "test_exp_poll"
     exp = Experiment(exp_name, exp_path=test_dir)
-    model = exp.create_model(
-        "model", path=test_dir, run_settings=RunSettings("sleep", "5")
+    application = exp.create_application(
+        "application", path=test_dir, run_settings=RunSettings("sleep", "5")
     )
-    exp.start(model, block=False)
+    exp.start(application, block=False)
     exp.poll(interval=1)
-    exp.stop(model)
+    exp.stop(application)
 
 
 def test_summary(test_dir: str) -> None:
     exp_name = "test_exp_summary"
     exp = Experiment(exp_name, exp_path=test_dir)
-    m = exp.create_model(
-        "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
+    m = exp.create_application(
+        "application", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )
     exp.start(m)
     summary_str = exp.summary(style="plain")
@@ -267,20 +269,20 @@ def test_default_orch_path(
     assert db.path == str(orch_path)
 
 
-def test_default_model_path(
+def test_default_application_path(
     monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
 ) -> None:
-    """Ensure the default file structure is created for Model"""
+    """Ensure the default file structure is created for Application"""
 
-    exp_name = "default-model-path"
+    exp_name = "default-application-path"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
     monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
     settings = exp.create_run_settings(exe="echo", exe_args="hello")
-    model = exp.create_model(name="model_name", run_settings=settings)
-    exp.start(model)
-    model_path = pathlib.Path(test_dir) / model.name
-    assert model_path.exists()
-    assert model.path == str(model_path)
+    application = exp.create_application(name="application_name", run_settings=settings)
+    exp.start(application)
+    application_path = pathlib.Path(test_dir) / application.name
+    assert application_path.exists()
+    assert application.path == str(application_path)
 
 
 def test_default_ensemble_path(
@@ -299,7 +301,7 @@ def test_default_ensemble_path(
     ensemble_path = pathlib.Path(test_dir) / ensemble.name
     assert ensemble_path.exists()
     assert ensemble.path == str(ensemble_path)
-    for member in ensemble.models:
+    for member in ensemble.applications:
         member_path = ensemble_path / member.name
         assert member_path.exists()
         assert member.path == str(ensemble_path / member.name)
@@ -325,23 +327,23 @@ def test_user_orch_path(
     shutil.rmtree(orch_path)
 
 
-def test_default_model_with_path(
+def test_default_application_with_path(
     monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
 ) -> None:
-    """Ensure a relative path is used to created Model folder"""
+    """Ensure a relative path is used to created Application folder"""
 
     exp_name = "default-ensemble-path"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
     monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
     settings = exp.create_run_settings(exe="echo", exe_args="hello")
-    model = exp.create_model(
-        name="model_name", run_settings=settings, path="./testing_folder1234"
+    application = exp.create_application(
+        name="application_name", run_settings=settings, path="./testing_folder1234"
     )
-    exp.start(model)
-    model_path = pathlib.Path(osp.abspath("./testing_folder1234"))
-    assert model_path.exists()
-    assert model.path == str(model_path)
-    shutil.rmtree(model_path)
+    exp.start(application)
+    application_path = pathlib.Path(osp.abspath("./testing_folder1234"))
+    assert application_path.exists()
+    assert application.path == str(application_path)
+    shutil.rmtree(application_path)
 
 
 def test_default_ensemble_with_path(
@@ -363,7 +365,7 @@ def test_default_ensemble_with_path(
     ensemble_path = pathlib.Path(osp.abspath("./testing_folder1234"))
     assert ensemble_path.exists()
     assert ensemble.path == str(ensemble_path)
-    for member in ensemble.models:
+    for member in ensemble.applications:
         member_path = ensemble_path / member.name
         assert member_path.exists()
         assert member.path == str(member_path)

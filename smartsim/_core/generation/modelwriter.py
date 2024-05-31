@@ -36,19 +36,19 @@ from ...log import get_logger
 logger = get_logger(__name__)
 
 
-class ModelWriter:
+class ApplicationWriter:
     def __init__(self) -> None:
         self.tag = ";"
         self.regex = "(;[^;]+;)"
         self.lines: t.List[str] = []
 
     def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
-        """Set the tag for the modelwriter to search for within
+        """Set the tag for the applicationwriter to search for within
            tagged files attached to an entity.
 
-        :param tag: tag for the modelwriter to search for,
+        :param tag: tag for the applicationwriter to search for,
                     defaults to semi-colon e.g. ";"
-        :param regex: full regex for the modelwriter to search for,
+        :param regex: full regex for the applicationwriter to search for,
                      defaults to "(;.+;)"
         """
         if regex:
@@ -57,17 +57,17 @@ class ModelWriter:
             self.tag = tag
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
-    def configure_tagged_model_files(
+    def configure_tagged_application_files(
         self,
         tagged_files: t.List[str],
         params: t.Dict[str, str],
         make_missing_tags_fatal: bool = False,
     ) -> t.Dict[str, t.Dict[str, str]]:
-        """Read, write and configure tagged files attached to a Model
+        """Read, write and configure tagged files attached to a Application
            instance.
 
         :param tagged_files: list of paths to tagged files
-        :param params: model parameters
+        :param params: application parameters
         :param make_missing_tags_fatal: raise an error if a tag is missing
         :returns: A dict connecting each file to its parameter settings
         """
@@ -81,7 +81,7 @@ class ModelWriter:
         return files_to_tags
 
     def _set_lines(self, file_path: str) -> None:
-        """Set the lines for the modelwrtter to iterate over
+        """Set the lines for the applicationwriter to iterate over
 
         :param file_path: path to the newly created and tagged file
         :raises ParameterWriterError: if the newly created file cannot be read
@@ -108,9 +108,9 @@ class ModelWriter:
         self, params: t.Dict[str, str], make_fatal: bool = False
     ) -> t.Dict[str, str]:
         """Replace the tagged parameters within the file attached to this
-           model. The tag defaults to ";"
+           application. The tag defaults to ";"
 
-        :param model: The model instance
+        :param application: The application instance
         :param make_fatal: (Optional) Set to True to force a fatal error
             if a tag is not matched
         :returns: A dict of parameter names and values set for the file
@@ -127,7 +127,7 @@ class ModelWriter:
                     line = re.sub(self.regex, new_val, line, 1)
                     used_params[previous_value] = new_val
 
-                # if a tag is found but is not in this model's configurations
+                # if a tag is found but is not in this application's configurations
                 # put in placeholder value
                 else:
                     tag = tagged_line.split(self.tag)[1]
@@ -145,11 +145,11 @@ class ModelWriter:
         return used_params
 
     def _is_ensemble_spec(
-        self, tagged_line: str, model_params: t.Dict[str, str]
+        self, tagged_line: str, application_params: t.Dict[str, str]
     ) -> bool:
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
-        if prev_val in model_params.keys():
+        if prev_val in application_params.keys():
             return True
         return False
 

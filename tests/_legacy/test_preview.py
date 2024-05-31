@@ -290,11 +290,11 @@ def test_model_preview(test_dir, wlmutils):
     rs1 = RunSettings("bash", "multi_tags_template.sh")
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
 
-    hello_world_model = exp.create_model(
+    hello_world_model = exp.create_application(
         "echo-hello", run_settings=rs1, params=model_params
     )
 
-    spam_eggs_model = exp.create_model("echo-spam", run_settings=rs2)
+    spam_eggs_model = exp.create_application("echo-spam", run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
@@ -333,8 +333,10 @@ def test_model_preview_properties(test_dir, wlmutils):
     se_param3 = "eggs"
     rs2 = exp.create_run_settings(se_param1, [se_param2, se_param3])
 
-    hello_world_model = exp.create_model(hw_name, run_settings=rs1, params=model_params)
-    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
+    hello_world_model = exp.create_application(
+        hw_name, run_settings=rs1, params=model_params
+    )
+    spam_eggs_model = exp.create_application(se_name, run_settings=rs2)
 
     preview_manifest = Manifest(hello_world_model, spam_eggs_model)
 
@@ -385,7 +387,7 @@ def test_preview_model_tagged_files(fileutils, test_dir, wlmutils):
     model_params = {"port": 6379, "password": "unbreakable_password"}
     model_settings = RunSettings("bash", "multi_tags_template.sh")
 
-    hello_world_model = exp.create_model(
+    hello_world_model = exp.create_application(
         "echo-hello", run_settings=model_settings, params=model_params
     )
 
@@ -420,7 +422,7 @@ def test_model_key_prefixing(test_dir, wlmutils):
     db = exp.create_database(port=6780, interface="lo")
     exp.generate(db, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
-    model = exp.create_model("model_test", run_settings=rs1)
+    model = exp.create_application("model_test", run_settings=rs1)
 
     # enable key prefixing on model
     model.enable_key_prefixing()
@@ -491,8 +493,8 @@ def test_preview_models_and_ensembles(test_dir, wlmutils):
     hw_name = "echo-hello"
     se_name = "echo-spam"
     ens_name = "echo-ensemble"
-    hello_world_model = exp.create_model(hw_name, run_settings=rs1)
-    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
+    hello_world_model = exp.create_application(hw_name, run_settings=rs1)
+    spam_eggs_model = exp.create_application(se_name, run_settings=rs2)
     hello_ensemble = exp.create_ensemble(ens_name, run_settings=rs1, replicas=3)
 
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
@@ -530,7 +532,7 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
     exp.generate(ensemble, overwrite=True)
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
     # Create model
-    ml_model = exp.create_model("tf_training", rs2)
+    ml_model = exp.create_application("tf_training", rs2)
 
     for sim in ensemble.entities:
         ml_model.register_incoming_entity(sim)
@@ -575,7 +577,7 @@ def test_ensemble_preview_client_configuration_multidb(test_dir, wlmutils):
     exp.generate(ensemble, overwrite=True)
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
     # Create model
-    ml_model = exp.create_model("tf_training", rs2)
+    ml_model = exp.create_application("tf_training", rs2)
     for sim in ensemble.entities:
         ml_model.register_incoming_entity(sim)
     exp.generate(ml_model, overwrite=True)
@@ -674,7 +676,7 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
     )
 
     # Create colocated SmartSim Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
 
     # Create and save ML model to filesystem
     content = "empty test"
@@ -794,7 +796,7 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     )
 
     # Create a SmartSim model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
 
     # Colocate a db with each ensemble entity and add a script
     # to each entity via file
@@ -1050,8 +1052,8 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     hw_name = "echo-hello"
     se_name = "echo-spam"
     ens_name = "echo-ensemble"
-    hello_world_model = exp.create_model(hw_name, run_settings=rs1)
-    spam_eggs_model = exp.create_model(se_name, run_settings=rs2)
+    hello_world_model = exp.create_application(hw_name, run_settings=rs1)
+    spam_eggs_model = exp.create_application(se_name, run_settings=rs2)
     hello_ensemble = exp.create_ensemble(ens_name, run_settings=rs1, replicas=3)
 
     exp.generate(hello_world_model, spam_eggs_model, hello_ensemble)
@@ -1092,7 +1094,7 @@ def test_verbosity_info_colocated_db_model_ensemble(
     )
 
     # Create colocated SmartSim Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model = exp.create_application("colocated_model", colo_settings)
 
     # Create and save ML model to filesystem
     content = "empty test"
@@ -1209,7 +1211,7 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     exp.generate(ensemble, overwrite=True)
     rs2 = exp.create_run_settings("echo", ["spam", "eggs"])
     # Create model
-    ml_model = exp.create_model("tf_training", rs2)
+    ml_model = exp.create_application("tf_training", rs2)
 
     for sim in ensemble.entities:
         ml_model.register_incoming_entity(sim)
@@ -1277,8 +1279,8 @@ def test_preview_colocated_db_singular_model(wlmutils, test_dir):
 
     rs = exp.create_run_settings("sleep", ["100"])
 
-    model_1 = exp.create_model("model_1", run_settings=rs)
-    model_2 = exp.create_model("model_2", run_settings=rs)
+    model_1 = exp.create_application("model_1", run_settings=rs)
+    model_2 = exp.create_application("model_2", run_settings=rs)
 
     model_1.colocate_db()
 
@@ -1307,7 +1309,7 @@ def test_preview_db_script(wlmutils, test_dir):
     model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
 
     # Initialize a Model object
-    model_instance = exp.create_model("model_name", model_settings)
+    model_instance = exp.create_application("model_name", model_settings)
     model_instance.colocate_db_tcp()
 
     # TorchScript string

@@ -29,7 +29,7 @@ import sys
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Model
+from smartsim.entity import Application
 from smartsim.error import SSUnsupportedError
 from smartsim.status import SmartSimStatus
 
@@ -50,7 +50,9 @@ def test_macosx_warning(fileutils, test_dir, coloutils):
     db_args = {"custom_pinning": [1]}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher="local", exp_path=test_dir
+    )
     with pytest.warns(
         RuntimeWarning,
         match="CPU pinning is not supported on MacOSX. Ignoring pinning specification.",
@@ -68,7 +70,9 @@ def test_unsupported_limit_app(fileutils, test_dir, coloutils):
     db_args = {"limit_app_cpus": True}
     db_type = "uds"  # Test is insensitive to choice of db
 
-    exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher="local", exp_path=test_dir
+    )
     with pytest.raises(SSUnsupportedError):
         coloutils.setup_test_colo(
             fileutils,
@@ -85,7 +89,9 @@ def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinni
     db_type = "uds"  # Test is insensitive to choice of db
     db_args = {"custom_pinning": custom_pinning}
 
-    exp = Experiment("colocated_model_defaults", launcher="local", exp_path=test_dir)
+    exp = Experiment(
+        "colocated_application_defaults", launcher="local", exp_path=test_dir
+    )
     with pytest.raises(TypeError):
         coloutils.setup_test_colo(
             fileutils,
@@ -110,19 +116,21 @@ def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinni
     ],
 )
 def test_create_pinning_string(pin_list, num_cpus, expected):
-    assert Model._create_pinning_string(pin_list, num_cpus) == expected
+    assert Application._create_pinning_string(pin_list, num_cpus) == expected
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_launch_colocated_model_defaults(
+def test_launch_colocated_application_defaults(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
-    """Test the launch of a model with a colocated database and local launcher"""
+    """Test the launch of a application with a colocated database and local launcher"""
 
     db_args = {}
 
-    exp = Experiment("colocated_model_defaults", launcher=launcher, exp_path=test_dir)
-    colo_model = coloutils.setup_test_colo(
+    exp = Experiment(
+        "colocated_application_defaults", launcher=launcher, exp_path=test_dir
+    )
+    colo_application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -135,38 +143,39 @@ def test_launch_colocated_model_defaults(
     else:
         true_pinning = "0"
     assert (
-        colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
+        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        == true_pinning
     )
-    exp.generate(colo_model)
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
+    exp.generate(colo_application)
+    exp.start(colo_application, block=True)
+    statuses = exp.get_status(colo_application)
     assert all(stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses)
 
-    # test restarting the colocated model
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
+    # test restarting the colocated application
+    exp.start(colo_application, block=True)
+    statuses = exp.get_status(colo_application)
     assert all(
         stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses
     ), f"Statuses {statuses}"
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_launch_multiple_colocated_models(
+def test_launch_multiple_colocated_applications(
     fileutils, test_dir, coloutils, wlmutils, db_type, launcher="local"
 ):
-    """Test the concurrent launch of two models with a colocated database and local launcher"""
+    """Test the concurrent launch of two applications with a colocated database and local launcher"""
 
     db_args = {}
 
-    exp = Experiment("multi_colo_models", launcher=launcher, exp_path=test_dir)
-    colo_models = [
+    exp = Experiment("multi_colo_applications", launcher=launcher, exp_path=test_dir)
+    colo_applications = [
         coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
             "send_data_local_smartredis.py",
             db_args,
-            colo_model_name="colo0",
+            colo_application_name="colo0",
             port=wlmutils.get_test_port(),
         ),
         coloutils.setup_test_colo(
@@ -175,53 +184,53 @@ def test_launch_multiple_colocated_models(
             exp,
             "send_data_local_smartredis.py",
             db_args,
-            colo_model_name="colo1",
+            colo_application_name="colo1",
             port=wlmutils.get_test_port() + 1,
         ),
     ]
-    exp.generate(*colo_models)
-    exp.start(*colo_models, block=True)
-    statuses = exp.get_status(*colo_models)
+    exp.generate(*colo_applications)
+    exp.start(*colo_applications, block=True)
+    statuses = exp.get_status(*colo_applications)
     assert all(stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses)
 
-    # test restarting the colocated model
-    exp.start(*colo_models, block=True)
-    statuses = exp.get_status(*colo_models)
+    # test restarting the colocated application
+    exp.start(*colo_applications, block=True)
+    statuses = exp.get_status(*colo_applications)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_disable_pinning(
+def test_colocated_application_disable_pinning(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     exp = Experiment(
-        "colocated_model_pinning_auto_1cpu", launcher=launcher, exp_path=test_dir
+        "colocated_application_pinning_auto_1cpu", launcher=launcher, exp_path=test_dir
     )
     db_args = {
         "db_cpus": 1,
         "custom_pinning": [],
     }
     # Check to make sure that the CPU mask was correctly generated
-    colo_model = coloutils.setup_test_colo(
+    colo_application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
         "send_data_local_smartredis.py",
         db_args,
     )
-    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] is None
-    exp.generate(colo_model)
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
+    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] is None
+    exp.generate(colo_application)
+    exp.start(colo_application, block=True)
+    statuses = exp.get_status(colo_application)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_auto_2cpu(
+def test_colocated_application_pinning_auto_2cpu(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     exp = Experiment(
-        "colocated_model_pinning_auto_2cpu", launcher=launcher, exp_path=test_dir
+        "colocated_application_pinning_auto_2cpu", launcher=launcher, exp_path=test_dir
     )
 
     db_args = {
@@ -229,7 +238,7 @@ def test_colocated_model_pinning_auto_2cpu(
     }
 
     # Check to make sure that the CPU mask was correctly generated
-    colo_model = coloutils.setup_test_colo(
+    colo_application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
@@ -241,65 +250,68 @@ def test_colocated_model_pinning_auto_2cpu(
     else:
         true_pinning = "0,1"
     assert (
-        colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
+        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        == true_pinning
     )
-    exp.generate(colo_model)
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
+    exp.generate(colo_application)
+    exp.start(colo_application, block=True)
+    statuses = exp.get_status(colo_application)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_range(
+def test_colocated_application_pinning_range(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     # Check to make sure that the CPU mask was correctly generated
 
     exp = Experiment(
-        "colocated_model_pinning_manual", launcher=launcher, exp_path=test_dir
+        "colocated_application_pinning_manual", launcher=launcher, exp_path=test_dir
     )
 
     db_args = {"db_cpus": 2, "custom_pinning": range(2)}
 
-    colo_model = coloutils.setup_test_colo(
+    colo_application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
         "send_data_local_smartredis.py",
         db_args,
     )
-    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
-    exp.generate(colo_model)
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
+    assert (
+        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    )
+    exp.generate(colo_application)
+    exp.start(colo_application, block=True)
+    statuses = exp.get_status(colo_application)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_list(
+def test_colocated_application_pinning_list(
     fileutils, test_dir, coloutils, db_type, launcher="local"
 ):
     # Check to make sure that the CPU mask was correctly generated
 
     exp = Experiment(
-        "colocated_model_pinning_manual", launcher=launcher, exp_path=test_dir
+        "colocated_application_pinning_manual", launcher=launcher, exp_path=test_dir
     )
 
     db_args = {"db_cpus": 1, "custom_pinning": [1]}
 
-    colo_model = coloutils.setup_test_colo(
+    colo_application = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
         "send_data_local_smartredis.py",
         db_args,
     )
-    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "1"
-    exp.generate(colo_model)
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
+    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "1"
+    exp.generate(colo_application)
+    exp.start(colo_application, block=True)
+    statuses = exp.get_status(colo_application)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
@@ -308,7 +320,7 @@ def test_colo_uds_verifies_socket_file_name(test_dir, launcher="local"):
 
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=["--version"])
 
-    colo_model = exp.create_model("wrong_uds_socket_name", colo_settings)
+    colo_application = exp.create_application("wrong_uds_socket_name", colo_settings)
 
     with pytest.raises(ValueError):
-        colo_model.colocate_db_uds(unix_socket="this is not a valid name!")
+        colo_application.colocate_db_uds(unix_socket="this is not a valid name!")

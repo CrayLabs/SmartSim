@@ -31,7 +31,7 @@ from os import path
 
 import pytest
 
-from smartsim._core.generation.modelwriter import ModelWriter
+from smartsim._core.generation.modelwriter import ApplicationWriter
 from smartsim.error.errors import ParameterWriterError, SmartSimError
 from smartsim.settings import RunSettings
 
@@ -62,9 +62,9 @@ def test_write_easy_configs(fileutils, test_dir):
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
 
-    # init modelwriter
-    writer = ModelWriter()
-    writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
+    # init ApplicationWriter
+    writer = ApplicationWriter()
+    writer.configure_tagged_application_files(glob(test_dir + "/*"), param_dict)
 
     written_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
@@ -90,11 +90,11 @@ def test_write_med_configs(fileutils, test_dir):
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
 
-    # init modelwriter
-    writer = ModelWriter()
+    # init ApplicationWriter
+    writer = ApplicationWriter()
     writer.set_tag(writer.tag, "(;.+;)")
     assert writer.regex == "(;.+;)"
-    writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
+    writer.configure_tagged_application_files(glob(test_dir + "/*"), param_dict)
 
     written_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
@@ -122,10 +122,10 @@ def test_write_new_tag_configs(fileutils, test_dir):
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
 
-    # init modelwriter
-    writer = ModelWriter()
+    # init ApplicationWriter
+    writer = ApplicationWriter()
     writer.set_tag("@")
-    writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
+    writer.configure_tagged_application_files(glob(test_dir + "/*"), param_dict)
 
     written_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
@@ -135,13 +135,13 @@ def test_write_new_tag_configs(fileutils, test_dir):
 
 
 def test_mw_error_1():
-    writer = ModelWriter()
+    writer = ApplicationWriter()
     with pytest.raises(ParameterWriterError):
-        writer.configure_tagged_model_files("[not/a/path]", {"5": 10})
+        writer.configure_tagged_application_files("[not/a/path]", {"5": 10})
 
 
 def test_mw_error_2():
-    writer = ModelWriter()
+    writer = ApplicationWriter()
     with pytest.raises(ParameterWriterError):
         writer._write_changes("[not/a/path]")
 
@@ -157,9 +157,9 @@ def test_write_mw_error_3(fileutils, test_dir):
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
 
-    # init modelwriter
-    writer = ModelWriter()
+    # init ApplicationWriter
+    writer = ApplicationWriter()
     with pytest.raises(SmartSimError):
-        writer.configure_tagged_model_files(
+        writer.configure_tagged_application_files(
             glob(test_dir + "/*"), param_dict, make_missing_tags_fatal=True
         )

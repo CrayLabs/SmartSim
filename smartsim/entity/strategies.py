@@ -86,7 +86,7 @@ def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy
 
 
 # create permutations of all parameters
-# single model if parameters only have one value
+# single application if parameters only have one value
 @_register("all_perm")
 def create_all_permutations(
     params: t.Mapping[str, t.Sequence[str]],
