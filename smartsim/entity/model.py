@@ -39,10 +39,13 @@ from .._core._install.builder import Device
 from .._core.utils.helpers import cat_arg_and_value, expand_exe_path
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
 from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
+
+if t.TYPE_CHECKING:
+    from ..settings.base import BatchSettings, RunSettings
+
 
 logger = get_logger(__name__)
 
@@ -55,12 +58,12 @@ class Application(SmartSimEntity):
         self,
         name: str,
         exe: str,
-        run_settings: RunSettings,
+        run_settings: "RunSettings",
         params: t.Optional[t.Dict[str, str]] = None,
         exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
-        batch_settings: t.Optional[BatchSettings] = None,
+        batch_settings: t.Optional["BatchSettings"] = None,
         files: t.Optional[EntityFiles] = None,
     ):
         """Initialize a ``Application``

@@ -28,12 +28,12 @@ import itertools
 
 import pytest
 
-from smartsim.entity import entity
-from smartsim.entity.entity import Ensemble
+from smartsim.entity import _mock
+from smartsim.entity._new_ensemble import Ensemble
 
 pytestmark = pytest.mark.group_a
 
-_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
+_2x2_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
 _2_PERM_STRAT = lambda p, n: [{"SPAM": "a", "EGGS": "b"}, {"SPAM": "c", "EGGS": "d"}]
 
 
@@ -41,24 +41,24 @@ _2_PERM_STRAT = lambda p, n: [{"SPAM": "a", "EGGS": "b"}, {"SPAM": "c", "EGGS": 
 def mock_launcher_settings():
     # TODO: Remove this mock with #587
     #       https://github.com/CrayLabs/SmartSim/pull/587
-    return entity.LaunchSettings()
+    return _mock.LaunchSettings()
 
 
 # fmt: off
 @pytest.mark.parametrize(
-    "              params,      strategy,  max_perms, replicas, expected_num_jobs",  # Test Name                                       Misc
-    (pytest.param(   None,    "all_perm",          0,        1,                 1 , id="No Parameters or Replicas")                    ,
-     pytest.param(_PARAMS,    "all_perm",          0,        1,                 4 , id="All Permutations")                             ,
-     pytest.param(_PARAMS,        "step",          0,        1,                 2 , id="Stepped Params")                               ,
-     pytest.param(_PARAMS,      "random",          0,        1,                 4 , id="Random Permutations")                          ,
-     pytest.param(_PARAMS,    "all_perm",          1,        1,                 1 , id="All Permutations [Capped Max Permutations]"    , marks=pytest.mark.xfail(reason="'all_perm' strategy currently ignores max number permutations'", strict=True)),
-     pytest.param(_PARAMS,        "step",          1,        1,                 1 , id="Stepped Params [Capped Max Permutations]"      , marks=pytest.mark.xfail(reason="'step' strategy currently ignores max number permutations'", strict=True)),
-     pytest.param(_PARAMS,      "random",          1,        1,                 1 , id="Random Permutations [Capped Max Permutations]"), #     ^^^^^^^^^^^^^^^^^
-     pytest.param(     {}, _2_PERM_STRAT,          0,        1,                 2 , id="Custom Permutation Strategy")                  , # TODO: I would argue that we should make these cases pass
-     pytest.param(     {},    "all_perm",          0,        5,                 5 , id="Identical Replicas")                           ,
-     pytest.param(_PARAMS,    "all_perm",          0,        2,                 8 , id="Replicas of All Permutations")                 ,
-     pytest.param(_PARAMS,        "step",          0,        2,                 4 , id="Replicas of Stepped Params")                   ,
-     pytest.param(_PARAMS,      "random",          3,        2,                 6 , id="Replicas of Random Permutations")              ,
+    "                  params,      strategy,  max_perms, replicas, expected_num_jobs",  # Test Name                                       Misc
+    (pytest.param(       None,    "all_perm",          0,        1,                 1 , id="No Parameters or Replicas")                    ,
+     pytest.param(_2x2_PARAMS,    "all_perm",          0,        1,                 4 , id="All Permutations")                             ,
+     pytest.param(_2x2_PARAMS,        "step",          0,        1,                 2 , id="Stepped Params")                               ,
+     pytest.param(_2x2_PARAMS,      "random",          0,        1,                 4 , id="Random Permutations")                          ,
+     pytest.param(_2x2_PARAMS,    "all_perm",          1,        1,                 1 , id="All Permutations [Capped Max Permutations]"    , marks=pytest.mark.xfail(reason="'all_perm' strategy currently ignores max number permutations'", strict=True)),
+     pytest.param(_2x2_PARAMS,        "step",          1,        1,                 1 , id="Stepped Params [Capped Max Permutations]"      , marks=pytest.mark.xfail(reason="'step' strategy currently ignores max number permutations'", strict=True)),
+     pytest.param(_2x2_PARAMS,      "random",          1,        1,                 1 , id="Random Permutations [Capped Max Permutations]"), #     ^^^^^^^^^^^^^^^^^
+     pytest.param(         {}, _2_PERM_STRAT,          0,        1,                 2 , id="Custom Permutation Strategy")                  , # TODO: I would argue that we should make these cases pass
+     pytest.param(         {},    "all_perm",          0,        5,                 5 , id="Identical Replicas")                           ,
+     pytest.param(_2x2_PARAMS,    "all_perm",          0,        2,                 8 , id="Replicas of All Permutations")                 ,
+     pytest.param(_2x2_PARAMS,        "step",          0,        2,                 4 , id="Replicas of Stepped Params")                   ,
+     pytest.param(_2x2_PARAMS,      "random",          3,        2,                 6 , id="Replicas of Random Permutations")              ,
 ))
 # fmt: on
 def test_expected_number_of_apps_created(
@@ -104,9 +104,6 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested():
         )._create_applications()
 
 
-@pytest.mark.xfail(
-    reason="This needs an implementation for `Application` to be tested", strict=True
-)
 @pytest.mark.parametrize(
     "params",
     (
@@ -117,10 +114,12 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested():
 )
 def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
     apps = Ensemble(
-        "test_ensemble", "echo", ("hello",), replicas=2, parameters=params
+        "test_ensemble", "echo", ("hello",), replicas=4, parameters=params
     )._create_applications()
     assert len(apps) >= 2  # Sanitiy check to make sure the test is valid
-    assert all(app_1.param == app_2.param for app_1, app_2 in itertools.pairwise(apps))
+    assert all(
+        app_1.params == app_2.params for app_1, app_2 in itertools.pairwise(apps)
+    )
     assert all(
         app_1.params is not app_2.params
         for app_1 in apps
