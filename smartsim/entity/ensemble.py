@@ -32,7 +32,6 @@ from os import getcwd
 from tabulate import tabulate
 
 from .._core._install.builder import Device
-from .._core.utils.helpers import expand_exe_path
 from ..error import (
     EntityExistsError,
     SmartSimError,
@@ -45,13 +44,7 @@ from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Application
-from .strategies import (
-    TPermutationStrategy,
-    create_all_permutations,
-    random_permutations,
-)
 from .strategies import resolve as resolve_strategy
-from .strategies import step_values
 
 logger = get_logger(__name__)
 
@@ -174,7 +167,8 @@ class Ensemble(EntityList[Application]):
                         )
                         application.enable_key_prefixing()
                         logger.debug(
-                            f"Created ensemble member: {application_name} in {self.name}"
+                            "Created ensemble member: "
+                            f"{application_name} in {self.name}"
                         )
                         self.add_application(application)
                 else:
@@ -200,7 +194,8 @@ class Ensemble(EntityList[Application]):
         """
         if not isinstance(application, Application):
             raise TypeError(
-                f"Argument to add_application was of type {type(application)}, not Application"
+                f"Argument to add_application was of type {type(application)}, "
+                " not Application"
             )
         # "in" operator uses application name for __eq__
         if application in self.entities:
@@ -237,7 +232,8 @@ class Ensemble(EntityList[Application]):
             application.enable_key_prefixing()
 
     def query_key_prefixing(self) -> bool:
-        """Inquire as to whether each application within the ensemble will prefix their keys
+        """Inquire as to whether each application within the ensemble will
+        prefix their keys
 
         :returns: True if all applications have key prefixing enabled, False otherwise
         """

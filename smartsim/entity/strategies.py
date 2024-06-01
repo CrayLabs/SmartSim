@@ -28,6 +28,7 @@
 
 from __future__ import annotations
 
+import functools
 import itertools
 import random
 import typing as t
@@ -47,9 +48,8 @@ def _register(name: str) -> t.Callable[
 ]:
     def _impl(fn: TPermutationStrategy) -> TPermutationStrategy:
         if name in _REGISTERED_STRATEGIES:
-            raise ValueError(
-                f"A strategy with the name '{name}' has already been registered"
-            )
+            msg = f"A strategy with the name '{name}' has already been registered"
+            raise ValueError(msg)
         _REGISTERED_STRATEGIES[name] = fn
         return fn
 
@@ -69,6 +69,7 @@ def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
 
 
 def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy:
+    @functools.wraps(fn)
     def _impl(
         params: t.Mapping[str, t.Sequence[str]], n_permutations: int
     ) -> list[dict[str, str]]:
