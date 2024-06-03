@@ -1,12 +1,14 @@
-import pytest
 import time
-from ..message_handler import MessageHandler
+
+import pytest
 import torch
+
+from ..message_handler import MessageHandler
 
 handler = MessageHandler()
 
 torch1 = torch.zeros((3, 2, 5), dtype=torch.int8, layout=torch.strided)
-torch2 = torch.ones((1024, 1024, 3), dtype=torch.int8, layout=torch.strided)
+torch2 = torch.ones((14, 14, 3), dtype=torch.int8, layout=torch.strided)
 
 
 @pytest.mark.parametrize(
@@ -92,9 +94,12 @@ def test_build_request(reply_channel, model, device, input, output, custom_attri
     print(
         f"Time taken to deserialize request: {formatted_time_deserialize_request} seconds"
     )
+    print(deserialized_request)
 
 
 response_attributes = handler.build_torchcnn_response_attributes()
+
+
 @pytest.mark.parametrize(
     "status, status_message, result, custom_attribute",
     [
@@ -148,3 +153,4 @@ def test_build_response(status, status_message, result, custom_attribute):
     print(
         f"Time taken to deserialize request: {formatted_time_deserialize_response} seconds"
     )
+    print(deserialized_response)
