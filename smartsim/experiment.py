@@ -428,8 +428,8 @@ class Experiment:
             raise
 
     @_contextualize
-    def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
-        """Reconnect to a running ``Orchestrator``
+    def reconnect_feature_store(self, checkpoint: str) -> FeatureStore:
+        """Reconnect to a running ``FeatureStore``
 
         This method can be used to connect to a ``FeatureStore`` deployment
         that was launched by a previous ``Experiment``. This can be
