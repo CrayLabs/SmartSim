@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
-
 import pytest
 
 from smartsim.entity import _mock
@@ -113,13 +111,13 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested():
     ),
 )
 def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
-    apps = Ensemble(
-        "test_ensemble", "echo", ("hello",), replicas=4, parameters=params
-    )._create_applications()
-    assert len(apps) >= 2  # Sanitiy check to make sure the test is valid
-    assert all(
-        app_1.params == app_2.params for app_1, app_2 in itertools.pairwise(apps)
+    apps = list(
+        Ensemble(
+            "test_ensemble", "echo", ("hello",), replicas=4, parameters=params
+        )._create_applications()
     )
+    assert len(apps) >= 2  # Sanitiy check to make sure the test is valid
+    assert all(app_1.params == app_2.params for app_1 in apps for app_2 in apps)
     assert all(
         app_1.params is not app_2.params
         for app_1 in apps
