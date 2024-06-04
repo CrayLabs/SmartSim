@@ -41,3 +41,13 @@ def test_build_torchcnn_request_attributes_successful():
 def test_build_torchcnn_request_attributes_unsuccessful():
     with pytest.raises(ValueError):
         attribute = handler.build_torchcnn_request_attributes("invalid!")
+
+def test_build_tfcnn_request_attributes_successful():
+    attribute = handler.build_tfcnn_request_attributes(name="tfcnn", tensor_type="sparse")
+    assert attribute.tensorType == "sparse"
+    assert attribute.name == "tfcnn"
+
+
+def test_build_tfcnn_request_attributes_unsuccessful():
+    with pytest.raises(ValueError):
+        attribute = handler.build_tfcnn_request_attributes("tf_fail","invalid!")
