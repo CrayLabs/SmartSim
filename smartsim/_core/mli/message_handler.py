@@ -25,19 +25,25 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
 
-import capnp  # pylint: disable=unused-import
+import capnp  # type: ignore # pylint: disable=unused-import
 import tensorflow as tf
 import torch
 
-from .mli_schemas.request import request_capnp  # pylint: disable=no-name-in-module
-from .mli_schemas.request.request_attributes import (
-    request_attributes_capnp,  # pylint: disable=no-name-in-module
+from .mli_schemas.request import (  # type: ignore # pylint: disable=no-name-in-module
+    request_capnp,
 )
-from .mli_schemas.response import response_capnp  # pylint: disable=no-name-in-module
-from .mli_schemas.response.response_attributes import (
-    response_attributes_capnp,  # pylint: disable=no-name-in-module
+from .mli_schemas.request.request_attributes import (  # type: ignore # pylint: disable=no-name-in-module
+    request_attributes_capnp,
 )
-from .mli_schemas.tensor import tensor_capnp  # pylint: disable=no-name-in-module
+from .mli_schemas.response import (  # type: ignore # pylint: disable=no-name-in-module
+    response_capnp,
+)
+from .mli_schemas.response.response_attributes import (  # type: ignore # pylint: disable=no-name-in-module
+    response_attributes_capnp,
+)
+from .mli_schemas.tensor import (  # type: ignore # pylint: disable=no-name-in-module
+    tensor_capnp,
+)
 
 
 class MessageHandler:
@@ -290,7 +296,7 @@ class MessageHandler:
         """
         Serializes a built request message.
         """
-        return request.to_bytes()
+        return request.to_bytes()  # type: ignore
 
     @staticmethod
     def deserialize_request(request_bytes: t.ByteString) -> request_capnp.Request:
@@ -401,7 +407,7 @@ class MessageHandler:
         """
         Serializes a built response message.
         """
-        return response.to_bytes()
+        return response.to_bytes()  # type: ignore
 
     @staticmethod
     def deserialize_response(response_bytes: t.ByteString) -> response_capnp.Response:
