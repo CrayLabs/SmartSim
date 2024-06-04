@@ -36,6 +36,3 @@ class MPMDPair:
     ):  # rename to LaunchSettings
         self.entity = entity
         self.launch_settings = launch_settings
-
-    def __iter__(self):
-        return self

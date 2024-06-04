@@ -52,21 +52,29 @@ def test_job_init():
     launch_settings = RunSettings("echo", ["spam", "eggs"])
     job = Job(entity, launch_settings)
     assert isinstance(job, Job)
+    assert job.entity.name == "test_name"
+    assert "echo" in job.launch_settings.exe[0]
+    assert "spam" in job.launch_settings.exe_args
+    assert "eggs" in job.launch_settings.exe_args
+
+
+def test_job_init_deepcopy():
+    entity = SmartSimEntity("test_name", None, None)
+    launch_settings = RunSettings("echo", ["spam", "eggs"])
+    job = Job(entity, launch_settings)
+    RunSettings("echo", ["hello", "world"])
+    assert "hello" not in job.launch_settings.exe_args
 
 
 def test_add_mpmd_pair():
-    """Test the creation of an MPMDJob and then adding an mpmd pair
-    using add_mpmd_pair"""
     entity = SmartSimEntity("test_name", None, None)
     launch_settings = RunSettings("echo", ["spam", "eggs"])
 
     mpmd_job = MPMDJob()
     mpmd_job.add_mpmd_pair(entity, launch_settings)
-
     mpmd_pair = MPMDPair(entity, launch_settings)
 
-    assert len(mpmd_job.mpmd_pairs) > 0
-
+    assert len(mpmd_job.mpmd_pairs) == 1
     assert mpmd_pair.entity == mpmd_job.mpmd_pairs[0].entity
     assert mpmd_pair.launch_settings == mpmd_job.mpmd_pairs[0].launch_settings
 
@@ -77,6 +85,19 @@ def test_mpmdpair_init():
     launch_settings = RunSettings("echo", ["spam", "eggs"])
     mpmd_pair = MPMDPair(entity, launch_settings)
     assert isinstance(mpmd_pair, MPMDPair)
+    assert mpmd_pair.entity.name == "test_name"
+    assert "echo" in mpmd_pair.launch_settings.exe[0]
+    assert "spam" in mpmd_pair.launch_settings.exe_args
+    assert "eggs" in mpmd_pair.launch_settings.exe_args
+
+
+def test_mpmdpair_init_deepcopy():
+    """Test the creation of an MPMDPair"""
+    entity = SmartSimEntity("test_name", None, None)
+    launch_settings = RunSettings("echo", ["spam", "eggs"])
+    mpmd_pair = MPMDPair(entity, launch_settings)
+    RunSettings("echo", ["hello", "world"])
+    assert "hello" not in mpmd_pair.launch_settings.exe_args
 
 
 def test_check_launcher():
@@ -91,7 +112,7 @@ def test_check_launcher():
     pair1 = MPMDPair(entity1, launch_settings1)
     mpmd_pairs.append(pair1)
     mpmd_job = MPMDJob(mpmd_pairs)
-    # add a second mpmd pair to the mpmd job
+    # Add a second mpmd pair to the mpmd job
     mpmd_job.add_mpmd_pair(entity2, launch_settings2)
 
     assert str(mpmd_job.mpmd_pairs[0].entity) == "entity1"
@@ -152,7 +173,6 @@ def test_add_mpmd_pair_check_entity_error():
 
     with pytest.raises(SSUnsupportedError) as ex:
         mpmd_job.add_mpmd_pair(entity2, launch_settings2)
-
         assert "MPMD pairs must all share the same entity type." in ex.value.args[0]
 
 

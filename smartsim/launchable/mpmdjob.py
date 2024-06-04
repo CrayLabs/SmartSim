@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
+from copy import deepcopy
 
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSUnsupportedError
@@ -55,8 +56,6 @@ def _check_entity(mpmd_pairs: t.List[MPMDPair]) -> None:
         if flag == 1:
             if type(ret) == type(mpmd_pair.entity):
                 flag = 0
-                print(type(ret))
-                print(type(mpmd_pair.entity))
             else:
                 raise SSUnsupportedError(
                     "MPMD pairs must all share the same entity type."
@@ -71,14 +70,21 @@ class MPMDJob(BaseJob):
     The stored pairs into an MPMD command(s)
     """
 
-    def __init__(self, mpmd_pairs: t.List[MPMDPair] = []) -> None:
+    def __init__(self, mpmd_pairs: t.List[MPMDPair] = None) -> None:
         super().__init__()
 
-        self.mpmd_pairs = mpmd_pairs
-        _check_launcher(self.mpmd_pairs)
-        _check_entity(self.mpmd_pairs)
+        self._mpmd_pairs = mpmd_pairs or []
+        _check_launcher(self._mpmd_pairs)
+        _check_entity(self._mpmd_pairs)
+        # self.warehouse_runner = MPMDJobWarehouseRunner
 
-    # self.warehouse_runner = MPMDJobWarehouseRunner
+    @property
+    def mpmd_pairs(self) -> t.List[MPMDPair]:
+        return self._mpmd_pairs
+
+    @mpmd_pairs.setter
+    def mpmd_pair(self, value):
+        self._mpmd_pair = deepcopy(value)
 
     def add_mpmd_pair(
         self, entity: SmartSimEntity, launch_settings: RunSettings
@@ -91,5 +97,15 @@ class MPMDJob(BaseJob):
         _check_entity(self.mpmd_pairs)
 
     def get_launch_steps(self) -> None:  # -> LaunchSteps:
+        """Return the launch steps corresponding to the
+        internal data.
+        """
         pass
         # return MPMDJobWarehouseRunner.run(self)
+
+    def __str__(self) -> str:  # pragma: no cover
+        """returns A user-readable string of a MPMD Job"""
+        for mpmd_pair in self.mpmd_pairs:
+            string = "\n== MPMD Pair == \n{}\n{}\n"
+            return string.format(mpmd_pair.entity, mpmd_pair.launch_settings)
+        return string

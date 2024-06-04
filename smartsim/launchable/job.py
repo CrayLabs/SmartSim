@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from abc import abstractmethod
+from copy import deepcopy
 
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.launchable.basejob import BaseJob
@@ -46,9 +47,25 @@ class Job(BaseJob):
         launch_settings: RunSettings,  # rename to LaunchSettings
     ) -> None:
         super().__init__()
-        self.entity = entity
-        self.launch_settings = launch_settings
+        self._entity = entity
+        self._launch_settings = launch_settings
         # self.warehouse_runner = JobWarehouseRunner
+
+    @property
+    def entity(self) -> SmartSimEntity:
+        return self._entity
+
+    @entity.setter
+    def entity(self, value):
+        self._entity = deepcopy(value)
+
+    @property
+    def launch_settings(self) -> RunSettings:
+        return self._launch_settings
+
+    @launch_settings.setter
+    def launch_settings(self, value):
+        self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> None:  # -> LaunchCommands:
         """Return the launch steps corresponding to the
@@ -57,7 +74,7 @@ class Job(BaseJob):
         pass
         # return JobWarehouseRunner.run(self)
 
-    def __str__(self) -> str:
-        string = f"SmartSim Entity: {self.entity}"
+    def __str__(self) -> str:  # pragma: no cover
+        string = f"SmartSim Entity: {self.entity}\n"
         string += f"Launch Settings: {self.launch_settings}"
         return string

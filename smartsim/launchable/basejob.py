@@ -35,4 +35,7 @@ class BaseJob(ABC, Launchable):
 
     @abstractmethod
     def get_launch_steps(self) -> None:  # -> LaunchSteps:
+        """Return the launch steps corresponding to the
+        internal data.
+        """
         ...
