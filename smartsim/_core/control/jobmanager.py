@@ -33,8 +33,8 @@ from threading import RLock, Thread
 from types import FrameType
 
 from ..._core.launcher.step import Step
-from ...database import Orchestrator
-from ...entity import DBNode, EntitySequence, SmartSimEntity
+from ...database import FeatureStore
+from ...entity import EntitySequence, FSNode, SmartSimEntity
 from ...log import ContextThread, get_logger
 from ...status import TERMINAL_STATUSES, SmartSimStatus
 from ..config import CONFIG
@@ -67,7 +67,7 @@ class JobManager:
 
         # active jobs
         self.jobs: t.Dict[str, Job] = {}
-        self.db_jobs: t.Dict[str, Job] = {}
+        self.fs_jobs: t.Dict[str, Job] = {}
 
         # completed jobs
         self.completed: t.Dict[str, Job] = {}
@@ -130,8 +130,8 @@ class JobManager:
             job.record_history()
 
             # remove from actively monitored jobs
-            if job.ename in self.db_jobs:
-                del self.db_jobs[job.ename]
+            if job.ename in self.fs_jobs:
+                del self.fs_jobs[job.ename]
             elif job.ename in self.jobs:
                 del self.jobs[job.ename]
 
@@ -143,7 +143,7 @@ class JobManager:
         :returns: the Job associated with the entity_name
         """
         with self._lock:
-            entities = ChainMap(self.db_jobs, self.jobs, self.completed)
+            entities = ChainMap(self.fs_jobs, self.jobs, self.completed)
             return entities[entity_name]
 
     def __call__(self) -> t.Dict[str, Job]:
@@ -151,7 +151,7 @@ class JobManager:
 
         :returns: Dictionary of all jobs
         """
-        all_jobs = {**self.jobs, **self.db_jobs}
+        all_jobs = {**self.jobs, **self.fs_jobs}
         return all_jobs
 
     def __contains__(self, key: str) -> bool:
@@ -177,10 +177,10 @@ class JobManager:
         launcher = str(self._launcher)
         # all operations here should be atomic
         job = Job(step.name, job_id, step.entity, launcher, is_task)
-        if isinstance(step.entity, (DBNode, Orchestrator)):
-            self.db_jobs[step.entity.name] = job
-        elif isinstance(step.entity, JobEntity) and step.entity.is_db:
-            self.db_jobs[step.entity.name] = job
+        if isinstance(step.entity, (FSNode, FeatureStore)):
+            self.fs_jobs[step.entity.name] = job
+        elif isinstance(step.entity, JobEntity) and step.entity.is_fs:
+            self.fs_jobs[step.entity.name] = job
         else:
             self.jobs[step.entity.name] = job
 
@@ -282,50 +282,50 @@ class JobManager:
             del self.completed[entity_name]
             job.reset(job_name, job_id, is_task)
 
-            if isinstance(job.entity, (DBNode, Orchestrator)):
-                self.db_jobs[entity_name] = job
+            if isinstance(job.entity, (FSNode, FeatureStore)):
+                self.fs_jobs[entity_name] = job
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
-        """Retrieve the list of hosts for the database
-        for corresponding database identifiers
+    def get_fs_host_addresses(self) -> t.Dict[str, t.List[str]]:
+        """Retrieve the list of hosts for the feature store
+        for corresponding feature store identifiers
 
         :return: dictionary of host ip addresses
         """
 
         address_dict: t.Dict[str, t.List[str]] = {}
-        for db_job in self.db_jobs.values():
+        for fs_job in self.fs_jobs.values():
             addresses = []
-            if isinstance(db_job.entity, (DBNode, Orchestrator)):
-                db_entity = db_job.entity
-                for combine in itertools.product(db_job.hosts, db_entity.ports):
+            if isinstance(fs_job.entity, (FSNode, FeatureStore)):
+                fs_entity = fs_job.entity
+                for combine in itertools.product(fs_job.hosts, fs_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-                dict_entry: t.List[str] = address_dict.get(db_entity.db_identifier, [])
+                dict_entry: t.List[str] = address_dict.get(fs_entity.fs_identifier, [])
                 dict_entry.extend(addresses)
-                address_dict[db_entity.db_identifier] = dict_entry
+                address_dict[fs_entity.fs_identifier] = dict_entry
 
         return address_dict
 
-    def set_db_hosts(self, orchestrator: Orchestrator) -> None:
-        """Set the DB hosts in db_jobs so future entities can query this
+    def set_fs_hosts(self, FeatureStore: FeatureStore) -> None:
+        """Set the fs hosts in fs_jobs so future entities can query this
 
-        :param orchestrator: orchestrator instance
+        :param FeatureStore: FeatureStore instance
         """
         # should only be called during launch in the controller
 
         with self._lock:
-            if orchestrator.batch:
-                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+            if FeatureStore.batch:
+                self.fs_jobs[FeatureStore.name].hosts = FeatureStore.hosts
 
             else:
-                for dbnode in orchestrator.entities:
-                    if not dbnode.is_mpmd:
-                        self.db_jobs[dbnode.name].hosts = [dbnode.host]
+                for fsnode in FeatureStore.entities:
+                    if not fsnode.is_mpmd:
+                        self.fs_jobs[fsnode.name].hosts = [fsnode.host]
                     else:
-                        self.db_jobs[dbnode.name].hosts = dbnode.hosts
+                        self.fs_jobs[fsnode.name].hosts = fsnode.hosts
 
     def signal_interrupt(self, signo: int, _frame: t.Optional[FrameType]) -> None:
         """Custom handler for whenever SIGINT is received"""
@@ -361,4 +361,4 @@ class JobManager:
 
     def __len__(self) -> int:
         # number of active jobs
-        return len(self.db_jobs) + len(self.jobs)
+        return len(self.fs_jobs) + len(self.jobs)

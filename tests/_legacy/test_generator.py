@@ -32,7 +32,7 @@ from tabulate import tabulate
 
 from smartsim import Experiment
 from smartsim._core.generation import Generator
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.settings import RunSettings
 
 # The tests in this file belong to the group_a group
@@ -123,21 +123,21 @@ def test_full_exp(fileutils, test_dir, wlmutils):
     script = fileutils.get_test_conf_path("sleep.py")
     application.attach_generator_files(to_copy=script)
 
-    orc = Orchestrator(wlmutils.get_test_port())
+    feature_store = FeatureStore(wlmutils.get_test_port())
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test_ens", params=params, run_settings=rs)
 
     config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=config)
-    exp.generate(orc, ensemble, application)
+    exp.generate(feature_store, ensemble, application)
 
     # test for ensemble
     assert osp.isdir(osp.join(test_dir, "test_ens/"))
     for i in range(9):
         assert osp.isdir(osp.join(test_dir, "test_ens/test_ens_" + str(i)))
 
-    # test for orc dir
-    assert osp.isdir(osp.join(test_dir, orc.name))
+    # test for feature_store dir
+    assert osp.isdir(osp.join(test_dir, feature_store.name))
 
     # test for application file
     assert osp.isdir(osp.join(test_dir, "application"))

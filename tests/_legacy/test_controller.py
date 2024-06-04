@@ -30,7 +30,7 @@ import pytest
 
 from smartsim._core.control.controller import Controller
 from smartsim._core.launcher.step import Step
-from smartsim.database.orchestrator import Orchestrator
+from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.ensemble import Ensemble
 from smartsim.settings.slurmSettings import SbatchSettings, SrunSettings
 
@@ -40,7 +40,9 @@ rs = SrunSettings("echo", ["spam", "eggs"])
 bs = SbatchSettings()
 
 ens = Ensemble("ens", params={}, run_settings=rs, batch_settings=bs, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(
+    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+)
 
 
 class MockStep(Step):
@@ -58,7 +60,7 @@ class MockStep(Step):
     "collection",
     [
         pytest.param(ens, id="Ensemble"),
-        pytest.param(orc, id="Database"),
+        pytest.param(feature_store, id="FeatureStore"),
     ],
 )
 def test_controller_batch_step_creation_preserves_entity_order(collection, monkeypatch):

@@ -30,7 +30,7 @@ import typing as t
 from smartsim.settings.containers import Container
 
 from .._core.utils.helpers import expand_exe_path, fmt_dict, is_valid_cmd
-from ..entity.dbobject import DBModel, DBScript
+from ..entity.dbobject import FSModel, FSScript
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -83,7 +83,7 @@ class RunSettings(SettingsBase):
         self.container = container
         self._run_command = run_command
         self.in_batch = False
-        self.colocated_db_settings: t.Optional[
+        self.colocated_fs_settings: t.Optional[
             t.Dict[
                 str,
                 t.Union[
@@ -93,8 +93,8 @@ class RunSettings(SettingsBase):
                     None,
                     t.List[str],
                     t.Iterable[t.Union[int, t.Iterable[int]]],
-                    t.List[DBModel],
-                    t.List[DBScript],
+                    t.List[FSModel],
+                    t.List[FSScript],
                     t.Dict[str, t.Union[int, None]],
                     t.Dict[str, str],
                 ],
@@ -535,8 +535,8 @@ Leading dashes were stripped and the arguments were passed to the run_command."
             string += f"\nRun Command: {self.run_command}"
         if self.run_args:
             string += f"\nRun Arguments:\n{fmt_dict(self.run_args)}"
-        if self.colocated_db_settings:
-            string += "\nCo-located Database: True"
+        if self.colocated_fs_settings:
+            string += "\nCo-located Feature Store: True"
         return string
 
 

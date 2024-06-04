@@ -31,7 +31,7 @@ import psutil
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 
@@ -43,48 +43,48 @@ if t.TYPE_CHECKING:
     import conftest
 
 
-def test_orc_parameters() -> None:
+def test_feature_store_parameters() -> None:
     threads_per_queue = 2
     inter_op_threads = 2
     intra_op_threads = 2
-    db = Orchestrator(
-        db_nodes=1,
+    fs = FeatureStore(
+        fs_nodes=1,
         threads_per_queue=threads_per_queue,
         inter_op_threads=inter_op_threads,
         intra_op_threads=intra_op_threads,
     )
-    assert db.queue_threads == threads_per_queue
-    assert db.inter_threads == inter_op_threads
-    assert db.intra_threads == intra_op_threads
+    assert fs.queue_threads == threads_per_queue
+    assert fs.inter_threads == inter_op_threads
+    assert fs.intra_threads == intra_op_threads
 
-    module_str = db._rai_module
+    module_str = fs._rai_module
     assert "THREADS_PER_QUEUE" in module_str
     assert "INTRA_OP_PARALLELISM" in module_str
     assert "INTER_OP_PARALLELISM" in module_str
 
 
 def test_is_not_active() -> None:
-    db = Orchestrator(db_nodes=1)
-    assert not db.is_active()
+    fs = FeatureStore(fs_nodes=1)
+    assert not fs.is_active()
 
 
-def test_inactive_orc_get_address() -> None:
-    db = Orchestrator()
+def test_inactive_feature_store_get_address() -> None:
+    fs = FeatureStore()
     with pytest.raises(SmartSimError):
-        db.get_address()
+        fs.get_address()
 
 
-def test_orc_is_active_functions(
+def test_feature_store_is_active_functions(
     local_experiment,
-    prepare_db,
-    local_db,
+    prepare_fs,
+    local_fs,
 ) -> None:
-    db = prepare_db(local_db).orchestrator
-    db = local_experiment.reconnect_orchestrator(db.checkpoint_file)
-    assert db.is_active()
+    fs = prepare_fs(local_fs).featurestore
+    fs = local_experiment.reconnect_feature_store(fs.checkpoint_file)
+    assert fs.is_active()
 
-    # check if the orchestrator can get the address
-    assert db.get_address() == [f"127.0.0.1:{db.ports[0]}"]
+    # check if the feature store can get the address
+    assert fs.get_address() == [f"127.0.0.1:{fs.ports[0]}"]
 
 
 def test_multiple_interfaces(
@@ -101,126 +101,135 @@ def test_multiple_interfaces(
     net_if_addrs = ["lo", net_if_addrs[0]]
 
     port = wlmutils.get_test_port()
-    db = Orchestrator(port=port, interface=net_if_addrs)
-    db.set_path(test_dir)
+    fs = FeatureStore(port=port, interface=net_if_addrs)
+    fs.set_path(test_dir)
 
-    exp.start(db)
+    exp.start(fs)
 
-    # check if the orchestrator is active
-    assert db.is_active()
+    # check if the FeatureStore is active
+    assert fs.is_active()
 
-    # check if the orchestrator can get the address
+    # check if the feature store can get the address
     correct_address = [f"127.0.0.1:{port}"]
 
-    if not correct_address == db.get_address():
-        exp.stop(db)
+    if not correct_address == fs.get_address():
+        exp.stop(fs)
         assert False
 
-    exp.stop(db)
+    exp.stop(fs)
 
 
-def test_catch_local_db_errors() -> None:
-    # local database with more than one node not allowed
+def test_catch_local_feature_store_errors() -> None:
+    # local feature store with more than one node not allowed
     with pytest.raises(SSUnsupportedError):
-        db = Orchestrator(db_nodes=2)
+        fs = FeatureStore(fs_nodes=2)
 
-    # Run command for local orchestrator not allowed
+    # Run command for local FeatureStore not allowed
     with pytest.raises(SmartSimError):
-        db = Orchestrator(run_command="srun")
+        fs = FeatureStore(run_command="srun")
 
-    # Batch mode for local orchestrator is not allowed
+    # Batch mode for local FeatureStore is not allowed
     with pytest.raises(SmartSimError):
-        db = Orchestrator(batch=True)
+        fs = FeatureStore(batch=True)
 
 
 #####  PBS  ######
 
 
 def test_pbs_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface="lo",
         launcher="pbs",
         run_command="aprun",
     )
-    orc.set_run_arg("account", "ACCOUNT")
+    feature_store.set_run_arg("account", "ACCOUNT")
     assert all(
-        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+        [
+            fs.run_settings.run_args["account"] == "ACCOUNT"
+            for fs in feature_store.entities
+        ]
     )
-    orc.set_run_arg("pes-per-numa-node", "5")
+    feature_store.set_run_arg("pes-per-numa-node", "5")
     assert all(
-        ["pes-per-numa-node" not in db.run_settings.run_args for db in orc.entities]
+        [
+            "pes-per-numa-node" not in fs.run_settings.run_args
+            for fs in feature_store.entities
+        ]
     )
 
 
 def test_pbs_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface="lo",
         launcher="pbs",
         run_command="aprun",
     )
     with pytest.raises(SmartSimError):
-        orc.set_batch_arg("account", "ACCOUNT")
+        feature_store.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = Orchestrator(
+    feature_store2 = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         interface="lo",
         launcher="pbs",
         run_command="aprun",
     )
-    orc2.set_batch_arg("account", "ACCOUNT")
-    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
-    orc2.set_batch_arg("N", "another_name")
-    assert "N" not in orc2.batch_settings.batch_args
+    feature_store2.set_batch_arg("account", "ACCOUNT")
+    assert feature_store2.batch_settings.batch_args["account"] == "ACCOUNT"
+    feature_store2.set_batch_arg("N", "another_name")
+    assert "N" not in feature_store2.batch_settings.batch_args
 
 
 ##### Slurm ######
 
 
 def test_slurm_set_run_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface="lo",
         launcher="slurm",
         run_command="srun",
     )
-    orc.set_run_arg("account", "ACCOUNT")
+    feature_store.set_run_arg("account", "ACCOUNT")
     assert all(
-        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+        [
+            fs.run_settings.run_args["account"] == "ACCOUNT"
+            for fs in feature_store.entities
+        ]
     )
 
 
 def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface="lo",
         launcher="slurm",
         run_command="srun",
     )
     with pytest.raises(SmartSimError):
-        orc.set_batch_arg("account", "ACCOUNT")
+        feature_store.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = Orchestrator(
+    feature_store2 = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         interface="lo",
         launcher="slurm",
         run_command="srun",
     )
-    orc2.set_batch_arg("account", "ACCOUNT")
-    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
+    feature_store2.set_batch_arg("account", "ACCOUNT")
+    assert feature_store2.batch_settings.batch_args["account"] == "ACCOUNT"
 
 
 @pytest.mark.parametrize(
@@ -230,98 +239,100 @@ def test_slurm_set_batch_arg(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
         pytest.param(False, id="Multiple `srun`s"),
     ],
 )
-def test_orc_results_in_correct_number_of_shards(single_cmd: bool) -> None:
+def test_feature_store_results_in_correct_number_of_shards(single_cmd: bool) -> None:
     num_shards = 5
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         port=12345,
         launcher="slurm",
         run_command="srun",
-        db_nodes=num_shards,
+        fs_nodes=num_shards,
         batch=False,
         single_cmd=single_cmd,
     )
     if single_cmd:
-        assert len(orc.entities) == 1
-        (node,) = orc.entities
+        assert len(feature_store.entities) == 1
+        (node,) = feature_store.entities
         assert len(node.run_settings.mpmd) == num_shards - 1
     else:
-        assert len(orc.entities) == num_shards
-        assert all(node.run_settings.mpmd == [] for node in orc.entities)
+        assert len(feature_store.entities) == num_shards
+        assert all(node.run_settings.mpmd == [] for node in feature_store.entities)
     assert (
-        orc.num_shards == orc.db_nodes == sum(node.num_shards for node in orc.entities)
+        feature_store.num_shards
+        == feature_store.fs_nodes
+        == sum(node.num_shards for node in feature_store.entities)
     )
 
 
 ###### LSF ######
 
 
-def test_catch_orc_errors_lsf(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
+def test_catch_feature_store_errors_lsf(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
     with pytest.raises(SSUnsupportedError):
-        orc = Orchestrator(
+        feature_store = FeatureStore(
             wlmutils.get_test_port(),
-            db_nodes=2,
-            db_per_host=2,
+            fs_nodes=2,
+            fs_per_host=2,
             batch=False,
             launcher="lsf",
             run_command="jsrun",
         )
 
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         hosts=["batch", "host1", "host2"],
         launcher="lsf",
         run_command="jsrun",
     )
     with pytest.raises(SmartSimError):
-        orc.set_batch_arg("P", "MYPROJECT")
+        feature_store.set_batch_arg("P", "MYPROJECT")
 
 
 def test_lsf_set_run_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
         launcher="lsf",
         run_command="jsrun",
     )
-    orc.set_run_arg("l", "gpu-gpu")
-    assert all(["l" not in db.run_settings.run_args for db in orc.entities])
+    feature_store.set_run_arg("l", "gpu-gpu")
+    assert all(["l" not in fs.run_settings.run_args for fs in feature_store.entities])
 
 
 def test_lsf_set_batch_args(wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
         launcher="lsf",
         run_command="jsrun",
     )
 
-    assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
-    orc.set_batch_arg("D", "102400000")
-    assert orc.batch_settings.batch_args["D"] == "102400000"
+    assert feature_store.batch_settings.batch_args["m"] == '"batch host1 host2"'
+    feature_store.set_batch_arg("D", "102400000")
+    assert feature_store.batch_settings.batch_args["D"] == "102400000"
 
 
 def test_orc_telemetry(test_dir: str, wlmutils: t.Type["conftest.WLMUtils"]) -> None:
-    """Ensure the default behavior for an orchestrator is to disable telemetry"""
-    db = Orchestrator(port=wlmutils.get_test_port())
-    db.set_path(test_dir)
+    """Ensure the default behavior for a feature store is to disable telemetry"""
+    fs = FeatureStore(port=wlmutils.get_test_port())
+    fs.set_path(test_dir)
 
     # default is disabled
-    assert not db.telemetry.is_enabled
+    assert not fs.telemetry.is_enabled
 
     # ensure updating value works as expected
-    db.telemetry.enable()
-    assert db.telemetry.is_enabled
+    fs.telemetry.enable()
+    assert fs.telemetry.is_enabled
 
     # toggle back
-    db.telemetry.disable()
-    assert not db.telemetry.is_enabled
+    fs.telemetry.disable()
+    assert not fs.telemetry.is_enabled
 
     # toggle one more time
-    db.telemetry.enable()
-    assert db.telemetry.is_enabled
+    fs.telemetry.enable()
+    assert fs.telemetry.is_enabled

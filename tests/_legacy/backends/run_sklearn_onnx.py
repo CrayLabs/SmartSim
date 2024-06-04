@@ -75,7 +75,7 @@ def run_model(client, model_name, device, model, model_input, in_name, out_names
 
 
 def run(device):
-    # connect a client to the database
+    # connect a client to the feature store
     client = Client(cluster=False)
 
     # linreg test

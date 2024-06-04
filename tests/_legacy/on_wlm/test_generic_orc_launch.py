@@ -34,16 +34,16 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_launch_orc_auto(test_dir, wlmutils):
-    """test single node orchestrator"""
+def test_launch_feature_store_auto(test_dir, wlmutils):
+    """test single node feature store"""
     launcher = wlmutils.get_test_launcher()
 
-    exp_name = "test-launch-auto-orc"
+    exp_name = "test-launch-auto-feature_store"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
         batch=False,
         interface=network_interface,
@@ -51,78 +51,78 @@ def test_launch_orc_auto(test_dir, wlmutils):
         hosts=wlmutils.get_test_hostlist(),
     )
 
-    exp.start(orc, block=True)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store, block=True)
+    statuses = exp.get_status(feature_store)
 
     # don't use assert so that we don't leave an orphan process
     if SmartSimStatus.STATUS_FAILED in statuses:
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False
 
-    exp.stop(orc)
-    statuses = exp.get_status(orc)
+    exp.stop(feature_store)
+    statuses = exp.get_status(feature_store)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_single(test_dir, wlmutils):
-    """test clustered 3-node orchestrator with single command"""
+def test_launch_cluster_feature_store_single(test_dir, wlmutils):
+    """test clustered 3-node feature store with single command"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
-    exp_name = "test-launch-auto-cluster-orc-single"
+    exp_name = "test-launch-auto-cluster-feature_store-single"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface=network_interface,
         single_cmd=True,
         hosts=wlmutils.get_test_hostlist(),
     )
 
-    exp.start(orc, block=True)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store, block=True)
+    statuses = exp.get_status(feature_store)
 
-    # don't use assert so that orc we don't leave an orphan process
+    # don't use assert so that feature_store we don't leave an orphan process
     if SmartSimStatus.STATUS_FAILED in statuses:
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False
 
-    exp.stop(orc)
-    statuses = exp.get_status(orc)
+    exp.stop(feature_store)
+    statuses = exp.get_status(feature_store)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_multi(test_dir, wlmutils):
-    """test clustered 3-node orchestrator with multiple commands"""
+def test_launch_cluster_feature_store_multi(test_dir, wlmutils):
+    """test clustered 3-node feature store with multiple commands"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
-    exp_name = "test-launch-auto-cluster-orc-multi"
+    exp_name = "test-launch-auto-cluster-feature-store-multi"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface=network_interface,
         single_cmd=False,
         hosts=wlmutils.get_test_hostlist(),
     )
 
-    exp.start(orc, block=True)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store, block=True)
+    statuses = exp.get_status(feature_store)
 
-    # don't use assert so that orc we don't leave an orphan process
+    # don't use assert so that feature_store we don't leave an orphan process
     if SmartSimStatus.STATUS_FAILED in statuses:
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False
 
-    exp.stop(orc)
-    statuses = exp.get_status(orc)
+    exp.stop(feature_store)
+    statuses = exp.get_status(feature_store)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])

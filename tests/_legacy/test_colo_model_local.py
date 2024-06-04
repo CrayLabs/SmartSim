@@ -38,17 +38,17 @@ pytestmark = pytest.mark.slow_tests
 
 
 if sys.platform == "darwin":
-    supported_dbs = ["tcp", "deprecated"]
+    supported_fss = ["tcp", "deprecated"]
 else:
-    supported_dbs = ["uds", "tcp", "deprecated"]
+    supported_fss = ["uds", "tcp", "deprecated"]
 
 is_mac = sys.platform == "darwin"
 
 
 @pytest.mark.skipif(not is_mac, reason="MacOS-only test")
 def test_macosx_warning(fileutils, test_dir, coloutils):
-    db_args = {"custom_pinning": [1]}
-    db_type = "uds"  # Test is insensitive to choice of db
+    fs_args = {"custom_pinning": [1]}
+    fs_type = "uds"  # Test is insensitive to choice of fs
 
     exp = Experiment(
         "colocated_application_defaults", launcher="local", exp_path=test_dir
@@ -59,16 +59,16 @@ def test_macosx_warning(fileutils, test_dir, coloutils):
     ):
         _ = coloutils.setup_test_colo(
             fileutils,
-            db_type,
+            fs_type,
             exp,
             "send_data_local_smartredis.py",
-            db_args,
+            fs_args,
         )
 
 
 def test_unsupported_limit_app(fileutils, test_dir, coloutils):
-    db_args = {"limit_app_cpus": True}
-    db_type = "uds"  # Test is insensitive to choice of db
+    fs_args = {"limit_app_cpus": True}
+    fs_type = "uds"  # Test is insensitive to choice of fs
 
     exp = Experiment(
         "colocated_application_defaults", launcher="local", exp_path=test_dir
@@ -76,18 +76,18 @@ def test_unsupported_limit_app(fileutils, test_dir, coloutils):
     with pytest.raises(SSUnsupportedError):
         coloutils.setup_test_colo(
             fileutils,
-            db_type,
+            fs_type,
             exp,
             "send_data_local_smartredis.py",
-            db_args,
+            fs_args,
         )
 
 
 @pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
 @pytest.mark.parametrize("custom_pinning", [1, "10", "#", 1.0, ["a"], [1.0]])
 def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinning):
-    db_type = "uds"  # Test is insensitive to choice of db
-    db_args = {"custom_pinning": custom_pinning}
+    fs_type = "uds"  # Test is insensitive to choice of fs
+    fs_args = {"custom_pinning": custom_pinning}
 
     exp = Experiment(
         "colocated_application_defaults", launcher="local", exp_path=test_dir
@@ -95,10 +95,10 @@ def test_unsupported_custom_pinning(fileutils, test_dir, coloutils, custom_pinni
     with pytest.raises(TypeError):
         coloutils.setup_test_colo(
             fileutils,
-            db_type,
+            fs_type,
             exp,
             "send_data_local_smartredis.py",
-            db_args,
+            fs_args,
         )
 
 
@@ -119,23 +119,23 @@ def test_create_pinning_string(pin_list, num_cpus, expected):
     assert Application._create_pinning_string(pin_list, num_cpus) == expected
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_launch_colocated_application_defaults(
-    fileutils, test_dir, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, fs_type, launcher="local"
 ):
-    """Test the launch of a application with a colocated database and local launcher"""
+    """Test the launch of a application with a colocated feature store and local launcher"""
 
-    db_args = {}
+    fs_args = {}
 
     exp = Experiment(
         "colocated_application_defaults", launcher=launcher, exp_path=test_dir
     )
     colo_application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
     )
 
     if is_mac:
@@ -143,7 +143,7 @@ def test_launch_colocated_application_defaults(
     else:
         true_pinning = "0"
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"]
         == true_pinning
     )
     exp.generate(colo_application)
@@ -159,31 +159,31 @@ def test_launch_colocated_application_defaults(
     ), f"Statuses {statuses}"
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_launch_multiple_colocated_applications(
-    fileutils, test_dir, coloutils, wlmutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, wlmutils, fs_type, launcher="local"
 ):
-    """Test the concurrent launch of two applications with a colocated database and local launcher"""
+    """Test the concurrent launch of two applications with a colocated feature store and local launcher"""
 
-    db_args = {}
+    fs_args = {}
 
     exp = Experiment("multi_colo_applications", launcher=launcher, exp_path=test_dir)
     colo_applications = [
         coloutils.setup_test_colo(
             fileutils,
-            db_type,
+            fs_type,
             exp,
             "send_data_local_smartredis.py",
-            db_args,
+            fs_args,
             colo_application_name="colo0",
             port=wlmutils.get_test_port(),
         ),
         coloutils.setup_test_colo(
             fileutils,
-            db_type,
+            fs_type,
             exp,
             "send_data_local_smartredis.py",
-            db_args,
+            fs_args,
             colo_application_name="colo1",
             port=wlmutils.get_test_port() + 1,
         ),
@@ -199,58 +199,58 @@ def test_launch_multiple_colocated_applications(
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_colocated_application_disable_pinning(
-    fileutils, test_dir, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, fs_type, launcher="local"
 ):
     exp = Experiment(
         "colocated_application_pinning_auto_1cpu", launcher=launcher, exp_path=test_dir
     )
-    db_args = {
-        "db_cpus": 1,
+    fs_args = {
+        "fs_cpus": 1,
         "custom_pinning": [],
     }
     # Check to make sure that the CPU mask was correctly generated
     colo_application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] is None
+    assert colo_application.run_settings.colocated_fs_settings["custom_pinning"] is None
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_colocated_application_pinning_auto_2cpu(
-    fileutils, test_dir, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, fs_type, launcher="local"
 ):
     exp = Experiment(
         "colocated_application_pinning_auto_2cpu", launcher=launcher, exp_path=test_dir
     )
 
-    db_args = {
-        "db_cpus": 2,
+    fs_args = {
+        "fs_cpus": 2,
     }
 
     # Check to make sure that the CPU mask was correctly generated
     colo_application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
     )
     if is_mac:
         true_pinning = None
     else:
         true_pinning = "0,1"
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"]
         == true_pinning
     )
     exp.generate(colo_application)
@@ -260,9 +260,9 @@ def test_colocated_application_pinning_auto_2cpu(
 
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_colocated_application_pinning_range(
-    fileutils, test_dir, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, fs_type, launcher="local"
 ):
     # Check to make sure that the CPU mask was correctly generated
 
@@ -270,17 +270,17 @@ def test_colocated_application_pinning_range(
         "colocated_application_pinning_manual", launcher=launcher, exp_path=test_dir
     )
 
-    db_args = {"db_cpus": 2, "custom_pinning": range(2)}
+    fs_args = {"fs_cpus": 2, "custom_pinning": range(2)}
 
     colo_application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
     )
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"] == "0,1"
     )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
@@ -289,9 +289,9 @@ def test_colocated_application_pinning_range(
 
 
 @pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_colocated_application_pinning_list(
-    fileutils, test_dir, coloutils, db_type, launcher="local"
+    fileutils, test_dir, coloutils, fs_type, launcher="local"
 ):
     # Check to make sure that the CPU mask was correctly generated
 
@@ -299,16 +299,16 @@ def test_colocated_application_pinning_list(
         "colocated_application_pinning_manual", launcher=launcher, exp_path=test_dir
     )
 
-    db_args = {"db_cpus": 1, "custom_pinning": [1]}
+    fs_args = {"fs_cpus": 1, "custom_pinning": [1]}
 
     colo_application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "1"
+    assert colo_application.run_settings.colocated_fs_settings["custom_pinning"] == "1"
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
@@ -323,4 +323,4 @@ def test_colo_uds_verifies_socket_file_name(test_dir, launcher="local"):
     colo_application = exp.create_application("wrong_uds_socket_name", colo_settings)
 
     with pytest.raises(ValueError):
-        colo_application.colocate_db_uds(unix_socket="this is not a valid name!")
+        colo_application.colocate_fs_uds(unix_socket="this is not a valid name!")

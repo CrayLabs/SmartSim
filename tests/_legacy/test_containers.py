@@ -142,7 +142,7 @@ def test_singularity_args(fileutils, test_dir):
 
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_smartredis(local_experiment, prepare_db, local_db, fileutils):
+def test_singularity_smartredis(local_experiment, prepare_fs, local_fs, fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a application.
@@ -151,8 +151,8 @@ def test_singularity_smartredis(local_experiment, prepare_db, local_db, fileutil
     """
 
     # create and start a database
-    db = prepare_db(local_db).orchestrator
-    local_experiment.reconnect_orchestrator(db.checkpoint_file)
+    fs = prepare_fs(local_fs).featurestore
+    local_experiment.reconnect_feature_store(fs.checkpoint_file)
 
     container = Singularity(containerURI)
 

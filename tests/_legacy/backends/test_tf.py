@@ -50,7 +50,7 @@ tf_backend_available = "tensorflow" in installed_redisai_backends()
     (not tf_backend_available) or (not tf_available),
     reason="Requires RedisAI TF backend",
 )
-def test_keras_model(wlm_experiment, prepare_db, single_db, mlutils, wlmutils):
+def test_keras_model(wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 for a keras model script
 
     this test can run on CPU/GPU by setting SMARTSIM_TEST_DEVICE=GPU
@@ -61,8 +61,8 @@ def test_keras_model(wlm_experiment, prepare_db, single_db, mlutils, wlmutils):
     """
 
     test_device = mlutils.get_test_device()
-    db = prepare_db(single_db).orchestrator
-    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+    fs = prepare_fs(single_fs).featurestore
+    wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
 
     run_settings = wlm_experiment.create_run_settings(
         "python", f"run_tf.py --device={test_device}"

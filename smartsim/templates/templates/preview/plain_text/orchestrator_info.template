@@ -1,11 +1,11 @@
 
-    = Database Identifier: {{ db.name }} =
+    = Feature Store Identifier: {{ fs.name }} =
         TCP/IP Port(s):
-          {%- for port in db.ports %}
+          {%- for port in fs.ports %}
           {{ port }}
           {%- endfor %}
-        Network Interface: {{ db._interfaces[0] }}
-        Type: {{ config.database_cli | get_dbtype }}
-        {%- if db.batch %}
-        Batch Launch: {{ db.batch }}
+        Network Interface: {{ fs._interfaces[0] }}
+        Type: {{ config.database_cli | get_fstype }}
+        {%- if fs.batch %}
+        Batch Launch: {{ fs.batch }}
         {%- endif %}

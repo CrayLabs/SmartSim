@@ -28,7 +28,7 @@ import os
 import shutil
 import typing as t
 
-from ....entity import Application, DBNode
+from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import BsubBatchSettings, JsrunSettings
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 class BsubBatchStep(Step):
     def __init__(
-        self, entity: t.Union[Application, DBNode], batch_settings: BsubBatchSettings
+        self, entity: t.Union[Application, FSNode], batch_settings: BsubBatchSettings
     ) -> None:
         """Initialize a LSF bsub step
 
@@ -106,7 +106,7 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, entity: t.Union[Application, DBNode], run_settings: RunSettings):
+    def __init__(self, entity: t.Union[Application, FSNode], run_settings: RunSettings):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched
@@ -173,9 +173,9 @@ class JsrunStep(Step):
 
         jsrun_cmd.extend(self.run_settings.format_run_args())
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
+            # for the application and feature store process now
             jsrun_cmd.extend(["--bind", "none"])
 
             # Replace the command with the entrypoint wrapper script

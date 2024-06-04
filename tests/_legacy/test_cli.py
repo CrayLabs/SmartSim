@@ -232,7 +232,7 @@ def test_cli_command_execution(capsys):
     exp_b_help = "this is my mock help text for build"
     exp_b_cmd = "build"
 
-    dbcli_exec = lambda x, y: mock_execute_custom(msg="Database", good=True)
+    dbcli_exec = lambda x, y: mock_execute_custom(msg="FeatureStore", good=True)
     build_exec = lambda x, y: mock_execute_custom(msg="Builder", good=True)
 
     menu = [
@@ -249,7 +249,7 @@ def test_cli_command_execution(capsys):
     captured = capsys.readouterr()  # capture new output
 
     # show that `smart dbcli` calls the build parser and build execute function
-    assert "Database" in captured.out
+    assert "FeatureStore" in captured.out
     assert ret_val == 0
 
     build_args = ["smart", exp_b_cmd]
@@ -670,13 +670,13 @@ def test_cli_full_clobber_execute(capsys, monkeypatch):
 def test_cli_full_dbcli_execute(capsys, monkeypatch):
     """Ensure that the execute method of dbcli is called"""
     exp_retval = 0
-    exp_output = "mocked-get_db_path utility"
+    exp_output = "mocked-get_fs_path utility"
 
     def mock_operation(*args, **kwargs) -> int:
         return exp_output
 
-    # mock out the internal get_db_path method so we don't actually do file system ops
-    monkeypatch.setattr(smartsim._core._cli.dbcli, "get_db_path", mock_operation)
+    # mock out the internal get_fs_path method so we don't actually do file system ops
+    monkeypatch.setattr(smartsim._core._cli.dbcli, "get_fs_path", mock_operation)
 
     command = "dbcli"
     cfg = MenuItemConfig(command, f"test {command} help text", dbcli_execute)
@@ -703,7 +703,7 @@ def test_cli_full_site_execute(capsys, monkeypatch):
         print(exp_output)
         return exp_retval
 
-    # mock out the internal get_db_path method so we don't actually do file system ops
+    # mock out the internal get_fs_path method so we don't actually do file system ops
     monkeypatch.setattr(smartsim._core._cli.site, "get_install_path", mock_operation)
 
     command = "site"
@@ -731,9 +731,11 @@ def test_cli_full_build_execute(capsys, monkeypatch):
         print(exp_output)
         return exp_retval
 
-    # mock out the internal get_db_path method so we don't actually do file system ops
+    # mock out the internal get_fs_path method so we don't actually do file system ops
     monkeypatch.setattr(smartsim._core._cli.build, "tabulate", mock_operation)
-    monkeypatch.setattr(smartsim._core._cli.build, "build_database", mock_operation)
+    monkeypatch.setattr(
+        smartsim._core._cli.build, "build_feature_store", mock_operation
+    )
     monkeypatch.setattr(smartsim._core._cli.build, "build_redis_ai", mock_operation)
     monkeypatch.setattr(
         smartsim._core._cli.build, "check_py_torch_version", mock_operation

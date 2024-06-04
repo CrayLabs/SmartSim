@@ -86,15 +86,15 @@ class JsrunSettings(RunSettings):
 
         :param cpus_per_rs: number of cpus to use per resource set or ALL_CPUS
         """
-        if self.colocated_db_settings:
-            db_cpus = int(t.cast(int, self.colocated_db_settings.get("db_cpus", 0)))
-            if not db_cpus:
-                raise ValueError("db_cpus must be configured on colocated_db_settings")
+        if self.colocated_fs_settings:
+            fs_cpus = int(t.cast(int, self.colocated_fs_settings.get("fs_cpus", 0)))
+            if not fs_cpus:
+                raise ValueError("fs_cpus must be configured on colocated_fs_settings")
 
-            if cpus_per_rs < db_cpus:
+            if cpus_per_rs < fs_cpus:
                 raise ValueError(
                     f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than "
-                    + f"db_cpus ({db_cpus})"
+                    + f"fs_cpus ({fs_cpus})"
                 )
         if isinstance(cpus_per_rs, str):
             self.run_args["cpu_per_rs"] = cpus_per_rs
@@ -195,7 +195,7 @@ class JsrunSettings(RunSettings):
 
         :param settings: ``JsrunSettings`` instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
                 "Colocated applications cannot be run as a mpmd workload"
             )
@@ -325,25 +325,25 @@ class JsrunSettings(RunSettings):
             string += "\nERF settings: " + pformat(self.erf_sets)
         return string
 
-    def _prep_colocated_db(self, db_cpus: int) -> None:
+    def _prep_colocated_fs(self, fs_cpus: int) -> None:
         cpus_per_flag_set = False
         for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
             if run_arg_value := self.run_args.get(cpu_per_rs_flag, 0):
                 cpus_per_flag_set = True
                 cpu_per_rs = int(run_arg_value)
-                if cpu_per_rs < db_cpus:
+                if cpu_per_rs < fs_cpus:
                     msg = (
                         f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, but "
-                        f"colocated DB requires {db_cpus} CPUs per RS. Automatically "
-                        f"setting {cpu_per_rs_flag} flag to {db_cpus}"
+                        f"colocated db requires {fs_cpus} CPUs per RS. Automatically "
+                        f"setting {cpu_per_rs_flag} flag to {fs_cpus}"
                     )
                     logger.info(msg)
-                    self.run_args[cpu_per_rs_flag] = db_cpus
+                    self.run_args[cpu_per_rs_flag] = fs_cpus
         if not cpus_per_flag_set:
-            msg = f"Colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
-            msg += f"--cpus_per_rs=={db_cpus}"
+            msg = f"Colocated fs requires {fs_cpus} CPUs per RS. Automatically setting "
+            msg += f"--cpus_per_rs=={fs_cpus}"
             logger.info(msg)
-            self.set_cpus_per_rs(db_cpus)
+            self.set_cpus_per_rs(fs_cpus)
 
         rs_per_host_set = False
         for rs_per_host_flag in ["rs_per_host", "r"]:
@@ -353,13 +353,13 @@ class JsrunSettings(RunSettings):
                 if rs_per_host != 1:
                     msg = f"{rs_per_host_flag} flag was set to {rs_per_host}, "
                     msg += (
-                        "but colocated DB requires running ONE resource set per host. "
+                        "but colocated fs requires running ONE resource set per host. "
                     )
                     msg += f"Automatically setting {rs_per_host_flag} flag to 1"
                     logger.info(msg)
                     self.run_args[rs_per_host_flag] = "1"
         if not rs_per_host_set:
-            msg = "Colocated DB requires one resource set per host. "
+            msg = "Colocated fs requires one resource set per host. "
             msg += " Automatically setting --rs_per_host==1"
             logger.info(msg)
             self.set_rs_per_host(1)

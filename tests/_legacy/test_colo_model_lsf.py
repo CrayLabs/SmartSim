@@ -47,29 +47,29 @@ class ExpectationMet(Exception):
 
 
 def show_expectation_met(*args, **kwargs):
-    raise ExpectationMet("mock._prep_colocated_db")
+    raise ExpectationMet("mock._prep_colocated_fs")
 
 
 def test_jsrun_prep(fileutils, coloutils, monkeypatch):
     """Ensure that JsrunSettings prep method is executed as expected"""
     monkeypatch.setattr(smartsim.settings.base, "expand_exe_path", lambda x: "/bin/{x}")
     # mock the prep method to raise an exception that short circuits test when goal is met
-    monkeypatch.setattr(JsrunSettings, "_prep_colocated_db", show_expectation_met)
+    monkeypatch.setattr(JsrunSettings, "_prep_colocated_fs", show_expectation_met)
 
-    db_args = {"custom_pinning": [1]}
-    db_type = "uds"  # Test is insensitive to choice of db
+    fs_args = {"custom_pinning": [1]}
+    fs_type = "uds"  # Test is insensitive to choice of fs
 
     exp = Experiment("colocated_application_lsf", launcher="lsf")
 
-    with pytest.raises(ExpectationMet, match="mock._prep_colocated_db") as ex:
+    with pytest.raises(ExpectationMet, match="mock._prep_colocated_fs") as ex:
         run_settings = JsrunSettings("foo")
 
         coloutils.setup_test_colo(
             fileutils,
-            db_type,
+            fs_type,
             exp,
             "send_data_local_smartredis.py",
-            db_args,
+            fs_args,
             colo_settings=run_settings,
         )
 
@@ -78,10 +78,10 @@ def test_non_js_run_prep(fileutils, coloutils, monkeypatch):
     """Ensure that RunSettings does not attempt to call a prep method"""
     monkeypatch.setattr(smartsim.settings.base, "expand_exe_path", lambda x: "/bin/{x}")
     # mock prep method to ensure that the exception isn't thrown w/non-JsrunSettings arg
-    monkeypatch.setattr(JsrunSettings, "_prep_colocated_db", show_expectation_met)
+    monkeypatch.setattr(JsrunSettings, "_prep_colocated_fs", show_expectation_met)
 
-    db_args = {"custom_pinning": [1]}
-    db_type = "tcp"  # Test is insensitive to choice of db
+    fs_args = {"custom_pinning": [1]}
+    fs_type = "tcp"  # Test is insensitive to choice of fs
 
     exp = Experiment("colocated_application_lsf", launcher="lsf")
 
@@ -89,10 +89,10 @@ def test_non_js_run_prep(fileutils, coloutils, monkeypatch):
 
     colo_application: Application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
         colo_settings=run_settings,
     )
 
@@ -119,14 +119,14 @@ def test_jsrun_prep_cpu_per_flag_set_check(
     exp_value,
     test_value,
 ):
-    """Ensure that _prep_colocated_db honors basic cpu_per_rs config and allows a
+    """Ensure that _prep_colocated_fs honors basic cpu_per_rs config and allows a
     valid input parameter to result in the correct output. If no expected input (or
     incorrect key) is given, the default should be returned using default config key"""
     monkeypatch.setattr(smartsim.settings.base, "expand_exe_path", lambda x: "/bin/{x}")
 
-    # excluding "db_cpus" should result in default value in comparison & output
-    db_args = {"custom_pinning": [1]}
-    db_type = "uds"  # Test is insensitive to choice of db
+    # excluding "fs_cpus" should result in default value in comparison & output
+    fs_args = {"custom_pinning": [1]}
+    fs_type = "uds"  # Test is insensitive to choice of fs
 
     exp = Experiment("colocated_application_lsf", launcher="lsf")
 
@@ -135,10 +135,10 @@ def test_jsrun_prep_cpu_per_flag_set_check(
 
     colo_application: Application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
         colo_settings=run_settings,
     )
 
@@ -151,14 +151,14 @@ def test_jsrun_prep_cpu_per_flag_set_check(
         pytest.param("cpu_per_rs", "cpu_per_rs", 11, 11, id="cpu_per_rs matches input"),
         pytest.param("c", "c", 22, 22, id="c matches input"),
         pytest.param(
-            "cpu_per_rs", "cpu_per_rsx", 3, 33, id="key typo: db_cpus out (not default)"
+            "cpu_per_rs", "cpu_per_rsx", 3, 33, id="key typo: fs_cpus out (not default)"
         ),
         pytest.param(
-            "cpu_per_rs", "cx", 3, 44, id="key typo: get db_cpus out (not default)"
+            "cpu_per_rs", "cx", 3, 44, id="key typo: get fs_cpus out (not default)"
         ),
     ],
 )
-def test_jsrun_prep_db_cpu_override(
+def test_jsrun_prep_fs_cpu_override(
     fileutils,
     coloutils,
     monkeypatch,
@@ -167,12 +167,12 @@ def test_jsrun_prep_db_cpu_override(
     exp_value,
     test_value,
 ):
-    """Ensure that both cpu_per_rs and c input config override db_cpus"""
+    """Ensure that both cpu_per_rs and c input config override fs_cpus"""
     monkeypatch.setattr(smartsim.settings.base, "expand_exe_path", lambda x: "/bin/{x}")
 
-    # setting "db_cpus" should result in non-default value in comparison & output
-    db_args = {"custom_pinning": [1], "db_cpus": 3}
-    db_type = "tcp"  # Test is insensitive to choice of db
+    # setting "fs_cpus" should result in non-default value in comparison & output
+    fs_args = {"custom_pinning": [1], "fs_cpus": 3}
+    fs_type = "tcp"  # Test is insensitive to choice of fs
 
     exp = Experiment("colocated_application_lsf", launcher="lsf")
 
@@ -181,10 +181,10 @@ def test_jsrun_prep_db_cpu_override(
 
     colo_application: Application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
         colo_settings=run_settings,
     )
 
@@ -195,14 +195,14 @@ def test_jsrun_prep_db_cpu_override(
     "exp_run_arg_key,run_arg_key,exp_value,test_value",
     [
         pytest.param(
-            "cpu_per_rs", "cpu_per_rs", 8, 3, id="cpu_per_rs swaps to db_cpus"
+            "cpu_per_rs", "cpu_per_rs", 8, 3, id="cpu_per_rs swaps to fs_cpus"
         ),
-        pytest.param("c", "c", 8, 4, id="c swaps to db_cpus"),
-        pytest.param("cpu_per_rs", "cpu_per_rsx", 8, 5, id="key typo: db_cpus out"),
-        pytest.param("cpu_per_rs", "cx", 8, 6, id="key typo: get db_cpus out"),
+        pytest.param("c", "c", 8, 4, id="c swaps to fs_cpus"),
+        pytest.param("cpu_per_rs", "cpu_per_rsx", 8, 5, id="key typo: fs_cpus out"),
+        pytest.param("cpu_per_rs", "cx", 8, 6, id="key typo: get fs_cpus out"),
     ],
 )
-def test_jsrun_prep_db_cpu_replacement(
+def test_jsrun_prep_fs_cpu_replacement(
     fileutils,
     coloutils,
     monkeypatch,
@@ -211,12 +211,12 @@ def test_jsrun_prep_db_cpu_replacement(
     exp_value,
     test_value,
 ):
-    """Ensure that db_cpus default is used if user config suggests underutilizing resources"""
+    """Ensure that fs_cpus default is used if user config suggests underutilizing resources"""
     monkeypatch.setattr(smartsim.settings.base, "expand_exe_path", lambda x: "/bin/{x}")
 
-    # setting "db_cpus" should result in non-default value in comparison & output
-    db_args = {"custom_pinning": [1], "db_cpus": 8}
-    db_type = "uds"  # Test is insensitive to choice of db
+    # setting "fs_cpus" should result in non-default value in comparison & output
+    fs_args = {"custom_pinning": [1], "fs_cpus": 8}
+    fs_type = "uds"  # Test is insensitive to choice of fs
 
     exp = Experiment("colocated_application_lsf", launcher="lsf")
 
@@ -225,10 +225,10 @@ def test_jsrun_prep_db_cpu_replacement(
 
     colo_application: Application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
         colo_settings=run_settings,
     )
 
@@ -265,8 +265,8 @@ def test_jsrun_prep_rs_per_host(
     required to meet limitations (e.g. rs_per_host MUST equal 1)"""
     monkeypatch.setattr(smartsim.settings.base, "expand_exe_path", lambda x: "/bin/{x}")
 
-    db_args = {"custom_pinning": [1]}
-    db_type = "tcp"  # Test is insensitive to choice of db
+    fs_args = {"custom_pinning": [1]}
+    fs_type = "tcp"  # Test is insensitive to choice of fs
 
     exp = Experiment("colocated_application_lsf", launcher="lsf")
 
@@ -275,14 +275,14 @@ def test_jsrun_prep_rs_per_host(
 
     colo_application: Application = coloutils.setup_test_colo(
         fileutils,
-        db_type,
+        fs_type,
         exp,
         "send_data_local_smartredis.py",
-        db_args,
+        fs_args,
         colo_settings=run_settings,
     )
 
-    # NOTE: _prep_colocated_db sets this to a string & not an integer
+    # NOTE: _prep_colocated_fs sets this to a string & not an integer
     assert str(colo_application.run_settings.run_args[exp_run_arg_key]) == str(
         exp_value
     )

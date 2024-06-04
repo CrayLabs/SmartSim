@@ -35,7 +35,7 @@ from redis.exceptions import ClusterDownError, RedisClusterException
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
-from ...entity import DBModel, DBScript
+from ...entity import FSModel, FSScript
 from ...error import SSInternalError
 from ...log import get_logger
 from ..config import CONFIG
@@ -73,7 +73,7 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     if returncode != 0:
         logger.error(out)
         logger.error(err)
-        raise SSInternalError("Database '--cluster create' command failed")
+        raise SSInternalError("Feature store '--cluster create' command failed")
     logger.debug(out)
 
 
@@ -95,10 +95,10 @@ def check_cluster_status(
 
     if not cluster_nodes:
         raise SSInternalError(
-            "No cluster nodes have been set for database status check."
+            "No cluster nodes have been set for feature store status check."
         )
 
-    logger.debug("Beginning database cluster status check...")
+    logger.debug("Beginning feature store cluster status check...")
     while trials > 0:
         # wait for cluster to spin up
         time.sleep(5)
@@ -117,16 +117,16 @@ def check_cluster_status(
         raise SSInternalError("Cluster setup could not be verified")
 
 
-def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> bool:
-    """Check if a DB is running
+def fs_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> bool:
+    """Check if a FS is running
 
-    if the DB is clustered, check cluster status, otherwise
-    just ping DB.
+    if the FS is clustered, check cluster status, otherwise
+    just ping FS.
 
     :param hosts: list of hosts
     :param ports: list of ports
-    :param num_shards: Number of DB shards
-    :return: Whether DB is running
+    :param num_shards: Number of FS shards
+    :return: Whether FS is running
     """
     # if single shard
     if num_shards < 2:
@@ -149,71 +149,71 @@ def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> boo
             return False
 
 
-def set_ml_model(db_model: DBModel, client: Client) -> None:
-    logger.debug(f"Adding DBModel named {db_model.name}")
+def set_ml_model(fs_model: FSModel, client: Client) -> None:
+    logger.debug(f"Adding FSModel named {fs_model.name}")
 
-    for device in db_model.devices:
+    for device in fs_model.devices:
         try:
-            if db_model.is_file:
+            if fs_model.is_file:
                 client.set_model_from_file(
-                    name=db_model.name,
-                    model_file=str(db_model.file),
-                    backend=db_model.backend,
+                    name=fs_model.name,
+                    model_file=str(fs_model.file),
+                    backend=fs_model.backend,
                     device=device,
-                    batch_size=db_model.batch_size,
-                    min_batch_size=db_model.min_batch_size,
-                    min_batch_timeout=db_model.min_batch_timeout,
-                    tag=db_model.tag,
-                    inputs=db_model.inputs,
-                    outputs=db_model.outputs,
+                    batch_size=fs_model.batch_size,
+                    min_batch_size=fs_model.min_batch_size,
+                    min_batch_timeout=fs_model.min_batch_timeout,
+                    tag=fs_model.tag,
+                    inputs=fs_model.inputs,
+                    outputs=fs_model.outputs,
                 )
             else:
-                if db_model.model is None:
-                    raise ValueError(f"No model attacted to {db_model.name}")
+                if fs_model.model is None:
+                    raise ValueError(f"No model attacted to {fs_model.name}")
                 client.set_model(
-                    name=db_model.name,
-                    model=db_model.model,
-                    backend=db_model.backend,
+                    name=fs_model.name,
+                    model=fs_model.model,
+                    backend=fs_model.backend,
                     device=device,
-                    batch_size=db_model.batch_size,
-                    min_batch_size=db_model.min_batch_size,
-                    min_batch_timeout=db_model.min_batch_timeout,
-                    tag=db_model.tag,
-                    inputs=db_model.inputs,
-                    outputs=db_model.outputs,
+                    batch_size=fs_model.batch_size,
+                    min_batch_size=fs_model.min_batch_size,
+                    min_batch_timeout=fs_model.min_batch_timeout,
+                    tag=fs_model.tag,
+                    inputs=fs_model.inputs,
+                    outputs=fs_model.outputs,
                 )
         except RedisReplyError as error:  # pragma: no cover
-            logger.error("Error while setting model on orchestrator.")
+            logger.error("Error while setting model on feature store.")
             raise error
 
 
-def set_script(db_script: DBScript, client: Client) -> None:
-    logger.debug(f"Adding DBScript named {db_script.name}")
+def set_script(fs_script: FSScript, client: Client) -> None:
+    logger.debug(f"Adding FSScript named {fs_script.name}")
 
-    for device in db_script.devices:
+    for device in fs_script.devices:
         try:
-            if db_script.is_file:
+            if fs_script.is_file:
                 client.set_script_from_file(
-                    name=db_script.name, file=str(db_script.file), device=device
+                    name=fs_script.name, file=str(fs_script.file), device=device
                 )
-            elif db_script.script:
-                if isinstance(db_script.script, str):
+            elif fs_script.script:
+                if isinstance(fs_script.script, str):
                     client.set_script(
-                        name=db_script.name, script=db_script.script, device=device
+                        name=fs_script.name, script=fs_script.script, device=device
                     )
-                elif callable(db_script.script):
+                elif callable(fs_script.script):
                     client.set_function(
-                        name=db_script.name, function=db_script.script, device=device
+                        name=fs_script.name, function=fs_script.script, device=device
                     )
             else:
-                raise ValueError(f"No script or file attached to {db_script.name}")
+                raise ValueError(f"No script or file attached to {fs_script.name}")
         except RedisReplyError as error:  # pragma: no cover
-            logger.error("Error while setting model on orchestrator.")
+            logger.error("Error while setting model on feature store.")
             raise error
 
 
-def shutdown_db_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-wlm
-    """Send shutdown signal to DB node.
+def shutdown_fs_node(host_ip: str, port: int) -> t.Tuple[int, str, str]:  # cov-wlm
+    """Send shutdown signal to FS node.
 
     Should only be used in the case where cluster deallocation
     needs to occur manually. Usually, the SmartSim job manager

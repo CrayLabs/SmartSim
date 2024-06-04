@@ -68,8 +68,8 @@ class EntitySequence(t.Generic[_T_co]):
         # ---------------------------------------------------------------------
         #
         self.entities: t.Sequence[_T_co] = []
-        self._db_models: t.Sequence["smartsim.entity.DBModel"] = []
-        self._db_scripts: t.Sequence["smartsim.entity.DBScript"] = []
+        self._fs_models: t.Sequence["smartsim.entity.FSModel"] = []
+        self._fs_scripts: t.Sequence["smartsim.entity.FSScript"] = []
         #
         # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -80,14 +80,14 @@ class EntitySequence(t.Generic[_T_co]):
         raise NotImplementedError
 
     @property
-    def db_models(self) -> t.Iterable["smartsim.entity.DBModel"]:
+    def fs_models(self) -> t.Iterable["smartsim.entity.FSModel"]:
         """Return an immutable collection of attached models"""
-        return (model for model in self._db_models)
+        return (model for model in self._fs_models)
 
     @property
-    def db_scripts(self) -> t.Iterable["smartsim.entity.DBScript"]:
+    def fs_scripts(self) -> t.Iterable["smartsim.entity.FSScript"]:
         """Return an immutable collection of attached scripts"""
-        return (script for script in self._db_scripts)
+        return (script for script in self._fs_scripts)
 
     @property
     def batch(self) -> bool:
@@ -131,8 +131,8 @@ class EntityList(EntitySequence[_T]):
         super().__init__(name=name, path=path, **kwargs)
         # Change container types to be invariant ``list``s
         self.entities: t.List[_T] = list(self.entities)
-        self._db_models: t.List["smartsim.entity.DBModel"] = list(self._db_models)
-        self._db_scripts: t.List["smartsim.entity.DBScript"] = list(self._db_scripts)
+        self._fs_models: t.List["smartsim.entity.FSModel"] = list(self._fs_models)
+        self._fs_scripts: t.List["smartsim.entity.FSScript"] = list(self._fs_scripts)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize the SmartSimEntity objects in the container"""

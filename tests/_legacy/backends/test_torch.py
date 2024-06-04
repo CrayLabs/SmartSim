@@ -49,9 +49,9 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_torch_model_and_script(
-    wlm_experiment, prepare_db, single_db, mlutils, wlmutils
+    wlm_experiment, prepare_fs, single_fs, mlutils, wlmutils
 ):
-    """This test needs two free nodes, 1 for the db and 1 for a torch model script
+    """This test needs two free nodes, 1 for the fs and 1 for a torch model script
 
      Here we test both the torchscipt API and the NN API from torch
 
@@ -62,8 +62,8 @@ def test_torch_model_and_script(
     You may need to put CUDNN in your LD_LIBRARY_PATH if running on GPU
     """
 
-    db = prepare_db(single_db).orchestrator
-    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+    fs = prepare_fs(single_fs).featurestore
+    wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
     test_device = mlutils.get_test_device()
 
     run_settings = wlm_experiment.create_run_settings(

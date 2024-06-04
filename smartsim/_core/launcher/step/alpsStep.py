@@ -29,7 +29,7 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....entity import Application, DBNode
+from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import AprunSettings, RunSettings, Singularity
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 class AprunStep(Step):
     def __init__(
-        self, entity: t.Union[Application, DBNode], run_settings: AprunSettings
+        self, entity: t.Union[Application, FSNode], run_settings: AprunSettings
     ) -> None:
         """Initialize a ALPS aprun job step
 
@@ -77,9 +77,9 @@ class AprunStep(Step):
         aprun_cmd.extend(self.run_settings.format_env_vars())
         aprun_cmd.extend(self.run_settings.format_run_args())
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
+            # for the application and feature store process now
             aprun_cmd.extend(["--cc", "none"])
 
             # Replace the command with the entrypoint wrapper script

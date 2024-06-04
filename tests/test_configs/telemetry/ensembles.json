@@ -13,7 +13,7 @@
       "run_id": "d041b90",
       "timestamp": 1698679830384608928,
       "application": [],
-      "orchestrator": [],
+      "featurestore": [],
       "ensemble": [
         {
           "name": "my-ens",

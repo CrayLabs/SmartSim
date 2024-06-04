@@ -68,7 +68,7 @@ class DragonStep(Step):
         run_settings = self.run_settings
         exe_cmd = []
 
-        if run_settings.colocated_db_settings:
+        if run_settings.colocated_fs_settings:
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             if not bash:

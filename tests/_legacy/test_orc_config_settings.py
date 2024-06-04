@@ -27,7 +27,7 @@
 
 import pytest
 
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.error import SmartSimError
 
 try:
@@ -41,41 +41,41 @@ except AttributeError:
 pytestmark = pytest.mark.group_b
 
 
-def test_config_methods(dbutils, prepare_db, local_db):
+def test_config_methods(fsutils, prepare_fs, local_fs):
     """Test all configuration file edit methods on an active db"""
-    db = prepare_db(local_db).orchestrator
+    fs = prepare_fs(local_fs).featurestore
 
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
-    configs = dbutils.get_db_configs()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
-    # ensure SmartSimError is raised when Orchestrator.set_db_conf
+    # ensure SmartSimError is raised when FeatureStore.set_fs_conf
     # is given invalid CONFIG key-value pairs
-    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    ss_error_configs = fsutils.get_smartsim_error_fs_configs()
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)
 
-    # ensure TypeError is raised when Orchestrator.set_db_conf
+    # ensure TypeError is raised when FeatureStore.set_fs_conf
     # is given either a key or a value that is not a string
-    type_error_configs = dbutils.get_type_error_db_configs()
+    type_error_configs = fsutils.get_type_error_fs_configs()
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                db.set_db_conf(key, value)
+                fs.set_db_conf(key, value)
 
 
-def test_config_methods_inactive(dbutils):
+def test_config_methods_inactive(fsutils):
     """Ensure a SmartSimError is raised when trying to
-    set configurations on an inactive database
+    set configurations on an inactive feature store
     """
-    db = Orchestrator()
-    configs = dbutils.get_db_configs()
+    fs = FeatureStore()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         with pytest.raises(SmartSimError):
             config_set_method(value)

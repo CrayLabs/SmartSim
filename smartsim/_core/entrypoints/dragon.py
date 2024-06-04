@@ -297,7 +297,7 @@ def cleanup() -> None:
 def register_signal_handlers() -> None:
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
-    # the database process.
+    # the feature store process.
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 

@@ -71,7 +71,7 @@ def test_catch_colo_mpmd_application():
 
     # make it colocated which should raise and error
     with pytest.raises(SSUnsupportedError):
-        application.colocate_db()
+        application.colocate_fs()
 
 
 def test_attach_batch_settings_to_application():

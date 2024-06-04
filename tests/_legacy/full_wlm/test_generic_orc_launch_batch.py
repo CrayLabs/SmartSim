@@ -40,7 +40,7 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 if (pytest.test_launcher == "pbs") and (not pytest.has_aprun):
     pytestmark = pytest.mark.skip(
-        reason="Launching orchestrators in a batch job is not supported on PBS without ALPS"
+        reason="Launching feature stores in a batch job is not supported on PBS without ALPS"
     )
 
 
@@ -53,179 +53,180 @@ def add_batch_resources(wlmutils, batch_settings):
                 batch_settings.set_resource(key, value)
 
 
-def test_launch_orc_auto_batch(test_dir, wlmutils):
-    """test single node orchestrator"""
+def test_launch_feature_store_auto_batch(test_dir, wlmutils):
+    """test single node feature store"""
     launcher = wlmutils.get_test_launcher()
 
-    exp_name = "test-launch-auto-orc-batch"
+    exp_name = "test-launch-auto-feature-store-batch"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
         batch=True,
         interface=network_interface,
         single_cmd=False,
     )
 
-    orc.batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, orc.batch_settings)
+    feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    orc.batch_settings.set_walltime("00:05:00")
-    orc.set_path(test_dir)
+    feature_store.batch_settings.set_walltime("00:05:00")
+    feature_store.set_path(test_dir)
 
-    exp.start(orc, block=True)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store, block=True)
+    statuses = exp.get_status(feature_store)
 
     # don't use assert so that we don't leave an orphan process
     if SmartSimStatus.STATUS_FAILED in statuses:
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False
 
-    exp.stop(orc)
-    statuses = exp.get_status(orc)
+    exp.stop(feature_store)
+    statuses = exp.get_status(feature_store)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_batch_single(test_dir, wlmutils):
-    """test clustered 3-node orchestrator with single command"""
+def test_launch_cluster_feature_store_batch_single(test_dir, wlmutils):
+    """test clustered 3-node feature store with single command"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
-    exp_name = "test-launch-auto-cluster-orc-batch-single"
+    exp_name = "test-launch-auto-cluster-feature-store-batch-single"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         interface=network_interface,
         single_cmd=True,
     )
 
-    orc.batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, orc.batch_settings)
+    feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    orc.batch_settings.set_walltime("00:05:00")
-    orc.set_path(test_dir)
+    feature_store.batch_settings.set_walltime("00:05:00")
+    feature_store.set_path(test_dir)
 
-    exp.start(orc, block=True)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store, block=True)
+    statuses = exp.get_status(feature_store)
 
-    # don't use assert so that orc we don't leave an orphan process
+    # don't use assert so that feature_store we don't leave an orphan process
     if SmartSimStatus.STATUS_FAILED in statuses:
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False
 
-    exp.stop(orc)
-    statuses = exp.get_status(orc)
+    exp.stop(feature_store)
+    statuses = exp.get_status(feature_store)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_batch_multi(test_dir, wlmutils):
-    """test clustered 3-node orchestrator"""
+def test_launch_cluster_feature_store_batch_multi(test_dir, wlmutils):
+    """test clustered 3-node feature store"""
     # TODO detect number of nodes in allocation and skip if not sufficent
     launcher = wlmutils.get_test_launcher()
 
-    exp_name = "test-launch-auto-cluster-orc-batch-multi"
+    exp_name = "test-launch-auto-cluster-feature-store-batch-multi"
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         interface=network_interface,
         single_cmd=False,
     )
 
-    orc.batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, orc.batch_settings)
+    feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    orc.batch_settings.set_walltime("00:05:00")
-    orc.set_path(test_dir)
+    feature_store.batch_settings.set_walltime("00:05:00")
+    feature_store.set_path(test_dir)
 
-    exp.start(orc, block=True)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store, block=True)
+    statuses = exp.get_status(feature_store)
 
-    # don't use assert so that orc we don't leave an orphan process
+    # don't use assert so that feature_store we don't leave an orphan process
     if SmartSimStatus.STATUS_FAILED in statuses:
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False
 
-    exp.stop(orc)
-    statuses = exp.get_status(orc)
+    exp.stop(feature_store)
+    statuses = exp.get_status(feature_store)
     assert all([stat == SmartSimStatus.STATUS_CANCELLED for stat in statuses])
 
 
-def test_launch_cluster_orc_reconnect(test_dir, wlmutils):
-    """test reconnecting to clustered 3-node orchestrator"""
+def test_launch_cluster_feature_store_reconnect(test_dir, wlmutils):
+    """test reconnecting to clustered 3-node feature store"""
     p_test_dir = pathlib.Path(test_dir)
     launcher = wlmutils.get_test_launcher()
-    exp_name = "test-launch-cluster-orc-batch-reconect"
+    exp_name = "test-launch-cluster-feature-store-batch-reconect"
     exp_1_dir = p_test_dir / exp_name
     exp_1_dir.mkdir()
     exp = Experiment(exp_name, launcher=launcher, exp_path=str(exp_1_dir))
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
-        wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface
+    feature_store = exp.create_feature_store(
+        wlmutils.get_test_port(), fs_nodes=3, batch=True, interface=network_interface
     )
 
-    orc.batch_settings.set_account(wlmutils.get_test_account())
-    add_batch_resources(wlmutils, orc.batch_settings)
+    feature_store.batch_settings.set_account(wlmutils.get_test_account())
+    add_batch_resources(wlmutils, feature_store.batch_settings)
 
-    orc.batch_settings.set_walltime("00:05:00")
+    feature_store.batch_settings.set_walltime("00:05:00")
 
-    exp.start(orc, block=True)
+    exp.start(feature_store, block=True)
 
-    statuses = exp.get_status(orc)
+    statuses = exp.get_status(feature_store)
     try:
         assert all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
     except Exception:
-        exp.stop(orc)
+        exp.stop(feature_store)
         raise
 
-    exp_name = "test-orc-cluster-orc-batch-reconnect-2nd"
+    exp_name = "test-feature_store-cluster-feature-store-batch-reconnect-2nd"
     exp_2_dir = p_test_dir / exp_name
     exp_2_dir.mkdir()
     exp_2 = Experiment(exp_name, launcher=launcher, exp_path=str(exp_2_dir))
 
     try:
-        checkpoint = osp.join(orc.path, "smartsim_db.dat")
-        reloaded_orc = exp_2.reconnect_orchestrator(checkpoint)
+        checkpoint = osp.join(feature_store.path, "smartsim_db.dat")
+        reloaded_feature_store = exp_2.reconnect_feature_store(checkpoint)
 
         # let statuses update once
         time.sleep(5)
 
-        statuses = exp_2.get_status(reloaded_orc)
+        statuses = exp_2.get_status(reloaded_feature_store)
         assert all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses)
     except Exception:
-        # Something went wrong! Let the experiment that started the DB
-        # clean up the DB
-        exp.stop(orc)
+        # Something went wrong! Let the experiment that started the FS
+        # clean up the FS
+        exp.stop(feature_store)
         raise
 
     try:
-        # Test experiment 2 can stop the DB
-        exp_2.stop(reloaded_orc)
+        # Test experiment 2 can stop the FS
+        exp_2.stop(reloaded_feature_store)
         assert all(
             stat == SmartSimStatus.STATUS_CANCELLED
-            for stat in exp_2.get_status(reloaded_orc)
+            for stat in exp_2.get_status(reloaded_feature_store)
         )
     except Exception:
-        # Something went wrong! Let the experiment that started the DB
-        # clean up the DB
-        exp.stop(orc)
+        # Something went wrong! Let the experiment that started the FS
+        # clean up the FS
+        exp.stop(feature_store)
         raise
     else:
-        # Ensure  it is the same DB that Experiment 1 was tracking
+        # Ensure  it is the same FS that Experiment 1 was tracking
         time.sleep(5)
         assert not any(
-            stat == SmartSimStatus.STATUS_RUNNING for stat in exp.get_status(orc)
+            stat == SmartSimStatus.STATUS_RUNNING
+            for stat in exp.get_status(feature_store)
         )

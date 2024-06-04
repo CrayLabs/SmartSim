@@ -91,7 +91,7 @@ class _BaseMPISettings(RunSettings):
 
         :param settings: MpirunSettings instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
                 "Colocated applications cannot be run as a mpmd workload"
             )
