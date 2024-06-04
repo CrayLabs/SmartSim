@@ -30,6 +30,9 @@ import torch
 
 from smartsim._core.mli.message_handler import MessageHandler
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 handler = MessageHandler()
 
 torch1 = torch.zeros((3, 2, 5), dtype=torch.int8)
