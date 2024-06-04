@@ -49,7 +49,8 @@ class MessageHandler:
         dimensions: t.List[int],
     ) -> tensor_capnp.Tensor:
         """
-        Builds a tensor using the provided data, order, data type, and dimensions.
+        Builds a Tensor message using the provided data,
+        order, data type, and dimensions.
         """
         try:
             description = tensor_capnp.TensorDescriptor.new_message()
@@ -68,6 +69,9 @@ class MessageHandler:
 
     @staticmethod
     def build_tensor_key(key: str) -> tensor_capnp.TensorKey:
+        """
+        Builds a new TensorKey message with the provided key.
+        """
         try:
             tensor_key = tensor_capnp.TensorKey.new_message()
             tensor_key.key = key
@@ -77,6 +81,9 @@ class MessageHandler:
 
     @staticmethod
     def build_model_key(key: str) -> request_capnp.ModelKey:
+        """
+        Builds a new ModelKey message with the provided key.
+        """
         try:
             model_key = request_capnp.ModelKey.new_message()
             model_key.key = key
@@ -88,6 +95,9 @@ class MessageHandler:
     def build_torchcnn_request_attributes(
         tensor_type: str,
     ) -> request_attributes_capnp.TorchRequestAttributes:
+        """
+        Builds a new TorchRequestAttributes message with the provided tensor type.
+        """
         try:
             attributes = request_attributes_capnp.TorchRequestAttributes.new_message()
             attributes.tensorType = tensor_type
@@ -99,6 +109,10 @@ class MessageHandler:
     def build_tfcnn_request_attributes(
         name: str, tensor_type: str
     ) -> request_attributes_capnp.TensorflowRequestAttributes:
+        """
+        Builds a new TensorflowRequestAttributes message with
+        the provided name and tensor type.
+        """
         try:
             attributes = (
                 request_attributes_capnp.TensorflowRequestAttributes.new_message()
@@ -113,35 +127,28 @@ class MessageHandler:
     def build_torchcnn_response_attributes() -> (
         response_attributes_capnp.TorchResponseAttributes
     ):
+        """
+        Builds a new TorchResponseAttributes message.
+        """
         return response_attributes_capnp.TorchResponseAttributes.new_message()
 
     @staticmethod
     def build_tfcnn_response_attributes() -> (
         response_attributes_capnp.TensorflowResponseAttributes
     ):
+        """
+        Builds a new TensorflowResponseAttributes message.
+        """
         return response_attributes_capnp.TensorflowResponseAttributes.new_message()
 
     @staticmethod
-    def build_request(
-        reply_channel: t.ByteString,
+    def _assign_model(
+        request: request_capnp.Request,
         model: t.Union[request_capnp.ModelKey, t.ByteString],
-        device: t.Union[str, None],
-        inputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
-        outputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
-        custom_attributes: t.Union[
-            request_attributes_capnp.TorchRequestAttributes,
-            request_attributes_capnp.TensorflowRequestAttributes,
-            None,
-        ],
-    ) -> request_capnp.Request:
-        try:
-            channel = request_capnp.ChannelDescriptor.new_message()
-            channel.reply = reply_channel
-            request = request_capnp.Request.new_message()
-            request.replyChannel = channel
-        except Exception as e:
-            raise ValueError("Error building reply channel portion of request.") from e
-
+    ) -> None:
+        """
+        Assigns a model to the supplied request.
+        """
         try:
             if isinstance(model, bytes):
                 request.model.modelData = model
@@ -150,42 +157,89 @@ class MessageHandler:
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
+    @staticmethod
+    def _assign_reply_channel(
+        request: request_capnp.Request, reply_channel: t.ByteString
+    ) -> None:
+        """
+        Assigns a reply channel to the supplied request.
+        """
+        try:
+            request.replyChannel.reply = reply_channel
+        except Exception as e:
+            raise ValueError("Error building reply channel portion of request.") from e
+
+    @staticmethod
+    def _assign_device(
+        request: request_capnp.Request, device: t.Union[str, None]
+    ) -> None:
+        """
+        Assigns a device to the supplied request.
+        """
         try:
             if device is None:
                 request.device.noDevice = device
             else:
                 request.device.deviceType = device
         except Exception as e:
-            raise ValueError("Error building device portion request.") from e
+            raise ValueError("Error building device portion of request.") from e
 
+    @staticmethod
+    def _assign_inputs(
+        request: request_capnp.Request,
+        inputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+    ) -> None:
+        """
+        Assigns inputs to the supplied request.
+        """
         try:
             if inputs:
-                first_input = inputs[0]
-                input_class_name = first_input.schema.node.displayName.split(":")[-1]
+                input_class_name = inputs[0].schema.node.displayName.split(":")[-1]
                 if input_class_name == "Tensor":
                     request.input.inputData = inputs
                 elif input_class_name == "TensorKey":
                     request.input.inputKeys = inputs
                 else:
-                    raise ValueError("""Invalid custom attribute class name.
-                        Expected 'Tensor' or 'TensorKey'.""")
+                    raise ValueError(
+                        "Invalid input class name. Expected 'Tensor' or 'TensorKey'."
+                    )
         except Exception as e:
-            raise ValueError("Error building inputs portion ofrequest.") from e
+            raise ValueError("Error building inputs portion of request.") from e
 
+    @staticmethod
+    def _assign_outputs(
+        request: request_capnp.Request,
+        outputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+    ) -> None:
+        """
+        Assigns outputs to the supplied request.
+        """
         try:
             if outputs:
-                first_output = outputs[0]
-                output_class_name = first_output.schema.node.displayName.split(":")[-1]
+                output_class_name = outputs[0].schema.node.displayName.split(":")[-1]
                 if output_class_name == "Tensor":
                     request.output.outputData = outputs
                 elif output_class_name == "TensorKey":
                     request.output.outputKeys = outputs
                 else:
-                    raise ValueError("""Invalid custom attribute class name.
-                        Expected 'Tensor' or 'TensorKey'.""")
+                    raise ValueError(
+                        "Invalid output class name. Expected 'Tensor' or 'TensorKey'."
+                    )
         except Exception as e:
             raise ValueError("Error building outputs portion of request.") from e
 
+    @staticmethod
+    def _assign_custom_request_attributes(
+        request: request_capnp.Request,
+        custom_attributes: t.Union[
+            request_attributes_capnp.TorchRequestAttributes,
+            request_attributes_capnp.TensorflowRequestAttributes,
+            None,
+        ],
+    ) -> None:
+        """
+        Assigns request attributes to the supplied request.
+        """
         try:
             if custom_attributes is None:
                 request.customAttributes.none = custom_attributes
@@ -206,14 +260,43 @@ class MessageHandler:
                 "Error building custom attributes portion of request."
             ) from e
 
+    @staticmethod
+    def build_request(
+        reply_channel: t.ByteString,
+        model: t.Union[request_capnp.ModelKey, t.ByteString],
+        device: t.Union[str, None],
+        inputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+        outputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+        custom_attributes: t.Union[
+            request_attributes_capnp.TorchRequestAttributes,
+            request_attributes_capnp.TensorflowRequestAttributes,
+            None,
+        ],
+    ) -> request_capnp.Request:
+        """
+        Builds the request message.
+        """
+        request = request_capnp.Request.new_message()
+        MessageHandler._assign_reply_channel(request, reply_channel)
+        MessageHandler._assign_model(request, model)
+        MessageHandler._assign_device(request, device)
+        MessageHandler._assign_inputs(request, inputs)
+        MessageHandler._assign_outputs(request, outputs)
+        MessageHandler._assign_custom_request_attributes(request, custom_attributes)
         return request
 
     @staticmethod
     def serialize_request(request: request_capnp.Request) -> t.ByteString:
+        """
+        Serializes a built request message.
+        """
         return request.to_bytes()
 
     @staticmethod
     def deserialize_request(request_bytes: t.ByteString) -> request_capnp.Request:
+        """
+        Deserializes a serialized request message.
+        """
         bytes_message = request_capnp.Request.from_bytes(request_bytes)
 
         with bytes_message as message:
@@ -221,23 +304,33 @@ class MessageHandler:
             return message
 
     @staticmethod
-    def build_response(
-        status: int,
-        message: str,
-        result: t.Union[t.List[tensor_capnp.Tensor], t.List[tensor_capnp.TensorKey]],
-        custom_attributes: t.Union[
-            response_attributes_capnp.TorchResponseAttributes,
-            response_attributes_capnp.TensorflowResponseAttributes,
-            None,
-        ],
-    ) -> response_capnp.Response:
+    def _assign_status(response: response_capnp.Response, status: int) -> None:
+        """
+        Assigns a status to the supplied response.
+        """
         try:
-            response = response_capnp.Response.new_message()
             response.status = status
+        except Exception as e:
+            raise ValueError("Error assigning status to response.") from e
+
+    @staticmethod
+    def _assign_status_message(response: response_capnp.Response, message: str) -> None:
+        """
+        Assigns a status message to the supplied response.
+        """
+        try:
             response.statusMessage = message
         except Exception as e:
-            raise ValueError("Error building response.") from e
+            raise ValueError("Error assigning status message to response.") from e
 
+    @staticmethod
+    def _assign_result(
+        response: response_capnp.Response,
+        result: t.Union[t.List[tensor_capnp.Tensor], t.List[tensor_capnp.TensorKey]],
+    ) -> None:
+        """
+        Assigns a result to the supplied response.
+        """
         try:
             if result:
                 first_result = result[0]
@@ -250,8 +343,20 @@ class MessageHandler:
                     raise ValueError("""Invalid custom attribute class name.
                         Expected 'Tensor' or 'TensorKey'.""")
         except Exception as e:
-            raise ValueError("Error building result portion of response.") from e
+            raise ValueError("Error assigning result to response.") from e
 
+    @staticmethod
+    def _assign_custom_response_attributes(
+        response: response_capnp.Response,
+        custom_attributes: t.Union[
+            response_attributes_capnp.TorchResponseAttributes,
+            response_attributes_capnp.TensorflowResponseAttributes,
+            None,
+        ],
+    ) -> None:
+        """
+        Assigns custom attributes to the supplied response.
+        """
         try:
             if custom_attributes is None:
                 response.customAttributes.none = custom_attributes
@@ -268,18 +373,41 @@ class MessageHandler:
                         Expected 'TensorflowResponseAttributes' or 
                         'TorchResponseAttributes'.""")
         except Exception as e:
-            raise ValueError(
-                "Error building custom attributes portion of response."
-            ) from e
+            raise ValueError("Error assigning custom attributes to response.") from e
 
+    @staticmethod
+    def build_response(
+        status: int,
+        message: str,
+        result: t.Union[t.List[tensor_capnp.Tensor], t.List[tensor_capnp.TensorKey]],
+        custom_attributes: t.Union[
+            response_attributes_capnp.TorchResponseAttributes,
+            response_attributes_capnp.TensorflowResponseAttributes,
+            None,
+        ],
+    ) -> response_capnp.Response:
+        """
+        Builds the response message.
+        """
+        response = response_capnp.Response.new_message()
+        MessageHandler._assign_status(response, status)
+        MessageHandler._assign_status_message(response, message)
+        MessageHandler._assign_result(response, result)
+        MessageHandler._assign_custom_response_attributes(response, custom_attributes)
         return response
 
     @staticmethod
     def serialize_response(response: response_capnp.Response) -> t.ByteString:
+        """
+        Serializes a built response message.
+        """
         return response.to_bytes()
 
     @staticmethod
     def deserialize_response(response_bytes: t.ByteString) -> response_capnp.Response:
+        """
+        Deserializes a serialized response message.
+        """
         bytes_message = response_capnp.Response.from_bytes(response_bytes)
 
         with bytes_message as message:
