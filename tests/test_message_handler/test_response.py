@@ -104,6 +104,7 @@ def test_build_response_successful(status, status_message, result, custom_attrib
     else:
         assert response.result.data[0].to_dict() == result[0].to_dict()
 
+
 @pytest.mark.parametrize(
     "status, status_message, result, custom_attribute",
     [
@@ -153,7 +154,10 @@ def test_build_response_successful(status, status_message, result, custom_attrib
 )
 def test_build_response_unsuccessful(status, status_message, result, custom_attribute):
     with pytest.raises(ValueError):
-        response = handler.build_response(status, status_message, result, custom_attribute)
+        response = handler.build_response(
+            status, status_message, result, custom_attribute
+        )
+
 
 @pytest.mark.parametrize(
     "response",
