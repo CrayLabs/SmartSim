@@ -36,7 +36,7 @@ from smartsim import Experiment
 from smartsim._core._cli import utils
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.utils import serialize
-from smartsim.database.orchestrator import Orchestrator
+from smartsim.database.orchestrator import FeatureStore
 
 _CFG_TM_ENABLED_ATTR = "telemetry_enabled"
 
@@ -144,10 +144,12 @@ def test_started_entities_are_serialized(test_dir, manifest_json):
         exp.stop(hello_world_application, spam_eggs_application, hello_ensemble)
 
 
-def test_serialzed_database_does_not_break_if_using_a_non_standard_install(monkeypatch):
-    monkeypatch.setattr(utils, "get_db_path", lambda: None)
-    db = Orchestrator()
-    dict_ = serialize._dictify_db(db, [])
+def test_serialzed_feature_store_does_not_break_if_using_a_non_standard_install(
+    monkeypatch,
+):
+    monkeypatch.setattr(utils, "get_fs_path", lambda: None)
+    fs = FeatureStore()
+    dict_ = serialize._dictify_fs(fs, [])
     assert dict_["type"] == "Unknown"
 
 

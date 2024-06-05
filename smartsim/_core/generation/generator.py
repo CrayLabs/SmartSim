@@ -35,7 +35,7 @@ from os.path import join, relpath
 
 from tabulate import tabulate
 
-from ...database import Orchestrator
+from ...database import FeatureStore
 from ...entity import Application, Ensemble, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
@@ -105,7 +105,7 @@ class Generator:
         generator_manifest = Manifest(*args)
 
         self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest.dbs)
+        self._gen_feature_store_dir(generator_manifest.fss)
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.applications)
 
@@ -154,21 +154,23 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_orc_dir(self, orchestrator_list: t.List[Orchestrator]) -> None:
+    def _gen_feature_store_dir(self, feature_store_list: t.List[FeatureStore]) -> None:
         """Create the directory that will hold the error, output and
-           configuration files for the orchestrator.
+           configuration files for the feature store.
 
-        :param orchestrator: Orchestrator instance
+        :param featurestore: FeatureStore instance
         """
-        # Loop through orchestrators
-        for orchestrator in orchestrator_list:
-            orc_path = path.join(self.gen_path, orchestrator.name)
+        # Loop through feature stores
+        for featurestore in feature_store_list:
+            feature_store_path = path.join(self.gen_path, featurestore.name)
 
-            orchestrator.set_path(orc_path)
-            # Always remove orchestrator files if present.
-            if path.isdir(orc_path):
-                shutil.rmtree(orc_path, ignore_errors=True)
-            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite, parents=True)
+            featurestore.set_path(feature_store_path)
+            # Always remove featurestore files if present.
+            if path.isdir(feature_store_path):
+                shutil.rmtree(feature_store_path, ignore_errors=True)
+            pathlib.Path(feature_store_path).mkdir(
+                exist_ok=self.overwrite, parents=True
+            )
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for Ensemble instances

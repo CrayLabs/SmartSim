@@ -97,7 +97,9 @@ def resolve(strategy: str | PermutationStrategyType) -> PermutationStrategyType:
         ) from None
 
 
-def _make_sanitized_custom_strategy(fn: PermutationStrategyType) -> PermutationStrategyType:
+def _make_sanitized_custom_strategy(
+    fn: PermutationStrategyType,
+) -> PermutationStrategyType:
     """Take a callable that satisfies the shape of a permutation strategy and
     return a sanitized version for future callers.
 

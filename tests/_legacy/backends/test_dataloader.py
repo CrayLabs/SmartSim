@@ -30,7 +30,7 @@ from os import path as osp
 import numpy as np
 import pytest
 
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
 from smartsim.log import get_logger
@@ -167,11 +167,11 @@ def train_tf(generator):
 
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
-def test_tf_dataloaders(wlm_experiment, prepare_db, single_db, monkeypatch):
+def test_tf_dataloaders(wlm_experiment, prepare_fs, single_fs, monkeypatch):
 
-    db = prepare_db(single_db).orchestrator
-    orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
-    monkeypatch.setenv("SSDB", orc.get_address()[0])
+    fs = prepare_fs(single_fs).featurestore
+    feature_store = wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
+    monkeypatch.setenv("SSDB", feature_store.get_address()[0])
     monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")
 
     try:
@@ -229,12 +229,12 @@ def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
 
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
 def test_torch_dataloaders(
-    wlm_experiment, prepare_db, single_db, fileutils, test_dir, wlmutils, monkeypatch
+    wlm_experiment, prepare_fs, single_fs, fileutils, test_dir, wlmutils, monkeypatch
 ):
     config_dir = fileutils.get_test_dir_path("ml")
-    db = prepare_db(single_db).orchestrator
-    orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
-    monkeypatch.setenv("SSDB", orc.get_address()[0])
+    fs = prepare_fs(single_fs).orchestrator
+    feature_store = wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
+    monkeypatch.setenv("SSDB", feature_store.get_address()[0])
     monkeypatch.setenv("SSKEYIN", "test_uploader_0,test_uploader_1")
 
     try:
@@ -320,22 +320,22 @@ def test_data_info_repr():
 @pytest.mark.skipif(
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
 )
-def test_wrong_dataloaders(wlm_experiment, prepare_db, single_db):
-    db = prepare_db(single_db).orchestrator
-    orc = wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+def test_wrong_dataloaders(wlm_experiment, prepare_fs, single_fs):
+    fs = prepare_fs(single_fs).featurestore
+    feature_store = wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
 
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
             _ = TFDataGenerator(
                 data_info_or_list_name="test_data_list",
-                address=orc.get_address()[0],
+                address=feature_store.get_address()[0],
                 cluster=False,
                 max_fetch_trials=1,
             )
         with pytest.raises(TypeError):
             _ = TFStaticDataGenerator(
                 test_data_info_repr=1,
-                address=orc.get_address()[0],
+                address=feature_store.get_address()[0],
                 cluster=False,
                 max_fetch_trials=1,
             )
@@ -344,7 +344,7 @@ def test_wrong_dataloaders(wlm_experiment, prepare_db, single_db):
         with pytest.raises(SSInternalError):
             torch_data_gen = TorchDataGenerator(
                 data_info_or_list_name="test_data_list",
-                address=orc.get_address()[0],
+                address=feature_store.get_address()[0],
                 cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)

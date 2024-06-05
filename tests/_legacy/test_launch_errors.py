@@ -28,7 +28,7 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
 from smartsim.status import SmartSimStatus
@@ -61,18 +61,22 @@ def test_model_failure(fileutils, test_dir):
     assert all([stat == SmartSimStatus.STATUS_FAILED for stat in statuses])
 
 
-def test_orchestrator_relaunch(test_dir, wlmutils):
-    """Test when users try to launch second orchestrator"""
-    exp_name = "test-orc-on-relaunch"
+def test_feature_store_relaunch(test_dir, wlmutils):
+    """Test when users try to launch second FeatureStore"""
+    exp_name = "test-feature-store-on-relaunch"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    orc = Orchestrator(port=wlmutils.get_test_port(), db_identifier="orch_1")
-    orc.set_path(test_dir)
-    orc_1 = Orchestrator(port=wlmutils.get_test_port() + 1, db_identifier="orch_2")
-    orc_1.set_path(test_dir)
+    feature_store = FeatureStore(
+        port=wlmutils.get_test_port(), fs_identifier="feature_store_1"
+    )
+    feature_store.set_path(test_dir)
+    feature_store_1 = FeatureStore(
+        port=wlmutils.get_test_port() + 1, fs_identifier="feature_store_2"
+    )
+    feature_store_1.set_path(test_dir)
     try:
-        exp.start(orc)
-        exp.start(orc_1)
+        exp.start(feature_store)
+        exp.start(feature_store_1)
     finally:
-        exp.stop(orc)
-        exp.stop(orc_1)
+        exp.stop(feature_store)
+        exp.stop(feature_store_1)

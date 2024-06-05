@@ -40,7 +40,7 @@ from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
 from smartsim._core.control.controller import Controller
 from smartsim._core.control.job import Job
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import PreviewFormatError
 from smartsim.settings import QsubBatchSettings, RunSettings
@@ -66,41 +66,41 @@ def preview_object(test_dir) -> t.Dict[str, Job]:
     """
     rs = RunSettings(exe="echo", exe_args="ifname=lo")
     s = SmartSimEntity(name="faux-name", path=test_dir, run_settings=rs)
-    o = Orchestrator()
+    o = FeatureStore()
     o.entity = s
-    s.db_identifier = "test_db_id"
+    s.fs_identifier = "test_fs_id"
     s.ports = [1235]
     s.num_shards = 1
     job = Job("faux-name", "faux-step-id", s, "slurm", True)
-    active_dbjobs: t.Dict[str, Job] = {"mock_job": job}
-    return active_dbjobs
+    active_fsjobs: t.Dict[str, Job] = {"mock_job": job}
+    return active_fsjobs
 
 
 @pytest.fixture
-def preview_object_multidb(test_dir) -> t.Dict[str, Job]:
+def preview_object_multifs(test_dir) -> t.Dict[str, Job]:
     """
-    Bare bones orch
+    Bare bones feature store
     """
     rs = RunSettings(exe="echo", exe_args="ifname=lo")
     s = SmartSimEntity(name="faux-name", path=test_dir, run_settings=rs)
-    o = Orchestrator()
+    o = FeatureStore()
     o.entity = s
-    s.db_identifier = "testdb_reg"
+    s.fs_identifier = "testfs_reg"
     s.ports = [8750]
     s.num_shards = 1
     job = Job("faux-name", "faux-step-id", s, "slurm", True)
 
     rs2 = RunSettings(exe="echo", exe_args="ifname=lo")
     s2 = SmartSimEntity(name="faux-name_2", path=test_dir, run_settings=rs)
-    o2 = Orchestrator()
+    o2 = FeatureStore()
     o2.entity = s2
-    s2.db_identifier = "testdb_reg2"
+    s2.fs_identifier = "testfs_reg2"
     s2.ports = [8752]
     s2.num_shards = 1
     job2 = Job("faux-name_2", "faux-step-id_2", s2, "slurm", True)
 
-    active_dbjobs: t.Dict[str, Job] = {"mock_job": job, "mock_job2": job2}
-    return active_dbjobs
+    active_fsjobs: t.Dict[str, Job] = {"mock_job": job, "mock_job2": job2}
+    return active_fsjobs
 
 
 def add_batch_resources(wlmutils, batch_settings):
@@ -140,14 +140,14 @@ def test_get_ifname_filter():
         assert output == expected_output
 
 
-def test_get_dbtype_filter():
-    """Test get_dbtype filter to extract database backend from config"""
+def test_get_fstype_filter():
+    """Test get_fstype filter to extract database backend from config"""
 
-    template_str = "{{ config | get_dbtype }}"
+    template_str = "{{ config | get_fstype }}"
     template_dict = {"ts": template_str}
     loader = jinja2.DictLoader(template_dict)
     env = jinja2.Environment(loader=loader, autoescape=True)
-    env.filters["get_dbtype"] = previewrenderer.get_dbtype
+    env.filters["get_fstype"] = previewrenderer.get_fstype
 
     t = env.get_template("ts")
     output = t.render(config=CONFIG.database_cli)
@@ -215,44 +215,44 @@ def test_experiment_preview_properties(test_dir, wlmutils):
     assert exp.launcher == summary_dict["Launcher"]
 
 
-def test_orchestrator_preview_render(test_dir, wlmutils, choose_host):
-    """Test correct preview output properties for Orchestrator preview"""
+def test_feature_store_preview_render(test_dir, wlmutils, choose_host):
+    """Test correct preview output properties for FeatureStore preview"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    exp_name = "test_orchestrator_preview_properties"
+    exp_name = "test_feature_store_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     # create regular database
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
     )
-    preview_manifest = Manifest(orc)
+    preview_manifest = Manifest(feature_store)
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
-    assert "Database Identifier" in output
+    assert "Feature Store Identifier" in output
     assert "Shards" in output
     assert "TCP/IP Port(s)" in output
     assert "Network Interface" in output
     assert "Type" in output
     assert "Executable" in output
 
-    db_path = _utils.get_db_path()
-    if db_path:
-        db_type, _ = db_path.name.split("-", 1)
+    fs_path = _utils.get_db_path()
+    if fs_path:
+        fs_type, _ = fs_path.name.split("-", 1)
 
-    assert orc.db_identifier in output
-    assert str(orc.num_shards) in output
-    assert orc._interfaces[0] in output
-    assert db_type in output
+    assert feature_store.fs_identifier in output
+    assert str(feature_store.num_shards) in output
+    assert feature_store._interfaces[0] in output
+    assert fs_type in output
     assert CONFIG.database_exe in output
-    assert orc.run_command in output
-    assert str(orc.db_nodes) in output
+    assert feature_store.run_command in output
+    assert str(feature_store.fs_nodes) in output
 
 
 def test_preview_to_file(test_dir, wlmutils):
@@ -419,8 +419,8 @@ def test_model_key_prefixing(test_dir, wlmutils):
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
-    db = exp.create_database(port=6780, interface="lo")
-    exp.generate(db, overwrite=True)
+    fs = exp.create_feature_store(port=6780, interface="lo")
+    exp.generate(fs, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     model = exp.create_application("model_test", run_settings=rs1)
 
@@ -428,7 +428,7 @@ def test_model_key_prefixing(test_dir, wlmutils):
     model.enable_key_prefixing()
     exp.generate(model, overwrite=True)
 
-    preview_manifest = Manifest(db, model)
+    preview_manifest = Manifest(fs, model)
 
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
@@ -522,8 +522,8 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
         "test-preview-ensemble-clientconfig", exp_path=test_dir, launcher=test_launcher
     )
     # Create Orchestrator
-    db = exp.create_database(port=6780, interface="lo")
-    exp.generate(db, overwrite=True)
+    fs = exp.create_feature_store(port=6780, interface="lo")
+    exp.generate(fs, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     # Create ensemble
     ensemble = exp.create_ensemble("fd_simulation", run_settings=rs1, replicas=2)
@@ -538,36 +538,36 @@ def test_ensemble_preview_client_configuration(test_dir, wlmutils):
         ml_model.register_incoming_entity(sim)
 
     exp.generate(ml_model, overwrite=True)
-    preview_manifest = Manifest(db, ml_model, ensemble)
+    preview_manifest = Manifest(fs, ml_model, ensemble)
 
     # Call preview renderer for testing output
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Client Configuration" in output
-    assert "Database Identifier" in output
-    assert "Database Backend" in output
+    assert "Feature Store Identifier" in output
+    assert "Feature Store Backend" in output
     assert "Type" in output
 
 
-def test_ensemble_preview_client_configuration_multidb(test_dir, wlmutils):
+def test_ensemble_preview_client_configuration_multifs(test_dir, wlmutils):
     """
     Test preview of client configuration and key prefixing in Ensemble preview
-    with multiple databases
+    with multiple feature stores
     """
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment(
-        "test-preview-multidb-clinet-config", exp_path=test_dir, launcher=test_launcher
+        "test-preview-multifs-clinet-config", exp_path=test_dir, launcher=test_launcher
     )
-    # Create Orchestrator
-    db1_dbid = "db_1"
-    db1 = exp.create_database(port=6780, interface="lo", db_identifier=db1_dbid)
-    exp.generate(db1, overwrite=True)
-    # Create another Orchestrator
-    db2_dbid = "db_2"
-    db2 = exp.create_database(port=6784, interface="lo", db_identifier=db2_dbid)
-    exp.generate(db2, overwrite=True)
+    # Create feature store
+    fs1_fsid = "fs_1"
+    fs1 = exp.create_feature_store(port=6780, interface="lo", fs_identifier=fs1_fsid)
+    exp.generate(fs1, overwrite=True)
+    # Create another feature store
+    fs2_fsid = "fs_2"
+    fs2 = exp.create_feature_store(port=6784, interface="lo", fs_identifier=fs2_fsid)
+    exp.generate(fs2, overwrite=True)
 
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     # Create ensemble
@@ -581,20 +581,20 @@ def test_ensemble_preview_client_configuration_multidb(test_dir, wlmutils):
     for sim in ensemble.entities:
         ml_model.register_incoming_entity(sim)
     exp.generate(ml_model, overwrite=True)
-    preview_manifest = Manifest(db1, db2, ml_model, ensemble)
+    preview_manifest = Manifest(fs1, fs2, ml_model, ensemble)
 
     # Call preview renderer for testing output
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Client Configuration" in output
-    assert "Database Identifier" in output
-    assert "Database Backend" in output
+    assert "Feature Store Identifier" in output
+    assert "Feature Store Backend" in output
     assert "TCP/IP Port(s)" in output
     assert "Type" in output
 
-    assert db1_dbid in output
-    assert db2_dbid in output
+    assert fs1_fsid in output
+    assert fs2_fsid in output
 
 
 def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
@@ -651,12 +651,12 @@ def test_ensemble_preview_attached_files(fileutils, test_dir, wlmutils):
             assert "generator_files/to_symlink_dir" in link
 
 
-def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
+def test_preview_colocated_fs_model_ensemble(fileutils, test_dir, wlmutils, mlutils):
     """
-    Test preview of DBModel on colocated ensembles
+    Test preview of FSModel on colocated ensembles
     """
 
-    exp_name = "test-preview-colocated-db-model-ensemble"
+    exp_name = "test-preview-colocated-fs-model-ensemble"
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
@@ -695,10 +695,10 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
         outputs="Identity",
     )
 
-    # Colocate a database with the first ensemble members
+    # Colocate a feature store with the first ensemble members
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db_tcp(
-            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
+        entity.colocate_fs_tcp(
+            port=test_port + i, fs_cpus=1, debug=True, ifname=test_interface
         )
         # Add ML models to each ensemble member to make sure they
         # do not conflict with other ML models
@@ -717,10 +717,10 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
     # Add another ensemble member
     colo_ensemble.add_model(colo_model)
 
-    # Colocate a database with the new ensemble member
-    colo_model.colocate_db_tcp(
+    # Colocate a feature store with the new ensemble member
+    colo_model.colocate_fs_tcp(
         port=test_port + len(colo_ensemble) - 1,
-        db_cpus=1,
+        fs_cpus=1,
         debug=True,
         ifname=test_interface,
     )
@@ -766,12 +766,12 @@ def test_preview_colocated_db_model_ensemble(fileutils, test_dir, wlmutils, mlut
     assert model_outputs in output
 
 
-def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
+def test_preview_colocated_fs_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     """
-    Test preview of DB Scripts on colocated DB from ensemble
+    Test preview of FS Scripts on colocated FS from ensemble
     """
 
-    exp_name = "test-preview-colocated-db-script"
+    exp_name = "test-preview-colocated-fs-script"
 
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
@@ -780,7 +780,7 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
 
     expected_torch_script = "torchscript.py"
-    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_fsscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path(expected_torch_script)
 
     # Create SmartSim Experiment
@@ -798,13 +798,13 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     # Create a SmartSim model
     colo_model = exp.create_application("colocated_model", colo_settings)
 
-    # Colocate a db with each ensemble entity and add a script
+    # Colocate a fs with each ensemble entity and add a script
     # to each entity via file
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
-        entity.colocate_db_tcp(
+        entity.colocate_fs_tcp(
             port=test_port + i,
-            db_cpus=1,
+            fs_cpus=1,
             debug=True,
             ifname=test_interface,
         )
@@ -817,10 +817,10 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
             first_device=0,
         )
 
-    # Colocate a db with the non-ensemble Model
-    colo_model.colocate_db_tcp(
+    # Colocate a fs with the non-ensemble Model
+    colo_model.colocate_fs_tcp(
         port=test_port + len(colo_ensemble),
-        db_cpus=1,
+        fs_cpus=1,
         debug=True,
         ifname=test_interface,
     )
@@ -850,9 +850,9 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
     )
 
     # Assert we have added one model to the ensemble
-    assert len(colo_ensemble._db_scripts) == 1
+    assert len(colo_ensemble._fs_scripts) == 1
     # Assert we have added both models to each entity
-    assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
+    assert all([len(entity._fs_scripts) == 2 for entity in colo_ensemble])
 
     exp.generate(colo_ensemble)
 
@@ -874,7 +874,7 @@ def test_preview_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlu
 
 
 def test_preview_active_infrastructure(wlmutils, test_dir, preview_object):
-    """Test active infrastructure without other orchestrators"""
+    """Test active infrastructure without other feature stores"""
 
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
@@ -883,11 +883,11 @@ def test_preview_active_infrastructure(wlmutils, test_dir, preview_object):
 
     # Execute method for template rendering
     output = previewrenderer.render(
-        exp, active_dbjobs=preview_object, verbosity_level="debug"
+        exp, active_fsjobs=preview_object, verbosity_level="debug"
     )
 
     assert "Active Infrastructure" in output
-    assert "Database Identifier" in output
+    assert "Feature Store Identifier" in output
     assert "Shards" in output
     assert "Network Interface" in output
     assert "Type" in output
@@ -899,48 +899,48 @@ def test_preview_orch_active_infrastructure(
 ):
     """
     Test correct preview output properties for active infrastructure preview
-    with other orchestrators
+    with other feature stores
     """
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    exp_name = "test_orchestrator_active_infrastructure_preview"
+    exp_name = "test_feature_store_active_infrastructure_preview"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
-    orc2 = exp.create_database(
+    feature_store2 = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
-        db_identifier="orc_2",
+        fs_identifier="fs_2",
     )
 
-    orc3 = exp.create_database(
+    feature_store3 = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
-        db_identifier="orc_3",
+        fs_identifier="fs_3",
     )
 
-    preview_manifest = Manifest(orc2, orc3)
+    preview_manifest = Manifest(feature_store2, feature_store3)
 
     # Execute method for template rendering
     output = previewrenderer.render(
-        exp, preview_manifest, active_dbjobs=preview_object, verbosity_level="debug"
+        exp, preview_manifest, active_fsjobs=preview_object, verbosity_level="debug"
     )
 
     assert "Active Infrastructure" in output
-    assert "Database Identifier" in output
+    assert "Feature Store Identifier" in output
     assert "Shards" in output
     assert "Network Interface" in output
     assert "Type" in output
     assert "TCP/IP" in output
 
 
-def test_preview_multidb_active_infrastructure(
+def test_preview_multifs_active_infrastructure(
     wlmutils, test_dir, choose_host, preview_object_multidb
 ):
-    """multiple started databases active infrastructure"""
+    """multiple started feature stores active infrastructure"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -949,32 +949,32 @@ def test_preview_multidb_active_infrastructure(
 
     # start a new Experiment for this section
     exp = Experiment(
-        "test_preview_multidb_active_infrastructure",
+        "test_preview_multifs_active_infrastructure",
         exp_path=test_dir,
         launcher=test_launcher,
     )
 
     # Execute method for template rendering
     output = previewrenderer.render(
-        exp, active_dbjobs=preview_object_multidb, verbosity_level="debug"
+        exp, active_fsjobs=preview_object_multifs, verbosity_level="debug"
     )
 
     assert "Active Infrastructure" in output
-    assert "Database Identifier" in output
+    assert "Feature Store Identifier" in output
     assert "Shards" in output
     assert "Network Interface" in output
     assert "Type" in output
     assert "TCP/IP" in output
 
-    assert "testdb_reg" in output
-    assert "testdb_reg2" in output
-    assert "Ochestrators" not in output
+    assert "testfs_reg" in output
+    assert "testfs_reg2" in output
+    assert "Feature Stores" not in output
 
 
-def test_preview_active_infrastructure_orchestrator_error(
+def test_preview_active_infrastructure_feature_store_error(
     wlmutils, test_dir, choose_host, monkeypatch: pytest.MonkeyPatch
 ):
-    """Demo error when trying to preview a started orchestrator"""
+    """Demo error when trying to preview a started feature store"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
@@ -983,56 +983,56 @@ def test_preview_active_infrastructure_orchestrator_error(
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     monkeypatch.setattr(
-        smartsim.database.orchestrator.Orchestrator, "is_active", lambda x: True
+        smartsim.database.orchestrator.FeatureStore, "is_active", lambda x: True
     )
 
-    orc = exp.create_database(
+    orc = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
-        db_identifier="orc_1",
+        fs_identifier="orc_1",
     )
 
     # Retrieve any active jobs
-    active_dbjobs = exp._control.active_orchestrator_jobs
+    active_fsjobs = exp._control.active_feature_store_jobs
 
     preview_manifest = Manifest(orc)
 
     # Execute method for template rendering
     output = previewrenderer.render(
-        exp, preview_manifest, active_dbjobs=active_dbjobs, verbosity_level="debug"
+        exp, preview_manifest, active_fsjobs=active_fsjobs, verbosity_level="debug"
     )
 
     assert "WARNING: Cannot preview orc_1, because it is already started" in output
 
 
-def test_active_orchestrator_jobs_property(
+def test_active_feature_store_jobs_property(
     wlmutils,
     test_dir,
     preview_object,
 ):
-    """Ensure db_jobs remaines unchanged after deletion
-    of active_orchestrator_jobs property stays intact when retrieving db_jobs"""
+    """Ensure fs_jobs remaines unchanged after deletion
+    of active_feature_store_jobs property stays intact when retrieving fs_jobs"""
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
 
     # start a new Experiment for this section
     exp = Experiment(
-        "test-active_orchestrator_jobs-property",
+        "test-active_feature_store_jobs-property",
         exp_path=test_dir,
         launcher=test_launcher,
     )
 
     controller = Controller()
-    controller._jobs.db_jobs = preview_object
+    controller._jobs.fs_jobs = preview_object
 
     # Modify the returned job collection
-    active_orchestrator_jobs = exp._control.active_orchestrator_jobs
-    active_orchestrator_jobs["test"] = "test_value"
+    active_feature_store_jobs = exp._control.active_feature_store_jobs
+    active_feature_store_jobs["test"] = "test_value"
 
     # Verify original collection is not also modified
-    assert not exp._control.active_orchestrator_jobs.get("test", None)
+    assert not exp._control.active_feature_store_jobs.get("test", None)
 
 
 def test_verbosity_info_ensemble(test_dir, wlmutils):
@@ -1067,14 +1067,14 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     assert "echo_ensemble_1" not in output
 
 
-def test_verbosity_info_colocated_db_model_ensemble(
+def test_verbosity_info_colocated_fs_model_ensemble(
     fileutils, test_dir, wlmutils, mlutils
 ):
-    """Test preview of DBModel on colocated ensembles, first adding the DBModel to the
-    ensemble, then colocating DB.
+    """Test preview of FSModel on colocated ensembles, first adding the FSModel to the
+    ensemble, then colocating FS.
     """
 
-    exp_name = "test-colocated-db-model-ensemble-reordered"
+    exp_name = "test-colocated-fs-model-ensemble-reordered"
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
@@ -1113,10 +1113,10 @@ def test_verbosity_info_colocated_db_model_ensemble(
         outputs="Identity",
     )
 
-    # Colocate a database with the first ensemble members
+    # Colocate a feature store with the first ensemble members
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db_tcp(
-            port=test_port + i, db_cpus=1, debug=True, ifname=test_interface
+        entity.colocate_fs_tcp(
+            port=test_port + i, fs_cpus=1, debug=True, ifname=test_interface
         )
         # Add ML models to each ensemble member to make sure they
         # do not conflict with other ML models
@@ -1135,10 +1135,10 @@ def test_verbosity_info_colocated_db_model_ensemble(
     # Add another ensemble member
     colo_ensemble.add_model(colo_model)
 
-    # Colocate a database with the new ensemble member
-    colo_model.colocate_db_tcp(
+    # Colocate a feature store with the new ensemble member
+    colo_model.colocate_fs_tcp(
         port=test_port + len(colo_ensemble) - 1,
-        db_cpus=1,
+        fs_cpus=1,
         debug=True,
         ifname=test_interface,
     )
@@ -1169,21 +1169,21 @@ def test_verbosity_info_colocated_db_model_ensemble(
     assert "Devices Per Node" not in output
 
 
-def test_verbosity_info_orchestrator(test_dir, wlmutils, choose_host):
-    """Test correct preview output properties for Orchestrator preview"""
+def test_verbosity_info_feature_store(test_dir, wlmutils, choose_host):
+    """Test correct preview output properties for feature store preview"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    exp_name = "test_orchestrator_preview_properties"
+    exp_name = "test_feature_store_preview_properties"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    # create regular database
-    orc = exp.create_database(
+    # create regular feature store
+    feature_store = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
     )
-    preview_manifest = Manifest(orc)
+    preview_manifest = Manifest(feature_store)
 
     # Execute method for template rendering
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
@@ -1200,9 +1200,9 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment("key_prefix_test", exp_path=test_dir, launcher=test_launcher)
-    # Create Orchestrator
-    db = exp.create_database(port=6780, interface="lo")
-    exp.generate(db, overwrite=True)
+    # Create feature store
+    fs = exp.create_feature_store(port=6780, interface="lo")
+    exp.generate(fs, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     # Create ensemble
     ensemble = exp.create_ensemble("fd_simulation", run_settings=rs1, replicas=2)
@@ -1217,7 +1217,7 @@ def test_verbosity_info_ensemble(test_dir, wlmutils):
         ml_model.register_incoming_entity(sim)
 
     exp.generate(ml_model, overwrite=True)
-    preview_manifest = Manifest(db, ml_model, ensemble)
+    preview_manifest = Manifest(fs, ml_model, ensemble)
 
     # Call preview renderer for testing output
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="info")
@@ -1268,8 +1268,8 @@ def test_check_verbosity_level():
     exp.preview(verbosity_level="info")
 
 
-def test_preview_colocated_db_singular_model(wlmutils, test_dir):
-    """Test preview behavior when a colocated db is only added to
+def test_preview_colocated_fs_singular_model(wlmutils, test_dir):
+    """Test preview behavior when a colocated fs is only added to
     one model. The expected behviour is that both models are colocated
     """
 
@@ -1282,7 +1282,7 @@ def test_preview_colocated_db_singular_model(wlmutils, test_dir):
     model_1 = exp.create_application("model_1", run_settings=rs)
     model_2 = exp.create_application("model_2", run_settings=rs)
 
-    model_1.colocate_db()
+    model_1.colocate_fs()
 
     exp.generate(model_1, model_2, overwrite=True)
 
@@ -1296,7 +1296,7 @@ def test_preview_colocated_db_singular_model(wlmutils, test_dir):
     assert "Client Configuration" in output
 
 
-def test_preview_db_script(wlmutils, test_dir):
+def test_preview_fs_script(wlmutils, test_dir):
     """
     Test preview of model instance with a torch script.
     """
@@ -1310,7 +1310,7 @@ def test_preview_db_script(wlmutils, test_dir):
 
     # Initialize a Model object
     model_instance = exp.create_application("model_name", model_settings)
-    model_instance.colocate_db_tcp()
+    model_instance.colocate_fs_tcp()
 
     # TorchScript string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"

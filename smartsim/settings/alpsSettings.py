@@ -62,7 +62,7 @@ class AprunSettings(RunSettings):
 
         :param settings: ``AprunSettings`` instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
                 "Colocated applications cannot be run as a mpmd workload"
             )

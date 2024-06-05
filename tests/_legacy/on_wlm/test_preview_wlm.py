@@ -33,7 +33,7 @@ from jinja2.filters import FILTERS
 from smartsim import Experiment
 from smartsim._core import Manifest, previewrenderer
 from smartsim._core.config import CONFIG
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.settings import QsubBatchSettings, RunSettings
 
 pytestmark = pytest.mark.slow_tests
@@ -62,44 +62,44 @@ def add_batch_resources(wlmutils, batch_settings):
     pytest.test_launcher not in pytest.wlm_options,
     reason="Not testing WLM integrations",
 )
-def test_preview_wlm_run_commands_cluster_orc_model(
+def test_preview_wlm_run_commands_cluster_feature_store_model(
     test_dir, coloutils, fileutils, wlmutils
 ):
     """
     Test preview of wlm run command and run aruguments on a
-    orchestrator and model
+    feature store and model
     """
 
-    exp_name = "test-preview-orc-model"
+    exp_name = "test-preview-feature-store-model"
     launcher = wlmutils.get_test_launcher()
     test_port = wlmutils.get_test_port()
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     network_interface = wlmutils.get_test_interface()
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface=network_interface,
         single_cmd=True,
         hosts=wlmutils.get_test_hostlist(),
-        db_identifier="testdb_reg",
+        fs_identifier="testfs_reg",
     )
 
-    db_args = {
+    fs_args = {
         "port": test_port,
-        "db_cpus": 1,
+        "fs_cpus": 1,
         "debug": True,
-        "db_identifier": "testdb_colo",
+        "fs_identifier": "testfs_colo",
     }
 
     # Create model with colocated database
     smartsim_model = coloutils.setup_test_colo(
-        fileutils, "uds", exp, test_script, db_args, on_wlm=on_wlm
+        fileutils, "uds", exp, test_script, fs_args, on_wlm=on_wlm
     )
 
-    preview_manifest = Manifest(orc, smartsim_model)
+    preview_manifest = Manifest(feature_store, smartsim_model)
 
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
@@ -216,7 +216,7 @@ def test_preview_batch_ensemble(fileutils, test_dir, wlmutils):
     reason="Not testing WLM integrations",
 )
 def test_preview_launch_command(test_dir, wlmutils, choose_host):
-    """Test preview launch command for orchestrator, models, and
+    """Test preview launch command for feature store, models, and
     ensembles"""
     # Prepare entities
     test_launcher = wlmutils.get_test_launcher()
@@ -225,7 +225,7 @@ def test_preview_launch_command(test_dir, wlmutils, choose_host):
     exp_name = "test_preview_launch_command"
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
     # create regular database
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         port=test_port,
         interface=test_interface,
         hosts=choose_host(wlmutils),
@@ -256,12 +256,14 @@ def test_preview_launch_command(test_dir, wlmutils, choose_host):
         n_models=4,
     )
 
-    preview_manifest = Manifest(orc, spam_eggs_model, hello_world_model, ensemble)
+    preview_manifest = Manifest(
+        feature_store, spam_eggs_model, hello_world_model, ensemble
+    )
 
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
-    assert "orchestrator" in output
+    assert "feature store" in output
     assert "echo-spam" in output
     assert "echo-hello" in output
 
@@ -293,17 +295,17 @@ def test_preview_batch_launch_command(fileutils, test_dir, wlmutils):
     )
     model.set_path(test_dir)
 
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=True,
         interface="lo",
         launcher="slurm",
         run_command="srun",
     )
-    orc.set_batch_arg("account", "ACCOUNT")
+    feature_store.set_batch_arg("account", "ACCOUNT")
 
-    preview_manifest = Manifest(orc, model)
+    preview_manifest = Manifest(feature_store, model)
     # Execute preview method
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
@@ -326,9 +328,9 @@ def test_ensemble_batch(test_dir, wlmutils):
     exp = Experiment(
         "test-preview-ensemble-clientconfig", exp_path=test_dir, launcher=test_launcher
     )
-    # Create Orchestrator
-    db = exp.create_database(port=6780, interface="lo")
-    exp.generate(db, overwrite=True)
+    # Create feature store
+    fs = exp.create_feature_store(port=6780, interface="lo")
+    exp.generate(fs, overwrite=True)
     rs1 = exp.create_run_settings("echo", ["hello", "world"])
     # Create ensemble
     batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
@@ -349,15 +351,15 @@ def test_ensemble_batch(test_dir, wlmutils):
 
     exp.generate(ml_model, overwrite=True)
 
-    preview_manifest = Manifest(db, ml_model, ensemble)
+    preview_manifest = Manifest(fs, ml_model, ensemble)
 
     # Call preview renderer for testing output
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")
 
     # Evaluate output
     assert "Client Configuration" in output
-    assert "Database Identifier" in output
-    assert "Database Backend" in output
+    assert "Feature Store Identifier" in output
+    assert "Feature Store Backend" in output
     assert "Type" in output
 
 
@@ -365,7 +367,7 @@ def test_ensemble_batch(test_dir, wlmutils):
     pytest.test_launcher not in pytest.wlm_options,
     reason="Not testing WLM integrations",
 )
-def test_preview_ensemble_db_script(wlmutils, test_dir):
+def test_preview_ensemble_fs_script(wlmutils, test_dir):
     """
     Test preview of a torch script on a model in an ensemble.
     """
@@ -373,8 +375,8 @@ def test_preview_ensemble_db_script(wlmutils, test_dir):
     test_launcher = wlmutils.get_test_launcher()
     exp = Experiment("getting-started", launcher=test_launcher)
 
-    orch = exp.create_database(db_identifier="test_db1")
-    orch_2 = exp.create_database(db_identifier="test_db2", db_nodes=3)
+    feature_store = exp.create_feature_store(fs_identifier="test_fs1")
+    feature_store_2 = exp.create_feature_store(fs_identifier="test_fs2", fs_nodes=3)
     # Initialize a RunSettings object
     model_settings = exp.create_run_settings(exe="python", exe_args="params.py")
     model_settings_2 = exp.create_run_settings(exe="python", exe_args="params.py")
@@ -400,7 +402,7 @@ def test_preview_ensemble_db_script(wlmutils, test_dir):
         devices_per_node=2,
         first_device=0,
     )
-    preview_manifest = Manifest(ensemble, orch, orch_2)
+    preview_manifest = Manifest(ensemble, feature_store, feature_store_2)
 
     # Call preview renderer for testing output
     output = previewrenderer.render(exp, preview_manifest, verbosity_level="debug")

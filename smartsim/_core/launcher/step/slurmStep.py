@@ -29,7 +29,7 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
-from ....entity import Application, DBNode, Ensemble
+from ....entity import Application, Ensemble, FSNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 class SbatchStep(Step):
     def __init__(
-        self, entity: t.Union[Application, DBNode], batch_settings: SbatchSettings
+        self, entity: t.Union[Application, FSNode], batch_settings: SbatchSettings
     ) -> None:
         """Initialize a Slurm Sbatch step
 
@@ -102,7 +102,7 @@ class SbatchStep(Step):
 
 class SrunStep(Step):
     def __init__(
-        self, entity: t.Union[Application, DBNode], run_settings: SrunSettings
+        self, entity: t.Union[Application, FSNode], run_settings: SrunSettings
     ) -> None:
         """Initialize a srun job step
 
@@ -146,7 +146,7 @@ class SrunStep(Step):
 
         srun_cmd += self.run_settings.format_run_args()
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             if not bash:
@@ -190,7 +190,7 @@ class SrunStep(Step):
         return self.run_settings.mpmd
 
     @staticmethod
-    def _get_exe_args_list(entity: t.Union[Application, DBNode]) -> t.List[str]:
+    def _get_exe_args_list(entity: t.Union[Application, FSNode]) -> t.List[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """

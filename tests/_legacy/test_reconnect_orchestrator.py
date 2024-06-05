@@ -30,7 +30,7 @@ import time
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
@@ -39,22 +39,22 @@ pytestmark = pytest.mark.group_b
 
 first_dir = ""
 
-# TODO ensure database is shutdown
+# TODO ensure feature store is shutdown
 # use https://stackoverflow.com/questions/22627659/run-code-before-and-after-each-test-in-py-test
 
 
-def test_local_orchestrator(test_dir, wlmutils):
-    """Test launching orchestrator locally"""
+def test_local_feature_store(test_dir, wlmutils):
+    """Test launching feature store locally"""
     global first_dir
-    exp_name = "test-orc-launch-local"
+    exp_name = "test-feature-store-launch-local"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     first_dir = test_dir
 
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    orc.set_path(osp.join(test_dir, "orchestrator"))
+    feature_store = FeatureStore(port=wlmutils.get_test_port())
+    feature_store.set_path(osp.join(test_dir, "feature_store"))
 
-    exp.start(orc)
-    statuses = exp.get_status(orc)
+    exp.start(feature_store)
+    statuses = exp.get_status(feature_store)
     assert [stat != SmartSimStatus.STATUS_FAILED for stat in statuses]
 
     # simulate user shutting down main thread
@@ -62,22 +62,23 @@ def test_local_orchestrator(test_dir, wlmutils):
     exp._control._launcher.task_manager.actively_monitoring = False
 
 
-def test_reconnect_local_orc(test_dir):
-    """Test reconnecting to orchestrator from first experiment"""
+def test_reconnect_local_feature_store(test_dir):
+    """Test reconnecting to feature store from first experiment"""
     global first_dir
     # start new experiment
-    exp_name = "test-orc-local-reconnect-2nd"
+    exp_name = "test-feature-store-local-reconnect-2nd"
     exp_2 = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
-    checkpoint = osp.join(first_dir, "orchestrator", "smartsim_db.dat")
-    reloaded_orc = exp_2.reconnect_orchestrator(checkpoint)
+    checkpoint = osp.join(first_dir, "feature_store", "smartsim_db.dat")
+
+    reloaded_feature_store = exp_2.reconnect_feature_store(checkpoint)
 
     # let statuses update once
     time.sleep(5)
 
-    statuses = exp_2.get_status(reloaded_orc)
+    statuses = exp_2.get_status(reloaded_feature_store)
     for stat in statuses:
         if stat == SmartSimStatus.STATUS_FAILED:
-            exp_2.stop(reloaded_orc)
+            exp_2.stop(reloaded_feature_store)
             assert False
-    exp_2.stop(reloaded_orc)
+    exp_2.stop(reloaded_feature_store)

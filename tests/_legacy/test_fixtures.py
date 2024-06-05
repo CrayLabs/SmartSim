@@ -29,7 +29,7 @@ import psutil
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 
@@ -37,20 +37,20 @@ from smartsim.error.errors import SSUnsupportedError
 pytestmark = pytest.mark.group_a
 
 
-def test_db_fixtures(local_experiment, local_db, prepare_db):
-    db = prepare_db(local_db).orchestrator
-    local_experiment.reconnect_orchestrator(db.checkpoint_file)
-    assert db.is_active()
-    local_experiment.stop(db)
+def test_db_fixtures(local_experiment, local_fs, prepare_fs):
+    fs = prepare_fs(local_fs).featurestore
+    local_experiment.reconnect_feature_store(fs.checkpoint_file)
+    assert fs.is_active()
+    local_experiment.stop(fs)
 
 
-def test_create_new_db_fixture_if_stopped(local_experiment, local_db, prepare_db):
+def test_create_new_fs_fixture_if_stopped(local_experiment, local_fs, prepare_fs):
     # Run this twice to make sure that there is a stopped database
-    output = prepare_db(local_db)
-    local_experiment.reconnect_orchestrator(output.orchestrator.checkpoint_file)
-    local_experiment.stop(output.orchestrator)
+    output = prepare_fs(local_fs)
+    local_experiment.reconnect_feature_store(output.featurestore.checkpoint_file)
+    local_experiment.stop(output.featurestore)
 
-    output = prepare_db(local_db)
-    assert output.new_db
-    local_experiment.reconnect_orchestrator(output.orchestrator.checkpoint_file)
-    assert output.orchestrator.is_active()
+    output = prepare_fs(local_fs)
+    assert output.new_fs
+    local_experiment.reconnect_feature_store(output.featurestore.checkpoint_file)
+    assert output.featurestore.is_active()

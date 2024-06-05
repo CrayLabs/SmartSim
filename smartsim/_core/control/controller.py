@@ -45,16 +45,16 @@ from smartsim._core.utils.network import get_ip_from_host
 from ..._core.launcher.step import Step
 from ..._core.utils.helpers import (
     SignalInterceptionStack,
-    unpack_colo_db_identifier,
-    unpack_db_identifier,
+    unpack_colo_fs_identifier,
+    unpack_fs_identifier,
 )
 from ..._core.utils.redis import (
-    db_is_active,
+    fs_is_active,
     set_ml_model,
     set_script,
-    shutdown_db_node,
+    shutdown_fs_node,
 )
-from ...database import Orchestrator
+from ...database import FeatureStore
 from ...entity import Application, Ensemble, EntitySequence, SmartSimEntity
 from ...error import (
     LauncherError,
@@ -144,21 +144,21 @@ class Controller:
             launched.map(_look_up_launched_data(self._launcher))
         )
 
-        # block until all non-database jobs are complete
+        # block until all non-feature store jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
             # it may be called separately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
-    def active_orchestrator_jobs(self) -> t.Dict[str, Job]:
-        """Return active orchestrator jobs."""
-        return {**self._jobs.db_jobs}
+    def active_feature_store_jobs(self) -> t.Dict[str, Job]:
+        """Return active feature store jobs."""
+        return {**self._jobs.fs_jobs}
 
     @property
-    def orchestrator_active(self) -> bool:
+    def feature_store_active(self) -> bool:
         with JM_LOCK:
-            if len(self._jobs.db_jobs) > 0:
+            if len(self._jobs.fs_jobs) > 0:
                 return True
             return False
 
@@ -193,8 +193,8 @@ class Controller:
         :raises ValueError: if entity has not been launched yet
         """
         try:
-            if isinstance(entity, Orchestrator):
-                raise TypeError("Finished() does not support Orchestrator instances")
+            if isinstance(entity, FeatureStore):
+                raise TypeError("Finished() does not support FeatureStore instances")
             if isinstance(entity, EntitySequence):
                 return all(self.finished(ent) for ent in entity.entities)
             if not isinstance(entity, SmartSimEntity):
@@ -243,21 +243,21 @@ class Controller:
                 )
                 self._jobs.move_to_completed(job)
 
-    def stop_db(self, db: Orchestrator) -> None:
-        """Stop an orchestrator
+    def stop_fs(self, fs: FeatureStore) -> None:
+        """Stop an FeatureStore
 
-        :param db: orchestrator to be stopped
+        :param fs: FeatureStore to be stopped
         """
-        if db.batch:
-            self.stop_entity(db)
+        if fs.batch:
+            self.stop_entity(fs)
         else:
             with JM_LOCK:
-                for node in db.entities:
+                for node in fs.entities:
                     for host_ip, port in itertools.product(
-                        (get_ip_from_host(host) for host in node.hosts), db.ports
+                        (get_ip_from_host(host) for host in node.hosts), fs.ports
                     ):
-                        retcode, _, _ = shutdown_db_node(host_ip, port)
-                        # Sometimes the DB will not shutdown (unless we force NOSAVE)
+                        retcode, _, _ = shutdown_fs_node(host_ip, port)
+                        # Sometimes the fs will not shutdown (unless we force NOSAVE)
                         if retcode != 0:
                             self.stop_entity(node)
                             continue
@@ -272,7 +272,7 @@ class Controller:
                         )
                         self._jobs.move_to_completed(job)
 
-        db.reset_hosts()
+        fs.reset_hosts()
 
     def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
         """Stop an instance of an entity list
@@ -397,8 +397,8 @@ class Controller:
     ) -> LaunchedManifest[t.Tuple[str, Step]]:
         """Main launching function of the controller
 
-        Orchestrators are always launched first so that the
-        address of the database can be given to following entities
+        FeatureStores are always launched first so that the
+        address of the feature store can be given to following entities
 
         :param exp_name: The name of the launching experiment
         :param exp_path: path to location of ``Experiment`` directory if generated
@@ -410,27 +410,27 @@ class Controller:
             exp_path=exp_path,
             launcher_name=str(self._launcher),
         )
-        # Loop over deployables to launch and launch multiple orchestrators
-        for orchestrator in manifest.dbs:
-            for key in self._jobs.get_db_host_addresses():
-                _, db_id = unpack_db_identifier(key, "_")
-                if orchestrator.db_identifier == db_id:
+        # Loop over deployables to launch and launch multiple FeatureStores
+        for featurestore in manifest.fss:
+            for key in self._jobs.get_fs_host_addresses():
+                _, fs_id = unpack_fs_identifier(key, "_")
+                if featurestore.fs_identifier == fs_id:
                     raise SSDBIDConflictError(
-                        f"Database identifier {orchestrator.db_identifier}"
+                        f"Feature store identifier {featurestore.fs_identifier}"
                         " has already been used. Pass in a unique"
-                        " name for db_identifier"
+                        " name for fs_identifier"
                     )
 
-            if orchestrator.num_shards > 1 and isinstance(
+            if featurestore.num_shards > 1 and isinstance(
                 self._launcher, LocalLauncher
             ):
                 raise SmartSimError(
-                    "Local launcher does not support multi-host orchestrators"
+                    "Local launcher does not support multi-host feature stores"
                 )
-            self._launch_orchestrator(orchestrator, manifest_builder)
+            self._launch_feature_store(featurestore, manifest_builder)
 
-        if self.orchestrator_active:
-            self._set_dbobjects(manifest)
+        if self.feature_store_active:
+            self._set_fsobjects(manifest)
 
         # create all steps prior to launch
         steps: t.List[
@@ -498,70 +498,80 @@ class Controller:
 
         return manifest_builder.finalize()
 
-    def _launch_orchestrator(
+    def _launch_feature_store(
         self,
-        orchestrator: Orchestrator,
+        featurestore: FeatureStore,
         manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
     ) -> None:
-        """Launch an Orchestrator instance
+        """Launch an FeatureStore instance
 
-        This function will launch the Orchestrator instance and
+        This function will launch the FeatureStore instance and
         if on WLM, find the nodes where it was launched and
         set them in the JobManager
 
-        :param orchestrator: orchestrator to launch
+        :param featurestore: FeatureStore to launch
         :param manifest_builder: An `LaunchedManifestBuilder` to record the
-                                 names and `Step`s of the launched orchestrator
+                                 names and `Step`s of the launched featurestore
         """
-        orchestrator.remove_stale_files()
-        orc_telem_dir = manifest_builder.run_telemetry_subdirectory / "database"
+        featurestore.remove_stale_files()
+        feature_store_telem_dir = (
+            manifest_builder.run_telemetry_subdirectory / "database"
+        )
 
-        # if the orchestrator was launched as a batch workload
-        if orchestrator.batch:
-            orc_batch_step, substeps = self._create_batch_job_step(
-                orchestrator, orc_telem_dir
+        # if the featurestore was launched as a batch workload
+        if featurestore.batch:
+            feature_store_batch_step, substeps = self._create_batch_job_step(
+                featurestore, feature_store_telem_dir
             )
-            manifest_builder.add_database(
-                orchestrator, [(orc_batch_step.name, step) for step in substeps]
+            manifest_builder.add_feature_store(
+                featurestore,
+                [(feature_store_batch_step.name, step) for step in substeps],
             )
 
-            self._launch_step(orc_batch_step, orchestrator)
-            self.symlink_output_files(orc_batch_step, orchestrator)
+            self._launch_step(feature_store_batch_step, featurestore)
+            self.symlink_output_files(feature_store_batch_step, featurestore)
 
             # symlink substeps to maintain directory structure
-            for substep, substep_entity in zip(substeps, orchestrator.entities):
+            for substep, substep_entity in zip(substeps, featurestore.entities):
                 self.symlink_output_files(substep, substep_entity)
 
-        # if orchestrator was run on existing allocation, locally, or in allocation
+        # if featurestore was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [
-                (self._create_job_step(db, orc_telem_dir / orchestrator.name), db)
-                for db in orchestrator.entities
+            fs_steps = [
+                (
+                    self._create_job_step(
+                        fs, feature_store_telem_dir / featurestore.name
+                    ),
+                    fs,
+                )
+                for fs in featurestore.entities
             ]
-            manifest_builder.add_database(
-                orchestrator, [(step.name, step) for step, _ in db_steps]
+            manifest_builder.add_feature_store(
+                featurestore, [(step.name, step) for step, _ in fs_steps]
             )
-            for db_step in db_steps:
-                self._launch_step(*db_step)
-                self.symlink_output_files(*db_step)
+            for fs_step in fs_steps:
+                self._launch_step(*fs_step)
+                self.symlink_output_files(*fs_step)
 
-        # wait for orchestrator to spin up
-        self._orchestrator_launch_wait(orchestrator)
+        # wait for featurestore to spin up
+        self._feature_store_launch_wait(featurestore)
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
-        self._jobs.set_db_hosts(orchestrator)
+        self._jobs.set_fs_hosts(featurestore)
 
-        # create the database cluster
-        if orchestrator.num_shards > 2:
+        # create the feature store cluster
+        if featurestore.num_shards > 2:
             num_trials = 5
             cluster_created = False
             while not cluster_created:
                 try:
-                    create_cluster(orchestrator.hosts, orchestrator.ports)
-                    check_cluster_status(orchestrator.hosts, orchestrator.ports)
-                    num_shards = orchestrator.num_shards
-                    logger.info(f"Database cluster created with {num_shards} shards")
+                    create_cluster(featurestore.hosts, featurestore.ports)
+                    check_cluster_status(featurestore.hosts, featurestore.ports)
+                    num_shards = featurestore.num_shards
+                    logger.info(
+                        f"Feature store cluster created with {num_shards} shards"
+                    )
                     cluster_created = True
                 except SSInternalError:
                     if num_trials > 0:
@@ -573,8 +583,8 @@ class Controller:
                     else:
                         # surface SSInternalError as we have no way to recover
                         raise
-        self._save_orchestrator(orchestrator)
-        logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
+        self._save_feature_store(featurestore)
+        logger.debug(f"FeatureStore launched on nodes: {featurestore.hosts}")
 
     def _launch_step(
         self,
@@ -591,10 +601,10 @@ class Controller:
         completed_job = self._jobs.completed.get(entity.name, None)
 
         # if completed job DNE and is the entity name is not
-        # running in JobManager.jobs or JobManager.db_jobs,
+        # running in JobManager.jobs or JobManager.fs_jobs,
         # launch the job
         if completed_job is None and (
-            entity.name not in self._jobs.jobs and entity.name not in self._jobs.db_jobs
+            entity.name not in self._jobs.jobs and entity.name not in self._jobs.fs_jobs
         ):
             try:
                 job_id = self._launcher.run(job_step)
@@ -636,7 +646,7 @@ class Controller:
 
     def _create_batch_job_step(
         self,
-        entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob],
+        entity_list: t.Union[FeatureStore, Ensemble, _AnonymousBatchJob],
         telemetry_dir: pathlib.Path,
     ) -> t.Tuple[Step, t.List[Step]]:
         """Use launcher to create batch job step
@@ -695,16 +705,16 @@ class Controller:
         :param entity: The entity to retrieve connections from
         """
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._jobs.get_fs_host_addresses()
 
-        for db_id, addresses in address_dict.items():
-            db_name, _ = unpack_db_identifier(db_id, "_")
+        for fs_id, addresses in address_dict.items():
+            fs_name, _ = unpack_fs_identifier(fs_id, "_")
             if addresses:
                 # Cap max length of SSDB
-                client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
+                client_env[f"SSDB{fs_name}"] = ",".join(addresses[:128])
 
                 # Retrieve num_shards to append to client env
-                client_env[f"SR_DB_TYPE{db_name}"] = (
+                client_env[f"SR_fs_TYPE{fs_name}"] = (
                     CLUSTERED if len(addresses) > 1 else STANDALONE
                 )
 
@@ -716,20 +726,20 @@ class Controller:
             client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated application
-        if entity.colocated and entity.run_settings.colocated_db_settings is not None:
-            db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
-            assert isinstance(db_name_colo, str)
+        if entity.colocated and entity.run_settings.colocated_fs_settings is not None:
+            fs_name_colo = entity.run_settings.colocated_fs_settings["fs_identifier"]
+            assert isinstance(fs_name_colo, str)
             for key in address_dict:
-                _, db_id = unpack_db_identifier(key, "_")
-                if db_name_colo == db_id:
+                _, fs_id = unpack_fs_identifier(key, "_")
+                if fs_name_colo == fs_id:
                     raise SSDBIDConflictError(
-                        f"Database identifier {db_name_colo}"
+                        f"Feature store identifier {fs_name_colo}"
                         " has already been used. Pass in a unique"
-                        " name for db_identifier"
+                        " name for fs_identifier"
                     )
 
-            db_name_colo = unpack_colo_db_identifier(db_name_colo)
-            if colo_cfg := entity.run_settings.colocated_db_settings:
+            fs_name_colo = unpack_colo_fs_identifier(fs_name_colo)
+            if colo_cfg := entity.run_settings.colocated_fs_settings:
                 port = colo_cfg.get("port", None)
                 socket = colo_cfg.get("unix_socket", None)
                 if socket and port:
@@ -737,62 +747,81 @@ class Controller:
                         "Co-located was configured for both TCP/IP and UDS"
                     )
                 if port:
-                    client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
+                    client_env[f"SSDB{fs_name_colo}"] = f"127.0.0.1:{str(port)}"
                 elif socket:
-                    client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
+                    client_env[f"SSDB{fs_name_colo}"] = f"unix://{socket}"
                 else:
                     raise SSInternalError(
-                        "Colocated database was not configured for either TCP or UDS"
+                        "Colocated feature store was not configured for either TCP or UDS"
                     )
-                client_env[f"SR_DB_TYPE{db_name_colo}"] = STANDALONE
+                client_env[f"SR_fs_TYPE{fs_name_colo}"] = STANDALONE
         entity.run_settings.update_env(client_env)
 
-    def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
-        """Save the orchestrator object via pickle
+    def _save_feature_store(self, feature_store: FeatureStore) -> None:
+        """Save the FeatureStore object via pickle
 
-        This function saves the orchestrator information to a pickle
+        This function saves the feature store information to a pickle
         file that can be imported by subsequent experiments to reconnect
-        to the orchestrator.
+        to the featurestore.
 
-        :param orchestrator: Orchestrator configuration to be saved
+        :param featurestore: FeatureStore configuration to be saved
         """
 
-        if not orchestrator.is_active():
-            raise Exception("Orchestrator is not running")
+        if not feature_store.is_active():
+            raise Exception("Feature store is not running")
 
-        # Extract only the db_jobs associated with this particular orchestrator
-        if orchestrator.batch:
-            job_names = [orchestrator.name]
+        # Extract only the fs_jobs associated with this particular feature store
+        if feature_store.batch:
+            job_names = [feature_store.name]
         else:
-            job_names = [dbnode.name for dbnode in orchestrator.entities]
-        db_jobs = {
-            name: job for name, job in self._jobs.db_jobs.items() if name in job_names
+            job_names = [fsnode.name for fsnode in feature_store.entities]
+        fs_jobs = {
+            name: job for name, job in self._jobs.fs_jobs.items() if name in job_names
         }
 
         # Extract the associated steps
         steps = [
-            self._launcher.step_mapping[db_job.name] for db_job in db_jobs.values()
+            self._launcher.step_mapping[fs_job.name] for fs_job in fs_jobs.values()
         ]
 
-        orc_data = {"db": orchestrator, "db_jobs": db_jobs, "steps": steps}
+        feature_store_data = {"fs": feature_store, "fs_jobs": fs_jobs, "steps": steps}
 
-        with open(orchestrator.checkpoint_file, "wb") as pickle_file:
-            pickle.dump(orc_data, pickle_file)
+        with open(feature_store.checkpoint_file, "wb") as pickle_file:
+            pickle.dump(feature_store_data, pickle_file)
 
-    def _orchestrator_launch_wait(self, orchestrator: Orchestrator) -> None:
-        """Wait for the orchestrator instances to run
+        # Extract only the fs_jobs associated with this particular featurestore
+        if feature_store.batch:
+            job_names = [feature_store.name]
+        else:
+            job_names = [fsnode.name for fsnode in feature_store.entities]
+        fs_jobs = {
+            name: job for name, job in self._jobs.fs_jobs.items() if name in job_names
+        }
 
-        In the case where the orchestrator is launched as a batch
-        through a WLM, we wait for the orchestrator to exit the
+        # Extract the associated steps
+        steps = [
+            self._launcher.step_mapping[fs_job.name] for fs_job in fs_jobs.values()
+        ]
+
+        feature_store_data = {"fs": feature_store, "fs_jobs": fs_jobs, "steps": steps}
+
+        with open(feature_store.checkpoint_file, "wb") as pickle_file:
+            pickle.dump(feature_store_data, pickle_file)
+
+    def _feature_store_launch_wait(self, featurestore: FeatureStore) -> None:
+        """Wait for the featurestore instances to run
+
+        In the case where the featurestore is launched as a batch
+        through a WLM, we wait for the featurestore to exit the
         queue before proceeding so new launched entities can
         be launched with SSDB address
 
-        :param orchestrator: orchestrator instance
+        :param featurestore: FeatureStore instance
         :raises SmartSimError: if launch fails or manually stopped by user
         """
-        if orchestrator.batch:
-            logger.info("Orchestrator launched as a batch")
-            logger.info("While queued, SmartSim will wait for Orchestrator to run")
+        if featurestore.batch:
+            logger.info("FeatureStore launched as a batch")
+            logger.info("While queued, SmartSim will wait for FeatureStore to run")
             logger.info("CTRL+C interrupt to abort and cancel launch")
 
         ready = False
@@ -804,20 +833,20 @@ class Controller:
                     self._jobs.check_jobs()
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
-                statuses = self.get_entity_list_status(orchestrator)
+                statuses = self.get_entity_list_status(featurestore)
                 if all(stat == SmartSimStatus.STATUS_RUNNING for stat in statuses):
                     ready = True
                     # TODO: Add a node status check
                 elif any(stat in TERMINAL_STATUSES for stat in statuses):
-                    self.stop_db(orchestrator)
-                    msg = "Orchestrator failed during startup"
-                    msg += f" See {orchestrator.path} for details"
+                    self.stop_fs(featurestore)
+                    msg = "FeatureStore failed during startup"
+                    msg += f" See {featurestore.path} for details"
                     raise SmartSimError(msg)
                 else:
-                    logger.debug("Waiting for orchestrator instances to spin up...")
+                    logger.debug("Waiting for featurestore instances to spin up...")
             except KeyboardInterrupt:
-                logger.info("Orchestrator launch cancelled - requesting to stop")
-                self.stop_db(orchestrator)
+                logger.info("FeatureStore launch cancelled - requesting to stop")
+                self.stop_fs(featurestore)
 
                 # re-raise keyboard interrupt so the job manager will display
                 # any running and un-killed jobs as this method is only called
@@ -825,82 +854,82 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_db(
+    def reload_saved_fs(
         self, checkpoint_file: t.Union[str, os.PathLike[str]]
-    ) -> Orchestrator:
+    ) -> FeatureStore:
         with JM_LOCK:
 
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(
-                    f"The SmartSim database config file {os.fspath(checkpoint_file)} "
+                    f"The SmartSim feature store config file {os.fspath(checkpoint_file)} "
                     "cannot be found."
                 )
 
             try:
                 with open(checkpoint_file, "rb") as pickle_file:
-                    db_config = pickle.load(pickle_file)
+                    fs_config = pickle.load(pickle_file)
             except (OSError, IOError) as e:
-                msg = "Database checkpoint corrupted"
+                msg = "Feature store checkpoint corrupted"
                 raise SmartSimError(msg) from e
 
             err_message = (
-                "The SmartSim database checkpoint is incomplete or corrupted. "
+                "The SmartSim feature store checkpoint is incomplete or corrupted. "
             )
-            if not "db" in db_config:
+            if not "fs" in fs_config:
                 raise SmartSimError(
-                    err_message + "Could not find the orchestrator object."
+                    err_message + "Could not find the featurestore object."
                 )
 
-            if not "db_jobs" in db_config:
+            if not "fs_jobs" in fs_config:
                 raise SmartSimError(
-                    err_message + "Could not find database job objects."
+                    err_message + "Could not find feature store job objects."
                 )
 
-            if not "steps" in db_config:
+            if not "steps" in fs_config:
                 raise SmartSimError(
-                    err_message + "Could not find database job objects."
+                    err_message + "Could not find feature store job objects."
                 )
-            orc: Orchestrator = db_config["db"]
+            feature_store: FeatureStore = fs_config["fs"]
 
-            # TODO check that each db_object is running
+            # TODO check that each fs_object is running
 
-            job_steps = zip(db_config["db_jobs"].values(), db_config["steps"])
+            job_steps = zip(fs_config["fs_jobs"].values(), fs_config["steps"])
             try:
-                for db_job, step in job_steps:
-                    self._jobs.db_jobs[db_job.ename] = db_job
-                    self._launcher.add_step_to_mapping_table(db_job.name, step)
+                for fs_job, step in job_steps:
+                    self._jobs.fs_jobs[fs_job.ename] = fs_job
+                    self._launcher.add_step_to_mapping_table(fs_job.name, step)
                     if step.task_id:
                         self._launcher.task_manager.add_existing(int(step.task_id))
             except LauncherError as e:
-                raise SmartSimError("Failed to reconnect orchestrator") from e
+                raise SmartSimError("Failed to reconnect feature store") from e
 
             # start job manager if not already started
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
 
-            return orc
+            return feature_store
 
-    def _set_dbobjects(self, manifest: Manifest) -> None:
-        if not manifest.has_db_objects:
+    def _set_fsobjects(self, manifest: Manifest) -> None:
+        if not manifest.has_fs_objects:
             return
 
-        address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._jobs.get_fs_host_addresses()
         for (
-            db_id,
-            db_addresses,
+            fs_id,
+            fs_addresses,
         ) in address_dict.items():
-            db_name, name = unpack_db_identifier(db_id, "_")
+            fs_name, name = unpack_fs_identifier(fs_id, "_")
 
-            hosts = list({address.split(":")[0] for address in db_addresses})
-            ports = list({int(address.split(":")[-1]) for address in db_addresses})
+            hosts = list({address.split(":")[0] for address in fs_addresses})
+            ports = list({int(address.split(":")[-1]) for address in fs_addresses})
 
-            if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
-                raise SSInternalError("Cannot set DB Objects, DB is not running")
+            if not fs_is_active(hosts=hosts, ports=ports, num_shards=len(fs_addresses)):
+                raise SSInternalError("Cannot set FS Objects, FS is not running")
 
-            os.environ[f"SSDB{db_name}"] = db_addresses[0]
+            os.environ[f"SSDB{fs_name}"] = fs_addresses[0]
 
-            os.environ[f"SR_DB_TYPE{db_name}"] = (
-                CLUSTERED if len(db_addresses) > 1 else STANDALONE
+            os.environ[f"SR_fs_TYPE{fs_name}"] = (
+                CLUSTERED if len(fs_addresses) > 1 else STANDALONE
             )
 
             options = ConfigOptions.create_from_environment(name)
@@ -908,27 +937,27 @@ class Controller:
 
             for application in manifest.applications:
                 if not application.colocated:
-                    for db_model in application.db_models:
-                        set_ml_model(db_model, client)
-                    for db_script in application.db_scripts:
-                        set_script(db_script, client)
+                    for fs_model in application.fs_models:
+                        set_ml_model(fs_model, client)
+                    for fs_script in application.fs_scripts:
+                        set_script(fs_script, client)
 
             for ensemble in manifest.ensembles:
-                for db_model in ensemble.db_models:
-                    set_ml_model(db_model, client)
-                for db_script in ensemble.db_scripts:
-                    set_script(db_script, client)
+                for fs_model in ensemble.fs_models:
+                    set_ml_model(fs_model, client)
+                for fs_script in ensemble.fs_scripts:
+                    set_script(fs_script, client)
                 for entity in ensemble.applications:
                     if not entity.colocated:
                         # Set models which could belong only
                         # to the entities and not to the ensemble
                         # but avoid duplicates
-                        for db_model in entity.db_models:
-                            if db_model not in ensemble.db_models:
-                                set_ml_model(db_model, client)
-                        for db_script in entity.db_scripts:
-                            if db_script not in ensemble.db_scripts:
-                                set_script(db_script, client)
+                        for fs_model in entity.fs_models:
+                            if fs_model not in ensemble.fs_models:
+                                set_ml_model(fs_model, client)
+                        for fs_script in entity.fs_scripts:
+                            if fs_script not in ensemble.fs_scripts:
+                                set_script(fs_script, client)
 
     def _start_telemetry_monitor(self, exp_dir: str) -> None:
         """Spawns a telemetry monitor process to keep track of the life times

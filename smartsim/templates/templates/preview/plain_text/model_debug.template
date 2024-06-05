@@ -54,42 +54,42 @@
         {%- endfor %}
         {%- endif %}
         {%- endif %}
-        {%- if model.run_settings.colocated_db_settings %}
+        {%- if model.run_settings.colocated_fs_settings %}
         Colocated:
-        {%- if model.run_settings.colocated_db_settings.db_identifier %}
-          Database Identifier: {{ model.run_settings.colocated_db_settings.db_identifier }}
+        {%- if model.run_settings.colocated_fs_settings.fs_identifier %}
+          Feature Store Identifier: {{ model.run_settings.colocated_fs_settings.fs_identifier }}
         {%- endif %}
-          {%- if model.run_settings.colocated_db_settings.port %}
+          {%- if model.run_settings.colocated_fs_settings.port %}
           Connection Type: TCP
           TCP/IP Port(s):
-            {{ model.run_settings.colocated_db_settings.port }}
+            {{ model.run_settings.colocated_fs_settings.port }}
           {%- endif %}
-          {%- if model.run_settings.colocated_db_settings.unix_socket %}
+          {%- if model.run_settings.colocated_fs_settings.unix_socket %}
           Connection Type: UDS
-          Unix Socket: {{ model.run_settings.colocated_db_settings.unix_socket }}
+          Unix Socket: {{ model.run_settings.colocated_fs_settings.unix_socket }}
           {%- endif %}
-          {%- if model.run_settings.colocated_db_settings.ifname %}
-          {%- if model.run_settings.colocated_db_settings.ifname | is_list %}
-          Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname[0] }}
+          {%- if model.run_settings.colocated_fs_settings.ifname %}
+          {%- if model.run_settings.colocated_fs_settings.ifname | is_list %}
+          Network Interface Name: {{ model.run_settings.colocated_fs_settings.ifname[0] }}
           {%- else %}
-          Network Interface Name: {{ model.run_settings.colocated_db_settings.ifname }}
+          Network Interface Name: {{ model.run_settings.colocated_fs_settings.ifname }}
           {%- endif %}
           {%- endif %}
-          CPUs: {{ model.run_settings.colocated_db_settings.cpus }}
-          Custom Pinning: {{ model.run_settings.colocated_db_settings.custom_pinning }}
+          CPUs: {{ model.run_settings.colocated_fs_settings.cpus }}
+          Custom Pinning: {{ model.run_settings.colocated_fs_settings.custom_pinning }}
           {%- endif %}
-        {%- if model._db_scripts %}
+        {%- if model._fs_scripts %}
         Torch Scripts:
-        {%- for script in model._db_scripts%}
+        {%- for script in model._fs_scripts%}
           Name: {{ script.name }}
             Path: {{ script.file }}
             Backend: {{ script.device }}
             Devices Per Node: {{ script.devices_per_node }}
         {%- endfor %}
         {%- endif %}
-        {%- if model._db_models %}
+        {%- if model._fs_models %}
         ML Models:
-        {%- for mlmodel in model._db_models %}
+        {%- for mlmodel in model._fs_models %}
           Name: {{ mlmodel.name }}
             Path: {{ mlmodel.file }}
             Backend: {{ mlmodel.backend }}

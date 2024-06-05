@@ -35,7 +35,7 @@ from smartsim import Experiment
 from smartsim._core.config import CONFIG
 from smartsim._core.config.config import Config
 from smartsim._core.utils import serialize
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.entity import Application
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
@@ -252,21 +252,21 @@ def test_error_on_cobalt() -> None:
         exp = Experiment("cobalt_exp", launcher="cobalt")
 
 
-def test_default_orch_path(
+def test_default_feature_store_path(
     monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
 ) -> None:
-    """Ensure the default file structure is created for Orchestrator"""
+    """Ensure the default file structure is created for FeatureStore"""
 
-    exp_name = "default-orch-path"
+    exp_name = "default-feature-store-path"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
     monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    db = exp.create_database(
+    db = exp.create_feature_store(
         port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface()
     )
     exp.start(db)
-    orch_path = pathlib.Path(test_dir) / db.name
-    assert orch_path.exists()
-    assert db.path == str(orch_path)
+    feature_store_path = pathlib.Path(test_dir) / db.name
+    assert feature_store_path.exists()
+    assert db.path == str(feature_store_path)
 
 
 def test_default_application_path(
@@ -307,24 +307,24 @@ def test_default_ensemble_path(
         assert member.path == str(ensemble_path / member.name)
 
 
-def test_user_orch_path(
+def test_user_feature_store_path(
     monkeypatch: pytest.MonkeyPatch, test_dir: str, wlmutils: "conftest.WLMUtils"
 ) -> None:
-    """Ensure a relative path is used to created Orchestrator folder"""
+    """Ensure a relative path is used to created FeatureStore folder"""
 
-    exp_name = "default-orch-path"
+    exp_name = "default-feature-store-path"
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     monkeypatch.setattr(exp._control, "start", lambda *a, **kw: ...)
-    db = exp.create_database(
+    db = exp.create_feature_store(
         port=wlmutils.get_test_port(),
         interface=wlmutils.get_test_interface(),
         path="./testing_folder1234",
     )
     exp.start(db)
-    orch_path = pathlib.Path(osp.abspath("./testing_folder1234"))
-    assert orch_path.exists()
-    assert db.path == str(orch_path)
-    shutil.rmtree(orch_path)
+    feature_store_path = pathlib.Path(osp.abspath("./testing_folder1234"))
+    assert feature_store_path.exists()
+    assert db.path == str(feature_store_path)
+    shutil.rmtree(feature_store_path)
 
 
 def test_default_application_with_path(

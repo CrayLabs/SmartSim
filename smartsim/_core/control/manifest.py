@@ -29,8 +29,8 @@ import pathlib
 import typing as t
 from dataclasses import dataclass, field
 
-from ...database import Orchestrator
-from ...entity import Application, DBNode, Ensemble, EntitySequence, SmartSimEntity
+from ...database import FeatureStore
+from ...entity import Application, Ensemble, EntitySequence, FSNode, SmartSimEntity
 from ...error import SmartSimError
 from ..config import CONFIG
 from ..utils import helpers as _helpers
@@ -38,7 +38,7 @@ from ..utils import serialize as _serialize
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
-_AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Application, DBNode)
+_AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Application, FSNode)
 
 if t.TYPE_CHECKING:
     import os
@@ -50,7 +50,7 @@ class Manifest:
     `SmartSimEntity`-derived objects or `EntitySequence`-derived objects) can
     be accessed by using the corresponding accessor.
 
-    Instances of ``Application``, ``Ensemble`` and ``Orchestrator``
+    Instances of ``Application``, ``Ensemble`` and ``FeatureStore``
     can all be passed as arguments
     """
 
@@ -63,14 +63,14 @@ class Manifest:
         self._check_entity_lists_nonempty()
 
     @property
-    def dbs(self) -> t.List[Orchestrator]:
-        """Return a list of Orchestrator instances in Manifest
+    def fss(self) -> t.List[FeatureStore]:
+        """Return a list of FeatureStore instances in Manifest
 
-        :raises SmartSimError: if user added to databases to manifest
-        :return: List of orchestrator instances
+        :raises SmartSimError: if user added to feature stores to manifest
+        :return: List of feature store instances
         """
-        dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
-        return dbs
+        fss = [item for item in self._deployables if isinstance(item, FeatureStore)]
+        return fss
 
     @property
     def applications(self) -> t.List[Application]:
@@ -94,14 +94,14 @@ class Manifest:
     @property
     def all_entity_lists(self) -> t.List[EntitySequence[SmartSimEntity]]:
         """All entity lists, including ensembles and
-        exceptional ones like Orchestrator
+        exceptional ones like FeatureStore
 
         :return: list of entity lists
         """
         _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
 
-        for db in self.dbs:
-            _all_entity_lists.append(db)
+        for fs in self.fss:
+            _all_entity_lists.append(fs)
 
         return _all_entity_lists
 
@@ -144,7 +144,7 @@ class Manifest:
         output = ""
         e_header = "=== Ensembles ===\n"
         m_header = "=== Applications ===\n"
-        db_header = "=== Database ===\n"
+        db_header = "=== Feature Stores ===\n"
         if self.ensembles:
             output += e_header
 
@@ -168,27 +168,27 @@ class Manifest:
                     output += f"Parameters: \n{_helpers.fmt_dict(application.params)}\n"
             output += "\n"
 
-        for adb in self.dbs:
-            output += db_header
-            output += f"Shards: {adb.num_shards}\n"
-            output += f"Port: {str(adb.ports[0])}\n"
-            output += f"Network: {adb._interfaces}\n"
-            output += f"Batch Launch: {adb.batch}\n"
-            if adb.batch:
-                output += f"{str(adb.batch_settings)}\n"
+        for afs in self.fss:
+            output += fs_header
+            output += f"Shards: {afs.num_shards}\n"
+            output += f"Port: {str(afs.ports[0])}\n"
+            output += f"Network: {afs._interfaces}\n"
+            output += f"Batch Launch: {afs.batch}\n"
+            if afs.batch:
+                output += f"{str(afs.batch_settings)}\n"
 
         output += "\n"
         return output
 
     @property
-    def has_db_objects(self) -> bool:
-        """Check if any entity has DBObjects to set"""
+    def has_fs_objects(self) -> bool:
+        """Check if any entity has FSObjects to set"""
         ents: t.Iterable[t.Union[Application, Ensemble]] = itertools.chain(
             self.applications,
             self.ensembles,
             (member for ens in self.ensembles for member in ens.entities),
         )
-        return any(any(ent.db_models) or any(ent.db_scripts) for ent in ents)
+        return any(any(ent.fs_models) or any(ent.fs_scripts) for ent in ents)
 
 
 class _LaunchedManifestMetadata(t.NamedTuple):
@@ -222,7 +222,9 @@ class LaunchedManifest(t.Generic[_T]):
     metadata: _LaunchedManifestMetadata
     applications: t.Tuple[t.Tuple[Application, _T], ...]
     ensembles: t.Tuple[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]], ...]
-    databases: t.Tuple[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]], ...]
+    featurestores: t.Tuple[
+        t.Tuple[FeatureStore, t.Tuple[t.Tuple[FSNode, _T], ...]], ...
+    ]
 
     def map(self, func: t.Callable[[_T], _U]) -> "LaunchedManifest[_U]":
         def _map_entity_data(
@@ -238,9 +240,9 @@ class LaunchedManifest(t.Generic[_T]):
                 (ens, _map_entity_data(func, application_data))
                 for ens, application_data in self.ensembles
             ),
-            databases=tuple(
-                (db_, _map_entity_data(func, node_data))
-                for db_, node_data in self.databases
+            featurestores=tuple(
+                (fs_, _map_entity_data(func, node_data))
+                for fs_, node_data in self.featurestores
             ),
         )
 
@@ -263,7 +265,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Application, _T], ...]]] = (
         field(default_factory=list, init=False)
     )
-    _databases: t.List[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]] = (
+    _featurestores: t.List[t.Tuple[FeatureStore, t.Tuple[t.Tuple[FSNode, _T], ...]]] = (
         field(default_factory=list, init=False)
     )
 
@@ -281,8 +283,8 @@ class LaunchedManifestBuilder(t.Generic[_T]):
     def add_ensemble(self, ens: Ensemble, data: t.Sequence[_T]) -> None:
         self._ensembles.append((ens, self._entities_to_data(ens.entities, data)))
 
-    def add_database(self, db_: Orchestrator, data: t.Sequence[_T]) -> None:
-        self._databases.append((db_, self._entities_to_data(db_.entities, data)))
+    def add_feature_store(self, fs_: FeatureStore, data: t.Sequence[_T]) -> None:
+        self._featurestores.append((fs_, self._entities_to_data(fs_.entities, data)))
 
     @staticmethod
     def _entities_to_data(
@@ -307,7 +309,7 @@ class LaunchedManifestBuilder(t.Generic[_T]):
             ),
             applications=tuple(self._applications),
             ensembles=tuple(self._ensembles),
-            databases=tuple(self._databases),
+            featurestores=tuple(self._featurestores),
         )
 
 

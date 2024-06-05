@@ -33,12 +33,12 @@ from smartsim.entity import Application
 from smartsim.status import SmartSimStatus
 
 if sys.platform == "darwin":
-    supported_dbs = ["tcp", "deprecated"]
+    supported_fss = ["tcp", "deprecated"]
 else:
-    supported_dbs = ["uds", "tcp", "deprecated"]
+    supported_fss = ["uds", "tcp", "deprecated"]
 
-# Set to true if DB logs should be generated for debugging
-DEBUG_DB = False
+# Set to true if fs logs should be generated for debugging
+DEBUG_fs = False
 
 # retrieved from pytest fixtures
 launcher = pytest.test_launcher
@@ -46,20 +46,20 @@ if launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
-def test_launch_colocated_application_defaults(fileutils, test_dir, coloutils, db_type):
-    """Test the launch of a application with a colocated database and local launcher"""
+@pytest.mark.parametrize("fs_type", supported_fss)
+def test_launch_colocated_application_defaults(fileutils, test_dir, coloutils, fs_type):
+    """Test the launch of a application with a colocated feature store and local launcher"""
 
-    db_args = {"debug": DEBUG_DB}
+    fs_args = {"debug": DEBUG_fs}
 
     exp = Experiment(
         "colocated_application_defaults", launcher=launcher, exp_path=test_dir
     )
     colo_application = coloutils.setup_test_colo(
-        fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
+        fileutils, fs_type, exp, "send_data_local_smartredis.py", fs_args, on_wlm=True
     )
     exp.generate(colo_application)
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0"
+    assert colo_application.run_settings.colocated_fs_settings["custom_pinning"] == "0"
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
     assert all(
@@ -74,22 +74,22 @@ def test_launch_colocated_application_defaults(fileutils, test_dir, coloutils, d
     ), f"Statuses: {statuses}"
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_application_disable_pinning(fileutils, test_dir, coloutils, db_type):
+@pytest.mark.parametrize("fs_type", supported_fss)
+def test_colocated_application_disable_pinning(fileutils, test_dir, coloutils, fs_type):
     exp = Experiment(
         "colocated_application_pinning_auto_1cpu", launcher=launcher, exp_path=test_dir
     )
-    db_args = {
-        "db_cpus": 1,
+    fs_args = {
+        "fs_cpus": 1,
         "custom_pinning": [],
-        "debug": DEBUG_DB,
+        "debug": DEBUG_fs,
     }
 
     # Check to make sure that the CPU mask was correctly generated
     colo_application = coloutils.setup_test_colo(
-        fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
+        fileutils, fs_type, exp, "send_data_local_smartredis.py", fs_args, on_wlm=True
     )
-    assert colo_application.run_settings.colocated_db_settings["custom_pinning"] is None
+    assert colo_application.run_settings.colocated_fs_settings["custom_pinning"] is None
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
     statuses = exp.get_status(colo_application)
@@ -98,9 +98,9 @@ def test_colocated_application_disable_pinning(fileutils, test_dir, coloutils, d
     ), f"Statuses: {statuses}"
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
+@pytest.mark.parametrize("fs_type", supported_fss)
 def test_colocated_application_pinning_auto_2cpu(
-    fileutils, test_dir, coloutils, db_type
+    fileutils, test_dir, coloutils, fs_type
 ):
     exp = Experiment(
         "colocated_application_pinning_auto_2cpu",
@@ -108,14 +108,14 @@ def test_colocated_application_pinning_auto_2cpu(
         exp_path=test_dir,
     )
 
-    db_args = {"db_cpus": 2, "debug": DEBUG_DB}
+    fs_args = {"fs_cpus": 2, "debug": DEBUG_fs}
 
     # Check to make sure that the CPU mask was correctly generated
     colo_application = coloutils.setup_test_colo(
-        fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
+        fileutils, fs_type, exp, "send_data_local_smartredis.py", fs_args, on_wlm=True
     )
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"] == "0,1"
     )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
@@ -125,8 +125,8 @@ def test_colocated_application_pinning_auto_2cpu(
     ), f"Statuses: {statuses}"
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_application_pinning_range(fileutils, test_dir, coloutils, db_type):
+@pytest.mark.parametrize("fs_type", supported_fss)
+def test_colocated_application_pinning_range(fileutils, test_dir, coloutils, fs_type):
     # Check to make sure that the CPU mask was correctly generated
     # Assume that there are at least 4 cpus on the node
 
@@ -136,13 +136,13 @@ def test_colocated_application_pinning_range(fileutils, test_dir, coloutils, db_
         exp_path=test_dir,
     )
 
-    db_args = {"db_cpus": 4, "custom_pinning": range(4), "debug": DEBUG_DB}
+    fs_args = {"fs_cpus": 4, "custom_pinning": range(4), "debug": DEBUG_fs}
 
     colo_application = coloutils.setup_test_colo(
-        fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
+        fileutils, fs_type, exp, "send_data_local_smartredis.py", fs_args, on_wlm=True
     )
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"]
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"]
         == "0,1,2,3"
     )
     exp.generate(colo_application)
@@ -153,8 +153,8 @@ def test_colocated_application_pinning_range(fileutils, test_dir, coloutils, db_
     ), f"Statuses: {statuses}"
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_application_pinning_list(fileutils, test_dir, coloutils, db_type):
+@pytest.mark.parametrize("fs_type", supported_fss)
+def test_colocated_application_pinning_list(fileutils, test_dir, coloutils, fs_type):
     # Check to make sure that the CPU mask was correctly generated
     # note we presume that this has more than 2 CPUs on the supercomputer node
 
@@ -164,13 +164,13 @@ def test_colocated_application_pinning_list(fileutils, test_dir, coloutils, db_t
         exp_path=test_dir,
     )
 
-    db_args = {"db_cpus": 2, "custom_pinning": [0, 2]}
+    fs_args = {"fs_cpus": 2, "custom_pinning": [0, 2]}
 
     colo_application = coloutils.setup_test_colo(
-        fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
+        fileutils, fs_type, exp, "send_data_local_smartredis.py", fs_args, on_wlm=True
     )
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,2"
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"] == "0,2"
     )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)
@@ -180,8 +180,8 @@ def test_colocated_application_pinning_list(fileutils, test_dir, coloutils, db_t
     ), f"Statuses: {statuses}"
 
 
-@pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_application_pinning_mixed(fileutils, test_dir, coloutils, db_type):
+@pytest.mark.parametrize("fs_type", supported_fss)
+def test_colocated_application_pinning_mixed(fileutils, test_dir, coloutils, fs_type):
     # Check to make sure that the CPU mask was correctly generated
     # note we presume that this at least 4 CPUs on the supercomputer node
 
@@ -191,13 +191,13 @@ def test_colocated_application_pinning_mixed(fileutils, test_dir, coloutils, db_
         exp_path=test_dir,
     )
 
-    db_args = {"db_cpus": 2, "custom_pinning": [range(2), 3]}
+    fs_args = {"fs_cpus": 2, "custom_pinning": [range(2), 3]}
 
     colo_application = coloutils.setup_test_colo(
-        fileutils, db_type, exp, "send_data_local_smartredis.py", db_args, on_wlm=True
+        fileutils, fs_type, exp, "send_data_local_smartredis.py", fs_args, on_wlm=True
     )
     assert (
-        colo_application.run_settings.colocated_db_settings["custom_pinning"] == "0,1,3"
+        colo_application.run_settings.colocated_fs_settings["custom_pinning"] == "0,1,3"
     )
     exp.generate(colo_application)
     exp.start(colo_application, block=True)

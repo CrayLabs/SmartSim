@@ -32,7 +32,7 @@ from smartredis import *
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.entity.dbobject import DBScript
+from smartsim.entity.dbobject import FSScript
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 from smartsim.settings import MpiexecSettings, MpirunSettings
@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 
 should_run = True
 
-supported_dbs = ["uds", "tcp"]
+supported_fss = ["uds", "tcp"]
 
 try:
     import torch
@@ -57,8 +57,8 @@ def timestwo(x):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
-    """Test DB scripts on remote DB"""
+def test_fs_script(wlm_experiment, prepare_fs, single_fs, fileutils, mlutils):
+    """Test FS scripts on remote Fs"""
 
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus() if pytest.test_device == "GPU" else 1
@@ -78,9 +78,9 @@ def test_db_script(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
         "smartsim_application", run_settings
     )
 
-    # Create the SmartSim database
-    db = prepare_db(single_db).orchestrator
-    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+    # Create the SmartSim feature store
+    fs = prepare_fs(single_fs).featurestore
+    wlm_experiment.reconnect_orchestrator(fs.checkpoint_file)
     wlm_experiment.generate(smartsim_application)
 
     # Define the torch script string
@@ -114,7 +114,7 @@ def test_db_script(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
     )
 
     # Assert we have all three scripts
-    assert len(smartsim_application._db_scripts) == 3
+    assert len(smartsim_application._fs_scripts) == 3
 
     # Launch and check successful completion
     wlm_experiment.start(smartsim_application, block=True)
@@ -123,11 +123,11 @@ def test_db_script(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_ensemble(wlm_experiment, prepare_db, single_db, fileutils, mlutils):
-    """Test DB scripts on remote DB"""
+def test_fs_script_ensemble(wlm_experiment, prepare_fs, single_fs, fileutils, mlutils):
+    """Test FS scripts on remote FS"""
 
     # Set wlm_experimenteriment name
-    wlm_experiment_name = "test-db-script"
+    wlm_experiment_name = "test-fs-script"
 
     # Retrieve parameters from testing environment
     test_device = mlutils.get_test_device()
@@ -143,12 +143,12 @@ def test_db_script_ensemble(wlm_experiment, prepare_db, single_db, fileutils, ml
     run_settings.set_nodes(1)
     run_settings.set_tasks(1)
 
-    db = prepare_db(single_db).orchestrator
-    wlm_experiment.reconnect_orchestrator(db.checkpoint_file)
+    fs = prepare_fs(single_fs).featurestore
+    wlm_experiment.reconnect_feature_store(fs.checkpoint_file)
 
     # Create Ensemble with two identical applications
     ensemble = wlm_experiment.create_ensemble(
-        "dbscript_ensemble", run_settings=run_settings, replicas=2
+        "fsscript_ensemble", run_settings=run_settings, replicas=2
     )
 
     # Create SmartSim application
@@ -199,10 +199,10 @@ def test_db_script_ensemble(wlm_experiment, prepare_db, single_db, fileutils, ml
     )
 
     # Assert we have added both models to the ensemble
-    assert len(ensemble._db_scripts) == 2
+    assert len(ensemble._fs_scripts) == 2
 
     # Assert we have added all three models to entities in ensemble
-    assert all([len(entity._db_scripts) == 3 for entity in ensemble])
+    assert all([len(entity._fs_scripts) == 3 for entity in ensemble])
 
     wlm_experiment.generate(ensemble)
 
@@ -212,11 +212,11 @@ def test_db_script_ensemble(wlm_experiment, prepare_db, single_db, fileutils, ml
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
-    """Test DB Scripts on colocated DB"""
+def test_colocated_fs_script(fileutils, test_dir, wlmutils, mlutils):
+    """Test fs Scripts on colocated fs"""
 
     # Set the experiment name
-    exp_name = "test-colocated-db-script"
+    exp_name = "test-colocated-fs-script"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -236,10 +236,10 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     colo_settings.set_nodes(1)
     colo_settings.set_tasks(1)
 
-    # Create application with colocated database
+    # Create application with colocated feature store
     colo_application = exp.create_application("colocated_application", colo_settings)
-    colo_application.colocate_db_tcp(
-        port=test_port, db_cpus=1, debug=True, ifname=test_interface
+    colo_application.colocate_fs_tcp(
+        port=test_port, fs_cpus=1, debug=True, ifname=test_interface
     )
 
     # Create string for script creation
@@ -263,12 +263,12 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
     )
 
     # Assert we have added both models
-    assert len(colo_application._db_scripts) == 2
+    assert len(colo_application._fs_scripts) == 2
 
     exp.generate(colo_application)
 
-    for db_script in colo_application._db_scripts:
-        logger.debug(db_script)
+    for fs_script in colo_application._fs_scripts:
+        logger.debug(fs_script)
 
     try:
         exp.start(colo_application, block=True)
@@ -279,13 +279,13 @@ def test_colocated_db_script(fileutils, test_dir, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
-    """Test DB Scripts on colocated DB from ensemble, first colocating DB,
+def test_colocated_fs_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
+    """Test fs Scripts on colocated fs from ensemble, first colocating fs,
     then adding script.
     """
 
     # Set experiment name
-    exp_name = "test-colocated-db-script"
+    exp_name = "test-colocated-fs-script"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -313,13 +313,13 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     # Create a SmartSim application
     colo_application = exp.create_application("colocated_application", colo_settings)
 
-    # Colocate a db with each ensemble entity and add a script
+    # Colocate a fs with each ensemble entity and add a script
     # to each entity via file
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
-        entity.colocate_db_tcp(
+        entity.colocate_fs_tcp(
             port=test_port + i,
-            db_cpus=1,
+            fs_cpus=1,
             debug=True,
             ifname=test_interface,
         )
@@ -332,10 +332,10 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
             first_device=0,
         )
 
-    # Colocate a db with the non-ensemble Application
-    colo_application.colocate_db_tcp(
+    # Colocate a feature store with the non-ensemble Application
+    colo_application.colocate_fs_tcp(
         port=test_port + len(colo_ensemble),
-        db_cpus=1,
+        fs_cpus=1,
         debug=True,
         ifname=test_interface,
     )
@@ -363,9 +363,9 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
     )
 
     # Assert we have added one application to the ensemble
-    assert len(colo_ensemble._db_scripts) == 1
+    assert len(colo_ensemble._fs_scripts) == 1
     # Assert we have added both applications to each entity
-    assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
+    assert all([len(entity._fs_scripts) == 2 for entity in colo_ensemble])
 
     exp.generate(colo_ensemble)
 
@@ -379,12 +379,12 @@ def test_colocated_db_script_ensemble(fileutils, test_dir, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, mlutils):
-    """Test DB Scripts on colocated DB from ensemble, first adding the
-    script to the ensemble, then colocating the DB"""
+def test_colocated_fs_script_ensemble_reordered(fileutils, test_dir, wlmutils, mlutils):
+    """Test fs Scripts on colocated fs from ensemble, first adding the
+    script to the ensemble, then colocating the fs"""
 
     # Set Experiment name
-    exp_name = "test-colocated-db-script-reord"
+    exp_name = "test-colocated-fs-script-reord"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -422,13 +422,13 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
         first_device=0,
     )
 
-    # Add a colocated database to the ensemble members
+    # Add a colocated feature store to the ensemble members
     # and then add a script via file
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
-        entity.colocate_db_tcp(
+        entity.colocate_fs_tcp(
             port=test_port + i,
-            db_cpus=1,
+            fs_cpus=1,
             debug=True,
             ifname=test_interface,
         )
@@ -441,10 +441,10 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
             first_device=0,
         )
 
-    # Add a colocated database to the non-ensemble SmartSim Application
-    colo_application.colocate_db_tcp(
+    # Add a colocated feature store to the non-ensemble SmartSim Application
+    colo_application.colocate_fs_tcp(
         port=test_port + len(colo_ensemble),
-        db_cpus=1,
+        fs_cpus=1,
         debug=True,
         ifname=test_interface,
     )
@@ -461,9 +461,9 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
     )
 
     # Assert we have added one application to the ensemble
-    assert len(colo_ensemble._db_scripts) == 1
+    assert len(colo_ensemble._fs_scripts) == 1
     # Assert we have added both applications to each entity
-    assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
+    assert all([len(entity._fs_scripts) == 2 for entity in colo_ensemble])
 
     exp.generate(colo_ensemble)
 
@@ -477,11 +477,11 @@ def test_colocated_db_script_ensemble_reordered(fileutils, test_dir, wlmutils, m
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
-    """Test DB Scripts error when setting a serialized function on colocated DB"""
+def test_fs_script_errors(fileutils, test_dir, wlmutils, mlutils):
+    """Test fs Scripts error when setting a serialized function on colocated fs"""
 
     # Set Experiment name
-    exp_name = "test-colocated-db-script"
+    exp_name = "test-colocated-fs-script"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -500,11 +500,11 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
     colo_settings.set_nodes(1)
     colo_settings.set_tasks(1)
 
-    # Create a SmartSim application with a colocated database
+    # Create a SmartSim application with a colocated feature store
     colo_application = exp.create_application("colocated_application", colo_settings)
-    colo_application.colocate_db_tcp(
+    colo_application.colocate_fs_tcp(
         port=test_port,
-        db_cpus=1,
+        fs_cpus=1,
         debug=True,
         ifname=test_interface,
     )
@@ -526,17 +526,17 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
         "colocated_ensemble", run_settings=colo_settings, replicas=2
     )
 
-    # Add a colocated database for each ensemble member
+    # Add a colocated feature store for each ensemble member
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db_tcp(
+        entity.colocate_fs_tcp(
             port=test_port + i,
-            db_cpus=1,
+            fs_cpus=1,
             debug=True,
             ifname=test_interface,
         )
 
     # Check that an exception is raised when adding an in-memory
-    # function to the ensemble with colocated databases
+    # function to the ensemble with colocated feature stores
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_function(
             "test_func",
@@ -562,31 +562,31 @@ def test_db_script_errors(fileutils, test_dir, wlmutils, mlutils):
     )
 
     # Check that an error is raised when trying to add
-    # a colocated database to ensemble members that have
+    # a colocated feature store to ensemble members that have
     # an in-memory script
     for i, entity in enumerate(colo_ensemble):
         with pytest.raises(SSUnsupportedError):
-            entity.colocate_db_tcp(
+            entity.colocate_fs_tcp(
                 port=test_port + i,
-                db_cpus=1,
+                fs_cpus=1,
                 debug=True,
                 ifname=test_interface,
             )
 
     # Check that an error is raised when trying to add
-    # a colocated database to an Ensemble that has
+    # a colocated feature store to an Ensemble that has
     # an in-memory script
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_application(colo_application)
 
 
-def test_inconsistent_params_db_script(fileutils):
-    """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
+def test_inconsistent_params_fs_script(fileutils):
+    """Test error when devices_per_node>1 and when devices is set to CPU in FSScript constructor"""
 
     torch_script = fileutils.get_test_conf_path("torchscript.py")
     with pytest.raises(SSUnsupportedError) as ex:
-        _ = DBScript(
-            name="test_script_db",
+        _ = FSScript(
+            name="test_script_fs",
             script_path=torch_script,
             device="CPU",
             devices_per_node=2,
@@ -597,8 +597,8 @@ def test_inconsistent_params_db_script(fileutils):
         == "Cannot set devices_per_node>1 if CPU is specified under devices"
     )
     with pytest.raises(SSUnsupportedError) as ex:
-        _ = DBScript(
-            name="test_script_db",
+        _ = FSScript(
+            name="test_script_fs",
             script_path=torch_script,
             device="CPU",
             devices_per_node=1,
@@ -611,11 +611,11 @@ def test_inconsistent_params_db_script(fileutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
-    """Test DB scripts on remote DB"""
+def test_fs_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
+    """Test fs scripts on remote fs"""
 
     # Set experiment name
-    exp_name = "test-db-script"
+    exp_name = "test-fs-script"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -637,7 +637,7 @@ def test_db_script_ensemble_duplicate(fileutils, test_dir, wlmutils, mlutils):
 
     # Create Ensemble with two identical applications
     ensemble = exp.create_ensemble(
-        "dbscript_ensemble", run_settings=run_settings, replicas=2
+        "fsscript_ensemble", run_settings=run_settings, replicas=2
     )
 
     # Create SmartSim application

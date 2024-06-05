@@ -55,7 +55,7 @@ def write_event(
     :param task_id: the task_id of a managed task
     :param step_id: the step_id of an unmanaged task
     :param entity_type: the SmartSimEntity subtype
-        (e.g. `orchestrator`, `ensemble`, `application`, `dbnode`, ...)
+        (e.g. `featurestore`, `ensemble`, `application`, `fsnode`, ...)
     :param event_type: the event subtype
     :param status_dir: path where the SmartSimEntity outputs are written
     :param detail: (optional) additional information to write with the event

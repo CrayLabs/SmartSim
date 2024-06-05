@@ -246,13 +246,13 @@ async def test_collector_manager_collect_filesink(
 
 @pytest.mark.asyncio
 async def test_collector_manager_collect_integration(
-    test_dir: str, mock_entity: MockCollectorEntityFunc, prepare_db, local_db, mock_sink
+    test_dir: str, mock_entity: MockCollectorEntityFunc, prepare_fs, local_fs, mock_sink
 ) -> None:
     """Ensure that all collectors are executed and some metric is retrieved"""
 
-    db = prepare_db(local_db).orchestrator
-    entity1 = mock_entity(port=db.ports[0], name="e1", telemetry_on=True)
-    entity2 = mock_entity(port=db.ports[0], name="e2", telemetry_on=True)
+    fs = prepare_fs(local_fs).featurestore
+    entity1 = mock_entity(port=fs.ports[0], name="e1", telemetry_on=True)
+    entity2 = mock_entity(port=fs.ports[0], name="e2", telemetry_on=True)
 
     # todo: consider a MockSink so i don't have to save the last value in the collector
     sinks = [mock_sink(), mock_sink(), mock_sink()]
@@ -341,20 +341,20 @@ async def test_collector_manager_timeout_db(
         pytest.param("application", True, id="applications, telemetry enabled"),
         pytest.param("ensemble", False, id="ensemble"),
         pytest.param("ensemble", True, id="ensemble, telemetry enabled"),
-        pytest.param("orchestrator", False, id="orchestrator"),
-        pytest.param("orchestrator", True, id="orchestrator, telemetry enabled"),
-        pytest.param("dbnode", False, id="dbnode"),
-        pytest.param("dbnode", True, id="dbnode, telemetry enabled"),
+        pytest.param("featurestore", False, id="featurestore"),
+        pytest.param("featurestore", True, id="featurestore, telemetry enabled"),
+        pytest.param("fsnode", False, id="fsnode"),
+        pytest.param("fsnode", True, id="fsnode, telemetry enabled"),
     ],
 )
 @pytest.mark.asyncio
-async def test_collector_manager_find_nondb(
+async def test_collector_manager_find_nonfs(
     mock_entity: MockCollectorEntityFunc,
     e_type: str,
     telemetry_on: bool,
 ) -> None:
     """Ensure that the number of collectors returned for entity types match expectations
-    NOTE: even orchestrator returns 0 mapped collectors because no collector output
+    NOTE: even featurestore returns 0 mapped collectors because no collector output
     paths are set on the entity"""
     entity = mock_entity(port=1234, name="e1", type=e_type, telemetry_on=telemetry_on)
     manager = CollectorManager(timeout_ms=10000)
@@ -383,7 +383,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
 
     # 1. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
-        port=1234, name="entity1", type="orchestrator", telemetry_on=True
+        port=1234, name="entity1", type="featurestore", telemetry_on=True
     )
     entity.collectors["client"] = "mock/path.csv"
     manager = CollectorManager()
@@ -397,7 +397,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
 
     # 3. ensure DBConnectionCountCollector is mapped
     entity = mock_entity(
-        port=1234, name="entity1", type="orchestrator", telemetry_on=True
+        port=1234, name="entity1", type="featurestore", telemetry_on=True
     )
     entity.collectors["client_count"] = "mock/path.csv"
     manager = CollectorManager()
@@ -411,7 +411,7 @@ async def test_collector_manager_find_db(mock_entity: MockCollectorEntityFunc) -
 
     # ensure DbMemoryCollector is mapped
     entity = mock_entity(
-        port=1234, name="entity1", type="orchestrator", telemetry_on=True
+        port=1234, name="entity1", type="featurestore", telemetry_on=True
     )
     entity.collectors["memory"] = "mock/path.csv"
     manager = CollectorManager()
@@ -429,7 +429,7 @@ async def test_collector_manager_find_entity_disabled(
     mock_entity: MockCollectorEntityFunc,
 ) -> None:
     """Ensure that disabling telemetry on the entity results in no collectors"""
-    entity: JobEntity = mock_entity(port=1234, name="entity1", type="orchestrator")
+    entity: JobEntity = mock_entity(port=1234, name="entity1", type="featurestore")
 
     # set paths for all known collectors
     entity.collectors["client"] = "mock/path.csv"

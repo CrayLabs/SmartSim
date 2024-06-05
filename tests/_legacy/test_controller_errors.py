@@ -30,7 +30,7 @@ import pytest
 from smartsim._core.control import Controller, Manifest
 from smartsim._core.launcher.step import Step
 from smartsim._core.launcher.step.dragonStep import DragonStep
-from smartsim.database import Orchestrator
+from smartsim.database import FeatureStore
 from smartsim.entity import Application
 from smartsim.entity.ensemble import Ensemble
 from smartsim.error import SmartSimError, SSUnsupportedError
@@ -52,15 +52,17 @@ application_2 = Application(
 ens = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=2)
 # Ensemble entity slightly different but with same name
 ens_2 = Ensemble("ensemble_name", params={}, run_settings=entity_settings, replicas=3)
-orc = Orchestrator(db_nodes=3, batch=True, launcher="slurm", run_command="srun")
+feature_store = FeatureStore(
+    fs_nodes=3, batch=True, launcher="slurm", run_command="srun"
+)
 
 
-def test_finished_entity_orc_error():
-    """Orchestrators are never 'finished', either run forever or stopped by user"""
-    orc = Orchestrator()
+def test_finished_entity_feature_store_error():
+    """FeatureStores are never 'finished', either run forever or stopped by user"""
+    feature_store = FeatureStore()
     cont = Controller(launcher="local")
     with pytest.raises(TypeError):
-        cont.finished(orc)
+        cont.finished(feature_store)
 
 
 def test_finished_entity_wrong_type():
@@ -105,26 +107,26 @@ def test_no_launcher():
         cont.init_launcher(None)
 
 
-def test_wrong_orchestrator(wlmutils):
+def test_wrong_feature_store(wlmutils):
     # lo interface to avoid warning from SmartSim
-    orc = Orchestrator(
+    feature_store = FeatureStore(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         interface="lo",
         run_command="aprun",
         launcher="pbs",
     )
     cont = Controller(launcher="local")
-    manifest = Manifest(orc)
+    manifest = Manifest(feature_store)
     with pytest.raises(SmartSimError):
         cont._launch("exp_name", "exp_path", manifest)
 
 
-def test_bad_orc_checkpoint():
+def test_bad_feature_store_checkpoint():
     checkpoint = "./bad-checkpoint"
     cont = Controller(launcher="local")
     with pytest.raises(FileNotFoundError):
-        cont.reload_saved_db(checkpoint)
+        cont.reload_saved_fs(checkpoint)
 
 
 class MockStep(Step):
@@ -141,12 +143,12 @@ class MockStep(Step):
     [
         pytest.param(ens, id="Ensemble_running"),
         pytest.param(application, id="Application_running"),
-        pytest.param(orc, id="Orch_running"),
+        pytest.param(orc, id="Feature_store_running"),
     ],
 )
 def test_duplicate_running_entity(test_dir, wlmutils, entity):
     """This test validates that users cannot reuse entity names
-    that are running in JobManager.jobs or JobManager.db_jobs
+    that are running in JobManager.jobs or JobManager.fs_jobs
     """
     step_settings = RunSettings("echo")
     step = MockStep("mock-step", test_dir, step_settings)
@@ -178,17 +180,17 @@ def test_restarting_entity(test_dir, wlmutils, entity):
     controller._launch_step(step, entity=entity)
 
 
-def test_restarting_orch(test_dir, wlmutils):
-    """Validate restarting a completed Orchestrator job"""
+def test_restarting_feature_store(test_dir, wlmutils):
+    """Validate restarting a completed FeatureStore job"""
     step_settings = RunSettings("echo")
     test_launcher = wlmutils.get_test_launcher()
     step = MockStep("mock-step", test_dir, step_settings)
     step.meta["status_dir"] = test_dir
-    orc.path = test_dir
+    feature_store.path = test_dir
     controller = Controller(test_launcher)
-    controller._jobs.add_job(orc.name, job_id="1234", entity=orc)
-    controller._jobs.move_to_completed(controller._jobs.db_jobs.get(orc.name))
-    controller._launch_step(step, entity=orc)
+    controller._jobs.add_job(feature_store.name, job_id="1234", entity=feature_store)
+    controller._jobs.move_to_completed(controller._jobs.fs_jobs.get(feature_store.name))
+    controller._launch_step(step, entity=feature_store)
 
 
 @pytest.mark.parametrize(
