@@ -64,7 +64,6 @@ from ..settings import (
 )
 
 from ..settings import BatchSettings, RunSettings
-
 from ..settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 

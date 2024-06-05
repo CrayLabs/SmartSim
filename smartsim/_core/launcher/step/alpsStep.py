@@ -37,6 +37,7 @@ from .step import Step, proxyable_launch_cmd
 
 logger = get_logger(__name__)
 
+
 class AprunStep(Step):
     def __init__(
         self, entity: t.Union[Model, DBNode], run_settings: AprunSettings

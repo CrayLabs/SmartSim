@@ -31,7 +31,6 @@ from ..._core.launcher.stepMapping import StepMap
 from ...entity import SmartSimEntity
 from ...error import AllocationError, LauncherError, SSUnsupportedError
 from ...settings import SettingsBase
-
 from .step import Step
 from .stepInfo import StepInfo, UnmanagedStepInfo
 from .stepMapping import StepMapping

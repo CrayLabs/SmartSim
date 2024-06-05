@@ -92,7 +92,6 @@ class DragonLauncher(WLMLauncher):
     @property
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
-        pass
         return {
             DragonRunSettings: DragonStep,
             SbatchSettings: DragonBatchStep,
