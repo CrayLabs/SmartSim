@@ -32,18 +32,14 @@ from os import getcwd
 from tabulate import tabulate
 
 from .._core._install.builder import Device
-from ..error import (
-    EntityExistsError,
-    SmartSimError,
-    SSUnsupportedError,
-    UserStrategyError,
-)
+from ..error import EntityExistsError, SmartSimError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
 from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Application
+from .strategies import TPermutationStrategy
 from .strategies import resolve as resolve_strategy
 
 logger = get_logger(__name__)
@@ -64,7 +60,7 @@ class Ensemble(EntityList[Application]):
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
-        perm_strat: str = "all_perm",
+        perm_strat: t.Union[str, TPermutationStrategy] = "all_perm",
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Ensemble of Application instances.
@@ -105,14 +101,19 @@ class Ensemble(EntityList[Application]):
         """An alias for a shallow copy of the ``entities`` attribute"""
         return list(self.entities)
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None:
+    def _initialize_entities(
+        self,
+        *,
+        perm_strat: t.Union[str, TPermutationStrategy] = "all_perm",
+        **kwargs: t.Any,
+    ) -> None:
         """Initialize all the applications within the ensemble based
         on the parameters passed to the ensemble and the permutation
         strategy given at init.
 
         :raises UserStrategyError: if user generation strategy fails
         """
-        strategy = resolve_strategy(kwargs.pop("perm_strat"))
+        strategy = resolve_strategy(perm_strat)
         replicas = kwargs.pop("replicas", None)
         self.replicas = replicas
 
@@ -123,12 +124,8 @@ class Ensemble(EntityList[Application]):
                 # Compute all combinations of application parameters and arguments
                 n_applications = kwargs.get("n_applications", 0)
                 all_application_params = strategy(self.params, n_applications)
-                if not isinstance(all_application_params, list):
-                    raise UserStrategyError(strategy)
 
                 for i, param_set in enumerate(all_application_params):
-                    if not isinstance(param_set, dict):
-                        raise UserStrategyError(strategy)
                     run_settings = deepcopy(self.run_settings)
                     application_name = "_".join((self.name, str(i)))
                     application = Application(

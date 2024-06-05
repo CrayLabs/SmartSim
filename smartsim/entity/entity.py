@@ -124,6 +124,14 @@ class SmartSimEntity:
 
 
 class CompoundEntity(abc.ABC):
+    """An interface to create different types of collections of launchables
+    from a single set of launch settings.
+
+    Objects that implement this interface describe how to turn their entities
+    into a collection of jobs and this interface will handle coercion into
+    other collections for jobs with slightly different launching behavior.
+    """
+
     @abc.abstractmethod
     def as_jobs(self, settings: _mock.LaunchSettings) -> t.Collection[_mock.Job]: ...
     def as_job_group(self, settings: _mock.LaunchSettings) -> _mock.JobGroup:

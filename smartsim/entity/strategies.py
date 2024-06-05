@@ -35,10 +35,12 @@ import typing as t
 
 from smartsim.error import errors
 
-TPermutationStrategy = t.Callable[
+# Type alias for the shape of a permutation strategy callable
+TPermutationStrategy: t.TypeAlias = t.Callable[
     [t.Mapping[str, t.Sequence[str]], int], list[dict[str, str]]
 ]
 
+# Map of globally registered strategy names to registered strategy callables
 _REGISTERED_STRATEGIES: t.Final[dict[str, TPermutationStrategy]] = {}
 
 
@@ -46,7 +48,22 @@ def _register(name: str) -> t.Callable[
     [TPermutationStrategy],
     TPermutationStrategy,
 ]:
+    """Create a decorator to globally register a permutation strategy under a
+    given name.
+
+    :param name: The name under which to register a strategy
+    :return: A decorator to register a permutation strategy function
+    """
+
     def _impl(fn: TPermutationStrategy) -> TPermutationStrategy:
+        """Add a strategy function to the globally registered strategies under
+        the `name` caught in the closure.
+
+        :param fn: A permutation strategy
+        :returns: The original strategy, unaltered
+        :raises ValueError: A strategy under name caught in the closure has
+            already been registered
+        """
         if name in _REGISTERED_STRATEGIES:
             msg = f"A strategy with the name '{name}' has already been registered"
             raise ValueError(msg)
@@ -57,8 +74,20 @@ def _register(name: str) -> t.Callable[
 
 
 def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
+    """Look-up or sanitize a permutation strategy:
+
+        - When `strategy` is a `str` it will look for a globally registered
+          strategy function by that name.
+
+        - When `strategy` is a `callable` it is will return a sanitized
+          strategy function.
+
+    :param strategy: The name of a registered strategy or a custom
+        permutation strategy
+    :return: A valid permutation strategy callable
+    """
     if callable(strategy):
-        return _make_safe_custom_strategy(strategy)
+        return _make_sanitized_custom_strategy(strategy)
     try:
         return _REGISTERED_STRATEGIES[strategy]
     except KeyError:
@@ -68,7 +97,22 @@ def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
         ) from None
 
 
-def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy:
+def _make_sanitized_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy:
+    """Take a callable that satisfies the shape of a permutation strategy and
+    return a sanitized version for future callers.
+
+    The sanitized version of the permutation strategy will intercept any
+    exceptions raised by the original permutation and re-raise a
+    `UserStrategyError`.
+
+    The sanitized version will also check the type of the value returned from
+    the original callable, and if it does conform to the expected return type,
+    a `UserStrategyError` will be raised.
+
+    :param fn: A custom user strategy function
+    :return: A sanitized version of the custom strategy function
+    """
+
     @functools.wraps(fn)
     def _impl(
         params: t.Mapping[str, t.Sequence[str]], n_permutations: int
@@ -96,6 +140,31 @@ def create_all_permutations(
     # TODO: Really don't like that this attr is ignored, but going to leave it
     #       as the original impl for now. Will change if requested!
 ) -> list[dict[str, str]]:
+    """Take a mapping parameters to possible values and return a sequence of
+    all possible permutations of those parameters.
+
+    For example calling:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        create_all_permutations({"A": ["1", "2"],
+                                 "B": ["3", "4"]})
+
+    Would result in the following permutations (not necessarily in this order):
+
+    .. highlight:: python
+    .. code-block:: python
+
+        [{"A": "1", "B": "3"},
+         {"A": "1", "B": "4"},
+         {"A": "2", "B": "3"},
+         {"A": "2", "B": "4"}]
+
+    :param params: A mapping of parameter names to possible values
+    :param _n_permutations: <ignored>
+    :return: A sequence of mappings of all possible permutations
+    """
     permutations = itertools.product(*params.values())
     return [dict(zip(params, permutation)) for permutation in permutations]
 
@@ -104,6 +173,30 @@ def create_all_permutations(
 def step_values(
     params: t.Mapping[str, t.Sequence[str]], _n_permutations: int = 0
 ) -> list[dict[str, str]]:
+    """Take a mapping parameters to possible values and return a sequence of
+    stepped values until a possible values sequence runs out of possible
+    values.
+
+    For example calling:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        step_values({"A": ["1", "2"],
+                     "B": ["3", "4"]})
+
+    Would result in the following permutations:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        [{"A": "1", "B": "3"},
+         {"A": "2", "B": "4"}]
+
+    :param params: A mapping of parameter names to possible values
+    :param _n_permutations: <ignored>
+    :return: A sequence of mappings of stepped values
+    """
     steps = zip(*params.values())
     return [dict(zip(params, step)) for step in steps]
 
@@ -112,6 +205,14 @@ def step_values(
 def random_permutations(
     params: t.Mapping[str, t.Sequence[str]], n_permutations: int = 0
 ) -> list[dict[str, str]]:
+    """Take a mapping parameters to possible values and return a sequence of
+    length `n_permutations`  sampled randomly from all possible permutations
+
+    :param params: A mapping of parameter names to possible values
+    :param n_permutations: The maximum number of permutations to sample from
+        the sequence of all permutations
+    :return: A sequence of mappings of sampled permutations
+    """
     permutations = create_all_permutations(params, 0)
 
     # sample from available permutations if n_permutations is specified
