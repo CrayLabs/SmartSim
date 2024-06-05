@@ -36,17 +36,17 @@ import typing as t
 from smartsim.error import errors
 
 # Type alias for the shape of a permutation strategy callable
-TPermutationStrategy: t.TypeAlias = t.Callable[
+PermutationStrategyType: t.TypeAlias = t.Callable[
     [t.Mapping[str, t.Sequence[str]], int], list[dict[str, str]]
 ]
 
 # Map of globally registered strategy names to registered strategy callables
-_REGISTERED_STRATEGIES: t.Final[dict[str, TPermutationStrategy]] = {}
+_REGISTERED_STRATEGIES: t.Final[dict[str, PermutationStrategyType]] = {}
 
 
 def _register(name: str) -> t.Callable[
-    [TPermutationStrategy],
-    TPermutationStrategy,
+    [PermutationStrategyType],
+    PermutationStrategyType,
 ]:
     """Create a decorator to globally register a permutation strategy under a
     given name.
@@ -55,7 +55,7 @@ def _register(name: str) -> t.Callable[
     :return: A decorator to register a permutation strategy function
     """
 
-    def _impl(fn: TPermutationStrategy) -> TPermutationStrategy:
+    def _impl(fn: PermutationStrategyType) -> PermutationStrategyType:
         """Add a strategy function to the globally registered strategies under
         the `name` caught in the closure.
 
@@ -73,7 +73,7 @@ def _register(name: str) -> t.Callable[
     return _impl
 
 
-def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
+def resolve(strategy: str | PermutationStrategyType) -> PermutationStrategyType:
     """Look-up or sanitize a permutation strategy:
 
         - When `strategy` is a `str` it will look for a globally registered
@@ -97,7 +97,7 @@ def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
         ) from None
 
 
-def _make_sanitized_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy:
+def _make_sanitized_custom_strategy(fn: PermutationStrategyType) -> PermutationStrategyType:
     """Take a callable that satisfies the shape of a permutation strategy and
     return a sanitized version for future callers.
 

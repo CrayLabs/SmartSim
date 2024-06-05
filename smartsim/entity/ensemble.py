@@ -39,7 +39,7 @@ from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Application
-from .strategies import TPermutationStrategy
+from .strategies import PermutationStrategyType
 from .strategies import resolve as resolve_strategy
 
 logger = get_logger(__name__)
@@ -60,7 +60,7 @@ class Ensemble(EntityList[Application]):
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
-        perm_strat: t.Union[str, TPermutationStrategy] = "all_perm",
+        perm_strat: t.Union[str, PermutationStrategyType] = "all_perm",
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Ensemble of Application instances.
@@ -104,7 +104,7 @@ class Ensemble(EntityList[Application]):
     def _initialize_entities(
         self,
         *,
-        perm_strat: t.Union[str, TPermutationStrategy] = "all_perm",
+        perm_strat: t.Union[str, PermutationStrategyType] = "all_perm",
         **kwargs: t.Any,
     ) -> None:
         """Initialize all the applications within the ensemble based
