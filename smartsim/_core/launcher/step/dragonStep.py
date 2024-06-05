@@ -39,7 +39,6 @@ from ....settings import (
     SbatchSettings,
     Singularity,
 )
-
 from .step import Step
 
 logger = get_logger(__name__)

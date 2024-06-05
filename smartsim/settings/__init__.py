@@ -48,3 +48,7 @@ class JsrunSettings: pass
 class BsubBatchSettings: pass
 class PalsMpiexecSettings: pass
 class SrunSettings: pass
+class Container: pass
+
+def create_batch_settings() -> None: ...
+def create_run_settings() -> None: ...

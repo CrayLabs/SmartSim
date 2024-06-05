@@ -40,7 +40,6 @@ from ....settings import (
     SettingsBase,
     SrunSettings,
 )
-
 from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher

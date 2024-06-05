@@ -39,7 +39,6 @@ from ....settings import (
     SbatchSettings,
     SettingsBase,
 )
-
 from ....status import SmartSimStatus
 from ...schemas import (
     DragonRunRequest,
@@ -90,17 +89,16 @@ class DragonLauncher(WLMLauncher):
         self._connector.cleanup()
 
     # RunSettings types supported by this launcher
-    # t.Type[SettingsBase]
     @property
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
         pass
-        # return {
-        #     DragonRunSettings: DragonStep,
-        #     SbatchSettings: DragonBatchStep,
-        #     QsubBatchSettings: DragonBatchStep,
-        #     RunSettings: LocalStep,
-        # }
+        return {
+            DragonRunSettings: DragonStep,
+            SbatchSettings: DragonBatchStep,
+            QsubBatchSettings: DragonBatchStep,
+            RunSettings: LocalStep,
+        }
 
     def add_step_to_mapping_table(self, name: str, step_map: StepMap) -> None:
         super().add_step_to_mapping_table(name, step_map)

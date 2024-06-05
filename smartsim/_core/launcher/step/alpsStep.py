@@ -88,7 +88,7 @@ class AprunStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             aprun_cmd.extend([bash, launch_script_path])
 
-        if isinstance(self.run_settings.container, Singularity): #changed from Singularity to str
+        if isinstance(self.run_settings.container, Singularity):
             # pylint: disable-next=protected-access
             aprun_cmd += self.run_settings.container._container_cmds(self.cwd)
 

@@ -38,7 +38,6 @@ from ....settings import (
     RunSettings,
     SettingsBase,
 )
-
 from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher

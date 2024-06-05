@@ -50,38 +50,22 @@ from ..error import (
 )
 from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
-# from ..settings import (
-#     AprunSettings,
-#     BsubBatchSettings,
-#     JsrunSettings,
-#     MpiexecSettings,
-#     MpirunSettings,
-#     OrterunSettings,
-#     PalsMpiexecSettings,
-#     QsubBatchSettings,
-#     SbatchSettings,
-#     SrunSettings,
-# )
-# Mock imports
-class AprunSettings: pass
-class BsubBatchSettings: pass
-class JsrunSettings: pass
-class MpiexecSettings: pass
-class OrterunSettings: pass
-class PalsMpiexecSettings: pass
-class QsubBatchSettings: pass
-class SbatchSettings: pass
-class SrunSettings: pass
+from ..settings import (
+    AprunSettings,
+    BsubBatchSettings,
+    JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    PalsMpiexecSettings,
+    QsubBatchSettings,
+    SbatchSettings,
+    SrunSettings,
+)
 
-# from ..settings.base import BatchSettings, RunSettings
-# Mock imports
-class BatchSettings: pass
-class RunSettings: pass
+from ..settings import BatchSettings, RunSettings
 
-# from ..settings.settings import create_batch_settings, create_run_settings
-# Mock functions
-def create_batch_settings() -> None: ...
-def create_run_settings() -> None: ...
+from ..settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
 logger = get_logger(__name__)

@@ -29,7 +29,6 @@ import typing as t
 from ....entity import DBNode, Model
 from ....log import get_logger
 from ....settings import QsubBatchSettings
-
 from .step import Step
 
 logger = get_logger(__name__)
