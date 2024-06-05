@@ -26,13 +26,24 @@
 
 @0xdd14d8ba5c06743f;
 
-using Enums = import "../../enums/enums.capnp";
-
-struct TorchRequestAttributes {
-  tensorType @0 :Enums.TorchTensorType;
+enum TorchTensorType {
+  nested @0; # ragged
+  sparse @1;
+  tensor @2; # "normal" tensor
 }
 
-struct TensorflowRequestAttributes {
+enum TFTensorType {
+  ragged @0;
+  sparse @1;
+  variable @2;
+  constant @3;
+}
+
+struct TorchRequestAttributes {
+  tensorType @0 :TorchTensorType;
+}
+
+struct TensorFlowRequestAttributes {
   name @0 :Text;
-  tensorType @1 :Enums.TFTensorType;
+  tensorType @1 :TFTensorType;
 }

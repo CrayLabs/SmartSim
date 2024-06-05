@@ -24,10 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-@0xee59c60fccbb1bf9;
+@0x8ca69fd1aacb6668;
 
-struct TorchResponseAttributes {
+struct ModelKey {
+  key @0 :Text;
 }
 
-struct TensorFlowResponseAttributes {
+struct TensorKey {
+  key @0 :Text;
 }

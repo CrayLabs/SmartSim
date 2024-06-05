@@ -48,16 +48,3 @@ enum NumericalType {
   float32 @8; 
   float64 @9;
 }
-
-enum TorchTensorType {
-  nested @0; # ragged
-  sparse @1;
-  tensor @2; # "normal" tensor
-}
-
-enum TFTensorType {
-  ragged @0;
-  sparse @1;
-  variable @2;
-  constant @3;
-}

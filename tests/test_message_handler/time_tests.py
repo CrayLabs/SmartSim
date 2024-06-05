@@ -32,7 +32,7 @@ built_tensor_1 = handler.build_tensor(torch1, "c", "int8", list(torch1.shape))
 built_tensor_2 = handler.build_tensor(torch2, "c", "int8", list(torch2.shape))
 
 output_tensor = handler.build_tensor(torch1, "c", "int8", list(torch1.shape))
-custom_attributes = handler.build_torchcnn_request_attributes("tensor")
+custom_attributes = handler.build_torch_request_attributes("tensor")
 
 
 @pytest.mark.parametrize(
@@ -97,7 +97,7 @@ def test_build_request(reply_channel, model, device, input, output, custom_attri
     print(deserialized_request)
 
 
-response_attributes = handler.build_torchcnn_response_attributes()
+response_attributes = handler.build_torch_response_attributes()
 
 
 @pytest.mark.parametrize(

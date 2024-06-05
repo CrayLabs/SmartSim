@@ -29,19 +29,16 @@
 using Enums = import "../enums/enums.capnp";
 using Tensors = import "../tensor/tensor.capnp";
 using RequestAttributes = import "request_attributes/request_attributes.capnp";
+using DataRef = import "../data/data_references.capnp";
 
 struct ChannelDescriptor {
   reply @0 :Data;
 }
 
-struct ModelKey {
-  key @0 :Text;
-}
-
 struct Request {
   replyChannel @0 :ChannelDescriptor;
   model :union {
-    modelKey @1 :ModelKey;
+    modelKey @1 :DataRef.ModelKey;
     modelData @2 :Data;
   }
   device :union {
@@ -49,16 +46,16 @@ struct Request {
     noDevice @4 :Void;
   }
   input :union {
-    inputKeys @5 :List(Tensors.TensorKey);
+    inputKeys @5 :List(DataRef.TensorKey);
     inputData @6 :List(Tensors.Tensor);
   }
   output :union {
-    outputKeys @7 :List(Tensors.TensorKey);
+    outputKeys @7 :List(DataRef.TensorKey);
     outputData @8 :List(Tensors.Tensor);
   }
   customAttributes :union {
-    torchCNN @9 :RequestAttributes.TorchRequestAttributes;
-    tfCNN @10 :RequestAttributes.TensorflowRequestAttributes;
+    torch @9 :RequestAttributes.TorchRequestAttributes;
+    tf @10 :RequestAttributes.TensorFlowRequestAttributes;
     none @11 :Void;
   }
 }

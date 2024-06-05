@@ -29,6 +29,9 @@ import capnp  # type: ignore # pylint: disable=unused-import
 import tensorflow as tf
 import torch
 
+from .mli_schemas.data import (  # type: ignore # pylint: disable=no-name-in-module
+    data_references_capnp,
+)
 from .mli_schemas.request import (  # type: ignore # pylint: disable=no-name-in-module
     request_capnp,
 )
@@ -74,31 +77,31 @@ class MessageHandler:
         return built_tensor
 
     @staticmethod
-    def build_tensor_key(key: str) -> tensor_capnp.TensorKey:
+    def build_tensor_key(key: str) -> data_references_capnp.TensorKey:
         """
         Builds a new TensorKey message with the provided key.
         """
         try:
-            tensor_key = tensor_capnp.TensorKey.new_message()
+            tensor_key = data_references_capnp.TensorKey.new_message()
             tensor_key.key = key
         except Exception as e:
             raise ValueError("Error building tensor key.") from e
         return tensor_key
 
     @staticmethod
-    def build_model_key(key: str) -> request_capnp.ModelKey:
+    def build_model_key(key: str) -> data_references_capnp.ModelKey:
         """
         Builds a new ModelKey message with the provided key.
         """
         try:
-            model_key = request_capnp.ModelKey.new_message()
+            model_key = data_references_capnp.ModelKey.new_message()
             model_key.key = key
         except Exception as e:
             raise ValueError("Error building model key.") from e
         return model_key
 
     @staticmethod
-    def build_torchcnn_request_attributes(
+    def build_torch_request_attributes(
         tensor_type: str,
     ) -> request_attributes_capnp.TorchRequestAttributes:
         """
@@ -108,29 +111,29 @@ class MessageHandler:
             attributes = request_attributes_capnp.TorchRequestAttributes.new_message()
             attributes.tensorType = tensor_type
         except Exception as e:
-            raise ValueError("Error building torchcnn request attributes.") from e
+            raise ValueError("Error building torch request attributes.") from e
         return attributes
 
     @staticmethod
-    def build_tfcnn_request_attributes(
+    def build_tf_request_attributes(
         name: str, tensor_type: str
-    ) -> request_attributes_capnp.TensorflowRequestAttributes:
+    ) -> request_attributes_capnp.TensorFlowRequestAttributes:
         """
-        Builds a new TensorflowRequestAttributes message with
+        Builds a new TensorFlowRequestAttributes message with
         the provided name and tensor type.
         """
         try:
             attributes = (
-                request_attributes_capnp.TensorflowRequestAttributes.new_message()
+                request_attributes_capnp.TensorFlowRequestAttributes.new_message()
             )
             attributes.name = name
             attributes.tensorType = tensor_type
         except Exception as e:
-            raise ValueError("Error building tfcnn request attributes.") from e
+            raise ValueError("Error building tf request attributes.") from e
         return attributes
 
     @staticmethod
-    def build_torchcnn_response_attributes() -> (
+    def build_torch_response_attributes() -> (
         response_attributes_capnp.TorchResponseAttributes
     ):
         """
@@ -139,18 +142,18 @@ class MessageHandler:
         return response_attributes_capnp.TorchResponseAttributes.new_message()
 
     @staticmethod
-    def build_tfcnn_response_attributes() -> (
-        response_attributes_capnp.TensorflowResponseAttributes
+    def build_tf_response_attributes() -> (
+        response_attributes_capnp.TensorFlowResponseAttributes
     ):
         """
-        Builds a new TensorflowResponseAttributes message.
+        Builds a new TensorFlowResponseAttributes message.
         """
-        return response_attributes_capnp.TensorflowResponseAttributes.new_message()
+        return response_attributes_capnp.TensorFlowResponseAttributes.new_message()
 
     @staticmethod
     def _assign_model(
         request: request_capnp.Request,
-        model: t.Union[request_capnp.ModelKey, t.ByteString],
+        model: t.Union[data_references_capnp.ModelKey, t.ByteString],
     ) -> None:
         """
         Assigns a model to the supplied request.
@@ -193,7 +196,9 @@ class MessageHandler:
     @staticmethod
     def _assign_inputs(
         request: request_capnp.Request,
-        inputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+        inputs: t.Union[
+            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
+        ],
     ) -> None:
         """
         Assigns inputs to the supplied request.
@@ -215,7 +220,9 @@ class MessageHandler:
     @staticmethod
     def _assign_outputs(
         request: request_capnp.Request,
-        outputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+        outputs: t.Union[
+            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
+        ],
     ) -> None:
         """
         Assigns outputs to the supplied request.
@@ -239,7 +246,7 @@ class MessageHandler:
         request: request_capnp.Request,
         custom_attributes: t.Union[
             request_attributes_capnp.TorchRequestAttributes,
-            request_attributes_capnp.TensorflowRequestAttributes,
+            request_attributes_capnp.TensorFlowRequestAttributes,
             None,
         ],
     ) -> None:
@@ -254,12 +261,12 @@ class MessageHandler:
                     custom_attributes.schema.node.displayName.split(":")[-1]
                 )
                 if custom_attribute_class_name == "TorchRequestAttributes":
-                    request.customAttributes.torchCNN = custom_attributes
-                elif custom_attribute_class_name == "TensorflowRequestAttributes":
-                    request.customAttributes.tfCNN = custom_attributes
+                    request.customAttributes.torch = custom_attributes
+                elif custom_attribute_class_name == "TensorFlowRequestAttributes":
+                    request.customAttributes.tf = custom_attributes
                 else:
                     raise ValueError("""Invalid custom attribute class name.
-                        Expected 'TensorflowRequestAttributes' or
+                        Expected 'TensorFlowRequestAttributes' or
                         'TorchRequestAttributes'.""")
         except Exception as e:
             raise ValueError(
@@ -269,13 +276,17 @@ class MessageHandler:
     @staticmethod
     def build_request(
         reply_channel: t.ByteString,
-        model: t.Union[request_capnp.ModelKey, t.ByteString],
+        model: t.Union[data_references_capnp.ModelKey, t.ByteString],
         device: t.Union[str, None],
-        inputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
-        outputs: t.Union[t.List[tensor_capnp.TensorKey], t.List[tensor_capnp.Tensor]],
+        inputs: t.Union[
+            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
+        ],
+        outputs: t.Union[
+            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
+        ],
         custom_attributes: t.Union[
             request_attributes_capnp.TorchRequestAttributes,
-            request_attributes_capnp.TensorflowRequestAttributes,
+            request_attributes_capnp.TensorFlowRequestAttributes,
             None,
         ],
     ) -> request_capnp.Request:
@@ -332,7 +343,9 @@ class MessageHandler:
     @staticmethod
     def _assign_result(
         response: response_capnp.Response,
-        result: t.Union[t.List[tensor_capnp.Tensor], t.List[tensor_capnp.TensorKey]],
+        result: t.Union[
+            t.List[tensor_capnp.Tensor], t.List[data_references_capnp.TensorKey]
+        ],
     ) -> None:
         """
         Assigns a result to the supplied response.
@@ -356,7 +369,7 @@ class MessageHandler:
         response: response_capnp.Response,
         custom_attributes: t.Union[
             response_attributes_capnp.TorchResponseAttributes,
-            response_attributes_capnp.TensorflowResponseAttributes,
+            response_attributes_capnp.TensorFlowResponseAttributes,
             None,
         ],
     ) -> None:
@@ -371,12 +384,12 @@ class MessageHandler:
                     custom_attributes.schema.node.displayName.split(":")[-1]
                 )
                 if custom_attribute_class_name == "TorchResponseAttributes":
-                    response.customAttributes.torchCNN = custom_attributes
-                elif custom_attribute_class_name == "TensorflowResponseAttributes":
-                    response.customAttributes.tfCNN = custom_attributes
+                    response.customAttributes.torch = custom_attributes
+                elif custom_attribute_class_name == "TensorFlowResponseAttributes":
+                    response.customAttributes.tf = custom_attributes
                 else:
                     raise ValueError("""Invalid custom attribute class name.
-                        Expected 'TensorflowResponseAttributes' or 
+                        Expected 'TensorFlowResponseAttributes' or 
                         'TorchResponseAttributes'.""")
         except Exception as e:
             raise ValueError("Error assigning custom attributes to response.") from e
@@ -385,10 +398,12 @@ class MessageHandler:
     def build_response(
         status: int,
         message: str,
-        result: t.Union[t.List[tensor_capnp.Tensor], t.List[tensor_capnp.TensorKey]],
+        result: t.Union[
+            t.List[tensor_capnp.Tensor], t.List[data_references_capnp.TensorKey]
+        ],
         custom_attributes: t.Union[
             response_attributes_capnp.TorchResponseAttributes,
-            response_attributes_capnp.TensorflowResponseAttributes,
+            response_attributes_capnp.TensorFlowResponseAttributes,
             None,
         ],
     ) -> response_capnp.Response:

@@ -53,8 +53,8 @@ input_key2 = handler.build_tensor_key("input_key2")
 output_key1 = handler.build_tensor_key("output_key1")
 output_key2 = handler.build_tensor_key("output_key2")
 
-torch_attributes = handler.build_torchcnn_request_attributes("sparse")
-tf_attributes = handler.build_tfcnn_request_attributes(name="tf", tensor_type="sparse")
+torch_attributes = handler.build_torch_request_attributes("sparse")
+tf_attributes = handler.build_tf_request_attributes(name="tf", tensor_type="sparse")
 
 indirect_request = handler.build_request(
     b"reply",
@@ -133,14 +133,13 @@ def test_build_request_indirect_successful(
     assert built_request.output.which() == "outputKeys"
     assert len(built_request.output.outputKeys) == len(input)
     print(built_request.customAttributes.which())
-    if built_request.customAttributes.which() == "tfCNN":
+    if built_request.customAttributes.which() == "tf":
         assert (
-            built_request.customAttributes.tfCNN.tensorType
-            == custom_attributes.tensorType
+            built_request.customAttributes.tf.tensorType == custom_attributes.tensorType
         )
-    elif built_request.customAttributes.which() == "torchCNN":
+    elif built_request.customAttributes.which() == "torch":
         assert (
-            built_request.customAttributes.torchCNN.tensorType
+            built_request.customAttributes.torch.tensorType
             == custom_attributes.tensorType
         )
     else:
@@ -300,14 +299,13 @@ def test_build_request_direct_successful(
     assert len(built_request.input.inputData) == len(input)
     assert built_request.output.which() == "outputData"
     assert len(built_request.output.outputData) == len(input)
-    if built_request.customAttributes.which() == "tfCNN":
+    if built_request.customAttributes.which() == "tf":
         assert (
-            built_request.customAttributes.tfCNN.tensorType
-            == custom_attributes.tensorType
+            built_request.customAttributes.tf.tensorType == custom_attributes.tensorType
         )
-    elif built_request.customAttributes.which() == "torchCNN":
+    elif built_request.customAttributes.which() == "torch":
         assert (
-            built_request.customAttributes.torchCNN.tensorType
+            built_request.customAttributes.torch.tensorType
             == custom_attributes.tensorType
         )
     else:

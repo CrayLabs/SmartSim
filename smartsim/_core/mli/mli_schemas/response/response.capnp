@@ -28,17 +28,18 @@
 
 using Tensors = import "../tensor/tensor.capnp";
 using ResponseAttributes = import "response_attributes/response_attributes.capnp";
+using DataRef = import "../data/data_references.capnp";
 
 struct Response {
   status @0 :Int32;
   statusMessage @1 :Text;
   result :union {
-    keys @2 :List(Tensors.TensorKey);
+    keys @2 :List(DataRef.TensorKey);
     data @3 :List(Tensors.Tensor);
   }
   customAttributes :union {
-    torchCNN @4 :ResponseAttributes.TorchResponseAttributes;
-    tfCNN @5 :ResponseAttributes.TensorflowResponseAttributes;
+    torch @4 :ResponseAttributes.TorchResponseAttributes;
+    tf @5 :ResponseAttributes.TensorFlowResponseAttributes;
     none @6 :Void;
   }
 }

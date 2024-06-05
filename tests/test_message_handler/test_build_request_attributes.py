@@ -36,24 +36,22 @@ pytestmark = pytest.mark.group_a
 handler = MessageHandler()
 
 
-def test_build_torchcnn_request_attributes_successful():
-    attribute = handler.build_torchcnn_request_attributes("sparse")
+def test_build_torch_request_attributes_successful():
+    attribute = handler.build_torch_request_attributes("sparse")
     assert attribute.tensorType == "sparse"
 
 
-def test_build_torchcnn_request_attributes_unsuccessful():
+def test_build_torch_request_attributes_unsuccessful():
     with pytest.raises(ValueError):
-        attribute = handler.build_torchcnn_request_attributes("invalid!")
+        attribute = handler.build_torch_request_attributes("invalid!")
 
 
-def test_build_tfcnn_request_attributes_successful():
-    attribute = handler.build_tfcnn_request_attributes(
-        name="tfcnn", tensor_type="sparse"
-    )
+def test_build_tf_request_attributes_successful():
+    attribute = handler.build_tf_request_attributes(name="tfcnn", tensor_type="sparse")
     assert attribute.tensorType == "sparse"
     assert attribute.name == "tfcnn"
 
 
-def test_build_tfcnn_request_attributes_unsuccessful():
+def test_build_tf_request_attributes_unsuccessful():
     with pytest.raises(ValueError):
-        attribute = handler.build_tfcnn_request_attributes("tf_fail", "invalid!")
+        attribute = handler.build_tf_request_attributes("tf_fail", "invalid!")

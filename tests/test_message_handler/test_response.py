@@ -49,8 +49,8 @@ tensor_4 = handler.build_tensor(tflow2, "c", "int64", list(tflow2.shape))
 result_key1 = handler.build_tensor_key("result_key1")
 result_key2 = handler.build_tensor_key("result_key2")
 
-torch_attributes = handler.build_torchcnn_response_attributes()
-tf_attributes = handler.build_tfcnn_response_attributes()
+torch_attributes = handler.build_torch_response_attributes()
+tf_attributes = handler.build_tf_response_attributes()
 
 indirect_response = handler.build_response(
     200,

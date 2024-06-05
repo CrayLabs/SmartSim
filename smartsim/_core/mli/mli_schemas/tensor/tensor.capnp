@@ -38,7 +38,3 @@ struct TensorDescriptor {
   order @1 :Enums.Order;
   dataType @2 :Enums.NumericalType;
 }
-
-struct TensorKey {
-  key @0 :Text;
-}
