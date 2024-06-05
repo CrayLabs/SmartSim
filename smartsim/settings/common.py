@@ -29,17 +29,14 @@ import typing as t
 IntegerArgument = t.Dict[str, t.Optional[int]]
 StringArgument = t.Dict[str, t.Optional[str]]
 
-def validate_env_vars(env_vars: StringArgument) -> None:
-    """Validate that user passed env vars are of correct type.
-    """
-    for key, value in env_vars.items():
-        if not isinstance(value, str) and value is not None:
-            raise TypeError(f"Value for '{key}' must be a string.")
-
-def validate_args(launch_args: t.Mapping[str, t.Union[str,int,float,None]]) -> None:
-    """Validate that user passed launch args and scheduler args are of correct type.
-    """
-    for key, value in launch_args.items():
-        if not isinstance(value, (str,int,float)) and value is not None:
-            raise TypeError(f"Value for '{key}' must be a string, an int, a float, or None.")
+def set_check_input(key: str, value: str | None, logger):
+    # TODO check this
+    if not (isinstance(key, str) or isinstance(value, (str, None))):
+            raise TypeError("Argument name should be of type str")
+    if key.startswith("-"):
+        key = key.lstrip("-")
+        logger.warning(
+            "One or more leading `-` characters were provided to the run argument. \
+            Leading dashes were stripped and the arguments were passed to the run_command."
+        )
     

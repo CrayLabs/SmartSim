@@ -37,12 +37,13 @@ logger = get_logger(__name__)
 
 class QsubBatchArgTranslator(BatchArgTranslator):
 
-    def scheduler_str(self) -> str:
-        """ Get the string representation of the scheduler
-        """
-        return SchedulerType.PbsScheduler.value
+    def __init__(
+        self,
+        scheduler_args: StringArgument,
+    ) -> None:
+        super().__init__(scheduler_args)
 
-    def set_nodes(self, num_nodes: int) -> t.Union[IntegerArgument,None]:
+    def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
         In PBS, 'select' is the more primitive way of describing how
@@ -54,9 +55,9 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         :param num_nodes: number of nodes
         """
 
-        return {"nodes": num_nodes}
+        self.set("nodes", str(num_nodes))
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument,None]:
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -68,9 +69,9 @@ class QsubBatchArgTranslator(BatchArgTranslator):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be a list of strings")
-        return {"hostname": ",".join(host_list)}
+        self.set("hostname", ",".join(host_list))
     
-    def set_walltime(self, walltime: str) -> t.Union[StringArgument,None]:
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         format = "HH:MM:SS"
@@ -81,16 +82,16 @@ class QsubBatchArgTranslator(BatchArgTranslator):
 
         :param walltime: wall time
         """
-        return {"walltime": walltime}
+        self.set("walltime", walltime)
     
-    def set_queue(self, queue: str) -> t.Union[StringArgument,None]:
+    def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
 
         :param queue: queue name
         """
-        return {"q": str(queue)}
+        self.set("q", str(queue))
     
-    def set_ncpus(self, num_cpus: int) -> t.Union[IntegerArgument,None]:
+    def set_ncpus(self, num_cpus: int) -> None:
         """Set the number of cpus obtained in each node.
 
         If a select argument is provided in
@@ -99,22 +100,22 @@ class QsubBatchArgTranslator(BatchArgTranslator):
 
         :param num_cpus: number of cpus per node in select
         """
-        return {"ppn": int(num_cpus)}
+        self.set("ppn", str(num_cpus))
     
-    def set_account(self, account: str) -> t.Union[StringArgument,None]:
+    def set_account(self, account: str) -> None:
         """Set the account for this batch job
 
         :param acct: account id
         """
-        return {"A": str(account)}
+        self.set("A", str(account))
 
-    def format_batch_args(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+    def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Qsub
         :raises ValueError: if options are supplied without values
         """
-        opts, batch_arg_copy = self._create_resource_list(batch_args)
+        opts, batch_arg_copy = self._create_resource_list(self._scheduler_args)
         for opt, value in batch_arg_copy.items():
             prefix = "-"
             if not value:
@@ -122,8 +123,9 @@ class QsubBatchArgTranslator(BatchArgTranslator):
             opts += [f"{prefix}{opt}", str(value)]
         return opts
 
+    @staticmethod
     def _sanity_check_resources(
-        self, batch_args: t.Dict[str, t.Union[str,int,float,None]]
+        batch_args: t.Dict[str, t.Union[str,int,float,None]]
     ) -> None:
         """Check that only select or nodes was specified in resources
 
@@ -141,10 +143,11 @@ class QsubBatchArgTranslator(BatchArgTranslator):
                 "'select' was set using 'set_resource'. Please only specify one."
             )
 
-        if has_select and not isinstance(has_select, int):
-            raise TypeError("The value for 'select' must be an integer")
-        if has_nodes and not isinstance(has_nodes, int):
-            raise TypeError("The value for 'nodes' must be an integer")
+        # TODO ask the team if this is true below
+        # if has_select and not isinstance(has_select, int):
+        #     raise TypeError("The value for 'select' must be an integer")
+        # if has_nodes and not isinstance(has_nodes, int):
+        #     raise TypeError("The value for 'nodes' must be an integer")
 
         for key, value in batch_args.items():
             if not isinstance(key, str):
@@ -181,8 +184,8 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         if walltime := batch_arg_copy.pop("walltime", None):
             res += ["-l", f"walltime={walltime}"]
 
-        # # All other "standard" resource specs
-        # for resource, value in batch_arg_copy.items():
-        #     res += [f"-l {resource}={value}"]
-
         return res, batch_arg_copy
+
+    def set(self, key: str, value: str | None) -> None:
+        # Store custom arguments in the launcher_args
+        self._scheduler_args[key] = value

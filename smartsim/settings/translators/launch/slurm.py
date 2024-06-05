@@ -30,26 +30,25 @@ import typing as t
 import re
 import os
 from ..launchArgTranslator import LaunchArgTranslator
-from ...common import IntegerArgument, StringArgument
-from ...launchCommand import LauncherType
+from ...common import IntegerArgument, StringArgument, set_check_input
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
-
 class SlurmArgTranslator(LaunchArgTranslator):
-
-    def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
-        return LauncherType.SlurmLauncher.value
     
-    def set_reserved_launch_args(self) -> set[str]:
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)
+    
+    def _reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
         return {"chdir", "D"}
 
-    def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
+    def set_nodes(self, nodes: int) -> None:
         """ Set the number of nodes
 
         Effectively this is setting: ``srun --nodes <num_nodes>``
@@ -57,9 +56,9 @@ class SlurmArgTranslator(LaunchArgTranslator):
         :param nodes: nodes to launch on
         :return: launcher argument
         """
-        return {"nodes": int(nodes)}
+        self.set("nodes", str(nodes))
     
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument,None]:
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """ Specify the hostlist for this job
 
         This sets ``--nodelist``
@@ -73,18 +72,18 @@ class SlurmArgTranslator(LaunchArgTranslator):
             raise TypeError("host_list argument must be a string or list of strings")
         elif not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        return {"nodelist": ",".join(host_list)}
+        self.set("nodelist", ",".join(host_list))
 
-    def set_hostlist_from_file(self, file_path: str) -> t.Union[StringArgument, None]:
+    def set_hostlist_from_file(self, file_path: str) -> None:
         """ Use the contents of a file to set the node list
 
         This sets ``--nodefile``
 
         :param file_path: Path to the nodelist file
         """
-        return {"nodefile": file_path}
+        self.set("nodefile", file_path)
 
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) ->  t.Union[StringArgument,None]:
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) ->  None:
         """ Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -96,36 +95,36 @@ class SlurmArgTranslator(LaunchArgTranslator):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        return { "exclude": ",".join(host_list)}
+        self.set("exclude",",".join(host_list))
 
-    def set_cpus_per_task(self, cpus_per_task: int) -> t.Union[IntegerArgument,None]:
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """ Set the number of cpus to use per task
 
         This sets ``--cpus-per-task``
 
         :param num_cpus: number of cpus to use per task
         """
-        return {"cpus-per-task": int(cpus_per_task)}
+        self.set("cpus-per-task", str(cpus_per_task))
 
-    def set_tasks(self, tasks: int) -> t.Union[IntegerArgument,None]:
+    def set_tasks(self, tasks: int) -> None:
         """ Set the number of tasks for this job
 
         This sets ``--ntasks``
 
         :param tasks: number of tasks
         """
-        return {"ntasks": int(tasks)}
+        self.set("ntasks",str(tasks))
     
-    def set_tasks_per_node(self, tasks_per_node: int) -> t.Union[IntegerArgument,None]:
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """ Set the number of tasks for this job
 
         This sets ``--ntasks-per-node``
 
         :param tasks_per_node: number of tasks per node
         """
-        return {"ntasks-per-node": int(tasks_per_node)}
+        self.set("ntasks-per-node",str(tasks_per_node))
     
-    def set_cpu_bindings(self, bindings: t.Union[int,t.List[int]]) -> t.Union[StringArgument,None]:
+    def set_cpu_bindings(self, bindings: t.Union[int,t.List[int]]) -> None:
         """ Bind by setting CPU masks on tasks
 
         This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
@@ -134,27 +133,27 @@ class SlurmArgTranslator(LaunchArgTranslator):
         """
         if isinstance(bindings, int):
             bindings = [bindings]
-        return {"cpu_bind": "map_cpu:" + ",".join(str(num) for num in bindings)}
+        self.set("cpu_bind","map_cpu:" + ",".join(str(num) for num in bindings))
 
-    def set_memory_per_node(self, memory_per_node: int) -> t.Union[StringArgument,None]:
+    def set_memory_per_node(self, memory_per_node: int) -> None:
         """ Specify the real memory required per node
 
         This sets ``--mem`` in megabytes
 
         :param memory_per_node: Amount of memory per node in megabytes
         """
-        return {"mem": f"{memory_per_node}M"}
+        self.set("mem",f"{memory_per_node}M")
 
-    def set_executable_broadcast(self, dest_path: str) -> t.Union[StringArgument,None]:
+    def set_executable_broadcast(self, dest_path: str) -> None:
         """ Copy executable file to allocated compute nodes
 
         This sets ``--bcast``
 
         :param dest_path: Path to copy an executable file
         """
-        return {"bcast": dest_path}
+        self.set("bcast",dest_path)
 
-    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument,None]:
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
         """ Specify the node feature for this job
 
         This sets ``-C``
@@ -166,9 +165,9 @@ class SlurmArgTranslator(LaunchArgTranslator):
             feature_list = [feature_list.strip()]
         elif not all(isinstance(feature, str) for feature in feature_list):
             raise TypeError("node_feature argument must be string or list of strings")
-        return {"C": ",".join(feature_list)}
+        self.set("C",",".join(feature_list))
 
-    def set_walltime(self, walltime: str) -> t.Union[StringArgument,None]:
+    def set_walltime(self, walltime: str) -> None:
         """ Set the walltime of the job
 
         format = "HH:MM:SS"
@@ -177,11 +176,11 @@ class SlurmArgTranslator(LaunchArgTranslator):
         """
         pattern = r'^\d{2}:\d{2}:\d{2}$'
         if walltime and re.match(pattern, walltime):
-            return {"time": str(walltime)}
+            self.set("time",str(walltime))
         else:
             raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
 
-    def set_het_group(self, het_group: t.Iterable[int]) -> t.Union[StringArgument,None]:
+    def set_het_group(self, het_group: t.Iterable[int]) -> None:
         """Set the heterogeneous group for this job
 
         this sets `--het-group`
@@ -199,44 +198,49 @@ class SlurmArgTranslator(LaunchArgTranslator):
                 f"but max het group in allocation is {het_size-1}"
             )
             raise ValueError(msg)
-        return {"het-group": ",".join(str(group) for group in het_group)}
+        self.set("het-group",",".join(str(group) for group in het_group))
 
-    def set_verbose_launch(self, verbose: bool) -> t.Union[t.Dict[str, None], t.Dict[str, int], None]:
+    def set_verbose_launch(self, verbose: bool) -> None:
         """ Set the job to run in verbose mode
 
         This sets ``--verbose``
 
         :param verbose: Whether the job should be run verbosely
         """
-        return {"verbose": None}
+        if verbose:
+            self.set("verbose",None)
+        else:
+            self._launch_args.pop("verbose", None)
 
-    def set_quiet_launch(self, quiet: bool) -> t.Union[t.Dict[str, None], None]:
+    def set_quiet_launch(self, quiet: bool) -> None:
         """Set the job to run in quiet mode
 
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
         """
-        return {"quiet": None}
+        if quiet:
+            self.set("quiet",None)
+        else:
+            self._launch_args.pop("quiet", None)
 
-    def format_launcher_args(self, launcher_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.Union[t.List[str],None]:
+    def format_launch_args(self) -> t.Union[t.List[str],None]:
         """Return a list of slurm formatted launch arguments
 
         :return: list of slurm arguments for these settings
         """
-        # add additional slurm arguments based on key length
-        opts = []
-        for opt, value in launcher_args.items():
-            short_arg = bool(len(str(opt)) == 1)
+        formatted = []
+        for key, value in self._launch_args.items():
+            short_arg = bool(len(str(key)) == 1)
             prefix = "-" if short_arg else "--"
             if not value:
-                opts += [prefix + opt]
+                formatted += [prefix + key]
             else:
                 if short_arg:
-                    opts += [prefix + opt, str(value)]
+                    formatted += [prefix + key, str(value)]
                 else:
-                    opts += ["=".join((prefix + opt, str(value)))]
-        return opts
+                    formatted += ["=".join((prefix + key, str(value)))]
+        return formatted
     
     def format_env_vars(self, env_vars: t.Dict[str, t.Optional[str]]) -> t.Union[t.List[str],None]:
         """Build bash compatible environment variable string for Slurm
@@ -292,3 +296,19 @@ class SlurmArgTranslator(LaunchArgTranslator):
                         "and re-run the experiment."
                     )
                     logger.warning(msg)
+
+    def set(self, key: str, value: str | None) -> None:
+        """ Set the launch arguments
+        """
+        set_check_input(key,value,logger)
+        if key in self._reserved_launch_args():
+            logger.warning(
+                (
+                    f"Could not set argument '{key}': "
+                    f"it is a reserved argument of '{type(self).__name__}'"
+                )
+            )
+            return
+        if key in self._launch_args and key != self._launch_args[key]:
+            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
+        self._launch_args[key] = value

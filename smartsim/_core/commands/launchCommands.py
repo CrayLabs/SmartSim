@@ -1,7 +1,7 @@
 from .commandList import CommandList
 
 class LaunchCommands:
-    """Container or aggregating prelaunch commands (e.g. file
+    """Container for aggregating prelaunch commands (e.g. file
     system operations), launch commands, and postlaunch commands
     """
     def __init__(

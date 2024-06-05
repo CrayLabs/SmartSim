@@ -32,13 +32,8 @@ from shlex import split as sh_split
 from ....entity import DBNode, Model
 from ....error import AllocationError, SmartSimError
 from ....log import get_logger
-# from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
-# from ....settings.base import RunSettings
-# Temp mock imports
-class MpiexecSettings: pass
-class MpirunSettings: pass
-class OrterunSettings: pass
-class RunSettings: pass
+from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
+from ....settings import RunSettings
 
 from .step import Step, proxyable_launch_cmd
 

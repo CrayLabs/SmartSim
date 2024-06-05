@@ -30,7 +30,7 @@ import copy
 
 from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
-from .common import validate_env_vars, validate_args, StringArgument
+from .common import StringArgument
 from .batchCommand import SchedulerType
 from .translators.batch.pbs import QsubBatchArgTranslator
 from .translators.batch.slurm import SlurmBatchArgTranslator
@@ -49,187 +49,54 @@ class BatchSettings(BaseSettings):
     ) -> None:
         try:
             self._batch_scheduler = SchedulerType(batch_scheduler)
-        except KeyError:
+        except ValueError:
             raise ValueError(f"Invalid scheduler type: {batch_scheduler}")
-        self._arg_translator = self._get_scheduler()
-
-        if env_vars:
-            validate_env_vars(env_vars)
+        self._arg_translator = self._get_arg_builder(scheduler_args)
         self.env_vars = env_vars or {}
 
-        if scheduler_args:
-            validate_args(scheduler_args)
-        self.scheduler_args = scheduler_args or {}
+    @property
+    def batch_scheduler(self) -> str:
+        """Return the scheduler name.
+        """
+        return self._batch_scheduler.value
 
     @property
-    def batch_scheduler(self):
-        return self._batch_scheduler
-
-    @property
-    def arg_translator(self):
+    def scheduler_args(self) -> BatchArgTranslator:
+        """Return the batch argument translator.
+        """
+        # Is a deep copy needed here?
         return self._arg_translator
 
     @property
-    def scheduler_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
-        """Retrieve attached batch arguments
-
-        :returns: attached batch arguments
+    def env_vars(self) -> StringArgument:
+        """Return an immutable list of attached environment variables.
         """
-        return self._scheduler_args
+        return copy.deepcopy(self._env_vars)
 
-    @scheduler_args.setter
-    def scheduler_args(self, value: t.Dict[str, t.Union[int, str, float,None]]) -> None:
-        """Attach batch arguments
-
-        :param value: dictionary of batch arguments
+    @env_vars.setter
+    def env_vars(self, value: t.Mapping[str, str]) -> None:
+        """Set the environment variables.
         """
-        self._scheduler_args = copy.deepcopy(value) if value else {}
+        self._env_vars = copy.deepcopy(value)
 
-    def _get_scheduler(self) -> BatchArgTranslator:
+    def _get_arg_builder(self, scheduler_args) -> BatchArgTranslator:
         """ Map the Scheduler to the BatchArgTranslator
         """
-        if self._batch_scheduler.value == 'slurm':
-            return SlurmBatchArgTranslator()
-        elif self._batch_scheduler.value == 'lsf':
-            return BsubBatchArgTranslator()
-        elif self._batch_scheduler.value == 'pbs':
-            return QsubBatchArgTranslator()
-
-    def scheduler_str(self) -> str:
-        """ Get the string representation of the scheduler
-        """
-        return self.arg_translator.scheduler_str()
-
-    def set_walltime(self, walltime: str) -> None:
-        """Set the walltime of the job
-
-        format = "HH:MM:SS"
-
-        :param walltime: wall time
-        """
-        # TODO check for formatting here
-        args = self.arg_translator.set_walltime(walltime)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_nodes(self, num_nodes: int) -> None:
-        """Set the number of nodes for this batch job
-
-        :param num_nodes: number of nodes
-        """
-        args = self.arg_translator.set_nodes(num_nodes)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_account(self, account: str) -> None:
-        """Set the account for this batch job
-
-        :param account: account id
-        """
-        args = self.arg_translator.set_account(account)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_partition(self, partition: str) -> None:
-        """Set the partition for the batch job
-
-        :param partition: partition name
-        """
-        args = self.arg_translator.set_partition(partition)
-        if args:
-            self.update_scheduler_args(args)
+        if self._batch_scheduler == SchedulerType.SlurmScheduler:
+            return SlurmBatchArgTranslator(scheduler_args)
+        elif self._batch_scheduler == SchedulerType.LsfScheduler:
+            return BsubBatchArgTranslator(scheduler_args)
+        elif self._batch_scheduler == SchedulerType.PbsScheduler:
+            return QsubBatchArgTranslator(scheduler_args)
+        else:
+            raise ValueError(f"Invalid scheduler type: {self._batch_scheduler}")
     
-    def set_queue(self, queue: str) -> None:
-        """alias for set_partition
-
-        Sets the partition for the slurm batch job
-
-        :param queue: the partition to run the batch job on
-        """
-        args = self.arg_translator.set_queue(queue)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_cpus_per_task(self, cpus_per_task: int) -> None:
-        """Set the number of cpus to use per task
-
-        This sets ``--cpus-per-task``
-
-        :param num_cpus: number of cpus to use per task
-        """
-        args = self.arg_translator.set_cpus_per_task(cpus_per_task)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
-        """Specify the hostlist for this job
-
-        :param host_list: hosts to launch on
-        :raises TypeError: if not str or list of str
-        """
-        args = self.arg_translator.set_hostlist(host_list)
-        if args:
-            self.update_scheduler_args(args)
-    
-    def set_smts(self, smts: int) -> None:
-        """Set SMTs
-
-        This sets ``-alloc_flags``. If the user sets
-        SMT explicitly through ``-alloc_flags``, then that
-        takes precedence.
-
-        :param smts: SMT (e.g on Summit: 1, 2, or 4)
-        """
-        args = self.arg_translator.set_smts(smts)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_project(self, project: str) -> None:
-        """Set the project
-
-        This sets ``-P``.
-
-        :param time: project name
-        """
-        args = self.arg_translator.set_project(project)
-        if args:
-            self.update_scheduler_args(args)
-
-    def set_tasks(self, tasks: int) -> None:
-        """Set the number of tasks for this job
-
-        This sets ``-n``
-
-        :param tasks: number of tasks
-        """
-        args = self.arg_translator.set_tasks(tasks)
-        if args:
-            self.update_scheduler_args(args)
-    
-    def set_ncpus(self, num_cpus: int) -> None:
-        """Set the number of cpus obtained in each node.
-
-        If a select argument is provided in
-        ``QsubBatchSettings.resources``, then
-        this value will be overridden
-
-        :param num_cpus: number of cpus per node in select
-        """
-        args = self.arg_translator.set_ncpus(num_cpus)
-        if args:
-            self.update_scheduler_args(args)
-
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
+
+        :return: batch arguments for Sbatch
         """
-        return self.arg_translator.format_batch_args(self.scheduler_args)
-
-    def update_scheduler_args(self, args: t.Mapping[str, int | str | float | None]) -> None:
-        self.scheduler_args.update(args)
-
-    def set(self, key: str, arg: t.Union[str,int,float,None]) -> None:
-        # Store custom arguments in the launcher_args
-        self.scheduler_args[key] = arg
+        return self._arg_translator.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nScheduler: {self.arg_translator.scheduler_str}"

@@ -28,20 +28,26 @@ from __future__ import annotations
 
 import typing as t
 from ..launchArgTranslator import LaunchArgTranslator
-from ...common import IntegerArgument, StringArgument
+from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
 class _BaseMPIArgTranslator(LaunchArgTranslator):
+    
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)
 
-    def set_reserved_launch_args(self) -> set[str]:
+    def _reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
         return {"wd", "wdir"}
 
-    def set_task_map(self, task_mapping: str) -> t.Union[StringArgument, None]:
+    def set_task_map(self, task_mapping: str) -> None:
         """ Set ``mpirun`` task mapping
 
         this sets ``--map-by <mapping>``
@@ -50,9 +56,9 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
 
         :param task_mapping: task mapping
         """
-        return {"map-by": task_mapping}
+        self.set("map-by",task_mapping)
 
-    def set_cpus_per_task(self, cpus_per_task: int) ->  t.Union[IntegerArgument, None]:
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """ Set the number of tasks for this job
 
         This sets ``--cpus-per-proc`` for MPI compliant implementations
@@ -62,9 +68,9 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
 
         :param cpus_per_task: number of tasks
         """
-        return {"cpus-per-proc": int(cpus_per_task)}
+        self.set("cpus-per-proc", str(cpus_per_task))
 
-    def set_executable_broadcast(self, dest_path: str) -> t.Union[StringArgument, None]:
+    def set_executable_broadcast(self, dest_path: str) -> None:
         """Copy the specified executable(s) to remote machines
 
         This sets ``--preload-binary``
@@ -78,34 +84,34 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
                     "Using session directory instead"
                 )
             )
-        return {"preload-binary": dest_path}
+        self.set("preload-binary",dest_path)
 
-    def set_cpu_binding_type(self, bind_type: str) ->  t.Union[StringArgument, None]:
+    def set_cpu_binding_type(self, bind_type: str) -> None:
         """ Specifies the cores to which MPI processes are bound
 
         This sets ``--bind-to`` for MPI compliant implementations
 
         :param bind_type: binding type
         """
-        return {"bind-to": bind_type}
+        self.set("bind-to",bind_type)
 
-    def set_tasks_per_node(self, tasks_per_node: int) ->  t.Union[IntegerArgument, None]:
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """ Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node
         """
-        return {"npernode": int(tasks_per_node)}
+        self.set("npernode",str(tasks_per_node))
 
-    def set_tasks(self, tasks: int) ->  t.Union[IntegerArgument, None]:
+    def set_tasks(self, tasks: int) -> None:
         """ Set the number of tasks for this job
 
         This sets ``-n`` for MPI compliant implementations
 
         :param tasks: number of tasks
         """
-        return {"n": int(tasks)}
+        self.set("n", str(tasks))
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) ->  t.Union[StringArgument, None]:
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """ Set the hostlist for the ``mpirun`` command
 
         This sets ``--host``
@@ -119,43 +125,49 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        return {"host": ",".join(host_list)}
+        self.set("host", ",".join(host_list))
 
-    def set_hostlist_from_file(self, file_path: str) ->  t.Union[StringArgument, None]:
+    def set_hostlist_from_file(self, file_path: str) ->  None:
         """ Use the contents of a file to set the hostlist
 
         This sets ``--hostfile``
 
         :param file_path: Path to the hostlist file
         """
-        return {"hostfile": file_path}
+        self.set("hostfile",file_path)
 
-    def set_verbose_launch(self, verbose: bool) -> t.Union[t.Dict[str, None], t.Dict[str, int], None]:
+    def set_verbose_launch(self, verbose: bool) -> None:
         """ Set the job to run in verbose mode
 
         This sets ``--verbose``
 
         :param verbose: Whether the job should be run verbosely
         """
-        return {"verbose": None}
+        if verbose:
+            self.set("verbose",None)
+        else:
+            self._launch_args.pop("verbose", None)
 
-    def set_walltime(self, walltime: str) -> t.Union[StringArgument, None]:
+    def set_walltime(self, walltime: str) -> None:
         """Set the maximum number of seconds that a job will run
 
         This sets ``--timeout``
 
         :param walltime: number like string of seconds that a job will run in secs
         """
-        return {"timeout": walltime}
+        self.set("timeout",walltime)
 
-    def set_quiet_launch(self, quiet: bool) ->  t.Union[t.Dict[str,None], None]:
+    def set_quiet_launch(self, quiet: bool) -> None:
         """ Set the job to run in quiet mode
 
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
         """
-        return {"quiet": None}
+        if quiet:
+            self.set("quiet",None)
+        else:
+            self._launch_args.pop("quiet", None)
 
     def format_env_vars(self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]) -> t.Union[t.List[str],None]:
         """ Format the environment variables for mpirun
@@ -173,41 +185,58 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
                     formatted += [env_string, name]
         return formatted
     
-    def format_launcher_args(self, launcher_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+    def format_launch_args(self) -> t.List[str]:
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
         """
         # args launcher uses
         args = []
-        restricted = ["wdir", "wd"]
 
-        for opt, value in launcher_args.items():
-            if opt not in restricted:
-                prefix = "--"
-                if not value:
-                    args += [prefix + opt]
-                else:
-                    args += [prefix + opt, str(value)]
+        for opt, value in self._launch_args.items():
+            prefix = "--"
+            if not value:
+                args += [prefix + opt]
+            else:
+                args += [prefix + opt, str(value)]
         return args
 
-class MpiArgTranslator(_BaseMPIArgTranslator):
-
-    def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
+    def set(self, key: str, value: str | None) -> None:
+        """ Set the launch arguments
         """
-        return LauncherType.MpirunLauncher.value
+        set_check_input(key,value,logger)
+        if key in self._reserved_launch_args():
+            logger.warning(
+                (
+                    f"Could not set argument '{key}': "
+                    f"it is a reserved argument of '{type(self).__name__}'"
+                )
+            )
+            return
+        if key in self._launch_args and key != self._launch_args[key]:
+            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
+        self._launch_args[key] = value
+
+class MpiArgTranslator(_BaseMPIArgTranslator):
+    
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)
 
 class MpiexecArgTranslator(_BaseMPIArgTranslator):
-
-    def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
-        return LauncherType.MpiexecLauncher.value
+    
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)
 
 class OrteArgTranslator(_BaseMPIArgTranslator):
-
-    def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
-        return LauncherType.OrterunLauncher.value
+    
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)

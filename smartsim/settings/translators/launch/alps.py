@@ -27,52 +27,52 @@
 from __future__ import annotations
 from ..launchArgTranslator import LaunchArgTranslator
 import typing as t
-from ...common import IntegerArgument, StringArgument
-from ...launchCommand import LauncherType
+from ...common import set_check_input, StringArgument
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
 class AprunArgTranslator(LaunchArgTranslator):
 
-    def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
-        return LauncherType.AlpsLauncher.value
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)
 
-    def set_reserved_launch_args(self) -> set[str]:
+    def _reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
-        return set()
+        return {"wdir"}
 
-    def set_cpus_per_task(self, cpus_per_task: int) -> t.Union[IntegerArgument, None]:
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of cpus to use per task
 
         This sets ``--cpus-per-pe``
 
         :param cpus_per_task: number of cpus to use per task
         """
-        return {"cpus-per-pe": int(cpus_per_task)}
+        self.set("cpus-per-pe",str(cpus_per_task))
 
-    def set_tasks(self, tasks: int) -> t.Union[IntegerArgument,None]:
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--pes``
 
         :param tasks: number of tasks
         """
-        return {"pes": int(tasks)}
+        self.set("pes",str(tasks))
 
-    def set_tasks_per_node(self, tasks_per_node: int) -> t.Union[IntegerArgument, None]:
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--pes-per-node``
 
         :param tasks_per_node: number of tasks per node
         """
-        return {"pes-per-node": int(tasks_per_node)}
+        self.set("pes-per-node",str(tasks_per_node))
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument, None]:
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         This sets ``--node-list``
@@ -86,18 +86,18 @@ class AprunArgTranslator(LaunchArgTranslator):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        return {"node-list": ",".join(host_list)}
+        self.set("node-list", ",".join(host_list))
 
-    def set_hostlist_from_file(self, file_path: str) -> t.Union[StringArgument, None]:
+    def set_hostlist_from_file(self, file_path: str) -> None:
         """Use the contents of a file to set the node list
 
         This sets ``--node-list-file``
 
         :param file_path: Path to the hostlist file
         """
-        return {"node-list-file": file_path}
+        self.set("node-list-file",file_path)
     
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument, None]:
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
         
         This sets ``--exclude-node-list``
@@ -111,9 +111,9 @@ class AprunArgTranslator(LaunchArgTranslator):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        return {"exclude-node-list": ",".join(host_list)}
+        self.set("exclude-node-list", ",".join(host_list))
 
-    def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> t.Union[StringArgument, None]:
+    def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> None:
         """Specifies the cores to which MPI processes are bound
 
         This sets ``--cpu-binding``
@@ -122,34 +122,37 @@ class AprunArgTranslator(LaunchArgTranslator):
         """
         if isinstance(bindings, int):
             bindings = [bindings]
-        return {"cpu-binding": ",".join(str(int(num)) for num in bindings)}
+        self.set("cpu-binding", ",".join(str(num) for num in bindings))
 
-    def set_memory_per_node(self, memory_per_node: int) -> t.Union[StringArgument, None]:
+    def set_memory_per_node(self, memory_per_node: int) -> None:
         """Specify the real memory required per node
 
         This sets ``--memory-per-pe`` in megabytes
 
         :param memory_per_node: Per PE memory limit in megabytes
         """
-        return {"memory-per-pe": str(memory_per_node)}
+        self.set("memory-per-pe", str(memory_per_node))
 
-    def set_walltime(self, walltime: str) -> t.Union[StringArgument, None]:
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         Walltime is given in total number of seconds
 
         :param walltime: wall time
         """
-        return {"cpu-time-limit": str(walltime)}
+        self.set("cpu-time-limit", str(walltime))
 
-    def set_verbose_launch(self, verbose: bool) -> t.Union[t.Dict[str, None], t.Dict[str, int], None]:
+    def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
 
         This sets ``--debug`` arg to the highest level
 
         :param verbose: Whether the job should be run verbosely
         """
-        return {"debug": 7}
+        if verbose:
+            self.set("debug","7")
+        else:
+            self._launch_args.pop("debug", None)
 
     def set_quiet_launch(self, quiet: bool) -> t.Union[t.Dict[str,None],None]:
         """Set the job to run in quiet mode
@@ -158,7 +161,10 @@ class AprunArgTranslator(LaunchArgTranslator):
 
         :param quiet: Whether the job should be run quietly
         """
-        return {"quiet": None}
+        if quiet:
+            self.set("quiet",None)
+        else:
+            self._launch_args.pop("quiet", None)
 
     def format_env_vars(self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]) -> t.Union[t.List[str],None]:
         """Format the environment variables for aprun
@@ -171,24 +177,38 @@ class AprunArgTranslator(LaunchArgTranslator):
                 formatted += ["-e", name + "=" + str(value)]
         return formatted
 
-    def format_launcher_args(self, launch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.Union[t.List[str],None]:
+    def format_launch_args(self) -> t.Union[t.List[str],None]:
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings
         """
         # args launcher uses
         args = []
-        restricted = ["wdir"]
 
-        for opt, value in launch_args.items():
-            if opt not in restricted:
-                short_arg = bool(len(str(opt)) == 1)
-                prefix = "-" if short_arg else "--"
-                if not value:
-                    args += [prefix + opt]
+        for opt, value in self._launch_args.items():
+            short_arg = bool(len(str(opt)) == 1)
+            prefix = "-" if short_arg else "--"
+            if not value:
+                args += [prefix + opt]
+            else:
+                if short_arg:
+                    args += [prefix + opt, str(value)]
                 else:
-                    if short_arg:
-                        args += [prefix + opt, str(value)]
-                    else:
-                        args += ["=".join((prefix + opt, str(value)))]
+                    args += ["=".join((prefix + opt, str(value)))]
         return args
+
+    def set(self, key: str, value: str | None) -> None:
+        """ Set the launch arguments
+        """
+        set_check_input(key,value,logger)
+        if key in self._reserved_launch_args():
+            logger.warning(
+                (
+                    f"Could not set argument '{key}': "
+                    f"it is a reserved argument of '{type(self).__name__}'"
+                )
+            )
+            return
+        if key in self._launch_args and key != self._launch_args[key]:
+            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
+        self._launch_args[key] = value

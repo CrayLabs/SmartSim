@@ -27,10 +27,7 @@
 import typing as t
 
 from ....entity import SmartSimEntity
-# from ....settings import RunSettings, SettingsBase
-# Mock imports
-class RunSettings: pass
-class SettingsBase: pass
+from ....settings import RunSettings, SettingsBase
 from ..launcher import Launcher
 from ..step import LocalStep, Step
 from ..stepInfo import StepInfo, UnmanagedStepInfo

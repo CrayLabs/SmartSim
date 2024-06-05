@@ -32,19 +32,13 @@ import typing as t
 from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
 from ....log import get_logger
-# from ....settings import (
-#     DragonRunSettings,
-#     QsubBatchSettings,
-#     RunSettings,
-#     SbatchSettings,
-#     SettingsBase,
-# )
-# Mock imports for now
-class DragonRunSettings: pass
-class QsubBatchSettings: pass
-class RunSettings: pass
-class SbatchSettings: pass
-class SettingsBase: pass
+from ....settings import (
+    DragonRunSettings,
+    QsubBatchSettings,
+    RunSettings,
+    SbatchSettings,
+    SettingsBase,
+)
 
 from ....status import SmartSimStatus
 from ...schemas import (
@@ -98,7 +92,7 @@ class DragonLauncher(WLMLauncher):
     # RunSettings types supported by this launcher
     # t.Type[SettingsBase]
     @property
-    def supported_rs(self) -> t.Dict[t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
         pass
         # return {

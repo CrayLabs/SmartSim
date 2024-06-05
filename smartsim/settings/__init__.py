@@ -33,3 +33,18 @@ __all__ = [
     "BaseSettings",
     "BatchSettings"
 ]
+
+class DragonRunSettings: pass
+class QsubBatchSettings: pass
+class SbatchSettings: pass
+class Singularity: pass
+class SettingsBase: pass
+class AprunSettings: pass
+class RunSettings: pass
+class OrterunSettings: pass
+class MpirunSettings: pass
+class MpiexecSettings: pass
+class JsrunSettings: pass
+class BsubBatchSettings: pass
+class PalsMpiexecSettings: pass
+class SrunSettings: pass

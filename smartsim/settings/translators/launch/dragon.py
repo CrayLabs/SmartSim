@@ -28,34 +28,37 @@ from __future__ import annotations
 
 import typing as t
 from ..launchArgTranslator import LaunchArgTranslator
-from ...common import IntegerArgument
-from ...launchCommand import LauncherType
+from ...common import StringArgument, set_check_input
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
 class DragonArgTranslator(LaunchArgTranslator):
+    
+    def __init__(
+        self,
+        launch_args: StringArgument,
+    ) -> None:
+        super().__init__(launch_args)
 
-    def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
-        return LauncherType.DragonLauncher.value
-
-    def set_reserved_launch_args(self) -> set[str]:
-        """ Return reserved launch arguments.
-        """
-        return set()
-
-    def set_nodes(self, nodes: int) -> t.Union[IntegerArgument, None]:
+    def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
 
         :param nodes: number of nodes to run with
         """
-        return {"nodes": nodes}
+        self.set("nodes",str(nodes))
 
-    def set_tasks_per_node(self, tasks_per_node: int) -> t.Union[IntegerArgument, None]:
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks for this job
 
         :param tasks_per_node: number of tasks per node
         """
-        return {"tasks-per-node": tasks_per_node}
+        self.set("tasks-per-node",str(tasks_per_node))
+
+    def set(self, key: str, value: str | None) -> None:
+        """ Set the launch arguments
+        """
+        set_check_input(key,value,logger)
+        if key in self._launch_args and key != self._launch_args[key]:
+            logger.warning(f"Overwritting argument '{key}' with value '{value}'")
+        self._launch_args[key] = value

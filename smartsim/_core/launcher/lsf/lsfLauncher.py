@@ -29,23 +29,15 @@ import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
-# from ....settings import (
-#     BsubBatchSettings,
-#     JsrunSettings,
-#     MpiexecSettings,
-#     MpirunSettings,
-#     OrterunSettings,
-#     RunSettings,
-#     SettingsBase,
-# )
-# Mock imports
-class BsubBatchSettings: pass
-class JsrunSettings: pass
-class MpiexecSettings: pass
-class MpirunSettings: pass
-class OrterunSettings: pass
-class RunSettings: pass
-class SettingsBase: pass
+from ....settings import (
+    BsubBatchSettings,
+    JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    RunSettings,
+    SettingsBase,
+)
 
 from ....status import SmartSimStatus
 from ...config import CONFIG

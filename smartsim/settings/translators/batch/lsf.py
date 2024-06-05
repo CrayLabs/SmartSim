@@ -36,12 +36,13 @@ logger = get_logger(__name__)
 
 class BsubBatchArgTranslator(BatchArgTranslator):
 
-    def scheduler_str(self) -> str:
-        """ Get the string representation of the scheduler
-        """
-        return SchedulerType.LsfScheduler.value
+    def __init__(
+        self,
+        scheduler_args: StringArgument,
+    ) -> None:
+        super().__init__(scheduler_args)
 
-    def set_walltime(self, walltime: str) -> t.Union[StringArgument,None]:
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime
 
         This sets ``-W``.
@@ -54,9 +55,9 @@ class BsubBatchArgTranslator(BatchArgTranslator):
         if walltime:
             if len(walltime.split(":")) > 2:
                 walltime = ":".join(walltime.split(":")[:2])
-        return {"W": walltime}
+        self.set("W", walltime)
 
-    def set_smts(self, smts: int) -> t.Union[IntegerArgument,None]:
+    def set_smts(self, smts: int) -> None:
         """Set SMTs
 
         This sets ``-alloc_flags``. If the user sets
@@ -65,18 +66,18 @@ class BsubBatchArgTranslator(BatchArgTranslator):
 
         :param smts: SMT (e.g on Summit: 1, 2, or 4)
         """
-        return {"alloc_flags": int(smts)}
+        self.set("alloc_flags", str(smts))
 
-    def set_project(self, project: str) -> t.Union[StringArgument,None]:
+    def set_project(self, project: str) -> None:
         """Set the project
 
         This sets ``-P``.
 
         :param time: project name
         """
-        return {"P": project}
+        self.set("P", project)
     
-    def set_account(self, account: str) -> t.Union[StringArgument,None]:
+    def set_account(self, account: str) -> None:
         """Set the project
 
         this function is an alias for `set_project`.
@@ -85,16 +86,16 @@ class BsubBatchArgTranslator(BatchArgTranslator):
         """
         return self.set_project(account)
 
-    def set_nodes(self, num_nodes: int) -> t.Union[IntegerArgument,None]:
+    def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
 
         :param nodes: number of nodes
         """
-        return {"nnodes": int(num_nodes)}
+        self.set("nnodes", str(num_nodes))
 
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> t.Union[StringArgument,None]:
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -106,34 +107,34 @@ class BsubBatchArgTranslator(BatchArgTranslator):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        return {"m": '"' + " ".join(host_list) + '"'}
+        self.set("m", '"' + " ".join(host_list) + '"')
 
-    def set_tasks(self, tasks: int) -> t.Union[IntegerArgument,None]:
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``-n``
 
         :param tasks: number of tasks
         """
-        return {"n": int(tasks)}
+        self.set("n", str(tasks))
 
-    def set_queue(self, queue: str) -> t.Union[StringArgument,None]:
+    def set_queue(self, queue: str) -> None:
         """Set the queue for this job
         
         This sets ``-q``
 
         :param queue: The queue to submit the job on
         """
-        return {"q": queue}
+        self.set("q", queue)
 
-    def format_batch_args(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+    def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
         :return: list of batch arguments for Qsub
         """
         opts = []
 
-        for opt, value in batch_args.items():
+        for opt, value in self._scheduler_args.items():
 
             prefix = "-"  # LSF only uses single dashses
 
@@ -143,3 +144,7 @@ class BsubBatchArgTranslator(BatchArgTranslator):
                 opts += [f"{prefix}{opt}", str(value)]
 
         return opts
+
+    def set(self, key: str, value: str | None) -> None:
+        # Store custom arguments in the launcher_args
+        self._scheduler_args[key] = value

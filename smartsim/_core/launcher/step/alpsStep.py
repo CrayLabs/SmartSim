@@ -32,18 +32,14 @@ from shlex import split as sh_split
 from ....entity import DBNode, Model
 from ....error import AllocationError
 from ....log import get_logger
-# from ....settings import AprunSettings, RunSettings, Singularity
-# Mock imports for now
-class AprunSettings: pass
-class RunSettings: pass
-class Singularity: pass
+from ....settings import AprunSettings, RunSettings, Singularity
 from .step import Step, proxyable_launch_cmd
 
 logger = get_logger(__name__)
 
 class AprunStep(Step):
     def __init__(
-        self, entity: t.Union[Model, DBNode], run_settings: str
+        self, entity: t.Union[Model, DBNode], run_settings: AprunSettings
     ) -> None:
         """Initialize a ALPS aprun job step
 
@@ -92,7 +88,7 @@ class AprunStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             aprun_cmd.extend([bash, launch_script_path])
 
-        if isinstance(self.run_settings.container, str): #changed from Singularity to str
+        if isinstance(self.run_settings.container, Singularity): #changed from Singularity to str
             # pylint: disable-next=protected-access
             aprun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
