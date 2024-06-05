@@ -32,12 +32,7 @@ from shlex import split as sh_split
 from ....entity import DBNode, Ensemble, Model
 from ....error import AllocationError
 from ....log import get_logger
-# from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
-# Temp mock imports
-class RunSettings: pass
-class SbatchSettings: pass
-class Singularity: pass
-class SrunSettings: pass
+from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
 
 from .step import Step
 
