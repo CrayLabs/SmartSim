@@ -53,7 +53,7 @@ class Job(BaseJob):
 
     @property
     def entity(self) -> SmartSimEntity:
-        return self._entity
+        return deepcopy(self._entity)
 
     @entity.setter
     def entity(self, value):
@@ -61,7 +61,7 @@ class Job(BaseJob):
 
     @property
     def launch_settings(self) -> RunSettings:
-        return self._launch_settings
+        return deepcopy(self._launch_settings)
 
     @launch_settings.setter
     def launch_settings(self, value):
