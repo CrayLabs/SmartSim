@@ -5,9 +5,9 @@ import pytest
 @pytest.mark.parametrize(
     "scheduler_enum",
     [
-        pytest.param(SchedulerType.SlurmScheduler, id="slurm"),
-        pytest.param(SchedulerType.PbsScheduler, id="dragon"),
-        pytest.param(SchedulerType.LsfScheduler, id="lsf"),
+        pytest.param(SchedulerType.Slurm, id="slurm"),
+        pytest.param(SchedulerType.Pbs, id="dragon"),
+        pytest.param(SchedulerType.Lsf, id="lsf"),
     ],
 )
 def test_create_scheduler_settings(scheduler_enum):

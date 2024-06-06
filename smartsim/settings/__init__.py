@@ -34,6 +34,7 @@ __all__ = [
     "BatchSettings"
 ]
 
+# TODO Mock imports for compiling tests
 class DragonRunSettings: pass
 class QsubBatchSettings: pass
 class SbatchSettings: pass

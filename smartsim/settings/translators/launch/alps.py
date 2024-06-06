@@ -25,14 +25,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-from ..launchArgTranslator import LaunchArgTranslator
+from ..launchArgBuilder import LaunchArgBuilder
 import typing as t
 from ...common import set_check_input, StringArgument
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
-class AprunArgTranslator(LaunchArgTranslator):
+class AprunArgBuilder(LaunchArgBuilder):
 
     def __init__(
         self,
@@ -184,7 +184,6 @@ class AprunArgTranslator(LaunchArgTranslator):
         """
         # args launcher uses
         args = []
-
         for opt, value in self._launch_args.items():
             short_arg = bool(len(str(opt)) == 1)
             prefix = "-" if short_arg else "--"

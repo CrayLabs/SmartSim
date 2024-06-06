@@ -1,6 +1,5 @@
 from smartsim.settings import BatchSettings
 import pytest
-import logging
 from smartsim.settings.batchCommand import SchedulerType
 
 @pytest.mark.parametrize(
@@ -18,13 +17,13 @@ from smartsim.settings.batchCommand import SchedulerType
     ],
 )
 def test_update_env_initialized(function, value, flag, result):
-    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.LsfScheduler)
+    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.Lsf)
     getattr(lsfScheduler.scheduler_args, function)(*value)
     assert lsfScheduler.scheduler_args._scheduler_args[flag] == result
 
 def test_create_bsub():
     batch_args = {"core_isolation": None}
-    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.LsfScheduler, scheduler_args=batch_args)
+    lsfScheduler = BatchSettings(batch_scheduler=SchedulerType.Lsf, scheduler_args=batch_args)
     lsfScheduler.scheduler_args.set_nodes(1)
     lsfScheduler.scheduler_args.set_walltime("10:10:10")
     lsfScheduler.scheduler_args.set_queue("default")

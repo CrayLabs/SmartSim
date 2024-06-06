@@ -24,12 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .lsf import BsubBatchArgTranslator
-from .pbs import QsubBatchArgTranslator
-from .slurm import SlurmBatchArgTranslator
+from .lsf import BsubBatchArgBuilder
+from .pbs import QsubBatchArgBuilder
+from .slurm import SlurmBatchArgBuilder
 
 __all__ = [
-    "BsubBatchArgTranslator",
-    "QsubBatchArgTranslator",
-    "SlurmBatchArgTranslator",
+    "BsubBatchArgBuilder",
+    "QsubBatchArgBuilder",
+    "SlurmBatchArgBuilder",
 ]

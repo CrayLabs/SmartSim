@@ -1,5 +1,5 @@
 from smartsim.settings import BatchSettings
-from smartsim.settings.translators.batch.pbs import QsubBatchArgTranslator
+from smartsim.settings.translators.batch.pbs import QsubBatchArgBuilder
 from smartsim.settings.batchCommand import SchedulerType
 import pytest
 
@@ -15,21 +15,22 @@ import pytest
         pytest.param("set_hostlist", (["host_A","host_B"],),"host_A,host_B","hostname",id="set_hostlist_list[str]"),
     ],
 )
-def test_update_env_initialized(function, value, flag, result):
-    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.PbsScheduler)
+def test_create_pbs_batch(function, value, flag, result):
+    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.Pbs)
     getattr(pbsScheduler.scheduler_args, function)(*value)
     assert pbsScheduler.scheduler_args._scheduler_args[flag] == result
     
-def test_create_pbs_batch():
-    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.PbsScheduler)
+def test_format_pbs_batch_args():
+    pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.Pbs)
     pbsScheduler.scheduler_args.set_nodes(1)
     pbsScheduler.scheduler_args.set_walltime("10:00:00")
     pbsScheduler.scheduler_args.set_queue("default")
     pbsScheduler.scheduler_args.set_account("myproject")
     pbsScheduler.scheduler_args.set_ncpus(10)
+    pbsScheduler.scheduler_args.set_hostlist(['host_a', 'host_b', 'host_c'])
     args = pbsScheduler.format_batch_args()
     assert args == [
-        "-l", "nodes=1:ncpus=10",
+        "-l", "nodes=1:ncpus=10:host=host_a+host=host_b+host=host_c",
         "-l", "walltime=10:00:00",
         "-q", "default",
         "-A", "myproject",

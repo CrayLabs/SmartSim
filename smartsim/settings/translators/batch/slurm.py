@@ -28,13 +28,13 @@ from __future__ import annotations
 
 import re
 import typing as t
-from ..batchArgTranslator import BatchArgTranslator
+from ..batchArgBuilder import BatchArgBuilder
 from ...common import StringArgument 
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
-class SlurmBatchArgTranslator(BatchArgTranslator):
+class SlurmBatchArgBuilder(BatchArgBuilder):
 
     def __init__(
         self,

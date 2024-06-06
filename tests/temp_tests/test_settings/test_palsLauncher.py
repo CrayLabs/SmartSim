@@ -1,5 +1,5 @@
 from smartsim.settings import LaunchSettings
-from smartsim.settings.translators.launch.pals import PalsMpiexecArgTranslator
+from smartsim.settings.translators.launch.pals import PalsMpiexecArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 
@@ -15,21 +15,21 @@ import pytest
     ],
 )
 def test_pals_class_methods(function, value, flag, result):
-    palsLauncher = LaunchSettings(launcher=LauncherType.PalsLauncher)
+    palsLauncher = LaunchSettings(launcher=LauncherType.Pals)
     getattr(palsLauncher.launch_args, function)(*value)
     assert palsLauncher.launch_args._launch_args[flag] == result
     assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]
 
 def test_format_env_vars():
     env_vars = {"FOO_VERSION": "3.14", "PATH": None, "LD_LIBRARY_PATH": None}
-    palsLauncher = LaunchSettings(launcher=LauncherType.PalsLauncher, env_vars=env_vars)
+    palsLauncher = LaunchSettings(launcher=LauncherType.Pals, env_vars=env_vars)
     formatted = " ".join(palsLauncher.format_env_vars())
     expected = "--env FOO_VERSION=3.14 --envlist PATH,LD_LIBRARY_PATH"
     assert formatted == expected
 
 def test_invalid_hostlist_format():
     """Test invalid hostlist formats"""
-    palsLauncher = LaunchSettings(launcher=LauncherType.PalsLauncher)
+    palsLauncher = LaunchSettings(launcher=LauncherType.Pals)
     with pytest.raises(TypeError):
         palsLauncher.launch_args.set_hostlist(["test",5])
     with pytest.raises(TypeError):

@@ -6,15 +6,15 @@ import logging
 @pytest.mark.parametrize(
     "launch_enum",
     [
-        pytest.param(LauncherType.SlurmLauncher,id="slurm"),
-        pytest.param(LauncherType.DragonLauncher,id="dragon"),
-        pytest.param(LauncherType.PalsLauncher,id="pals"),
-        pytest.param(LauncherType.AlpsLauncher,id="alps"),
-        pytest.param(LauncherType.LocalLauncher,id="local"),
-        pytest.param(LauncherType.MpiexecLauncher,id="mpiexec"),
-        pytest.param(LauncherType.MpirunLauncher,id="mpirun"),
-        pytest.param(LauncherType.OrterunLauncher,id="orterun"),
-        pytest.param(LauncherType.LsfLauncher,id="lsf"),
+        pytest.param(LauncherType.Slurm,id="slurm"),
+        pytest.param(LauncherType.Dragon,id="dragon"),
+        pytest.param(LauncherType.Pals,id="pals"),
+        pytest.param(LauncherType.Alps,id="alps"),
+        pytest.param(LauncherType.Local,id="local"),
+        pytest.param(LauncherType.Mpiexec,id="mpiexec"),
+        pytest.param(LauncherType.Mpirun,id="mpirun"),
+        pytest.param(LauncherType.Orterun,id="orterun"),
+        pytest.param(LauncherType.Lsf,id="lsf"),
     ],
 )
 def test_create_launch_settings(launch_enum):
@@ -60,84 +60,3 @@ def test_update_env_vars_errors():
         # and that the function is atomic
         ls.update_env({"test":"test","test":1})
         assert ls.env_vars == {"ENV":"VAR"}
-
-# TODO need to test launch_args
-# def test_set_launch_args():
-#     ls = LaunchSettings(launcher="local", launch_args = {"init":"arg"})
-#     assert ls.launch_args == {"init":"arg"}
-#     ls.launch_args = {"launch":"arg"}
-#     assert ls.launch_args == {"launch":"arg"}
-
-# @pytest.mark.parametrize(
-#     "launcher,key",
-#     [
-#         pytest.param(LauncherType.SlurmLauncher, ("chdir",), id="slurm-chdir"),
-#         pytest.param(LauncherType.SlurmLauncher, ("D",), id="slurm-D"),
-#         pytest.param(LauncherType.LsfLauncher, ("chdir",), id="lsf-chdir"),
-#         pytest.param(LauncherType.LsfLauncher, ("h",), id="lsf-h"),
-#         pytest.param(LauncherType.MpiexecLauncher, ("wd",), id="mpiexec-wd"),
-#         pytest.param(LauncherType.OrterunLauncher, ("wd",), id="orte-wd"),
-#         pytest.param(LauncherType.MpirunLauncher, ("wd",), id="mpi-wd"),
-#         pytest.param(LauncherType.MpiexecLauncher, ("wdir",), id="mpiexec-wdir"),
-#         pytest.param(LauncherType.OrterunLauncher, ("wdir",), id="orte-wdir"),
-#         pytest.param(LauncherType.MpirunLauncher, ("wdir",), id="mpi-wdir"),
-#     ],
-# )
-# def test_prevent_set_reserved_launch_args(caplog, launcher, key):
-#     """Test methods not implemented throw warnings"""
-#     from smartsim.settings.launchSettings import logger
-
-#     prev_prop = logger.propagate
-#     logger.propagate = True
-
-#     with caplog.at_level(logging.WARNING):
-#         caplog.clear()
-#         launchSettings = LaunchSettings(launcher=launcher)
-#         try:
-#             getattr(launchSettings, "set")(*key, None)
-#         finally:
-#             logger.propagate = prev_prop
-
-#         for rec in caplog.records:
-#             if (
-#                 logging.WARNING <= rec.levelno < logging.ERROR
-#                 and "Could not set argument" in rec.msg
-#             ):
-#                 break
-#         else:
-#             pytest.fail(
-#                 (
-#                     f"No message stating method `{key}` is not "
-#                     "implemented at `warning` level"
-#                 )
-#             )
-
-# def test_log_overwrite_set_warning_message(caplog):
-#     """Test methods not implemented throw warnings"""
-#     from smartsim.settings.launchSettings import logger
-
-#     prev_prop = logger.propagate
-#     logger.propagate = True
-
-#     with caplog.at_level(logging.WARNING):
-#         caplog.clear()
-#         launchSettings = LaunchSettings(launcher=LauncherType.LocalLauncher)
-#         launchSettings.set("test", None)
-#         try:
-#             getattr(launchSettings, "set")("test", "overwritting")
-#         finally:
-#             logger.propagate = prev_prop
-
-#         for rec in caplog.records:
-#             if (
-#                 logging.WARNING <= rec.levelno < logging.ERROR
-#                 and "Overwritting argument" in rec.msg
-#             ):
-#                 break
-#         else:
-#             pytest.fail(
-#                 (
-#                     f"No message stating method `test` will be "
-#                     "overwritten at `warning` level"
-#                 )
-#             )

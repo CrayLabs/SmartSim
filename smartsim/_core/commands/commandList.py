@@ -28,12 +28,14 @@ from collections.abc import MutableSequence
 from .command import Command
 import typing as t
 
-class CommandList(MutableSequence):
+class CommandList(MutableSequence[Command]):
     """Container for a Sequence of Command objects
     """
-    def __init__(self, commands: t.Optional[t.Union[Command, t.List[Command]]]):
+    def __init__(self, commands: t.Union[Command, t.List[Command]]):
         """CommandList constructor
         """
+        if isinstance(commands, Command):
+            commands = [commands]
         self._commands: t.List[Command] = list(commands)
 
     @property

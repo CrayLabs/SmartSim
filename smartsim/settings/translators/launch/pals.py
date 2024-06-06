@@ -27,13 +27,13 @@
 from __future__ import annotations
 
 import typing as t
-from ..launchArgTranslator import LaunchArgTranslator
+from ..launchArgBuilder import LaunchArgBuilder
 from ...common import StringArgument, set_check_input
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
-class PalsMpiexecArgTranslator(LaunchArgTranslator):
+class PalsMpiexecArgBuilder(LaunchArgBuilder):
     
     def __init__(
         self,

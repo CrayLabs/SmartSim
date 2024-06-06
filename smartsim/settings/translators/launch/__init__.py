@@ -1,19 +1,19 @@
-from .alps import AprunArgTranslator
-from .dragon import DragonArgTranslator
-from .local import LocalArgTranslator
-from .lsf import JsrunArgTranslator
-from .mpi import MpiArgTranslator, MpiexecArgTranslator, OrteArgTranslator
-from .pals import PalsMpiexecArgTranslator
-from .slurm import SlurmArgTranslator
+from .alps import AprunArgBuilder
+from .dragon import DragonArgBuilder
+from .local import LocalArgBuilder
+from .lsf import JsrunArgBuilder
+from .mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
+from .pals import PalsMpiexecArgBuilder
+from .slurm import SlurmArgBuilder
 
 __all__ = [
-    "AprunArgTranslator",
-    "DragonArgTranslator",
-    "LocalArgTranslator",
-    "JsrunArgTranslator",
-    "MpiArgTranslator",
-    "MpiexecArgTranslator",
-    "OrteArgTranslator",
-    "PalsMpiexecArgTranslator",
-    "SlurmArgTranslator",
+    "AprunArgBuilder",
+    "DragonArgBuilder",
+    "LocalArgBuilder",
+    "JsrunArgBuilder",
+    "MpiArgBuilder",
+    "MpiexecArgBuilder",
+    "OrteArgBuilder",
+    "PalsMpiexecArgBuilder",
+    "SlurmArgBuilder",
 ]

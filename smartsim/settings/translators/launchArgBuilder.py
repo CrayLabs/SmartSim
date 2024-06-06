@@ -27,71 +27,23 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import typing as t
-from ..common import IntegerArgument, StringArgument
 import copy
 
 from smartsim.log import get_logger                                                                                    
 
 logger = get_logger(__name__)
 
-class BatchArgTranslator(ABC):
-    """Abstract base class that defines all generic scheduler
+class LaunchArgBuilder(ABC):
+    """Abstract base class that defines all generic launcher
     argument methods that are not supported.  It is the
     responsibility of child classes for each launcher to translate
     the input parameter to a properly formatted launcher argument.
     """
+    def __init__(self, launch_args) -> None:
+        self._launch_args = copy.deepcopy(launch_args) or {}
     
-    def __init__(self, scheduler_args) -> None:
-        self._scheduler_args = copy.deepcopy(scheduler_args) or {}
-
     @abstractmethod
-    def set_account(self, account: str) -> None:
-        """Set the account for this batch job
-
-        :param account: account id
-        """
-        pass
-
-    @abstractmethod
-    def set_queue(self, queue: str) -> None:
-        """alias for set_partition
-
-        Sets the partition for the slurm batch job
-
-        :param queue: the partition to run the batch job on
-        """
-        pass
-
-    @abstractmethod
-    def set_walltime(self, walltime: str) -> None:
-        """Set the walltime of the job
-
-        :param walltime: wall time
-        """
-        pass
-
-    @abstractmethod
-    def set_nodes(self, num_nodes: int) -> None:
-        """Set the number of nodes for this batch job
-
-        :param num_nodes: number of nodes
-        """
-        pass
-
-    @abstractmethod
-    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
-        """Specify the hostlist for this job
-
-        :param host_list: hosts to launch on
-        :raises TypeError: if not str or list of str
-        """
-        pass
-
-    @abstractmethod
-    def format_batch_args(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
-        """Get the formatted batch arguments for a preview
-
-        :return: batch arguments for Sbatch
+    def set(self, arg: str, val: str | None) -> None:
+        """ Set the launch arguments
         """
         pass

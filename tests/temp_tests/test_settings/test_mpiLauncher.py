@@ -1,5 +1,5 @@
 from smartsim.settings import LaunchSettings
-from smartsim.settings.translators.launch.mpi import MpiArgTranslator, MpiexecArgTranslator, OrteArgTranslator
+from smartsim.settings.translators.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
 import pytest
 import logging
 import itertools
@@ -23,22 +23,22 @@ from smartsim.settings.launchCommand import LauncherType
             pytest.param(l, "set_hostlist", (["host_A","host_B"],),"host_A,host_B","host",id="set_hostlist_list[str]"),
             pytest.param(l, "set_hostlist_from_file", ("./path/to/hostfile",),"./path/to/hostfile","hostfile",id="set_hostlist_from_file"),
         )
-                for l in ([LauncherType.MpirunLauncher, MpiArgTranslator], [LauncherType.MpiexecLauncher, MpiexecArgTranslator], [LauncherType.OrterunLauncher, OrteArgTranslator])
+                for l in ([LauncherType.Mpirun, MpiArgBuilder], [LauncherType.Mpiexec, MpiexecArgBuilder], [LauncherType.Orterun, OrteArgBuilder])
             ))
     ],
 )
 def test_mpi_class_methods(l,function, value, flag, result):
     mpiSettings = LaunchSettings(launcher=l[0])
-    assert isinstance(mpiSettings._arg_translator,l[1])
+    assert isinstance(mpiSettings._arg_builder,l[1])
     getattr(mpiSettings.launch_args, function)(*value)
     assert mpiSettings.launch_args._launch_args[flag] == result
 
 @pytest.mark.parametrize(
     "launcher",
     [
-        pytest.param(LauncherType.MpirunLauncher, id="format_env_mpirun"),
-        pytest.param(LauncherType.MpiexecLauncher, id="format_env_mpiexec"),
-        pytest.param(LauncherType.OrterunLauncher, id="format_env_orterun"),
+        pytest.param(LauncherType.Mpirun, id="format_env_mpirun"),
+        pytest.param(LauncherType.Mpiexec, id="format_env_mpiexec"),
+        pytest.param(LauncherType.Orterun, id="format_env_orterun"),
     ],
 )
 def test_format_env_vars(launcher):
@@ -56,9 +56,9 @@ def test_format_env_vars(launcher):
 @pytest.mark.parametrize(
     "launcher",
     [
-        pytest.param(LauncherType.MpirunLauncher, id="format_launcher_args_mpirun"),
-        pytest.param(LauncherType.MpiexecLauncher, id="format_launcher_args_mpiexec"),
-        pytest.param(LauncherType.OrterunLauncher, id="format_launcher_args_orterun"),
+        pytest.param(LauncherType.Mpirun, id="format_launcher_args_mpirun"),
+        pytest.param(LauncherType.Mpiexec, id="format_launcher_args_mpiexec"),
+        pytest.param(LauncherType.Orterun, id="format_launcher_args_orterun"),
     ],
 )
 def test_format_launcher_args(launcher):
@@ -73,9 +73,9 @@ def test_format_launcher_args(launcher):
 @pytest.mark.parametrize(
     "launcher",
     [
-        pytest.param(LauncherType.MpirunLauncher, id="set_verbose_launch_mpirun"),
-        pytest.param(LauncherType.MpiexecLauncher, id="set_verbose_launch_mpiexec"),
-        pytest.param(LauncherType.OrterunLauncher, id="set_verbose_launch_orterun"),
+        pytest.param(LauncherType.Mpirun, id="set_verbose_launch_mpirun"),
+        pytest.param(LauncherType.Mpiexec, id="set_verbose_launch_mpiexec"),
+        pytest.param(LauncherType.Orterun, id="set_verbose_launch_orterun"),
     ],
 )
 def test_set_verbose_launch(launcher):
@@ -88,9 +88,9 @@ def test_set_verbose_launch(launcher):
 @pytest.mark.parametrize(
     "launcher",
     [
-        pytest.param(LauncherType.MpirunLauncher, id="set_quiet_launch_mpirun"),
-        pytest.param(LauncherType.MpiexecLauncher, id="set_quiet_launch_mpiexec"),
-        pytest.param(LauncherType.OrterunLauncher, id="set_quiet_launch_orterun"),
+        pytest.param(LauncherType.Mpirun, id="set_quiet_launch_mpirun"),
+        pytest.param(LauncherType.Mpiexec, id="set_quiet_launch_mpiexec"),
+        pytest.param(LauncherType.Orterun, id="set_quiet_launch_orterun"),
     ],
 )
 def test_set_quiet_launch(launcher):
@@ -103,9 +103,9 @@ def test_set_quiet_launch(launcher):
 @pytest.mark.parametrize(
     "launcher",
     [
-        pytest.param(LauncherType.MpirunLauncher, id="invalid_hostlist_mpirun"),
-        pytest.param(LauncherType.MpiexecLauncher, id="invalid_hostlist_mpiexec"),
-        pytest.param(LauncherType.OrterunLauncher, id="invalid_hostlist_orterun"),
+        pytest.param(LauncherType.Mpirun, id="invalid_hostlist_mpirun"),
+        pytest.param(LauncherType.Mpiexec, id="invalid_hostlist_mpiexec"),
+        pytest.param(LauncherType.Orterun, id="invalid_hostlist_orterun"),
     ],
 )
 def test_invalid_hostlist_format(launcher):

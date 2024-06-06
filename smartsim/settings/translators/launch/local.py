@@ -27,13 +27,13 @@
 from __future__ import annotations
 
 import typing as t
-from ..launchArgTranslator import LaunchArgTranslator
+from ..launchArgBuilder import LaunchArgBuilder
 from smartsim.log import get_logger
 from ...common import StringArgument, set_check_input                                                            
 
 logger = get_logger(__name__)
 
-class LocalArgTranslator(LaunchArgTranslator):
+class LocalArgBuilder(LaunchArgBuilder):
     
     def __init__(
         self,

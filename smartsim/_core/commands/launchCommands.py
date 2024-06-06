@@ -17,21 +17,21 @@ class LaunchCommands:
         self._postlaunch_commands = postlaunch_commands
 
     @property
-    def prelaunch_command_maps(self) -> CommandList:
+    def prelaunch_command(self) -> CommandList:
         """Get the prelaunch command list.
         Return a reference to the command list.
         """
         return self._prelaunch_commands
 
     @property
-    def launch_command_maps(self) -> CommandList:
+    def launch_command(self) -> CommandList:
         """Get the launch command list.
         Return a reference to the command list.
         """
         return self._launch_commands
 
     @property
-    def postlaunch_command_maps(self) -> CommandList:
+    def postlaunch_command(self) -> CommandList:
         """Get the postlaunch command list.
         Return a reference to the command list.
         """

@@ -28,14 +28,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 import typing as t
-from ..batchArgTranslator import BatchArgTranslator
+from ..batchArgBuilder import BatchArgBuilder
 from ....error import SSConfigError
-from ...common import IntegerArgument, StringArgument
-from smartsim.log import get_logger                                                                                
-from ...batchCommand import SchedulerType
+from ...common import StringArgument
+from smartsim.log import get_logger
 logger = get_logger(__name__)
 
-class QsubBatchArgTranslator(BatchArgTranslator):
+class QsubBatchArgBuilder(BatchArgBuilder):
 
     def __init__(
         self,
@@ -125,7 +124,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
 
     @staticmethod
     def _sanity_check_resources(
-        batch_args: t.Dict[str, t.Union[str,int,float,None]]
+        batch_args: t.Dict[str, str | None]
     ) -> None:
         """Check that only select or nodes was specified in resources
 
@@ -143,25 +142,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
                 "'select' was set using 'set_resource'. Please only specify one."
             )
 
-        # TODO ask the team if this is true below
-        # if has_select and not isinstance(has_select, int):
-        #     raise TypeError("The value for 'select' must be an integer")
-        # if has_nodes and not isinstance(has_nodes, int):
-        #     raise TypeError("The value for 'nodes' must be an integer")
-
-        for key, value in batch_args.items():
-            if not isinstance(key, str):
-                raise TypeError(
-                    f"The type of {key} is {type(key)}. Only int and str "
-                    "are allowed."
-                )
-            if not isinstance(value, (str, int)):
-                raise TypeError(
-                    f"The value associated with {key} is {type(value)}. Only int "
-                    "and str are allowed."
-                )
-
-    def _create_resource_list(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.Tuple[t.List[str],t.Dict[str, t.Union[str,int,float,None]]]:
+    def _create_resource_list(self, batch_args: t.Dict[str, str | None]) -> t.Tuple[t.List[str],t.Dict[str, str | None]]:
         self._sanity_check_resources(batch_args)
         res = []
 
@@ -178,7 +159,7 @@ class QsubBatchArgTranslator(BatchArgTranslator):
         if ncpus := batch_arg_copy.pop("ppn", None):
             select_command += f":ncpus={ncpus}"
         if hosts := batch_arg_copy.pop("hostname", None):
-            hosts_list = ["=".join(str(hosts))]
+            hosts_list = ["=".join(("host", str(host))) for host in hosts.split(",")]
             select_command += f":{'+'.join(hosts_list)}"
         res += select_command.split()
         if walltime := batch_arg_copy.pop("walltime", None):

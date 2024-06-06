@@ -1,5 +1,5 @@
 from smartsim.settings import BatchSettings
-from smartsim.settings.translators.batch.slurm import SlurmBatchArgTranslator
+from smartsim.settings.translators.batch.slurm import SlurmBatchArgBuilder
 from smartsim.settings.batchCommand import SchedulerType
 import pytest
 
@@ -17,15 +17,14 @@ import pytest
     ],
 )
 def test_sbatch_class_methods(function, value, flag, result):
-    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.Slurm)
     getattr(slurmScheduler.scheduler_args, function)(*value)
     assert slurmScheduler.scheduler_args._scheduler_args[flag] == result
 
 def test_create_sbatch():
     batch_args = {"exclusive": None, "oversubscribe": None}
-    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler, scheduler_args=batch_args)
-    assert isinstance(slurmScheduler._arg_translator, SlurmBatchArgTranslator)
-    #assert slurmScheduler.batch_args["partition"] == "default"
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.Slurm, scheduler_args=batch_args)
+    assert isinstance(slurmScheduler._arg_builder, SlurmBatchArgBuilder)
     args = slurmScheduler.format_batch_args()
     assert args == [
         "--exclusive",
@@ -42,7 +41,7 @@ def test_launch_args_input_mutation():
         key1: val1,
         key2: val2,
     }
-    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler, scheduler_args=default_scheduler_args)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.Slurm, scheduler_args=default_scheduler_args)
 
     # Confirm initial values are set
     assert slurmScheduler.scheduler_args._scheduler_args[key0] == val0
@@ -58,14 +57,14 @@ def test_launch_args_input_mutation():
 
 def test_sbatch_settings():
     scheduler_args = {"nodes": 1, "time": "10:00:00", "account": "A3123"}
-    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler,scheduler_args=scheduler_args)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.Slurm,scheduler_args=scheduler_args)
     formatted = slurmScheduler.format_batch_args()
     result = ["--nodes=1", "--time=10:00:00", "--account=A3123"]
     assert formatted == result
 
 
 def test_sbatch_manual():
-    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.SlurmScheduler)
+    slurmScheduler = BatchSettings(batch_scheduler=SchedulerType.Slurm)
     slurmScheduler.scheduler_args.set_nodes(5)
     slurmScheduler.scheduler_args.set_account("A3531")
     slurmScheduler.scheduler_args.set_walltime("10:00:00")

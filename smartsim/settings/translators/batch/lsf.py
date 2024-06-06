@@ -27,14 +27,13 @@
 from __future__ import annotations
 
 import typing as t
-from ..batchArgTranslator import BatchArgTranslator
-from ...common import IntegerArgument, StringArgument
-from smartsim.log import get_logger   
-from ...batchCommand import SchedulerType                                                                             
+from ..batchArgBuilder import BatchArgBuilder
+from ...common import StringArgument
+from smartsim.log import get_logger                                                                            
 
 logger = get_logger(__name__)
 
-class BsubBatchArgTranslator(BatchArgTranslator):
+class BsubBatchArgBuilder(BatchArgBuilder):
 
     def __init__(
         self,

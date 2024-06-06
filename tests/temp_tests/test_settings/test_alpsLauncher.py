@@ -1,6 +1,6 @@
 import pytest
 from smartsim.settings import LaunchSettings
-from smartsim.settings.translators.launch.alps import AprunArgTranslator
+from smartsim.settings.translators.launch.alps import AprunArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 
 @pytest.mark.parametrize(
@@ -23,22 +23,22 @@ from smartsim.settings.launchCommand import LauncherType
     ],
 )
 def test_alps_class_methods(function, value, flag, result):
-    alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert isinstance(alpsLauncher._arg_translator,AprunArgTranslator)
+    alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
+    assert isinstance(alpsLauncher._arg_builder,AprunArgBuilder)
     getattr(alpsLauncher.launch_args, function)(*value)
     assert alpsLauncher.launch_args._launch_args[flag] == result
 
 def test_set_verbose_launch():
-    alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert isinstance(alpsLauncher._arg_translator,AprunArgTranslator)
+    alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
+    assert isinstance(alpsLauncher._arg_builder,AprunArgBuilder)
     alpsLauncher.launch_args.set_verbose_launch(True)
     assert alpsLauncher.launch_args._launch_args == {'debug': "7"}
     alpsLauncher.launch_args.set_verbose_launch(False)
     assert alpsLauncher.launch_args._launch_args == {}
 
 def test_set_quiet_launch():
-    aprunLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
-    assert isinstance(aprunLauncher._arg_translator,AprunArgTranslator)
+    aprunLauncher = LaunchSettings(launcher=LauncherType.Alps)
+    assert isinstance(aprunLauncher._arg_builder,AprunArgBuilder)
     aprunLauncher.launch_args.set_quiet_launch(True)
     assert aprunLauncher.launch_args._launch_args == {'quiet': None}
     aprunLauncher.launch_args.set_quiet_launch(False)
@@ -46,15 +46,15 @@ def test_set_quiet_launch():
     
 def test_format_env_vars():
     env_vars = {"OMP_NUM_THREADS": "20", "LOGGING": "verbose"}
-    aprunLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher, env_vars=env_vars)
-    assert isinstance(aprunLauncher._arg_translator,AprunArgTranslator)
+    aprunLauncher = LaunchSettings(launcher=LauncherType.Alps, env_vars=env_vars)
+    assert isinstance(aprunLauncher._arg_builder,AprunArgBuilder)
     aprunLauncher.update_env({"OMP_NUM_THREADS": "10"})
     formatted = aprunLauncher.format_env_vars()
     result = ["-e", "OMP_NUM_THREADS=10", "-e", "LOGGING=verbose"]
     assert formatted == result
 
 def test_aprun_settings():
-    aprunLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
+    aprunLauncher = LaunchSettings(launcher=LauncherType.Alps)
     aprunLauncher.launch_args.set_cpus_per_task(2)
     aprunLauncher.launch_args.set_tasks(100)
     aprunLauncher.launch_args.set_tasks_per_node(20)
@@ -64,7 +64,7 @@ def test_aprun_settings():
 
 def test_invalid_hostlist_format():
     """Test invalid hostlist formats"""
-    alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
+    alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
     with pytest.raises(TypeError):
         alpsLauncher.launch_args.set_hostlist(["test",5])
     with pytest.raises(TypeError):
@@ -74,7 +74,7 @@ def test_invalid_hostlist_format():
 
 def test_invalid_exclude_hostlist_format():
     """Test invalid hostlist formats"""
-    alpsLauncher = LaunchSettings(launcher=LauncherType.AlpsLauncher)
+    alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
     with pytest.raises(TypeError):
         alpsLauncher.launch_args.set_excluded_hosts(["test",5])
     with pytest.raises(TypeError):

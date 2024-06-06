@@ -33,14 +33,14 @@ from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
 from .common import StringArgument
 from .launchCommand import LauncherType
-from .translators.launch.alps import AprunArgTranslator
-from .translators.launch.lsf import JsrunArgTranslator
-from .translators.launch.mpi import MpiArgTranslator, MpiexecArgTranslator, OrteArgTranslator
-from .translators.launch.pals import PalsMpiexecArgTranslator
-from .translators.launch.slurm import SlurmArgTranslator      
-from .translators.launch.dragon import DragonArgTranslator  
-from .translators.launch.local import LocalArgTranslator 
-from .translators import LaunchArgTranslator   
+from .translators.launch.alps import AprunArgBuilder
+from .translators.launch.lsf import JsrunArgBuilder
+from .translators.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
+from .translators.launch.pals import PalsMpiexecArgBuilder
+from .translators.launch.slurm import SlurmArgBuilder      
+from .translators.launch.dragon import DragonArgBuilder  
+from .translators.launch.local import LocalArgBuilder 
+from .translators import LaunchArgBuilder   
 from .baseSettings import BaseSettings                                                        
 
 logger = get_logger(__name__)
@@ -56,7 +56,7 @@ class LaunchSettings(BaseSettings):
             self._launcher = LauncherType(launcher)
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
-        self._arg_translator = self._get_arg_builder(launch_args)
+        self._arg_builder = self._get_arg_builder(launch_args)
         self.env_vars = env_vars or {}
     
     @property
@@ -66,11 +66,11 @@ class LaunchSettings(BaseSettings):
         return self._launcher.value
     
     @property
-    def launch_args(self) -> LaunchArgTranslator:
+    def launch_args(self) -> LaunchArgBuilder:
         """Return the launch argument translator.
         """
         # Is a deep copy needed here?
-        return self._arg_translator
+        return self._arg_builder
 
     @launch_args.setter
     def launch_args(self, args: t.Mapping[str, str]) -> None:
@@ -92,27 +92,27 @@ class LaunchSettings(BaseSettings):
         """
         self._env_vars = copy.deepcopy(value)
     
-    def _get_arg_builder(self, launch_args) -> LaunchArgTranslator:
-        """ Map the Launcher to the LaunchArgTranslator
+    def _get_arg_builder(self, launch_args) -> LaunchArgBuilder:
+        """ Map the Launcher to the LaunchArgBuilder
         """
-        if self._launcher == LauncherType.SlurmLauncher:
-            return SlurmArgTranslator(launch_args)
-        elif self._launcher == LauncherType.MpiexecLauncher:
-            return MpiexecArgTranslator(launch_args)
-        elif self._launcher == LauncherType.MpirunLauncher:
-            return MpiArgTranslator(launch_args)
-        elif self._launcher == LauncherType.OrterunLauncher:
-            return OrteArgTranslator(launch_args)
-        elif self._launcher == LauncherType.AlpsLauncher:
-            return AprunArgTranslator(launch_args)
-        elif self._launcher == LauncherType.LsfLauncher:
-            return JsrunArgTranslator(launch_args)
-        elif self._launcher == LauncherType.PalsLauncher:
-            return PalsMpiexecArgTranslator(launch_args)
-        elif self._launcher == LauncherType.DragonLauncher:
-            return DragonArgTranslator(launch_args)
-        elif self._launcher == LauncherType.LocalLauncher:
-            return LocalArgTranslator(launch_args)
+        if self._launcher == LauncherType.Slurm:
+            return SlurmArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Mpiexec:
+            return MpiexecArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Mpirun:
+            return MpiArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Orterun:
+            return OrteArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Alps:
+            return AprunArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Lsf:
+            return JsrunArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Pals:
+            return PalsMpiexecArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Dragon:
+            return DragonArgBuilder(launch_args)
+        elif self._launcher == LauncherType.Local:
+            return LocalArgBuilder(launch_args)
         else:
             raise ValueError(f"Invalid launcher type: {self._launcher}")
 
@@ -140,7 +140,7 @@ class LaunchSettings(BaseSettings):
         """Build bash compatible environment variable string for Slurm
         :returns: the formatted string of environment variables
         """
-        return self._arg_translator.format_env_vars(self.env_vars)
+        return self._arg_builder.format_env_vars(self.env_vars)
 
     def format_comma_sep_env_vars(self) -> t.Union[t.Tuple[str, t.List[str]],None]:
         """Build environment variable string for Slurm
@@ -149,7 +149,7 @@ class LaunchSettings(BaseSettings):
         for more information on this, see the slurm documentation for srun
         :returns: the formatted string of environment variables
         """
-        return self._arg_translator.format_comma_sep_env_vars(self.env_vars)
+        return self._arg_builder.format_comma_sep_env_vars(self.env_vars)
 
     def format_launch_args(self) -> t.Union[t.List[str],None]:
         """Return formatted launch arguments
@@ -157,7 +157,7 @@ class LaunchSettings(BaseSettings):
         literally with no formatting.
         :return: list run arguments for these settings
         """
-        return self._arg_translator.format_launch_args()
+        return self._arg_builder.format_launch_args()
     
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nLauncher: {self.launcher}"

@@ -28,7 +28,7 @@ from collections.abc import MutableSequence
 from ...settings.launchCommand import LauncherType
 import typing as t
 
-class Command(MutableSequence):
+class Command(MutableSequence[str]):
     """Basic container for command information
     """
     def __init__(self, launcher: LauncherType, command:t.List[str]) -> None:

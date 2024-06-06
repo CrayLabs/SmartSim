@@ -27,14 +27,14 @@
 from __future__ import annotations
 
 import typing as t
-from ..launchArgTranslator import LaunchArgTranslator
+from ..launchArgBuilder import LaunchArgBuilder
 from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
-class _BaseMPIArgTranslator(LaunchArgTranslator):
+class _BaseMPIArgBuilder(LaunchArgBuilder):
     
     def __init__(
         self,
@@ -217,7 +217,7 @@ class _BaseMPIArgTranslator(LaunchArgTranslator):
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
 
-class MpiArgTranslator(_BaseMPIArgTranslator):
+class MpiArgBuilder(_BaseMPIArgBuilder):
     
     def __init__(
         self,
@@ -225,7 +225,7 @@ class MpiArgTranslator(_BaseMPIArgTranslator):
     ) -> None:
         super().__init__(launch_args)
 
-class MpiexecArgTranslator(_BaseMPIArgTranslator):
+class MpiexecArgBuilder(_BaseMPIArgBuilder):
     
     def __init__(
         self,
@@ -233,7 +233,7 @@ class MpiexecArgTranslator(_BaseMPIArgTranslator):
     ) -> None:
         super().__init__(launch_args)
 
-class OrteArgTranslator(_BaseMPIArgTranslator):
+class OrteArgBuilder(_BaseMPIArgBuilder):
     
     def __init__(
         self,

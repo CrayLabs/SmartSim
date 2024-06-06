@@ -29,13 +29,13 @@ from __future__ import annotations
 import typing as t
 import re
 import os
-from ..launchArgTranslator import LaunchArgTranslator
+from ..launchArgBuilder import LaunchArgBuilder
 from ...common import IntegerArgument, StringArgument, set_check_input
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
 
-class SlurmArgTranslator(LaunchArgTranslator):
+class SlurmArgBuilder(LaunchArgBuilder):
     
     def __init__(
         self,

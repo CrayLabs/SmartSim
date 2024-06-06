@@ -1,5 +1,5 @@
 from smartsim.settings import LaunchSettings
-from smartsim.settings.translators.launch.dragon import DragonArgTranslator
+from smartsim.settings.translators.launch.dragon import DragonArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 import logging
@@ -12,7 +12,7 @@ import logging
     ],
 )
 def test_dragon_class_methods(function, value, flag, result):
-    dragonLauncher = LaunchSettings(launcher=LauncherType.DragonLauncher)
-    assert isinstance(dragonLauncher._arg_translator,DragonArgTranslator)
+    dragonLauncher = LaunchSettings(launcher=LauncherType.Dragon)
+    assert isinstance(dragonLauncher._arg_builder,DragonArgBuilder)
     getattr(dragonLauncher.launch_args, function)(*value)
     assert dragonLauncher.launch_args._launch_args[flag] == result

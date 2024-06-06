@@ -32,10 +32,10 @@ from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
 from .common import StringArgument
 from .batchCommand import SchedulerType
-from .translators.batch.pbs import QsubBatchArgTranslator
-from .translators.batch.slurm import SlurmBatchArgTranslator
-from .translators.batch.lsf import BsubBatchArgTranslator
-from .translators import BatchArgTranslator
+from .translators.batch.pbs import QsubBatchArgBuilder
+from .translators.batch.slurm import SlurmBatchArgBuilder
+from .translators.batch.lsf import BsubBatchArgBuilder
+from .translators import BatchArgBuilder
 from .baseSettings import BaseSettings
 
 logger = get_logger(__name__)
@@ -51,7 +51,7 @@ class BatchSettings(BaseSettings):
             self._batch_scheduler = SchedulerType(batch_scheduler)
         except ValueError:
             raise ValueError(f"Invalid scheduler type: {batch_scheduler}")
-        self._arg_translator = self._get_arg_builder(scheduler_args)
+        self._arg_builder = self._get_arg_builder(scheduler_args)
         self.env_vars = env_vars or {}
 
     @property
@@ -61,11 +61,11 @@ class BatchSettings(BaseSettings):
         return self._batch_scheduler.value
 
     @property
-    def scheduler_args(self) -> BatchArgTranslator:
+    def scheduler_args(self) -> BatchArgBuilder:
         """Return the batch argument translator.
         """
         # Is a deep copy needed here?
-        return self._arg_translator
+        return self._arg_builder
 
     @property
     def env_vars(self) -> StringArgument:
@@ -79,15 +79,15 @@ class BatchSettings(BaseSettings):
         """
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(self, scheduler_args) -> BatchArgTranslator:
-        """ Map the Scheduler to the BatchArgTranslator
+    def _get_arg_builder(self, scheduler_args) -> BatchArgBuilder:
+        """ Map the Scheduler to the BatchArgBuilder
         """
-        if self._batch_scheduler == SchedulerType.SlurmScheduler:
-            return SlurmBatchArgTranslator(scheduler_args)
-        elif self._batch_scheduler == SchedulerType.LsfScheduler:
-            return BsubBatchArgTranslator(scheduler_args)
-        elif self._batch_scheduler == SchedulerType.PbsScheduler:
-            return QsubBatchArgTranslator(scheduler_args)
+        if self._batch_scheduler == SchedulerType.Slurm:
+            return SlurmBatchArgBuilder(scheduler_args)
+        elif self._batch_scheduler == SchedulerType.Lsf:
+            return BsubBatchArgBuilder(scheduler_args)
+        elif self._batch_scheduler == SchedulerType.Pbs:
+            return QsubBatchArgBuilder(scheduler_args)
         else:
             raise ValueError(f"Invalid scheduler type: {self._batch_scheduler}")
     
@@ -96,7 +96,7 @@ class BatchSettings(BaseSettings):
 
         :return: batch arguments for Sbatch
         """
-        return self._arg_translator.format_batch_args()
+        return self._arg_builder.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nScheduler: {self.arg_translator.scheduler_str}"

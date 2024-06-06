@@ -24,10 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .launchArgTranslator import LaunchArgTranslator
-from .batchArgTranslator import BatchArgTranslator
+from .launchArgBuilder import LaunchArgBuilder
+from .batchArgBuilder import BatchArgBuilder
 
 __all__ = [
-    "LaunchArgTranslator",
-    "BatchArgTranslator"
+    "LaunchArgBuilder",
+    "BatchArgBuilder"
 ]

@@ -30,6 +30,6 @@ class SchedulerType(Enum):
     """ Schedulers that are supported by
     SmartSim.
     """
-    SlurmScheduler = "slurm"
-    PbsScheduler = "pbs"
-    LsfScheduler = "lsf"
+    Slurm = "slurm"
+    Pbs = "pbs"
+    Lsf = "lsf"
