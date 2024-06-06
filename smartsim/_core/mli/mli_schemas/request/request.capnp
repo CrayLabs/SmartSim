@@ -26,10 +26,14 @@
 
 @0xa27f0152c7bb299e;
 
-using Enums = import "../enums/enums.capnp";
 using Tensors = import "../tensor/tensor.capnp";
 using RequestAttributes = import "request_attributes/request_attributes.capnp";
 using DataRef = import "../data/data_references.capnp";
+
+enum Device {
+  cpu @0;
+  gpu @1;
+}
 
 struct ChannelDescriptor {
   reply @0 :Data;
@@ -42,7 +46,7 @@ struct Request {
     modelData @2 :Data;
   }
   device :union {
-    deviceType @3 :Enums.Device;
+    deviceType @3 :Device;
     noDevice @4 :Void;
   }
   input :union {

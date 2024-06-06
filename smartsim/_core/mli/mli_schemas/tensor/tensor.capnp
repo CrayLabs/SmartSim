@@ -26,7 +26,23 @@
 
 @0x9a0aeb2e04838fb1;
 
-using Enums = import "../enums/enums.capnp";
+enum Order {
+  c @0; # row major (contiguous layout)
+  f @1; # column major (fortran contiguous layout)
+}
+
+enum NumericalType {
+  int8 @0;
+  int16 @1;
+  int32 @2;
+  int64 @3;
+  uInt8 @4;
+  uInt16 @5;
+  uInt32 @6;
+  uInt64 @7;
+  float32 @8; 
+  float64 @9;
+}
 
 struct Tensor {
   blob @0 :Data;
@@ -35,6 +51,6 @@ struct Tensor {
 
 struct TensorDescriptor {
   dimensions @0 :List(Int32);
-  order @1 :Enums.Order;
-  dataType @2 :Enums.NumericalType;
+  order @1 :Order;
+  dataType @2 :NumericalType;
 }

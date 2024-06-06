@@ -25,36 +25,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
 
-import capnp  # type: ignore # pylint: disable=unused-import
 import tensorflow as tf
 import torch
 
-from .mli_schemas.data import (  # type: ignore # pylint: disable=no-name-in-module
-    data_references_capnp,
-)
-from .mli_schemas.request import (  # type: ignore # pylint: disable=no-name-in-module
-    request_capnp,
-)
-from .mli_schemas.request.request_attributes import (  # type: ignore # pylint: disable=no-name-in-module
-    request_attributes_capnp,
-)
-from .mli_schemas.response import (  # type: ignore # pylint: disable=no-name-in-module
-    response_capnp,
-)
-from .mli_schemas.response.response_attributes import (  # type: ignore # pylint: disable=no-name-in-module
-    response_attributes_capnp,
-)
-from .mli_schemas.tensor import (  # type: ignore # pylint: disable=no-name-in-module
-    tensor_capnp,
-)
+from .mli_schemas.data import data_references_capnp
+from .mli_schemas.request import request_capnp
+from .mli_schemas.request.request_attributes import request_attributes_capnp
+from .mli_schemas.response import response_capnp
+from .mli_schemas.response.response_attributes import response_attributes_capnp
+from .mli_schemas.tensor import tensor_capnp
 
 
 class MessageHandler:
     @staticmethod
     def build_tensor(
         tensor: t.Union[torch.Tensor, tf.Tensor],
-        order: str,
-        data_type: str,
+        order: "tensor_capnp.Order",
+        data_type: "tensor_capnp.NumericalType",
         dimensions: t.List[int],
     ) -> tensor_capnp.Tensor:
         """
@@ -102,7 +89,7 @@ class MessageHandler:
 
     @staticmethod
     def build_torch_request_attributes(
-        tensor_type: str,
+        tensor_type: "request_attributes_capnp.TorchTensorType",
     ) -> request_attributes_capnp.TorchRequestAttributes:
         """
         Builds a new TorchRequestAttributes message with the provided tensor type.
@@ -116,7 +103,7 @@ class MessageHandler:
 
     @staticmethod
     def build_tf_request_attributes(
-        name: str, tensor_type: str
+        name: str, tensor_type: "request_attributes_capnp.TFTensorType"
     ) -> request_attributes_capnp.TensorFlowRequestAttributes:
         """
         Builds a new TensorFlowRequestAttributes message with
@@ -162,7 +149,7 @@ class MessageHandler:
             if isinstance(model, bytes):
                 request.model.modelData = model
             else:
-                request.model.modelKey = model
+                request.model.modelKey = model  # type: ignore
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
@@ -180,7 +167,7 @@ class MessageHandler:
 
     @staticmethod
     def _assign_device(
-        request: request_capnp.Request, device: t.Union[str, None]
+        request: request_capnp.Request, device: t.Union["request_capnp.Device", None]
     ) -> None:
         """
         Assigns a device to the supplied request.
@@ -205,11 +192,12 @@ class MessageHandler:
         """
         try:
             if inputs:
-                input_class_name = inputs[0].schema.node.displayName.split(":")[-1]
+                display_name = inputs[0].schema.node.displayName  # type: ignore
+                input_class_name = display_name.split(":")[-1]
                 if input_class_name == "Tensor":
-                    request.input.inputData = inputs
+                    request.input.inputData = inputs  # type: ignore
                 elif input_class_name == "TensorKey":
-                    request.input.inputKeys = inputs
+                    request.input.inputKeys = inputs  # type: ignore
                 else:
                     raise ValueError(
                         "Invalid input class name. Expected 'Tensor' or 'TensorKey'."
@@ -229,11 +217,12 @@ class MessageHandler:
         """
         try:
             if outputs:
-                output_class_name = outputs[0].schema.node.displayName.split(":")[-1]
+                display_name = outputs[0].schema.node.displayName  # type: ignore
+                output_class_name = display_name.split(":")[-1]
                 if output_class_name == "Tensor":
-                    request.output.outputData = outputs
+                    request.output.outputData = outputs  # type: ignore
                 elif output_class_name == "TensorKey":
-                    request.output.outputKeys = outputs
+                    request.output.outputKeys = outputs  # type: ignore
                 else:
                     raise ValueError(
                         "Invalid output class name. Expected 'Tensor' or 'TensorKey'."
@@ -244,7 +233,7 @@ class MessageHandler:
     @staticmethod
     def _assign_custom_request_attributes(
         request: request_capnp.Request,
-        custom_attributes: t.Union[
+        custom_attrs: t.Union[
             request_attributes_capnp.TorchRequestAttributes,
             request_attributes_capnp.TensorFlowRequestAttributes,
             None,
@@ -254,16 +243,16 @@ class MessageHandler:
         Assigns request attributes to the supplied request.
         """
         try:
-            if custom_attributes is None:
-                request.customAttributes.none = custom_attributes
+            if custom_attrs is None:
+                request.customAttributes.none = custom_attrs
             else:
                 custom_attribute_class_name = (
-                    custom_attributes.schema.node.displayName.split(":")[-1]
+                    custom_attrs.schema.node.displayName.split(":")[-1] # type: ignore
                 )
                 if custom_attribute_class_name == "TorchRequestAttributes":
-                    request.customAttributes.torch = custom_attributes
+                    request.customAttributes.torch = custom_attrs  # type: ignore
                 elif custom_attribute_class_name == "TensorFlowRequestAttributes":
-                    request.customAttributes.tf = custom_attributes
+                    request.customAttributes.tf = custom_attrs  # type: ignore
                 else:
                     raise ValueError("""Invalid custom attribute class name.
                         Expected 'TensorFlowRequestAttributes' or
@@ -277,7 +266,7 @@ class MessageHandler:
     def build_request(
         reply_channel: t.ByteString,
         model: t.Union[data_references_capnp.ModelKey, t.ByteString],
-        device: t.Union[str, None],
+        device: t.Union["request_capnp.Device", None],
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
         ],
@@ -303,11 +292,11 @@ class MessageHandler:
         return request
 
     @staticmethod
-    def serialize_request(request: request_capnp.Request) -> t.ByteString:
+    def serialize_request(request: request_capnp.RequestBuilder) -> t.ByteString:
         """
         Serializes a built request message.
         """
-        return request.to_bytes()  # type: ignore
+        return request.to_bytes()
 
     @staticmethod
     def deserialize_request(request_bytes: t.ByteString) -> request_capnp.Request:
@@ -353,11 +342,12 @@ class MessageHandler:
         try:
             if result:
                 first_result = result[0]
-                result_class_name = first_result.schema.node.displayName.split(":")[-1]
+                display_name = first_result.schema.node.displayName  # type: ignore
+                result_class_name = display_name.split(":")[-1]
                 if result_class_name == "Tensor":
-                    response.result.data = result
+                    response.result.data = result  # type: ignore
                 elif result_class_name == "TensorKey":
-                    response.result.keys = result
+                    response.result.keys = result  # type: ignore
                 else:
                     raise ValueError("""Invalid custom attribute class name.
                         Expected 'Tensor' or 'TensorKey'.""")
@@ -367,7 +357,7 @@ class MessageHandler:
     @staticmethod
     def _assign_custom_response_attributes(
         response: response_capnp.Response,
-        custom_attributes: t.Union[
+        custom_attrs: t.Union[
             response_attributes_capnp.TorchResponseAttributes,
             response_attributes_capnp.TensorFlowResponseAttributes,
             None,
@@ -377,16 +367,16 @@ class MessageHandler:
         Assigns custom attributes to the supplied response.
         """
         try:
-            if custom_attributes is None:
-                response.customAttributes.none = custom_attributes
+            if custom_attrs is None:
+                response.customAttributes.none = custom_attrs
             else:
                 custom_attribute_class_name = (
-                    custom_attributes.schema.node.displayName.split(":")[-1]
+                    custom_attrs.schema.node.displayName.split(":")[-1] # type: ignore
                 )
                 if custom_attribute_class_name == "TorchResponseAttributes":
-                    response.customAttributes.torch = custom_attributes
+                    response.customAttributes.torch = custom_attrs  # type: ignore
                 elif custom_attribute_class_name == "TensorFlowResponseAttributes":
-                    response.customAttributes.tf = custom_attributes
+                    response.customAttributes.tf = custom_attrs  # type: ignore
                 else:
                     raise ValueError("""Invalid custom attribute class name.
                         Expected 'TensorFlowResponseAttributes' or 
@@ -418,11 +408,11 @@ class MessageHandler:
         return response
 
     @staticmethod
-    def serialize_response(response: response_capnp.Response) -> t.ByteString:
+    def serialize_response(response: response_capnp.ResponseBuilder) -> t.ByteString:
         """
         Serializes a built response message.
         """
-        return response.to_bytes()  # type: ignore
+        return response.to_bytes()
 
     @staticmethod
     def deserialize_response(response_bytes: t.ByteString) -> response_capnp.Response:
