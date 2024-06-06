@@ -75,8 +75,8 @@ def test_add_mpmd_pair():
     mpmd_pair = MPMDPair(entity, launch_settings)
 
     assert len(mpmd_job.mpmd_pairs) == 1
-    assert mpmd_pair.entity == mpmd_job.mpmd_pairs[0].entity
-    assert mpmd_pair.launch_settings == mpmd_job.mpmd_pairs[0].launch_settings
+    assert str(mpmd_pair.entity) == str(mpmd_job.mpmd_pairs[0].entity)
+    assert str(mpmd_pair.launch_settings) == str(mpmd_job.mpmd_pairs[0].launch_settings)
 
 
 def test_mpmdpair_init():

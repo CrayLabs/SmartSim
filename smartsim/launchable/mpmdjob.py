@@ -91,7 +91,7 @@ class MPMDJob(BaseJob):
         """
         Add a mpmd pair to the mpmd job
         """
-        self.mpmd_pairs.append(MPMDPair(entity, launch_settings))
+        self._mpmd_pairs.append(MPMDPair(entity, launch_settings))
         _check_launcher(self.mpmd_pairs)
         _check_entity(self.mpmd_pairs)
 
