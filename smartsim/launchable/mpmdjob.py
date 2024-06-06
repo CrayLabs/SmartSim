@@ -73,7 +73,7 @@ class MPMDJob(BaseJob):
     def __init__(self, mpmd_pairs: t.List[MPMDPair] = None) -> None:
         super().__init__()
 
-        self._mpmd_pairs = mpmd_pairs or []
+        self._mpmd_pairs = deepcopy(mpmd_pairs) if mpmd_pairs else []
         _check_launcher(self._mpmd_pairs)
         _check_entity(self._mpmd_pairs)
         # self.warehouse_runner = MPMDJobWarehouseRunner
