@@ -47,8 +47,8 @@ class Job(BaseJob):
         launch_settings: RunSettings,  # rename to LaunchSettings
     ) -> None:
         super().__init__()
-        self._entity = entity
-        self._launch_settings = launch_settings
+        self._entity = deepcopy(entity)
+        self._launch_settings = deepcopy(launch_settings)
         # self.warehouse_runner = JobWarehouseRunner
 
     @property
