@@ -33,6 +33,6 @@ class MPMDPair:
 
     def __init__(
         self, entity: SmartSimEntity, launch_settings: RunSettings
-    ):  # rename to LaunchSettings
+    ):  # TODO: rename to LaunchSettings
         self.entity = entity
         self.launch_settings = launch_settings
