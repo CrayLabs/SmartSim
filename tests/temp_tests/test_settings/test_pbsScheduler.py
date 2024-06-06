@@ -3,6 +3,11 @@ from smartsim.settings.translators.batch.pbs import QsubBatchArgBuilder
 from smartsim.settings.batchCommand import SchedulerType
 import pytest
 
+def test_scheduler_str():
+    """Ensure scheduler_str returns appropriate value"""
+    bs = BatchSettings(batch_scheduler=SchedulerType.Pbs)
+    assert bs.scheduler_args.scheduler_str() == SchedulerType.Pbs.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [
@@ -17,7 +22,7 @@ import pytest
 )
 def test_create_pbs_batch(function, value, flag, result):
     pbsScheduler = BatchSettings(batch_scheduler=SchedulerType.Pbs)
-    assert pbsScheduler.scheduler_args == QsubBatchArgBuilder
+    assert isinstance(pbsScheduler.scheduler_args, QsubBatchArgBuilder)
     getattr(pbsScheduler.scheduler_args, function)(*value)
     assert pbsScheduler.scheduler_args._scheduler_args[flag] == result
     

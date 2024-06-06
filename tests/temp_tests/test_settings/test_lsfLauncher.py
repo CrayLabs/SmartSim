@@ -3,6 +3,11 @@ from smartsim.settings.translators.launch.lsf import JsrunArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    ls = LaunchSettings(launcher=LauncherType.Lsf)
+    assert ls.launch_args.launcher_str() == LauncherType.Lsf.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

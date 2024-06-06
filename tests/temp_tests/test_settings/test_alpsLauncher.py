@@ -3,6 +3,11 @@ from smartsim.settings import LaunchSettings
 from smartsim.settings.translators.launch.alps import AprunArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    alpsLauncher = LaunchSettings(launcher=LauncherType.Alps)
+    assert alpsLauncher.launch_args.launcher_str() == LauncherType.Alps.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

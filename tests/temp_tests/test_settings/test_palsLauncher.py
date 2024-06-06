@@ -3,6 +3,11 @@ from smartsim.settings.translators.launch.pals import PalsMpiexecArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    ls = LaunchSettings(launcher=LauncherType.Pals)
+    assert ls.launch_args.launcher_str() == LauncherType.Pals.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [
@@ -16,7 +21,7 @@ import pytest
 )
 def test_pals_class_methods(function, value, flag, result):
     palsLauncher = LaunchSettings(launcher=LauncherType.Pals)
-    assert palsLauncher.launch_args == PalsMpiexecArgBuilder
+    assert isinstance(palsLauncher.launch_args,PalsMpiexecArgBuilder)
     getattr(palsLauncher.launch_args, function)(*value)
     assert palsLauncher.launch_args._launch_args[flag] == result
     assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]

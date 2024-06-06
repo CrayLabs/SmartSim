@@ -3,6 +3,11 @@ from smartsim.settings.translators.launch.local import LocalArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    ls = LaunchSettings(launcher=LauncherType.Local)
+    assert ls.launch_args.launcher_str() == LauncherType.Local.value
+
 # TODO complete after launch args retrieval
 def test_launch_args_input_mutation():
     # Tests that the run args passed in are not modified after initialization

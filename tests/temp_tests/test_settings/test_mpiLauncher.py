@@ -5,6 +5,19 @@ import itertools
 from smartsim.settings.launchCommand import LauncherType
 
 @pytest.mark.parametrize(
+    "launcher",
+    [
+        pytest.param(LauncherType.Mpirun, id="launcher_str_mpirun"),
+        pytest.param(LauncherType.Mpiexec, id="launcher_str_mpiexec"),
+        pytest.param(LauncherType.Orterun, id="launcher_str_orterun"),
+    ],
+)
+def test_launcher_str(launcher):
+    """Ensure launcher_str returns appropriate value"""
+    ls = LaunchSettings(launcher=launcher)
+    assert ls.launch_args.launcher_str() == launcher.value
+
+@pytest.mark.parametrize(
     "l,function,value,result,flag",
     [
     # Use OpenMPI style settigs for all launchers

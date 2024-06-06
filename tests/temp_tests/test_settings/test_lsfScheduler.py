@@ -2,6 +2,11 @@ from smartsim.settings import BatchSettings
 import pytest
 from smartsim.settings.batchCommand import SchedulerType
 
+def test_scheduler_str():
+    """Ensure scheduler_str returns appropriate value"""
+    bs = BatchSettings(batch_scheduler=SchedulerType.Lsf)
+    assert bs.scheduler_args.scheduler_str() == SchedulerType.Lsf.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

@@ -3,6 +3,11 @@ from smartsim.settings.translators.launch.slurm import SlurmArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    ls = LaunchSettings(launcher=LauncherType.Slurm)
+    assert ls.launch_args.launcher_str() == LauncherType.Slurm.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

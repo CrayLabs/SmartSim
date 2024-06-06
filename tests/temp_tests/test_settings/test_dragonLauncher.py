@@ -3,6 +3,11 @@ from smartsim.settings.translators.launch.dragon import DragonArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
 
+def test_launcher_str():
+    """Ensure launcher_str returns appropriate value"""
+    ls = LaunchSettings(launcher=LauncherType.Dragon)
+    assert ls.launch_args.launcher_str() == LauncherType.Dragon.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [

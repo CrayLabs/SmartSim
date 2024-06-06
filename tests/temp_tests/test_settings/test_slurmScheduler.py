@@ -3,6 +3,11 @@ from smartsim.settings.translators.batch.slurm import SlurmBatchArgBuilder
 from smartsim.settings.batchCommand import SchedulerType
 import pytest
 
+def test_scheduler_str():
+    """Ensure scheduler_str returns appropriate value"""
+    bs = BatchSettings(batch_scheduler=SchedulerType.Slurm)
+    assert bs.scheduler_args.scheduler_str() == SchedulerType.Slurm.value
+
 @pytest.mark.parametrize(
     "function,value,result,flag",
     [
