@@ -32,6 +32,7 @@ from os import getcwd
 from tabulate import tabulate
 
 from smartsim._core.types import Device
+
 from ..error import (
     EntityExistsError,
     SmartSimError,

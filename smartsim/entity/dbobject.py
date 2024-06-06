@@ -27,7 +27,8 @@
 import typing as t
 from pathlib import Path
 
-from smartsim._core.types import  Device
+from smartsim._core.types import Device
+
 from ..error import SSUnsupportedError
 
 __all__ = ["DBObject", "DBModel", "DBScript"]

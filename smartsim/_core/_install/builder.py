@@ -48,6 +48,9 @@ from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
 
+if t.TYPE_CHECKING:
+    from typing_extensions import Never
+
 # NOTE: This will be imported by setup.py and hence no smartsim related
 # items should be imported into this file.
 
@@ -97,7 +100,24 @@ class Architecture(enum.Enum):
 
 class Device(enum.Enum):
     CPU = "cpu"
-    GPU = "gpu"
+    CUDA11 = "cuda11"
+    CUDA12 = "cuda12"
+
+    @classmethod
+    def from_string(cls, str_: str) -> "Device":
+        str_ = str_.lower()
+        if str_ == "gpu":
+            # TODO: auto detect which device to use
+            #       currently hard coded to `cuda11`
+            return cls.CUDA11
+        return cls(str_)
+
+    def is_gpu(self) -> bool:
+        return self != type(self).CPU
+
+    def is_cuda(self) -> bool:
+        cls = type(self)
+        return self in (cls.CUDA11, cls.CUDA12)
 
 
 class OperatingSystem(enum.Enum):
@@ -487,8 +507,8 @@ class RedisAIBuilder(Builder):
         return self.build_onnx
 
     def get_deps_dir_path_for(self, device: Device) -> Path:
-        def fail_to_format(reason: str) -> BuildError:  # pragma: no cover
-            return BuildError(f"Failed to format RedisAI dependency path: {reason}")
+        def fail_to_format(reason: str) -> str:  # pragma: no cover
+            return f"Failed to format RedisAI dependency path: {reason}"
 
         _os, architecture = self._platform
         if _os == OperatingSystem.DARWIN:
@@ -496,14 +516,22 @@ class RedisAIBuilder(Builder):
         elif _os == OperatingSystem.LINUX:
             os_ = "linux"
         else:  # pragma: no cover
-            raise fail_to_format(f"Unknown operating system: {_os}")
+            _assert_never(
+                _os, message=fail_to_format("Unknown operating system: {architecture}")
+            )
         if architecture == Architecture.X64:
             arch = "x64"
         elif architecture == Architecture.ARM64:
             arch = "arm64v8"
         else:  # pragma: no cover
-            raise fail_to_format(f"Unknown architecture: {architecture}")
-        return self.rai_build_path / f"deps/{os_}-{arch}-{device.value}"
+            _assert_never(
+                architecture,
+                message=fail_to_format("Unknown architecture: {architecture}"),
+            )
+        return (
+            self.rai_build_path
+            / f"deps/{os_}-{arch}-{'gpu' if device.is_gpu() else 'cpu'}"
+        )
 
     def _get_deps_to_fetch_for(
         self, device: Device
@@ -625,7 +653,7 @@ class RedisAIBuilder(Builder):
             with_pt=self.build_torch,
             with_tf=self.build_tf,
             with_ort=self.build_onnx,
-            extra_env={"GPU": "1" if device == Device.GPU else "0"},
+            extra_env={"GPU": "1" if device.is_gpu() else "0"},
         )
 
         if self.torch_dir:
@@ -884,10 +912,14 @@ class _PTArchiveLinux(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.GPU:
-            pt_build = "cu117"
+        if self.device == Device.CUDA11:
+            pt_build = "cu118"
+        elif self.device == Device.CUDA12:
+            pt_build = "cu121"
+        elif self.device == Device.CPU:
+            pt_build = "cpu"
         else:
-            pt_build = Device.CPU.value
+            _assert_never(self.device)
         # pylint: disable-next=line-too-long
         libtorch_archive = (
             f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
@@ -906,7 +938,7 @@ class _PTArchiveMacOSX(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.GPU:
+        if self.device.is_gpu():
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
             pt_build = Device.CPU.value
@@ -961,17 +993,17 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
 
         if self.os_ == OperatingSystem.LINUX:
             tf_os = "linux"
-            tf_device = self.device
+            tf_device = "gpu" if self.device.is_gpu() else "cpu"
         elif self.os_ == OperatingSystem.DARWIN:
             tf_os = "darwin"
-            if self.device == Device.GPU:
+            if self.device.is_gpu():
                 raise BuildError("RedisAI does not currently support GPU on Macos")
-            tf_device = Device.CPU
+            tf_device = "cpu"
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
-            f"libtensorflow-{tf_device.value}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
+            f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
         )
 
     @property
@@ -1008,12 +1040,12 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
         if self.os_ == OperatingSystem.LINUX:
             ort_os = "linux"
             ort_arch = "x64"
-            ort_build = "-gpu" if self.device == Device.GPU else ""
+            ort_build = "-gpu" if self.device.is_gpu() else ""
         elif self.os_ == OperatingSystem.DARWIN:
             ort_os = "osx"
             ort_arch = "x86_64"
             ort_build = ""
-            if self.device == Device.GPU:
+            if self.device.is_gpu():
                 raise BuildError("RedisAI does not currently support GPU on Macos")
         else:
             raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
@@ -1075,3 +1107,13 @@ def _modify_source_files(
         for line in handles:
             line = compiled_regex.sub(replacement, line)
             print(line, end="")
+
+
+def _assert_never(
+    obj: "Never", *, message: t.Optional[str] = None
+) -> t.NoReturn:  # pragma: no cover
+    raise BuildError(
+        f"Unexpected value `{repr(obj)}` encountered during build process"
+        if message is None
+        else message
+    )
