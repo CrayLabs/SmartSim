@@ -31,7 +31,8 @@ import re
 import os
 from ..launchArgBuilder import LaunchArgBuilder
 from ...common import IntegerArgument, StringArgument, set_check_input
-from smartsim.log import get_logger                                                                                
+from smartsim.log import get_logger     
+from ...launchCommand import LauncherType                                                                           
 
 logger = get_logger(__name__)
 
@@ -39,10 +40,15 @@ class SlurmArgBuilder(LaunchArgBuilder):
     
     def __init__(
         self,
-        launch_args: StringArgument,
+        launch_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
     
+    def launcher_str(self) -> str:
+        """ Get the string representation of the launcher
+        """
+        return LauncherType.Slurm.value
+
     def _reserved_launch_args(self) -> set[str]:
         """ Return reserved launch arguments.
         """
@@ -300,7 +306,7 @@ class SlurmArgBuilder(LaunchArgBuilder):
     def set(self, key: str, value: str | None) -> None:
         """ Set the launch arguments
         """
-        set_check_input(key,value,logger)
+        set_check_input(key,value)
         if key in self._reserved_launch_args():
             logger.warning(
                 (

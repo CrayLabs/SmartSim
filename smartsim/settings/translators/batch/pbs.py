@@ -31,6 +31,7 @@ import typing as t
 from ..batchArgBuilder import BatchArgBuilder
 from ....error import SSConfigError
 from ...common import StringArgument
+from ...batchCommand import SchedulerType
 from smartsim.log import get_logger
 logger = get_logger(__name__)
 
@@ -38,9 +39,14 @@ class QsubBatchArgBuilder(BatchArgBuilder):
 
     def __init__(
         self,
-        scheduler_args: StringArgument,
+        scheduler_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(scheduler_args)
+
+    def scheduler_str(self) -> str:
+        """ Get the string representation of the scheduler
+        """
+        return SchedulerType.Pbs.value
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job

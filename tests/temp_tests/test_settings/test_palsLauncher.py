@@ -16,6 +16,7 @@ import pytest
 )
 def test_pals_class_methods(function, value, flag, result):
     palsLauncher = LaunchSettings(launcher=LauncherType.Pals)
+    assert palsLauncher.launch_args == PalsMpiexecArgBuilder
     getattr(palsLauncher.launch_args, function)(*value)
     assert palsLauncher.launch_args._launch_args[flag] == result
     assert palsLauncher.format_launch_args() == ["--" + flag, str(result)]

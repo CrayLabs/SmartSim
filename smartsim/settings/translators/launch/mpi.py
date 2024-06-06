@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import typing as t
 from ..launchArgBuilder import LaunchArgBuilder
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
 from smartsim.log import get_logger                                                                                
 
@@ -38,7 +38,7 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
     
     def __init__(
         self,
-        launch_args: StringArgument,
+        launch_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
 
@@ -204,7 +204,7 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
     def set(self, key: str, value: str | None) -> None:
         """ Set the launch arguments
         """
-        set_check_input(key,value,logger)
+        set_check_input(key,value)
         if key in self._reserved_launch_args():
             logger.warning(
                 (
@@ -221,22 +221,37 @@ class MpiArgBuilder(_BaseMPIArgBuilder):
     
     def __init__(
         self,
-        launch_args: StringArgument,
+        launch_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
+
+    def launcher_str(self) -> str:
+        """ Get the string representation of the launcher
+        """
+        return LauncherType.Mpirun.value
 
 class MpiexecArgBuilder(_BaseMPIArgBuilder):
     
     def __init__(
         self,
-        launch_args: StringArgument,
+        launch_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
+
+    def launcher_str(self) -> str:
+        """ Get the string representation of the launcher
+        """
+        return LauncherType.Mpiexec.value
 
 class OrteArgBuilder(_BaseMPIArgBuilder):
     
     def __init__(
         self,
-        launch_args: StringArgument,
+        launch_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
+
+    def launcher_str(self) -> str:
+        """ Get the string representation of the launcher
+        """
+        return LauncherType.Orterun.value

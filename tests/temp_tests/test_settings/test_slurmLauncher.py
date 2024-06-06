@@ -2,7 +2,6 @@ from smartsim.settings import LaunchSettings
 from smartsim.settings.translators.launch.slurm import SlurmArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
-import logging
 
 @pytest.mark.parametrize(
     "function,value,result,flag",

@@ -2,7 +2,6 @@ from smartsim.settings import LaunchSettings
 from smartsim.settings.translators.launch.local import LocalArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 import pytest
-import logging
 
 # TODO complete after launch args retrieval
 def test_launch_args_input_mutation():

@@ -28,6 +28,7 @@ from __future__ import annotations
 from ..launchArgBuilder import LaunchArgBuilder
 import typing as t
 from ...common import set_check_input, StringArgument
+from ...launchCommand import LauncherType
 from smartsim.log import get_logger                                                                                
 
 logger = get_logger(__name__)
@@ -36,7 +37,7 @@ class AprunArgBuilder(LaunchArgBuilder):
 
     def __init__(
         self,
-        launch_args: StringArgument,
+        launch_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
 
@@ -44,6 +45,11 @@ class AprunArgBuilder(LaunchArgBuilder):
         """ Return reserved launch arguments.
         """
         return {"wdir"}
+
+    def launcher_str(self) -> str:
+        """ Get the string representation of the launcher
+        """
+        return LauncherType.Alps.value
 
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of cpus to use per task
@@ -154,7 +160,7 @@ class AprunArgBuilder(LaunchArgBuilder):
         else:
             self._launch_args.pop("debug", None)
 
-    def set_quiet_launch(self, quiet: bool) -> t.Union[t.Dict[str,None],None]:
+    def set_quiet_launch(self, quiet: bool) -> None:
         """Set the job to run in quiet mode
 
         This sets ``--quiet``
@@ -199,7 +205,7 @@ class AprunArgBuilder(LaunchArgBuilder):
     def set(self, key: str, value: str | None) -> None:
         """ Set the launch arguments
         """
-        set_check_input(key,value,logger)
+        set_check_input(key,value)
         if key in self._reserved_launch_args():
             logger.warning(
                 (

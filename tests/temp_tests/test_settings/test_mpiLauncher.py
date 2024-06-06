@@ -1,7 +1,6 @@
 from smartsim.settings import LaunchSettings
 from smartsim.settings.translators.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
 import pytest
-import logging
 import itertools
 from smartsim.settings.launchCommand import LauncherType
 

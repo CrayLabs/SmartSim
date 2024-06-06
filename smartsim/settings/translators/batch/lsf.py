@@ -29,7 +29,8 @@ from __future__ import annotations
 import typing as t
 from ..batchArgBuilder import BatchArgBuilder
 from ...common import StringArgument
-from smartsim.log import get_logger                                                                            
+from smartsim.log import get_logger   
+from ...batchCommand import SchedulerType                                                                         
 
 logger = get_logger(__name__)
 
@@ -37,9 +38,14 @@ class BsubBatchArgBuilder(BatchArgBuilder):
 
     def __init__(
         self,
-        scheduler_args: StringArgument,
+        scheduler_args:  t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(scheduler_args)
+
+    def scheduler_str(self) -> str:
+        """ Get the string representation of the scheduler
+        """
+        return SchedulerType.Lsf.value
 
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime

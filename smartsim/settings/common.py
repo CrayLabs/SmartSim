@@ -25,11 +25,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
+from smartsim.log import get_logger
 
 IntegerArgument = t.Dict[str, t.Optional[int]]
 StringArgument = t.Dict[str, t.Optional[str]]
 
-def set_check_input(key: str, value: str | None, logger):
+logger = get_logger(__name__)
+
+def set_check_input(key: str, value: str | None) -> None:
     # TODO check this
     if not (isinstance(key, str) or isinstance(value, (str, None))):
             raise TypeError("Argument name should be of type str")

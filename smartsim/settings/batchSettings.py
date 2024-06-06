@@ -44,8 +44,8 @@ class BatchSettings(BaseSettings):
     def __init__(
         self,
         batch_scheduler: t.Union[SchedulerType, str],
-        scheduler_args: t.Optional[t.Dict[str, t.Union[str,int,float,None]]] = None,
-        env_vars: t.Optional[StringArgument] = None,
+        scheduler_args: t.Dict[str, t.Union[str, None]] | None = None,
+        env_vars: StringArgument | None = None,
     ) -> None:
         try:
             self._batch_scheduler = SchedulerType(batch_scheduler)
@@ -53,6 +53,12 @@ class BatchSettings(BaseSettings):
             raise ValueError(f"Invalid scheduler type: {batch_scheduler}")
         self._arg_builder = self._get_arg_builder(scheduler_args)
         self.env_vars = env_vars or {}
+
+    @property
+    def scheduler(self) -> str:
+        """Return the launcher name.
+        """
+        return self._batch_scheduler.value
 
     @property
     def batch_scheduler(self) -> str:
@@ -74,12 +80,12 @@ class BatchSettings(BaseSettings):
         return copy.deepcopy(self._env_vars)
 
     @env_vars.setter
-    def env_vars(self, value: t.Mapping[str, str]) -> None:
+    def env_vars(self, value: t.Dict[str, str | None]) -> None:
         """Set the environment variables.
         """
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(self, scheduler_args) -> BatchArgBuilder:
+    def _get_arg_builder(self, scheduler_args: StringArgument | None) -> BatchArgBuilder:
         """ Map the Scheduler to the BatchArgBuilder
         """
         if self._batch_scheduler == SchedulerType.Slurm:
@@ -99,9 +105,9 @@ class BatchSettings(BaseSettings):
         return self._arg_builder.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nScheduler: {self.arg_translator.scheduler_str}"
+        string = f"\nScheduler: {self.scheduler}"
         if self.scheduler_args:
-            string += f"\nScheduler Arguments:\n{fmt_dict(self.scheduler_args)}"
+            string += f"\nScheduler Arguments:\n{fmt_dict(self.scheduler_args._scheduler_args)}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

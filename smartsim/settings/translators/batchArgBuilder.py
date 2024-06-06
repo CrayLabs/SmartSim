@@ -41,8 +41,14 @@ class BatchArgBuilder(ABC):
     the input parameter to a properly formatted launcher argument.
     """
     
-    def __init__(self, scheduler_args) -> None:
+    def __init__(self, scheduler_args: t.Dict[str, str | None] | None) -> None:
         self._scheduler_args = copy.deepcopy(scheduler_args) or {}
+
+    @abstractmethod
+    def scheduler_str(self) -> str:
+        """ Get the string representation of the launcher
+        """
+        pass
 
     @abstractmethod
     def set_account(self, account: str) -> None:
@@ -88,7 +94,7 @@ class BatchArgBuilder(ABC):
         pass
 
     @abstractmethod
-    def format_batch_args(self, batch_args: t.Dict[str, t.Union[str,int,float,None]]) -> t.List[str]:
+    def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Sbatch

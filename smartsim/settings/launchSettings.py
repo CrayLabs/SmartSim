@@ -49,15 +49,15 @@ class LaunchSettings(BaseSettings):
     def __init__(
         self,
         launcher: t.Union[LauncherType, str],
-        launch_args: t.Optional[StringArgument] = None,
-        env_vars: t.Optional[StringArgument] = None,
+        launch_args: StringArgument | None = None,
+        env_vars: StringArgument | None = None,
     ) -> None:
         try:
             self._launcher = LauncherType(launcher)
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
         self._arg_builder = self._get_arg_builder(launch_args)
-        self.env_vars = env_vars or {}
+        self.env_vars = copy.deepcopy(env_vars) if env_vars else {}
     
     @property
     def launcher(self) -> str:
@@ -81,18 +81,18 @@ class LaunchSettings(BaseSettings):
             self.launch_args.set(k, v)
 
     @property
-    def env_vars(self) -> StringArgument:
+    def env_vars(self) -> t.Mapping[str, str | None]:
         """Return an immutable list of attached environment variables.
         """
         return copy.deepcopy(self._env_vars)
 
     @env_vars.setter
-    def env_vars(self, value: t.Mapping[str, str]) -> None:
+    def env_vars(self, value: t.Dict[str, str]) -> None:
         """Set the environment variables.
         """
         self._env_vars = copy.deepcopy(value)
     
-    def _get_arg_builder(self, launch_args) -> LaunchArgBuilder:
+    def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder:
         """ Map the Launcher to the LaunchArgBuilder
         """
         if self._launcher == LauncherType.Slurm:
@@ -116,7 +116,7 @@ class LaunchSettings(BaseSettings):
         else:
             raise ValueError(f"Invalid launcher type: {self._launcher}")
 
-    def update_env(self, env_vars: StringArgument) -> None:
+    def update_env(self, env_vars: t.Dict[str, str | None]) -> None:
         """Update the job environment variables
 
         To fully inherit the current user environment, add the
@@ -140,7 +140,7 @@ class LaunchSettings(BaseSettings):
         """Build bash compatible environment variable string for Slurm
         :returns: the formatted string of environment variables
         """
-        return self._arg_builder.format_env_vars(self.env_vars)
+        return self._arg_builder.format_env_vars(self._env_vars)
 
     def format_comma_sep_env_vars(self) -> t.Union[t.Tuple[str, t.List[str]],None]:
         """Build environment variable string for Slurm
@@ -149,7 +149,7 @@ class LaunchSettings(BaseSettings):
         for more information on this, see the slurm documentation for srun
         :returns: the formatted string of environment variables
         """
-        return self._arg_builder.format_comma_sep_env_vars(self.env_vars)
+        return self._arg_builder.format_comma_sep_env_vars(self._env_vars)
 
     def format_launch_args(self) -> t.Union[t.List[str],None]:
         """Return formatted launch arguments
