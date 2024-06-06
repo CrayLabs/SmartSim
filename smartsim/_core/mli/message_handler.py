@@ -247,7 +247,7 @@ class MessageHandler:
                 request.customAttributes.none = custom_attrs
             else:
                 custom_attribute_class_name = (
-                    custom_attrs.schema.node.displayName.split(":")[-1] # type: ignore
+                    custom_attrs.schema.node.displayName.split(":")[-1]  # type: ignore
                 )
                 if custom_attribute_class_name == "TorchRequestAttributes":
                     request.customAttributes.torch = custom_attrs  # type: ignore
@@ -371,7 +371,7 @@ class MessageHandler:
                 response.customAttributes.none = custom_attrs
             else:
                 custom_attribute_class_name = (
-                    custom_attrs.schema.node.displayName.split(":")[-1] # type: ignore
+                    custom_attrs.schema.node.displayName.split(":")[-1]  # type: ignore
                 )
                 if custom_attribute_class_name == "TorchResponseAttributes":
                     response.customAttributes.torch = custom_attrs  # type: ignore

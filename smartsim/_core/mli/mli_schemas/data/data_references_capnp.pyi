@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `data_references.capnp`."""
+
 # mypy: ignore-errors
 
 from __future__ import annotations

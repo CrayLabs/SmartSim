@@ -1,4 +1,5 @@
 """This is an automatically generated stub for `request_attributes.capnp`."""
+
 # mypy: ignore-errors
 
 from __future__ import annotations
