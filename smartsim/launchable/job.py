@@ -44,7 +44,7 @@ class Job(BaseJob):
     def __init__(
         self,
         entity: SmartSimEntity,
-        launch_settings: RunSettings,  # rename to LaunchSettings
+        launch_settings: RunSettings,  # TODO: rename to LaunchSettings
     ) -> None:
         super().__init__()
         self._entity = deepcopy(entity)
