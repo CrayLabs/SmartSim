@@ -179,10 +179,8 @@ class RedisAIVersion(Version_):
             "skl2onnx": "1.16.0",
             "onnxmltools": "1.12.0",
             "scikit-learn": "1.3.2",
-            "torch": "2.0.1",
-            "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu117",
-            "torchvision": "0.15.2",
+            "torch": "2.1.0",
+            "torchvision": "0.16.0",
         },
     }
 
@@ -213,7 +211,7 @@ class RedisAIVersion(Version_):
         except KeyError:
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{name}'\n\n"
-                "This is likely a problem with the SmartSim build process;"
+                "This is likely a problem with the SmartSim build process; "
                 "if this problem persists please log a new issue at "
                 "https://github.com/CrayLabs/SmartSim/issues "
                 "or get in contact with us at "
@@ -271,10 +269,6 @@ class Versioner:
     # torch can be set by the user because we download that for them
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
-    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
-    TORCH_CUDA_SUFFIX = Version_(
-        get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix)
-    )
 
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
@@ -305,8 +299,6 @@ class Versioner:
         _torch_fields = [
             "torch",
             "torchvision",
-            "torch_cpu_suffix",
-            "torch_cuda_suffix",
         ]
         for field in _torch_fields:
             ml_defaults.pop(field)

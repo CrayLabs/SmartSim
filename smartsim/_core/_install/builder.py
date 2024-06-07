@@ -100,8 +100,8 @@ class Architecture(enum.Enum):
 
 class Device(enum.Enum):
     CPU = "cpu"
-    CUDA11 = "cuda11"
-    CUDA12 = "cuda12"
+    CUDA118 = "cuda118"
+    CUDA121 = "cuda121"
 
     @classmethod
     def from_string(cls, str_: str) -> "Device":
@@ -109,7 +109,7 @@ class Device(enum.Enum):
         if str_ == "gpu":
             # TODO: auto detect which device to use
             #       currently hard coded to `cuda11`
-            return cls.CUDA11
+            return cls.CUDA118
         return cls(str_)
 
     def is_gpu(self) -> bool:
@@ -117,7 +117,18 @@ class Device(enum.Enum):
 
     def is_cuda(self) -> bool:
         cls = type(self)
-        return self in (cls.CUDA11, cls.CUDA12)
+        return self in (cls.CUDA118, cls.CUDA121)
+
+    def torch_suffix(self) -> str:
+        cls = type(self)
+        if self == cls.CPU:
+            return "cpu"
+        if self == cls.CUDA118:
+            return "cu118"
+        if self == cls.CUDA121:
+            return "cu121"
+        _assert_never(self)
+
 
 
 class OperatingSystem(enum.Enum):
@@ -546,7 +557,7 @@ class RedisAIBuilder(Builder):
         # DLPack is always required
         fetchable_deps: t.List[_RAIBuildDependency] = [_DLPackRepository("v0.5_RAI")]
         if self.fetch_torch:
-            pt_dep = _choose_pt_variant(os_)(arch, device, "2.0.1", self.torch_with_mkl)
+            pt_dep = _choose_pt_variant(os_)(arch, device, "2.1.0", self.torch_with_mkl)
             fetchable_deps.append(pt_dep)
         if self.fetch_tf:
             fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
@@ -912,15 +923,7 @@ class _PTArchiveLinux(_PTArchive):
 
     @property
     def url(self) -> str:
-        if self.device == Device.CUDA11:
-            pt_build = "cu118"
-        elif self.device == Device.CUDA12:
-            pt_build = "cu121"
-        elif self.device == Device.CPU:
-            pt_build = "cpu"
-        else:
-            _assert_never(self.device)
-        # pylint: disable-next=line-too-long
+        pt_build = self.device.torch_suffix()
         libtorch_archive = (
             f"libtorch-cxx11-abi-shared-without-deps-{self.version}%2B{pt_build}.zip"
         )

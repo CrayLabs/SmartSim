@@ -234,12 +234,7 @@ def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> 
             raise BuildError("SmartSim does not support GPU on MacOS")
         device_suffix = ""
     else:  # linux
-        if device == Device.CPU:
-            device_suffix = versions.TORCH_CPU_SUFFIX
-        elif device.is_cuda():
-            device_suffix = versions.TORCH_CUDA_SUFFIX
-        else:
-            raise BuildError("Unrecognized device requested")
+        device_suffix = f"+{device.torch_suffix()}"
 
     torch_deps = {
         "torch": Version_(f"{versions.TORCH}{device_suffix}"),
