@@ -15,11 +15,18 @@ To be released at some future point in time
 
 Description
 
+- Fine grain build support
+- Update Torch version to 2.1.0
 - Improve support for building SmartSim without ML backends
 - Update packaging dependency
 
 Detailed Notes
 
+- SmartSim can now be built using Cuda version 11.8 or Cuda 12.1 by specify
+  `smart build --device=cuda118` or `smart build --device=cuda121`. The
+  original `smart build --device=gpu` will default to using Cuda 11.8.
+- As a result of the previous change, SmartSim now requires C++17 and a
+  minimium Cuda version of 11.8 in order to build Torch 2.1.0.
 - Fix an error that would prevent ``smart build`` from moving a successfully
   compiled RedisAI shared object to the install location expected by SmartSim
   if no ML backend installations were found. Previously, this would effectively
