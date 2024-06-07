@@ -270,3 +270,76 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
         super().__init__(
             smartsim_status, status, returncode, output=output, error=error
         )
+
+class SGEStepInfo(StepInfo):  # cov-pbs
+    @property
+    def mapping(self) -> t.Dict[str, SmartSimStatus]:
+        # pylint: disable=line-too-long
+        # see https://manpages.ubuntu.com/manpages/jammy/man5/sge_status.5.html
+        return {
+            # Running states
+            "r": SmartSimStatus.STATUS_RUNNING,
+            "hr": SmartSimStatus.STATUS_RUNNING,
+            "t": SmartSimStatus.STATUS_RUNNING,
+            "Rr": SmartSimStatus.STATUS_RUNNING,
+            "Rt": SmartSimStatus.STATUS_RUNNING,
+            # Queued states
+            "qw": SmartSimStatus.STATUS_QUEUED,
+            "Rq": SmartSimStatus.STATUS_QUEUED,
+            "hqw": SmartSimStatus.STATUS_QUEUED,
+            "hRwq": SmartSimStatus.STATUS_QUEUED,
+            # Paused states
+            "s": SmartSimStatus.STATUS_PAUSED,
+            "ts": SmartSimStatus.STATUS_PAUSED,
+            "S": SmartSimStatus.STATUS_PAUSED,
+            "tS": SmartSimStatus.STATUS_PAUSED,
+            "T": SmartSimStatus.STATUS_PAUSED,
+            "tT": SmartSimStatus.STATUS_PAUSED,
+            "Rs": SmartSimStatus.STATUS_PAUSED,
+            "Rts": SmartSimStatus.STATUS_PAUSED,
+            "RS": SmartSimStatus.STATUS_PAUSED,
+            "RtS": SmartSimStatus.STATUS_PAUSED,
+            "RT": SmartSimStatus.STATUS_PAUSED,
+            "RtT": SmartSimStatus.STATUS_PAUSED,
+            # Failed states
+            "Eqw": SmartSimStatus.STATUS_FAILED,
+            "Ehqw": SmartSimStatus.STATUS_FAILED,
+            "EhRqw": SmartSimStatus.STATUS_FAILED,
+            # Finished states
+            "z": SmartSimStatus.STATUS_COMPLETED,
+            # Cancelled
+            "dr": SmartSimStatus.STATUS_CANCELLED,
+            "dt": SmartSimStatus.STATUS_CANCELLED,
+            "dRr": SmartSimStatus.STATUS_CANCELLED,
+            "dRt": SmartSimStatus.STATUS_CANCELLED,
+            "ds": SmartSimStatus.STATUS_CANCELLED,
+            "dS": SmartSimStatus.STATUS_CANCELLED,
+            "dT": SmartSimStatus.STATUS_CANCELLED,
+            "dRs": SmartSimStatus.STATUS_CANCELLED,
+            "dRS": SmartSimStatus.STATUS_CANCELLED,
+            "dRT": SmartSimStatus.STATUS_CANCELLED,
+        }
+
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[int] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
+        if status == "NOTFOUND":
+            if returncode is not None:
+                smartsim_status = (
+                    SmartSimStatus.STATUS_COMPLETED
+                    if returncode == 0
+                    else SmartSimStatus.STATUS_FAILED
+                )
+            else:
+                # if PBS job history isnt available, and job isnt in queue
+                smartsim_status = SmartSimStatus.STATUS_COMPLETED
+                returncode = 0
+        else:
+            smartsim_status = self._get_smartsim_status(status)
+        super().__init__(
+            smartsim_status, status, returncode, output=output, error=error
+        )

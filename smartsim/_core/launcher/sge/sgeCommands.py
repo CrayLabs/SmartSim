@@ -24,32 +24,53 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsSettings import AprunSettings
-from .base import RunSettings, SettingsBase
-from .containers import Container, Singularity
-from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-from .palsSettings import PalsMpiexecSettings
-from .pbsSettings import QsubBatchSettings
-from .sgeSettings import SgeQsubBatchSettings
-from .slurmSettings import SbatchSettings, SrunSettings
+import typing as t
 
-__all__ = [
-    "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
-    "MpirunSettings",
-    "MpiexecSettings",
-    "OrterunSettings",
-    "QsubBatchSettings",
-    "RunSettings",
-    "SettingsBase",
-    "SbatchSettings",
-    "SgeQsubBatchSettings",
-    "SrunSettings",
-    "PalsMpiexecSettings",
-    "DragonRunSettings",
-    "Container",
-    "Singularity",
-]
+from ..util.shell import execute_cmd
+
+
+def qstat(args: t.List[str]) -> t.Tuple[str, str]:
+    """Calls SGE qstat with args
+
+    :param args: List of command arguments
+    :returns: Output and error of qstat
+    """
+    cmd = ["qstat"] + args
+    _, out, error = execute_cmd(cmd)
+    return out, error
+
+
+def qsub(args: t.List[str]) -> t.Tuple[str, str]:
+    """Calls SGE qsub with args
+
+    :param args: List of command arguments
+    :returns: Output and error of salloc
+    """
+    cmd = ["qsub"] + args
+    _, out, error = execute_cmd(cmd)
+    return out, error
+
+
+def qdel(args: t.List[str]) -> t.Tuple[int, str, str]:
+    """Calls SGE qdel with args.
+
+    returncode is also supplied in this function.
+
+    :param args: list of command arguments
+    :return: output and error
+    """
+    cmd = ["qdel"] + args
+    returncode, out, error = execute_cmd(cmd)
+    return returncode, out, error
+
+def qacct(args: t.List[str]) -> t.Tuple[int, str, str]:
+    """Calls SGE qacct with args.
+
+    returncode is also supplied in this function.
+
+    :param args: list of command arguments
+    :return: output and error
+    """
+    cmd = ["qacct"] + args
+    returncode, out, error = execute_cmd(cmd)
+    return returncode, out, error
