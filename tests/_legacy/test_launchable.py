@@ -26,9 +26,9 @@
 
 import pytest
 
-from smartsim.database.orchestrator import Orchestrator
+from smartsim.database.orchestrator import FeatureStore
 from smartsim.entity.entity import SmartSimEntity
-from smartsim.entity.model import Model
+from smartsim.entity.model import Application
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable import Job, Launchable
 from smartsim.launchable.launchable import SmartSimObject
@@ -141,10 +141,10 @@ def test_add_mpmd_pair_check_launcher_error():
 def test_add_mpmd_pair_check_entity():
     """Test that mpmd pairs that have the same entity type can be added to an MPMD Job"""
     mpmd_pairs = []
-    entity1 = Model("entity1", None, None)
+    entity1 = Application("entity1", None, None)
     launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
 
-    entity2 = Model("entity2", None, None)
+    entity2 = Application("entity2", None, None)
     launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="srun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -161,10 +161,10 @@ def test_add_mpmd_pair_check_entity_error():
     """Test that an error is raised when a pairs is added to an mpmd job
     using add_mpmd_pair that does not have the same entity type"""
     mpmd_pairs = []
-    entity1 = Model("entity1", None, None)
+    entity1 = Application("entity1", None, None)
     launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
 
-    entity2 = Orchestrator("entity2")
+    entity2 = FeatureStore("entity2")
     launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="srun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -181,10 +181,10 @@ def test_create_mpmdjob_invalid_mpmdpairs():
     does not have the same launcher type"""
 
     mpmd_pairs = []
-    entity1 = Model("entity1", None, None)
+    entity1 = Application("entity1", None, None)
     launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
 
-    entity1 = Model("entity1", None, None)
+    entity1 = Application("entity1", None, None)
     launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="mpirun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -202,9 +202,9 @@ def test_create_mpmdjob_valid_mpmdpairs():
     """Test that all pairs have the same entity type is enforced when creating an MPMDJob"""
 
     mpmd_pairs = []
-    entity1 = Model("entity1", None, None)
+    entity1 = Application("entity1", None, None)
     launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
-    entity1 = Model("entity1", None, None)
+    entity1 = Application("entity1", None, None)
     launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="srun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
