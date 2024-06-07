@@ -174,11 +174,12 @@ class RedisAIVersion(Version_):
 
     defaults = {
         "1.2.7": {
-            "tensorflow": "2.13.1",
-            "onnx": "1.14.1",
-            "skl2onnx": "1.16.0",
-            "onnxmltools": "1.12.0",
-            "scikit-learn": "1.3.2",
+            # TODO: Address before merge to `develop`
+            "tensorflow": "2.13.1",  # FIXME: Backend is currently v2.16.1
+            "onnx": "1.14.1",  # TODO: update
+            "skl2onnx": "1.16.0",  # TODO: update
+            "onnxmltools": "1.12.0",  # TODO: update
+            "scikit-learn": "1.3.2",  # TODO: udpate
             "torch": "2.1.0",
             "torchvision": "0.16.0",
         },

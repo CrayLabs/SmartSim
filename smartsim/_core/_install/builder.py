@@ -557,8 +557,9 @@ class RedisAIBuilder(Builder):
             pt_dep = _choose_pt_variant(os_)(arch, device, "2.1.0", self.torch_with_mkl)
             fetchable_deps.append(pt_dep)
         if self.fetch_tf:
-            fetchable_deps.append(_TFArchive(os_, arch, device, "2.13.1"))
+            fetchable_deps.append(_TFArchive(os_, arch, device, "2.15.0"))
         if self.fetch_onnx:
+            # TODO: before merge to `develop`, bump this to 1.17.x
             fetchable_deps.append(_ORTArchive(os_, device, "1.16.3"))
 
         return tuple(fetchable_deps)
