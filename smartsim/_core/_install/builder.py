@@ -568,7 +568,7 @@ class RedisAIBuilder(Builder):
 
         :param device: device to build for
         """
-        device_str = 'gpu' if device.is_gpu() else 'cpu'
+        device_str = "gpu" if device.is_gpu() else "cpu"
         rai_deps_path = sorted(
             self.rai_build_path.glob(os.path.join("deps", f"*{device_str}*"))
         )
@@ -958,7 +958,7 @@ class _PTArchiveMacOSX(_PTArchive):
         if self.device.is_gpu():
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
-            pt_build = 'cpu'
+            pt_build = "cpu"
             libtorch_archive = f"libtorch-macos-{self.version}.zip"
             root_url = "https://download.pytorch.org/libtorch"
             return f"{root_url}/{pt_build}/{libtorch_archive}"
