@@ -1017,8 +1017,8 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
             if self.device.is_gpu():
                 raise BuildError("RedisAI does not currently support GPU on Macos")
             tf_device = "cpu"
-        else:
-            raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
+        else:  # pragma: no cover
+            _assert_never(self.os_, message="Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
             f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
@@ -1065,8 +1065,9 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
             ort_build = ""
             if self.device.is_gpu():
                 raise BuildError("RedisAI does not currently support GPU on Macos")
-        else:
-            raise BuildError(f"Unexpected OS for TF Archive: {self.os_}")
+        else:  # pragma: no cover
+            msg = "Unexpected OS for ONNX Runtime Archive: {self.os_}"
+            _assert_never(self.os_, message=msg)
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
         return f"{ort_url_base}/{ort_archive}"
 
