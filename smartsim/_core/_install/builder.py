@@ -121,13 +121,14 @@ class Device(enum.Enum):
 
     def torch_suffix(self) -> str:
         cls = type(self)
-        if self == cls.CPU:
-            return "cpu"
-        if self == cls.CUDA118:
-            return "cu118"
-        if self == cls.CUDA121:
-            return "cu121"
-        _assert_never(self)
+        try:
+            return {
+                cls.CPU: "cpu",
+                cls.CUDA118: "cu118",
+                cls.CUDA121: "cu121",
+            }[self]
+        except KeyError:
+            raise BuildError("Unkown Torch Suffix for device {self}") from None
 
 
 class OperatingSystem(enum.Enum):
