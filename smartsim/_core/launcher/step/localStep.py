@@ -28,15 +28,16 @@ import os
 import shutil
 import typing as t
 
+from ....entity import Application, FSNode
 from ....settings import Singularity
 from ....settings.base import RunSettings
 from .step import Step, proxyable_launch_cmd
 
 
 class LocalStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
-        super().__init__(name, cwd, run_settings)
-        self.run_settings = run_settings
+    def __init__(self, entity: t.Union[Application, FSNode], run_settings: RunSettings):
+        super().__init__(entity, run_settings)
+        self.run_settings = entity.run_settings
         self._env = self._set_env()
 
     @property
@@ -54,7 +55,7 @@ class LocalStep(Step):
             run_args = self.run_settings.format_run_args()
             cmd.extend(run_args)
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # Replace the command with the entrypoint wrapper script
             if not (bash := shutil.which("bash")):
                 raise RuntimeError("Unable to locate bash interpreter")
@@ -68,9 +69,9 @@ class LocalStep(Step):
             cmd += container._container_cmds(self.cwd)
 
         # build executable
-        cmd.extend(self.run_settings.exe)
-        if self.run_settings.exe_args:
-            cmd.extend(self.run_settings.exe_args)
+        cmd.extend(self.entity.exe)
+        if self.entity.exe_args:
+            cmd.extend(self.entity.exe_args)
         return cmd
 
     def _set_env(self) -> t.Dict[str, str]:

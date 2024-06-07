@@ -40,8 +40,6 @@ logger = get_logger(__name__)
 class SrunSettings(RunSettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         alloc: t.Optional[str] = None,
@@ -54,15 +52,11 @@ class SrunSettings(RunSettings):
         If an allocation is specified, the instance receiving these run
         parameters will launch on that allocation.
 
-        :param exe: executable to run
-        :param exe_args: executable arguments
         :param run_args: srun arguments without dashes
         :param env_vars: environment variables for job
         :param alloc: allocation ID if running on existing alloc
         """
         super().__init__(
-            exe,
-            exe_args,
             run_command="srun",
             run_args=run_args,
             env_vars=env_vars,
@@ -86,13 +80,13 @@ class SrunSettings(RunSettings):
         """Make a mpmd workload by combining two ``srun`` commands
 
         This connects the two settings to be executed with a single
-        Model instance
+        Application instance
 
         :param settings: SrunSettings instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
-                "Colocated models cannot be run as a mpmd workload"
+                "Colocated applications cannot be run as a mpmd workload"
             )
         if self.container:
             raise SSUnsupportedError(

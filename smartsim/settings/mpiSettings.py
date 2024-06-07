@@ -42,8 +42,6 @@ class _BaseMPISettings(RunSettings):
 
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_command: str = "mpiexec",
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
@@ -60,16 +58,12 @@ class _BaseMPISettings(RunSettings):
         command line arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
-        :param exe: executable
-        :param exe_args: executable arguments
         :param run_args: arguments for run command
         :param env_vars: environment vars to launch job with
         :param fail_if_missing_exec: Throw an exception of the MPI command
                                      is missing. Otherwise, throw a warning
         """
         super().__init__(
-            exe,
-            exe_args,
             run_command=run_command,
             run_args=run_args,
             env_vars=env_vars,
@@ -93,13 +87,13 @@ class _BaseMPISettings(RunSettings):
         """Make a mpmd workload by combining two ``mpirun`` commands
 
         This connects the two settings to be executed with a single
-        Model instance
+        Application instance
 
         :param settings: MpirunSettings instance
         """
-        if self.colocated_db_settings:
+        if self.colocated_fs_settings:
             raise SSUnsupportedError(
-                "Colocated models cannot be run as a mpmd workload"
+                "Colocated applications cannot be run as a mpmd workload"
             )
         self.mpmd.append(settings)
 
@@ -263,8 +257,6 @@ class _BaseMPISettings(RunSettings):
 class MpirunSettings(_BaseMPISettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
@@ -279,19 +271,15 @@ class MpirunSettings(_BaseMPISettings):
         into ``mpirun`` arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
-        :param exe: executable
-        :param exe_args: executable arguments
         :param run_args: arguments for run command
         :param env_vars: environment vars to launch job with
         """
-        super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
+        super().__init__("mpirun", run_args, env_vars, **kwargs)
 
 
 class MpiexecSettings(_BaseMPISettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
@@ -306,12 +294,10 @@ class MpiexecSettings(_BaseMPISettings):
         into ``mpiexec`` arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
-        :param exe: executable
-        :param exe_args: executable arguments
         :param run_args: arguments for run command
         :param env_vars: environment vars to launch job with
         """
-        super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
+        super().__init__("mpiexec", run_args, env_vars, **kwargs)
 
         completed_process = subprocess.run(
             [self._run_command, "--help"], capture_output=True, check=False
@@ -326,8 +312,6 @@ class MpiexecSettings(_BaseMPISettings):
 class OrterunSettings(_BaseMPISettings):
     def __init__(
         self,
-        exe: str,
-        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
@@ -342,9 +326,7 @@ class OrterunSettings(_BaseMPISettings):
         into ``orterun`` arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
-        :param exe: executable
-        :param exe_args: executable arguments
         :param run_args: arguments for run command
         :param env_vars: environment vars to launch job with
         """
-        super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
+        super().__init__("orterun", run_args, env_vars, **kwargs)

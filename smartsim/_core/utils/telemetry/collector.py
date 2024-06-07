@@ -95,8 +95,8 @@ class _DBAddress:
 
     def __init__(self, host: str, port: int) -> None:
         """Initialize the instance
-        :param host: host address for database connections
-        :param port: port number for database connections
+        :param host: host address for feature store connections
+        :param port: port number for feature store connections
         """
         self.host = host.strip() if host else ""
         self.port = port
@@ -115,7 +115,7 @@ class _DBAddress:
 
 
 class DBCollector(Collector):
-    """A base class for collectors that retrieve statistics from an orchestrator"""
+    """A base class for collectors that retrieve statistics from a feature store"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         """Initialize the `DBCollector`
@@ -131,7 +131,7 @@ class DBCollector(Collector):
         )
 
     async def _configure_client(self) -> None:
-        """Configure the client connection to the target database"""
+        """Configure the client connection to the target feature store"""
         try:
             if not self._client:
                 self._client = redisa.Redis(
@@ -146,7 +146,7 @@ class DBCollector(Collector):
                 )
 
     async def prepare(self) -> None:
-        """Initialization logic for the DB collector. Creates a database
+        """Initialization logic for the FS collector. Creates a feature store
         connection then executes the `post_prepare` callback function."""
         if self._client:
             return
@@ -157,7 +157,7 @@ class DBCollector(Collector):
     @abc.abstractmethod
     async def _post_prepare(self) -> None:
         """Hook function to enable subclasses to perform actions
-        after a db client is ready"""
+        after a fss client is ready"""
 
     @abc.abstractmethod
     async def _perform_collection(
@@ -171,7 +171,7 @@ class DBCollector(Collector):
         """
 
     async def collect(self) -> None:
-        """Execute database metric collection if the collector is enabled. Writes
+        """Execute feature store metric collection if the collector is enabled. Writes
         the resulting metrics to the associated output sink. Calling `collect`
         when `self.enabled` is `False` performs no actions."""
         if not self.enabled:
@@ -186,8 +186,8 @@ class DBCollector(Collector):
             return
 
         try:
-            # if we can't communicate w/the db, exit
-            if not await self._check_db():
+            # if we can't communicate w/the fs, exit
+            if not await self._check_fs():
                 return
 
             all_metrics = await self._perform_collection()
@@ -197,7 +197,7 @@ class DBCollector(Collector):
             logger.warning(f"Collect failed for {type(self).__name__}", exc_info=ex)
 
     async def shutdown(self) -> None:
-        """Execute cleanup of database client connections"""
+        """Execute cleanup of feature store client connections"""
         try:
             if self._client:
                 logger.info(
@@ -210,8 +210,8 @@ class DBCollector(Collector):
                 f"An error occurred during {type(self).__name__} shutdown", exc_info=ex
             )
 
-    async def _check_db(self) -> bool:
-        """Check if the target database is reachable.
+    async def _check_fs(self) -> bool:
+        """Check if the target feature store is reachable.
 
         :return: `True` if connection succeeds, `False` otherwise.
         """
@@ -219,7 +219,7 @@ class DBCollector(Collector):
             if self._client:
                 return await self._client.ping()
         except redisex.ConnectionError:
-            logger.warning(f"Cannot ping db {self._address}")
+            logger.warning(f"Cannot ping fs {self._address}")
 
         return False
 
@@ -233,7 +233,7 @@ class DBMemoryCollector(DBCollector):
 
     async def _post_prepare(self) -> None:
         """Write column headers for a CSV formatted output sink after
-        the database connection is established"""
+        the feature store connection is established"""
         await self._sink.save("timestamp", *self._columns)
 
     async def _perform_collection(
@@ -247,11 +247,11 @@ class DBMemoryCollector(DBCollector):
         if self._client is None:
             return []
 
-        db_info = await self._client.info("memory")
+        fs_info = await self._client.info("memory")
 
-        used = float(db_info["used_memory"])
-        peak = float(db_info["used_memory_peak"])
-        total = float(db_info["total_system_memory"])
+        used = float(fs_info["used_memory"])
+        peak = float(fs_info["used_memory_peak"])
+        total = float(fs_info["total_system_memory"])
 
         value = (get_ts_ms(), used, peak, total)
 
@@ -261,7 +261,7 @@ class DBMemoryCollector(DBCollector):
 
 
 class DBConnectionCollector(DBCollector):
-    """A `DBCollector` that collects database client-connection metrics"""
+    """A `DBCollector` that collects feature store client-connection metrics"""
 
     def __init__(self, entity: JobEntity, sink: Sink) -> None:
         super().__init__(entity, sink)
@@ -269,7 +269,7 @@ class DBConnectionCollector(DBCollector):
 
     async def _post_prepare(self) -> None:
         """Write column headers for a CSV formatted output sink after
-        the database connection is established"""
+        the feature store connection is established"""
         await self._sink.save("timestamp", *self._columns)
 
     async def _perform_collection(
@@ -306,7 +306,7 @@ class DBConnectionCountCollector(DBCollector):
 
     async def _post_prepare(self) -> None:
         """Write column headers for a CSV formatted output sink after
-        the database connection is established"""
+        the feature store connection is established"""
         await self._sink.save("timestamp", *self._columns)
 
     async def _perform_collection(
@@ -457,9 +457,9 @@ class CollectorManager:
         """
         collectors: t.List[Collector] = []
 
-        # ONLY db telemetry is implemented at this time. This resolver must
-        # be updated when non-database or always-on collectors are introduced
-        if entity.is_db and entity.telemetry_on:
+        # ONLY fs telemetry is implemented at this time. This resolver must
+        # be updated when non-feature store or always-on collectors are introduced
+        if entity.is_fs and entity.telemetry_on:
             if mem_out := entity.collectors.get("memory", None):
                 collectors.append(DBMemoryCollector(entity, FileSink(mem_out)))
 
@@ -469,7 +469,7 @@ class CollectorManager:
             if num_out := entity.collectors.get("client_count", None):
                 collectors.append(DBConnectionCountCollector(entity, FileSink(num_out)))
         else:
-            logger.debug(f"Collectors disabled for db {entity.name}")
+            logger.debug(f"Collectors disabled for fs {entity.name}")
 
         self.add_all(collectors)
 

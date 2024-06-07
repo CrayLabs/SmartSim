@@ -175,8 +175,9 @@ class QsubBatchSettings(BatchSettings):
         :param value: value
         """
         # TODO add error checking here
-        # TODO include option to overwrite place (warning for orchestrator?)
+        # TODO include option to overwrite place (warning for featurestore?)
         updated_dict = self.resources
+        print(f"name of resource: {resource_name}")
         updated_dict.update({resource_name: value})
         self._sanity_check_resources(updated_dict)
         self.resources = updated_dict
