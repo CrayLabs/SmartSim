@@ -447,8 +447,6 @@ class RedisAIBuilder(Builder):
             verbose=verbose,
         )
 
-        self.rai_install_path: t.Optional[Path] = None
-
         # convert to int for RAI build script
         self._torch = build_torch
         self._tf = build_tf
@@ -568,10 +566,11 @@ class RedisAIBuilder(Builder):
     def symlink_libtf(self, device: Device) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
 
-        :param device: cpu or gpu
+        :param device: device to build for
         """
+        device_str = 'gpu' if device.is_gpu() else 'cpu'
         rai_deps_path = sorted(
-            self.rai_build_path.glob(os.path.join("deps", f"*{device.value}*"))
+            self.rai_build_path.glob(os.path.join("deps", f"*{device_str}*"))
         )
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
@@ -753,11 +752,11 @@ class RedisAIBuilder(Builder):
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
         """
-        self.rai_install_path = self.rai_build_path.joinpath(
-            f"install-{device.value}"
+        rai_install_path = self.rai_build_path.joinpath(
+            f"install-{'gpu' if device.is_gpu() else 'cpu'}"
         ).resolve()
-        rai_lib = self.rai_install_path / "redisai.so"
-        rai_backends = self.rai_install_path / "backends"
+        rai_lib = rai_install_path / "redisai.so"
+        rai_backends = rai_install_path / "backends"
 
         if rai_backends.is_dir():
             self.copy_dir(rai_backends, self.lib_path / "backends", set_exe=True)
@@ -959,7 +958,7 @@ class _PTArchiveMacOSX(_PTArchive):
         if self.device.is_gpu():
             raise BuildError("RedisAI does not currently support GPU on Mac OSX")
         if self.architecture == Architecture.X64:
-            pt_build = Device.CPU.value
+            pt_build = 'cpu'
             libtorch_archive = f"libtorch-macos-{self.version}.zip"
             root_url = "https://download.pytorch.org/libtorch"
             return f"{root_url}/{pt_build}/{libtorch_archive}"

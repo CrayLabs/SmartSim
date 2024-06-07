@@ -40,9 +40,7 @@ pytestmark = pytest.mark.group_a
 
 RAI_VERSIONS = RedisAIVersion("1.2.7")
 
-for_each_device = pytest.mark.parametrize(
-    "device", [device for device in build.Device]
-)
+for_each_device = pytest.mark.parametrize("device", [device for device in build.Device])
 for_each_gpu_device = pytest.mark.parametrize(
     "device", [device for device in build.Device if device.is_gpu()]
 )
