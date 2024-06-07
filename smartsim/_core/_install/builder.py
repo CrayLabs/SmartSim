@@ -130,7 +130,6 @@ class Device(enum.Enum):
         _assert_never(self)
 
 
-
 class OperatingSystem(enum.Enum):
     LINUX = ("linux", "linux2")
     DARWIN = ("darwin",)
@@ -620,6 +619,21 @@ class RedisAIBuilder(Builder):
             if not dst_file.is_file():
                 os.symlink(src_file, dst_file)
 
+    def _patch_source_files(self) -> None:
+        try:
+            _modify_source_files(
+                self.rai_build_path / "CMakeLists.txt",
+                r"CMAKE_MINIMUM_REQUIRED\(VERSION\s([0-2]\.\d+|3\.[0-8])\.\d+\)",
+                "CMAKE_MINIMUM_REQUIRED(VERSION 3.8.0)",
+            )
+            _modify_source_files(
+                self.rai_build_path / "src/backends/libtorch_c/CMakeLists.txt",
+                r"set_property\(TARGET\storch_c\sPROPERTY\sCXX_STANDARD\s(98|11|14)\)",
+                "set_property(TARGET torch_c PROPERTY CXX_STANDARD 17)",
+            )
+        except FileNotFoundError as e:
+            raise BuildError("Could not find the RedisAI source files to patch") from e
+
     def build_from_git(
         self, git_url: str, branch: str, device: Device = Device.CPU
     ) -> None:
@@ -655,6 +669,7 @@ class RedisAIBuilder(Builder):
         )
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
+        self._patch_source_files()
         self._fetch_deps_for(device)
 
         if self.libtf_dir and device.value:
