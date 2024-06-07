@@ -54,3 +54,15 @@ struct TensorDescriptor {
   order @1 :Order;
   dataType @2 :NumericalType;
 }
+
+struct OutputTensorDescriptor {
+  order @0 :Order;
+  optionalDimension :union {
+    dimensions @1 :List(Int32);
+    none @2 :Void;
+  }
+  optionalDatatype :union {
+    dataType @3 :NumericalType;
+    none @4 :Void;
+  }
+}

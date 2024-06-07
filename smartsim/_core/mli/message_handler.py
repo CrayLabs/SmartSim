@@ -64,6 +64,34 @@ class MessageHandler:
         return built_tensor
 
     @staticmethod
+    def build_output_tensor_descriptor(
+        order: "tensor_capnp.Order",
+        data_type: t.Optional["tensor_capnp.NumericalType"],
+        dimensions: t.Optional[t.List[int]],
+    ) -> tensor_capnp.OutputTensorDescriptor:
+        """
+        Builds an OutputTensorDescriptor message using the provided
+        order, data type, and dimensions.
+        """
+        try:
+            description = tensor_capnp.OutputTensorDescriptor.new_message()
+            description.order = order
+            if data_type:
+                description.optionalDatatype.dataType = data_type
+            else:
+                description.optionalDatatype.none = data_type
+
+            if dimensions is not None:
+                description.optionalDimension.dimensions = dimensions
+            else:
+                description.optionalDimension.none = dimensions
+
+        except Exception as e:
+            raise ValueError("Error building output tensor descriptor.") from e
+
+        return description
+
+    @staticmethod
     def build_tensor_key(key: str) -> data_references_capnp.TensorKey:
         """
         Builds a new TensorKey message with the provided key.
@@ -208,27 +236,34 @@ class MessageHandler:
     @staticmethod
     def _assign_outputs(
         request: request_capnp.Request,
-        outputs: t.Union[
-            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
-        ],
+        outputs: t.Optional[t.List[data_references_capnp.TensorKey]],
     ) -> None:
         """
         Assigns outputs to the supplied request.
         """
         try:
-            if outputs:
-                display_name = outputs[0].schema.node.displayName  # type: ignore
-                output_class_name = display_name.split(":")[-1]
-                if output_class_name == "Tensor":
-                    request.output.outputData = outputs  # type: ignore
-                elif output_class_name == "TensorKey":
-                    request.output.outputKeys = outputs  # type: ignore
-                else:
-                    raise ValueError(
-                        "Invalid output class name. Expected 'Tensor' or 'TensorKey'."
-                    )
+            if outputs is not None:
+                request.output.outputKeys = outputs
+            else:
+                request.output.outputData = outputs
+
         except Exception as e:
             raise ValueError("Error building outputs portion of request.") from e
+
+    @staticmethod
+    def _assign_output_options(
+        request: request_capnp.Request,
+        output_options: t.List[tensor_capnp.OutputTensorDescriptor],
+    ) -> None:
+        """
+        Assigns a list of output tensor descriptors to the supplied request.
+        """
+        try:
+            request.outputOptions = output_options
+        except Exception as e:
+            raise ValueError(
+                "Error building the output options portion of request."
+            ) from e
 
     @staticmethod
     def _assign_custom_request_attributes(
@@ -266,13 +301,12 @@ class MessageHandler:
     def build_request(
         reply_channel: t.ByteString,
         model: t.Union[data_references_capnp.ModelKey, t.ByteString],
-        device: t.Union["request_capnp.Device", None],
+        device: t.Optional["request_capnp.Device"],
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
         ],
-        outputs: t.Union[
-            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
-        ],
+        outputs: t.Optional[t.List[data_references_capnp.TensorKey]],
+        output_options: t.List[tensor_capnp.OutputTensorDescriptor],
         custom_attributes: t.Union[
             request_attributes_capnp.TorchRequestAttributes,
             request_attributes_capnp.TensorFlowRequestAttributes,
@@ -288,6 +322,7 @@ class MessageHandler:
         MessageHandler._assign_device(request, device)
         MessageHandler._assign_inputs(request, inputs)
         MessageHandler._assign_outputs(request, outputs)
+        MessageHandler._assign_output_options(request, output_options)
         MessageHandler._assign_custom_request_attributes(request, custom_attributes)
         return request
 
@@ -306,11 +341,12 @@ class MessageHandler:
         bytes_message = request_capnp.Request.from_bytes(request_bytes)
 
         with bytes_message as message:
-            # return a Request dataclass?
             return message
 
     @staticmethod
-    def _assign_status(response: response_capnp.Response, status: int) -> None:
+    def _assign_status(
+        response: response_capnp.Response, status: "response_capnp.StatusEnum"
+    ) -> None:
         """
         Assigns a status to the supplied response.
         """
@@ -320,14 +356,14 @@ class MessageHandler:
             raise ValueError("Error assigning status to response.") from e
 
     @staticmethod
-    def _assign_status_message(response: response_capnp.Response, message: str) -> None:
+    def _assign_message(response: response_capnp.Response, message: str) -> None:
         """
-        Assigns a status message to the supplied response.
+        Assigns a message to the supplied response.
         """
         try:
-            response.statusMessage = message
+            response.message = message
         except Exception as e:
-            raise ValueError("Error assigning status message to response.") from e
+            raise ValueError("Error assigning message to response.") from e
 
     @staticmethod
     def _assign_result(
@@ -386,7 +422,7 @@ class MessageHandler:
 
     @staticmethod
     def build_response(
-        status: int,
+        status: "response_capnp.StatusEnum",
         message: str,
         result: t.Union[
             t.List[tensor_capnp.Tensor], t.List[data_references_capnp.TensorKey]
@@ -402,7 +438,7 @@ class MessageHandler:
         """
         response = response_capnp.Response.new_message()
         MessageHandler._assign_status(response, status)
-        MessageHandler._assign_status_message(response, message)
+        MessageHandler._assign_message(response, message)
         MessageHandler._assign_result(response, result)
         MessageHandler._assign_custom_response_attributes(response, custom_attributes)
         return response
@@ -422,5 +458,4 @@ class MessageHandler:
         bytes_message = response_capnp.Response.from_bytes(response_bytes)
 
         with bytes_message as message:
-            # return a Response dataclass?
             return message

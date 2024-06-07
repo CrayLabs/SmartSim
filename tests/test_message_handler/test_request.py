@@ -36,9 +36,9 @@ pytestmark = pytest.mark.group_a
 handler = MessageHandler()
 
 torch1 = torch.zeros((3, 2, 5), dtype=torch.int8)
-torch2 = torch.ones((1040, 1040, 3), dtype=torch.int64)
+torch2 = torch.ones((10, 10, 3), dtype=torch.int64)
 tflow1 = tf.zeros((3, 2, 5), dtype=tf.int8)
-tflow2 = tf.ones((1040, 1040, 3), dtype=tf.int64)
+tflow2 = tf.ones((10, 10, 3), dtype=tf.int64)
 
 tensor_1 = handler.build_tensor(torch1, "c", "int8", list(torch1.shape))
 tensor_2 = handler.build_tensor(torch2, "c", "int64", list(torch2.shape))
@@ -53,6 +53,10 @@ input_key2 = handler.build_tensor_key("input_key2")
 output_key1 = handler.build_tensor_key("output_key1")
 output_key2 = handler.build_tensor_key("output_key2")
 
+output_descriptor1 = handler.build_output_tensor_descriptor("c", "int64", None)
+output_descriptor2 = handler.build_output_tensor_descriptor("f", None, None)
+output_descriptor3 = handler.build_output_tensor_descriptor("c", None, [1, 2, 3])
+
 torch_attributes = handler.build_torch_request_attributes("sparse")
 tf_attributes = handler.build_tf_request_attributes(name="tf", tensor_type="sparse")
 
@@ -62,6 +66,7 @@ indirect_request = handler.build_request(
     "cpu",
     [input_key1, input_key2],
     [output_key1, output_key2],
+    [output_descriptor1, output_descriptor2, output_descriptor3],
     tf_attributes,
 )
 direct_request = handler.build_request(
@@ -69,13 +74,14 @@ direct_request = handler.build_request(
     b"model",
     "cpu",
     [tensor_1, tensor_2],
-    [tensor_3, tensor_4],
+    None,
+    [output_descriptor1, output_descriptor2],
     torch_attributes,
 )
 
 
 @pytest.mark.parametrize(
-    "reply_channel, model, device, input, output, custom_attributes",
+    "reply_channel, model, device, input, output, output_options, custom_attributes",
     [
         pytest.param(
             b"reply channel",
@@ -83,6 +89,7 @@ direct_request = handler.build_request(
             "cpu",
             [input_key1, input_key2],
             [output_key1, output_key2],
+            [output_descriptor1],
             torch_attributes,
         ),
         pytest.param(
@@ -91,6 +98,7 @@ direct_request = handler.build_request(
             "gpu",
             [input_key1],
             [output_key2],
+            [output_descriptor1],
             torch_attributes,
         ),
         pytest.param(
@@ -99,6 +107,7 @@ direct_request = handler.build_request(
             None,
             [input_key1],
             [output_key2],
+            [output_descriptor1],
             tf_attributes,
         ),
         pytest.param(
@@ -106,16 +115,17 @@ direct_request = handler.build_request(
             model_key,
             "cpu",
             [input_key1],
-            [output_key2],
+            [output_key1],
+            [output_descriptor1],
             None,
         ),
     ],
 )
 def test_build_request_indirect_successful(
-    reply_channel, model, device, input, output, custom_attributes
+    reply_channel, model, device, input, output, output_options, custom_attributes
 ):
     built_request = handler.build_request(
-        reply_channel, model, device, input, output, custom_attributes
+        reply_channel, model, device, input, output, output_options, custom_attributes
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
@@ -131,8 +141,9 @@ def test_build_request_indirect_successful(
     assert built_request.input.inputKeys[0].key == input[0].key
     assert len(built_request.input.inputKeys) == len(input)
     assert built_request.output.which() == "outputKeys"
-    assert len(built_request.output.outputKeys) == len(input)
-    print(built_request.customAttributes.which())
+    assert len(built_request.output.outputKeys) == len(output)
+    for i, j in zip(built_request.outputOptions, output_options):
+        assert i.order == j.order
     if built_request.customAttributes.which() == "tf":
         assert (
             built_request.customAttributes.tf.tensorType == custom_attributes.tensorType
@@ -147,7 +158,7 @@ def test_build_request_indirect_successful(
 
 
 @pytest.mark.parametrize(
-    "reply_channel, model, device, input, output, custom_attributes",
+    "reply_channel, model, device, input, output, output_options, custom_attributes",
     [
         pytest.param(
             [],
@@ -155,6 +166,7 @@ def test_build_request_indirect_successful(
             "cpu",
             [input_key1, input_key2],
             [output_key1, output_key2],
+            [output_descriptor1],
             torch_attributes,
             id="bad channel",
         ),
@@ -164,6 +176,7 @@ def test_build_request_indirect_successful(
             "gpu",
             [input_key1],
             [output_key2],
+            [output_descriptor1],
             torch_attributes,
             id="bad model",
         ),
@@ -173,6 +186,7 @@ def test_build_request_indirect_successful(
             "bad device",
             [input_key1],
             [output_key2],
+            [output_descriptor1],
             torch_attributes,
             id="bad device",
         ),
@@ -182,6 +196,7 @@ def test_build_request_indirect_successful(
             "cpu",
             ["input_key1", "input_key2"],
             [output_key1, output_key2],
+            [output_descriptor1],
             torch_attributes,
             id="bad inputs",
         ),
@@ -191,6 +206,7 @@ def test_build_request_indirect_successful(
             "cpu",
             [model_key],
             [output_key1, output_key2],
+            [output_descriptor1],
             torch_attributes,
             id="bad input schema type",
         ),
@@ -200,6 +216,7 @@ def test_build_request_indirect_successful(
             "cpu",
             [input_key1],
             ["output_key1", "output_key2"],
+            [output_descriptor1],
             torch_attributes,
             id="bad outputs",
         ),
@@ -209,6 +226,7 @@ def test_build_request_indirect_successful(
             "cpu",
             [input_key1],
             [model_key],
+            [output_descriptor1],
             torch_attributes,
             id="bad output schema type",
         ),
@@ -218,6 +236,7 @@ def test_build_request_indirect_successful(
             "cpu",
             [input_key1],
             [output_key1, output_key2],
+            [output_descriptor1],
             "bad attributes",
             id="bad custom attributes",
         ),
@@ -227,29 +246,47 @@ def test_build_request_indirect_successful(
             "cpu",
             [input_key1],
             [output_key1, output_key2],
+            [output_descriptor1],
             model_key,
             id="bad custom attributes schema type",
+        ),
+        pytest.param(
+            b"reply channel",
+            model_key,
+            "cpu",
+            [input_key1],
+            [output_key1, output_key2],
+            "bad options",
+            torch_attributes,
+            id="bad output options",
         ),
     ],
 )
 def test_build_request_indirect_unsuccessful(
-    reply_channel, model, device, input, output, custom_attributes
+    reply_channel, model, device, input, output, output_options, custom_attributes
 ):
     with pytest.raises(ValueError):
         built_request = handler.build_request(
-            reply_channel, model, device, input, output, custom_attributes
+            reply_channel,
+            model,
+            device,
+            input,
+            output,
+            output_options,
+            custom_attributes,
         )
 
 
 @pytest.mark.parametrize(
-    "reply_channel, model, device, input, output, custom_attributes",
+    "reply_channel, model, device, input, output, output_options, custom_attributes",
     [
         pytest.param(
             b"reply channel",
             model_key,
             "cpu",
             [tensor_1, tensor_2],
-            [tensor_3, tensor_4],
+            None,
+            [output_descriptor2],
             torch_attributes,
         ),
         pytest.param(
@@ -257,7 +294,8 @@ def test_build_request_indirect_unsuccessful(
             b"model data",
             "gpu",
             [tensor_1],
-            [tensor_2],
+            None,
+            [output_descriptor3],
             torch_attributes,
         ),
         pytest.param(
@@ -265,7 +303,8 @@ def test_build_request_indirect_unsuccessful(
             b"model data",
             None,
             [tensor_3],
-            [tensor_4],
+            None,
+            [output_descriptor1],
             tf_attributes,
         ),
         pytest.param(
@@ -273,16 +312,17 @@ def test_build_request_indirect_unsuccessful(
             b"model data",
             None,
             [tensor_3],
-            [tensor_4],
+            None,
+            [output_descriptor1],
             None,
         ),
     ],
 )
 def test_build_request_direct_successful(
-    reply_channel, model, device, input, output, custom_attributes
+    reply_channel, model, device, input, output, output_options, custom_attributes
 ):
     built_request = handler.build_request(
-        reply_channel, model, device, input, output, custom_attributes
+        reply_channel, model, device, input, output, output_options, custom_attributes
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
@@ -298,7 +338,9 @@ def test_build_request_direct_successful(
     assert built_request.input.inputData[0].blob == input[0].blob
     assert len(built_request.input.inputData) == len(input)
     assert built_request.output.which() == "outputData"
-    assert len(built_request.output.outputData) == len(input)
+    assert built_request.output.outputData == output
+    for i, j in zip(built_request.outputOptions, output_options):
+        assert i.order == j.order
     if built_request.customAttributes.which() == "tf":
         assert (
             built_request.customAttributes.tf.tensorType == custom_attributes.tensorType
@@ -313,14 +355,15 @@ def test_build_request_direct_successful(
 
 
 @pytest.mark.parametrize(
-    "reply_channel, model, device, input, output, custom_attributes",
+    "reply_channel, model, device, input, output, output_options, custom_attributes",
     [
         pytest.param(
             [],
             model_key,
             "cpu",
             [tensor_1, tensor_2],
-            [tensor_3, tensor_4],
+            None,
+            [output_descriptor2],
             torch_attributes,
             id="bad channel",
         ),
@@ -329,7 +372,8 @@ def test_build_request_direct_successful(
             "bad model",
             "gpu",
             [tensor_1],
-            [tensor_3],
+            None,
+            [output_descriptor2],
             torch_attributes,
             id="bad model",
         ),
@@ -338,7 +382,8 @@ def test_build_request_direct_successful(
             model_key,
             "bad device",
             [tensor_2],
-            [tensor_1],
+            None,
+            [output_descriptor2],
             torch_attributes,
             id="bad device",
         ),
@@ -347,7 +392,8 @@ def test_build_request_direct_successful(
             model_key,
             "cpu",
             ["input_key1", "input_key2"],
-            [tensor_1, tensor_2],
+            None,
+            [output_descriptor2],
             torch_attributes,
             id="bad inputs",
         ),
@@ -355,8 +401,9 @@ def test_build_request_direct_successful(
             b"reply channel",
             model_key,
             "cpu",
-            [tensor_4],
+            None,
             ["output_key1", "output_key2"],
+            [output_descriptor2],
             torch_attributes,
             id="bad outputs",
         ),
@@ -365,18 +412,35 @@ def test_build_request_direct_successful(
             model_key,
             "cpu",
             [tensor_1],
-            [tensor_2, tensor_3],
+            None,
+            [output_descriptor2],
             "bad attributes",
             id="bad custom attributes",
+        ),
+        pytest.param(
+            b"reply_channel",
+            model_key,
+            "cpu",
+            [tensor_1, tensor_2],
+            None,
+            ["output_descriptor2"],
+            torch_attributes,
+            id="bad output options",
         ),
     ],
 )
 def test_build_request_direct_unsuccessful(
-    reply_channel, model, device, input, output, custom_attributes
+    reply_channel, model, device, input, output, output_options, custom_attributes
 ):
     with pytest.raises(ValueError):
         built_request = handler.build_request(
-            reply_channel, model, device, input, output, custom_attributes
+            reply_channel,
+            model,
+            device,
+            input,
+            output,
+            output_options,
+            custom_attributes,
         )
 
 

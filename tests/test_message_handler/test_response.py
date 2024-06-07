@@ -53,13 +53,13 @@ torch_attributes = handler.build_torch_response_attributes()
 tf_attributes = handler.build_tf_response_attributes()
 
 indirect_response = handler.build_response(
-    200,
+    "complete",
     "Success!",
     [result_key1, result_key2],
     tf_attributes,
 )
 direct_response = handler.build_response(
-    200,
+    "complete",
     "Success again!",
     [tensor_1, tensor_2],
     torch_attributes,
@@ -101,7 +101,7 @@ def test_build_response_successful(status, status_message, result, custom_attrib
     )
     assert response is not None
     assert response.status == status
-    assert response.statusMessage == status_message
+    assert response.message == status_message
     if response.result.which() == "keys":
         assert response.result.keys[0].to_dict() == result[0].to_dict()
     else:
@@ -112,42 +112,42 @@ def test_build_response_successful(status, status_message, result, custom_attrib
     "status, status_message, result, custom_attribute",
     [
         pytest.param(
-            "200",
+            "bad status",
             "Yay, it worked!",
             [tensor_3, tensor_4],
             None,
             id="bad status",
         ),
         pytest.param(
-            200,
+            "complete",
             200,
             [tensor_1],
             torch_attributes,
             id="bad status message",
         ),
         pytest.param(
-            200,
+            "complete",
             "Yay, it worked!",
             ["result_key1", "result_key2"],
             tf_attributes,
             id="bad result",
         ),
         pytest.param(
-            200,
+            "complete",
             "Yay, it worked!",
             [tf_attributes],
             tf_attributes,
             id="bad result type",
         ),
         pytest.param(
-            200,
+            "complete",
             "Yay, it worked!",
             [tensor_3, tensor_4],
             "custom attributes",
             id="bad custom attributes",
         ),
         pytest.param(
-            200,
+            "complete",
             "Yay, it worked!",
             [tensor_3, tensor_4],
             tensor_1,

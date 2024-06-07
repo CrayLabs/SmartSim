@@ -16,7 +16,14 @@ from ..data.data_references_capnp import (
     TensorKeyBuilder,
     TensorKeyReader,
 )
-from ..tensor.tensor_capnp import Tensor, TensorBuilder, TensorReader
+from ..tensor.tensor_capnp import (
+    OutputTensorDescriptor,
+    OutputTensorDescriptorBuilder,
+    OutputTensorDescriptorReader,
+    Tensor,
+    TensorBuilder,
+    TensorReader,
+)
 from .request_attributes.request_attributes_capnp import (
     TensorFlowRequestAttributes,
     TensorFlowRequestAttributesBuilder,
@@ -184,7 +191,7 @@ class Request:
 
     class Output:
         outputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        outputData: Sequence[Tensor | TensorBuilder | TensorReader]
+        outputData: None
         def which(self) -> Literal["outputKeys", "outputData"]: ...
         @staticmethod
         @contextmanager
@@ -205,12 +212,10 @@ class Request:
 
     class OutputReader(Request.Output):
         outputKeys: Sequence[TensorKeyReader]
-        outputData: Sequence[TensorReader]
         def as_builder(self) -> Request.OutputBuilder: ...
 
     class OutputBuilder(Request.Output):
         outputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        outputData: Sequence[Tensor | TensorBuilder | TensorReader]
         @staticmethod
         def from_dict(dictionary: dict) -> Request.OutputBuilder: ...
         def copy(self) -> Request.OutputBuilder: ...
@@ -289,6 +294,11 @@ class Request:
     device: Request.Device | Request.DeviceBuilder | Request.DeviceReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
     output: Request.Output | Request.OutputBuilder | Request.OutputReader
+    outputOptions: Sequence[
+        OutputTensorDescriptor
+        | OutputTensorDescriptorBuilder
+        | OutputTensorDescriptorReader
+    ]
     customAttributes: (
         Request.CustomAttributes
         | Request.CustomAttributesBuilder
@@ -329,6 +339,7 @@ class RequestReader(Request):
     device: Request.DeviceReader
     input: Request.InputReader
     output: Request.OutputReader
+    outputOptions: Sequence[OutputTensorDescriptorReader]
     customAttributes: Request.CustomAttributesReader
     def as_builder(self) -> RequestBuilder: ...
 
@@ -338,6 +349,11 @@ class RequestBuilder(Request):
     device: Request.Device | Request.DeviceBuilder | Request.DeviceReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
     output: Request.Output | Request.OutputBuilder | Request.OutputReader
+    outputOptions: Sequence[
+        OutputTensorDescriptor
+        | OutputTensorDescriptorBuilder
+        | OutputTensorDescriptorReader
+    ]
     customAttributes: (
         Request.CustomAttributes
         | Request.CustomAttributesBuilder

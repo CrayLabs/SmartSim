@@ -19,6 +19,8 @@ from .response_attributes.response_attributes_capnp import (
     TorchResponseAttributesReader,
 )
 
+StatusEnum = Literal["complete", "fail", "timeout"]
+
 class Response:
     class Result:
         keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
@@ -122,8 +124,8 @@ class Response:
         def write(file: BufferedWriter) -> None: ...
         @staticmethod
         def write_packed(file: BufferedWriter) -> None: ...
-    status: int
-    statusMessage: str
+    status: StatusEnum
+    message: str
     result: Response.Result | Response.ResultBuilder | Response.ResultReader
     customAttributes: (
         Response.CustomAttributes

@@ -13,3 +13,6 @@ TensorReader = Tensor
 TensorDescriptor = capnp.load(module_file).TensorDescriptor
 TensorDescriptorBuilder = TensorDescriptor
 TensorDescriptorReader = TensorDescriptor
+OutputTensorDescriptor = capnp.load(module_file).OutputTensorDescriptor
+OutputTensorDescriptorBuilder = OutputTensorDescriptor
+OutputTensorDescriptorReader = OutputTensorDescriptor

@@ -1,18 +1,18 @@
 # BSD 2-Clause License
-
+#
 # Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
-
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-
+#
 # 1. Redistributions of source code must retain the above copyright notice, this
 #    list of conditions and the following disclaimer.
-
+#
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
-
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,28 +24,36 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-@0xa05dcb4444780705;
+import pytest
+import tensorflow as tf
+import torch
 
-using Tensors = import "../tensor/tensor.capnp";
-using ResponseAttributes = import "response_attributes/response_attributes.capnp";
-using DataRef = import "../data/data_references.capnp";
+from smartsim._core.mli.message_handler import MessageHandler
 
-enum StatusEnum {
-  complete @0;
-  fail @1;
-  timeout @2;
-}
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
 
-struct Response {
-  status @0 :StatusEnum;
-  message @1 :Text;
-  result :union {
-    keys @2 :List(DataRef.TensorKey);
-    data @3 :List(Tensors.Tensor);
-  }
-  customAttributes :union {
-    torch @4 :ResponseAttributes.TorchResponseAttributes;
-    tf @5 :ResponseAttributes.TensorFlowResponseAttributes;
-    none @6 :Void;
-  }
-}
+handler = MessageHandler()
+
+
+@pytest.mark.parametrize(
+    "order, dtype, dimension",
+    [
+        pytest.param("c", "int8", [1, 2, 3, 4], id="specified dtype and dimension"),
+        pytest.param("c", None, [1, 2, 3, 4], id="specified dimension"),
+        pytest.param("c", "int8", None, id="specified dtype"),
+    ],
+)
+def test_build_output_tensor_descriptor_successful(dtype, order, dimension):
+    built_descriptor = handler.build_output_tensor_descriptor(order, dtype, dimension)
+    assert built_descriptor is not None
+    assert built_descriptor.order == order
+    if built_descriptor.optionalDatatype.which() == "dataType":
+        assert built_descriptor.optionalDatatype.dataType == dtype
+    else:
+        assert built_descriptor.optionalDatatype.none == dtype
+    if built_descriptor.optionalDimension.which() == "dimensions":
+        for i, j in zip(built_descriptor.optionalDimension.dimensions, dimension):
+            assert i == j
+    else:
+        assert built_descriptor.optionalDimension.none == dimension

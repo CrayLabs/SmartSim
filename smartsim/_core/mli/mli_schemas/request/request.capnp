@@ -55,11 +55,12 @@ struct Request {
   }
   output :union {
     outputKeys @7 :List(DataRef.TensorKey);
-    outputData @8 :List(Tensors.Tensor);
+    outputData @8 :Void;
   }
+  outputOptions @9 :List(Tensors.OutputTensorDescriptor);
   customAttributes :union {
-    torch @9 :RequestAttributes.TorchRequestAttributes;
-    tf @10 :RequestAttributes.TensorFlowRequestAttributes;
-    none @11 :Void;
+    torch @10 :RequestAttributes.TorchRequestAttributes;
+    tf @11 :RequestAttributes.TensorFlowRequestAttributes;
+    none @12 :Void;
   }
 }
