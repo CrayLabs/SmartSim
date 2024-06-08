@@ -175,7 +175,7 @@ class RedisAIVersion(Version_):
     defaults = {
         "1.2.7": {
             # TODO: Address before merge to `develop`
-            "tensorflow": "2.13.1",  # FIXME: Backend is currently v2.16.1
+            "tensorflow": "2.13.1",  # FIXME: Backend is currently v2.15.0
             "onnx": "1.14.1",  # TODO: update
             "skl2onnx": "1.16.0",  # TODO: update
             "onnxmltools": "1.12.0",  # TODO: update
