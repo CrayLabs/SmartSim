@@ -40,9 +40,11 @@ pytestmark = pytest.mark.group_a
 
 RAI_VERSIONS = RedisAIVersion("1.2.7")
 
-for_each_device = pytest.mark.parametrize(
-    "device", [build.Device.CPU, build.Device.GPU]
+for_each_device = pytest.mark.parametrize("device", [device for device in build.Device])
+for_each_gpu_device = pytest.mark.parametrize(
+    "device", [device for device in build.Device if device.is_gpu()]
 )
+
 
 _toggle_build_optional_backend = lambda backend: pytest.mark.parametrize(
     f"build_{backend}",
@@ -265,10 +267,11 @@ def test_PTArchiveMacOSX_url():
     assert arm64_prefix in pt_macosx_cpu.url
 
 
-def test_PTArchiveMacOSX_gpu_error():
+@for_each_gpu_device
+def test_PTArchiveMacOSX_gpu_error(device):
     with pytest.raises(build.BuildError, match="support GPU on Mac OSX"):
         build._PTArchiveMacOSX(
-            build.Architecture.ARM64, build.Device.GPU, RAI_VERSIONS.torch, False
+            build.Architecture.ARM64, device, RAI_VERSIONS.torch, False
         ).url
 
 

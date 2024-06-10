@@ -143,7 +143,7 @@ def build_redis_ai(
     torch_with_mkl: bool = True,
 ) -> None:
     # make sure user isn't trying to do something silly on MacOS
-    if build_env.PLATFORM == "darwin" and device == Device.GPU:
+    if build_env.PLATFORM == "darwin" and device.is_gpu():
         raise BuildError("SmartSim does not support GPU on MacOS")
 
     # decide which runtimes to build
@@ -154,7 +154,7 @@ def build_redis_ai(
         ["ONNX", versions.ONNX, color_bool(use_onnx)],
     ]
     print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
-    print(f"Building for GPU support: {color_bool(device == Device.GPU)}\n")
+    print(f"Building for GPU support: {color_bool(device.is_gpu())}\n")
 
     if not check_backends_install():
         sys.exit(1)
@@ -196,7 +196,7 @@ def build_redis_ai(
     else:
         # get the build environment, update with CUDNN env vars
         # if present and building for GPU, otherwise warn the user
-        if device == Device.GPU:
+        if device.is_cuda():
             gpu_env = build_env.get_cudnn_env()
             cudnn_env_vars = [
                 "CUDNN_LIBRARY",
@@ -230,16 +230,11 @@ def build_redis_ai(
 def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> None:
     """Check Python environment for TensorFlow installation"""
     if BuildEnv.is_macos():
-        if device == Device.GPU:
+        if device.is_gpu():
             raise BuildError("SmartSim does not support GPU on MacOS")
         device_suffix = ""
     else:  # linux
-        if device == Device.CPU:
-            device_suffix = versions.TORCH_CPU_SUFFIX
-        elif device == Device.GPU:
-            device_suffix = versions.TORCH_CUDA_SUFFIX
-        else:
-            raise BuildError("Unrecognized device requested")
+        device_suffix = f"+{device.torch_suffix()}"
 
     torch_deps = {
         "torch": Version_(f"{versions.TORCH}{device_suffix}"),
@@ -260,13 +255,10 @@ def check_py_torch_version(versions: Versioner, device: Device = Device.CPU) -> 
             "Torch version not found in python environment. "
             "Attempting to install via `pip`"
         )
-        wheel_device = (
-            device.value if device == Device.CPU else device_suffix.replace("+", "")
-        )
         pip(
             "install",
             "--extra-index-url",
-            f"https://download.pytorch.org/whl/{wheel_device}",
+            f"https://download.pytorch.org/whl/{device.torch_suffix()}",
             *(f"{package}=={version}" for package, version in torch_deps.items()),
         )
     elif missing or conflicts:
@@ -378,7 +370,7 @@ def execute(
 ) -> int:
     verbose = args.v
     keydb = args.keydb
-    device = Device(args.device.lower())
+    device = Device.from_string(args.device.lower())
     is_dragon_requested = args.dragon
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
@@ -474,7 +466,7 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--device",
         type=str.lower,
         default=Device.CPU.value,
-        choices=[device.value for device in Device],
+        choices=[*(device.value for device in Device), "gpu"],
         help="Device to build ML runtimes for",
     )
     parser.add_argument(

@@ -9,6 +9,23 @@ Jump to:
 
 ## SmartSim
 
+###  Cuda 12 support branch
+
+To be merged into `develop` at some future point in time
+
+Description
+
+- Fine grain build support for GPUs
+- Update Torch to 2.1.0, Tensorflow to 2.15.0
+
+Detailed Notes
+
+- SmartSim can now be built using Cuda version 11.8 or Cuda 12.1 by specify
+  `smart build --device=cuda118` or `smart build --device=cuda121`. The
+  original `smart build --device=gpu` will default to using Cuda 11.8.
+- As a result of the previous change, SmartSim now requires C++17 and a
+  minimum Cuda version of 11.8 in order to build Torch 2.1.0.
+
 ### Development branch
 
 To be released at some future point in time

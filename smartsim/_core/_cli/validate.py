@@ -39,7 +39,7 @@ from smartredis import Client
 
 from smartsim import Experiment
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
-from smartsim._core._install.builder import Device
+from smartsim._core.types import Device
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim._core.utils.network import find_free_port
 from smartsim.log import get_logger
