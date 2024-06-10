@@ -178,10 +178,14 @@ def test_all_perm_strategy_contents():
 # fmt: off
 @pytest.mark.parametrize(
     "                  params,      exe_arg_params,   strategy,  max_perms, replicas, expected_num_jobs",  # Test Name          
-    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,     "step",         30,        1,                8  , id="1"),
+    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,     "step",         30,        1,                2  , id="1"),
+     pytest.param(_2x2_PARAMS,                None,     "step",         30,        1,                2  , id="2"),
+     pytest.param(       None,                None,     "step",         30,        1,                1  , id="3"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,     "step",          1,        1,                1  , id="4"),
+     pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,     "step",         30,        2,                4  , id="5"),
 ))
 # fmt: on
-def test_all_perm_strategy(
+def test_plz_work(
     # Parameterized
     params,
     exe_arg_params,
@@ -203,3 +207,31 @@ def test_all_perm_strategy(
         replicas=replicas,
     ).as_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
+
+# fmt: off
+@pytest.mark.parametrize(
+    "                  params,      exe_arg_params,   strategy,  max_perms, replicas, expected_num_jobs",  # Test Name          
+    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG,   "random",         30,        1,                2  , id="1"),
+))
+# fmt: on
+def test_plz_work(
+    # Parameterized
+    params,
+    exe_arg_params,
+    strategy,
+    max_perms,
+    replicas,
+    expected_num_jobs,
+    # Other fixtures
+    mock_launcher_settings,
+):
+    jobs = Ensemble(
+        "test_ensemble",
+        "echo",
+        ("hello", "world"),
+        file_parameters=params,
+        exe_arg_parameters=exe_arg_params,
+        permutation_strategy=strategy,
+        max_permutations=max_perms,
+        replicas=replicas,
+    )._create_applications()

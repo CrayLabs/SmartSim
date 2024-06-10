@@ -112,20 +112,39 @@ def create_all_permutations(
 
 @_register("step")
 def step_values(
-    params: t.Mapping[str, t.Sequence[str]], _n_permutations: int = 0
+    params: t.Mapping[str, t.Sequence[str]],
+    exe_args: t.Mapping[str, t.Sequence[t.Sequence[str]]],
+    _n_permutations: int = 0,
 ) -> list[dict[str, str]]:
-    steps = zip(*params.values())
-    return [dict(zip(params, step)) for step in steps]
+    param_zip = zip(*params.values())
+    param_zip = [dict(zip(params, step)) for step in param_zip][:_n_permutations]
+
+    exe_arg_zip = zip(*exe_args.values())
+    # Generate all possible permutations of executable arguments
+    exe_arg_zip = [dict(zip(exe_args, step)) for step in exe_arg_zip][:_n_permutations]
+    matts_bad_idea = (ParamSet(file_params, exe_args) for (file_params, exe_args) in itertools.zip_longest(param_zip,exe_arg_zip,fillvalue=-1))
+    matt_bad_idea_part_2 = itertools.islice(matts_bad_idea, _n_permutations)
+    return list(matt_bad_idea_part_2)
+    
 
 
 @_register("random")
 def random_permutations(
     params: t.Mapping[str, t.Sequence[str]], n_permutations: int = 0
 ) -> list[dict[str, str]]:
-    permutations = create_all_permutations(params, 0)
+    # Generate all possible permutations of parameter values
+    params_permutations = itertools.product(*params.values())
+    # Create dictionaries for each parameter permutation
+    param_zip = [dict(zip(params, permutation)) for permutation in params_permutations][:_n_permutations]
+    # Generate all possible permutations of executable arguments
+    exe_arg_permutations = itertools.product(*exe_args.values())
+    # Create dictionaries for each executable argument permutation
+    exe_arg_zip = [dict(zip(exe_args, permutation)) for permutation in exe_arg_permutations][:_n_permutations]
+    # Combine parameter and executable argument dictionaries
+    combinations = itertools.product(param_zip,exe_arg_zip)
 
     # sample from available permutations if n_permutations is specified
-    if 0 < n_permutations < len(permutations):
+    if 0 < n_permutations < len(combinations):
         permutations = random.sample(permutations, n_permutations)
 
     return permutations
