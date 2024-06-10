@@ -9,7 +9,7 @@ Jump to:
 
 ## SmartSim
 
-###  Cuda 12 bupport branch
+###  Cuda 12 support branch
 
 To be merged into `develop` at some future point in time
 

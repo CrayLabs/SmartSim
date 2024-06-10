@@ -558,7 +558,15 @@ class RedisAIBuilder(Builder):
             pt_dep = _choose_pt_variant(os_)(arch, device, "2.1.0", self.torch_with_mkl)
             fetchable_deps.append(pt_dep)
         if self.fetch_tf:
-            fetchable_deps.append(_TFArchive(os_, arch, device, "2.15.0"))
+            if device == Device.CUDA118:
+                version = "2.14.0"
+            elif (  # pylint: disable=consider-using-in
+                device == Device.CUDA121 or device == Device.CPU
+            ):
+                version = "2.15.0"
+            else:
+                _assert_never(device)
+            fetchable_deps.append(_TFArchive(os_, arch, device, version))
         if self.fetch_onnx:
             # TODO: before merge to `develop`, bump this to 1.17.x
             fetchable_deps.append(_ORTArchive(os_, device, "1.16.3"))
