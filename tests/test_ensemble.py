@@ -33,6 +33,10 @@ pytestmark = pytest.mark.group_a
 
 _2x2_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
 _2_PERM_STRAT = lambda p, n: [{"SPAM": "a", "EGGS": "b"}, {"SPAM": "c", "EGGS": "d"}]
+_2x2_EXE_ARG = {"EXE": [["a"],
+                        ["b", "c"]],
+                "ARGS": [["d"],
+                        ["e", "f"]]}
 
 
 @pytest.fixture
@@ -127,5 +131,5 @@ def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
 
 def test_plz_work(mock_launcher_settings):
     Ensemble(
-            "test_ensemble", "echo", ("hello",), replicas=4, file_parameters=_2x2_PARAMS, 
+            "test_ensemble", "echo", ("hello",), replicas=4, file_parameters=_2x2_PARAMS, exe_arg_parameters=_2x2_EXE_ARG
         )._create_applications()

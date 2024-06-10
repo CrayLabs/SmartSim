@@ -95,10 +95,13 @@ def create_all_permutations(
     exe_args: t.Mapping[str, t.Sequence[t.Sequence[str]]],
     _n_permutations: int = 0,
 ) -> list[dict[str, str]]:
-    param_set = ParamSet(params,exe_args)
-    print(f"param_set: {param_set}")
+    params_permutations = itertools.product(*params.values())
+    param_zip = [dict(zip(params, permutation)) for permutation in params_permutations]
+    exe_arg_permutations = itertools.product(*exe_args.values())
+    exe_arg_zip = [dict(zip(exe_args, permutation)) for permutation in exe_arg_permutations]
+    param_set = ParamSet(param_zip,exe_arg_zip)
+    
     return
-    permutations = itertools.product(*params.values())
     return [dict(zip(params, permutation)) for permutation in permutations]
 
 
