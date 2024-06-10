@@ -73,7 +73,7 @@ def test_expected_number_of_apps_created(
         "test_ensemble",
         "echo",
         ("hello", "world"),
-        parameters=params,
+        file_parameters=params,
         permutation_strategy=strategy,
         max_permutations=max_perms,
         replicas=replicas,
@@ -113,7 +113,7 @@ def test_strategy_error_raised_if_a_strategy_that_dne_is_requested():
 def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
     apps = list(
         Ensemble(
-            "test_ensemble", "echo", ("hello",), replicas=4, parameters=params
+            "test_ensemble", "echo", ("hello",), replicas=4, file_parameters=params
         )._create_applications()
     )
     assert len(apps) >= 2  # Sanitiy check to make sure the test is valid

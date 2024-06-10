@@ -51,8 +51,9 @@ class Ensemble(entity.CompoundEntity):
         exe: str | os.PathLike[str],
         exe_args: t.Sequence[str] | None = None,
         files: EntityFiles | None = None,
-        parameters: t.Mapping[str, t.Sequence[str]] | None = None,
+        file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.TPermutationStrategy = "all_perm",
+        
         max_permutations: int = 0,
         replicas: int = 1,
     ) -> None:
@@ -60,14 +61,15 @@ class Ensemble(entity.CompoundEntity):
         self.exe = os.fspath(exe)
         self.exe_args = list(exe_args) if exe_args else []
         self.files = copy.deepcopy(files) if files else EntityFiles()
-        self.parameters = dict(parameters) if parameters else {}
+        self.file_parameters = dict(file_parameters) if file_parameters else {}
         self.permutation_strategy = permutation_strategy
         self.max_permutations = max_permutations
         self.replicas = replicas
 
     def _create_applications(self) -> tuple[Application, ...]:
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        permutations = permutation_strategy(self.parameters, self.max_permutations)
+        
+        combinations = permutation_strategy(self.file_parameters, self.self.max_permutations)
         permutations = permutations if permutations else [{}]
         permutations_ = itertools.chain.from_iterable(
             itertools.repeat(permutation, self.replicas) for permutation in permutations
