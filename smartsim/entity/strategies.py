@@ -27,6 +27,7 @@
 # Generation Strategies
 
 from __future__ import annotations
+from .param_data_class import ParamSet
 
 import functools
 import itertools
@@ -91,11 +92,12 @@ def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy
 @_register("all_perm")
 def create_all_permutations(
     params: t.Mapping[str, t.Sequence[str]],
+    exe_args: t.Mapping[str, t.Sequence[t.Sequence[str]]],
     _n_permutations: int = 0,
-    # ^^^^^^^^^^^^^
-    # TODO: Really don't like that this attr is ignored, but going to leave it
-    #       as the original impl for now. Will change if requested!
 ) -> list[dict[str, str]]:
+    param_set = ParamSet(params,exe_args)
+    print(f"param_set: {param_set}")
+    return
     permutations = itertools.product(*params.values())
     return [dict(zip(params, permutation)) for permutation in permutations]
 

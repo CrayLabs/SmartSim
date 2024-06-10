@@ -124,3 +124,8 @@ def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
         for app_2 in apps
         if app_1 is not app_2
     )
+
+def test_plz_work(mock_launcher_settings):
+    Ensemble(
+            "test_ensemble", "echo", ("hello",), replicas=4, file_parameters=_2x2_PARAMS, 
+        )._create_applications()

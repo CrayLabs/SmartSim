@@ -179,6 +179,7 @@ deps = [
     "pydantic==1.10.14",
     "pyzmq>=25.1.2",
     "pygithub>=2.3.0",
+    "dataclasses>=0.6"
 ]
 
 # Add SmartRedis at specific version

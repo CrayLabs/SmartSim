@@ -53,7 +53,7 @@ class Ensemble(entity.CompoundEntity):
         files: EntityFiles | None = None,
         file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.TPermutationStrategy = "all_perm",
-        
+        exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
         max_permutations: int = 0,
         replicas: int = 1,
     ) -> None:
@@ -63,30 +63,32 @@ class Ensemble(entity.CompoundEntity):
         self.files = copy.deepcopy(files) if files else EntityFiles()
         self.file_parameters = dict(file_parameters) if file_parameters else {}
         self.permutation_strategy = permutation_strategy
+        self.exe_arg_parameters = copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         self.max_permutations = max_permutations
         self.replicas = replicas
 
     def _create_applications(self) -> tuple[Application, ...]:
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        
-        combinations = permutation_strategy(self.file_parameters, self.self.max_permutations)
-        permutations = permutations if permutations else [{}]
-        permutations_ = itertools.chain.from_iterable(
-            itertools.repeat(permutation, self.replicas) for permutation in permutations
-        )
-        return tuple(
-            Application(
-                name=f"{self.name}-{i}",
-                exe=self.exe,
-                run_settings=_mock.Mock(),  # type: ignore[arg-type]
-                # ^^^^^^^^^^^^^^^^^^^
-                # FIXME: remove this constructor arg! It should not exist!!
-                exe_args=self.exe_args,
-                files=self.files,
-                params=permutation,
-            )
-            for i, permutation in enumerate(permutations_)
-        )
+        # below: send in all informations to retrieve
+        combinations = permutation_strategy(self.file_parameters, self.exe_arg_parameters, self.max_permutations)
+        return
+        # permutations = permutations if permutations else [{}]
+        # permutations_ = itertools.chain.from_iterable(
+        #     itertools.repeat(permutation, self.replicas) for permutation in permutations
+        # )
+        # return tuple(
+        #     Application(
+        #         name=f"{self.name}-{i}",
+        #         exe=self.exe,
+        #         run_settings=_mock.Mock(),  # type: ignore[arg-type]
+        #         # ^^^^^^^^^^^^^^^^^^^
+        #         # FIXME: remove this constructor arg! It should not exist!!
+        #         exe_args=self.exe_args,
+        #         files=self.files,
+        #         params=permutation,
+        #     )
+        #     for i, permutation in enumerate(permutations_)
+        # )
 
     def as_jobs(self, settings: _mock.LaunchSettings) -> tuple[_mock.Job, ...]:
         apps = self._create_applications()
