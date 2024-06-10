@@ -25,8 +25,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-import tensorflow as tf
-import torch
+
+try:
+    import tensorflow as tf
+except ImportError:
+    should_run_tf = False
+else:
+    should_run_tf = True
+
+
+try:
+    import torch
+except ImportError:
+    should_run_torch = False
+else:
+    should_run_torch = True
 
 from smartsim._core.mli.message_handler import MessageHandler
 
@@ -35,24 +48,28 @@ pytestmark = pytest.mark.group_a
 
 handler = MessageHandler()
 
-torch1 = torch.zeros((3, 2, 5), dtype=torch.int8)
-torch2 = torch.ones((1040, 1040, 3), dtype=torch.int64)
-tflow1 = tf.zeros((3, 2, 5), dtype=tf.int8)
-tflow2 = tf.ones((1040, 1040, 3), dtype=tf.int64)
 
-
+@pytest.mark.skipif(not should_run_torch, reason="Test needs Torch to run")
 @pytest.mark.parametrize(
     "tensor, dtype, order, dimension",
     [
-        pytest.param(torch1, "int8", "c", list(torch1.shape), id="small torch tensor"),
         pytest.param(
-            torch2, "int64", "c", list(torch2.shape), id="medium torch tensor"
+            torch.zeros((3, 2, 5), dtype=torch.int8),
+            "int8",
+            "c",
+            [3, 2, 5],
+            id="small torch tensor",
         ),
-        pytest.param(tflow1, "int8", "c", list(tflow1.shape), id="small tf tensor"),
-        pytest.param(tflow2, "int64", "c", list(tflow2.shape), id="medium tf tensor"),
+        pytest.param(
+            torch.ones((1040, 1040, 3), dtype=torch.int64),
+            "int64",
+            "c",
+            [1040, 1040, 3],
+            id="medium torch tensor",
+        ),
     ],
 )
-def test_build_tensor_successful(tensor, dtype, order, dimension):
+def test_build_torch_tensor_successful(tensor, dtype, order, dimension):
     built_tensor = handler.build_tensor(tensor, order, dtype, dimension)
     assert built_tensor is not None
     assert type(built_tensor.blob) == bytes
@@ -62,19 +79,97 @@ def test_build_tensor_successful(tensor, dtype, order, dimension):
         assert i == j
 
 
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+@pytest.mark.parametrize(
+    "tensor, dtype, order, dimension",
+    [
+        pytest.param(
+            tf.zeros((3, 2, 5), dtype=tf.int8),
+            "int8",
+            "c",
+            [3, 2, 5],
+            id="small tf tensor",
+        ),
+        pytest.param(
+            tf.ones((1040, 1040, 3), dtype=tf.int64),
+            "int64",
+            "c",
+            [1040, 1040, 3],
+            id="medium tf tensor",
+        ),
+    ],
+)
+def test_build_tf_tensor_successful(tensor, dtype, order, dimension):
+    built_tensor = handler.build_tensor(tensor, order, dtype, dimension)
+    assert built_tensor is not None
+    assert type(built_tensor.blob) == bytes
+    assert built_tensor.tensorDescriptor.order == order
+    assert built_tensor.tensorDescriptor.dataType == dtype
+    for i, j in zip(built_tensor.tensorDescriptor.dimensions, dimension):
+        assert i == j
+
+
+@pytest.mark.skipif(not should_run_torch, reason="Test needs Torch to run")
 @pytest.mark.parametrize(
     "tensor, dtype, order, dimension",
     [
         pytest.param([1, 2, 4], "c", "int8", [1, 2, 3], id="bad tensor type"),
         pytest.param(
-            torch1, "bad_order", "int8", list(torch1.shape), id="bad order type"
+            torch.zeros((3, 2, 5), dtype=torch.int8),
+            "bad_order",
+            "int8",
+            [3, 2, 5],
+            id="bad order type",
         ),
         pytest.param(
-            torch1, "f", "bad_num_type", list(torch1.shape), id="bad numerical type"
+            torch.zeros((3, 2, 5), dtype=torch.int8),
+            "f",
+            "bad_num_type",
+            [3, 2, 5],
+            id="bad numerical type",
         ),
-        pytest.param(torch1, "f", "int8", "bad shape type", id="bad shape type"),
+        pytest.param(
+            torch.zeros((3, 2, 5), dtype=torch.int8),
+            "f",
+            "int8",
+            "bad shape type",
+            id="bad shape type",
+        ),
     ],
 )
-def test_build_tensor_bad_input(tensor, dtype, order, dimension):
+def test_build_torch_tensor_bad_input(tensor, dtype, order, dimension):
+    with pytest.raises(ValueError):
+        built_tensor = handler.build_tensor(tensor, order, dtype, dimension)
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+@pytest.mark.parametrize(
+    "tensor, dtype, order, dimension",
+    [
+        pytest.param([1, 2, 4], "c", "int8", [1, 2, 3], id="bad tensor type"),
+        pytest.param(
+            tf.zeros((3, 2, 5), dtype=tf.int8),
+            "bad_order",
+            "int8",
+            [3, 2, 5],
+            id="bad order type",
+        ),
+        pytest.param(
+            tf.zeros((3, 2, 5), dtype=tf.int8),
+            "f",
+            "bad_num_type",
+            [3, 2, 5],
+            id="bad numerical type",
+        ),
+        pytest.param(
+            tf.zeros((3, 2, 5), dtype=tf.int8),
+            "f",
+            "int8",
+            "bad shape type",
+            id="bad shape type",
+        ),
+    ],
+)
+def test_build_tf_tensor_bad_input(tensor, dtype, order, dimension):
     with pytest.raises(ValueError):
         built_tensor = handler.build_tensor(tensor, order, dtype, dimension)

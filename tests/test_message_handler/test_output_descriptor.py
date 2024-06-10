@@ -57,3 +57,21 @@ def test_build_output_tensor_descriptor_successful(dtype, keys, order, dimension
     assert built_descriptor.optionalDatatype == dtype
     for i, j in zip(built_descriptor.optionalDimension, dimension):
         assert i == j
+
+
+@pytest.mark.parametrize(
+    "order, keys, dtype, dimension",
+    [
+        pytest.param("bad_order", [], "int8", [3, 2, 5], id="bad order type"),
+        pytest.param(
+            "f", [tensor_key], "bad_num_type", [3, 2, 5], id="bad numerical type"
+        ),
+        pytest.param("f", [tensor_key], "int8", "bad shape type", id="bad shape type"),
+        pytest.param("f", ["tensor_key"], "int8", [3, 2, 5], id="bad key type"),
+    ],
+)
+def test_build_output_tensor_descriptor_unsuccessful(order, keys, dtype, dimension):
+    with pytest.raises(ValueError):
+        built_tensor = handler.build_output_tensor_descriptor(
+            order, keys, dtype, dimension
+        )
