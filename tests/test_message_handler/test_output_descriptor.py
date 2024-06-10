@@ -25,8 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-import tensorflow as tf
-import torch
 
 from smartsim._core.mli.message_handler import MessageHandler
 
@@ -35,25 +33,22 @@ pytestmark = pytest.mark.group_a
 
 handler = MessageHandler()
 
+tensor_key = handler.build_tensor_key("key")
 
 @pytest.mark.parametrize(
-    "order, dtype, dimension",
+    "order, keys, dtype, dimension",
     [
-        pytest.param("c", "int8", [1, 2, 3, 4], id="specified dtype and dimension"),
-        pytest.param("c", None, [1, 2, 3, 4], id="specified dimension"),
-        pytest.param("c", "int8", None, id="specified dtype"),
+        pytest.param("c", [tensor_key], "int8", [1, 2, 3, 4], id="all specified"),
+        pytest.param("c", [tensor_key, tensor_key], "none", [1, 2, 3, 4], id="none dtype"),
+        pytest.param("c", [tensor_key], "int8", [], id="empty dimensions"),
+        pytest.param("c", [], "int8", [1,2,3,4], id="empty keys"),
     ],
 )
-def test_build_output_tensor_descriptor_successful(dtype, order, dimension):
-    built_descriptor = handler.build_output_tensor_descriptor(order, dtype, dimension)
+def test_build_output_tensor_descriptor_successful(dtype, keys, order, dimension):
+    built_descriptor = handler.build_output_tensor_descriptor(order, keys, dtype, dimension)
     assert built_descriptor is not None
     assert built_descriptor.order == order
-    if built_descriptor.optionalDatatype.which() == "dataType":
-        assert built_descriptor.optionalDatatype.dataType == dtype
-    else:
-        assert built_descriptor.optionalDatatype.none == dtype
-    if built_descriptor.optionalDimension.which() == "dimensions":
-        for i, j in zip(built_descriptor.optionalDimension.dimensions, dimension):
-            assert i == j
-    else:
-        assert built_descriptor.optionalDimension.none == dimension
+    assert len(built_descriptor.optionalKeys) == len(keys)
+    assert built_descriptor.optionalDatatype == dtype
+    for i, j in zip(built_descriptor.optionalDimension, dimension):
+        assert i == j

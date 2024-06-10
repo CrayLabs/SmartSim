@@ -26,6 +26,8 @@
 
 @0x9a0aeb2e04838fb1;
 
+using DataRef = import "../data/data_references.capnp";
+
 enum Order {
   c @0; # row major (contiguous layout)
   f @1; # column major (fortran contiguous layout)
@@ -44,6 +46,21 @@ enum NumericalType {
   float64 @9;
 }
 
+enum ReturnNumericalType {
+  int8 @0;
+  int16 @1;
+  int32 @2;
+  int64 @3;
+  uInt8 @4;
+  uInt16 @5;
+  uInt32 @6;
+  uInt64 @7;
+  float32 @8; 
+  float64 @9;
+  none @10;
+  auto @ 11;
+}
+
 struct Tensor {
   blob @0 :Data;
   tensorDescriptor @1 :TensorDescriptor;
@@ -55,14 +72,9 @@ struct TensorDescriptor {
   dataType @2 :NumericalType;
 }
 
-struct OutputTensorDescriptor {
+struct OutputDescriptor {
   order @0 :Order;
-  optionalDimension :union {
-    dimensions @1 :List(Int32);
-    none @2 :Void;
-  }
-  optionalDatatype :union {
-    dataType @3 :NumericalType;
-    none @4 :Void;
-  }
+  optionalKeys @1 :List(DataRef.TensorKey);
+  optionalDimension @2 :List(Int32);
+  optionalDatatype @3 :ReturnNumericalType;
 }

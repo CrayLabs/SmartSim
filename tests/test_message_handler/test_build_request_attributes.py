@@ -25,8 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-import tensorflow as tf
-import torch
 
 from smartsim._core.mli.message_handler import MessageHandler
 

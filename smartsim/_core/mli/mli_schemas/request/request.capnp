@@ -33,6 +33,7 @@ using DataRef = import "../data/data_references.capnp";
 enum Device {
   cpu @0;
   gpu @1;
+  auto @2;
 }
 
 struct ChannelDescriptor {
@@ -45,22 +46,16 @@ struct Request {
     modelKey @1 :DataRef.ModelKey;
     modelData @2 :Data;
   }
-  device :union {
-    deviceType @3 :Device;
-    noDevice @4 :Void;
-  }
+  device @3 :Device;
   input :union {
-    inputKeys @5 :List(DataRef.TensorKey);
-    inputData @6 :List(Tensors.Tensor);
+    inputKeys @4 :List(DataRef.TensorKey);
+    inputData @5 :List(Tensors.Tensor);
   }
-  output :union {
-    outputKeys @7 :List(DataRef.TensorKey);
-    outputData @8 :Void;
-  }
-  outputOptions @9 :List(Tensors.OutputTensorDescriptor);
+  output @6 :List(DataRef.TensorKey);
+  outputDescriptors @7 :List(Tensors.OutputDescriptor);
   customAttributes :union {
-    torch @10 :RequestAttributes.TorchRequestAttributes;
-    tf @11 :RequestAttributes.TensorFlowRequestAttributes;
-    none @12 :Void;
+    torch @8 :RequestAttributes.TorchRequestAttributes;
+    tf @9 :RequestAttributes.TensorFlowRequestAttributes;
+    none @10 :Void;
   }
 }

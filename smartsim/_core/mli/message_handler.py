@@ -47,6 +47,12 @@ class MessageHandler:
         """
         Builds a Tensor message using the provided data,
         order, data type, and dimensions.
+
+        :param tensor: Tensor to build the message around
+        :param order: Order of the tensor, such as row-major (c) or column-major (f)
+        :param data_type: Data type of the tensor
+        :param dimensions: Dimensions of the tensor
+        :raises ValueError: if building fails
         """
         try:
             description = tensor_capnp.TensorDescriptor.new_message()
@@ -66,25 +72,26 @@ class MessageHandler:
     @staticmethod
     def build_output_tensor_descriptor(
         order: "tensor_capnp.Order",
-        data_type: t.Optional["tensor_capnp.NumericalType"],
-        dimensions: t.Optional[t.List[int]],
-    ) -> tensor_capnp.OutputTensorDescriptor:
+        keys: t.List["data_references_capnp.TensorKey"],
+        data_type: "tensor_capnp.ReturnNumericalType",
+        dimensions: t.List[int],
+    ) -> tensor_capnp.OutputDescriptor:
         """
-        Builds an OutputTensorDescriptor message using the provided
+        Builds an OutputDescriptor message using the provided
         order, data type, and dimensions.
+
+        :param order: Order of the tensor, such as row-major (c) or column-major (f)
+        :param keys: List of TensorKeys to apply transorm descriptor to 
+        :param data_type: Tranform data type of the tensor
+        :param dimensions: Transform dimensions of the tensor
+        :raises ValueError: if building fails
         """
         try:
-            description = tensor_capnp.OutputTensorDescriptor.new_message()
+            description = tensor_capnp.OutputDescriptor.new_message()
             description.order = order
-            if data_type:
-                description.optionalDatatype.dataType = data_type
-            else:
-                description.optionalDatatype.none = data_type
-
-            if dimensions is not None:
-                description.optionalDimension.dimensions = dimensions
-            else:
-                description.optionalDimension.none = dimensions
+            description.optionalKeys = keys
+            description.optionalDatatype = data_type
+            description.optionalDimension = dimensions
 
         except Exception as e:
             raise ValueError("Error building output tensor descriptor.") from e
@@ -95,6 +102,9 @@ class MessageHandler:
     def build_tensor_key(key: str) -> data_references_capnp.TensorKey:
         """
         Builds a new TensorKey message with the provided key.
+
+        :param key: String to set the TensorKey
+        :raises ValueError: if building fails
         """
         try:
             tensor_key = data_references_capnp.TensorKey.new_message()
@@ -107,6 +117,9 @@ class MessageHandler:
     def build_model_key(key: str) -> data_references_capnp.ModelKey:
         """
         Builds a new ModelKey message with the provided key.
+
+        :param key: String to set the ModelKey
+        :raises ValueError: if building fails
         """
         try:
             model_key = data_references_capnp.ModelKey.new_message()
@@ -121,12 +134,15 @@ class MessageHandler:
     ) -> request_attributes_capnp.TorchRequestAttributes:
         """
         Builds a new TorchRequestAttributes message with the provided tensor type.
+
+        :param tensor_type: Type of the tensor passed in
+        :raises ValueError: if building fails
         """
         try:
             attributes = request_attributes_capnp.TorchRequestAttributes.new_message()
             attributes.tensorType = tensor_type
         except Exception as e:
-            raise ValueError("Error building torch request attributes.") from e
+            raise ValueError("Error building Torch request attributes.") from e
         return attributes
 
     @staticmethod
@@ -136,6 +152,10 @@ class MessageHandler:
         """
         Builds a new TensorFlowRequestAttributes message with
         the provided name and tensor type.
+
+        :param name: Name of the tensor
+        :param tensor_type: Type of the tensor passed in
+        :raises ValueError: if building fails
         """
         try:
             attributes = (
@@ -144,7 +164,7 @@ class MessageHandler:
             attributes.name = name
             attributes.tensorType = tensor_type
         except Exception as e:
-            raise ValueError("Error building tf request attributes.") from e
+            raise ValueError("Error building TensorFlow request attributes.") from e
         return attributes
 
     @staticmethod
@@ -172,6 +192,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns a model to the supplied request.
+
+        :param request: Request being built
+        :param model: Model to be assigned
+        :raises ValueError: if building fails
         """
         try:
             if isinstance(model, bytes):
@@ -187,6 +211,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns a reply channel to the supplied request.
+
+        :param request: Request being built
+        :param reply_channel: Reply channel to be assigned
+        :raises ValueError: if building fails
         """
         try:
             request.replyChannel.reply = reply_channel
@@ -195,16 +223,17 @@ class MessageHandler:
 
     @staticmethod
     def _assign_device(
-        request: request_capnp.Request, device: t.Union["request_capnp.Device", None]
+        request: request_capnp.Request, device: "request_capnp.Device"
     ) -> None:
         """
         Assigns a device to the supplied request.
+
+        :param request: Request being built
+        :param device: Device to be assigned
+        :raises ValueError: if building fails
         """
         try:
-            if device is None:
-                request.device.noDevice = device
-            else:
-                request.device.deviceType = device
+            request.device = device
         except Exception as e:
             raise ValueError("Error building device portion of request.") from e
 
@@ -217,6 +246,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns inputs to the supplied request.
+
+        :param request: Request being built
+        :param inputs: Inputs to be assigned
+        :raises ValueError: if building fails
         """
         try:
             if inputs:
@@ -236,16 +269,17 @@ class MessageHandler:
     @staticmethod
     def _assign_outputs(
         request: request_capnp.Request,
-        outputs: t.Optional[t.List[data_references_capnp.TensorKey]],
+        outputs: t.List[data_references_capnp.TensorKey],
     ) -> None:
         """
         Assigns outputs to the supplied request.
+
+        :param request: Request being built
+        :param outputs: Outputs to be assigned
+        :raises ValueError: if building fails
         """
         try:
-            if outputs is not None:
-                request.output.outputKeys = outputs
-            else:
-                request.output.outputData = outputs
+            request.output = outputs
 
         except Exception as e:
             raise ValueError("Error building outputs portion of request.") from e
@@ -253,16 +287,20 @@ class MessageHandler:
     @staticmethod
     def _assign_output_options(
         request: request_capnp.Request,
-        output_options: t.List[tensor_capnp.OutputTensorDescriptor],
+        output_options: t.List[tensor_capnp.OutputDescriptor],
     ) -> None:
         """
         Assigns a list of output tensor descriptors to the supplied request.
+
+        :param request: Request being built
+        :param output_descriptors: Output descriptors to be assigned
+        :raises ValueError: if building fails
         """
         try:
-            request.outputOptions = output_options
+            request.outputDescriptors = output_options
         except Exception as e:
             raise ValueError(
-                "Error building the output options portion of request."
+                "Error building the output descriptors portion of request."
             ) from e
 
     @staticmethod
@@ -276,6 +314,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns request attributes to the supplied request.
+
+        :param request: Request being built
+        :param custom_attrs: Custom attributes to be assigned
+        :raises ValueError: if building fails
         """
         try:
             if custom_attrs is None:
@@ -301,12 +343,12 @@ class MessageHandler:
     def build_request(
         reply_channel: t.ByteString,
         model: t.Union[data_references_capnp.ModelKey, t.ByteString],
-        device: t.Optional["request_capnp.Device"],
+        device: "request_capnp.Device",
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
         ],
-        outputs: t.Optional[t.List[data_references_capnp.TensorKey]],
-        output_options: t.List[tensor_capnp.OutputTensorDescriptor],
+        outputs: t.List[data_references_capnp.TensorKey],
+        output_descriptors: t.List[tensor_capnp.OutputDescriptor],
         custom_attributes: t.Union[
             request_attributes_capnp.TorchRequestAttributes,
             request_attributes_capnp.TensorFlowRequestAttributes,
@@ -315,6 +357,14 @@ class MessageHandler:
     ) -> request_capnp.Request:
         """
         Builds the request message.
+
+        :param reply_channel: Reply channel to be assigned to request
+        :param model: Model to be assigned to request
+        :param device: Device to be assigned to request
+        :param inputs: Inputs to be assigned to request
+        :param outputs: Outputs to be assigned to request
+        :param output_descriptors: Output descriptors to be assigned to request
+        :param custom_attributes: Custom attributes to be assigned to request
         """
         request = request_capnp.Request.new_message()
         MessageHandler._assign_reply_channel(request, reply_channel)
@@ -322,7 +372,7 @@ class MessageHandler:
         MessageHandler._assign_device(request, device)
         MessageHandler._assign_inputs(request, inputs)
         MessageHandler._assign_outputs(request, outputs)
-        MessageHandler._assign_output_options(request, output_options)
+        MessageHandler._assign_output_options(request, output_descriptors)
         MessageHandler._assign_custom_request_attributes(request, custom_attributes)
         return request
 
@@ -330,6 +380,8 @@ class MessageHandler:
     def serialize_request(request: request_capnp.RequestBuilder) -> t.ByteString:
         """
         Serializes a built request message.
+
+        :param request: Request to be serialized
         """
         return request.to_bytes()
 
@@ -337,6 +389,8 @@ class MessageHandler:
     def deserialize_request(request_bytes: t.ByteString) -> request_capnp.Request:
         """
         Deserializes a serialized request message.
+
+        :param request_bytes: Bytes to be deserialized into a Request
         """
         bytes_message = request_capnp.Request.from_bytes(request_bytes)
 
@@ -349,6 +403,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns a status to the supplied response.
+
+        :param response: Response being built
+        :param status: Status to be assigned
+        :raises ValueError: if building fails
         """
         try:
             response.status = status
@@ -359,6 +417,10 @@ class MessageHandler:
     def _assign_message(response: response_capnp.Response, message: str) -> None:
         """
         Assigns a message to the supplied response.
+
+        :param response: Response being built
+        :param message: Message to be assigned
+        :raises ValueError: if building fails
         """
         try:
             response.message = message
@@ -374,6 +436,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns a result to the supplied response.
+
+        :param response: Response being built
+        :param result: Result to be assigned
+        :raises ValueError: if building fails
         """
         try:
             if result:
@@ -401,6 +467,10 @@ class MessageHandler:
     ) -> None:
         """
         Assigns custom attributes to the supplied response.
+
+        :param response: Response being built
+        :param custom_attrs: Custom attributes to be assigned
+        :raises ValueError: if building fails
         """
         try:
             if custom_attrs is None:
@@ -435,6 +505,11 @@ class MessageHandler:
     ) -> response_capnp.Response:
         """
         Builds the response message.
+
+        :param status: Status to be assigned to response
+        :param message: Message to be assigned to response
+        :param result: Result to be assigned to response
+        :param custom_attributes: Custom attributes to be assigned to response
         """
         response = response_capnp.Response.new_message()
         MessageHandler._assign_status(response, status)

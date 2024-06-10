@@ -17,9 +17,9 @@ from ..data.data_references_capnp import (
     TensorKeyReader,
 )
 from ..tensor.tensor_capnp import (
-    OutputTensorDescriptor,
-    OutputTensorDescriptorBuilder,
-    OutputTensorDescriptorReader,
+    OutputDescriptor,
+    OutputDescriptorBuilder,
+    OutputDescriptorReader,
     Tensor,
     TensorBuilder,
     TensorReader,
@@ -33,7 +33,7 @@ from .request_attributes.request_attributes_capnp import (
     TorchRequestAttributesReader,
 )
 
-Device = Literal["cpu", "gpu"]
+Device = Literal["cpu", "gpu", "auto"]
 
 class ChannelDescriptor:
     reply: bytes
@@ -111,43 +111,6 @@ class Request:
         @staticmethod
         def write_packed(file: BufferedWriter) -> None: ...
 
-    class Device:
-        deviceType: Device
-        noDevice: None
-        def which(self) -> Literal["deviceType", "noDevice"]: ...
-        @staticmethod
-        @contextmanager
-        def from_bytes(
-            data: bytes,
-            traversal_limit_in_words: int | None = ...,
-            nesting_limit: int | None = ...,
-        ) -> Iterator[Request.DeviceReader]: ...
-        @staticmethod
-        def from_bytes_packed(
-            data: bytes,
-            traversal_limit_in_words: int | None = ...,
-            nesting_limit: int | None = ...,
-        ) -> Request.DeviceReader: ...
-        @staticmethod
-        def new_message() -> Request.DeviceBuilder: ...
-        def to_dict(self) -> dict: ...
-
-    class DeviceReader(Request.Device):
-        def as_builder(self) -> Request.DeviceBuilder: ...
-
-    class DeviceBuilder(Request.Device):
-        @staticmethod
-        def from_dict(dictionary: dict) -> Request.DeviceBuilder: ...
-        def copy(self) -> Request.DeviceBuilder: ...
-        def to_bytes(self) -> bytes: ...
-        def to_bytes_packed(self) -> bytes: ...
-        def to_segments(self) -> list[bytes]: ...
-        def as_reader(self) -> Request.DeviceReader: ...
-        @staticmethod
-        def write(file: BufferedWriter) -> None: ...
-        @staticmethod
-        def write_packed(file: BufferedWriter) -> None: ...
-
     class Input:
         inputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
         inputData: Sequence[Tensor | TensorBuilder | TensorReader]
@@ -184,45 +147,6 @@ class Request:
         def to_bytes_packed(self) -> bytes: ...
         def to_segments(self) -> list[bytes]: ...
         def as_reader(self) -> Request.InputReader: ...
-        @staticmethod
-        def write(file: BufferedWriter) -> None: ...
-        @staticmethod
-        def write_packed(file: BufferedWriter) -> None: ...
-
-    class Output:
-        outputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        outputData: None
-        def which(self) -> Literal["outputKeys", "outputData"]: ...
-        @staticmethod
-        @contextmanager
-        def from_bytes(
-            data: bytes,
-            traversal_limit_in_words: int | None = ...,
-            nesting_limit: int | None = ...,
-        ) -> Iterator[Request.OutputReader]: ...
-        @staticmethod
-        def from_bytes_packed(
-            data: bytes,
-            traversal_limit_in_words: int | None = ...,
-            nesting_limit: int | None = ...,
-        ) -> Request.OutputReader: ...
-        @staticmethod
-        def new_message() -> Request.OutputBuilder: ...
-        def to_dict(self) -> dict: ...
-
-    class OutputReader(Request.Output):
-        outputKeys: Sequence[TensorKeyReader]
-        def as_builder(self) -> Request.OutputBuilder: ...
-
-    class OutputBuilder(Request.Output):
-        outputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        @staticmethod
-        def from_dict(dictionary: dict) -> Request.OutputBuilder: ...
-        def copy(self) -> Request.OutputBuilder: ...
-        def to_bytes(self) -> bytes: ...
-        def to_bytes_packed(self) -> bytes: ...
-        def to_segments(self) -> list[bytes]: ...
-        def as_reader(self) -> Request.OutputReader: ...
         @staticmethod
         def write(file: BufferedWriter) -> None: ...
         @staticmethod
@@ -291,13 +215,11 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
     replyChannel: ChannelDescriptor | ChannelDescriptorBuilder | ChannelDescriptorReader
     model: Request.Model | Request.ModelBuilder | Request.ModelReader
-    device: Request.Device | Request.DeviceBuilder | Request.DeviceReader
+    device: Device
     input: Request.Input | Request.InputBuilder | Request.InputReader
-    output: Request.Output | Request.OutputBuilder | Request.OutputReader
-    outputOptions: Sequence[
-        OutputTensorDescriptor
-        | OutputTensorDescriptorBuilder
-        | OutputTensorDescriptorReader
+    output: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+    outputDescriptors: Sequence[
+        OutputDescriptor | OutputDescriptorBuilder | OutputDescriptorReader
     ]
     customAttributes: (
         Request.CustomAttributes
@@ -309,11 +231,7 @@ class Request:
     @overload
     def init(self, name: Literal["model"]) -> Model: ...
     @overload
-    def init(self, name: Literal["device"]) -> Device: ...
-    @overload
     def init(self, name: Literal["input"]) -> Input: ...
-    @overload
-    def init(self, name: Literal["output"]) -> Output: ...
     @overload
     def init(self, name: Literal["customAttributes"]) -> CustomAttributes: ...
     @staticmethod
@@ -336,23 +254,19 @@ class Request:
 class RequestReader(Request):
     replyChannel: ChannelDescriptorReader
     model: Request.ModelReader
-    device: Request.DeviceReader
     input: Request.InputReader
-    output: Request.OutputReader
-    outputOptions: Sequence[OutputTensorDescriptorReader]
+    output: Sequence[TensorKeyReader]
+    outputDescriptors: Sequence[OutputDescriptorReader]
     customAttributes: Request.CustomAttributesReader
     def as_builder(self) -> RequestBuilder: ...
 
 class RequestBuilder(Request):
     replyChannel: ChannelDescriptor | ChannelDescriptorBuilder | ChannelDescriptorReader
     model: Request.Model | Request.ModelBuilder | Request.ModelReader
-    device: Request.Device | Request.DeviceBuilder | Request.DeviceReader
     input: Request.Input | Request.InputBuilder | Request.InputReader
-    output: Request.Output | Request.OutputBuilder | Request.OutputReader
-    outputOptions: Sequence[
-        OutputTensorDescriptor
-        | OutputTensorDescriptorBuilder
-        | OutputTensorDescriptorReader
+    output: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+    outputDescriptors: Sequence[
+        OutputDescriptor | OutputDescriptorBuilder | OutputDescriptorReader
     ]
     customAttributes: (
         Request.CustomAttributes
