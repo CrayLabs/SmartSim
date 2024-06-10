@@ -74,6 +74,7 @@ class Ensemble(entity.CompoundEntity):
         permutations_ = itertools.chain.from_iterable(
             itertools.repeat(permutation, self.replicas) for permutation in combinations
         )
+        test = list(permutations_)
         return tuple(
             Application(
                 name=f"{self.name}-{i}",
@@ -83,9 +84,10 @@ class Ensemble(entity.CompoundEntity):
                 # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
                 files=self.files,
-                params=permutation,
+                params=i._params,
+                params_as_args=i._exe_args,
             )
-            for i, permutation in enumerate(permutations_)
+            for i in test
         )
 
     def as_jobs(self, settings: _mock.LaunchSettings) -> tuple[_mock.Job, ...]:
