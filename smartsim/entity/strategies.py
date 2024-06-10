@@ -95,13 +95,32 @@ def create_all_permutations(
     exe_args: t.Mapping[str, t.Sequence[t.Sequence[str]]],
     _n_permutations: int = 0,
 ) -> list[dict[str, str]]:
+    # Generate all possible permutations of parameter values
     params_permutations = itertools.product(*params.values())
-    param_zip = [dict(zip(params, permutation)) for permutation in params_permutations]
+    # Create dictionaries for each parameter permutation
+    param_zip = [dict(zip(params, permutation)) for permutation in params_permutations][:_n_permutations]
+    # Generate all possible permutations of executable arguments
     exe_arg_permutations = itertools.product(*exe_args.values())
-    exe_arg_zip = [dict(zip(exe_args, permutation)) for permutation in exe_arg_permutations]
-    param_set = ParamSet(param_zip,exe_arg_zip)
-    
+    # Create dictionaries for each executable argument permutation
+    exe_arg_zip = [dict(zip(exe_args, permutation)) for permutation in exe_arg_permutations][:_n_permutations]
+    # Combine parameter and executable argument dictionaries
+    combinations = itertools.product(param_zip,exe_arg_zip)
+    matts_bad_idea = (ParamSet(file_params, exe_args) for file_params, exe_args in combinations)
+    matt_bad_idea_part_2 = itertools.islice(matts_bad_idea, _n_permutations)
+    print(list(matt_bad_idea_part_2))
     return
+    # # Initialize an empty ParamSet
+    # param_set = ParamSet()
+    # # Assign values to param_set for each combination
+    # for i in range(_n_permutations):
+    #     try:
+    #         val = next(combinations)
+    #         param_set._exe_args[i] = val[1]
+    #         param_set._params[i] = val[0]
+    #     except StopIteration:
+    #         break
+    # print(param_set)
+    # return
     return [dict(zip(params, permutation)) for permutation in permutations]
 
 

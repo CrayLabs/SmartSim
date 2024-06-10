@@ -54,7 +54,7 @@ class Ensemble(entity.CompoundEntity):
         file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.TPermutationStrategy = "all_perm",
         exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
-        max_permutations: int = 0,
+        max_permutations: int = 30,
         replicas: int = 1,
     ) -> None:
         self.name = name
