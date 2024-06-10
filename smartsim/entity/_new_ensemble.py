@@ -71,24 +71,22 @@ class Ensemble(entity.CompoundEntity):
         permutation_strategy = strategies.resolve(self.permutation_strategy)
         # below: send in all informations to retrieve
         combinations = permutation_strategy(self.file_parameters, self.exe_arg_parameters, self.max_permutations)
-        return
-        # permutations = permutations if permutations else [{}]
-        # permutations_ = itertools.chain.from_iterable(
-        #     itertools.repeat(permutation, self.replicas) for permutation in permutations
-        # )
-        # return tuple(
-        #     Application(
-        #         name=f"{self.name}-{i}",
-        #         exe=self.exe,
-        #         run_settings=_mock.Mock(),  # type: ignore[arg-type]
-        #         # ^^^^^^^^^^^^^^^^^^^
-        #         # FIXME: remove this constructor arg! It should not exist!!
-        #         exe_args=self.exe_args,
-        #         files=self.files,
-        #         params=permutation,
-        #     )
-        #     for i, permutation in enumerate(permutations_)
-        # )
+        permutations_ = itertools.chain.from_iterable(
+            itertools.repeat(permutation, self.replicas) for permutation in combinations
+        )
+        return tuple(
+            Application(
+                name=f"{self.name}-{i}",
+                exe=self.exe,
+                run_settings=_mock.Mock(),  # type: ignore[arg-type]
+                # ^^^^^^^^^^^^^^^^^^^
+                # FIXME: remove this constructor arg! It should not exist!!
+                exe_args=self.exe_args,
+                files=self.files,
+                params=permutation,
+            )
+            for i, permutation in enumerate(permutations_)
+        )
 
     def as_jobs(self, settings: _mock.LaunchSettings) -> tuple[_mock.Job, ...]:
         apps = self._create_applications()

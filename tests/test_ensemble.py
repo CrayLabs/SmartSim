@@ -129,7 +129,32 @@ def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
         if app_1 is not app_2
     )
 
-def test_plz_work(mock_launcher_settings):
-    Ensemble(
-            "test_ensemble", "echo", ("hello",), replicas=4, file_parameters=_2x2_PARAMS, exe_arg_parameters=_2x2_EXE_ARG
-        )._create_applications()
+# fmt: off
+@pytest.mark.parametrize(
+    "                  params,      exe_arg_params,   strategy,  max_perms, replicas, expected_num_jobs",  # Test Name                                       Misc
+    (pytest.param(_2x2_PARAMS,        _2x2_EXE_ARG, "all_perm",         30,        1,                 1 , id="1")                    ,
+))
+# fmt: on
+def test_plz_work(
+    # Parameterized
+    params,
+    exe_arg_params,
+    strategy,
+    max_perms,
+    replicas,
+    expected_num_jobs,
+    # Other fixtures
+    mock_launcher_settings,
+):
+    jobs = Ensemble(
+        "test_ensemble",
+        "echo",
+        ("hello", "world"),
+        file_parameters=params,
+        exe_arg_parameters=exe_arg_params,
+        permutation_strategy=strategy,
+        max_permutations=max_perms,
+        replicas=replicas,
+    )._create_applications()
+    # .as_jobs(mock_launcher_settings)
+    # assert len(jobs) == expected_num_jobs
