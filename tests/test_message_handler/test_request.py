@@ -53,9 +53,13 @@ input_key2 = handler.build_tensor_key("input_key2")
 output_key1 = handler.build_tensor_key("output_key1")
 output_key2 = handler.build_tensor_key("output_key2")
 
-output_descriptor1 = handler.build_output_tensor_descriptor("c", [output_key1,output_key2], "int64", [])
+output_descriptor1 = handler.build_output_tensor_descriptor(
+    "c", [output_key1, output_key2], "int64", []
+)
 output_descriptor2 = handler.build_output_tensor_descriptor("f", [], "auto", [])
-output_descriptor3 = handler.build_output_tensor_descriptor("c", [output_key1], "none", [1, 2, 3])
+output_descriptor3 = handler.build_output_tensor_descriptor(
+    "c", [output_key1], "none", [1, 2, 3]
+)
 
 torch_attributes = handler.build_torch_request_attributes("sparse")
 tf_attributes = handler.build_tf_request_attributes(name="tf", tensor_type="sparse")
@@ -125,7 +129,13 @@ def test_build_request_indirect_successful(
     reply_channel, model, device, input, output, output_descriptors, custom_attributes
 ):
     built_request = handler.build_request(
-        reply_channel, model, device, input, output, output_descriptors, custom_attributes
+        reply_channel,
+        model,
+        device,
+        input,
+        output,
+        output_descriptors,
+        custom_attributes,
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
@@ -154,7 +164,7 @@ def test_build_request_indirect_successful(
 
 
 @pytest.mark.parametrize(
-    "reply_channel, model, device, input, output, output_options, custom_attributes",
+    "reply_channel, model, device, input, output, output_descriptors, custom_attributes",
     [
         pytest.param(
             [],
@@ -252,14 +262,14 @@ def test_build_request_indirect_successful(
             "cpu",
             [input_key1],
             [output_key1, output_key2],
-            "bad options",
+            "bad descriptors",
             torch_attributes,
-            id="bad output options",
+            id="bad output descriptors",
         ),
     ],
 )
 def test_build_request_indirect_unsuccessful(
-    reply_channel, model, device, input, output, output_options, custom_attributes
+    reply_channel, model, device, input, output, output_descriptors, custom_attributes
 ):
     with pytest.raises(ValueError):
         built_request = handler.build_request(
@@ -268,7 +278,7 @@ def test_build_request_indirect_unsuccessful(
             device,
             input,
             output,
-            output_options,
+            output_descriptors,
             custom_attributes,
         )
 
@@ -318,7 +328,13 @@ def test_build_request_direct_successful(
     reply_channel, model, device, input, output, output_descriptors, custom_attributes
 ):
     built_request = handler.build_request(
-        reply_channel, model, device, input, output, output_descriptors, custom_attributes
+        reply_channel,
+        model,
+        device,
+        input,
+        output,
+        output_descriptors,
+        custom_attributes,
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
@@ -347,7 +363,7 @@ def test_build_request_direct_successful(
 
 
 @pytest.mark.parametrize(
-    "reply_channel, model, device, input, output, output_options, custom_attributes",
+    "reply_channel, model, device, input, output, output_descriptors, custom_attributes",
     [
         pytest.param(
             [],
@@ -417,12 +433,12 @@ def test_build_request_direct_successful(
             [],
             ["output_descriptor2"],
             torch_attributes,
-            id="bad output options",
+            id="bad output descriptors",
         ),
     ],
 )
 def test_build_request_direct_unsuccessful(
-    reply_channel, model, device, input, output, output_options, custom_attributes
+    reply_channel, model, device, input, output, output_descriptors, custom_attributes
 ):
     with pytest.raises(ValueError):
         built_request = handler.build_request(
@@ -431,7 +447,7 @@ def test_build_request_direct_unsuccessful(
             device,
             input,
             output,
-            output_options,
+            output_descriptors,
             custom_attributes,
         )
 

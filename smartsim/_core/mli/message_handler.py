@@ -81,7 +81,7 @@ class MessageHandler:
         order, data type, and dimensions.
 
         :param order: Order of the tensor, such as row-major (c) or column-major (f)
-        :param keys: List of TensorKeys to apply transorm descriptor to 
+        :param keys: List of TensorKeys to apply transorm descriptor to
         :param data_type: Tranform data type of the tensor
         :param dimensions: Transform dimensions of the tensor
         :raises ValueError: if building fails

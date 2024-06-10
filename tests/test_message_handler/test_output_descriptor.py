@@ -35,17 +35,22 @@ handler = MessageHandler()
 
 tensor_key = handler.build_tensor_key("key")
 
+
 @pytest.mark.parametrize(
     "order, keys, dtype, dimension",
     [
         pytest.param("c", [tensor_key], "int8", [1, 2, 3, 4], id="all specified"),
-        pytest.param("c", [tensor_key, tensor_key], "none", [1, 2, 3, 4], id="none dtype"),
+        pytest.param(
+            "c", [tensor_key, tensor_key], "none", [1, 2, 3, 4], id="none dtype"
+        ),
         pytest.param("c", [tensor_key], "int8", [], id="empty dimensions"),
-        pytest.param("c", [], "int8", [1,2,3,4], id="empty keys"),
+        pytest.param("c", [], "int8", [1, 2, 3, 4], id="empty keys"),
     ],
 )
 def test_build_output_tensor_descriptor_successful(dtype, keys, order, dimension):
-    built_descriptor = handler.build_output_tensor_descriptor(order, keys, dtype, dimension)
+    built_descriptor = handler.build_output_tensor_descriptor(
+        order, keys, dtype, dimension
+    )
     assert built_descriptor is not None
     assert built_descriptor.order == order
     assert len(built_descriptor.optionalKeys) == len(keys)
