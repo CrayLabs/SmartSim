@@ -3,8 +3,8 @@ from abc import abstractmethod
 from collections.abc import MutableSequence
 from copy import deepcopy
 
-class BaseJob: pass # assume BaseJob class exists until Julias implementation
-class Launchable: pass # assume BaseJob class exists until Julias implementation
+from .basejob import BaseJob
+from smartsim.launchable.launchable import Launchable
 
 class BaseJobGroup(Launchable, MutableSequence):
     """Highest level ABC of a group of jobs that can be 

@@ -1,5 +1,6 @@
 import typing as t
-from .baseJobGroup import BaseJobGroup, BaseJob
+from .baseJobGroup import BaseJobGroup
+from .basejob import BaseJob
 from copy import deepcopy
 
 class ColocatedJobGroup(BaseJobGroup):

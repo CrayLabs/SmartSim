@@ -29,3 +29,6 @@ from .job import Job
 from .launchable import Launchable
 from .mpmdjob import MPMDJob
 from .mpmdpair import MPMDPair
+from .baseJobGroup import BaseJobGroup
+from .jobGroup import JobGroup
+from .colocatedJobGroup import ColocatedJobGroup
