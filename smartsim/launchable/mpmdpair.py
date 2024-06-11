@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import copy
+
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.settings.base import RunSettings
-import copy
 
 
 class MPMDPair:
