@@ -28,9 +28,9 @@ from smartsim._core.commands.commandList import CommandList
 from smartsim._core.commands.command import Command
 from smartsim.settings.launchCommand import LauncherType
 
-salloc_cmd = Command(launcher=LauncherType.SlurmLauncher, command=["salloc", "-N", "1"])
-srun_cmd = Command(launcher=LauncherType.SlurmLauncher, command=["srun", "-n", "1"])
-sacct_cmd = Command(launcher=LauncherType.SlurmLauncher, command=["sacct", "--user"])
+salloc_cmd = Command(launcher=LauncherType.Slurm, command=["salloc", "-N", "1"])
+srun_cmd = Command(launcher=LauncherType.Slurm, command=["srun", "-n", "1"])
+sacct_cmd = Command(launcher=LauncherType.Slurm, command=["sacct", "--user"])
 
 def test_command_init():
     cmd_list = CommandList(commands=[salloc_cmd,srun_cmd])
