@@ -2,16 +2,12 @@ from smartsim.entity.model import Application
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.colocatedJobGroup import ColocatedJobGroup
 from smartsim.launchable.job import Job
-
+from smartsim.settings.base import RunSettings
 
 # TODO replace with LaunchSettings
-class RunSettings:
-    pass
-
-
-app_1 = Application("app_1", "python", RunSettings())
-app_2 = Application("app_2", "python", RunSettings())
-app_3 = Application("app_3", "python", RunSettings())
+app_1 = Application("app_1", "python", run_settings=RunSettings())
+app_2 = Application("app_2", "python", run_settings=RunSettings())
+app_3 = Application("app_3", "python", run_settings=RunSettings())
 
 
 def test_create_ColocatedJobGroup():

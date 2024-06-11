@@ -2,13 +2,9 @@ from smartsim.entity.model import Application
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.job import Job
 from smartsim.launchable.jobGroup import JobGroup
-
+from smartsim.settings.base import RunSettings
 
 # TODO replace with LaunchSettings
-class RunSettings:
-    pass
-
-
 app_1 = Application("app_1", "python", RunSettings())
 app_2 = Application("app_2", "python", RunSettings())
 app_3 = Application("app_3", "python", RunSettings())
