@@ -9,15 +9,7 @@ from smartsim.settings.launchCommand import LauncherType
 @pytest.mark.parametrize(
     "launch_enum",
     [
-        pytest.param(LauncherType.Slurm, id="slurm"),
-        pytest.param(LauncherType.Dragon, id="dragon"),
-        pytest.param(LauncherType.Pals, id="pals"),
-        pytest.param(LauncherType.Alps, id="alps"),
-        pytest.param(LauncherType.Local, id="local"),
-        pytest.param(LauncherType.Mpiexec, id="mpiexec"),
-        pytest.param(LauncherType.Mpirun, id="mpirun"),
-        pytest.param(LauncherType.Orterun, id="orterun"),
-        pytest.param(LauncherType.Lsf, id="lsf"),
+        pytest.param(type_,id=type_.value) for type_ in LauncherType
     ],
 )
 def test_create_launch_settings(launch_enum):

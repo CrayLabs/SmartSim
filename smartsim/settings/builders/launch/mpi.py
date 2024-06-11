@@ -38,11 +38,6 @@ logger = get_logger(__name__)
 
 
 class _BaseMPIArgBuilder(LaunchArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
 
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""

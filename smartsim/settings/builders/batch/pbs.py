@@ -40,11 +40,6 @@ logger = get_logger(__name__)
 
 
 class QsubBatchArgBuilder(BatchArgBuilder):
-    def __init__(
-        self,
-        scheduler_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(scheduler_args)
 
     def scheduler_str(self) -> str:
         """Get the string representation of the scheduler"""

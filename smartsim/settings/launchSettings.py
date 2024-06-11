@@ -35,14 +35,14 @@ from .._core.utils.helpers import fmt_dict
 from .baseSettings import BaseSettings
 from .common import StringArgument
 from .launchCommand import LauncherType
-from .translators import LaunchArgBuilder
-from .translators.launch.alps import AprunArgBuilder
-from .translators.launch.dragon import DragonArgBuilder
-from .translators.launch.local import LocalArgBuilder
-from .translators.launch.lsf import JsrunArgBuilder
-from .translators.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
-from .translators.launch.pals import PalsMpiexecArgBuilder
-from .translators.launch.slurm import SlurmArgBuilder
+from .builders import LaunchArgBuilder
+from .builders.launch.alps import AprunArgBuilder
+from .builders.launch.dragon import DragonArgBuilder
+from .builders.launch.local import LocalArgBuilder
+from .builders.launch.lsf import JsrunArgBuilder
+from .builders.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
+from .builders.launch.pals import PalsMpiexecArgBuilder
+from .builders.launch.slurm import SlurmArgBuilder
 
 logger = get_logger(__name__)
 
@@ -69,7 +69,6 @@ class LaunchSettings(BaseSettings):
     @property
     def launch_args(self) -> LaunchArgBuilder:
         """Return the launch argument translator."""
-        # Is a deep copy needed here?
         return self._arg_builder
 
     @launch_args.setter

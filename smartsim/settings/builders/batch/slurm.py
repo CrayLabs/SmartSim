@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import re
 import typing as t
 
 from smartsim.log import get_logger
@@ -37,72 +38,74 @@ from ..batchArgBuilder import BatchArgBuilder
 logger = get_logger(__name__)
 
 
-class BsubBatchArgBuilder(BatchArgBuilder):
-    def __init__(
-        self,
-        scheduler_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(scheduler_args)
+class SlurmBatchArgBuilder(BatchArgBuilder):
 
     def scheduler_str(self) -> str:
         """Get the string representation of the scheduler"""
-        return SchedulerType.Lsf.value
+        return SchedulerType.Slurm.value
 
     def set_walltime(self, walltime: str) -> None:
-        """Set the walltime
+        """Set the walltime of the job
 
-        This sets ``-W``.
+        format = "HH:MM:SS"
 
-        :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours,
-                         if time is supplied in hh:mm:ss format, seconds
-                         will be ignored and walltime will be set as ``hh:mm``
+        :param walltime: wall time
         """
-        # For compatibility with other launchers, as explained in docstring
-        if walltime:
-            if len(walltime.split(":")) > 2:
-                walltime = ":".join(walltime.split(":")[:2])
-        self.set("W", walltime)
-
-    def set_smts(self, smts: int) -> None:
-        """Set SMTs
-
-        This sets ``-alloc_flags``. If the user sets
-        SMT explicitly through ``-alloc_flags``, then that
-        takes precedence.
-
-        :param smts: SMT (e.g on Summit: 1, 2, or 4)
-        """
-        self.set("alloc_flags", str(smts))
-
-    def set_project(self, project: str) -> None:
-        """Set the project
-
-        This sets ``-P``.
-
-        :param time: project name
-        """
-        self.set("P", project)
-
-    def set_account(self, account: str) -> None:
-        """Set the project
-
-        this function is an alias for `set_project`.
-
-        :param account: project name
-        """
-        return self.set_project(account)
+        pattern = r"^\d{2}:\d{2}:\d{2}$"
+        if walltime and re.match(pattern, walltime):
+            self.set("time", str(walltime))
+        else:
+            raise ValueError("Invalid walltime format. Please use 'HH:MM:SS' format.")
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
-        This sets ``-nnodes``.
+        This sets ``--nodes``.
 
-        :param nodes: number of nodes
+        :param num_nodes: number of nodes
         """
-        self.set("nnodes", str(num_nodes))
+        self.set("nodes", str(num_nodes))
+
+    def set_account(self, account: str) -> None:
+        """Set the account for this batch job
+
+        This sets ``--account``.
+
+        :param account: account id
+        """
+        self.set("account", account)
+
+    def set_partition(self, partition: str) -> None:
+        """Set the partition for the batch job
+
+        This sets ``--partition``.
+
+        :param partition: partition name
+        """
+        self.set("partition", str(partition))
+
+    def set_queue(self, queue: str) -> None:
+        """alias for set_partition
+
+        Sets the partition for the slurm batch job
+
+        :param queue: the partition to run the batch job on
+        """
+        return self.set_partition(queue)
+
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
+        """Set the number of cpus to use per task
+
+        This sets ``--cpus-per-task``
+
+        :param num_cpus: number of cpus to use per task
+        """
+        self.set("cpus-per-task", str(cpus_per_task))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
+
+        This sets ``--nodelist``.
 
         :param host_list: hosts to launch on
         :raises TypeError: if not str or list of str
@@ -113,42 +116,27 @@ class BsubBatchArgBuilder(BatchArgBuilder):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        self.set("m", '"' + " ".join(host_list) + '"')
-
-    def set_tasks(self, tasks: int) -> None:
-        """Set the number of tasks for this job
-
-        This sets ``-n``
-
-        :param tasks: number of tasks
-        """
-        self.set("n", str(tasks))
-
-    def set_queue(self, queue: str) -> None:
-        """Set the queue for this job
-
-        This sets ``-q``
-
-        :param queue: The queue to submit the job on
-        """
-        self.set("q", queue)
+        self.set("nodelist", ",".join(host_list))
 
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
-        :return: list of batch arguments for Qsub
+        :return: batch arguments for Sbatch
         """
         opts = []
-
+        # TODO add restricted here
         for opt, value in self._scheduler_args.items():
+            # attach "-" prefix if argument is 1 character otherwise "--"
+            short_arg = len(opt) == 1
+            prefix = "-" if short_arg else "--"
 
-            prefix = "-"  # LSF only uses single dashses
-
-            if value is None:
+            if not value:
                 opts += [prefix + opt]
             else:
-                opts += [f"{prefix}{opt}", str(value)]
-
+                if short_arg:
+                    opts += [prefix + opt, str(value)]
+                else:
+                    opts += ["=".join((prefix + opt, str(value)))]
         return opts
 
     def set(self, key: str, value: str | None) -> None:

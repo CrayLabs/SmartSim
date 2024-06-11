@@ -2,7 +2,7 @@ import pytest
 
 from smartsim.settings import BatchSettings
 from smartsim.settings.batchCommand import SchedulerType
-from smartsim.settings.translators.batch.pbs import QsubBatchArgBuilder
+from smartsim.settings.builders.batch.pbs import QsubBatchArgBuilder
 
 
 def test_scheduler_str():

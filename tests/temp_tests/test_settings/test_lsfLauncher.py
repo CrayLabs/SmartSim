@@ -2,7 +2,7 @@ import pytest
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.launchCommand import LauncherType
-from smartsim.settings.translators.launch.lsf import JsrunArgBuilder
+from smartsim.settings.builders.launch.lsf import JsrunArgBuilder
 
 
 def test_launcher_str():

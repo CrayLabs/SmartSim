@@ -35,10 +35,10 @@ from .._core.utils.helpers import fmt_dict
 from .baseSettings import BaseSettings
 from .batchCommand import SchedulerType
 from .common import StringArgument
-from .translators import BatchArgBuilder
-from .translators.batch.lsf import BsubBatchArgBuilder
-from .translators.batch.pbs import QsubBatchArgBuilder
-from .translators.batch.slurm import SlurmBatchArgBuilder
+from .builders import BatchArgBuilder
+from .builders.batch.lsf import BsubBatchArgBuilder
+from .builders.batch.pbs import QsubBatchArgBuilder
+from .builders.batch.slurm import SlurmBatchArgBuilder
 
 logger = get_logger(__name__)
 
@@ -53,7 +53,7 @@ class BatchSettings(BaseSettings):
         try:
             self._batch_scheduler = SchedulerType(batch_scheduler)
         except ValueError:
-            raise ValueError(f"Invalid scheduler type: {batch_scheduler}")
+            raise ValueError(f"Invalid scheduler type: {batch_scheduler}") from None
         self._arg_builder = self._get_arg_builder(scheduler_args)
         self.env_vars = env_vars or {}
 
@@ -70,7 +70,6 @@ class BatchSettings(BaseSettings):
     @property
     def scheduler_args(self) -> BatchArgBuilder:
         """Return the batch argument translator."""
-        # Is a deep copy needed here?
         return self._arg_builder
 
     @property

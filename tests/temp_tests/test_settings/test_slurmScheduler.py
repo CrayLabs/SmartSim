@@ -2,7 +2,7 @@ import pytest
 
 from smartsim.settings import BatchSettings
 from smartsim.settings.batchCommand import SchedulerType
-from smartsim.settings.translators.batch.slurm import SlurmBatchArgBuilder
+from smartsim.settings.builders.batch.slurm import SlurmBatchArgBuilder
 
 
 def test_scheduler_str():

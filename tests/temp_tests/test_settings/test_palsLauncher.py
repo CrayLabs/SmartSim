@@ -2,7 +2,7 @@ import pytest
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.launchCommand import LauncherType
-from smartsim.settings.translators.launch.pals import PalsMpiexecArgBuilder
+from smartsim.settings.builders.launch.pals import PalsMpiexecArgBuilder
 
 
 def test_launcher_str():

@@ -2,7 +2,7 @@ import pytest
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.launchCommand import LauncherType
-from smartsim.settings.translators.launch.slurm import SlurmArgBuilder
+from smartsim.settings.builders.launch.slurm import SlurmArgBuilder
 
 
 def test_launcher_str():

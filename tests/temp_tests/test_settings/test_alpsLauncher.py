@@ -2,7 +2,7 @@ import pytest
 
 from smartsim.settings import LaunchSettings
 from smartsim.settings.launchCommand import LauncherType
-from smartsim.settings.translators.launch.alps import AprunArgBuilder
+from smartsim.settings.builders.launch.alps import AprunArgBuilder
 
 
 def test_launcher_str():

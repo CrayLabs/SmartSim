@@ -38,11 +38,6 @@ logger = get_logger(__name__)
 
 
 class AprunArgBuilder(LaunchArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
 
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
@@ -194,7 +189,7 @@ class AprunArgBuilder(LaunchArgBuilder):
         # args launcher uses
         args = []
         for opt, value in self._launch_args.items():
-            short_arg = bool(len(str(opt)) == 1)
+            short_arg = len(opt) == 1
             prefix = "-" if short_arg else "--"
             if not value:
                 args += [prefix + opt]
