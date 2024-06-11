@@ -36,23 +36,29 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_batch_model_and_ensemble(test_dir, wlmutils):
+def test_batch_application_and_ensemble(test_dir, wlmutils):
     exp_name = "test-batch"
     launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     rs = exp.create_run_settings("echo", ["spam", "eggs"])
     bs = exp.create_batch_settings()
 
-    test_model = exp.create_model(
-        "test_model", path=test_dir, run_settings=rs, batch_settings=bs
+    test_application = exp.create_application(
+        "test_application", path=test_dir, run_settings=rs, batch_settings=bs
     )
-    exp.generate(test_model)
-    exp.start(test_model, block=True)
+    exp.generate(test_application)
+    exp.start(test_application, block=True)
 
-    assert pathlib.Path(test_model.path).exists()
-    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.out"), True)
-    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.err"), False)
-    _should_not_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.sh"))
+    assert pathlib.Path(test_application.path).exists()
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), True
+    )
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.err"), False
+    )
+    _should_not_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.sh")
+    )
 
     test_ensemble = exp.create_ensemble(
         "test_ensemble", params={}, batch_settings=bs, run_settings=rs, replicas=3
@@ -61,7 +67,7 @@ def test_batch_model_and_ensemble(test_dir, wlmutils):
     exp.start(test_ensemble, block=True)
 
     assert pathlib.Path(test_ensemble.path).exists()
-    for i in range(len(test_ensemble.models)):
+    for i in range(len(test_ensemble.applications)):
         _should_be_symlinked(
             pathlib.Path(
                 test_ensemble.path,
@@ -94,7 +100,7 @@ def test_batch_ensemble_symlinks(test_dir, wlmutils):
     exp.generate(test_ensemble)
     exp.start(test_ensemble, block=True)
 
-    for i in range(len(test_ensemble.models)):
+    for i in range(len(test_ensemble.applications)):
         _should_be_symlinked(
             pathlib.Path(
                 test_ensemble.path,
@@ -115,32 +121,38 @@ def test_batch_ensemble_symlinks(test_dir, wlmutils):
     _should_not_be_symlinked(pathlib.Path(exp.exp_path, "smartsim_params.txt"))
 
 
-def test_batch_model_symlinks(test_dir, wlmutils):
-    exp_name = "test-batch-model"
+def test_batch_application_symlinks(test_dir, wlmutils):
+    exp_name = "test-batch-application"
     launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     rs = exp.create_run_settings("echo", ["spam", "eggs"])
     bs = exp.create_batch_settings()
-    test_model = exp.create_model(
-        "test_model", path=test_dir, run_settings=rs, batch_settings=bs
+    test_application = exp.create_application(
+        "test_application", path=test_dir, run_settings=rs, batch_settings=bs
     )
-    exp.generate(test_model)
-    exp.start(test_model, block=True)
+    exp.generate(test_application)
+    exp.start(test_application, block=True)
 
-    assert pathlib.Path(test_model.path).exists()
+    assert pathlib.Path(test_application.path).exists()
 
-    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.out"), True)
-    _should_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.err"), False)
-    _should_not_be_symlinked(pathlib.Path(test_model.path, f"{test_model.name}.sh"))
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.out"), True
+    )
+    _should_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.err"), False
+    )
+    _should_not_be_symlinked(
+        pathlib.Path(test_application.path, f"{test_application.name}.sh")
+    )
 
 
-def test_batch_orchestrator_symlinks(test_dir, wlmutils):
+def test_batch_feature_store_symlinks(test_dir, wlmutils):
     exp_name = "test-batch-orc"
     launcher = wlmutils.get_test_launcher()
     exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
     port = 2424
-    db = exp.create_database(
-        db_nodes=3,
+    db = exp.create_feature_store(
+        fs_nodes=3,
         port=port,
         batch=True,
         interface=wlmutils.get_test_interface(),
@@ -154,7 +166,7 @@ def test_batch_orchestrator_symlinks(test_dir, wlmutils):
     _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.out"), False)
     _should_be_symlinked(pathlib.Path(db.path, f"{db.name}.err"), False)
 
-    for i in range(db.db_nodes):
+    for i in range(db.fs_nodes):
         _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.out"), False)
         _should_be_symlinked(pathlib.Path(db.path, f"{db.name}_{i}.err"), False)
         _should_not_be_symlinked(

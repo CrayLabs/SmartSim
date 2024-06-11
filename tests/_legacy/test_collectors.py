@@ -42,7 +42,7 @@ from smartsim._core.utils.telemetry.collector import (
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
 
-PrepareDB = t.Callable[[dict], smartsim.experiment.Orchestrator]
+PrepareFS = t.Callable[[dict], smartsim.experiment.FeatureStore]
 
 
 @pytest.mark.asyncio
@@ -173,15 +173,15 @@ async def test_dbmemcollector_collect(
 async def test_dbmemcollector_integration(
     mock_entity: MockCollectorEntityFunc,
     mock_sink: MockSink,
-    prepare_db: PrepareDB,
-    local_db: dict,
+    prepare_fs: PrepareFS,
+    local_fs: dict,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Integration test with a real orchestrator instance to ensure
+    """Integration test with a real feature store instance to ensure
     output data matches expectations and proper db client API uage"""
 
-    db = prepare_db(local_db).orchestrator
-    entity = mock_entity(port=db.ports[0], telemetry_on=True)
+    fs = prepare_fs(local_fs).featurestore
+    entity = mock_entity(port=fs.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBMemoryCollector(entity, sink)
@@ -273,15 +273,15 @@ async def test_dbconn_count_collector_collect(
 async def test_dbconncollector_integration(
     mock_entity: MockCollectorEntityFunc,
     mock_sink: MockSink,
-    prepare_db: PrepareDB,
-    local_db: dict,
+    prepare_fs: PrepareFS,
+    local_fs: dict,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Integration test with a real orchestrator instance to ensure
+    """Integration test with a real feature store instance to ensure
     output data matches expectations and proper db client API uage"""
 
-    db = prepare_db(local_db).orchestrator
-    entity = mock_entity(port=db.ports[0], telemetry_on=True)
+    fs = prepare_fs(local_fs).featurestore
+    entity = mock_entity(port=fs.ports[0], telemetry_on=True)
 
     sink = mock_sink()
     collector = DBConnectionCollector(entity, sink)

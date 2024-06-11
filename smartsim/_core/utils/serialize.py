@@ -36,9 +36,9 @@ import smartsim.log
 
 if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
-    from smartsim.database.orchestrator import Orchestrator
-    from smartsim.entity import DBNode, Ensemble, Model
-    from smartsim.entity.dbobject import DBModel, DBScript
+    from smartsim.database.orchestrator import FeatureStore
+    from smartsim.entity import Application, Ensemble, FSNode
+    from smartsim.entity.dbobject import FSModel, FSScript
     from smartsim.settings.base import BatchSettings, RunSettings
 
 
@@ -58,12 +58,12 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
     new_run = {
         "run_id": manifest.metadata.run_id,
         "timestamp": int(time.time_ns()),
-        "model": [
-            _dictify_model(model, *telemetry_metadata)
-            for model, telemetry_metadata in manifest.models
+        "application": [
+            _dictify_application(application, *telemetry_metadata)
+            for application, telemetry_metadata in manifest.applications
         ],
-        "orchestrator": [
-            _dictify_db(db, nodes_info) for db, nodes_info in manifest.databases
+        "featurestore": [
+            _dictify_fs(fs, nodes_info) for fs, nodes_info in manifest.featurestores
         ],
         "ensemble": [
             _dictify_ensemble(ens, member_info)
@@ -95,8 +95,8 @@ def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
             json.dump(manifest_dict, file, indent=2)
 
 
-def _dictify_model(
-    model: Model,
+def _dictify_application(
+    application: Application,
     step_id: t.Optional[str],
     task_id: t.Optional[str],
     managed: t.Optional[bool],
@@ -104,38 +104,38 @@ def _dictify_model(
     err_file: str,
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
-    if model.run_settings is not None:
-        colo_settings = (model.run_settings.colocated_db_settings or {}).copy()
+    if application.run_settings is not None:
+        colo_settings = (application.run_settings.colocated_fs_settings or {}).copy()
     else:
         colo_settings = ({}).copy()
-    db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
-    db_models = t.cast("t.List[DBModel]", colo_settings.pop("db_models", []))
+    fs_scripts = t.cast("t.List[FSScript]", colo_settings.pop("fs_scripts", []))
+    fs_models = t.cast("t.List[FSModel]", colo_settings.pop("fs_models", []))
     return {
-        "name": model.name,
-        "path": model.path,
-        "exe_args": model.exe_args,
-        "exe": model.exe,
-        "run_settings": _dictify_run_settings(model.run_settings),
+        "name": application.name,
+        "path": application.path,
+        "exe_args": application.exe_args,
+        "exe": application.exe,
+        "run_settings": _dictify_run_settings(application.run_settings),
         "batch_settings": (
-            _dictify_batch_settings(model.batch_settings)
-            if model.batch_settings
+            _dictify_batch_settings(application.batch_settings)
+            if application.batch_settings
             else {}
         ),
-        "params": model.params,
+        "params": application.params,
         "files": (
             {
-                "Symlink": model.files.link,
-                "Configure": model.files.tagged,
-                "Copy": model.files.copy,
+                "Symlink": application.files.link,
+                "Configure": application.files.tagged,
+                "Copy": application.files.copy,
             }
-            if model.files
+            if application.files
             else {
                 "Symlink": [],
                 "Configure": [],
                 "Copy": [],
             }
         ),
-        "colocated_db": (
+        "colocated_fs": (
             {
                 "settings": colo_settings,
                 "scripts": [
@@ -145,7 +145,7 @@ def _dictify_model(
                             "device": script.device,
                         }
                     }
-                    for script in db_scripts
+                    for script in fs_scripts
                 ],
                 "models": [
                     {
@@ -154,7 +154,7 @@ def _dictify_model(
                             "device": model.device,
                         }
                     }
-                    for model in db_models
+                    for model in fs_models
                 ],
             }
             if colo_settings
@@ -173,7 +173,7 @@ def _dictify_model(
 
 def _dictify_ensemble(
     ens: Ensemble,
-    members: t.Sequence[t.Tuple[Model, TStepLaunchMetaData]],
+    members: t.Sequence[t.Tuple[Application, TStepLaunchMetaData]],
 ) -> t.Dict[str, t.Any]:
     return {
         "name": ens.name,
@@ -185,9 +185,9 @@ def _dictify_ensemble(
             if ens.batch_settings
             else {}
         ),
-        "models": [
-            _dictify_model(model, *launching_metadata)
-            for model, launching_metadata in members
+        "applications": [
+            _dictify_application(application, *launching_metadata)
+            for application, launching_metadata in members
         ],
     }
 
@@ -217,20 +217,20 @@ def _dictify_batch_settings(batch_settings: BatchSettings) -> t.Dict[str, t.Any]
     }
 
 
-def _dictify_db(
-    db: Orchestrator,
-    nodes: t.Sequence[t.Tuple[DBNode, TStepLaunchMetaData]],
+def _dictify_fs(
+    fs: FeatureStore,
+    nodes: t.Sequence[t.Tuple[FSNode, TStepLaunchMetaData]],
 ) -> t.Dict[str, t.Any]:
-    db_path = _utils.get_db_path()
-    if db_path:
-        db_type, _ = db_path.name.split("-", 1)
+    fs_path = _utils.get_fs_path()
+    if fs_path:
+        fs_type, _ = fs_path.name.split("-", 1)
     else:
-        db_type = "Unknown"
+        fs_type = "Unknown"
 
     return {
-        "name": db.name,
-        "type": db_type,
-        "interface": db._interfaces,  # pylint: disable=protected-access
+        "name": fs.name,
+        "type": fs_type,
+        "interface": fs._interfaces,  # pylint: disable=protected-access
         "shards": [
             {
                 **shard.to_dict(),
@@ -238,14 +238,14 @@ def _dictify_db(
                 "out_file": out_file,
                 "err_file": err_file,
                 "memory_file": (
-                    str(status_dir / "memory.csv") if db.telemetry.is_enabled else ""
+                    str(status_dir / "memory.csv") if fs.telemetry.is_enabled else ""
                 ),
                 "client_file": (
-                    str(status_dir / "client.csv") if db.telemetry.is_enabled else ""
+                    str(status_dir / "client.csv") if fs.telemetry.is_enabled else ""
                 ),
                 "client_count_file": (
                     str(status_dir / "client_count.csv")
-                    if db.telemetry.is_enabled
+                    if fs.telemetry.is_enabled
                     else ""
                 ),
                 "telemetry_metadata": {
@@ -255,7 +255,7 @@ def _dictify_db(
                     "managed": managed,
                 },
             }
-            for dbnode, (
+            for fsnode, (
                 step_id,
                 task_id,
                 managed,
@@ -263,6 +263,6 @@ def _dictify_db(
                 err_file,
                 status_dir,
             ) in nodes
-            for shard in dbnode.get_launched_shard_info()
+            for shard in fsnode.get_launched_shard_info()
         ],
     }

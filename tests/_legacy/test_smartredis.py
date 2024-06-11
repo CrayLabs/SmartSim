@@ -29,8 +29,8 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.database import Orchestrator
-from smartsim.entity import Ensemble, Model
+from smartsim.database import FeatureStore
+from smartsim.entity import Application, Ensemble
 from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the group_b group
@@ -60,15 +60,15 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_exchange(local_experiment, local_db, prepare_db, fileutils):
+def test_exchange(local_experiment, local_fs, prepare_fs, fileutils):
     """Run two processes, each process puts a tensor on
-    the DB, then accesses the other process's tensor.
-    Finally, the tensor is used to run a model.
+    the FS, then accesses the other process's tensor.
+    Finally, the tensor is used to run a application.
     """
 
-    db = prepare_db(local_db).orchestrator
-    # create and start a database
-    local_experiment.reconnect_orchestrator(db.checkpoint_file)
+    fs = prepare_fs(local_fs).featurestore
+    # create and start a feature store
+    local_experiment.reconnect_feature_store(fs.checkpoint_file)
 
     rs = local_experiment.create_run_settings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
@@ -87,7 +87,7 @@ def test_exchange(local_experiment, local_db, prepare_db, fileutils):
 
     local_experiment.generate(ensemble)
 
-    # start the models
+    # start the applications
     local_experiment.start(ensemble, summary=False)
 
     # get and confirm statuses
@@ -95,16 +95,16 @@ def test_exchange(local_experiment, local_db, prepare_db, fileutils):
     assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
 
 
-def test_consumer(local_experiment, local_db, prepare_db, fileutils):
+def test_consumer(local_experiment, local_fs, prepare_fs, fileutils):
     """Run three processes, each one of the first two processes
-    puts a tensor on the DB; the third process accesses the
+    puts a tensor on the FS; the third process accesses the
     tensors put by the two producers.
-    Finally, the tensor is used to run a model by each producer
+    Finally, the tensor is used to run a application by each producer
     and the consumer accesses the two results.
     """
 
-    db = prepare_db(local_db).orchestrator
-    local_experiment.reconnect_orchestrator(db.checkpoint_file)
+    fs = prepare_fs(local_fs).featurestore
+    local_experiment.reconnect_feature_store(fs.checkpoint_file)
 
     rs_prod = local_experiment.create_run_settings("python", "producer.py")
     rs_consumer = local_experiment.create_run_settings("python", "consumer.py")
@@ -113,10 +113,10 @@ def test_consumer(local_experiment, local_db, prepare_db, fileutils):
         name="producer", params=params, run_settings=rs_prod, perm_strat="step"
     )
 
-    consumer = Model(
+    consumer = Application(
         "consumer", params={}, path=ensemble.path, run_settings=rs_consumer
     )
-    ensemble.add_model(consumer)
+    ensemble.add_application(consumer)
 
     ensemble.register_incoming_entity(ensemble["producer_0"])
     ensemble.register_incoming_entity(ensemble["producer_1"])
@@ -126,7 +126,7 @@ def test_consumer(local_experiment, local_db, prepare_db, fileutils):
 
     local_experiment.generate(ensemble)
 
-    # start the models
+    # start the applications
     local_experiment.start(ensemble, summary=False)
 
     # get and confirm statuses

@@ -144,7 +144,7 @@ def test_jsrun_mpmd():
 
 def test_catch_colo_mpmd():
     settings = JsrunSettings("python")
-    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
+    settings.colocated_fs_settings = {"port": 6379, "cpus": 1}
     settings_2 = JsrunSettings("python")
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)

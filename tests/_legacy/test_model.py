@@ -31,7 +31,7 @@ import pytest
 from smartsim import Experiment
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 from smartsim._core.launcher.step import SbatchStep, SrunStep
-from smartsim.entity import Ensemble, Model
+from smartsim.entity import Application, Ensemble
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings
@@ -44,7 +44,7 @@ def test_register_incoming_entity_preexists():
     exp = Experiment("experiment", launcher="local")
     rs = RunSettings("python", exe_args="sleep.py")
     ensemble = exp.create_ensemble(name="ensemble", replicas=1, run_settings=rs)
-    m = exp.create_model("model", run_settings=rs)
+    m = exp.create_application("application", run_settings=rs)
     m.register_incoming_entity(ensemble["ensemble_0"])
     assert len(m.incoming_entities) == 1
     with pytest.raises(EntityExistsError):
@@ -54,36 +54,38 @@ def test_register_incoming_entity_preexists():
 def test_disable_key_prefixing():
     exp = Experiment("experiment", launcher="local")
     rs = RunSettings("python", exe_args="sleep.py")
-    m = exp.create_model("model", run_settings=rs)
+    m = exp.create_application("application", run_settings=rs)
     m.disable_key_prefixing()
     assert m.query_key_prefixing() == False
 
 
-def test_catch_colo_mpmd_model():
+def test_catch_colo_mpmd_application():
     exp = Experiment("experiment", launcher="local")
     rs = _BaseMPISettings("python", exe_args="sleep.py", fail_if_missing_exec=False)
 
-    # make it an mpmd model
+    # make it an mpmd application
     rs_2 = _BaseMPISettings("python", exe_args="sleep.py", fail_if_missing_exec=False)
     rs.make_mpmd(rs_2)
 
-    model = exp.create_model("bad_colo_model", rs)
+    application = exp.create_application("bad_colo_application", rs)
 
     # make it colocated which should raise and error
     with pytest.raises(SSUnsupportedError):
-        model.colocate_db()
+        application.colocate_fs()
 
 
-def test_attach_batch_settings_to_model():
+def test_attach_batch_settings_to_application():
     exp = Experiment("experiment", launcher="slurm")
     bs = SbatchSettings()
     rs = SrunSettings("python", exe_args="sleep.py")
 
-    model_wo_bs = exp.create_model("test_model", run_settings=rs)
-    assert model_wo_bs.batch_settings is None
+    application_wo_bs = exp.create_application("test_application", run_settings=rs)
+    assert application_wo_bs.batch_settings is None
 
-    model_w_bs = exp.create_model("test_model_2", run_settings=rs, batch_settings=bs)
-    assert isinstance(model_w_bs.batch_settings, SbatchSettings)
+    application_w_bs = exp.create_application(
+        "test_application_2", run_settings=rs, batch_settings=bs
+    )
+    assert isinstance(application_w_bs.batch_settings, SbatchSettings)
 
 
 @pytest.fixture
@@ -116,53 +118,57 @@ def monkeypatch_exp_controller(monkeypatch):
     return _monkeypatch_exp_controller
 
 
-def test_model_with_batch_settings_makes_batch_step(
+def test_application_with_batch_settings_makes_batch_step(
     monkeypatch_exp_controller, test_dir
 ):
     exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     bs = SbatchSettings()
     rs = SrunSettings("python", exe_args="sleep.py")
-    model = exp.create_model("test_model", run_settings=rs, batch_settings=bs)
+    application = exp.create_application(
+        "test_application", run_settings=rs, batch_settings=bs
+    )
 
     entity_steps = monkeypatch_exp_controller(exp)
-    exp.start(model)
+    exp.start(application)
 
     assert len(entity_steps) == 1
     step, entity = entity_steps[0]
-    assert isinstance(entity, Model)
+    assert isinstance(entity, Application)
     assert isinstance(step, SbatchStep)
 
 
-def test_model_without_batch_settings_makes_run_step(
+def test_application_without_batch_settings_makes_run_step(
     monkeypatch, monkeypatch_exp_controller, test_dir
 ):
     exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     rs = SrunSettings("python", exe_args="sleep.py")
-    model = exp.create_model("test_model", run_settings=rs)
+    application = exp.create_application("test_application", run_settings=rs)
 
     # pretend we are in an allocation to not raise alloc err
     monkeypatch.setenv("SLURM_JOB_ID", "12345")
 
     entity_steps = monkeypatch_exp_controller(exp)
-    exp.start(model)
+    exp.start(application)
 
     assert len(entity_steps) == 1
     step, entity = entity_steps[0]
-    assert isinstance(entity, Model)
+    assert isinstance(entity, Application)
     assert isinstance(step, SrunStep)
 
 
-def test_models_batch_settings_are_ignored_in_ensemble(
+def test_applications_batch_settings_are_ignored_in_ensemble(
     monkeypatch_exp_controller, test_dir
 ):
     exp = Experiment("experiment", launcher="slurm", exp_path=test_dir)
     bs_1 = SbatchSettings(nodes=5)
     rs = SrunSettings("python", exe_args="sleep.py")
-    model = exp.create_model("test_model", run_settings=rs, batch_settings=bs_1)
+    application = exp.create_application(
+        "test_application", run_settings=rs, batch_settings=bs_1
+    )
 
     bs_2 = SbatchSettings(nodes=10)
     ens = exp.create_ensemble("test_ensemble", batch_settings=bs_2)
-    ens.add_model(model)
+    ens.add_application(application)
 
     entity_steps = monkeypatch_exp_controller(exp)
     exp.start(ens)
@@ -174,5 +180,7 @@ def test_models_batch_settings_are_ignored_in_ensemble(
     assert step.batch_settings.batch_args["nodes"] == "10"
     assert len(step.step_cmds) == 1
     step_cmd = step.step_cmds[0]
-    assert any("srun" in tok for tok in step_cmd)  # call the model using run settings
+    assert any(
+        "srun" in tok for tok in step_cmd
+    )  # call the application using run settings
     assert not any("sbatch" in tok for tok in step_cmd)  # no sbatch in sbatch

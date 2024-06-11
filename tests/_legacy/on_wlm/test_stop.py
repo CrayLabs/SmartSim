@@ -44,13 +44,13 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 
 def test_stop_entity(fileutils, test_dir, wlmutils):
-    exp_name = "test-launch-stop-model"
+    exp_name = "test-launch-stop-application"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=10")
     settings.set_tasks(1)
-    M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
+    M1 = exp.create_application("m1", path=test_dir, run_settings=settings)
 
     exp.start(M1, block=False)
     time.sleep(5)

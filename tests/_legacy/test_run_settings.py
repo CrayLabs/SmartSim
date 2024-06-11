@@ -31,6 +31,7 @@ import os.path as osp
 
 import pytest
 
+from smartsim import Experiment
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import (
     MpiexecSettings,
@@ -41,6 +42,7 @@ from smartsim.settings import (
     Singularity,
 )
 from smartsim.settings.settings import create_run_settings
+from smartsim.status import SmartSimStatus
 
 # The tests in this file belong to the slow_tests group
 pytestmark = pytest.mark.slow_tests
@@ -567,3 +569,55 @@ def test_update_env_null_valued(env_vars):
     with pytest.raises(TypeError) as ex:
         rs = RunSettings(sample_exe, run_command=cmd, env_vars=orig_env)
         rs.update_env(env_vars)
+
+
+def test_create_run_settings_run_args_leading_dashes(test_dir, wlmutils):
+    """
+    Test warning for leading `-` in run_args in `exp.create_run_settings`
+    """
+    exp_name = "test-create-run_settings-run_args-leading-dashes"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+
+    run_args = {"--nodes": 1}
+    settings = exp.create_run_settings(
+        "echo", exe_args=["hello", "world"], run_command="srun", run_args=run_args
+    )
+    model = exp.create_model("sr_issue_model", run_settings=settings)
+    exp.start(model)
+
+    statuses = exp.get_status(model)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+
+
+def test_set_run_args_leading_dashes(test_dir, wlmutils):
+    """
+    Test warning for leading `-` for run_args in `settings.set`
+    """
+    exp_name = "test-set-run-args-leading-dashes"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    settings = exp.create_run_settings(
+        "echo", exe_args=["hello", "world"], run_command="srun"
+    )
+    settings.set("--nodes", "1")
+
+    model = exp.create_model("sr_issue_model", run_settings=settings)
+    exp.start(model)
+    statuses = exp.get_status(model)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])
+
+
+def test_run_args_integer(test_dir, wlmutils):
+    """
+    Test that `setting.set` will take an integer as a run argument
+    """
+    exp_name = "test-run-args-integer"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
+    settings = exp.create_run_settings(
+        "echo", exe_args=["hello", "world"], run_command="srun"
+    )
+    settings.set("--nodes", 1)
+
+    model = exp.create_model("sr_issue_model", run_settings=settings)
+    exp.start(model)
+    statuses = exp.get_status(model)
+    assert all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses])

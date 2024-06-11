@@ -33,7 +33,7 @@ from smartsim.settings.settings import RunSettings
 from smartsim.status import SmartSimStatus
 
 """
-Test the launch and stop of simple models and ensembles that use base
+Test the launch and stop of simple applications and ensembles that use base
 RunSettings while on WLM that do not include a run command
 
 These tests will execute code (very light scripts) on the head node
@@ -49,37 +49,37 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_simple_model_on_wlm(fileutils, test_dir, wlmutils):
+def test_simple_application_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "lsf"]:
         pytest.skip("Test only runs on systems with LSF, PBSPro, or Slurm as WLM")
 
-    exp_name = "test-simplebase-settings-model-launch"
+    exp_name = "test-simplebase-settings-application-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")
-    M = exp.create_model("m", path=test_dir, run_settings=settings)
+    M = exp.create_application("m", path=test_dir, run_settings=settings)
 
-    # launch model twice to show that it can also be restarted
+    # launch application twice to show that it can also be restarted
     for _ in range(2):
         exp.start(M, block=True)
         assert exp.get_status(M)[0] == SmartSimStatus.STATUS_COMPLETED
 
 
-def test_simple_model_stop_on_wlm(fileutils, test_dir, wlmutils):
+def test_simple_application_stop_on_wlm(fileutils, test_dir, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "lsf"]:
         pytest.skip("Test only runs on systems with LSF, PBSPro, or Slurm as WLM")
 
-    exp_name = "test-simplebase-settings-model-stop"
+    exp_name = "test-simplebase-settings-application-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher(), exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")
-    M = exp.create_model("m", path=test_dir, run_settings=settings)
+    M = exp.create_application("m", path=test_dir, run_settings=settings)
 
-    # stop launched model
+    # stop launched application
     exp.start(M, block=False)
     time.sleep(2)
     exp.stop(M)

@@ -296,14 +296,14 @@ def test_load_manifest(fileutils: FileUtils, test_dir: str, config: cfg.Config):
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 6
 
-    assert len(manifest.runs[0].models) == 1
-    assert len(manifest.runs[2].models) == 8  # 8 models in ensemble
-    assert len(manifest.runs[0].orchestrators) == 0
-    assert len(manifest.runs[1].orchestrators) == 3  # 3 shards in db
+    assert len(manifest.runs[0].applications) == 1
+    assert len(manifest.runs[2].applications) == 8  # 8 applications in ensemble
+    assert len(manifest.runs[0].featurestores) == 0
+    assert len(manifest.runs[1].featurestores) == 3  # 3 shards in fs
 
 
-def test_load_manifest_colo_model(fileutils: FileUtils):
-    """Ensure that the runtime manifest loads correctly when containing a colocated model"""
+def test_load_manifest_colo_application(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing a colocated application"""
     # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/colocatedmodel.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -315,11 +315,11 @@ def test_load_manifest_colo_model(fileutils: FileUtils):
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
 
-    assert len(manifest.runs[0].models) == 1
+    assert len(manifest.runs[0].applications) == 1
 
 
-def test_load_manifest_serial_models(fileutils: FileUtils):
-    """Ensure that the runtime manifest loads correctly when containing multiple models"""
+def test_load_manifest_serial_applications(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing multiple applications"""
     # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/serialmodels.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -331,12 +331,12 @@ def test_load_manifest_serial_models(fileutils: FileUtils):
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
 
-    assert len(manifest.runs[0].models) == 5
+    assert len(manifest.runs[0].applications) == 5
 
 
-def test_load_manifest_db_and_models(fileutils: FileUtils):
-    """Ensure that the runtime manifest loads correctly when containing models &
-    orchestrator across 2 separate runs"""
+def test_load_manifest_fs_and_applications(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing applications &
+    feature store across 2 separate runs"""
     # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/db_and_model.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
@@ -348,19 +348,19 @@ def test_load_manifest_db_and_models(fileutils: FileUtils):
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 2
 
-    assert len(manifest.runs[0].orchestrators) == 1
-    assert len(manifest.runs[1].models) == 1
+    assert len(manifest.runs[0].featurestores) == 1
+    assert len(manifest.runs[1].applications) == 1
 
     # verify collector paths from manifest are deserialized to collector config
-    assert manifest.runs[0].orchestrators[0].collectors["client"]
-    assert manifest.runs[0].orchestrators[0].collectors["memory"]
+    assert manifest.runs[0].featurestores[0].collectors["client"]
+    assert manifest.runs[0].featurestores[0].collectors["memory"]
     # verify collector paths missing from manifest are empty
-    assert not manifest.runs[0].orchestrators[0].collectors["client_count"]
+    assert not manifest.runs[0].featurestores[0].collectors["client_count"]
 
 
-def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
-    """Ensure that the runtime manifest loads correctly when containing models &
-    orchestrator in a single run"""
+def test_load_manifest_fs_and_applications_1run(fileutils: FileUtils):
+    """Ensure that the runtime manifest loads correctly when containing applications &
+    featurestore in a single run"""
     # NOTE: for regeneration, this manifest can use `test_telemetry_colo`
     sample_manifest_path = fileutils.get_test_conf_path(
         "telemetry/db_and_model_1run.json"
@@ -374,21 +374,33 @@ def test_load_manifest_db_and_models_1run(fileutils: FileUtils):
     assert manifest.launcher == "Slurm"
     assert len(manifest.runs) == 1
 
-    assert len(manifest.runs[0].orchestrators) == 1
-    assert len(manifest.runs[0].models) == 1
+    assert len(manifest.runs[0].featurestores) == 1
+    assert len(manifest.runs[0].applications) == 1
 
 
 @pytest.mark.parametrize(
-    ["task_id", "step_id", "etype", "exp_isorch", "exp_ismanaged"],
+    ["task_id", "step_id", "etype", "exp_isfeature_store", "exp_ismanaged"],
     [
-        pytest.param("123", "", "model", False, False, id="unmanaged, non-orch"),
-        pytest.param("456", "123", "ensemble", False, True, id="managed, non-orch"),
-        pytest.param("789", "987", "orchestrator", True, True, id="managed, orch"),
-        pytest.param("987", "", "orchestrator", True, False, id="unmanaged, orch"),
+        pytest.param(
+            "123", "", "application", False, False, id="unmanaged, non-feature_store"
+        ),
+        pytest.param(
+            "456", "123", "ensemble", False, True, id="managed, non-feature_store"
+        ),
+        pytest.param(
+            "789", "987", "featurestore", True, True, id="managed, feature_store"
+        ),
+        pytest.param(
+            "987", "", "featurestore", True, False, id="unmanaged, feature_store"
+        ),
     ],
 )
 def test_persistable_computed_properties(
-    task_id: str, step_id: str, etype: str, exp_isorch: bool, exp_ismanaged: bool
+    task_id: str,
+    step_id: str,
+    etype: str,
+    exp_isfeature_store: bool,
+    exp_ismanaged: bool,
 ):
     name = f"test-{etype}-{uuid.uuid4()}"
     timestamp = get_ts_ms()
@@ -407,12 +419,12 @@ def test_persistable_computed_properties(
     persistable = persistables[0] if persistables else None
 
     assert persistable.is_managed == exp_ismanaged
-    assert persistable.is_db == exp_isorch
+    assert persistable.is_fs == exp_isfeature_store
 
 
 def test_deserialize_ensemble(fileutils: FileUtils):
-    """Ensure that the children of ensembles (models) are correctly
-    placed in the models collection"""
+    """Ensure that the children of ensembles (applications) are correctly
+    placed in the applications collection"""
     sample_manifest_path = fileutils.get_test_conf_path("telemetry/ensembles.json")
     sample_manifest = pathlib.Path(sample_manifest_path)
     assert sample_manifest.exists()
@@ -424,7 +436,7 @@ def test_deserialize_ensemble(fileutils: FileUtils):
 
     # NOTE: no longer returning ensembles, only children...
     # assert len(manifest.runs[0].ensembles) == 1
-    assert len(manifest.runs[0].models) == 8
+    assert len(manifest.runs[0].applications) == 8
 
 
 def test_shutdown_conditions__no_monitored_jobs(test_dir: str):
@@ -459,17 +471,17 @@ def test_shutdown_conditions__has_monitored_job(test_dir: str):
     telmon._action_handler = mani_handler
 
     assert not telmon._can_shutdown()
-    assert not bool(mani_handler.job_manager.db_jobs)
+    assert not bool(mani_handler.job_manager.fs_jobs)
     assert bool(mani_handler.job_manager.jobs)
 
 
-def test_shutdown_conditions__has_db(test_dir: str):
-    """Show that an event handler w/a monitored db cannot shutdown"""
+def test_shutdown_conditions__has_fs(test_dir: str):
+    """Show that an event handler w/a monitored fs cannot shutdown"""
     job_entity1 = JobEntity()
     job_entity1.name = "xyz"
     job_entity1.step_id = "123"
     job_entity1.task_id = ""
-    job_entity1.type = "orchestrator"  # <---- make entity appear as db
+    job_entity1.type = "featurestore"  # <---- make entity appear as fs
 
     mani_handler = ManifestEventHandler("xyz")
     ## TODO: see next comment and combine an add_job method on manieventhandler
@@ -486,7 +498,7 @@ def test_shutdown_conditions__has_db(test_dir: str):
     telmon._action_handler = mani_handler  # replace w/mock handler
 
     assert not telmon._can_shutdown()
-    assert bool([j for j in mani_handler._tracked_jobs.values() if j.is_db])
+    assert bool([j for j in mani_handler._tracked_jobs.values() if j.is_fs])
     assert not bool(mani_handler.job_manager.jobs)
 
 
@@ -554,10 +566,10 @@ async def test_auto_shutdown__no_jobs(test_dir: str, expected_duration: int):
     ],
 )
 @pytest.mark.asyncio
-async def test_auto_shutdown__has_db(
+async def test_auto_shutdown__has_fs(
     test_dir: str, cooldown_ms: int, task_duration_ms: int
 ):
-    """Ensure that the cooldown timer is respected with a running db"""
+    """Ensure that the cooldown timer is respected with a running fs"""
 
     class FauxObserver:
         """Mock for the watchdog file system event listener"""
@@ -575,10 +587,10 @@ async def test_auto_shutdown__has_db(
             return True
 
     entity = JobEntity()
-    entity.name = "db_0"
+    entity.name = "fs_0"
     entity.step_id = "123"
     entity.task_id = ""
-    entity.type = "orchestrator"
+    entity.type = "featurestore"
     entity.telemetry_on = True
     entity.status_dir = test_dir
 
@@ -611,12 +623,12 @@ async def test_auto_shutdown__has_db(
     assert observer.stop_count == 1
 
 
-def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
-    """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
-    with unique db_identifiers"""
+def test_telemetry_single_application(fileutils, test_dir, wlmutils, config):
+    """Test that it is possible to create_database then colocate_fs_uds/colocate_fs_tcp
+    with unique fs_identifiers"""
 
     # Set experiment name
-    exp_name = "telemetry_single_model"
+    exp_name = "telemetry_single_application"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -630,11 +642,11 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     app_settings.set_nodes(1)
     app_settings.set_tasks_per_node(1)
 
-    # Create the SmartSim Model
-    smartsim_model = exp.create_model("perroquet", app_settings)
-    exp.generate(smartsim_model)
-    exp.start(smartsim_model, block=True)
-    assert exp.get_status(smartsim_model)[0] == SmartSimStatus.STATUS_COMPLETED
+    # Create the SmartSim Aapplication
+    smartsim_application = exp.create_application("perroquet", app_settings)
+    exp.generate(smartsim_application)
+    exp.start(smartsim_application, block=True)
+    assert exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
 
     telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
     start_events = list(telemetry_output_path.rglob("start.json"))
@@ -644,7 +656,7 @@ def test_telemetry_single_model(fileutils, test_dir, wlmutils, config):
     assert len(stop_events) == 1
 
 
-def test_telemetry_single_model_nonblocking(
+def test_telemetry_single_application_nonblocking(
     fileutils, test_dir, wlmutils, monkeypatch, config
 ):
     """Ensure that the telemetry monitor logs exist when the experiment
@@ -653,7 +665,7 @@ def test_telemetry_single_model_nonblocking(
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "test_telemetry_single_model_nonblocking"
+        exp_name = "test_telemetry_single_application_nonblocking"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
@@ -667,15 +679,17 @@ def test_telemetry_single_model_nonblocking(
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
-        # Create the SmartSim Model
-        smartsim_model = exp.create_model("perroquet", app_settings)
-        exp.generate(smartsim_model)
-        exp.start(smartsim_model)
+        # Create the SmartSim Application
+        smartsim_application = exp.create_application("perroquet", app_settings)
+        exp.generate(smartsim_application)
+        exp.start(smartsim_application)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(smartsim_model)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert (
+            exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+        )
 
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
@@ -684,15 +698,17 @@ def test_telemetry_single_model_nonblocking(
         assert len(stop_events) == 1
 
 
-def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_serial_applications(
+    fileutils, test_dir, wlmutils, monkeypatch, config
+):
     """
-    Test telemetry with models being run in serial (one after each other)
+    Test telemetry with applications being run in serial (one after each other)
     """
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "telemetry_serial_models"
+        exp_name = "telemetry_serial_applications"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
@@ -706,16 +722,16 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, con
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
-        # Create the SmartSim Model
-        smartsim_models = [
-            exp.create_model(f"perroquet_{i}", app_settings) for i in range(5)
+        # Create the SmartSim Aapplication
+        smartsim_applications = [
+            exp.create_application(f"perroquet_{i}", app_settings) for i in range(5)
         ]
-        exp.generate(*smartsim_models)
-        exp.start(*smartsim_models, block=True)
+        exp.generate(*smartsim_applications)
+        exp.start(*smartsim_applications, block=True)
         assert all(
             [
                 status == SmartSimStatus.STATUS_COMPLETED
-                for status in exp.get_status(*smartsim_models)
+                for status in exp.get_status(*smartsim_applications)
             ]
         )
 
@@ -727,18 +743,18 @@ def test_telemetry_serial_models(fileutils, test_dir, wlmutils, monkeypatch, con
         assert len(stop_events) == 5
 
 
-def test_telemetry_serial_models_nonblocking(
+def test_telemetry_serial_applications_nonblocking(
     fileutils, test_dir, wlmutils, monkeypatch, config
 ):
     """
-    Test telemetry with models being run in serial (one after each other)
+    Test telemetry with applications being run in serial (one after each other)
     in a non-blocking experiment
     """
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "telemetry_serial_models"
+        exp_name = "telemetry_serial_applications"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
@@ -752,12 +768,12 @@ def test_telemetry_serial_models_nonblocking(
         app_settings.set_nodes(1)
         app_settings.set_tasks_per_node(1)
 
-        # Create the SmartSim Model
-        smartsim_models = [
-            exp.create_model(f"perroquet_{i}", app_settings) for i in range(5)
+        # Create the SmartSim Aapplication
+        smartsim_applications = [
+            exp.create_application(f"perroquet_{i}", app_settings) for i in range(5)
         ]
-        exp.generate(*smartsim_models)
-        exp.start(*smartsim_models)
+        exp.generate(*smartsim_applications)
+        exp.start(*smartsim_applications)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
@@ -765,7 +781,7 @@ def test_telemetry_serial_models_nonblocking(
         assert all(
             [
                 status == SmartSimStatus.STATUS_COMPLETED
-                for status in exp.get_status(*smartsim_models)
+                for status in exp.get_status(*smartsim_applications)
             ]
         )
 
@@ -776,15 +792,15 @@ def test_telemetry_serial_models_nonblocking(
         assert len(stop_events) == 5
 
 
-def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_fs_only_with_generate(test_dir, wlmutils, monkeypatch, config):
     """
-    Test telemetry with only a database running
+    Test telemetry with only a feature store running
     """
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "telemetry_db_with_generate"
+        exp_name = "telemetry_fs_with_generate"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
@@ -794,14 +810,16 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        # create regular database
-        orc = exp.create_database(port=test_port, interface=test_interface)
-        exp.generate(orc)
+        # create regular feature store
+        feature_store = exp.create_feature_store(
+            port=test_port, interface=test_interface
+        )
+        exp.generate(feature_store)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
         try:
-            exp.start(orc, block=True)
+            exp.start(feature_store, block=True)
 
             snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
@@ -811,24 +829,24 @@ def test_telemetry_db_only_with_generate(test_dir, wlmutils, monkeypatch, config
             assert len(start_events) == 1
             assert len(stop_events) <= 1
         finally:
-            exp.stop(orc)
+            exp.stop(feature_store)
             snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
+        assert exp.get_status(feature_store)[0] == SmartSimStatus.STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_fs_only_without_generate(test_dir, wlmutils, monkeypatch, config):
     """
-    Test telemetry with only a non-generated database running
+    Test telemetry with only a non-generated feature store running
     """
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "telemetry_db_only_without_generate"
+        exp_name = "telemetry_fs_only_without_generate"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
@@ -838,12 +856,14 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        # create regular database
-        orc = exp.create_database(port=test_port, interface=test_interface)
+        # create regular feature store
+        feature_store = exp.create_feature_store(
+            port=test_port, interface=test_interface
+        )
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
         try:
-            exp.start(orc)
+            exp.start(feature_store)
 
             snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
@@ -853,25 +873,27 @@ def test_telemetry_db_only_without_generate(test_dir, wlmutils, monkeypatch, con
             assert len(start_events) == 1
             assert len(stop_events) == 0
         finally:
-            exp.stop(orc)
+            exp.stop(feature_store)
 
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
-        assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
+        assert exp.get_status(feature_store)[0] == SmartSimStatus.STATUS_CANCELLED
 
         stop_events = list(telemetry_output_path.rglob("stop.json"))
         assert len(stop_events) == 1
 
 
-def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, config):
+def test_telemetry_fs_and_application(
+    fileutils, test_dir, wlmutils, monkeypatch, config
+):
     """
-    Test telemetry with only a database and a model running
+    Test telemetry with only a feature store and a application running
     """
 
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
 
         # Set experiment name
-        exp_name = "telemetry_db_and_model"
+        exp_name = "telemetry_fs_and_application"
 
         # Retrieve parameters from testing environment
         test_launcher = wlmutils.get_test_launcher()
@@ -882,29 +904,33 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        # create regular database
-        orc = exp.create_database(port=test_port, interface=test_interface)
-        exp.generate(orc)
+        # create regular feature store
+        feature_store = exp.create_feature_store(
+            port=test_port, interface=test_interface
+        )
+        exp.generate(feature_store)
         try:
-            exp.start(orc)
+            exp.start(feature_store)
 
             # create run settings
             app_settings = exp.create_run_settings(sys.executable, test_script)
             app_settings.set_nodes(1)
             app_settings.set_tasks_per_node(1)
 
-            # Create the SmartSim Model
-            smartsim_model = exp.create_model("perroquet", app_settings)
-            exp.generate(smartsim_model)
-            exp.start(smartsim_model, block=True)
+            # Create the SmartSim Aapplication
+            smartsim_application = exp.create_application("perroquet", app_settings)
+            exp.generate(smartsim_application)
+            exp.start(smartsim_application, block=True)
         finally:
-            exp.stop(orc)
+            exp.stop(feature_store)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         snooze_blocking(telemetry_output_path, max_delay=10, post_data_delay=1)
 
-        assert exp.get_status(orc)[0] == SmartSimStatus.STATUS_CANCELLED
-        assert exp.get_status(smartsim_model)[0] == SmartSimStatus.STATUS_COMPLETED
+        assert exp.get_status(feature_store)[0] == SmartSimStatus.STATUS_CANCELLED
+        assert (
+            exp.get_status(smartsim_application)[0] == SmartSimStatus.STATUS_COMPLETED
+        )
 
         start_events = list(telemetry_output_path.rglob("database/**/start.json"))
         stop_events = list(telemetry_output_path.rglob("database/**/stop.json"))
@@ -912,8 +938,8 @@ def test_telemetry_db_and_model(fileutils, test_dir, wlmutils, monkeypatch, conf
         assert len(start_events) == 1
         assert len(stop_events) == 1
 
-        start_events = list(telemetry_output_path.rglob("model/**/start.json"))
-        stop_events = list(telemetry_output_path.rglob("model/**/stop.json"))
+        start_events = list(telemetry_output_path.rglob("application/**/start.json"))
+        stop_events = list(telemetry_output_path.rglob("application/**/stop.json"))
         assert len(start_events) == 1
         assert len(stop_events) == 1
 
@@ -961,7 +987,7 @@ def test_telemetry_ensemble(fileutils, test_dir, wlmutils, monkeypatch, config):
 
 def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, config):
     """
-    Test telemetry with only a colocated model running
+    Test telemetry with only a colocated application running
     """
 
     with monkeypatch.context() as ctx:
@@ -976,7 +1002,7 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
         # Create SmartSim Experiment
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
-        smartsim_model = coloutils.setup_test_colo(
+        smartsim_application = coloutils.setup_test_colo(
             fileutils,
             "uds",
             exp,
@@ -984,12 +1010,12 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
             {},
         )
 
-        exp.generate(smartsim_model)
-        exp.start(smartsim_model, block=True)
+        exp.generate(smartsim_application)
+        exp.start(smartsim_application, block=True)
         assert all(
             [
                 status == SmartSimStatus.STATUS_COMPLETED
-                for status in exp.get_status(smartsim_model)
+                for status in exp.get_status(smartsim_application)
             ]
         )
 
@@ -997,7 +1023,7 @@ def test_telemetry_colo(fileutils, test_dir, wlmutils, coloutils, monkeypatch, c
         start_events = list(telemetry_output_path.rglob("start.json"))
         stop_events = list(telemetry_output_path.rglob("stop.json"))
 
-        # the colodb does NOT show up as a unique entity in the telemetry
+        # the colofs does NOT show up as a unique entity in the telemetry
         assert len(start_events) == 1
         assert len(stop_events) == 1
 
@@ -1039,10 +1065,10 @@ def test_telemetry_autoshutdown(
         exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
         rs = RunSettings("python", exe_args=["sleep.py", "1"])
-        model = exp.create_model("model", run_settings=rs)
+        application = exp.create_application("application", run_settings=rs)
 
         start_time = get_ts_ms()
-        exp.start(model, block=True)
+        exp.start(application, block=True)
 
         telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
         empty_mani = list(telemetry_output_path.rglob("manifest.json"))
@@ -1197,39 +1223,39 @@ def test_multistart_experiment(
     rs_m = exp.create_run_settings("echo", ["hello", "world"], run_command=run_command)
     rs_m.set_nodes(1)
     rs_m.set_tasks(1)
-    model = exp.create_model("my-model", run_settings=rs_m)
+    application = exp.create_application("my-application", run_settings=rs_m)
 
-    db = exp.create_database(
-        db_nodes=1,
+    fs = exp.create_feature_store(
+        fs_nodes=1,
         port=wlmutils.get_test_port(),
         interface=wlmutils.get_test_interface(),
     )
 
-    exp.generate(db, ens, model, overwrite=True)
+    exp.generate(fs, ens, application, overwrite=True)
 
     with monkeypatch.context() as ctx:
         ctx.setattr(cfg.Config, "telemetry_frequency", 1)
         ctx.setattr(cfg.Config, "telemetry_cooldown", 45)
 
-        exp.start(model, block=False)
+        exp.start(application, block=False)
 
         # track PID to see that telmon cooldown avoids restarting process
         tm_pid = exp._control._telemetry_monitor.pid
 
-        exp.start(db, block=False)
+        exp.start(fs, block=False)
         # check that same TM proc is active
         assert tm_pid == exp._control._telemetry_monitor.pid
         try:
             exp.start(ens, block=True, summary=True)
         finally:
-            exp.stop(db)
+            exp.stop(fs)
             assert tm_pid == exp._control._telemetry_monitor.pid
-            time.sleep(3)  # time for telmon to write db stop event
+            time.sleep(3)  # time for telmon to write fs stop event
 
     telemetry_output_path = pathlib.Path(test_dir) / config.telemetry_subdir
 
-    db_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
-    assert len(db_start_events) == 1
+    fs_start_events = list(telemetry_output_path.rglob("database/**/start.json"))
+    assert len(fs_start_events) == 1
 
     m_start_events = list(telemetry_output_path.rglob("model/**/start.json"))
     assert len(m_start_events) == 1
@@ -1303,7 +1329,7 @@ async def test_wlm_completion_handling(
         job_entity.step_id = "faux-step-id"
         job_entity.task_id = 1234
         job_entity.status_dir = test_dir
-        job_entity.type = "orchestrator"
+        job_entity.type = "featurestore"
 
         job = Job(job_entity.name, job_entity.step_id, job_entity, "slurm", True)
 

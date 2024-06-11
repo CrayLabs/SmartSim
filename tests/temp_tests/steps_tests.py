@@ -101,7 +101,7 @@ def test_instantiate_batch_settings(
     run_settings = settings_type()
     run_settings.in_batch = True
     batch_settings = batch_settings_type()
-    model = Model(exe="echo", exe_args="hello", name="model_name", run_settings=run_settings, batch_settings=batch_settings)
+    model = Application(exe="echo", exe_args="hello", name="model_name", run_settings=run_settings, batch_settings=batch_settings)
     jobStep = step_type(entity=model, batch_settings=model.batch_settings)
     assert jobStep.batch_settings == batch_settings
     assert jobStep.entity == model

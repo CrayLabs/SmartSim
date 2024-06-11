@@ -44,7 +44,7 @@ containerURI = "docker://alrigazzi/smartsim-testing:latest"
 def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
-    Finally, the tensor is used to run a model.
+    Finally, the tensor is used to run a application.
 
     Note: This is a containerized port of test_smartredis.py for WLM system
     """
@@ -59,12 +59,12 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher=launcher
     )
 
-    # create and start a database
-    orc = exp.create_database(
+    # create and start a feature store
+    feature_store = exp.create_feature_store(
         port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface()
     )
-    exp.generate(orc)
-    exp.start(orc, block=False)
+    exp.generate(feature_store)
+    exp.start(feature_store, block=False)
 
     container = Singularity(containerURI)
     rs = exp.create_run_settings(
@@ -87,16 +87,16 @@ def test_singularity_wlm_smartredis(fileutils, test_dir, wlmutils):
 
     exp.generate(ensemble)
 
-    # start the models
+    # start the applications
     exp.start(ensemble, summary=False)
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
     if not all([stat == SmartSimStatus.STATUS_COMPLETED for stat in statuses]):
-        exp.stop(orc)
+        exp.stop(feature_store)
         assert False  # client ensemble failed
 
-    # stop the orchestrator
-    exp.stop(orc)
+    # stop the feature store
+    exp.stop(feature_store)
 
     print(exp.summary())

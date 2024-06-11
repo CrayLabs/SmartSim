@@ -91,6 +91,7 @@ launches that utilize a parallel launch binary like
 
 .. autosummary::
 
+    RunSettings.add_exe_args
     RunSettings.update_env
 
 .. autoclass:: RunSettings
@@ -120,6 +121,7 @@ steps to a batch.
     SrunSettings.set_hostlist
     SrunSettings.set_excluded_hosts
     SrunSettings.set_cpus_per_task
+    SrunSettings.add_exe_args
     SrunSettings.format_run_args
     SrunSettings.format_env_vars
     SrunSettings.update_env
@@ -151,6 +153,7 @@ and within batch launches (e.g., ``QsubBatchSettings``)
     AprunSettings.set_tasks
     AprunSettings.set_tasks_per_node
     AprunSettings.make_mpmd
+    AprunSettings.add_exe_args
     AprunSettings.format_run_args
     AprunSettings.format_env_vars
     AprunSettings.update_env
@@ -236,6 +239,7 @@ supported on Slurm and PBSpro.
     MpirunSettings.set_tasks
     MpirunSettings.set_task_map
     MpirunSettings.make_mpmd
+    MpirunSettings.add_exe_args
     MpirunSettings.format_run_args
     MpirunSettings.format_env_vars
     MpirunSettings.update_env
@@ -262,6 +266,7 @@ supported on Slurm and PBSpro.
     MpiexecSettings.set_tasks
     MpiexecSettings.set_task_map
     MpiexecSettings.make_mpmd
+    MpiexecSettings.add_exe_args
     MpiexecSettings.format_run_args
     MpiexecSettings.format_env_vars
     MpiexecSettings.update_env
@@ -288,6 +293,7 @@ supported on Slurm and PBSpro.
     OrterunSettings.set_tasks
     OrterunSettings.set_task_map
     OrterunSettings.make_mpmd
+    OrterunSettings.add_exe_args
     OrterunSettings.format_run_args
     OrterunSettings.format_env_vars
     OrterunSettings.update_env

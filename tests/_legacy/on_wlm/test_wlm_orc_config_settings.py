@@ -43,61 +43,61 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm_single(dbutils, prepare_db, single_db):
+def test_config_methods_on_wlm_single(fsutils, prepare_db, single_db):
     """Test all configuration file edit methods on single node WLM db"""
 
-    db = prepare_db(single_db).orchestrator
+    fs = prepare_fs(single_fs).featurestore
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
-    configs = dbutils.get_db_configs()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
         logger.debug(f"Setting {setting}={value}")
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
-    # ensure SmartSimError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    # ensure SmartSimError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    ss_error_configs = fsutils.get_smartsim_error_fs_configs()
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)
 
-    # ensure TypeError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    type_error_configs = dbutils.get_type_error_db_configs()
+    # ensure TypeError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    type_error_configs = fsutils.get_type_error_fs_configs()
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)
 
 
-def test_config_methods_on_wlm_cluster(dbutils, prepare_db, clustered_db):
+def test_config_methods_on_wlm_cluster(fsutils, prepare_fs, clustered_fs):
     """Test all configuration file edit methods on an active clustered db"""
 
-    db = prepare_db(clustered_db).orchestrator
+    fs = prepare_fs(clustered_fs).featurestore
     # test the happy path and ensure all configuration file edit methods
     # successfully execute when given correct key-value pairs
-    configs = dbutils.get_db_configs()
+    configs = fsutils.get_fs_configs()
     for setting, value in configs.items():
         logger.debug(f"Setting {setting}={value}")
-        config_set_method = dbutils.get_config_edit_method(db, setting)
+        config_set_method = fsutils.get_config_edit_method(fs, setting)
         config_set_method(value)
 
-    # ensure SmartSimError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    # ensure SmartSimError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    ss_error_configs = fsutils.get_smartsim_error_fs_configs()
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
                 logger.debug(f"Setting {key}={value}")
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)
 
-    # ensure TypeError is raised when a clustered database's
-    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
-    type_error_configs = dbutils.get_type_error_db_configs()
+    # ensure TypeError is raised when a clustered feature store's
+    # FeatureStore.set_fs_conf is given invalid CONFIG key-value pairs
+    type_error_configs = fsutils.get_type_error_fs_configs()
     for key, value_list in type_error_configs.items():
         for value in value_list:
             with pytest.raises(TypeError):
                 logger.debug(f"Setting {key}={value}")
-                db.set_db_conf(key, value)
+                fs.set_fs_conf(key, value)

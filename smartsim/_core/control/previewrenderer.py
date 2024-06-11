@@ -65,7 +65,7 @@ def as_toggle(_eval_ctx: u.F, value: bool) -> str:
 
 @pass_eval_context
 def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
-    """Extract Network Interface from orchestrator run settings."""
+    """Extract Network Interface from feature store run settings."""
     if value:
         for val in value:
             if "ifname=" in val:
@@ -75,12 +75,12 @@ def get_ifname(_eval_ctx: u.F, value: t.List[str]) -> str:
 
 
 @pass_eval_context
-def get_dbtype(_eval_ctx: u.F, value: str) -> str:
-    """Extract data base type."""
+def get_fstype(_eval_ctx: u.F, value: str) -> str:
+    """Extract feature store type."""
     if value:
         if "-cli" in value:
-            db_type, _ = value.split("/")[-1].split("-", 1)
-            return db_type
+            fs_type, _ = value.split("/")[-1].split("-", 1)
+            return fs_type
     return ""
 
 
@@ -112,7 +112,7 @@ def render(
     verbosity_level: Verbosity = Verbosity.INFO,
     output_format: Format = Format.PLAINTEXT,
     output_filename: t.Optional[str] = None,
-    active_dbjobs: t.Optional[t.Dict[str, Job]] = None,
+    active_fsjobs: t.Optional[t.Dict[str, Job]] = None,
 ) -> str:
     """
     Render the template from the supplied entities.
@@ -133,7 +133,7 @@ def render(
 
     env.filters["as_toggle"] = as_toggle
     env.filters["get_ifname"] = get_ifname
-    env.filters["get_dbtype"] = get_dbtype
+    env.filters["get_fstype"] = get_fstype
     env.filters["is_list"] = is_list
     env.globals["Verbosity"] = Verbosity
 
@@ -150,7 +150,7 @@ def render(
 
     rendered_preview = tpl.render(
         exp_entity=exp,
-        active_dbjobs=active_dbjobs,
+        active_dbjobs=active_fsjobs,
         manifest=manifest,
         config=CONFIG,
         verbosity_level=verbosity_level,

@@ -63,19 +63,19 @@ def test_set_het_groups(monkeypatch, test_dir):
         rs.set_het_group([4])
 
 
-def test_orch_single_cmd(monkeypatch, wlmutils, test_dir):
+def test_feature_store_single_cmd(monkeypatch, wlmutils, test_dir):
     """Test that single cmd is rejected in a heterogeneous job"""
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
-    exp_name = "test-orch-single-cmd"
+    exp_name = "test-feature-store-single-cmd"
     exp = Experiment(exp_name, launcher="slurm", exp_path=test_dir)
-    orc = exp.create_database(
+    feature_store = exp.create_feature_store(
         wlmutils.get_test_port(),
-        db_nodes=3,
+        fs_nodes=3,
         batch=False,
         interface=wlmutils.get_test_interface(),
         single_cmd=True,
         hosts=wlmutils.get_test_hostlist(),
     )
 
-    for node in orc:
+    for node in feature_store:
         assert node.is_mpmd == False

@@ -30,7 +30,7 @@ from copy import deepcopy
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Ensemble, Model
+from smartsim.entity import Application, Ensemble
 from smartsim.error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from smartsim.settings import RunSettings
 
@@ -49,7 +49,7 @@ TODO: test to add
 # ---- helpers ------------------------------------------------------
 
 
-def step_values(param_names, param_values, n_models=0):
+def step_values(param_names, param_values, n_applications=0):
     permutations = []
     for p in zip(*param_values):
         permutations.append(dict(zip(param_names, p)))
@@ -58,13 +58,13 @@ def step_values(param_names, param_values, n_models=0):
 
 # bad permutation strategy that doesn't return
 # a list of dictionaries
-def bad_strategy(names, values, n_models=0):
+def bad_strategy(names, values, n_applications=0):
     return -1
 
 
 # test bad perm strategy that returns a list but of lists
 # not dictionaries
-def bad_strategy_2(names, values, n_models=0):
+def bad_strategy_2(names, values, n_applications=0):
     return [values]
 
 
@@ -88,11 +88,11 @@ def test_step():
     ensemble = Ensemble("step", params, run_settings=rs, perm_strat="step")
     assert len(ensemble) == 2
 
-    model_1_params = {"h": "5", "g": "7"}
-    assert ensemble.entities[0].params == model_1_params
+    application_1_params = {"h": "5", "g": "7"}
+    assert ensemble.entities[0].params == application_1_params
 
-    model_2_params = {"h": "6", "g": "8"}
-    assert ensemble.entities[1].params == model_2_params
+    application_2_params = {"h": "6", "g": "8"}
+    assert ensemble.entities[1].params == application_2_params
 
 
 def test_random():
@@ -104,7 +104,7 @@ def test_random():
         params,
         run_settings=rs,
         perm_strat="random",
-        n_models=len(random_ints),
+        n_applications=len(random_ints),
     )
     assert len(ensemble) == len(random_ints)
     assigned_params = [m.params["h"] for m in ensemble.entities]
@@ -115,7 +115,7 @@ def test_random():
         params,
         run_settings=rs,
         perm_strat="random",
-        n_models=len(random_ints) - 1,
+        n_applications=len(random_ints) - 1,
     )
     assert len(ensemble) == len(random_ints) - 1
     assigned_params = [m.params["h"] for m in ensemble.entities]
@@ -128,14 +128,14 @@ def test_user_strategy():
     ensemble = Ensemble("step", params, run_settings=rs, perm_strat=step_values)
     assert len(ensemble) == 2
 
-    model_1_params = {"h": "5", "g": "7"}
-    assert ensemble.entities[0].params == model_1_params
+    application_1_params = {"h": "5", "g": "7"}
+    assert ensemble.entities[0].params == application_1_params
 
-    model_2_params = {"h": "6", "g": "8"}
-    assert ensemble.entities[1].params == model_2_params
+    application_2_params = {"h": "6", "g": "8"}
+    assert ensemble.entities[1].params == application_2_params
 
 
-# ----- Model arguments -------------------------------------
+# ----- Application arguments -------------------------------------
 
 
 def test_arg_params():
@@ -161,9 +161,9 @@ def test_arg_params():
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
 
 
-def test_arg_and_model_params_step():
+def test_arg_and_application_params_step():
     """Test parameterized exe arguments combined with
-    model parameters and step strategy
+    application parameters and step strategy
     """
     params = {"H": [5, 6], "g_param": ["a", "b"], "h": [5, 6], "g": [7, 8]}
 
@@ -185,16 +185,16 @@ def test_arg_and_model_params_step():
     exe_args_1 = rs_orig_args + ["-H", "6", "--g_param=b"]
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
 
-    model_1_params = {"H": "5", "g_param": "a", "h": "5", "g": "7"}
-    assert ensemble.entities[0].params == model_1_params
+    application_1_params = {"H": "5", "g_param": "a", "h": "5", "g": "7"}
+    assert ensemble.entities[0].params == application_1_params
 
-    model_2_params = {"H": "6", "g_param": "b", "h": "6", "g": "8"}
-    assert ensemble.entities[1].params == model_2_params
+    application_2_params = {"H": "6", "g_param": "b", "h": "6", "g": "8"}
+    assert ensemble.entities[1].params == application_2_params
 
 
-def test_arg_and_model_params_all_perms():
+def test_arg_and_application_params_all_perms():
     """Test parameterized exe arguments combined with
-    model parameters and all_perm strategy
+    application parameters and all_perm strategy
     """
     params = {"h": [5, 6], "g_param": ["a", "b"]}
 
@@ -218,14 +218,14 @@ def test_arg_and_model_params_all_perms():
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
     assert ensemble.entities[3].run_settings.exe_args == exe_args_1
 
-    model_0_params = {"g_param": "a", "h": "5"}
-    assert ensemble.entities[0].params == model_0_params
-    model_1_params = {"g_param": "b", "h": "5"}
-    assert ensemble.entities[1].params == model_1_params
-    model_2_params = {"g_param": "a", "h": "6"}
-    assert ensemble.entities[2].params == model_2_params
-    model_3_params = {"g_param": "b", "h": "6"}
-    assert ensemble.entities[3].params == model_3_params
+    application_0_params = {"g_param": "a", "h": "5"}
+    assert ensemble.entities[0].params == application_0_params
+    application_1_params = {"g_param": "b", "h": "5"}
+    assert ensemble.entities[1].params == application_1_params
+    application_2_params = {"g_param": "a", "h": "6"}
+    assert ensemble.entities[2].params == application_2_params
+    application_3_params = {"g_param": "b", "h": "6"}
+    assert ensemble.entities[3].params == application_3_params
 
 
 # ----- Error Handling --------------------------------------
@@ -258,41 +258,41 @@ def test_incorrect_param_type():
         e = Ensemble("ensemble", params, run_settings=rs)
 
 
-def test_add_model_type():
+def test_add_application_type():
     params = {"h": 5}
     e = Ensemble("ensemble", params, run_settings=rs)
     with pytest.raises(TypeError):
-        # should be a Model not string
-        e.add_model("model")
+        # should be a Application not string
+        e.add_application("application")
 
 
-def test_add_existing_model():
+def test_add_existing_application():
     params_1 = {"h": 5}
     params_2 = {"z": 6}
-    model_1 = Model("identical_name", params_1, "", rs)
-    model_2 = Model("identical_name", params_2, "", rs)
+    application_1 = Application("identical_name", params_1, "", rs)
+    application_2 = Application("identical_name", params_2, "", rs)
     e = Ensemble("ensemble", params_1, run_settings=rs)
-    e.add_model(model_1)
+    e.add_application(application_1)
     with pytest.raises(EntityExistsError):
-        e.add_model(model_2)
+        e.add_application(application_2)
 
 
 # ----- Other --------------------------------------
 
 
-def test_models_property():
+def test_applications_property():
     params = {"h": [5, 6, 7, 8]}
     e = Ensemble("test", params, run_settings=rs)
-    models = e.models
-    assert models == [model for model in e]
+    applications = e.applications
+    assert applications == [application for application in e]
 
 
 def test_key_prefixing():
     params_1 = {"h": [5, 6, 7, 8]}
     params_2 = {"z": 6}
     e = Ensemble("test", params_1, run_settings=rs)
-    model = Model("model", params_2, "", rs)
-    e.add_model(model)
+    application = Application("application", params_2, "", rs)
+    e.add_application(application)
     assert e.query_key_prefixing() == False
     e.enable_key_prefixing()
     assert e.query_key_prefixing() == True

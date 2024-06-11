@@ -40,8 +40,8 @@ from smartsim._core.control.manifest import (
 from smartsim._core.control.manifest import (
     _LaunchedManifestMetadata as LaunchedManifestMetadata,
 )
-from smartsim.database import Orchestrator
-from smartsim.entity.dbobject import DBModel, DBScript
+from smartsim.database import FeatureStore
+from smartsim.entity.dbobject import FSModel, FSScript
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 
@@ -54,25 +54,25 @@ pytestmark = pytest.mark.group_b
 rs = RunSettings("python", "sleep.py")
 
 exp = Experiment("util-test", launcher="local")
-model = exp.create_model("model_1", run_settings=rs)
-model_2 = exp.create_model("model_1", run_settings=rs)
+application = exp.create_application("application_1", run_settings=rs)
+application_2 = exp.create_application("application_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 
-orc = Orchestrator()
-orc_1 = deepcopy(orc)
-orc_1.name = "orc2"
+feature_store = FeatureStore()
+feature_store_1 = deepcopy(feature_store)
+feature_store_1.name = "feature_store2"
 
-db_script = DBScript("some-script", "def main():\n    print('hello world')\n")
-db_model = DBModel("some-model", "TORCH", b"some-model-bytes")
+fs_script = FSScript("some-script", "def main():\n    print('hello world')\n")
+fs_model = FSModel("some-model", "TORCH", b"some-model-bytes")
 
 
 def test_separate():
-    manifest = Manifest(model, ensemble, orc)
-    assert manifest.models[0] == model
-    assert len(manifest.models) == 1
+    manifest = Manifest(application, ensemble, feature_store)
+    assert manifest.applications[0] == application
+    assert len(manifest.applications) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
-    assert manifest.dbs[0] == orc
+    assert manifest.fss[0] == feature_store
 
 
 def test_separate_type():
@@ -82,7 +82,7 @@ def test_separate_type():
 
 def test_name_collision():
     with pytest.raises(SmartSimError):
-        _ = Manifest(model, model_2)
+        _ = Manifest(application, application_2)
 
 
 def test_catch_empty_ensemble():
@@ -106,64 +106,70 @@ def test_corner_case():
 
 
 @pytest.mark.parametrize(
-    "patch, has_db_objects",
+    "patch, has_fs_objects",
     [
-        pytest.param((), False, id="No DB Objects"),
-        pytest.param((model, "_db_models", [db_model]), True, id="Model w/ DB Model"),
+        pytest.param((), False, id="No FS Objects"),
         pytest.param(
-            (model, "_db_scripts", [db_script]), True, id="Model w/ DB Script"
+            (application, "_fs_models", [fs_model]), True, id="Application w/ FS Model"
         ),
         pytest.param(
-            (ensemble, "_db_models", [db_model]), True, id="Ensemble w/ DB Model"
-        ),
-        pytest.param(
-            (ensemble, "_db_scripts", [db_script]), True, id="Ensemble w/ DB Script"
-        ),
-        pytest.param(
-            (ensemble.entities[0], "_db_models", [db_model]),
+            (application, "_fs_scripts", [fs_script]),
             True,
-            id="Ensemble Member w/ DB Model",
+            id="Application w/ FS Script",
         ),
         pytest.param(
-            (ensemble.entities[0], "_db_scripts", [db_script]),
+            (ensemble, "_fs_models", [fs_model]), True, id="Ensemble w/ fs Model"
+        ),
+        pytest.param(
+            (ensemble, "_fs_scripts", [fs_script]), True, id="Ensemble w/ fs Script"
+        ),
+        pytest.param(
+            (ensemble.entities[0], "_fs_models", [fs_model]),
             True,
-            id="Ensemble Member w/ DB Script",
+            id="Ensemble Member w/ fs Model",
+        ),
+        pytest.param(
+            (ensemble.entities[0], "_fs_scripts", [fs_script]),
+            True,
+            id="Ensemble Member w/ fs Script",
         ),
     ],
 )
-def test_manifest_detects_db_objects(monkeypatch, patch, has_db_objects):
+def test_manifest_detects_fs_objects(monkeypatch, patch, has_fs_objects):
     if patch:
         monkeypatch.setattr(*patch)
-    assert Manifest(model, ensemble).has_db_objects == has_db_objects
+    assert Manifest(application, ensemble).has_fs_objects == has_fs_objects
 
 
 def test_launched_manifest_transform_data():
-    models = [(model, 1), (model_2, 2)]
+    applications = [(application, 1), (application_2, 2)]
     ensembles = [(ensemble, [(m, i) for i, m in enumerate(ensemble.entities)])]
-    dbs = [(orc, [(n, i) for i, n in enumerate(orc.entities)])]
+    fss = [(feature_store, [(n, i) for i, n in enumerate(feature_store.entities)])]
     launched = LaunchedManifest(
         metadata=LaunchedManifestMetadata("name", "path", "launcher", "run_id"),
-        models=models,
+        applications=applications,
         ensembles=ensembles,
-        databases=dbs,
+        featurestores=fss,
     )
     transformed = launched.map(lambda x: str(x))
-    assert transformed.models == tuple((m, str(i)) for m, i in models)
+    assert transformed.applications == tuple((m, str(i)) for m, i in applications)
     assert transformed.ensembles[0][1] == tuple((m, str(i)) for m, i in ensembles[0][1])
-    assert transformed.databases[0][1] == tuple((n, str(i)) for n, i in dbs[0][1])
+    assert transformed.featurestores[0][1] == tuple((n, str(i)) for n, i in fss[0][1])
 
 
 def test_launched_manifest_builder_correctly_maps_data():
     lmb = LaunchedManifestBuilder("name", "path", "launcher name", str(uuid4()))
-    lmb.add_model(model, 1)
-    lmb.add_model(model_2, 1)
+    lmb.add_application(application, 1)
+    lmb.add_application(application_2, 1)
     lmb.add_ensemble(ensemble, [i for i in range(len(ensemble.entities))])
-    lmb.add_database(orc, [i for i in range(len(orc.entities))])
+    lmb.add_feature_store(
+        feature_store, [i for i in range(len(feature_store.entities))]
+    )
 
     manifest = lmb.finalize()
-    assert len(manifest.models) == 2
+    assert len(manifest.applications) == 2
     assert len(manifest.ensembles) == 1
-    assert len(manifest.databases) == 1
+    assert len(manifest.featurestores) == 1
 
 
 def test_launced_manifest_builder_raises_if_lens_do_not_match():
@@ -171,7 +177,7 @@ def test_launced_manifest_builder_raises_if_lens_do_not_match():
     with pytest.raises(ValueError):
         lmb.add_ensemble(ensemble, list(range(123)))
     with pytest.raises(ValueError):
-        lmb.add_database(orc, list(range(123)))
+        lmb.add_feature_store(feature_store, list(range(123)))
 
 
 def test_launched_manifest_builer_raises_if_attaching_data_to_empty_collection(

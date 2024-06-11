@@ -58,14 +58,14 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     cleanup()
 
 
-def launch_db_model(client: Client, db_model: t.List[str]) -> str:
+def launch_fs_model(client: Client, fs_model: t.List[str]) -> str:
     """Parse options to launch model on local cluster
 
-    :param client: SmartRedis client connected to local DB
-    :param db_model: List of arguments defining the model
+    :param client: SmartRedis client connected to local FS
+    :param fs_model: List of arguments defining the model
     :return: Name of model
     """
-    parser = argparse.ArgumentParser("Set ML model on DB")
+    parser = argparse.ArgumentParser("Set ML model on FS")
     parser.add_argument("--name", type=str)
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
@@ -78,7 +78,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     parser.add_argument("--tag", type=str, default="")
     parser.add_argument("--inputs", nargs="+", default=None)
     parser.add_argument("--outputs", nargs="+", default=None)
-    args = parser.parse_args(db_model)
+    args = parser.parse_args(fs_model)
 
     inputs = None
     outputs = None
@@ -122,14 +122,14 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     return name
 
 
-def launch_db_script(client: Client, db_script: t.List[str]) -> str:
+def launch_fs_script(client: Client, fs_script: t.List[str]) -> str:
     """Parse options to launch script on local cluster
 
-    :param client: SmartRedis client connected to local DB
-    :param db_model: List of arguments defining the script
+    :param client: SmartRedis client connected to local FS
+    :param fs_model: List of arguments defining the script
     :return: Name of model
     """
-    parser = argparse.ArgumentParser("Set script on DB")
+    parser = argparse.ArgumentParser("Set script on FS")
     parser.add_argument("--name", type=str)
     parser.add_argument("--func", type=str)
     parser.add_argument("--file", type=str)
@@ -137,7 +137,7 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     parser.add_argument("--device", type=str)
     parser.add_argument("--devices_per_node", type=int, default=1)
     parser.add_argument("--first_device", type=int, default=0)
-    args = parser.parse_args(db_script)
+    args = parser.parse_args(fs_script)
 
     if args.file and args.func:
         raise ValueError("Both file and func cannot be provided.")
@@ -165,11 +165,11 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
 
 def main(
     network_interface: str,
-    db_cpus: int,
+    fs_cpus: int,
     command: t.List[str],
-    db_models: t.List[t.List[str]],
-    db_scripts: t.List[t.List[str]],
-    db_identifier: str,
+    fs_models: t.List[t.List[str]],
+    fs_scripts: t.List[t.List[str]],
+    fs_identifier: str,
 ) -> None:
     # pylint: disable=too-many-statements
     global DBPID  # pylint: disable=global-statement
@@ -198,7 +198,7 @@ def main(
     try:
         hostname = socket.gethostname()
         filename = (
-            f"colo_orc_{hostname}.log"
+            f"colo_feature_store_{hostname}.log"
             if os.getenv("SMARTSIM_LOG_LEVEL") == "debug"
             else os.devnull
         )
@@ -210,66 +210,68 @@ def main(
 
     except Exception as e:
         cleanup()
-        logger.error(f"Failed to start database process: {str(e)}")
+        logger.error(f"Failed to start feature store process: {str(e)}")
         raise SSInternalError("Colocated process failed to start") from e
 
     try:
         logger.debug(
-            "\n\nColocated database information\n"
+            "\n\nColocated feature store information\n"
             f"\n\tIP Address(es): {' '.join(ip_addresses + [lo_address])}"
             f"\n\tCommand: {' '.join(cmd)}\n\n"
-            f"\n\t# of Database CPUs: {db_cpus}"
-            f"\n\tDatabase Identifier: {db_identifier}"
+            f"\n\t# of Feature Store CPUs: {fs_cpus}"
+            f"\n\tFeature Store Identifier: {fs_identifier}"
         )
     except Exception as e:
         cleanup()
-        logger.error(f"Failed to start database process: {str(e)}")
+        logger.error(f"Failed to start feature store process: {str(e)}")
         raise SSInternalError("Colocated process failed to start") from e
 
-    def launch_models(client: Client, db_models: t.List[t.List[str]]) -> None:
-        for i, db_model in enumerate(db_models):
+    def launch_models(client: Client, fs_models: t.List[t.List[str]]) -> None:
+        for i, fs_model in enumerate(fs_models):
             logger.debug("Uploading model")
-            model_name = launch_db_model(client, db_model)
-            logger.debug(f"Added model {model_name} ({i+1}/{len(db_models)})")
+            model_name = launch_fs_model(client, fs_model)
+            logger.debug(f"Added model {model_name} ({i+1}/{len(fs_models)})")
 
-    def launch_db_scripts(client: Client, db_scripts: t.List[t.List[str]]) -> None:
-        for i, db_script in enumerate(db_scripts):
+    def launch_fs_scripts(client: Client, fs_scripts: t.List[t.List[str]]) -> None:
+        for i, fs_script in enumerate(fs_scripts):
             logger.debug("Uploading script")
-            script_name = launch_db_script(client, db_script)
-            logger.debug(f"Added script {script_name} ({i+1}/{len(db_scripts)})")
+            script_name = launch_fs_script(client, fs_script)
+            logger.debug(f"Added script {script_name} ({i+1}/{len(fs_scripts)})")
 
     try:
-        if db_models or db_scripts:
+        if fs_models or fs_scripts:
             try:
-                options = ConfigOptions.create_from_environment(db_identifier)
+                options = ConfigOptions.create_from_environment(fs_identifier)
                 client = Client(options, logger_name="SmartSim")
-                launch_models(client, db_models)
-                launch_db_scripts(client, db_scripts)
+                launch_models(client, fs_models)
+                launch_fs_scripts(client, fs_scripts)
             except (RedisConnectionError, RedisReplyError) as ex:
                 raise SSInternalError(
-                    "Failed to set model or script, could not connect to database"
+                    "Failed to set model or script, could not connect to feature store"
                 ) from ex
             # Make sure we don't keep this around
             del client
 
     except Exception as e:
         cleanup()
-        logger.error(f"Colocated database process failed: {str(e)}")
+        logger.error(f"Colocated feature store process failed: {str(e)}")
         raise SSInternalError("Colocated entrypoint raised an error") from e
 
 
 def cleanup() -> None:
     try:
-        logger.debug("Cleaning up colocated database")
-        # attempt to stop the database process
-        db_proc = psutil.Process(DBPID)
-        db_proc.terminate()
+        logger.debug("Cleaning up colocated feature store")
+        # attempt to stop the feature store process
+        fs_proc = psutil.Process(DBPID)
+        fs_proc.terminate()
 
     except psutil.NoSuchProcess:
-        logger.warning("Couldn't find database process to kill.")
+        logger.warning("Couldn't find feature store process to kill.")
 
     except OSError as e:
-        logger.warning(f"Failed to clean up colocated database gracefully: {str(e)}")
+        logger.warning(
+            f"Failed to clean up colocated feature store gracefully: {str(e)}"
+        )
     finally:
         if LOCK.is_locked:
             LOCK.release()
@@ -294,27 +296,27 @@ if __name__ == "__main__":
         "+lockfile", type=str, help="Filename to create for single proc per host"
     )
     arg_parser.add_argument(
-        "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
+        "+fs_cpus", type=int, default=2, help="Number of CPUs to use for FS"
     )
 
     arg_parser.add_argument(
-        "+db_identifier", type=str, default="", help="Database Identifier"
+        "+fs_identifier", type=str, default="", help="Feature Store Identifier"
     )
 
     arg_parser.add_argument("+command", nargs="+", help="Command to run")
     arg_parser.add_argument(
-        "+db_model",
+        "+fs_model",
         nargs="+",
         action="append",
         default=[],
-        help="Model to set on DB",
+        help="Model to set on FS",
     )
     arg_parser.add_argument(
-        "+db_script",
+        "+fs_script",
         nargs="+",
         action="append",
         default=[],
-        help="Script to set on DB",
+        help="Script to set on FS",
     )
 
     os.environ["PYTHONUNBUFFERED"] = "1"
@@ -325,20 +327,22 @@ if __name__ == "__main__":
 
         LOCK = filelock.FileLock(tmp_lockfile)
         LOCK.acquire(timeout=0.1)
-        logger.debug(f"Starting colocated database on host: {socket.gethostname()}")
+        logger.debug(
+            f"Starting colocated feature store on host: {socket.gethostname()}"
+        )
 
         # make sure to register the cleanup before we start
         # the proecss so our signaller will be able to stop
-        # the database process.
+        # the feature store process.
         register_signal_handlers()
 
         main(
             parsed_args.ifname,
-            parsed_args.db_cpus,
+            parsed_args.fs_cpus,
             parsed_args.command,
-            parsed_args.db_model,
-            parsed_args.db_script,
-            parsed_args.db_identifier,
+            parsed_args.fs_model,
+            parsed_args.fs_script,
+            parsed_args.fs_identifier,
         )
 
     # gracefully exit the processes in the distributed application that

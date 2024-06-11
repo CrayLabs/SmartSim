@@ -76,9 +76,9 @@ class JobEntity:
         """Flag indicating if the entity has completed execution"""
 
     @property
-    def is_db(self) -> bool:
-        """Returns `True` if the entity represents a database or database shard"""
-        return self.type in ["orchestrator", "dbnode"]
+    def is_fs(self) -> bool:
+        """Returns `True` if the entity represents a feature store or feature store shard"""
+        return self.type in ["featurestore", "fsnode"]
 
     @property
     def is_managed(self) -> bool:
@@ -112,13 +112,13 @@ class JobEntity:
             self._is_complete = True
 
     @staticmethod
-    def _map_db_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
-        """Map DB-specific properties from a runtime manifest onto a `JobEntity`
+    def _map_fs_metadata(entity_dict: t.Dict[str, t.Any], entity: "JobEntity") -> None:
+        """Map FS-specific properties from a runtime manifest onto a `JobEntity`
 
         :param entity_dict: The raw dictionary deserialized from manifest JSON
         :param entity: The entity instance to modify
         """
-        if entity.is_db:
+        if entity.is_fs:
             # add collectors if they're configured to be enabled in the manifest
             entity.collectors = {
                 "client": entity_dict.get("client_file", ""),
@@ -184,7 +184,7 @@ class JobEntity:
         cls._map_standard_metadata(
             entity_type, entity_dict, entity, exp_dir, raw_experiment
         )
-        cls._map_db_metadata(entity_dict, entity)
+        cls._map_fs_metadata(entity_dict, entity)
 
         return entity
 
@@ -222,7 +222,7 @@ class Job:
         # output is only populated if it's system related (e.g. cmd failed immediately)
         self.output: t.Optional[str] = None
         self.error: t.Optional[str] = None  # same as output
-        self.hosts: t.List[str] = []  # currently only used for DB jobs
+        self.hosts: t.List[str] = []  # currently only used for FS jobs
         self.launched_with = launcher
         self.is_task = is_task
         self.start_time = time.time()

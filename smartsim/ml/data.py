@@ -76,12 +76,12 @@ class DataInfo:
         self._ds_name = form_name(self.list_name, "info")
 
     def publish(self, client: Client) -> None:
-        """Upload DataInfo information to Orchestrator
+        """Upload DataInfo information to FeatureStore
 
         The information is put on the DB as a DataSet, with strings
         stored as metastrings and integers stored as metascalars.
 
-        :param client: Client to connect to Database
+        :param client: Client to connect to Feature Store
         """
         info_ds = Dataset(self._ds_name)
         info_ds.add_meta_string("sample_name", self.sample_name)
@@ -92,13 +92,13 @@ class DataInfo:
         client.put_dataset(info_ds)
 
     def download(self, client: Client) -> None:
-        """Download DataInfo information from Orchestrator
+        """Download DataInfo information from FeatureStore
 
         The information retrieved from the DB is used to populate
         this object's members. If the information is not available
         on the DB, the object members are not modified.
 
-        :param client: Client to connect to Database
+        :param client: Client to connect to Feature Store
         """
         try:
             info_ds = client.get_dataset(self._ds_name)
@@ -134,7 +134,7 @@ class TrainingDataUploader:
 
     This class can be used to upload samples following a simple convention
     for naming. Once created, the function `publish_info` can be used
-    to put all details about the data set on the Orchestrator. A training
+    to put all details about the data set on the FeatureStore. A training
     process can thus access them and get all relevant information to download
     the batches which are uploaded.
 
@@ -142,11 +142,11 @@ class TrainingDataUploader:
     and the data will be stored following the naming convention specified
     by the attributes of this class.
 
-    :param list_name: Name of the dataset as stored on the Orchestrator
+    :param list_name: Name of the dataset as stored on the FeatureStore
     :param sample_name: Name of samples tensor in uploaded Datasets
     :param target_name: Name of targets tensor (if needed) in uploaded Datasets
     :param num_classes: Number of classes of targets, if categorical
-    :param cluster: Whether the SmartSim Orchestrator is being run as a cluster
+    :param cluster: Whether the SmartSim FeatureStore is being run as a cluster
     :param address: Address of Redis DB as <ip_address>:<port>
     :param rank: Rank of DataUploader in multi-process application (e.g. MPI rank).
     :param verbose: If output should be logged to screen.
@@ -261,7 +261,7 @@ class DataDownloader:
         download, if a string is passed, it is used to download DataInfo data
         from DB, assuming it was stored with ``list_name=data_info_or_list_name``
     :param list_name: Name of aggregation list used to upload data
-    :param cluster: Whether the Orchestrator will be run as a cluster
+    :param cluster: Whether the FeatureStore will be run as a cluster
     :param address: Address of Redis client as <ip_address>:<port>
     :param replica_rank: When StaticDataDownloader is used distributedly,
         indicates the rank of this object

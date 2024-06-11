@@ -458,7 +458,7 @@ class TelemetryMonitor:
     def _can_shutdown(self) -> bool:
         """Determines if the telemetry monitor can perform shutdown. An
         automatic shutdown will occur if there are no active jobs being monitored.
-        Managed jobs and databases are considered separately due to the way they
+        Managed jobs and feature stores are considered separately due to the way they
         are stored in the job manager
 
         :return: return True if capable of automatically shutting down
@@ -471,20 +471,20 @@ class TelemetryMonitor:
         unmanaged_jobs = (
             list(self._action_handler.tracked_jobs) if self._action_handler else []
         )
-        # get an individual count of databases for logging
-        n_dbs: int = len(
+        # get an individual count of feature stores for logging
+        n_fss: int = len(
             [
                 job
                 for job in managed_jobs + unmanaged_jobs
-                if isinstance(job, JobEntity) and job.is_db
+                if isinstance(job, JobEntity) and job.is_fs
             ]
         )
 
         # if we have no jobs currently being monitored we can shutdown
-        n_jobs = len(managed_jobs) + len(unmanaged_jobs) - n_dbs
-        shutdown_ok = n_jobs + n_dbs == 0
+        n_jobs = len(managed_jobs) + len(unmanaged_jobs) - n_fss
+        shutdown_ok = n_jobs + n_fss == 0
 
-        logger.debug(f"{n_jobs} active job(s), {n_dbs} active db(s)")
+        logger.debug(f"{n_jobs} active job(s), {n_fss} active fs(s)")
         return shutdown_ok
 
     async def monitor(self) -> None:
