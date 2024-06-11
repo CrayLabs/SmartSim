@@ -285,9 +285,9 @@ class MessageHandler:
             raise ValueError("Error building outputs portion of request.") from e
 
     @staticmethod
-    def _assign_output_options(
+    def _assign_output_descriptors(
         request: request_capnp.Request,
-        output_options: t.List[tensor_capnp.OutputDescriptor],
+        output_descriptors: t.List[tensor_capnp.OutputDescriptor],
     ) -> None:
         """
         Assigns a list of output tensor descriptors to the supplied request.
@@ -297,7 +297,7 @@ class MessageHandler:
         :raises ValueError: if building fails
         """
         try:
-            request.outputDescriptors = output_options
+            request.outputDescriptors = output_descriptors
         except Exception as e:
             raise ValueError(
                 "Error building the output descriptors portion of request."
@@ -372,7 +372,7 @@ class MessageHandler:
         MessageHandler._assign_device(request, device)
         MessageHandler._assign_inputs(request, inputs)
         MessageHandler._assign_outputs(request, outputs)
-        MessageHandler._assign_output_options(request, output_descriptors)
+        MessageHandler._assign_output_descriptors(request, output_descriptors)
         MessageHandler._assign_custom_request_attributes(request, custom_attributes)
         return request
 
