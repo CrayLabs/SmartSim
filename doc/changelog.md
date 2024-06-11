@@ -9,6 +9,14 @@ Jump to:
 
 ## SmartSim
 
+### MLI branch
+
+Description
+
+- Added schemas and MessageHandler class for de/serialization of
+  inference requests and response messages
+
+
 ### Development branch
 
 To be released at some future point in time
