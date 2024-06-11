@@ -29,17 +29,19 @@ import shutil
 import typing as t
 from shlex import split as sh_split
 
+from ....entity import Application, Ensemble, FSNode
 from ....error import AllocationError
 from ....log import get_logger
 from ....settings import RunSettings, SbatchSettings, Singularity, SrunSettings
 from .step import Step
-from ....entity import Model, Ensemble, DBNode
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], batch_settings: SbatchSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Application, FSNode], batch_settings: SbatchSettings
+    ) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -99,7 +101,9 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, entity: t.Union[Model, DBNode], run_settings: SrunSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Application, FSNode], run_settings: SrunSettings
+    ) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -142,7 +146,7 @@ class SrunStep(Step):
 
         srun_cmd += self.run_settings.format_run_args()
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             if not bash:
@@ -186,7 +190,7 @@ class SrunStep(Step):
         return self.run_settings.mpmd
 
     @staticmethod
-    def _get_exe_args_list(entity: t.Union[Model, DBNode]) -> t.List[str]:
+    def _get_exe_args_list(entity: t.Union[Application, FSNode]) -> t.List[str]:
         """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list
         """
@@ -216,7 +220,7 @@ class SrunStep(Step):
         cmd = exe + args
 
         compound_env_vars = []
-        for mpmd_rs in self._get_mpmd(): #returns a list of runsettings
+        for mpmd_rs in self._get_mpmd():  # returns a list of runsettings
             cmd += [" : "]
             cmd += mpmd_rs.format_run_args()
             cmd += ["--job-name", self.name]

@@ -12,17 +12,17 @@
         {
             "run_id": "2ca19ad",
             "timestamp": 1699038647234488933,
-            "model": [],
-            "orchestrator": [
+            "application": [],
+            "featurestore": [
                 {
-                    "name": "orchestrator",
+                    "name": "featurestore",
                     "type": "redis",
                     "interface": [
                         "ipogif0"
                     ],
                     "shards": [
                         {
-                            "name": "orchestrator_0",
+                            "name": "featurestore_0",
                             "hostname": "10.128.0.4",
                             "port": 6780,
                             "cluster": false,
@@ -33,7 +33,7 @@
                             "client_count_file": null,
                             "memory_file": "/path/to/some/mem.log",
                             "telemetry_metadata": {
-                                "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/2ca19ad/database/orchestrator/orchestrator_0",
+                                "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/2ca19ad/database/featurestore/featurestore_0",
                                 "step_id": "4139111.27",
                                 "task_id": "1452",
                                 "managed": true
@@ -47,7 +47,7 @@
         {
             "run_id": "4b5507a",
             "timestamp": 1699038661491043211,
-            "model": [
+            "application": [
                 {
                     "name": "perroquet",
                     "path": "/tmp/my-exp/perroquet",
@@ -71,7 +71,7 @@
                         "Configure": [],
                         "Copy": []
                     },
-                    "colocated_db": {},
+                    "colocated_fs": {},
                     "telemetry_metadata": {
                         "status_dir": "/tmp/my-exp/.smartsim/telemetry/telemetry_db_and_model/4b5507a/model/perroquet",
                         "step_id": "4139111.28",
@@ -82,7 +82,7 @@
                     "err_file": "/tmp/my-exp/perroquet/perroquet.err"
                 }
             ],
-            "orchestrator": [],
+            "featurestore": [],
             "ensemble": []
         }
     ]

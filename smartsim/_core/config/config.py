@@ -118,7 +118,7 @@ class Config:
         conf = Path(os.environ.get("REDIS_CONF", self.conf_path)).resolve()
         if not conf.is_file():
             raise SSConfigError(
-                "Database configuration file at REDIS_CONF could not be found"
+                "Feature store configuration file at REDIS_CONF could not be found"
             )
         return str(conf)
 
@@ -126,12 +126,12 @@ class Config:
     def database_exe(self) -> str:
         try:
             database_exe = next(self.bin_path.glob("*-server"))
-            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
-            exe = expand_exe_path(str(database))
+            feature_store = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            exe = expand_exe_path(str(feature_store))
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified database binary at REDIS_PATH could not be used"
+                "Specified feature store binary at REDIS_PATH could not be used"
             ) from e
 
     @property

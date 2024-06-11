@@ -121,21 +121,21 @@ def main(args: argparse.Namespace) -> int:
             print(line.decode("utf-8").rstrip(), flush=True)
     except Exception:
         cleanup()
-        logger.error("Database process starter raised an exception", exc_info=True)
+        logger.error("Feature store process starter raised an exception", exc_info=True)
         return 1
     return 0
 
 
 def cleanup() -> None:
-    logger.debug("Cleaning up database instance")
+    logger.debug("Cleaning up feature store instance")
     try:
-        # attempt to stop the database process
+        # attempt to stop the feature store process
         if DBPID is not None:
             psutil.Process(DBPID).terminate()
     except psutil.NoSuchProcess:
-        logger.warning("Couldn't find database process to kill.")
+        logger.warning("Couldn't find feature store process to kill.")
     except OSError as e:
-        logger.warning(f"Failed to clean up database gracefully: {str(e)}")
+        logger.warning(f"Failed to clean up feature store gracefully: {str(e)}")
 
 
 if __name__ == "__main__":
@@ -145,12 +145,12 @@ if __name__ == "__main__":
         prefix_chars="+", description="SmartSim Process Launcher"
     )
     parser.add_argument(
-        "+orc-exe", type=str, help="Path to the orchestrator executable", required=True
+        "+orc-exe", type=str, help="Path to the feature store executable", required=True
     )
     parser.add_argument(
         "+conf-file",
         type=str,
-        help="Path to the orchestrator configuration file",
+        help="Path to the feature store configuration file",
         required=True,
     )
     parser.add_argument(
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "+port",
         type=int,
-        help="The port on which to launch the shard of the orchestrator",
+        help="The port on which to launch the shard of the feature store",
         required=True,
     )
     parser.add_argument(
@@ -178,14 +178,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "+cluster",
         action="store_true",
-        help="Specify if this orchestrator shard is part of a cluster",
+        help="Specify if this feature store shard is part of a cluster",
     )
 
     args_ = parser.parse_args()
 
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
-    # the database process.
+    # the feature store process.
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 

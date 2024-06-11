@@ -26,6 +26,10 @@
 
 import typing as t
 
+from ..log import get_logger
+
+logger = get_logger(__name__)
+
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
 from ..settings import (
@@ -72,6 +76,15 @@ def create_batch_settings(
     :return: a newly created BatchSettings instance
     :raises SmartSimError: if batch creation fails
     """
+    if batch_args:
+        res_arg = batch_args
+        batch_args = {k.strip().lstrip("-"): _ for k, _ in batch_args.items()}
+
+        if batch_args != res_arg:
+            logger.warning(
+                "One or more leading `-` characters were provided to the run argument. \
+Leading dashes were stripped and the arguments were passed to the run_command."
+            )
     # all supported batch class implementations
     by_launcher: t.Dict[str, t.Callable[..., base.BatchSettings]] = {
         "pbs": QsubBatchSettings,
@@ -129,6 +142,16 @@ def create_run_settings(
     :return: the created ``RunSettings``
     :raises SmartSimError: if run_command=="auto" and detection fails
     """
+    if run_args:
+        reserve_run_args = run_args
+        run_args = {k.strip().lstrip("-"): _ for k, _ in run_args.items()}
+
+        if set(reserve_run_args) != set(run_args):
+            logger.warning(
+                "One or more leading `-` characters were provided to the run argument. \
+Leading dashes were stripped and arguments were passed to the run_command."
+            )
+
     # all supported RunSettings child classes
     supported: t.Dict[str, _TRunSettingsSelector] = {
         "aprun": lambda launcher: AprunSettings,
@@ -193,6 +216,4 @@ def create_run_settings(
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None
     # 3) local launcher being used and default of "auto" was passed.
-    return RunSettings(
-        run_command, run_args, env_vars, container=container
-    )
+    return RunSettings(run_command, run_args, env_vars, container=container)

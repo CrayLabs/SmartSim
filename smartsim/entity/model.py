@@ -26,10 +26,10 @@
 
 from __future__ import annotations
 
+import copy
 import itertools
 import re
 import sys
-import copy
 import typing as t
 import warnings
 from os import getcwd
@@ -40,14 +40,14 @@ from .._core.utils.helpers import cat_arg_and_value, expand_exe_path
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
-from .dbobject import DBModel, DBScript
+from .dbobject import FSModel, FSScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
 logger = get_logger(__name__)
 
 
-class Model(SmartSimEntity):
+class Application(SmartSimEntity):
     def __init__(
         self,
         name: str,
@@ -59,12 +59,12 @@ class Model(SmartSimEntity):
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
     ):
-        """Initialize a ``Model``
+        """Initialize a ``Application``
 
-        :param name: name of the model
+        :param name: name of the application
         :param exe: executable to run
         :param exe_args: executable arguments
-        :param params: model parameters for writing into configuration files or
+        :param params: application parameters for writing into configuration files or
                        to be passed as command line arguments to executable.
         :param path: path to output, error, and configuration files
         :param run_settings: launcher settings specified in the experiment
@@ -72,7 +72,7 @@ class Model(SmartSimEntity):
                                interpreted as command line arguments to
                                be added to run_settings
         :param batch_settings: Launcher settings for running the individual
-                               model as a batch job
+                               application as a batch job
         """
         super().__init__(name, str(path), run_settings)
         self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
@@ -82,8 +82,8 @@ class Model(SmartSimEntity):
         self.incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False
         self.batch_settings = batch_settings
-        self._db_models: t.List[DBModel] = []
-        self._db_scripts: t.List[DBScript] = []
+        self._fs_models: t.List[FSModel] = []
+        self._fs_scripts: t.List[FSScript] = []
         self.files: t.Optional[EntityFiles] = None
 
     @property
@@ -103,31 +103,31 @@ class Model(SmartSimEntity):
         self._exe_args = self._build_exe_args(value)
 
     @property
-    def db_models(self) -> t.Iterable[DBModel]:
+    def fs_models(self) -> t.Iterable[FSModel]:
         """Retrieve an immutable collection of attached models
 
         :return: Return an immutable collection of attached models
         """
-        return (model for model in self._db_models)
+        return (model for model in self._fs_models)
 
     @property
-    def db_scripts(self) -> t.Iterable[DBScript]:
+    def fs_scripts(self) -> t.Iterable[FSScript]:
         """Retrieve an immutable collection attached of scripts
 
         :return: Return an immutable collection of attached scripts
         """
-        return (script for script in self._db_scripts)
+        return (script for script in self._fs_scripts)
 
     @property
     def colocated(self) -> bool:
-        """Return True if this Model will run with a colocated Orchestrator
+        """Return True if this Model will run with a colocated FeatureStore
 
-        :return: Return True of the Model will run with a colocated Orchestrator
+        :return: Return True of the Model will run with a colocated FeatureStore
         """
         if self.run_settings is None:
             return False
         else:
-            return bool(self.run_settings.colocated_db_settings)
+            return bool(self.run_settings.colocated_fs_settings)
 
     def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
         """Add executable arguments to executable
@@ -158,11 +158,11 @@ class Model(SmartSimEntity):
         self.incoming_entities.append(incoming_entity)
 
     def enable_key_prefixing(self) -> None:
-        """If called, the entity will prefix its keys with its own model name"""
+        """If called, the entity will prefix its keys with its own application name"""
         self._key_prefixing_enabled = True
 
     def disable_key_prefixing(self) -> None:
-        """If called, the entity will not prefix its keys with its own model name"""
+        """If called, the entity will not prefix its keys with its own application name"""
         self._key_prefixing_enabled = False
 
     def query_key_prefixing(self) -> bool:
@@ -189,8 +189,8 @@ class Model(SmartSimEntity):
         the path of the entity, and files "to_symlink" are
         symlinked into the path of the entity.
 
-        Files "to_configure" are text based model input files where
-        parameters for the model are set. Note that only models
+        Files "to_configure" are text based application input files where
+        parameters for the application are set. Note that only applications
         support the "to_configure" field. These files must have
         fields tagged that correspond to the values the user
         would like to change. The tag is settable but defaults
@@ -225,41 +225,41 @@ class Model(SmartSimEntity):
         :returns: String version of table
         """
         if not self.files:
-            return "No file attached to this model."
+            return "No file attached to this application."
         return str(self.files)
 
     def print_attached_files(self) -> None:
         """Print a table of the attached files on std out"""
         print(self.attached_files_table)
 
-    def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
-        """An alias for ``Model.colocate_db_tcp``"""
+    def colocate_fs(self, *args: t.Any, **kwargs: t.Any) -> None:
+        """An alias for ``Application.colocate_fs_tcp``"""
         warnings.warn(
             (
-                "`colocate_db` has been deprecated and will be removed in a \n"
-                "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
+                "`colocate_fs` has been deprecated and will be removed in a \n"
+                "future release. Please use `colocate_fs_tcp` or `colocate_fs_uds`."
             ),
             FutureWarning,
         )
-        self.colocate_db_tcp(*args, **kwargs)
+        self.colocate_fs_tcp(*args, **kwargs)
 
-    def colocate_db_uds(
+    def colocate_fs_uds(
         self,
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
-        db_cpus: int = 1,
+        fs_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
-        db_identifier: str = "",
+        fs_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
-        """Colocate an Orchestrator instance with this Model over UDS.
+        """Colocate an FeatureStore instance with this Application over UDS.
 
         This method will initialize settings which add an unsharded
-        database to this Model instance. Only this Model will be able to communicate
-        with this colocated database by using Unix Domain sockets.
+        feature store to this Application instance. Only this Application will be able to communicate
+        with this colocated feature store by using Unix Domain sockets.
 
-        Extra parameters for the db can be passed through kwargs. This includes
+        Extra parameters for the fs can be passed through kwargs. This includes
         many performance, caching and inference settings.
 
         .. highlight:: python
@@ -277,11 +277,11 @@ class Model(SmartSimEntity):
 
         :param unix_socket: path to where the socket file will be created
         :param socket_permissions: permissions for the socketfile
-        :param db_cpus: number of cpus to use for orchestrator
-        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
+        :param fs_cpus: number of cpus to use for FeatureStore
+        :param custom_pinning: CPUs to pin the FeatureStore to. Passing an empty
                                iterable disables pinning
-        :param debug: launch Model with extra debug information about the colocated db
-        :param kwargs: additional keyword arguments to pass to the orchestrator database
+        :param debug: launch Application with extra debug information about the colocated fs
+        :param kwargs: additional keyword arguments to pass to the FeatureStore feature store
         """
 
         if not re.match(r"^[a-zA-Z0-9.:\,_\-/]*$", unix_socket):
@@ -297,30 +297,30 @@ class Model(SmartSimEntity):
         }
 
         common_options = {
-            "cpus": db_cpus,
+            "cpus": fs_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
-            "db_identifier": db_identifier,
+            "fs_identifier": fs_identifier,
         }
-        self._set_colocated_db_settings(uds_options, common_options, **kwargs)
+        self._set_colocated_fs_settings(uds_options, common_options, **kwargs)
 
-    def colocate_db_tcp(
+    def colocate_fs_tcp(
         self,
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
-        db_cpus: int = 1,
+        fs_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
-        db_identifier: str = "",
+        fs_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
-        """Colocate an Orchestrator instance with this Model over TCP/IP.
+        """Colocate an FeatureStore instance with this Application over TCP/IP.
 
         This method will initialize settings which add an unsharded
-        database to this Model instance. Only this Model will be able to communicate
-        with this colocated database by using the loopback TCP interface.
+        feature store to this Application instance. Only this Application will be able to communicate
+        with this colocated feature store by using the loopback TCP interface.
 
-        Extra parameters for the db can be passed through kwargs. This includes
+        Extra parameters for the fs can be passed through kwargs. This includes
         many performance, caching and inference settings.
 
         .. highlight:: python
@@ -336,25 +336,25 @@ class Model(SmartSimEntity):
 
         Generally these don't need to be changed.
 
-        :param port: port to use for orchestrator database
-        :param ifname: interface to use for orchestrator
-        :param db_cpus: number of cpus to use for orchestrator
-        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
+        :param port: port to use for FeatureStore feature store
+        :param ifname: interface to use for FeatureStore
+        :param fs_cpus: number of cpus to use for FeatureStore
+        :param custom_pinning: CPUs to pin the FeatureStore to. Passing an empty
                                iterable disables pinning
-        :param debug: launch Model with extra debug information about the colocated db
-        :param kwargs: additional keyword arguments to pass to the orchestrator database
+        :param debug: launch Application with extra debug information about the colocated fs
+        :param kwargs: additional keyword arguments to pass to the FeatureStore feature store
         """
 
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
-            "cpus": db_cpus,
+            "cpus": fs_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
-            "db_identifier": db_identifier,
+            "fs_identifier": fs_identifier,
         }
-        self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
+        self._set_colocated_fs_settings(tcp_options, common_options, **kwargs)
 
-    def _set_colocated_db_settings(
+    def _set_colocated_fs_settings(
         self,
         connection_options: t.Mapping[str, t.Union[int, t.List[str], str]],
         common_options: t.Dict[
@@ -371,17 +371,17 @@ class Model(SmartSimEntity):
     ) -> None:
         """
         Ingest the connection-specific options (UDS/TCP) and set the final settings
-        for the colocated database
+        for the colocated feature store
         """
 
         if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
             raise SSUnsupportedError(
-                "Models colocated with databases cannot be run as a mpmd workload"
+                "Applications colocated with feature stores cannot be run as a mpmd workload"
             )
 
-        if hasattr(self.run_settings, "_prep_colocated_db"):
+        if hasattr(self.run_settings, "_prep_colocated_fs"):
             # pylint: disable-next=protected-access
-            self.run_settings._prep_colocated_db(common_options["cpus"])
+            self.run_settings._prep_colocated_fs(common_options["cpus"])
 
         if "limit_app_cpus" in kwargs:
             raise SSUnsupportedError(
@@ -389,7 +389,7 @@ class Model(SmartSimEntity):
                 "RunSettings using the correct binding option for your launcher."
             )
 
-        # TODO list which db settings can be extras
+        # TODO list which fs settings can be extras
         custom_pinning_ = t.cast(
             t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
             common_options.get("custom_pinning"),
@@ -399,7 +399,7 @@ class Model(SmartSimEntity):
             custom_pinning_, cpus_
         )
 
-        colo_db_config: t.Dict[
+        colo_fs_config: t.Dict[
             str,
             t.Union[
                 bool,
@@ -408,14 +408,14 @@ class Model(SmartSimEntity):
                 None,
                 t.List[str],
                 t.Iterable[t.Union[int, t.Iterable[int]]],
-                t.List[DBModel],
-                t.List[DBScript],
+                t.List[FSModel],
+                t.List[FSScript],
                 t.Dict[str, t.Union[int, None]],
                 t.Dict[str, str],
             ],
         ] = {}
-        colo_db_config.update(connection_options)
-        colo_db_config.update(common_options)
+        colo_fs_config.update(connection_options)
+        colo_fs_config.update(common_options)
 
         redis_ai_temp = {
             "threads_per_queue": kwargs.get("threads_per_queue", None),
@@ -423,16 +423,16 @@ class Model(SmartSimEntity):
             "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
         }
         # redisai arguments for inference settings
-        colo_db_config["rai_args"] = redis_ai_temp
-        colo_db_config["extra_db_args"] = {
+        colo_fs_config["rai_args"] = redis_ai_temp
+        colo_fs_config["extra_fs_args"] = {
             k: str(v) for k, v in kwargs.items() if k not in redis_ai_temp
         }
 
-        self._check_db_objects_colo()
-        colo_db_config["db_models"] = self._db_models
-        colo_db_config["db_scripts"] = self._db_scripts
+        self._check_fs_objects_colo()
+        colo_fs_config["fs_models"] = self._fs_models
+        colo_fs_config["fs_scripts"] = self._fs_scripts
 
-        self.run_settings.colocated_db_settings = colo_db_config
+        self.run_settings.colocated_fs_settings = colo_fs_config
 
     @staticmethod
     def _create_pinning_string(
@@ -488,17 +488,15 @@ class Model(SmartSimEntity):
             for param in self.params_as_args:
                 if not param in self.params:
                     raise ValueError(
-                        f"Tried to convert {param} to command line argument for Model "
-                        f"{self.name}, but its value was not found in model params"
+                        f"Tried to convert {param} to command line argument for Application "
+                        f"{self.name}, but its value was not found in application params"
                     )
                 if self.run_settings is None:
                     raise ValueError(
-                        "Tried to configure command line parameter for Model "
+                        "Tried to configure command line parameter for Application "
                         f"{self.name}, but no RunSettings are set."
                     )
-                self.add_exe_args(
-                    cat_arg_and_value(param, self.params[param])
-                )
+                self.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def add_ml_model(
         self,
@@ -516,10 +514,10 @@ class Model(SmartSimEntity):
         inputs: t.Optional[t.List[str]] = None,
         outputs: t.Optional[t.List[str]] = None,
     ) -> None:
-        """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
+        """A TF, TF-lite, PT, or ONNX model to load into the fs at runtime
 
         Each ML Model added will be loaded into an
-        orchestrator (converged or not) prior to the execution
+        FeatureStore (converged or not) prior to the execution
         of this Model instance
 
         One of either model (in memory representation) or model_path (file)
@@ -527,7 +525,7 @@ class Model(SmartSimEntity):
 
         :param name: key to store model under
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :param model: A model in memory (only supported for non-colocated orchestrators)
+        :param model: A model in memory (only supported for non-colocated feature stores)
         :param model_path: serialized model
         :param device: name of device for execution
         :param devices_per_node: The number of GPU devices available on the host.
@@ -543,7 +541,7 @@ class Model(SmartSimEntity):
         :param inputs: model inputs (TF only)
         :param outputs: model outupts (TF only)
         """
-        db_model = DBModel(
+        fs_model = FSModel(
             name=name,
             backend=backend,
             model=model,
@@ -558,7 +556,7 @@ class Model(SmartSimEntity):
             inputs=inputs,
             outputs=outputs,
         )
-        self.add_ml_model_object(db_model)
+        self.add_ml_model_object(fs_model)
 
     def add_script(
         self,
@@ -571,8 +569,8 @@ class Model(SmartSimEntity):
     ) -> None:
         """TorchScript to launch with this Model instance
 
-        Each script added to the model will be loaded into an
-        orchestrator (converged or not) prior to the execution
+        Each script added to the application will be loaded into an
+        FeatureStore (converged or not) prior to the execution
         of this Model instance
 
         Device selection is either "GPU" or "CPU". If many devices are
@@ -587,7 +585,7 @@ class Model(SmartSimEntity):
         must be provided
 
         :param name: key to store script under
-        :param script: TorchScript code (only supported for non-colocated orchestrators)
+        :param script: TorchScript code (only supported for non-colocated featurestores)
         :param script_path: path to TorchScript code
         :param device: device for script execution
         :param devices_per_node: The number of GPU devices available on the host.
@@ -597,7 +595,7 @@ class Model(SmartSimEntity):
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
         """
-        db_script = DBScript(
+        fs_script = FSScript(
             name=name,
             script=script,
             script_path=script_path,
@@ -605,7 +603,7 @@ class Model(SmartSimEntity):
             devices_per_node=devices_per_node,
             first_device=first_device,
         )
-        self.add_script_object(db_script)
+        self.add_script_object(fs_script)
 
     def add_function(
         self,
@@ -615,19 +613,19 @@ class Model(SmartSimEntity):
         devices_per_node: int = 1,
         first_device: int = 0,
     ) -> None:
-        """TorchScript function to launch with this Model instance
+        """TorchScript function to launch with this Application instance
 
-        Each script function to the model will be loaded into a
-        non-converged orchestrator prior to the execution
-        of this Model instance.
+        Each script function to the application will be loaded into a
+        non-converged FeatureStore prior to the execution
+        of this Application instance.
 
-        For converged orchestrators, the :meth:`add_script` method should be used.
+        For converged featurestores, the :meth:`add_script` method should be used.
 
         Device selection is either "GPU" or "CPU". If many devices are
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the application being stored in the first N devices of type ``device``.
 
         :param name: key to store function under
         :param function: TorchScript function code
@@ -639,20 +637,20 @@ class Model(SmartSimEntity):
                This parameter only applies to GPU devices and will be ignored if device
                is specified as CPU.
         """
-        db_script = DBScript(
+        fs_script = FSScript(
             name=name,
             script=function,
             device=device,
             devices_per_node=devices_per_node,
             first_device=first_device,
         )
-        self.add_script_object(db_script)
+        self.add_script_object(fs_script)
 
     def __hash__(self) -> int:
         return hash(self.name)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Model):
+        if not isinstance(other, Application):
             return False
 
         if self.name == other.name:
@@ -663,53 +661,55 @@ class Model(SmartSimEntity):
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
         entity_str += str(self.run_settings) + "\n"
-        if self._db_models:
-            entity_str += "DB Models: \n" + str(len(self._db_models)) + "\n"
-        if self._db_scripts:
-            entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
+        if self._fs_models:
+            entity_str += "FS Models: \n" + str(len(self._fs_models)) + "\n"
+        if self._fs_scripts:
+            entity_str += "FS Scripts: \n" + str(len(self._fs_scripts)) + "\n"
         return entity_str
 
-    def add_ml_model_object(self, db_model: DBModel) -> None:
-        if not db_model.is_file and self.colocated:
-            err_msg = "ML model can not be set from memory for colocated databases.\n"
-            err_msg += (
-                f"Please store the ML model named {db_model.name} in binary format "
+    def add_ml_model_object(self, fs_model: FSModel) -> None:
+        if not fs_model.is_file and self.colocated:
+            err_msg = (
+                "ML model can not be set from memory for colocated feature stores.\n"
             )
-            err_msg += "and add it to the SmartSim Model as file."
+            err_msg += (
+                f"Please store the ML model named {fs_model.name} in binary format "
+            )
+            err_msg += "and add it to the SmartSim Application as file."
             raise SSUnsupportedError(err_msg)
 
-        self._db_models.append(db_model)
+        self._fs_models.append(fs_model)
 
-    def add_script_object(self, db_script: DBScript) -> None:
-        if db_script.func and self.colocated:
-            if not isinstance(db_script.func, str):
+    def add_script_object(self, fs_script: FSScript) -> None:
+        if fs_script.func and self.colocated:
+            if not isinstance(fs_script.func, str):
                 err_msg = (
-                    "Functions can not be set from memory for colocated databases.\n"
-                    f"Please convert the function named {db_script.name} "
+                    "Functions can not be set from memory for colocated feature stores.\n"
+                    f"Please convert the function named {fs_script.name} "
                     "to a string or store it as a text file and add it to the "
-                    "SmartSim Model with add_script."
+                    "SmartSim Application with add_script."
                 )
                 raise SSUnsupportedError(err_msg)
-        self._db_scripts.append(db_script)
+        self._fs_scripts.append(fs_script)
 
-    def _check_db_objects_colo(self) -> None:
-        for db_model in self._db_models:
-            if not db_model.is_file:
+    def _check_fs_objects_colo(self) -> None:
+        for fs_model in self._fs_models:
+            if not fs_model.is_file:
                 err_msg = (
-                    "ML model can not be set from memory for colocated databases.\n"
-                    f"Please store the ML model named {db_model.name} in binary "
-                    "format and add it to the SmartSim Model as file."
+                    "ML model can not be set from memory for colocated feature stores.\n"
+                    f"Please store the ML model named {fs_model.name} in binary "
+                    "format and add it to the SmartSim Application as file."
                 )
                 raise SSUnsupportedError(err_msg)
 
-        for db_script in self._db_scripts:
-            if db_script.func:
-                if not isinstance(db_script.func, str):
+        for fs_script in self._fs_scripts:
+            if fs_script.func:
+                if not isinstance(fs_script.func, str):
                     err_msg = (
                         "Functions can not be set from memory for colocated "
-                        "databases.\nPlease convert the function named "
-                        f"{db_script.name} to a string or store it as a text"
-                        "file and add it to the SmartSim Model with add_script."
+                        "feature stores.\nPlease convert the function named "
+                        f"{fs_script.name} to a string or store it as a text"
+                        "file and add it to the SmartSim Application with add_script."
                     )
                     raise SSUnsupportedError(err_msg)
 
