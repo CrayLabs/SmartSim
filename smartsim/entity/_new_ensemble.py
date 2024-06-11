@@ -69,7 +69,6 @@ class Ensemble(entity.CompoundEntity):
 
     def _create_applications(self) -> tuple[Application, ...]:
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        # below: send in all informations to retrieve
         combinations = permutation_strategy(self.file_parameters, self.exe_arg_parameters, self.max_permutations)
         permutations_ = itertools.chain.from_iterable(
             itertools.repeat(permutation, self.replicas) for permutation in combinations
