@@ -40,7 +40,6 @@ logger = get_logger(__name__)
 
 
 class QsubBatchArgBuilder(BatchArgBuilder):
-
     def scheduler_str(self) -> str:
         """Get the string representation of the scheduler"""
         return SchedulerType.Pbs.value

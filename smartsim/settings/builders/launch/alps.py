@@ -38,7 +38,6 @@ logger = get_logger(__name__)
 
 
 class AprunArgBuilder(LaunchArgBuilder):
-
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
         return {"wdir"}

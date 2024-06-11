@@ -8,9 +8,7 @@ from smartsim.settings.launchCommand import LauncherType
 
 @pytest.mark.parametrize(
     "launch_enum",
-    [
-        pytest.param(type_,id=type_.value) for type_ in LauncherType
-    ],
+    [pytest.param(type_, id=type_.value) for type_ in LauncherType],
 )
 def test_create_launch_settings(launch_enum):
     ls_str = LaunchSettings(

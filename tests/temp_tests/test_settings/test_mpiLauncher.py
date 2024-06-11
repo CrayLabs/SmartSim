@@ -3,12 +3,12 @@ import itertools
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.launchCommand import LauncherType
 from smartsim.settings.builders.launch.mpi import (
     MpiArgBuilder,
     MpiexecArgBuilder,
     OrteArgBuilder,
 )
+from smartsim.settings.launchCommand import LauncherType
 
 
 @pytest.mark.parametrize(

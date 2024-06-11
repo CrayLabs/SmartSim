@@ -1,8 +1,8 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.launchCommand import LauncherType
 from smartsim.settings.builders.launch.local import LocalArgBuilder
+from smartsim.settings.launchCommand import LauncherType
 
 
 def test_launcher_str():

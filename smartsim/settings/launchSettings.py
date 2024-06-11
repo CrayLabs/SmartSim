@@ -33,8 +33,6 @@ from smartsim.log import get_logger
 
 from .._core.utils.helpers import fmt_dict
 from .baseSettings import BaseSettings
-from .common import StringArgument
-from .launchCommand import LauncherType
 from .builders import LaunchArgBuilder
 from .builders.launch.alps import AprunArgBuilder
 from .builders.launch.dragon import DragonArgBuilder
@@ -43,6 +41,8 @@ from .builders.launch.lsf import JsrunArgBuilder
 from .builders.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
 from .builders.launch.pals import PalsMpiexecArgBuilder
 from .builders.launch.slurm import SlurmArgBuilder
+from .common import StringArgument
+from .launchCommand import LauncherType
 
 logger = get_logger(__name__)
 

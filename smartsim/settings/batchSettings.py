@@ -34,11 +34,11 @@ from smartsim.log import get_logger
 from .._core.utils.helpers import fmt_dict
 from .baseSettings import BaseSettings
 from .batchCommand import SchedulerType
-from .common import StringArgument
 from .builders import BatchArgBuilder
 from .builders.batch.lsf import BsubBatchArgBuilder
 from .builders.batch.pbs import QsubBatchArgBuilder
 from .builders.batch.slurm import SlurmBatchArgBuilder
+from .common import StringArgument
 
 logger = get_logger(__name__)
 

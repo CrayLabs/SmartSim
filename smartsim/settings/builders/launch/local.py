@@ -38,7 +38,6 @@ logger = get_logger(__name__)
 
 
 class LocalArgBuilder(LaunchArgBuilder):
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Local.value
