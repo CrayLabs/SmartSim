@@ -37,8 +37,12 @@ else:
     tflow1 = tf.zeros((3, 2, 5), dtype=tf.int8)
     tflow2 = tf.ones((10, 10, 3), dtype=tf.int64)
 
-    tensor_3 = MessageHandler.build_tensor(tflow1, "c", "int8", list(tflow1.shape))
-    tensor_4 = MessageHandler.build_tensor(tflow2, "c", "int64", list(tflow2.shape))
+    tensor_3 = MessageHandler.build_tensor(
+        tflow1.numpy(), "c", "int8", list(tflow1.shape)
+    )
+    tensor_4 = MessageHandler.build_tensor(
+        tflow2.numpy(), "c", "int64", list(tflow2.shape)
+    )
 
     tf_attributes = MessageHandler.build_tf_request_attributes(
         name="tf", tensor_type="sparse"
@@ -55,8 +59,12 @@ else:
     torch1 = torch.zeros((3, 2, 5), dtype=torch.int8)
     torch2 = torch.ones((10, 10, 3), dtype=torch.int64)
 
-    tensor_1 = MessageHandler.build_tensor(torch1, "c", "int8", list(torch1.shape))
-    tensor_2 = MessageHandler.build_tensor(torch2, "c", "int64", list(torch2.shape))
+    tensor_1 = MessageHandler.build_tensor(
+        torch1.numpy(), "c", "int8", list(torch1.shape)
+    )
+    tensor_2 = MessageHandler.build_tensor(
+        torch2.numpy(), "c", "int64", list(torch2.shape)
+    )
 
     torch_attributes = MessageHandler.build_torch_request_attributes("sparse")
 

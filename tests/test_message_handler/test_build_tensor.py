@@ -33,6 +33,11 @@ except ImportError:
 else:
     should_run_tf = True
 
+    small_tf_tensor = tf.zeros((3, 2, 5), dtype=tf.int8)
+    small_tf_tensor = small_tf_tensor.numpy()
+    medium_tf_tensor = tf.ones((1040, 1040, 3), dtype=tf.int64)
+    medium_tf_tensor = medium_tf_tensor.numpy()
+
 
 try:
     import torch
@@ -40,6 +45,11 @@ except ImportError:
     should_run_torch = False
 else:
     should_run_torch = True
+
+    small_torch_tensor = torch.zeros((3, 2, 5), dtype=torch.int8)
+    small_torch_tensor = small_torch_tensor.numpy()
+    medium_torch_tensor = torch.ones((1040, 1040, 3), dtype=torch.int64)
+    medium_torch_tensor = medium_torch_tensor.numpy()
 
 from smartsim._core.mli.message_handler import MessageHandler
 
@@ -54,14 +64,14 @@ handler = MessageHandler()
     "tensor, dtype, order, dimension",
     [
         pytest.param(
-            torch.zeros((3, 2, 5), dtype=torch.int8),
+            small_torch_tensor,
             "int8",
             "c",
             [3, 2, 5],
             id="small torch tensor",
         ),
         pytest.param(
-            torch.ones((1040, 1040, 3), dtype=torch.int64),
+            medium_torch_tensor,
             "int64",
             "c",
             [1040, 1040, 3],
@@ -84,14 +94,14 @@ def test_build_torch_tensor_successful(tensor, dtype, order, dimension):
     "tensor, dtype, order, dimension",
     [
         pytest.param(
-            tf.zeros((3, 2, 5), dtype=tf.int8),
+            small_tf_tensor,
             "int8",
             "c",
             [3, 2, 5],
             id="small tf tensor",
         ),
         pytest.param(
-            tf.ones((1040, 1040, 3), dtype=tf.int64),
+            medium_tf_tensor,
             "int64",
             "c",
             [1040, 1040, 3],
@@ -115,21 +125,21 @@ def test_build_tf_tensor_successful(tensor, dtype, order, dimension):
     [
         pytest.param([1, 2, 4], "c", "int8", [1, 2, 3], id="bad tensor type"),
         pytest.param(
-            torch.zeros((3, 2, 5), dtype=torch.int8),
+            small_torch_tensor,
             "bad_order",
             "int8",
             [3, 2, 5],
             id="bad order type",
         ),
         pytest.param(
-            torch.zeros((3, 2, 5), dtype=torch.int8),
+            small_torch_tensor,
             "f",
             "bad_num_type",
             [3, 2, 5],
             id="bad numerical type",
         ),
         pytest.param(
-            torch.zeros((3, 2, 5), dtype=torch.int8),
+            small_torch_tensor,
             "f",
             "int8",
             "bad shape type",
@@ -148,21 +158,21 @@ def test_build_torch_tensor_bad_input(tensor, dtype, order, dimension):
     [
         pytest.param([1, 2, 4], "c", "int8", [1, 2, 3], id="bad tensor type"),
         pytest.param(
-            tf.zeros((3, 2, 5), dtype=tf.int8),
+            small_tf_tensor,
             "bad_order",
             "int8",
             [3, 2, 5],
             id="bad order type",
         ),
         pytest.param(
-            tf.zeros((3, 2, 5), dtype=tf.int8),
+            small_tf_tensor,
             "f",
             "bad_num_type",
             [3, 2, 5],
             id="bad numerical type",
         ),
         pytest.param(
-            tf.zeros((3, 2, 5), dtype=tf.int8),
+            small_tf_tensor,
             "f",
             "int8",
             "bad shape type",

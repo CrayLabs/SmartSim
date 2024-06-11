@@ -38,15 +38,19 @@ else:
     tflow1 = tf.zeros((3, 2, 5), dtype=tf.int8)
     tflow2 = tf.ones((1040, 1040, 3), dtype=tf.int64)
 
-    tensor_3 = MessageHandler.build_tensor(tflow1, "c", "int8", list(tflow1.shape))
-    tensor_4 = MessageHandler.build_tensor(tflow2, "c", "int64", list(tflow2.shape))
+    small_tf_tensor = MessageHandler.build_tensor(
+        tflow1.numpy(), "c", "int8", list(tflow1.shape)
+    )
+    medium_tf_tensor = MessageHandler.build_tensor(
+        tflow2.numpy(), "c", "int64", list(tflow2.shape)
+    )
 
     tf_attributes = MessageHandler.build_tf_response_attributes()
 
     tf_direct_response = MessageHandler.build_response(
         "complete",
         "Success again!",
-        [tensor_3, tensor_4],
+        [small_tf_tensor, medium_tf_tensor],
         tf_attributes,
     )
 
@@ -61,15 +65,19 @@ else:
     torch1 = torch.zeros((3, 2, 5), dtype=torch.int8)
     torch2 = torch.ones((1040, 1040, 3), dtype=torch.int64)
 
-    tensor_1 = MessageHandler.build_tensor(torch1, "c", "int8", list(torch1.shape))
-    tensor_2 = MessageHandler.build_tensor(torch2, "c", "int64", list(torch2.shape))
+    small_torch_tensor = MessageHandler.build_tensor(
+        torch1.numpy(), "c", "int8", list(torch1.shape)
+    )
+    medium_torch_tensor = MessageHandler.build_tensor(
+        torch2.numpy(), "c", "int64", list(torch2.shape)
+    )
 
     torch_attributes = MessageHandler.build_torch_response_attributes()
 
     torch_direct_response = MessageHandler.build_response(
         "complete",
         "Success again!",
-        [tensor_1, tensor_2],
+        [small_torch_tensor, medium_torch_tensor],
         torch_attributes,
     )
 
@@ -106,14 +114,14 @@ if should_run_torch:
         pytest.param(
             200,
             "Yay, it worked!",
-            [tensor_1, tensor_2],
+            [small_torch_tensor, medium_torch_tensor],
             None,
             id="tensor list",
         ),
         pytest.param(
             200,
             "Yay, it worked!",
-            [tensor_1],
+            [small_torch_tensor],
             torch_attributes,
             id="small tensor",
         ),
@@ -151,14 +159,14 @@ def test_build_torch_response_successful(
         pytest.param(
             200,
             "Yay, it worked!",
-            [tensor_3, tensor_4],
+            [small_tf_tensor, medium_tf_tensor],
             None,
             id="tensor list",
         ),
         pytest.param(
             200,
             "Yay, it worked!",
-            [tensor_3],
+            [small_tf_tensor],
             tf_attributes,
             id="small tensor",
         ),
@@ -194,14 +202,14 @@ def test_build_tf_response_successful(status, status_message, result, custom_att
         pytest.param(
             "bad status",
             "Yay, it worked!",
-            [tensor_3, tensor_4],
+            [small_tf_tensor, medium_tf_tensor],
             None,
             id="bad status",
         ),
         pytest.param(
             "complete",
             200,
-            [tensor_3],
+            [small_tf_tensor],
             tf_attributes,
             id="bad status message",
         ),
@@ -222,14 +230,14 @@ def test_build_tf_response_successful(status, status_message, result, custom_att
         pytest.param(
             "complete",
             "Yay, it worked!",
-            [tensor_3, tensor_4],
+            [small_tf_tensor, medium_tf_tensor],
             "custom attributes",
             id="bad custom attributes",
         ),
         pytest.param(
             "complete",
             "Yay, it worked!",
-            [tensor_3, tensor_4],
+            [small_tf_tensor, medium_tf_tensor],
             result_key1,
             id="bad custom attributes type",
         ),
@@ -251,14 +259,14 @@ def test_build_tf_response_unsuccessful(
         pytest.param(
             "bad status",
             "Yay, it worked!",
-            [tensor_1, tensor_2],
+            [small_torch_tensor, medium_torch_tensor],
             None,
             id="bad status",
         ),
         pytest.param(
             "complete",
             200,
-            [tensor_1],
+            [small_torch_tensor],
             torch_attributes,
             id="bad status message",
         ),
@@ -279,14 +287,14 @@ def test_build_tf_response_unsuccessful(
         pytest.param(
             "complete",
             "Yay, it worked!",
-            [tensor_1, tensor_2],
+            [small_torch_tensor, medium_torch_tensor],
             "custom attributes",
             id="bad custom attributes",
         ),
         pytest.param(
             "complete",
             "Yay, it worked!",
-            [tensor_1, tensor_2],
+            [small_torch_tensor, medium_torch_tensor],
             result_key1,
             id="bad custom attributes type",
         ),
