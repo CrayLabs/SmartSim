@@ -34,7 +34,9 @@ logger = get_logger(__name__)
 
 
 class SgeQsubBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: SgeQsubBatchSettings) -> None:
+    def __init__(
+        self, name: str, cwd: str, batch_settings: SgeQsubBatchSettings
+    ) -> None:
         """Initialize a Sun Grid Engine qsub step
 
         :param name: name of the entity to launch

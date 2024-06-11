@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 
 
 def parse_qsub(output: str) -> str:
-    """Parse qsub output and return job id. For PBS, the
+    """Parse qsub output and return job id. For SGE, the
     output is the job id itself.
 
     :param output: stdout of qsub command
@@ -77,8 +77,9 @@ def parse_qsub_error(output: str) -> str:
 #                 break
 #     return result
 
+
 def parse_qstat_jobid_xml(output: str, job_id: str) -> t.Optional[str]:
-    """Parse and return output of the qstat command run with JSON options
+    """Parse and return output of the qstat command run with XML options
     to obtain job status.
 
     :param output: output of the qstat command in JSON format
@@ -94,7 +95,8 @@ def parse_qstat_jobid_xml(output: str, job_id: str) -> t.Optional[str]:
 
     return None
 
-def parse_qacct_job_output(output: str, field_name: str)-> str:
+
+def parse_qacct_job_output(output: str, field_name: str) -> str:
     """Parse the output from qacct for a single job
 
     :param output: The raw text output from qacct
@@ -106,32 +108,6 @@ def parse_qacct_job_output(output: str, field_name: str)-> str:
             return line.split()[1]
 
     return None
-
-# def parse_qstat_nodes(output: str) -> t.List[str]:
-#     """Parse and return the qstat command run with
-#     options to obtain node list.
-
-#     This function parses and returns the nodes of
-#     a job in a list with the duplicates removed.
-
-#     The `output` parameter must be in JSON format.
-
-#     :param output: output of the qstat command in JSON format
-#     :return: compute nodes of the allocation or job
-#     """
-#     nodes: t.List[str] = []
-#     out_json = load_and_clean_json(output)
-#     if "Jobs" not in out_json:
-#         return nodes
-#     jobs = out_json["Jobs"]
-#     job = jobs[list(jobs.keys())[0]]
-#     vnodes = job["exec_vnode"]
-#     for vnode in vnodes.split("+"):
-#         vnode = vnode.strip("()")
-#         vnode = vnode.split(":")[0]
-#         nodes.append(vnode)
-
-#     return list(sorted(set(nodes)))
 
 
 def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:

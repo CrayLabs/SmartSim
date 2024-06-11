@@ -114,10 +114,7 @@ class SgeQsubBatchSettings(BatchSettings):
         :param nodes: Number of nodes, any integer other than 0 is invalid
         """
         if nodes:
-            raise SSConfigError(
-                "SGE does not support setting the number of nodes"
-            )
-
+            raise SSConfigError("SGE does not support setting the number of nodes")
 
     def set_ncpus(self, num_cpus: t.Union[int, str]) -> None:
         """Set the number of cpus obtained in each node.

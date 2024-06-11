@@ -271,6 +271,7 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
             smartsim_status, status, returncode, output=output, error=error
         )
 
+
 class SGEStepInfo(StepInfo):  # cov-pbs
     @property
     def mapping(self) -> t.Dict[str, SmartSimStatus]:

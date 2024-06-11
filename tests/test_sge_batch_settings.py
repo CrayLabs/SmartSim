@@ -27,15 +27,15 @@
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.launcher.sge.sgeParser import parse_qstat_jobid_xml
 from smartsim.error import SSConfigError
 from smartsim.settings import SgeQsubBatchSettings
 from smartsim.settings.mpiSettings import _BaseMPISettings
-from smartsim._core.launcher.sge.sgeParser import parse_qstat_jobid_xml
 
 # The tests in this file belong to the group_b group
 pytestmark = pytest.mark.group_b
 
-qstat_example = '''<?xml version='1.0'?>
+qstat_example = """<?xml version='1.0'?>
 <job_info  xmlns:xsd="http://arc.liv.ac.uk/repos/darcs/sge/source/dist/util/resources/schemas/qstat/qstat.xsd">
   <queue_info>
     <job_list state="running">
@@ -62,7 +62,7 @@ qstat_example = '''<?xml version='1.0'?>
     </job_list>
   </job_info>
 </job_info>
-'''
+"""
 
 
 @pytest.mark.parametrize("pe_type", ["mpi", "smp"])
@@ -136,10 +136,12 @@ def test_resources_not_set_on_error():
 
     assert unaltered_resources == settings.resources
 
+
 def test_qstat_jobid_xml():
     assert parse_qstat_jobid_xml(qstat_example, "1387693") == "r"
     assert parse_qstat_jobid_xml(qstat_example, "1387695") == "qw"
     assert parse_qstat_jobid_xml(qstat_example, "9999999") is None
+
 
 def test_sge_launcher_defaults():
     exp = Experiment("test_sge_run_settings", launcher="sge")

@@ -344,7 +344,7 @@ class Controller:
             "lsf": LSFLauncher,
             "local": LocalLauncher,
             "dragon": DragonLauncher,
-            "sge": SGELauncher
+            "sge": SGELauncher,
         }
 
         if launcher is not None:

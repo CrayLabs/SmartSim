@@ -63,6 +63,7 @@ def qdel(args: t.List[str]) -> t.Tuple[int, str, str]:
     returncode, out, error = execute_cmd(cmd)
     return returncode, out, error
 
+
 def qacct(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls SGE qacct with args.
 

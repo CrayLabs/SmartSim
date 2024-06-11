@@ -77,7 +77,7 @@ by_launcher: t.Dict[str, t.List[str]] = {
     "pals": ["mpiexec"],
     "lsf": ["jsrun"],
     "local": [""],
-    "sge": ["mpirun", "mpiexec", "orterun"]
+    "sge": ["mpirun", "mpiexec", "orterun"],
 }
 
 

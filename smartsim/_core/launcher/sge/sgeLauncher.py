@@ -34,9 +34,9 @@ from ....settings import (
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
-    SgeQsubBatchSettings,
     RunSettings,
     SettingsBase,
+    SgeQsubBatchSettings,
 )
 from ....status import SmartSimStatus
 from ...config import CONFIG
@@ -51,11 +51,8 @@ from ..step import (
     Step,
 )
 from ..stepInfo import SGEStepInfo, StepInfo
-from .sgeCommands import qdel, qstat, qacct
-from .sgeParser import (
-    parse_qstat_jobid_xml,
-    parse_qacct_job_output
-)
+from .sgeCommands import qacct, qdel, qstat
+from .sgeParser import parse_qacct_job_output, parse_qstat_jobid_xml
 
 logger = get_logger(__name__)
 
@@ -117,9 +114,9 @@ class SGELauncher(WLMLauncher):
                 cmd_list, step.cwd, step.env, out=output.fileno(), err=error.fileno()
             )
 
-#        # if batch submission did not successfully retrieve job ID
-#        if not step_id and step.managed:
-#            step_id = self._get_sge_step_id(step)
+        #        # if batch submission did not successfully retrieve job ID
+        #        if not step_id and step.managed:
+        #            step_id = self._get_sge_step_id(step)
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -150,27 +147,27 @@ class SGELauncher(WLMLauncher):
         )  # set status to cancelled instead of failed
         return step_info
 
-#    @staticmethod
-#    def _get_sge_step_id(step: Step, interval: int = 2) -> str:
-#        """Get the step_id of a step from qstat (rarely used)
-#
-#        Parses qstat XML output by looking for the step name
-#        TODO: change this to use ``qstat -a -u user``
-#        """
-#        time.sleep(interval)
-#        step_id: t.Optional[str] = None
-#        trials = CONFIG.wlm_trials
-#        while trials > 0:
-#            output, _ = qstat(["-f", "-xml"])
-#            step_id = parse_step_id_from_qstat(output, step.name)
-#            if step_id:
-#                break
-#            else:
-#                time.sleep(interval)
-#                trials -= 1
-#        if not step_id:
-#            raise LauncherError("Could not find id of launched job step")
-#        return step_id
+    #    @staticmethod
+    #    def _get_sge_step_id(step: Step, interval: int = 2) -> str:
+    #        """Get the step_id of a step from qstat (rarely used)
+    #
+    #        Parses qstat XML output by looking for the step name
+    #        TODO: change this to use ``qstat -a -u user``
+    #        """
+    #        time.sleep(interval)
+    #        step_id: t.Optional[str] = None
+    #        trials = CONFIG.wlm_trials
+    #        while trials > 0:
+    #            output, _ = qstat(["-f", "-xml"])
+    #            step_id = parse_step_id_from_qstat(output, step.name)
+    #            if step_id:
+    #                break
+    #            else:
+    #                time.sleep(interval)
+    #                trials -= 1
+    #        if not step_id:
+    #            raise LauncherError("Could not find id of launched job step")
+    #        return step_id
 
     def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
@@ -202,7 +199,7 @@ class SGELauncher(WLMLauncher):
                     else:
                         info.status = SmartSimStatus.STATUS_COMPLETED
                         info.returncode = 0
-                else: # Assume if qacct did not find it, that the job completed
+                else:  # Assume if qacct did not find it, that the job completed
                     info.status = SmartSimStatus.STATUS_COMPLETED
                     info.returncode = 0
             else:
