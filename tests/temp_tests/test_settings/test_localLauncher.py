@@ -1,12 +1,15 @@
-from smartsim.settings import LaunchSettings
-from smartsim.settings.translators.launch.local import LocalArgBuilder
-from smartsim.settings.launchCommand import LauncherType
 import pytest
+
+from smartsim.settings import LaunchSettings
+from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.translators.launch.local import LocalArgBuilder
+
 
 def test_launcher_str():
     """Ensure launcher_str returns appropriate value"""
     ls = LaunchSettings(launcher=LauncherType.Local)
     assert ls.launch_args.launcher_str() == LauncherType.Local.value
+
 
 # TODO complete after launch args retrieval
 def test_launch_args_input_mutation():
@@ -19,7 +22,9 @@ def test_launch_args_input_mutation():
         key1: val1,
         key2: val2,
     }
-    localLauncher = LaunchSettings(launcher=LauncherType.Local, launch_args=default_launcher_args)
+    localLauncher = LaunchSettings(
+        launcher=LauncherType.Local, launch_args=default_launcher_args
+    )
 
     # Confirm initial values are set
     assert localLauncher.launch_args._launch_args[key0] == val0
@@ -32,6 +37,7 @@ def test_launch_args_input_mutation():
 
     # Confirm previously created run settings are not changed
     assert localLauncher.launch_args._launch_args[key2] == val2
+
 
 @pytest.mark.parametrize(
     "env_vars",
@@ -49,10 +55,12 @@ def test_update_env(env_vars):
 
     assert len(localLauncher.env_vars) == len(env_vars.keys())
 
+
 def test_format_launch_args():
     localLauncher = LaunchSettings(launcher=LauncherType.Local, launch_args={"-np": 2})
     launch_args = localLauncher.format_launch_args()
     assert launch_args == ["-np", "2"]
+
 
 @pytest.mark.parametrize(
     "env_vars",
@@ -69,6 +77,7 @@ def test_update_env_null_valued(env_vars):
     with pytest.raises(TypeError) as ex:
         localLauncher = LaunchSettings(launcher=LauncherType.Local, env_vars=orig_env)
         localLauncher.update_env(env_vars)
+
 
 @pytest.mark.parametrize(
     "env_vars",
@@ -91,13 +100,14 @@ def test_update_env_initialized(env_vars):
     assert len(localLauncher.env_vars) == len(combined_keys)
     assert {k for k in localLauncher.env_vars.keys()} == combined_keys
 
+
 def test_format_env_vars():
-    env_vars={
-            "A": "a",
-            "B": None,
-            "C": "",
-            "D": "12",
-        }
+    env_vars = {
+        "A": "a",
+        "B": None,
+        "C": "",
+        "D": "12",
+    }
     localLauncher = LaunchSettings(launcher=LauncherType.Local, env_vars=env_vars)
     assert isinstance(localLauncher._arg_builder, LocalArgBuilder)
     assert localLauncher.format_env_vars() == ["A=a", "B=", "C=", "D=12"]

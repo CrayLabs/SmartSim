@@ -26,13 +26,14 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-import typing as t
 import copy
+import typing as t
+from abc import ABC, abstractmethod
 
-from smartsim.log import get_logger                                                                                    
+from smartsim.log import get_logger
 
 logger = get_logger(__name__)
+
 
 class LaunchArgBuilder(ABC):
     """Abstract base class that defines all generic launcher
@@ -40,28 +41,30 @@ class LaunchArgBuilder(ABC):
     responsibility of child classes for each launcher to translate
     the input parameter to a properly formatted launcher argument.
     """
+
     def __init__(self, launch_args: t.Dict[str, str | None] | None) -> None:
         self._launch_args = copy.deepcopy(launch_args) or {}
-    
+
     @abstractmethod
     def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
+        """Get the string representation of the launcher"""
         pass
-    
+
     @abstractmethod
     def set(self, arg: str, val: str | None) -> None:
-        """ Set the launch arguments
-        """
+        """Set the launch arguments"""
         pass
-    
-    def format_launch_args(self) -> t.Union[t.List[str],None]:
-        """ Build formatted launch arguments
-        """
-        logger.warning(f"format_launcher_args() not supported for {self.launcher_str()}.")
+
+    def format_launch_args(self) -> t.Union[t.List[str], None]:
+        """Build formatted launch arguments"""
+        logger.warning(
+            f"format_launcher_args() not supported for {self.launcher_str()}."
+        )
         return None
 
-    def format_comma_sep_env_vars(self, env_vars: t.Dict[str, t.Optional[str]]) -> t.Union[t.Tuple[str, t.List[str]],None]:
+    def format_comma_sep_env_vars(
+        self, env_vars: t.Dict[str, t.Optional[str]]
+    ) -> t.Union[t.Tuple[str, t.List[str]], None]:
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists
@@ -70,10 +73,14 @@ class LaunchArgBuilder(ABC):
 
         :returns: the formatted string of environment variables
         """
-        logger.warning(f"format_comma_sep_env_vars() not supported for {self.launcher_str()}.")
+        logger.warning(
+            f"format_comma_sep_env_vars() not supported for {self.launcher_str()}."
+        )
         return None
 
-    def format_env_vars(self, env_vars: t.Dict[str, t.Optional[str]]) -> t.Union[t.List[str],None]:
+    def format_env_vars(
+        self, env_vars: t.Dict[str, t.Optional[str]]
+    ) -> t.Union[t.List[str], None]:
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables

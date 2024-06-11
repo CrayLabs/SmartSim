@@ -1,8 +1,15 @@
-from smartsim.settings import LaunchSettings
-from smartsim.settings.translators.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
-import pytest
 import itertools
+
+import pytest
+
+from smartsim.settings import LaunchSettings
 from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.translators.launch.mpi import (
+    MpiArgBuilder,
+    MpiexecArgBuilder,
+    OrteArgBuilder,
+)
+
 
 @pytest.mark.parametrize(
     "launcher",
@@ -17,33 +24,98 @@ def test_launcher_str(launcher):
     ls = LaunchSettings(launcher=launcher)
     assert ls.launch_args.launcher_str() == launcher.value
 
+
 @pytest.mark.parametrize(
     "l,function,value,result,flag",
     [
-    # Use OpenMPI style settigs for all launchers
-    *itertools.chain.from_iterable(
-        (
+        # Use OpenMPI style settigs for all launchers
+        *itertools.chain.from_iterable(
             (
-            pytest.param(l, "set_walltime", ("100",),"100","timeout",id="set_walltime"),
-            pytest.param(l, "set_task_map", ("taskmap",),"taskmap","map-by",id="set_task_map"),
-            pytest.param(l, "set_cpus_per_task", (2,),"2","cpus-per-proc",id="set_cpus_per_task"),
-            pytest.param(l, "set_cpu_binding_type", ("4",),"4","bind-to",id="set_cpu_binding_type"),
-            pytest.param(l, "set_tasks_per_node", (4,),"4","npernode",id="set_tasks_per_node"),
-            pytest.param(l, "set_tasks", (4,),"4","n",id="set_tasks"),
-            pytest.param(l, "set_executable_broadcast", ("broadcast",),"broadcast","preload-binary",id="set_executable_broadcast"),
-            pytest.param(l, "set_hostlist", ("host_A",),"host_A","host",id="set_hostlist_str"),
-            pytest.param(l, "set_hostlist", (["host_A","host_B"],),"host_A,host_B","host",id="set_hostlist_list[str]"),
-            pytest.param(l, "set_hostlist_from_file", ("./path/to/hostfile",),"./path/to/hostfile","hostfile",id="set_hostlist_from_file"),
+                (
+                    pytest.param(
+                        l, "set_walltime", ("100",), "100", "timeout", id="set_walltime"
+                    ),
+                    pytest.param(
+                        l,
+                        "set_task_map",
+                        ("taskmap",),
+                        "taskmap",
+                        "map-by",
+                        id="set_task_map",
+                    ),
+                    pytest.param(
+                        l,
+                        "set_cpus_per_task",
+                        (2,),
+                        "2",
+                        "cpus-per-proc",
+                        id="set_cpus_per_task",
+                    ),
+                    pytest.param(
+                        l,
+                        "set_cpu_binding_type",
+                        ("4",),
+                        "4",
+                        "bind-to",
+                        id="set_cpu_binding_type",
+                    ),
+                    pytest.param(
+                        l,
+                        "set_tasks_per_node",
+                        (4,),
+                        "4",
+                        "npernode",
+                        id="set_tasks_per_node",
+                    ),
+                    pytest.param(l, "set_tasks", (4,), "4", "n", id="set_tasks"),
+                    pytest.param(
+                        l,
+                        "set_executable_broadcast",
+                        ("broadcast",),
+                        "broadcast",
+                        "preload-binary",
+                        id="set_executable_broadcast",
+                    ),
+                    pytest.param(
+                        l,
+                        "set_hostlist",
+                        ("host_A",),
+                        "host_A",
+                        "host",
+                        id="set_hostlist_str",
+                    ),
+                    pytest.param(
+                        l,
+                        "set_hostlist",
+                        (["host_A", "host_B"],),
+                        "host_A,host_B",
+                        "host",
+                        id="set_hostlist_list[str]",
+                    ),
+                    pytest.param(
+                        l,
+                        "set_hostlist_from_file",
+                        ("./path/to/hostfile",),
+                        "./path/to/hostfile",
+                        "hostfile",
+                        id="set_hostlist_from_file",
+                    ),
+                )
+                for l in (
+                    [LauncherType.Mpirun, MpiArgBuilder],
+                    [LauncherType.Mpiexec, MpiexecArgBuilder],
+                    [LauncherType.Orterun, OrteArgBuilder],
+                )
+            )
         )
-                for l in ([LauncherType.Mpirun, MpiArgBuilder], [LauncherType.Mpiexec, MpiexecArgBuilder], [LauncherType.Orterun, OrteArgBuilder])
-            ))
     ],
 )
-def test_mpi_class_methods(l,function, value, flag, result):
+def test_mpi_class_methods(l, function, value, flag, result):
     mpiSettings = LaunchSettings(launcher=l[0])
-    assert isinstance(mpiSettings._arg_builder,l[1])
+    assert isinstance(mpiSettings._arg_builder, l[1])
     getattr(mpiSettings.launch_args, function)(*value)
     assert mpiSettings.launch_args._launch_args[flag] == result
+
 
 @pytest.mark.parametrize(
     "launcher",
@@ -65,6 +137,7 @@ def test_format_env_vars(launcher):
     ]
     assert formatted == result
 
+
 @pytest.mark.parametrize(
     "launcher",
     [
@@ -82,6 +155,7 @@ def test_format_launcher_args(launcher):
     result = ["--cpus-per-proc", "1", "--n", "2", "--host", "node005,node006"]
     assert formatted == result
 
+
 @pytest.mark.parametrize(
     "launcher",
     [
@@ -93,9 +167,10 @@ def test_format_launcher_args(launcher):
 def test_set_verbose_launch(launcher):
     mpiSettings = LaunchSettings(launcher=launcher)
     mpiSettings.launch_args.set_verbose_launch(True)
-    assert mpiSettings.launch_args._launch_args == {'verbose': None}
+    assert mpiSettings.launch_args._launch_args == {"verbose": None}
     mpiSettings.launch_args.set_verbose_launch(False)
     assert mpiSettings.launch_args._launch_args == {}
+
 
 @pytest.mark.parametrize(
     "launcher",
@@ -108,9 +183,10 @@ def test_set_verbose_launch(launcher):
 def test_set_quiet_launch(launcher):
     mpiSettings = LaunchSettings(launcher=launcher)
     mpiSettings.launch_args.set_quiet_launch(True)
-    assert mpiSettings.launch_args._launch_args == {'quiet': None}
+    assert mpiSettings.launch_args._launch_args == {"quiet": None}
     mpiSettings.launch_args.set_quiet_launch(False)
     assert mpiSettings.launch_args._launch_args == {}
+
 
 @pytest.mark.parametrize(
     "launcher",
@@ -124,7 +200,7 @@ def test_invalid_hostlist_format(launcher):
     """Test invalid hostlist formats"""
     mpiSettings = LaunchSettings(launcher=launcher)
     with pytest.raises(TypeError):
-        mpiSettings.launch_args.set_hostlist(["test",5])
+        mpiSettings.launch_args.set_hostlist(["test", 5])
     with pytest.raises(TypeError):
         mpiSettings.launch_args.set_hostlist([5])
     with pytest.raises(TypeError):

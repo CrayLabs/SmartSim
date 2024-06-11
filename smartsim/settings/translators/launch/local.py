@@ -27,27 +27,28 @@
 from __future__ import annotations
 
 import typing as t
-from ..launchArgBuilder import LaunchArgBuilder
+
 from smartsim.log import get_logger
-from ...common import StringArgument, set_check_input  
-from ...launchCommand import LauncherType                                                          
+
+from ...common import StringArgument, set_check_input
+from ...launchCommand import LauncherType
+from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
 
+
 class LocalArgBuilder(LaunchArgBuilder):
-    
     def __init__(
         self,
-        launch_args:  t.Dict[str, str | None] | None,
+        launch_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
 
     def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
+        """Get the string representation of the launcher"""
         return LauncherType.Local.value
 
-    def format_env_vars(self, env_vars: StringArgument) -> t.Union[t.List[str],None]:
+    def format_env_vars(self, env_vars: StringArgument) -> t.Union[t.List[str], None]:
         """Build environment variable string
 
         :returns: formatted list of strings to export variables
@@ -60,7 +61,7 @@ class LocalArgBuilder(LaunchArgBuilder):
                 formatted.append(f"{key}={val}")
         return formatted
 
-    def format_launch_args(self) -> t.Union[t.List[str],None]:
+    def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Build launcher argument string
 
         :returns: formatted list of launcher arguments
@@ -72,9 +73,8 @@ class LocalArgBuilder(LaunchArgBuilder):
         return formatted
 
     def set(self, key: str, value: str | None) -> None:
-        """ Set the launch arguments
-        """
-        set_check_input(key,value)
+        """Set the launch arguments"""
+        set_check_input(key, value)
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value

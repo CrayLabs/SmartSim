@@ -28,15 +28,17 @@ from __future__ import annotations
 
 import re
 import typing as t
-from ..batchArgBuilder import BatchArgBuilder
-from ...common import StringArgument 
+
+from smartsim.log import get_logger
+
 from ...batchCommand import SchedulerType
-from smartsim.log import get_logger                                                                                
+from ...common import StringArgument
+from ..batchArgBuilder import BatchArgBuilder
 
 logger = get_logger(__name__)
 
-class SlurmBatchArgBuilder(BatchArgBuilder):
 
+class SlurmBatchArgBuilder(BatchArgBuilder):
     def __init__(
         self,
         scheduler_args: t.Dict[str, str | None] | None,
@@ -44,8 +46,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
         super().__init__(scheduler_args)
 
     def scheduler_str(self) -> str:
-        """ Get the string representation of the scheduler
-        """
+        """Get the string representation of the scheduler"""
         return SchedulerType.Slurm.value
 
     def set_walltime(self, walltime: str) -> None:
@@ -55,7 +56,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
 
         :param walltime: wall time
         """
-        pattern = r'^\d{2}:\d{2}:\d{2}$'
+        pattern = r"^\d{2}:\d{2}:\d{2}$"
         if walltime and re.match(pattern, walltime):
             self.set("time", str(walltime))
         else:
@@ -63,7 +64,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
-        
+
         This sets ``--nodes``.
 
         :param num_nodes: number of nodes
@@ -72,7 +73,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
 
     def set_account(self, account: str) -> None:
         """Set the account for this batch job
-        
+
         This sets ``--account``.
 
         :param account: account id
@@ -81,7 +82,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
 
     def set_partition(self, partition: str) -> None:
         """Set the partition for the batch job
-        
+
         This sets ``--partition``.
 
         :param partition: partition name
@@ -108,7 +109,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
-        
+
         This sets ``--nodelist``.
 
         :param host_list: hosts to launch on
@@ -142,7 +143,7 @@ class SlurmBatchArgBuilder(BatchArgBuilder):
                 else:
                     opts += ["=".join((prefix + opt, str(value)))]
         return opts
-    
+
     def set(self, key: str, value: str | None) -> None:
         # Store custom arguments in the launcher_args
         self._scheduler_args[key] = value

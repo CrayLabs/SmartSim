@@ -25,30 +25,31 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-from ..launchArgBuilder import LaunchArgBuilder
+
 import typing as t
-from ...common import set_check_input, StringArgument
+
+from smartsim.log import get_logger
+
+from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
-from smartsim.log import get_logger                                                                                
+from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
 
-class AprunArgBuilder(LaunchArgBuilder):
 
+class AprunArgBuilder(LaunchArgBuilder):
     def __init__(
         self,
-        launch_args:  t.Dict[str, str | None] | None,
+        launch_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
 
     def _reserved_launch_args(self) -> set[str]:
-        """ Return reserved launch arguments.
-        """
+        """Return reserved launch arguments."""
         return {"wdir"}
 
     def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
+        """Get the string representation of the launcher"""
         return LauncherType.Alps.value
 
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
@@ -58,7 +59,7 @@ class AprunArgBuilder(LaunchArgBuilder):
 
         :param cpus_per_task: number of cpus to use per task
         """
-        self.set("cpus-per-pe",str(cpus_per_task))
+        self.set("cpus-per-pe", str(cpus_per_task))
 
     def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
@@ -67,7 +68,7 @@ class AprunArgBuilder(LaunchArgBuilder):
 
         :param tasks: number of tasks
         """
-        self.set("pes",str(tasks))
+        self.set("pes", str(tasks))
 
     def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks for this job
@@ -76,13 +77,13 @@ class AprunArgBuilder(LaunchArgBuilder):
 
         :param tasks_per_node: number of tasks per node
         """
-        self.set("pes-per-node",str(tasks_per_node))
+        self.set("pes-per-node", str(tasks_per_node))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         This sets ``--node-list``
-        
+
         :param host_list: hosts to launch on
         :raises TypeError: if not str or list of str
         """
@@ -101,11 +102,11 @@ class AprunArgBuilder(LaunchArgBuilder):
 
         :param file_path: Path to the hostlist file
         """
-        self.set("node-list-file",file_path)
-    
+        self.set("node-list-file", file_path)
+
     def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
-        
+
         This sets ``--exclude-node-list``
 
         :param host_list: hosts to exclude
@@ -156,7 +157,7 @@ class AprunArgBuilder(LaunchArgBuilder):
         :param verbose: Whether the job should be run verbosely
         """
         if verbose:
-            self.set("debug","7")
+            self.set("debug", "7")
         else:
             self._launch_args.pop("debug", None)
 
@@ -168,11 +169,13 @@ class AprunArgBuilder(LaunchArgBuilder):
         :param quiet: Whether the job should be run quietly
         """
         if quiet:
-            self.set("quiet",None)
+            self.set("quiet", None)
         else:
             self._launch_args.pop("quiet", None)
 
-    def format_env_vars(self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]) -> t.Union[t.List[str],None]:
+    def format_env_vars(
+        self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]
+    ) -> t.Union[t.List[str], None]:
         """Format the environment variables for aprun
 
         :return: list of env vars
@@ -183,7 +186,7 @@ class AprunArgBuilder(LaunchArgBuilder):
                 formatted += ["-e", name + "=" + str(value)]
         return formatted
 
-    def format_launch_args(self) -> t.Union[t.List[str],None]:
+    def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings
@@ -203,9 +206,8 @@ class AprunArgBuilder(LaunchArgBuilder):
         return args
 
     def set(self, key: str, value: str | None) -> None:
-        """ Set the launch arguments
-        """
-        set_check_input(key,value)
+        """Set the launch arguments"""
+        set_check_input(key, value)
         if key in self._reserved_launch_args():
             logger.warning(
                 (

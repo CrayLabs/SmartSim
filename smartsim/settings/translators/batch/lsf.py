@@ -27,24 +27,25 @@
 from __future__ import annotations
 
 import typing as t
-from ..batchArgBuilder import BatchArgBuilder
+
+from smartsim.log import get_logger
+
+from ...batchCommand import SchedulerType
 from ...common import StringArgument
-from smartsim.log import get_logger   
-from ...batchCommand import SchedulerType                                                                         
+from ..batchArgBuilder import BatchArgBuilder
 
 logger = get_logger(__name__)
 
-class BsubBatchArgBuilder(BatchArgBuilder):
 
+class BsubBatchArgBuilder(BatchArgBuilder):
     def __init__(
         self,
-        scheduler_args:  t.Dict[str, str | None] | None,
+        scheduler_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(scheduler_args)
 
     def scheduler_str(self) -> str:
-        """ Get the string representation of the scheduler
-        """
+        """Get the string representation of the scheduler"""
         return SchedulerType.Lsf.value
 
     def set_walltime(self, walltime: str) -> None:
@@ -81,7 +82,7 @@ class BsubBatchArgBuilder(BatchArgBuilder):
         :param time: project name
         """
         self.set("P", project)
-    
+
     def set_account(self, account: str) -> None:
         """Set the project
 
@@ -125,7 +126,7 @@ class BsubBatchArgBuilder(BatchArgBuilder):
 
     def set_queue(self, queue: str) -> None:
         """Set the queue for this job
-        
+
         This sets ``-q``
 
         :param queue: The queue to submit the job on

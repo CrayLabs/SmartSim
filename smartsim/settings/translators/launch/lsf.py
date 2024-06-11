@@ -27,29 +27,29 @@
 from __future__ import annotations
 
 import typing as t
-from ..launchArgBuilder import LaunchArgBuilder
+
+from smartsim.log import get_logger
+
 from ...common import StringArgument, set_check_input
-from smartsim.log import get_logger       
-from ...launchCommand import LauncherType                                                                         
+from ...launchCommand import LauncherType
+from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
 
+
 class JsrunArgBuilder(LaunchArgBuilder):
-    
     def __init__(
         self,
-        launch_args:  t.Dict[str, str | None] | None,
+        launch_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
 
     def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
+        """Get the string representation of the launcher"""
         return LauncherType.Lsf.value
 
     def _reserved_launch_args(self) -> set[str]:
-        """ Return reserved launch arguments.
-        """
+        """Return reserved launch arguments."""
         return {"chdir", "h", "stdio_stdout", "o", "stdio_stderr", "k"}
 
     def set_tasks(self, tasks: int) -> None:
@@ -70,7 +70,9 @@ class JsrunArgBuilder(LaunchArgBuilder):
         """
         self.set("bind", binding)
 
-    def format_env_vars(self, env_vars: t.Dict[str, t.Optional[str]]) -> t.Union[t.List[str],None]:
+    def format_env_vars(
+        self, env_vars: t.Dict[str, t.Optional[str]]
+    ) -> t.Union[t.List[str], None]:
         """Format environment variables. Each variable needs
         to be passed with ``--env``. If a variable is set to ``None``,
         its value is propagated from the current environment.
@@ -85,14 +87,14 @@ class JsrunArgBuilder(LaunchArgBuilder):
                 format_str += ["-E", f"{k}"]
         return format_str
 
-    def format_launch_args(self) -> t.Union[t.List[str],None]:
+    def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Return a list of LSF formatted run arguments
 
         :return: list of LSF arguments for these settings
         """
         # args launcher uses
         args = []
-        
+
         for opt, value in self._launch_args.items():
             short_arg = bool(len(str(opt)) == 1)
             prefix = "-" if short_arg else "--"
@@ -106,9 +108,8 @@ class JsrunArgBuilder(LaunchArgBuilder):
         return args
 
     def set(self, key: str, value: str | None) -> None:
-        """ Set the launch arguments
-        """
-        set_check_input(key,value)
+        """Set the launch arguments"""
+        set_check_input(key, value)
         if key in self._reserved_launch_args():
             logger.warning(
                 (

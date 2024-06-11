@@ -24,16 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from collections.abc import MutableSequence
-from .command import Command
 import typing as t
+from collections.abc import MutableSequence
+
+from .command import Command
+
 
 class CommandList(MutableSequence[Command]):
-    """Container for a Sequence of Command objects
-    """
+    """Container for a Sequence of Command objects"""
+
     def __init__(self, commands: t.Union[Command, t.List[Command]]):
-        """CommandList constructor
-        """
+        """CommandList constructor"""
         if isinstance(commands, Command):
             commands = [commands]
         self._commands: t.List[Command] = list(commands)
@@ -44,33 +45,28 @@ class CommandList(MutableSequence[Command]):
         Return a reference to the Command list.
         """
         return self._commands
-    
+
     def __getitem__(self, idx: int) -> Command:
-        """Get the Command at the specified index.
-        """
+        """Get the Command at the specified index."""
         return self._commands[idx]
-    
+
     def __setitem__(self, idx: int, value: Command) -> None:
-        """Set the Command at the specified index.
-        """
+        """Set the Command at the specified index."""
         self._commands[idx] = value
 
     def __delitem__(self, idx: int) -> None:
-        """Delete the Command at the specified index.
-        """
+        """Delete the Command at the specified index."""
         del self._commands[idx]
 
     def __len__(self) -> int:
-        """Get the length of the Command list.
-        """
+        """Get the length of the Command list."""
         return len(self._commands)
 
     def insert(self, idx: int, value: Command) -> None:
-        """Insert a Command at the specified index.
-        """
+        """Insert a Command at the specified index."""
         self._commands.insert(idx, value)
 
-    def __str__(self) -> str: # pragma: no cover
+    def __str__(self) -> str:  # pragma: no cover
         string = "\n\nCommand List:\n\n"
         for counter, cmd in enumerate(self.commands):
             string += f"CommandList index {counter} value:"

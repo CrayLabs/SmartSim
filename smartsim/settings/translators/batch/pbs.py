@@ -26,26 +26,28 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import typing as t
-from ..batchArgBuilder import BatchArgBuilder
-from ....error import SSConfigError
-from ...common import StringArgument
-from ...batchCommand import SchedulerType
+from copy import deepcopy
+
 from smartsim.log import get_logger
+
+from ....error import SSConfigError
+from ...batchCommand import SchedulerType
+from ...common import StringArgument
+from ..batchArgBuilder import BatchArgBuilder
+
 logger = get_logger(__name__)
 
-class QsubBatchArgBuilder(BatchArgBuilder):
 
+class QsubBatchArgBuilder(BatchArgBuilder):
     def __init__(
         self,
-        scheduler_args:  t.Dict[str, str | None] | None,
+        scheduler_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(scheduler_args)
 
     def scheduler_str(self) -> str:
-        """ Get the string representation of the scheduler
-        """
+        """Get the string representation of the scheduler"""
         return SchedulerType.Pbs.value
 
     def set_nodes(self, num_nodes: int) -> None:
@@ -75,7 +77,7 @@ class QsubBatchArgBuilder(BatchArgBuilder):
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be a list of strings")
         self.set("hostname", ",".join(host_list))
-    
+
     def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
@@ -88,14 +90,14 @@ class QsubBatchArgBuilder(BatchArgBuilder):
         :param walltime: wall time
         """
         self.set("walltime", walltime)
-    
+
     def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
 
         :param queue: queue name
         """
         self.set("q", str(queue))
-    
+
     def set_ncpus(self, num_cpus: int) -> None:
         """Set the number of cpus obtained in each node.
 
@@ -106,7 +108,7 @@ class QsubBatchArgBuilder(BatchArgBuilder):
         :param num_cpus: number of cpus per node in select
         """
         self.set("ppn", str(num_cpus))
-    
+
     def set_account(self, account: str) -> None:
         """Set the account for this batch job
 
@@ -129,9 +131,7 @@ class QsubBatchArgBuilder(BatchArgBuilder):
         return opts
 
     @staticmethod
-    def _sanity_check_resources(
-        batch_args: t.Dict[str, str | None]
-    ) -> None:
+    def _sanity_check_resources(batch_args: t.Dict[str, str | None]) -> None:
         """Check that only select or nodes was specified in resources
 
         Note: For PBS Pro, nodes is equivalent to 'select' and 'place' so
@@ -148,7 +148,9 @@ class QsubBatchArgBuilder(BatchArgBuilder):
                 "'select' was set using 'set_resource'. Please only specify one."
             )
 
-    def _create_resource_list(self, batch_args: t.Dict[str, str | None]) -> t.Tuple[t.List[str],t.Dict[str, str | None]]:
+    def _create_resource_list(
+        self, batch_args: t.Dict[str, str | None]
+    ) -> t.Tuple[t.List[str], t.Dict[str, str | None]]:
         self._sanity_check_resources(batch_args)
         res = []
 

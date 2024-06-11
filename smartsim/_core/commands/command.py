@@ -24,16 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from collections.abc import MutableSequence
-from ...settings.launchCommand import LauncherType
 import typing as t
+from collections.abc import MutableSequence
+
+from ...settings.launchCommand import LauncherType
+
 
 class Command(MutableSequence[str]):
-    """Basic container for command information
-    """
-    def __init__(self, launcher: LauncherType, command:t.List[str]) -> None:
-        """Command constructor
-        """
+    """Basic container for command information"""
+
+    def __init__(self, launcher: LauncherType, command: t.List[str]) -> None:
+        """Command constructor"""
         self._launcher = launcher
         self._command = command
 
@@ -43,40 +44,35 @@ class Command(MutableSequence[str]):
         Return a reference to the LauncherType.
         """
         return self._launcher
-    
+
     @property
     def command(self) -> t.List[str]:
         """Get the command list.
         Return a reference to the command list.
         """
         return self._command
-    
+
     def __getitem__(self, idx: int) -> str:
-        """Get the command at the specified index.
-        """
+        """Get the command at the specified index."""
         return self._command[idx]
-    
+
     def __setitem__(self, idx: int, value: str) -> None:
-        """Set the command at the specified index.
-        """
+        """Set the command at the specified index."""
         self._command[idx] = value
 
     def __delitem__(self, idx: int) -> None:
-        """Delete the command at the specified index.
-        """
+        """Delete the command at the specified index."""
         del self._command[idx]
 
     def __len__(self) -> int:
-        """Get the length of the command list.
-        """
+        """Get the length of the command list."""
         return len(self._command)
 
     def insert(self, idx: int, value: str) -> None:
-        """Insert a command at the specified index.
-        """
+        """Insert a command at the specified index."""
         self._command.insert(idx, value)
-    
-    def __str__(self) -> str: # pragma: no cover
+
+    def __str__(self) -> str:  # pragma: no cover
         string = f"\nLauncher: {self.launcher.value}\n"
         string += f"Command: {' '.join(str(cmd) for cmd in self.command)}"
         return string

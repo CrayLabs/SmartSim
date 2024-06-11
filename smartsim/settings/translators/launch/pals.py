@@ -27,46 +27,46 @@
 from __future__ import annotations
 
 import typing as t
-from ..launchArgBuilder import LaunchArgBuilder
+
+from smartsim.log import get_logger
+
 from ...common import StringArgument, set_check_input
-from smartsim.log import get_logger  
-from ...launchCommand import LauncherType                                                                              
+from ...launchCommand import LauncherType
+from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
 
+
 class PalsMpiexecArgBuilder(LaunchArgBuilder):
-    
     def __init__(
         self,
-        launch_args:  t.Dict[str, str | None] | None,
+        launch_args: t.Dict[str, str | None] | None,
     ) -> None:
         super().__init__(launch_args)
 
     def launcher_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
+        """Get the string representation of the launcher"""
         return LauncherType.Pals.value
-    
+
     def _reserved_launch_args(self) -> set[str]:
-        """ Return reserved launch arguments.
-        """
+        """Return reserved launch arguments."""
         return {"wdir", "wd"}
 
     def set_cpu_binding_type(self, bind_type: str) -> None:
-        """ Specifies the cores to which MPI processes are bound
+        """Specifies the cores to which MPI processes are bound
 
         This sets ``--bind-to`` for MPI compliant implementations
 
         :param bind_type: binding type
         """
-        self.set("bind-to",bind_type)
+        self.set("bind-to", bind_type)
 
     def set_tasks(self, tasks: int) -> None:
-        """ Set the number of tasks
+        """Set the number of tasks
 
         :param tasks: number of total tasks to launch
         """
-        self.set("np",str(tasks))
+        self.set("np", str(tasks))
 
     def set_executable_broadcast(self, dest_path: str) -> None:
         """Copy the specified executable(s) to remote machines
@@ -78,16 +78,16 @@ class PalsMpiexecArgBuilder(LaunchArgBuilder):
         self.set("transfer", dest_path)
 
     def set_tasks_per_node(self, tasks_per_node: int) -> None:
-        """ Set the number of tasks per node
-    
+        """Set the number of tasks per node
+
         This sets ``--ppn``
 
         :param tasks_per_node: number of tasks to launch per node
         """
-        self.set("ppn",str(tasks_per_node))
+        self.set("ppn", str(tasks_per_node))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
-        """ Set the hostlist for the PALS ``mpiexec`` command
+        """Set the hostlist for the PALS ``mpiexec`` command
 
         This sets ``hosts``
 
@@ -100,10 +100,12 @@ class PalsMpiexecArgBuilder(LaunchArgBuilder):
             raise TypeError("host_list argument must be a list of strings")
         if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
-        self.set("hosts",",".join(host_list))
+        self.set("hosts", ",".join(host_list))
 
-    def format_env_vars(self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]) -> t.Union[t.List[str],None]:
-        """ Format the environment variables for mpirun
+    def format_env_vars(
+        self, env_vars: t.Optional[t.Dict[str, t.Optional[str]]]
+    ) -> t.Union[t.List[str], None]:
+        """Format the environment variables for mpirun
 
         :return: list of env vars
         """
@@ -140,9 +142,8 @@ class PalsMpiexecArgBuilder(LaunchArgBuilder):
         return args
 
     def set(self, key: str, value: str | None) -> None:
-        """ Set the launch arguments
-        """
-        set_check_input(key,value)
+        """Set the launch arguments"""
+        set_check_input(key, value)
         if key in self._reserved_launch_args():
             logger.warning(
                 (

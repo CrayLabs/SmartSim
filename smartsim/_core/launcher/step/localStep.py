@@ -29,8 +29,7 @@ import shutil
 import typing as t
 
 from ....entity import Application, FSNode
-from ....settings import Singularity
-from ....settings import RunSettings
+from ....settings import RunSettings, Singularity
 from .step import Step, proxyable_launch_cmd
 
 

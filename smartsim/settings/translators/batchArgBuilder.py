@@ -26,13 +26,14 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-import typing as t
 import copy
+import typing as t
+from abc import ABC, abstractmethod
 
-from smartsim.log import get_logger                                                                                    
+from smartsim.log import get_logger
 
 logger = get_logger(__name__)
+
 
 class BatchArgBuilder(ABC):
     """Abstract base class that defines all generic scheduler
@@ -40,14 +41,13 @@ class BatchArgBuilder(ABC):
     responsibility of child classes for each launcher to translate
     the input parameter to a properly formatted launcher argument.
     """
-    
+
     def __init__(self, scheduler_args: t.Dict[str, str | None] | None) -> None:
         self._scheduler_args = copy.deepcopy(scheduler_args) or {}
 
     @abstractmethod
     def scheduler_str(self) -> str:
-        """ Get the string representation of the launcher
-        """
+        """Get the string representation of the launcher"""
         pass
 
     @abstractmethod

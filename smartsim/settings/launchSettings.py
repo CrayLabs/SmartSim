@@ -25,25 +25,27 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-import typing as t
-import copy
 
+import copy
+import typing as t
 
 from smartsim.log import get_logger
+
 from .._core.utils.helpers import fmt_dict
+from .baseSettings import BaseSettings
 from .common import StringArgument
 from .launchCommand import LauncherType
+from .translators import LaunchArgBuilder
 from .translators.launch.alps import AprunArgBuilder
+from .translators.launch.dragon import DragonArgBuilder
+from .translators.launch.local import LocalArgBuilder
 from .translators.launch.lsf import JsrunArgBuilder
 from .translators.launch.mpi import MpiArgBuilder, MpiexecArgBuilder, OrteArgBuilder
 from .translators.launch.pals import PalsMpiexecArgBuilder
-from .translators.launch.slurm import SlurmArgBuilder      
-from .translators.launch.dragon import DragonArgBuilder  
-from .translators.launch.local import LocalArgBuilder 
-from .translators import LaunchArgBuilder   
-from .baseSettings import BaseSettings                                                        
+from .translators.launch.slurm import SlurmArgBuilder
 
 logger = get_logger(__name__)
+
 
 class LaunchSettings(BaseSettings):
     def __init__(
@@ -58,43 +60,37 @@ class LaunchSettings(BaseSettings):
             raise ValueError(f"Invalid launcher type: {launcher}")
         self._arg_builder = self._get_arg_builder(launch_args)
         self.env_vars = copy.deepcopy(env_vars) if env_vars else {}
-    
+
     @property
     def launcher(self) -> str:
-        """Return the launcher name.
-        """
+        """Return the launcher name."""
         return self._launcher.value
-    
+
     @property
     def launch_args(self) -> LaunchArgBuilder:
-        """Return the launch argument translator.
-        """
+        """Return the launch argument translator."""
         # Is a deep copy needed here?
         return self._arg_builder
 
     @launch_args.setter
     def launch_args(self, args: t.Mapping[str, str]) -> None:
-        """Update the launch arguments.
-        """
+        """Update the launch arguments."""
         self.launch_args._launch_args.clear()
         for k, v in args.items():
             self.launch_args.set(k, v)
 
     @property
     def env_vars(self) -> t.Mapping[str, str | None]:
-        """Return an immutable list of attached environment variables.
-        """
+        """Return an immutable list of attached environment variables."""
         return copy.deepcopy(self._env_vars)
 
     @env_vars.setter
     def env_vars(self, value: t.Dict[str, str]) -> None:
-        """Set the environment variables.
-        """
+        """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
-    
+
     def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder:
-        """ Map the Launcher to the LaunchArgBuilder
-        """
+        """Map the Launcher to the LaunchArgBuilder"""
         if self._launcher == LauncherType.Slurm:
             return SlurmArgBuilder(launch_args)
         elif self._launcher == LauncherType.Mpiexec:
@@ -131,18 +127,16 @@ class LaunchSettings(BaseSettings):
         # Coerce env_vars values to str as a convenience to user
         for env, val in env_vars.items():
             if not (isinstance(val, str) and isinstance(env, str)):
-                raise TypeError(
-                    f"env_vars[{env}] was of type {type(val)}, not str"
-                )
+                raise TypeError(f"env_vars[{env}] was of type {type(val)}, not str")
         self._env_vars.update(env_vars)
-    
-    def format_env_vars(self) -> t.Union[t.List[str],None]:
+
+    def format_env_vars(self) -> t.Union[t.List[str], None]:
         """Build bash compatible environment variable string for Slurm
         :returns: the formatted string of environment variables
         """
         return self._arg_builder.format_env_vars(self._env_vars)
 
-    def format_comma_sep_env_vars(self) -> t.Union[t.Tuple[str, t.List[str]],None]:
+    def format_comma_sep_env_vars(self) -> t.Union[t.Tuple[str, t.List[str]], None]:
         """Build environment variable string for Slurm
         Slurm takes exports in comma separated lists
         the list starts with all as to not disturb the rest of the environment
@@ -151,14 +145,14 @@ class LaunchSettings(BaseSettings):
         """
         return self._arg_builder.format_comma_sep_env_vars(self._env_vars)
 
-    def format_launch_args(self) -> t.Union[t.List[str],None]:
+    def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Return formatted launch arguments
         For ``RunSettings``, the run arguments are passed
         literally with no formatting.
         :return: list run arguments for these settings
         """
         return self._arg_builder.format_launch_args()
-    
+
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nLauncher: {self.launcher}"
         if self.launch_args._launch_args:

@@ -1,17 +1,18 @@
 from .commandList import CommandList
 
+
 class LaunchCommands:
     """Container for aggregating prelaunch commands (e.g. file
     system operations), launch commands, and postlaunch commands
     """
+
     def __init__(
-            self,
-            prelaunch_commands: CommandList,
-            launch_commands: CommandList,
-            postlaunch_commands: CommandList,
-        ) -> None:
-        """LaunchCommand constructor
-        """
+        self,
+        prelaunch_commands: CommandList,
+        launch_commands: CommandList,
+        postlaunch_commands: CommandList,
+    ) -> None:
+        """LaunchCommand constructor"""
         self._prelaunch_commands = prelaunch_commands
         self._launch_commands = launch_commands
         self._postlaunch_commands = postlaunch_commands
@@ -37,7 +38,7 @@ class LaunchCommands:
         """
         return self._postlaunch_commands
 
-    def __str__(self) -> str: # pragma: no cover
+    def __str__(self) -> str:  # pragma: no cover
         string = "\n\nPrelaunch Command List:\n"
         for _, pre_cmd in enumerate(self.prelaunch_command):
             string += f"{pre_cmd}\n"

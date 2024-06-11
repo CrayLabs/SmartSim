@@ -25,20 +25,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-import typing as t
+
 import copy
+import typing as t
 
 from smartsim.log import get_logger
+
 from .._core.utils.helpers import fmt_dict
-from .common import StringArgument
+from .baseSettings import BaseSettings
 from .batchCommand import SchedulerType
+from .common import StringArgument
+from .translators import BatchArgBuilder
+from .translators.batch.lsf import BsubBatchArgBuilder
 from .translators.batch.pbs import QsubBatchArgBuilder
 from .translators.batch.slurm import SlurmBatchArgBuilder
-from .translators.batch.lsf import BsubBatchArgBuilder
-from .translators import BatchArgBuilder
-from .baseSettings import BaseSettings
 
 logger = get_logger(__name__)
+
 
 class BatchSettings(BaseSettings):
     def __init__(
@@ -56,38 +59,34 @@ class BatchSettings(BaseSettings):
 
     @property
     def scheduler(self) -> str:
-        """Return the launcher name.
-        """
+        """Return the launcher name."""
         return self._batch_scheduler.value
 
     @property
     def batch_scheduler(self) -> str:
-        """Return the scheduler name.
-        """
+        """Return the scheduler name."""
         return self._batch_scheduler.value
 
     @property
     def scheduler_args(self) -> BatchArgBuilder:
-        """Return the batch argument translator.
-        """
+        """Return the batch argument translator."""
         # Is a deep copy needed here?
         return self._arg_builder
 
     @property
     def env_vars(self) -> StringArgument:
-        """Return an immutable list of attached environment variables.
-        """
+        """Return an immutable list of attached environment variables."""
         return copy.deepcopy(self._env_vars)
 
     @env_vars.setter
     def env_vars(self, value: t.Dict[str, str | None]) -> None:
-        """Set the environment variables.
-        """
+        """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(self, scheduler_args: StringArgument | None) -> BatchArgBuilder:
-        """ Map the Scheduler to the BatchArgBuilder
-        """
+    def _get_arg_builder(
+        self, scheduler_args: StringArgument | None
+    ) -> BatchArgBuilder:
+        """Map the Scheduler to the BatchArgBuilder"""
         if self._batch_scheduler == SchedulerType.Slurm:
             return SlurmBatchArgBuilder(scheduler_args)
         elif self._batch_scheduler == SchedulerType.Lsf:
@@ -96,7 +95,7 @@ class BatchSettings(BaseSettings):
             return QsubBatchArgBuilder(scheduler_args)
         else:
             raise ValueError(f"Invalid scheduler type: {self._batch_scheduler}")
-    
+
     def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
