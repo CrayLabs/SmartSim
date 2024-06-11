@@ -9,7 +9,7 @@ Jump to:
 
 ## SmartSim
 
-## MLI branch
+### MLI branch
 
 Description
 
