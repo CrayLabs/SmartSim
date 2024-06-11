@@ -35,7 +35,7 @@ from smartsim.launchable.launchable import SmartSimObject
 from smartsim.launchable.mpmdjob import MPMDJob
 from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings.base import RunSettings
-
+# TODO replace with LaunchSettings
 
 def test_smartsimobject_init():
     ss_object = SmartSimObject()
