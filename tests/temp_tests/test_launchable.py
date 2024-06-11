@@ -36,6 +36,8 @@ from smartsim.launchable.mpmdjob import MPMDJob
 from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings.base import RunSettings
 
+# TODO replace with LaunchSettings
+
 
 def test_smartsimobject_init():
     ss_object = SmartSimObject()
@@ -48,31 +50,33 @@ def test_launchable_init():
 
 
 def test_job_init():
-    entity = SmartSimEntity("test_name", None, None)
-    launch_settings = RunSettings("echo", ["spam", "eggs"])
-    job = Job(entity, launch_settings)
+    entity = Application(
+        "test_name", run_settings=RunSettings(), exe="echo", exe_args=["spam", "eggs"]
+    )
+    job = Job(entity, RunSettings())
     assert isinstance(job, Job)
     assert job.entity.name == "test_name"
-    assert "echo" in job.launch_settings.exe[0]
-    assert "spam" in job.launch_settings.exe_args
-    assert "eggs" in job.launch_settings.exe_args
+    assert "echo" in job.entity.exe[0]
+    assert "spam" in job.entity.exe_args
+    assert "eggs" in job.entity.exe_args
 
 
 def test_job_init_deepcopy():
-    entity = SmartSimEntity("test_name", None, None)
-    launch_settings = RunSettings("echo", ["spam", "eggs"])
-    job = Job(entity, launch_settings)
-    RunSettings("echo", ["hello", "world"])
-    assert "hello" not in job.launch_settings.exe_args
+    entity = Application(
+        "test_name", run_settings=RunSettings(), exe="echo", exe_args=["spam", "eggs"]
+    )
+    settings = RunSettings(run_args="test")
+    job = Job(entity, settings)
+    settings.run_args = "change"
+    assert "change" not in job.launch_settings.run_args
 
 
 def test_add_mpmd_pair():
-    entity = SmartSimEntity("test_name", None, None)
-    launch_settings = RunSettings("echo", ["spam", "eggs"])
+    entity = SmartSimEntity("test_name", "python", RunSettings())
 
     mpmd_job = MPMDJob()
-    mpmd_job.add_mpmd_pair(entity, launch_settings)
-    mpmd_pair = MPMDPair(entity, launch_settings)
+    mpmd_job.add_mpmd_pair(entity, RunSettings())
+    mpmd_pair = MPMDPair(entity, RunSettings())
 
     assert len(mpmd_job.mpmd_pairs) == 1
     assert str(mpmd_pair.entity) == str(mpmd_job.mpmd_pairs[0].entity)
@@ -81,32 +85,39 @@ def test_add_mpmd_pair():
 
 def test_mpmdpair_init():
     """Test the creation of an MPMDPair"""
-    entity = SmartSimEntity("test_name", None, None)
-    launch_settings = RunSettings("echo", ["spam", "eggs"])
-    mpmd_pair = MPMDPair(entity, launch_settings)
+    entity = Application(
+        "test_name", "echo", exe_args=["spam", "eggs"], run_settings=RunSettings()
+    )
+    mpmd_pair = MPMDPair(entity, RunSettings())
     assert isinstance(mpmd_pair, MPMDPair)
     assert mpmd_pair.entity.name == "test_name"
-    assert "echo" in mpmd_pair.launch_settings.exe[0]
-    assert "spam" in mpmd_pair.launch_settings.exe_args
-    assert "eggs" in mpmd_pair.launch_settings.exe_args
+    assert "echo" in mpmd_pair.entity.exe[0]
+    assert "spam" in mpmd_pair.entity.exe_args
+    assert "eggs" in mpmd_pair.entity.exe_args
 
 
 def test_mpmdpair_init_deepcopy():
     """Test the creation of an MPMDPair"""
-    entity = SmartSimEntity("test_name", None, None)
-    launch_settings = RunSettings("echo", ["spam", "eggs"])
-    mpmd_pair = MPMDPair(entity, launch_settings)
-    RunSettings("echo", ["hello", "world"])
-    assert "hello" not in mpmd_pair.launch_settings.exe_args
+    entity = Application(
+        "test_name", "echo", run_settings=RunSettings(), exe_args=["spam", "eggs"]
+    )
+    settings = RunSettings(run_args="test")
+    mpmd_pair = MPMDPair(entity, settings)
+    settings.run_args = "change"
+    assert "change" not in mpmd_pair.launch_settings.run_args
 
 
 def test_check_launcher():
     """Test that mpmd pairs that have the same launcher type can be added to an MPMD Job"""
 
-    entity1 = SmartSimEntity("entity1", None, None)
-    launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="mpirun")
-    entity2 = SmartSimEntity("entity2", None, None)
-    launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="mpirun")
+    entity1 = Application(
+        "entity1", "echo", exe_args=["hello", "world"], run_settings=RunSettings()
+    )
+    launch_settings1 = RunSettings()
+    entity2 = Application(
+        "entity2", "echo", exe_args=["hello", "world"], run_settings=RunSettings()
+    )
+    launch_settings2 = RunSettings()
     mpmd_pairs = []
 
     pair1 = MPMDPair(entity1, launch_settings1)
@@ -115,19 +126,19 @@ def test_check_launcher():
     # Add a second mpmd pair to the mpmd job
     mpmd_job.add_mpmd_pair(entity2, launch_settings2)
 
-    assert str(mpmd_job.mpmd_pairs[0].entity) == "entity1"
-    assert str(mpmd_job.mpmd_pairs[1].entity) == "entity2"
+    assert str(mpmd_job.mpmd_pairs[0].entity.name) == "entity1"
+    assert str(mpmd_job.mpmd_pairs[1].entity.name) == "entity2"
 
 
 def test_add_mpmd_pair_check_launcher_error():
     """Test that an error is raised when a pairs is added to an mpmd
     job using add_mpmd_pair that does not have the same launcher type"""
     mpmd_pairs = []
-    entity1 = SmartSimEntity("entity1", None, None)
-    launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
+    entity1 = SmartSimEntity("entity1", "python", RunSettings())
+    launch_settings1 = RunSettings(run_command="srun")
 
-    entity2 = SmartSimEntity("entity2", None, None)
-    launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="mpirun")
+    entity2 = SmartSimEntity("entity2", "python", RunSettings())
+    launch_settings2 = RunSettings(run_command="mpirun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
     mpmd_pairs.append(pair1)
@@ -141,11 +152,11 @@ def test_add_mpmd_pair_check_launcher_error():
 def test_add_mpmd_pair_check_entity():
     """Test that mpmd pairs that have the same entity type can be added to an MPMD Job"""
     mpmd_pairs = []
-    entity1 = Application("entity1", None, None)
-    launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
+    entity1 = Application("entity1", "python", RunSettings())
+    launch_settings1 = RunSettings(run_command="srun")
 
-    entity2 = Application("entity2", None, None)
-    launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="srun")
+    entity2 = Application("entity2", "python", RunSettings())
+    launch_settings2 = RunSettings(run_command="srun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
     mpmd_pairs.append(pair1)
@@ -161,11 +172,11 @@ def test_add_mpmd_pair_check_entity_error():
     """Test that an error is raised when a pairs is added to an mpmd job
     using add_mpmd_pair that does not have the same entity type"""
     mpmd_pairs = []
-    entity1 = Application("entity1", None, None)
-    launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
+    entity1 = Application("entity1", "python", RunSettings())
+    launch_settings1 = RunSettings(run_command="srun")
 
     entity2 = FeatureStore("entity2")
-    launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="srun")
+    launch_settings2 = RunSettings(run_command="srun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
     mpmd_pairs.append(pair1)
@@ -181,11 +192,11 @@ def test_create_mpmdjob_invalid_mpmdpairs():
     does not have the same launcher type"""
 
     mpmd_pairs = []
-    entity1 = Application("entity1", None, None)
-    launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
+    entity1 = Application("entity1", "python", RunSettings())
+    launch_settings1 = RunSettings(run_command="srun")
 
-    entity1 = Application("entity1", None, None)
-    launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="mpirun")
+    entity1 = Application("entity1", "python", RunSettings())
+    launch_settings2 = RunSettings(run_command="mpirun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
     pair2 = MPMDPair(entity1, launch_settings2)
@@ -202,10 +213,10 @@ def test_create_mpmdjob_valid_mpmdpairs():
     """Test that all pairs have the same entity type is enforced when creating an MPMDJob"""
 
     mpmd_pairs = []
-    entity1 = Application("entity1", None, None)
-    launch_settings1 = RunSettings("echo", ["hello", "world"], run_command="srun")
-    entity1 = Application("entity1", None, None)
-    launch_settings2 = RunSettings("echo", ["spam", "eggs"], run_command="srun")
+    entity1 = Application("entity1", "python", RunSettings())
+    launch_settings1 = RunSettings(run_command="srun")
+    entity1 = Application("entity1", "python", RunSettings())
+    launch_settings2 = RunSettings(run_command="srun")
 
     pair1 = MPMDPair(entity1, launch_settings1)
     pair2 = MPMDPair(entity1, launch_settings2)

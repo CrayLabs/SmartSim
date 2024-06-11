@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import copy
+
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.settings.base import RunSettings
 
@@ -34,5 +36,5 @@ class MPMDPair:
     def __init__(
         self, entity: SmartSimEntity, launch_settings: RunSettings
     ):  # TODO: rename to LaunchSettings
-        self.entity = entity
-        self.launch_settings = launch_settings
+        self.entity = copy.deepcopy(entity)
+        self.launch_settings = copy.deepcopy(launch_settings)
