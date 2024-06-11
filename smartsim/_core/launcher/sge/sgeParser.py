@@ -89,14 +89,17 @@ def parse_qstat_jobid_xml(output: str, job_id: str) -> t.Optional[str]:
 
     root = ET.fromstring(output)
     for job_list in root.findall(".//job_list"):
-        if job_list.find("JB_job_number").text == job_id:
-            state = job_list.find("state").text
-            return state
+        job_state = job_list.find("state")
+        # not None construct is needed here, since element with no
+        # children returns 0, interpreted as False
+        if (job_number := job_list.find("JB_job_number")) is not None:
+            if job_number.text == job_id and (job_state is not None):
+                return job_state.text
 
     return None
 
 
-def parse_qacct_job_output(output: str, field_name: str) -> str:
+def parse_qacct_job_output(output: str, field_name: str) -> t.Union[str, int]:
     """Parse the output from qacct for a single job
 
     :param output: The raw text output from qacct
@@ -107,7 +110,7 @@ def parse_qacct_job_output(output: str, field_name: str) -> str:
         if field_name in line:
             return line.split()[1]
 
-    return None
+    return 1
 
 
 def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:

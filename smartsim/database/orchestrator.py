@@ -292,12 +292,14 @@ class Orchestrator(EntityList[DBNode]):
             self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
             self._fill_reserved()
 
-    def _mpi_has_sge_support(self):
+    def _mpi_has_sge_support(self) -> bool:
         """Check if MPI command supports SGE
 
         If the run command is mpirun, mpiexec, or orterun, there is a possibility
         that the user is using OpenMPI with SGE grid support. In this case, hosts
         do not need to be set.
+
+        :returns: bool
         """
 
         if self.run_command in ["mpirun", "orterun", "mpiexec"]:

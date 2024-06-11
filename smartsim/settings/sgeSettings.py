@@ -38,7 +38,7 @@ class SgeQsubBatchSettings(BatchSettings):
         self,
         time: t.Optional[str] = None,
         ncpus: t.Optional[int] = None,
-        pe_type: str = None,
+        pe_type: t.Optional[str] = None,
         account: t.Optional[str] = None,
         shebang: str = "#!/bin/bash -l",
         resources: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
@@ -76,6 +76,7 @@ class SgeQsubBatchSettings(BatchSettings):
         )
 
         self._context_variables: t.List[str] = []
+        self._env_vars: t.Dict[str, str] = {}
 
     @property
     def resources(self) -> t.Dict[str, t.Union[str, int]]:
@@ -108,7 +109,7 @@ class SgeQsubBatchSettings(BatchSettings):
         if walltime:
             self.set_resource("h_rt", walltime)
 
-    def set_nodes(self, nodes: t.Optional[int]):
+    def set_nodes(self, nodes: t.Optional[int]) -> None:
         """Set the number of nodes, invalid for SGE
 
         :param nodes: Number of nodes, any integer other than 0 is invalid
@@ -187,7 +188,7 @@ class SgeQsubBatchSettings(BatchSettings):
         """
         self.set_resource("mem", memory_spec)
 
-    def set_pe_type(self, pe_type: str):
+    def set_pe_type(self, pe_type: str) -> None:
         """Set the parallel environment
 
         :param pe_type: parallel environment identifier (e.g. mpi or smp)
@@ -195,13 +196,13 @@ class SgeQsubBatchSettings(BatchSettings):
         if pe_type:
             self.set_resource("pe_type", pe_type)
 
-    def set_threads_per_pe(self, threads_per_core: int):
+    def set_threads_per_pe(self, threads_per_core: int) -> None:
         """Sets the number of threads per processing element
 
         :param threads_per_core: Number of threads per core
         """
 
-        self.update_env({"OMP_NUM_THREADS": threads_per_core})
+        self._env_vars["OMP_NUM_THREADS"] = str(threads_per_core)
 
     def set_resource(self, resource_name: str, value: t.Union[str, int]) -> None:
         """Set a resource value for the SGE batch
@@ -275,4 +276,7 @@ class SgeQsubBatchSettings(BatchSettings):
         for resource, value in resources.items():
             res += [f"-l {resource}={value}"]
 
+        # Set any environment variables
+        for key, value in self._env_vars.items():
+            res += [f"-v {key}={value}"]
         return res
