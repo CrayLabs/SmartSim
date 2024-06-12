@@ -34,7 +34,7 @@ StringArgument = t.Dict[str, t.Optional[str]]
 logger = get_logger(__name__)
 
 
-def set_check_input(key: str, value: str | None) -> None:
+def set_check_input(key: str, value: t.Optional[str]) -> None:
     if not isinstance(key, str):
         raise TypeError(f"Key '{key}' should be of type str")
     if not isinstance(value, (str, type(None))):
