@@ -15,11 +15,13 @@ To be released at some future point in time
 
 Description
 
+- Fix tests outputs in incorrect directory
 - Improve support for building SmartSim without ML backends
 - Update packaging dependency
 
 Detailed Notes
 
+- Ensure ouputs from tests are written to temporary `tests/test_output` directory
 - Fix an error that would prevent ``smart build`` from moving a successfully
   compiled RedisAI shared object to the install location expected by SmartSim
   if no ML backend installations were found. Previously, this would effectively
