@@ -26,7 +26,7 @@
 
 import typing as t
 
-from ..error import SSConfigError
+from ..error import LauncherUnsupportedFeature, SSConfigError
 from ..log import get_logger
 from .base import BatchSettings
 
@@ -87,6 +87,14 @@ class SgeQsubBatchSettings(BatchSettings):
         self._sanity_check_resources(resources)
         self._resources = resources.copy()
 
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+        raise LauncherUnsupportedFeature(
+            "SGE does not support requesting specific hosts in batch jobs"
+        )
+
+    def set_queue(self, queue: str) -> None:
+        raise LauncherUnsupportedFeature("SGE does not support specifying queues")
+
     def set_shebang(self, shebang: str) -> None:
         """Set the shebang (shell) for the batch job
 
@@ -109,13 +117,15 @@ class SgeQsubBatchSettings(BatchSettings):
         if walltime:
             self.set_resource("h_rt", walltime)
 
-    def set_nodes(self, nodes: t.Optional[int]) -> None:
+    def set_nodes(self, num_nodes: t.Optional[int]) -> None:
         """Set the number of nodes, invalid for SGE
 
         :param nodes: Number of nodes, any integer other than 0 is invalid
         """
-        if nodes:
-            raise SSConfigError("SGE does not support setting the number of nodes")
+        if num_nodes:
+            raise LauncherUnsupportedFeature(
+                "SGE does not support setting the number of nodes"
+            )
 
     def set_ncpus(self, num_cpus: t.Union[int, str]) -> None:
         """Set the number of cpus obtained in each node.
@@ -265,12 +275,13 @@ class SgeQsubBatchSettings(BatchSettings):
             msg = f"{ncpus=} and {pe_type=} must both be set. "
             msg += "Call set_ncpus and/or set_pe_type."
             raise SSConfigError(msg)
-        elif pe_type and ncpus:
+
+        if pe_type and ncpus:
             res += [f"-pe {pe_type} {ncpus}"]
 
         # Deal with context variables
-        for cv in self._context_variables:
-            res += [cv]
+        for context_variable in self._context_variables:
+            res += [context_variable]
 
         # All other "standard" resource specs
         for resource, value in resources.items():

@@ -30,7 +30,6 @@ import typing as t
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
-    AprunSettings,
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
@@ -42,7 +41,6 @@ from ....status import SmartSimStatus
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
-    AprunStep,
     LocalStep,
     MpiexecStep,
     MpirunStep,
@@ -189,7 +187,7 @@ class SGELauncher(WLMLauncher):
                 while return_code != 0 and num_trials < CONFIG.wlm_trials:
                     num_trials += 1
                     time.sleep(CONFIG.jm_interval)
-                    return_code, qacct_output, qacct_error = qacct([f"-j {step_id}"])
+                    return_code, qacct_output, _ = qacct([f"-j {step_id}"])
 
                 if qacct_output:
                     failed = bool(int(parse_qacct_job_output(qacct_output, "failed")))

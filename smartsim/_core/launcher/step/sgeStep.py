@@ -77,7 +77,7 @@ class SgeQsubBatchStep(Step):
             script_file.write(f"#$ -o {output}\n")
             script_file.write(f"#$ -e {error}\n")
             script_file.write(f"#$ -N {self.name}\n")
-            script_file.write(f"#$ -V\n")
+            script_file.write("#$ -V\n")
 
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():

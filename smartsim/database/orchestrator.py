@@ -286,7 +286,10 @@ class Orchestrator(EntityList[DBNode]):
             elif not hosts:
                 if not self._mpi_has_sge_support():
                     raise SmartSimError(
-                        "hosts argument is required when launching Orchestrator with mpirun"
+                        (
+                            "hosts argument required when launching ",
+                            "Orchestrator with mpirun",
+                        )
                     )
             self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
             self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
@@ -306,10 +309,7 @@ class Orchestrator(EntityList[DBNode]):
             if shutil.which("ompi_info"):
                 _, output, _ = execute_cmd(["ompi_info"])
                 return "gridengine" in output
-            else:
-                return False
-        else:
-            return False
+        return False
 
     @property
     def db_identifier(self) -> str:
