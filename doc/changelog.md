@@ -15,7 +15,7 @@ To be released at some future point in time
 
 Description
 
-- Fix tests outputs in incorrect directory
+- Fix test outputs being created in incorrect directory
 - Improve support for building SmartSim without ML backends
 - Update packaging dependency
 
