@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os.path as osp
+
 import pytest
 
 from smartsim import Experiment
@@ -143,7 +145,11 @@ def test_qstat_jobid_xml():
     assert parse_qstat_jobid_xml(qstat_example, "9999999") is None
 
 
-def test_sge_launcher_defaults():
+def test_sge_launcher_defaults(monkeypatch, fileutils):
+
+    stub_path = osp.join("mpi_impl_stubs", "openmpi4")
+    stub_path = fileutils.get_test_dir_path(stub_path)
+    monkeypatch.setenv("PATH", stub_path, prepend=":")
     exp = Experiment("test_sge_run_settings", launcher="sge")
 
     bs = exp.create_batch_settings()
