@@ -25,7 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .basejob import BaseJob
+from .baseJobGroup import BaseJobGroup
+from .colocatedJobGroup import ColocatedJobGroup
 from .job import Job
+from .jobGroup import JobGroup
 from .launchable import Launchable
 from .mpmdjob import MPMDJob
 from .mpmdpair import MPMDPair

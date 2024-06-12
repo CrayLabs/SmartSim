@@ -33,7 +33,6 @@ from smartsim.launchable.launchable import Launchable
 class BaseJob(ABC, Launchable):
     """The highest level abstract base class for a single job that can be launched"""
 
-    @abstractmethod
     def get_launch_steps(self) -> None:  # TODO: -> LaunchSteps:
         """Return the launch steps corresponding to the
         internal data.
