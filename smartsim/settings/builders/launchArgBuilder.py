@@ -31,6 +31,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from smartsim.log import get_logger
+
 from ..._core.utils.helpers import fmt_dict
 
 logger = get_logger(__name__)
@@ -67,11 +68,9 @@ class LaunchArgBuilder(ABC):
         self, env_vars: t.Dict[str, t.Optional[str]]
     ) -> t.Union[t.Tuple[str, t.List[str]], None]:
         """Build environment variable string for Slurm
-
         Slurm takes exports in comma separated lists
         the list starts with all as to not disturb the rest of the environment
         for more information on this, see the slurm documentation for srun
-
         :returns: the formatted string of environment variables
         """
         logger.warning(
@@ -83,7 +82,6 @@ class LaunchArgBuilder(ABC):
         self, env_vars: t.Dict[str, t.Optional[str]]
     ) -> t.Union[t.List[str], None]:
         """Build bash compatible environment variable string for Slurm
-
         :returns: the formatted string of environment variables
         """
         logger.warning(f"format_env_vars() not supported for {self.launcher_str()}.")

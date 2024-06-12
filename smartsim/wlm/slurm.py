@@ -42,7 +42,7 @@ from ..log import get_logger
 
 # from ..settings.slurmSettings import fmt_walltime
 # Mock function
-def fmt_walltime() -> None: ...
+def fmt_walltime(hours: int, minutes: int, seconds: int) -> str: ...  # type: ignore[...]
 
 
 logger = get_logger(__name__)

@@ -128,7 +128,9 @@ class LaunchSettings(BaseSettings):
             if not isinstance(env, str):
                 raise TypeError(f"The key '{env}' of env_vars should be of type str")
             if not isinstance(val, (str, type(None))):
-                raise TypeError(f"The value '{val}' of env_vars should be of type str or None")
+                raise TypeError(
+                    f"The value '{val}' of env_vars should be of type str or None"
+                )
         self._env_vars.update(env_vars)
 
     def format_env_vars(self) -> t.Union[t.List[str], None]:

@@ -27,14 +27,12 @@
 import copy
 
 from smartsim.entity.entity import SmartSimEntity
-from smartsim.settings.base import RunSettings
+from smartsim.settings.launchSettings import LaunchSettings
 
 
 class MPMDPair:
     """Class to store MPMD Pairs"""
 
-    def __init__(
-        self, entity: SmartSimEntity, launch_settings: RunSettings
-    ):  # TODO: rename to LaunchSettings
+    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings):
         self.entity = copy.deepcopy(entity)
         self.launch_settings = copy.deepcopy(launch_settings)

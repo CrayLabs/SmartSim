@@ -28,10 +28,11 @@ from __future__ import annotations
 
 import copy
 import typing as t
-from ..._core.utils.helpers import fmt_dict
 from abc import ABC, abstractmethod
 
 from smartsim.log import get_logger
+
+from ..._core.utils.helpers import fmt_dict
 
 logger = get_logger(__name__)
 

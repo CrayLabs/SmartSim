@@ -1,5 +1,7 @@
-from smartsim.settings.common import set_check_input
 import pytest
+
+from smartsim.settings.common import set_check_input
+
 
 def test_check_set_raise_error():
     with pytest.raises(TypeError):
