@@ -105,7 +105,7 @@ class BatchSettings(BaseSettings):
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nScheduler: {self.scheduler}"
         if self.scheduler_args:
-            string += f"\nScheduler Arguments:\n{fmt_dict(self.scheduler_args._scheduler_args)}"
+            string += str(self.scheduler_args)
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

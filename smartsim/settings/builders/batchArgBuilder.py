@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import copy
 import typing as t
+from ..._core.utils.helpers import fmt_dict
 from abc import ABC, abstractmethod
 
 from smartsim.log import get_logger
@@ -100,3 +101,7 @@ class BatchArgBuilder(ABC):
         :return: batch arguments for Sbatch
         """
         pass
+
+    def __str__(self) -> str:  # pragma: no-cover
+        string = f"\nScheduler Arguments:\n{fmt_dict(self._scheduler_args)}"
+        return string

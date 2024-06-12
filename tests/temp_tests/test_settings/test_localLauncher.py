@@ -65,7 +65,6 @@ def test_format_launch_args():
 @pytest.mark.parametrize(
     "env_vars",
     [
-        pytest.param({"env1": None}, id="null value not allowed"),
         pytest.param({"env1": {"abc"}}, id="set value not allowed"),
         pytest.param({"env1": {"abc": "def"}}, id="dict value not allowed"),
     ],

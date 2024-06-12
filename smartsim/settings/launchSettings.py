@@ -125,8 +125,10 @@ class LaunchSettings(BaseSettings):
         """
         # Coerce env_vars values to str as a convenience to user
         for env, val in env_vars.items():
-            if not (isinstance(val, str) and isinstance(env, str)):
-                raise TypeError(f"env_vars[{env}] was of type {type(val)}, not str")
+            if not isinstance(env, str):
+                raise TypeError(f"The key '{env}' of env_vars should be of type str")
+            if not isinstance(val, (str, type(None))):
+                raise TypeError(f"The value '{val}' of env_vars should be of type str or None")
         self._env_vars.update(env_vars)
 
     def format_env_vars(self) -> t.Union[t.List[str], None]:
@@ -154,8 +156,8 @@ class LaunchSettings(BaseSettings):
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"\nLauncher: {self.launcher}"
-        if self.launch_args._launch_args:
-            string += f"\nLaunch Arguments:\n{fmt_dict(self.launch_args._launch_args)}"
+        if self.launch_args:
+            string += str(self.launch_args)
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

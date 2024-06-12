@@ -18,6 +18,7 @@ def test_create_scheduler_settings(scheduler_enum):
         scheduler_args={"launch": "var"},
         env_vars={"ENV": "VAR"},
     )
+    print(bs_str)
     assert bs_str._batch_scheduler == scheduler_enum
     # TODO need to test scheduler_args
     assert bs_str._env_vars == {"ENV": "VAR"}

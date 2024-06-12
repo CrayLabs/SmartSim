@@ -31,6 +31,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from smartsim.log import get_logger
+from ..._core.utils.helpers import fmt_dict
 
 logger = get_logger(__name__)
 
@@ -87,3 +88,7 @@ class LaunchArgBuilder(ABC):
         """
         logger.warning(f"format_env_vars() not supported for {self.launcher_str()}.")
         return None
+
+    def __str__(self) -> str:  # pragma: no-cover
+        string = f"\nLaunch Arguments:\n{fmt_dict(self._launch_args)}"
+        return string

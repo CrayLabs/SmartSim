@@ -35,9 +35,10 @@ logger = get_logger(__name__)
 
 
 def set_check_input(key: str, value: str | None) -> None:
-    # TODO check this
-    if not (isinstance(key, str) or isinstance(value, (str, None))):
-        raise TypeError("Argument name should be of type str")
+    if not isinstance(key, str):
+        raise TypeError(f"Key '{key}' should be of type str")
+    if not isinstance(value, (str, type(None))):
+        raise TypeError(f"Value '{value}' should be of type str or None")
     if key.startswith("-"):
         key = key.lstrip("-")
         logger.warning(

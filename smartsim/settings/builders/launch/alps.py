@@ -163,7 +163,7 @@ class AprunArgBuilder(LaunchArgBuilder):
         :param quiet: Whether the job should be run quietly
         """
         if quiet:
-            self.set("quiet", None)
+            self._launch_args["quiet"] = None
         else:
             self._launch_args.pop("quiet", None)
 
