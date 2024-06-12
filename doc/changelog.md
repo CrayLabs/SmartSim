@@ -15,11 +15,17 @@ To be released at some future point in time
 
 Description
 
+- New launcher support for SGE (and similar derivatives)
 - Improve support for building SmartSim without ML backends
 - Update packaging dependency
 
 Detailed Notes
 
+- SGE is now a supported launcher for SmartSim. Users can now define
+  BatchSettings which will be monitored by the TaskManager. Additionally,
+  if the MPI implementation was built with SGE support, Orchestrators can
+  use `mpirun` without needing to specify the hosts
+  ([SmartSim-PR659](https://github.com/CrayLabs/SmartSim/pull/659))
 - Fix an error that would prevent ``smart build`` from moving a successfully
   compiled RedisAI shared object to the install location expected by SmartSim
   if no ML backend installations were found. Previously, this would effectively
