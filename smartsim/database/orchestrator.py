@@ -284,7 +284,8 @@ class Orchestrator(EntityList[DBNode]):
             if hosts:
                 self.set_hosts(hosts)
             elif not hosts:
-                if not self._mpi_has_sge_support():
+                mpilike = run_command in ["mpirun", "mpiexec", "orterun"]
+                if mpilike and not self._mpi_has_sge_support():
                     raise SmartSimError(
                         (
                             "hosts argument required when launching ",
