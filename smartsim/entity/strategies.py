@@ -72,16 +72,16 @@ def resolve(strategy: str | TPermutationStrategy) -> TPermutationStrategy:
 def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy:
     @functools.wraps(fn)
     def _impl(
-        params: t.Mapping[str, t.Sequence[str]],
-        exe_args: t.Mapping[str, t.Sequence[t.Sequence[str]]],
-        n_permutations: int
+        params: t.Optional[t.Mapping[str, t.Sequence[str]]],
+        exe_args: t.Optional[t.Mapping[str, t.Sequence[t.Sequence[str]]]],
+        n_permutations: int = 0
     ) -> list[ParamSet]:
         try:
             permutations = fn(params, exe_args, n_permutations)
         except Exception as e:
             raise errors.UserStrategyError(str(fn)) from e
         if not isinstance(permutations, list) or not all(
-            isinstance(permutation, dict) for permutation in permutations
+            isinstance(permutation, ParamSet) for permutation in permutations
         ):
             raise errors.UserStrategyError(str(fn))
         return permutations
@@ -130,7 +130,7 @@ def step_values(
     # Limit the list to '_n_permutations' elements
     exe_arg_zip = [dict(zip(exe_args, step)) for step in exe_arg_zip][:_n_permutations]
     # Combine the parameter sets from 'param_zip' and 'exe_arg_zip' using itertools.zip_longest
-    param_set = (ParamSet(file_param, exe_arg) for (file_param, exe_arg) in itertools.zip_longest(param_zip,exe_arg_zip,fillvalue=-1))
+    param_set = (ParamSet(file_param, exe_arg) for (file_param, exe_arg) in itertools.zip_longest(param_zip,exe_arg_zip))
     # Limit the generator to '_n_permutations' elements
     slice = itertools.islice(param_set, _n_permutations)
     # Convert the limited generator to a list and return it

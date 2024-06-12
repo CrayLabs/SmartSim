@@ -28,6 +28,7 @@ import pytest
 
 from smartsim.entity import strategies
 from smartsim.error import errors
+from smartsim.entity.param_data_class import ParamSet
 
 pytestmark = pytest.mark.group_a
 
@@ -67,7 +68,7 @@ def test_user_strategy_error_raised_when_attempting_to_get_unknown_strat():
         strategies.resolve("NOT-REGISTERED")
 
 
-def broken_strategy(p, n):
+def broken_strategy(p, n, e):
     raise Exception("This custom strategy raised an error")
 
 
@@ -92,28 +93,36 @@ def test_custom_strategy_raises_user_strategy_error_if_something_goes_wrong(stra
         pytest.param(
             strategies.create_all_permutations,
             (
-                {"SPAM": "a", "EGGS": "c"},
-                {"SPAM": "a", "EGGS": "d"},
-                {"SPAM": "b", "EGGS": "c"},
-                {"SPAM": "b", "EGGS": "d"},
+                [ParamSet(_params={'SPAM': 'a', 'EGGS': 'c'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'a', 'EGGS': 'c'}, _exe_args={'EXE': ['b', 'c']}),
+                ParamSet(_params={'SPAM': 'a', 'EGGS': 'd'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'a', 'EGGS': 'd'}, _exe_args={'EXE': ['b', 'c']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'c'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'c'}, _exe_args={'EXE': ['b', 'c']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'd'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'd'}, _exe_args={'EXE': ['b', 'c']})]
             ),
             id="All Permutations",
         ),
         pytest.param(
             strategies.step_values,
             (
-                {"SPAM": "a", "EGGS": "c"},
-                {"SPAM": "b", "EGGS": "d"},
+                [ParamSet(_params={'SPAM': 'a', 'EGGS': 'c'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'd'}, _exe_args={'EXE': ['b', 'c']})]
             ),
             id="Step Values",
         ),
         pytest.param(
             strategies.random_permutations,
             (
-                {"SPAM": "a", "EGGS": "c"},
-                {"SPAM": "a", "EGGS": "d"},
-                {"SPAM": "b", "EGGS": "c"},
-                {"SPAM": "b", "EGGS": "d"},
+                [ParamSet(_params={'SPAM': 'a', 'EGGS': 'c'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'a', 'EGGS': 'c'}, _exe_args={'EXE': ['b', 'c']}),
+                ParamSet(_params={'SPAM': 'a', 'EGGS': 'd'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'a', 'EGGS': 'd'}, _exe_args={'EXE': ['b', 'c']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'c'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'c'}, _exe_args={'EXE': ['b', 'c']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'd'}, _exe_args={'EXE': ['a']}),
+                ParamSet(_params={'SPAM': 'b', 'EGGS': 'd'}, _exe_args={'EXE': ['b', 'c']})]
             ),
             id="Uncapped Random Permutations",
         ),
@@ -121,7 +130,8 @@ def test_custom_strategy_raises_user_strategy_error_if_something_goes_wrong(stra
 )
 def test_strategy_returns_expected_set(strategy, expected_output):
     params = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
-    output = list(strategy(params))
+    exe_args = {"EXE": [["a"],["b", "c"]]}
+    output = list(strategy(params,exe_args,50))
     assert len(output) == len(expected_output)
     assert all(item in expected_output for item in output)
     assert all(item in output for item in expected_output)
