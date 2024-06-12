@@ -24,24 +24,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
+import typing as t
+
 import pytest
 
 from smartsim.entity import _mock
 from smartsim.entity._new_ensemble import Ensemble
-from smartsim.error import errors
 from smartsim.entity.param_data_class import ParamSet
-import typing as t
-import itertools
+from smartsim.error import errors
 
 pytestmark = pytest.mark.group_a
 
 _2x2_PARAMS = {"SPAM": ["a", "b"], "EGGS": ["c", "d"]}
 # real func and also replace with the actual types
-_2_PERM_STRAT = lambda p, n, e: [{"SPAM": "a", "EGGS": "b"}, {"SPAM": "c", "EGGS": "d"}, {"SPAM": "a", "EGGS": "b"}]
-_2x2_EXE_ARG = {"EXE": [["a"],
-                        ["b", "c"]],
-                "ARGS": [["d"],
-                        ["e", "f"]]}
+_2_PERM_STRAT = lambda p, n, e: [
+    {"SPAM": "a", "EGGS": "b"},
+    {"SPAM": "c", "EGGS": "d"},
+    {"SPAM": "a", "EGGS": "b"},
+]
+_2x2_EXE_ARG = {"EXE": [["a"], ["b", "c"]], "ARGS": [["d"], ["e", "f"]]}
+
 
 def user_created_function(
     file_params: t.Mapping[str, t.Sequence[str]],
@@ -50,14 +53,19 @@ def user_created_function(
 ) -> list[ParamSet]:
     exe_arg_params = _2x2_EXE_ARG
     # Create dictionaries for each parameter permutation
-    param_zip = [dict(zip(file_params, permutation)) for permutation in file_params][:_n_permutations]
+    param_zip = [dict(zip(file_params, permutation)) for permutation in file_params][
+        :_n_permutations
+    ]
     # Create dictionaries for each executable argument permutation
-    exe_arg_zip = [dict(zip(exe_arg_params, permutation)) for permutation in exe_arg_params][:_n_permutations]
+    exe_arg_zip = [
+        dict(zip(exe_arg_params, permutation)) for permutation in exe_arg_params
+    ][:_n_permutations]
     # Combine parameter and executable argument dictionaries
-    combinations = itertools.product(param_zip,exe_arg_zip)
+    combinations = itertools.product(param_zip, exe_arg_zip)
     # Combine the parameter sets from 'param_zip' and 'exe_arg_zip' using itertools.zip_longest
     param_set = (ParamSet(file_param, exe_arg) for file_param, exe_arg in combinations)
     return list(param_set)
+
 
 @pytest.fixture
 def mock_launcher_settings():
@@ -151,6 +159,7 @@ def test_replicated_applications_have_eq_deep_copies_of_parameters(params):
         if app_1 is not app_2
     )
 
+
 # fmt: off
 @pytest.mark.parametrize(
     "                  params,      exe_arg_params,   strategy,  max_perms, replicas, expected_num_jobs",  # Test Name          
@@ -184,6 +193,7 @@ def test_all_perm_strategy(
     ).as_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
 
+
 def test_all_perm_strategy_contents():
     jobs = Ensemble(
         "test_ensemble",
@@ -196,6 +206,7 @@ def test_all_perm_strategy_contents():
         replicas=1,
     ).as_jobs(mock_launcher_settings)
     assert len(jobs) == 16
+
 
 # fmt: off
 @pytest.mark.parametrize(
@@ -229,6 +240,7 @@ def test_step_strategy(
         replicas=replicas,
     ).as_jobs(mock_launcher_settings)
     assert len(jobs) == expected_num_jobs
+
 
 # fmt: off
 @pytest.mark.parametrize(

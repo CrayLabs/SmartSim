@@ -27,7 +27,6 @@
 # Generation Strategies
 
 from __future__ import annotations
-from .param_data_class import ParamSet
 
 import functools
 import itertools
@@ -36,8 +35,11 @@ import typing as t
 
 from smartsim.error import errors
 
+from .param_data_class import ParamSet
+
 TPermutationStrategy = t.Callable[
-    [t.Mapping[str, t.Sequence[str]], t.Mapping[str, t.Sequence[t.Sequence[str]]], int], list[ParamSet]
+    [t.Mapping[str, t.Sequence[str]], t.Mapping[str, t.Sequence[t.Sequence[str]]], int],
+    list[ParamSet],
 ]
 
 _REGISTERED_STRATEGIES: t.Final[dict[str, TPermutationStrategy]] = {}
@@ -74,7 +76,7 @@ def _make_safe_custom_strategy(fn: TPermutationStrategy) -> TPermutationStrategy
     def _impl(
         params: t.Optional[t.Mapping[str, t.Sequence[str]]],
         exe_args: t.Optional[t.Mapping[str, t.Sequence[t.Sequence[str]]]],
-        n_permutations: int = 0
+        n_permutations: int = 0,
     ) -> list[ParamSet]:
         try:
             permutations = fn(params, exe_args, n_permutations)
@@ -100,13 +102,18 @@ def create_all_permutations(
     # Generate all possible permutations of parameter values
     file_params_permutations = itertools.product(*file_params.values())
     # Create dictionaries for each parameter permutation
-    param_zip = [dict(zip(file_params, permutation)) for permutation in file_params_permutations][:_n_permutations]
+    param_zip = [
+        dict(zip(file_params, permutation)) for permutation in file_params_permutations
+    ][:_n_permutations]
     # Generate all possible permutations of executable arguments
     exe_arg_params_permutations = itertools.product(*exe_arg_params.values())
     # Create dictionaries for each executable argument permutation
-    exe_arg_zip = [dict(zip(exe_arg_params, permutation)) for permutation in exe_arg_params_permutations][:_n_permutations]
+    exe_arg_zip = [
+        dict(zip(exe_arg_params, permutation))
+        for permutation in exe_arg_params_permutations
+    ][:_n_permutations]
     # Combine parameter and executable argument dictionaries
-    combinations = itertools.product(param_zip,exe_arg_zip)
+    combinations = itertools.product(param_zip, exe_arg_zip)
     # Combine the parameter sets from 'param_zip' and 'exe_arg_zip' using itertools.zip_longest
     param_set = (ParamSet(file_param, exe_arg) for file_param, exe_arg in combinations)
     slice = itertools.islice(param_set, _n_permutations)
@@ -130,11 +137,15 @@ def step_values(
     # Limit the list to '_n_permutations' elements
     exe_arg_zip = [dict(zip(exe_args, step)) for step in exe_arg_zip][:_n_permutations]
     # Combine the parameter sets from 'param_zip' and 'exe_arg_zip' using itertools.zip_longest
-    param_set = (ParamSet(file_param, exe_arg) for (file_param, exe_arg) in itertools.zip_longest(param_zip,exe_arg_zip))
+    param_set = (
+        ParamSet(file_param, exe_arg)
+        for (file_param, exe_arg) in itertools.zip_longest(param_zip, exe_arg_zip)
+    )
     # Limit the generator to '_n_permutations' elements
     slice = itertools.islice(param_set, _n_permutations)
     # Convert the limited generator to a list and return it
     return list(slice)
+
 
 @_register("random")
 def random_permutations(

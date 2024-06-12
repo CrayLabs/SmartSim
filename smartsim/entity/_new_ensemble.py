@@ -63,13 +63,17 @@ class Ensemble(entity.CompoundEntity):
         self.files = copy.deepcopy(files) if files else EntityFiles()
         self.file_parameters = dict(file_parameters) if file_parameters else {}
         self.permutation_strategy = permutation_strategy
-        self.exe_arg_parameters = copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
+        self.exe_arg_parameters = (
+            copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
+        )
         self.max_permutations = max_permutations
         self.replicas = replicas
 
     def _create_applications(self) -> tuple[Application, ...]:
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        combinations = permutation_strategy(self.file_parameters, self.exe_arg_parameters, self.max_permutations)
+        combinations = permutation_strategy(
+            self.file_parameters, self.exe_arg_parameters, self.max_permutations
+        )
         permutations_ = itertools.chain.from_iterable(
             itertools.repeat(permutation, self.replicas) for permutation in combinations
         )
