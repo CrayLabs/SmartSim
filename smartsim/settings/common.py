@@ -24,15 +24,26 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import copy
+from __future__ import annotations
 
-from smartsim.entity.entity import SmartSimEntity
-from smartsim.settings.launchSettings import LaunchSettings
+import typing as t
+
+from smartsim.log import get_logger
+
+IntegerArgument = t.Dict[str, t.Optional[int]]
+StringArgument = t.Dict[str, t.Optional[str]]
+
+logger = get_logger(__name__)
 
 
-class MPMDPair:
-    """Class to store MPMD Pairs"""
-
-    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings):
-        self.entity = copy.deepcopy(entity)
-        self.launch_settings = copy.deepcopy(launch_settings)
+def set_check_input(key: str, value: t.Optional[str]) -> None:
+    if not isinstance(key, str):
+        raise TypeError(f"Key '{key}' should be of type str")
+    if not isinstance(value, (str, type(None))):
+        raise TypeError(f"Value '{value}' should be of type str or None")
+    if key.startswith("-"):
+        key = key.lstrip("-")
+        logger.warning(
+            "One or more leading `-` characters were provided to the run argument. \
+            Leading dashes were stripped and the arguments were passed to the run_command."
+        )

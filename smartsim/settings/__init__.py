@@ -24,30 +24,73 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .alpsSettings import AprunSettings
-from .base import RunSettings, SettingsBase
-from .containers import Container, Singularity
-from .dragonRunSettings import DragonRunSettings
-from .lsfSettings import BsubBatchSettings, JsrunSettings
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
-from .palsSettings import PalsMpiexecSettings
-from .pbsSettings import QsubBatchSettings
-from .slurmSettings import SbatchSettings, SrunSettings
+from .baseSettings import BaseSettings
+from .batchSettings import BatchSettings
+from .launchSettings import LaunchSettings
 
-__all__ = [
-    "AprunSettings",
-    "BsubBatchSettings",
-    "JsrunSettings",
-    "MpirunSettings",
-    "MpiexecSettings",
-    "OrterunSettings",
-    "QsubBatchSettings",
-    "RunSettings",
-    "SettingsBase",
-    "SbatchSettings",
-    "SrunSettings",
-    "PalsMpiexecSettings",
-    "DragonRunSettings",
-    "Container",
-    "Singularity",
-]
+__all__ = ["LaunchSettings", "BaseSettings", "BatchSettings"]
+
+
+# TODO Mock imports for compiling tests
+class DragonRunSettings:
+    pass
+
+
+class QsubBatchSettings:
+    pass
+
+
+class SbatchSettings:
+    pass
+
+
+class Singularity:
+    pass
+
+
+class SettingsBase:
+    pass
+
+
+class AprunSettings:
+    pass
+
+
+class RunSettings:
+    pass
+
+
+class OrterunSettings:
+    pass
+
+
+class MpirunSettings:
+    pass
+
+
+class MpiexecSettings:
+    pass
+
+
+class JsrunSettings:
+    pass
+
+
+class BsubBatchSettings:
+    pass
+
+
+class PalsMpiexecSettings:
+    pass
+
+
+class SrunSettings:
+    pass
+
+
+class Container:
+    pass
+
+
+def create_batch_settings() -> None: ...
+def create_run_settings() -> None: ...

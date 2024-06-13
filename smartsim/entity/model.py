@@ -39,7 +39,7 @@ from .._core._install.builder import Device
 from .._core.utils.helpers import cat_arg_and_value, expand_exe_path
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
+from ..settings import BatchSettings, RunSettings
 from .dbobject import FSModel, FSScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
@@ -75,7 +75,8 @@ class Application(SmartSimEntity):
                                application as a batch job
         """
         super().__init__(name, str(path), run_settings)
-        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe = [expand_exe_path(exe)]
+        # self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
         self.params = params
         self.params_as_args = params_as_args

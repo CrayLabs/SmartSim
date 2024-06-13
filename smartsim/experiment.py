@@ -48,7 +48,7 @@ from .entity import (
 )
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
-from .settings import Container, base, settings
+from .settings import BatchSettings, Container, RunSettings
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)

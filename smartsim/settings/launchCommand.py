@@ -24,15 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import copy
-
-from smartsim.entity.entity import SmartSimEntity
-from smartsim.settings.launchSettings import LaunchSettings
+from enum import Enum
 
 
-class MPMDPair:
-    """Class to store MPMD Pairs"""
+class LauncherType(Enum):
+    """Launchers that are supported by
+    SmartSim.
+    """
 
-    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings):
-        self.entity = copy.deepcopy(entity)
-        self.launch_settings = copy.deepcopy(launch_settings)
+    Dragon = "dragon"
+    Slurm = "slurm"
+    Pals = "pals"
+    Alps = "alps"
+    Local = "local"
+    Mpiexec = "mpiexec"
+    Mpirun = "mpirun"
+    Orterun = "orterun"
+    Lsf = "lsf"

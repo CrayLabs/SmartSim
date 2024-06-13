@@ -24,12 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from abc import abstractmethod
 from copy import deepcopy
 
+from smartsim._core.commands.launchCommands import LaunchCommands
 from smartsim.entity.entity import SmartSimEntity
 from smartsim.launchable.basejob import BaseJob
-from smartsim.settings import RunSettings
+from smartsim.settings import LaunchSettings
 
 
 class Job(BaseJob):
@@ -44,8 +44,8 @@ class Job(BaseJob):
     def __init__(
         self,
         entity: SmartSimEntity,
-        launch_settings: RunSettings,  # TODO: rename to LaunchSettings
-    ) -> None:
+        launch_settings: LaunchSettings,
+    ):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
@@ -60,14 +60,14 @@ class Job(BaseJob):
         self._entity = deepcopy(value)
 
     @property
-    def launch_settings(self) -> RunSettings:
+    def launch_settings(self) -> LaunchSettings:
         return deepcopy(self._launch_settings)
 
     @launch_settings.setter
     def launch_settings(self, value):
         self._launch_settings = deepcopy(value)
 
-    def get_launch_steps(self) -> None:  # -> LaunchCommands:
+    def get_launch_steps(self) -> LaunchCommands:
         """Return the launch steps corresponding to the
         internal data.
         """

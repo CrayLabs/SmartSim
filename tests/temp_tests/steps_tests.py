@@ -12,7 +12,7 @@ from smartsim._core.launcher.step import (
     SbatchStep,
     SrunStep,
 )
-from smartsim.entity import Application
+from smartsim.entity import Model
 from smartsim.settings import (
     AprunSettings,
     BsubBatchSettings,
@@ -55,7 +55,7 @@ from smartsim.settings import (
 def test_instantiate_run_settings(settings_type, step_type):
     run_settings = settings_type()
     run_settings.in_batch = True
-    model = Application(
+    model = Model(
         exe="echo", exe_args="hello", name="model_name", run_settings=run_settings
     )
     jobStep = step_type(entity=model, run_settings=model.run_settings)
@@ -85,7 +85,7 @@ def test_instantiate_run_settings(settings_type, step_type):
 def test_instantiate_mpi_run_settings(settings_type, step_type):
     run_settings = settings_type(fail_if_missing_exec=False)
     run_settings.in_batch = True
-    model = Application(
+    model = Model(
         exe="echo", exe_args="hello", name="model_name", run_settings=run_settings
     )
     jobStep = step_type(entity=model, run_settings=model.run_settings)

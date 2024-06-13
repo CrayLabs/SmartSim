@@ -40,7 +40,7 @@ from ..error import (
     UserStrategyError,
 )
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
+from ..settings import BatchSettings, RunSettings
 from .dbobject import FSModel, FSScript
 from .entity import SmartSimEntity
 from .entityList import EntityList

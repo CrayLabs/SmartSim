@@ -52,6 +52,7 @@ from ..log import get_logger
 from ..servertype import CLUSTERED, STANDALONE
 from ..settings import (
     AprunSettings,
+    BatchSettings,
     BsubBatchSettings,
     JsrunSettings,
     MpiexecSettings,
@@ -59,11 +60,12 @@ from ..settings import (
     OrterunSettings,
     PalsMpiexecSettings,
     QsubBatchSettings,
+    RunSettings,
     SbatchSettings,
     SrunSettings,
+    create_batch_settings,
+    create_run_settings,
 )
-from ..settings.base import BatchSettings, RunSettings
-from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
 logger = get_logger(__name__)

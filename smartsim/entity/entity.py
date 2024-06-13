@@ -26,10 +26,6 @@
 
 import typing as t
 
-if t.TYPE_CHECKING:
-    # pylint: disable-next=unused-import
-    import smartsim.settings.base
-
 
 class TelemetryConfiguration:
     """A base class for configuraing telemetry production behavior on

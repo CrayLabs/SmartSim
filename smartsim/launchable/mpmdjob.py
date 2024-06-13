@@ -31,7 +31,7 @@ from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.mpmdpair import MPMDPair
-from smartsim.settings.base import RunSettings
+from smartsim.settings.launchSettings import LaunchSettings
 
 
 def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:
@@ -40,11 +40,11 @@ def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:
     ret = None
     for mpmd_pair in mpmd_pairs:
         if flag == 1:
-            if ret == mpmd_pair.launch_settings.run_command:
+            if ret == mpmd_pair.launch_settings.launcher:
                 flag = 0
             else:
                 raise SSUnsupportedError("MPMD pairs must all share the same launcher.")
-        ret = mpmd_pair.launch_settings.run_command
+        ret = mpmd_pair.launch_settings.launcher
         flag = 1
 
 
@@ -86,7 +86,7 @@ class MPMDJob(BaseJob):
         self._mpmd_pair = deepcopy(value)
 
     def add_mpmd_pair(
-        self, entity: SmartSimEntity, launch_settings: RunSettings
+        self, entity: SmartSimEntity, launch_settings: LaunchSettings
     ) -> None:
         """
         Add a mpmd pair to the mpmd job

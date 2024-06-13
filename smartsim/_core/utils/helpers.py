@@ -87,7 +87,7 @@ def check_dev_log_level() -> bool:
     return lvl == "developer"
 
 
-def fmt_dict(value: t.Dict[str, t.Any]) -> str:
+def fmt_dict(value: t.Mapping[str, t.Any]) -> str:
     fmt_str = ""
     for k, v in value.items():
         fmt_str += "\t" + str(k) + " = " + str(v)
