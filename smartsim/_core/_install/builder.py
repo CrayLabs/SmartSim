@@ -128,7 +128,7 @@ class Device(enum.Enum):
                 cls.CUDA121: "cu121",
             }[self]
         except KeyError:
-            raise BuildError("Unkown Torch Suffix for device {self}") from None
+            raise BuildError(f"Unkown Torch Suffix for device {self}") from None
 
 
 class OperatingSystem(enum.Enum):
@@ -526,7 +526,7 @@ class RedisAIBuilder(Builder):
             os_ = "linux"
         else:  # pragma: no cover
             _assert_never(
-                _os, message=fail_to_format("Unknown operating system: {architecture}")
+                _os, message=fail_to_format(f"Unknown operating system: {_os}")
             )
         if architecture == Architecture.X64:
             arch = "x64"
@@ -535,7 +535,7 @@ class RedisAIBuilder(Builder):
         else:  # pragma: no cover
             _assert_never(
                 architecture,
-                message=fail_to_format("Unknown architecture: {architecture}"),
+                message=fail_to_format(f"Unknown architecture: {architecture}"),
             )
         return (
             self.rai_build_path
@@ -1027,7 +1027,7 @@ class _TFArchive(_WebTGZ, _RAIBuildDependency):
                 raise BuildError("RedisAI does not currently support GPU on Macos")
             tf_device = "cpu"
         else:  # pragma: no cover
-            _assert_never(self.os_, message="Unexpected OS for TF Archive: {self.os_}")
+            _assert_never(self.os_, message=f"Unexpected OS for TF Archive: {self.os_}")
         return (
             "https://storage.googleapis.com/tensorflow/libtensorflow/"
             f"libtensorflow-{tf_device}-{tf_os}-{tf_arch}-{self.version}.tar.gz"
@@ -1075,7 +1075,7 @@ class _ORTArchive(_WebTGZ, _RAIBuildDependency):
             if self.device.is_gpu():
                 raise BuildError("RedisAI does not currently support GPU on Macos")
         else:  # pragma: no cover
-            msg = "Unexpected OS for ONNX Runtime Archive: {self.os_}"
+            msg = f"Unexpected OS for ONNX Runtime Archive: {self.os_}"
             _assert_never(self.os_, message=msg)
         ort_archive = f"onnxruntime-{ort_os}-{ort_arch}{ort_build}-{self.version}.tgz"
         return f"{ort_url_base}/{ort_archive}"
