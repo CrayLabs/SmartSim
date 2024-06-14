@@ -151,7 +151,7 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
 class PBSStepInfo(StepInfo):  # cov-pbs
     @property
     def mapping(self) -> t.Dict[str, SmartSimStatus]:
-        # pylint: disable=line-too-long
+        # pylint: disable-next=line-too-long
         # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
         return {
             "R": SmartSimStatus.STATUS_RUNNING,
@@ -201,7 +201,7 @@ class PBSStepInfo(StepInfo):  # cov-pbs
 class LSFBatchStepInfo(StepInfo):  # cov-lsf
     @property
     def mapping(self) -> t.Dict[str, SmartSimStatus]:
-        # pylint: disable=line-too-long
+        # pylint: disable-next=line-too-long
         # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
             "RUN": SmartSimStatus.STATUS_RUNNING,
@@ -239,7 +239,7 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
 class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     @property
     def mapping(self) -> t.Dict[str, SmartSimStatus]:
-        # pylint: disable=line-too-long
+        # pylint: disable-next=line-too-long
         # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
             "Killed": SmartSimStatus.STATUS_COMPLETED,
@@ -275,7 +275,7 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
 class SGEStepInfo(StepInfo):  # cov-pbs
     @property
     def mapping(self) -> t.Dict[str, SmartSimStatus]:
-        # pylint: disable=line-too-long
+        # pylint: disable-next=line-too-long
         # see https://manpages.ubuntu.com/manpages/jammy/man5/sge_status.5.html
         return {
             # Running states
@@ -336,7 +336,7 @@ class SGEStepInfo(StepInfo):  # cov-pbs
                     else SmartSimStatus.STATUS_FAILED
                 )
             else:
-                # if PBS job history isnt available, and job isnt in queue
+                # if PBS job history is not available, and job is not in queue
                 smartsim_status = SmartSimStatus.STATUS_COMPLETED
                 returncode = 0
         else:

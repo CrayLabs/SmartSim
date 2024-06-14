@@ -25,7 +25,7 @@ Detailed Notes
   BatchSettings which will be monitored by the TaskManager. Additionally,
   if the MPI implementation was built with SGE support, Orchestrators can
   use `mpirun` without needing to specify the hosts
-  ([SmartSim-PR659](https://github.com/CrayLabs/SmartSim/pull/659))
+  ([SmartSim-PR610](https://github.com/CrayLabs/SmartSim/pull/610))
 - Fix an error that would prevent ``smart build`` from moving a successfully
   compiled RedisAI shared object to the install location expected by SmartSim
   if no ML backend installations were found. Previously, this would effectively

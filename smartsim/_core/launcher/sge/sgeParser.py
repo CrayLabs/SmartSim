@@ -110,39 +110,3 @@ def parse_qacct_job_output(output: str, field_name: str) -> t.Union[str, int]:
             return line.split()[1]
 
     return 1
-
-
-def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
-    """Parse and return the step id from a qstat command
-
-    :param output: output qstat
-    :param step_name: the name of the step to query
-    :return: the step_id
-    """
-    step_id: t.Optional[str] = None
-    out_json = load_and_clean_json(output)
-
-    if "Jobs" not in out_json:
-        return step_id
-    jobs = out_json["Jobs"]
-    for key, val in jobs.items():
-        if val["Job_Name"] == step_name:
-            step_id = key
-            return step_id
-
-    return step_id
-
-
-def load_and_clean_json(out: str) -> t.Any:
-    if len(out.strip()) == 0:
-        return ""
-    try:
-        json_out = json.loads(out)
-        return json_out
-    except json.decoder.JSONDecodeError as e:
-        out_arr = out.split("\n")
-        new_out = ""
-        for lineno, line in enumerate(out_arr):
-            if lineno != e.lineno - 1:
-                new_out = new_out + "\n" + line
-        return load_and_clean_json(new_out)
