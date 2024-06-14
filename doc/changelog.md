@@ -18,6 +18,7 @@ Description
 - Add Dockerfiles with GPU support
 - Fine grain build support for GPUs
 - Update Torch to 2.1.0, Tensorflow to 2.15.0
+- Better error messages in build process
 
 Detailed Notes
 
@@ -29,6 +30,8 @@ Detailed Notes
   original `smart build --device=gpu` will default to using Cuda 11.8.
 - As a result of the previous change, SmartSim now requires C++17 and a
   minimum Cuda version of 11.8 in order to build Torch 2.1.0.
+- Error messages were not being interpolated correctly. This has been
+  addressed to provide more context when exposing error messages to users.
 
 ### Development branch
 
