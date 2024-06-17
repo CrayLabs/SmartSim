@@ -37,7 +37,7 @@ from ..launchArgBuilder import LaunchArgBuilder
 logger = get_logger(__name__)
 
 
-class PalsMpiexecArgBuilder(LaunchArgBuilder):
+class PalsMpiexecArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Pals.value

@@ -37,7 +37,7 @@ from ..launchArgBuilder import LaunchArgBuilder
 logger = get_logger(__name__)
 
 
-class _BaseMPIArgBuilder(LaunchArgBuilder):
+class _BaseMPIArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
         return {"wd", "wdir"}

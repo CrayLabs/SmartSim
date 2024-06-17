@@ -37,7 +37,7 @@ from ..launchArgBuilder import LaunchArgBuilder
 logger = get_logger(__name__)
 
 
-class JsrunArgBuilder(LaunchArgBuilder):
+class JsrunArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Lsf.value

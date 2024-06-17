@@ -37,7 +37,7 @@ from ..launchArgBuilder import LaunchArgBuilder
 logger = get_logger(__name__)
 
 
-class DragonArgBuilder(LaunchArgBuilder):
+class DragonArgBuilder(LaunchArgBuilder[t.Any]):  # TODO: come back and fix this
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Dragon.value
