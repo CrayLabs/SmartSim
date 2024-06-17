@@ -57,30 +57,11 @@ def parse_qsub_error(output: str) -> str:
     return base_err
 
 
-# def parse_qstat_jobid(output: str, job_id: str) -> t.Optional[str]:
-#     """Parse and return output of the qstat command run with options
-#     to obtain job status.
-#
-#     :param output: output of the qstat command
-#     :param job_id: allocation id or job step id
-#     :return: status
-#     """
-#     result = None
-#     for line in output.split("\n"):
-#         fields = line.split()
-#         if len(fields) >= 5:
-#             if fields[0] == job_id:
-#                 stat = fields[4]
-#                 result = stat
-#                 break
-#     return result
-
-
 def parse_qstat_jobid_xml(output: str, job_id: str) -> t.Optional[str]:
     """Parse and return output of the qstat command run with XML options
     to obtain job status.
 
-    :param output: output of the qstat command in JSON format
+    :param output: output of the qstat command in XML format
     :param job_id: allocation id or job step id
     :return: status
     """
