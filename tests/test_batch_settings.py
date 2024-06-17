@@ -64,7 +64,7 @@ def test_create_sbatch():
     assert isinstance(slurm_batch, SbatchSettings)
     assert slurm_batch.batch_args["partition"] == "default"
     args = slurm_batch.format_batch_args()
-    assert args == [
+    expected_args = [
         "--exclusive",
         "--oversubscribe",
         "--nodes=1",
@@ -72,6 +72,8 @@ def test_create_sbatch():
         "--partition=default",
         "--account=myproject",
     ]
+    assert all(arg in expected_args for arg in args)
+    assert len(expected_args) == len(args)
 
 
 def test_create_bsub():

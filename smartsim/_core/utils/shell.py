@@ -30,9 +30,9 @@ from subprocess import PIPE, TimeoutExpired
 
 import psutil
 
-from ....error import ShellError
-from ....log import get_logger
-from ...utils.helpers import check_dev_log_level
+from ...error import ShellError
+from ...log import get_logger
+from .helpers import check_dev_log_level
 
 logger = get_logger(__name__)
 VERBOSE_SHELL = check_dev_log_level()
