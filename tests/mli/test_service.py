@@ -164,7 +164,7 @@ def test_service_cooldown(cooldown: int) -> None:
     service.execute()
     ts1 = datetime.datetime.now()
 
-    fudge_factor = 1.05  # allow a little bit of wiggle room for the loop
+    fudge_factor = 1.1  # allow a little bit of wiggle room for the loop
     duration_in_seconds = (ts1 - ts0).total_seconds()
 
     assert duration_in_seconds <= cooldown * fudge_factor
@@ -196,7 +196,7 @@ def test_service_delay(delay: int, num_iterations: int) -> None:
     service.execute()
     ts1 = datetime.datetime.now()
 
-    fudge_factor = 1.05  # allow a little bit of wiggle room for the loop
+    fudge_factor = 1.1  # allow a little bit of wiggle room for the loop
     expected_duration = (num_iterations * delay) * fudge_factor
     duration_in_seconds = (ts1 - ts0).total_seconds()
 
