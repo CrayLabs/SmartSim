@@ -196,8 +196,8 @@ def test_service_delay(delay: int, num_iterations: int) -> None:
     service.execute()
     ts1 = datetime.datetime.now()
 
-    fudge_factor = 1.1  # allow a little bit of wiggle room for the loop
-    expected_duration = (num_iterations * delay) * fudge_factor
+    # the expected duration is the sum of the delay between each iteration
+    expected_duration = (num_iterations + 1) * delay
     duration_in_seconds = (ts1 - ts0).total_seconds()
 
     assert duration_in_seconds <= expected_duration
