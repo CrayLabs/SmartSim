@@ -4,6 +4,8 @@ from smartsim.settings import LaunchSettings
 from smartsim.settings.builders.launch.local import LocalArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 
+pytestmark = pytest.mark.group_a
+
 
 def test_launcher_str():
     """Ensure launcher_str returns appropriate value"""
@@ -110,3 +112,8 @@ def test_format_env_vars():
     localLauncher = LaunchSettings(launcher=LauncherType.Local, env_vars=env_vars)
     assert isinstance(localLauncher._arg_builder, LocalArgBuilder)
     assert localLauncher.format_env_vars() == ["A=a", "B=", "C=", "D=12"]
+
+
+def test_formatting_returns_original_exe(echo_executable_like):
+    cmd = LocalArgBuilder({}).finalize(echo_executable_like, {})
+    assert tuple(cmd) == ("echo", "hello", "world")
