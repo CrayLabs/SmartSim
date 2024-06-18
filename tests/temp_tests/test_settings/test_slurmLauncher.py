@@ -4,6 +4,8 @@ from smartsim.settings import LaunchSettings
 from smartsim.settings.builders.launch.slurm import SlurmArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 
+pytestmark = pytest.mark.group_a
+
 
 def test_launcher_str():
     """Ensure launcher_str returns appropriate value"""
@@ -253,3 +255,39 @@ def test_set_het_groups(monkeypatch):
     assert slurmLauncher._arg_builder._launch_args["het-group"] == "3,2"
     with pytest.raises(ValueError):
         slurmLauncher.launch_args.set_het_group([4])
+
+
+@pytest.mark.parametrize(
+    "args, expected",
+    (
+        pytest.param({}, ("srun", "--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param(
+            {"N": "1"},
+            ("srun", "-N", "1", "--", "echo", "hello", "world"),
+            id="Short Arg",
+        ),
+        pytest.param(
+            {"nodes": "1"},
+            ("srun", "--nodes=1", "--", "echo", "hello", "world"),
+            id="Long Arg",
+        ),
+        pytest.param(
+            {"v": None},
+            ("srun", "-v", "--", "echo", "hello", "world"),
+            id="Short Arg (No Value)",
+        ),
+        pytest.param(
+            {"verbose": None},
+            ("srun", "--verbose", "--", "echo", "hello", "world"),
+            id="Long Arg (No Value)",
+        ),
+        pytest.param(
+            {"nodes": "1", "n": "123"},
+            ("srun", "--nodes=1", "-n", "123", "--", "echo", "hello", "world"),
+            id="Short and Long Args",
+        ),
+    ),
+)
+def test_formatting_launch_args(echo_executable_like, args, expected):
+    cmd = SlurmArgBuilder(args).finalize(echo_executable_like, {})
+    assert tuple(cmd) == expected
