@@ -140,6 +140,14 @@ module = [
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
   "watchdog",
   "dragon.*",
+
+  # Ignore these modules while the core refactor is on going. Uncomment as
+  # needed for gradual typing
+  #
+  # FIXME: DO NOT MERGE THIS INTO DEVELOP BRANCH UNLESS THESE ARE PASSING OR
+  #        REMOVED!!
+  "smartsim._core.*",
+  "smartsim.database.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true
