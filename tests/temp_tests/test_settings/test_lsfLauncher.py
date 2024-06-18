@@ -4,6 +4,8 @@ from smartsim.settings import LaunchSettings
 from smartsim.settings.builders.launch.lsf import JsrunArgBuilder
 from smartsim.settings.launchCommand import LauncherType
 
+pytestmark = pytest.mark.group_a
+
 
 def test_launcher_str():
     """Ensure launcher_str returns appropriate value"""
@@ -56,3 +58,39 @@ def test_launch_args():
         "--np=100",
     ]
     assert formatted == result
+
+
+@pytest.mark.parametrize(
+    "args, expected",
+    (
+        pytest.param({}, ("jsrun", "--", "echo", "hello", "world"), id="Empty Args"),
+        pytest.param(
+            {"n": "1"},
+            ("jsrun", "-n", "1", "--", "echo", "hello", "world"),
+            id="Short Arg",
+        ),
+        pytest.param(
+            {"nrs": "1"},
+            ("jsrun", "--nrs=1", "--", "echo", "hello", "world"),
+            id="Long Arg",
+        ),
+        pytest.param(
+            {"v": None},
+            ("jsrun", "-v", "--", "echo", "hello", "world"),
+            id="Short Arg (No Value)",
+        ),
+        pytest.param(
+            {"verbose": None},
+            ("jsrun", "--verbose", "--", "echo", "hello", "world"),
+            id="Long Arg (No Value)",
+        ),
+        pytest.param(
+            {"tasks_per_rs": "1", "n": "123"},
+            ("jsrun", "--tasks_per_rs=1", "-n", "123", "--", "echo", "hello", "world"),
+            id="Short and Long Args",
+        ),
+    ),
+)
+def test_formatting_launch_args(echo_executable_like, args, expected):
+    cmd = JsrunArgBuilder(args).finalize(echo_executable_like, {})
+    assert tuple(cmd) == expected
