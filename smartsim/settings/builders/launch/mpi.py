@@ -34,6 +34,9 @@ from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
+if t.TYPE_CHECKING:
+    from smartsim.settings.builders.launchArgBuilder import ExecutableLike
+
 logger = get_logger(__name__)
 
 
@@ -215,36 +218,43 @@ class _BaseMPIArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
 
 
 class MpiArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpirun.value
 
+    def finalize(
+        self, exe: ExecutableLike, env: dict[str, str | None]
+    ) -> t.Sequence[str]:
+        return ("mpirun", *self.format_launch_args(), "--", *exe.as_program_arguments())
+
 
 class MpiexecArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpiexec.value
 
+    def finalize(
+        self, exe: ExecutableLike, env: dict[str, str | None]
+    ) -> t.Sequence[str]:
+        return (
+            "mpiexec",
+            *self.format_launch_args(),
+            "--",
+            *exe.as_program_arguments(),
+        )
+
 
 class OrteArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Orterun.value
+
+    def finalize(
+        self, exe: ExecutableLike, env: dict[str, str | None]
+    ) -> t.Sequence[str]:
+        return (
+            "orterun",
+            *self.format_launch_args(),
+            "--",
+            *exe.as_program_arguments(),
+        )

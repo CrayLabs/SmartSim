@@ -34,6 +34,9 @@ from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
+if t.TYPE_CHECKING:
+    from smartsim.settings.builders.launchArgBuilder import ExecutableLike
+
 logger = get_logger(__name__)
 
 
@@ -149,3 +152,13 @@ class PalsMpiexecArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
+
+    def finalize(
+        self, exe: ExecutableLike, env: dict[str, str | None]
+    ) -> t.Sequence[str]:
+        return (
+            "mpiexec",
+            *(self.format_launch_args() or ()),
+            "--",
+            *exe.as_program_arguments(),
+        )
