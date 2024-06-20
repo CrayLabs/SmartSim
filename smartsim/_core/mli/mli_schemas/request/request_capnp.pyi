@@ -33,8 +33,6 @@ from .request_attributes.request_attributes_capnp import (
     TorchRequestAttributesReader,
 )
 
-Device = Literal["cpu", "gpu", "auto"]
-
 class ChannelDescriptor:
     reply: bytes
     @staticmethod
@@ -215,7 +213,6 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
     replyChannel: ChannelDescriptor | ChannelDescriptorBuilder | ChannelDescriptorReader
     model: Request.Model | Request.ModelBuilder | Request.ModelReader
-    device: Device
     input: Request.Input | Request.InputBuilder | Request.InputReader
     output: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
     outputDescriptors: Sequence[

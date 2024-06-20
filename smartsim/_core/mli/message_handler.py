@@ -221,22 +221,6 @@ class MessageHandler:
             raise ValueError("Error building reply channel portion of request.") from e
 
     @staticmethod
-    def _assign_device(
-        request: request_capnp.Request, device: "request_capnp.Device"
-    ) -> None:
-        """
-        Assigns a device to the supplied request.
-
-        :param request: Request being built
-        :param device: Device to be assigned
-        :raises ValueError: if building fails
-        """
-        try:
-            request.device = device
-        except Exception as e:
-            raise ValueError("Error building device portion of request.") from e
-
-    @staticmethod
     def _assign_inputs(
         request: request_capnp.Request,
         inputs: t.Union[
@@ -342,7 +326,6 @@ class MessageHandler:
     def build_request(
         reply_channel: t.ByteString,
         model: t.Union[data_references_capnp.ModelKey, t.ByteString],
-        device: "request_capnp.Device",
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
         ],
@@ -359,7 +342,6 @@ class MessageHandler:
 
         :param reply_channel: Reply channel to be assigned to request
         :param model: Model to be assigned to request
-        :param device: Device to be assigned to request
         :param inputs: Inputs to be assigned to request
         :param outputs: Outputs to be assigned to request
         :param output_descriptors: Output descriptors to be assigned to request
@@ -368,7 +350,6 @@ class MessageHandler:
         request = request_capnp.Request.new_message()
         MessageHandler._assign_reply_channel(request, reply_channel)
         MessageHandler._assign_model(request, model)
-        MessageHandler._assign_device(request, device)
         MessageHandler._assign_inputs(request, inputs)
         MessageHandler._assign_outputs(request, outputs)
         MessageHandler._assign_output_descriptors(request, output_descriptors)
