@@ -26,18 +26,23 @@
 
 from __future__ import annotations
 
+import os
 import typing as t
 
+from smartsim._core.schemas.dragonRequests import DragonRunRequest
 from smartsim.log import get_logger
 
 from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
+if t.TYPE_CHECKING:
+    from smartsim.settings.builders.launchArgBuilder import ExecutableLike
+
 logger = get_logger(__name__)
 
 
-class DragonArgBuilder(LaunchArgBuilder[t.Any]):  # TODO: come back and fix this
+class DragonArgBuilder(LaunchArgBuilder[DragonRunRequest]):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Dragon.value
@@ -54,7 +59,7 @@ class DragonArgBuilder(LaunchArgBuilder[t.Any]):  # TODO: come back and fix this
 
         :param tasks_per_node: number of tasks per node
         """
-        self.set("tasks-per-node", str(tasks_per_node))
+        self.set("tasks_per_node", str(tasks_per_node))
 
     def set(self, key: str, value: str | None) -> None:
         """Set the launch arguments"""
@@ -62,3 +67,24 @@ class DragonArgBuilder(LaunchArgBuilder[t.Any]):  # TODO: come back and fix this
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
+
+    def finalize(
+        self, exe: ExecutableLike, env: dict[str, str | None]
+    ) -> DragonRunRequest:
+        exe_, *args = exe.as_program_arguments()
+        return DragonRunRequest(
+            exe=exe_,
+            exe_args=args,
+            path=os.getcwd(),  # FIXME: Currently this is hard coded because
+                               #        the schema requires it, but in future,
+                               #        it is almost certainly necessary that
+                               #        this will need to be injected by the
+                               #        user or by us to have the command
+                               #        execute next to any generated files. A
+                               #        similar problem exists for the other
+                               #        settings.
+                               # TODO: Find a way to inject this path
+            env=env,
+            current_env=dict(os.environ),
+            **self._launch_args,
+        )
