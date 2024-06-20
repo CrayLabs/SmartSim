@@ -50,7 +50,6 @@ class InferenceRequest:
         output_keys: t.Optional[t.List[str]] = None,
         raw_model: t.Optional[bytes] = None,
         batch_size: int = 0,
-        device: t.Optional[str] = None,
     ):
         """Initialize the object"""
         self.model_key = model_key
@@ -61,7 +60,6 @@ class InferenceRequest:
         self.input_meta = input_meta or []
         self.output_keys = output_keys or []
         self.batch_size = batch_size
-        self.device = device
 
 
 class InferenceReply:
