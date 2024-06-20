@@ -67,8 +67,15 @@ class LaunchSettings(BaseSettings):
         return self._launcher.value
 
     @property
-    def launch_args(self) -> LaunchArgBuilder:
+    def launch_args(self) -> LaunchArgBuilder[t.Any]:
         """Return the launch argument translator."""
+        # FIXME: We _REALLY_ need to make the `LaunchSettings` class generic at
+        #        on `_arg_builder` if we are expecting users to call specific
+        #        `set_*` methods defined specificially on each of the
+        #        subclasses. Otherwise we have no way of showing what methods
+        #        are available at intellisense/static analysis/compile time.
+        #        This whole object basically resolves to being one step removed
+        #        from `Any` typed!!
         return self._arg_builder
 
     @launch_args.setter
@@ -88,7 +95,7 @@ class LaunchSettings(BaseSettings):
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder:
+    def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder[t.Any]:
         """Map the Launcher to the LaunchArgBuilder"""
         if self._launcher == LauncherType.Slurm:
             return SlurmArgBuilder(launch_args)
