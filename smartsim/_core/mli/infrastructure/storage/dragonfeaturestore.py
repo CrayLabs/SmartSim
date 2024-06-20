@@ -50,9 +50,9 @@ class DragonFeatureStore(FeatureStore):
         key_ = key.encode("utf-8")
         try:
             return self._storage[key_]
-        except:
+        except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
-            raise sse.SmartSimError(f"{key} not found in feature store")
+            raise sse.SmartSimError(f"{key} not found in feature store") from ex
 
     def __setitem__(self, key: str, value: bytes) -> None:
         """Assign a value using key
