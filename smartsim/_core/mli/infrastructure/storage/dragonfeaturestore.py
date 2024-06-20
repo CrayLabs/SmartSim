@@ -48,9 +48,11 @@ class DragonFeatureStore(FeatureStore):
         """Retrieve an item using key
         :param key: Unique key of an item to retrieve from the feature store"""
         key_ = key.encode("utf-8")
-        if key_ not in self._storage:
+        try:
+            return self._storage[key_]
+        except:
+            # note: explicitly avoid round-trip to check for key existence
             raise sse.SmartSimError(f"{key} not found in feature store")
-        return self._storage[key_]
 
     def __setitem__(self, key: str, value: bytes) -> None:
         """Assign a value using key
