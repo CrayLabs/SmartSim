@@ -15,6 +15,7 @@ Description
 
 - Added schemas and MessageHandler class for de/serialization of
   inference requests and response messages
+- Removed device from schemas, Messagehandler and tests
 
 
 ### Development branch
