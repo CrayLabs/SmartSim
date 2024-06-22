@@ -25,8 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+from unittest.mock import Mock
 
 from smartsim.settings.builders import launchArgBuilder as launch
+from smartsim.settings import dispatch
 
 
 @pytest.fixture
@@ -35,4 +37,30 @@ def echo_executable_like():
         def as_program_arguments(self):
             return ("echo", "hello", "world")
 
-    return _ExeLike()
+    yield _ExeLike()
+
+
+@pytest.fixture
+def settings_builder():
+    class _SettingsBuilder(launch.LaunchArgBuilder):
+        def launcher_str(self):
+            return "Mock Settings Builder"
+
+        def set(self, arg, val): ...
+        def finalize(self, exe, env):
+            return Mock()
+
+    yield _SettingsBuilder({})
+
+
+@pytest.fixture
+def launcher_like():
+    class _LuancherLike(dispatch.LauncherLike):
+        def start(self, launchable):
+            return dispatch.create_job_id()
+
+        @classmethod
+        def create(cls, exp):
+            return cls()
+
+    yield _LuancherLike()

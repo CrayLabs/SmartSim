@@ -29,6 +29,7 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
+from smartsim.settings.dispatch import default_dispatcher, ShellLauncher
 
 from ...common import StringArgument, set_check_input
 from ...launchCommand import LauncherType
@@ -40,6 +41,7 @@ if t.TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+@default_dispatcher.dispatch(to_launcher=ShellLauncher)
 class PalsMpiexecArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
