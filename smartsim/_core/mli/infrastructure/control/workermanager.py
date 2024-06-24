@@ -24,7 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import multiprocessing as mp
+import os
+import pickle
 import typing as t
 
 import numpy as np
@@ -43,9 +46,35 @@ from smartsim._core.mli.mli_schemas.response.response_capnp import Response
 from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
+    from dragon.fli import FLInterface
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 logger = get_logger(__name__)
+
+
+class EnvironmentConfigLoader:
+    """
+    Class to help facilitate the loading of a FeatureStore and Queue
+    into the WorkerManager.
+    """
+
+    def __init__(self) -> None:
+        self._feature_store_bytes = os.getenv("SSFeatureStore", None)
+        self._queue_bytes = os.getenv("SSQueue", None)
+        self.feature_store: t.Optional[FeatureStore] = None
+        self.queue: t.Optional["FLInterface"] = None
+
+    def get_feature_store(self) -> t.Optional[FeatureStore]:
+        if self._feature_store_bytes is not None:
+            self.feature_store = pickle.loads(
+                base64.b64decode(self._feature_store_bytes)
+            )
+        return self.feature_store
+
+    def get_queue(self) -> t.Optional["FLInterface"]:
+        if self._queue_bytes is not None:
+            self.queue = pickle.loads(base64.b64decode(self._queue_bytes))
+        return self.queue
 
 
 def deserialize_message(
@@ -163,28 +192,29 @@ class WorkerManager(Service):
 
     def __init__(
         self,
-        task_queue: "mp.Queue[bytes]",
+        config_loader: EnvironmentConfigLoader,
         worker: MachineLearningWorkerBase,
-        feature_store: t.Optional[FeatureStore] = None,
         as_service: bool = False,
         cooldown: int = 0,
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
     ) -> None:
         """Initialize the WorkerManager
-        :param task_queue: The queue to monitor for new tasks
+        :param config_loader: Environment config loader that loads the task queue and
+        feature store
         :param workers: A worker to manage
-        :param feature_store: The persistence mechanism
         :param as_service: Specifies run-once or run-until-complete behavior of service
-        :param cooldown: Number of seconds to wait before shutting down afer
+        :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
         :param comm_channel_type: The type of communication channel used for callbacks
         """
         super().__init__(as_service, cooldown)
 
         """a collection of workers the manager is controlling"""
-        self._task_queue: "mp.Queue[bytes]" = task_queue
+        self._task_queue: t.Optional["mp.Queue[bytes]"] = config_loader.get_queue()
         """the queue the manager monitors for new tasks"""
-        self._feature_store: t.Optional[FeatureStore] = feature_store
+        self._feature_store: t.Optional[FeatureStore] = (
+            config_loader.get_feature_store()
+        )
         """a feature store to retrieve models from"""
         self._worker = worker
         """The ML Worker implementation"""
