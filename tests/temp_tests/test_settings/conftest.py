@@ -24,11 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
 from unittest.mock import Mock
 
-from smartsim.settings.builders import launchArgBuilder as launch
+import pytest
+
 from smartsim.settings import dispatch
+from smartsim.settings.builders import launchArgBuilder as launch
 
 
 @pytest.fixture

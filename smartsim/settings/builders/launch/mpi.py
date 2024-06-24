@@ -29,7 +29,7 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import default_dispatcher, ShellLauncher
+from smartsim.settings.dispatch import ShellLauncher, default_dispatcher
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType

@@ -27,13 +27,12 @@
 from __future__ import annotations
 
 import subprocess as sp
-import uuid
 import typing as t
-
-from smartsim.error import errors
+import uuid
 
 if t.TYPE_CHECKING:
     from typing_extensions import Self
+
     from smartsim.experiment import Experiment
     from smartsim.settings.builders import LaunchArgBuilder
 

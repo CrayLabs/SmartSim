@@ -75,15 +75,16 @@ class DragonArgBuilder(LaunchArgBuilder[DragonRunRequest]):
         return DragonRunRequest(
             exe=exe_,
             exe_args=args,
-            path=os.getcwd(),  # FIXME: Currently this is hard coded because
-                               #        the schema requires it, but in future,
-                               #        it is almost certainly necessary that
-                               #        this will need to be injected by the
-                               #        user or by us to have the command
-                               #        execute next to any generated files. A
-                               #        similar problem exists for the other
-                               #        settings.
-                               # TODO: Find a way to inject this path
+            # FIXME: Currently this is hard coded because
+            #        the schema requires it, but in future,
+            #        it is almost certainly necessary that
+            #        this will need to be injected by the
+            #        user or by us to have the command
+            #        execute next to any generated files. A
+            #        similar problem exists for the other
+            #        settings.
+            # TODO: Find a way to inject this path
+            path=os.getcwd(),
             env=env,
             current_env=dict(os.environ),
             **self._launch_args,
