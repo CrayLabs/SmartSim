@@ -66,7 +66,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     model_bytes = persist_torch_model.read_bytes()
 #     input_tensor = torch.randn(2)
 
-#     expected_device = "cpu"
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
 #     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
 
@@ -77,7 +76,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
 #         model=model_bytes,
-#         device=expected_device,
 #         inputs=[message_tensor_input],
 #         outputs=[],
 #         custom_attributes=None,
@@ -86,7 +84,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     msg_bytes = MessageHandler.serialize_request(request)
 
 #     inference_request = worker.deserialize(msg_bytes)
-#     assert inference_request.device == expected_device
 #     assert inference_request.callback._descriptor == expected_callback_channel
 
 
@@ -104,7 +101,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     # input_tensor = torch.randn(2)
 #     # feature_store[input_key] = input_tensor
 
-#     expected_device = "cpu"
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
 #     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
 
@@ -117,7 +113,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
 #         model=message_model_key,
-#         device=expected_device,
 #         inputs=[message_tensor_input_key],
 #         outputs=[message_tensor_output_key],
 #         custom_attributes=None,
@@ -126,7 +121,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     msg_bytes = MessageHandler.serialize_request(request)
 
 #     inference_request = worker.deserialize(msg_bytes)
-#     assert inference_request.device == expected_device
 #     assert inference_request.callback._descriptor == expected_callback_channel
 
 
@@ -147,7 +141,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     # input_tensor = torch.randn(2)
 #     # feature_store[input_key] = input_tensor
 
-#     expected_device = "cpu"
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
 #     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
 
@@ -160,7 +153,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
 #         model=model_bytes,
-#         device=expected_device,
 #         inputs=[message_tensor_input_key],
 #         # outputs=[message_tensor_output_key],
 #         outputs=[],
@@ -170,7 +162,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     msg_bytes = MessageHandler.serialize_request(request)
 
 #     inference_request = worker.deserialize(msg_bytes)
-#     assert inference_request.device == expected_device
 #     assert inference_request.callback._descriptor == expected_callback_channel
 
 
@@ -191,7 +182,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     input_tensor = torch.randn(2)
 #     # feature_store[input_key] = input_tensor
 
-#     expected_device = "cpu"
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
 #     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
 
@@ -207,7 +197,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
 #         model=model_bytes,
-#         device=expected_device,
 #         inputs=[message_tensor_input],
 #         # outputs=[message_tensor_output_key],
 #         outputs=[message_tensor_output_key],
@@ -217,7 +206,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     msg_bytes = MessageHandler.serialize_request(request)
 
 #     inference_request = worker.deserialize(msg_bytes)
-#     assert inference_request.device == expected_device
 #     assert inference_request.callback._descriptor == expected_callback_channel
 
 
@@ -238,7 +226,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     input_tensor = torch.randn(2)
 #     # feature_store[input_key] = input_tensor
 
-#     expected_device = "cpu"
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
 #     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
 
@@ -254,7 +241,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     request = MessageHandler.build_request(
 #         reply_channel=callback_channel.descriptor,
 #         model=message_model_key,
-#         device=expected_device,
 #         inputs=[message_tensor_input],
 #         # outputs=[message_tensor_output_key],
 #         outputs=[],
@@ -264,7 +250,6 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     msg_bytes = MessageHandler.serialize_request(request)
 
 #     inference_request = worker.deserialize(msg_bytes)
-#     assert inference_request.device == expected_device
 #     assert inference_request.callback._descriptor == expected_callback_channel
 
 
