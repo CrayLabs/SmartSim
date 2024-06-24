@@ -65,6 +65,7 @@ class EnvironmentConfigLoader:
         self.queue: t.Optional["FLInterface"] = None
 
     def get_feature_store(self) -> t.Optional[FeatureStore]:
+        """Loads the Feature Store previously set in SSFeatureStore"""
         if self._feature_store_bytes is not None:
             self.feature_store = pickle.loads(
                 base64.b64decode(self._feature_store_bytes)
@@ -72,6 +73,7 @@ class EnvironmentConfigLoader:
         return self.feature_store
 
     def get_queue(self) -> t.Optional["FLInterface"]:
+        """Loads the Queue previously set in SSQueue"""
         if self._queue_bytes is not None:
             self.queue = pickle.loads(base64.b64decode(self._queue_bytes))
         return self.queue
