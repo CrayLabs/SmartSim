@@ -47,6 +47,7 @@ from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
+
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 logger = get_logger(__name__)

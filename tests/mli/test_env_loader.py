@@ -34,6 +34,9 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
     EnvironmentConfigLoader,
 )
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 @pytest.mark.parametrize(
     "feature_store, queue",
