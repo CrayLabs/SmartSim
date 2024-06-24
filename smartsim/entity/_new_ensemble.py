@@ -39,6 +39,7 @@ import typing as t
 from smartsim.entity import _mock, entity, strategies
 from smartsim.entity.files import EntityFiles
 from smartsim.entity.model import Application
+from smartsim.entity.strategies import ParamSet
 
 
 # TODO: If we like this design, we need to:
@@ -54,17 +55,21 @@ class Ensemble(entity.CompoundEntity):
         name: str,
         exe: str | os.PathLike[str],
         exe_args: t.Sequence[str] | None = None,
+        exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
         files: EntityFiles | None = None,
-        parameters: t.Mapping[str, t.Sequence[str]] | None = None,
+        file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.PermutationStrategyType = "all_perm",
-        max_permutations: int = 0,
+        max_permutations: int = -1,
         replicas: int = 1,
     ) -> None:
         self.name = name
         self.exe = os.fspath(exe)
         self.exe_args = list(exe_args) if exe_args else []
+        self.exe_arg_parameters = (
+            copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
+        )
         self.files = copy.deepcopy(files) if files else EntityFiles()
-        self.parameters = dict(parameters) if parameters else {}
+        self.file_parameters = dict(file_parameters) if file_parameters else {}
         self.permutation_strategy = permutation_strategy
         self.max_permutations = max_permutations
         self.replicas = replicas
@@ -74,10 +79,12 @@ class Ensemble(entity.CompoundEntity):
         application instances.
         """
         permutation_strategy = strategies.resolve(self.permutation_strategy)
-        permutations = permutation_strategy(self.parameters, self.max_permutations)
-        permutations = permutations if permutations else [{}]
+        combinations = permutation_strategy(
+            self.file_parameters, self.exe_arg_parameters, self.max_permutations
+        )
+        combinations = combinations if combinations else [ParamSet({}, {})]
         permutations_ = itertools.chain.from_iterable(
-            itertools.repeat(permutation, self.replicas) for permutation in permutations
+            itertools.repeat(permutation, self.replicas) for permutation in combinations
         )
         return tuple(
             Application(
@@ -88,7 +95,8 @@ class Ensemble(entity.CompoundEntity):
                 # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
                 files=self.files,
-                params=permutation,
+                params=permutation.params,
+                params_as_args=permutation.exe_args,
             )
             for i, permutation in enumerate(permutations_)
         )
