@@ -34,7 +34,10 @@ import typing as t
 import pytest
 import torch
 
-from smartsim._core.mli.infrastructure.control.workermanager import EnvironmentConfigLoader, WorkerManager
+from smartsim._core.mli.infrastructure.control.workermanager import (
+    EnvironmentConfigLoader,
+    WorkerManager,
+)
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
@@ -182,7 +185,12 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     # create a mock client application to populate the request queue
     msg_pump = mp.Process(
         target=mock_messages,
-        args=(config_loader.get_queue(), config_loader.get_feature_store(), fs_path, comm_path),
+        args=(
+            config_loader.get_queue(),
+            config_loader.get_feature_store(),
+            fs_path,
+            comm_path,
+        ),
     )
     msg_pump.start()
 
