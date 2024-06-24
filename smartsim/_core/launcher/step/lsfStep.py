@@ -31,8 +31,7 @@ import typing as t
 from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
-from ....settings import BsubBatchSettings, JsrunSettings
-from ....settings.base import RunSettings
+from ....settings import BsubBatchSettings, JsrunSettings, RunSettings
 from .step import Step
 
 logger = get_logger(__name__)

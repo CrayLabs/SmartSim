@@ -31,15 +31,14 @@ import itertools
 import os
 import typing as t
 
-# TODO: We are using the mocks defined `mock` module. We should use the correct
-#       module when these types are actually defined when PRs #587 and #603 are
-#       merged.
-# https://github.com/CrayLabs/SmartSim/pull/587
-# https://github.com/CrayLabs/SmartSim/pull/603
 from smartsim.entity import _mock, entity, strategies
 from smartsim.entity.files import EntityFiles
 from smartsim.entity.model import Application
 from smartsim.entity.strategies import ParamSet
+from smartsim.launchable.job import Job
+
+if t.TYPE_CHECKING:
+    from smartsim.settings.launchSettings import LaunchSettings
 
 
 # TODO: If we like this design, we need to:
@@ -101,8 +100,8 @@ class Ensemble(entity.CompoundEntity):
             for i, permutation in enumerate(permutations_)
         )
 
-    def as_jobs(self, settings: _mock.LaunchSettings) -> tuple[_mock.Job, ...]:
+    def as_jobs(self, settings: LaunchSettings) -> tuple[Job, ...]:
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")
-        return tuple(_mock.Job(app, settings) for app in apps)
+        return tuple(Job(app, settings) for app in apps)

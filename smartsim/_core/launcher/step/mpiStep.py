@@ -32,8 +32,7 @@ from shlex import split as sh_split
 from ....entity import Application, FSNode
 from ....error import AllocationError, SmartSimError
 from ....log import get_logger
-from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings
-from ....settings.base import RunSettings
+from ....settings import MpiexecSettings, MpirunSettings, OrterunSettings, RunSettings
 from .step import Step, proxyable_launch_cmd
 
 logger = get_logger(__name__)

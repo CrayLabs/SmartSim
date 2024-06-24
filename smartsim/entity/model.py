@@ -83,7 +83,8 @@ class Application(SmartSimEntity):
         :param files: Files to have available to the application
         """
         super().__init__(name, str(path), run_settings)
-        self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
+        self.exe = [expand_exe_path(exe)]
+        # self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
         self.params = params.copy() if params else {}
         self.params_as_args = params_as_args

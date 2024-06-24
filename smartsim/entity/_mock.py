@@ -41,18 +41,3 @@ class Mock:
     def __init__(self, *_: t.Any, **__: t.Any): ...
     def __getattr__(self, _: str) -> Mock:
         return Mock()
-
-
-# Remove with merge of #603
-# https://github.com/CrayLabs/SmartSim/pull/603
-class Job(Mock): ...
-
-
-# Remove with merge of #599
-# https://github.com/CrayLabs/SmartSim/pull/599
-class JobGroup(Mock): ...
-
-
-# Remove with merge of #587
-# https://github.com/CrayLabs/SmartSim/pull/587
-class LaunchSettings(Mock): ...

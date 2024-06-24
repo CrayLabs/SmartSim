@@ -29,9 +29,11 @@ from __future__ import annotations
 import abc
 import typing as t
 
+from smartsim.launchable.jobGroup import JobGroup
+
 if t.TYPE_CHECKING:
     import smartsim.settings.base
-    from smartsim.entity import _mock
+    from smartsim.settings.launchSettings import LaunchSettings
 
 
 class TelemetryConfiguration:
@@ -133,6 +135,6 @@ class CompoundEntity(abc.ABC):
     """
 
     @abc.abstractmethod
-    def as_jobs(self, settings: _mock.LaunchSettings) -> t.Collection[_mock.Job]: ...
-    def as_job_group(self, settings: _mock.LaunchSettings) -> _mock.JobGroup:
-        return _mock.JobGroup(self.as_jobs(settings))
+    def as_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
+    def as_job_group(self, settings: LaunchSettings) -> JobGroup:
+        return JobGroup(list(self.as_jobs(settings)))

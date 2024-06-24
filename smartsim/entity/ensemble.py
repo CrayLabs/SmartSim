@@ -34,7 +34,7 @@ from tabulate import tabulate
 from .._core._install.builder import Device
 from ..error import EntityExistsError, SmartSimError, SSUnsupportedError
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
+from ..settings import BatchSettings, RunSettings
 from .dbobject import FSModel, FSScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
