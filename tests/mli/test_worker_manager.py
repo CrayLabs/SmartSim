@@ -34,7 +34,7 @@ import typing as t
 import pytest
 import torch
 
-from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
+from smartsim._core.mli.infrastructure.control.workermanager import EnvironmentConfigLoader, WorkerManager
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
@@ -168,14 +168,12 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     fs_path = test_path / "feature_store"
     comm_path = test_path / "comm_store"
 
-    work_queue: "mp.Queue[bytes]" = mp.Queue()
+    config_loader = EnvironmentConfigLoader()
     integrated_worker = IntegratedTorchWorker()
-    file_system_store = FileSystemFeatureStore()
 
     worker_manager = WorkerManager(
-        work_queue,
+        config_loader,
         integrated_worker,
-        file_system_store,
         as_service=True,
         cooldown=10,
         comm_channel_type=FileSystemCommChannel,
@@ -184,7 +182,7 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     # create a mock client application to populate the request queue
     msg_pump = mp.Process(
         target=mock_messages,
-        args=(work_queue, file_system_store, fs_path, comm_path),
+        args=(config_loader.get_queue(), config_loader.get_feature_store(), fs_path, comm_path),
     )
     msg_pump.start()
 
