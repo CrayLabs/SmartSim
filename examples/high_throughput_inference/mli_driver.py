@@ -1,23 +1,26 @@
+import os
 import sys
 from smartsim import Experiment
 from smartsim.status import TERMINAL_STATUSES
 import time
 
-worker_manager_script_name = "standalone_workermanager.py"
-app_script_name = "mock_app.py"
 device = "gpu"
+filedir = os.path.dirname(__file__)
+worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
+app_script_name = os.path.join(filedir, "mock_app.py")
+model_name = os.path.join(filedir, f"resnet50.{device.upper()}.pt")
 
 
-exp = Experiment("MLI_proto", launcher="dragon")
+exp = Experiment("MLI_proto", launcher="dragon", exp_path=os.path.join(filedir, "MLI_proto"))
 
-worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name])
+worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device])
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
 
 app_rs = exp.create_run_settings(sys.executable, exe_args = [app_script_name, "--device", device])
 app = exp.create_model("app", run_settings=app_rs)
-app.attach_generator_files(to_copy=[app_script_name], to_symlink=[f"resnet50.{device.upper()}.pt"])
+app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 
 
 exp.generate(worker_manager, app, overwrite=True)

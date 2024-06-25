@@ -74,8 +74,6 @@ if __name__ == "__main__":
 
             batch = torch.randn((batch_size, 3, 224, 224), dtype=torch.float32)
 
-            expected_device: t.Literal["cpu", "gpu"] = args.device.lower()
-
             start = time.perf_counter()
             interm = start
             built_tensor = MessageHandler.build_tensor(
@@ -89,7 +87,6 @@ if __name__ == "__main__":
             request = MessageHandler.build_request(
                 reply_channel=from_worker_ch.serialize(),
                 model=buffer.getvalue(),
-                device=expected_device,
                 inputs=[built_tensor],
                 outputs=[],
                 output_descriptors=[],

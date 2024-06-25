@@ -6,12 +6,8 @@ from dragon.data.ddict.ddict import DDict
 from dragon.utils import b64decode, b64encode
 from dragon.globalservices.api_setup import connect_to_infrastructure
 # isort: on
-import logging
-import multiprocessing as mp
+import argparse
 import os
-import pathlib
-import shutil
-import time
 
 
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
@@ -21,8 +17,10 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
 )
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser("Worker Manager")
+    parser.add_argument("--device", default="gpu")
+    args = parser.parse_args()
     connect_to_infrastructure()
-    mp.set_start_method("dragon")
     ddict_str = os.environ["SS_DRG_DDICT"]
     ddict = DDict.attach(ddict_str)
 
@@ -41,5 +39,6 @@ if __name__ == "__main__":
         as_service=True,
         cooldown=10,
         comm_channel_type=DragonCommChannel,
+        device = args.device,
     )
     worker_manager.execute()
