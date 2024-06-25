@@ -260,21 +260,23 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def load_model(
-        request: InferenceRequest, fetch_result: FetchModelResult
+        request: InferenceRequest, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         """Given a loaded MachineLearningModel, ensure it is loaded into
         device memory
         :param request: The request that triggered the pipeline
+        :param device: The device on which the model must be placed
         :return: ModelLoadResult wrapping the model loaded for the request"""
 
     @staticmethod
     @abstractmethod
     def transform_input(
-        request: InferenceRequest, fetch_result: FetchInputResult
+        request: InferenceRequest, fetch_result: FetchInputResult, device: str
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw output from fetching inputs out of a feature store
+        :param device: The device on which the transformed input must be placed
         :return: The transformed inputs wrapped in a InputTransformResult"""
 
     @staticmethod
@@ -293,13 +295,13 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_output(
-        request: InferenceRequest,
-        execute_result: ExecuteResult,
+        request: InferenceRequest, execute_result: ExecuteResult, result_device: str
     ) -> TransformOutputResult:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
         :param request: The request that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
+        :param result_device: The device on which the result of inference is placed
         :return:"""
 
 
@@ -308,28 +310,27 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def load_model(
-        request: InferenceRequest, fetch_result: FetchModelResult
+        request: InferenceRequest, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         model_bytes = fetch_result.model_bytes or request.raw_model
         if not model_bytes:
             raise ValueError("Unable to load model without reference object")
 
         _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = _device_to_torch[str(request.device)]
+        device = _device_to_torch[device]
         buffer = io.BytesIO(model_bytes)
-        # type: ignore-next[no-untyped-call]
-        model = torch.jit.load(buffer, map_location=device)
+        model = torch.jit.load(buffer, map_location=device)  # type: ignore
         result = LoadModelResult(model)
         return result
 
     @staticmethod
     def transform_input(
-        request: InferenceRequest, fetch_result: FetchInputResult
+        request: InferenceRequest, fetch_result: FetchInputResult, device: str
     ) -> TransformInputResult:
         result = []
 
         _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = _device_to_torch[str(request.device)]
+        device = _device_to_torch[device]
         if fetch_result.meta is None:
             raise ValueError("Cannot reconstruct tensor without meta information")
         for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
@@ -362,8 +363,9 @@ class TorchWorker(MachineLearningWorkerBase):
     def transform_output(
         request: InferenceRequest,
         execute_result: ExecuteResult,
+        result_device: str,
     ) -> TransformOutputResult:
-        if str(request.device) != "cpu":
+        if result_device != "cpu":
             transformed = [
                 item.to("cpu").clone() for item in execute_result.predictions
             ]

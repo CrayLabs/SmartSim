@@ -54,7 +54,9 @@ logger = get_logger(__name__)
 
 
 def deserialize_message(
-    data_blob: bytes, channel_type: t.Type[CommChannelBase]
+    data_blob: bytes,
+    channel_type: t.Type[CommChannelBase],
+    device: t.Literal["cpu", "gpu"],
 ) -> InferenceRequest:
     """Deserialize a message from a byte stream into an InferenceRequest
     :param data_blob: The byte stream to deserialize"""
@@ -166,6 +168,7 @@ class WorkerManager(Service):
         as_service: bool = False,
         cooldown: int = 0,
         comm_channel_type: t.Type[CommChannelBase] = DragonFLIChannel,
+        device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
         :param task_queue: The queue to monitor for new tasks
@@ -187,6 +190,8 @@ class WorkerManager(Service):
         """The ML Worker implementation"""
         self._comm_channel_type = comm_channel_type
         """The type of communication channel to construct for callbacks"""
+        self._device = device
+        """Device on which workers need to run"""
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -236,17 +241,24 @@ class WorkerManager(Service):
             except fli.FLIEOT as exc:
                 return
 
-        request = deserialize_message(request_bytes, self._comm_channel_type)
+        request = deserialize_message(
+            request_bytes, self._comm_channel_type, self._device
+        )
         if not self._validate_request(request):
             return
+
 
         # # let the worker perform additional custom deserialization
         # request = self._worker.deserialize(request_bytes)
 
         fetch_model_result = self._worker.fetch_model(request, self._feature_store)
-        model_result = self._worker.load_model(request, fetch_model_result)
+        model_result = self._worker.load_model(
+            request, fetch_model_result, self._device
+        )
         fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
-        transformed_input = self._worker.transform_input(request, fetch_input_result)
+        transformed_input = self._worker.transform_input(
+            request, fetch_input_result, self._device
+        )
 
         reply = InferenceReply()
 
@@ -254,7 +266,9 @@ class WorkerManager(Service):
             execute_result = self._worker.execute(
                 request, model_result, transformed_input
             )
-            transformed_output = self._worker.transform_output(request, execute_result)
+            transformed_output = self._worker.transform_output(
+                request, execute_result, self._device
+            )
 
             if request.output_keys:
                 reply.output_keys = self._worker.place_output(
