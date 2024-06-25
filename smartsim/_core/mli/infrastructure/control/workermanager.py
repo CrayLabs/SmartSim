@@ -64,7 +64,6 @@ def deserialize_message(
 
     request = MessageHandler.deserialize_request(data_blob)
     # return request
-    device = request.device
     model_key: t.Optional[str] = None
     model_bytes: t.Optional[bytes] = None
 
@@ -106,7 +105,6 @@ def deserialize_message(
         input_keys=input_keys,
         raw_model=model_bytes,
         batch_size=0,
-        device=device,
     )
     return inference_request
 

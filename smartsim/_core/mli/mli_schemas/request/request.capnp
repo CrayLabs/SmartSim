@@ -30,12 +30,6 @@ using Tensors = import "../tensor/tensor.capnp";
 using RequestAttributes = import "request_attributes/request_attributes.capnp";
 using DataRef = import "../data/data_references.capnp";
 
-enum Device {
-  cpu @0;
-  gpu @1;
-  auto @2;
-}
-
 struct ChannelDescriptor {
   reply @0 :Data;
 }
@@ -46,16 +40,15 @@ struct Request {
     modelKey @1 :DataRef.ModelKey;
     modelData @2 :Data;
   }
-  device @3 :Device;
   input :union {
-    inputKeys @4 :List(DataRef.TensorKey);
-    inputData @5 :List(Tensors.Tensor);
+    inputKeys @3 :List(DataRef.TensorKey);
+    inputData @4 :List(Tensors.Tensor);
   }
-  output @6 :List(DataRef.TensorKey);
-  outputDescriptors @7 :List(Tensors.OutputDescriptor);
+  output @5 :List(DataRef.TensorKey);
+  outputDescriptors @6 :List(Tensors.OutputDescriptor);
   customAttributes :union {
-    torch @8 :RequestAttributes.TorchRequestAttributes;
-    tf @9 :RequestAttributes.TensorFlowRequestAttributes;
-    none @10 :Void;
+    torch @7 :RequestAttributes.TorchRequestAttributes;
+    tf @8 :RequestAttributes.TensorFlowRequestAttributes;
+    none @9 :Void;
   }
 }
