@@ -247,7 +247,6 @@ class WorkerManager(Service):
         if not self._validate_request(request):
             return
 
-
         # # let the worker perform additional custom deserialization
         # request = self._worker.deserialize(request_bytes)
 
