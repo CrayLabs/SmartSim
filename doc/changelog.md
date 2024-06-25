@@ -17,7 +17,7 @@ Description
 - Added schemas and MessageHandler class for de/serialization of
   inference requests and response messages
 - Removed device from schemas, MessageHandler and tests
-
+- Add TorchWorker first implementation and mock inference app example
 
 ### Development branch
 
