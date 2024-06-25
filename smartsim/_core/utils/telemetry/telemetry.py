@@ -48,6 +48,7 @@ from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim._core.launcher.sge.sgeLauncher import SGELauncher
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.utils.helpers import get_ts_ms
 from smartsim._core.utils.serialize import MANIFEST_FILENAME
@@ -102,7 +103,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             "lsf": LSFLauncher,
             "local": LocalLauncher,
             "dragon": DragonLauncher,
-        }
+            "sge": SGELauncher,
+        },
         self._collector_mgr = CollectorManager(timeout_ms)
 
     @property

@@ -1,0 +1,20 @@
+
+def pre_process_3ch(image):
+    mean = torch.zeros(1).float().to(image.device)
+    std = torch.zeros(1).float().to(image.device)
+    mean[0] = 0.1307
+    std[0] = 0.3081
+    mean = mean.unsqueeze(1).unsqueeze(1)
+    std = std.unsqueeze(1).unsqueeze(1)
+    temp = image.float().div(28).permute(1, 0)
+    return temp.sub(mean).div(std).unsqueeze(0)
+
+def post_process(output):
+    return output.max(1)[1]
+
+
+def pre_process(inp):
+    mean = torch.zeros(1).float().to(inp.device)
+    mean[0] = 2.0
+    temp = inp.float() * mean
+    return temp
