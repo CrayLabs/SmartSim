@@ -1,0 +1,604 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Contributing Examples &#8212; SmartSim 0.4.1 documentation</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="tutorials/getting_started/getting_started.html" />
+    <link rel="prev" title="Community" href="community.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">SmartSim 0.4.1 documentation</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="versions.html">
+   Versions
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Getting Started
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="overview.html">
+   Introduction
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="community.html">
+   Community
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Contributing Examples
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Tutorials
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/getting_started/getting_started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">
+   Online Analysis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">
+   Online Inference
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">
+   Online Training
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tutorials/ray/starting_ray.html">
+   Ray Integration
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartSim
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="experiment.html">
+   Experiments
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="orchestrator.html">
+   Orchestrator
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="launchers.html">
+   Launchers
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartsim_api.html">
+   SmartSim API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  SmartRedis
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="smartredis.html">
+   SmartRedis
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_integration.html">
+   Integrating into a Simulation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_python_walkthrough.html">
+   Python
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_cpp_walkthrough.html">
+   C++
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_fortran_walkthrough.html">
+   Fortran
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_data_structures.html">
+   Data Structures
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="sr_runtime.html">
+   Runtime Requirements
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api/smartredis_api.html">
+   SmartRedis API
+  </a>
+ </li>
+</ul>
+<p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Reference
+ </span>
+</p>
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="changelog.html">
+   Changelog
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="code_of_conduct.html">
+   Code of Conduct
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="developer.html">
+   Developer
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/contributing_examples.rst.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.rst</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn"
+        aria-label="Connect with source repository"><i class="fab fa-github"></i></button>
+    <div class="dropdown-buttons sourcebuttons">
+        <a class="repository-button"
+            href="https://github.com/CrayLabs/SmartSim"><button type="button" class="btn btn-secondary topbarbtn"
+                data-toggle="tooltip" data-placement="left" title="Source repository"><i
+                    class="fab fa-github"></i>repository</button></a>
+        <a class="issues-button"
+            href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fcontributing_examples.html&body=Your%20issue%20content%20here."><button
+                type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip" data-placement="left"
+                title="Open an issue"><i class="fas fa-lightbulb"></i>open issue</button></a>
+        
+    </div>
+</div>
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#what-is-the-smartsim-zoo">
+   What Is the SmartSim Zoo?
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#the-two-categories-of-the-smartsim-zoo">
+     The Two Categories of the SmartSim Zoo
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#how-to-contribute">
+   How To Contribute
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#existing-examples">
+   Existing Examples
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#summary-of-smartsim-application-examples">
+   Summary of SmartSim Application Examples
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Contributing Examples</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#what-is-the-smartsim-zoo">
+   What Is the SmartSim Zoo?
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#the-two-categories-of-the-smartsim-zoo">
+     The Two Categories of the SmartSim Zoo
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#how-to-contribute">
+   How To Contribute
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#existing-examples">
+   Existing Examples
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#summary-of-smartsim-application-examples">
+   Summary of SmartSim Application Examples
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <section id="contributing-examples">
+<h1>Contributing Examples<a class="headerlink" href="#contributing-examples" title="Permalink to this headline">¶</a></h1>
+<section id="what-is-the-smartsim-zoo">
+<h2>What Is the SmartSim Zoo?<a class="headerlink" href="#what-is-the-smartsim-zoo" title="Permalink to this headline">¶</a></h2>
+<p>Given that SmartSim is a community developed and maintained project, we have introduced
+a <a class="reference external" href="https://github.com/CrayLabs/SmartSim-Zoo">SmartSim Example Zoo</a> that contains CrayLabs and user contributed examples of using SmartSim
+for various simulation and machine learning applications.</p>
+<section id="the-two-categories-of-the-smartsim-zoo">
+<h3>The Two Categories of the SmartSim Zoo<a class="headerlink" href="#the-two-categories-of-the-smartsim-zoo" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>SmartSim Deployments (running SmartSim on various HPC Systems)</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>The source code for the repository serves the purpose of showing diverse examples of how to get SmartSim running on
+different HPC Systems. If you are looking for working examples on a specific machine, then the source code in the
+SmartSim-Zoo repository is for you. The SmartSim development team strives to keep these examples updated with each
+release so that users will always have robust examples for their needs.</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>SmartSim Applications (completed projects that use SmartSim)</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>The README for the repository describes some of the larger applications of SmartSim. These examples fall under two categories:
+examples by paper and examples by simulation model. The examples by paper are based on existing research papers, and the examples
+by simulation models are integrations of SmartSim with existing simulation models.</p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+<section id="how-to-contribute">
+<h2>How To Contribute<a class="headerlink" href="#how-to-contribute" title="Permalink to this headline">¶</a></h2>
+<p>We support, encourage, and welcome all contributions to the <a class="reference external" href="https://github.com/CrayLabs/SmartSim-Zoo">SmartSim Zoo</a> repository. Instructions for
+contributing examples varies whether you are contributing a SmartSim deployment or a SmartSim application.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Contributing SmartSim Deployment Examples</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>For contributing examples of SmartSim running on a HPC System, we ask that you include a description and all references to code and
+relevant previous implementations or open source code that the work is based on for the benefit of anyone who would like to
+try out your example.</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Contributing SmartSim Application Examples</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>For contributing examples of completed projects that use SmartSim, we ask that you follow the subsequent contribution template:</p></li>
+</ul>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Title of the project</p></li>
+<li><p>High-level description (the ‘elevator pitch’)</p></li>
+<li><p>SmartSim features used (e.g. online analysis, ensemble)</p></li>
+<li><p>Prerequisites: hardware and software</p></li>
+<li><p>Installation guide</p></li>
+<li><p>Quickstart</p></li>
+<li><p>Contact information</p></li>
+<li><p>Citation</p></li>
+</ol>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="existing-examples">
+<h2>Existing Examples<a class="headerlink" href="#existing-examples" title="Permalink to this headline">¶</a></h2>
+<p>The subsequent tables summarize the examples provided in the SmartSim Zoo. You can find a more detailed
+description of each example in the <a class="reference external" href="https://github.com/CrayLabs/SmartSim-Zoo">SmartSim Zoo</a>.</p>
+<table class="colwidths-given table" id="id6">
+<caption><span class="caption-text">SmartSim Deployment Examples</span><a class="headerlink" href="#id6" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>HPC System</p></th>
+<th class="head"><p>Organization / Machine Owner</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Casper</p></td>
+<td><p>National Center for Atmospheric Research (NCAR)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cheyenne</p></td>
+<td><p>National Center for Atmospheric Research (NCAR)</p></td>
+</tr>
+<tr class="row-even"><td><p>Summit</p></td>
+<td><p>Oak Ridge National Lab</p></td>
+</tr>
+<tr class="row-odd"><td><p>Theta</p></td>
+<td><p>Argonne National Lab</p></td>
+</tr>
+<tr class="row-even"><td><p>ThetaGPU</p></td>
+<td><p>Argonne National Lab</p></td>
+</tr>
+</tbody>
+</table>
+<table class="colwidths-given table" id="id7">
+<caption><span class="caption-text">Current CrayLabs Collaborations</span><a class="headerlink" href="#id7" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 43%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Paper/Simulation Name</p></th>
+<th class="head"><p>Collaborators</p></th>
+<th class="head"><p>Links</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>DeepDriveMD</p></td>
+<td><p>CrayLabs, Argonne National Lab, Oak Ridge National Lab</p></td>
+<td><p><a class="reference external" href="https://github.com/CrayLabs/smartsim-openmm">Implementation</a> <a class="reference external" href="https://arxiv.org/abs/1909.07817">Original Paper</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>TensorFlowFoam</p></td>
+<td><p>CrayLabs, Argonne National Lab</p></td>
+<td><p><a class="reference external" href="https://github.com/CrayLabs/smartsim-openFOAM">Implementation</a> <a class="reference external" href="https://arxiv.org/abs/2012.00900">Original Paper</a></p></td>
+</tr>
+<tr class="row-even"><td><p>ML-EKE</p></td>
+<td><p>CrayLabs, NCAR, University of Victoria</p></td>
+<td><p><a class="reference external" href="https://github.com/CrayLabs/NCAR_ML_EKE">Implementation</a> <a class="reference external" href="https://arxiv.org/abs/2104.09355">Paper</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>LAMMPS + SmartSim</p></td>
+<td><p>CrayLabs, Sandia National Laboratories</p></td>
+<td><p><a class="reference external" href="https://github.com/CrayLabs/smartsim-lammps">Implementation</a> <a class="reference external" href="https://github.com/CrayLabs/LAMMPS">Forked Model</a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="summary-of-smartsim-application-examples">
+<h2>Summary of SmartSim Application Examples<a class="headerlink" href="#summary-of-smartsim-application-examples" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>DeepDriveMD:</strong> Based on the original DeepDriveMD work, extended to orchestrate complex workflows
+with coupled applications without using the filesystem for exchanging information.</p></li>
+<li><p><strong>TensorFlowFoam:</strong> Uses TensorFlow inside of OpenFOAM simulations using SmartSim. Displays SmartSim’s
+capability to evaluate a machine learning model from within a simulation with minimal external library
+code and minimal API calls.</p></li>
+<li><p><strong>ML-EKE:</strong> Runs an ensemble of simulations all using the SmartSim architecture to replace a
+parameterization (MEKE) within each global ocean simulation (MOM6).</p></li>
+<li><p><strong>LAMMPS + SmartSim:</strong> Implementation of a <code class="docutils literal notranslate"><span class="pre">SMARTSIM</span></code> dump style which uses the SmartRedis clients to stream
+data to an Orchestrator database created by SmartSim.</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="community.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Community</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="tutorials/getting_started/getting_started.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Getting Started</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+      By Cray Labs<br/>
+    
+        &copy; Copyright 2021-2022, Hewlett Packard Enterprise.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

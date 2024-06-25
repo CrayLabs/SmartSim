@@ -1,0 +1,385 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Experiments &mdash; SmartSim 0.3.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Orchestrator" href="orchestrator.html" />
+    <link rel="prev" title="Machine Learning" href="tutorials/inference.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview of SmartSim</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/01_getting_started/01_getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/using_clients.html">Using SmartRedis Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/lattice_boltz_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/inference.html">Machine Learning</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartSim</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Experiments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#entities">Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ensemble">Ensemble</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#launching-ensembles">Launching Ensembles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SmartRedis</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Experiments</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/experiment.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="experiments">
+<h1>Experiments<a class="headerlink" href="#experiments" title="Permalink to this headline">¶</a></h1>
+<p>The Experiment acts as both a factory function as well as an interface to interact
+with the entities created by the experiment.</p>
+<p>Users can initialize an <a class="reference internal" href="api/smartsim_api.html#experiment-api"><span class="std std-ref">Experiment</span></a> at the beginning of a Jupyter notebook,
+interactive python session, or Python file and use the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> to
+iteratively create, configure and launch computational kernels on the
+system through the specified launcher.</p>
+<p><a class="reference internal" href="_images/SmartSim_Architecture.png"><img alt="Alternative text" src="_images/SmartSim_Architecture.png" style="width: 700px;" /></a></p>
+<p>The interface was designed to be simple with as little complexity
+as possible, and agnostic to the backend launching mechanism (local,
+Slurm, PBSPro, etc).</p>
+<div class="section" id="entities">
+<h2>Entities<a class="headerlink" href="#entities" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>The instances created by an <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> fall into two classes:</dt><dd><ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SmartSimEntity</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EntityList</span></code></p></li>
+</ol>
+</dd>
+</dl>
+<p><code class="docutils literal notranslate"><span class="pre">Model</span></code> instances are <code class="docutils literal notranslate"><span class="pre">SmartSimEntity</span></code> objects. <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> instances
+are <code class="docutils literal notranslate"><span class="pre">EntityList</span></code> objects. <code class="docutils literal notranslate"><span class="pre">EntityList</span></code> instances are containers of
+<code class="docutils literal notranslate"><span class="pre">SmartSimEntity</span></code> objects.</p>
+</div>
+<div class="section" id="model">
+<h2>Model<a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Model(s)</span></code> are created through the Experiment API. Models represent
+any computational kernel. Models are flexible enough to support many
+different applications, however, to be used with our clients (SmartRedis)
+the application will have to be written in Python, C, C++, or Fortran.</p>
+<p>Models are given <a class="reference internal" href="api/smartsim_api.html#rs-api"><span class="std std-ref">RunSettings</span></a> objects that specify how a kernel should
+be executed with regard to the workload manager (e.g. Slurm) and the available
+compute resources on the system.</p>
+<p>Each launcher supports specific types of <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="api/smartsim_api.html#srun-api"><span class="std std-ref">SrunSettings</span></a> for Slurm</p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#aprun-api"><span class="std std-ref">AprunSettings</span></a> for PBSPro and Cobalt</p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#openmpi-api"><span class="std std-ref">MpirunSettings</span></a> for OpenMPI with <cite>mpirun</cite> on PBSPro, Cobalt, LSF, and Slurm</p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#jsrun-api"><span class="std std-ref">JsrunSettings</span></a> for LSF</p></li>
+</ul>
+</div></blockquote>
+<p>When on systems that support these launch binaries, <code class="docutils literal notranslate"><span class="pre">Model</span></code> objects can
+be created to run applications in allocations obtained by the user, or in the
+case of Slurm based systems, SmartSim can obtain allocations before launching
+<code class="docutils literal notranslate"><span class="pre">Model</span></code> instances.</p>
+</div>
+<div class="section" id="ensemble">
+<h2>Ensemble<a class="headerlink" href="#ensemble" title="Permalink to this headline">¶</a></h2>
+<p>In addition to a single model, SmartSim has the ability to launch an
+<code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> of <code class="docutils literal notranslate"><span class="pre">Model</span></code> applications simultaneously.</p>
+<dl class="simple">
+<dt>An <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> can be constructed in three ways:</dt><dd><ol class="arabic simple">
+<li><p>Parameter expansion (by specifying <code class="docutils literal notranslate"><span class="pre">params</span></code> and <code class="docutils literal notranslate"><span class="pre">perm_strat</span></code> argument)</p></li>
+<li><p>Replica creation (by specifying <code class="docutils literal notranslate"><span class="pre">replicas</span></code> argument)</p></li>
+<li><p>Manually (by adding created <code class="docutils literal notranslate"><span class="pre">Model</span></code> objects) if launching as a batch job</p></li>
+</ol>
+</dd>
+</dl>
+<p>Ensembles can be given parameters and permutation strategies that
+define how the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> will create the underlying model objects.</p>
+<dl class="simple">
+<dt>Three strategies are built in:</dt><dd><ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">all_perm</span></code> for generating all permutations of model parameters</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">step</span></code> for creating one set of parameters for each element in <cite>n</cite> arrays</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">random</span></code> for random selection from predefined parameter spaces.</p></li>
+</ol>
+</dd>
+</dl>
+<p>A callable function can also be supplied for custom permutation strategies.
+The function should take in two lists: parameter names and parameter values.
+The function should return a list of dictionaries that will be supplied as
+model parameters. The length of the list returned will determine how many
+<code class="docutils literal notranslate"><span class="pre">Model</span></code> instances are created.</p>
+<p>For example, the following the the built-in strategy <code class="docutils literal notranslate"><span class="pre">all_perm</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">create_all_permutations</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">param_values</span><span class="p">):</span>
+    <span class="n">perms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">param_values</span><span class="p">))</span>
+    <span class="n">all_permutations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">perms</span><span class="p">:</span>
+        <span class="n">temp_model</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+        <span class="n">all_permutations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp_model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">all_permutations</span>
+</pre></div>
+</div>
+<p>After <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> initialization, <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> instances can be
+passed as arguments to <code class="docutils literal notranslate"><span class="pre">Experiment.generate()</span></code> to write assigned
+parameter values into attached and tagged configuration files.</p>
+<div class="section" id="launching-ensembles">
+<h3>Launching Ensembles<a class="headerlink" href="#launching-ensembles" title="Permalink to this headline">¶</a></h3>
+<p>Ensembles can be launched in previously obtained interactive allocations
+and as a batch. Similar to <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>, <code class="docutils literal notranslate"><span class="pre">BatchSettings</span></code> specify how
+a application(s) in a batch job should be executed with regards to the system
+workload manager and available compute resources.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="api/smartsim_api.html#sbatch-api"><span class="std std-ref">SbatchSettings</span></a> for Slurm</p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#qsub-api"><span class="std std-ref">QsubBatchSettings</span></a> for PBSPro</p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#cqsub-api"><span class="std std-ref">CobaltBatchSettings</span></a> for Cobalt</p></li>
+<li><p><a class="reference internal" href="api/smartsim_api.html#bsub-api"><span class="std std-ref">BsubBatchSettings</span></a> for LSF</p></li>
+</ul>
+</div></blockquote>
+<p>If only passed <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>, <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> objects will require either
+a <code class="docutils literal notranslate"><span class="pre">replicas</span></code> argument or a <code class="docutils literal notranslate"><span class="pre">params</span></code> argument to expand parameters
+into <code class="docutils literal notranslate"><span class="pre">Model</span></code> instances. At launch, the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> will look for
+interactive allocations to launch models in.</p>
+<p>If passed <code class="docutils literal notranslate"><span class="pre">BatchSettings</span></code> without other arguments, an empty <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code>
+will be created that <code class="docutils literal notranslate"><span class="pre">Model</span></code> objects can be added to manually. All <code class="docutils literal notranslate"><span class="pre">Model</span></code>
+objects added to the <code class="docutils literal notranslate"><span class="pre">Ensemble</span></code> will be launched in a single batch.</p>
+<p>If passed <code class="docutils literal notranslate"><span class="pre">BatchSettings</span></code> and <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>, the <code class="docutils literal notranslate"><span class="pre">BatchSettings</span></code> will
+determine the allocation settings for the entire batch, and the <code class="docutils literal notranslate"><span class="pre">RunSettings</span></code>
+will determine how each individual <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance is executed within
+that batch.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="orchestrator.html" class="btn btn-neutral float-right" title="Orchestrator" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tutorials/inference.html" class="btn btn-neutral float-left" title="Machine Learning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Hewlett Packard Enterprise.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

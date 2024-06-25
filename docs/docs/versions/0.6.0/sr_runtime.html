@@ -1,0 +1,694 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Runtime Requirements &#8212; SmartSim 0.6.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'sr_runtime';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Advanced Topics" href="sr_advanced_topics.html" />
+    <link rel="prev" title="DataSet Conversions" href="sr_dataset_conversions.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.6.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartdashboard.html">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fsr_runtime.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/sr_runtime.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Runtime Requirements</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-redis-database-location-and-type">Setting Redis Database Location and Type</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#logging-environment-variables">Logging Environment Variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ensemble-environment-variables">Ensemble Environment Variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-execution-environment-variable">Model Execution Environment Variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#connection-and-command-execution-environment-variables">Connection and Command Execution Environment Variables</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="runtime-requirements">
+<h1>Runtime Requirements<a class="headerlink" href="#runtime-requirements" title="Permalink to this heading">#</a></h1>
+<p>At runtime, the clients need to know where to look
+for the Redis database.  Additionally,  if
+SmartSim ensemble functionality is being used,
+information is needed to prevent key collisions
+and to retrieve the correct information from the
+database.  In the following sections,
+these requirements will be described.</p>
+<section id="setting-redis-database-location-and-type">
+<h2>Setting Redis Database Location and Type<a class="headerlink" href="#setting-redis-database-location-and-type" title="Permalink to this heading">#</a></h2>
+<p>The C++, C, and Fortran clients retrieve
+the Redis database location from the
+<code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment variable that is set
+by the user.  If the SmartSim infrastructure
+library is being used, then the infrastructure
+library will set the value of <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> for the user.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> environment variable should have the format
+of <code class="docutils literal notranslate"><span class="pre">address:port</span></code>, and may optionally be prefixed with
+a protocol, such as <code class="docutils literal notranslate"><span class="pre">tcp://</span></code>.  For a cluster, the addresses
+and ports should be separated by a “,” character. If no
+protocol is specified, the default will be taken as TCP.
+Unix domain sockets are supported via the protocol prefex
+<code class="docutils literal notranslate"><span class="pre">unix://</span></code>; however, Unix domain sockets are not supported
+in clusters.</p>
+<p>Below is an example of setting <code class="docutils literal notranslate"><span class="pre">SSDB</span></code> for a Redis cluster
+at three different addresses, each using port <code class="docutils literal notranslate"><span class="pre">6379</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SSDB</span><span class="o">=</span><span class="s2">&quot;10.128.0.153:6379,10.128.0.154:6379,10.128.0.155:6379&quot;</span>
+</pre></div>
+</div>
+<p>There are two types of Redis databases that can be used by the
+SmartRedis library. A <code class="docutils literal notranslate"><span class="pre">Clustered</span></code> database, such as the one in
+the previous example, is replicated across multiple shards.
+By way of comparison, a <code class="docutils literal notranslate"><span class="pre">Standalone</span></code> database only has a single
+shard that services all traffic; this is the form used when a
+colocated database or a standard deployment with a non-sharded
+database is requested.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">SR_DB_TYPE</span></code> environment variable informs the SmartRedis
+library which form is in use. Below is an example of setting
+<code class="docutils literal notranslate"><span class="pre">SR_DB_TYPE</span></code> for a Redis cluster:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SR_DB_TYPE</span><span class="o">=</span><span class="s2">&quot;Clustered&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="logging-environment-variables">
+<h2>Logging Environment Variables<a class="headerlink" href="#logging-environment-variables" title="Permalink to this heading">#</a></h2>
+<p>SmartRedis will log events to a file on behalf of a client. There
+are two main environment variables that affect logging, <code class="docutils literal notranslate"><span class="pre">SR_LOG_FILE</span></code>
+and <code class="docutils literal notranslate"><span class="pre">SR_LOG_LEVEL</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SR_LOG_FILE</span></code> is the specifier for the location of the file that
+receives logging information. Each entry in the file will be prefixed
+with a timestamp and the identifier of the client that invoked the logging
+message. The path may be relative or absolute, though a relative path risks
+creation of multiple log files if the executables that instantiate SmartRedis
+clients are run from different directories. If this variable is not set,
+logging information will be sent to standard console output (STDOUT in C and
+C++; output_unit in Fortran).</p>
+<p><code class="docutils literal notranslate"><span class="pre">SR_LOG_LEVEL</span></code> relates to the verbosity of information that wil be logged.
+It may be one of three levels: <code class="docutils literal notranslate"><span class="pre">QUIET</span></code> disables logging altogether.
+<code class="docutils literal notranslate"><span class="pre">INFO</span></code> provides informational logging, such as exception events that
+transpire within the SmartRedis library and creation or destruction of a
+client object.  <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> provides more verbose logging, including information
+on the activities of the SmartRedis thread pool and API function entry and exit.
+Debug level logging will also log the absence of an expected environment variable,
+though this can happen only if the variables to set up logging are in place. If
+this parameter is not set, a default logging level of <code class="docutils literal notranslate"><span class="pre">INFO</span></code> will be adopted.</p>
+<p>The runtime impact of log levels NONE or INFO should be minimal on
+client performance; however, setting the log level to DEBUG may cause some
+degradation.</p>
+</section>
+<section id="ensemble-environment-variables">
+<h2>Ensemble Environment Variables<a class="headerlink" href="#ensemble-environment-variables" title="Permalink to this heading">#</a></h2>
+<p>The clients work with SmartSim ensemble functionality through
+environment variables.  There are two environment variables
+that are used for ensembles, <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> and <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> defines the prefix that is attached to
+tensors, datasets, models, and scripts sent from the client
+to the database.  This prefixing prevents key collisions for
+objects sent from the client to the database.  <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code>
+should be set to a single string value.  If using the
+SmartSim infrastructure library to launch the ensemble,
+<code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> will be set by SmartSim.  An example
+value of <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SSKEYOUT</span><span class="o">=</span><span class="s2">&quot;model_1&quot;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> defines prefixes that can be attached to
+tensors, datasets, models, and scripts when retrieving
+data from the database.  <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> can have multiple,
+comma separated values, however, only one of the values
+can be used at a time.  <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> allows a client
+in an application to retrieve data from clients
+that were part of ensemble when placing data in the
+database.  An example value of <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SSKEYIN</span><span class="o">=</span><span class="s2">&quot;model_2,model_3,model_4&quot;</span>
+</pre></div>
+</div>
+<p>In the case of multiple <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> values, the <code class="docutils literal notranslate"><span class="pre">Client</span></code>
+API provides a function <code class="docutils literal notranslate"><span class="pre">Client.set_data_source()</span></code>
+to select which <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> value is used.  The
+default is to use the first value of <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code>,
+and any value specified using <code class="docutils literal notranslate"><span class="pre">Client.set_data_source()</span></code>
+must be present in <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> when the <code class="docutils literal notranslate"><span class="pre">Client</span></code>
+is created.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Client</span></code> API provides functions to activate or
+deactivate the use of <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> and <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code>.
+These functions are split by the data type
+that prefixes are applied to in order to give the
+user fine control of prefixing in advanced applications.
+The default is to use prefixes on tensors and datasets
+if <code class="docutils literal notranslate"><span class="pre">SSKEYIN</span></code> and <code class="docutils literal notranslate"><span class="pre">SSKEYOUT</span></code> are present.  The default
+is not to use prefixes on scripts and models.
+The functions for changing this default behavior are:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">use_tensor_ensemble_prefix</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">use_prefix</span><span class="p">);</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">use_dataset_ensemble_prefix</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">use_prefix</span><span class="p">);</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">use_model_ensemble_prefix</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">use_prefix</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">Client.use_tensor_ensemble_prefix()</span></code> controls
+object prefixing for objects stored with <code class="docutils literal notranslate"><span class="pre">Client.put_tensor()</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">Client.use_dataset_ensemble_prefix()</span></code> controls
+object prefixing for``DataSet`` components added via
+<code class="docutils literal notranslate"><span class="pre">DataSet.add_tensor()</span></code>, <code class="docutils literal notranslate"><span class="pre">DataSet.add_meta_scalar()</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">DataSet.add_meta_string()</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">Client.use_model_ensemble_prefix()</span></code> controls
+object prefixing for model and script data.</p>
+</div>
+</section>
+<section id="model-execution-environment-variable">
+<h2>Model Execution Environment Variable<a class="headerlink" href="#model-execution-environment-variable" title="Permalink to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">SR_MODEL_TIMEOUT</span></code> environment variable defines a timeout
+on the length of time SmartRedis will wait for a model to
+execute. The value for this variable is measured in milliseconds,
+and the default value is one minute.</p>
+</section>
+<section id="connection-and-command-execution-environment-variables">
+<h2>Connection and Command Execution Environment Variables<a class="headerlink" href="#connection-and-command-execution-environment-variables" title="Permalink to this heading">#</a></h2>
+<p>SmartRedis allows for client connection and command execution
+behavior to be adjusted via environment variables.</p>
+<p>During client initialization, the environment variables <code class="docutils literal notranslate"><span class="pre">SR_CONN_INTERVAL</span></code>
+and <code class="docutils literal notranslate"><span class="pre">SR_CONN_TIMEOUT</span></code> are used by SmartRedis to determine
+the frequency of connection attempts and the cumulative amount of time
+before a timeout error is thrown, respectively.  The user can set
+these environment variables to adjust client connection behavior.
+<code class="docutils literal notranslate"><span class="pre">SR_CONN_INTERVAL</span></code> should be specified in milliseconds and
+<code class="docutils literal notranslate"><span class="pre">SR_CONN_TIMEOUT</span></code> should be specified in seconds.</p>
+<p>The environment variables <code class="docutils literal notranslate"><span class="pre">SR_CMD_INTERVAL</span></code> and <code class="docutils literal notranslate"><span class="pre">SR_CMD_TIMEOUT</span></code>
+are used are used by SmartRedis to determine
+the frequency of command execution attempts and the
+cumulative amount of time before a timeout error is thrown, respectively.
+The user can set these environment variables to adjust command execution behavior.
+<code class="docutils literal notranslate"><span class="pre">SR_CMD_INTERVAL</span></code> should be specified in milliseconds and
+<code class="docutils literal notranslate"><span class="pre">SR_CMD_TIMEOUT</span></code> should be specified in seconds.  Note that <code class="docutils literal notranslate"><span class="pre">SR_CMD_INTERVAL</span></code>
+and <code class="docutils literal notranslate"><span class="pre">SR_CMD_TIMEOUT</span></code> are read during client initialization and not
+before each command execution.</p>
+<p>The environment variable <code class="docutils literal notranslate"><span class="pre">SR_THREAD_COUNT</span></code> is used by SmartRedis to determine
+the number of threads to initialize when building a worker pool for parallel task
+execution. The default value is four. If the variable is set to zero, SmartRedis
+will use a default number of threads equal to one per hardware context in the
+processor on which the library is running (more specifically, SmartRedis will
+use the result of a call to std::thread::hardware_concurrency() as the number
+of threads to create). This default will generally give good
+performance; however, if the SmartRedis library is sharing the processor hardware
+with other software, it may be useful to specify a smaller number of threads for
+some workloads.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="sr_dataset_conversions.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">DataSet Conversions</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="sr_advanced_topics.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Advanced Topics</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-redis-database-location-and-type">Setting Redis Database Location and Type</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#logging-environment-variables">Logging Environment Variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ensemble-environment-variables">Ensemble Environment Variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-execution-environment-variable">Model Execution Environment Variable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#connection-and-command-execution-environment-variables">Connection and Command Execution Environment Variables</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2023, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

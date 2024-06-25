@@ -1,0 +1,613 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>SmartDashboard &#8212; SmartSim 0.6.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'smartdashboard';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="SmartRedis API" href="api/smartredis_api.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">SmartSim 0.6.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/basic.html">Basic Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_instructions/platform.html">Installation on specific platforms</a></li>
+
+
+
+
+
+
+
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smartsim_zoo.html">Contributing Examples</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/getting_started/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/online_analysis/lattice/online_analysis.html">Online Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_inference/Inference-in-SmartSim.html">Online Inference</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="tutorials/ml_training/surrogate/train_surrogate.html">Online Training</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartSim</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">Orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ml_features.html">ML Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartsim_api.html">SmartSim API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartRedis</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="smartredis.html">SmartRedis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_integration.html">Integrating into a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_python_walkthrough.html">Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_cpp_walkthrough.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_fortran_walkthrough.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_data_structures.html">Data Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_dataset_conversions.html">DataSet Conversions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_runtime.html">Runtime Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sr_advanced_topics.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/smartredis_api.html">SmartRedis API</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">SmartDashboard</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">SmartDashboard</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/CrayLabs/SmartSim/issues/new?title=Issue%20on%20page%20%2Fsmartdashboard.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/smartdashboard.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>SmartDashboard</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-smartdashboard">Running SmartDashboard</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-smartdashboard">Using SmartDashboard</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="smartdashboard">
+<h1>SmartDashboard<a class="headerlink" href="#smartdashboard" title="Permalink to this heading">#</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">SmartDashboard</span></code> is an add-on to SmartSim that provides a dashboard to help users understand
+and monitor their SmartSim experiments in a visual way. Configuration, status, and logs
+are available for all launched entities within an experiment for easy inspection.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">Telemetry</span> <span class="pre">Monitor</span></code> is a new background process that is launched along with the experiment
+that helps <code class="docutils literal notranslate"><span class="pre">SmartDashboard</span></code> properly display data. Experiment metadata is also stored in
+the <code class="docutils literal notranslate"><span class="pre">.smartsim</span></code> directory, a hidden folder for internal api use and used by the dashboard.
+Deletion of the experiment folder will remove all experiment metadata.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
+<p>It’s important to note that SmartDashboard only works while using SmartSim, so
+SmartSim will need to be installed as well. SmartSim installation docs can be
+found <a class="reference external" href="https://www.craylabs.org/docs/installation_instructions/basic.html">here</a>.</p>
+<p>User Install:</p>
+<p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">git+https://github.com/CrayLabs/SmartDashboard.git</span></code> to install
+SmartDashboard without cloning the repository.</p>
+<p>Developer Install:</p>
+<p>Clone the <code class="docutils literal notranslate"><span class="pre">SmartDashboard</span></code> repository at <a class="github reference external" href="https://github.com/CrayLabs/SmartDashboard.git">CrayLabs/SmartDashboard.git</a>.
+Once cloned, <code class="docutils literal notranslate"><span class="pre">cd</span></code> into the repository and run:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code></p>
+</section>
+<section id="running-smartdashboard">
+<h2>Running SmartDashboard<a class="headerlink" href="#running-smartdashboard" title="Permalink to this heading">#</a></h2>
+<p>After launching a SmartSim experiment, the dashboard can be launched using SmartSim’s CLI.</p>
+<p><code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">dashboard</span> <span class="pre">--port</span> <span class="pre">&lt;port</span> <span class="pre">number&gt;</span> <span class="pre">--directory</span> <span class="pre">&lt;experiment</span> <span class="pre">directory</span> <span class="pre">path&gt;</span></code></p>
+<p>The port can optionally be specified, otherwise the dashboard port will default to <code class="docutils literal notranslate"><span class="pre">8501</span></code>.
+The directory must be specified and should be a relative or absolute path to the created experiment directory.</p>
+<dl class="option-list">
+<dt><kbd><span class="option">--port</span>, <span class="option">-p</span></kbd></dt>
+<dd><p>port number</p>
+</dd>
+<dt><kbd><span class="option">--directory</span>, <span class="option">-d</span></kbd></dt>
+<dd><p>experiment directory</p>
+</dd>
+</dl>
+<p>Example workflow:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># directory before running experiment</span>
+├──<span class="w"> </span>hello_world.py
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># hello_world.py</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Experiment</span>
+
+<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="s2">&quot;hello_world_exp&quot;</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="n">run</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_run_settings</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s2">&quot;echo&quot;</span><span class="p">,</span> <span class="n">exe_args</span><span class="o">=</span><span class="s2">&quot;Hello World!&quot;</span><span class="p">)</span>
+<span class="n">run</span><span class="o">.</span><span class="n">set_tasks</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">run</span><span class="o">.</span><span class="n">set_tasks_per_node</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s2">&quot;hello_world&quot;</span><span class="p">,</span> <span class="n">run</span><span class="p">)</span>
+<span class="n">exp</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">summary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in interactive terminal</span>
+python<span class="w"> </span>hello_world.py
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># directory after running experiment</span>
+├──<span class="w"> </span>hello_world.py
+└──<span class="w"> </span>hello_world_exp
+</pre></div>
+</div>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">hello_world_exp</span></code> is created in the directory of the driver script.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in a different interactive terminal</span>
+smart<span class="w"> </span>dashboard<span class="w"> </span>--port<span class="w"> </span><span class="m">8888</span><span class="w"> </span>--directory<span class="w"> </span>hello_world_exp
+</pre></div>
+</div>
+<p>The dashboard will automatically open in a browser at port 8888 when <code class="docutils literal notranslate"><span class="pre">smart</span> <span class="pre">dashboard</span></code>
+is invoked locally.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the dashboard is executed remotely, establishing port-forwarding to the
+remote machine will be necessary. This may be accomplished with ssh as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># using ssh to establish port forwarding</span>
+ssh<span class="w"> </span>-L<span class="w"> </span><span class="o">[</span>local-addr<span class="o">]</span>:&lt;local-port&gt;:&lt;remote-addr&gt;:&lt;remote-port&gt;<span class="w"> </span>&lt;user-id&gt;@&lt;remote-addr&gt;
+
+<span class="c1"># example forwarding the remote port 8888 to localhost:8000</span>
+ssh<span class="w"> </span>-L<span class="w"> </span>localhost:8000:super1.my.domain.net:8888<span class="w"> </span>smartdash@super1.my.domain.net
+</pre></div>
+</div>
+<p>After establishing the port-forwarding, a local browser can be pointed at the appropriate
+URL, such as <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code> for the example above.</p>
+</div>
+<p>The dashboard is also persistent, meaning that a user can launch and use the dashboard
+even after the experiment has completed.</p>
+</section>
+<section id="using-smartdashboard">
+<h2>Using SmartDashboard<a class="headerlink" href="#using-smartdashboard" title="Permalink to this heading">#</a></h2>
+<p>Once displayed in the browser, SmartDashboard currently has two tabs on the left hand side.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Experiment</span> <span class="pre">Overview:</span></code> This tab is where configuration information, statuses, and
+logs are located for each launched entity of the experiment. The <code class="docutils literal notranslate"><span class="pre">Experiment</span></code>
+section displays configuaration information for the overall experiment. In the <code class="docutils literal notranslate"><span class="pre">Applications</span></code>
+section, also known as SmartSim <code class="docutils literal notranslate"><span class="pre">Models</span></code>, select a launched application to see its status,
+what it was configured with, and its logs. The <code class="docutils literal notranslate"><span class="pre">Orchestrators</span></code> section also provides
+configuration and status information, as well as logs per shard for a selected orchestrator.
+Finally, in the <code class="docutils literal notranslate"><span class="pre">Ensembles</span></code> section, select an ensemble to see its status and configuration.
+Then select any of its members to see its status, configuration, and logs.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Help:</span></code> This tab links to SmartSim documentation and provides a SmartSim contact for support.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="api/smartredis_api.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">SmartRedis API</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="changelog.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Changelog</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-smartdashboard">Running SmartDashboard</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-smartdashboard">Using SmartDashboard</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cray Labs
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021-2023, Hewlett Packard Enterprise.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+<div class="extra_footer">
+  Questions? You can contact <a href="mailto:craylabs@hpe.com">contact us</a> or <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA">join us on Slack!</a>
+</div>
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
