@@ -111,7 +111,7 @@ class ExecuteResult:
 class FetchInputResult:
     """A wrapper around fetched inputs"""
 
-    def __init__(self, result: t.List[bytes], meta: t.List[t.Any]) -> None:
+    def __init__(self, result: t.List[bytes], meta: t.Optional[t.List[t.Any]]) -> None:
         """Initialize the object"""
         self.inputs = result
         self.meta = meta
@@ -121,7 +121,7 @@ class TransformOutputResult:
     """A wrapper around inference results transformed for transmission"""
 
     def __init__(
-        self, result: t.Any, shape: t.List[int], order: str, dtype: str
+        self, result: t.Any, shape: t.Optional[t.List[int]], order: str, dtype: str
     ) -> None:
         """Initialize the OutputTransformResult"""
         self.outputs = result
@@ -209,7 +209,9 @@ class MachineLearningWorkerCore:
                     raise sse.SmartSimError(
                         f"Model could not be retrieved with key {input_}"
                     ) from ex
-            return FetchInputResult(data)
+            return FetchInputResult(
+                data, None
+            )  # fixme: need to get both tensor and descriptor
 
         raise ValueError("No input source")
 
@@ -316,7 +318,9 @@ class TorchWorker(MachineLearningWorkerBase):
 
         _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
         device = _device_to_torch[str(request.device)]
-        model: torch.nn.Module = torch.jit.load(io.BytesIO(model_bytes), map_location=device)  # type: ignore[no-untyped-call]
+        buffer = io.BytesIO(model_bytes)
+        # type: ignore-next[no-untyped-call]
+        model = torch.jit.load(buffer, map_location=device)
         result = LoadModelResult(model)
         return result
 
@@ -328,12 +332,14 @@ class TorchWorker(MachineLearningWorkerBase):
 
         _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
         device = _device_to_torch[str(request.device)]
+        if fetch_result.meta is None:
+            raise ValueError("Cannot reconstruct tensor without meta information")
         for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
-            td: tensor_capnp.TensorDescriptor = item_meta
+            tensor_desc: tensor_capnp.TensorDescriptor = item_meta
             result.append(
-                torch.tensor(
-                    np.frombuffer(item, dtype=str(td.dataType)).reshape(td.dimensions)
-                ).to(device)
+                torch.tensor(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
+                .to(device)
+                .reshape(tuple(dim for dim in tensor_desc.dimensions))
             )
         return TransformInputResult(result)
         # return data # note: this fails copy test!
@@ -365,7 +371,7 @@ class TorchWorker(MachineLearningWorkerBase):
             ]
             # todo: need the shape from latest schemas added here.
             return TransformOutputResult(transformed, None, "c", "float32")  # fixme
-        else:
-            return TransformOutputResult(
-                execute_result.predictions, None, "c", "float32"
-            )  # fixme
+
+        return TransformOutputResult(
+            execute_result.predictions, None, "c", "float32"
+        )  # fixme

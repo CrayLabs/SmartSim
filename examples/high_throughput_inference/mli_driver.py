@@ -5,7 +5,7 @@ import time
 
 worker_manager_script_name = "standalone_workermanager.py"
 app_script_name = "mock_app.py"
-device = "cpu"
+device = "gpu"
 
 
 exp = Experiment("MLI_proto", launcher="dragon")

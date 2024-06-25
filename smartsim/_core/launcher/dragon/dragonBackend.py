@@ -26,7 +26,6 @@
 import collections
 import functools
 import itertools
-import os
 import time
 import typing as t
 from dataclasses import dataclass, field
@@ -411,7 +410,7 @@ class DragonBackend:
             self._infra_ddict["creation"] = str(time.time())
             logger.info(self._infra_ddict["creation"])
 
-        return self._infra_ddict.serialize()
+        return str(self._infra_ddict.serialize())
 
     def _start_steps(self) -> None:
         self._heartbeat()
