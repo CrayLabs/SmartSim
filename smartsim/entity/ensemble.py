@@ -192,7 +192,7 @@ class Ensemble(EntityList[Application]):
         if not isinstance(application, Application):
             raise TypeError(
                 f"Argument to add_application was of type {type(application)}, "
-                " not Application"
+                "not Application"
             )
         # "in" operator uses application name for __eq__
         if application in self.entities:
