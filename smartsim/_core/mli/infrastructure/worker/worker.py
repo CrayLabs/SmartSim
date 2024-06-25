@@ -24,12 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import io
 import typing as t
 from abc import ABC, abstractmethod
+
+import numpy as np
+import torch
 
 import smartsim.error as sse
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.mli_schemas.tensor import tensor_capnp
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
@@ -106,9 +111,10 @@ class ExecuteResult:
 class FetchInputResult:
     """A wrapper around fetched inputs"""
 
-    def __init__(self, result: t.List[bytes]) -> None:
+    def __init__(self, result: t.List[bytes], meta: t.List[t.Any]) -> None:
         """Initialize the object"""
         self.inputs = result
+        self.meta = meta
 
 
 class TransformOutputResult:
@@ -122,7 +128,6 @@ class TransformOutputResult:
         self.shape = shape
         self.order = order
         self.dtype = dtype
-        # todo: determine if each output must have an individual (shape, order, dtype)
 
 
 class CreateInputBatchResult:
@@ -152,8 +157,6 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param feature_store: The feature store used for persistence
         :return: Raw bytes of the model"""
-        if not feature_store:
-            raise ValueError("Feature store is required for model retrieval")
 
         if request.raw_model:
             # Should we cache model in the feature store?
@@ -161,6 +164,9 @@ class MachineLearningWorkerCore:
             # feature_store[model_key] = request.raw_model
             # short-circuit and return the directly supplied model
             return FetchModelResult(request.raw_model)
+
+        if not feature_store:
+            raise ValueError("Feature store is required for model retrieval")
 
         if not request.model_key:
             raise sse.SmartSimError(
@@ -185,8 +191,12 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param feature_store: The feature store used for persistence
         :return: the fetched input"""
+
+        if request.raw_inputs:
+            return FetchInputResult(request.raw_inputs, request.input_meta)
+
         if not feature_store:
-            raise ValueError("Feature store is required for input retrieval")
+            raise ValueError("No input and no feature store provided")
 
         if request.input_keys:
             data: t.List[bytes] = []
@@ -200,9 +210,6 @@ class MachineLearningWorkerCore:
                         f"Model could not be retrieved with key {input_}"
                     ) from ex
             return FetchInputResult(data)
-
-        if request.raw_inputs:
-            return FetchInputResult(request.raw_inputs)
 
         raise ValueError("No input source")
 
@@ -250,14 +257,6 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     """Abstrct base class providing contract for a machine learning
     worker implementation."""
 
-    # @staticmethod
-    # @abstractmethod
-    # def deserialize(request: InferenceRequest) -> InferenceRequest:
-    #     """Given a collection of data serialized to bytes, convert the bytes
-    #     to a proper representation used by the ML backend
-    #     :param data_blob: inference request as a byte-serialized blob
-    #     :return: InferenceRequest deserialized from the input"""
-
     @staticmethod
     @abstractmethod
     def load_model(
@@ -303,11 +302,70 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param execute_result: The result of inference wrapped in an ExecuteResult
         :return:"""
 
-    # @staticmethod
-    # @abstractmethod
-    # def serialize_reply(
-    #     request: InferenceRequest, results: OutputTransformResult
-    # ) -> bytes:
-    #     """Given an output, serialize to bytes for transport
-    #     :param reply: The result of the inference pipeline
-    #     :return: a byte-serialized version of the reply"""
+
+class TorchWorker(MachineLearningWorkerBase):
+    """A worker that executes a PyTorch model."""
+
+    @staticmethod
+    def load_model(
+        request: InferenceRequest, fetch_result: FetchModelResult
+    ) -> LoadModelResult:
+        model_bytes = fetch_result.model_bytes or request.raw_model
+        if not model_bytes:
+            raise ValueError("Unable to load model without reference object")
+
+        _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
+        device = _device_to_torch[str(request.device)]
+        model: torch.nn.Module = torch.jit.load(io.BytesIO(model_bytes), map_location=device)  # type: ignore[no-untyped-call]
+        result = LoadModelResult(model)
+        return result
+
+    @staticmethod
+    def transform_input(
+        request: InferenceRequest, fetch_result: FetchInputResult
+    ) -> TransformInputResult:
+        result = []
+
+        _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
+        device = _device_to_torch[str(request.device)]
+        for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
+            td: tensor_capnp.TensorDescriptor = item_meta
+            result.append(
+                torch.tensor(
+                    np.frombuffer(item, dtype=str(td.dataType)).reshape(td.dimensions)
+                ).to(device)
+            )
+        return TransformInputResult(result)
+        # return data # note: this fails copy test!
+
+    @staticmethod
+    def execute(
+        request: InferenceRequest,
+        load_result: LoadModelResult,
+        transform_result: TransformInputResult,
+    ) -> ExecuteResult:
+        if not load_result.model:
+            raise sse.SmartSimError("Model must be loaded to execute")
+
+        model: torch.nn.Module = load_result.model
+        model.eval()
+        results = [model(tensor).detach() for tensor in transform_result.transformed]
+
+        execute_result = ExecuteResult(results)
+        return execute_result
+
+    @staticmethod
+    def transform_output(
+        request: InferenceRequest,
+        execute_result: ExecuteResult,
+    ) -> TransformOutputResult:
+        if str(request.device) != "cpu":
+            transformed = [
+                item.to("cpu").clone() for item in execute_result.predictions
+            ]
+            # todo: need the shape from latest schemas added here.
+            return TransformOutputResult(transformed, None, "c", "float32")  # fixme
+        else:
+            return TransformOutputResult(
+                execute_result.predictions, None, "c", "float32"
+            )  # fixme
