@@ -29,6 +29,7 @@ from __future__ import annotations
 import copy
 import itertools
 import os
+import os.path
 import typing as t
 
 from smartsim.entity import _mock, entity, strategies
@@ -55,6 +56,7 @@ class Ensemble(entity.CompoundEntity):
         exe: str | os.PathLike[str],
         exe_args: t.Sequence[str] | None = None,
         exe_arg_parameters: t.Mapping[str, t.Sequence[t.Sequence[str]]] | None = None,
+        path: str | os.PathLike[str] | None = None,
         files: EntityFiles | None = None,
         file_parameters: t.Mapping[str, t.Sequence[str]] | None = None,
         permutation_strategy: str | strategies.PermutationStrategyType = "all_perm",
@@ -67,6 +69,11 @@ class Ensemble(entity.CompoundEntity):
         self.exe_arg_parameters = (
             copy.deepcopy(exe_arg_parameters) if exe_arg_parameters else {}
         )
+        self.path = os.fspath(path) if path is not None else os.getcwd()
+        #                                                    ^^^^^^^^^^^
+        # TODO: Copied from the original implementation, but I'm not sure that
+        #       I like this default. Shouldn't it be something under an
+        #       experiment directory? If so, how it injected??
         self.files = copy.deepcopy(files) if files else EntityFiles()
         self.file_parameters = dict(file_parameters) if file_parameters else {}
         self.permutation_strategy = permutation_strategy
@@ -93,6 +100,7 @@ class Ensemble(entity.CompoundEntity):
                 # ^^^^^^^^^^^^^^^^^^^^^^^
                 # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
+                path=os.path.join(self.path, self.name),
                 files=self.files,
                 params=permutation.params,
                 params_as_args=permutation.exe_args,  # type: ignore[arg-type]
