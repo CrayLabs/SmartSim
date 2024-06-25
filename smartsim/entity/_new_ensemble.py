@@ -89,13 +89,15 @@ class Ensemble(entity.CompoundEntity):
             Application(
                 name=f"{self.name}-{i}",
                 exe=self.exe,
-                run_settings=_mock.Mock(),  # type: ignore[arg-type]
-                # ^^^^^^^^^^^^^^^^^^^
+                run_settings=_mock.Mock(),
+                # ^^^^^^^^^^^^^^^^^^^^^^^
                 # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
                 files=self.files,
                 params=permutation.params,
-                params_as_args=permutation.exe_args,
+                params_as_args=permutation.exe_args,  # type: ignore[arg-type]
+                # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                # FIXME: this is the wrong type on Application!
             )
             for i, permutation in enumerate(permutations_)
         )

@@ -32,6 +32,8 @@ import pytest
 from smartsim.entity import _mock
 from smartsim.entity._new_ensemble import Ensemble
 from smartsim.entity.strategies import ParamSet
+from smartsim.settings.launchCommand import LauncherType
+from smartsim.settings.launchSettings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
 
@@ -49,9 +51,7 @@ def user_created_function(
 
 @pytest.fixture
 def mock_launcher_settings():
-    # TODO: Remove this mock with #587
-    #       https://github.com/CrayLabs/SmartSim/pull/587
-    return _mock.LaunchSettings()
+    return LaunchSettings(LauncherType.Local, {}, {})
 
 
 def test_ensemble_user_created_strategy(mock_launcher_settings):
