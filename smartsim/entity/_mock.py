@@ -40,6 +40,7 @@ class Mock:
 
     def __init__(self, *_: t.Any, **__: t.Any): ...
     def __getattr__(self, _: str) -> Mock:
-        return Mock()
+        return type(self)()
 
-    __deepcopy__: t.ClassVar[t.Literal[None]] = None
+    def __deepcopy__(self, _: dict[t.Any, t.Any]) -> Mock:
+        return type(self)()
