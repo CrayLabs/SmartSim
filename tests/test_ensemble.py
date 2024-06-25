@@ -32,7 +32,6 @@ import pytest
 from smartsim.entity import _mock
 from smartsim.entity._new_ensemble import Ensemble
 from smartsim.entity.strategies import ParamSet
-from smartsim.settings.launchCommand import LauncherType
 from smartsim.settings.launchSettings import LaunchSettings
 
 pytestmark = pytest.mark.group_a
@@ -50,8 +49,8 @@ def user_created_function(
 
 
 @pytest.fixture
-def mock_launcher_settings():
-    return LaunchSettings(LauncherType.Local, {}, {})
+def mock_launcher_settings(wlmutils):
+    return LaunchSettings(wlmutils.get_test_launcher(), {}, {})
 
 
 def test_ensemble_user_created_strategy(mock_launcher_settings, test_dir):
