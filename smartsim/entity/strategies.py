@@ -130,9 +130,9 @@ def _make_sanitized_custom_strategy(
 
     @functools.wraps(fn)
     def _impl(
-        params: t.Optional[t.Mapping[str, t.Sequence[str]]],
-        exe_args: t.Optional[t.Mapping[str, t.Sequence[t.Sequence[str]]]],
-        n_permutations: int = 0,
+        params: t.Mapping[str, t.Sequence[str]],
+        exe_args: t.Mapping[str, t.Sequence[t.Sequence[str]]],
+        n_permutations: int = -1,
     ) -> list[ParamSet]:
         try:
             permutations = fn(params, exe_args, n_permutations)
@@ -179,12 +179,19 @@ def create_all_permutations(
     param_zip = (
         dict(zip(params, permutation)) for permutation in file_params_permutations
     )
+
     exe_arg_params_permutations = itertools.product(*exe_arg.values())
-    exe_arg_zip = (
-        dict(zip(exe_arg, permutation)) for permutation in exe_arg_params_permutations
+    exe_arg_params_permutations_ = (
+        tuple(map(list, sequence)) for sequence in exe_arg_params_permutations
     )
+    exe_arg_zip = (
+        dict(zip(exe_arg, permutation)) for permutation in exe_arg_params_permutations_
+    )
+
     combinations = itertools.product(param_zip, exe_arg_zip)
-    param_set = (ParamSet(file_param, exe_arg) for file_param, exe_arg in combinations)
+    param_set: t.Iterable[ParamSet] = (
+        ParamSet(file_param, exe_arg) for file_param, exe_arg in combinations
+    )
     if n_permutations >= 0:
         param_set = itertools.islice(param_set, n_permutations)
     return list(param_set)
@@ -212,20 +219,23 @@ def step_values(
     .. highlight:: python
     .. code-block:: python
         [ParamSet(params={'SPAM': 'a', 'EGGS': 'c'},
-         exe_args={'EXE': ['a'], 'ARGS': ['d']})]
+                  exe_args={'EXE': ['a'], 'ARGS': ['d']})]
     :param file_params: A mapping of file parameter names to possible values
     :param exe_arg_params: A mapping of exe arg parameter names to possible values
-    :param _n_permutations: The maximum number of permutations to sample from
+    :param n_permutations: The maximum number of permutations to sample from
         the sequence of step permutations
     :return: A sequence of ParamSets of stepped values
     """
-    param_zip = zip(*params.values())
-    param_zip = (dict(zip(params, step)) for step in param_zip)
-    exe_arg_zip = zip(*exe_args.values())
-    exe_arg_zip = (dict(zip(exe_args, step)) for step in exe_arg_zip)
-    param_set = (
+    param_zip: t.Iterable[tuple[str, ...]] = zip(*params.values())
+    param_zip_ = (dict(zip(params, step)) for step in param_zip)
+
+    exe_arg_zip: t.Iterable[tuple[t.Sequence[str], ...]] = zip(*exe_args.values())
+    exe_arg_zip_ = (map(list, sequence) for sequence in exe_arg_zip)
+    exe_arg_zip__ = (dict(zip(exe_args, step)) for step in exe_arg_zip_)
+
+    param_set: t.Iterable[ParamSet] = (
         ParamSet(file_param, exe_arg)
-        for (file_param, exe_arg) in zip(param_zip, exe_arg_zip)
+        for file_param, exe_arg in zip(param_zip_, exe_arg_zip__)
     )
     if n_permutations >= 0:
         param_set = itertools.islice(param_set, n_permutations)
