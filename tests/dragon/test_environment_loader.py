@@ -24,15 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import base64
+import os
 import pickle
+
 import pytest
-
-from dragon.fli import FLInterface
 from dragon.channels import Channel
+from dragon.fli import FLInterface
 
-from smartsim._core.mli.infrastructure.control.workermanager import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.control.workermanager import (
+    EnvironmentConfigLoader,
+)
+
 
 def test_environment_loader_basic():
     chan = Channel.make_process_local()
@@ -41,9 +44,9 @@ def test_environment_loader_basic():
     sender.send_bytes(b"bytessss")
     expected_value = b"value_bytes"
     expected_key = "key"
-    fs = {expected_key:expected_value}
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(fs)).decode('utf-8')
-    os.environ["SSQueue"] = base64.b64encode(pickle.dumps(queue)).decode('utf-8')
+    fs = {expected_key: expected_value}
+    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(fs)).decode("utf-8")
+    os.environ["SSQueue"] = base64.b64encode(pickle.dumps(queue)).decode("utf-8")
     config = EnvironmentConfigLoader()
     config_store = config.get_feature_store()
     assert config_store[expected_key] == expected_value
