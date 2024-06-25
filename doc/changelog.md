@@ -16,6 +16,7 @@ Description
 - Add ML worker manager, sample worker, and feature store
 - Added schemas and MessageHandler class for de/serialization of
   inference requests and response messages
+- Removed device from schemas, MessageHandler and tests
 
 
 ### Development branch
