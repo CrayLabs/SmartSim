@@ -144,7 +144,7 @@ class Experiment:
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
         :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "lsf", or "local". If set to "auto",
+                         "lsf", "sge", or "local". If set to "auto",
                          an attempt will be made to find an available launcher
                          on the system.
         """
