@@ -29,14 +29,12 @@ import os
 import pickle
 import typing as t
 
-import dragon.utils as du
-
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 
 
 class EnvironmentConfigLoader:
     """
-    Class to help facilitate the loading of a FeatureStore and Queue
+    Facilitates the loading of a FeatureStore and Queue
     into the WorkerManager.
     """
 
@@ -56,5 +54,5 @@ class EnvironmentConfigLoader:
     def get_queue(self) -> t.Optional[t.ByteString]:
         """Returns the Queue descriptor previously set in SSQueue"""
         if self.queue is not None:
-            return du.B64.str_to_bytes(self.queue) # type: ignore
+            return base64.b64decode(self.queue)
         return self.queue
