@@ -322,7 +322,7 @@ class SlurmArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
         self._launch_args[key] = value
 
     def finalize(
-        self, exe: ExecutableLike, env: dict[str, str | None]
+        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
     ) -> t.Sequence[str]:
         return (
             "srun",

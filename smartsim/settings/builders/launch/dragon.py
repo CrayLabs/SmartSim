@@ -69,7 +69,7 @@ class DragonArgBuilder(LaunchArgBuilder[DragonRunRequest]):
         self._launch_args[key] = value
 
     def finalize(
-        self, exe: ExecutableLike, env: dict[str, str | None]
+        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
     ) -> DragonRunRequest:
         exe_, *args = exe.as_program_arguments()
         return DragonRunRequest(
