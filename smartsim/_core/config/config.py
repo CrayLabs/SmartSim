@@ -161,10 +161,7 @@ class Config:
 
     @property
     def dragon_server_path(self) -> t.Optional[str]:
-        return os.getenv(
-            "SMARTSIM_DRAGON_SERVER_PATH",
-            os.getenv("SMARTSIM_DRAGON_SERVER_PATH_EXP", None),
-        )
+        return os.getenv("SMARTSIM_DRAGON_SERVER_PATH", None)
 
     @property
     def dragon_server_timeout(self) -> int:

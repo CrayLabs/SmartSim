@@ -30,6 +30,7 @@ import subprocess as sp
 import typing as t
 import uuid
 
+from smartsim._core.utils import helpers
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
@@ -139,7 +140,7 @@ default_dispatcher: t.Final = Dispatcher()
 
 
 def create_job_id() -> LaunchedJobID:
-    return LaunchedJobID(uuid.uuid4())
+    return LaunchedJobID(str(uuid.uuid4()))
 
 
 class LauncherLike(t.Protocol[_T_contra]):
@@ -160,7 +161,8 @@ class ShellLauncher:
 
     def start(self, launchable: t.Sequence[str]) -> LaunchedJobID:
         id_ = create_job_id()
-        self._launched[id_] = sp.Popen(launchable)
+        exe, *rest = launchable
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
         return id_
 
     @classmethod

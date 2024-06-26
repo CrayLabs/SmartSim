@@ -29,7 +29,7 @@ from __future__ import annotations
 import os
 import typing as t
 
-from smartsim._core.schemas.dragonRequests import DragonRunRequest
+from smartsim._core.schemas.dragonRequests import DragonRunRequestView
 from smartsim.log import get_logger
 
 from ...common import StringArgument, set_check_input
@@ -42,7 +42,7 @@ if t.TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class DragonArgBuilder(LaunchArgBuilder[DragonRunRequest]):
+class DragonArgBuilder(LaunchArgBuilder[DragonRunRequestView]):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Dragon.value
@@ -70,22 +70,22 @@ class DragonArgBuilder(LaunchArgBuilder[DragonRunRequest]):
 
     def finalize(
         self, exe: ExecutableLike, env: t.Mapping[str, str | None]
-    ) -> DragonRunRequest:
+    ) -> DragonRunRequestView:
         exe_, *args = exe.as_program_arguments()
-        return DragonRunRequest(
+        return DragonRunRequestView(
             exe=exe_,
             exe_args=args,
-            # FIXME: Currently this is hard coded because
-            #        the schema requires it, but in future,
-            #        it is almost certainly necessary that
-            #        this will need to be injected by the
-            #        user or by us to have the command
-            #        execute next to any generated files. A
-            #        similar problem exists for the other
-            #        settings.
+            # FIXME: Currently this is hard coded because the schema requires
+            #        it, but in future, it is almost certainly necessary that
+            #        this will need to be injected by the user or by us to have
+            #        the command execute next to any generated files. A similar
+            #        problem exists for the other settings.
             # TODO: Find a way to inject this path
             path=os.getcwd(),
             env=env,
-            current_env=dict(os.environ),
+            # TODO: Not sure how this info is injected
+            name=None,
+            output_file=None,
+            error_file=None,
             **self._launch_args,
         )

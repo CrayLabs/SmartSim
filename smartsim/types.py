@@ -27,6 +27,5 @@
 from __future__ import annotations
 
 import typing as t
-import uuid
 
-LaunchedJobID = t.NewType("LaunchedJobID", uuid.UUID)
+LaunchedJobID = t.NewType("LaunchedJobID", str)
