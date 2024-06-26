@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pickle
 import typing as t
 
 import smartsim.error as sse
@@ -32,7 +31,7 @@ from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
-    from dragon.data.distdictionary.dragon_dict import DragonDict
+    from dragon.data.ddict.ddict import DDict
 
 
 logger = get_logger(__name__)
@@ -41,15 +40,9 @@ logger = get_logger(__name__)
 class DragonFeatureStore(FeatureStore):
     """A feature store backed by a dragon distributed dictionary"""
 
-    def __init__(self, storage: "DragonDict") -> None:
+    def __init__(self, storage: "DDict") -> None:
         """Initialize the DragonFeatureStore instance"""
         self._storage = storage
-
-    def __getstate__(self) -> t.ByteString:
-        return pickle.dumps(self._storage)
-
-    def __setstate__(self, value: t.ByteString) -> None:
-        self._storage = pickle.loads(value)
 
     def __getitem__(self, key: str) -> t.Any:
         """Retrieve an item using key

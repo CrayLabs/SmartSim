@@ -31,6 +31,7 @@ import pickle
 import dragon.utils as du
 import pytest
 from dragon.channels import Channel
+from dragon.data.ddict.ddict import DDict
 from dragon.fli import DragonFLIError, FLInterface
 
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
@@ -97,6 +98,29 @@ def test_environment_loader_FLI_fails():
 )
 def test_environment_loader_memory_featurestore(expected_keys, expected_values):
     feature_store = MemoryFeatureStore()
+    key_value_pairs = zip(expected_keys, expected_values)
+    for k, v in key_value_pairs:
+        feature_store[k] = v
+    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(feature_store)).decode(
+        "utf-8"
+    )
+    config = EnvironmentConfigLoader()
+    config_feature_store = config.get_feature_store()
+
+    for k, _ in key_value_pairs:
+        assert config_feature_store[k] == feature_store[k]
+
+
+@pytest.mark.parametrize(
+    "expected_keys, expected_values",
+    [
+        pytest.param(["key1", "key2", "key3"], ["value1", "value2", "value3"]),
+        pytest.param(["another key"], ["another value"]),
+    ],
+)
+def test_environment_loader_dragon_featurestore(expected_keys, expected_values):
+    storage = DDict()
+    feature_store = DragonFeatureStore(storage)
     key_value_pairs = zip(expected_keys, expected_values)
     for k, v in key_value_pairs:
         feature_store[k] = v
