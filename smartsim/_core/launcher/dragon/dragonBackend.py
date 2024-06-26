@@ -189,7 +189,7 @@ class DragonBackend:
 
         self._view = DragonBackendView(self)
         logger.debug(self._view.host_desc)
-        self._infra_ddict: t.Optional[DDict] = None
+        self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
 
     @property
     def hosts(self) -> list[str]:
