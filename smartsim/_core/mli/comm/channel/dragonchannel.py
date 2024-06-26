@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.log import get_logger
 
@@ -35,6 +36,7 @@ try:
 except ImportError as exc:
     if not "pytest" in sys.modules:
         raise exc from None
+
 
 class DragonCommChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon channel"""
