@@ -56,5 +56,5 @@ class EnvironmentConfigLoader:
     def get_queue(self) -> t.Optional[t.ByteString]:
         """Returns the Queue descriptor previously set in SSQueue"""
         if self.queue is not None:
-            return du.B64.str_to_bytes(self.queue)
+            return du.B64.str_to_bytes(self.queue) # type: ignore
         return self.queue
