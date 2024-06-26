@@ -24,17 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
 import multiprocessing as mp
-import os
-import pickle
 import typing as t
 
 import numpy as np
+from dragon.fli import FLInterface
 
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceReply,
@@ -46,38 +45,9 @@ from smartsim._core.mli.mli_schemas.response.response_capnp import Response
 from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
-    from dragon.fli import FLInterface
-
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 logger = get_logger(__name__)
-
-
-class EnvironmentConfigLoader:
-    """
-    Class to help facilitate the loading of a FeatureStore and Queue
-    into the WorkerManager.
-    """
-
-    def __init__(self) -> None:
-        self._feature_store_bytes = os.getenv("SSFeatureStore", None)
-        self._queue_bytes = os.getenv("SSQueue", None)
-        self.feature_store: t.Optional[FeatureStore] = None
-        self.queue: t.Optional["FLInterface"] = None
-
-    def get_feature_store(self) -> t.Optional[FeatureStore]:
-        """Loads the Feature Store previously set in SSFeatureStore"""
-        if self._feature_store_bytes is not None:
-            self.feature_store = pickle.loads(
-                base64.b64decode(self._feature_store_bytes)
-            )
-        return self.feature_store
-
-    def get_queue(self) -> t.Optional["FLInterface"]:
-        """Loads the Queue previously set in SSQueue"""
-        if self._queue_bytes is not None:
-            self.queue = pickle.loads(base64.b64decode(self._queue_bytes))
-        return self.queue
 
 
 def deserialize_message(
@@ -212,8 +182,11 @@ class WorkerManager(Service):
         """
         super().__init__(as_service, cooldown)
 
+        queue_bytes: t.Optional[t.ByteString] = config_loader.get_queue()
         """a collection of workers the manager is controlling"""
-        self._task_queue: t.Optional["mp.Queue[bytes]"] = config_loader.get_queue()
+        self._task_queue: t.Optional["FLInterface"] = (
+            FLInterface.attach(queue_bytes) if queue_bytes is not None else None
+        )
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()

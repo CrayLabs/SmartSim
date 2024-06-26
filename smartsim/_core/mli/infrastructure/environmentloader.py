@@ -27,35 +27,34 @@
 import base64
 import os
 import pickle
+import typing as t
 
-import pytest
+import dragon.utils as du
 
-from smartsim._core.mli.infrastructure.control.workermanager import (
-    EnvironmentConfigLoader,
-)
-
-# The tests in this file belong to the group_a group
-pytestmark = pytest.mark.group_a
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 
 
-@pytest.mark.parametrize(
-    "feature_store, queue",
-    [
-        pytest.param("feature_store_string", "queue_string", id="strings"),
-        pytest.param(b"feature_store_string", b"queue_string", id="bytes"),
-        pytest.param(123, 456, id="Integers"),
-        pytest.param({"key": "value"}, {"key": 1}, id="Dicts"),
-        pytest.param(["feature", "store", "list"], ["queue", "list"], id="Lists"),
-        pytest.param(None, None, id="None"),
-    ],
-)
-def test_environment_config_loader(feature_store, queue):
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(feature_store)).decode(
-        "utf-8"
-    )
-    os.environ["SSQueue"] = base64.b64encode(pickle.dumps(queue)).decode("utf-8")
-    config = EnvironmentConfigLoader()
-    config_store = config.get_feature_store()
-    assert config_store == feature_store
-    config_queue = config.get_queue()
-    assert config_queue == queue
+class EnvironmentConfigLoader:
+    """
+    Class to help facilitate the loading of a FeatureStore and Queue
+    into the WorkerManager.
+    """
+
+    def __init__(self) -> None:
+        self._feature_store_bytes = os.getenv("SSFeatureStore", None)
+        self.queue = os.getenv("SSQueue", None)
+        self.feature_store: t.Optional[FeatureStore]
+
+    def get_feature_store(self) -> t.Optional[FeatureStore]:
+        """Loads the Feature Store previously set in SSFeatureStore"""
+        if self._feature_store_bytes is not None:
+            self.feature_store = pickle.loads(
+                base64.b64decode(self._feature_store_bytes)
+            )
+        return self.feature_store
+
+    def get_queue(self) -> t.Optional[t.ByteString]:
+        """Returns the Queue descriptor previously set in SSQueue"""
+        if self.queue is not None:
+            return du.B64.str_to_bytes(self.queue)
+        return self.queue

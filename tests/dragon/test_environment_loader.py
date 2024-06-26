@@ -28,27 +28,83 @@ import base64
 import os
 import pickle
 
+import dragon.utils as du
 import pytest
 from dragon.channels import Channel
-from dragon.fli import FLInterface
+from dragon.fli import DragonFLIError, FLInterface
 
-from smartsim._core.mli.infrastructure.control.workermanager import (
-    EnvironmentConfigLoader,
+from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+    DragonFeatureStore,
 )
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from tests.mli.featurestore import MemoryFeatureStore
 
 
-def test_environment_loader_basic():
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param(b"a"),
+        pytest.param(b"new byte string"),
+    ],
+)
+def test_environment_loader_attach_FLI(content):
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    sender = queue.sendh(use_main_as_stream_channel=True)
-    sender.send_bytes(b"bytessss")
-    expected_value = b"value_bytes"
-    expected_key = "key"
-    fs = {expected_key: expected_value}
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(fs)).decode("utf-8")
-    os.environ["SSQueue"] = base64.b64encode(pickle.dumps(queue)).decode("utf-8")
+    os.environ["SSQueue"] = du.B64.bytes_to_str(queue.serialize())
+
     config = EnvironmentConfigLoader()
-    config_store = config.get_feature_store()
-    assert config_store[expected_key] == expected_value
-    config_queue = config.get_queue()
-    assert config_queue.__class__ == queue.__class__
+    config_queue_ser = config.get_queue()
+
+    new_queue = FLInterface.attach(config_queue_ser)
+    new_sender = new_queue.sendh(use_main_as_stream_channel=True)
+    new_sender.send_bytes(content)
+
+    old_recv = queue.recvh(use_main_as_stream_channel=True)
+    result, _ = old_recv.recv_bytes()
+    assert result == content
+
+
+def test_environment_loader_serialize_FLI():
+    chan = Channel.make_process_local()
+    queue = FLInterface(main_ch=chan)
+    os.environ["SSQueue"] = du.B64.bytes_to_str(queue.serialize())
+
+    config = EnvironmentConfigLoader()
+    config_queue_ser = config.get_queue()
+    assert config_queue_ser == queue.serialize()
+
+
+def test_environment_loader_FLI_fails():
+    chan = Channel.make_process_local()
+    queue = FLInterface(main_ch=chan)
+    os.environ["SSQueue"] = "randomstring"
+
+    config = EnvironmentConfigLoader()
+    config_queue_ser = config.get_queue()
+    assert config_queue_ser != queue.serialize()
+
+    with pytest.raises(DragonFLIError):
+        new_queue = FLInterface.attach(config_queue_ser)
+
+
+@pytest.mark.parametrize(
+    "expected_keys, expected_values",
+    [
+        pytest.param(["key1", "key2", "key3"], ["value1", "value2", "value3"]),
+        pytest.param(["another key"], ["another value"]),
+    ],
+)
+def test_environment_loader_memory_featurestore(expected_keys, expected_values):
+    feature_store = MemoryFeatureStore()
+    key_value_pairs = zip(expected_keys, expected_values)
+    for k, v in key_value_pairs:
+        feature_store[k] = v
+    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(feature_store)).decode(
+        "utf-8"
+    )
+    config = EnvironmentConfigLoader()
+    config_feature_store = config.get_feature_store()
+
+    for k, _ in key_value_pairs:
+        assert config_feature_store[k] == feature_store[k]
