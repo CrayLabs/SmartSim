@@ -168,7 +168,7 @@ class WorkerManager(Service):
 
     def __init__(
         self,
-        file_like_interface: fli.FLInterface,
+        file_like_interface: "fli.FLInterface",
         worker: MachineLearningWorkerBase,
         feature_store: t.Optional[FeatureStore] = None,
         as_service: bool = False,

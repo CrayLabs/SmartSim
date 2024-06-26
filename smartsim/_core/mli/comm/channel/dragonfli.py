@@ -24,11 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# isort: off
-import dragon
-from dragon import fli
-import dragon.channels as dch
+import sys
 
+# isort: off
+try:
+    from dragon import fli
+    import dragon.channels as dch
+except ImportError as exc:
+    if not "pytest" in sys.modules:
+        raise exc from None
 # isort: on
 
 
