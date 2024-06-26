@@ -36,15 +36,14 @@ from tabulate import tabulate
 
 # pylint: disable=import-error
 # isort: off
+import dragon.data.ddict.ddict as dragon_ddict
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
-from dragon.infrastructure.process_desc import ProcessOptions
-from dragon.data.ddict.ddict import DDict
+import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.group_state as dragon_group_state
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
 import dragon.native.machine as dragon_machine
-import multiprocessing as mp
 
 # pylint: enable=import-error
 # isort: on
@@ -78,7 +77,6 @@ class DragonStatus(str, Enum):
         return self.value
 
 
-mp.set_start_method("dragon")
 
 
 @dataclass
@@ -405,7 +403,7 @@ class DragonBackend:
         """
         if self._infra_ddict is None:
             logger.info("Creating DDict")
-            self._infra_ddict = DDict()  # todo: parametrize
+            self._infra_ddict = dragon_ddict.DDict()  # todo: parametrize
             logger.info("Created DDict")
             self._infra_ddict["creation"] = str(time.time())
             logger.info(self._infra_ddict["creation"])
@@ -427,7 +425,7 @@ class DragonBackend:
                     placement=dragon_policy.Policy.Placement.HOST_NAME,
                     host_name=hosts[0],
                 )
-                options = ProcessOptions(make_inf_channels=True)
+                options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
                 grp = dragon_process_group.ProcessGroup(
                     restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
                 )
