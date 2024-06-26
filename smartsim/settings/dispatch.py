@@ -30,6 +30,8 @@ import subprocess as sp
 import typing as t
 import uuid
 
+from smartsim.types import LaunchedJobID
+
 if t.TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -38,18 +40,6 @@ if t.TYPE_CHECKING:
 
 _T = t.TypeVar("_T")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
-
-JobID = t.NewType("JobID", uuid.UUID)
-
-
-def create_job_id() -> JobID:
-    return JobID(uuid.uuid4())
-
-
-class LauncherLike(t.Protocol[_T_contra]):
-    def start(self, launchable: _T_contra) -> JobID: ...
-    @classmethod
-    def create(cls, exp: Experiment) -> Self: ...
 
 
 @t.final
@@ -143,6 +133,21 @@ class Dispatcher:
 default_dispatcher: t.Final = Dispatcher()
 
 
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# TODO: move these to a common module under `smartsim._core.launcher`
+# -----------------------------------------------------------------------------
+
+
+def create_job_id() -> LaunchedJobID:
+    return LaunchedJobID(uuid.uuid4())
+
+
+class LauncherLike(t.Protocol[_T_contra]):
+    def start(self, launchable: _T_contra) -> LaunchedJobID: ...
+    @classmethod
+    def create(cls, exp: Experiment) -> Self: ...
+
+
 class ShellLauncher:
     """Mock launcher for launching/tracking simple shell commands
 
@@ -151,9 +156,9 @@ class ShellLauncher:
     """
 
     def __init__(self) -> None:
-        self._launched: dict[JobID, sp.Popen[bytes]] = {}
+        self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    def start(self, launchable: t.Sequence[str]) -> JobID:
+    def start(self, launchable: t.Sequence[str]) -> LaunchedJobID:
         id_ = create_job_id()
         self._launched[id_] = sp.Popen(launchable)
         return id_
@@ -161,3 +166,6 @@ class ShellLauncher:
     @classmethod
     def create(cls, exp: Experiment) -> Self:
         return cls()
+
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
