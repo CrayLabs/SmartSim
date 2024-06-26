@@ -41,7 +41,7 @@ class EnvironmentConfigLoader:
     def __init__(self) -> None:
         self._feature_store_bytes = os.getenv("SSFeatureStore", None)
         self.queue = os.getenv("SSQueue", None)
-        self.feature_store: t.Optional[FeatureStore]
+        self.feature_store: t.Optional[FeatureStore] = None
 
     def get_feature_store(self) -> t.Optional[FeatureStore]:
         """Loads the Feature Store previously set in SSFeatureStore"""
