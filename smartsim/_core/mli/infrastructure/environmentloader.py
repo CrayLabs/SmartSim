@@ -29,7 +29,7 @@ import os
 import pickle
 import typing as t
 
-from dragon.fli import FLInterface # pylint: disable=all
+from dragon.fli import FLInterface  # pylint: disable=all
 
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 
