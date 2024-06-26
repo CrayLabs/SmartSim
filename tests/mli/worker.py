@@ -49,7 +49,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
     def load_model(
         request: mliw.InferenceRequest, fetch_result: mliw.FetchModelResult
     ) -> mliw.LoadModelResult:
-        model_bytes = fetch_result.model_bytes or request.raw_model
+        model_bytes = fetch_result.result or request.raw_model
         if not model_bytes:
             raise ValueError("Unable to load model without reference object")
 
@@ -63,7 +63,7 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
         fetch_result: mliw.FetchInputResult,
     ) -> mliw.TransformInputResult:
         # extra metadata for assembly can be found in request.input_meta
-        raw_inputs = request.raw_inputs or fetch_result.inputs
+        raw_inputs = request.raw_inputs or fetch_result.result
 
         result: t.List[torch.Tensor] = []
         # should this happen here?
@@ -80,11 +80,11 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
         load_result: mliw.LoadModelResult,
         transform_result: mliw.TransformInputResult,
     ) -> mliw.ExecuteResult:
-        if not load_result.model:
+        if not load_result.result:
             raise sse.SmartSimError("Model must be loaded to execute")
 
-        model = load_result.model
-        results = [model(tensor) for tensor in transform_result.transformed]
+        model = load_result.result
+        results = [model(tensor) for tensor in transform_result.result]
 
         execute_result = mliw.ExecuteResult(results)
         return execute_result
@@ -103,11 +103,10 @@ class IntegratedTorchWorker(mliw.MachineLearningWorkerBase):
         # capnproto Tensors Or tensor descriptors accompanying bytes
 
         # send the original tensors...
-        execute_result.predictions = [t.detach() for t in execute_result.predictions]
+        execute_result.result = [t.detach() for t in execute_result.result]
         # todo: solve sending all tensor metadata that coincisdes with each prediction
-        return mliw.TransformOutputResult(
-            execute_result.predictions, [1], "c", "float32"
-        )
+        tensor_result = mliw.TensorResult(execute_result.result, [1], "c", "float32")
+        return mliw.TransformOutputResult([tensor_result])
         # return OutputTransformResult(transformed)
 
     # @staticmethod

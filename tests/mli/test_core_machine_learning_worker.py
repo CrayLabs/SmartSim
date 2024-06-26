@@ -95,8 +95,8 @@ def test_fetch_model_disk(persist_torch_model: pathlib.Path) -> None:
     request = InferenceRequest(model_key=key)
 
     fetch_result = worker.fetch_model(request, feature_store)
-    assert fetch_result.model_bytes
-    assert fetch_result.model_bytes == persist_torch_model.read_bytes()
+    assert fetch_result.result
+    assert fetch_result.result == persist_torch_model.read_bytes()
 
 
 def test_fetch_model_disk_missing() -> None:
@@ -131,8 +131,8 @@ def test_fetch_model_feature_store(persist_torch_model: pathlib.Path) -> None:
 
     request = InferenceRequest(model_key=key)
     fetch_result = worker.fetch_model(request, feature_store)
-    assert fetch_result.model_bytes
-    assert fetch_result.model_bytes == persist_torch_model.read_bytes()
+    assert fetch_result.result
+    assert fetch_result.result == persist_torch_model.read_bytes()
 
 
 def test_fetch_model_feature_store_missing() -> None:
@@ -166,8 +166,8 @@ def test_fetch_model_memory(persist_torch_model: pathlib.Path) -> None:
     request = InferenceRequest(model_key=key)
 
     fetch_result = worker.fetch_model(request, feature_store)
-    assert fetch_result.model_bytes
-    assert fetch_result.model_bytes == persist_torch_model.read_bytes()
+    assert fetch_result.result
+    assert fetch_result.result == persist_torch_model.read_bytes()
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
@@ -183,7 +183,7 @@ def test_fetch_input_disk(persist_torch_tensor: pathlib.Path) -> None:
     feature_store[tensor_name] = persist_torch_tensor.read_bytes()
 
     fetch_result = worker.fetch_inputs(request, feature_store)
-    assert fetch_result.inputs is not None
+    assert fetch_result.result is not None
 
 
 def test_fetch_input_disk_missing() -> None:
@@ -218,8 +218,8 @@ def test_fetch_input_feature_store(persist_torch_tensor: pathlib.Path) -> None:
     feature_store[tensor_name] = persist_torch_tensor.read_bytes()
 
     fetch_result = worker.fetch_inputs(request, feature_store)
-    assert fetch_result.inputs
-    assert list(fetch_result.inputs)[0][:10] == persist_torch_tensor.read_bytes()[:10]
+    assert fetch_result.result
+    assert list(fetch_result.result)[0][:10] == persist_torch_tensor.read_bytes()[:10]
 
 
 @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
@@ -247,7 +247,7 @@ def test_fetch_multi_input_feature_store(persist_torch_tensor: pathlib.Path) -> 
 
     fetch_result = worker.fetch_inputs(request, feature_store)
 
-    raw_bytes = list(fetch_result.inputs)
+    raw_bytes = list(fetch_result.result)
     assert raw_bytes
     assert raw_bytes[0][:10] == persist_torch_tensor.read_bytes()[:10]
     assert raw_bytes[1][:10] == body2[:10]
@@ -282,7 +282,7 @@ def test_fetch_input_memory(persist_torch_tensor: pathlib.Path) -> None:
     request = InferenceRequest(input_keys=[model_name])
 
     fetch_result = worker.fetch_inputs(request, feature_store)
-    assert fetch_result.inputs is not None
+    assert fetch_result.result is not None
 
 
 def test_batch_requests() -> None:

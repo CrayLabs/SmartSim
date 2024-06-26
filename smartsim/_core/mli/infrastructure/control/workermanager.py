@@ -82,6 +82,7 @@ def deserialize_message(
     input_bytes: t.Optional[t.List[bytes]] = (
         None  # these will really be tensors already
     )
+    output_keys: t.Optional[t.List[str]] = None
 
     # # client example
     # msg = Message()
@@ -97,12 +98,16 @@ def deserialize_message(
         input_bytes = [data.blob for data in request.input.inputData]
         input_meta = [data.tensorDescriptor for data in request.input.inputData]
 
+    if request.output:
+        output_keys = [tensor_key.key for tensor_key in request.output]
+
     inference_request = InferenceRequest(
         model_key=model_key,
         callback=comm_channel,
         raw_inputs=input_bytes,
-        input_meta=input_meta,
         input_keys=input_keys,
+        input_meta=input_meta,
+        output_keys=output_keys,
         raw_model=model_bytes,
         batch_size=0,
     )
@@ -262,7 +267,7 @@ class WorkerManager(Service):
                     request, transformed_output, self._feature_store
                 )
             else:
-                reply.outputs = transformed_output.outputs
+                reply.outputs = transformed_output.result
         except Exception:
             logger.exception("Error executing worker")
             reply.failed = True
