@@ -77,8 +77,6 @@ class DragonStatus(str, Enum):
         return self.value
 
 
-
-
 @dataclass
 class ProcessGroupInfo:
     status: SmartSimStatus
