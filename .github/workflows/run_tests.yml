@@ -121,7 +121,9 @@ jobs:
 
       - name: Install ML Runtimes with Smart (with dragon support)
         if: ( matrix.subset == 'dragon' )
-        run: smart build --device cpu --dragon
+        run: |
+          smart clean
+          smart build --device cpu --dragon
 
       - name: Run mypy
         run: |
