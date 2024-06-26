@@ -40,6 +40,10 @@ class QsubBatchSettings:
     pass
 
 
+class SgeQsubBatchSettings:
+    pass
+
+
 class SbatchSettings:
     pass
 

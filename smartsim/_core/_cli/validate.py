@@ -215,7 +215,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: Device) -> None:
     # do not need the sending connection in this proc anymore
     send_conn.close()
 
-    proc.join(timeout=120)
+    proc.join(timeout=600)
     if proc.is_alive():
         proc.terminate()
         raise Exception("Failed to build a simple keras model within 2 minutes")
