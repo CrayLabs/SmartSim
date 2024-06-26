@@ -24,12 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import typing as t
 from copy import deepcopy
 
 from smartsim._core.commands.launchCommands import LaunchCommands
-from smartsim.entity.entity import SmartSimEntity
 from smartsim.launchable.basejob import BaseJob
 from smartsim.settings import LaunchSettings
+
+if t.TYPE_CHECKING:
+    from smartsim.entity.entity import SmartSimEntity
 
 
 class Job(BaseJob):
