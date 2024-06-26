@@ -28,7 +28,6 @@ import multiprocessing as mp
 import typing as t
 
 import numpy as np
-from dragon.fli import FLInterface
 
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
@@ -45,6 +44,8 @@ from smartsim._core.mli.mli_schemas.response.response_capnp import Response
 from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
+    from dragon.fli import FLInterface
+
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 logger = get_logger(__name__)
@@ -182,11 +183,8 @@ class WorkerManager(Service):
         """
         super().__init__(as_service, cooldown)
 
-        queue_bytes: t.Optional[t.ByteString] = config_loader.get_queue()
         """a collection of workers the manager is controlling"""
-        self._task_queue: t.Optional["FLInterface"] = (
-            FLInterface.attach(queue_bytes) if queue_bytes is not None else None
-        )
+        self._task_queue: t.Optional["FLInterface"] = config_loader.get_queue()
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()

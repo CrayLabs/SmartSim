@@ -29,6 +29,8 @@ import os
 import pickle
 import typing as t
 
+from dragon.fli import FLInterface
+
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 
 
@@ -39,20 +41,21 @@ class EnvironmentConfigLoader:
     """
 
     def __init__(self) -> None:
-        self._feature_store_bytes = os.getenv("SSFeatureStore", None)
-        self.queue = os.getenv("SSQueue", None)
+        self._feature_store_descriptor = os.getenv("SSFeatureStore", None)
+        self._queue_descriptor = os.getenv("SSQueue", None)
         self.feature_store: t.Optional[FeatureStore] = None
+        self.queue: t.Optional["FLInterface"] = None
 
     def get_feature_store(self) -> t.Optional[FeatureStore]:
         """Loads the Feature Store previously set in SSFeatureStore"""
-        if self._feature_store_bytes is not None:
+        if self._feature_store_descriptor is not None:
             self.feature_store = pickle.loads(
-                base64.b64decode(self._feature_store_bytes)
+                base64.b64decode(self._feature_store_descriptor)
             )
         return self.feature_store
 
-    def get_queue(self) -> t.Optional[t.ByteString]:
-        """Returns the Queue descriptor previously set in SSQueue"""
-        if self.queue is not None:
-            return base64.b64decode(self.queue)
+    def get_queue(self) -> t.Optional["FLInterface"]:
+        """Returns the Queue  previously set in SSQueue"""
+        if self._queue_descriptor is not None:
+            return FLInterface.attach(base64.b64decode(self._queue_descriptor))
         return self.queue

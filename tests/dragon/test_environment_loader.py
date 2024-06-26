@@ -49,16 +49,16 @@ from tests.mli.featurestore import MemoryFeatureStore
         pytest.param(b"new byte string"),
     ],
 )
-def test_environment_loader_attach_FLI(content):
+def test_environment_loader_attach_FLI(content, monkeypatch):
+    """A descriptor can be stored, loaded, and reattached"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    os.environ["SSQueue"] = du.B64.bytes_to_str(queue.serialize())
+    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
 
     config = EnvironmentConfigLoader()
-    config_queue_ser = config.get_queue()
+    config_queue = config.get_queue()
 
-    new_queue = FLInterface.attach(config_queue_ser)
-    new_sender = new_queue.sendh(use_main_as_stream_channel=True)
+    new_sender = config_queue.sendh(use_main_as_stream_channel=True)
     new_sender.send_bytes(content)
 
     old_recv = queue.recvh(use_main_as_stream_channel=True)
@@ -66,27 +66,25 @@ def test_environment_loader_attach_FLI(content):
     assert result == content
 
 
-def test_environment_loader_serialize_FLI():
+def test_environment_loader_serialize_FLI(monkeypatch):
+    """The serialized descriptors of a loaded and unloaded
+    queue are the same"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    os.environ["SSQueue"] = du.B64.bytes_to_str(queue.serialize())
+    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
 
     config = EnvironmentConfigLoader()
-    config_queue_ser = config.get_queue()
-    assert config_queue_ser == queue.serialize()
+    config_queue = config.get_queue()
+    assert config_queue.serialize() == queue.serialize()
 
 
-def test_environment_loader_FLI_fails():
-    chan = Channel.make_process_local()
-    queue = FLInterface(main_ch=chan)
-    os.environ["SSQueue"] = "randomstring"
-
+def test_environment_loader_FLI_fails(monkeypatch):
+    """An incorrect serialized descriptor will fails to attach"""
+    monkeypatch.setenv("SSQueue", "randomstring")
     config = EnvironmentConfigLoader()
-    config_queue_ser = config.get_queue()
-    assert config_queue_ser != queue.serialize()
 
     with pytest.raises(DragonFLIError):
-        new_queue = FLInterface.attach(config_queue_ser)
+        config_queue = config.get_queue()
 
 
 @pytest.mark.parametrize(
@@ -96,13 +94,16 @@ def test_environment_loader_FLI_fails():
         pytest.param(["another key"], ["another value"]),
     ],
 )
-def test_environment_loader_memory_featurestore(expected_keys, expected_values):
+def test_environment_loader_memory_featurestore(
+    expected_keys, expected_values, monkeypatch
+):
+    """MemoryFeatureStores can be correctly serialized and deserialized"""
     feature_store = MemoryFeatureStore()
     key_value_pairs = zip(expected_keys, expected_values)
     for k, v in key_value_pairs:
         feature_store[k] = v
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(feature_store)).decode(
-        "utf-8"
+    monkeypatch.setenv(
+        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
     )
     config = EnvironmentConfigLoader()
     config_feature_store = config.get_feature_store()
@@ -118,17 +119,28 @@ def test_environment_loader_memory_featurestore(expected_keys, expected_values):
         pytest.param(["another key"], ["another value"]),
     ],
 )
-def test_environment_loader_dragon_featurestore(expected_keys, expected_values):
+def test_environment_loader_dragon_featurestore(
+    expected_keys, expected_values, monkeypatch
+):
+    """DragonFeatureStores can be correctly serialized and deserialized"""
     storage = DDict()
     feature_store = DragonFeatureStore(storage)
     key_value_pairs = zip(expected_keys, expected_values)
     for k, v in key_value_pairs:
         feature_store[k] = v
-    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(feature_store)).decode(
-        "utf-8"
+    monkeypatch.setenv(
+        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
     )
     config = EnvironmentConfigLoader()
     config_feature_store = config.get_feature_store()
 
     for k, _ in key_value_pairs:
         assert config_feature_store[k] == feature_store[k]
+
+
+def test_environment_variables_not_set():
+    """EnvironmentConfigLoader getters return None when environment
+    variables are not set"""
+    config = EnvironmentConfigLoader()
+    assert config.get_feature_store() == None
+    assert config.get_queue() == None
