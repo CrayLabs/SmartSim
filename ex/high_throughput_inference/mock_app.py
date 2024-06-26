@@ -5,7 +5,7 @@ from dragon.channels import Channel
 import dragon.channels
 from dragon.data.ddict.ddict import DDict
 from dragon.globalservices.api_setup import connect_to_infrastructure
-from dragon.utils import b64decode, b64encode
+from dragon.utils import b64decode
 
 # isort: on
 
@@ -13,11 +13,8 @@ import argparse
 import io
 import numpy
 import os
-import tabulate
 import time
 import torch
-import typing as t
-
 from smartsim._core.mli.message_handler import MessageHandler
 
 

@@ -11,7 +11,7 @@ import os
 
 
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-from smartsim._core.mli.infrastructure.worker.worker import TorchWorker
+from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
 )

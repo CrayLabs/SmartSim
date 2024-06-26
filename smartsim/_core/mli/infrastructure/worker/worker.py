@@ -24,18 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
 import typing as t
 from abc import ABC, abstractmethod
 
-import numpy as np
-import torch
-
-import smartsim.error as sse
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
-from smartsim._core.mli.mli_schemas.tensor import tensor_capnp
-from smartsim.log import get_logger
+from .....error import SmartSimError
+from .....log import get_logger
+from ...comm.channel.channel import CommChannelBase
+from ...infrastructure.storage.featurestore import FeatureStore
 
 logger = get_logger(__name__)
 
@@ -167,7 +162,7 @@ class MachineLearningWorkerCore:
             raise ValueError("Feature store is required for model retrieval")
 
         if not request.model_key:
-            raise sse.SmartSimError(
+            raise SmartSimError(
                 "Key must be provided to retrieve model from feature store"
             )
 
@@ -176,7 +171,7 @@ class MachineLearningWorkerCore:
             return FetchModelResult(raw_bytes)
         except FileNotFoundError as ex:
             logger.exception(ex)
-            raise sse.SmartSimError(
+            raise SmartSimError(
                 f"Model could not be retrieved with key {request.model_key}"
             ) from ex
 
@@ -204,7 +199,7 @@ class MachineLearningWorkerCore:
                     data.append(tensor_bytes)
                 except KeyError as ex:
                     logger.exception(ex)
-                    raise sse.SmartSimError(
+                    raise SmartSimError(
                         f"Model could not be retrieved with key {input_}"
                     ) from ex
             return FetchInputResult(
@@ -303,75 +298,3 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         :param execute_result: The result of inference wrapped in an ExecuteResult
         :param result_device: The device on which the result of inference is placed
         :return:"""
-
-
-class TorchWorker(MachineLearningWorkerBase):
-    """A worker that executes a PyTorch model."""
-
-    @staticmethod
-    def load_model(
-        request: InferenceRequest, fetch_result: FetchModelResult, device: str
-    ) -> LoadModelResult:
-        model_bytes = fetch_result.model_bytes or request.raw_model
-        if not model_bytes:
-            raise ValueError("Unable to load model without reference object")
-
-        _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = _device_to_torch[device]
-        buffer = io.BytesIO(model_bytes)
-        model = torch.jit.load(buffer, map_location=device)  # type: ignore
-        result = LoadModelResult(model)
-        return result
-
-    @staticmethod
-    def transform_input(
-        request: InferenceRequest, fetch_result: FetchInputResult, device: str
-    ) -> TransformInputResult:
-        result = []
-
-        _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = _device_to_torch[device]
-        if fetch_result.meta is None:
-            raise ValueError("Cannot reconstruct tensor without meta information")
-        for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
-            tensor_desc: tensor_capnp.TensorDescriptor = item_meta
-            result.append(
-                torch.tensor(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
-                .to(device)
-                .reshape(tuple(dim for dim in tensor_desc.dimensions))
-            )
-        return TransformInputResult(result)
-        # return data # note: this fails copy test!
-
-    @staticmethod
-    def execute(
-        request: InferenceRequest,
-        load_result: LoadModelResult,
-        transform_result: TransformInputResult,
-    ) -> ExecuteResult:
-        if not load_result.model:
-            raise sse.SmartSimError("Model must be loaded to execute")
-
-        model: torch.nn.Module = load_result.model
-        model.eval()
-        results = [model(tensor).detach() for tensor in transform_result.transformed]
-
-        execute_result = ExecuteResult(results)
-        return execute_result
-
-    @staticmethod
-    def transform_output(
-        request: InferenceRequest,
-        execute_result: ExecuteResult,
-        result_device: str,
-    ) -> TransformOutputResult:
-        if result_device != "cpu":
-            transformed = [
-                item.to("cpu").clone() for item in execute_result.predictions
-            ]
-            # todo: need the shape from latest schemas added here.
-            return TransformOutputResult(transformed, None, "c", "float32")  # fixme
-
-        return TransformOutputResult(
-            execute_result.predictions, None, "c", "float32"
-        )  # fixme
