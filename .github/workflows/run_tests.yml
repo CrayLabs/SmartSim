@@ -120,18 +120,8 @@ jobs:
         run: smart build --device cpu --onnx --dragon -v
 
       - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
-        if: contains( matrix.os, 'macos-14' ) && ( matrix.subset != 'dragon' )
+        if: contains( matrix.os, 'macos-14' )
         run: smart build --device cpu --no_tf -v
-
-      - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon with dragon)
-        if: contains( matrix.os, 'macos-14' ) && ( matrix.subset == 'dragon' )
-        run: smart build --device cpu --no_tf --dragon -v
-
-      # - name: Install ML Runtimes with Smart (with dragon support)
-      #   if: ( matrix.subset == 'dragon' )
-      #   run: |
-      #     smart clean
-      #     smart build --device cpu --dragon
 
       - name: Run mypy
         run: |
