@@ -104,7 +104,7 @@ def deserialize_message(
         raw_inputs=input_bytes,
         input_meta=input_meta,
         input_keys=input_keys,
-        raw_model=model_bytes.data,
+        raw_model=model_bytes.data if model_bytes is not None else None,
         batch_size=0,
     )
     return inference_request
