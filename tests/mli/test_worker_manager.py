@@ -47,8 +47,8 @@ from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
 logger = get_logger(__name__)
-# The tests in this file belong to the group_b group
-pytestmark = pytest.mark.group_a
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 
 def mock_work(worker_manager_queue: "mp.Queue[bytes]") -> None:
