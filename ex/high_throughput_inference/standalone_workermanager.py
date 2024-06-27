@@ -26,8 +26,7 @@ if __name__ == "__main__":
 
     to_worker_channel = Channel.make_process_local()
     to_worker_manager_channel = Channel.make_process_local()
-    channels = [Channel.make_process_local() for _ in range(100)]
-    to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=to_worker_manager_channel, stream_channels=channels)
+    to_worker_fli = fli.FLInterface(main_ch=to_worker_channel, manager_ch=to_worker_manager_channel)
     ddict["to_worker_fli"] = b64encode(to_worker_fli.serialize())
 
     torch_worker = TorchWorker()

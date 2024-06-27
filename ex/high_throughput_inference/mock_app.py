@@ -62,6 +62,9 @@ if __name__ == "__main__":
 
     print(",".join(headers))
 
+    from_worker_ch = Channel.make_process_local()
+    to_worker_ch = Channel.make_process_local()
+
     for batch_size in [1, 8, 32, 64, 128]:
 
         timings = []
@@ -79,7 +82,6 @@ if __name__ == "__main__":
             timings[-1].append(time.perf_counter() - interm)
             interm = time.perf_counter()
 
-            from_worker_ch = Channel.make_process_local()
 
             request = MessageHandler.build_request(
                 reply_channel=from_worker_ch.serialize(),
@@ -95,7 +97,7 @@ if __name__ == "__main__":
             request_bytes = MessageHandler.serialize_request(request)
             timings[-1].append(time.perf_counter() - interm)
             interm = time.perf_counter()
-            with to_worker_fli.sendh(timeout=None) as to_sendh:
+            with to_worker_fli.sendh(timeout=None, stream_channel=to_worker_ch) as to_sendh:
                 to_sendh.send_bytes(request_bytes)
                 timings[-1].append(time.perf_counter() - interm)
                 interm = time.perf_counter()
