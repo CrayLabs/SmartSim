@@ -28,6 +28,7 @@ import typing as t
 import numpy as np
 
 from .mli_schemas.data import data_references_capnp
+from .mli_schemas.model import model_capnp
 from .mli_schemas.request import request_capnp
 from .mli_schemas.request.request_attributes import request_attributes_capnp
 from .mli_schemas.response import response_capnp
@@ -113,6 +114,25 @@ class MessageHandler:
         return tensor_key
 
     @staticmethod
+    def build_model(data:t.ByteString, name: str, version: str) -> model_capnp.Model:
+        """
+        Builds a new Model message with the provided data, name, and version.
+
+        :param data: Model data
+        :param name: Model name
+        :param version: Model version
+        :raises ValueError: if building fails
+        """
+        try:
+            model = model_capnp.Model.new_message()
+            model.data = data
+            model.name = name
+            model.version = version
+        except Exception as e:
+            raise ValueError("Error building model.") from e
+        return model
+
+    @staticmethod
     def build_model_key(key: str) -> data_references_capnp.ModelKey:
         """
         Builds a new ModelKey message with the provided key.
@@ -187,7 +207,7 @@ class MessageHandler:
     @staticmethod
     def _assign_model(
         request: request_capnp.Request,
-        model: t.Union[data_references_capnp.ModelKey, t.ByteString],
+        model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
     ) -> None:
         """
         Assigns a model to the supplied request.
@@ -197,10 +217,14 @@ class MessageHandler:
         :raises ValueError: if building fails
         """
         try:
-            if isinstance(model, bytes):
-                request.model.modelData = model
-            else:
+            model_class_name = model.schema.node.displayName.split(":")[-1]  # type: ignore
+            if model_class_name == "Model":
+                request.model.modelData = model  # type: ignore
+            elif model_class_name == "ModelKey":
                 request.model.modelKey = model  # type: ignore
+            else:
+                raise ValueError("""Invalid custom attribute class name.
+                        Expected 'Model' or 'ModelKey'.""")
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
@@ -325,7 +349,7 @@ class MessageHandler:
     @staticmethod
     def build_request(
         reply_channel: t.ByteString,
-        model: t.Union[data_references_capnp.ModelKey, t.ByteString],
+        model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
         ],

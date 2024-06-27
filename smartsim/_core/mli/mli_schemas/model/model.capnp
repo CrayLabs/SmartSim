@@ -24,32 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-@0xa27f0152c7bb299e;
+@0xaefb9301e14ba4bd;
 
-using Tensors = import "../tensor/tensor.capnp";
-using RequestAttributes = import "request_attributes/request_attributes.capnp";
-using DataRef = import "../data/data_references.capnp";
-using Models = import "../model/model.capnp";
-
-struct ChannelDescriptor {
-  reply @0 :Data;
-}
-
-struct Request {
-  replyChannel @0 :ChannelDescriptor;
-  model :union {
-    modelKey @1 :DataRef.ModelKey;
-    modelData @2 :Models.Model;
-  }
-  input :union {
-    inputKeys @3 :List(DataRef.TensorKey);
-    inputData @4 :List(Tensors.Tensor);
-  }
-  output @5 :List(DataRef.TensorKey);
-  outputDescriptors @6 :List(Tensors.OutputDescriptor);
-  customAttributes :union {
-    torch @7 :RequestAttributes.TorchRequestAttributes;
-    tf @8 :RequestAttributes.TensorFlowRequestAttributes;
-    none @9 :Void;
-  }
+struct Model {
+  data @0 :Data;
+  name @1 :Text;
+  version @2 :Text;
 }

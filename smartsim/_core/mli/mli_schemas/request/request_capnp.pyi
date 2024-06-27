@@ -16,6 +16,7 @@ from ..data.data_references_capnp import (
     TensorKeyBuilder,
     TensorKeyReader,
 )
+from ..model.model_capnp import Model, ModelBuilder, ModelReader
 from ..tensor.tensor_capnp import (
     OutputDescriptor,
     OutputDescriptorBuilder,
@@ -71,9 +72,12 @@ class ChannelDescriptorBuilder(ChannelDescriptor):
 class Request:
     class Model:
         modelKey: ModelKey | ModelKeyBuilder | ModelKeyReader
-        modelData: bytes
+        modelData: Model | ModelBuilder | ModelReader
         def which(self) -> Literal["modelKey", "modelData"]: ...
+        @overload
         def init(self, name: Literal["modelKey"]) -> ModelKey: ...
+        @overload
+        def init(self, name: Literal["modelData"]) -> Model: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -93,10 +97,12 @@ class Request:
 
     class ModelReader(Request.Model):
         modelKey: ModelKeyReader
+        modelData: ModelReader
         def as_builder(self) -> Request.ModelBuilder: ...
 
     class ModelBuilder(Request.Model):
         modelKey: ModelKey | ModelKeyBuilder | ModelKeyReader
+        modelData: Model | ModelBuilder | ModelReader
         @staticmethod
         def from_dict(dictionary: dict) -> Request.ModelBuilder: ...
         def copy(self) -> Request.ModelBuilder: ...

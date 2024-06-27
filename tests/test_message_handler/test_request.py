@@ -72,6 +72,7 @@ else:
 pytestmark = pytest.mark.group_a
 
 model_key = MessageHandler.build_model_key("model_key")
+model = MessageHandler.build_model(b"model data", "model_name", "v0.0.1")
 
 input_key1 = MessageHandler.build_tensor_key("input_key1")
 input_key2 = MessageHandler.build_tensor_key("input_key2")
@@ -91,7 +92,7 @@ output_descriptor3 = MessageHandler.build_output_tensor_descriptor(
 if should_run_tf:
     tf_indirect_request = MessageHandler.build_request(
         b"reply",
-        b"model",
+        model,
         [input_key1, input_key2],
         [output_key1, output_key2],
         [output_descriptor1, output_descriptor2, output_descriptor3],
@@ -100,7 +101,7 @@ if should_run_tf:
 
     tf_direct_request = MessageHandler.build_request(
         b"reply",
-        b"model",
+        model,
         [tensor_3, tensor_4],
         [],
         [output_descriptor1, output_descriptor2],
@@ -110,7 +111,7 @@ if should_run_tf:
 if should_run_torch:
     torch_indirect_request = MessageHandler.build_request(
         b"reply",
-        b"model",
+        model,
         [input_key1, input_key2],
         [output_key1, output_key2],
         [output_descriptor1, output_descriptor2, output_descriptor3],
@@ -118,7 +119,7 @@ if should_run_torch:
     )
     torch_direct_request = MessageHandler.build_request(
         b"reply",
-        b"model",
+        model,
         [tensor_1, tensor_2],
         [],
         [output_descriptor1, output_descriptor2],
@@ -140,7 +141,7 @@ if should_run_torch:
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [input_key1],
             [output_key2],
             [output_descriptor1],
@@ -148,7 +149,7 @@ if should_run_torch:
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [input_key1],
             [output_key2],
             [output_descriptor1],
@@ -180,7 +181,9 @@ def test_build_request_indirect_tf_successful(
     if built_request.model.which() == "modelKey":
         assert built_request.model.modelKey.key == model.key
     else:
-        assert built_request.model.modelData == model
+        assert built_request.model.modelData.data == model.data
+        assert built_request.model.modelData.name == model.name
+        assert built_request.model.modelData.version == model.version
     assert built_request.input.which() == "inputKeys"
     assert built_request.input.inputKeys[0].key == input[0].key
     assert len(built_request.input.inputKeys) == len(input)
@@ -214,7 +217,7 @@ def test_build_request_indirect_tf_successful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [input_key1],
             [output_key2],
             [output_descriptor1],
@@ -222,7 +225,7 @@ def test_build_request_indirect_tf_successful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [input_key1],
             [output_key2],
             [output_descriptor1],
@@ -254,7 +257,9 @@ def test_build_request_indirect_torch_successful(
     if built_request.model.which() == "modelKey":
         assert built_request.model.modelKey.key == model.key
     else:
-        assert built_request.model.modelData == model
+        assert built_request.model.modelData.data == model.data
+        assert built_request.model.modelData.name == model.name
+        assert built_request.model.modelData.version == model.version
     assert built_request.input.which() == "inputKeys"
     assert built_request.input.inputKeys[0].key == input[0].key
     assert len(built_request.input.inputKeys) == len(input)
@@ -490,7 +495,7 @@ def test_build_request_indirect_tf_unsuccessful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [tensor_1],
             [],
             [output_descriptor3],
@@ -498,7 +503,7 @@ def test_build_request_indirect_tf_unsuccessful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [tensor_2],
             [],
             [output_descriptor1],
@@ -506,7 +511,7 @@ def test_build_request_indirect_tf_unsuccessful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [tensor_1],
             [],
             [output_descriptor1],
@@ -530,7 +535,9 @@ def test_build_request_direct_torch_successful(
     if built_request.model.which() == "modelKey":
         assert built_request.model.modelKey.key == model.key
     else:
-        assert built_request.model.modelData == model
+        assert built_request.model.modelData.data == model.data
+        assert built_request.model.modelData.name == model.name
+        assert built_request.model.modelData.version == model.version
     assert built_request.input.which() == "inputData"
     assert built_request.input.inputData[0].blob == input[0].blob
     assert len(built_request.input.inputData) == len(input)
@@ -564,7 +571,7 @@ def test_build_request_direct_torch_successful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [tensor_4],
             [],
             [output_descriptor3],
@@ -572,7 +579,7 @@ def test_build_request_direct_torch_successful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [tensor_4],
             [],
             [output_descriptor1],
@@ -580,7 +587,7 @@ def test_build_request_direct_torch_successful(
         ),
         pytest.param(
             b"another reply channel",
-            b"model data",
+            model,
             [tensor_3],
             [],
             [output_descriptor1],
@@ -604,7 +611,9 @@ def test_build_request_direct_tf_successful(
     if built_request.model.which() == "modelKey":
         assert built_request.model.modelKey.key == model.key
     else:
-        assert built_request.model.modelData == model
+        assert built_request.model.modelData.data == model.data
+        assert built_request.model.modelData.name == model.name
+        assert built_request.model.modelData.version == model.version
     assert built_request.input.which() == "inputData"
     assert built_request.input.inputData[0].blob == input[0].blob
     assert len(built_request.input.inputData) == len(input)
