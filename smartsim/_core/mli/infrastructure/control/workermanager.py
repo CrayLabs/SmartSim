@@ -44,6 +44,7 @@ from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.model.model_capnp import Model
 
 logger = get_logger(__name__)
 
@@ -65,7 +66,7 @@ def deserialize_message(
     request = MessageHandler.deserialize_request(data_blob)
     # return request
     model_key: t.Optional[str] = None
-    model_bytes: t.Optional[bytes] = None
+    model_bytes: t.Optional[Model] = None
 
     if request.model.which() == "key":
         model_key = request.model.key.key
@@ -103,7 +104,7 @@ def deserialize_message(
         raw_inputs=input_bytes,
         input_meta=input_meta,
         input_keys=input_keys,
-        raw_model=model_bytes,
+        raw_model=model_bytes.data,
         batch_size=0,
     )
     return inference_request
