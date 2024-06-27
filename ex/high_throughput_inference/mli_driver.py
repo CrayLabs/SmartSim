@@ -4,7 +4,7 @@ from smartsim import Experiment
 from smartsim.status import TERMINAL_STATUSES
 import time
 
-device = "cpu"
+device = "gpu"
 filedir = os.path.dirname(__file__)
 worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
 app_script_name = os.path.join(filedir, "mock_app.py")
