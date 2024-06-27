@@ -114,7 +114,7 @@ class MessageHandler:
         return tensor_key
 
     @staticmethod
-    def build_model(data:t.ByteString, name: str, version: str) -> model_capnp.Model:
+    def build_model(data: t.ByteString, name: str, version: str) -> model_capnp.Model:
         """
         Builds a new Model message with the provided data, name, and version.
 
@@ -217,11 +217,11 @@ class MessageHandler:
         :raises ValueError: if building fails
         """
         try:
-            model_class_name = model.schema.node.displayName.split(":")[-1]  # type: ignore
-            if model_class_name == "Model":
-                request.model.modelData = model  # type: ignore
-            elif model_class_name == "ModelKey":
-                request.model.modelKey = model  # type: ignore
+            class_name = model.schema.node.displayName.split(":")[-1]  # type: ignore
+            if class_name == "Model":
+                request.model.data = model  # type: ignore
+            elif class_name == "ModelKey":
+                request.model.key = model  # type: ignore
             else:
                 raise ValueError("""Invalid custom attribute class name.
                         Expected 'Model' or 'ModelKey'.""")
@@ -263,9 +263,9 @@ class MessageHandler:
                 display_name = inputs[0].schema.node.displayName  # type: ignore
                 input_class_name = display_name.split(":")[-1]
                 if input_class_name == "Tensor":
-                    request.input.inputData = inputs  # type: ignore
+                    request.input.data = inputs  # type: ignore
                 elif input_class_name == "TensorKey":
-                    request.input.inputKeys = inputs  # type: ignore
+                    request.input.keys = inputs  # type: ignore
                 else:
                     raise ValueError(
                         "Invalid input class name. Expected 'Tensor' or 'TensorKey'."

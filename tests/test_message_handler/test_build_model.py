@@ -33,6 +33,7 @@ pytestmark = pytest.mark.group_a
 
 handler = MessageHandler()
 
+
 def test_build_model_successful():
     expected_data = b"model data"
     expected_name = "model name"

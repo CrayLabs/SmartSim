@@ -38,12 +38,12 @@ struct ChannelDescriptor {
 struct Request {
   replyChannel @0 :ChannelDescriptor;
   model :union {
-    modelKey @1 :DataRef.ModelKey;
-    modelData @2 :Models.Model;
+    key @1 :DataRef.ModelKey;
+    data @2 :Models.Model;
   }
   input :union {
-    inputKeys @3 :List(DataRef.TensorKey);
-    inputData @4 :List(Tensors.Tensor);
+    keys @3 :List(DataRef.TensorKey);
+    data @4 :List(Tensors.Tensor);
   }
   output @5 :List(DataRef.TensorKey);
   outputDescriptors @6 :List(Tensors.OutputDescriptor);

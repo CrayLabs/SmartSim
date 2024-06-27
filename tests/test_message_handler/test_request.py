@@ -178,15 +178,15 @@ def test_build_request_indirect_tf_successful(
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
-    if built_request.model.which() == "modelKey":
-        assert built_request.model.modelKey.key == model.key
+    if built_request.model.which() == "key":
+        assert built_request.model.key.key == model.key
     else:
-        assert built_request.model.modelData.data == model.data
-        assert built_request.model.modelData.name == model.name
-        assert built_request.model.modelData.version == model.version
-    assert built_request.input.which() == "inputKeys"
-    assert built_request.input.inputKeys[0].key == input[0].key
-    assert len(built_request.input.inputKeys) == len(input)
+        assert built_request.model.data.data == model.data
+        assert built_request.model.data.name == model.name
+        assert built_request.model.data.version == model.version
+    assert built_request.input.which() == "keys"
+    assert built_request.input.keys[0].key == input[0].key
+    assert len(built_request.input.keys) == len(input)
     assert len(built_request.output) == len(output)
     for i, j in zip(built_request.outputDescriptors, output_descriptors):
         assert i.order == j.order
@@ -254,15 +254,15 @@ def test_build_request_indirect_torch_successful(
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
-    if built_request.model.which() == "modelKey":
-        assert built_request.model.modelKey.key == model.key
+    if built_request.model.which() == "key":
+        assert built_request.model.key.key == model.key
     else:
-        assert built_request.model.modelData.data == model.data
-        assert built_request.model.modelData.name == model.name
-        assert built_request.model.modelData.version == model.version
-    assert built_request.input.which() == "inputKeys"
-    assert built_request.input.inputKeys[0].key == input[0].key
-    assert len(built_request.input.inputKeys) == len(input)
+        assert built_request.model.data.data == model.data
+        assert built_request.model.data.name == model.name
+        assert built_request.model.data.version == model.version
+    assert built_request.input.which() == "keys"
+    assert built_request.input.keys[0].key == input[0].key
+    assert len(built_request.input.keys) == len(input)
     assert len(built_request.output) == len(output)
     for i, j in zip(built_request.outputDescriptors, output_descriptors):
         assert i.order == j.order
@@ -532,15 +532,15 @@ def test_build_request_direct_torch_successful(
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
-    if built_request.model.which() == "modelKey":
-        assert built_request.model.modelKey.key == model.key
+    if built_request.model.which() == "key":
+        assert built_request.model.key.key == model.key
     else:
-        assert built_request.model.modelData.data == model.data
-        assert built_request.model.modelData.name == model.name
-        assert built_request.model.modelData.version == model.version
-    assert built_request.input.which() == "inputData"
-    assert built_request.input.inputData[0].blob == input[0].blob
-    assert len(built_request.input.inputData) == len(input)
+        assert built_request.model.data.data == model.data
+        assert built_request.model.data.name == model.name
+        assert built_request.model.data.version == model.version
+    assert built_request.input.which() == "data"
+    assert built_request.input.data[0].blob == input[0].blob
+    assert len(built_request.input.data) == len(input)
     assert len(built_request.output) == len(output)
     for i, j in zip(built_request.outputDescriptors, output_descriptors):
         assert i.order == j.order
@@ -608,15 +608,15 @@ def test_build_request_direct_tf_successful(
     )
     assert built_request is not None
     assert built_request.replyChannel.reply == reply_channel
-    if built_request.model.which() == "modelKey":
-        assert built_request.model.modelKey.key == model.key
+    if built_request.model.which() == "key":
+        assert built_request.model.key.key == model.key
     else:
-        assert built_request.model.modelData.data == model.data
-        assert built_request.model.modelData.name == model.name
-        assert built_request.model.modelData.version == model.version
-    assert built_request.input.which() == "inputData"
-    assert built_request.input.inputData[0].blob == input[0].blob
-    assert len(built_request.input.inputData) == len(input)
+        assert built_request.model.data.data == model.data
+        assert built_request.model.data.name == model.name
+        assert built_request.model.data.version == model.version
+    assert built_request.input.which() == "data"
+    assert built_request.input.data[0].blob == input[0].blob
+    assert len(built_request.input.data) == len(input)
     assert len(built_request.output) == len(output)
     for i, j in zip(built_request.outputDescriptors, output_descriptors):
         assert i.order == j.order

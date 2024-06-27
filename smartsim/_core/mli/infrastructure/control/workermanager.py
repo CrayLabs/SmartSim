@@ -67,10 +67,10 @@ def deserialize_message(
     model_key: t.Optional[str] = None
     model_bytes: t.Optional[bytes] = None
 
-    if request.model.which() == "modelKey":
-        model_key = request.model.modelKey.key
-    elif request.model.which() == "modelData":
-        model_bytes = request.model.modelData
+    if request.model.which() == "key":
+        model_key = request.model.key.key
+    elif request.model.which() == "data":
+        model_bytes = request.model.data
 
     callback_key = request.replyChannel.reply
 
@@ -91,11 +91,11 @@ def deserialize_message(
     # # end client
     input_meta: t.List[t.Any] = []
 
-    if request.input.which() == "inputKeys":
-        input_keys = [input_key.key for input_key in request.input.inputKeys]
-    elif request.input.which() == "inputData":
-        input_bytes = [data.blob for data in request.input.inputData]
-        input_meta = [data.tensorDescriptor for data in request.input.inputData]
+    if request.input.which() == "keys":
+        input_keys = [input_key.key for input_key in request.input.keys]
+    elif request.input.which() == "data":
+        input_bytes = [data.blob for data in request.input.data]
+        input_meta = [data.tensorDescriptor for data in request.input.data]
 
     inference_request = InferenceRequest(
         model_key=model_key,

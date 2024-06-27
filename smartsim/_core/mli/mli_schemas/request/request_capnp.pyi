@@ -71,13 +71,13 @@ class ChannelDescriptorBuilder(ChannelDescriptor):
 
 class Request:
     class Model:
-        modelKey: ModelKey | ModelKeyBuilder | ModelKeyReader
-        modelData: Model | ModelBuilder | ModelReader
-        def which(self) -> Literal["modelKey", "modelData"]: ...
+        key: ModelKey | ModelKeyBuilder | ModelKeyReader
+        data: Model | ModelBuilder | ModelReader
+        def which(self) -> Literal["key", "data"]: ...
         @overload
-        def init(self, name: Literal["modelKey"]) -> ModelKey: ...
+        def init(self, name: Literal["key"]) -> ModelKey: ...
         @overload
-        def init(self, name: Literal["modelData"]) -> Model: ...
+        def init(self, name: Literal["data"]) -> Model: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -96,13 +96,13 @@ class Request:
         def to_dict(self) -> dict: ...
 
     class ModelReader(Request.Model):
-        modelKey: ModelKeyReader
-        modelData: ModelReader
+        key: ModelKeyReader
+        data: ModelReader
         def as_builder(self) -> Request.ModelBuilder: ...
 
     class ModelBuilder(Request.Model):
-        modelKey: ModelKey | ModelKeyBuilder | ModelKeyReader
-        modelData: Model | ModelBuilder | ModelReader
+        key: ModelKey | ModelKeyBuilder | ModelKeyReader
+        data: Model | ModelBuilder | ModelReader
         @staticmethod
         def from_dict(dictionary: dict) -> Request.ModelBuilder: ...
         def copy(self) -> Request.ModelBuilder: ...
@@ -116,9 +116,9 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
 
     class Input:
-        inputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        inputData: Sequence[Tensor | TensorBuilder | TensorReader]
-        def which(self) -> Literal["inputKeys", "inputData"]: ...
+        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        data: Sequence[Tensor | TensorBuilder | TensorReader]
+        def which(self) -> Literal["keys", "data"]: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -137,13 +137,13 @@ class Request:
         def to_dict(self) -> dict: ...
 
     class InputReader(Request.Input):
-        inputKeys: Sequence[TensorKeyReader]
-        inputData: Sequence[TensorReader]
+        keys: Sequence[TensorKeyReader]
+        data: Sequence[TensorReader]
         def as_builder(self) -> Request.InputBuilder: ...
 
     class InputBuilder(Request.Input):
-        inputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        inputData: Sequence[Tensor | TensorBuilder | TensorReader]
+        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        data: Sequence[Tensor | TensorBuilder | TensorReader]
         @staticmethod
         def from_dict(dictionary: dict) -> Request.InputBuilder: ...
         def copy(self) -> Request.InputBuilder: ...
