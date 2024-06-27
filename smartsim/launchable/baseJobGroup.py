@@ -8,13 +8,10 @@ from smartsim.launchable.launchable import Launchable
 from .basejob import BaseJob
 
 
-class BaseJobGroup(Launchable, MutableSequence):
+class BaseJobGroup(Launchable, MutableSequence[BaseJob]):
     """Highest level ABC of a group of jobs that can be
     launched
     """
-
-    def __init__(self) -> None:
-        super().__init__()
 
     @property
     @abstractmethod
@@ -52,7 +49,6 @@ class BaseJobGroup(Launchable, MutableSequence):
         """Returns the total number of jobs in the collection."""
         return len(self.jobs)
 
-    def __str__(self):  # pragma: no-cover
+    def __str__(self) -> str:  # pragma: no-cover
         """Returns a string representation of the collection of jobs."""
-        string = ""
-        string += f"Jobs: {self.jobs}"
+        return f"Jobs: {self.jobs}"

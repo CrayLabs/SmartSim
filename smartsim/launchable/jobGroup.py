@@ -26,9 +26,8 @@ class JobGroup(BaseJobGroup):
         """
         return self._jobs
 
-    def __str__(self):  # pragma: no-cover
+    def __str__(self) -> str:  # pragma: no-cover
         """Returns a string representation of the collection of
         job groups.
         """
-        string = ""
-        string += f"Job Groups: {self.jobs}"
+        return f"Job Groups: {self.jobs}"

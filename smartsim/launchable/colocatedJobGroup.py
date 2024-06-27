@@ -26,9 +26,8 @@ class ColocatedJobGroup(BaseJobGroup):
         """
         return self._jobs
 
-    def __str__(self):  # pragma: no-cover
+    def __str__(self) -> str:  # pragma: no-cover
         """Returns a string representation of the collection of
         colocated job groups.
         """
-        string = ""
-        string += f"Colocated Jobs: {self.jobs}"
+        return f"Colocated Jobs: {self.jobs}"

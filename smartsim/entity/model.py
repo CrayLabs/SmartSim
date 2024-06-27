@@ -78,7 +78,7 @@ class Application(SmartSimEntity):
         self.exe = [expand_exe_path(exe)]
         # self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
-        self.params = params
+        self.params = params or {}
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False
