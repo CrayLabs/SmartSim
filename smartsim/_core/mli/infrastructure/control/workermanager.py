@@ -43,8 +43,8 @@ from smartsim._core.mli.mli_schemas.response.response_capnp import Response
 from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
+    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 logger = get_logger(__name__)
 
