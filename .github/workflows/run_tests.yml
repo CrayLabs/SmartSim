@@ -117,7 +117,7 @@ jobs:
 
       - name: Install ML Runtimes with Smart (with pt, tf, dragon, and onnx support)
         if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset == 'dragon' )
-        run: smart build --device cpu --onnx -v --dragon
+        run: smart build --device cpu --onnx --dragon -v
 
       - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
         if: contains( matrix.os, 'macos-14' ) && ( matrix.subset != 'dragon' )
@@ -125,7 +125,7 @@ jobs:
 
       - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon with dragon)
         if: contains( matrix.os, 'macos-14' ) && ( matrix.subset == 'dragon' )
-        run: smart build --device cpu --no_tf -v --dragon
+        run: smart build --device cpu --no_tf --dragon -v
 
       # - name: Install ML Runtimes with Smart (with dragon support)
       #   if: ( matrix.subset == 'dragon' )
