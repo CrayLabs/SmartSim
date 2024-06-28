@@ -26,25 +26,30 @@
 
 import sys
 
+# isort: off
+try:
+    from dragon import fli
+    import dragon.channels as dch
+except ImportError as exc:
+    if not "pytest" in sys.modules:
+        raise exc from None
+# isort: on
+
+
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-try:
-    import dragon.channels as dch
-except ImportError as exc:
-    if not "pytest" in sys.modules:
-        raise exc from None
 
+class DragonFLIChannel(cch.CommChannelBase):
+    """Passes messages by writing to a Dragon FLI Channel"""
 
-class DragonCommChannel(cch.CommChannelBase):
-    """Passes messages by writing to a Dragon channel"""
-
-    def __init__(self, key: bytes) -> None:
-        """Initialize the DragonCommChannel instance"""
-        super().__init__(key)
-        self._channel: dch.Channel = dch.Channel.attach(key)
+    def __init__(self, fli_desc: bytes) -> None:
+        """Initialize the DragonFLIChannel instance"""
+        super().__init__(fli_desc)
+        # todo: do we need memory pool information to construct the channel correctly?
+        self._channel: "dch.Channel" = fli.FLInterface.attach(fli_desc)
 
     def send(self, value: bytes) -> None:
         """Send a message throuh the underlying communication channel

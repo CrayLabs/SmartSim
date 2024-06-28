@@ -105,6 +105,16 @@ def get_mock_backend(monkeypatch: pytest.MonkeyPatch) -> "DragonBackend":
     )
     monkeypatch.setitem(
         sys.modules,
+        "dragon.infrastructure.process_desc",
+        MagicMock(),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "dragon.data.ddict.ddict",
+        MagicMock(),
+    )
+    monkeypatch.setitem(
+        sys.modules,
         "dragon.infrastructure.policy",
         MagicMock(**{"Policy.return_value": MagicMock()}),
     )

@@ -29,10 +29,14 @@ import logging
 import multiprocessing as mp
 import pathlib
 import time
-import typing as t
 
 import pytest
-import torch
+
+should_run = True
+try:
+    import torch
+except ImportError:
+    should_run = False
 
 from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
@@ -44,8 +48,10 @@ from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
 logger = get_logger(__name__)
-# The tests in this file belong to the group_b group
+# The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_a
+
+pytest.mark.skipif(not should_run, "Test needs PyTorch to run")
 
 
 def mock_work(worker_manager_queue: "mp.Queue[bytes]") -> None:

@@ -24,14 +24,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import multiprocessing as mp
+import sys
+
+# isort: off
+try:
+    import dragon
+    from dragon import fli
+except ImportError as exc:
+    if not "pytest" in sys.modules:
+        raise exc from None
+
+# isort: on
+import time
 import typing as t
 
 import numpy as np
 
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceReply,
@@ -49,7 +60,9 @@ logger = get_logger(__name__)
 
 
 def deserialize_message(
-    data_blob: bytes, channel_type: t.Type[CommChannelBase]
+    data_blob: bytes,
+    channel_type: t.Type[CommChannelBase],
+    device: t.Literal["cpu", "gpu"],
 ) -> InferenceRequest:
     """Deserialize a message from a byte stream into an InferenceRequest
     :param data_blob: The byte stream to deserialize"""
@@ -83,12 +96,6 @@ def deserialize_message(
         None  # these will really be tensors already
     )
 
-    # # client example
-    # msg = Message()
-    # t = torch.Tensor()
-    # msg.inputs = [custom_byte_converter(t)]
-    # mli_client.request_inference(msg)
-    # # end client
     input_meta: t.List[t.Any] = []
 
     if request.input.which() == "inputKeys":
@@ -161,12 +168,13 @@ class WorkerManager(Service):
 
     def __init__(
         self,
-        task_queue: "mp.Queue[bytes]",
+        file_like_interface: "fli.FLInterface",
         worker: MachineLearningWorkerBase,
         feature_store: t.Optional[FeatureStore] = None,
         as_service: bool = False,
         cooldown: int = 0,
-        comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
+        comm_channel_type: t.Type[CommChannelBase] = DragonFLIChannel,
+        device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
         :param task_queue: The queue to monitor for new tasks
@@ -180,7 +188,7 @@ class WorkerManager(Service):
         super().__init__(as_service, cooldown)
 
         """a collection of workers the manager is controlling"""
-        self._task_queue: "mp.Queue[bytes]" = task_queue
+        self._task_queue: fli.FLInterface = file_like_interface
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = feature_store
         """a feature store to retrieve models from"""
@@ -188,6 +196,8 @@ class WorkerManager(Service):
         """The ML Worker implementation"""
         self._comm_channel_type = comm_channel_type
         """The type of communication channel to construct for callbacks"""
+        self._device = device
+        """Device on which workers need to run"""
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -230,9 +240,16 @@ class WorkerManager(Service):
             return
 
         # perform default deserialization of the message envelope
-        request_bytes: bytes = self._task_queue.get()
+        # perform default deserialization of the message envelope
+        with self._task_queue.recvh(timeout=None) as recvh:
+            try:
+                request_bytes, _ = recvh.recv_bytes(timeout=None)
+            except fli.FLIEOT as exc:
+                return
 
-        request = deserialize_message(request_bytes, self._comm_channel_type)
+        request = deserialize_message(
+            request_bytes, self._comm_channel_type, self._device
+        )
         if not self._validate_request(request):
             return
 
@@ -240,13 +257,13 @@ class WorkerManager(Service):
         # request = self._worker.deserialize(request_bytes)
 
         fetch_model_result = self._worker.fetch_model(request, self._feature_store)
-        model_result = self._worker.load_model(request, fetch_model_result)
+        model_result = self._worker.load_model(
+            request, fetch_model_result, self._device
+        )
         fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
-        transformed_input = self._worker.transform_input(request, fetch_input_result)
-
-        # batch: t.Collection[_Datum] = transform_result.transformed_input
-        # if self._batch_size:
-        #     batch = self._worker.batch_requests(transform_result, self._batch_size)
+        transformed_input = self._worker.transform_input(
+            request, fetch_input_result, self._device
+        )
 
         reply = InferenceReply()
 
@@ -254,8 +271,9 @@ class WorkerManager(Service):
             execute_result = self._worker.execute(
                 request, model_result, transformed_input
             )
-
-            transformed_output = self._worker.transform_output(request, execute_result)
+            transformed_output = self._worker.transform_output(
+                request, execute_result, self._device
+            )
 
             if request.output_keys:
                 reply.output_keys = self._worker.place_output(
