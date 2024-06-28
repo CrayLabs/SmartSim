@@ -28,8 +28,11 @@ import base64
 import os
 import pickle
 
-import dragon.utils as du
 import pytest
+
+dragon = pytest.importorskip("dragon")
+
+import dragon.utils as du
 from dragon.channels import Channel
 from dragon.data.ddict.ddict import DDict
 from dragon.fli import DragonFLIError, FLInterface

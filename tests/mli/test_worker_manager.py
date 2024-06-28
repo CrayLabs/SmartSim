@@ -34,6 +34,8 @@ import typing as t
 import pytest
 import torch
 
+dragon = pytest.importorskip("dragon")
+
 from smartsim._core.mli.infrastructure.control.workermanager import (
     EnvironmentConfigLoader,
     WorkerManager,
