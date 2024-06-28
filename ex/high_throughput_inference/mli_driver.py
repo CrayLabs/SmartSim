@@ -10,8 +10,9 @@ worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py"
 app_script_name = os.path.join(filedir, "mock_app.py")
 model_name = os.path.join(filedir, f"resnet50.{device.upper()}.pt")
 
-
-exp = Experiment("MLI_proto", launcher="dragon", exp_path=os.path.join(filedir, "MLI_proto"))
+exp_path = os.path.join(filedir, "MLI_proto")
+os.makedirs(exp_path, exist_ok=True)
+exp = Experiment("MLI_proto", launcher="dragon", exp_path=exp_path)
 
 worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device])
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)

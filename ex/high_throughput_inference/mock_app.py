@@ -19,6 +19,9 @@ import numbers
 
 from collections import OrderedDict
 from smartsim._core.mli.message_handler import MessageHandler
+from smartsim.log import get_logger
+
+logger = get_logger("App")
 
 class ProtoClient:
     def __init__(self, timing_on: bool):
@@ -140,10 +143,12 @@ if __name__ == "__main__":
 
     client = ProtoClient(timing_on=True)
 
-    total_iterations = 10
+    total_iterations = 100
 
-    for batch_size in [1, 8, 32, 64, 128]:
+    for batch_size in [1, 2, 4, 8, 16, 32, 64, 128]:
+        logger.info(f"Batch size: {batch_size}")
         for iteration_number in range(total_iterations + int(batch_size==1)):
+            logger.info(f"Iteration: {iteration_number}")
             client.run_model(resnet.model, resnet.get_batch(batch_size))
 
     client.print_timings(to_file=True)
