@@ -114,7 +114,7 @@ class MessageHandler:
         return tensor_key
 
     @staticmethod
-    def build_model(data: t.ByteString, name: str, version: str) -> model_capnp.Model:
+    def build_model(data: bytes, name: str, version: str) -> model_capnp.Model:
         """
         Builds a new Model message with the provided data, name, and version.
 
@@ -230,7 +230,7 @@ class MessageHandler:
 
     @staticmethod
     def _assign_reply_channel(
-        request: request_capnp.Request, reply_channel: t.ByteString
+        request: request_capnp.Request, reply_channel: bytes
     ) -> None:
         """
         Assigns a reply channel to the supplied request.
@@ -348,7 +348,7 @@ class MessageHandler:
 
     @staticmethod
     def build_request(
-        reply_channel: t.ByteString,
+        reply_channel: bytes,
         model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
@@ -381,7 +381,7 @@ class MessageHandler:
         return request
 
     @staticmethod
-    def serialize_request(request: request_capnp.RequestBuilder) -> t.ByteString:
+    def serialize_request(request: request_capnp.RequestBuilder) -> bytes:
         """
         Serializes a built request message.
 
@@ -390,7 +390,7 @@ class MessageHandler:
         return request.to_bytes()
 
     @staticmethod
-    def deserialize_request(request_bytes: t.ByteString) -> request_capnp.Request:
+    def deserialize_request(request_bytes: bytes) -> request_capnp.Request:
         """
         Deserializes a serialized request message.
 
@@ -523,14 +523,14 @@ class MessageHandler:
         return response
 
     @staticmethod
-    def serialize_response(response: response_capnp.ResponseBuilder) -> t.ByteString:
+    def serialize_response(response: response_capnp.ResponseBuilder) -> bytes:
         """
         Serializes a built response message.
         """
         return response.to_bytes()
 
     @staticmethod
-    def deserialize_response(response_bytes: t.ByteString) -> response_capnp.Response:
+    def deserialize_response(response_bytes: bytes) -> response_capnp.Response:
         """
         Deserializes a serialized response message.
         """
