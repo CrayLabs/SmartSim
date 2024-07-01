@@ -42,7 +42,6 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
-
 from tests.mli.featurestore import MemoryFeatureStore
 
 # The tests in this file belong to the dragon group
