@@ -81,6 +81,7 @@ class InferenceReply:
 @dataclasses.dataclass
 class TensorResult:
     """A result from a tensor operation in the pipeline"""
+
     tensor: t.Any
     shape: t.List[int]
     order: str
@@ -93,16 +94,17 @@ _T = t.TypeVar("_T")
 @dataclasses.dataclass
 class StageResult(t.Generic[_T]):
     """Generic base class for results from a stage in the pipeline"""
+
     result: _T
 
 
-LoadModelResult: t.TypeAlias = StageResult[t.Any]
-TransformInputResult: t.TypeAlias = StageResult[t.Any]
-ExecuteResult: t.TypeAlias = StageResult[t.Any]
-FetchInputResult: t.TypeAlias = StageResult[t.Any]
-TransformOutputResult: t.TypeAlias = StageResult[t.List[TensorResult]]
-CreateInputBatchResult: t.TypeAlias = StageResult[t.Any]
-FetchModelResult: t.TypeAlias = StageResult[bytes]
+LoadModelResult = StageResult[t.Any]
+TransformInputResult = StageResult[t.Any]
+ExecuteResult = StageResult[t.Any]
+FetchInputResult = StageResult[t.Any]
+TransformOutputResult = StageResult[t.List[TensorResult]]
+CreateInputBatchResult = StageResult[t.Any]
+FetchModelResult = StageResult[bytes]
 
 
 class MachineLearningWorkerCore:
