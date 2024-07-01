@@ -32,6 +32,9 @@ from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim.log import get_logger
 
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.model.model_capnp import Model
+
 logger = get_logger(__name__)
 
 
@@ -48,7 +51,7 @@ class InferenceRequest:
         input_keys: t.Optional[t.List[str]] = None,
         input_meta: t.Optional[t.List[t.Any]] = None,
         output_keys: t.Optional[t.List[str]] = None,
-        raw_model: t.Optional[bytes] = None,
+        raw_model: t.Optional[Model] = None,
         batch_size: int = 0,
     ):
         """Initialize the object"""
