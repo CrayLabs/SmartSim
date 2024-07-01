@@ -30,10 +30,8 @@ from abc import ABC, abstractmethod
 import smartsim.error as sse
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.mli_schemas.model.model_capnp import Model
 from smartsim.log import get_logger
-
-if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.model.model_capnp import Model
 
 logger = get_logger(__name__)
 
@@ -161,7 +159,7 @@ class MachineLearningWorkerCore:
             # model_key = hash(request.raw_model)
             # feature_store[model_key] = request.raw_model
             # short-circuit and return the directly supplied model
-            return FetchModelResult(request.raw_model)
+            return FetchModelResult(request.raw_model.data)
 
         if not request.model_key:
             raise sse.SmartSimError(
