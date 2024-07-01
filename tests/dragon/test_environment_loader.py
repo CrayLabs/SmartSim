@@ -41,8 +41,8 @@ from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfi
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
-from tests.mli.featurestore import MemoryFeatureStore
+
+from ..mli.featurestore import MemoryFeatureStore
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
