@@ -34,6 +34,7 @@ import smartsim.error as sse
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceRequest,
     MachineLearningWorkerCore,
+    TensorResult,
     TransformInputResult,
     TransformOutputResult,
 )
@@ -313,7 +314,7 @@ def test_place_outputs() -> None:
         feature_store[k] = v
 
     request = InferenceRequest(output_keys=keys)
-    transform_result = TransformOutputResult(data, [1], "c", "float32")
+    transform_result = TransformOutputResult([TensorResult(data, [1], "c", "float32")])
 
     worker.place_output(request, transform_result, feature_store)
 
