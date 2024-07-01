@@ -239,7 +239,22 @@ class WorkerManager(Service):
         # # let the worker perform additional custom deserialization
         # request = self._worker.deserialize(request_bytes)
 
-        fetch_model_result = self._worker.fetch_model(request, self._feature_store)
+        try:
+            fetch_model_result = self._worker.fetch_model(request, self._feature_store)
+            try:
+                model_result = self._worker.load_model(request, fetch_model_result)
+            except Exception as e:
+                logger.exception(
+                f"An error occurred while loading the model."
+                f"Exception type: {type(e).__name__}."
+                f"Exception message: {str(e)}"
+            )
+        except Exception as e:
+            logger.exception(
+            f"An error occurred while fetching the model."
+            f"Exception type: {type(e).__name__}."
+            f"Exception message: {str(e)}"
+        )
         model_result = self._worker.load_model(request, fetch_model_result)
         fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
         transformed_input = self._worker.transform_input(request, fetch_input_result)
