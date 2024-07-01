@@ -27,9 +27,6 @@
 import io
 import logging
 import multiprocessing as mp
-import pathlib
-import time
-import typing as t
 
 import pytest
 import torch
@@ -125,4 +122,15 @@ def test_transform_output_errors_handled(monkeypatch):
     work_queue.put(ser_request)
     
     monkeypatch.setattr(integrated_worker, "transform_output", mock_transform_output)
+    worker_manager._on_iteration()
+
+
+def test_place_output_errors_handled(monkeypatch):
+    
+    def mock_place_output(a, b, c):
+         raise ValueError("Simulated error in place_output")
+    
+    work_queue.put(ser_request)
+    
+    monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
     worker_manager._on_iteration()
