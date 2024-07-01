@@ -18,7 +18,6 @@ Description
   inference requests and response messages
 - Removed device from schemas, MessageHandler and tests
 
-
 ### Development branch
 
 To be released at some future point in time
