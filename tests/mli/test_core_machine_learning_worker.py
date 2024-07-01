@@ -310,9 +310,6 @@ def test_place_outputs() -> None:
     keys = [key_name + "1", key_name + "2", key_name + "3"]
     data = [b"abcdef", b"ghijkl", b"mnopqr"]
 
-    for k, v in zip(keys, data):
-        feature_store[k] = v
-
     request = InferenceRequest(output_keys=keys)
     mock_result = [TensorResult(tensor_data, [1], "c", "float32") for tensor_data in data]
     transform_result = TransformOutputResult(mock_result)
