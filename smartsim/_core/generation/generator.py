@@ -38,6 +38,7 @@ from tabulate import tabulate
 
 from ...database import FeatureStore
 from ...entity import Application, Ensemble, TaggedFilesHierarchy
+from ...launchable.job import Job
 from ...log import get_logger
 from ..control import Manifest
 from os import path as osp
@@ -113,10 +114,11 @@ class Generator:
 
         """
         self._gen_exp_dir()
+        self._gen_job_dir(self.manifest.jobs)
         # self._gen_feature_store_dir(generator_manifest.fss)
         # self._gen_entity_list_dir(generator_manifest.ensembles)
         # self._gen_entity_dirs(generator_manifest.applications)
-
+    
     def _gen_exp_dir(self) -> None:
         """Create the directory for an experiment if it does not
         already exist.
@@ -141,6 +143,9 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
+    def _gen_job_dir(self, job_list: t.List[Job]) -> None:
+        pass
+    
     def _gen_feature_store_dir(self, feature_store_list: t.List[FeatureStore]) -> None:
         """Create the directory that will hold the error, output and
            configuration files for the feature store.
