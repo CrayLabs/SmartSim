@@ -287,7 +287,7 @@ def test_generation_log(fileutils, test_dir):
     ground_truth = get_gen_file(
         fileutils, osp.join("log_params", "smartsim_params.txt")
     )
-
+    
     with open(log_file) as f1, open(ground_truth) as f2:
         assert not not_header(f1.readline())
         f1 = filter(not_header, f1)

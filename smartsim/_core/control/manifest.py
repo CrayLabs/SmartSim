@@ -35,6 +35,7 @@ from ...error import SmartSimError
 from ..config import CONFIG
 from ..utils import helpers as _helpers
 from ..utils import serialize as _serialize
+from ...launchable.job import Job
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -58,9 +59,19 @@ class Manifest:
         self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> None:
         self._deployables = list(args)
-        self._check_types(self._deployables)
-        self._check_names(self._deployables)
-        self._check_entity_lists_nonempty()
+        # self._check_types(self._deployables)
+        # self._check_names(self._deployables)
+        # self._check_entity_lists_nonempty()
+
+    @property
+    def jobs(self) -> t.List[Job]:
+        """Return a list of FeatureStore instances in Manifest
+
+        :raises SmartSimError: if user added to feature stores to manifest
+        :return: List of feature store instances
+        """
+        jobs = [item for item in self._deployables if isinstance(item, Job)]
+        return jobs
 
     @property
     def fss(self) -> t.List[FeatureStore]:

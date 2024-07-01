@@ -40,6 +40,7 @@ from ...database import FeatureStore
 from ...entity import Application, Ensemble, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
+from os import path as osp
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -51,13 +52,14 @@ class Generator:
     """
 
     def __init__(
-        self, gen_path: str
+        self, gen_path: str, manifest: Manifest
     ) -> None:
         """Initialize a generator object
 
         :param gen_path: Path in which files need to be generated
         """
         self.gen_path = gen_path
+        self.manifest = manifest
 
     @property
     def log_level(self) -> int:
@@ -90,7 +92,7 @@ class Generator:
         """
         return join(self.gen_path, "smartsim_params.txt")
 
-    def generate_experiment(self, *args: t.Any) -> None:
+    def generate_experiment(self) -> None:
         """Run ensemble and experiment file structure generation
 
         Generate the file structure for a SmartSim experiment. This
@@ -110,32 +112,10 @@ class Generator:
         e.g. ``THERMO=;90;``
 
         """
-        generator_manifest = Manifest(*args)
-
         self._gen_exp_dir()
-        self._gen_feature_store_dir(generator_manifest.fss)
-        self._gen_entity_list_dir(generator_manifest.ensembles)
-        self._gen_entity_dirs(generator_manifest.applications)
-
-    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
-        """Set the tag used for tagging input files
-
-        Set a tag or a regular expression for the
-        generator to look for when configuring new applications.
-
-        For example, a tag might be ``;`` where the
-        expression being replaced in the application configuration
-        file would look like ``;expression;``
-
-        A full regular expression might tag specific
-        application configurations such that the configuration
-        files don't need to be tagged manually.
-
-        :param tag: A string of characters that signify
-                    the string to be changed. Defaults to ``;``
-        :param regex: full regex for the applicationwriter to search for
-        """
-        self._writer.set_tag(tag, regex)
+        # self._gen_feature_store_dir(generator_manifest.fss)
+        # self._gen_entity_list_dir(generator_manifest.ensembles)
+        # self._gen_entity_dirs(generator_manifest.applications)
 
     def _gen_exp_dir(self) -> None:
         """Create the directory for an experiment if it does not
@@ -153,7 +133,6 @@ class Generator:
             logger.log(
                 level=self.log_level, msg="Working in previously created experiment"
             )
-
         # The log_file only keeps track of the last generation
         # this is to avoid gigantic files in case the user repeats
         # generation several times. The information is anyhow
@@ -279,6 +258,32 @@ class Generator:
                 )
                 self._log_params(entity, files_to_params)
 
+    @staticmethod
+    def _copy_entity_files(entity: Application) -> None:
+        """Copy the entity files and directories attached to this entity.
+
+        :param entity: Application
+        """
+        if entity.files:
+            for to_copy in entity.files.copy:
+                dst_path = path.join(entity.path, path.basename(to_copy))
+                if path.isdir(to_copy):
+                    dir_util.copy_tree(to_copy, entity.path)
+                else:
+                    shutil.copyfile(to_copy, dst_path)
+
+    @staticmethod
+    def _link_entity_files(entity: Application) -> None:
+        """Symlink the entity files attached to this entity.
+
+        :param entity: Application
+        """
+        if entity.files:
+            for to_link in entity.files.link:
+                dst_path = path.join(entity.path, path.basename(to_link))
+                symlink(to_link, dst_path)
+
+    # TODO to be refactored in ticket 723
     def _log_params(
         self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
     ) -> None:
@@ -321,28 +326,3 @@ class Generator:
                 level=self.log_level,
                 msg=f"Configured application {entity.name} with no parameters",
             )
-
-    @staticmethod
-    def _copy_entity_files(entity: Application) -> None:
-        """Copy the entity files and directories attached to this entity.
-
-        :param entity: Application
-        """
-        if entity.files:
-            for to_copy in entity.files.copy:
-                dst_path = path.join(entity.path, path.basename(to_copy))
-                if path.isdir(to_copy):
-                    dir_util.copy_tree(to_copy, entity.path)
-                else:
-                    shutil.copyfile(to_copy, dst_path)
-
-    @staticmethod
-    def _link_entity_files(entity: Application) -> None:
-        """Symlink the entity files attached to this entity.
-
-        :param entity: Application
-        """
-        if entity.files:
-            for to_link in entity.files.link:
-                dst_path = path.join(entity.path, path.basename(to_link))
-                symlink(to_link, dst_path)
