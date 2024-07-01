@@ -117,7 +117,9 @@ jobs:
 
       - name: Install ML Runtimes with Smart (with pt, tf, dragon, and onnx support)
         if: (contains( matrix.os, 'ubuntu' ) || contains( matrix.os, 'macos-12')) && ( matrix.subset == 'dragon' )
-        run: smart build --device cpu --onnx --dragon -v
+        run: |
+          smart build --device cpu --onnx --dragon -v
+          echo "LD_LIBRARY_PATH=$PWD/smartsim/_core/.dragon/dragon-0.9/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install ML Runtimes with Smart (no ONNX,TF on Apple Silicon)
         if: contains( matrix.os, 'macos-14' )
@@ -151,7 +153,7 @@ jobs:
       - name: Run Pytest
         if: (matrix.subset == 'dragon' && matrix.os == 'ubuntu-22.04')
         run: |
-          echo "LD_LIBRARY_PATH=$PWD/smartsim/_core/.dragon/dragon-0.9/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
           dragon -s py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ -m ${{ matrix.subset }} ./tests
 
       # Run pytest (test subsets)
