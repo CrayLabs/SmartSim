@@ -314,7 +314,8 @@ def test_place_outputs() -> None:
         feature_store[k] = v
 
     request = InferenceRequest(output_keys=keys)
-    transform_result = TransformOutputResult([TensorResult(data, [1], "c", "float32")])
+    mock_result = [TensorResult(tensor_data, [1], "c", "float32") for tensor_data in data]
+    transform_result = TransformOutputResult(mock_result)
 
     worker.place_output(request, transform_result, feature_store)
 
