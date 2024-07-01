@@ -32,6 +32,7 @@ from distutils import dir_util  # pylint: disable=deprecated-module
 from logging import DEBUG, INFO
 from os import mkdir, path, symlink
 from os.path import join, relpath
+import os
 
 from tabulate import tabulate
 
@@ -39,7 +40,6 @@ from ...database import FeatureStore
 from ...entity import Application, Ensemble, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
-from .modelwriter import ApplicationWriter
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -47,30 +47,38 @@ logger.propagate = False
 
 class Generator:
     """The primary job of the generator is to create the file structure
-    for a SmartSim experiment. The Generator is responsible for reading
-    and writing into configuration files as well.
+    for a SmartSim experiment.
     """
 
     def __init__(
-        self, gen_path: str, overwrite: bool = False, verbose: bool = True
+        self, gen_path: str
     ) -> None:
         """Initialize a generator object
 
-        if overwrite is true, replace any existing
-        configured applications within an ensemble if there
-        is a name collision. Also replace any and all directories
-        for the experiment with fresh copies. Otherwise, if overwrite
-        is false, raises EntityExistsError when there is a name
-        collision between entities.
-
         :param gen_path: Path in which files need to be generated
-        :param overwrite: toggle entity replacement
-        :param verbose: Whether generation information should be logged to std out
         """
-        self._writer = ApplicationWriter()
         self.gen_path = gen_path
-        self.overwrite = overwrite
-        self.log_level = DEBUG if not verbose else INFO
+
+    @property
+    def log_level(self) -> int:
+        """Determines the log level based on the value of the environment
+        variable SMARTSIM_LOG_LEVEL.
+        
+        If the environment variable is set to "debug", returns the log level DEBUG.
+        Otherwise, returns the default log level INFO.
+
+        :return: Log level (DEBUG or INFO)
+        """
+        # Get the value of the environment variable SMARTSIM_LOG_LEVEL
+        env_log_level = os.getenv("SMARTSIM_LOG_LEVEL")
+        
+        # Set the default log level to INFO
+        default_log_level = INFO
+        
+        if env_log_level == "debug":
+            return DEBUG
+        else:
+            return default_log_level
 
     @property
     def log_file(self) -> str:
@@ -78,7 +86,7 @@ class Generator:
         summarizing the parameters used for the last generation
         of all generated entities.
 
-        :returns: path to file with parameter settings
+        :return: path to file with parameter settings
         """
         return join(self.gen_path, "smartsim_params.txt")
 
