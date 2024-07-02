@@ -32,26 +32,17 @@ from os import getcwd
 from tabulate import tabulate
 
 from .._core._install.builder import Device
-from .._core.utils.helpers import expand_exe_path
-from ..error import (
-    EntityExistsError,
-    SmartSimError,
-    SSUnsupportedError,
-    UserStrategyError,
-)
+from ..error import EntityExistsError, SmartSimError, SSUnsupportedError
 from ..log import get_logger
 from ..settings import BatchSettings, RunSettings
 from .dbobject import FSModel, FSScript
 from .entity import SmartSimEntity
 from .entityList import EntityList
 from .model import Application
-from .strategies import create_all_permutations, random_permutations, step_values
+from .strategies import PermutationStrategyType
+from .strategies import resolve as resolve_strategy
 
 logger = get_logger(__name__)
-
-StrategyFunction = t.Callable[
-    [t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]
-]
 
 
 class Ensemble(EntityList[Application]):
@@ -69,7 +60,7 @@ class Ensemble(EntityList[Application]):
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
         run_settings: t.Optional[RunSettings] = None,
-        perm_strat: str = "all_perm",
+        perm_strat: t.Union[str, PermutationStrategyType] = "all_perm",
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Ensemble of Application instances.
@@ -110,14 +101,19 @@ class Ensemble(EntityList[Application]):
         """An alias for a shallow copy of the ``entities`` attribute"""
         return list(self.entities)
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None:
+    def _initialize_entities(
+        self,
+        *,
+        perm_strat: t.Union[str, PermutationStrategyType] = "all_perm",
+        **kwargs: t.Any,
+    ) -> None:
         """Initialize all the applications within the ensemble based
         on the parameters passed to the ensemble and the permutation
         strategy given at init.
 
         :raises UserStrategyError: if user generation strategy fails
         """
-        strategy = self._set_strategy(kwargs.pop("perm_strat"))
+        strategy = resolve_strategy(perm_strat)
         replicas = kwargs.pop("replicas", None)
         self.replicas = replicas
 
@@ -125,17 +121,11 @@ class Ensemble(EntityList[Application]):
         # the ensemble and assign run_settings to each member
         if self.params:
             if self.run_settings and self.exe:
-                param_names, params = self._read_application_parameters()
-
                 # Compute all combinations of application parameters and arguments
                 n_applications = kwargs.get("n_applications", 0)
-                all_application_params = strategy(param_names, params, n_applications)
-                if not isinstance(all_application_params, list):
-                    raise UserStrategyError(strategy)
+                all_application_params = strategy(self.params, n_applications)
 
                 for i, param_set in enumerate(all_application_params):
-                    if not isinstance(param_set, dict):
-                        raise UserStrategyError(strategy)
                     run_settings = deepcopy(self.run_settings)
                     application_name = "_".join((self.name, str(i)))
                     application = Application(
@@ -174,7 +164,8 @@ class Ensemble(EntityList[Application]):
                         )
                         application.enable_key_prefixing()
                         logger.debug(
-                            f"Created ensemble member: {application_name} in {self.name}"
+                            "Created ensemble member: "
+                            f"{application_name} in {self.name}"
                         )
                         self.add_application(application)
                 else:
@@ -200,7 +191,8 @@ class Ensemble(EntityList[Application]):
         """
         if not isinstance(application, Application):
             raise TypeError(
-                f"Argument to add_application was of type {type(application)}, not Application"
+                f"Argument to add_application was of type {type(application)}, "
+                "not Application"
             )
         # "in" operator uses application name for __eq__
         if application in self.entities:
@@ -237,7 +229,8 @@ class Ensemble(EntityList[Application]):
             application.enable_key_prefixing()
 
     def query_key_prefixing(self) -> bool:
-        """Inquire as to whether each application within the ensemble will prefix their keys
+        """Inquire as to whether each application within the ensemble will
+        prefix their keys
 
         :returns: True if all applications have key prefixing enabled, False otherwise
         """
@@ -300,57 +293,6 @@ class Ensemble(EntityList[Application]):
     def print_attached_files(self) -> None:
         """Print table of attached files to std out"""
         print(self.attached_files_table)
-
-    @staticmethod
-    def _set_strategy(strategy: str) -> StrategyFunction:
-        """Set the permutation strategy for generating applications within
-        the ensemble
-
-        :param strategy: name of the strategy or callable function
-        :raises SSUnsupportedError: if str name is not supported
-        :return: strategy function
-        """
-        if strategy == "all_perm":
-            return create_all_permutations
-        if strategy == "step":
-            return step_values
-        if strategy == "random":
-            return random_permutations
-        if callable(strategy):
-            return strategy
-        raise SSUnsupportedError(
-            f"Permutation strategy given is not supported: {strategy}"
-        )
-
-    def _read_application_parameters(self) -> t.Tuple[t.List[str], t.List[t.List[str]]]:
-        """Take in the parameters given to the ensemble and prepare to
-        create applications for the ensemble
-
-        :raises TypeError: if params are of the wrong type
-        :return: param names and values for permutation strategy
-        """
-
-        if not isinstance(self.params, dict):
-            raise TypeError(
-                "Ensemble initialization argument 'params' must be of type dict"
-            )
-
-        param_names: t.List[str] = []
-        parameters: t.List[t.List[str]] = []
-        for name, val in self.params.items():
-            param_names.append(name)
-
-            if isinstance(val, list):
-                val = [str(v) for v in val]
-                parameters.append(val)
-            elif isinstance(val, (int, str)):
-                parameters.append([str(val)])
-            else:
-                raise TypeError(
-                    "Incorrect type for ensemble parameters\n"
-                    + "Must be list, int, or string."
-                )
-        return param_names, parameters
 
     def add_ml_model(
         self,

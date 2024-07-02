@@ -24,14 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import typing as t
 from copy import deepcopy
 
-from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings.launchSettings import LaunchSettings
+
+if t.TYPE_CHECKING:
+    from smartsim.entity.entity import SmartSimEntity
 
 
 def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:
