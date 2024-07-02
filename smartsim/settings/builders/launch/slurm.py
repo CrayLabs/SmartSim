@@ -31,15 +31,20 @@ import re
 import typing as t
 
 from smartsim.log import get_logger
+from smartsim.settings.dispatch import ShellLauncher, default_dispatcher
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
+if t.TYPE_CHECKING:
+    from smartsim.settings.builders.launchArgBuilder import ExecutableLike
+
 logger = get_logger(__name__)
 
 
-class SlurmArgBuilder(LaunchArgBuilder):
+@default_dispatcher.dispatch(to_launcher=ShellLauncher)
+class SlurmArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Slurm.value
@@ -315,3 +320,13 @@ class SlurmArgBuilder(LaunchArgBuilder):
         if key in self._launch_args and key != self._launch_args[key]:
             logger.warning(f"Overwritting argument '{key}' with value '{value}'")
         self._launch_args[key] = value
+
+    def finalize(
+        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
+    ) -> t.Sequence[str]:
+        return (
+            "srun",
+            *(self.format_launch_args() or ()),
+            "--",
+            *exe.as_program_arguments(),
+        )

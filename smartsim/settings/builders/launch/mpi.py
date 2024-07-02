@@ -29,15 +29,19 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
+from smartsim.settings.dispatch import ShellLauncher, default_dispatcher
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
+if t.TYPE_CHECKING:
+    from smartsim.settings.builders.launchArgBuilder import ExecutableLike
+
 logger = get_logger(__name__)
 
 
-class _BaseMPIArgBuilder(LaunchArgBuilder):
+class _BaseMPIArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""
         return {"wd", "wdir"}
@@ -214,37 +218,47 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
         self._launch_args[key] = value
 
 
+@default_dispatcher.dispatch(to_launcher=ShellLauncher)
 class MpiArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpirun.value
 
+    def finalize(
+        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
+    ) -> t.Sequence[str]:
+        return ("mpirun", *self.format_launch_args(), "--", *exe.as_program_arguments())
 
+
+@default_dispatcher.dispatch(to_launcher=ShellLauncher)
 class MpiexecArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpiexec.value
 
+    def finalize(
+        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
+    ) -> t.Sequence[str]:
+        return (
+            "mpiexec",
+            *self.format_launch_args(),
+            "--",
+            *exe.as_program_arguments(),
+        )
 
+
+@default_dispatcher.dispatch(to_launcher=ShellLauncher)
 class OrteArgBuilder(_BaseMPIArgBuilder):
-    def __init__(
-        self,
-        launch_args: t.Dict[str, str | None] | None,
-    ) -> None:
-        super().__init__(launch_args)
-
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Orterun.value
+
+    def finalize(
+        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
+    ) -> t.Sequence[str]:
+        return (
+            "orterun",
+            *self.format_launch_args(),
+            "--",
+            *exe.as_program_arguments(),
+        )

@@ -24,79 +24,44 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
+from unittest.mock import Mock
 
-from .baseSettings import BaseSettings
-from .batchSettings import BatchSettings
-from .launchSettings import LaunchSettings
+import pytest
 
-__all__ = ["LaunchSettings", "BaseSettings", "BatchSettings"]
-
-
-# TODO Mock imports for compiling tests
-class DragonRunSettings:
-    pass
+from smartsim.settings import dispatch
+from smartsim.settings.builders import launchArgBuilder as launch
 
 
-class QsubBatchSettings:
-    pass
+@pytest.fixture
+def echo_executable_like():
+    class _ExeLike(launch.ExecutableLike):
+        def as_program_arguments(self):
+            return ("echo", "hello", "world")
+
+    yield _ExeLike()
 
 
-class SgeQsubBatchSettings:
-    pass
+@pytest.fixture
+def settings_builder():
+    class _SettingsBuilder(launch.LaunchArgBuilder):
+        def launcher_str(self):
+            return "Mock Settings Builder"
+
+        def set(self, arg, val): ...
+        def finalize(self, exe, env):
+            return Mock()
+
+    yield _SettingsBuilder({})
 
 
-class SbatchSettings:
-    pass
+@pytest.fixture
+def launcher_like():
+    class _LuancherLike(dispatch.LauncherLike):
+        def start(self, launchable):
+            return dispatch.create_job_id()
 
+        @classmethod
+        def create(cls, exp):
+            return cls()
 
-class Singularity:
-    pass
-
-
-class SettingsBase:
-    pass
-
-
-class AprunSettings:
-    pass
-
-
-class RunSettings:
-    pass
-
-
-class OrterunSettings:
-    pass
-
-
-class MpirunSettings:
-    pass
-
-
-class MpiexecSettings:
-    pass
-
-
-class JsrunSettings:
-    pass
-
-
-class BsubBatchSettings:
-    pass
-
-
-class PalsMpiexecSettings:
-    pass
-
-
-class SrunSettings:
-    pass
-
-
-class Container:
-    pass
-
-
-def create_batch_settings() -> None: ...
-def create_run_settings() -> None: ...
+    yield _LuancherLike()

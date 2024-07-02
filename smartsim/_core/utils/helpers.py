@@ -27,6 +27,8 @@
 """
 A file of helper functions for SmartSim
 """
+from __future__ import annotations
+
 import base64
 import collections.abc
 import os
@@ -45,6 +47,7 @@ if t.TYPE_CHECKING:
     from types import FrameType
 
 
+_T = t.TypeVar("_T")
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
@@ -122,7 +125,6 @@ def expand_exe_path(exe: str) -> str:
 
     # which returns none if not found
     in_path = which(exe)
-    print(f"hmm what is this: {in_path}")
     if not in_path:
         if os.path.isfile(exe) and os.access(exe, os.X_OK):
             return os.path.abspath(exe)
@@ -410,6 +412,10 @@ def is_crayex_platform() -> bool:
     :returns: True if current platform is Cray EX, False otherwise"""
     result = check_platform()
     return result.is_cray
+
+
+def first(predicate: t.Callable[[_T], bool], iterable: t.Iterable[_T]) -> _T | None:
+    return next((item for item in iterable if predicate(item)), None)
 
 
 @t.final

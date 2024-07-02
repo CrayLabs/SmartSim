@@ -26,6 +26,9 @@
 
 import typing as t
 
+if t.TYPE_CHECKING:
+    import smartsim.settings.base.RunSettings
+
 
 class TelemetryConfiguration:
     """A base class for configuraing telemetry production behavior on

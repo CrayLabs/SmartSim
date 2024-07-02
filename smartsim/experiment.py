@@ -26,15 +26,21 @@
 
 # pylint: disable=too-many-lines
 
+from __future__ import annotations
+
+import itertools
 import os
 import os.path as osp
+import textwrap
 import typing as t
 from os import environ, getcwd
 
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
+from smartsim._core.utils.helpers import first
 from smartsim.error.errors import SSUnsupportedError
+from smartsim.settings.dispatch import default_dispatcher
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -49,7 +55,12 @@ from .entity import (
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
 from .settings import BatchSettings, Container, RunSettings
-from .wlm import detect_launcher
+
+if t.TYPE_CHECKING:
+    from smartsim.launchable.job import Job
+    from smartsim.settings.builders import LaunchArgBuilder
+    from smartsim.settings.dispatch import Dispatcher, LauncherLike
+    from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
 
@@ -101,8 +112,9 @@ class Experiment:
     def __init__(
         self,
         name: str,
-        exp_path: t.Optional[str] = None,
-        launcher: str = "local",
+        exp_path: str | None = None,
+        *,
+        settings_dispatcher: Dispatcher = default_dispatcher,
     ):
         """Initialize an Experiment instance.
 
@@ -110,7 +122,7 @@ class Experiment:
         local launcher, which will start all Experiment created
         instances on the localhost.
 
-        Example of initializing an Experiment with the local launcher
+        Example of initializing an Experiment
 
         .. highlight:: python
         .. code-block:: python
@@ -143,10 +155,6 @@ class Experiment:
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
-        :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "lsf", "sge", or "local". If set to "auto",
-                         an attempt will be made to find an available launcher
-                         on the system.
         """
         self.name = name
         if exp_path:
@@ -160,27 +168,44 @@ class Experiment:
 
         self.exp_path = exp_path
 
-        self._launcher = launcher.lower()
-
-        if self._launcher == "auto":
-            self._launcher = detect_launcher()
-        if self._launcher == "cobalt":
-            raise SSUnsupportedError("Cobalt launcher is no longer supported.")
-
-        if launcher == "dragon":
-            self._set_dragon_server_path()
-
-        self._control = Controller(launcher=self._launcher)
+        # TODO: Remove this! The contoller is becoming obsolete
+        self._control = Controller(launcher="local")
+        self._dispatcher = settings_dispatcher
+        self._active_launchers: set[LauncherLike[t.Any]] = set()
 
         self.fs_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
 
-    def _set_dragon_server_path(self) -> None:
-        """Set path for dragon server through environment varialbes"""
-        if not "SMARTSIM_DRAGON_SERVER_PATH" in environ:
-            environ["SMARTSIM_DRAGON_SERVER_PATH_EXP"] = osp.join(
-                self.exp_path, CONFIG.dragon_default_subdir
+    def start_jobs(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
+        """WIP: replacemnt method to launch jobs using the new API"""
+
+        if not jobs:
+            raise TypeError(
+                f"{type(self).__name__}.start_jobs() missing at least 1 required "
+                "positional argument"
             )
+
+        def _start(job: Job) -> LaunchedJobID:
+            builder = job.launch_settings.launch_args
+            launcher_type = self._dispatcher.get_launcher_for(builder)
+            launcher = first(
+                lambda launcher: type(launcher) is launcher_type,
+                self._active_launchers,
+            )
+            if launcher is None:
+                launcher = launcher_type.create(self)
+                self._active_launchers.add(launcher)
+            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            # FIXME: Opting out of type check here. Fix this later!!
+            # TODO: Very much dislike that we have to pass in attrs off of `job`
+            #       into `builder`, which is itself an attr of an attr of `job`.
+            #       Why is `Job` not generic based on launch arg builder?
+            # ---------------------------------------------------------------------
+            finalized = builder.finalize(job.entity, job.launch_settings.env_vars)
+            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            return launcher.start(finalized)
+
+        return tuple(map(_start, jobs))
 
     @_contextualize
     def start(
@@ -477,7 +502,7 @@ class Experiment:
         """
 
         # Retrieve any active feature store jobs
-        active_fsjobs = self._control.active_active_feature_store_jobs
+        active_fsjobs = self._control.active_feature_store_jobs
 
         preview_manifest = Manifest(*args)
 
@@ -489,10 +514,6 @@ class Experiment:
             output_filename,
             active_fsjobs,
         )
-
-    @property
-    def launcher(self) -> str:
-        return self._launcher
 
     @_contextualize
     def summary(self, style: str = "github") -> str:
@@ -551,11 +572,19 @@ class Experiment:
 
         :param manifest: Manifest of deployables.
         """
+        launcher_list = "\n".join(str(launcher) for launcher in self._active_launchers)
+        #                         ^^^^^^^^^^^^^
+        # TODO: make this a nicer string
+        summary = textwrap.dedent(f"""\
 
-        summary = "\n\n=== Launch Summary ===\n"
-        summary += f"Experiment: {self.name}\n"
-        summary += f"Experiment Path: {self.exp_path}\n"
-        summary += f"Launcher: {self._launcher}\n"
+
+            === Launch Summary ===
+            Experiment: {self.name}
+            Experiment Path: {self.exp_path}
+            Launchers:
+            {textwrap.indent("  - ", launcher_list)}
+            """)
+
         if manifest.applications:
             summary += f"Applications: {len(manifest.applications)}\n"
 
