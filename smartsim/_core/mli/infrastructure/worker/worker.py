@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import dataclasses
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -77,66 +78,33 @@ class InferenceReply:
         self.failed = failed
 
 
-class LoadModelResult:
-    """A wrapper around a loaded model"""
+@dataclasses.dataclass
+class TensorResult:
+    """A result from a tensor operation in the pipeline"""
 
-    def __init__(self, model: t.Any) -> None:
-        """Initialize the object"""
-        self.model = model
-
-
-class TransformInputResult:
-    """A wrapper around a transformed input"""
-
-    def __init__(self, result: t.Any) -> None:
-        """Initialize the object"""
-        self.transformed = result
+    tensor: t.Any
+    shape: t.List[int]
+    order: str
+    dtype: str
 
 
-class ExecuteResult:
-    """A wrapper around inference results"""
-
-    def __init__(self, result: t.Any) -> None:
-        """Initialize the object"""
-        self.predictions = result
+_T = t.TypeVar("_T")
 
 
-class FetchInputResult:
-    """A wrapper around fetched inputs"""
+@dataclasses.dataclass
+class StageResult(t.Generic[_T]):
+    """Generic base class for results from a stage in the pipeline"""
 
-    def __init__(self, result: t.List[bytes]) -> None:
-        """Initialize the object"""
-        self.inputs = result
-
-
-class TransformOutputResult:
-    """A wrapper around inference results transformed for transmission"""
-
-    def __init__(
-        self, result: t.Any, shape: t.List[int], order: str, dtype: str
-    ) -> None:
-        """Initialize the OutputTransformResult"""
-        self.outputs = result
-        self.shape = shape
-        self.order = order
-        self.dtype = dtype
-        # todo: determine if each output must have an individual (shape, order, dtype)
+    result: _T
 
 
-class CreateInputBatchResult:
-    """A wrapper around inputs batched into a single request"""
-
-    def __init__(self, result: t.Any) -> None:
-        """Initialize the object"""
-        self.batch = result
-
-
-class FetchModelResult:
-    """A wrapper around raw fetched models"""
-
-    def __init__(self, result: bytes) -> None:
-        """Initialize the object"""
-        self.model_bytes = result
+LoadModelResult = StageResult[t.Any]
+TransformInputResult = StageResult[t.Any]
+ExecuteResult = StageResult[t.Any]
+FetchInputResult = StageResult[t.Any]
+TransformOutputResult = StageResult[t.List[TensorResult]]
+CreateInputBatchResult = StageResult[t.Any]
+FetchModelResult = StageResult[bytes]
 
 
 class MachineLearningWorkerCore:
@@ -237,8 +205,8 @@ class MachineLearningWorkerCore:
         # accurately placed, datum might need to include this.
 
         # Consider parallelizing all PUT feature_store operations
-        for k, v in zip(request.output_keys, transform_result.outputs):
-            feature_store[k] = v
+        for k, v in zip(request.output_keys, transform_result.result):
+            feature_store[k] = v.tensor  # todo: serialize tensor w/MessageHandler
             keys.append(k)
 
         return keys
