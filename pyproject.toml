@@ -62,7 +62,9 @@ markers = [
   "group_a: fast test subset a",
   "group_b: fast test subset b",
   "slow_tests: tests that take a long duration to complete",
+  "dragon: dragon tests",
 ]
+pythonpath="tests smartsim"
 
 [tool.isort]
 # supress circular import warning
