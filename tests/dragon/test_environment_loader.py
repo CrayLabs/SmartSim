@@ -39,7 +39,9 @@ try:
     from dragon.fli import DragonFLIError, FLInterface
     from mli.featurestore import MemoryFeatureStore
 
-    from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
+    from smartsim._core.mli.infrastructure.environmentloader import (
+        EnvironmentConfigLoader,
+    )
     from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
         DragonFeatureStore,
     )
