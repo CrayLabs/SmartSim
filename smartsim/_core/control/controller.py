@@ -72,6 +72,7 @@ from ..launcher import (
     LocalLauncher,
     LSFLauncher,
     PBSLauncher,
+    SGELauncher,
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
@@ -343,6 +344,7 @@ class Controller:
             "lsf": LSFLauncher,
             "local": LocalLauncher,
             "dragon": DragonLauncher,
+            "sge": SGELauncher,
         }
 
         if launcher is not None:
