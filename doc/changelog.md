@@ -30,6 +30,7 @@ Description
 - Fix test outputs being created in incorrect directory
 - Improve support for building SmartSim without ML backends
 - Update packaging dependency
+- Remove broken oss.redis.com URI blocking documentation generation
 
 Detailed Notes
 
