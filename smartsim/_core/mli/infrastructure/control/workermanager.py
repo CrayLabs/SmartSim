@@ -155,6 +155,19 @@ def build_reply(reply: InferenceReply) -> Response:
     )
 
 
+def exception_handler(
+    exc: Exception, func_descriptor: str, reply: InferenceReply
+) -> None:
+    logger.exception(
+        f"An error occurred while {func_descriptor}."
+        f"Exception type: {type(exc).__name__}."
+        f"Exception message: {str(exc)}"
+    )
+    reply.failed = True
+    reply.status_enum = "fail"
+    reply.message = f"Failed while {func_descriptor}."
+
+
 class WorkerManager(Service):
     """An implementation of a service managing distribution of tasks to
     machine learning workers"""
@@ -241,98 +254,72 @@ class WorkerManager(Service):
 
         reply = InferenceReply()
 
+        fetch_model_result = None
+        model_result = None
+        fetch_input_result = None
+        transformed_input = None
+        execute_result = None
+        transformed_output = None
+
         try:
             fetch_model_result = self._worker.fetch_model(request, self._feature_store)
+        except Exception as e:
+            exception_handler(e, "fetching the model", reply)
+
+        if not reply.failed and fetch_model_result is not None:
             try:
                 model_result = self._worker.load_model(request, fetch_model_result)
-                try:
-                    fetch_input_result = self._worker.fetch_inputs(
-                        request, self._feature_store
-                    )
-                    try:
-                        transformed_input = self._worker.transform_input(
-                            request, fetch_input_result
-                        )
-                        try:
-                            execute_result = self._worker.execute(
-                                request, model_result, transformed_input
-                            )
-                            try:
-                                transformed_output = self._worker.transform_output(
-                                    request, execute_result
-                                )
-                                if request.output_keys:
-                                    try:
-                                        reply.output_keys = self._worker.place_output(
-                                            request,
-                                            transformed_output,
-                                            self._feature_store,
-                                        )
-                                    except Exception as e:
-                                        logger.exception(
-                                            f"An error occurred while placing the output."
-                                            f"Exception type: {type(e).__name__}."
-                                            f"Exception message: {str(e)}"
-                                        )
-                                        reply.failed = True
-                                        reply.status_enum = "fail"
-                                        reply.message = "Failed while placing the output."
-                                else:
-                                    reply.outputs = transformed_output.outputs
-                            except Exception as e:
-                                logger.exception(
-                                    f"An error occurred while transforming the output."
-                                    f"Exception type: {type(e).__name__}."
-                                    f"Exception message: {str(e)}"
-                                )
-                                reply.failed = True
-                                reply.status_enum = "fail"
-                                reply.message = "Failed while transforming the output."
-                        except Exception as e:
-                            logger.exception(
-                                f"An error occurred while executing."
-                                f"Exception type: {type(e).__name__}."
-                                f"Exception message: {str(e)}"
-                            )
-                            reply.failed = True
-                            reply.status_enum = "fail"
-                            reply.message = "Failed while executing."
-                    except Exception as e:
-                        logger.exception(
-                            f"An error occurred while transforming the input."
-                            f"Exception type: {type(e).__name__}."
-                            f"Exception message: {str(e)}"
-                        )
-                        reply.failed = True
-                        reply.status_enum = "fail"
-                        reply.message = "Failed while transforming the input."
-                except Exception as e:
-                    logger.exception(
-                        f"An error occurred while fetching the inputs."
-                        f"Exception type: {type(e).__name__}."
-                        f"Exception message: {str(e)}"
-                    )
-                    reply.failed = True
-                    reply.status_enum = "fail"
-                    reply.message = "Failed while fetching the inputs."
             except Exception as e:
-                logger.exception(
-                    f"An error occurred while loading the model."
-                    f"Exception type: {type(e).__name__}."
-                    f"Exception message: {str(e)}"
+                exception_handler(e, "loading the model", reply)
+
+        if not reply.failed:
+            try:
+                fetch_input_result = self._worker.fetch_inputs(
+                    request, self._feature_store
                 )
-                reply.failed = True
-                reply.status_enum = "fail"
-                reply.message = "Failed while loading the model."
-        except Exception as e:
-            logger.exception(
-                f"An error occurred while fetching the model."
-                f"Exception type: {type(e).__name__}."
-                f"Exception message: {str(e)}"
-            )
-            reply.failed = True
-            reply.status_enum = "fail"
-            reply.message = "Failed while fetching the model."
+            except Exception as e:
+                exception_handler(e, "fetching the inputs", reply)
+
+        if not reply.failed and fetch_input_result is not None:
+            try:
+                transformed_input = self._worker.transform_input(
+                    request, fetch_input_result
+                )
+            except Exception as e:
+                exception_handler(e, "transforming the input", reply)
+
+        if (
+            not reply.failed
+            and model_result is not None
+            and transformed_input is not None
+        ):
+            try:
+                execute_result = self._worker.execute(
+                    request, model_result, transformed_input
+                )
+            except Exception as e:
+                exception_handler(e, "executing", reply)
+
+        if not reply.failed and execute_result is not None:
+            try:
+                transformed_output = self._worker.transform_output(
+                    request, execute_result
+                )
+            except Exception as e:
+                exception_handler(e, "transforming the output", reply)
+
+        if not reply.failed and transformed_output is not None:
+            if request.output_keys:
+                try:
+                    reply.output_keys = self._worker.place_output(
+                        request,
+                        transformed_output,
+                        self._feature_store,
+                    )
+                except Exception as e:
+                    exception_handler(e, "placing the output", reply)
+            else:
+                reply.outputs = transformed_output.outputs
 
         if reply.failed:
             response = build_failure_reply(reply.status_enum, reply.message)

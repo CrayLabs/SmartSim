@@ -24,43 +24,48 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
-import logging
 import multiprocessing as mp
 
 import pytest
-import torch
 
-from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.infrastructure.control.workermanager import (
+    WorkerManager,
+    exception_handler,
+)
+from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 from smartsim._core.mli.message_handler import MessageHandler
-from smartsim.log import get_logger
 
 from .channel import FileSystemCommChannel
 from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
-work_queue: "mp.Queue[bytes]" = mp.Queue()
-integrated_worker = IntegratedTorchWorker()
-file_system_store = FileSystemFeatureStore()
+
+@pytest.fixture
+def setup_worker_manager(test_dir):
+    work_queue: "mp.Queue[bytes]" = mp.Queue()
+    integrated_worker = IntegratedTorchWorker()
+    file_system_store = FileSystemFeatureStore(test_dir)
+
+    worker_manager = WorkerManager(
+        work_queue,
+        integrated_worker,
+        file_system_store,
+        as_service=False,
+        cooldown=10,
+        comm_channel_type=FileSystemCommChannel,
+    )
+    tensor_key = MessageHandler.build_tensor_key("key")
+    request = MessageHandler.build_request(
+        b"channel", b"model", [tensor_key], [tensor_key], [], None
+    )
+    ser_request = MessageHandler.serialize_request(request)
+
+    return worker_manager, work_queue, integrated_worker, ser_request
 
 
-worker_manager = WorkerManager(
-    work_queue,
-    integrated_worker,
-    file_system_store,
-    as_service=False,
-    cooldown=10,
-    comm_channel_type=FileSystemCommChannel,
-)
-tensor_key = MessageHandler.build_tensor_key("key")
-request = MessageHandler.build_request(
-    b"channel", b"model", [tensor_key], [tensor_key], [], None
-)
-ser_request = MessageHandler.serialize_request(request)
+def test_execute_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
 
-
-def test_execute_errors_handled(monkeypatch):
     def mock_execute():
         raise ValueError("Simulated error in execute")
 
@@ -71,7 +76,9 @@ def test_execute_errors_handled(monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_fetch_model_errors_handled(monkeypatch):
+def test_fetch_model_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+
     def mock_fetch_model(a, b):
         raise ValueError("Simulated error in fetch_model")
 
@@ -82,7 +89,9 @@ def test_fetch_model_errors_handled(monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_load_model_errors_handled(monkeypatch):
+def test_load_model_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+
     def mock_load_model(a, b):
         raise ValueError("Simulated error in load_model")
 
@@ -92,7 +101,9 @@ def test_load_model_errors_handled(monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_fetch_inputs_errors_handled(monkeypatch):
+def test_fetch_inputs_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+
     def mock_fetch_inputs(a, b):
         raise ValueError("Simulated error in fetch_inputs")
 
@@ -102,7 +113,9 @@ def test_fetch_inputs_errors_handled(monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_transform_input_errors_handled(monkeypatch):
+def test_transform_input_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+
     def mock_transform_input(a, b):
         raise ValueError("Simulated error in transform_input")
 
@@ -112,7 +125,9 @@ def test_transform_input_errors_handled(monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_transform_output_errors_handled(monkeypatch):
+def test_transform_output_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+
     def mock_transform_output(a, b):
         raise ValueError("Simulated error in transform_output")
 
@@ -122,7 +137,9 @@ def test_transform_output_errors_handled(monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_place_output_errors_handled(monkeypatch):
+def test_place_output_errors_handled(setup_worker_manager, monkeypatch):
+    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+
     def mock_place_output(a, b, c):
         raise ValueError("Simulated error in place_output")
 
@@ -130,4 +147,14 @@ def test_place_output_errors_handled(monkeypatch):
 
     monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
     worker_manager._on_iteration()
-    
+
+
+def test_exception_handling_helper():
+    reply = InferenceReply()
+
+    test_exception = ValueError("Test ValueError")
+    exception_handler(test_exception, "fetching the model", reply)
+
+    assert reply.failed == True
+    assert reply.status_enum == "fail"
+    assert reply.message == "Failed while fetching the model."

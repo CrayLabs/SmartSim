@@ -73,8 +73,8 @@ class InferenceReply:
         outputs: t.Optional[t.Collection[t.Any]] = None,
         output_keys: t.Optional[t.Collection[str]] = None,
         failed: bool = False,
-        status_enum: 'StatusEnum' = "complete",
-        message: str = "Success"
+        status_enum: "StatusEnum" = "complete",
+        message: str = "Success",
     ) -> None:
         """Initialize the object"""
         self.outputs: t.Collection[t.Any] = outputs or []
