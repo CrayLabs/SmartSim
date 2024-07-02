@@ -33,10 +33,10 @@ import pytest
 dragon = pytest.importorskip("dragon")
 
 try:
-    import dragon.utils as du
     from dragon.channels import Channel
     from dragon.data.ddict.ddict import DDict
     from dragon.fli import DragonFLIError, FLInterface
+    from dragon.utils import b64decode
     from mli.featurestore import MemoryFeatureStore
 
     from smartsim._core.mli.infrastructure.environmentloader import (
@@ -64,7 +64,7 @@ def test_environment_loader_attach_FLI(content, monkeypatch):
     """A descriptor can be stored, loaded, and reattached"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv("SSQueue", b64decode(queue.serialize()))
 
     config = EnvironmentConfigLoader()
     config_queue = config.get_queue()
@@ -82,7 +82,7 @@ def test_environment_loader_serialize_FLI(monkeypatch):
     queue are the same"""
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
-    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
+    monkeypatch.setenv("SSQueue", b64decode(queue.serialize()))
 
     config = EnvironmentConfigLoader()
     config_queue = config.get_queue()

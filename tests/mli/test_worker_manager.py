@@ -41,7 +41,8 @@ try:
         EnvironmentConfigLoader,
         WorkerManager,
     )
-except ImportError:
+except ImportError as exc:
+    print(f"{__file__}: {exc}")
     pass
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
