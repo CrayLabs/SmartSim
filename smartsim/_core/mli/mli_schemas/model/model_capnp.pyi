@@ -24,18 +24,49 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""This is an automatically generated stub for `data_references.capnp`."""
+"""This is an automatically generated stub for `model.capnp`."""
 
-import os
+# mypy: ignore-errors
 
-import capnp  # type: ignore
+from __future__ import annotations
 
-capnp.remove_import_hook()
-here = os.path.dirname(os.path.abspath(__file__))
-module_file = os.path.abspath(os.path.join(here, "data_references.capnp"))
-ModelKey = capnp.load(module_file).ModelKey
-ModelKeyBuilder = ModelKey
-ModelKeyReader = ModelKey
-TensorKey = capnp.load(module_file).TensorKey
-TensorKeyBuilder = TensorKey
-TensorKeyReader = TensorKey
+from contextlib import contextmanager
+from io import BufferedWriter
+from typing import Iterator
+
+class Model:
+    data: bytes
+    name: str
+    version: str
+    @staticmethod
+    @contextmanager
+    def from_bytes(
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
+    ) -> Iterator[ModelReader]: ...
+    @staticmethod
+    def from_bytes_packed(
+        data: bytes,
+        traversal_limit_in_words: int | None = ...,
+        nesting_limit: int | None = ...,
+    ) -> ModelReader: ...
+    @staticmethod
+    def new_message() -> ModelBuilder: ...
+    def to_dict(self) -> dict: ...
+
+class ModelReader(Model):
+    def as_builder(self) -> ModelBuilder: ...
+
+class ModelBuilder(Model):
+    @staticmethod
+    def from_dict(dictionary: dict) -> ModelBuilder: ...
+    def copy(self) -> ModelBuilder: ...
+    def to_bytes(self) -> bytes: ...
+    def to_bytes_packed(self) -> bytes: ...
+    def to_segments(self) -> list[bytes]: ...
+    def as_reader(self) -> ModelReader: ...
+    @staticmethod
+    def write(file: BufferedWriter) -> None: ...
+    @staticmethod
+    def write_packed(file: BufferedWriter) -> None: ...

@@ -24,18 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""This is an automatically generated stub for `data_references.capnp`."""
+@0xaefb9301e14ba4bd;
 
-import os
-
-import capnp  # type: ignore
-
-capnp.remove_import_hook()
-here = os.path.dirname(os.path.abspath(__file__))
-module_file = os.path.abspath(os.path.join(here, "data_references.capnp"))
-ModelKey = capnp.load(module_file).ModelKey
-ModelKeyBuilder = ModelKey
-ModelKeyReader = ModelKey
-TensorKey = capnp.load(module_file).TensorKey
-TensorKeyBuilder = TensorKey
-TensorKeyReader = TensorKey
+struct Model {
+  data @0 :Data;
+  name @1 :Text;
+  version @2 :Text;
+}
