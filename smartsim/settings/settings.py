@@ -41,6 +41,7 @@ from ..settings import (
     QsubBatchSettings,
     RunSettings,
     SbatchSettings,
+    SgeQsubBatchSettings,
     SrunSettings,
     base,
 )
@@ -78,6 +79,7 @@ def create_batch_settings(
         "slurm": SbatchSettings,
         "lsf": BsubBatchSettings,
         "pals": QsubBatchSettings,
+        "sge": SgeQsubBatchSettings,
     }
 
     if launcher in ["auto", "dragon"]:
@@ -153,6 +155,7 @@ def create_run_settings(
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "pals": ["mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
+        "sge": ["mpirun", "mpiexec"],
         "local": [""],
     }
 

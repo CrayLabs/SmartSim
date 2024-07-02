@@ -29,6 +29,7 @@ from .launcher import Launcher
 from .local.local import LocalLauncher
 from .lsf.lsfLauncher import LSFLauncher
 from .pbs.pbsLauncher import PBSLauncher
+from .sge.sgeLauncher import SGELauncher
 from .slurm.slurmLauncher import SlurmLauncher
 
 __all__ = [
@@ -37,5 +38,6 @@ __all__ = [
     "LocalLauncher",
     "LSFLauncher",
     "PBSLauncher",
+    "SGELauncher",
     "SlurmLauncher",
 ]
