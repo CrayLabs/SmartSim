@@ -1,12 +1,22 @@
-import os
 from os import path as osp
 
+from smartsim import Experiment
 from smartsim._core.control.manifest import Manifest
 from smartsim._core.generation.generator import Generator
 from smartsim.entity._new_ensemble import Ensemble
 from smartsim.entity.model import Application
 from smartsim.launchable.job import Job
 from smartsim.settings.launchSettings import LaunchSettings
+
+
+def test_private_experiment_generation(test_dir, wlmutils):
+    exp = Experiment(
+        "test_exp", exp_path=test_dir, launcher=wlmutils.get_test_launcher()
+    )
+    manifest = Manifest()
+    exp._generate(manifest)
+    log_file = osp.join(test_dir, "smartsim_params.txt")
+    assert osp.isfile(log_file)
 
 
 def test_generate_experiment_directory(test_dir):
