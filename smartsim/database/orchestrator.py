@@ -189,8 +189,6 @@ class Orchestrator(EntityList[DBNode]):
 
         Extra configurations for RedisAI
 
-        See https://oss.redis.com/redisai/configuration/
-
         :param path: path to location of ``Orchestrator`` directory
         :param port: TCP/IP port
         :param interface: network interface(s)
