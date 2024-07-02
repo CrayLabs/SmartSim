@@ -239,47 +239,85 @@ class WorkerManager(Service):
         # # let the worker perform additional custom deserialization
         # request = self._worker.deserialize(request_bytes)
 
+        reply = InferenceReply()
+
         try:
             fetch_model_result = self._worker.fetch_model(request, self._feature_store)
             try:
                 model_result = self._worker.load_model(request, fetch_model_result)
+                try:
+                    fetch_input_result = self._worker.fetch_inputs(
+                        request, self._feature_store
+                    )
+                    try:
+                        transformed_input = self._worker.transform_input(
+                            request, fetch_input_result
+                        )
+                        try:
+                            execute_result = self._worker.execute(
+                                request, model_result, transformed_input
+                            )
+                            try:
+                                transformed_output = self._worker.transform_output(
+                                    request, execute_result
+                                )
+                                if request.output_keys:
+                                    try:
+                                        reply.output_keys = self._worker.place_output(
+                                            request,
+                                            transformed_output,
+                                            self._feature_store,
+                                        )
+                                    except Exception as e:
+                                        logger.exception(
+                                            f"An error occurred while placing the output."
+                                            f"Exception type: {type(e).__name__}."
+                                            f"Exception message: {str(e)}"
+                                        )
+                                        reply.failed = True
+                                else:
+                                    reply.outputs = transformed_output.outputs
+                            except Exception as e:
+                                logger.exception(
+                                    f"An error occurred while transforming the output."
+                                    f"Exception type: {type(e).__name__}."
+                                    f"Exception message: {str(e)}"
+                                )
+                                reply.failed = True
+                        except Exception as e:
+                            logger.exception(
+                                f"An error occurred while executing."
+                                f"Exception type: {type(e).__name__}."
+                                f"Exception message: {str(e)}"
+                            )
+                            reply.failed = True
+                    except Exception as e:
+                        logger.exception(
+                            f"An error occurred while transforming the input."
+                            f"Exception type: {type(e).__name__}."
+                            f"Exception message: {str(e)}"
+                        )
+                        reply.failed = True
+                except Exception as e:
+                    logger.exception(
+                        f"An error occurred while fetching the model."
+                        f"Exception type: {type(e).__name__}."
+                        f"Exception message: {str(e)}"
+                    )
+                    reply.failed = True
             except Exception as e:
                 logger.exception(
-                f"An error occurred while loading the model."
+                    f"An error occurred while loading the model."
+                    f"Exception type: {type(e).__name__}."
+                    f"Exception message: {str(e)}"
+                )
+                reply.failed = True
+        except Exception as e:
+            logger.exception(
+                f"An error occurred while fetching the model."
                 f"Exception type: {type(e).__name__}."
                 f"Exception message: {str(e)}"
             )
-        except Exception as e:
-            logger.exception(
-            f"An error occurred while fetching the model."
-            f"Exception type: {type(e).__name__}."
-            f"Exception message: {str(e)}"
-        )
-        model_result = self._worker.load_model(request, fetch_model_result)
-        fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
-        transformed_input = self._worker.transform_input(request, fetch_input_result)
-
-        # batch: t.Collection[_Datum] = transform_result.transformed_input
-        # if self._batch_size:
-        #     batch = self._worker.batch_requests(transform_result, self._batch_size)
-
-        reply = InferenceReply()
-
-        try:
-            execute_result = self._worker.execute(
-                request, model_result, transformed_input
-            )
-
-            transformed_output = self._worker.transform_output(request, execute_result)
-
-            if request.output_keys:
-                reply.output_keys = self._worker.place_output(
-                    request, transformed_output, self._feature_store
-                )
-            else:
-                reply.outputs = transformed_output.outputs
-        except Exception:
-            logger.exception("Error executing worker")
             reply.failed = True
 
         if reply.failed:

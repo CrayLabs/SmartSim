@@ -54,83 +54,85 @@ worker_manager = WorkerManager(
     comm_channel_type=FileSystemCommChannel,
 )
 tensor_key = MessageHandler.build_tensor_key("key")
-request = MessageHandler.build_request(b"channel", b"model", [tensor_key], [tensor_key], [], None)
+request = MessageHandler.build_request(
+    b"channel", b"model", [tensor_key], [tensor_key], [], None
+)
 ser_request = MessageHandler.serialize_request(request)
 
-def test_execute_errors_handled(monkeypatch):
 
+def test_execute_errors_handled(monkeypatch):
     def mock_execute():
         raise ValueError("Simulated error in execute")
-    
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "execute", mock_execute)
 
     worker_manager._on_iteration()
 
 
 def test_fetch_model_errors_handled(monkeypatch):
-    
     def mock_fetch_model(a, b):
-         raise ValueError("Simulated error in fetch_model")
-    
+        raise ValueError("Simulated error in fetch_model")
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "fetch_model", mock_fetch_model)
 
     worker_manager._on_iteration()
 
 
 def test_load_model_errors_handled(monkeypatch):
-    
     def mock_load_model(a, b):
-         raise ValueError("Simulated error in load_model")
-    
+        raise ValueError("Simulated error in load_model")
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "load_model", mock_load_model)
     worker_manager._on_iteration()
 
 
 def test_fetch_inputs_errors_handled(monkeypatch):
-    
     def mock_fetch_inputs(a, b):
-         raise ValueError("Simulated error in fetch_inputs")
-    
+        raise ValueError("Simulated error in fetch_inputs")
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "fetch_inputs", mock_fetch_inputs)
     worker_manager._on_iteration()
 
 
 def test_transform_input_errors_handled(monkeypatch):
-    
     def mock_transform_input(a, b):
-         raise ValueError("Simulated error in transform_input")
-    
+        raise ValueError("Simulated error in transform_input")
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "transform_input", mock_transform_input)
     worker_manager._on_iteration()
 
 
 def test_transform_output_errors_handled(monkeypatch):
-    
     def mock_transform_output(a, b):
-         raise ValueError("Simulated error in transform_output")
-    
+        raise ValueError("Simulated error in transform_output")
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "transform_output", mock_transform_output)
     worker_manager._on_iteration()
 
 
-def test_place_output_errors_handled(monkeypatch):
-    
+def test_place_output_errors_handled(monkeypatch, caplog):
     def mock_place_output(a, b, c):
-         raise ValueError("Simulated error in place_output")
-    
+        raise ValueError("Simulated error in place_output")
+
     work_queue.put(ser_request)
-    
+
     monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
     worker_manager._on_iteration()
+
+    with caplog.at_level(logging.ERROR):
+        worker_manager._on_iteration()
+
+    # Check if the expected error message was logged
+    assert any("Simulated error in place_output" in message for message in caplog.text)
