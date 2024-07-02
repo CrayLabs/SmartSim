@@ -45,7 +45,8 @@ try:
     from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
         DragonFeatureStore,
     )
-except ImportError:
+except ImportError as exc:
+    print(exc)
     pass
 
 # The tests in this file belong to the dragon group
