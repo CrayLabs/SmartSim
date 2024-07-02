@@ -32,6 +32,9 @@ from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim.log import get_logger
 
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+
 logger = get_logger(__name__)
 
 
@@ -70,11 +73,15 @@ class InferenceReply:
         outputs: t.Optional[t.Collection[t.Any]] = None,
         output_keys: t.Optional[t.Collection[str]] = None,
         failed: bool = False,
+        status_enum: 'StatusEnum' = "complete",
+        message: str = "Success"
     ) -> None:
         """Initialize the object"""
         self.outputs: t.Collection[t.Any] = outputs or []
         self.output_keys: t.Collection[t.Optional[str]] = output_keys or []
         self.failed = failed
+        self.status_enum = status_enum
+        self.message = message
 
 
 class LoadModelResult:

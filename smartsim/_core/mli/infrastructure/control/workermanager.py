@@ -148,8 +148,8 @@ def build_reply(reply: InferenceReply) -> Response:
     results = prepare_outputs(reply)
 
     return MessageHandler.build_response(
-        status="complete",
-        message="success",
+        status=reply.status_enum,
+        message=reply.message,
         result=results,
         custom_attributes=None,
     )
@@ -275,6 +275,8 @@ class WorkerManager(Service):
                                             f"Exception message: {str(e)}"
                                         )
                                         reply.failed = True
+                                        reply.status_enum = "fail"
+                                        reply.message = "Failed while placing the output."
                                 else:
                                     reply.outputs = transformed_output.outputs
                             except Exception as e:
@@ -284,6 +286,8 @@ class WorkerManager(Service):
                                     f"Exception message: {str(e)}"
                                 )
                                 reply.failed = True
+                                reply.status_enum = "fail"
+                                reply.message = "Failed while transforming the output."
                         except Exception as e:
                             logger.exception(
                                 f"An error occurred while executing."
@@ -291,6 +295,8 @@ class WorkerManager(Service):
                                 f"Exception message: {str(e)}"
                             )
                             reply.failed = True
+                            reply.status_enum = "fail"
+                            reply.message = "Failed while executing."
                     except Exception as e:
                         logger.exception(
                             f"An error occurred while transforming the input."
@@ -298,13 +304,17 @@ class WorkerManager(Service):
                             f"Exception message: {str(e)}"
                         )
                         reply.failed = True
+                        reply.status_enum = "fail"
+                        reply.message = "Failed while transforming the input."
                 except Exception as e:
                     logger.exception(
-                        f"An error occurred while fetching the model."
+                        f"An error occurred while fetching the inputs."
                         f"Exception type: {type(e).__name__}."
                         f"Exception message: {str(e)}"
                     )
                     reply.failed = True
+                    reply.status_enum = "fail"
+                    reply.message = "Failed while fetching the inputs."
             except Exception as e:
                 logger.exception(
                     f"An error occurred while loading the model."
@@ -312,6 +322,8 @@ class WorkerManager(Service):
                     f"Exception message: {str(e)}"
                 )
                 reply.failed = True
+                reply.status_enum = "fail"
+                reply.message = "Failed while loading the model."
         except Exception as e:
             logger.exception(
                 f"An error occurred while fetching the model."
@@ -319,14 +331,17 @@ class WorkerManager(Service):
                 f"Exception message: {str(e)}"
             )
             reply.failed = True
+            reply.status_enum = "fail"
+            reply.message = "Failed while fetching the model."
 
         if reply.failed:
-            response = build_failure_reply("fail", "failure-occurred")
+            response = build_failure_reply(reply.status_enum, reply.message)
         else:
             if reply.outputs is None or not reply.outputs:
-                response = build_failure_reply("fail", "no-results")
+                response = build_failure_reply("fail", "Outputs not found.")
 
-            response = build_reply(reply)
+            else:
+                response = build_reply(reply)
 
         # serialized = self._worker.serialize_reply(request, transformed_output)
         serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
