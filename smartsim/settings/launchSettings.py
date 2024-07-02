@@ -75,7 +75,7 @@ class LaunchSettings(BaseSettings):
         #        subclasses. Otherwise we have no way of showing what methods
         #        are available at intellisense/static analysis/compile time.
         #        This whole object basically resolves to being one step removed
-        #        from `Any` typed!!
+        #        from `Any` typed (worse even, as type checkers will error)!!
         return self._arg_builder
 
     @launch_args.setter

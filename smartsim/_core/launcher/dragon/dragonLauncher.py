@@ -130,7 +130,7 @@ class DragonLauncher(WLMLauncher):
     @classmethod
     def create(cls, exp: Experiment) -> Self:
         self = cls(exp.exp_path)
-        self._connector.connect_to_dragon()  # TODO: protected access
+        self._connector.connect_to_dragon()  # pylint: disable=protected-access
         return self
 
     def start(self, req_args: DragonRunRequestView) -> LaunchedJobID:

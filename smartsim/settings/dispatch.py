@@ -150,11 +150,7 @@ class LauncherLike(t.Protocol[_T_contra]):
 
 
 class ShellLauncher:
-    """Mock launcher for launching/tracking simple shell commands
-
-    TODO: this is probably all we need for a "local" launcher, but probably
-          best to move this to a `smartsim._core.launcher` module/submodule
-    """
+    """Mock launcher for launching/tracking simple shell commands"""
 
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}

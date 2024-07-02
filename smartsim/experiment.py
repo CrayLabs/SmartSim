@@ -573,8 +573,6 @@ class Experiment:
         :param manifest: Manifest of deployables.
         """
         launcher_list = "\n".join(str(launcher) for launcher in self._active_launchers)
-        #                         ^^^^^^^^^^^^^
-        # TODO: make this a nicer string
         summary = textwrap.dedent(f"""\
 
 

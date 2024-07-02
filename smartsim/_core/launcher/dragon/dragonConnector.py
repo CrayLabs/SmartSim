@@ -96,16 +96,6 @@ class DragonConnector:
         logger.debug(f"Dragon Server path was set to {self._dragon_server_path}")
         self._env_vars: t.Dict[str, str] = {}
 
-        # TODO: Remove! in theory this is unreachable
-        if self._dragon_server_path is None:
-            raise SmartSimError(
-                "DragonConnector could not find the dragon server path. "
-                "This should not happen if the Connector was started by an "
-                "experiment.\nIf the DragonConnector was started manually, "
-                "then the environment variable SMARTSIM_DRAGON_SERVER_PATH "
-                "should be set to an existing directory."
-            )
-
     @property
     def is_connected(self) -> bool:
         """Whether the Connector established a connection to the server
