@@ -340,8 +340,8 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 # TODO: Remove this registry and move back to builder file after fixing
 #       circular import
 # -----------------------------------------------------------------------------
-from smartsim.settings.dispatch import default_dispatcher
 from smartsim.settings.builders.launch.dragon import DragonArgBuilder
+from smartsim.settings.dispatch import default_dispatcher
 
 default_dispatcher.dispatch(DragonArgBuilder, to_launcher=DragonLauncher)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
