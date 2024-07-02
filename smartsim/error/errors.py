@@ -108,6 +108,10 @@ class LauncherError(SSInternalError):
     """Raised when there is an error in the launcher"""
 
 
+class LauncherUnsupportedFeature(LauncherError):
+    """Raised when the launcher does not support a given method"""
+
+
 class AllocationError(LauncherError):
     """Raised when there is a problem with the user WLM allocation"""
 
