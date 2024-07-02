@@ -58,6 +58,7 @@ class Generator:
         """Initialize a generator object
 
         :param gen_path: Path in which files need to be generated
+        :param manifest: 
         """
         self.gen_path = gen_path
         self.manifest = manifest
@@ -115,9 +116,6 @@ class Generator:
         """
         self._gen_exp_dir()
         self._gen_job_dir(self.manifest.jobs)
-        # self._gen_feature_store_dir(generator_manifest.fss)
-        # self._gen_entity_list_dir(generator_manifest.ensembles)
-        # self._gen_entity_dirs(generator_manifest.applications)
     
     def _gen_exp_dir(self) -> None:
         """Create the directory for an experiment if it does not
@@ -144,84 +142,21 @@ class Generator:
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
     def _gen_job_dir(self, job_list: t.List[Job]) -> None:
-        pass
+        for job in job_list:
+            destination = job.entity.path
+            pathlib.Path(destination).mkdir(exist_ok=True, parents=True)
+            if isinstance(Application, type(job.entity)):
+                self.build_operations(job.entity)
+
+    def build_operations(self, app: Application) -> t.Sequence[t.Sequence[str]]:
+        file_operation_list = []
+        if app.files.copy:
+            file_operation_list.append(self._copy_entity_files(app.files.copy))
+        if app.files.link:
+            file_operation_list.append(self._link_entity_files(app.files.link))
+        if app.files.tagged:
+            file_operation_list.append(self._write_tagged_entity_files(app.files.tagged))
     
-    def _gen_feature_store_dir(self, feature_store_list: t.List[FeatureStore]) -> None:
-        """Create the directory that will hold the error, output and
-           configuration files for the feature store.
-
-        :param featurestore: FeatureStore instance
-        """
-        # Loop through feature stores
-        for featurestore in feature_store_list:
-            feature_store_path = path.join(self.gen_path, featurestore.name)
-
-            featurestore.set_path(feature_store_path)
-            # Always remove featurestore files if present.
-            if path.isdir(feature_store_path):
-                shutil.rmtree(feature_store_path, ignore_errors=True)
-            pathlib.Path(feature_store_path).mkdir(
-                exist_ok=self.overwrite, parents=True
-            )
-
-    def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
-        """Generate directories for Ensemble instances
-
-        :param entity_lists: list of Ensemble instances
-        """
-
-        if not entity_lists:
-            return
-
-        for elist in entity_lists:
-            elist_dir = path.join(self.gen_path, elist.name)
-            if path.isdir(elist_dir):
-                if self.overwrite:
-                    shutil.rmtree(elist_dir)
-                    mkdir(elist_dir)
-            else:
-                mkdir(elist_dir)
-            elist.path = elist_dir
-
-            self._gen_entity_dirs(list(elist.applications), entity_list=elist)
-
-    def _gen_entity_dirs(
-        self,
-        entities: t.List[Application],
-        entity_list: t.Optional[Ensemble] = None,
-    ) -> None:
-        """Generate directories for Entity instances
-
-        :param entities: list of Application instances
-        :param entity_list: Ensemble instance
-        :raises EntityExistsError: if a directory already exists for an
-                                   entity by that name
-        """
-        if not entities:
-            return
-
-        for entity in entities:
-            if entity_list:
-                dst = path.join(self.gen_path, entity_list.name, entity.name)
-            else:
-                dst = path.join(self.gen_path, entity.name)
-
-            if path.isdir(dst):
-                if self.overwrite:
-                    shutil.rmtree(dst)
-                else:
-                    error = (
-                        f"Directory for entity {entity.name} "
-                        f"already exists in path {dst}"
-                    )
-                    raise FileExistsError(error)
-            pathlib.Path(dst).mkdir(exist_ok=True)
-            entity.path = dst
-
-            self._copy_entity_files(entity)
-            self._link_entity_files(entity)
-            self._write_tagged_entity_files(entity)
-
     def _write_tagged_entity_files(self, entity: Application) -> None:
         """Read, configure and write the tagged input files for
            a Application instance within an ensemble. This function
@@ -257,28 +192,27 @@ class Generator:
                 _build_tagged_files(entity.files.tagged_hierarchy)
 
             # write in changes to configurations
-            if isinstance(entity, Application):
-                files_to_params = self._writer.configure_tagged_application_files(
-                    to_write, entity.params
-                )
-                self._log_params(entity, files_to_params)
+            # if isinstance(entity, Application):
+            #     files_to_params = self._writer.configure_tagged_application_files(
+            #         to_write, entity.params
+            #     )
+            #     self._log_params(entity, files_to_params)
 
     @staticmethod
-    def _copy_entity_files(entity: Application) -> None:
+    def _copy_entity_files(copy_file: str) -> t.Sequence[str]:
         """Copy the entity files and directories attached to this entity.
 
         :param entity: Application
         """
-        if entity.files:
-            for to_copy in entity.files.copy:
-                dst_path = path.join(entity.path, path.basename(to_copy))
-                if path.isdir(to_copy):
-                    dir_util.copy_tree(to_copy, entity.path)
-                else:
-                    shutil.copyfile(to_copy, dst_path)
+        for to_copy in entity.files.copy:
+            dst_path = path.join(entity.path, path.basename(to_copy))
+            if path.isdir(to_copy):
+                dir_util.copy_tree(to_copy, entity.path)
+            else:
+                shutil.copyfile(to_copy, dst_path)
 
     @staticmethod
-    def _link_entity_files(entity: Application) -> None:
+    def _link_entity_files(linked_file: str) -> t.Sequence[str]:
         """Symlink the entity files attached to this entity.
 
         :param entity: Application

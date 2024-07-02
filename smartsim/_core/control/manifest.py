@@ -56,9 +56,17 @@ class Manifest:
     """
 
     def __init__(
-        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+        self, *args: t.Any
     ) -> None:
-        self._deployables = list(args)
+        self._deployables = []
+        for element in args:
+            if isinstance(element, tuple):
+                # If element is a tuple, iterate through its items
+                for item in element:
+                    self._deployables.append(item)
+            else:
+                # Otherwise, directly add the element to the list
+                self._deployables.append(element)
         # self._check_types(self._deployables)
         # self._check_names(self._deployables)
         # self._check_entity_lists_nonempty()
@@ -72,49 +80,6 @@ class Manifest:
         """
         jobs = [item for item in self._deployables if isinstance(item, Job)]
         return jobs
-
-    @property
-    def fss(self) -> t.List[FeatureStore]:
-        """Return a list of FeatureStore instances in Manifest
-
-        :raises SmartSimError: if user added to feature stores to manifest
-        :return: List of feature store instances
-        """
-        fss = [item for item in self._deployables if isinstance(item, FeatureStore)]
-        return fss
-
-    @property
-    def applications(self) -> t.List[Application]:
-        """Return Application instances in Manifest
-
-        :return: application instances
-        """
-        _applications: t.List[Application] = [
-            item for item in self._deployables if isinstance(item, Application)
-        ]
-        return _applications
-
-    @property
-    def ensembles(self) -> t.List[Ensemble]:
-        """Return Ensemble instances in Manifest
-
-        :return: list of ensembles
-        """
-        return [e for e in self._deployables if isinstance(e, Ensemble)]
-
-    @property
-    def all_entity_lists(self) -> t.List[EntitySequence[SmartSimEntity]]:
-        """All entity lists, including ensembles and
-        exceptional ones like FeatureStore
-
-        :return: list of entity lists
-        """
-        _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
-
-        for fs in self.fss:
-            _all_entity_lists.append(fs)
-
-        return _all_entity_lists
 
     @property
     def has_deployable(self) -> bool:
