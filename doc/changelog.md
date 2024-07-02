@@ -15,6 +15,7 @@ To be released at some future point in time
 
 Description
 
+- Pin NumPy version to 1.x
 - New launcher support for SGE (and similar derivatives)
 - Fix test outputs being created in incorrect directory
 - Improve support for building SmartSim without ML backends
@@ -23,6 +24,11 @@ Description
 
 Detailed Notes
 
+- The new major version release of Numpy is incompatible with modules
+  compiled against Numpy 1.x. For both SmartSim and SmartRedis we
+  request a 1.x version of numpy. This is needed in SmartSim because
+  some of the downstream dependencies request NumPy
+  ([SmartSim-PR623](https://github.com/CrayLabs/SmartSim/pull/623))
 - SGE is now a supported launcher for SmartSim. Users can now define
   BatchSettings which will be monitored by the TaskManager. Additionally,
   if the MPI implementation was built with SGE support, Orchestrators can
