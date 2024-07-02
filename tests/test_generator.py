@@ -36,5 +36,22 @@ def test_generate_ensemble_directory(test_dir):
     manifest = Manifest(jobs)
     generate = Generator(test_dir, manifest)
     generate.generate_experiment()
+    for job in jobs:
+        assert osp.isdir(job.entity.path)
+
+def test_to_copy_operation(fileutils, test_dir):
+    path_1 = osp.join(test_dir, "app_folder_3")
+    application_1 = Application("app", exe="python",run_settings="RunSettings", path=path_1)
+    script = fileutils.get_test_conf_path("sleep.py")
+    application_1.attach_generator_files(to_copy=script)
+    job = Job(application_1, LaunchSettings("slurm"))
+    manifest = Manifest(job)
+    generate = Generator(test_dir, manifest)
+    generate.generate_experiment()
+    output = generate.build_operations(application_1)
+    assert output == [["temporary", "copy"]]
+    
+    
+    
     
     

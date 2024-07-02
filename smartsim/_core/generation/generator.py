@@ -150,12 +150,18 @@ class Generator:
 
     def build_operations(self, app: Application) -> t.Sequence[t.Sequence[str]]:
         file_operation_list = []
-        if app.files.copy:
-            file_operation_list.append(self._copy_entity_files(app.files.copy))
-        if app.files.link:
-            file_operation_list.append(self._link_entity_files(app.files.link))
-        if app.files.tagged:
-            file_operation_list.append(self._write_tagged_entity_files(app.files.tagged))
+        for file_copy in app.files.copy:
+            copy_system_ops = self._copy_entity_files(file_copy)
+            print(f"yupp: {copy_system_ops}")
+            file_operation_list.append(copy_system_ops)
+            print(f"heh: {file_operation_list}")
+        for file_link in app.files.link:
+            link_system_ops = self._link_entity_files(file_link)
+            file_operation_list.append(link_system_ops)
+        return file_operation_list
+        # for file_configure in app.files.tagged:
+        #     configure_system_ops = self._write_tagged_entity_files(file_configure)
+        #     file_operation_list.append(configure_system_ops)
     
     def _write_tagged_entity_files(self, entity: Application) -> None:
         """Read, configure and write the tagged input files for
@@ -198,29 +204,23 @@ class Generator:
             #     )
             #     self._log_params(entity, files_to_params)
 
+    # TODO replace with entrypoint
     @staticmethod
     def _copy_entity_files(copy_file: str) -> t.Sequence[str]:
         """Copy the entity files and directories attached to this entity.
 
         :param entity: Application
         """
-        for to_copy in entity.files.copy:
-            dst_path = path.join(entity.path, path.basename(to_copy))
-            if path.isdir(to_copy):
-                dir_util.copy_tree(to_copy, entity.path)
-            else:
-                shutil.copyfile(to_copy, dst_path)
+        return ["temporary", "copy"]
 
+    # TODO replace with entrypoint
     @staticmethod
     def _link_entity_files(linked_file: str) -> t.Sequence[str]:
         """Symlink the entity files attached to this entity.
 
         :param entity: Application
         """
-        if entity.files:
-            for to_link in entity.files.link:
-                dst_path = path.join(entity.path, path.basename(to_link))
-                symlink(to_link, dst_path)
+        return ["temporary"]
 
     # TODO to be refactored in ticket 723
     def _log_params(
