@@ -127,7 +127,6 @@ def mock_messages(
         # working set size > 1 has side-effects
         # only incurs cost when working set size has been exceeded
 
-        expected_device: t.Literal["cpu", "gpu"] = "cpu"
         channel_key = comm_channel_root_dir / f"{iteration_number}/channel.txt"
         callback_channel = FileSystemCommChannel(pathlib.Path(channel_key))
 
@@ -149,7 +148,6 @@ def mock_messages(
         request = MessageHandler.build_request(
             reply_channel=callback_channel.descriptor,
             model=message_model_key,
-            device=expected_device,
             inputs=[message_tensor_input_key],
             outputs=[message_tensor_output_key],
             custom_attributes=None,
