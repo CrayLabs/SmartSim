@@ -158,9 +158,17 @@ def build_reply(reply: InferenceReply) -> Response:
 def exception_handler(
     exc: Exception, func_descriptor: str, reply: InferenceReply
 ) -> None:
+    """
+    Logs exceptions and sets reply attributes without taking
+    down the WorkerManager.
+
+    :param exc: The exception to be logged
+    :param func_descriptor: Descriptor to help form error messages
+    :param reply: InferenceReply to modify
+    """
     logger.exception(
-        f"An error occurred while {func_descriptor}."
-        f"Exception type: {type(exc).__name__}."
+        f"An error occurred while {func_descriptor}.\n"
+        f"Exception type: {type(exc).__name__}.\n"
         f"Exception message: {str(exc)}"
     )
     reply.failed = True
