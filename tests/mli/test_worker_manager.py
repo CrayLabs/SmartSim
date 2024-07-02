@@ -36,10 +36,13 @@ import torch
 
 dragon = pytest.importorskip("dragon")
 
-from smartsim._core.mli.infrastructure.control.workermanager import (
-    EnvironmentConfigLoader,
-    WorkerManager,
-)
+try:
+    from smartsim._core.mli.infrastructure.control.workermanager import (
+        EnvironmentConfigLoader,
+        WorkerManager,
+    )
+except ImportError:
+    pass
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger

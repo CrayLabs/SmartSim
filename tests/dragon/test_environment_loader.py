@@ -32,16 +32,19 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
-import dragon.utils as du
-from dragon.channels import Channel
-from dragon.data.ddict.ddict import DDict
-from dragon.fli import DragonFLIError, FLInterface
-from mli.featurestore import MemoryFeatureStore
+try:
+    import dragon.utils as du
+    from dragon.channels import Channel
+    from dragon.data.ddict.ddict import DDict
+    from dragon.fli import DragonFLIError, FLInterface
+    from mli.featurestore import MemoryFeatureStore
 
-from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
-    DragonFeatureStore,
-)
+    from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
+    from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+        DragonFeatureStore,
+    )
+except ImportError:
+    pass
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
