@@ -32,10 +32,10 @@ from dataclasses import dataclass, field
 from ...database import FeatureStore
 from ...entity import Application, Ensemble, EntitySequence, FSNode, SmartSimEntity
 from ...error import SmartSimError
+from ...launchable.job import Job
 from ..config import CONFIG
 from ..utils import helpers as _helpers
 from ..utils import serialize as _serialize
-from ...launchable.job import Job
 
 _T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
@@ -55,9 +55,7 @@ class Manifest:
     can all be passed as arguments
     """
 
-    def __init__(
-        self, *args: t.Any
-    ) -> None:
+    def __init__(self, *args: t.Any) -> None:
         self._deployables = []
         for element in args:
             if isinstance(element, tuple):

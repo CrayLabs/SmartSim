@@ -236,7 +236,7 @@ class Experiment:
                                   signal is received.
         """
         start_manifest = Manifest(*args)
-        self._create_entity_dir(start_manifest)
+        self._generate(start_manifest)
         try:
             if summary:
                 self._launch_summary(start_manifest)
@@ -292,12 +292,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def generate(
+    def _generate(
         self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        tag: t.Optional[str] = None,
-        overwrite: bool = False,
-        verbose: bool = False,
+        manifest: Manifest,
     ) -> None:
         """Generate the file structure for an ``Experiment``
 
@@ -311,16 +308,10 @@ class Experiment:
 
         Instances of ``application``, ``Ensemble`` and ``FeatureStore``
         can all be passed as arguments to the generate method.
-
-        :param tag: tag used in `to_configure` generator files
-        :param overwrite: overwrite existing folders and contents
-        :param verbose: log parameter settings to std out
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
-            if tag:
-                generator.set_tag(tag)
-            generator.generate_experiment(*args)
+            generator = Generator(self.exp_path, manifest)
+            generator.generate_experiment()
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -569,25 +560,6 @@ class Experiment:
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
-
-    def _create_entity_dir(self, start_manifest: Manifest) -> None:
-        def create_entity_dir(
-            entity: t.Union[FeatureStore, Application, Ensemble]
-        ) -> None:
-            if not os.path.isdir(entity.path):
-                os.makedirs(entity.path)
-
-        for application in start_manifest.applications:
-            create_entity_dir(application)
-
-        for feature_store in start_manifest.fss:
-            create_entity_dir(feature_store)
-
-        for ensemble in start_manifest.ensembles:
-            create_entity_dir(ensemble)
-
-            for member in ensemble.applications:
-                create_entity_dir(member)
 
     def __str__(self) -> str:
         return self.name
