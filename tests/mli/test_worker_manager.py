@@ -69,7 +69,7 @@ from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 # The tests in this file belong to the dragon group
-pytestmark = pytest.mark.dragon_out
+pytestmark = pytest.mark.dragon
 
 
 def mock_work(worker_manager_queue: "mp.Queue[bytes]") -> None:

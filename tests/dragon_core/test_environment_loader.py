@@ -50,7 +50,7 @@ except ImportError as exc:
     pass
 
 # The tests in this file belong to the dragon group
-pytestmark = pytest.mark.dragon
+pytestmark = pytest.mark.dragon_out
 
 
 @pytest.mark.parametrize(
