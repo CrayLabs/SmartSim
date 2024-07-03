@@ -67,3 +67,10 @@ def test_build_reply(status, message):
     response = build_reply(reply)
     assert response.status == status
     assert response.message == message
+
+
+def test_build_reply_fails():
+    with pytest.raises(ValueError):
+        reply = InferenceReply()
+        reply.status_enum = "not a status enum"
+        response = build_reply(reply)
