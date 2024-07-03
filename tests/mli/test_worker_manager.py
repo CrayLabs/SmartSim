@@ -37,17 +37,25 @@ import torch
 dragon = pytest.importorskip("dragon")
 
 try:
-    from smartsim._core.mli.infrastructure.control.workermanager import (
-        EnvironmentConfigLoader,
-        WorkerManager,
-    )
+    from mli.channel import FileSystemCommChannel
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
-from mli.channel import FileSystemCommChannel
-from mli.featurestore import FileSystemFeatureStore
-from mli.worker import IntegratedTorchWorker
+try:
+    from mli.featurestore import FileSystemFeatureStore
+except ImportError as exc:
+    print(f"{__file__}: {exc}")
+    pass
+try:
+    from mli.worker import IntegratedTorchWorker
+except ImportError as exc:
+    print(f"{__file__}: {exc}")
+    pass
 
+from smartsim._core.mli.infrastructure.control.workermanager import (
+    EnvironmentConfigLoader,
+    WorkerManager,
+)
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
