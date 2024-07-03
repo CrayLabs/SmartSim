@@ -58,8 +58,9 @@ def setup_worker_manager(test_dir):
         comm_channel_type=FileSystemCommChannel,
     )
     tensor_key = MessageHandler.build_tensor_key("key")
+    model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
     request = MessageHandler.build_request(
-        b"channel", b"model", [tensor_key], [tensor_key], [], None
+        b"channel", model, [tensor_key], [tensor_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
 
