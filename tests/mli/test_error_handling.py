@@ -39,6 +39,9 @@ from .channel import FileSystemCommChannel
 from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
+# The tests in this file belong to the group_a group
+pytestmark = pytest.mark.group_a
+
 
 @pytest.fixture
 def setup_worker_manager(test_dir):

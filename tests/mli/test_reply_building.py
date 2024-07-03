@@ -32,6 +32,8 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
 )
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 
+# The tests in this file belong to the group_b group
+pytestmark = pytest.mark.group_b
 
 @pytest.mark.parametrize(
     "status, message",
