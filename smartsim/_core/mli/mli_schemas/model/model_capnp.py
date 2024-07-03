@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""This is an automatically generated stub for `data_references.capnp`."""
+"""This is an automatically generated stub for `model.capnp`."""
 
 import os
 
@@ -32,10 +32,7 @@ import capnp  # type: ignore
 
 capnp.remove_import_hook()
 here = os.path.dirname(os.path.abspath(__file__))
-module_file = os.path.abspath(os.path.join(here, "data_references.capnp"))
-ModelKey = capnp.load(module_file).ModelKey
-ModelKeyBuilder = ModelKey
-ModelKeyReader = ModelKey
-TensorKey = capnp.load(module_file).TensorKey
-TensorKeyBuilder = TensorKey
-TensorKeyReader = TensorKey
+module_file = os.path.abspath(os.path.join(here, "model.capnp"))
+Model = capnp.load(module_file).Model
+ModelBuilder = Model
+ModelReader = Model

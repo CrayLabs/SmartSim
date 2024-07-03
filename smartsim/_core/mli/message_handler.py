@@ -28,6 +28,7 @@ import typing as t
 import numpy as np
 
 from .mli_schemas.data import data_references_capnp
+from .mli_schemas.model import model_capnp
 from .mli_schemas.request import request_capnp
 from .mli_schemas.request.request_attributes import request_attributes_capnp
 from .mli_schemas.response import response_capnp
@@ -113,6 +114,25 @@ class MessageHandler:
         return tensor_key
 
     @staticmethod
+    def build_model(data: bytes, name: str, version: str) -> model_capnp.Model:
+        """
+        Builds a new Model message with the provided data, name, and version.
+
+        :param data: Model data
+        :param name: Model name
+        :param version: Model version
+        :raises ValueError: if building fails
+        """
+        try:
+            model = model_capnp.Model.new_message()
+            model.data = data
+            model.name = name
+            model.version = version
+        except Exception as e:
+            raise ValueError("Error building model.") from e
+        return model
+
+    @staticmethod
     def build_model_key(key: str) -> data_references_capnp.ModelKey:
         """
         Builds a new ModelKey message with the provided key.
@@ -187,7 +207,7 @@ class MessageHandler:
     @staticmethod
     def _assign_model(
         request: request_capnp.Request,
-        model: t.Union[data_references_capnp.ModelKey, t.ByteString],
+        model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
     ) -> None:
         """
         Assigns a model to the supplied request.
@@ -197,16 +217,20 @@ class MessageHandler:
         :raises ValueError: if building fails
         """
         try:
-            if isinstance(model, bytes):
-                request.model.modelData = model
+            class_name = model.schema.node.displayName.split(":")[-1]  # type: ignore
+            if class_name == "Model":
+                request.model.data = model  # type: ignore
+            elif class_name == "ModelKey":
+                request.model.key = model  # type: ignore
             else:
-                request.model.modelKey = model  # type: ignore
+                raise ValueError("""Invalid custom attribute class name.
+                        Expected 'Model' or 'ModelKey'.""")
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
     @staticmethod
     def _assign_reply_channel(
-        request: request_capnp.Request, reply_channel: t.ByteString
+        request: request_capnp.Request, reply_channel: bytes
     ) -> None:
         """
         Assigns a reply channel to the supplied request.
@@ -239,9 +263,9 @@ class MessageHandler:
                 display_name = inputs[0].schema.node.displayName  # type: ignore
                 input_class_name = display_name.split(":")[-1]
                 if input_class_name == "Tensor":
-                    request.input.inputData = inputs  # type: ignore
+                    request.input.data = inputs  # type: ignore
                 elif input_class_name == "TensorKey":
-                    request.input.inputKeys = inputs  # type: ignore
+                    request.input.keys = inputs  # type: ignore
                 else:
                     raise ValueError(
                         "Invalid input class name. Expected 'Tensor' or 'TensorKey'."
@@ -324,8 +348,8 @@ class MessageHandler:
 
     @staticmethod
     def build_request(
-        reply_channel: t.ByteString,
-        model: t.Union[data_references_capnp.ModelKey, t.ByteString],
+        reply_channel: bytes,
+        model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
         inputs: t.Union[
             t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
         ],
@@ -357,7 +381,7 @@ class MessageHandler:
         return request
 
     @staticmethod
-    def serialize_request(request: request_capnp.RequestBuilder) -> t.ByteString:
+    def serialize_request(request: request_capnp.RequestBuilder) -> bytes:
         """
         Serializes a built request message.
 
@@ -366,7 +390,7 @@ class MessageHandler:
         return request.to_bytes()
 
     @staticmethod
-    def deserialize_request(request_bytes: t.ByteString) -> request_capnp.Request:
+    def deserialize_request(request_bytes: bytes) -> request_capnp.Request:
         """
         Deserializes a serialized request message.
 
@@ -499,14 +523,14 @@ class MessageHandler:
         return response
 
     @staticmethod
-    def serialize_response(response: response_capnp.ResponseBuilder) -> t.ByteString:
+    def serialize_response(response: response_capnp.ResponseBuilder) -> bytes:
         """
         Serializes a built response message.
         """
         return response.to_bytes()
 
     @staticmethod
-    def deserialize_response(response_bytes: t.ByteString) -> response_capnp.Response:
+    def deserialize_response(response_bytes: bytes) -> response_capnp.Response:
         """
         Deserializes a serialized response message.
         """
