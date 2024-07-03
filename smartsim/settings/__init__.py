@@ -32,6 +32,7 @@ from .lsfSettings import BsubBatchSettings, JsrunSettings
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
 from .palsSettings import PalsMpiexecSettings
 from .pbsSettings import QsubBatchSettings
+from .sgeSettings import SgeQsubBatchSettings
 from .slurmSettings import SbatchSettings, SrunSettings
 
 __all__ = [
@@ -45,6 +46,7 @@ __all__ = [
     "RunSettings",
     "SettingsBase",
     "SbatchSettings",
+    "SgeQsubBatchSettings",
     "SrunSettings",
     "PalsMpiexecSettings",
     "DragonRunSettings",

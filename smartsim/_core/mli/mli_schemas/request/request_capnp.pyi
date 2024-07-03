@@ -1,3 +1,29 @@
+# BSD 2-Clause License
+
+# Copyright (c) 2021-2024, Hewlett Packard Enterprise
+# All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """This is an automatically generated stub for `request.capnp`."""
 
 # mypy: ignore-errors
@@ -16,6 +42,7 @@ from ..data.data_references_capnp import (
     TensorKeyBuilder,
     TensorKeyReader,
 )
+from ..model.model_capnp import Model, ModelBuilder, ModelReader
 from ..tensor.tensor_capnp import (
     OutputDescriptor,
     OutputDescriptorBuilder,
@@ -32,8 +59,6 @@ from .request_attributes.request_attributes_capnp import (
     TorchRequestAttributesBuilder,
     TorchRequestAttributesReader,
 )
-
-Device = Literal["cpu", "gpu", "auto"]
 
 class ChannelDescriptor:
     reply: bytes
@@ -72,10 +97,13 @@ class ChannelDescriptorBuilder(ChannelDescriptor):
 
 class Request:
     class Model:
-        modelKey: ModelKey | ModelKeyBuilder | ModelKeyReader
-        modelData: bytes
-        def which(self) -> Literal["modelKey", "modelData"]: ...
-        def init(self, name: Literal["modelKey"]) -> ModelKey: ...
+        key: ModelKey | ModelKeyBuilder | ModelKeyReader
+        data: Model | ModelBuilder | ModelReader
+        def which(self) -> Literal["key", "data"]: ...
+        @overload
+        def init(self, name: Literal["key"]) -> ModelKey: ...
+        @overload
+        def init(self, name: Literal["data"]) -> Model: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -94,11 +122,13 @@ class Request:
         def to_dict(self) -> dict: ...
 
     class ModelReader(Request.Model):
-        modelKey: ModelKeyReader
+        key: ModelKeyReader
+        data: ModelReader
         def as_builder(self) -> Request.ModelBuilder: ...
 
     class ModelBuilder(Request.Model):
-        modelKey: ModelKey | ModelKeyBuilder | ModelKeyReader
+        key: ModelKey | ModelKeyBuilder | ModelKeyReader
+        data: Model | ModelBuilder | ModelReader
         @staticmethod
         def from_dict(dictionary: dict) -> Request.ModelBuilder: ...
         def copy(self) -> Request.ModelBuilder: ...
@@ -112,9 +142,9 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
 
     class Input:
-        inputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        inputData: Sequence[Tensor | TensorBuilder | TensorReader]
-        def which(self) -> Literal["inputKeys", "inputData"]: ...
+        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        data: Sequence[Tensor | TensorBuilder | TensorReader]
+        def which(self) -> Literal["keys", "data"]: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -133,13 +163,13 @@ class Request:
         def to_dict(self) -> dict: ...
 
     class InputReader(Request.Input):
-        inputKeys: Sequence[TensorKeyReader]
-        inputData: Sequence[TensorReader]
+        keys: Sequence[TensorKeyReader]
+        data: Sequence[TensorReader]
         def as_builder(self) -> Request.InputBuilder: ...
 
     class InputBuilder(Request.Input):
-        inputKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        inputData: Sequence[Tensor | TensorBuilder | TensorReader]
+        keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
+        data: Sequence[Tensor | TensorBuilder | TensorReader]
         @staticmethod
         def from_dict(dictionary: dict) -> Request.InputBuilder: ...
         def copy(self) -> Request.InputBuilder: ...
@@ -215,7 +245,6 @@ class Request:
         def write_packed(file: BufferedWriter) -> None: ...
     replyChannel: ChannelDescriptor | ChannelDescriptorBuilder | ChannelDescriptorReader
     model: Request.Model | Request.ModelBuilder | Request.ModelReader
-    device: Device
     input: Request.Input | Request.InputBuilder | Request.InputReader
     output: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
     outputDescriptors: Sequence[
