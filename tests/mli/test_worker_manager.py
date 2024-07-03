@@ -34,8 +34,11 @@ import typing as t
 import pytest
 import torch
 
-dragon = pytest.importorskip("dragon")
-
+try:
+    dragon = pytest.importorskip("dragon")
+except ImportError as exc:
+    print(f"{__file__}: {exc}")
+    pass
 try:
     from mli.channel import FileSystemCommChannel
 except ImportError as exc:
@@ -52,10 +55,14 @@ except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
 
-from smartsim._core.mli.infrastructure.control.workermanager import (
-    EnvironmentConfigLoader,
-    WorkerManager,
-)
+try:
+    from smartsim._core.mli.infrastructure.control.workermanager import (
+        EnvironmentConfigLoader,
+        WorkerManager,
+    )
+except ImportError as exc:
+    print(f"{__file__}: {exc}")
+    pass
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger

@@ -46,7 +46,7 @@ try:
         DragonFeatureStore,
     )
 except ImportError as exc:
-    print(exc)
+    print(f"{__file__}: {exc}")
     pass
 
 # The tests in this file belong to the dragon group
