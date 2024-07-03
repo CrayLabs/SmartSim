@@ -149,6 +149,7 @@ def test_parser():
     args = cmd.split()
 
     ns = parser.parse_args(args)
+    print(ns)
 
     assert ns.exp_dir == test_dir
     assert ns.frequency == test_freq

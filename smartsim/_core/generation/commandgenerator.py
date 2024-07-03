@@ -28,6 +28,31 @@ import typing as t
 from os import path
 
 
+# ##
+
+# # module -- named function things?
+# # open file locally, 
+# # open up module and run that module 
+
+# - each of these going 
+
+# one single entry point file 
+# with a main function with an arg parser (takes in at least one arg (the op), all the other args for that function)
+
+# move_op, arg1, arg2 
+
+# - no smartsim imports 
+
+# core/entrypoints/file_operations.py
+
+
+
+
+
+
+ 
+
+
 def move_op(to_move: str, dest_file: str):
     """Write a python script to moves a file
 
@@ -84,7 +109,9 @@ else:
 """
 
 
-def symlink_op(to_link: str, entity_path: str):
+
+
+def symlink_op(source: str, dest: str):
     """
     Write a python script to make the to_link path a symlink pointing to the entity path.
 
@@ -92,17 +119,35 @@ def symlink_op(to_link: str, entity_path: str):
     :param entity_path:
     :return: string of python code to perform operation that can be executed
     """
-    return rf"""import os
-from os import path
-dest_path = path.join('{entity_path}', path.basename('{to_link}'))
+   # return rf"""import os
+    import os
 
-os.symlink('{to_link}', dest_path)
-  """
 
+    os.symlink(source, dest)
+ #"""
+
+
+    # dest_path = path.join('{entity_path}', path.basename('{to_link}'))
+    # os.symlink('{to_link}', dest_path)
+
+
+
+
+
+
+
+
+
+# TODO: needs a destination path  -- is there a dest file? 
+
+# TODO: make sure im not missing anything 
+# TODO: application writer - should be captured in the entry point
 
 def configure_op(
-    to_configure: str, params: t.Dict[str, str], tag_delimiter: t.Optional[str] = None
+    to_configure: str, dest: t.Optional[str], params: t.Dict[str, str], tag_delimiter: str = ';'
 ):
+    
+
     """Write a python script to set, search and replace the tagged parameters for the configure operation
     within tagged files attached to an entity.
 
@@ -112,61 +157,118 @@ def configure_op(
     :return: string of python code to perform operation that can be executed
     """
 
-    return rf"""import re
-import collections
+    import re
+    import collections
 
-def _get_prev_value(tagged_line: str) -> str:
-    split_tag = tagged_line.split(tag_delimiter)
-    return split_tag[1]
+    def _get_prev_value(tagged_line: str) -> str:
+        split_tag = tagged_line.split(tag_delimiter)
+        return split_tag[1]
 
-def _is_ensemble_spec(
-    tagged_line: str, model_params: dict
-  ) -> bool:
-      split_tag = tagged_line.split(tag_delimiter)
-      prev_val = split_tag[1]
-      if prev_val in model_params.keys():
-          return True
-      return False
+    def _is_ensemble_spec(
+        tagged_line: str, model_params: dict
+    ) -> bool:
+        split_tag = tagged_line.split(tag_delimiter)
+        prev_val = split_tag[1]
+        if prev_val in model_params.keys():
+            return True
+        return False
 
-edited = []
-used_params = {{}}
-params = {params}
+    edited = []
+    used_params = {}
+   # params = params
 
-tag_delimiter = '{tag_delimiter}'
+    tag_delimiter = tag_delimiter
 
-if tag_delimiter == 'False':
-  tag_delimiter = ';'
+    regex = "".join(("(", tag_delimiter, ".+", tag_delimiter, ")"))
 
-regex = "".join(("(", tag_delimiter, ".+", tag_delimiter, ")"))
+    # Set the lines to iterate over
+    with open(to_configure,'r+', encoding='utf-8') as file_stream:
+        lines = file_stream.readlines()
 
-# Set the lines to iterate over
-with open('{to_configure}','r+', encoding='utf-8') as file_stream:
-  lines = file_stream.readlines()
+    unused_tags = collections.defaultdict(list)
 
-unused_tags = collections.defaultdict(list)
+    # read lines in file
+    for i, line in enumerate(lines, 1):
+        while search := re.search(regex, line):
+            tagged_line = search.group(0)
+            previous_value = _get_prev_value(tagged_line)
+            if _is_ensemble_spec(tagged_line, params):
+                new_val = str(params[previous_value])
+                line = re.sub(regex, new_val, line, 1)
+                used_params[previous_value] = new_val
 
-# read lines in file
-for i, line in enumerate(lines, 1):
-    while search := re.search(regex, line):
-        tagged_line = search.group(0)
-        previous_value = _get_prev_value(tagged_line)
-        if _is_ensemble_spec(tagged_line, params):
-            new_val = str(params[previous_value])
-            line = re.sub(regex, new_val, line, 1)
-            used_params[previous_value] = new_val
+            # if a tag_delimiter is found but is not in this model's configurations
+            # put in placeholder value
+            else:
+                tag_delimiter_ = tagged_line.split(tag_delimiter)[1]
+                unused_tags[tag_delimiter_].append(i)
+                line = re.sub(regex, previous_value, line)
+                break
+        edited.append(line)
 
-        # if a tag_delimiter is found but is not in this model's configurations
-        # put in placeholder value
-        else:
-            tag_delimiter_ = tagged_line.split(tag_delimiter)[1]
-            unused_tags[tag_delimiter_].append(i)
-            line = re.sub(regex, previous_value, line)
-            break
-    edited.append(line)
+    lines = edited
 
-lines = edited
+    # write to file 
+    if dest:
+        file_stream = dest
 
-with open('{to_configure}', "w+", encoding="utf-8") as file_stream:
-    for line in lines:
-        file_stream.write(line)
-  """
+    with open(to_configure, "w+", encoding="utf-8") as file_stream:
+        for line in lines:
+            file_stream.write(line)
+
+
+#     return rf"""import re
+# import collections
+
+# def _get_prev_value(tagged_line: str) -> str:
+#     split_tag = tagged_line.split(tag_delimiter)
+#     return split_tag[1]
+
+# def _is_ensemble_spec(
+#     tagged_line: str, model_params: dict
+#   ) -> bool:
+#       split_tag = tagged_line.split(tag_delimiter)
+#       prev_val = split_tag[1]
+#       if prev_val in model_params.keys():
+#           return True
+#       return False
+
+# edited = []
+# used_params = {{}}
+# params = {params}
+
+# tag_delimiter = '{tag_delimiter}'
+
+# regex = "".join(("(", tag_delimiter, ".+", tag_delimiter, ")"))
+
+# # Set the lines to iterate over
+# with open('{to_configure}','r+', encoding='utf-8') as file_stream:
+#   lines = file_stream.readlines()
+
+# unused_tags = collections.defaultdict(list)
+
+# # read lines in file
+# for i, line in enumerate(lines, 1):
+#     while search := re.search(regex, line):
+#         tagged_line = search.group(0)
+#         previous_value = _get_prev_value(tagged_line)
+#         if _is_ensemble_spec(tagged_line, params):
+#             new_val = str(params[previous_value])
+#             line = re.sub(regex, new_val, line, 1)
+#             used_params[previous_value] = new_val
+
+#         # if a tag_delimiter is found but is not in this model's configurations
+#         # put in placeholder value
+#         else:
+#             tag_delimiter_ = tagged_line.split(tag_delimiter)[1]
+#             unused_tags[tag_delimiter_].append(i)
+#             line = re.sub(regex, previous_value, line)
+#             break
+#     edited.append(line)
+
+# lines = edited
+
+# with open('{to_configure}', "w+", encoding="utf-8") as file_stream:
+#     for line in lines:
+#         file_stream.write(line)
+#   """

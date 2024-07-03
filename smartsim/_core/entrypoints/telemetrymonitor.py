@@ -148,7 +148,8 @@ if __name__ == "__main__":
     """
     os.environ["PYTHONUNBUFFERED"] = "1"
 
-    args = parse_arguments()
+    args = parse_arguments() #JPNOTE get from here  - pos args, first one in, the rest will get fed into the rest of the functions
+    #sys args? - some number of strings that come after
     configure_logger(logger, args.log_level, args.exp_dir)
 
     telemetry_monitor = TelemetryMonitor(args)

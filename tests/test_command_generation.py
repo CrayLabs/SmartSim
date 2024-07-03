@@ -27,8 +27,7 @@
 import filecmp
 import os
 import pathlib
-import subprocess
-import sys
+
 import typing as t
 from distutils import dir_util
 from glob import glob
@@ -37,14 +36,41 @@ from os import path as osp
 import pytest
 
 from smartsim._core.generation import commandgenerator
+from smartsim._core.entrypoints import command_generator
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_output_root = os.path.join(test_path, "tests", "test_output")
 
 
-def test_symlink_entity():
+def test_symlink_files():
     """
-    Test the execution of the python script created by symlink_op
+    Test operation to symlink files
+    """
+
+    source = pathlib.Path(test_output_root) / "sym_source"
+    os.mkdir(source)
+    source_file = pathlib.Path(source) / "sym_source.txt"
+    with open(source_file, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("")
+    # entity_path to be the dest dir
+    entity_path = os.path.join(test_output_root, "entity_name")
+
+    command_generator.symlink_op(source_file, entity_path)
+
+    link = pathlib.Path(test_output_root) / "entity_name"
+    # Assert the two files are the same file
+    assert link.is_symlink()
+    assert os.readlink(link) == str(source_file)
+    
+    # Clean up the test directory
+    os.unlink(link)
+    os.remove(pathlib.Path(source) / "sym_source.txt")
+    os.rmdir(pathlib.Path(test_output_root) / "sym_source") 
+
+
+def test_symlink_dir():
+    """
+    Test operation to symlink directories
     """
 
     source = pathlib.Path(test_output_root) / "sym_source"
@@ -52,28 +78,21 @@ def test_symlink_entity():
 
     # entity_path to be the dest dir
     entity_path = os.path.join(test_output_root, "entity_name")
-    os.mkdir(entity_path)
 
-    target = pathlib.Path(test_output_root) / "entity_name" / "sym_source"
+    command_generator.symlink_op(source, entity_path)
 
-    # # Build the command
-    cmd = commandgenerator.symlink_op(source, entity_path)
-    # # execute the command
-    subprocess.run([sys.executable, "-c", cmd])
-
-    # # Assert the two files are the same file
-    assert target.is_symlink()
-    assert os.readlink(target) == str(source)
+    link = pathlib.Path(test_output_root) / "entity_name"
+    # Assert the two files are the same file
+    assert link.is_symlink()
+    assert os.readlink(link) == str(source)
 
     # Clean up the test directory
-    os.unlink(target)
-    os.rmdir(pathlib.Path(test_output_root) / "entity_name")
-    os.rmdir(pathlib.Path(test_output_root) / "sym_source")
+    os.unlink(link)
+    os.rmdir(pathlib.Path(test_output_root) / "sym_source") 
 
 
 def test_copy_op_file():
-    """Test the execution of the python script created by copy_op
-    Test the operation to copy the content of the source file to the destination path
+    """Test the operation to copy the content of the source file to the destination path
     with an empty file of the same name already in the directory"""
 
     to_copy = os.path.join(test_output_root, "to_copy")
@@ -91,8 +110,7 @@ def test_copy_op_file():
         dummy_file.write("")
 
     # Execute copy
-    cmd = commandgenerator.copy_op(source_file, entity_path)
-    subprocess.run([sys.executable, "-c", cmd])
+    command_generator.copy_op(source_file, dest_file)
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -103,8 +121,7 @@ def test_copy_op_file():
 
 
 def test_copy_op_dirs():
-    """Test the execution of the python script created by copy_op
-    Test the oeprations that copies an entire directory tree source to a new location destination
+    """Test the oeprations that copies an entire directory tree source to a new location destination
     """
 
     to_copy = os.path.join(test_output_root, "to_copy")
@@ -124,8 +141,8 @@ def test_copy_op_dirs():
     os.mkdir(entity_path)
     # copy those files?
 
-    cmd = commandgenerator.copy_op(to_copy, entity_path)
-    subprocess.run([sys.executable, "-c", cmd])
+    cmd = command_generator.copy_op(to_copy, entity_path)
+    #subprocess.run([sys.executable, "-c", cmd])
 
     # Clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -137,8 +154,7 @@ def test_copy_op_dirs():
 
 
 def test_copy_op(fileutils):
-    """Test the execution of the python script created by copy_op
-    Test the operation to copy the content of the source file to the destination file.
+    """Test the operation to copy the content of the source file to the destination file.
     """
 
     # make a test file with some contents
@@ -155,8 +171,8 @@ def test_copy_op(fileutils):
     with open(to_copy_file, "r", encoding="utf-8") as dummy_file:
         assert dummy_file.read() == "dummy"
 
-    cmd = commandgenerator.copy_op(to_copy_file, entity_path)
-    subprocess.run([sys.executable, "-c", cmd])
+    cmd = command_generator.copy_op(to_copy_file, entity_path)
+    #subprocess.run([sys.executable, "-c", cmd])
 
     entity_file = os.path.join(test_output_root, "entity_name", "to_copy.txt")
     # asser that the entity_path now has the source file with the correct contents
@@ -171,8 +187,7 @@ def test_copy_op(fileutils):
 
 
 def test_copy_op_bad_source_file():
-    """Test the execution of the python script created by copy_op
-    Test that a FileNotFoundError is raised when there is a bad source file
+    """Test that a FileNotFoundError is raised when there is a bad source file
     """
 
     to_copy = os.path.join(test_output_root, "to_copy")
@@ -182,7 +197,7 @@ def test_copy_op_bad_source_file():
 
     # Execute copy
     with pytest.raises(FileNotFoundError) as ex:
-        commandgenerator.copy_op("/not/a/real/path", entity_path)
+        command_generator.copy_op("/not/a/real/path", entity_path)
     assert "is not a valid path" in ex.value.args[0]
     # clean up
     os.rmdir(pathlib.Path(test_output_root) / "to_copy")
@@ -190,8 +205,8 @@ def test_copy_op_bad_source_file():
 
 
 def test_copy_op_bad_dest_path():
-    """Test the execution of the python script created by copy_op.
-    Test that a FileNotFoundError is raised when there is a bad destination file."""
+    """Test that a FileNotFoundError is raised when there is a bad destination file.
+    """
 
     to_copy = os.path.join(test_output_root, "to_copy")
     os.mkdir(to_copy)
@@ -201,7 +216,7 @@ def test_copy_op_bad_dest_path():
     os.mkdir(entity_path)
 
     with pytest.raises(FileNotFoundError) as ex:
-        commandgenerator.copy_op(source_file, "/not/a/real/path")
+        command_generator.copy_op(source_file, "/not/a/real/path")
     assert "is not a valid path" in ex.value.args[0]
 
     # clean up
@@ -210,8 +225,7 @@ def test_copy_op_bad_dest_path():
 
 
 def test_move_op():
-    """Test the execution of the python script created by move_op.
-    Test the operation to move a file"""
+    """Test the operation to move a file"""
 
     source_dir = os.path.join(test_output_root, "from_here")
     os.mkdir(source_dir)
@@ -228,8 +242,8 @@ def test_move_op():
     with open(source_file, "r", encoding="utf-8") as dummy_file:
         assert dummy_file.read() == "dummy"
 
-    cmd = commandgenerator.move_op(source_file, dest_file)
-    subprocess.run([sys.executable, "-c", cmd])
+    cmd = command_generator.move_op(source_file, dest_file)
+    #subprocess.run([sys.executable, "-c", cmd])
 
     # Assert that the move was successful
     assert not osp.exists(source_file)
@@ -243,42 +257,10 @@ def test_move_op():
     os.rmdir(dest_dir)
 
 
-def test_delete_op():
-    """Test the execution of the python script created by delete_op.
-    Test the operation to delete a file"""
-
-    # Make a test file with dummy text
-    to_del = pathlib.Path(test_output_root) / "app_del.txt"
-    with open(to_del, "w+", encoding="utf-8") as dummy_file:
-        dummy_file.write("dummy")
-
-    assert osp.exists(to_del)
-    with open(to_del, "r", encoding="utf-8") as dummy_file:
-        assert dummy_file.read() == "dummy"
-
-    cmd = commandgenerator.delete_op(to_del)
-    subprocess.run([sys.executable, "-c", cmd])
-
-    # Assert file has been deleted
-    assert not osp.exists(to_del)
-
-
-def test_delete_op_bad_path():
-    """Test the execution of the python script created by delete_op.
-    Test that FileNotFoundError is raised when a bad path is given to the
-    soperation to delete a file"""
-
-    test_output_root = os.path.join(test_path, "tests", "test_output")
-    to_del = pathlib.Path(test_output_root) / "not_real.txt"
-
-    with pytest.raises(FileNotFoundError) as ex:
-        commandgenerator.delete_op(to_del)
-    assert "is not a valid path" in ex.value.args[0]
 
 
 def test_configure_op(test_dir, fileutils):
-    """Test the execution of the python script created by configure_op.
-    Test configure param operations with a tag parameter given"""
+    """Test configure param operations with a tag parameter given"""
 
     # the param dict for configure operations
     param_dict = {
@@ -304,8 +286,8 @@ def test_configure_op(test_dir, fileutils):
 
     # Run configure op on test files
     for tagged_file in tagged_files:
-        cmd = commandgenerator.configure_op(tagged_file, param_dict, tag)
-        subprocess.run([sys.executable, "-c", cmd])
+        cmd = command_generator.configure_op(tagged_file,dest=tagged_file, params=param_dict,tag_delimiter=tag)
+        #subprocess.run([sys.executable, "-c", cmd])
 
     # check that files and correct files are the same
     for written, correct in zip(tagged_files, correct_files):
@@ -313,8 +295,7 @@ def test_configure_op(test_dir, fileutils):
 
 
 def test_configure_op_no_tag(test_dir, fileutils):
-    """Test the execution of the python script created by configure_op.
-    Test configure param operations with no tag parameter given"""
+    """Test configure param operations with no tag parameter given"""
 
     # the param dict for configure operations
     param_dict = {
@@ -339,9 +320,242 @@ def test_configure_op_no_tag(test_dir, fileutils):
 
     # Run configure op on test files
     for tagged_file in tagged_files:
-        cmd = commandgenerator.configure_op(tagged_file, param_dict, False)
-        subprocess.run([sys.executable, "-c", cmd])
+        cmd = command_generator.configure_op(tagged_file,dest=None, params=param_dict)
+       # subprocess.run([sys.executable, "-c", cmd])
 
     # check that files and correct files are the same
     for written, correct in zip(tagged_files, correct_files):
         assert filecmp.cmp(written, correct)
+
+def test_delete_op():
+    """Test the operation to delete a file"""
+
+    # Make a test file with dummy text
+    to_del = pathlib.Path(test_output_root) / "app_del.txt"
+    with open(to_del, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy")
+
+    assert osp.exists(to_del)
+    with open(to_del, "r", encoding="utf-8") as dummy_file:
+        assert dummy_file.read() == "dummy"
+
+    cmd = command_generator.delete_op(to_del)
+    #subprocess.run([sys.executable, "-c", cmd])
+
+    # Assert file has been deleted
+    assert not osp.exists(to_del)
+
+
+def test_delete_op_bad_path():
+    """Test that FileNotFoundError is raised when a bad path is given to the
+    soperation to delete a file"""
+
+    test_output_root = os.path.join(test_path, "tests", "test_output")
+    to_del = pathlib.Path(test_output_root) / "not_real.txt"
+
+    with pytest.raises(FileNotFoundError) as ex:
+        command_generator.delete_op(to_del)
+    assert "is not a valid path" in ex.value.args[0]
+
+
+from smartsim._core.entrypoints.telemetrymonitor import get_parser
+from smartsim._core.entrypoints.command_generator import get_parser 
+
+def test_parser_remove():
+    """Test that the parser succeeds when receiving expected args"""
+    
+    
+    parser = get_parser()
+
+    # Make a test file with dummy text
+    to_remove = pathlib.Path(test_output_root) / "app_del.txt"
+    with open(to_remove, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy")
+
+    # parser.add_argument('integers', metavar='N', type=int, nargs='+',
+    #                 help='an integer for the accumulator')
+    # parser.add_argument('--sum', dest='accumulate', action='store_const',
+    #                 const=sum, default=max,
+    #                 help='sum the integers (default: find the max)')
+
+    #args = parser.parse_args()
+
+
+
+   # test_dir = "/foo/bar"
+   # test_freq = 123
+
+   
+
+   # cmd = f"-exp_dir {test_dir} -frequency {test_freq}"
+    cmd = f"_core/entrypoints/file_operations.py remove {to_remove}"
+    args = cmd.split()
+
+    print(args)
+
+    #ns = parser.parse_args(args)
+
+   # assert ns.exp_dir == test_dir
+   # assert ns.frequency == test_freq
+
+   #assert not osp.exists(to_del)
+
+
+
+ALL_ARGS = {"-exp_dir", "-frequency"}
+
+@pytest.mark.parametrize(
+    ["cmd", "missing"],
+    [
+        pytest.param("", {"-exp_dir", "-frequency"}, id="no args"),
+        pytest.param("-exp_dir /foo/bar", {"-frequency"}, id="no freq"),
+        pytest.param("-frequency 123", {"-exp_dir"}, id="no dir"),
+    ],
+)
+
+def test_parser_reqd_args(capsys, cmd, missing):
+    """Test that the parser reports any missing required arguments"""
+    parser = get_parser()
+
+    args = cmd.split()
+
+    captured = capsys.readouterr()  # throw away existing output
+    with pytest.raises(SystemExit) as ex:
+        ns = parser.parse_args(args)
+
+    captured = capsys.readouterr()
+    assert "the following arguments are required" in captured.err
+    err_desc = captured.err.split("the following arguments are required:")[-1]
+    for arg in missing:
+        assert arg in err_desc
+
+    expected = ALL_ARGS - missing
+    for exp in expected:
+        assert exp not in err_desc
+
+
+def test_parser():
+    """Test that the parser succeeds when receiving expected args"""
+    parser = get_parser()
+
+    test_dir = "/foo/bar"
+    test_freq = 123
+
+    cmd = f"-exp_dir {test_dir} -frequency {test_freq}"
+    args = cmd.split()
+
+    ns = parser.parse_args(args)
+    print(ns)
+
+    assert ns.exp_dir == test_dir
+    assert ns.frequency == test_freq
+
+
+
+
+
+def test_parser_move():
+    """Test that the parser succeeds when receiving expected args"""
+    parser = get_parser()
+
+
+    src_path = "/absolute/file/src/path"
+    dest_path = "/absolute/file/dest/path"
+
+    cmd = f"move {src_path} {dest_path}"    # must be absolute path
+    # python 
+    args = cmd.split()
+    print(args)
+    ns = parser.parse_args(args)
+    print(ns)
+
+    assert ns.src_path == src_path
+    assert ns.dest_path == dest_path
+
+def test_parser_remove():
+    """Test that the parser succeeds when receiving expected args"""
+    parser = get_parser()
+
+    file_path = "/absolute/file/path"
+    cmd = f"remove {file_path}"
+
+    args = cmd.split()
+    ns = parser.parse_args(args)
+    assert ns.to_remove == file_path
+
+def test_parser_symlink():
+    """Test that the parser succeeds when receiving expected args"""
+    parser = get_parser()
+
+    src_path = "/absolute/file/src/path"
+    dest_path = "/absolute/file/dest/path"
+    cmd = f"symlink {src_path} {dest_path}"
+
+    args = cmd.split()
+
+    ns = parser.parse_args(args)
+
+    assert ns.source_path == src_path
+    assert ns.dest_path == dest_path
+
+def test_parser_copy():
+    """Test that the parser succeeds when receiving expected args"""
+    parser = get_parser()
+
+    src_path = "/absolute/file/src/path"
+    dest_path = "/absolute/file/dest/path"
+
+    cmd = f"copy {src_path} {dest_path}"    # must be absolute path
+    # python 
+    args = cmd.split()
+
+    ns = parser.parse_args(args)
+    print(ns)
+
+    assert ns.source_path == src_path
+    assert ns.dest_path == dest_path
+
+import json
+
+def test_parser_configure():
+    """Test that the parser succeeds when receiving expected args"""
+    parser = get_parser()
+
+    src_path = "/absolute/file/src/path"
+    dest_path = "/absolute/file/dest/path"
+    tag_delimiter = ";"
+    params = '{"5":10}'
+    
+#     '{"5": 10}'
+
+#     >>>
+# {u'value1': u'key1'}
+
+    cmd = f"configure {src_path} {dest_path} {tag_delimiter} {params}"    # must be absolute path
+    # python 
+    args = cmd.split()
+
+    ns = parser.parse_args(args)
+    print(ns)
+
+
+#parser.add_argument('-m', '--my-dict', type=str)
+#args = parser.parse_args()
+    print("HIHIHI")
+#import json
+    my_dictionary = json.loads(ns.param_dict)
+    print(my_dictionary)
+    print("is thre a type",type(my_dictionary))
+
+
+    assert ns.source_path == src_path
+    assert ns.dest_path == dest_path
+    assert ns.tag_delimiter == tag_delimiter
+    assert ns.param_dict == params
+
+
+def test_command_generator_entrypoint():
+    ...
+    parser = get_parser()
+ 
+   # from smartsim._core.generation import commandgenerator
