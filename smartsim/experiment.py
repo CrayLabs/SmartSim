@@ -574,8 +574,6 @@ class Experiment:
         """
         launcher_list = "\n".join(str(launcher) for launcher in self._active_launchers)
         summary = textwrap.dedent(f"""\
-
-
             === Launch Summary ===
             Experiment: {self.name}
             Experiment Path: {self.exp_path}
@@ -593,9 +591,7 @@ class Experiment:
         else:
             summary += "Feature Store Status: inactive\n"
 
-        summary += f"\n{str(manifest)}"
-
-        logger.info(summary)
+        logger.info(f"\n\n{summary}\n{manifest}")
 
     def _create_entity_dir(self, start_manifest: Manifest) -> None:
         def create_entity_dir(
