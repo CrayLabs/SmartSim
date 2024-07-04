@@ -401,7 +401,7 @@ class DragonBackend:
         """
         if self._infra_ddict is None:
             logger.info("Creating DDict")
-            self._infra_ddict = dragon_ddict.DDict()  # todo: parametrize
+            self._infra_ddict = dragon_ddict.DDict(n_nodes=len(self._hosts), total_mem=len(self._hosts)*1024**3)  # todo: parametrize
             logger.info("Created DDict")
             self._infra_ddict["creation"] = str(time.time())
             logger.info(self._infra_ddict["creation"])

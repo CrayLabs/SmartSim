@@ -32,6 +32,18 @@ from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 
+import sys
+
+# isort: off
+try:
+    import dragon
+    from dragon.utils import b64decode
+except ImportError as exc:
+    if not "pytest" in sys.modules:
+        raise exc from None
+
+# isort: on
+
 logger = get_logger(__name__)
 
 
@@ -167,7 +179,7 @@ class MachineLearningWorkerCore:
             )
 
         try:
-            raw_bytes = feature_store[request.model_key]
+            raw_bytes = b64decode(feature_store[request.model_key])
             return FetchModelResult(raw_bytes)
         except FileNotFoundError as ex:
             logger.exception(ex)

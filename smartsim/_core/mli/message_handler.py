@@ -200,7 +200,9 @@ class MessageHandler:
             if isinstance(model, bytes):
                 request.model.modelData = model
             else:
-                request.model.modelKey = model  # type: ignore
+                model_key = data_references_capnp.ModelKey()
+                model_key.key = model
+                request.model.modelKey = model_key  # type: ignore
         except Exception as e:
             raise ValueError("Error building model portion of request.") from e
 
