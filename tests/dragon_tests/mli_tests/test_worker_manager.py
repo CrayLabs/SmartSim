@@ -37,9 +37,6 @@ import typing as t
 
 import torch
 
-from .channel import FileSystemCommChannel
-from .featurestore import FileSystemFeatureStore
-from .worker import IntegratedTorchWorker
 from smartsim._core.mli.infrastructure.control.workermanager import (
     EnvironmentConfigLoader,
     WorkerManager,
@@ -47,6 +44,10 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
+
+from .channel import FileSystemCommChannel
+from .featurestore import FileSystemFeatureStore
+from .worker import IntegratedTorchWorker
 
 logger = get_logger(__name__)
 # The tests in this file belong to the dragon group

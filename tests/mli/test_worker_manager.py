@@ -36,7 +36,6 @@ import time
 import typing as t
 
 import torch
-
 from mli_tests.channel import FileSystemCommChannel
 from mli_tests.featurestore import FileSystemFeatureStore
 from mli_tests.worker import IntegratedTorchWorker
@@ -45,7 +44,6 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
     EnvironmentConfigLoader,
     WorkerManager,
 )
-
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger

@@ -29,7 +29,6 @@ import time
 
 import pytest
 import torch
-from .featurestore import FileSystemFeatureStore, MemoryFeatureStore
 
 import smartsim.error as sse
 from smartsim._core.mli.infrastructure.worker.worker import (
@@ -39,6 +38,8 @@ from smartsim._core.mli.infrastructure.worker.worker import (
     TransformOutputResult,
 )
 from smartsim._core.utils import installed_redisai_backends
+
+from .featurestore import FileSystemFeatureStore, MemoryFeatureStore
 
 # The tests in this file belong to the group_a group
 pytestmark = pytest.mark.group_b
