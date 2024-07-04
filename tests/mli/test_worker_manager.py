@@ -24,6 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pytest
+dragon = pytest.importorskip("dragon")
+
 import io
 import logging
 import multiprocessing as mp
@@ -31,26 +34,20 @@ import pathlib
 import time
 import typing as t
 
-import pytest
 import torch
 
 try:
-    dragon = pytest.importorskip("dragon")
+    from mli.channel import FileSystemCommChannel
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
 try:
-    from mli_utils.channel import FileSystemCommChannel
+    from mli.featurestore import FileSystemFeatureStore
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
 try:
-    from mli_utils.featurestore import FileSystemFeatureStore
-except ImportError as exc:
-    print(f"{__file__}: {exc}")
-    pass
-try:
-    from mli_utils.worker import IntegratedTorchWorker
+    from mli.worker import IntegratedTorchWorker
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass

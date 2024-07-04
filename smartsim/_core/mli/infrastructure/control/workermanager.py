@@ -184,6 +184,8 @@ class WorkerManager(Service):
 
         """a collection of workers the manager is controlling"""
         self._task_queue: t.Optional["FLInterface"] = config_loader.get_queue()
+        if self._task_queue is None:
+            logger.warning("No queue to check for tasks")
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()
@@ -231,7 +233,7 @@ class WorkerManager(Service):
         logger.debug("executing worker manager pipeline")
 
         if self._task_queue is None:
-            logger.warning("No queue to check for tasks")
+            time.sleep(1)
             return
 
         # perform default deserialization of the message envelope
