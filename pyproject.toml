@@ -65,7 +65,6 @@ markers = [
   "dragon: dragon tests",
 ]
 pythonpath=["tests"]
-testpaths =["tests","tests/mli","tests/*"]
 
 [tool.isort]
 # supress circular import warning
