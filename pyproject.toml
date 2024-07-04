@@ -64,7 +64,6 @@ markers = [
   "slow_tests: tests that take a long duration to complete",
   "dragon: dragon tests",
 ]
-pythonpath=[".", "tests", "tests/mli"]
 
 [tool.isort]
 # supress circular import warning
