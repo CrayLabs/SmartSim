@@ -132,6 +132,7 @@ class Dispatcher:
 
 
 default_dispatcher: t.Final = Dispatcher()
+dispatch: t.Final = default_dispatcher.dispatch
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

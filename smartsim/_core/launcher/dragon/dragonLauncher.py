@@ -341,7 +341,7 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 #       circular import
 # -----------------------------------------------------------------------------
 from smartsim.settings.builders.launch.dragon import DragonArgBuilder
-from smartsim.settings.dispatch import default_dispatcher
+from smartsim.settings.dispatch import dispatch
 
-default_dispatcher.dispatch(DragonArgBuilder, to_launcher=DragonLauncher)
+dispatch(DragonArgBuilder, to_launcher=DragonLauncher)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

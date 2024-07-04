@@ -29,7 +29,7 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import ShellLauncher, default_dispatcher
+from smartsim.settings.dispatch import ShellLauncher, dispatch
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
@@ -218,7 +218,7 @@ class _BaseMPIArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
         self._launch_args[key] = value
 
 
-@default_dispatcher.dispatch(to_launcher=ShellLauncher)
+@dispatch(to_launcher=ShellLauncher)
 class MpiArgBuilder(_BaseMPIArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
@@ -230,7 +230,7 @@ class MpiArgBuilder(_BaseMPIArgBuilder):
         return ("mpirun", *self.format_launch_args(), "--", *exe.as_program_arguments())
 
 
-@default_dispatcher.dispatch(to_launcher=ShellLauncher)
+@dispatch(to_launcher=ShellLauncher)
 class MpiexecArgBuilder(_BaseMPIArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
@@ -247,7 +247,7 @@ class MpiexecArgBuilder(_BaseMPIArgBuilder):
         )
 
 
-@default_dispatcher.dispatch(to_launcher=ShellLauncher)
+@dispatch(to_launcher=ShellLauncher)
 class OrteArgBuilder(_BaseMPIArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
