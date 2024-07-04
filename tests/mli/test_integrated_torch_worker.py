@@ -60,14 +60,14 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 # @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
 # def test_deserialize_direct_request(persist_torch_model: pathlib.Path) -> None:
 #     """Verify that a direct requestis deserialized properly"""
-#     worker = mli.IntegratedTorchWorker
-#     # feature_store = mli.MemoryFeatureStore()
+#     worker = mli_utils.IntegratedTorchWorker
+#     # feature_store = mli_utils.MemoryFeatureStore()
 
 #     model_bytes = persist_torch_model.read_bytes()
 #     input_tensor = torch.randn(2)
 
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
-#     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
+#     callback_channel = mli_utils.DragonCommChannel.find(expected_callback_channel)
 
 #     message_tensor_input = MessageHandler.build_tensor(
 #         input_tensor, "c", "float32", [2]
@@ -90,8 +90,8 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 # @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
 # def test_deserialize_indirect_request(persist_torch_model: pathlib.Path) -> None:
 #     """Verify that an indirect request is deserialized correctly"""
-#     worker = mli.IntegratedTorchWorker
-#     # feature_store = mli.MemoryFeatureStore()
+#     worker = mli_utils.IntegratedTorchWorker
+#     # feature_store = mli_utils.MemoryFeatureStore()
 
 #     model_key = "persisted-model"
 #     # model_bytes = persist_torch_model.read_bytes()
@@ -102,7 +102,7 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     # feature_store[input_key] = input_tensor
 
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
-#     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
+#     callback_channel = mli_utils.DragonCommChannel.find(expected_callback_channel)
 
 #     output_key = f"demo-output"
 
@@ -130,8 +130,8 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 # ) -> None:
 #     """Verify that a mixed mode (combining direct and indirect inputs, models, outputs)
 #     with indirect inputs is deserialized correctly"""
-#     worker = mli.IntegratedTorchWorker
-#     # feature_store = mli.MemoryFeatureStore()
+#     worker = mli_utils.IntegratedTorchWorker
+#     # feature_store = mli_utils.MemoryFeatureStore()
 
 #     # model_key = "persisted-model"
 #     model_bytes = persist_torch_model.read_bytes()
@@ -142,7 +142,7 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     # feature_store[input_key] = input_tensor
 
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
-#     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
+#     callback_channel = mli_utils.DragonCommChannel.find(expected_callback_channel)
 
 #     output_key = f"demo-output"
 
@@ -171,8 +171,8 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 # ) -> None:
 #     """Verify that a mixed mode (combining direct and indirect inputs, models, outputs)
 #     with indirect outputs is deserialized correctly"""
-#     worker = mli.IntegratedTorchWorker
-#     # feature_store = mli.MemoryFeatureStore()
+#     worker = mli_utils.IntegratedTorchWorker
+#     # feature_store = mli_utils.MemoryFeatureStore()
 
 #     # model_key = "persisted-model"
 #     model_bytes = persist_torch_model.read_bytes()
@@ -183,7 +183,7 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     # feature_store[input_key] = input_tensor
 
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
-#     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
+#     callback_channel = mli_utils.DragonCommChannel.find(expected_callback_channel)
 
 #     output_key = f"demo-output"
 
@@ -215,8 +215,8 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 # ) -> None:
 #     """Verify that a mixed mode (combining direct and indirect inputs, models, outputs)
 #     with indirect outputs is deserialized correctly"""
-#     worker = mli.IntegratedTorchWorker
-#     # feature_store = mli.MemoryFeatureStore()
+#     worker = mli_utils.IntegratedTorchWorker
+#     # feature_store = mli_utils.MemoryFeatureStore()
 
 #     model_key = "persisted-model"
 #     # model_bytes = persist_torch_model.read_bytes()
@@ -227,7 +227,7 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 #     # feature_store[input_key] = input_tensor
 
 #     expected_callback_channel = b"faux_channel_descriptor_bytes"
-#     callback_channel = mli.DragonCommChannel.find(expected_callback_channel)
+#     callback_channel = mli_utils.DragonCommChannel.find(expected_callback_channel)
 
 #     output_key = f"demo-output"
 
@@ -256,9 +256,9 @@ def persist_torch_model(test_dir: str) -> pathlib.Path:
 # @pytest.mark.skipif(not torch_available, reason="Torch backend is not installed")
 # def test_serialize(test_dir: str, persist_torch_model: pathlib.Path) -> None:
 #     """Verify that the worker correctly executes reply serialization"""
-#     worker = mli.IntegratedTorchWorker
+#     worker = mli_utils.IntegratedTorchWorker
 
-#     reply = mli.InferenceReply()
+#     reply = mli_utils.InferenceReply()
 #     reply.output_keys = ["foo", "bar"]
 
 #     # use the worker implementation of reply serialization to get bytes for

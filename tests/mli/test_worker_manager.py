@@ -38,17 +38,17 @@ import typing as t
 import torch
 
 try:
-    from mli.channel import FileSystemCommChannel
+    from mli_utils.channel import FileSystemCommChannel
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
 try:
-    from mli.featurestore import FileSystemFeatureStore
+    from mli_utils.featurestore import FileSystemFeatureStore
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
 try:
-    from mli.worker import IntegratedTorchWorker
+    from mli_utils.worker import IntegratedTorchWorker
 except ImportError as exc:
     print(f"{__file__}: {exc}")
     pass
