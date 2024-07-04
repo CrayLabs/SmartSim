@@ -415,6 +415,24 @@ def is_crayex_platform() -> bool:
 
 
 def first(predicate: t.Callable[[_T], bool], iterable: t.Iterable[_T]) -> _T | None:
+    """Return the first instance of an iterable that meets some precondition.
+    Any elements of the iterable that do not meet the precondition will be
+    forgotten. If no item in the iterable is found that meets the predicate,
+    `None` is returned. This is roughly equivalent to
+
+    .. highlight:: python
+    .. code-block:: python
+
+        next(filter(predicate, iterable), None)
+
+    but does not require the predicate to be a type guard to type check.
+
+    :param predicate: A function that returns `True` or `False` given a element
+                      of the iterable
+    :param iterable: An iterable that yields elements to evealuate
+    :returns: The first element of the iterable to make the the `predicate`
+              return `True`
+    """
     return next((item for item in iterable if predicate(item)), None)
 
 

@@ -113,7 +113,7 @@ class Experiment:
         self,
         name: str,
         exp_path: str | None = None,
-        *,
+        *,  # Keyword arguments only
         settings_dispatcher: Dispatcher = default_dispatcher,
     ):
         """Initialize an Experiment instance.
@@ -155,6 +155,9 @@ class Experiment:
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
+        :param settings_dispatcher: The dispatcher the experiment will use to
+            figure determine how to launch a job. If none is provided, the
+            experiment will use the default dispatcher.
         """
         self.name = name
         if exp_path:
