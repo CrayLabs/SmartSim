@@ -37,7 +37,7 @@ try:
     from dragon.data.ddict.ddict import DDict
     from dragon.fli import DragonFLIError, FLInterface
     from dragon.utils import b64encode
-    from mli_utils.featurestore import MemoryFeatureStore
+    from mli_tests.featurestore import MemoryFeatureStore
 
     from smartsim._core.mli.infrastructure.environmentloader import (
         EnvironmentConfigLoader,

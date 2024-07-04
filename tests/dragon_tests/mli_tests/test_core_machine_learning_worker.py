@@ -29,7 +29,7 @@ import time
 
 import pytest
 import torch
-from mli_utils.featurestore import FileSystemFeatureStore, MemoryFeatureStore
+from .featurestore import FileSystemFeatureStore, MemoryFeatureStore
 
 import smartsim.error as sse
 from smartsim._core.mli.infrastructure.worker.worker import (
