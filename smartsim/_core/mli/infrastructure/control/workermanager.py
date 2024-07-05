@@ -241,7 +241,6 @@ class WorkerManager(Service):
             return
 
         # perform default deserialization of the message envelope
-        # perform default deserialization of the message envelope
         with self._task_queue.recvh(timeout=None) as recvh:
             try:
                 request_bytes, _ = recvh.recv_bytes(timeout=None)
@@ -253,9 +252,6 @@ class WorkerManager(Service):
         )
         if not self._validate_request(request):
             return
-
-        # # let the worker perform additional custom deserialization
-        # request = self._worker.deserialize(request_bytes)
 
         fetch_model_result = self._worker.fetch_model(request, self._feature_store)
         model_result = self._worker.load_model(
@@ -294,7 +290,6 @@ class WorkerManager(Service):
 
             response = build_reply(reply)
 
-        # serialized = self._worker.serialize_reply(request, transformed_output)
         serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
         if request.callback:
             request.callback.send(serialized_resp)
