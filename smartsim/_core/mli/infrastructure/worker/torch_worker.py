@@ -53,13 +53,16 @@ class TorchWorker(MachineLearningWorkerBase):
     def load_model(
         request: InferenceRequest, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
-        model_bytes = fetch_result.model_bytes or request.raw_model
-        if not model_bytes:
+        if fetch_result.model_bytes:
+            model_bytes = fetch_result.model_bytes
+        elif request.raw_model and request.raw_model.data:
+            model_bytes = request.raw_model.data
+        else:
             raise ValueError("Unable to load model without reference object")
 
-        _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = _device_to_torch[device]
-        buffer = io.BytesIO(model_bytes)
+        device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
+        device = device_to_torch[device]
+        buffer = io.BytesIO(initial_bytes=model_bytes)
         model = torch.jit.load(buffer, map_location=device)  # type: ignore
         result = LoadModelResult(model)
         return result

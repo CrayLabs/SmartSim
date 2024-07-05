@@ -148,7 +148,7 @@ class FetchModelResult:
 
     def __init__(self, result: bytes) -> None:
         """Initialize the object"""
-        self.model_bytes = result
+        self.model_bytes: bytes = result
 
 
 class MachineLearningWorkerCore:

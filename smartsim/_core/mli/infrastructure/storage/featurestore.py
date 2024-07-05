@@ -37,7 +37,7 @@ class FeatureStore(ABC):
         :param key: Unique key of an item to retrieve from the feature store"""
 
     @abstractmethod
-    def __setitem__(self, key: str, value: bytes) -> None:
+    def __setitem__(self, key: str, value: str) -> None:
         """Assign a value using key
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
