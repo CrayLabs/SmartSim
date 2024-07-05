@@ -31,6 +31,7 @@ from .....error import SmartSimError
 from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
+from ...mli_schemas.model.model_capnp import Model
 
 import sys
 
@@ -60,7 +61,7 @@ class InferenceRequest:
         input_keys: t.Optional[t.List[str]] = None,
         input_meta: t.Optional[t.List[t.Any]] = None,
         output_keys: t.Optional[t.List[str]] = None,
-        raw_model: t.Optional[bytes] = None,
+        raw_model: t.Optional[Model] = None,
         batch_size: int = 0,
     ):
         """Initialize the object"""
@@ -168,7 +169,7 @@ class MachineLearningWorkerCore:
             # model_key = hash(request.raw_model)
             # feature_store[model_key] = request.raw_model
             # short-circuit and return the directly supplied model
-            return FetchModelResult(request.raw_model)
+            return FetchModelResult(request.raw_model.data)
 
         if not feature_store:
             raise ValueError("Feature store is required for model retrieval")
