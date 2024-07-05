@@ -107,9 +107,7 @@ class TorchWorker(MachineLearningWorkerBase):
         result_device: str,
     ) -> TransformOutputResult:
         if result_device != "cpu":
-            transformed = [
-                item.to("cpu") for item in execute_result.predictions
-            ]
+            transformed = [item.to("cpu") for item in execute_result.predictions]
             # todo: need the shape from latest schemas added here.
             return TransformOutputResult(transformed, None, "c", "float32")  # fixme
 
