@@ -36,12 +36,10 @@ from ...mli_schemas.model.model_capnp import Model
 
 # isort: off
 try:
-    import dragon
     from dragon.utils import b64decode
 except ImportError as exc:
-    if not "pytest" in sys.modules:
+    if "pytest" not in sys.modules:
         raise exc from None
-
 # isort: on
 
 logger = get_logger(__name__)

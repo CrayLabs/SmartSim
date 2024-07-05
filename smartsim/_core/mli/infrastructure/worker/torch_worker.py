@@ -73,8 +73,8 @@ class TorchWorker(MachineLearningWorkerBase):
     ) -> TransformInputResult:
         result = []
 
-        _device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = _device_to_torch[device]
+        device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
+        device = device_to_torch[device]
         if fetch_result.meta is None:
             raise ValueError("Cannot reconstruct tensor without meta information")
         for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
