@@ -165,7 +165,7 @@ class BinaryDistribution(Distribution):
 
 
 # Define needed dependencies for the installation
-deps = [
+install_requires = [
     "packaging>=24.0",
     "psutil>=5.7.2",
     "coloredlogs>=10.0",
@@ -183,7 +183,7 @@ deps = [
 ]
 
 # Add SmartRedis at specific version
-deps.append("smartredis>={}".format(versions.SMARTREDIS))
+install_requires.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
@@ -213,7 +213,7 @@ extras_require = {
 # rest in setup.cfg
 setup(
     version=smartsim_version,
-    install_requires=deps,
+    install_requires=install_requires,
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,
