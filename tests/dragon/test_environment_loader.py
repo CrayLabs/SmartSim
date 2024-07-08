@@ -42,7 +42,7 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
 
-# from ..mli.featurestore import MemoryFeatureStore
+from ..mli_utils.featurestore import MemoryFeatureStore
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -93,29 +93,29 @@ def test_environment_loader_FLI_fails(monkeypatch):
         config_queue = config.get_queue()
 
 
-# @pytest.mark.parametrize(
-#     "expected_keys, expected_values",
-#     [
-#         pytest.param(["key1", "key2", "key3"], ["value1", "value2", "value3"]),
-#         pytest.param(["another key"], ["another value"]),
-#     ],
-# )
-# def test_environment_loader_memory_featurestore(
-#     expected_keys, expected_values, monkeypatch
-# ):
-#     """MemoryFeatureStores can be correctly serialized and deserialized"""
-#     feature_store = MemoryFeatureStore()
-#     key_value_pairs = zip(expected_keys, expected_values)
-#     for k, v in key_value_pairs:
-#         feature_store[k] = v
-#     monkeypatch.setenv(
-#         "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
-#     )
-#     config = EnvironmentConfigLoader()
-#     config_feature_store = config.get_feature_store()
+@pytest.mark.parametrize(
+    "expected_keys, expected_values",
+    [
+        pytest.param(["key1", "key2", "key3"], ["value1", "value2", "value3"]),
+        pytest.param(["another key"], ["another value"]),
+    ],
+)
+def test_environment_loader_memory_featurestore(
+    expected_keys, expected_values, monkeypatch
+):
+    """MemoryFeatureStores can be correctly serialized and deserialized"""
+    feature_store = MemoryFeatureStore()
+    key_value_pairs = zip(expected_keys, expected_values)
+    for k, v in key_value_pairs:
+        feature_store[k] = v
+    monkeypatch.setenv(
+        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
+    )
+    config = EnvironmentConfigLoader()
+    config_feature_store = config.get_feature_store()
 
-#     for k, _ in key_value_pairs:
-#         assert config_feature_store[k] == feature_store[k]
+    for k, _ in key_value_pairs:
+        assert config_feature_store[k] == feature_store[k]
 
 
 @pytest.mark.parametrize(
