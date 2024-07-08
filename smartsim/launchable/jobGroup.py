@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import typing as t
 from copy import deepcopy
 
 from .basejob import BaseJob
 from .baseJobGroup import BaseJobGroup
+
+if t.TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class JobGroup(BaseJobGroup):
@@ -26,9 +31,19 @@ class JobGroup(BaseJobGroup):
         """
         return self._jobs
 
-    def __str__(self):  # pragma: no-cover
+    @t.overload
+    def __getitem__(self, idx: int) -> BaseJob: ...
+    @t.overload
+    def __getitem__(self, idx: slice) -> Self: ...
+    def __getitem__(self, idx: int | slice) -> BaseJob | Self:
+        """Retrieves the job at the specified index (idx)."""
+        jobs = self.jobs[idx]
+        if isinstance(jobs, BaseJob):
+            return jobs
+        return type(self)(jobs)
+
+    def __str__(self) -> str:  # pragma: no-cover
         """Returns a string representation of the collection of
         job groups.
         """
-        string = ""
-        string += f"Job Groups: {self.jobs}"
+        return f"Job Groups: {self.jobs}"

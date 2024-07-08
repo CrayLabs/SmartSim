@@ -28,4 +28,4 @@ from __future__ import annotations
 
 import typing as t
 
-LaunchedJobID = t.NewType("LaunchedJobID", str)
+TODO = t.Any  # TODO: remove this after refactor
