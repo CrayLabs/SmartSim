@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import typing as t
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from copy import deepcopy
 
@@ -8,13 +10,10 @@ from smartsim.launchable.launchable import Launchable
 from .basejob import BaseJob
 
 
-class BaseJobGroup(Launchable, MutableSequence):
+class BaseJobGroup(Launchable, MutableSequence[BaseJob], ABC):
     """Highest level ABC of a group of jobs that can be
     launched
     """
-
-    def __init__(self) -> None:
-        super().__init__()
 
     @property
     @abstractmethod
@@ -36,15 +35,24 @@ class BaseJobGroup(Launchable, MutableSequence):
         """Allows iteration over the jobs in the collection."""
         return iter(self.jobs)
 
-    def __getitem__(self, idx: int) -> BaseJob:
-        """Retrieves the job at the specified index (idx)."""
-        return self.jobs[idx]
-
-    def __setitem__(self, idx: int, value: BaseJob) -> None:
+    @t.overload
+    def __setitem__(self, idx: int, value: BaseJob) -> None: ...
+    @t.overload
+    def __setitem__(self, idx: slice, value: t.Iterable[BaseJob]) -> None: ...
+    def __setitem__(
+        self, idx: int | slice, value: BaseJob | t.Iterable[BaseJob]
+    ) -> None:
         """Sets the job at the specified index (idx) to the given value."""
-        self.jobs[idx] = deepcopy(value)
+        if isinstance(idx, int):
+            if not isinstance(value, BaseJob):
+                raise TypeError("Can only assign a `BaseJob`")
+            self.jobs[idx] = deepcopy(value)
+        else:
+            if not isinstance(value, t.Iterable):
+                raise TypeError("Can only assign an iterable")
+            self.jobs[idx] = (deepcopy(val) for val in value)
 
-    def __delitem__(self, idx: int) -> None:
+    def __delitem__(self, idx: int | slice) -> None:
         """Deletes the job at the specified index (idx)."""
         del self.jobs[idx]
 
@@ -52,7 +60,6 @@ class BaseJobGroup(Launchable, MutableSequence):
         """Returns the total number of jobs in the collection."""
         return len(self.jobs)
 
-    def __str__(self):  # pragma: no-cover
+    def __str__(self) -> str:  # pragma: no-cover
         """Returns a string representation of the collection of jobs."""
-        string = ""
-        string += f"Jobs: {self.jobs}"
+        return f"Jobs: {self.jobs}"

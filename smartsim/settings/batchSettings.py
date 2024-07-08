@@ -103,9 +103,7 @@ class BatchSettings(BaseSettings):
         return self._arg_builder.format_batch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nScheduler: {self.scheduler}"
-        if self.scheduler_args:
-            string += str(self.scheduler_args)
+        string = f"\nScheduler: {self.scheduler}{self.scheduler_args}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

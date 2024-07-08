@@ -59,7 +59,7 @@ class LaunchSettings(BaseSettings):
         except ValueError:
             raise ValueError(f"Invalid launcher type: {launcher}")
         self._arg_builder = self._get_arg_builder(launch_args)
-        self.env_vars = copy.deepcopy(env_vars) if env_vars else {}
+        self.env_vars = env_vars or {}
 
     @property
     def launcher(self) -> str:
@@ -79,12 +79,12 @@ class LaunchSettings(BaseSettings):
             self.launch_args.set(k, v)
 
     @property
-    def env_vars(self) -> t.Mapping[str, str | None]:
+    def env_vars(self) -> dict[str, str | None]:
         """Return an immutable list of attached environment variables."""
         return copy.deepcopy(self._env_vars)
 
     @env_vars.setter
-    def env_vars(self, value: t.Dict[str, str]) -> None:
+    def env_vars(self, value: dict[str, str | None]) -> None:
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
@@ -157,9 +157,7 @@ class LaunchSettings(BaseSettings):
         return self._arg_builder.format_launch_args()
 
     def __str__(self) -> str:  # pragma: no-cover
-        string = f"\nLauncher: {self.launcher}"
-        if self.launch_args:
-            string += str(self.launch_args)
+        string = f"\nLauncher: {self.launcher}{self.launch_args}"
         if self.env_vars:
             string += f"\nEnvironment variables: \n{fmt_dict(self.env_vars)}"
         return string

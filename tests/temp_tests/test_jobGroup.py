@@ -10,8 +10,13 @@ app_2 = Application("app_2", "python", LaunchSettings("slurm"))
 app_3 = Application("app_3", "python", LaunchSettings("slurm"))
 
 
+class MockJob(BaseJob):
+    def get_launch_steps(self):
+        raise NotImplementedError
+
+
 def test_create_JobGroup():
-    job_1 = BaseJob()
+    job_1 = MockJob()
     job_group = JobGroup([job_1])
     assert len(job_group) == 1
 
@@ -36,8 +41,8 @@ def test_setitem_JobGroup():
 
 
 def test_delitem_JobGroup():
-    job_1 = BaseJob()
-    job_2 = BaseJob()
+    job_1 = MockJob()
+    job_2 = MockJob()
     job_group = JobGroup([job_1, job_2])
     assert len(job_group) == 2
     del job_group[1]
@@ -45,17 +50,17 @@ def test_delitem_JobGroup():
 
 
 def test_len_JobGroup():
-    job_1 = BaseJob()
-    job_2 = BaseJob()
+    job_1 = MockJob()
+    job_2 = MockJob()
     job_group = JobGroup([job_1, job_2])
     assert len(job_group) == 2
 
 
 def test_insert_JobGroup():
-    job_1 = BaseJob()
-    job_2 = BaseJob()
+    job_1 = MockJob()
+    job_2 = MockJob()
     job_group = JobGroup([job_1, job_2])
-    job_3 = BaseJob()
+    job_3 = MockJob()
     job_group.insert(0, job_3)
     get_value = job_group[0]
     assert get_value == job_3

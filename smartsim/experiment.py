@@ -477,7 +477,7 @@ class Experiment:
         """
 
         # Retrieve any active feature store jobs
-        active_fsjobs = self._control.active_active_feature_store_jobs
+        active_fsjobs = self._control.active_feature_store_jobs
 
         preview_manifest = Manifest(*args)
 
