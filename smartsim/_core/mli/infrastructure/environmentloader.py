@@ -55,7 +55,7 @@ class EnvironmentConfigLoader:
         return self.feature_store
 
     def get_queue(self) -> t.Optional["FLInterface"]:
-        """Returns the Queue  previously set in SSQueue"""
+        """Returns the Queue previously set in SSQueue"""
         if self._queue_descriptor is not None:
-            return FLInterface.attach(base64.b64decode(self._queue_descriptor))
+            self.queue = FLInterface.attach(base64.b64decode(self._queue_descriptor))
         return self.queue

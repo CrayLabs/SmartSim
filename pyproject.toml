@@ -62,7 +62,7 @@ markers = [
   "group_a: fast test subset a",
   "group_b: fast test subset b",
   "slow_tests: tests that take a long duration to complete",
-  "dragon: dragon tests",
+  "dragon: tests that must be executed in a dragon runtime",
 ]
 
 [tool.isort]
