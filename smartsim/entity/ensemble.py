@@ -97,7 +97,6 @@ class Ensemble(entity.CompoundEntity):
                 # ^^^^^^^^^^^^^^^^^^^^^^^
                 # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
-                path=os.path.join(self.path, self.name),
                 files=self.files,
                 params=permutation.params,
                 params_as_args=permutation.exe_args,  # type: ignore[arg-type]
@@ -111,4 +110,4 @@ class Ensemble(entity.CompoundEntity):
         apps = self._create_applications()
         if not apps:
             raise ValueError("There are no members as part of this ensemble")
-        return tuple(Job(app, settings) for app in apps)
+        return tuple(Job(app, settings, f"job_{i}", ensemble_name=self.name) for i, app in enumerate(apps, 1))

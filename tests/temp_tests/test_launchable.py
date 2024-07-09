@@ -79,7 +79,7 @@ def test_job_init_deepcopy():
 
 
 def test_add_mpmd_pair():
-    entity = SmartSimEntity("test_name", "python", LaunchSettings("slurm"))
+    entity = SmartSimEntity("test_name", LaunchSettings("slurm"))
 
     mpmd_job = MPMDJob()
     mpmd_job.add_mpmd_pair(entity, LaunchSettings("slurm"))
@@ -154,10 +154,10 @@ def test_add_mpmd_pair_check_launcher_error():
     """Test that an error is raised when a pairs is added to an mpmd
     job using add_mpmd_pair that does not have the same launcher type"""
     mpmd_pairs = []
-    entity1 = SmartSimEntity("entity1", "python", LaunchSettings("slurm"))
+    entity1 = SmartSimEntity("entity1", LaunchSettings("slurm"))
     launch_settings1 = LaunchSettings("slurm")
 
-    entity2 = SmartSimEntity("entity2", "python", LaunchSettings("pals"))
+    entity2 = SmartSimEntity("entity2", LaunchSettings("pals"))
     launch_settings2 = LaunchSettings("pals")
 
     pair1 = MPMDPair(entity1, launch_settings1)

@@ -225,9 +225,17 @@ class MpiArgBuilder(_BaseMPIArgBuilder):
         return LauncherType.Mpirun.value
 
     def finalize(
-        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
-    ) -> t.Sequence[str]:
-        return ("mpirun", *self.format_launch_args(), "--", *exe.as_program_arguments())
+        self,
+        exe: ExecutableLike,
+        env: t.Mapping[str, str | None],
+        job_execution_path: str,
+    ) -> t.Tuple[t.Sequence[str], str]:
+        return (
+            "mpirun",
+            *self.format_launch_args(),
+            "--",
+            *exe.as_program_arguments(),
+        ), job_execution_path
 
 
 @dispatch(to_launcher=ShellLauncher)
@@ -237,14 +245,17 @@ class MpiexecArgBuilder(_BaseMPIArgBuilder):
         return LauncherType.Mpiexec.value
 
     def finalize(
-        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
-    ) -> t.Sequence[str]:
+        self,
+        exe: ExecutableLike,
+        env: t.Mapping[str, str | None],
+        job_execution_path: str,
+    ) -> t.Tuple[t.Sequence[str], str]:
         return (
             "mpiexec",
             *self.format_launch_args(),
             "--",
             *exe.as_program_arguments(),
-        )
+        ), job_execution_path
 
 
 @dispatch(to_launcher=ShellLauncher)
@@ -254,11 +265,14 @@ class OrteArgBuilder(_BaseMPIArgBuilder):
         return LauncherType.Orterun.value
 
     def finalize(
-        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
-    ) -> t.Sequence[str]:
+        self,
+        exe: ExecutableLike,
+        env: t.Mapping[str, str | None],
+        job_execution_path: str,
+    ) -> t.Tuple[t.Sequence[str], str]:
         return (
             "orterun",
             *self.format_launch_args(),
             "--",
             *exe.as_program_arguments(),
-        )
+        ), job_execution_path

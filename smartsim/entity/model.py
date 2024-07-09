@@ -64,7 +64,6 @@ class Application(SmartSimEntity):
         run_settings: "RunSettings",
         params: t.Optional[t.Dict[str, str]] = None,
         exe_args: t.Optional[t.List[str]] = None,
-        path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional["BatchSettings"] = None,
         files: t.Optional[EntityFiles] = None,
@@ -85,7 +84,7 @@ class Application(SmartSimEntity):
                                application as a batch job
         :param files: Files to have available to the application
         """
-        super().__init__(name, str(path), run_settings)
+        super().__init__(name, run_settings)
         self.exe = [expand_exe_path(exe)]
         # self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []

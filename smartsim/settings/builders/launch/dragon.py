@@ -69,7 +69,10 @@ class DragonArgBuilder(LaunchArgBuilder[DragonRunRequestView]):
         self._launch_args[key] = value
 
     def finalize(
-        self, exe: ExecutableLike, env: t.Mapping[str, str | None]
+        self,
+        exe: ExecutableLike,
+        env: t.Mapping[str, str | None],
+        job_execution_path: str,
     ) -> DragonRunRequestView:
         exe_, *args = exe.as_program_arguments()
         return DragonRunRequestView(
@@ -81,7 +84,7 @@ class DragonArgBuilder(LaunchArgBuilder[DragonRunRequestView]):
             #        the command execute next to any generated files. A similar
             #        problem exists for the other settings.
             # TODO: Find a way to inject this path
-            path=os.getcwd(),
+            path=job_execution_path,
             env=env,
             # TODO: Not sure how this info is injected
             name=None,

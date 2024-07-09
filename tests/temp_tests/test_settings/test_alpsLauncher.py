@@ -182,6 +182,7 @@ def test_invalid_exclude_hostlist_format():
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = AprunArgBuilder(args).finalize(echo_executable_like, {})
+def test_formatting_launch_args(echo_executable_like, args, expected, test_dir):
+    cmd, path = AprunArgBuilder(args).finalize(echo_executable_like, {}, test_dir)
     assert tuple(cmd) == expected
+    assert path == test_dir
