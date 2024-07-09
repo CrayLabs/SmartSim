@@ -44,7 +44,10 @@ from .entity import SmartSimEntity
 from .files import EntityFiles
 
 if t.TYPE_CHECKING:
-    from ..settings.base import BatchSettings, RunSettings
+    from smartsim.types import TODO
+
+    RunSettings = TODO
+    BatchSettings = TODO
 
 
 logger = get_logger(__name__)

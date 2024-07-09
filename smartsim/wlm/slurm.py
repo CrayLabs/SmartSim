@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import os
 import typing as t
 from shutil import which
@@ -40,9 +41,18 @@ from ..error import (
 from ..log import get_logger
 
 
-# from ..settings.slurmSettings import fmt_walltime
-# Mock function
-def fmt_walltime(hours: int, minutes: int, seconds: int) -> str: ...  # type: ignore[...]
+def fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
+    """Helper function walltime format conversion
+
+    Converts time to format HH:MM:SS
+
+    :param hours: number of hours to run job
+    :param minutes: number of minutes to run job
+    :param seconds: number of seconds to run job
+    :returns: Formatted walltime
+    """
+    delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    return f"0{delta}" if delta.seconds // 3600 < 10 else str(delta)
 
 
 logger = get_logger(__name__)

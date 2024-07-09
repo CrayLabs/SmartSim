@@ -61,7 +61,7 @@ class Job(BaseJob):
         return deepcopy(self._entity)
 
     @entity.setter
-    def entity(self, value):
+    def entity(self, value: SmartSimEntity) -> None:
         self._entity = deepcopy(value)
 
     @property
@@ -69,15 +69,15 @@ class Job(BaseJob):
         return deepcopy(self._launch_settings)
 
     @launch_settings.setter
-    def launch_settings(self, value):
+    def launch_settings(self, value: LaunchSettings) -> None:
         self._launch_settings = deepcopy(value)
 
     def get_launch_steps(self) -> LaunchCommands:
         """Return the launch steps corresponding to the
         internal data.
         """
-        pass
         # TODO: return JobWarehouseRunner.run(self)
+        raise NotImplementedError
 
     def __str__(self) -> str:  # pragma: no cover
         string = f"SmartSim Entity: {self.entity}\n"

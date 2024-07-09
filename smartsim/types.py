@@ -24,65 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import typing as t
 
-from .baseSettings import BaseSettings
-from .batchSettings import BatchSettings
-from .launchSettings import LaunchSettings
-
-__all__ = ["LaunchSettings", "BaseSettings", "BatchSettings"]
-
-
-# TODO Mock imports for compiling tests
-class SettingsBase:
-    def __init__(self, *_: t.Any, **__: t.Any) -> None: ...
-    def __getattr__(self, _: str) -> t.Any: ...
-
-
-class QsubBatchSettings(SettingsBase): ...
-
-
-class SgeQsubBatchSettings(SettingsBase): ...
-
-
-class SbatchSettings(SettingsBase): ...
-
-
-class Singularity: ...
-
-
-class AprunSettings(SettingsBase): ...
-
-
-class RunSettings(SettingsBase): ...
-
-
-class DragonRunSettings(RunSettings): ...
-
-
-class OrterunSettings(RunSettings): ...
-
-
-class MpirunSettings(RunSettings): ...
-
-
-class MpiexecSettings(RunSettings): ...
-
-
-class JsrunSettings(RunSettings): ...
-
-
-class BsubBatchSettings(RunSettings): ...
-
-
-class PalsMpiexecSettings(RunSettings): ...
-
-
-class SrunSettings(RunSettings): ...
-
-
-class Container: ...
-
-
-def create_batch_settings(*_: t.Any, **__: t.Any) -> t.Any: ...
-def create_run_settings(*_: t.Any, **__: t.Any) -> t.Any: ...
+TODO = t.Any  # TODO: remove this after refactor
