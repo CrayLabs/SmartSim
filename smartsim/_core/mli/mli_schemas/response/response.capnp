@@ -34,6 +34,7 @@ enum StatusEnum {
   complete @0;
   fail @1;
   timeout @2;
+  running @3;
 }
 
 struct Response {

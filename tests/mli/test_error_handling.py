@@ -54,7 +54,7 @@ def setup_worker_manager(test_dir):
         integrated_worker,
         file_system_store,
         as_service=False,
-        cooldown=10,
+        cooldown=3,
         comm_channel_type=FileSystemCommChannel,
     )
     tensor_key = MessageHandler.build_tensor_key("key")
@@ -159,6 +159,5 @@ def test_exception_handling_helper():
     test_exception = ValueError("Test ValueError")
     exception_handler(test_exception, "fetching the model", reply)
 
-    assert reply.failed == True
     assert reply.status_enum == "fail"
     assert reply.message == "Failed while fetching the model."

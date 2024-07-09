@@ -45,7 +45,7 @@ from .response_attributes.response_attributes_capnp import (
     TorchResponseAttributesReader,
 )
 
-StatusEnum = Literal["complete", "fail", "timeout"]
+StatusEnum = Literal["complete", "fail", "timeout", "running"]
 
 class Response:
     class Result:

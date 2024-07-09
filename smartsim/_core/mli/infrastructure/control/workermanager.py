@@ -172,7 +172,6 @@ def exception_handler(
         f"Exception type: {type(exc).__name__}.\n"
         f"Exception message: {str(exc)}"
     )
-    reply.failed = True
     reply.status_enum = "fail"
     reply.message = f"Failed while {func_descriptor}."
 
@@ -275,13 +274,13 @@ class WorkerManager(Service):
         except Exception as e:
             exception_handler(e, "fetching the model", reply)
 
-        if not reply.failed and fetch_model_result is not None:
+        if reply.status_enum == "running" and fetch_model_result is not None:
             try:
                 model_result = self._worker.load_model(request, fetch_model_result)
             except Exception as e:
                 exception_handler(e, "loading the model", reply)
 
-        if not reply.failed:
+        if reply.status_enum == "running":
             try:
                 fetch_input_result = self._worker.fetch_inputs(
                     request, self._feature_store
@@ -289,7 +288,7 @@ class WorkerManager(Service):
             except Exception as e:
                 exception_handler(e, "fetching the inputs", reply)
 
-        if not reply.failed and fetch_input_result is not None:
+        if reply.status_enum == "running" and fetch_input_result is not None:
             try:
                 transformed_input = self._worker.transform_input(
                     request, fetch_input_result
@@ -298,7 +297,7 @@ class WorkerManager(Service):
                 exception_handler(e, "transforming the input", reply)
 
         if (
-            not reply.failed
+            reply.status_enum == "running"
             and model_result is not None
             and transformed_input is not None
         ):
@@ -309,7 +308,7 @@ class WorkerManager(Service):
             except Exception as e:
                 exception_handler(e, "executing", reply)
 
-        if not reply.failed and execute_result is not None:
+        if reply.status_enum == "running" and execute_result is not None:
             try:
                 transformed_output = self._worker.transform_output(
                     request, execute_result
@@ -317,7 +316,7 @@ class WorkerManager(Service):
             except Exception as e:
                 exception_handler(e, "transforming the output", reply)
 
-        if not reply.failed and transformed_output is not None:
+        if reply.status_enum == "running" and transformed_output is not None:
             if request.output_keys:
                 try:
                     reply.output_keys = self._worker.place_output(
@@ -330,13 +329,15 @@ class WorkerManager(Service):
             else:
                 reply.outputs = transformed_output.outputs
 
-        if reply.failed:
+        if reply.status_enum != "running":
             response = build_failure_reply(reply.status_enum, reply.message)
         else:
             if reply.outputs is None or not reply.outputs:
                 response = build_failure_reply("fail", "Outputs not found.")
 
             else:
+                reply.status_enum = "complete"
+                reply.message = "Success"
                 response = build_reply(reply)
 
         # serialized = self._worker.serialize_reply(request, transformed_output)
