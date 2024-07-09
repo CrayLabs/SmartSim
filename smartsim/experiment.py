@@ -174,7 +174,9 @@ class Experiment:
         # TODO: Remove this! The contoller is becoming obsolete
         self._control = Controller(launcher="local")
         self._dispatcher = settings_dispatcher
+
         self._active_launchers: set[LauncherLike[t.Any]] = set()
+        """The active launchers created, used, and reused by the experiment"""
 
         self.fs_identifiers: t.Set[str] = set()
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
@@ -189,7 +191,7 @@ class Experiment:
             )
 
         def _start(job: Job) -> LaunchedJobID:
-            builder = job.launch_settings.launch_args
+            builder: LaunchArgBuilder[t.Any] = job.launch_settings.launch_args
             launcher_type = self._dispatcher.get_launcher_for(builder)
             launcher = first(
                 lambda launcher: type(launcher) is launcher_type,
