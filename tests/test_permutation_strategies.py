@@ -37,10 +37,14 @@ pytestmark = pytest.mark.group_a
 
 def test_strategy_registration(monkeypatch):
     monkeypatch.setattr(strategies, "_REGISTERED_STRATEGIES", {})
-    assert not strategies._REGISTERED_STRATEGIES
+    assert strategies._REGISTERED_STRATEGIES == {}
 
     new_strat = lambda params, exe_args, nmax: []
-    strategies._register("new_strat")(new_strat)
+    decorator = strategies._register("new_strat")
+    assert strategies._REGISTERED_STRATEGIES == {}
+
+    ret_val = decorator(new_strat)
+    assert ret_val is new_strat
     assert strategies._REGISTERED_STRATEGIES == {"new_strat": new_strat}
 
 
@@ -83,13 +87,13 @@ def broken_strategy(p, n, e):
         pytest.param(lambda params, exe_args, nmax: 123, id="Does not return a list"),
         pytest.param(
             lambda params, exe_args, nmax: [1, 2, 3],
-            id="Does not return a list of dicts",
+            id="Does not return a list of ParamSet",
         ),
     ),
 )
 def test_custom_strategy_raises_user_strategy_error_if_something_goes_wrong(strategy):
     with pytest.raises(errors.UserStrategyError):
-        strategies.resolve(strategy)({"SPAM": ["EGGS"]}, {"SPAM": [["EGGS"]]}, 123)
+        strategies.resolve(strategy)({"SPAM": ["EGGS"]}, {"HELLO": [["WORLD"]]}, 123)
 
 
 @pytest.mark.parametrize(
