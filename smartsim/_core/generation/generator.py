@@ -37,6 +37,7 @@ from tabulate import tabulate
 
 from ...database import FeatureStore
 from ...entity import Application, Ensemble, TaggedFilesHierarchy
+from ...launchable.job import Job
 from ...log import get_logger
 from ..control import Manifest
 from ...launchable.basejob import BaseJob
@@ -151,31 +152,9 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
-        """Generate directories for Ensemble instances
-
-        :param entity_lists: list of Ensemble instances
-        """
-
-        if not entity_lists:
-            return
-
-        for elist in entity_lists:
-            elist_dir = path.join(self.gen_path, elist.name)
-            if path.isdir(elist_dir):
-                if self.overwrite:
-                    shutil.rmtree(elist_dir)
-                    mkdir(elist_dir)
-            else:
-                mkdir(elist_dir)
-            elist.path = elist_dir
-
-            self._gen_entity_dirs(list(elist.applications), entity_list=elist)
-
-    def _gen_entity_dirs(
+    def _gen_job_dir(
         self,
-        entities: t.List[Application],
-        entity_list: t.Optional[Ensemble] = None,
+        job: Job,
     ) -> None:
         """Generate directories for Entity instances
 
@@ -184,30 +163,41 @@ class Generator:
         :raises EntityExistsError: if a directory already exists for an
                                    entity by that name
         """
-        if not entities:
-            return
+        job_destination = job.entity.path
+        pathlib.Path(job_destination).mkdir(exist_ok=True)
+        if isinstance(Application, type(job.entity)):
+            file_operation_list = self.build_operations(job.entity)
+            self.execute_file_operations(file_operation_list)
+    
+    def execute_file_operations(self, file_ops: t.Sequence[t.Sequence[str]]) -> None:
+        ...
+    
+    def build_operations(self, app: Application) -> t.Sequence[t.Sequence[str]]:
+        """This method generates file system operations based on the provided application.
+        It processes three types of operations: to_copy, to_symlink, and to_configure.
+        For each type, it calls the corresponding private methods and appends the results
+        to the `file_operation_list`.
 
-        for entity in entities:
-            if entity_list:
-                dst = path.join(self.gen_path, entity_list.name, entity.name)
-            else:
-                dst = path.join(self.gen_path, entity.name)
-
-            if path.isdir(dst):
-                if self.overwrite:
-                    shutil.rmtree(dst)
-                else:
-                    error = (
-                        f"Directory for entity {entity.name} "
-                        f"already exists in path {dst}"
-                    )
-                    raise FileExistsError(error)
-            pathlib.Path(dst).mkdir(exist_ok=True)
-            entity.path = dst
-
-            self._copy_entity_files(entity)
-            self._link_entity_files(entity)
-            self._write_tagged_entity_files(entity)
+        :param app: The application for which operations are generated.
+        :return: A list of lists containing file system operations.
+        """
+        file_operation_list = []
+        # Generate copy file system operations
+        file_operation_list.extend(
+            self._get_copy_file_system_operation(file_copy)
+            for file_copy in app.files.copy
+        )
+        # Generate symlink file system operations
+        file_operation_list.extend(
+            self._get_symlink_file_system_operation(file_link)
+            for file_link in app.files.link
+        )
+        # Generate configure file system operations
+        file_operation_list.extend(
+            self._write_tagged_entity_files(file_configure)
+            for file_configure in app.files.tagged
+        )
+        return file_operation_list
 
     def _write_tagged_entity_files(self, entity: Application) -> None:
         """Read, configure and write the tagged input files for
@@ -250,6 +240,27 @@ class Generator:
                 )
                 self._log_params(entity, files_to_params)
 
+    # TODO replace with entrypoint operation
+    @staticmethod
+    def _get_copy_file_system_operation(copy_file: str) -> t.Sequence[str]:
+        """Get copy file system operation for a file.
+
+        :param linked_file: The file to be copied.
+        :return: A list of copy file system operations.
+        """
+        return ["temporary", "copy"]
+
+    # TODO replace with entrypoint operation
+    @staticmethod
+    def _get_symlink_file_system_operation(linked_file: str) -> t.Sequence[str]:
+        """Get symlink file system operation for a file.
+
+        :param linked_file: The file to be symlinked.
+        :return: A list of symlink file system operations.
+        """
+        return ["temporary", "link"]
+
+    # TODO to be refactored in ticket 723
     def _log_params(
         self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
     ) -> None:
@@ -292,28 +303,3 @@ class Generator:
                 level=self.log_level,
                 msg=f"Configured application {entity.name} with no parameters",
             )
-
-    @staticmethod
-    def _copy_entity_files(entity: Application) -> None:
-        """Copy the entity files and directories attached to this entity.
-
-        :param entity: Application
-        """
-        if entity.files:
-            for to_copy in entity.files.copy:
-                dst_path = path.join(entity.path, path.basename(to_copy))
-                if path.isdir(to_copy):
-                    dir_util.copy_tree(to_copy, entity.path)
-                else:
-                    shutil.copyfile(to_copy, dst_path)
-
-    @staticmethod
-    def _link_entity_files(entity: Application) -> None:
-        """Symlink the entity files attached to this entity.
-
-        :param entity: Application
-        """
-        if entity.files:
-            for to_link in entity.files.link:
-                dst_path = path.join(entity.path, path.basename(to_link))
-                symlink(to_link, dst_path)

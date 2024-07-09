@@ -208,7 +208,9 @@ class Experiment:
             #       into `builder`, which is itself an attr of an attr of `job`.
             #       Why is `Job` not generic based on launch arg builder?
             # ---------------------------------------------------------------------
-            finalized = builder.finalize(job.entity, job.launch_settings.env_vars)
+            exe_like = t.cast("ExecutableLike", job.entity)
+            job_execution_path = self._generate(job)
+            finalized = builder.finalize(exe_like, job.launch_settings.env_vars)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             return launcher.start(finalized)
 
