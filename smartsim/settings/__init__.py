@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from .baseSettings import BaseSettings
 from .batchSettings import BatchSettings
 from .launchSettings import LaunchSettings
@@ -32,69 +34,55 @@ __all__ = ["LaunchSettings", "BaseSettings", "BatchSettings"]
 
 
 # TODO Mock imports for compiling tests
-class DragonRunSettings:
-    pass
-
-
-class QsubBatchSettings:
-    pass
-
-
-class SgeQsubBatchSettings:
-    pass
-
-
-class SbatchSettings:
-    pass
-
-
-class Singularity:
-    pass
-
-
 class SettingsBase:
-    pass
+    def __init__(self, *_: t.Any, **__: t.Any) -> None: ...
+    def __getattr__(self, _: str) -> t.Any: ...
 
 
-class AprunSettings:
-    pass
+class QsubBatchSettings(SettingsBase): ...
 
 
-class RunSettings:
-    pass
+class SgeQsubBatchSettings(SettingsBase): ...
 
 
-class OrterunSettings:
-    pass
+class SbatchSettings(SettingsBase): ...
 
 
-class MpirunSettings:
-    pass
+class Singularity: ...
 
 
-class MpiexecSettings:
-    pass
+class AprunSettings(SettingsBase): ...
 
 
-class JsrunSettings:
-    pass
+class RunSettings(SettingsBase): ...
 
 
-class BsubBatchSettings:
-    pass
+class DragonRunSettings(RunSettings): ...
 
 
-class PalsMpiexecSettings:
-    pass
+class OrterunSettings(RunSettings): ...
 
 
-class SrunSettings:
-    pass
+class MpirunSettings(RunSettings): ...
 
 
-class Container:
-    pass
+class MpiexecSettings(RunSettings): ...
 
 
-def create_batch_settings() -> None: ...
-def create_run_settings() -> None: ...
+class JsrunSettings(RunSettings): ...
+
+
+class BsubBatchSettings(RunSettings): ...
+
+
+class PalsMpiexecSettings(RunSettings): ...
+
+
+class SrunSettings(RunSettings): ...
+
+
+class Container: ...
+
+
+def create_batch_settings(*_: t.Any, **__: t.Any) -> t.Any: ...
+def create_run_settings(*_: t.Any, **__: t.Any) -> t.Any: ...

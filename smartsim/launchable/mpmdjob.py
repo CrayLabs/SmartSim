@@ -24,6 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import textwrap
 import typing as t
 from copy import deepcopy
 
@@ -32,6 +35,9 @@ from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.mpmdpair import MPMDPair
 from smartsim.settings.launchSettings import LaunchSettings
+
+if t.TYPE_CHECKING:
+    from smartsim._core.commands.launchCommands import LaunchCommands
 
 
 def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:
@@ -51,7 +57,7 @@ def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:
 def _check_entity(mpmd_pairs: t.List[MPMDPair]) -> None:
     """Enforce all pairs have the same entity types"""
     flag = 0
-    ret = None
+    ret: SmartSimEntity | None = None
     for mpmd_pair in mpmd_pairs:
         if flag == 1:
             if type(ret) == type(mpmd_pair.entity):
@@ -70,7 +76,7 @@ class MPMDJob(BaseJob):
     The stored pairs into an MPMD command(s)
     """
 
-    def __init__(self, mpmd_pairs: t.List[MPMDPair] = None) -> None:
+    def __init__(self, mpmd_pairs: t.List[MPMDPair] | None = None) -> None:
         super().__init__()
         self._mpmd_pairs = deepcopy(mpmd_pairs) if mpmd_pairs else []
         _check_launcher(self._mpmd_pairs)
@@ -78,11 +84,11 @@ class MPMDJob(BaseJob):
         # TODO: self.warehouse_runner = MPMDJobWarehouseRunner
 
     @property
-    def mpmd_pairs(self) -> t.List[MPMDPair]:
+    def mpmd_pairs(self) -> list[MPMDPair]:
         return deepcopy(self._mpmd_pairs)
 
     @mpmd_pairs.setter
-    def mpmd_pair(self, value):
+    def mpmd_pairs(self, value: list[MPMDPair]) -> None:
         self._mpmd_pair = deepcopy(value)
 
     def add_mpmd_pair(
@@ -95,16 +101,18 @@ class MPMDJob(BaseJob):
         _check_launcher(self.mpmd_pairs)
         _check_entity(self.mpmd_pairs)
 
-    def get_launch_steps(self) -> None:  # TODO: -> LaunchSteps:
+    def get_launch_steps(self) -> LaunchCommands:
         """Return the launch steps corresponding to the
         internal data.
         """
-        pass
         # TODO: return MPMDJobWarehouseRunner.run(self)
+        raise NotImplementedError
 
     def __str__(self) -> str:  # pragma: no cover
         """returns A user-readable string of a MPMD Job"""
-        for mpmd_pair in self.mpmd_pairs:
-            string = "\n== MPMD Pair == \n{}\n{}\n"
-            return string.format(mpmd_pair.entity, mpmd_pair.launch_settings)
-        return string
+        fmt = lambda mpmd_pair: textwrap.dedent(f"""\
+                == MPMD Pair ==
+                {mpmd_pair.entity}
+                {mpmd_pair.launch_settings}
+                """)
+        return "\n".join(map(fmt, self.mpmd_pairs))

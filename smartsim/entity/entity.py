@@ -27,7 +27,9 @@
 import typing as t
 
 if t.TYPE_CHECKING:
-    import smartsim.settings.base.RunSettings
+    from smartsim.types import TODO
+
+    RunSettings = TODO
 
 
 class TelemetryConfiguration:
@@ -89,9 +91,7 @@ class TelemetryConfiguration:
 
 
 class SmartSimEntity:
-    def __init__(
-        self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"
-    ) -> None:
+    def __init__(self, name: str, path: str, run_settings: "RunSettings") -> None:
         """Initialize a SmartSim entity.
 
         Each entity must have a name, path, and

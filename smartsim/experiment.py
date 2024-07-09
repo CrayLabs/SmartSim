@@ -58,7 +58,10 @@ from .settings import BatchSettings, Container, RunSettings
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.builders import LaunchArgBuilder
+    from smartsim.settings.builders.launchArgBuilder import (
+        ExecutableLike,
+        LaunchArgBuilder,
+    )
     from smartsim.settings.dispatch import Dispatcher, LauncherLike
     from smartsim.types import LaunchedJobID
 
@@ -203,8 +206,11 @@ class Experiment:
             # TODO: Very much dislike that we have to pass in attrs off of `job`
             #       into `builder`, which is itself an attr of an attr of `job`.
             #       Why is `Job` not generic based on launch arg builder?
+            # FIXME: Remove this dangerous cast after `SmartSimEntity` conforms
+            #        to protocol
             # ---------------------------------------------------------------------
-            finalized = builder.finalize(job.entity, job.launch_settings.env_vars)
+            exe_like = t.cast("ExecutableLike", job.entity)
+            finalized = builder.finalize(exe_like, job.launch_settings.env_vars)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             return launcher.start(finalized)
 
