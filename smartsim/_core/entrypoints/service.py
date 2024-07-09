@@ -46,7 +46,8 @@ class Service(ABC):
         :param as_service: Determines if the host will run until shutdown criteria
         are met or as a run-once instance
         :param cooldown: Period of time to allow service to run before automatic
-        shutdown, in seconds. A non-zero, positive integer."""
+        shutdown, in seconds. A non-zero, positive integer.
+        :param loop_delay: delay between iterations of the event loop"""
         self._as_service = as_service
         """If the service should run until shutdown function returns True"""
         self._cooldown = abs(cooldown)

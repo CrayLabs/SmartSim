@@ -51,3 +51,9 @@ class DragonCommChannel(cch.CommChannelBase):
         :param value: The value to send"""
         with self._channel.sendh(timeout=None) as sendh:
             sendh.send_bytes(value)
+
+    def recv(self) -> bytes:
+        """Receieve a message through the underlying communication channel
+        :returns: the received message"""
+        with self._channel.recvh(timeout=None) as recvh:
+            return recvh.recv_bytes(timeout=None)

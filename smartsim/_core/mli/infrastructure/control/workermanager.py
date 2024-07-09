@@ -27,14 +27,10 @@
 import sys
 
 # isort: off
-try:
-    import dragon
-    from dragon import fli
-except ImportError as exc:
-    if not "pytest" in sys.modules:
-        raise exc from None
-
+import dragon
+from dragon import fli
 # isort: on
+
 import time
 import typing as t
 
@@ -169,7 +165,7 @@ class WorkerManager(Service):
 
     def __init__(
         self,
-        file_like_interface: "fli.FLInterface",
+        task_queue: CommChannelBase,
         worker: MachineLearningWorkerBase,
         feature_store: t.Optional[FeatureStore] = None,
         as_service: bool = False,
@@ -189,7 +185,7 @@ class WorkerManager(Service):
         super().__init__(as_service, cooldown)
 
         """a collection of workers the manager is controlling"""
-        self._task_queue: fli.FLInterface = file_like_interface
+        self._task_queue: CommChannelBase = task_queue
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = feature_store
         """a feature store to retrieve models from"""
@@ -241,11 +237,7 @@ class WorkerManager(Service):
             return
 
         # perform default deserialization of the message envelope
-        with self._task_queue.recvh(timeout=None) as recvh:
-            try:
-                request_bytes, _ = recvh.recv_bytes(timeout=None)
-            except fli.FLIEOT as exc:
-                return
+        request_bytes = self._task_queue.recv()
 
         request = deserialize_message(
             request_bytes, self._comm_channel_type, self._device

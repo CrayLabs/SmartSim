@@ -1,6 +1,11 @@
+
+
 import os
+import base64
+import cloudpickle
 import sys
 from smartsim import Experiment
+from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim.status import TERMINAL_STATUSES
 import time
 
@@ -14,7 +19,9 @@ exp_path = os.path.join(filedir, "MLI_proto")
 os.makedirs(exp_path, exist_ok=True)
 exp = Experiment("MLI_proto", launcher="dragon", exp_path=exp_path)
 
-worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device])
+torch_worker_str = base64.b64encode(cloudpickle.dumps(TorchWorker)).decode("ascii")
+
+worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device, "--worker_class", torch_worker_str])
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 

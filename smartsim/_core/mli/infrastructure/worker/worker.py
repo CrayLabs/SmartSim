@@ -24,6 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# isort: off
+from dragon.utils import b64decode
+# isort: on
+
 import sys
 import typing as t
 from abc import ABC, abstractmethod
@@ -34,13 +38,6 @@ from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
 
-# isort: off
-try:
-    from dragon.utils import b64decode
-except ImportError as exc:
-    if "pytest" not in sys.modules:
-        raise exc from None
-# isort: on
 
 logger = get_logger(__name__)
 
