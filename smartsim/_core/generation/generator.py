@@ -39,7 +39,8 @@ from ...database import FeatureStore
 from ...entity import Application, Ensemble, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
-from .modelwriter import ApplicationWriter
+from ...launchable.basejob import BaseJob
+import os
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -52,7 +53,7 @@ class Generator:
     """
 
     def __init__(
-        self, gen_path: str, overwrite: bool = False, verbose: bool = True
+        self, gen_path: str, base_job: BaseJob
     ) -> None:
         """Initialize a generator object
 
@@ -64,13 +65,31 @@ class Generator:
         collision between entities.
 
         :param gen_path: Path in which files need to be generated
-        :param overwrite: toggle entity replacement
-        :param verbose: Whether generation information should be logged to std out
+        :param base_job: TODO
         """
-        self._writer = ApplicationWriter()
         self.gen_path = gen_path
-        self.overwrite = overwrite
-        self.log_level = DEBUG if not verbose else INFO
+        self.base_job = base_job
+
+    @property
+    def log_level(self) -> int:
+        """Determines the log level based on the value of the environment
+        variable SMARTSIM_LOG_LEVEL.
+
+        If the environment variable is set to "debug", returns the log level DEBUG.
+        Otherwise, returns the default log level INFO.
+
+        :return: Log level (DEBUG or INFO)
+        """
+        # Get the value of the environment variable SMARTSIM_LOG_LEVEL
+        env_log_level = os.getenv("SMARTSIM_LOG_LEVEL")
+
+        # Set the default log level to INFO
+        default_log_level = INFO
+
+        if env_log_level == "debug":
+            return DEBUG
+        else:
+            return default_log_level
 
     @property
     def log_file(self) -> str:
@@ -82,7 +101,7 @@ class Generator:
         """
         return join(self.gen_path, "smartsim_params.txt")
 
-    def generate_experiment(self, *args: t.Any) -> None:
+    def generate_experiment(self) -> None:
         """Run ensemble and experiment file structure generation
 
         Generate the file structure for a SmartSim experiment. This
@@ -102,32 +121,10 @@ class Generator:
         e.g. ``THERMO=;90;``
 
         """
-        generator_manifest = Manifest(*args)
 
         self._gen_exp_dir()
-        self._gen_feature_store_dir(generator_manifest.fss)
-        self._gen_entity_list_dir(generator_manifest.ensembles)
-        self._gen_entity_dirs(generator_manifest.applications)
+        self._gen_job_dir()
 
-    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
-        """Set the tag used for tagging input files
-
-        Set a tag or a regular expression for the
-        generator to look for when configuring new applications.
-
-        For example, a tag might be ``;`` where the
-        expression being replaced in the application configuration
-        file would look like ``;expression;``
-
-        A full regular expression might tag specific
-        application configurations such that the configuration
-        files don't need to be tagged manually.
-
-        :param tag: A string of characters that signify
-                    the string to be changed. Defaults to ``;``
-        :param regex: full regex for the applicationwriter to search for
-        """
-        self._writer.set_tag(tag, regex)
 
     def _gen_exp_dir(self) -> None:
         """Create the directory for an experiment if it does not
@@ -153,24 +150,6 @@ class Generator:
         with open(self.log_file, mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
-
-    def _gen_feature_store_dir(self, feature_store_list: t.List[FeatureStore]) -> None:
-        """Create the directory that will hold the error, output and
-           configuration files for the feature store.
-
-        :param featurestore: FeatureStore instance
-        """
-        # Loop through feature stores
-        for featurestore in feature_store_list:
-            feature_store_path = path.join(self.gen_path, featurestore.name)
-
-            featurestore.set_path(feature_store_path)
-            # Always remove featurestore files if present.
-            if path.isdir(feature_store_path):
-                shutil.rmtree(feature_store_path, ignore_errors=True)
-            pathlib.Path(feature_store_path).mkdir(
-                exist_ok=self.overwrite, parents=True
-            )
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for Ensemble instances

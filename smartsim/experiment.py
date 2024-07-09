@@ -200,6 +200,8 @@ class Experiment:
             if launcher is None:
                 launcher = launcher_type.create(self)
                 self._active_launchers.add(launcher)
+            # TODO write comments
+            job_execution_path = self._generate(job)
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             # FIXME: Opting out of type check here. Fix this later!!
             # TODO: Very much dislike that we have to pass in attrs off of `job`
@@ -322,12 +324,9 @@ class Experiment:
             raise
 
     @_contextualize
-    def generate(
+    def _generate(
         self,
-        *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        tag: t.Optional[str] = None,
-        overwrite: bool = False,
-        verbose: bool = False,
+        job: Job,
     ) -> None:
         """Generate the file structure for an ``Experiment``
 
@@ -347,10 +346,8 @@ class Experiment:
         :param verbose: log parameter settings to std out
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
-            if tag:
-                generator.set_tag(tag)
-            generator.generate_experiment(*args)
+            generator = Generator(self.exp_path, job)
+            generator.generate_experiment()
         except SmartSimError as e:
             logger.error(e)
             raise
