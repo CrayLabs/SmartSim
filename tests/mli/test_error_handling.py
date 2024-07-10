@@ -91,12 +91,10 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch):
 
 
 def test_fetch_model_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_fetch_model(a, b):
         raise ValueError("Simulated error in fetch_model")
-
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "fetch_model", mock_fetch_model)
 
@@ -104,60 +102,51 @@ def test_fetch_model_errors_handled(setup_worker_manager, monkeypatch):
 
 
 def test_load_model_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_load_model(a, b):
         raise ValueError("Simulated error in load_model")
-
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "load_model", mock_load_model)
     worker_manager._on_iteration()
 
 
 def test_fetch_inputs_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_fetch_inputs(a, b):
         raise ValueError("Simulated error in fetch_inputs")
-
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "fetch_inputs", mock_fetch_inputs)
     worker_manager._on_iteration()
 
 
 def test_transform_input_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_transform_input(a, b):
         raise ValueError("Simulated error in transform_input")
-
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "transform_input", mock_transform_input)
     worker_manager._on_iteration()
 
 
 def test_transform_output_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_transform_output(a, b):
         raise ValueError("Simulated error in transform_output")
-
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "transform_output", mock_transform_output)
     worker_manager._on_iteration()
 
 
 def test_place_output_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_place_output(a, b, c):
         raise ValueError("Simulated error in place_output")
 
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
     worker_manager._on_iteration()

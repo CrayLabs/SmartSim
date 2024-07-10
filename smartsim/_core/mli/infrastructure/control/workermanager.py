@@ -255,7 +255,8 @@ class WorkerManager(Service):
             return
 
         # perform default deserialization of the message envelope
-        request_bytes: bytes = self._task_queue.get()
+        receiver = self._task_queue.recvh(use_main_as_stream_channel=True)
+        request_bytes, _ = receiver.recv_bytes()
 
         request = deserialize_message(request_bytes, self._comm_channel_type)
         if not self._validate_request(request):
