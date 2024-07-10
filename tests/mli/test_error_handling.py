@@ -93,7 +93,7 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
 
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.workermanager",
+        worker_manager,
         "build_failure_reply",
         mock_reply_fn,
     )
