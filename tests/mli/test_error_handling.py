@@ -30,12 +30,18 @@ import pytest
 
 dragon = pytest.importorskip("dragon")
 
+import dragon.utils as du
+from dragon.channels import Channel
+from dragon.data.ddict.ddict import DDict
+from dragon.fli import DragonFLIError, FLInterface
+
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
 )
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 from smartsim._core.mli.message_handler import MessageHandler
+from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 
 from .channel import FileSystemCommChannel
 from .featurestore import FileSystemFeatureStore
@@ -46,15 +52,16 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture
-def setup_worker_manager(test_dir):
-    work_queue: "mp.Queue[bytes]" = mp.Queue()
+def setup_worker_manager(test_dir, monkeypatch):
     integrated_worker = IntegratedTorchWorker()
-    file_system_store = FileSystemFeatureStore(test_dir)
+
+    chan = Channel.make_process_local()
+    queue = FLInterface(main_ch=chan)
+    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
 
     worker_manager = WorkerManager(
-        work_queue,
+        EnvironmentConfigLoader(),
         integrated_worker,
-        file_system_store,
         as_service=False,
         cooldown=3,
         comm_channel_type=FileSystemCommChannel,
@@ -66,7 +73,7 @@ def setup_worker_manager(test_dir):
     )
     ser_request = MessageHandler.serialize_request(request)
 
-    return worker_manager, work_queue, integrated_worker, ser_request
+    return worker_manager, worker_manager._task_queue, integrated_worker, ser_request
 
 
 def test_execute_errors_handled(setup_worker_manager, monkeypatch):
