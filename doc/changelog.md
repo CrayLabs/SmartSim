@@ -14,10 +14,11 @@ Jump to:
 Description
 
 - Add error handling in Worker Manager pipeline
+- Add EnvironmentConfigLoader for ML Worker Manager
 - Add Model schema with model metadata included
 - Removed device from schemas, MessageHandler and tests
 - Add ML worker manager, sample worker, and feature store
-- Added schemas and MessageHandler class for de/serialization of
+- Add schemas and MessageHandler class for de/serialization of
   inference requests and response messages
 
 

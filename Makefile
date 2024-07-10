@@ -164,7 +164,7 @@ tutorials-prod:
 # help: test                           - Run all tests
 .PHONY: test
 test:
-	@python -m pytest --ignore=tests/full_wlm/
+	@python -m pytest --ignore=tests/full_wlm/ --ignore=tests/dragon
 
 # help: test-verbose                   - Run all tests verbosely
 .PHONY: test-verbose
@@ -192,3 +192,8 @@ test-full:
 .PHONY: test-wlm
 test-wlm:
 	@python -m pytest -vv tests/full_wlm/ tests/on_wlm
+
+# help: test-dragon                   - Run dragon-specific tests
+.PHONY: test-dragon
+test-dragon:
+	@dragon pytest tests/dragon
