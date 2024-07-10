@@ -66,23 +66,25 @@ def setup_worker_manager(test_dir, monkeypatch):
         cooldown=3,
         comm_channel_type=FileSystemCommChannel,
     )
+
+
     tensor_key = MessageHandler.build_tensor_key("key")
     model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
     request = MessageHandler.build_request(
         b"channel", model, [tensor_key], [tensor_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
+    new_sender = worker_manager._task_queue.sendh(use_main_as_stream_channel=True)
+    new_sender.send_bytes(ser_request)
 
-    return worker_manager, worker_manager._task_queue, integrated_worker, ser_request
+    return worker_manager, integrated_worker
 
 
 def test_execute_errors_handled(setup_worker_manager, monkeypatch):
-    worker_manager, work_queue, integrated_worker, ser_request = setup_worker_manager
+    worker_manager, integrated_worker = setup_worker_manager
 
     def mock_execute():
         raise ValueError("Simulated error in execute")
-
-    work_queue.put(ser_request)
 
     monkeypatch.setattr(integrated_worker, "execute", mock_execute)
 
