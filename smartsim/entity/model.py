@@ -39,25 +39,35 @@ from .._core._install.builder import Device
 from .._core.utils.helpers import cat_arg_and_value, expand_exe_path
 from ..error import EntityExistsError, SSUnsupportedError
 from ..log import get_logger
-from ..settings import BatchSettings, RunSettings
 from .dbobject import FSModel, FSScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
+if t.TYPE_CHECKING:
+    from smartsim.types import TODO
+
+    RunSettings = TODO
+    BatchSettings = TODO
+
+
 logger = get_logger(__name__)
 
 
+# TODO: Remove this supression when we strip fileds/functionality
+#       (run-settings/batch_settings/params_as_args/etc)!
+# pylint: disable-next=too-many-public-methods
 class Application(SmartSimEntity):
     def __init__(
         self,
         name: str,
         exe: str,
-        run_settings: RunSettings,
+        run_settings: "RunSettings",
         params: t.Optional[t.Dict[str, str]] = None,
         exe_args: t.Optional[t.List[str]] = None,
         path: t.Optional[str] = getcwd(),
         params_as_args: t.Optional[t.List[str]] = None,
-        batch_settings: t.Optional[BatchSettings] = None,
+        batch_settings: t.Optional["BatchSettings"] = None,
+        files: t.Optional[EntityFiles] = None,
     ):
         """Initialize a ``Application``
 
@@ -73,19 +83,20 @@ class Application(SmartSimEntity):
                                be added to run_settings
         :param batch_settings: Launcher settings for running the individual
                                application as a batch job
+        :param files: Files to have available to the application
         """
         super().__init__(name, str(path), run_settings)
         self.exe = [expand_exe_path(exe)]
         # self.exe = [exe] if run_settings.container else [expand_exe_path(exe)]
         self.exe_args = exe_args or []
-        self.params = params or {}
+        self.params = params.copy() if params else {}
         self.params_as_args = params_as_args
         self.incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False
         self.batch_settings = batch_settings
         self._fs_models: t.List[FSModel] = []
         self._fs_scripts: t.List[FSScript] = []
-        self.files: t.Optional[EntityFiles] = None
+        self.files = copy.deepcopy(files) if files else None
 
     @property
     def exe_args(self) -> t.Union[str, t.List[str]]:
@@ -127,8 +138,7 @@ class Application(SmartSimEntity):
         """
         if self.run_settings is None:
             return False
-        else:
-            return bool(self.run_settings.colocated_fs_settings)
+        return bool(self.run_settings.colocated_fs_settings)
 
     def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
         """Add executable arguments to executable
@@ -163,7 +173,9 @@ class Application(SmartSimEntity):
         self._key_prefixing_enabled = True
 
     def disable_key_prefixing(self) -> None:
-        """If called, the entity will not prefix its keys with its own application name"""
+        """If called, the entity will not prefix its keys with its own
+        application name
+        """
         self._key_prefixing_enabled = False
 
     def query_key_prefixing(self) -> bool:
@@ -256,9 +268,10 @@ class Application(SmartSimEntity):
     ) -> None:
         """Colocate an FeatureStore instance with this Application over UDS.
 
-        This method will initialize settings which add an unsharded
-        feature store to this Application instance. Only this Application will be able to communicate
-        with this colocated feature store by using Unix Domain sockets.
+        This method will initialize settings which add an unsharded feature
+        store to this Application instance. Only this Application will be able
+        to communicate with this colocated feature store by using Unix Domain
+        sockets.
 
         Extra parameters for the fs can be passed through kwargs. This includes
         many performance, caching and inference settings.
@@ -281,8 +294,10 @@ class Application(SmartSimEntity):
         :param fs_cpus: number of cpus to use for FeatureStore
         :param custom_pinning: CPUs to pin the FeatureStore to. Passing an empty
                                iterable disables pinning
-        :param debug: launch Application with extra debug information about the colocated fs
-        :param kwargs: additional keyword arguments to pass to the FeatureStore feature store
+        :param debug: launch Application with extra debug information about the
+                      colocated fs
+        :param kwargs: additional keyword arguments to pass to the FeatureStore
+                       feature store
         """
 
         if not re.match(r"^[a-zA-Z0-9.:\,_\-/]*$", unix_socket):
@@ -317,9 +332,10 @@ class Application(SmartSimEntity):
     ) -> None:
         """Colocate an FeatureStore instance with this Application over TCP/IP.
 
-        This method will initialize settings which add an unsharded
-        feature store to this Application instance. Only this Application will be able to communicate
-        with this colocated feature store by using the loopback TCP interface.
+        This method will initialize settings which add an unsharded feature
+        store to this Application instance. Only this Application will be able
+        to communicate with this colocated feature store by using the loopback
+        TCP interface.
 
         Extra parameters for the fs can be passed through kwargs. This includes
         many performance, caching and inference settings.
@@ -342,8 +358,10 @@ class Application(SmartSimEntity):
         :param fs_cpus: number of cpus to use for FeatureStore
         :param custom_pinning: CPUs to pin the FeatureStore to. Passing an empty
                                iterable disables pinning
-        :param debug: launch Application with extra debug information about the colocated fs
-        :param kwargs: additional keyword arguments to pass to the FeatureStore feature store
+        :param debug: launch Application with extra debug information about the
+                      colocated fs
+        :param kwargs: additional keyword arguments to pass to the FeatureStore
+                       feature store
         """
 
         tcp_options = {"port": port, "ifname": ifname}
@@ -377,7 +395,8 @@ class Application(SmartSimEntity):
 
         if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
             raise SSUnsupportedError(
-                "Applications colocated with feature stores cannot be run as a mpmd workload"
+                "Applications colocated with feature stores cannot be run as a "
+                "mpmd workload"
             )
 
         if hasattr(self.run_settings, "_prep_colocated_fs"):
@@ -489,8 +508,9 @@ class Application(SmartSimEntity):
             for param in self.params_as_args:
                 if not param in self.params:
                     raise ValueError(
-                        f"Tried to convert {param} to command line argument for Application "
-                        f"{self.name}, but its value was not found in application params"
+                        f"Tried to convert {param} to command line argument for "
+                        f"application {self.name}, but its value was not found "
+                        "in application params"
                     )
                 if self.run_settings is None:
                     raise ValueError(
@@ -526,7 +546,8 @@ class Application(SmartSimEntity):
 
         :param name: key to store model under
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :param model: A model in memory (only supported for non-colocated feature stores)
+        :param model: A model in memory (only supported for non-colocated
+                      feature stores)
         :param model_path: serialized model
         :param device: name of device for execution
         :param devices_per_node: The number of GPU devices available on the host.
@@ -685,7 +706,8 @@ class Application(SmartSimEntity):
         if fs_script.func and self.colocated:
             if not isinstance(fs_script.func, str):
                 err_msg = (
-                    "Functions can not be set from memory for colocated feature stores.\n"
+                    "Functions can not be set from memory for colocated "
+                    "feature stores.\n"
                     f"Please convert the function named {fs_script.name} "
                     "to a string or store it as a text file and add it to the "
                     "SmartSim Application with add_script."
@@ -697,7 +719,8 @@ class Application(SmartSimEntity):
         for fs_model in self._fs_models:
             if not fs_model.is_file:
                 err_msg = (
-                    "ML model can not be set from memory for colocated feature stores.\n"
+                    "ML model can not be set from memory for colocated "
+                    "feature stores.\n"
                     f"Please store the ML model named {fs_model.name} in binary "
                     "format and add it to the SmartSim Application as file."
                 )

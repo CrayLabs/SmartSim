@@ -191,8 +191,6 @@ class Generator:
                 mkdir(elist_dir)
             elist.path = elist_dir
 
-            self._gen_entity_dirs(list(elist.applications), entity_list=elist)
-
     def _gen_entity_dirs(
         self,
         entities: t.List[Application],

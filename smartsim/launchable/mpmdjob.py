@@ -30,7 +30,6 @@ import textwrap
 import typing as t
 from copy import deepcopy
 
-from smartsim.entity.entity import SmartSimEntity
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.launchable.basejob import BaseJob
 from smartsim.launchable.mpmdpair import MPMDPair
@@ -38,6 +37,7 @@ from smartsim.settings.launchSettings import LaunchSettings
 
 if t.TYPE_CHECKING:
     from smartsim._core.commands.launchCommands import LaunchCommands
+    from smartsim.entity.entity import SmartSimEntity
 
 
 def _check_launcher(mpmd_pairs: t.List[MPMDPair]) -> None:

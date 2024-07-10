@@ -282,8 +282,6 @@ class Experiment:
         try:
             for entity in stop_manifest.applications:
                 self._control.stop_entity(entity)
-            for entity_list in stop_manifest.ensembles:
-                self._control.stop_entity_list(entity_list)
             fss = stop_manifest.fss
             for fs in fss:
                 self._control.stop_fs(fs)
@@ -585,9 +583,6 @@ class Experiment:
 
         for ensemble in start_manifest.ensembles:
             create_entity_dir(ensemble)
-
-            for member in ensemble.applications:
-                create_entity_dir(member)
 
     def __str__(self) -> str:
         return self.name
