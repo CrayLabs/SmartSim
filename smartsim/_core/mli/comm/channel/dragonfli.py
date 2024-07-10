@@ -27,9 +27,11 @@
 # isort: off
 from dragon import fli
 import dragon.channels as dch
+
 # isort: on
 
 import sys
+
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.log import get_logger
 
@@ -60,4 +62,4 @@ class DragonFLIChannel(cch.CommChannelBase):
                 request_bytes, _ = recvh.recv_bytes(timeout=None)
                 return request_bytes
             except fli.FLIEOT as exc:
-                return b''
+                return b""

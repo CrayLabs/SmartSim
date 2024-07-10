@@ -24,11 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# isort: off
-from dragon.utils import b64decode
-# isort: on
-
-import sys
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -37,7 +32,6 @@ from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
-
 
 logger = get_logger(__name__)
 
@@ -174,7 +168,7 @@ class MachineLearningWorkerCore:
             )
 
         try:
-            raw_bytes = b64decode(feature_store[request.model_key])
+            raw_bytes: bytes = t.cast(bytes, feature_store[request.model_key])
             return FetchModelResult(raw_bytes)
         except FileNotFoundError as ex:
             logger.exception(ex)
@@ -202,7 +196,7 @@ class MachineLearningWorkerCore:
             data: t.List[bytes] = []
             for input_ in request.input_keys:
                 try:
-                    tensor_bytes = feature_store[input_]
+                    tensor_bytes = t.cast(bytes, feature_store[input_])
                     data.append(tensor_bytes)
                 except KeyError as ex:
                     logger.exception(ex)

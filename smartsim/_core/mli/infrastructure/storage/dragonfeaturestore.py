@@ -44,22 +44,27 @@ class DragonFeatureStore(FeatureStore):
         """Initialize the DragonFeatureStore instance"""
         self._storage = storage
 
-    def __getitem__(self, key: str) -> t.Any:
+    def __getitem__(self, key: str) -> t.Union[str, bytes]:
         """Retrieve an item using key
         :param key: Unique key of an item to retrieve from the feature store"""
         try:
-            return self._storage[key]
+            value: t.Union[str, bytes] = self._storage[key]
+            return value
+        except KeyError as ex:
+            raise ex
         except Exception as ex:
             # note: explicitly avoid round-trip to check for key existence
-            raise sse.SmartSimError(f"{key} not found in feature store") from ex
+            raise sse.SmartSimError(
+                f"Could not get value for existing key {key}, error:\n{ex}"
+            ) from ex
 
-    def __setitem__(self, key: str, value: str) -> None:
+    def __setitem__(self, key: str, value: t.Union[str, bytes]) -> None:
         """Assign a value using key
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
         self._storage[key] = value
 
-    def __contains__(self, key: t.Union[str]) -> bool:
+    def __contains__(self, key: str) -> bool:
         """Membership operator to test for a key existing within the feature store.
         Return `True` if the key is found, `False` otherwise
         :param key: Unique key of an item to retrieve from the feature store"""

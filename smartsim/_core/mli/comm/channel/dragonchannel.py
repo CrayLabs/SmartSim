@@ -56,4 +56,5 @@ class DragonCommChannel(cch.CommChannelBase):
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
         with self._channel.recvh(timeout=None) as recvh:
-            return recvh.recv_bytes(timeout=None)
+            message_bytes: bytes = recvh.recv_bytes(timeout=None)
+            return message_bytes

@@ -103,6 +103,23 @@ class Service(ABC):
         running = True
         cooldown_start: t.Optional[datetime.datetime] = None
 
+        headers = [
+            "batch_size",
+            "w_deserialize",
+            "w_fetch_model",
+            "w_load_model",
+            "w_fetch_input",
+            "w_transform_input",
+            "w_execute",
+            "w_transform_output",
+            "w_assign_output",
+            "w_build_reply",
+            "w_serialize_resp",
+            "w_send",
+        ]
+
+        print(",".join(headers))
+
         while running:
             self._on_iteration()
 

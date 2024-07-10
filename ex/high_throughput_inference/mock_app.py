@@ -31,7 +31,7 @@ from dragon.channels import Channel
 import dragon.channels
 from dragon.data.ddict.ddict import DDict
 from dragon.globalservices.api_setup import connect_to_infrastructure
-from dragon.utils import b64decode
+from dragon.utils import b64decode, b64encode
 
 # isort: on
 
@@ -107,7 +107,7 @@ class ProtoClient:
             numpy.savetxt("timings.txt", value_array)
 
 
-    def run_model(self, model: bytes, batch: torch.Tensor):
+    def run_model(self, model: bytes | str, batch: torch.Tensor):
         self.start_timings(batch.shape[0])
         built_tensor = MessageHandler.build_tensor(
             batch.numpy(), "c", "float32", list(batch.shape))
@@ -143,10 +143,14 @@ class ProtoClient:
         self.end_timings()
         return result
 
+    def set_model(self, key: str, model: bytes):
+        self._ddict[key] = b64encode(model)
+
 
 class ResNetWrapper():
-    def __init__(self, model: str):
+    def __init__(self, name: str, model: str):
         self._model = torch.jit.load(model)
+        self._name = name
         buffer = io.BytesIO()
         scripted = torch.jit.trace(self._model, self.get_batch())
         torch.jit.save(scripted, buffer)
@@ -159,15 +163,20 @@ class ResNetWrapper():
     def model(self):
         return self._serialized_model
 
+    @property
+    def name(self):
+        return self._name
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Mock application")
     parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
 
-    resnet = ResNetWrapper(f"resnet50.{args.device.upper()}.pt")
+    resnet = ResNetWrapper("resnet50", f"resnet50.{args.device.upper()}.pt")
 
     client = ProtoClient(timing_on=True)
+    client.set_model(resnet.name, resnet.model)
 
     total_iterations = 100
 
@@ -175,6 +184,6 @@ if __name__ == "__main__":
         logger.info(f"Batch size: {batch_size}")
         for iteration_number in range(total_iterations + int(batch_size==1)):
             logger.info(f"Iteration: {iteration_number}")
-            client.run_model(resnet.model, resnet.get_batch(batch_size))
+            client.run_model(resnet.name, resnet.get_batch(batch_size))
 
     client.print_timings(to_file=True)

@@ -38,11 +38,11 @@ import cloudpickle
 import os
 
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import DragonFeatureStore
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
-from smartsim._core.mli.infrastructure.control.workermanager import (
-    WorkerManager,
-)
+from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Worker Manager")
@@ -74,11 +74,13 @@ if __name__ == "__main__":
     ddict["to_worker_fli"] = to_worker_fli_serialized
 
     torch_worker = cloudpickle.loads(base64.b64decode(args.worker_class.encode('ascii')))()
+
+    dfs = DragonFeatureStore(ddict)
     comm_channel = DragonFLIChannel(to_worker_fli_serialized)
     worker_manager = WorkerManager(
         task_queue=comm_channel,
         worker=torch_worker,
-        feature_store=None,
+        feature_store=dfs,
         as_service=True,
         cooldown=10,
         comm_channel_type=DragonCommChannel,
