@@ -24,9 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import abc
 import typing as t
 
+from smartsim.launchable.jobGroup import JobGroup
+
 if t.TYPE_CHECKING:
+    from smartsim.launchable.job import Job
+    from smartsim.settings.launchSettings import LaunchSettings
     from smartsim.types import TODO
 
     RunSettings = TODO
@@ -117,3 +124,18 @@ class SmartSimEntity:
 
     def __repr__(self) -> str:
         return self.name
+
+
+class CompoundEntity(abc.ABC):
+    """An interface to create different types of collections of launchables
+    from a single set of launch settings.
+
+    Objects that implement this interface describe how to turn their entities
+    into a collection of jobs and this interface will handle coercion into
+    other collections for jobs with slightly different launching behavior.
+    """
+
+    @abc.abstractmethod
+    def as_jobs(self, settings: LaunchSettings) -> t.Collection[Job]: ...
+    def as_job_group(self, settings: LaunchSettings) -> JobGroup:
+        return JobGroup(list(self.as_jobs(settings)))
