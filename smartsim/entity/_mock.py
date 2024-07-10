@@ -24,20 +24,23 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""This module contains stubs of functionality that is not currently
+implemented. 
+
+THIS WHOLE MODULE SHOULD BE REMOVED IN FUTURE!!
+"""
+
 from __future__ import annotations
 
-import copy
 import typing as t
 
-from smartsim.settings.launchSettings import LaunchSettings
 
-if t.TYPE_CHECKING:
-    from smartsim.entity.entity import SmartSimEntity
+class Mock:
+    """Base mock class"""
 
+    def __init__(self, *_: t.Any, **__: t.Any): ...
+    def __getattr__(self, _: str) -> Mock:
+        return type(self)()
 
-class MPMDPair:
-    """Class to store MPMD Pairs"""
-
-    def __init__(self, entity: SmartSimEntity, launch_settings: LaunchSettings):
-        self.entity = copy.deepcopy(entity)
-        self.launch_settings = copy.deepcopy(launch_settings)
+    def __deepcopy__(self, _: dict[t.Any, t.Any]) -> Mock:
+        return type(self)()
