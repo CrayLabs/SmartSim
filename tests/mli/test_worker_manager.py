@@ -34,7 +34,12 @@ import typing as t
 import pytest
 import torch
 
-from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
+dragon = pytest.importorskip("dragon")
+
+from smartsim._core.mli.infrastructure.control.workermanager import (
+    EnvironmentConfigLoader,
+    WorkerManager,
+)
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
@@ -44,8 +49,8 @@ from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
 logger = get_logger(__name__)
-# The tests in this file belong to the group_b group
-pytestmark = pytest.mark.group_a
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 
 def mock_work(worker_manager_queue: "mp.Queue[bytes]") -> None:
@@ -166,14 +171,12 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     fs_path = test_path / "feature_store"
     comm_path = test_path / "comm_store"
 
-    work_queue: "mp.Queue[bytes]" = mp.Queue()
+    config_loader = EnvironmentConfigLoader()
     integrated_worker = IntegratedTorchWorker()
-    file_system_store = FileSystemFeatureStore()
 
     worker_manager = WorkerManager(
-        work_queue,
+        config_loader,
         integrated_worker,
-        file_system_store,
         as_service=True,
         cooldown=10,
         comm_channel_type=FileSystemCommChannel,
@@ -182,7 +185,12 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     # create a mock client application to populate the request queue
     msg_pump = mp.Process(
         target=mock_messages,
-        args=(work_queue, file_system_store, fs_path, comm_path),
+        args=(
+            config_loader.get_queue(),
+            config_loader.get_feature_store(),
+            fs_path,
+            comm_path,
+        ),
     )
     msg_pump.start()
 

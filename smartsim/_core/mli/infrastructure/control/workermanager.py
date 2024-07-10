@@ -32,6 +32,7 @@ import numpy as np
 from smartsim._core.entrypoints.service import Service
 from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
+from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
 from smartsim._core.mli.infrastructure.worker.worker import (
     InferenceReply,
@@ -43,6 +44,8 @@ from smartsim._core.mli.mli_schemas.response.response_capnp import Response
 from smartsim.log import get_logger
 
 if t.TYPE_CHECKING:
+    from dragon.fli import FLInterface
+
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
@@ -162,28 +165,29 @@ class WorkerManager(Service):
 
     def __init__(
         self,
-        task_queue: "mp.Queue[bytes]",
+        config_loader: EnvironmentConfigLoader,
         worker: MachineLearningWorkerBase,
-        feature_store: t.Optional[FeatureStore] = None,
         as_service: bool = False,
         cooldown: int = 0,
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
     ) -> None:
         """Initialize the WorkerManager
-        :param task_queue: The queue to monitor for new tasks
+        :param config_loader: Environment config loader that loads the task queue and
+        feature store
         :param workers: A worker to manage
-        :param feature_store: The persistence mechanism
         :param as_service: Specifies run-once or run-until-complete behavior of service
-        :param cooldown: Number of seconds to wait before shutting down afer
+        :param cooldown: Number of seconds to wait before shutting down after
         shutdown criteria are met
         :param comm_channel_type: The type of communication channel used for callbacks
         """
         super().__init__(as_service, cooldown)
 
         """a collection of workers the manager is controlling"""
-        self._task_queue: "mp.Queue[bytes]" = task_queue
+        self._task_queue: t.Optional["FLInterface"] = config_loader.get_queue()
         """the queue the manager monitors for new tasks"""
-        self._feature_store: t.Optional[FeatureStore] = feature_store
+        self._feature_store: t.Optional[FeatureStore] = (
+            config_loader.get_feature_store()
+        )
         """a feature store to retrieve models from"""
         self._worker = worker
         """The ML Worker implementation"""
