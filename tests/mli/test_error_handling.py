@@ -39,9 +39,9 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
 )
+from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 from smartsim._core.mli.message_handler import MessageHandler
-from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 
 from .channel import FileSystemCommChannel
 from .featurestore import FileSystemFeatureStore
