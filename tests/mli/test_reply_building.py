@@ -50,7 +50,7 @@ pytestmark = pytest.mark.dragon
         pytest.param("fail", "Failed while executing", id="fail"),
     ],
 )
-def test_build_failure_reply(status: StatusEnum, message: str):
+def test_build_failure_reply(status: "StatusEnum", message: str):
     "Ensures failure replies can be built successfully"
     response = build_failure_reply(status, message)
     assert response.status == status
@@ -71,7 +71,7 @@ def test_build_failure_reply_fails():
         pytest.param("complete", "Success", id="complete"),
     ],
 )
-def test_build_reply(status: StatusEnum, message: str):
+def test_build_reply(status: "StatusEnum", message: str):
     "Ensures replies can be built successfully"
     reply = InferenceReply()
     reply.status_enum = status
