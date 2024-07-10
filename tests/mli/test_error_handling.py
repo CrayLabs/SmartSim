@@ -45,7 +45,15 @@ from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfi
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.worker.worker import InferenceReply, FetchInputResult, FetchModelResult, LoadModelResult, TransformInputResult, ExecuteResult, TransformOutputResult
+from smartsim._core.mli.infrastructure.worker.worker import (
+    ExecuteResult,
+    FetchInputResult,
+    FetchModelResult,
+    InferenceReply,
+    LoadModelResult,
+    TransformInputResult,
+    TransformOutputResult,
+)
 from smartsim._core.mli.message_handler import MessageHandler
 
 from .channel import FileSystemCommChannel
@@ -151,10 +159,26 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
     execute pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
 
-    monkeypatch.setattr(integrated_worker, "fetch_model", MagicMock(return_value=FetchModelResult(b"result_bytes")))
-    monkeypatch.setattr(integrated_worker, "load_model", MagicMock(return_value=LoadModelResult(b"result_bytes")))
-    monkeypatch.setattr(integrated_worker, "fetch_inputs", MagicMock(return_value=FetchInputResult(b"result_bytes")))
-    monkeypatch.setattr(integrated_worker, "transform_input", MagicMock(return_value=TransformInputResult(b"result_bytes")))
+    monkeypatch.setattr(
+        integrated_worker,
+        "fetch_model",
+        MagicMock(return_value=FetchModelResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "load_model",
+        MagicMock(return_value=LoadModelResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "fetch_inputs",
+        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "transform_input",
+        MagicMock(return_value=TransformInputResult(b"result_bytes")),
+    )
 
     def mock_execute():
         raise ValueError("Simulated error in execute")
