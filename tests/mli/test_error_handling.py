@@ -36,7 +36,6 @@ from dragon.fli import FLInterface
 
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
-    build_failure_reply,
     exception_handler,
 )
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
@@ -93,7 +92,7 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
 
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
-        build_failure_reply,
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
         mock_reply_fn,
     )
 
