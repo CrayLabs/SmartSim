@@ -160,7 +160,10 @@ def build_reply(reply: InferenceReply) -> Response:
 
 
 def exception_handler(
-    exc: Exception, func_descriptor: str, reply: InferenceReply
+    exc: Exception,
+    reply_channel: t.Optional[CommChannelBase],
+    func_descriptor: str,
+    reply: InferenceReply,
 ) -> None:
     """
     Logs exceptions and sets reply attributes without taking
@@ -177,6 +180,10 @@ def exception_handler(
     )
     reply.status_enum = "fail"
     reply.message = f"Failed while {func_descriptor}."
+    response = build_failure_reply(reply.status_enum, reply.message)
+    serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+    if reply_channel:
+        reply_channel.send(serialized_resp)
 
 
 class WorkerManager(Service):
@@ -262,90 +269,69 @@ class WorkerManager(Service):
         if not self._validate_request(request):
             return
 
-        # # let the worker perform additional custom deserialization
-        # request = self._worker.deserialize(request_bytes)
-
         reply = InferenceReply()
-
-        fetch_model_result = None
-        model_result = None
-        fetch_input_result = None
-        transformed_input = None
-        execute_result = None
-        transformed_output = None
 
         try:
             fetch_model_result = self._worker.fetch_model(request, self._feature_store)
         except Exception as e:
-            exception_handler(e, "fetching the model", reply)
+            exception_handler(e, request.callback, "fetching the model", reply)
+            return
 
-        if reply.status_enum == "running" and fetch_model_result is not None:
-            try:
-                model_result = self._worker.load_model(request, fetch_model_result)
-            except Exception as e:
-                exception_handler(e, "loading the model", reply)
+        try:
+            model_result = self._worker.load_model(request, fetch_model_result)
+        except Exception as e:
+            exception_handler(e, request.callback, "loading the model", reply)
+            return
 
-        if reply.status_enum == "running":
+        try:
+            fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
+        except Exception as e:
+            exception_handler(e, request.callback, "fetching the inputs", reply)
+            return
+
+        try:
+            transformed_input = self._worker.transform_input(
+                request, fetch_input_result
+            )
+        except Exception as e:
+            exception_handler(e, request.callback, "transforming the input", reply)
+            return
+
+        try:
+            execute_result = self._worker.execute(
+                request, model_result, transformed_input
+            )
+        except Exception as e:
+            exception_handler(e, request.callback, "executing", reply)
+            return
+
+        try:
+            transformed_output = self._worker.transform_output(request, execute_result)
+        except Exception as e:
+            exception_handler(e, request.callback, "transforming the output", reply)
+            return
+
+        if request.output_keys:
             try:
-                fetch_input_result = self._worker.fetch_inputs(
-                    request, self._feature_store
+                reply.output_keys = self._worker.place_output(
+                    request,
+                    transformed_output,
+                    self._feature_store,
                 )
             except Exception as e:
-                exception_handler(e, "fetching the inputs", reply)
-
-        if reply.status_enum == "running" and fetch_input_result is not None:
-            try:
-                transformed_input = self._worker.transform_input(
-                    request, fetch_input_result
-                )
-            except Exception as e:
-                exception_handler(e, "transforming the input", reply)
-
-        if (
-            reply.status_enum == "running"
-            and model_result is not None
-            and transformed_input is not None
-        ):
-            try:
-                execute_result = self._worker.execute(
-                    request, model_result, transformed_input
-                )
-            except Exception as e:
-                exception_handler(e, "executing", reply)
-
-        if reply.status_enum == "running" and execute_result is not None:
-            try:
-                transformed_output = self._worker.transform_output(
-                    request, execute_result
-                )
-            except Exception as e:
-                exception_handler(e, "transforming the output", reply)
-
-        if reply.status_enum == "running" and transformed_output is not None:
-            if request.output_keys:
-                try:
-                    reply.output_keys = self._worker.place_output(
-                        request,
-                        transformed_output,
-                        self._feature_store,
-                    )
-                except Exception as e:
-                    exception_handler(e, "placing the output", reply)
-            else:
-                reply.outputs = transformed_output.outputs
-
-        if reply.status_enum != "running":
-            response = build_failure_reply(reply.status_enum, reply.message)
+                exception_handler(e, request.callback, "placing the output", reply)
+                return
         else:
-            if reply.outputs is None or not reply.outputs:
-                response = build_failure_reply("fail", "Outputs not found.")
+            reply.outputs = transformed_output.outputs
 
-            else:
-                reply.status_enum = "complete"
-                reply.message = "Success"
-                response = build_reply(reply)
+        if reply.outputs is None or not reply.outputs:
+            response = build_failure_reply("fail", "Outputs not found.")
 
-        # serialized = self._worker.serialize_reply(request, transformed_output)
+        else:
+            reply.status_enum = "complete"
+            reply.message = "Success"
+            response = build_reply(reply)
+
         serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
         if request.callback:
             request.callback.send(serialized_resp)
