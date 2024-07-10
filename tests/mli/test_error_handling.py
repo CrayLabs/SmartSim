@@ -45,7 +45,7 @@ from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfi
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
-from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
+from smartsim._core.mli.infrastructure.worker.worker import InferenceReply, FetchInputResult, FetchModelResult, LoadModelResult, TransformInputResult, ExecuteResult, TransformOutputResult
 from smartsim._core.mli.message_handler import MessageHandler
 
 from .channel import FileSystemCommChannel
@@ -87,28 +87,6 @@ def setup_worker_manager(test_dir, monkeypatch):
     new_sender.send_bytes(ser_request)
 
     return worker_manager, integrated_worker
-
-
-def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.MonkeyPatch):
-    """Ensures that the worker manager does not crash after a failure in the
-    execute pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
-
-    def mock_execute():
-        raise ValueError("Simulated error in execute")
-
-    monkeypatch.setattr(integrated_worker, "execute", mock_execute)
-
-    worker_manager._on_iteration()
-
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while executing.")
 
 
 def test_fetch_model_errors_handled(
@@ -166,6 +144,33 @@ def test_transform_input_errors_handled(
 
     monkeypatch.setattr(integrated_worker, "transform_input", mock_transform_input)
     worker_manager._on_iteration()
+
+
+def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.MonkeyPatch):
+    """Ensures that the worker manager does not crash after a failure in the
+    execute pipeline stage"""
+    worker_manager, integrated_worker = setup_worker_manager
+
+    monkeypatch.setattr(integrated_worker, "fetch_model", MagicMock(return_value=FetchModelResult(b"result_bytes")))
+    monkeypatch.setattr(integrated_worker, "load_model", MagicMock(return_value=LoadModelResult(b"result_bytes")))
+    monkeypatch.setattr(integrated_worker, "fetch_inputs", MagicMock(return_value=FetchInputResult(b"result_bytes")))
+    monkeypatch.setattr(integrated_worker, "transform_input", MagicMock(return_value=TransformInputResult(b"result_bytes")))
+
+    def mock_execute():
+        raise ValueError("Simulated error in execute")
+
+    monkeypatch.setattr(integrated_worker, "execute", mock_execute)
+
+    worker_manager._on_iteration()
+
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while executing.")
 
 
 def test_transform_output_errors_handled(
