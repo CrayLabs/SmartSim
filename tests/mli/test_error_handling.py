@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
+import pickle
 from unittest.mock import MagicMock
 
 import pytest
@@ -32,6 +34,7 @@ dragon = pytest.importorskip("dragon")
 
 import dragon.utils as du
 from dragon.channels import Channel
+from dragon.data.ddict.ddict import DDict
 from dragon.fli import FLInterface
 
 from smartsim._core.mli.infrastructure.control.workermanager import (
@@ -39,6 +42,9 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
     exception_handler,
 )
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
+from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
+    DragonFeatureStore,
+)
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 from smartsim._core.mli.message_handler import MessageHandler
 
@@ -57,6 +63,11 @@ def setup_worker_manager(test_dir, monkeypatch):
     chan = Channel.make_process_local()
     queue = FLInterface(main_ch=chan)
     monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
+    storage = DDict()
+    feature_store = DragonFeatureStore(storage)
+    monkeypatch.setenv(
+        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
+    )
 
     worker_manager = WorkerManager(
         EnvironmentConfigLoader(),
