@@ -259,7 +259,7 @@ class WorkerManager(Service):
             if not request.model_key:
                 raise SmartSimError("Neither key, nor model provided")
 
-            if request.model_key in self._cached_models:
+            if False and (request.model_key in self._cached_models):
                 timings.append(time.perf_counter() - interm)
                 interm = time.perf_counter()
                 model_result = LoadModelResult(self._cached_models[request.model_key])

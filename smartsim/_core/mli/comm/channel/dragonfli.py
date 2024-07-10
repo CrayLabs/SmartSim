@@ -31,6 +31,7 @@ import dragon.channels as dch
 # isort: on
 
 import sys
+import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.log import get_logger
@@ -41,22 +42,25 @@ logger = get_logger(__name__)
 class DragonFLIChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon FLI Channel"""
 
-    def __init__(self, fli_desc: str) -> None:
+    def __init__(self, fli_desc: str, sender_supplied: bool = True) -> None:
         """Initialize the DragonFLIChannel instance"""
         super().__init__(fli_desc)
         # todo: do we need memory pool information to construct the channel correctly?
-        self._channel: "fli" = fli.FLInterface.attach(fli_desc)
+        self._fli: "fli" = fli.FLInterface.attach(fli_desc)
+        self._channel: t.Optional["dch"] = (
+            dch.Channel.make_process_local() if sender_supplied else None
+        )
 
     def send(self, value: bytes) -> None:
         """Send a message through the underlying communication channel
         :param value: The value to send"""
-        with self._channel.sendh(timeout=None) as sendh:
+        with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
             sendh.send_bytes(value)
 
     def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
-        with self._channel.recvh(timeout=None) as recvh:
+        with self._fli.recvh(timeout=None) as recvh:
             try:
                 request_bytes: bytes
                 request_bytes, _ = recvh.recv_bytes(timeout=None)

@@ -112,9 +112,14 @@ class ProtoClient:
         built_tensor = MessageHandler.build_tensor(
             batch.numpy(), "c", "float32", list(batch.shape))
         self.measure_time("build_tensor")
+        built_model = None
+        if isinstance(model, str):
+            model_arg = MessageHandler.build_model_key(model)
+        else:
+            model_arg = MessageHandler.build_model(model, "resnet-50", "1.0")
         request = MessageHandler.build_request(
             reply_channel=self._from_worker_ch_serialized,
-            model=MessageHandler.build_model(model, "resnet-50", "1.0"),
+            model= model_arg,
             inputs=[built_tensor],
             outputs=[],
             output_descriptors=[],
@@ -125,6 +130,7 @@ class ProtoClient:
         self.measure_time("serialize_request")
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
+        logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.measure_time("send")
         with self._from_worker_ch.recvh(timeout=None) as from_recvh:
@@ -144,7 +150,7 @@ class ProtoClient:
         return result
 
     def set_model(self, key: str, model: bytes):
-        self._ddict[key] = b64encode(model)
+        self._ddict[key] = model
 
 
 class ResNetWrapper():
