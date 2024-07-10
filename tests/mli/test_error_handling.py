@@ -155,7 +155,7 @@ def test_exception_handling_helper():
     reply = InferenceReply()
 
     test_exception = ValueError("Test ValueError")
-    exception_handler(test_exception, "fetching the model", reply)
+    exception_handler(test_exception, None, "fetching the model", reply)
 
     assert reply.status_enum == "fail"
     assert reply.message == "Failed while fetching the model."
