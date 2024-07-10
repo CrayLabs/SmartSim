@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import multiprocessing as mp
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -90,6 +90,16 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
     monkeypatch.setattr(integrated_worker, "execute", mock_execute)
 
     worker_manager._on_iteration()
+
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.workermanager",
+        "build_failure_reply",
+        mock_reply_fn,
+    )
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while executing.")
 
 
 def test_fetch_model_errors_handled(
