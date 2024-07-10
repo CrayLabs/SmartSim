@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 import pytest
 
 dragon = pytest.importorskip("dragon")
@@ -33,6 +35,9 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
     build_reply,
 )
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
+
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -45,7 +50,7 @@ pytestmark = pytest.mark.dragon
         pytest.param("fail", "Failed while executing", id="fail"),
     ],
 )
-def test_build_failure_reply(status, message):
+def test_build_failure_reply(status: StatusEnum, message: str):
     "Ensures failure replies can be built successfully"
     response = build_failure_reply(status, message)
     assert response.status == status
@@ -66,7 +71,7 @@ def test_build_failure_reply_fails():
         pytest.param("complete", "Success", id="complete"),
     ],
 )
-def test_build_reply(status, message):
+def test_build_reply(status: StatusEnum, message: str):
     "Ensures replies can be built successfully"
     reply = InferenceReply()
     reply.status_enum = status

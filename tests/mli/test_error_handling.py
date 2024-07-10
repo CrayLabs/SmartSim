@@ -79,7 +79,7 @@ def setup_worker_manager(test_dir, monkeypatch):
     return worker_manager, integrated_worker
 
 
-def test_execute_errors_handled(setup_worker_manager, monkeypatch):
+def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.MonkeyPatch):
     """Ensures that the worker manager does not crash aftera failure in the
     execute pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
@@ -92,7 +92,9 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_fetch_model_errors_handled(setup_worker_manager, monkeypatch):
+def test_fetch_model_errors_handled(
+    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+):
     """Ensures that the worker manager does not crash aftera failure in the
     fetch model pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
@@ -105,7 +107,9 @@ def test_fetch_model_errors_handled(setup_worker_manager, monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_load_model_errors_handled(setup_worker_manager, monkeypatch):
+def test_load_model_errors_handled(
+    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+):
     """Ensures that the worker manager does not crash aftera failure in the
     load model pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
@@ -117,7 +121,9 @@ def test_load_model_errors_handled(setup_worker_manager, monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_fetch_inputs_errors_handled(setup_worker_manager, monkeypatch):
+def test_fetch_inputs_errors_handled(
+    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+):
     """Ensures that the worker manager does not crash aftera failure in the
     fetch inputs pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
@@ -129,7 +135,9 @@ def test_fetch_inputs_errors_handled(setup_worker_manager, monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_transform_input_errors_handled(setup_worker_manager, monkeypatch):
+def test_transform_input_errors_handled(
+    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+):
     """Ensures that the worker manager does not crash aftera failure in the
     transform input pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
@@ -141,7 +149,9 @@ def test_transform_input_errors_handled(setup_worker_manager, monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_transform_output_errors_handled(setup_worker_manager, monkeypatch):
+def test_transform_output_errors_handled(
+    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+):
     """Ensures that the worker manager does not crash aftera failure in the
     transform output pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
@@ -153,7 +163,9 @@ def test_transform_output_errors_handled(setup_worker_manager, monkeypatch):
     worker_manager._on_iteration()
 
 
-def test_place_output_errors_handled(setup_worker_manager, monkeypatch):
+def test_place_output_errors_handled(
+    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+):
     """Ensures that the worker manager does not crash aftera failure in the
     place output pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
