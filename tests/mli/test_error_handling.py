@@ -147,7 +147,6 @@ def test_place_output_errors_handled(setup_worker_manager, monkeypatch):
     def mock_place_output(a, b, c):
         raise ValueError("Simulated error in place_output")
 
-
     monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
     worker_manager._on_iteration()
 
