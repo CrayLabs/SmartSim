@@ -32,11 +32,11 @@ dragon = pytest.importorskip("dragon")
 
 import dragon.utils as du
 from dragon.channels import Channel
-from dragon.data.ddict.ddict import DDict
-from dragon.fli import DragonFLIError, FLInterface
+from dragon.fli import FLInterface
 
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
+    build_failure_reply,
     exception_handler,
 )
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
@@ -93,8 +93,7 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
 
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
-        worker_manager,
-        "build_failure_reply",
+        build_failure_reply,
         mock_reply_fn,
     )
 
