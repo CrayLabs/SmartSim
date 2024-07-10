@@ -28,6 +28,8 @@ import multiprocessing as mp
 
 import pytest
 
+dragon = pytest.importorskip("dragon")
+
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
@@ -39,8 +41,8 @@ from .channel import FileSystemCommChannel
 from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
-# The tests in this file belong to the group_a group
-pytestmark = pytest.mark.group_a
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture

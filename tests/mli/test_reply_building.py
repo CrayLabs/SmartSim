@@ -26,14 +26,16 @@
 
 import pytest
 
+dragon = pytest.importorskip("dragon")
+
 from smartsim._core.mli.infrastructure.control.workermanager import (
     build_failure_reply,
     build_reply,
 )
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 
-# The tests in this file belong to the group_b group
-pytestmark = pytest.mark.group_b
+# The tests in this file belong to the dragon group
+pytestmark = pytest.mark.dragon
 
 
 @pytest.mark.parametrize(
