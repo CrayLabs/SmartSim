@@ -46,14 +46,18 @@ pytestmark = pytest.mark.dragon
     ],
 )
 def test_build_failure_reply(status, message):
+    "Ensures failure replies can be built successfully"
     response = build_failure_reply(status, message)
     assert response.status == status
     assert response.message == message
 
 
 def test_build_failure_reply_fails():
-    with pytest.raises(ValueError):
+    "Ensures ValueError is raised if a StatusEnum is not used"
+    with pytest.raises(ValueError) as ex:
         response = build_failure_reply("not a status enum", "message")
+
+    assert "Error assigning status to response" in ex.value.args[0]
 
 
 @pytest.mark.parametrize(
@@ -63,6 +67,7 @@ def test_build_failure_reply_fails():
     ],
 )
 def test_build_reply(status, message):
+    "Ensures replies can be built successfully"
     reply = InferenceReply()
     reply.status_enum = status
     reply.message = message
@@ -72,7 +77,10 @@ def test_build_reply(status, message):
 
 
 def test_build_reply_fails():
-    with pytest.raises(ValueError):
+    "Ensures ValueError is raised if a StatusEnum is not used"
+    with pytest.raises(ValueError) as ex:
         reply = InferenceReply()
         reply.status_enum = "not a status enum"
         response = build_reply(reply)
+
+    assert "Error assigning status to response" in ex.value.args[0]

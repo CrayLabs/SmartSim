@@ -166,10 +166,11 @@ def exception_handler(
     reply: InferenceReply,
 ) -> None:
     """
-    Logs exceptions and sets reply attributes without taking
-    down the WorkerManager.
+    Logs exceptions, sets reply attributes, and sends the
+    failure response without taking down the WorkerManager.
 
     :param exc: The exception to be logged
+    :param reply_channel: The channel used to send replies
     :param func_descriptor: Descriptor to help form error messages
     :param reply: InferenceReply to modify
     """
