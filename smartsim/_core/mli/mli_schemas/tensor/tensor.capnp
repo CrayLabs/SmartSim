@@ -61,11 +61,6 @@ enum ReturnNumericalType {
   auto @ 11;
 }
 
-struct Tensor {
-  blob @0 :Data;
-  tensorDescriptor @1 :TensorDescriptor;
-}
-
 struct TensorDescriptor {
   dimensions @0 :List(Int32);
   order @1 :Order;
