@@ -32,6 +32,7 @@ import typing as t
 from dragon.fli import FLInterface  # pylint: disable=all
 
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 
 
 class EnvironmentConfigLoader:
@@ -41,10 +42,10 @@ class EnvironmentConfigLoader:
     """
 
     def __init__(self) -> None:
-        self._feature_store_descriptor = os.getenv("SSFeatureStore", None)
-        self._queue_descriptor = os.getenv("SSQueue", None)
+        self._feature_store_descriptor: t.Optional[str] = os.getenv("SSFeatureStore", None)
+        self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
         self.feature_store: t.Optional[FeatureStore] = None
-        self.queue: t.Optional["FLInterface"] = None
+        self.queue: t.Optional[DragonFLIChannel] = None
 
     def get_feature_store(self) -> t.Optional[FeatureStore]:
         """Loads the Feature Store previously set in SSFeatureStore"""
@@ -54,8 +55,8 @@ class EnvironmentConfigLoader:
             )
         return self.feature_store
 
-    def get_queue(self) -> t.Optional["FLInterface"]:
+    def get_queue(self, sender_supplied: bool = True) -> t.Optional[DragonFLIChannel]:
         """Returns the Queue previously set in SSQueue"""
         if self._queue_descriptor is not None:
-            self.queue = FLInterface.attach(base64.b64decode(self._queue_descriptor))
+            self.queue = DragonFLIChannel(fli_desc=base64.b64decode(self._queue_descriptor), sender_supplied=sender_supplied)
         return self.queue

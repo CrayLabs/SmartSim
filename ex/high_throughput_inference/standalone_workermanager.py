@@ -35,6 +35,7 @@ from dragon.globalservices.api_setup import connect_to_infrastructure
 import argparse
 import base64
 import cloudpickle
+import pickle
 import os
 
 from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
@@ -42,6 +43,7 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import DragonF
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
+from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 
 
 if __name__ == "__main__":
@@ -77,10 +79,15 @@ if __name__ == "__main__":
 
     dfs = DragonFeatureStore(ddict)
     comm_channel = DragonFLIChannel(to_worker_fli_serialized)
+
+    os.environ["SSFeatureStore"] = base64.b64encode(pickle.dumps(dfs)).decode("utf-8")
+    os.environ["SSQueue"] = base64.b64encode(to_worker_fli_serialized).decode("utf-8")
+
+    config_loader = EnvironmentConfigLoader()
+
     worker_manager = WorkerManager(
-        task_queue=comm_channel,
+        config_loader=config_loader,
         worker=torch_worker,
-        feature_store=dfs,
         as_service=True,
         cooldown=10,
         comm_channel_type=DragonCommChannel,

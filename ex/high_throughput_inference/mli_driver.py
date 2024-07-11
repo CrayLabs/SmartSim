@@ -30,7 +30,6 @@ worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_scri
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
-
 app_rs = exp.create_run_settings(sys.executable, exe_args = [app_script_name, "--device", device])
 app = exp.create_model("app", run_settings=app_rs)
 app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])

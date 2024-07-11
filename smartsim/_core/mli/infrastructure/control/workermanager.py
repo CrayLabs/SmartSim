@@ -41,7 +41,7 @@ from .....error import SmartSimError
 from .....log import get_logger
 from ....entrypoints.service import Service
 from ...comm.channel.channel import CommChannelBase
-from ...comm.channel.dragonfli import DragonFLIChannel
+from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
@@ -175,7 +175,7 @@ class WorkerManager(Service):
         worker: MachineLearningWorkerBase,
         as_service: bool = False,
         cooldown: int = 0,
-        comm_channel_type: t.Type[CommChannelBase] = DragonFLIChannel,
+        comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
         device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
@@ -244,34 +244,34 @@ class WorkerManager(Service):
             logger.warning("No queue to check for tasks")
             return
 
-        timings = []
+        timings = []  # timing
         # perform default deserialization of the message envelope
         request_bytes: bytes = self._task_queue.recv()
 
-        interm = time.perf_counter()
+        interm = time.perf_counter()  # timing
         request = deserialize_message(
             request_bytes, self._comm_channel_type, self._device
         )
         if not self._validate_request(request):
             return
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
 
         if not request.raw_model:
-            if not request.model_key:
-                raise SmartSimError("Neither key, nor model provided")
-
-            if False and (request.model_key in self._cached_models):
-                timings.append(time.perf_counter() - interm)
-                interm = time.perf_counter()
+            if request.model_key is None:
+                # A valid request should never get here.
+                raise ValueError("Could not read model key")
+            if request.model_key in self._cached_models:
+                timings.append(time.perf_counter() - interm)  # timing
+                interm = time.perf_counter()  # timing
                 model_result = LoadModelResult(self._cached_models[request.model_key])
 
             else:
                 fetch_model_result = None
                 while True:
                     try:
-                        interm = time.perf_counter()
+                        interm = time.perf_counter()  # timing
                         fetch_model_result = self._worker.fetch_model(
                             request, self._feature_store
                         )
@@ -282,8 +282,8 @@ class WorkerManager(Service):
 
                 if fetch_model_result is None:
                     raise SmartSimError("Could not retrieve model from feature store")
-                timings.append(time.perf_counter() - interm)
-                interm = time.perf_counter()
+                timings.append(time.perf_counter() - interm)  # timing
+                interm = time.perf_counter()  # timing
                 model_result = self._worker.load_model(
                     request, fetch_model_result, self._device
                 )
@@ -294,18 +294,18 @@ class WorkerManager(Service):
                 request, fetch_result=fetch_model_result, device=self._device
             )
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
         fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
         transformed_input = self._worker.transform_input(
             request, fetch_input_result, self._device
         )
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
 
         reply = InferenceReply()
 
@@ -314,14 +314,14 @@ class WorkerManager(Service):
                 request, model_result, transformed_input
             )
 
-            timings.append(time.perf_counter() - interm)
-            interm = time.perf_counter()
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
             transformed_output = self._worker.transform_output(
                 request, execute_result, self._device
             )
 
-            timings.append(time.perf_counter() - interm)
-            interm = time.perf_counter()
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
             if request.output_keys:
                 reply.output_keys = self._worker.place_output(
                     request, transformed_output, self._feature_store
@@ -332,8 +332,8 @@ class WorkerManager(Service):
             logger.exception("Error executing worker")
             reply.failed = True
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
 
         if reply.failed:
             response = build_failure_reply("fail", "failure-occurred")
@@ -343,21 +343,21 @@ class WorkerManager(Service):
 
             response = build_reply(reply)
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
 
         # serialized = self._worker.serialize_reply(request, transformed_output)
         serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
         if request.callback:
             request.callback.send(serialized_resp)
 
-        timings.append(time.perf_counter() - interm)
-        interm = time.perf_counter()
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
 
-        print(" ".join(str(time) for time in timings))
+        print(" ".join(str(time) for time in timings))  # timing
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""
