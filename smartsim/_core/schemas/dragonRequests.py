@@ -26,7 +26,7 @@
 
 import typing as t
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt
 
 import smartsim._core.schemas.utils as _utils
 
@@ -37,6 +37,36 @@ request_registry = _utils.SchemaRegistry["DragonRequest"]()
 
 
 class DragonRequest(BaseModel): ...
+
+
+class DragonRunPolicy(BaseModel):
+    """Policy specifying hardware constraints when running a Dragon job"""
+
+    device: t.Literal["cpu", "gpu"] = Field(default="cpu")
+    cpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    gpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+
+    @staticmethod
+    def from_run_args(
+        run_args: t.Dict[str, t.Union[int, str, float, None]]
+    ) -> "DragonRunPolicy":
+        features: str = str(run_args.get("node-feature", ""))
+
+        device = "gpu" if "gpu" in features else "cpu"
+
+        gpu_args = str(run_args.get("gpu-affinity", ""))
+        cpu_args = str(run_args.get("cpu-affinity", ""))
+        gpu_affinity = [x for x in gpu_args.split(",") if x]
+        cpu_affinity = [x for x in cpu_args.split(",") if x]
+
+        if device == "cpu" and not (cpu_affinity or gpu_affinity):
+            return DragonRunPolicy()
+
+        return DragonRunPolicy(
+            device=device,
+            cpu_affinity=cpu_affinity,
+            gpu_affinity=gpu_affinity,
+        )
 
 
 class DragonRunRequestView(DragonRequest):
@@ -57,6 +87,7 @@ class DragonRunRequestView(DragonRequest):
 @request_registry.register("run")
 class DragonRunRequest(DragonRunRequestView):
     current_env: t.Dict[str, t.Optional[str]] = {}
+    policy: t.Optional[DragonRunPolicy] = None
 
     def __str__(self) -> str:
         return str(DragonRunRequestView.parse_obj(self.dict(exclude={"current_env"})))

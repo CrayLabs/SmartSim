@@ -65,6 +65,51 @@ In the next sections, we detail how Dragon is integrated into SmartSim.
 
 For more information on HPC launchers, visit the :ref:`Run Settings<run_settings_hpc_ex>` page.
 
+Hardware Pinning
+================
+
+Dragon also enables users to specify hardware constraints using ``DragonRunSettings``. For 
+example, you may may configure the run settings to require that nodes executing the
+``Model`` support the `"gpu"` feature.
+
+.. code-block:: python
+
+    # Because "dragon" was specified as the launcher during Experiment initialization,
+    # create_run_settings will return a DragonRunSettings object
+    rs = exp.create_run_settings(exe="mpi_app",
+                                 exe_args=["--option", "value"],
+                                 env_vars={"MYVAR": "VALUE"})
+
+    # Specify that the nodes features must include a GPU
+    rs.set_feature("gpu")
+
+For more fine-grained control, CPU and GPU affinity can be specified using the
+``DragonRunSettings`` object. The following example demonstrates how to specify
+CPU affinity and GPU affinities simultaneously. Note that affinities are passed
+as a list of device indices.
+
+.. code-block:: python
+
+    # Because "dragon" was specified as the launcher during Experiment initialization,
+    # create_run_settings will return a DragonRunSettings object
+    rs = exp.create_run_settings(exe="mpi_app",
+                                 exe_args=["--option", "value"],
+                                 env_vars={"MYVAR": "VALUE"})
+
+    # Request the first 8 CPUs for this job
+    rs.set_cpu_affinity(list(range(9)))
+
+    # Request the first two GPUs on the node for this job
+    rs.set_gpu_affinity([0, 1])
+
+.. note::
+
+    SmartSim submits jobs in the order they are received. On a heterogeneous system, SmartSim
+    will attempt to allocate non-GPU nodes first. However, a process may be allocated to a GPU
+    node if only GPU nodes are available, regardless of the requested features.
+
+    To ensure a process is allocated to a specific node, configure a hostname constraint.
+    
 =================
 The Dragon Server
 =================
