@@ -31,7 +31,8 @@ import os
 import pickle
 import re
 import shutil
-from distutils import dir_util
+from ast import literal_eval
+from distutils import dir_util  # pylint: disable=deprecated-module
 from pathlib import Path
 
 
@@ -51,94 +52,103 @@ def _check_path(file_path: str) -> Path:
     raise FileNotFoundError(f"File or Directory {file_path} not found")
 
 
-def move(args) -> None:
+def move(parsed_args) -> None:
     """Move a file
 
     Sample usage:
-        python _core/entrypoints/file_operations.py move /absolute/file/src/path /absolute/file/dest/path
+        python _core/entrypoints/file_operations.py move
+        /absolute/file/src/path /absolute/file/dest/path
 
-    :param to_move: Path to a source file to be copied
-    :param dst_path: Path to a file to copy the contents from the source file into
+        source path: Path to a source file to be copied
+        dest path: Path to a file to copy the contents from the source file into
     """
-    _check_path(args.source)
-    _check_path(args.dest)
-    shutil.move(args.source, args.dest)
+    _check_path(parsed_args.source)
+    _check_path(parsed_args.dest)
+    shutil.move(parsed_args.source, parsed_args.dest)
 
 
-def remove(args) -> None:
+def remove(parsed_args) -> None:
     """Write a python script that removes a file when executed.
 
     Sample usage:
-        python _core/entrypoints/file_operations.py remove /absolute/file/path   # must be absolute path
+        python _core/entrypoints/file_operations.py remove
+        /absolute/file/path
 
-    :param to_remove: Path to the file to be deleted
+        file path: Path to the file to be deleted
     """
-    _check_path(args.to_remove)
-    os.remove(args.to_remove)
+    _check_path(parsed_args.to_remove)
+    os.remove(parsed_args.to_remove)
 
 
-def copy(args):
+def copy(parsed_args):
     """
     Write a python script to copy the entity files and directories attached
     to this entity into an entity directory
 
     Sample usage:
-        python _core/entrypoints/file_operations.py copy /absolute/file/src/path /absolute/file/dest/path
+        python _core/entrypoints/file_operations.py copy
+        /absolute/file/src/path /absolute/file/dest/path
 
-    :param source_path: Path to directory, or path to file to copy into an entity directory
-    :param dest_path: Path to destination directory or path to destination file to copy
+        source path: Path to directory, or path to file to copy into an entity directory
+        dest path: Path to destination directory or path to destination file to copy
     """
-    _check_path(args.source)
-    _check_path(args.dest)
+    _check_path(parsed_args.source)
+    _check_path(parsed_args.dest)
 
-    if os.path.isdir(args.source):
-        dir_util.copy_tree(args.source, args.dest)
+    if os.path.isdir(parsed_args.source):
+        dir_util.copy_tree(parsed_args.source, parsed_args.dest)
     else:
-        shutil.copyfile(args.source, args.dest)
+        shutil.copyfile(parsed_args.source, parsed_args.dest)
 
 
-def symlink(args):
+def symlink(parsed_args):
     """
     Create a symbolic link pointing to the exisiting source file
     named link
 
     Sample usage:
-        python _core/entrypoints/file_operations.py symlink /absolute/file/src/path /absolute/file/dest/path
+        python _core/entrypoints/file_operations.py symlink
+        /absolute/file/src/path /absolute/file/dest/path
 
-    :param src_file: the exisiting source path
-    :param dst_file: target name where the symlink will be created.
+        source path: the exisiting source path
+        dest path: target name where the symlink will be created.
     """
-    _check_path(args.source)
+    _check_path(parsed_args.source)
 
-    os.symlink(args.source, args.dest)
+    os.symlink(parsed_args.source, parsed_args.dest)
 
 
-def configure(args):
-    """Write a python script to set, search and replace the tagged parameters for the configure operation
-    within tagged files attached to an entity.
+def configure(parsed_args):
+    """Write a python script to set, search and replace the tagged parameters for the
+    configure operation within tagged files attached to an entity.
 
-    User-formatted files can be attached using the `configure` argument. These files will be modified
-    during ``Model`` generation to replace tagged sections in the user-formatted files with
-    values from the `params` initializer argument used during ``Model`` creation:
+    User-formatted files can be attached using the `configure` argument. These files
+    will be modified during ``Application`` generation to replace tagged sections in the
+    user-formatted files with values from the `params` initializer argument used during
+    ``Application`` creation:
 
     Sample usage:
-        python _core/entrypoints/file_operations.py configure /absolute/file/src/path /absolute/file/dest/path tag_deliminator param_dict
+        python _core/entrypoints/file_operations.py configure
+        /absolute/file/src/path /absolute/file/dest/path tag_deliminator param_dict
 
-    :param to_configure: The tagged files the search and replace operations to be performed upon
-    :param dest: Optional destination for configured files to be written to
-    :param param_dict: A dict of parameter names and values set for the file
-    :tag_delimiter: tag for the configure operation to search for, defaults to semi-colon e.g. ";"
+        source path: The tagged files the search and replace operations to be
+            performed upon
+        dest path: Optional destination for configured files to be written to
+        tag_delimiter: tag for the configure operation to search for, defaults to
+            semi-colon e.g. ";"
+        param_dict: A dict of parameter names and values set for the file
+
     """
 
-    _check_path(args.source)
-    if args.dest:
-        _check_path(args.dest)
+    _check_path(parsed_args.source)
+    if parsed_args.dest:
+        _check_path(parsed_args.dest)
 
     tag_delimiter = ";"
-    if args.tag_delimiter:
-        tag_delimiter = args.tag_delimiter
+    if parsed_args.tag_delimiter:
+        tag_delimiter = parsed_args.tag_delimiter
 
-    decoded_dict = base64.b64decode(eval(args.param_dict))
+    decoded_dict = base64.b64decode(literal_eval(parsed_args.param_dict))
     param_dict = pickle.loads(decoded_dict)
 
     if not param_dict:
@@ -150,28 +160,28 @@ def configure(args):
         split_tag = tagged_line.split(tag_delimiter)
         return split_tag[1]
 
-    def _is_ensemble_spec(tagged_line: str, model_params: dict) -> bool:
+    def _is_ensemble_spec(tagged_line: str, application_params: dict) -> bool:
         split_tag = tagged_line.split(tag_delimiter)
         prev_val = split_tag[1]
-        if prev_val in model_params.keys():
+        if prev_val in application_params.keys():
             return True
         return False
 
     edited = []
     used_params = {}
 
-    # Set the tag for the modelwriter to search for within
+    # Set the tag for the application writer to search for within
     # tagged files attached to an entity.
     regex = "".join(("(", tag_delimiter, ".+", tag_delimiter, ")"))
 
     # Set the lines to iterate over
-    with open(args.source, "r+", encoding="utf-8") as file_stream:
+    with open(parsed_args.source, "r+", encoding="utf-8") as file_stream:
         lines = file_stream.readlines()
 
     unused_tags = collections.defaultdict(list)
 
     # Replace the tagged parameters within the file attached to this
-    # model. The tag defaults to ";"
+    # application. The tag defaults to ";"
     for i, line in enumerate(lines, 1):
         while search := re.search(regex, line):
             tagged_line = search.group(0)
@@ -181,8 +191,8 @@ def configure(args):
                 line = re.sub(regex, new_val, line, 1)
                 used_params[previous_value] = new_val
 
-            # if a tag_delimiter is found but is not in this model's configurations
-            # put in placeholder value
+            # if a tag_delimiter is found but is not in this application's
+            # configurations put in placeholder value
             else:
                 tag_delimiter_ = tagged_line.split(tag_delimiter)[1]
                 unused_tags[tag_delimiter_].append(i)
@@ -193,13 +203,12 @@ def configure(args):
     lines = edited
 
     # write configured file to destination specified. Default is an overwrite
-    if args.dest:
-        file_stream = args.dest
+    if parsed_args.dest:
+        file_stream = parsed_args.dest
 
-    with open(args.source, "w+", encoding="utf-8") as file_stream:
+    with open(parsed_args.source, "w+", encoding="utf-8") as file_stream:
         for line in lines:
             file_stream.write(line)
-
 
 def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments
@@ -255,7 +264,9 @@ def parse_arguments() -> str:
 
 
 if __name__ == "__main__":
-    """Run file operations move, remove, symlink, copy, and configure using command line arguments."""
+    """Run file operations move, remove, symlink, copy, and configure 
+    using command line arguments.
+    """
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     args = parse_arguments()
