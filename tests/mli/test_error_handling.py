@@ -180,7 +180,7 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
         MagicMock(return_value=TransformInputResult(b"result_bytes")),
     )
 
-    def mock_execute():
+    def mock_execute(a, b, c):
         raise ValueError("Simulated error in execute")
 
     monkeypatch.setattr(integrated_worker, "execute", mock_execute)
