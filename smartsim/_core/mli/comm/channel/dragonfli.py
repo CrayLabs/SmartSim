@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 class DragonFLIChannel(cch.CommChannelBase):
     """Passes messages by writing to a Dragon FLI Channel"""
 
-    def __init__(self, fli_desc: str, sender_supplied: bool = True) -> None:
+    def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
         """Initialize the DragonFLIChannel instance"""
         super().__init__(fli_desc)
         # todo: do we need memory pool information to construct the channel correctly?
