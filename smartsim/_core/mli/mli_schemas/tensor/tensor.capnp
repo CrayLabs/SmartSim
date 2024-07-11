@@ -58,7 +58,7 @@ enum ReturnNumericalType {
   float32 @8; 
   float64 @9;
   none @10;
-  auto @ 11;
+  auto @11;
 }
 
 struct TensorDescriptor {

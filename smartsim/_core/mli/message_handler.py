@@ -25,8 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import typing as t
 
-import numpy as np
-
 from .mli_schemas.data import data_references_capnp
 from .mli_schemas.model import model_capnp
 from .mli_schemas.request import request_capnp
@@ -38,17 +36,15 @@ from .mli_schemas.tensor import tensor_capnp
 
 class MessageHandler:
     @staticmethod
-    def build_tensor(
-        tensor: np.ndarray[t.Any, np.dtype[t.Any]],
+    def build_tensor_descriptor(
         order: "tensor_capnp.Order",
         data_type: "tensor_capnp.NumericalType",
         dimensions: t.List[int],
-    ) -> tensor_capnp.Tensor:
+    ) -> tensor_capnp.TensorDescriptor:
         """
-        Builds a Tensor message using the provided data,
+        Builds a TensorDescriptor message using the provided
         order, data type, and dimensions.
 
-        :param tensor: Tensor to build the message around
         :param order: Order of the tensor, such as row-major (c) or column-major (f)
         :param data_type: Data type of the tensor
         :param dimensions: Dimensions of the tensor
@@ -59,15 +55,12 @@ class MessageHandler:
             description.order = order
             description.dataType = data_type
             description.dimensions = dimensions
-            built_tensor = tensor_capnp.Tensor.new_message()
-            built_tensor.blob = tensor.tobytes()  # tensor channel instead?
-            built_tensor.tensorDescriptor = description
         except Exception as e:
             raise ValueError(
-                "Error building tensor."
+                "Error building tensor descriptor."
             ) from e  # TODO: create custom exception
 
-        return built_tensor
+        return description
 
     @staticmethod
     def build_output_tensor_descriptor(
@@ -248,7 +241,8 @@ class MessageHandler:
     def _assign_inputs(
         request: request_capnp.Request,
         inputs: t.Union[
-            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
+            t.List[data_references_capnp.TensorKey],
+            t.List[tensor_capnp.TensorDescriptor],
         ],
     ) -> None:
         """
@@ -262,13 +256,14 @@ class MessageHandler:
             if inputs:
                 display_name = inputs[0].schema.node.displayName  # type: ignore
                 input_class_name = display_name.split(":")[-1]
-                if input_class_name == "Tensor":
-                    request.input.data = inputs  # type: ignore
+                if input_class_name == "TensorDescriptor":
+                    request.input.descriptors = inputs  # type: ignore
                 elif input_class_name == "TensorKey":
                     request.input.keys = inputs  # type: ignore
                 else:
                     raise ValueError(
-                        "Invalid input class name. Expected 'Tensor' or 'TensorKey'."
+                        """Invalid input class name. Expected
+                        'TensorDescriptor' or 'TensorKey'."""
                     )
         except Exception as e:
             raise ValueError("Error building inputs portion of request.") from e
@@ -351,7 +346,8 @@ class MessageHandler:
         reply_channel: bytes,
         model: t.Union[data_references_capnp.ModelKey, model_capnp.Model],
         inputs: t.Union[
-            t.List[data_references_capnp.TensorKey], t.List[tensor_capnp.Tensor]
+            t.List[data_references_capnp.TensorKey],
+            t.List[tensor_capnp.TensorDescriptor],
         ],
         outputs: t.List[data_references_capnp.TensorKey],
         output_descriptors: t.List[tensor_capnp.OutputDescriptor],
@@ -437,7 +433,8 @@ class MessageHandler:
     def _assign_result(
         response: response_capnp.Response,
         result: t.Union[
-            t.List[tensor_capnp.Tensor], t.List[data_references_capnp.TensorKey]
+            t.List[tensor_capnp.TensorDescriptor],
+            t.List[data_references_capnp.TensorKey],
         ],
     ) -> None:
         """
@@ -452,13 +449,13 @@ class MessageHandler:
                 first_result = result[0]
                 display_name = first_result.schema.node.displayName  # type: ignore
                 result_class_name = display_name.split(":")[-1]
-                if result_class_name == "Tensor":
-                    response.result.data = result  # type: ignore
+                if result_class_name == "TensorDescriptor":
+                    response.result.descriptors = result  # type: ignore
                 elif result_class_name == "TensorKey":
                     response.result.keys = result  # type: ignore
                 else:
                     raise ValueError("""Invalid custom attribute class name.
-                        Expected 'Tensor' or 'TensorKey'.""")
+                        Expected 'TensorDescriptor' or 'TensorKey'.""")
         except Exception as e:
             raise ValueError("Error assigning result to response.") from e
 
@@ -501,7 +498,8 @@ class MessageHandler:
         status: "response_capnp.StatusEnum",
         message: str,
         result: t.Union[
-            t.List[tensor_capnp.Tensor], t.List[data_references_capnp.TensorKey]
+            t.List[tensor_capnp.TensorDescriptor],
+            t.List[data_references_capnp.TensorKey],
         ],
         custom_attributes: t.Union[
             response_attributes_capnp.TorchResponseAttributes,

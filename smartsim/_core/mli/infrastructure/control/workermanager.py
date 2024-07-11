@@ -103,9 +103,9 @@ def deserialize_message(
 
     if request.input.which() == "keys":
         input_keys = [input_key.key for input_key in request.input.keys]
-    elif request.input.which() == "data":
-        input_bytes = [data.blob for data in request.input.data]
-        input_meta = [data.tensorDescriptor for data in request.input.data]
+    elif request.input.which() == "descriptors":
+        # input_bytes = [data.blob for data in request.input.data]
+        input_meta = [request.input.descriptors]
 
     inference_request = InferenceRequest(
         model_key=model_key,
@@ -137,20 +137,16 @@ def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
             msg_key = MessageHandler.build_tensor_key(key)
             prepared_outputs.append(msg_key)
     elif reply.outputs:
-        arrays: t.List[np.ndarray[t.Any, np.dtype[t.Any]]] = [
-            output.numpy() for output in reply.outputs
-        ]
-        for tensor in arrays:
+        for _ in reply.outputs:
             # todo: need to have the output attributes specified in the req?
             # maybe, add `MessageHandler.dtype_of(tensor)`?
             # can `build_tensor` do dtype and shape?
-            msg_tensor = MessageHandler.build_tensor(
-                tensor,
+            msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                 "c",
                 "float32",
                 [1],
             )
-            prepared_outputs.append(msg_tensor)
+            prepared_outputs.append(msg_tensor_desc)
     return prepared_outputs
 
 
@@ -252,6 +248,11 @@ class WorkerManager(Service):
         request = deserialize_message(
             request_bytes, self._comm_channel_type, self._device
         )
+
+        if request.input_meta:
+            for _ in request.input_meta:
+                request.raw_inputs.append(self._task_queue.recv())
+
         if not self._validate_request(request):
             return
 
@@ -353,6 +354,9 @@ class WorkerManager(Service):
         interm = time.perf_counter()  # timing
         if request.callback:
             request.callback.send(serialized_resp)
+            if reply.outputs:
+                for output in reply.outputs:
+                    request.callback.send(output)
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
