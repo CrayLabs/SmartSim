@@ -35,12 +35,9 @@ from os.path import join, relpath
 
 from tabulate import tabulate
 
-from ...database import FeatureStore
-from ...entity import Application, Ensemble, TaggedFilesHierarchy
+from ...entity import Application, TaggedFilesHierarchy
 from ...launchable.job import Job
 from ...log import get_logger
-from ..control import Manifest
-from ...launchable.basejob import BaseJob
 import os
 
 logger = get_logger(__name__)
@@ -54,7 +51,7 @@ class Generator:
     """
 
     def __init__(
-        self, gen_path: str, base_job: BaseJob
+        self, gen_path: str, job: Job
     ) -> None:
         """Initialize a generator object
 
@@ -66,10 +63,10 @@ class Generator:
         collision between entities.
 
         :param gen_path: Path in which files need to be generated
-        :param base_job: TODO
+        :param job: TODO
         """
         self.gen_path = gen_path
-        self.base_job = base_job
+        self.job = job
 
     @property
     def log_level(self) -> int:
@@ -153,8 +150,7 @@ class Generator:
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
     def _gen_job_dir(
-        self,
-        job: Job,
+        self
     ) -> None:
         """Generate directories for Entity instances
 
@@ -163,16 +159,16 @@ class Generator:
         :raises EntityExistsError: if a directory already exists for an
                                    entity by that name
         """
-        job_destination = job.entity.path
-        pathlib.Path(job_destination).mkdir(exist_ok=True)
-        if isinstance(Application, type(job.entity)):
-            file_operation_list = self.build_operations(job.entity)
+        # TODO might need to change parents=True if Experiment class DNE after meeting
+        pathlib.Path(self.job.entity.path).mkdir(exist_ok=True, parents=True)
+        if isinstance(Application, type(self.job.entity)):
+            file_operation_list = self.build_operations()
             self.execute_file_operations(file_operation_list)
     
     def execute_file_operations(self, file_ops: t.Sequence[t.Sequence[str]]) -> None:
         ...
     
-    def build_operations(self, app: Application) -> t.Sequence[t.Sequence[str]]:
+    def build_operations(self) -> t.Sequence[t.Sequence[str]]:
         """This method generates file system operations based on the provided application.
         It processes three types of operations: to_copy, to_symlink, and to_configure.
         For each type, it calls the corresponding private methods and appends the results
@@ -181,21 +177,22 @@ class Generator:
         :param app: The application for which operations are generated.
         :return: A list of lists containing file system operations.
         """
+        application_files = self.job.entity.files
         file_operation_list = []
         # Generate copy file system operations
         file_operation_list.extend(
             self._get_copy_file_system_operation(file_copy)
-            for file_copy in app.files.copy
+            for file_copy in application_files.copy
         )
         # Generate symlink file system operations
         file_operation_list.extend(
             self._get_symlink_file_system_operation(file_link)
-            for file_link in app.files.link
+            for file_link in application_files.link
         )
         # Generate configure file system operations
         file_operation_list.extend(
             self._write_tagged_entity_files(file_configure)
-            for file_configure in app.files.tagged
+            for file_configure in application_files.tagged
         )
         return file_operation_list
 
@@ -261,45 +258,45 @@ class Generator:
         return ["temporary", "link"]
 
     # TODO to be refactored in ticket 723
-    def _log_params(
-        self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
-    ) -> None:
-        """Log which files were modified during generation
+    # def _log_params(
+    #     self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
+    # ) -> None:
+    #     """Log which files were modified during generation
 
-        and what values were set to the parameters
+    #     and what values were set to the parameters
 
-        :param entity: the application being generated
-        :param files_to_params: a dict connecting each file to its parameter settings
-        """
-        used_params: t.Dict[str, str] = {}
-        file_to_tables: t.Dict[str, str] = {}
-        for file, params in files_to_params.items():
-            used_params.update(params)
-            table = tabulate(params.items(), headers=["Name", "Value"])
-            file_to_tables[relpath(file, self.gen_path)] = table
+    #     :param entity: the application being generated
+    #     :param files_to_params: a dict connecting each file to its parameter settings
+    #     """
+    #     used_params: t.Dict[str, str] = {}
+    #     file_to_tables: t.Dict[str, str] = {}
+    #     for file, params in files_to_params.items():
+    #         used_params.update(params)
+    #         table = tabulate(params.items(), headers=["Name", "Value"])
+    #         file_to_tables[relpath(file, self.gen_path)] = table
 
-        if used_params:
-            used_params_str = ", ".join(
-                [f"{name}={value}" for name, value in used_params.items()]
-            )
-            logger.log(
-                level=self.log_level,
-                msg=f"Configured application {entity.name} with params {used_params_str}",
-            )
-            file_table = tabulate(
-                file_to_tables.items(),
-                headers=["File name", "Parameters"],
-            )
-            log_entry = f"Application name: {entity.name}\n{file_table}\n\n"
-            with open(self.log_file, mode="a", encoding="utf-8") as logfile:
-                logfile.write(log_entry)
-            with open(
-                join(entity.path, "smartsim_params.txt"), mode="w", encoding="utf-8"
-            ) as local_logfile:
-                local_logfile.write(log_entry)
+    #     if used_params:
+    #         used_params_str = ", ".join(
+    #             [f"{name}={value}" for name, value in used_params.items()]
+    #         )
+    #         logger.log(
+    #             level=self.log_level,
+    #             msg=f"Configured application {entity.name} with params {used_params_str}",
+    #         )
+    #         file_table = tabulate(
+    #             file_to_tables.items(),
+    #             headers=["File name", "Parameters"],
+    #         )
+    #         log_entry = f"Application name: {entity.name}\n{file_table}\n\n"
+    #         with open(self.log_file, mode="a", encoding="utf-8") as logfile:
+    #             logfile.write(log_entry)
+    #         with open(
+    #             join(entity.path, "smartsim_params.txt"), mode="w", encoding="utf-8"
+    #         ) as local_logfile:
+    #             local_logfile.write(log_entry)
 
-        else:
-            logger.log(
-                level=self.log_level,
-                msg=f"Configured application {entity.name} with no parameters",
-            )
+    #     else:
+    #         logger.log(
+    #             level=self.log_level,
+    #             msg=f"Configured application {entity.name} with no parameters",
+    #         )
