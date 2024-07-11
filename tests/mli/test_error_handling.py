@@ -48,7 +48,6 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
-    FetchModelResult,
     InferenceReply,
     LoadModelResult,
     TransformInputResult,
@@ -57,7 +56,6 @@ from smartsim._core.mli.infrastructure.worker.worker import (
 from smartsim._core.mli.message_handler import MessageHandler
 
 from .channel import FileSystemCommChannel
-from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
 # The tests in this file belong to the dragon group
@@ -108,8 +106,24 @@ def test_fetch_model_errors_handled(
         raise ValueError("Simulated error in fetch_model")
 
     monkeypatch.setattr(integrated_worker, "fetch_model", mock_fetch_model)
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
 
     worker_manager._on_iteration()
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while fetching the model.")
 
 
 def test_load_model_errors_handled(
@@ -123,7 +137,24 @@ def test_load_model_errors_handled(
         raise ValueError("Simulated error in load_model")
 
     monkeypatch.setattr(integrated_worker, "load_model", mock_load_model)
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
     worker_manager._on_iteration()
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while loading the model.")
 
 
 def test_fetch_inputs_errors_handled(
@@ -137,7 +168,30 @@ def test_fetch_inputs_errors_handled(
         raise ValueError("Simulated error in fetch_inputs")
 
     monkeypatch.setattr(integrated_worker, "fetch_inputs", mock_fetch_inputs)
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        integrated_worker,
+        "load_model",
+        MagicMock(return_value=LoadModelResult(b"result_bytes")),
+    )
+
     worker_manager._on_iteration()
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while fetching the inputs.")
 
 
 def test_transform_input_errors_handled(
@@ -151,7 +205,35 @@ def test_transform_input_errors_handled(
         raise ValueError("Simulated error in transform_input")
 
     monkeypatch.setattr(integrated_worker, "transform_input", mock_transform_input)
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        integrated_worker,
+        "load_model",
+        MagicMock(return_value=LoadModelResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "fetch_inputs",
+        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
+    )
+
     worker_manager._on_iteration()
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while transforming the input.")
 
 
 def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.MonkeyPatch):
@@ -159,11 +241,24 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
     execute pipeline stage"""
     worker_manager, integrated_worker = setup_worker_manager
 
+    def mock_execute(a, b, c):
+        raise ValueError("Simulated error in execute")
+
+    monkeypatch.setattr(integrated_worker, "execute", mock_execute)
+    mock_reply_fn = MagicMock()
     monkeypatch.setattr(
-        integrated_worker,
-        "fetch_model",
-        MagicMock(return_value=FetchModelResult(b"result_bytes")),
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
     )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
     monkeypatch.setattr(
         integrated_worker,
         "load_model",
@@ -180,18 +275,7 @@ def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.Monkey
         MagicMock(return_value=TransformInputResult(b"result_bytes")),
     )
 
-    def mock_execute(a, b, c):
-        raise ValueError("Simulated error in execute")
-
-    monkeypatch.setattr(integrated_worker, "execute", mock_execute)
-
     worker_manager._on_iteration()
-
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
 
     assert mock_reply_fn.called_once()
     mock_reply_fn.assert_called_with("fail", "Failed while executing.")
@@ -208,7 +292,45 @@ def test_transform_output_errors_handled(
         raise ValueError("Simulated error in transform_output")
 
     monkeypatch.setattr(integrated_worker, "transform_output", mock_transform_output)
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        integrated_worker,
+        "load_model",
+        MagicMock(return_value=LoadModelResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "fetch_inputs",
+        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "transform_input",
+        MagicMock(return_value=TransformInputResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "execute",
+        MagicMock(return_value=ExecuteResult(b"result_bytes")),
+    )
+
     worker_manager._on_iteration()
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while transforming the output.")
 
 
 def test_place_output_errors_handled(
@@ -222,7 +344,50 @@ def test_place_output_errors_handled(
         raise ValueError("Simulated error in place_output")
 
     monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
+    mock_reply_fn = MagicMock()
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
+        mock_reply_fn,
+    )
+
+    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
+        return exception_handler(exc, None, func_descriptor, reply)
+
+    monkeypatch.setattr(
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
+    )
+
+    monkeypatch.setattr(
+        integrated_worker,
+        "load_model",
+        MagicMock(return_value=LoadModelResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "fetch_inputs",
+        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "transform_input",
+        MagicMock(return_value=TransformInputResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "execute",
+        MagicMock(return_value=ExecuteResult(b"result_bytes")),
+    )
+    monkeypatch.setattr(
+        integrated_worker,
+        "transform_output",
+        MagicMock(return_value=TransformOutputResult(b"result", [], "c", "float32")),
+    )
+
     worker_manager._on_iteration()
+
+    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_with("fail", "Failed while placing the output.")
 
 
 def test_exception_handling_helper():
