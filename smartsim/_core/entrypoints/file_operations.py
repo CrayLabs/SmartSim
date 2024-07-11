@@ -25,19 +25,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import base64
+import collections
 import os
-import typing as t
+import pickle
+import re
 import shutil
 from distutils import dir_util
-import re
-import collections
+from pathlib import Path
 
 
-def get_dst_path(application_path, input_file):
-    return os.path.join(application_path, os.path.basename(input_file))
-
-
-def _check_path(file_path: str) -> str:
+def _check_path(file_path: str) -> Path:
     """Given a user provided path-like str, find the actual path to
         the directory or file and create a full path.
 
@@ -53,100 +51,106 @@ def _check_path(file_path: str) -> str:
     raise FileNotFoundError(f"File or Directory {file_path} not found")
 
 
-
-def move(source: str, dest: str):
+def move(args) -> None:
     """Move a file
+
+    Sample usage:
+        python _core/entrypoints/file_operations.py move /absolute/file/src/path /absolute/file/dest/path
 
     :param to_move: Path to a source file to be copied
     :param dst_path: Path to a file to copy the contents from the source file into
-    :return: string of python code to perform operation that can be executed
     """
+    _check_path(args.source)
+    _check_path(args.dest)
+    shutil.move(args.source, args.dest)
 
-    _check_path(source)
-  
-    shutil.move(source, dest)
 
-
-def remove(to_delete: str):
+def remove(args) -> None:
     """Write a python script that removes a file when executed.
 
-    :param to_delete: Path to the file to be deleted
-    :return: string of python code to perform operation that can be executed
+    Sample usage:
+        python _core/entrypoints/file_operations.py remove /absolute/file/path   # must be absolute path
+
+    :param to_remove: Path to the file to be deleted
     """
-    _check_path(to_delete)
-    
-    os.remove(to_delete)
-
-
-# TODO: remove the entity path things and keep it as a helper funtion that 
-# gives the user to add the application, and then it would take the applciation path and do the copy 
+    _check_path(args.to_remove)
+    os.remove(args.to_remove)
 
 
 def copy(args):
-    # args.source_path: str, dest_path: str):
     """
     Write a python script to copy the entity files and directories attached
     to this entity into an entity directory
 
+    Sample usage:
+        python _core/entrypoints/file_operations.py copy /absolute/file/src/path /absolute/file/dest/path
+
     :param source_path: Path to directory, or path to file to copy into an entity directory
-    :param dest_path: Path to destination directory or path to destination file to copy 
-    :return: string of python code to perform operation that can be executed
+    :param dest_path: Path to destination directory or path to destination file to copy
     """
+    _check_path(args.source)
+    _check_path(args.dest)
 
-    print("MADE IT INTO THE COPY FUNCTION")
-    _check_path(args.source_path)
-    _check_path(args.dest_path)
-
-    if os.path.isdir(args.source_path):
-        dir_util.copy_tree(args.source_path, args.dest_path)
+    if os.path.isdir(args.source):
+        dir_util.copy_tree(args.source, args.dest)
     else:
-        shutil.copyfile(args.source_path, args.dest_path)
+        shutil.copyfile(args.source, args.dest)
 
 
-
-def symlink(source: str, link: str):
+def symlink(args):
     """
     Create a symbolic link pointing to the exisiting source file
     named link
 
+    Sample usage:
+        python _core/entrypoints/file_operations.py symlink /absolute/file/src/path /absolute/file/dest/path
+
     :param src_file: the exisiting source path
-    :param dst_file: target name where the symlink will be created. 
+    :param dst_file: target name where the symlink will be created.
     """
+    _check_path(args.source)
 
-    _check_path(source)
-
-    os.symlink(source, link)
-
+    os.symlink(args.source, args.dest)
 
 
-def configure(
-    to_configure: str, dest_path: t.Optional[str], param_dict: t.Dict[str, str], tag_delimiter: str = ';'
-):
+def configure(args):
     """Write a python script to set, search and replace the tagged parameters for the configure operation
     within tagged files attached to an entity.
 
-    User-formatted files can be attached using the `to_configure` argument. These files will be modified
-during ``Model`` generation to replace tagged sections in the user-formatted files with
-values from the `params` initializer argument used during ``Model`` creation:
+    User-formatted files can be attached using the `configure` argument. These files will be modified
+    during ``Model`` generation to replace tagged sections in the user-formatted files with
+    values from the `params` initializer argument used during ``Model`` creation:
+
+    Sample usage:
+        python _core/entrypoints/file_operations.py configure /absolute/file/src/path /absolute/file/dest/path tag_deliminator param_dict
 
     :param to_configure: The tagged files the search and replace operations to be performed upon
     :param dest: Optional destination for configured files to be written to
     :param param_dict: A dict of parameter names and values set for the file
     :tag_delimiter: tag for the configure operation to search for, defaults to semi-colon e.g. ";"
-    :return: string of python code to perform operation that can be executed
     """
 
-    _check_path(to_configure)
-    if dest_path:
-        _check_path(dest_path)
+    _check_path(args.source)
+    if args.dest:
+        _check_path(args.dest)
+
+    tag_delimiter = ";"
+    if args.tag_delimiter:
+        tag_delimiter = args.tag_delimiter
+
+    decoded_dict = base64.b64decode(eval(args.param_dict))
+    param_dict = pickle.loads(decoded_dict)
+
+    if not param_dict:
+        raise ValueError("param dictionary is empty")
+    if not isinstance(param_dict, dict):
+        raise TypeError("param dict is not a valid dictionary")
 
     def _get_prev_value(tagged_line: str) -> str:
         split_tag = tagged_line.split(tag_delimiter)
         return split_tag[1]
 
-    def _is_ensemble_spec(
-        tagged_line: str, model_params: dict
-    ) -> bool:
+    def _is_ensemble_spec(tagged_line: str, model_params: dict) -> bool:
         split_tag = tagged_line.split(tag_delimiter)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():
@@ -155,16 +159,13 @@ values from the `params` initializer argument used during ``Model`` creation:
 
     edited = []
     used_params = {}
-    #param_dict = {param_dict}
-
-   # tag_delimiter = tag_delimiter
 
     # Set the tag for the modelwriter to search for within
     # tagged files attached to an entity.
     regex = "".join(("(", tag_delimiter, ".+", tag_delimiter, ")"))
 
     # Set the lines to iterate over
-    with open(to_configure,'r+', encoding='utf-8') as file_stream:
+    with open(args.source, "r+", encoding="utf-8") as file_stream:
         lines = file_stream.readlines()
 
     unused_tags = collections.defaultdict(list)
@@ -192,170 +193,69 @@ values from the `params` initializer argument used during ``Model`` creation:
     lines = edited
 
     # write configured file to destination specified. Default is an overwrite
-    if dest_path:
-        file_stream = dest_path
+    if args.dest:
+        file_stream = args.dest
 
-    with open(to_configure, "w+", encoding="utf-8") as file_stream:
+    with open(args.source, "w+", encoding="utf-8") as file_stream:
         for line in lines:
             file_stream.write(line)
 
 
-# python _core/entrypoints/file_operations.py remove /absolute/file/path   # must be absolute path
-# python _core/entrypoints/file_operations.py move /absolute/file/src/path /absolute/file/dest/path 
-# python _core/entrypoints/file_operations.py symlink /absolute/file/src/path /absolute/file/dest/path
-# python _core/entrypoints/file_operations.py copy /absolute/file/src/path /absolute/file/dest/path
-# python _core/entrypoints/file_operations.py configure /absolte/file/src/path /absolte/file/dest/path tagged_deliminator params  # base64 encoded dictionary for params
-
-
-import json
 def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments
 
     :returns: An argument parser ready to accept required command generator parameters
     """
     arg_parser = argparse.ArgumentParser(description="Command Generator")
-    
-    subparsers = arg_parser.add_subparsers(help='file_operations')
-    
-    # subparser for move op
+
+    subparsers = arg_parser.add_subparsers(help="file_operations")
+
+    # Subparser for move op
     move_parser = subparsers.add_parser("move")
     move_parser.set_defaults(func=move)
-    move_parser.add_argument("src_path")
-    move_parser.add_argument("dest_path")
+    move_parser.add_argument("source")
+    move_parser.add_argument("dest")
 
-  # subparser for remove op
+    # Subparser for remove op
     remove_parser = subparsers.add_parser("remove")
-    remove_parser.add_argument(
-        "to_remove",
-        type = str)
+    remove_parser.add_argument("to_remove", type=str)
 
-    # subparser for copy op
+    # Subparser for copy op
     copy_parser = subparsers.add_parser("copy")
     copy_parser.set_defaults(func=copy)
-    copy_parser.add_argument(
-        "source_path",
-        type = str)
-    copy_parser.add_argument(
-        "dest_path",
-        type = str)
-    
-    # subparser for symlink op
+    copy_parser.add_argument("source", type=str)
+    copy_parser.add_argument("dest", type=str)
+
+    # Subparser for symlink op
     symlink_parser = subparsers.add_parser("symlink")
     symlink_parser.set_defaults(func=symlink)
-    symlink_parser.add_argument(
-        "source_path",
-        type = str)
-    symlink_parser.add_argument(
-        "dest_path",
-        type = str)
+    symlink_parser.add_argument("source", type=str)
+    symlink_parser.add_argument("dest", type=str)
 
-    # subparser for configure op
+    # Subparser for configure op
     configure_parser = subparsers.add_parser("configure")
     configure_parser.set_defaults(func=configure)
-    configure_parser.add_argument(
-        "source_path",
-        type = str)
-    configure_parser.add_argument(
-        "dest_path",
-        type = str)
-    configure_parser.add_argument(
-        "tag_delimiter",
-        type = str)
-    configure_parser.add_argument( 
-        "param_dict",
-        type = str)
+    configure_parser.add_argument("source", type=str)
+    configure_parser.add_argument("dest", type=str)
+    configure_parser.add_argument("tag_delimiter", type=str)
+    configure_parser.add_argument("param_dict", type=str)
 
     return arg_parser
 
 
-def parse_arguments() -> str: # -> TelemetryMonitorArgs:
-    # """Parse the command line arguments and return an instance
-    # of TelemetryMonitorArgs populated with the CLI inputs
+def parse_arguments() -> str:
+    """Parse the command line arguments
 
-    # :returns: `TelemetryMonitorArgs` instance populated with command line arguments
-    #"""
+    :returns: the parsed command line arguments
+    """
     parser = get_parser()
     parsed_args = parser.parse_args()
-
     parsed_args.func(parsed_args)
-    #print(parsed_args)
-    # return TelemetryMonitorArgs(
-    #     parsed_args.exp_dir,
-    #     parsed_args.frequency,
-    #     parsed_args.cooldown,
-    #     parsed_args.loglevel,
-    # )
-    #parsed_args.func(parsed_args)
     return parsed_args
 
 
-
-
 if __name__ == "__main__":
-    """Prepare the telemetry monitor process using command line arguments.
-
-    Sample usage:
-    python -m smartsim._core.entrypoints.telemetrymonitor -exp_dir <exp_dir>
-          -frequency 30 -cooldown 90 -loglevel INFO
-    The experiment id is generated during experiment startup
-    and can be found in the manifest.json in <exp_dir>/.smartsim/telemetry
-    """
+    """Run file operations move, remove, symlink, copy, and configure using command line arguments."""
     os.environ["PYTHONUNBUFFERED"] = "1"
 
-    args = parse_arguments() #JPNOTE get from here  - pos args, first one in, the rest will get fed into the rest of the functions
-    #sys args? - some number of strings that come after
-    #configure_logger(logger, args.log_level, args.exp_dir)
-
-    print(args)
-
-    print("IN MAIN HERE")
-    import json
-
-
-
-   # if arg.copy
-   # my_dictionary = json.loads(args.my_dict)
-
-      # args = parser.parse_args()
-    
-
-    # def command1(args):
-    #     print("command1: %s" % args.name)
-
-    # def command2(args):
-    #     print("comamnd2: %s" % args.frequency)
-
-    # if __name__ == '__main__':
-    #     main()
-
-    #ns = parser.parse_args(args)
-
-    # if args[1] == 'remove':
-
-    #     to_remove = args[2]
-    #     remove_op(to_remove)
-
-    # if args[1] == 'move':
-    #     to_move = args [2]
-    #     entity_path = args[3]
-    #     move_op(to_move, entity_path)
-
-    # if args[1] == 'symlink':
-
-    #     symlink_op()
-    
-    # if args[1] == 'copy':
-    #     copy_op()
-
-    # if args[1] == 'configure':
-    #     configure_op()
-
-
- 
-    
-
-
-
-
-
-   # sys.exit(1) # do I need? 
+    args = parse_arguments()

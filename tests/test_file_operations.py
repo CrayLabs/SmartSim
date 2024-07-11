@@ -24,18 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import filecmp
 import os
 import pathlib
-
-import typing as t
+import pickle
 from distutils import dir_util
 from glob import glob
 from os import path as osp
 
 import pytest
-from smartsim._core.entrypoints import command_generator
-from smartsim._core.entrypoints.command_generator import get_parser 
+
+from smartsim._core.entrypoints import file_operations
+from smartsim._core.entrypoints.file_operations import get_parser
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_output_root = os.path.join(test_path, "tests", "test_output")
@@ -45,32 +46,32 @@ def test_symlink_files():
     """
     Test operation to symlink files
     """
-
+    # Set source directory and file
     source = pathlib.Path(test_output_root) / "sym_source"
     os.mkdir(source)
     source_file = pathlib.Path(source) / "sym_source.txt"
     with open(source_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("")
-    # entity_path to be the dest dir
+
+    # Set path to be the destination directory
     entity_path = os.path.join(test_output_root, "entity_name")
 
-
     parser = get_parser()
-    cmd = f"symlink {source_file} {entity_path}" 
+    cmd = f"symlink {source_file} {entity_path}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
-    command_generator.symlink(ns)
+    file_operations.symlink(ns)
 
-    link = pathlib.Path(test_output_root) / "entity_name"
     # Assert the two files are the same file
+    link = pathlib.Path(test_output_root) / "entity_name"
     assert link.is_symlink()
     assert os.readlink(link) == str(source_file)
 
     # Clean up the test directory
     os.unlink(link)
     os.remove(pathlib.Path(source) / "sym_source.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "sym_source") 
+    os.rmdir(pathlib.Path(test_output_root) / "sym_source")
 
 
 def test_symlink_dir():
@@ -85,11 +86,11 @@ def test_symlink_dir():
     entity_path = os.path.join(test_output_root, "entity_name")
 
     parser = get_parser()
-    cmd = f"symlink {source} {entity_path}" 
+    cmd = f"symlink {source} {entity_path}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
-    command_generator.symlink(ns)
+    file_operations.symlink(ns)
 
     link = pathlib.Path(test_output_root) / "entity_name"
     # Assert the two files are the same file
@@ -98,7 +99,7 @@ def test_symlink_dir():
 
     # Clean up the test directory
     os.unlink(link)
-    os.rmdir(pathlib.Path(test_output_root) / "sym_source") 
+    os.rmdir(pathlib.Path(test_output_root) / "sym_source")
 
 
 def test_copy_op_file():
@@ -119,14 +120,13 @@ def test_copy_op_file():
     with open(dest_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("")
 
-
     parser = get_parser()
-    cmd = f"copy {source_file} {dest_file}" 
+    cmd = f"copy {source_file} {dest_file}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     # Execute copy
-    command_generator.copy(ns)
+    file_operations.copy(ns)
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -137,8 +137,7 @@ def test_copy_op_file():
 
 
 def test_copy_op_dirs():
-    """Test the oeprations that copies an entire directory tree source to a new location destination
-    """
+    """Test the oeprations that copies an entire directory tree source to a new location destination"""
 
     to_copy = os.path.join(test_output_root, "to_copy")
     os.mkdir(to_copy)
@@ -157,12 +156,12 @@ def test_copy_op_dirs():
     os.mkdir(entity_path)
 
     parser = get_parser()
-    cmd = f"copy {to_copy} {entity_path}" 
+    cmd = f"copy {to_copy} {entity_path}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     # Execute copy
-    command_generator.copy(ns)
+    file_operations.copy(ns)
 
     # Clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -174,8 +173,7 @@ def test_copy_op_dirs():
 
 
 def test_copy_op_bad_source_file():
-    """Test that a FileNotFoundError is raised when there is a bad source file
-    """
+    """Test that a FileNotFoundError is raised when there is a bad source file"""
 
     to_copy = os.path.join(test_output_root, "to_copy")
     os.mkdir(to_copy)
@@ -184,24 +182,23 @@ def test_copy_op_bad_source_file():
 
     bad_path = "/not/a/real/path"
     # Execute copy
-    
+
     parser = get_parser()
-    cmd = f"copy {bad_path} {entity_path}" 
+    cmd = f"copy {bad_path} {entity_path}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     with pytest.raises(FileNotFoundError) as ex:
-        command_generator.copy(ns)
+        file_operations.copy(ns)
     assert f"File or Directory {bad_path} not found" in ex.value.args[0]
-    
+
     # clean up
     os.rmdir(pathlib.Path(test_output_root) / "to_copy")
     os.rmdir(pathlib.Path(test_output_root) / "entity_name")
 
 
 def test_copy_op_bad_dest_path():
-    """Test that a FileNotFoundError is raised when there is a bad destination file.
-    """
+    """Test that a FileNotFoundError is raised when there is a bad destination file."""
 
     to_copy = os.path.join(test_output_root, "to_copy")
     os.mkdir(to_copy)
@@ -215,12 +212,12 @@ def test_copy_op_bad_dest_path():
     bad_path = "/not/a/real/path"
 
     parser = get_parser()
-    cmd = f"copy {source_file} {bad_path}" 
+    cmd = f"copy {source_file} {bad_path}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     with pytest.raises(FileNotFoundError) as ex:
-        command_generator.copy(ns)
+        file_operations.copy(ns)
     assert f"File or Directory {bad_path} not found" in ex.value.args[0]
 
     # clean up
@@ -237,11 +234,11 @@ def test_move_op():
     dest_dir = os.path.join(test_output_root, "to_here")
     os.mkdir(dest_dir)
 
-    #dest_file = os.path.join(test_output_root, "to_here", "to_here.txt")
+    # dest_file = os.path.join(test_output_root, "to_here", "to_here.txt")
     dest_file = pathlib.Path(dest_dir) / "to_here.txt"
     with open(dest_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write(" ")
-    
+
     source_file = pathlib.Path(source_dir) / "app_move.txt"
     with open(source_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("dummy")
@@ -249,13 +246,13 @@ def test_move_op():
     assert osp.exists(source_file)
     with open(source_file, "r", encoding="utf-8") as dummy_file:
         assert dummy_file.read() == "dummy"
-    
+
     parser = get_parser()
-    cmd = f"move {source_file} {dest_file}" 
+    cmd = f"move {source_file} {dest_file}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
-    command_generator.move(ns)
+    file_operations.move(ns)
 
     # Assert that the move was successful
     assert not osp.exists(source_file)
@@ -267,6 +264,7 @@ def test_move_op():
     os.rmdir(source_dir)
     os.remove(dest_file)
     os.rmdir(dest_dir)
+
 
 def test_remove_op():
     """Test the operation to delete a file"""
@@ -281,11 +279,11 @@ def test_remove_op():
         assert dummy_file.read() == "dummy"
 
     parser = get_parser()
-    cmd = f"remove {to_del}" 
+    cmd = f"remove {to_del}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
-    command_generator.remove(ns)
+    file_operations.remove(ns)
 
     # Assert file has been deleted
     assert not osp.exists(to_del)
@@ -295,38 +293,46 @@ def test_remove_op_bad_path():
     """Test that FileNotFoundError is raised when a bad path is given to the
     soperation to delete a file"""
 
-    test_output_root = os.path.join(test_path, "tests", "test_output")
     to_del = pathlib.Path(test_output_root) / "not_real.txt"
 
     parser = get_parser()
-    cmd = f"remove {to_del}" 
+    cmd = f"remove {to_del}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     with pytest.raises(FileNotFoundError) as ex:
-        command_generator.remove(ns)
+        file_operations.remove(ns)
     assert f"File or Directory {to_del} not found" in ex.value.args[0]
 
 
-def test_configure_op(test_dir, fileutils):
-    """Test configure param operations with a tag parameter given"""
+@pytest.mark.parametrize(
+    ["param_dict", "error_type"],
+    [
+        pytest.param(
+            {
+                "5": 10,
+                "FIRST": "SECOND",
+                "17": 20,
+                "65": "70",
+                "placeholder": "group leftupper region",
+                "1200": "120",
+            },
+            "None",
+            id="correct dict",
+        ),
+        pytest.param(
+            ["list", "of", "values"],
+            "TypeError",
+            id="incorrect dict",
+        ),
+        pytest.param({}, "ValueError", id="empty dict"),
+    ],
+)
+def test_configure_op(test_dir, fileutils, param_dict, error_type):
+    """Test configure operation with correct parameter dictionary, empty dicitonary, and an incorrect type"""
 
-    # the param dict for configure operations
-    # param_dict = {
-    #     "5": 10,  # MOM_input
-    #     "FIRST": "SECOND",  # example_input.i
-    #     "17": 20,  # in.airebo
-    #     "65": "70",  # in.atm
-    #     "placeholder": "group leftupper region",  # in.crack
-    #     "1200": "120",  # input.nml
-    # }
-   #"{\"error\":\"Wrong account\"}"
-    param_dict = '{"5":10,"FIRST":"SECOND","17":20,"65":"70","placeholder":\"group leftupper region\","1200":"120"}'
     tag = ";"
 
-    # json loads --> needs to be '  with double quotes inside '
-    # but for the arg parse -- needs to have double quotes around everything 
-    # retreive tagged files
     conf_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "marked/"))
     # retrieve files to compare after test
     correct_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "correct/"))
@@ -338,81 +344,52 @@ def test_configure_op(test_dir, fileutils):
     tagged_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
 
+    # Pickle the dictionary
+    pickled_dict = pickle.dumps(param_dict)
 
-    parser = get_parser()
-    cmd = f" configure {tagged_files[0]} {tagged_files[0]} {tag} {param_dict}"
-    args = cmd.split()
-    ns = parser.parse_args(args)
-    print(ns)
-    
-    #command_generator.configure(ns)
-    #Run configure op on test files
-    for tagged_file in tagged_files:
-        #cmd = f" configure {tagged_file} {tagged_file} {param_dict} {tag}"
-        parser = get_parser()
-        cmd = f" configure {tagged_file} {tagged_file} {tag} {param_dict}"
-        args = cmd.split()
-        ns = parser.parse_args(args)
-        command_generator.configure(ns)
-        #tagged_file, dest=tagged_file, param_dict=param_dict,tag_delimiter=tag
-        #subprocess.run([sys.executable, "-c", cmd])
-
-    # check that files and correct files are the same
-    for written, correct in zip(tagged_files, correct_files):
-        assert filecmp.cmp(written, correct)
-
-
-def test_configure_op_no_tag(test_dir, fileutils):
-    """Test configure param operations with no tag parameter given"""
-
-    # the param dict for configure operations
-    # param_dict = {
-    #     "5": 10,  # MOM_input
-    #     "FIRST": "SECOND",  # example_input.i
-    #     "17": 20,  # in.airebo
-    #     "65": "70",  # in.atm
-    #     "placeholder": "group leftupper region",  # in.crack
-    #     "1200": "120",  # input.nml
-    # }
-    param_dict = '{"5":10,"FIRST":"SECOND","17":20,"65":"70","placeholder":"group_leftupper_region","1200":"120"}'
-    # retreive tagged files
-    conf_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "marked/"))
-    # retrieve files to compare after test
-    correct_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "correct/"))
-
-    # copy files to test directory
-    dir_util.copy_tree(conf_path, test_dir)
-    assert osp.isdir(test_dir)
-
-    tagged_files = sorted(glob(test_dir + "/*"))
-    correct_files = sorted(glob(correct_path + "*"))
+    # Encode the pickled dictionary with Base64
+    encoded_dict = base64.b64encode(pickled_dict)
 
     # Run configure op on test files
     for tagged_file in tagged_files:
-        cmd = command_generator.configure(tagged_file,dest_path=None, param_dict=param_dict)
-       # subprocess.run([sys.executable, "-c", cmd])
+        parser = get_parser()
+        cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
+        args = cmd.split()
+        ns = parser.parse_args(args)
 
-    # check that files and correct files are the same
-    for written, correct in zip(tagged_files, correct_files):
-        assert filecmp.cmp(written, correct)
+        if error_type == "ValueError":
+            with pytest.raises(ValueError) as ex:
+                file_operations.configure(ns)
+                assert "param dictionary is empty" in ex.value.args[0]
+        elif error_type == "TypeError":
+            with pytest.raises(TypeError) as ex:
+                file_operations.configure(ns)
+                assert "param dict is not a valid dictionary" in ex.value.args[0]
+        else:
+            file_operations.configure(ns)
+
+    if error_type == "None":
+        for written, correct in zip(tagged_files, correct_files):
+            assert filecmp.cmp(written, correct)
 
 
 def test_parser_move():
-    """Test that the parser succeeds when receiving expected args"""
+    """Test that the parser succeeds when receiving expected args for the move operation"""
     parser = get_parser()
 
     src_path = "/absolute/file/src/path"
     dest_path = "/absolute/file/dest/path"
 
-    cmd = f"move {src_path} {dest_path}" 
+    cmd = f"move {src_path} {dest_path}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     assert ns.source == src_path
     assert ns.dest == dest_path
 
+
 def test_parser_remove():
-    """Test that the parser succeeds when receiving expected args"""
+    """Test that the parser succeeds when receiving expected args for the remove operation"""
     parser = get_parser()
 
     file_path = "/absolute/file/path"
@@ -420,11 +397,12 @@ def test_parser_remove():
 
     args = cmd.split()
     ns = parser.parse_args(args)
-    
+
     assert ns.to_remove == file_path
 
+
 def test_parser_symlink():
-    """Test that the parser succeeds when receiving expected args"""
+    """Test that the parser succeeds when receiving expected args for the symlink operation"""
     parser = get_parser()
 
     src_path = "/absolute/file/src/path"
@@ -438,14 +416,15 @@ def test_parser_symlink():
     assert ns.source == src_path
     assert ns.dest == dest_path
 
+
 def test_parser_copy():
-    """Test that the parser succeeds when receiving expected args"""
+    """Test that the parser succeeds when receiving expected args for the copy operation"""
     parser = get_parser()
 
     src_path = "/absolute/file/src/path"
     dest_path = "/absolute/file/dest/path"
 
-    cmd = f"copy {src_path} {dest_path}" 
+    cmd = f"copy {src_path} {dest_path}"
 
     args = cmd.split()
     ns = parser.parse_args(args)
@@ -455,56 +434,30 @@ def test_parser_copy():
 
 
 def test_parser_configure_parse():
-    """Test that the parser succeeds when receiving expected args"""
+    """Test that the parser succeeds when receiving expected args for the configure operation"""
     parser = get_parser()
 
     src_path = "/absolute/file/src/path"
     dest_path = "/absolute/file/dest/path"
     tag_delimiter = ";"
-    params = '{"5":10}'
 
-    #params = '{"5":10,"FIRST":"SECOND","17":20,"65":"70","placeholder":"group_leftupper_region","1200":"120"}'
+    param_dict = {
+        "5": 10,
+        "FIRST": "SECOND",
+        "17": 20,
+        "65": "70",
+        "placeholder": "group leftupper region",
+        "1200": "120",
+    }
 
-    cmd = f"configure {src_path} {dest_path} {tag_delimiter} {params}" 
+    pickled_dict = pickle.dumps(param_dict)
+    encoded_dict = base64.b64encode(pickled_dict)
+
+    cmd = f"configure {src_path} {dest_path} {tag_delimiter} {encoded_dict}"
     args = cmd.split()
     ns = parser.parse_args(args)
 
     assert ns.source == src_path
     assert ns.dest == dest_path
     assert ns.tag_delimiter == tag_delimiter
-    assert ns.param_dict == params
-
-
-
-
-# TODO: should I add 
-ALL_ARGS = {"-exp_dir", "-frequency"}
-
-@pytest.mark.parametrize(
-    ["cmd", "missing"],
-    [
-        pytest.param("", {"-exp_dir", "-frequency"}, id="no args"),
-        pytest.param("-exp_dir /foo/bar", {"-frequency"}, id="no freq"),
-        pytest.param("-frequency 123", {"-exp_dir"}, id="no dir"),
-    ],
-)
-
-def test_parser_reqd_args(capsys, cmd, missing):
-    """Test that the parser reports any missing required arguments"""
-    parser = get_parser()
-
-    args = cmd.split()
-
-    captured = capsys.readouterr()  # throw away existing output
-    with pytest.raises(SystemExit) as ex:
-        ns = parser.parse_args(args)
-
-    captured = capsys.readouterr()
-    assert "the following arguments are required" in captured.err
-    err_desc = captured.err.split("the following arguments are required:")[-1]
-    for arg in missing:
-        assert arg in err_desc
-
-    expected = ALL_ARGS - missing
-    for exp in expected:
-        assert exp not in err_desc
+    assert ns.param_dict == str(encoded_dict)
