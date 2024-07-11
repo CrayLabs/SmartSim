@@ -63,7 +63,7 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture
-def setup_worker_manager(test_dir, monkeypatch):
+def setup_worker_manager(test_dir, monkeypatch: pytest.MonkeyPatch):
     integrated_worker = IntegratedTorchWorker()
 
     chan = Channel.make_process_local()
@@ -86,7 +86,7 @@ def setup_worker_manager(test_dir, monkeypatch):
     tensor_key = MessageHandler.build_tensor_key("key")
     model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
     request = MessageHandler.build_request(
-        b"channel", model, [tensor_key], [tensor_key], [], None
+        test_dir, model, [tensor_key], [tensor_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
     new_sender = worker_manager._task_queue.sendh(use_main_as_stream_channel=True)
@@ -95,17 +95,11 @@ def setup_worker_manager(test_dir, monkeypatch):
     return worker_manager, integrated_worker
 
 
-def test_fetch_model_errors_handled(
-    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
-):
-    """Ensures that the worker manager does not crash after a failure in the
-    fetch model pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
+def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stage):
+    def mock_stage(*args, **kwargs):
+        raise ValueError(f"Simulated error in {stage}")
 
-    def mock_fetch_model(a, b):
-        raise ValueError("Simulated error in fetch_model")
-
-    monkeypatch.setattr(integrated_worker, "fetch_model", mock_fetch_model)
+    monkeypatch.setattr(integrated_worker, stage, mock_stage)
     mock_reply_fn = MagicMock()
     monkeypatch.setattr(
         "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
@@ -119,275 +113,96 @@ def test_fetch_model_errors_handled(
         "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
         mock_exception_handler,
     )
-
-    worker_manager._on_iteration()
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while fetching the model.")
+    return mock_reply_fn
 
 
-def test_load_model_errors_handled(
-    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    "stage, error_message",
+    [
+        pytest.param(
+            "fetch_model", "Failed while fetching the model.", id="fetch model"
+        ),
+        pytest.param("load_model", "Failed while loading the model.", id="load model"),
+        pytest.param(
+            "fetch_inputs", "Failed while fetching the inputs.", id="fetch inputs"
+        ),
+        pytest.param(
+            "transform_input",
+            "Failed while transforming the input.",
+            id="transform inputs",
+        ),
+        pytest.param("execute", "Failed while executing.", id="execute"),
+        pytest.param(
+            "transform_output",
+            "Failed while transforming the output.",
+            id="transform output",
+        ),
+        pytest.param(
+            "place_output", "Failed while placing the output.", id="place output"
+        ),
+    ],
+)
+def test_pipeline_stage_errors_handled(
+    setup_worker_manager,
+    monkeypatch: pytest.MonkeyPatch,
+    stage: str,
+    error_message: str,
 ):
-    """Ensures that the worker manager does not crash after a failure in the
-    load model pipeline stage"""
+    """Ensures that the worker manager does not crash after a failure in various pipeline stages"""
     worker_manager, integrated_worker = setup_worker_manager
 
-    def mock_load_model(a, b):
-        raise ValueError("Simulated error in load_model")
+    mock_reply_fn = mock_pipeline_stage(monkeypatch, integrated_worker, stage)
 
-    monkeypatch.setattr(integrated_worker, "load_model", mock_load_model)
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
-        return exception_handler(exc, None, func_descriptor, reply)
-
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
-
-    worker_manager._on_iteration()
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while loading the model.")
-
-
-def test_fetch_inputs_errors_handled(
-    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
-):
-    """Ensures that the worker manager does not crash after a failure in the
-    fetch inputs pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
-
-    def mock_fetch_inputs(a, b):
-        raise ValueError("Simulated error in fetch_inputs")
-
-    monkeypatch.setattr(integrated_worker, "fetch_inputs", mock_fetch_inputs)
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
-        return exception_handler(exc, None, func_descriptor, reply)
-
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
-
-    monkeypatch.setattr(
-        integrated_worker,
+    if stage not in ["fetch_model", "load_model"]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "load_model",
+            MagicMock(return_value=LoadModelResult(b"result_bytes")),
+        )
+    if stage not in ["fetch_model", "load_model", "fetch_inputs"]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "fetch_inputs",
+            MagicMock(return_value=FetchInputResult([b"result_bytes"])),
+        )
+    if stage not in ["fetch_model", "load_model", "fetch_inputs", "transform_input"]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "transform_input",
+            MagicMock(return_value=TransformInputResult(b"result_bytes")),
+        )
+    if stage not in [
+        "fetch_model",
         "load_model",
-        MagicMock(return_value=LoadModelResult(b"result_bytes")),
-    )
-
-    worker_manager._on_iteration()
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while fetching the inputs.")
-
-
-def test_transform_input_errors_handled(
-    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
-):
-    """Ensures that the worker manager does not crash after a failure in the
-    transform input pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
-
-    def mock_transform_input(a, b):
-        raise ValueError("Simulated error in transform_input")
-
-    monkeypatch.setattr(integrated_worker, "transform_input", mock_transform_input)
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
-        return exception_handler(exc, None, func_descriptor, reply)
-
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
-
-    monkeypatch.setattr(
-        integrated_worker,
-        "load_model",
-        MagicMock(return_value=LoadModelResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "fetch_inputs",
-        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
-    )
-
-    worker_manager._on_iteration()
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while transforming the input.")
-
-
-def test_execute_errors_handled(setup_worker_manager, monkeypatch: pytest.MonkeyPatch):
-    """Ensures that the worker manager does not crash after a failure in the
-    execute pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
-
-    def mock_execute(a, b, c):
-        raise ValueError("Simulated error in execute")
-
-    monkeypatch.setattr(integrated_worker, "execute", mock_execute)
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
-        return exception_handler(exc, None, func_descriptor, reply)
-
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
-
-    monkeypatch.setattr(
-        integrated_worker,
-        "load_model",
-        MagicMock(return_value=LoadModelResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
-        "fetch_inputs",
-        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "transform_input",
-        MagicMock(return_value=TransformInputResult(b"result_bytes")),
-    )
-
-    worker_manager._on_iteration()
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while executing.")
-
-
-def test_transform_output_errors_handled(
-    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
-):
-    """Ensures that the worker manager does not crash after a failure in the
-    transform output pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
-
-    def mock_transform_output(a, b):
-        raise ValueError("Simulated error in transform_output")
-
-    monkeypatch.setattr(integrated_worker, "transform_output", mock_transform_output)
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
-        return exception_handler(exc, None, func_descriptor, reply)
-
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
-
-    monkeypatch.setattr(
-        integrated_worker,
-        "load_model",
-        MagicMock(return_value=LoadModelResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
-        "fetch_inputs",
-        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
-        "transform_input",
-        MagicMock(return_value=TransformInputResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "execute",
-        MagicMock(return_value=ExecuteResult(b"result_bytes")),
-    )
-
-    worker_manager._on_iteration()
-
-    assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while transforming the output.")
-
-
-def test_place_output_errors_handled(
-    setup_worker_manager, monkeypatch: pytest.MonkeyPatch
-):
-    """Ensures that the worker manager does not crash after a failure in the
-    place output pipeline stage"""
-    worker_manager, integrated_worker = setup_worker_manager
-
-    def mock_place_output(a, b, c):
-        raise ValueError("Simulated error in place_output")
-
-    monkeypatch.setattr(integrated_worker, "place_output", mock_place_output)
-    mock_reply_fn = MagicMock()
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.build_failure_reply",
-        mock_reply_fn,
-    )
-
-    def mock_exception_handler(exc, reply_channel, func_descriptor, reply):
-        return exception_handler(exc, None, func_descriptor, reply)
-
-    monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
-    )
-
-    monkeypatch.setattr(
-        integrated_worker,
+    ]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "execute",
+            MagicMock(return_value=ExecuteResult(b"result_bytes")),
+        )
+    if stage not in [
+        "fetch_model",
         "load_model",
-        MagicMock(return_value=LoadModelResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "fetch_inputs",
-        MagicMock(return_value=FetchInputResult([b"result_bytes"])),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "transform_input",
-        MagicMock(return_value=TransformInputResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "execute",
-        MagicMock(return_value=ExecuteResult(b"result_bytes")),
-    )
-    monkeypatch.setattr(
-        integrated_worker,
         "transform_output",
-        MagicMock(return_value=TransformOutputResult(b"result", [], "c", "float32")),
-    )
+    ]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "transform_output",
+            MagicMock(
+                return_value=TransformOutputResult(b"result", [], "c", "float32")
+            ),
+        )
 
     worker_manager._on_iteration()
 
     assert mock_reply_fn.called_once()
-    mock_reply_fn.assert_called_with("fail", "Failed while placing the output.")
+    mock_reply_fn.assert_called_with("fail", error_message)
 
 
 def test_exception_handling_helper():
