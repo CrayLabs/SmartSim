@@ -209,7 +209,6 @@ class Experiment:
             #       Why is `Job` not generic based on launch arg builder?
             # ---------------------------------------------------------------------
             exe_like = t.cast("ExecutableLike", job.entity)
-            job_execution_path = self._generate(job)
             finalized = builder.finalize(exe_like, job.launch_settings.env_vars)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             return launcher.start(finalized)
@@ -327,7 +326,7 @@ class Experiment:
     def _generate(
         self,
         job: Job,
-    ) -> None:
+    ) -> str:
         """Generate the file structure for an ``Experiment``
 
         ``Experiment.generate`` creates directories for each entity
@@ -347,7 +346,8 @@ class Experiment:
         """
         try:
             generator = Generator(self.exp_path, job)
-            generator.generate_experiment()
+            job_path = generator.generate_experiment()
+            return job_path
         except SmartSimError as e:
             logger.error(e)
             raise
