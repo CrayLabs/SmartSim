@@ -165,25 +165,9 @@ class BinaryDistribution(Distribution):
 
 
 # Define needed dependencies for the installation
-install_requires = [
-    "packaging>=24.0",
-    "psutil>=5.7.2",
-    "coloredlogs>=10.0",
-    "tabulate>=0.8.9",
-    "redis>=4.5",
-    "tqdm>=4.50.2",
-    "filelock>=3.4.2",
-    "protobuf~=3.20",
-    "jinja2>=3.1.2",
-    "watchdog>=4.0.0",
-    "pydantic==1.10.14",
-    "pyzmq>=25.1.2",
-    "pygithub>=2.3.0",
-    "numpy<2"
-]
 
 # Add SmartRedis at specific version
-install_requires.append("smartredis>={}".format(versions.SMARTREDIS))
+# install_requires.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
@@ -213,7 +197,23 @@ extras_require = {
 # rest in setup.cfg
 setup(
     version=smartsim_version,
-    install_requires=install_requires,
+    install_requires = [
+        "packaging>=24.0",
+        "psutil>=5.7.2",
+        "coloredlogs>=10.0",
+        "tabulate>=0.8.9",
+        "redis>=4.5",
+        "tqdm>=4.50.2",
+        "filelock>=3.4.2",
+        "protobuf~=3.20",
+        "jinja2>=3.1.2",
+        "watchdog>=4.0.0",
+        "pydantic==1.10.14",
+        "pyzmq>=25.1.2",
+        "pygithub>=2.3.0",
+        "numpy<2",
+	"smartredis<=0.5.3,
+    ],
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,
