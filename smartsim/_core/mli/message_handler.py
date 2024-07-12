@@ -261,10 +261,8 @@ class MessageHandler:
                 elif input_class_name == "TensorKey":
                     request.input.keys = inputs  # type: ignore
                 else:
-                    raise ValueError(
-                        """Invalid input class name. Expected
-                        'TensorDescriptor' or 'TensorKey'."""
-                    )
+                    raise ValueError("""Invalid input class name. Expected
+                        'TensorDescriptor' or 'TensorKey'.""")
         except Exception as e:
             raise ValueError("Error building inputs portion of request.") from e
 
