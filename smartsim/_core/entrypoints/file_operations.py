@@ -160,7 +160,7 @@ def configure(parsed_args: argparse.Namespace) -> None:
         split_tag = tagged_line.split(tag_delimiter)
         return split_tag[1]
 
-    def _is_ensemble_spec(tagged_line: str, application_params: dict[str,str]) -> bool:
+    def _is_ensemble_spec(tagged_line: str, application_params: dict[str, str]) -> bool:
         split_tag = tagged_line.split(tag_delimiter)
         prev_val = split_tag[1]
         if prev_val in application_params.keys():
@@ -209,6 +209,7 @@ def configure(parsed_args: argparse.Namespace) -> None:
     with open(parsed_args.source, "w+", encoding="utf-8") as file_stream:
         for line in lines:
             file_stream.write(line)
+
 
 def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments
@@ -264,7 +265,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    """Run file operations move, remove, symlink, copy, and configure 
+    """Run file operations move, remove, symlink, copy, and configure
     using command line arguments.
     """
     os.environ["PYTHONUNBUFFERED"] = "1"
