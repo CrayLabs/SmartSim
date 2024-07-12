@@ -33,10 +33,9 @@ import re
 import shutil
 from ast import literal_eval
 from distutils import dir_util  # pylint: disable=deprecated-module
-from pathlib import Path
 
 
-def _check_path(file_path: str) -> Path:
+def _check_path(file_path: str) -> str:
     """Given a user provided path-like str, find the actual path to
         the directory or file and create a full path.
 
@@ -52,7 +51,7 @@ def _check_path(file_path: str) -> Path:
     raise FileNotFoundError(f"File or Directory {file_path} not found")
 
 
-def move(parsed_args) -> None:
+def move(parsed_args: argparse.Namespace) -> None:
     """Move a file
 
     Sample usage:
@@ -62,12 +61,13 @@ def move(parsed_args) -> None:
         source path: Path to a source file to be copied
         dest path: Path to a file to copy the contents from the source file into
     """
+    print(type(parsed_args))
     _check_path(parsed_args.source)
     _check_path(parsed_args.dest)
     shutil.move(parsed_args.source, parsed_args.dest)
 
 
-def remove(parsed_args) -> None:
+def remove(parsed_args: argparse.Namespace) -> None:
     """Write a python script that removes a file when executed.
 
     Sample usage:
@@ -80,7 +80,7 @@ def remove(parsed_args) -> None:
     os.remove(parsed_args.to_remove)
 
 
-def copy(parsed_args):
+def copy(parsed_args: argparse.Namespace) -> None:
     """
     Write a python script to copy the entity files and directories attached
     to this entity into an entity directory
@@ -101,7 +101,7 @@ def copy(parsed_args):
         shutil.copyfile(parsed_args.source, parsed_args.dest)
 
 
-def symlink(parsed_args):
+def symlink(parsed_args: argparse.Namespace) -> None:
     """
     Create a symbolic link pointing to the exisiting source file
     named link
@@ -118,7 +118,7 @@ def symlink(parsed_args):
     os.symlink(parsed_args.source, parsed_args.dest)
 
 
-def configure(parsed_args):
+def configure(parsed_args: argparse.Namespace) -> None:
     """Write a python script to set, search and replace the tagged parameters for the
     configure operation within tagged files attached to an entity.
 
@@ -160,7 +160,7 @@ def configure(parsed_args):
         split_tag = tagged_line.split(tag_delimiter)
         return split_tag[1]
 
-    def _is_ensemble_spec(tagged_line: str, application_params: dict) -> bool:
+    def _is_ensemble_spec(tagged_line: str, application_params: dict[str,str]) -> bool:
         split_tag = tagged_line.split(tag_delimiter)
         prev_val = split_tag[1]
         if prev_val in application_params.keys():
@@ -252,7 +252,7 @@ def get_parser() -> argparse.ArgumentParser:
     return arg_parser
 
 
-def parse_arguments() -> str:
+def parse_arguments() -> argparse.Namespace:
     """Parse the command line arguments
 
     :returns: the parsed command line arguments
