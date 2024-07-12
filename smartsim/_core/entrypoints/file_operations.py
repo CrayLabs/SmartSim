@@ -61,7 +61,6 @@ def move(parsed_args: argparse.Namespace) -> None:
         source path: Path to a source file to be copied
         dest path: Path to a file to copy the contents from the source file into
     """
-    print(type(parsed_args))
     _check_path(parsed_args.source)
     _check_path(parsed_args.dest)
     shutil.move(parsed_args.source, parsed_args.dest)

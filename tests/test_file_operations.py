@@ -38,23 +38,20 @@ import pytest
 from smartsim._core.entrypoints import file_operations
 from smartsim._core.entrypoints.file_operations import get_parser
 
-test_path = os.path.dirname(os.path.abspath(__file__))
-test_output_root = os.path.join(test_path, "tests", "test_output")
 
-
-def test_symlink_files():
+def test_symlink_files(test_dir):
     """
     Test operation to symlink files
     """
     # Set source directory and file
-    source = pathlib.Path(test_output_root) / "sym_source"
+    source = pathlib.Path(test_dir) / "sym_source"
     os.mkdir(source)
     source_file = pathlib.Path(source) / "sym_source.txt"
     with open(source_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("")
 
     # Set path to be the destination directory
-    entity_path = os.path.join(test_output_root, "entity_name")
+    entity_path = os.path.join(test_dir, "entity_name")
 
     parser = get_parser()
     cmd = f"symlink {source_file} {entity_path}"
@@ -64,26 +61,26 @@ def test_symlink_files():
     file_operations.symlink(ns)
 
     # Assert the two files are the same file
-    link = pathlib.Path(test_output_root) / "entity_name"
+    link = pathlib.Path(test_dir) / "entity_name"
     assert link.is_symlink()
     assert os.readlink(link) == str(source_file)
 
     # Clean up the test directory
     os.unlink(link)
     os.remove(pathlib.Path(source) / "sym_source.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "sym_source")
+    os.rmdir(pathlib.Path(test_dir) / "sym_source")
 
 
-def test_symlink_dir():
+def test_symlink_dir(test_dir):
     """
     Test operation to symlink directories
     """
 
-    source = pathlib.Path(test_output_root) / "sym_source"
+    source = pathlib.Path(test_dir) / "sym_source"
     os.mkdir(source)
 
     # entity_path to be the dest dir
-    entity_path = os.path.join(test_output_root, "entity_name")
+    entity_path = os.path.join(test_dir, "entity_name")
 
     parser = get_parser()
     cmd = f"symlink {source} {entity_path}"
@@ -92,31 +89,31 @@ def test_symlink_dir():
 
     file_operations.symlink(ns)
 
-    link = pathlib.Path(test_output_root) / "entity_name"
+    link = pathlib.Path(test_dir) / "entity_name"
     # Assert the two files are the same file
     assert link.is_symlink()
     assert os.readlink(link) == str(source)
 
     # Clean up the test directory
     os.unlink(link)
-    os.rmdir(pathlib.Path(test_output_root) / "sym_source")
+    os.rmdir(pathlib.Path(test_dir) / "sym_source")
 
 
-def test_copy_op_file():
+def test_copy_op_file(test_dir):
     """Test the operation to copy the content of the source file to the destination path
     with an empty file of the same name already in the directory"""
 
-    to_copy = os.path.join(test_output_root, "to_copy")
+    to_copy = os.path.join(test_dir, "to_copy")
     os.mkdir(to_copy)
 
     source_file = pathlib.Path(to_copy) / "copy_file.txt"
     with open(source_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("dummy")
 
-    entity_path = os.path.join(test_output_root, "entity_name")
+    entity_path = os.path.join(test_dir, "entity_name")
     os.mkdir(entity_path)
 
-    dest_file = os.path.join(test_output_root, "entity_name", "copy_file.txt")
+    dest_file = os.path.join(test_dir, "entity_name", "copy_file.txt")
     with open(dest_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("")
 
@@ -130,16 +127,16 @@ def test_copy_op_file():
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "to_copy")
+    os.rmdir(pathlib.Path(test_dir) / "to_copy")
 
     os.remove(pathlib.Path(entity_path) / "copy_file.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "entity_name")
+    os.rmdir(pathlib.Path(test_dir) / "entity_name")
 
 
-def test_copy_op_dirs():
+def test_copy_op_dirs(test_dir):
     """Test the oeprations that copies an entire directory tree source to a new location destination"""
 
-    to_copy = os.path.join(test_output_root, "to_copy")
+    to_copy = os.path.join(test_dir, "to_copy")
     os.mkdir(to_copy)
 
     # write some test files in the dir
@@ -152,7 +149,7 @@ def test_copy_op_dirs():
         dummy_file.write("dummy2")
 
     # entity_path to be the dest dir
-    entity_path = os.path.join(test_output_root, "entity_name")
+    entity_path = os.path.join(test_dir, "entity_name")
     os.mkdir(entity_path)
 
     parser = get_parser()
@@ -166,18 +163,18 @@ def test_copy_op_dirs():
     # Clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
     os.remove(pathlib.Path(to_copy) / "copy_file_2.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "to_copy")
+    os.rmdir(pathlib.Path(test_dir) / "to_copy")
     os.remove(pathlib.Path(entity_path) / "copy_file.txt")
     os.remove(pathlib.Path(entity_path) / "copy_file_2.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "entity_name")
+    os.rmdir(pathlib.Path(test_dir) / "entity_name")
 
 
-def test_copy_op_bad_source_file():
+def test_copy_op_bad_source_file(test_dir):
     """Test that a FileNotFoundError is raised when there is a bad source file"""
 
-    to_copy = os.path.join(test_output_root, "to_copy")
+    to_copy = os.path.join(test_dir, "to_copy")
     os.mkdir(to_copy)
-    entity_path = os.path.join(test_output_root, "entity_name")
+    entity_path = os.path.join(test_dir, "entity_name")
     os.mkdir(entity_path)
 
     bad_path = "/not/a/real/path"
@@ -193,20 +190,20 @@ def test_copy_op_bad_source_file():
     assert f"File or Directory {bad_path} not found" in ex.value.args[0]
 
     # clean up
-    os.rmdir(pathlib.Path(test_output_root) / "to_copy")
-    os.rmdir(pathlib.Path(test_output_root) / "entity_name")
+    os.rmdir(pathlib.Path(test_dir) / "to_copy")
+    os.rmdir(pathlib.Path(test_dir) / "entity_name")
 
 
-def test_copy_op_bad_dest_path():
+def test_copy_op_bad_dest_path(test_dir):
     """Test that a FileNotFoundError is raised when there is a bad destination file."""
 
-    to_copy = os.path.join(test_output_root, "to_copy")
+    to_copy = os.path.join(test_dir, "to_copy")
     os.mkdir(to_copy)
 
     source_file = pathlib.Path(to_copy) / "copy_file.txt"
     with open(source_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("dummy1")
-    entity_path = os.path.join(test_output_root, "entity_name")
+    entity_path = os.path.join(test_dir, "entity_name")
     os.mkdir(entity_path)
 
     bad_path = "/not/a/real/path"
@@ -222,16 +219,16 @@ def test_copy_op_bad_dest_path():
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
-    os.rmdir(pathlib.Path(test_output_root) / "to_copy")
-    os.rmdir(pathlib.Path(test_output_root) / "entity_name")
+    os.rmdir(pathlib.Path(test_dir) / "to_copy")
+    os.rmdir(pathlib.Path(test_dir) / "entity_name")
 
 
-def test_move_op():
+def test_move_op(test_dir):
     """Test the operation to move a file"""
 
-    source_dir = os.path.join(test_output_root, "from_here")
+    source_dir = os.path.join(test_dir, "from_here")
     os.mkdir(source_dir)
-    dest_dir = os.path.join(test_output_root, "to_here")
+    dest_dir = os.path.join(test_dir, "to_here")
     os.mkdir(dest_dir)
 
     # dest_file = os.path.join(test_output_root, "to_here", "to_here.txt")
@@ -266,11 +263,11 @@ def test_move_op():
     os.rmdir(dest_dir)
 
 
-def test_remove_op():
+def test_remove_op(test_dir):
     """Test the operation to delete a file"""
 
     # Make a test file with dummy text
-    to_del = pathlib.Path(test_output_root) / "app_del.txt"
+    to_del = pathlib.Path(test_dir) / "app_del.txt"
     with open(to_del, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write("dummy")
 
@@ -289,11 +286,11 @@ def test_remove_op():
     assert not osp.exists(to_del)
 
 
-def test_remove_op_bad_path():
+def test_remove_op_bad_path(test_dir):
     """Test that FileNotFoundError is raised when a bad path is given to the
     soperation to delete a file"""
 
-    to_del = pathlib.Path(test_output_root) / "not_real.txt"
+    to_del = pathlib.Path(test_dir) / "not_real.txt"
 
     parser = get_parser()
     cmd = f"remove {to_del}"
