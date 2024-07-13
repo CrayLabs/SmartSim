@@ -50,7 +50,7 @@ class CommChannelBase(ABC):
         :returns: the received message"""
 
     @property
-    def descriptor(self) -> bytes:
+    def descriptor(self) -> t.List[bytes]:
         """Return the channel descriptor for the underlying dragon channel"""
         if isinstance(self._descriptor, str):
             return self._descriptor.encode("utf-8")

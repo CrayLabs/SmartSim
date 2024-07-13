@@ -156,9 +156,12 @@ def test_execute(mlutils) -> None:
 
     execute_result = worker.execute(sample_request, load_model_result, transform_result)
 
-    assert all(
-        result.shape == torch.Size((20, 10)) for result in execute_result.predictions
-    )
+    # assert all(
+    #     result.shape == torch.Size((20, 10)) for result in execute_result.predictions
+    # )
+
+    # need to make this test more meaningful, but predictions are bytes string now (potentially will change back)
+    assert all(type(result) == bytes for result in execute_result.predictions)
 
 
 def test_transform_output(mlutils):

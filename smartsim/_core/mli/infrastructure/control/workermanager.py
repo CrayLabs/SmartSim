@@ -105,7 +105,7 @@ def deserialize_message(
         input_keys = [input_key.key for input_key in request.input.keys]
     elif request.input.which() == "descriptors":
         # input_bytes = [data.blob for data in request.input.data]
-        input_meta = [request.input.descriptors]
+        input_meta = request.input.descriptors
 
     inference_request = InferenceRequest(
         model_key=model_key,
@@ -242,7 +242,10 @@ class WorkerManager(Service):
 
         timings = []  # timing
         # perform default deserialization of the message envelope
-        request_bytes: bytes = self._task_queue.recv()
+        bytes_list: t.List[bytes] = self._task_queue.recv()
+        if bytes_list:
+            request_bytes = bytes_list[0]
+            tensor_list = bytes_list[1:]
 
         interm = time.perf_counter()  # timing
         request = deserialize_message(
@@ -250,8 +253,7 @@ class WorkerManager(Service):
         )
 
         if request.input_meta:
-            for _ in request.input_meta:
-                request.raw_inputs.append(self._task_queue.recv())
+            request.raw_inputs = tensor_list
 
         if not self._validate_request(request):
             return
@@ -353,8 +355,10 @@ class WorkerManager(Service):
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
         if request.callback:
+            # send serialized response
             request.callback.send(serialized_resp)
             if reply.outputs:
+                # send tensor data after response
                 for output in reply.outputs:
                     request.callback.send(output)
 

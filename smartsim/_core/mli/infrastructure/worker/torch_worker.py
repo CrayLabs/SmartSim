@@ -98,7 +98,10 @@ class TorchWorker(MachineLearningWorkerBase):
 
         model: torch.nn.Module = load_result.model
         model.eval()
-        results = [model(tensor).detach() for tensor in transform_result.transformed]
+        results = [
+            model(tensor).detach().numpy().tobytes()
+            for tensor in transform_result.transformed
+        ]  # TODO THIS IS BAD
 
         execute_result = ExecuteResult(results)
         return execute_result

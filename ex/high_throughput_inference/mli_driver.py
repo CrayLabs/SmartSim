@@ -10,7 +10,7 @@ from smartsim.status import TERMINAL_STATUSES
 import time
 import typing as t
 
-device = "gpu"
+device = "cpu"
 filedir = os.path.dirname(__file__)
 worker_manager_script_name = os.path.join(filedir, "standalone_workermanager.py")
 app_script_name = os.path.join(filedir, "mock_app.py")

@@ -42,6 +42,7 @@ import os
 import time
 import torch
 import numbers
+import typing
 
 from collections import OrderedDict
 from smartsim._core.mli.message_handler import MessageHandler
@@ -108,7 +109,7 @@ class ProtoClient:
 
 
     def run_model(self, model: bytes | str, batch: torch.Tensor):
-        tensors = [batch.numpy()]
+        tensors: typing.List[numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]]= [batch.numpy()]
         self.start_timings(batch.shape[0])
         # built_tensor = MessageHandler.build_tensor(
         #     batch.numpy(), "c", "float32", list(batch.shape))
@@ -134,7 +135,8 @@ class ProtoClient:
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
             for t in tensors:
-                to_sendh.send_bytes(t.tobytes()) # NOT FAST ENOUGH!!!
+                # to_sendh.send_bytes(t.tobytes()) #TODO NOT FAST ENOUGH!!!
+                to_sendh.send_bytes(bytes(t.data))
         logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.measure_time("send")
@@ -143,7 +145,7 @@ class ProtoClient:
             self.measure_time("receive")
             response = MessageHandler.deserialize_response(resp)
             self.measure_time("deserialize_response")
-            # list of data blobs? recv depending on the len(esponse.result.descriptors)?
+            # list of data blobs? recv depending on the len(response.result.descriptors)?
             data_blob = from_recvh.recv_bytes(timeout=None)
             result = torch.from_numpy(
                 numpy.frombuffer(
@@ -151,12 +153,6 @@ class ProtoClient:
                     dtype=str(response.result.descriptors[0].dataType),
                 )
             )
-            # result = torch.from_numpy(
-            #     numpy.frombuffer(
-            #         response.result.data[0].blob,
-            #         dtype=str(response.result.data[0].tensorDescriptor.dataType),
-            #     )
-            # )
             self.measure_time("deserialize_tensor")
 
         self.end_timings()
