@@ -75,7 +75,9 @@ if __name__ == "__main__":
     to_worker_fli_serialized = to_worker_fli.serialize()
     ddict["to_worker_fli"] = to_worker_fli_serialized
 
-    torch_worker = cloudpickle.loads(base64.b64decode(args.worker_class.encode('ascii')))()
+    torch_worker = cloudpickle.loads(
+        base64.b64decode(args.worker_class.encode('ascii'))
+        )()
 
     dfs = DragonFeatureStore(ddict)
     comm_channel = DragonFLIChannel(to_worker_fli_serialized)
