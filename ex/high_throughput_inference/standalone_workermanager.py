@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device",
         type=str,
-        default="cpu",
+        default="gpu",
         choices="gpu cpu".split(),
         help="Device on which the inference takes place",
     )

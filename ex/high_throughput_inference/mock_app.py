@@ -42,7 +42,6 @@ import os
 import time
 import torch
 import numbers
-import typing
 
 from collections import OrderedDict
 from smartsim._core.mli.message_handler import MessageHandler
@@ -109,10 +108,8 @@ class ProtoClient:
 
 
     def run_model(self, model: bytes | str, batch: torch.Tensor):
-        tensors: typing.List[numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]]= [batch.numpy()]
+        tensors = [batch.numpy()]
         self.start_timings(batch.shape[0])
-        # built_tensor = MessageHandler.build_tensor(
-        #     batch.numpy(), "c", "float32", list(batch.shape))
         built_tensor_desc = MessageHandler.build_tensor_descriptor(
             "c", "float32", list(batch.shape))
         self.measure_time("build_tensor_descriptor")

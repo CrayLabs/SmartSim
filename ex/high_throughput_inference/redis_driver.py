@@ -31,7 +31,7 @@ from smartsim.status import TERMINAL_STATUSES
 import time
 import typing as t
 
-device = "cpu"
+device = "gpu"
 filedir = os.path.dirname(__file__)
 app_script_name = os.path.join(filedir, "mock_app_redis.py")
 model_name = os.path.join(filedir, f"resnet50.{device.upper()}.pt")
