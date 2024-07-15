@@ -396,7 +396,9 @@ class MessageHandler:
 
         :param request_bytes: Bytes to be deserialized into a Request
         """
-        bytes_message = request_capnp.Request.from_bytes(request_bytes)
+        bytes_message = request_capnp.Request.from_bytes(
+            request_bytes, traversal_limit_in_words=2**63
+        )
 
         with bytes_message as message:
             return message
@@ -489,7 +491,7 @@ class MessageHandler:
                     response.customAttributes.tf = custom_attrs  # type: ignore
                 else:
                     raise ValueError("""Invalid custom attribute class name.
-                        Expected 'TensorFlowResponseAttributes' or 
+                        Expected 'TensorFlowResponseAttributes' or
                         'TorchResponseAttributes'.""")
         except Exception as e:
             raise ValueError("Error assigning custom attributes to response.") from e
@@ -534,7 +536,9 @@ class MessageHandler:
         """
         Deserializes a serialized response message.
         """
-        bytes_message = response_capnp.Response.from_bytes(response_bytes)
+        bytes_message = response_capnp.Response.from_bytes(
+            response_bytes, traversal_limit_in_words=2**63
+        )
 
         with bytes_message as message:
             return message

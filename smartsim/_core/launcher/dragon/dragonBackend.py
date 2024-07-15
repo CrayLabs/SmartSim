@@ -36,8 +36,10 @@ from tabulate import tabulate
 
 # pylint: disable=import-error
 # isort: off
+import dragon.data.ddict.ddict as dragon_ddict
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
+import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.group_state as dragon_group_state
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
@@ -187,6 +189,7 @@ class DragonBackend:
 
         self._view = DragonBackendView(self)
         logger.debug(self._view.host_desc)
+        self._infra_ddict: t.Optional[dragon_ddict.DDict] = None
 
     @property
     def hosts(self) -> list[str]:
@@ -391,6 +394,22 @@ class DragonBackend:
                 self._group_infos[step_id].status = SmartSimStatus.STATUS_CANCELLED
                 self._group_infos[step_id].return_codes = [-9]
 
+    @property
+    def infra_ddict(self) -> str:
+        """Create a Dragon distributed dictionary and return its
+        serialized descriptor
+        """
+        if self._infra_ddict is None:
+            logger.info("Creating DDict")
+            self._infra_ddict = dragon_ddict.DDict(
+                n_nodes=len(self._hosts), total_mem=len(self._hosts) * 1024**3
+            )  # todo: parametrize
+            logger.info("Created DDict")
+            self._infra_ddict["creation"] = str(time.time())
+            logger.info(self._infra_ddict["creation"])
+
+        return str(self._infra_ddict.serialize())
+
     def _start_steps(self) -> None:
         self._heartbeat()
         with self._queue_lock:
@@ -406,6 +425,7 @@ class DragonBackend:
                     placement=dragon_policy.Policy.Placement.HOST_NAME,
                     host_name=hosts[0],
                 )
+                options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
                 grp = dragon_process_group.ProcessGroup(
                     restart=False, pmi_enabled=request.pmi_enabled, policy=global_policy
                 )
@@ -421,10 +441,15 @@ class DragonBackend:
                         target=request.exe,
                         args=request.exe_args,
                         cwd=request.path,
-                        env={**request.current_env, **request.env},
+                        env={
+                            **request.current_env,
+                            **request.env,
+                            "SS_DRG_DDICT": self.infra_ddict,
+                        },
                         stdout=dragon_process.Popen.PIPE,
                         stderr=dragon_process.Popen.PIPE,
                         policy=local_policy,
+                        options=options,
                     )
                     grp.add_process(nproc=request.tasks_per_node, template=tmp_proc)
 

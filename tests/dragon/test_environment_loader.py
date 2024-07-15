@@ -64,10 +64,9 @@ def test_environment_loader_attach_FLI(content, monkeypatch):
     config = EnvironmentConfigLoader()
     config_queue = config.get_queue()
 
-    new_sender = config_queue.sendh(use_main_as_stream_channel=True)
-    new_sender.send_bytes(content)
+    new_sender = config_queue.send(content)
 
-    old_recv = queue.recvh(use_main_as_stream_channel=True)
+    old_recv = queue.recvh()
     result, _ = old_recv.recv_bytes()
     assert result == content
 
@@ -81,7 +80,7 @@ def test_environment_loader_serialize_FLI(monkeypatch):
 
     config = EnvironmentConfigLoader()
     config_queue = config.get_queue()
-    assert config_queue.serialize() == queue.serialize()
+    assert config_queue._fli.serialize() == queue.serialize()
 
 
 def test_environment_loader_FLI_fails(monkeypatch):

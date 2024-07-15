@@ -27,11 +27,11 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-import smartsim.error as sse
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
-from smartsim._core.mli.mli_schemas.model.model_capnp import Model
-from smartsim.log import get_logger
+from .....error import SmartSimError
+from .....log import get_logger
+from ...comm.channel.channel import CommChannelBase
+from ...infrastructure.storage.featurestore import FeatureStore
+from ...mli_schemas.model.model_capnp import Model
 
 logger = get_logger(__name__)
 
@@ -105,23 +105,23 @@ class ExecuteResult:
 class FetchInputResult:
     """A wrapper around fetched inputs"""
 
-    def __init__(self, result: t.List[bytes]) -> None:
+    def __init__(self, result: t.List[bytes], meta: t.Optional[t.List[t.Any]]) -> None:
         """Initialize the object"""
         self.inputs = result
+        self.meta = meta
 
 
 class TransformOutputResult:
     """A wrapper around inference results transformed for transmission"""
 
     def __init__(
-        self, result: t.Any, shape: t.List[int], order: str, dtype: str
+        self, result: t.Any, shape: t.Optional[t.List[int]], order: str, dtype: str
     ) -> None:
         """Initialize the OutputTransformResult"""
         self.outputs = result
         self.shape = shape
         self.order = order
         self.dtype = dtype
-        # todo: determine if each output must have an individual (shape, order, dtype)
 
 
 class CreateInputBatchResult:
@@ -137,7 +137,7 @@ class FetchModelResult:
 
     def __init__(self, result: bytes) -> None:
         """Initialize the object"""
-        self.model_bytes = result
+        self.model_bytes: bytes = result
 
 
 class MachineLearningWorkerCore:
@@ -151,8 +151,6 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param feature_store: The feature store used for persistence
         :return: Raw bytes of the model"""
-        if not feature_store:
-            raise ValueError("Feature store is required for model retrieval")
 
         if request.raw_model:
             # Should we cache model in the feature store?
@@ -161,17 +159,20 @@ class MachineLearningWorkerCore:
             # short-circuit and return the directly supplied model
             return FetchModelResult(request.raw_model.data)
 
+        if not feature_store:
+            raise ValueError("Feature store is required for model retrieval")
+
         if not request.model_key:
-            raise sse.SmartSimError(
+            raise SmartSimError(
                 "Key must be provided to retrieve model from feature store"
             )
 
         try:
-            raw_bytes = feature_store[request.model_key]
+            raw_bytes: bytes = t.cast(bytes, feature_store[request.model_key])
             return FetchModelResult(raw_bytes)
         except FileNotFoundError as ex:
             logger.exception(ex)
-            raise sse.SmartSimError(
+            raise SmartSimError(
                 f"Model could not be retrieved with key {request.model_key}"
             ) from ex
 
@@ -184,24 +185,27 @@ class MachineLearningWorkerCore:
         :param request: The request that triggered the pipeline
         :param feature_store: The feature store used for persistence
         :return: the fetched input"""
+
+        if request.raw_inputs:
+            return FetchInputResult(request.raw_inputs, request.input_meta)
+
         if not feature_store:
-            raise ValueError("Feature store is required for input retrieval")
+            raise ValueError("No input and no feature store provided")
 
         if request.input_keys:
             data: t.List[bytes] = []
             for input_ in request.input_keys:
                 try:
-                    tensor_bytes = feature_store[input_]
+                    tensor_bytes = t.cast(bytes, feature_store[input_])
                     data.append(tensor_bytes)
                 except KeyError as ex:
                     logger.exception(ex)
-                    raise sse.SmartSimError(
+                    raise SmartSimError(
                         f"Model could not be retrieved with key {input_}"
                     ) from ex
-            return FetchInputResult(data)
-
-        if request.raw_inputs:
-            return FetchInputResult(request.raw_inputs)
+            return FetchInputResult(
+                data, None
+            )  # fixme: need to get both tensor and descriptor
 
         raise ValueError("No input source")
 
@@ -249,32 +253,26 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     """Abstrct base class providing contract for a machine learning
     worker implementation."""
 
-    # @staticmethod
-    # @abstractmethod
-    # def deserialize(request: InferenceRequest) -> InferenceRequest:
-    #     """Given a collection of data serialized to bytes, convert the bytes
-    #     to a proper representation used by the ML backend
-    #     :param data_blob: inference request as a byte-serialized blob
-    #     :return: InferenceRequest deserialized from the input"""
-
     @staticmethod
     @abstractmethod
     def load_model(
-        request: InferenceRequest, fetch_result: FetchModelResult
+        request: InferenceRequest, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
         """Given a loaded MachineLearningModel, ensure it is loaded into
         device memory
         :param request: The request that triggered the pipeline
+        :param device: The device on which the model must be placed
         :return: ModelLoadResult wrapping the model loaded for the request"""
 
     @staticmethod
     @abstractmethod
     def transform_input(
-        request: InferenceRequest, fetch_result: FetchInputResult
+        request: InferenceRequest, fetch_result: FetchInputResult, device: str
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw output from fetching inputs out of a feature store
+        :param device: The device on which the transformed input must be placed
         :return: The transformed inputs wrapped in a InputTransformResult"""
 
     @staticmethod
@@ -293,20 +291,11 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_output(
-        request: InferenceRequest,
-        execute_result: ExecuteResult,
+        request: InferenceRequest, execute_result: ExecuteResult, result_device: str
     ) -> TransformOutputResult:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
         :param request: The request that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
+        :param result_device: The device on which the result of inference is placed
         :return:"""
-
-    # @staticmethod
-    # @abstractmethod
-    # def serialize_reply(
-    #     request: InferenceRequest, results: OutputTransformResult
-    # ) -> bytes:
-    #     """Given an output, serialize to bytes for transport
-    #     :param reply: The result of the inference pipeline
-    #     :return: a byte-serialized version of the reply"""

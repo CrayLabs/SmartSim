@@ -24,37 +24,46 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# isort: off
+from dragon import fli
+import dragon.channels as dch
+
+# isort: on
+
 import sys
+import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
-try:
-    import dragon.channels as dch
-except ImportError as exc:
-    if not "pytest" in sys.modules:
-        raise exc from None
 
+class DragonFLIChannel(cch.CommChannelBase):
+    """Passes messages by writing to a Dragon FLI Channel"""
 
-class DragonCommChannel(cch.CommChannelBase):
-    """Passes messages by writing to a Dragon channel"""
-
-    def __init__(self, key: bytes) -> None:
-        """Initialize the DragonCommChannel instance"""
-        super().__init__(key)
-        self._channel: dch.Channel = dch.Channel.attach(key)
+    def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
+        """Initialize the DragonFLIChannel instance"""
+        super().__init__(fli_desc)
+        # todo: do we need memory pool information to construct the channel correctly?
+        self._fli: "fli" = fli.FLInterface.attach(fli_desc)
+        self._channel: t.Optional["dch"] = (
+            dch.Channel.make_process_local() if sender_supplied else None
+        )
 
     def send(self, value: bytes) -> None:
-        """Send a message throuh the underlying communication channel
+        """Send a message through the underlying communication channel
         :param value: The value to send"""
-        with self._channel.sendh(timeout=None) as sendh:
+        with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
             sendh.send_bytes(value)
 
     def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
-        with self._channel.recvh(timeout=None) as recvh:
-            message_bytes: bytes = recvh.recv_bytes(timeout=None)
-            return message_bytes
+        with self._fli.recvh(timeout=None) as recvh:
+            try:
+                request_bytes: bytes
+                request_bytes, _ = recvh.recv_bytes(timeout=None)
+                return request_bytes
+            except fli.FLIEOT as exc:
+                return b""
