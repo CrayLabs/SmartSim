@@ -140,13 +140,13 @@ class InstallPlatlib(install):
 
 class SmartSimBuild(build_py):
     def run(self):
-        database_builder = builder.DatabaseBuilder(
+        feature_store_builder = builder.FeatureStoreBuilder(
             build_env(), build_env.MALLOC, build_env.JOBS
         )
-        if not database_builder.is_built:
-            database_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
+        if not feature_store_builder.is_built:
+            feature_store_builder.build_from_git(versions.REDIS_URL, versions.REDIS)
 
-            database_builder.cleanup()
+            feature_store_builder.cleanup()
 
         # run original build_py command
         super().run()
@@ -179,6 +179,7 @@ deps = [
     "pydantic==1.10.14",
     "pyzmq>=25.1.2",
     "pygithub>=2.3.0",
+    "numpy<2"
 ]
 
 # Add SmartRedis at specific version

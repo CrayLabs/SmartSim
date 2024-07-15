@@ -113,12 +113,12 @@ def clean(core_path: Path, _all: bool = False) -> int:
                 removed = True
                 file_path.unlink()
         if removed:
-            logger.info("Successfully removed SmartSim database installation")
+            logger.info("Successfully removed SmartSim feature store installation")
 
     return os.EX_OK
 
 
-def get_db_path() -> t.Optional[Path]:
+def get_fs_path() -> t.Optional[Path]:
     bin_path = get_install_path() / "_core" / "bin"
     for option in bin_path.iterdir():
         if option.name in ("redis-cli", "keydb-cli"):

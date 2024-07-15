@@ -35,11 +35,11 @@ from os.path import join, relpath
 
 from tabulate import tabulate
 
-from ...database import Orchestrator
-from ...entity import Ensemble, Model, TaggedFilesHierarchy
+from ...database import FeatureStore
+from ...entity import Application, Ensemble, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
-from .modelwriter import ModelWriter
+from .modelwriter import ApplicationWriter
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -57,7 +57,7 @@ class Generator:
         """Initialize a generator object
 
         if overwrite is true, replace any existing
-        configured models within an ensemble if there
+        configured applications within an ensemble if there
         is a name collision. Also replace any and all directories
         for the experiment with fresh copies. Otherwise, if overwrite
         is false, raises EntityExistsError when there is a name
@@ -67,7 +67,7 @@ class Generator:
         :param overwrite: toggle entity replacement
         :param verbose: Whether generation information should be logged to std out
         """
-        self._writer = ModelWriter()
+        self._writer = ApplicationWriter()
         self.gen_path = gen_path
         self.overwrite = overwrite
         self.log_level = DEBUG if not verbose else INFO
@@ -87,7 +87,7 @@ class Generator:
 
         Generate the file structure for a SmartSim experiment. This
         includes the writing and configuring of input files for a
-        model.
+        application.
 
         To have files or directories present in the created entity
         directories, such as datasets or input files, call
@@ -95,7 +95,7 @@ class Generator:
         ``entity.attach_generator_files`` for more information on
         what types of files can be included.
 
-        Tagged model files are read, checked for input variables to
+        Tagged application files are read, checked for input variables to
         configure, and written. Input variables to configure are
         specified with a tag within the input file itself.
         The default tag is surronding an input value with semicolons.
@@ -105,27 +105,27 @@ class Generator:
         generator_manifest = Manifest(*args)
 
         self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest.dbs)
+        self._gen_feature_store_dir(generator_manifest.fss)
         self._gen_entity_list_dir(generator_manifest.ensembles)
-        self._gen_entity_dirs(generator_manifest.models)
+        self._gen_entity_dirs(generator_manifest.applications)
 
     def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
         """Set the tag used for tagging input files
 
         Set a tag or a regular expression for the
-        generator to look for when configuring new models.
+        generator to look for when configuring new applications.
 
         For example, a tag might be ``;`` where the
-        expression being replaced in the model configuration
+        expression being replaced in the application configuration
         file would look like ``;expression;``
 
         A full regular expression might tag specific
-        model configurations such that the configuration
+        application configurations such that the configuration
         files don't need to be tagged manually.
 
         :param tag: A string of characters that signify
                     the string to be changed. Defaults to ``;``
-        :param regex: full regex for the modelwriter to search for
+        :param regex: full regex for the applicationwriter to search for
         """
         self._writer.set_tag(tag, regex)
 
@@ -154,21 +154,23 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_orc_dir(self, orchestrator_list: t.List[Orchestrator]) -> None:
+    def _gen_feature_store_dir(self, feature_store_list: t.List[FeatureStore]) -> None:
         """Create the directory that will hold the error, output and
-           configuration files for the orchestrator.
+           configuration files for the feature store.
 
-        :param orchestrator: Orchestrator instance
+        :param featurestore: FeatureStore instance
         """
-        # Loop through orchestrators
-        for orchestrator in orchestrator_list:
-            orc_path = path.join(self.gen_path, orchestrator.name)
+        # Loop through feature stores
+        for featurestore in feature_store_list:
+            feature_store_path = path.join(self.gen_path, featurestore.name)
 
-            orchestrator.set_path(orc_path)
-            # Always remove orchestrator files if present.
-            if path.isdir(orc_path):
-                shutil.rmtree(orc_path, ignore_errors=True)
-            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite, parents=True)
+            featurestore.set_path(feature_store_path)
+            # Always remove featurestore files if present.
+            if path.isdir(feature_store_path):
+                shutil.rmtree(feature_store_path, ignore_errors=True)
+            pathlib.Path(feature_store_path).mkdir(
+                exist_ok=self.overwrite, parents=True
+            )
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for Ensemble instances
@@ -189,16 +191,14 @@ class Generator:
                 mkdir(elist_dir)
             elist.path = elist_dir
 
-            self._gen_entity_dirs(list(elist.models), entity_list=elist)
-
     def _gen_entity_dirs(
         self,
-        entities: t.List[Model],
+        entities: t.List[Application],
         entity_list: t.Optional[Ensemble] = None,
     ) -> None:
         """Generate directories for Entity instances
 
-        :param entities: list of Model instances
+        :param entities: list of Application instances
         :param entity_list: Ensemble instance
         :raises EntityExistsError: if a directory already exists for an
                                    entity by that name
@@ -228,13 +228,13 @@ class Generator:
             self._link_entity_files(entity)
             self._write_tagged_entity_files(entity)
 
-    def _write_tagged_entity_files(self, entity: Model) -> None:
+    def _write_tagged_entity_files(self, entity: Application) -> None:
         """Read, configure and write the tagged input files for
-           a Model instance within an ensemble. This function
+           a Application instance within an ensemble. This function
            specifically deals with the tagged files attached to
            an Ensemble.
 
-        :param entity: a Model instance
+        :param entity: a Application instance
         """
         if entity.files:
             to_write = []
@@ -263,20 +263,20 @@ class Generator:
                 _build_tagged_files(entity.files.tagged_hierarchy)
 
             # write in changes to configurations
-            if isinstance(entity, Model):
-                files_to_params = self._writer.configure_tagged_model_files(
+            if isinstance(entity, Application):
+                files_to_params = self._writer.configure_tagged_application_files(
                     to_write, entity.params
                 )
                 self._log_params(entity, files_to_params)
 
     def _log_params(
-        self, entity: Model, files_to_params: t.Dict[str, t.Dict[str, str]]
+        self, entity: Application, files_to_params: t.Dict[str, t.Dict[str, str]]
     ) -> None:
         """Log which files were modified during generation
 
         and what values were set to the parameters
 
-        :param entity: the model being generated
+        :param entity: the application being generated
         :param files_to_params: a dict connecting each file to its parameter settings
         """
         used_params: t.Dict[str, str] = {}
@@ -292,13 +292,13 @@ class Generator:
             )
             logger.log(
                 level=self.log_level,
-                msg=f"Configured model {entity.name} with params {used_params_str}",
+                msg=f"Configured application {entity.name} with params {used_params_str}",
             )
             file_table = tabulate(
                 file_to_tables.items(),
                 headers=["File name", "Parameters"],
             )
-            log_entry = f"Model name: {entity.name}\n{file_table}\n\n"
+            log_entry = f"Application name: {entity.name}\n{file_table}\n\n"
             with open(self.log_file, mode="a", encoding="utf-8") as logfile:
                 logfile.write(log_entry)
             with open(
@@ -309,14 +309,14 @@ class Generator:
         else:
             logger.log(
                 level=self.log_level,
-                msg=f"Configured model {entity.name} with no parameters",
+                msg=f"Configured application {entity.name} with no parameters",
             )
 
     @staticmethod
-    def _copy_entity_files(entity: Model) -> None:
+    def _copy_entity_files(entity: Application) -> None:
         """Copy the entity files and directories attached to this entity.
 
-        :param entity: Model
+        :param entity: Application
         """
         if entity.files:
             for to_copy in entity.files.copy:
@@ -327,10 +327,10 @@ class Generator:
                     shutil.copyfile(to_copy, dst_path)
 
     @staticmethod
-    def _link_entity_files(entity: Model) -> None:
+    def _link_entity_files(entity: Application) -> None:
         """Symlink the entity files attached to this entity.
 
-        :param entity: Model
+        :param entity: Application
         """
         if entity.files:
             for to_link in entity.files.link:

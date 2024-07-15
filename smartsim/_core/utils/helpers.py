@@ -48,27 +48,27 @@ if t.TYPE_CHECKING:
 _TSignalHandlerFn = t.Callable[[int, t.Optional["FrameType"]], object]
 
 
-def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
-    """Unpack the unformatted database identifier
+def unpack_fs_identifier(fs_id: str, token: str) -> t.Tuple[str, str]:
+    """Unpack the unformatted feature store identifier
     and format for env variable suffix using the token
-    :param db_id: the unformatted database identifier eg. identifier_1
-    :param token: character to use to construct the db suffix
-    :return: db id suffix and formatted db_id e.g. ("_identifier_1", "identifier_1")
+    :param fs_id: the unformatted feature store identifier eg. identifier_1
+    :param token: character to use to construct the fs suffix
+    :return: fs id suffix and formatted fs_id e.g. ("_identifier_1", "identifier_1")
     """
 
-    if db_id == "orchestrator":
+    if fs_id == "featurestore":
         return "", ""
-    db_name_suffix = token + db_id
-    return db_name_suffix, db_id
+    fs_name_suffix = token + fs_id
+    return fs_name_suffix, fs_id
 
 
-def unpack_colo_db_identifier(db_id: str) -> str:
-    """Create database identifier suffix for colocated database
+def unpack_colo_fs_identifier(fs_id: str) -> str:
+    """Create feature store identifier suffix for colocated feature store
 
-    :param db_id: the unformatted database identifier
-    :return: db suffix
+    :param fs_id: the unformatted feature store identifier
+    :return: fs suffix
     """
-    return "_" + db_id if db_id else ""
+    return "_" + fs_id if fs_id else ""
 
 
 def create_short_id_str() -> str:
@@ -87,7 +87,7 @@ def check_dev_log_level() -> bool:
     return lvl == "developer"
 
 
-def fmt_dict(value: t.Dict[str, t.Any]) -> str:
+def fmt_dict(value: t.Mapping[str, t.Any]) -> str:
     fmt_str = ""
     for k, v in value.items():
         fmt_str += "\t" + str(k) + " = " + str(v)

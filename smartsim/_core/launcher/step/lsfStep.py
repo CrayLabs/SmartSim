@@ -28,24 +28,26 @@ import os
 import shutil
 import typing as t
 
+from ....entity import Application, FSNode
 from ....error import AllocationError
 from ....log import get_logger
-from ....settings import BsubBatchSettings, JsrunSettings
-from ....settings.base import RunSettings
+from ....settings import BsubBatchSettings, JsrunSettings, RunSettings
 from .step import Step
 
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BsubBatchSettings) -> None:
+    def __init__(
+        self, entity: t.Union[Application, FSNode], batch_settings: BsubBatchSettings
+    ) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
         :param cwd: path to launch dir
         :param batch_settings: batch settings for entity
         """
-        super().__init__(name, cwd, batch_settings)
+        super().__init__(entity, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
         self.batch_settings = batch_settings
@@ -103,14 +105,14 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(self, entity: t.Union[Application, FSNode], run_settings: RunSettings):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched
         :param cwd: path to launch dir
         :param run_settings: run settings for entity
         """
-        super().__init__(name, cwd, run_settings)
+        super().__init__(entity, run_settings)
         self.alloc: t.Optional[str] = None
         self.managed = True
         self.run_settings = run_settings
@@ -170,9 +172,9 @@ class JsrunStep(Step):
 
         jsrun_cmd.extend(self.run_settings.format_run_args())
 
-        if self.run_settings.colocated_db_settings:
+        if self.run_settings.colocated_fs_settings:
             # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
+            # for the application and feature store process now
             jsrun_cmd.extend(["--bind", "none"])
 
             # Replace the command with the entrypoint wrapper script
@@ -214,8 +216,8 @@ class JsrunStep(Step):
 
         :return: executable list
         """
-        exe = self.run_settings.exe
-        args = self.run_settings._exe_args  # pylint: disable=protected-access
+        exe = self.entity.exe
+        args = self.entity.exe_args  # pylint: disable=protected-access
 
         if self._get_mpmd():
             erf_file = self.get_step_file(ending=".mpmd")

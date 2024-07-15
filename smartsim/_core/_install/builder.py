@@ -243,7 +243,7 @@ class Builder:
             raise BuildError(e) from e
 
 
-class DatabaseBuilder(Builder):
+class FeatureStoreBuilder(Builder):
     """Class to build Redis or KeyDB from Source
     Supported build methods:
      - from git
@@ -285,8 +285,8 @@ class DatabaseBuilder(Builder):
         :param branch: branch to checkout
         """
         # pylint: disable=too-many-locals
-        database_name = "keydb" if "KeyDB" in git_url else "redis"
-        database_build_path = Path(self.build_dir, database_name.lower())
+        feature_store_name = "keydb" if "KeyDB" in git_url else "redis"
+        feature_store_build_path = Path(self.build_dir, feature_store_name.lower())
 
         # remove git directory if it exists as it should
         # really never exist as we delete after build
@@ -297,9 +297,9 @@ class DatabaseBuilder(Builder):
         if keydb_build_path.is_dir():
             shutil.rmtree(str(keydb_build_path))
 
-        # Check database URL
+        # Check feature store URL
         if not self.is_valid_url(git_url):
-            raise BuildError(f"Malformed {database_name} URL: {git_url}")
+            raise BuildError(f"Malformed {feature_store_name} URL: {git_url}")
 
         clone_cmd = config_git_command(
             self._platform,
@@ -311,7 +311,7 @@ class DatabaseBuilder(Builder):
                 branch,
                 "--depth",
                 "1",
-                database_name,
+                feature_store_name,
             ],
         )
 
@@ -325,14 +325,14 @@ class DatabaseBuilder(Builder):
             str(self.jobs),
             f"MALLOC={self.malloc}",
         ]
-        self.run_command(build_cmd, cwd=str(database_build_path))
+        self.run_command(build_cmd, cwd=str(feature_store_build_path))
 
         # move redis binaries to smartsim/smartsim/_core/bin
-        database_src_dir = database_build_path / "src"
-        server_source = database_src_dir / (database_name.lower() + "-server")
-        server_destination = self.bin_path / (database_name.lower() + "-server")
-        cli_source = database_src_dir / (database_name.lower() + "-cli")
-        cli_destination = self.bin_path / (database_name.lower() + "-cli")
+        feature_store_src_dir = feature_store_build_path / "src"
+        server_source = feature_store_src_dir / (feature_store_name.lower() + "-server")
+        server_destination = self.bin_path / (feature_store_name.lower() + "-server")
+        cli_source = feature_store_src_dir / (feature_store_name.lower() + "-cli")
+        cli_destination = self.bin_path / (feature_store_name.lower() + "-cli")
         self.copy_file(server_source, server_destination, set_exe=True)
         self.copy_file(cli_source, cli_destination, set_exe=True)
 
@@ -342,8 +342,8 @@ class DatabaseBuilder(Builder):
         bin_path = Path(dependency_path, "bin").resolve()
         try:
             database_exe = next(bin_path.glob("*-server"))
-            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
-            _ = expand_exe_path(str(database))
+            feature_store = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            _ = expand_exe_path(str(feature_store))
         except (TypeError, FileNotFoundError) as e:
             raise BuildError("Installation of redis-server failed!") from e
 

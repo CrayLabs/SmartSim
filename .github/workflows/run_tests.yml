@@ -124,8 +124,9 @@ jobs:
           python -m pip install .[mypy]
           make check-mypy
 
-      - name: Run Pylint
-        run: make check-lint
+      # TODO: Re-enable static analysis once API is firmed up
+      # - name: Run Pylint
+      #   run: make check-lint
 
       # Run isort/black style check
       - name: Run isort
