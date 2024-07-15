@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
+import os
 import pathlib
 import shutil
 import typing as t
@@ -35,10 +37,10 @@ from os.path import join, relpath
 
 from tabulate import tabulate
 
+from ...database import FeatureStore
 from ...entity import Application, TaggedFilesHierarchy
-from ...launchable.job import Job
+from ...launchable import Job, JobGroup
 from ...log import get_logger
-import os
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -50,20 +52,16 @@ class Generator:
     and writing into configuration files as well.
     """
 
-    def __init__(
-        self, gen_path: str, job: Job
-    ) -> None:
+    def __init__(self, gen_path: str, job: Job) -> None:
         """Initialize a generator object
 
-        if overwrite is true, replace any existing
-        configured applications within an ensemble if there
-        is a name collision. Also replace any and all directories
-        for the experiment with fresh copies. Otherwise, if overwrite
-        is false, raises EntityExistsError when there is a name
-        collision between entities.
+        The Generator class is responsible for creating Job directories.
+        It ensures that paths adhere to SmartSim path standards. Additionally,
+        it creates a log directory for telemetry data and handles symlinking,
+        configuration, and file copying within the job directory.
 
         :param gen_path: Path in which files need to be generated
-        :param job: TODO
+        :param job: Reference to a SmartSimEntity and LaunchSettings
         """
         self.gen_path = gen_path
         self.job = job
@@ -88,6 +86,37 @@ class Generator:
             return DEBUG
         else:
             return default_log_level
+
+    @property
+    def run_path(self) -> str:
+        """Determines the job path.
+
+        :return: Path to run directory.
+        """
+        entity_type = ""
+        job_type = ""
+        if isinstance(self.job, (Job, JobGroup)):
+            job_type = f"{self.job.__class__.__name__.lower()}s"
+        if isinstance(self.job.entity, (Application, FeatureStore)):
+            entity_type = f"{self.job.entity.__class__.__name__.lower()}{self._generate_custom_id()}"
+        return os.path.join(
+            self.gen_path,
+            "run",
+            job_type,
+            self.job.name + self._generate_custom_id(),
+            entity_type,
+            "run",
+        )
+
+    def _generate_custom_id(self) -> str:
+        """Create a short custom ID
+
+        :return: Custom alphanumeric ID
+        """
+        # Generate 32 random bytes
+        random_bytes = os.urandom(32)
+        # Encode the bytes using Base64 and slice the first 8 characters
+        return "-" + base64.b64encode(random_bytes)[:8].decode()
 
     @property
     def log_file(self) -> str:
@@ -123,7 +152,6 @@ class Generator:
         self._gen_exp_dir()
         self._gen_job_dir()
 
-
     def _gen_exp_dir(self) -> None:
         """Create the directory for an experiment if it does not
         already exist.
@@ -149,9 +177,7 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_job_dir(
-        self
-    ) -> None:
+    def _gen_job_dir(self) -> None:
         """Generate directories for Entity instances
 
         :param entities: list of Application instances
@@ -164,10 +190,11 @@ class Generator:
         if isinstance(Application, type(self.job.entity)):
             file_operation_list = self.build_operations()
             self.execute_file_operations(file_operation_list)
-    
-    def execute_file_operations(self, file_ops: t.Sequence[t.Sequence[str]]) -> None:
-        ...
-    
+
+    def execute_file_operations(
+        self, file_ops: t.Sequence[t.Sequence[str]]
+    ) -> None: ...
+
     def build_operations(self) -> t.Sequence[t.Sequence[str]]:
         """This method generates file system operations based on the provided application.
         It processes three types of operations: to_copy, to_symlink, and to_configure.

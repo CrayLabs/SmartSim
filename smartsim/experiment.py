@@ -200,7 +200,6 @@ class Experiment:
             if launcher is None:
                 launcher = launcher_type.create(self)
                 self._active_launchers.add(launcher)
-            # TODO write comments
             job_execution_path = self._generate(job)
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             # FIXME: Opting out of type check here. Fix this later!!

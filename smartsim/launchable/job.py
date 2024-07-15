@@ -50,11 +50,19 @@ class Job(BaseJob):
         self,
         entity: SmartSimEntity,
         launch_settings: LaunchSettings,
+        name: str = "job",
     ):
         super().__init__()
         self._entity = deepcopy(entity)
         self._launch_settings = deepcopy(launch_settings)
+        self._name = deepcopy(name)
         # TODO: self.warehouse_runner = JobWarehouseRunner
+
+    # TODO do we want the user to be allowed to reset the Job name? Therefore, add setter
+    @property
+    def name(self) -> str:
+        """Retrieves the name of the Job."""
+        return deepcopy(self._name)
 
     @property
     def entity(self) -> SmartSimEntity:
