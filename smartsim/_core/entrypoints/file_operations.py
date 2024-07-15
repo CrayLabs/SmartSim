@@ -35,65 +35,50 @@ from ast import literal_eval
 from distutils import dir_util  # pylint: disable=deprecated-module
 
 
-def _check_path(file_path: str) -> str:
-    """Given a user provided path-like str, find the actual path to
-        the directory or file and create a full path.
-
-    :param file_path: path to a specific file or directory
-    :raises FileNotFoundError: if file or directory does not exist
-    :return: full path to file or directory
-    """
-    full_path = os.path.abspath(file_path)
-    if os.path.isfile(full_path):
-        return full_path
-    if os.path.isdir(full_path):
-        return full_path
-    raise FileNotFoundError(f"File or Directory {file_path} not found")
-
-
 def move(parsed_args: argparse.Namespace) -> None:
-    """Move a file
+    """Move a source file or directory to another location. If dest is an
+    existing directory or a symlink to a directory, then the srouce will
+    be moved inside that directory. The destination path in that directory
+    must not already exist. If dest is an existing file, it will be overwritten.
 
     Sample usage:
         python _core/entrypoints/file_operations.py move
-        /absolute/file/src/path /absolute/file/dest/path
+        /absolute/file/source/path /absolute/file/dest/path
 
-        source path: Path to a source file to be copied
-        dest path: Path to a file to copy the contents from the source file into
+        /absolute/file/source/path: File or directory to be moved
+        /absolute/file/dest/path: Path to a file or directory location
     """
-    _check_path(parsed_args.source)
-    _check_path(parsed_args.dest)
     shutil.move(parsed_args.source, parsed_args.dest)
 
 
 def remove(parsed_args: argparse.Namespace) -> None:
-    """Write a python script that removes a file when executed.
+    """Remove a file or directory.
 
     Sample usage:
         python _core/entrypoints/file_operations.py remove
         /absolute/file/path
 
-        file path: Path to the file to be deleted
+        /absolute/file/path: Path to the file or directory to be deleted
     """
-    _check_path(parsed_args.to_remove)
-    os.remove(parsed_args.to_remove)
+    if os.path.isdir(parsed_args.to_remove):
+        os.rmdir(parsed_args.to_remove)
+    else:
+        os.remove(parsed_args.to_remove)
 
 
 def copy(parsed_args: argparse.Namespace) -> None:
-    """
-    Write a python script to copy the entity files and directories attached
-    to this entity into an entity directory
+    """Copy the contents from the source file into the dest file.
+    If source is a directory, copy the entire directory tree source to dest.
 
     Sample usage:
         python _core/entrypoints/file_operations.py copy
-        /absolute/file/src/path /absolute/file/dest/path
+        /absolute/file/source/path /absolute/file/dest/path
 
-        source path: Path to directory, or path to file to copy into an entity directory
-        dest path: Path to destination directory or path to destination file to copy
+        /absolute/file/source/path: Path to directory, or path to file to
+            copy to a new location
+        /absolute/file/dest/path: Path to destination directory or path to
+            destination file
     """
-    _check_path(parsed_args.source)
-    _check_path(parsed_args.dest)
-
     if os.path.isdir(parsed_args.source):
         dir_util.copy_tree(parsed_args.source, parsed_args.dest)
     else:
@@ -103,46 +88,40 @@ def copy(parsed_args: argparse.Namespace) -> None:
 def symlink(parsed_args: argparse.Namespace) -> None:
     """
     Create a symbolic link pointing to the exisiting source file
-    named link
+    named link.
 
     Sample usage:
         python _core/entrypoints/file_operations.py symlink
-        /absolute/file/src/path /absolute/file/dest/path
+        /absolute/file/source/path /absolute/file/dest/path
 
-        source path: the exisiting source path
-        dest path: target name where the symlink will be created.
+        /absolute/file/source/path: the exisiting source path
+        /absolute/file/dest/path: target name where the symlink will be created.
     """
-    _check_path(parsed_args.source)
-
     os.symlink(parsed_args.source, parsed_args.dest)
 
 
 def configure(parsed_args: argparse.Namespace) -> None:
-    """Write a python script to set, search and replace the tagged parameters for the
-    configure operation within tagged files attached to an entity.
+    """Write a python script to set, search and replace the tagged parameters
+    for the configure operation within tagged files attached to an entity.
 
-    User-formatted files can be attached using the `configure` argument. These files
-    will be modified during ``Application`` generation to replace tagged sections in the
-    user-formatted files with values from the `params` initializer argument used during
-    ``Application`` creation:
+    User-formatted files can be attached using the `configure` argument.
+    These files will be modified during ``Application`` generation to replace
+    tagged sections in the user-formatted files with values from the `params`
+    initializer argument used during ``Application`` creation:
 
     Sample usage:
         python _core/entrypoints/file_operations.py configure
-        /absolute/file/src/path /absolute/file/dest/path tag_deliminator param_dict
+        /absolute/file/source/pat /absolute/file/dest/path tag_deliminator param_dict
 
-        source path: The tagged files the search and replace operations to be
-            performed upon
-        dest path: Optional destination for configured files to be written to
+        /absolute/file/source/path: The tagged files the search and replace operations
+        to be performed upon
+        /absolute/file/dest/path: Optional destination for configured files to be
+        written to.
         tag_delimiter: tag for the configure operation to search for, defaults to
             semi-colon e.g. ";"
         param_dict: A dict of parameter names and values set for the file
 
     """
-
-    _check_path(parsed_args.source)
-    if parsed_args.dest:
-        _check_path(parsed_args.dest)
-
     tag_delimiter = ";"
     if parsed_args.tag_delimiter:
         tag_delimiter = parsed_args.tag_delimiter

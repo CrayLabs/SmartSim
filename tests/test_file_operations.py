@@ -46,9 +46,9 @@ def test_symlink_files(test_dir):
     # Set source directory and file
     source = pathlib.Path(test_dir) / "sym_source"
     os.mkdir(source)
-    source_file = pathlib.Path(source) / "sym_source.txt"
+    source_file = source / "sym_source.txt"
     with open(source_file, "w+", encoding="utf-8") as dummy_file:
-        dummy_file.write("")
+        dummy_file.write("dummy")
 
     # Set path to be the destination directory
     entity_path = os.path.join(test_dir, "entity_name")
@@ -125,7 +125,11 @@ def test_copy_op_file(test_dir):
     # Execute copy
     file_operations.copy(ns)
 
-    # clean up
+    # Assert files were copied over
+    with open(dest_file, "r", encoding="utf-8") as dummy_file:
+        assert dummy_file.read() == "dummy"
+
+    # Clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
     os.rmdir(pathlib.Path(test_dir) / "to_copy")
 
@@ -160,6 +164,15 @@ def test_copy_op_dirs(test_dir):
     # Execute copy
     file_operations.copy(ns)
 
+    # Assert dirs were copied over
+    entity_files_1 = pathlib.Path(entity_path) / "copy_file.txt"
+    with open(entity_files_1, "r", encoding="utf-8") as dummy_file:
+        assert dummy_file.read() == "dummy1"
+
+    entity_files_2 = pathlib.Path(entity_path) / "copy_file_2.txt"
+    with open(entity_files_2, "r", encoding="utf-8") as dummy_file:
+        assert dummy_file.read() == "dummy2"
+
     # Clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
     os.remove(pathlib.Path(to_copy) / "copy_file_2.txt")
@@ -187,9 +200,9 @@ def test_copy_op_bad_source_file(test_dir):
 
     with pytest.raises(FileNotFoundError) as ex:
         file_operations.copy(ns)
-    assert f"File or Directory {bad_path} not found" in ex.value.args[0]
+    assert f"No such file or directory" in ex.value.args
 
-    # clean up
+    # Clean up
     os.rmdir(pathlib.Path(test_dir) / "to_copy")
     os.rmdir(pathlib.Path(test_dir) / "entity_name")
 
@@ -215,7 +228,7 @@ def test_copy_op_bad_dest_path(test_dir):
 
     with pytest.raises(FileNotFoundError) as ex:
         file_operations.copy(ns)
-    assert f"File or Directory {bad_path} not found" in ex.value.args[0]
+    assert f"No such file or directory" in ex.value.args
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -263,7 +276,7 @@ def test_move_op(test_dir):
     os.rmdir(dest_dir)
 
 
-def test_remove_op(test_dir):
+def test_remove_op_file(test_dir):
     """Test the operation to delete a file"""
 
     # Make a test file with dummy text
@@ -286,6 +299,24 @@ def test_remove_op(test_dir):
     assert not osp.exists(to_del)
 
 
+def test_remove_op_dir(test_dir):
+    """Test the operation to delete a directory"""
+
+    # Make a test file with dummy text
+    to_del = pathlib.Path(test_dir) / "dir_del"
+    os.mkdir(to_del)
+
+    parser = get_parser()
+    cmd = f"remove {to_del}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    file_operations.remove(ns)
+
+    # Assert directory has been deleted
+    assert not osp.exists(to_del)
+
+
 def test_remove_op_bad_path(test_dir):
     """Test that FileNotFoundError is raised when a bad path is given to the
     soperation to delete a file"""
@@ -299,7 +330,7 @@ def test_remove_op_bad_path(test_dir):
 
     with pytest.raises(FileNotFoundError) as ex:
         file_operations.remove(ns)
-    assert f"File or Directory {to_del} not found" in ex.value.args[0]
+    assert f"No such file or directory" in ex.value.args
 
 
 @pytest.mark.parametrize(
