@@ -126,7 +126,7 @@ class Generator:
 
         :returns: path to file with parameter settings
         """
-        return join(self.gen_path, "smartsim_params.txt")
+        return join(self.run_path, "smartsim_params.txt")
 
     def generate_experiment(self) -> None:
         """Run ensemble and experiment file structure generation
@@ -148,26 +148,10 @@ class Generator:
         e.g. ``THERMO=;90;``
 
         """
-
-        self._gen_exp_dir()
-        self._gen_job_dir()
-
-    def _gen_exp_dir(self) -> None:
-        """Create the directory for an experiment if it does not
-        already exist.
-        """
-
-        if path.isfile(self.gen_path):
-            raise FileExistsError(
-                f"Experiment directory could not be created. {self.gen_path} exists"
-            )
-        if not path.isdir(self.gen_path):
-            # keep exists ok for race conditions on NFS
-            pathlib.Path(self.gen_path).mkdir(exist_ok=True, parents=True)
-        else:
-            logger.log(
-                level=self.log_level, msg="Working in previously created experiment"
-            )
+        pathlib.Path(self.gen_path).mkdir(exist_ok=True, parents=True)
+        # logger.log(
+        #     level=self.log_level, msg="Working in experiment "
+        # )
 
         # The log_file only keeps track of the last generation
         # this is to avoid gigantic files in case the user repeats
@@ -176,17 +160,7 @@ class Generator:
         with open(self.log_file, mode="w", encoding="utf-8") as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
-
-    def _gen_job_dir(self) -> None:
-        """Generate directories for Entity instances
-
-        :param entities: list of Application instances
-        :param entity_list: Ensemble instance
-        :raises EntityExistsError: if a directory already exists for an
-                                   entity by that name
-        """
-        # TODO might need to change parents=True if Experiment class DNE after meeting
-        pathlib.Path(self.job.entity.path).mkdir(exist_ok=True, parents=True)
+        
         if isinstance(Application, type(self.job.entity)):
             file_operation_list = self.build_operations()
             self.execute_file_operations(file_operation_list)
