@@ -180,7 +180,6 @@ def test_dragon_client_main(
         assert isinstance(request_arg, DragonRunRequest)
 
         policy = request_arg.policy
-        assert policy.device == "cpu" if not policy.gpu_affinity else "gpu"
 
         # make sure each policy has been read in correctly with valid affinity indices
         assert len(policy.cpu_affinity) == len(set(policy.cpu_affinity))

@@ -383,8 +383,6 @@ def test_dragon_batch_step_write_request_file(
     # verify that there is an item in file for each step added to the batch
     assert len(requests_json) == len(dragon_batch_step.steps)
 
-    exp_device = ["cpu", "cpu", "gpu", "gpu"]
-
     for index, req in enumerate(requests_json):
         req_type, req_data = req.split("|", 1)
         # the only steps added are to execute apps, requests should be of type "run"
@@ -392,6 +390,5 @@ def test_dragon_batch_step_write_request_file(
 
         run_request = DragonRunRequest(**json.loads(req_data))
         assert run_request
-        assert run_request.policy.device == exp_device[index]
         assert run_request.policy.cpu_affinity == cpu_affinities[index]
         assert run_request.policy.gpu_affinity == gpu_affinities[index]

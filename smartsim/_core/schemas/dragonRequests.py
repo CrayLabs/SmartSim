@@ -26,9 +26,10 @@
 
 import typing as t
 
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, ValidationError
 
 import smartsim._core.schemas.utils as _utils
+from smartsim.error.errors import SmartSimError
 
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
@@ -42,31 +43,35 @@ class DragonRequest(BaseModel): ...
 class DragonRunPolicy(BaseModel):
     """Policy specifying hardware constraints when running a Dragon job"""
 
-    device: t.Literal["cpu", "gpu"] = Field(default="cpu")
     cpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    """List of CPU indices to which the job should be pinned"""
     gpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    """List of GPU indices to which the job should be pinned"""
 
     @staticmethod
     def from_run_args(
         run_args: t.Dict[str, t.Union[int, str, float, None]]
     ) -> "DragonRunPolicy":
-        features: str = str(run_args.get("node-feature", ""))
+        """Create a DragonRunPolicy from a dictionary of run arguments"""
+        gpu_args = ""
+        if gpu_arg_value := run_args.get("gpu-affinity", None):
+            gpu_args = str(gpu_arg_value)
 
-        device = "gpu" if "gpu" in features else "cpu"
+        cpu_args = ""
+        if cpu_arg_value := run_args.get("cpu-affinity", None):
+            cpu_args = str(cpu_arg_value)
 
-        gpu_args = str(run_args.get("gpu-affinity", ""))
-        cpu_args = str(run_args.get("cpu-affinity", ""))
-        gpu_affinity = [x for x in gpu_args.split(",") if x]
-        cpu_affinity = [x for x in cpu_args.split(",") if x]
+        # run args converted to a string must be split back into a list[int]
+        gpu_affinity = [int(x.strip()) for x in gpu_args.split(",") if x]
+        cpu_affinity = [int(x.strip()) for x in cpu_args.split(",") if x]
 
-        if device == "cpu" and not (cpu_affinity or gpu_affinity):
-            return DragonRunPolicy()
-
-        return DragonRunPolicy(
-            device=device,
-            cpu_affinity=cpu_affinity,
-            gpu_affinity=gpu_affinity,
-        )
+        try:
+            return DragonRunPolicy(
+                cpu_affinity=cpu_affinity,
+                gpu_affinity=gpu_affinity,
+            )
+        except ValidationError as ex:
+            raise SmartSimError("Unable to build DragonRunPolicy") from ex
 
 
 class DragonRunRequestView(DragonRequest):

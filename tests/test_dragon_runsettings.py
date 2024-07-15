@@ -96,26 +96,3 @@ def test_dragon_runsettings_gpu_affinity():
     # ensure the value is not changed when we extend the list
     rs.run_args["gpu-affinity"] = "7,8,9"
     assert rs.run_args["gpu-affinity"] != ",".join(str(val) for val in exp_value)
-
-
-def test_dragon_runsettings_on_gpu():
-    """Verify that setting gpu as a node feature works correctly and that
-    using the function is not additive"""
-    rs = DragonRunSettings(exe="sleep", exe_args=["1"])
-
-    feature_key = "node-feature"
-
-    # check that no default features exist
-    features = rs.run_args.get(feature_key, [])
-    assert not features
-
-    # set to initial value
-    rs.set_node_feature("gpu")
-    features = rs.run_args.get(feature_key, [])
-    assert "gpu" in features
-
-    # change value, verify overwrite
-    rs.set_node_feature("cpu")
-    features = rs.run_args.get(feature_key, [])
-    assert "cpu" in features
-    assert "gpu" not in features

@@ -296,11 +296,6 @@ class DragonBackend:
     ) -> t.Tuple[bool, t.Optional[str]]:
         # ensure the policy can be honored
         if request.policy:
-            if request.policy.device == "gpu":
-                # make sure nodes w/GPUs exist
-                if not any(self._gpus):
-                    return False, "Cannot satisfy request, no GPUs available"
-
             if request.policy.cpu_affinity:
                 # make sure some node has enough CPUs
                 available = max(self._cpus)
@@ -448,33 +443,31 @@ class DragonBackend:
 
     @staticmethod
     def create_run_policy(
-        request: DragonRunRequest, node_name: str
+        request: DragonRequest, node_name: str
     ) -> "dragon_policy.Policy":
         if isinstance(request, DragonRunRequest):
             run_request: DragonRunRequest = request
 
-            device = dragon_policy.Policy.Device.DEFAULT
             affinity = dragon_policy.Policy.Affinity.DEFAULT
             cpu_affinity: t.List[int] = []
             gpu_affinity: t.List[int] = []
 
+            # Customize policy only if the client requested it, otherwise use default
             if run_request.policy is not None:
+                # affinities are not mutually exclusive. If specified, both are used
                 if run_request.policy.cpu_affinity:
                     affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     cpu_affinity = run_request.policy.cpu_affinity
-                    device = dragon_policy.Policy.Device.CPU
 
                 if run_request.policy.gpu_affinity:
                     affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     gpu_affinity = run_request.policy.gpu_affinity
-                    device = dragon_policy.Policy.Device.GPU
 
             if affinity != dragon_policy.Policy.Affinity.DEFAULT:
                 return dragon_policy.Policy(
                     placement=dragon_policy.Policy.Placement.HOST_NAME,
                     host_name=node_name,
                     affinity=affinity,
-                    device=device,
                     cpu_affinity=cpu_affinity,
                     gpu_affinity=gpu_affinity,
                 )

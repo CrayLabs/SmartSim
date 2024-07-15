@@ -83,9 +83,10 @@ class DragonRunSettings(RunSettings):
 
     @override
     def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
-        """Add a node feature requirement
+        """Specify the node feature for this job
 
-        :param tasks_per_node: number of tasks per node
+        :param feature_list: a collection of strings representing the required
+         node features. Currently supported node features are: "gpu"
         """
         if isinstance(feature_list, str):
             feature_list = feature_list.strip().split()

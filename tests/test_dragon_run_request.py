@@ -349,7 +349,7 @@ def test_run_request_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(device="cpu", cpu_affinity=[0, 1]),
+        policy=DragonRunPolicy(cpu_affinity=[0, 1]),
     )
 
     run_resp = dragon_backend.process_request(run_req)
@@ -559,7 +559,7 @@ def test_can_honor_cpu_affinity(
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(device="cpu", cpu_affinity=affinity),
+        policy=DragonRunPolicy(cpu_affinity=affinity),
     )
 
     assert dragon_backend._can_honor(run_req)[0]
@@ -580,7 +580,7 @@ def test_can_honor_cpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(device="cpu", cpu_affinity=list(range(9))),
+        policy=DragonRunPolicy(cpu_affinity=list(range(9))),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -603,7 +603,7 @@ def test_can_honor_gpu_affinity(
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(device="gpu", gpu_affinity=affinity),
+        policy=DragonRunPolicy(gpu_affinity=affinity),
     )
 
     assert dragon_backend._can_honor(run_req)[0]
@@ -611,7 +611,7 @@ def test_can_honor_gpu_affinity(
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
 def test_can_honor_gpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify that invalid CPU affinities are NOT accepted
+    """Verify that invalid GPU affinities are NOT accepted
     NOTE: negative values are captured by the Pydantic schema"""
     dragon_backend = get_mock_backend(monkeypatch)
     run_req = DragonRunRequest(
@@ -624,31 +624,10 @@ def test_can_honor_gpu_affinity_out_of_range(monkeypatch: pytest.MonkeyPatch) ->
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(device="gpu", gpu_affinity=list(range(3))),
+        policy=DragonRunPolicy(gpu_affinity=list(range(3))),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
-
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-def test_can_honor_gpu_device(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify that valid GPU request is accepted"""
-    dragon_backend = get_mock_backend(monkeypatch)
-    run_req = DragonRunRequest(
-        exe="sleep",
-        exe_args=["5"],
-        path="/a/fake/path",
-        nodes=2,
-        tasks=1,
-        tasks_per_node=1,
-        env={},
-        current_env={},
-        pmi_enabled=False,
-        # specify GPU device w/no affinity
-        policy=DragonRunPolicy(device="gpu"),
-    )
-
-    assert dragon_backend._can_honor(run_req)[0]
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -669,7 +648,7 @@ def test_can_honor_gpu_device_not_available(monkeypatch: pytest.MonkeyPatch) -> 
         current_env={},
         pmi_enabled=False,
         # specify GPU device w/no affinity
-        policy=DragonRunPolicy(device="gpu"),
+        policy=DragonRunPolicy(gpu_affinity=[0]),
     )
 
     assert not dragon_backend._can_honor(run_req)[0]
@@ -710,26 +689,3 @@ def test_view(monkeypatch: pytest.MonkeyPatch) -> None:
     expected_message = expected_message.replace(" ", "")
 
     assert actual_msg == expected_message
-
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-def test_run_request_with_invalid_device(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify that invalid affinity values fail validation"""
-    with pytest.raises(ValidationError) as ex:
-        DragonRunRequest(
-            exe="sleep",
-            exe_args=["5"],
-            path="/a/fake/path",
-            nodes=2,
-            tasks=1,
-            tasks_per_node=1,
-            env={},
-            current_env={},
-            pmi_enabled=False,
-            policy=DragonRunPolicy(
-                device="zpu",  # <---- not a valid device
-            ),
-        )
-
-    assert f"device" in str(ex.value.args[0])
-    assert "WrongConstantError" in str(ex.value.args[0])

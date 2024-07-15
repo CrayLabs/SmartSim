@@ -143,6 +143,7 @@ def test_create_run_policy_run_request_no_run_policy() -> None:
     assert policy.device == Policy.Device.DEFAULT
     assert set(policy.cpu_affinity) == set()
     assert policy.gpu_affinity == []
+    assert policy.affinity == Policy.Affinity.DEFAULT
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -164,9 +165,9 @@ def test_create_run_policy_run_request_default_run_policy() -> None:
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
 
-    assert policy.device == Policy.Device.DEFAULT
     assert set(policy.cpu_affinity) == set()
     assert set(policy.gpu_affinity) == set()
+    assert policy.affinity == Policy.Affinity.DEFAULT
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -189,9 +190,9 @@ def test_create_run_policy_run_request_cpu_affinity_no_device() -> None:
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
 
-    assert policy.device == Policy.Device.CPU
     assert set(policy.cpu_affinity) == affinity
     assert policy.gpu_affinity == []
+    assert policy.affinity == Policy.Affinity.SPECIFIC
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -208,14 +209,14 @@ def test_create_run_policy_run_request_cpu_affinity() -> None:
         env={},
         current_env={},
         pmi_enabled=False,
-        policy=DragonRunPolicy(device="cpu", cpu_affinity=list(affinity)),
+        policy=DragonRunPolicy(cpu_affinity=list(affinity)),
     )
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
 
-    assert policy.device == Policy.Device.CPU
     assert set(policy.cpu_affinity) == affinity
     assert policy.gpu_affinity == []
+    assert policy.affinity == Policy.Affinity.SPECIFIC
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
@@ -237,58 +238,134 @@ def test_create_run_policy_run_request_gpu_affinity() -> None:
 
     policy = DragonBackend.create_run_policy(run_req, "localhost")
 
-    assert policy.device == Policy.Device.GPU
     assert policy.cpu_affinity == []
     assert set(policy.gpu_affinity) == set(affinity)
+    assert policy.affinity == Policy.Affinity.SPECIFIC
 
 
 @pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-def test_create_run_policy_run_request_gpu_affinity_device_mismatch() -> None:
-    """Verify that a policy specifying GPU affinity is returned as expected
-    if the device specified (CPU) is a mismatch from a supplied affinity (GPU)"""
-    affinity = set([0, 2, 4])
-    run_req = DragonRunRequest(
-        exe="sleep",
-        exe_args=["5"],
-        path="/a/fake/path",
-        nodes=2,
-        tasks=1,
-        tasks_per_node=1,
-        env={},
-        current_env={},
-        pmi_enabled=False,
-        # note: here we say "use cpu" but supply a gpu affinity
-        policy=DragonRunPolicy(device="cpu", gpu_affinity=list(affinity)),
-    )
+def test_dragon_run_policy_from_run_args() -> None:
+    """Verify that a DragonRunPolicy is created from a dictionary of run arguments"""
+    run_args = {
+        "gpu-affinity": "0,1,2",
+        "cpu-affinity": "3,4,5,6",
+    }
 
-    policy = DragonBackend.create_run_policy(run_req, "localhost")
+    policy = DragonRunPolicy.from_run_args(run_args)
 
-    assert policy.device == Policy.Device.GPU
+    assert policy.cpu_affinity == [3, 4, 5, 6]
+    assert policy.gpu_affinity == [0, 1, 2]
+
+
+def test_dragon_run_policy_from_run_args_empty() -> None:
+    """Verify that a DragonRunPolicy is created from an empty
+    dictionary of run arguments"""
+    run_args = {}
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
     assert policy.cpu_affinity == []
-    assert set(policy.gpu_affinity) == set(affinity)
-
-
-@pytest.mark.skipif(not dragon_loaded, reason="Test is only for Dragon WLM systems")
-def test_create_run_policy_run_request_cpu_affinity_device_mismatch() -> None:
-    """Verify that a policy specifying CPU affinity is returned as expected
-    if the device specified (GPU) is a mismatch from a supplied affinity (CPU)"""
-    affinity = set([0, 2, 4])
-    run_req = DragonRunRequest(
-        exe="sleep",
-        exe_args=["5"],
-        path="/a/fake/path",
-        nodes=2,
-        tasks=1,
-        tasks_per_node=1,
-        env={},
-        current_env={},
-        pmi_enabled=False,
-        # note: here we say "use cpu" but supply a gpu affinity
-        policy=DragonRunPolicy(device="gpu", cpu_affinity=list(affinity)),
-    )
-
-    policy = DragonBackend.create_run_policy(run_req, "localhost")
-
-    assert policy.device == Policy.Device.CPU
     assert policy.gpu_affinity == []
-    assert set(policy.cpu_affinity) == set(affinity)
+
+
+def test_dragon_run_policy_from_run_args_cpu_affinity() -> None:
+    """Verify that a DragonRunPolicy is created from a dictionary
+    of run arguments containing a CPU affinity"""
+    run_args = {
+        "cpu-affinity": "3,4,5,6",
+    }
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
+    assert policy.cpu_affinity == [3, 4, 5, 6]
+    assert policy.gpu_affinity == []
+
+
+def test_dragon_run_policy_from_run_args_gpu_affinity() -> None:
+    """Verify that a DragonRunPolicy is created from a dictionary
+    of run arguments containing a GPU affinity"""
+    run_args = {
+        "gpu-affinity": "0, 1, 2",
+    }
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
+    assert policy.cpu_affinity == []
+    assert policy.gpu_affinity == [0, 1, 2]
+
+
+def test_dragon_run_policy_from_run_args_invalid_gpu_affinity() -> None:
+    """Verify that a DragonRunPolicy is NOT created from a dictionary
+    of run arguments with an invalid GPU affinity"""
+    run_args = {
+        "gpu-affinity": "0,-1,2",
+    }
+
+    with pytest.raises(SmartSimError) as ex:
+        DragonRunPolicy.from_run_args(run_args)
+
+    assert "DragonRunPolicy" in ex.value.args[0]
+
+
+def test_dragon_run_policy_from_run_args_invalid_cpu_affinity() -> None:
+    """Verify that a DragonRunPolicy is NOT created from a dictionary
+    of run arguments with an invalid CPU affinity"""
+    run_args = {
+        "cpu-affinity": "3,4,5,-6",
+    }
+
+    with pytest.raises(SmartSimError) as ex:
+        DragonRunPolicy.from_run_args(run_args)
+
+    assert "DragonRunPolicy" in ex.value.args[0]
+
+
+def test_dragon_run_policy_from_run_args_ignore_empties_gpu() -> None:
+    """Verify that a DragonRunPolicy is created from a dictionary
+    of run arguments and ignores empty values in the serialized gpu list"""
+    run_args = {
+        "gpu-affinity": "0,,2",
+    }
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
+    assert policy.cpu_affinity == []
+    assert policy.gpu_affinity == [0, 2]
+
+
+def test_dragon_run_policy_from_run_args_ignore_empties_cpu() -> None:
+    """Verify that a DragonRunPolicy is created from a dictionary
+    of run arguments and ignores empty values in the serialized cpu list"""
+    run_args = {
+        "cpu-affinity": "3,4,,6,",
+    }
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
+    assert policy.cpu_affinity == [3, 4, 6]
+    assert policy.gpu_affinity == []
+
+
+def test_dragon_run_policy_from_run_args_null_gpu_affinity() -> None:
+    """Verify that a DragonRunPolicy is created if a null value is encountered
+    in the gpu-affinity list"""
+    run_args = {
+        "gpu-affinity": None,
+        "cpu-affinity": "3,4,5,6",
+    }
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
+    assert policy.cpu_affinity == [3, 4, 5, 6]
+    assert policy.gpu_affinity == []
+
+
+def test_dragon_run_policy_from_run_args_null_cpu_affinity() -> None:
+    """Verify that a DragonRunPolicy is created if a null value is encountered
+    in the cpu-affinity list"""
+    run_args = {"gpu-affinity": "0,1,2", "cpu-affinity": None}
+
+    policy = DragonRunPolicy.from_run_args(run_args)
+
+    assert policy.cpu_affinity == []
+    assert policy.gpu_affinity == [0, 1, 2]
