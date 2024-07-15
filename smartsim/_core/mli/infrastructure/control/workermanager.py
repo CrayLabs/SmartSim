@@ -58,6 +58,7 @@ if t.TYPE_CHECKING:
 
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
 
@@ -99,13 +100,12 @@ def deserialize_message(
         None  # these will really be tensors already
     )
 
-    input_meta: t.List[t.Any] = []
+    input_meta: t.List[TensorDescriptor] = []
 
     if request.input.which() == "keys":
         input_keys = [input_key.key for input_key in request.input.keys]
     elif request.input.which() == "descriptors":
-        # input_bytes = [data.blob for data in request.input.data]
-        input_meta = request.input.descriptors
+        input_meta = request.input.descriptors  # type: ignore
 
     inference_request = InferenceRequest(
         model_key=model_key,
@@ -141,6 +141,8 @@ def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
             # todo: need to have the output attributes specified in the req?
             # maybe, add `MessageHandler.dtype_of(tensor)`?
             # can `build_tensor` do dtype and shape?
+
+            # TODO isn't this what output descriptors are for?
             msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                 "c",
                 "float32",
@@ -241,8 +243,11 @@ class WorkerManager(Service):
             return
 
         timings = []  # timing
-        # perform default deserialization of the message envelope
+
         bytes_list: t.List[bytes] = self._task_queue.recv()
+        request_bytes: bytes = b""
+        tensor_list = []
+
         if bytes_list:
             request_bytes = bytes_list[0]
             tensor_list = bytes_list[1:]
@@ -252,7 +257,7 @@ class WorkerManager(Service):
             request_bytes, self._comm_channel_type, self._device
         )
 
-        if request.input_meta:
+        if request.input_meta and tensor_list:
             request.raw_inputs = tensor_list
 
         if not self._validate_request(request):

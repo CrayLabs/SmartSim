@@ -45,12 +45,12 @@ class CommChannelBase(ABC):
         :param value: The value to send"""
 
     @abstractmethod
-    def recv(self) -> bytes:
+    def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
 
     @property
-    def descriptor(self) -> t.List[bytes]:
+    def descriptor(self) -> bytes:
         """Return the channel descriptor for the underlying dragon channel"""
         if isinstance(self._descriptor, str):
             return self._descriptor.encode("utf-8")

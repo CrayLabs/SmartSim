@@ -135,8 +135,8 @@ class ProtoClient:
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
             for t in tensors:
-                # to_sendh.send_bytes(t.tobytes()) #TODO NOT FAST ENOUGH!!!
-                to_sendh.send_bytes(bytes(t.data))
+                to_sendh.send_bytes(t.tobytes()) #TODO NOT FAST ENOUGH!!!
+                # to_sendh.send_bytes(bytes(t.data))
         logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.measure_time("send")

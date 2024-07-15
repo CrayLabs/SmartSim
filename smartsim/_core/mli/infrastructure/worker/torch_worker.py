@@ -98,10 +98,11 @@ class TorchWorker(MachineLearningWorkerBase):
 
         model: torch.nn.Module = load_result.model
         model.eval()
-        results = [
-            model(tensor).detach().numpy().tobytes()
-            for tensor in transform_result.transformed
-        ]  # TODO THIS IS BAD
+        results = [model(tensor).detach() for tensor in transform_result.transformed]
+        # results = [
+        #     model(tensor).detach().numpy().tobytes()
+        #     for tensor in transform_result.transformed
+        # ]  # TODO THIS IS BAD
 
         execute_result = ExecuteResult(results)
         return execute_result
@@ -113,10 +114,16 @@ class TorchWorker(MachineLearningWorkerBase):
         result_device: str,
     ) -> TransformOutputResult:
         if result_device != "cpu":
-            transformed = [item.to("cpu") for item in execute_result.predictions]
+            transformed = [
+                item.to("cpu").numpy().tobytes() for item in execute_result.predictions
+            ]
+
             # todo: need the shape from latest schemas added here.
             return TransformOutputResult(transformed, None, "c", "float32")  # fixme
 
         return TransformOutputResult(
-            execute_result.predictions, None, "c", "float32"
+            [item.numpy().tobytes() for item in execute_result.predictions],
+            None,
+            "c",
+            "float32",
         )  # fixme
