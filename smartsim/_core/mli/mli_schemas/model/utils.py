@@ -24,33 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
+import typing as t
+from collections import namedtuple
 
-import smartsim._core.mli.comm.channel.channel as cch
-from smartsim.log import get_logger
+from .model_capnp import Model
 
-logger = get_logger(__name__)
-
-import dragon.channels as dch
+ModelInfo = namedtuple("ModelInfo", ["Name", "Version"])
 
 
-class DragonCommChannel(cch.CommChannelBase):
-    """Passes messages by writing to a Dragon channel"""
+def make_model_key(model: Model) -> str:
+    return f"{model.name}_{model.version}"
 
-    def __init__(self, key: bytes) -> None:
-        """Initialize the DragonCommChannel instance"""
-        super().__init__(key)
-        self._channel: dch.Channel = dch.Channel.attach(key)
 
-    def send(self, value: bytes) -> None:
-        """Send a message throuh the underlying communication channel
-        :param value: The value to send"""
-        with self._channel.sendh(timeout=None) as sendh:
-            sendh.send_bytes(value)
-
-    def recv(self) -> bytes:
-        """Receieve a message through the underlying communication channel
-        :returns: the received message"""
-        with self._channel.recvh(timeout=None) as recvh:
-            message_bytes: bytes = recvh.recv_bytes(timeout=None)
-            return message_bytes
+def get_model_name_and_version(key: str) -> t.NamedTuple:
+    split_key = key.rsplit("_", 1)
+    return ModelInfo(split_key[0], split_key[1])

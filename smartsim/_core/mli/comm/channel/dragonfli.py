@@ -30,7 +30,6 @@ import dragon.channels as dch
 
 # isort: on
 
-import sys
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
@@ -65,5 +64,5 @@ class DragonFLIChannel(cch.CommChannelBase):
                 request_bytes: bytes
                 request_bytes, _ = recvh.recv_bytes(timeout=None)
                 return request_bytes
-            except fli.FLIEOT as exc:
+            except fli.FLIEOT:
                 return b""

@@ -250,7 +250,7 @@ class MachineLearningWorkerCore:
 
 
 class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
-    """Abstrct base class providing contract for a machine learning
+    """Abstract base class providing contract for a machine learning
     worker implementation."""
 
     @staticmethod
