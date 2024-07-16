@@ -69,13 +69,6 @@ class LaunchSettings(BaseSettings):
     @property
     def launch_args(self) -> LaunchArgBuilder[t.Any]:
         """Return the launch argument translator."""
-        # FIXME: We _REALLY_ need to make the `LaunchSettings` class generic at
-        #        on `_arg_builder` if we are expecting users to call specific
-        #        `set_*` methods defined specificially on each of the
-        #        subclasses. Otherwise we have no way of showing what methods
-        #        are available at intellisense/static analysis/compile time.
-        #        This whole object basically resolves to being one step removed
-        #        from `Any` typed (worse even, as type checkers will error)!!
         return self._arg_builder
 
     @launch_args.setter
