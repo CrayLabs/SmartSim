@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Add TorchWorker first implementation and mock inference app example
 - Add error handling in Worker Manager pipeline
 - Add EnvironmentConfigLoader for ML Worker Manager
 - Add Model schema with model metadata included

@@ -24,37 +24,42 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import sys
+from smartsim import Experiment
+from smartsim.status import TERMINAL_STATUSES
+import time
+import typing as t
 
-import smartsim._core.mli.comm.channel.channel as cch
-from smartsim.log import get_logger
-
-logger = get_logger(__name__)
-
-try:
-    import dragon.channels as dch
-except ImportError as exc:
-    if not "pytest" in sys.modules:
-        raise exc from None
+device = "gpu"
+filedir = os.path.dirname(__file__)
+app_script_name = os.path.join(filedir, "mock_app_redis.py")
+model_name = os.path.join(filedir, f"resnet50.{device.upper()}.pt")
 
 
-class DragonCommChannel(cch.CommChannelBase):
-    """Passes messages by writing to a Dragon channel"""
+exp_path = os.path.join(filedir, "redis_ai")
+os.makedirs(exp_path, exist_ok=True)
+exp = Experiment("redis_ai", launcher="slurm", exp_path=exp_path)
 
-    def __init__(self, key: bytes) -> None:
-        """Initialize the DragonCommChannel instance"""
-        super().__init__(key)
-        self._channel: dch.Channel = dch.Channel.attach(key)
+db = exp.create_database(interface="hsn0")
 
-    def send(self, value: bytes) -> None:
-        """Send a message throuh the underlying communication channel
-        :param value: The value to send"""
-        with self._channel.sendh(timeout=None) as sendh:
-            sendh.send_bytes(value)
+app_rs = exp.create_run_settings(sys.executable, exe_args = [app_script_name, "--device", device])
+app_rs.set_nodes(1)
+app_rs.set_tasks(1)
+app = exp.create_model("app", run_settings=app_rs)
+app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 
-    def recv(self) -> bytes:
-        """Receieve a message through the underlying communication channel
-        :returns: the received message"""
-        with self._channel.recvh(timeout=None) as recvh:
-            message_bytes: bytes = recvh.recv_bytes(timeout=None)
-            return message_bytes
+exp.generate(db, app, overwrite=True)
+
+exp.start(db, app, block=False)
+
+while True:
+    if exp.get_status(app)[0] in TERMINAL_STATUSES:
+        exp.stop(db)
+        break
+    if exp.get_status(db)[0] in TERMINAL_STATUSES:
+        exp.stop(app)
+        break
+    time.sleep(5)
+
+print("Exiting.")
