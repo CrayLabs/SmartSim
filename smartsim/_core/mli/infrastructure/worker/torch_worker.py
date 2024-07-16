@@ -36,6 +36,7 @@ from .worker import (
     ExecuteResult,
     FetchInputResult,
     FetchModelResult,
+    InferenceBatch,
     InferenceRequest,
     LoadModelResult,
     MachineLearningWorkerBase,
@@ -51,8 +52,9 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def load_model(
-        request: InferenceRequest, fetch_result: FetchModelResult, device: str
+        batch: InferenceBatch, fetch_result: FetchModelResult, device: str
     ) -> LoadModelResult:
+        request = batch.requests[0]
         if fetch_result.model_bytes:
             model_bytes = fetch_result.model_bytes
         elif request.raw_model and request.raw_model.data:
@@ -69,27 +71,45 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def transform_input(
-        request: InferenceRequest, fetch_result: FetchInputResult, device: str
+        batch: InferenceBatch, fetch_results: list[FetchInputResult], device: str
     ) -> TransformInputResult:
-        result = []
+        results: list[list[torch.Tensor]] = []
+        start = 0
+        slices: list[slice] = []
 
         device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = device_to_torch[device]
-        if fetch_result.meta is None:
-            raise ValueError("Cannot reconstruct tensor without meta information")
-        for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
-            tensor_desc: tensor_capnp.TensorDescriptor = item_meta
+        for old, new in device_to_torch.items():
+            device.replace(old, new)
+
+        for fetch_result in fetch_results:
+            partial_result = []
+            if fetch_result.meta is None:
+                raise ValueError("Cannot reconstruct tensor without meta information")
+            for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
+                tensor_desc: tensor_capnp.TensorDescriptor = item_meta
+                partial_result.append(
+                    torch.tensor(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
+                    .to(device)
+                    .reshape(tuple(dim for dim in tensor_desc.dimensions))
+                )
+            results.append(partial_result)
+            num_samples = fetch_result.meta[0].dimensions[0]
+            slices.append(slice(start, start + num_samples))
+            start = start + num_samples
+
+        result: list[torch.Tensor] = []
+        for t_idx in range(len(results[0])):
             result.append(
-                torch.tensor(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
-                .to(device)
-                .reshape(tuple(dim for dim in tensor_desc.dimensions))
+                torch.concatenate([partial_result[t_idx] for partial_result in results])
             )
-        return TransformInputResult(result)
+
+        return TransformInputResult(result, slices)
         # return data # note: this fails copy test!
 
+    # pylint: disable-next=unused-argument
     @staticmethod
     def execute(
-        request: InferenceRequest,
+        batch: InferenceBatch,
         load_result: LoadModelResult,
         transform_result: TransformInputResult,
     ) -> ExecuteResult:
@@ -100,20 +120,23 @@ class TorchWorker(MachineLearningWorkerBase):
         model.eval()
         results = [model(tensor).detach() for tensor in transform_result.transformed]
 
-        execute_result = ExecuteResult(results)
+        execute_result = ExecuteResult(results, transform_result.slices)
         return execute_result
 
     @staticmethod
     def transform_output(
-        request: InferenceRequest,
+        batch: InferenceBatch,
         execute_result: ExecuteResult,
         result_device: str,
-    ) -> TransformOutputResult:
-        if result_device != "cpu":
-            transformed = [item.to("cpu") for item in execute_result.predictions]
-            # todo: need the shape from latest schemas added here.
-            return TransformOutputResult(transformed, None, "c", "float32")  # fixme
+    ) -> list[TransformOutputResult]:
+        transformed_list: list[TransformOutputResult] = []
+        for result_slice in execute_result.slices:
+            if result_device != "cpu":
+                transformed = [item.to("cpu") for item in execute_result.predictions[result_slice]]
+                # todo: need the shape from latest schemas added here.
+                transformed_list.append(TransformOutputResult(transformed, None, "c", "float32"))  # fixme
 
-        return TransformOutputResult(
-            execute_result.predictions, None, "c", "float32"
-        )  # fixme
+            transformed_list.append(TransformOutputResult(
+                execute_result.predictions[result_slice], None, "c", "float32"
+            ))  # fixme
+        return transformed_list

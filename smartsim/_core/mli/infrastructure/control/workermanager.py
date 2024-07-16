@@ -23,12 +23,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import time
 import typing as t
 
 import numpy as np
 
-from .....error import SmartSimError
 from .....log import ContextThread, get_logger
 from ....entrypoints.service import Service
 from ...comm.channel.channel import CommChannelBase
@@ -265,63 +263,70 @@ class WorkerManager(Service):
             logger.warning("No queue to check for tasks")
             return
 
-        inference_work = self._request_dispatcher.flush_requests()
-        if inference_work is None or 0 == len(inference_work.requests):
+        batch = self._request_dispatcher.flush_requests()
+        if batch is None or 0 == len(batch.requests):
             return
 
-        request = inference_work.requests[0]
+        # sample_request = inference_work.requests[0]
 
         device: WorkerDevice = next(
             self._device_manager.get_free_device(
                 worker=self._worker,
-                inference_work=inference_work,
+                batch=batch,
                 feature_store=self._feature_store,
             )
         )
 
+        model_result = LoadModelResult(device.get_model(batch.model_key))
 
-        model_result = device.get_model(inference_work.model_key)
-
-        fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
+        fetch_input_results = self._worker.fetch_inputs(batch, self._feature_store)
 
         transformed_input = self._worker.transform_input(
-            request, fetch_input_result, self._device
+            batch, fetch_input_results, self._device
         )
 
-        reply = InferenceReply()
+        replies: list[InferenceReply] = [InferenceReply() for _ in range(len(batch.requests))]
 
         try:
             execute_result = self._worker.execute(
-                request, model_result, transformed_input
+                batch, model_result, transformed_input
             )
-
-            transformed_output = self._worker.transform_output(
-                request, execute_result, self._device
+            transformed_outputs = self._worker.transform_output(
+                batch, execute_result, self._device
             )
-
-            if request.output_keys:
-                reply.output_keys = self._worker.place_output(
-                    request, transformed_output, self._feature_store
-                )
-            else:
-                reply.outputs = transformed_output.outputs
         except Exception:
             logger.exception("Error executing worker")
-            reply.failed = True
-
-        if reply.failed:
-            response = build_failure_reply("fail", "failure-occurred")
+            for reply in replies:
+                reply.failed = True
         else:
-            if reply.outputs is None or not reply.outputs:
-                response = build_failure_reply("fail", "no-results")
+            for reply_idx, (request, transformed_output) in enumerate(zip(
+                batch.requests, transformed_outputs
+            )):
+                reply = replies[reply_idx]
+                try:
+                    if request.output_keys:
+                        reply.output_keys = self._worker.place_output(
+                            request, transformed_output, self._feature_store
+                        )
+                    else:
+                        reply.outputs = transformed_output.outputs
+                except Exception:
+                    logger.exception("Error executing worker")
+                    reply.failed = True
 
-            response = build_reply(reply)
+                if reply.failed:
+                    response = build_failure_reply("fail", "failure-occurred")
+                else:
+                    if reply.outputs is None or not reply.outputs:
+                        response = build_failure_reply("fail", "no-results")
 
-        # serialized = self._worker.serialize_reply(request, transformed_output)
-        serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+                response = build_reply(reply)
 
-        if request.callback:
-            request.callback.send(serialized_resp)
+                # serialized = self._worker.serialize_reply(request, transformed_output)
+                serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+
+                if request.callback:
+                    request.callback.send(serialized_resp)
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""

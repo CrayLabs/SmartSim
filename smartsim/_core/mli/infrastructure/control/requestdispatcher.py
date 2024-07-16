@@ -26,24 +26,17 @@
 import time
 import typing as t
 import uuid
-from dataclasses import dataclass
 from queue import Empty, Full, Queue
 from threading import RLock
 from types import TracebackType
 
 from packaging.version import Version
 
-from ...infrastructure.worker.worker import InferenceRequest
+from ...infrastructure.worker.worker import InferenceBatch, InferenceRequest
 from ...mli_schemas.model.model_capnp import Model
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
-
-
-@dataclass
-class InferenceWork:
-    model_key: str
-    requests: list[InferenceRequest]
 
 
 class WorkerDevice:
@@ -214,11 +207,11 @@ class RequestDispatcher:
             self._model_last_version[model.name] = Version(model.version)
             return
 
-    def flush_requests(self) -> t.Optional[InferenceWork]:
+    def flush_requests(self) -> t.Optional[InferenceBatch]:
         result = None
         for queue in self._queues:
             if queue.acquire(blocking=False) and queue.ready:
-                result = InferenceWork(
+                result = InferenceBatch(
                     model_key=queue.model_key, requests=queue.flush()
                 )
                 queue.release()

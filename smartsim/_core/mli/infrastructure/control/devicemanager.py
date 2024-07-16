@@ -31,7 +31,7 @@ from types import TracebackType
 
 from ...infrastructure.storage.featurestore import FeatureStore
 from ..worker.worker import MachineLearningWorkerBase
-from .requestdispatcher import InferenceWork
+from .requestdispatcher import InferenceBatch
 
 
 class WorkerDevice:
@@ -67,7 +67,7 @@ class WorkerDevice:
     def get_model(self, key: str) -> t.Any:
         return self._models[key]
 
-    def __contains__(self, key: str):
+    def __contains__(self, key: str) -> bool:
         return key in self._models
 
     def __exit__(
@@ -87,18 +87,18 @@ class DeviceManager:
     def get_free_device(
         self,
         worker: MachineLearningWorkerBase,
-        inference_work: InferenceWork,
+        batch: InferenceBatch,
         feature_store: t.Optional[FeatureStore],
     ) -> t.Generator[WorkerDevice, None, None]:
         return_device = None
-        sample_request = inference_work.requests[0]
+        sample_request = batch.requests[0]
         direct_inference = sample_request.raw_model is not None
         while return_device is None:
             loaded_devices = []
             if not direct_inference:
                 # Look up devices to see if any of them already has a copy of the model
                 for device in self._devices:
-                    if inference_work.model_key in device:
+                    if batch.model_key in device:
                         loaded_devices.append(device)
 
                 # If a pre-loaded model is found on a device, try using that device
@@ -113,12 +113,12 @@ class DeviceManager:
                         candidate_device not in loaded_devices
                         and candidate_device.acquire(blocking=False)
                     ):
-                        model_bytes = worker.fetch_model(sample_request, feature_store)
+                        model_bytes = worker.fetch_model(batch, feature_store)
                         loaded_model = worker.load_model(
-                            sample_request, model_bytes, candidate_device.name
+                            batch, model_bytes, candidate_device.name
                         )
                         candidate_device.add_model(
-                            inference_work.model_key, loaded_model.model
+                            batch.model_key, loaded_model.model
                         )
 
                         return_device = candidate_device
@@ -126,5 +126,6 @@ class DeviceManager:
         try:
             yield return_device
         finally:
-            return_device.remove_model(inference_work.model_key)
+            if direct_inference:
+                return_device.remove_model(batch.model_key)
             return_device.release()
