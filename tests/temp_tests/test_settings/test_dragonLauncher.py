@@ -36,14 +36,14 @@ NOT_SET = object()
 @pytest.mark.parametrize("nodes", (NOT_SET, 20, 40))
 @pytest.mark.parametrize("tasks_per_node", (NOT_SET, 1, 20))
 def test_formatting_launch_args_into_request(
-    echo_executable_like, nodes, tasks_per_node
+    echo_executable_like, nodes, tasks_per_node, test_dir
 ):
     builder = DragonArgBuilder({})
     if nodes is not NOT_SET:
         builder.set_nodes(nodes)
     if tasks_per_node is not NOT_SET:
         builder.set_tasks_per_node(tasks_per_node)
-    req = builder.finalize(echo_executable_like, {})
+    req = builder.finalize(echo_executable_like, {}, test_dir)
 
     args = dict(
         (k, v)
@@ -54,10 +54,11 @@ def test_formatting_launch_args_into_request(
         if v is not NOT_SET
     )
     expected = DragonRunRequest(
-        exe="echo", exe_args=["hello", "world"], path="/tmp", env={}, **args
+        exe="echo", exe_args=["hello", "world"], path=test_dir, env={}, **args
     )
 
     assert req.nodes == expected.nodes
     assert req.tasks_per_node == expected.tasks_per_node
     assert req.hostlist == expected.hostlist
     assert req.pmi_enabled == expected.pmi_enabled
+    assert req.path == expected.path

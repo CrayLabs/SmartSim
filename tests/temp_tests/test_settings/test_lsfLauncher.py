@@ -91,6 +91,7 @@ def test_launch_args():
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = JsrunArgBuilder(args).finalize(echo_executable_like, {})
+def test_formatting_launch_args(echo_executable_like, args, expected, test_dir):
+    cmd, path = JsrunArgBuilder(args).finalize(echo_executable_like, {}, test_dir)
     assert tuple(cmd) == expected
+    assert path == test_dir

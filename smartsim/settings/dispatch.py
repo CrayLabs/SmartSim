@@ -156,10 +156,10 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    def start(self, launchable: t.Sequence[str]) -> LaunchedJobID:
+    def start(self, launchable: t.Sequence[str], job_execution_path: str) -> LaunchedJobID:
         id_ = create_job_id()
         exe, *rest = launchable
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest)) # can specify a different dir for Popen
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest), cwd=job_execution_path) # can specify a different dir for Popen
         return id_
 
     @classmethod
