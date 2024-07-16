@@ -97,7 +97,6 @@ class Ensemble(entity.CompoundEntity):
                 # ^^^^^^^^^^^^^^^^^^^^^^^
                 # FIXME: remove this constructor arg! It should not exist!!
                 exe_args=self.exe_args,
-                path=os.path.join(self.path, self.name),
                 files=self.files,
                 params=permutation.params,
                 params_as_args=permutation.exe_args,  # type: ignore[arg-type]
