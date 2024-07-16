@@ -34,7 +34,7 @@ from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
 
 if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger(__name__)
 
@@ -73,7 +73,7 @@ class InferenceReply:
         self,
         outputs: t.Optional[t.Collection[t.Any]] = None,
         output_keys: t.Optional[t.Collection[str]] = None,
-        status_enum: "StatusEnum" = "running",
+        status_enum: "Status" = "running",
         message: str = "In progress",
     ) -> None:
         """Initialize the object"""

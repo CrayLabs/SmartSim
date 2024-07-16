@@ -405,7 +405,7 @@ class MessageHandler:
 
     @staticmethod
     def _assign_status(
-        response: response_capnp.Response, status: "response_capnp.StatusEnum"
+        response: response_capnp.Response, status: "response_capnp.Status"
     ) -> None:
         """
         Assigns a status to the supplied response.
@@ -498,7 +498,7 @@ class MessageHandler:
 
     @staticmethod
     def build_response(
-        status: "response_capnp.StatusEnum",
+        status: "response_capnp.Status",
         message: str,
         result: t.Union[
             t.List[tensor_capnp.Tensor], t.List[data_references_capnp.TensorKey]

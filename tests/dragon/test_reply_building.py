@@ -37,7 +37,7 @@ from smartsim._core.mli.infrastructure.control.workermanager import (
 from smartsim._core.mli.infrastructure.worker.worker import InferenceReply
 
 if t.TYPE_CHECKING:
-    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -50,7 +50,7 @@ pytestmark = pytest.mark.dragon
         pytest.param("fail", "Failed while executing", id="fail"),
     ],
 )
-def test_build_failure_reply(status: "StatusEnum", message: str):
+def test_build_failure_reply(status: "Status", message: str):
     "Ensures failure replies can be built successfully"
     response = build_failure_reply(status, message)
     assert response.status == status
@@ -58,7 +58,7 @@ def test_build_failure_reply(status: "StatusEnum", message: str):
 
 
 def test_build_failure_reply_fails():
-    "Ensures ValueError is raised if a StatusEnum is not used"
+    "Ensures ValueError is raised if a Status Enum is not used"
     with pytest.raises(ValueError) as ex:
         response = build_failure_reply("not a status enum", "message")
 
@@ -71,7 +71,7 @@ def test_build_failure_reply_fails():
         pytest.param("complete", "Success", id="complete"),
     ],
 )
-def test_build_reply(status: "StatusEnum", message: str):
+def test_build_reply(status: "Status", message: str):
     "Ensures replies can be built successfully"
     reply = InferenceReply()
     reply.status_enum = status
@@ -82,7 +82,7 @@ def test_build_reply(status: "StatusEnum", message: str):
 
 
 def test_build_reply_fails():
-    "Ensures ValueError is raised if a StatusEnum is not used"
+    "Ensures ValueError is raised if a Status Enum is not used"
     with pytest.raises(ValueError) as ex:
         reply = InferenceReply()
         reply.status_enum = "not a status enum"

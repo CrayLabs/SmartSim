@@ -57,7 +57,7 @@ if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
 
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
-    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger(__name__)
 
@@ -124,7 +124,7 @@ def deserialize_message(
     return inference_request
 
 
-def build_failure_reply(status: "StatusEnum", message: str) -> Response:
+def build_failure_reply(status: "Status", message: str) -> Response:
     return MessageHandler.build_response(
         status=status,  # todo: need to indicate correct status
         message=message,  # todo: decide what these will be
