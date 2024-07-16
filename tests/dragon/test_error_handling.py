@@ -89,8 +89,7 @@ def setup_worker_manager(test_dir, monkeypatch: pytest.MonkeyPatch):
         test_dir, model, [tensor_key], [tensor_key], [], None
     )
     ser_request = MessageHandler.serialize_request(request)
-    new_sender = worker_manager._task_queue.sendh(use_main_as_stream_channel=True)
-    new_sender.send_bytes(ser_request)
+    worker_manager._task_queue.send(ser_request)
 
     return worker_manager, integrated_worker
 
@@ -163,7 +162,7 @@ def test_pipeline_stage_errors_handled(
         monkeypatch.setattr(
             integrated_worker,
             "fetch_inputs",
-            MagicMock(return_value=FetchInputResult([b"result_bytes"])),
+            MagicMock(return_value=FetchInputResult([b"result_bytes"], None)),
         )
     if stage not in ["fetch_model", "load_model", "fetch_inputs", "transform_input"]:
         monkeypatch.setattr(

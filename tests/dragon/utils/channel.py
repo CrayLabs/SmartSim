@@ -57,3 +57,7 @@ class FileSystemCommChannel(CommChannelBase):
             f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
         )
         self._file_path.write_bytes(value)
+
+    def recv(self) -> bytes:
+        """Receieve a message through the underlying communication channel
+        :returns: the received message"""
