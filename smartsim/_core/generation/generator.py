@@ -65,13 +65,12 @@ class Generator:
         :param job: Reference to a SmartSimEntity and LaunchSettings
         """
         self.job = job
+        # TODO revisit this check
         if isinstance(job, (Job, JobGroup)):
             job_type = f"{job.__class__.__name__.lower()}s"
-        # TODO in future - add FeatureStore to isinstance
-        if isinstance(job.entity, (Application)):
-            entity_type = (
-                f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-            )
+        entity_type = (
+            f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+        )
         self.path = os.path.join(
             gen_path,
             run_ID,
@@ -112,7 +111,7 @@ class Generator:
         """
         return join(self.path, "smartsim_params.txt")
 
-    def generate_experiment(self) -> None:
+    def generate_experiment(self) -> str:
         """Run ensemble and experiment file structure generation
 
         Generate the file structure for a SmartSim experiment. This
@@ -149,6 +148,7 @@ class Generator:
         # if isinstance(Application, type(self.job.entity)):
         #     file_operation_list = self.build_operations()
         #     self.execute_file_operations(file_operation_list)
+        return self.path
 
     def execute_file_operations(
         self, file_ops: t.Sequence[t.Sequence[str]]

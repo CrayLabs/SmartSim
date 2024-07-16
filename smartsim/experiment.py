@@ -210,7 +210,7 @@ class Experiment:
             #       Why is `Job` not generic based on launch arg builder?
             # ---------------------------------------------------------------------
             exe_like = t.cast("ExecutableLike", job.entity)
-            finalized = builder.finalize(exe_like, job.launch_settings.env_vars)
+            finalized = builder.finalize(exe_like, job.launch_settings.env_vars, job_execution_path)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             return launcher.start(finalized)
 

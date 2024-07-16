@@ -159,7 +159,7 @@ class ShellLauncher:
     def start(self, launchable: t.Sequence[str]) -> LaunchedJobID:
         id_ = create_job_id()
         exe, *rest = launchable
-        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
+        self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest)) # can specify a different dir for Popen
         return id_
 
     @classmethod
