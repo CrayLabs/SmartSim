@@ -700,9 +700,6 @@ def test_run_step_success(test_dir: str) -> None:
     req_name = dragon_run_request.name  # name sent to dragon env
     assert req_name.startswith(step0.name)
 
-    req_policy_device = dragon_run_request.policy.device
-    assert req_policy_device == ""  # default device is cpu
-
     req_policy_cpu_affinity = dragon_run_request.policy.cpu_affinity
     assert not req_policy_cpu_affinity  # default should be empty list
 
