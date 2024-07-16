@@ -48,6 +48,12 @@ def move(parsed_args: argparse.Namespace) -> None:
         /absolute/file/source/path: File or directory to be moved
         /absolute/file/dest/path: Path to a file or directory location
     """
+    if not os.path.isabs(parsed_args.source):
+        raise ValueError(f"path {parsed_args.source} must be absolute")
+
+    if not os.path.isabs(parsed_args.dest):
+        raise ValueError(f"path {parsed_args.dest} must be absolute")
+
     shutil.move(parsed_args.source, parsed_args.dest)
 
 
@@ -60,6 +66,9 @@ def remove(parsed_args: argparse.Namespace) -> None:
 
         /absolute/file/path: Path to the file or directory to be deleted
     """
+    if not os.path.isabs(parsed_args.to_remove):
+        raise ValueError(f"path {parsed_args.to_remove} must be absolute")
+
     if os.path.isdir(parsed_args.to_remove):
         os.rmdir(parsed_args.to_remove)
     else:
@@ -79,6 +88,12 @@ def copy(parsed_args: argparse.Namespace) -> None:
         /absolute/file/dest/path: Path to destination directory or path to
             destination file
     """
+    if not os.path.isabs(parsed_args.source):
+        raise ValueError(f"path {parsed_args.source} must be absolute")
+
+    if not os.path.isabs(parsed_args.dest):
+        raise ValueError(f"path {parsed_args.dest} must be absolute")
+
     if os.path.isdir(parsed_args.source):
         dir_util.copy_tree(parsed_args.source, parsed_args.dest)
     else:
@@ -97,12 +112,18 @@ def symlink(parsed_args: argparse.Namespace) -> None:
         /absolute/file/source/path: the exisiting source path
         /absolute/file/dest/path: target name where the symlink will be created.
     """
+    if not os.path.isabs(parsed_args.source):
+        raise ValueError(f"path {parsed_args.source} must be absolute")
+
+    if not os.path.isabs(parsed_args.dest):
+        raise ValueError(f"path {parsed_args.dest} must be absolute")
+
     os.symlink(parsed_args.source, parsed_args.dest)
 
 
 def configure(parsed_args: argparse.Namespace) -> None:
-    """Write a python script to set, search and replace the tagged parameters
-    for the configure operation within tagged files attached to an entity.
+    """Set, search and replace the tagged parameters for the
+    configure operation within tagged files attached to an entity.
 
     User-formatted files can be attached using the `configure` argument.
     These files will be modified during ``Application`` generation to replace
@@ -115,13 +136,19 @@ def configure(parsed_args: argparse.Namespace) -> None:
 
         /absolute/file/source/path: The tagged files the search and replace operations
         to be performed upon
-        /absolute/file/dest/path: Optional destination for configured files to be
+        /absolute/file/dest/path: The destination for configured files to be
         written to.
         tag_delimiter: tag for the configure operation to search for, defaults to
             semi-colon e.g. ";"
         param_dict: A dict of parameter names and values set for the file
 
     """
+    if not os.path.isabs(parsed_args.source):
+        raise ValueError(f"path {parsed_args.source} must be absolute")
+
+    if not os.path.isabs(parsed_args.dest):
+        raise ValueError(f"path {parsed_args.dest} must be absolute")
+
     tag_delimiter = ";"
     if parsed_args.tag_delimiter:
         tag_delimiter = parsed_args.tag_delimiter
@@ -206,6 +233,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # Subparser for remove op
     remove_parser = subparsers.add_parser("remove")
+    remove_parser.set_defaults(func=remove)
     remove_parser.add_argument("to_remove", type=str)
 
     # Subparser for copy op

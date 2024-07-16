@@ -99,6 +99,30 @@ def test_symlink_dir(test_dir):
     os.rmdir(pathlib.Path(test_dir) / "sym_source")
 
 
+def test_symlink_not_absolute(test_dir):
+    """Test that ValueError is raised when a relative path
+    is given to the symlink operation
+    """
+    # Set source directory and file
+    source = pathlib.Path(test_dir) / "sym_source"
+    os.mkdir(source)
+    source_file = source / "sym_source.txt"
+    with open(source_file, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy")
+
+    # Set path to be the destination directory
+    entity_path = ".."
+
+    parser = get_parser()
+    cmd = f"symlink {source_file} {entity_path}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    with pytest.raises(ValueError) as ex:
+        file_operations.symlink(ns)
+    assert f"path {entity_path} must be absolute" in ex.value.args
+
+
 def test_copy_op_file(test_dir):
     """Test the operation to copy the content of the source file to the destination path
     with an empty file of the same name already in the directory"""
@@ -200,7 +224,7 @@ def test_copy_op_bad_source_file(test_dir):
 
     with pytest.raises(FileNotFoundError) as ex:
         file_operations.copy(ns)
-    assert f"No such file or directory" in ex.value.args
+    assert "No such file or directory" in ex.value.args
 
     # Clean up
     os.rmdir(pathlib.Path(test_dir) / "to_copy")
@@ -228,7 +252,35 @@ def test_copy_op_bad_dest_path(test_dir):
 
     with pytest.raises(FileNotFoundError) as ex:
         file_operations.copy(ns)
-    assert f"No such file or directory" in ex.value.args
+    assert "No such file or directory" in ex.value.args
+
+    # clean up
+    os.remove(pathlib.Path(to_copy) / "copy_file.txt")
+    os.rmdir(pathlib.Path(test_dir) / "to_copy")
+    os.rmdir(pathlib.Path(test_dir) / "entity_name")
+
+
+def test_copy_not_absolute(test_dir):
+
+    to_copy = os.path.join(test_dir, "to_copy")
+    os.mkdir(to_copy)
+
+    source_file = pathlib.Path(to_copy) / "copy_file.txt"
+    with open(source_file, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy1")
+    entity_path = os.path.join(test_dir, "entity_name")
+    os.mkdir(entity_path)
+
+    bad_path = ".."
+
+    parser = get_parser()
+    cmd = f"copy {source_file} {bad_path}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    with pytest.raises(ValueError) as ex:
+        file_operations.copy(ns)
+    assert f"path {bad_path} must be absolute" in ex.value.args
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -244,7 +296,6 @@ def test_move_op(test_dir):
     dest_dir = os.path.join(test_dir, "to_here")
     os.mkdir(dest_dir)
 
-    # dest_file = os.path.join(test_output_root, "to_here", "to_here.txt")
     dest_file = pathlib.Path(dest_dir) / "to_here.txt"
     with open(dest_file, "w+", encoding="utf-8") as dummy_file:
         dummy_file.write(" ")
@@ -274,6 +325,31 @@ def test_move_op(test_dir):
     os.rmdir(source_dir)
     os.remove(dest_file)
     os.rmdir(dest_dir)
+
+
+def test_move_not_absolute(test_dir):
+    """Test that a ValueError is raised when a relative
+    path is given to the move operation"""
+
+    source_dir = os.path.join(test_dir, "from_here")
+    os.mkdir(source_dir)
+    dest_dir = os.path.join(test_dir, "to_here")
+    os.mkdir(dest_dir)
+
+    dest_file = ".."
+
+    source_file = pathlib.Path(source_dir) / "app_move.txt"
+    with open(source_file, "w+", encoding="utf-8") as dummy_file:
+        dummy_file.write("dummy")
+
+    parser = get_parser()
+    cmd = f"move {source_file} {dest_file}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    with pytest.raises(ValueError) as ex:
+        file_operations.move(ns)
+    assert f"path {dest_file} must be absolute" in ex.value.args
 
 
 def test_remove_op_file(test_dir):
@@ -319,7 +395,7 @@ def test_remove_op_dir(test_dir):
 
 def test_remove_op_bad_path(test_dir):
     """Test that FileNotFoundError is raised when a bad path is given to the
-    soperation to delete a file"""
+    operation to delete a file"""
 
     to_del = pathlib.Path(test_dir) / "not_real.txt"
 
@@ -330,7 +406,23 @@ def test_remove_op_bad_path(test_dir):
 
     with pytest.raises(FileNotFoundError) as ex:
         file_operations.remove(ns)
-    assert f"No such file or directory" in ex.value.args
+    assert "No such file or directory" in ex.value.args
+
+
+def test_remove_op_no_absolute():
+    """Test that ValueError is raised when a relative path
+    is given to the operation to delete a file"""
+
+    to_del = ".."
+
+    parser = get_parser()
+    cmd = f"remove {to_del}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    with pytest.raises(ValueError) as ex:
+        file_operations.remove(ns)
+    assert f"path {to_del} must be absolute" in ex.value.args
 
 
 @pytest.mark.parametrize(
@@ -399,6 +491,29 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
     if error_type == "None":
         for written, correct in zip(tagged_files, correct_files):
             assert filecmp.cmp(written, correct)
+
+
+def test_configure_not_absolute():
+    """Test that ValueError is raised when tagged files
+    given to configure op are not absolute paths
+    """
+
+    tagged_file = ".."
+    tag = ";"
+    param_dict = {"5": 10}
+    # Pickle the dictionary
+    pickled_dict = pickle.dumps(param_dict)
+
+    # Encode the pickled dictionary with Base64
+    encoded_dict = base64.b64encode(pickled_dict)
+    parser = get_parser()
+    cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    with pytest.raises(ValueError) as ex:
+        file_operations.move(ns)
+    assert f"path {tagged_file} must be absolute" in ex.value.args
 
 
 def test_parser_move():
