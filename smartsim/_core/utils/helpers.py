@@ -74,7 +74,7 @@ def unpack_colo_fs_identifier(fs_id: str) -> str:
     return "_" + fs_id if fs_id else ""
 
 
-def create_short_id_str() -> str:
+def create_short_id_str() -> str:  # here
     return str(uuid.uuid4())[:7]
 
 
