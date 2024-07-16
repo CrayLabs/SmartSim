@@ -61,3 +61,4 @@ class FileSystemCommChannel(CommChannelBase):
     def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
+        ...
