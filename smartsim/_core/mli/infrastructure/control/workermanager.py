@@ -171,9 +171,7 @@ def build_reply(reply: InferenceReply) -> Response:
 
 
 def exception_handler(
-    exc: Exception,
-    reply_channel: t.Optional[CommChannelBase],
-    failure_message: str
+    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
 ) -> None:
     """
     Logs exceptions, sets reply attributes, and sends the
@@ -189,7 +187,7 @@ def exception_handler(
         f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
-    response = build_failure_reply('fail', failure_message)
+    response = build_failure_reply("fail", failure_message)
     serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
     if reply_channel:
         reply_channel.send(serialized_resp)
@@ -349,14 +347,18 @@ class WorkerManager(Service):
                     request, self._feature_store
                 )
             except Exception as e:
-                exception_handler(e, request.callback, "Failed while fetching the model.")
+                exception_handler(
+                    e, request.callback, "Failed while fetching the model."
+                )
                 return
             try:
                 model_result = self._worker.load_model(
                     request, fetch_result=fetch_model_result, device=self._device
                 )
             except Exception as e:
-                exception_handler(e, request.callback, "Failed while loading the model.")
+                exception_handler(
+                    e, request.callback, "Failed while loading the model."
+                )
                 return
 
         timings.append(time.perf_counter() - interm)  # timing
@@ -374,7 +376,9 @@ class WorkerManager(Service):
                 request, fetch_input_result, self._device
             )
         except Exception as e:
-            exception_handler(e, request.callback, "Failed while transforming the input.")
+            exception_handler(
+                e, request.callback, "Failed while transforming the input."
+            )
             return
 
         timings.append(time.perf_counter() - interm)  # timing
@@ -395,7 +399,9 @@ class WorkerManager(Service):
                 request, execute_result, self._device
             )
         except Exception as e:
-            exception_handler(e, request.callback, "Failed while transforming the output.")
+            exception_handler(
+                e, request.callback, "Failed while transforming the output."
+            )
             return
 
         timings.append(time.perf_counter() - interm)  # timing
@@ -408,7 +414,9 @@ class WorkerManager(Service):
                     self._feature_store,
                 )
             except Exception as e:
-                exception_handler(e, request.callback, "Failed while placing the output.")
+                exception_handler(
+                    e, request.callback, "Failed while placing the output."
+                )
                 return
         else:
             reply.outputs = transformed_output.outputs
