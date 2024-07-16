@@ -186,7 +186,7 @@ def exception_handler(
     """
     logger.exception(
         f"{failure_message}.\n"
-        f"Exception type: {type(exc).__name__}.\n"
+        f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
     response = build_failure_reply('fail', failure_message)
