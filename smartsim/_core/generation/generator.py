@@ -68,9 +68,7 @@ class Generator:
         # TODO revisit this check
         if isinstance(job, (Job, JobGroup)):
             job_type = f"{job.__class__.__name__.lower()}s"
-        entity_type = (
-            f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-        )
+        entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
         self.path = os.path.join(
             gen_path,
             run_ID,

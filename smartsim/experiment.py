@@ -28,13 +28,13 @@
 
 from __future__ import annotations
 
+import datetime
 import itertools
 import os
 import os.path as osp
 import textwrap
 import typing as t
 from os import environ, getcwd
-import datetime
 
 from tabulate import tabulate
 
@@ -171,7 +171,12 @@ class Experiment:
             exp_path = osp.join(getcwd(), name)
 
         self.exp_path = exp_path
-        self.run_ID = "run-" + datetime.datetime.now().strftime("%H:%M:%S") + "-" + datetime.datetime.now().strftime("%Y-%m-%d")
+        self.run_ID = (
+            "run-"
+            + datetime.datetime.now().strftime("%H:%M:%S")
+            + "-"
+            + datetime.datetime.now().strftime("%Y-%m-%d")
+        )
 
         # TODO: Remove this! The contoller is becoming obsolete
         self._control = Controller(launcher="local")
@@ -210,7 +215,9 @@ class Experiment:
             #       Why is `Job` not generic based on launch arg builder?
             # ---------------------------------------------------------------------
             exe_like = t.cast("ExecutableLike", job.entity)
-            finalized = builder.finalize(exe_like, job.launch_settings.env_vars, job_execution_path)
+            finalized = builder.finalize(
+                exe_like, job.launch_settings.env_vars, job_execution_path
+            )
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             return launcher.start(finalized)
 
