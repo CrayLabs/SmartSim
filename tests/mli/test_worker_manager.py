@@ -29,10 +29,11 @@ import logging
 import multiprocessing as mp
 import pathlib
 import time
+import typing as t
 
 import pytest
+import torch
 
-torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
 from smartsim._core.mli.infrastructure.control.workermanager import (

@@ -46,8 +46,7 @@ class Service(ABC):
         :param as_service: Determines if the host will run until shutdown criteria
         are met or as a run-once instance
         :param cooldown: Period of time to allow service to run before automatic
-        shutdown, in seconds. A non-zero, positive integer.
-        :param loop_delay: delay between iterations of the event loop"""
+        shutdown, in seconds. A non-zero, positive integer."""
         self._as_service = as_service
         """If the service should run until shutdown function returns True"""
         self._cooldown = abs(cooldown)
@@ -102,23 +101,6 @@ class Service(ABC):
 
         running = True
         cooldown_start: t.Optional[datetime.datetime] = None
-
-        headers = [
-            "batch_size",
-            "w_deserialize",
-            "w_fetch_model",
-            "w_load_model",
-            "w_fetch_input",
-            "w_transform_input",
-            "w_execute",
-            "w_transform_output",
-            "w_assign_output",
-            "w_build_reply",
-            "w_serialize_resp",
-            "w_send",
-        ]
-
-        print(",".join(headers))
 
         while running:
             self._on_iteration()

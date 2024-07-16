@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import typing as t
 from abc import ABC, abstractmethod
 
 
@@ -33,12 +32,12 @@ class FeatureStore(ABC):
     values from a feature store implementation"""
 
     @abstractmethod
-    def __getitem__(self, key: str) -> t.Union[str, bytes]:
+    def __getitem__(self, key: str) -> bytes:
         """Retrieve an item using key
         :param key: Unique key of an item to retrieve from the feature store"""
 
     @abstractmethod
-    def __setitem__(self, key: str, value: t.Union[str, bytes]) -> None:
+    def __setitem__(self, key: str, value: bytes) -> None:
         """Assign a value using key
         :param key: Unique key of an item to set in the feature store
         :param value: Value to persist in the feature store"""
