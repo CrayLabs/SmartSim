@@ -24,24 +24,34 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import multiprocessing as mp
+import sys
+
+# isort: off
+import dragon
+from dragon import fli
+
+# isort: on
+
+import time
 import typing as t
 
 import numpy as np
 
-from smartsim._core.entrypoints.service import Service
-from smartsim._core.mli.comm.channel.channel import CommChannelBase
-from smartsim._core.mli.comm.channel.dragonchannel import DragonCommChannel
-from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
-from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
-from smartsim._core.mli.infrastructure.worker.worker import (
+from .....error import SmartSimError
+from .....log import get_logger
+from ....entrypoints.service import Service
+from ...comm.channel.channel import CommChannelBase
+from ...comm.channel.dragonchannel import DragonCommChannel
+from ...infrastructure.environmentloader import EnvironmentConfigLoader
+from ...infrastructure.storage.featurestore import FeatureStore
+from ...infrastructure.worker.worker import (
     InferenceReply,
     InferenceRequest,
+    LoadModelResult,
     MachineLearningWorkerBase,
 )
-from smartsim._core.mli.message_handler import MessageHandler
-from smartsim._core.mli.mli_schemas.response.response_capnp import Response
-from smartsim.log import get_logger
+from ...message_handler import MessageHandler
+from ...mli_schemas.response.response_capnp import Response
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
@@ -53,7 +63,9 @@ logger = get_logger(__name__)
 
 
 def deserialize_message(
-    data_blob: bytes, channel_type: t.Type[CommChannelBase]
+    data_blob: bytes,
+    channel_type: t.Type[CommChannelBase],
+    device: t.Literal["cpu", "gpu"],
 ) -> InferenceRequest:
     """Deserialize a message from a byte stream into an InferenceRequest
     :param data_blob: The byte stream to deserialize"""
@@ -88,12 +100,6 @@ def deserialize_message(
     )
     output_keys: t.Optional[t.List[str]] = None
 
-    # # client example
-    # msg = Message()
-    # t = torch.Tensor()
-    # msg.inputs = [custom_byte_converter(t)]
-    # mli_client.request_inference(msg)
-    # # end client
     input_meta: t.List[t.Any] = []
 
     if request.input.which() == "keys":
@@ -203,6 +209,7 @@ class WorkerManager(Service):
         as_service: bool = False,
         cooldown: int = 0,
         comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
+        device: t.Literal["cpu", "gpu"] = "cpu",
     ) -> None:
         """Initialize the WorkerManager
         :param config_loader: Environment config loader that loads the task queue and
@@ -215,8 +222,7 @@ class WorkerManager(Service):
         """
         super().__init__(as_service, cooldown)
 
-        """a collection of workers the manager is controlling"""
-        self._task_queue: t.Optional["FLInterface"] = config_loader.get_queue()
+        self._task_queue: t.Optional[CommChannelBase] = config_loader.get_queue()
         """the queue the manager monitors for new tasks"""
         self._feature_store: t.Optional[FeatureStore] = (
             config_loader.get_feature_store()
@@ -226,6 +232,10 @@ class WorkerManager(Service):
         """The ML Worker implementation"""
         self._comm_channel_type = comm_channel_type
         """The type of communication channel to construct for callbacks"""
+        self._device = device
+        """Device on which workers need to run"""
+        self._cached_models: dict[str, t.Any] = {}
+        """Dictionary of previously loaded models"""
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -267,13 +277,70 @@ class WorkerManager(Service):
             logger.warning("No queue to check for tasks")
             return
 
+        timings = []  # timing
         # perform default deserialization of the message envelope
+        request_bytes: bytes = self._task_queue.recv()
         receiver = self._task_queue.recvh(use_main_as_stream_channel=True)
         request_bytes, _ = receiver.recv_bytes()
 
-        request = deserialize_message(request_bytes, self._comm_channel_type)
+        interm = time.perf_counter()  # timing
+        request = deserialize_message(
+            request_bytes, self._comm_channel_type, self._device
+        )
         if not self._validate_request(request):
             return
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+
+        if not request.raw_model:
+            if request.model_key is None:
+                # A valid request should never get here.
+                raise ValueError("Could not read model key")
+            if request.model_key in self._cached_models:
+                timings.append(time.perf_counter() - interm)  # timing
+                interm = time.perf_counter()  # timing
+                model_result = LoadModelResult(self._cached_models[request.model_key])
+
+            else:
+                fetch_model_result = None
+                while True:
+                    try:
+                        interm = time.perf_counter()  # timing
+                        fetch_model_result = self._worker.fetch_model(
+                            request, self._feature_store
+                        )
+                    except KeyError:
+                        time.sleep(0.1)
+                    else:
+                        break
+
+                if fetch_model_result is None:
+                    raise SmartSimError("Could not retrieve model from feature store")
+                timings.append(time.perf_counter() - interm)  # timing
+                interm = time.perf_counter()  # timing
+                model_result = self._worker.load_model(
+                    request, fetch_model_result, self._device
+                )
+                self._cached_models[request.model_key] = model_result.model
+        else:
+            fetch_model_result = self._worker.fetch_model(request, None)
+            model_result = self._worker.load_model(
+                request, fetch_result=fetch_model_result, device=self._device
+            )
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+        fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+        transformed_input = self._worker.transform_input(
+            request, fetch_input_result, self._device
+        )
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
 
         reply = InferenceReply()
 
@@ -307,16 +374,19 @@ class WorkerManager(Service):
             execute_result = self._worker.execute(
                 request, model_result, transformed_input
             )
-        except Exception as e:
-            exception_handler(e, request.callback, "executing", reply)
-            return
 
         try:
-            transformed_output = self._worker.transform_output(request, execute_result)
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
+            transformed_output = self._worker.transform_output(
+                request, execute_result, self._device
+            )
         except Exception as e:
             exception_handler(e, request.callback, "transforming the output", reply)
             return
 
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
         if request.output_keys:
             try:
                 reply.output_keys = self._worker.place_output(
@@ -330,6 +400,15 @@ class WorkerManager(Service):
         else:
             reply.outputs = transformed_output.outputs
 
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+
+        if reply.outputs is None or not reply.outputs:
+            response = build_failure_reply("fail", "Outputs not found.")
+
+        else:
+            reply.outputs = transformed_output.outputs
+
         if reply.outputs is None or not reply.outputs:
             response = build_failure_reply("fail", "Outputs not found.")
 
@@ -338,9 +417,20 @@ class WorkerManager(Service):
             reply.message = "Success"
             response = build_reply(reply)
 
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+
         serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
         if request.callback:
             request.callback.send(serialized_resp)
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+
+        print(" ".join(str(time) for time in timings))  # timing
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""
