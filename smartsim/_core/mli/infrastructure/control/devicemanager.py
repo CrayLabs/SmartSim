@@ -105,6 +105,7 @@ class DeviceManager:
                 for device in loaded_devices:
                     if device.acquire(blocking=False):
                         return_device = device
+                        break
 
             # If the model is not loaded on a free device, load it on another device (if available)
             if return_device is None:

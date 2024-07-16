@@ -37,7 +37,6 @@ from .worker import (
     FetchInputResult,
     FetchModelResult,
     InferenceBatch,
-    InferenceRequest,
     LoadModelResult,
     MachineLearningWorkerBase,
     TransformInputResult,
@@ -79,7 +78,7 @@ class TorchWorker(MachineLearningWorkerBase):
 
         device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
         for old, new in device_to_torch.items():
-            device.replace(old, new)
+            device = device.replace(old, new)
 
         for fetch_result in fetch_results:
             partial_result = []
@@ -98,10 +97,13 @@ class TorchWorker(MachineLearningWorkerBase):
             start = start + num_samples
 
         result: list[torch.Tensor] = []
-        for t_idx in range(len(results[0])):
-            result.append(
-                torch.concatenate([partial_result[t_idx] for partial_result in results])
-            )
+        if len(batch.requests) > 1:
+            for t_idx in range(len(results[0])):
+                result.append(
+                    torch.concatenate([partial_result[t_idx] for partial_result in results])
+                )
+        else:
+            result = results[0]
 
         return TransformInputResult(result, slices)
         # return data # note: this fails copy test!

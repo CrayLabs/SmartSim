@@ -198,6 +198,7 @@ class MachineLearningWorkerCore:
                 fetch_results.append(
                     FetchInputResult(request.raw_inputs, request.input_meta)
                 )
+                continue
 
             if not feature_store:
                 raise ValueError("No input and no feature store provided")
@@ -216,6 +217,7 @@ class MachineLearningWorkerCore:
                 fetch_results.append(
                     FetchInputResult(data, None)
                 )  # fixme: need to get both tensor and descriptor
+                continue
 
             raise ValueError("No input source")
 

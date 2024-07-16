@@ -32,12 +32,14 @@ from types import TracebackType
 
 from packaging.version import Version
 
+from .....log import get_logger
 from ...infrastructure.worker.worker import InferenceBatch, InferenceRequest
 from ...mli_schemas.model.model_capnp import Model
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
 
+logger = get_logger("Request Dispatcher")
 
 class WorkerDevice:
     def __init__(self, name: str) -> None:
@@ -78,6 +80,11 @@ class BatchQueue(Queue[InferenceRequest]):
         self._disposable = False
         self._model_key = model_key
         self._flush_lock = RLock()
+        self._id = str(uuid.uuid4())
+
+    @property
+    def id(self):
+        return self._id
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
         return self._flush_lock.acquire(blocking=blocking, timeout=timeout)
@@ -106,11 +113,17 @@ class BatchQueue(Queue[InferenceRequest]):
         block: bool = False,
         timeout: t.Optional[float] = 0.0,
     ) -> None:
-        if not self.acquire(blocking=False) or self.disposable:
+        if not self.acquire(blocking=False):
+            logger.error(f"Could not acquire queue {self._id} to put")
             raise Full
-        if self._first_put is None:
-            self._first_put = time.time()
-        super().put(item, block=block, timeout=timeout)
+        try:
+            if self.full():
+                raise Full
+            if self._first_put is None:
+                self._first_put = time.time()
+            super().put(item, block=block, timeout=timeout)
+        finally:
+            self.release()
 
     @property
     def _waited_time(self) -> float:
@@ -146,6 +159,10 @@ class BatchQueue(Queue[InferenceRequest]):
         return items
 
     def full(self) -> bool:
+        if self._disposable:
+            return True
+        if self._batch_size <= 0:
+            return False
         return self.qsize() >= self._batch_size
 
     def empty(self) -> bool:
@@ -158,7 +175,7 @@ class RequestDispatcher:
         batch_timeout: float,
         batch_size: int,
     ) -> None:
-        self._queues: list[BatchQueue]
+        self._queues: list[BatchQueue] = []
         self._active_queues: dict[str, BatchQueue] = {}
         self._model_last_version: dict[str, Version] = {}
         self._model_name_to_key: dict[str, str] = {}
@@ -170,15 +187,19 @@ class RequestDispatcher:
         with self._queue_swap_lock:
             for queue in self._queues:
                 if queue.model_key == model_key and not queue.full():
+                    logger.info("Found queue, swapping")
                     self._active_queues[model_key] = queue
                     return
 
+            logger.info("Creating new queue")
             new_queue = BatchQueue(self._batch_timeout, self._batch_size, model_key)
+            self._queues.append(new_queue)
             self._active_queues[model_key] = new_queue
             return
 
     def dispatch(self, request: InferenceRequest) -> None:
         if request.raw_model is not None:
+            logger.info("Direct inference requested, creating tmp queue")
             tmp_id = f"_tmp_{str(uuid.uuid4())}"
             tmp_queue: BatchQueue = BatchQueue(
                 batch_timeout=0, batch_size=1, model_key=tmp_id
@@ -189,12 +210,14 @@ class RequestDispatcher:
             return
 
         if request.model_key:
+            logger.info("Indirect inference requested, dispatching it to existing queue")
             success = False
             while not success:
                 try:
                     self._active_queues[request.model_key].put_nowait(request)
                     success = True
                 except (Full, KeyError):
+                    logger.info("Could not find non-full queue, swapping")
                     self._swap_queue(request.model_key)
 
     def _update_model_version(self, model: Model) -> None:
@@ -210,11 +233,15 @@ class RequestDispatcher:
     def flush_requests(self) -> t.Optional[InferenceBatch]:
         result = None
         for queue in self._queues:
-            if queue.acquire(blocking=False) and queue.ready:
-                result = InferenceBatch(
-                    model_key=queue.model_key, requests=queue.flush()
-                )
-                queue.release()
+            # logger.info("Acquiring queue to flush")
+            if queue.ready and queue.acquire(blocking=False):
+                try:
+                    logger.info(f"Acquired queue {queue.id}")
+                    result = InferenceBatch(
+                        model_key=queue.model_key, requests=queue.flush()
+                    )
+                finally:
+                    queue.release()
                 break
 
         return result
