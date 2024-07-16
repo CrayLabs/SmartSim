@@ -212,7 +212,7 @@ setup(
         "pyzmq>=25.1.2",
         "pygithub>=2.3.0",
         "numpy<2",
-	"smartredis<=0.5.3,
+	    "smartredis<=0.5.3",
     ],
     cmdclass={
         "build_py": SmartSimBuild,
