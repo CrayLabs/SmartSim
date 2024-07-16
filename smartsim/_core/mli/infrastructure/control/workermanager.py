@@ -183,7 +183,7 @@ def exception_handler(
     :param reply: InferenceReply to modify
     """
     logger.exception(
-        f"{failure_message}.\n"
+        f"{failure_message}\n"
         f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
