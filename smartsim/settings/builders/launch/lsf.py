@@ -126,7 +126,7 @@ class JsrunArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
         exe: ExecutableLike,
         env: t.Mapping[str, str | None],
         job_execution_path: str,
-    ) -> t.Sequence[str]:
+    ) -> t.Tuple[t.Sequence[str], str]:
         return (
             "jsrun",
             *(self.format_launch_args() or ()),

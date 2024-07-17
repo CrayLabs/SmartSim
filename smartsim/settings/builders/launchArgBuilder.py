@@ -59,7 +59,7 @@ class LaunchArgBuilder(ABC, t.Generic[_T]):
         """Set the launch arguments"""
 
     @abstractmethod
-    def finalize(self, exe: ExecutableLike, env: t.Mapping[str, str | None]) -> _T:
+    def finalize(self, exe: ExecutableLike, env: t.Mapping[str, str | None], job_execution_path: str) -> t.Tuple[t.Sequence[str], str]:
         """Prepare an entity for launch using the built options"""
 
     def format_launch_args(self) -> t.Union[t.List[str], None]:

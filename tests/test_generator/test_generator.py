@@ -22,7 +22,6 @@ class NoOpLauncher:
     def start(self, _):
         return "anything"
 
-
 class EchoApp:
     def as_program_arguments(self):
         return ["echo", "Hello", "World!"]
@@ -105,6 +104,5 @@ def test_generate_ensemble_directory(test_dir, wlmutils):
     for job in job_list:
         run_ID = "temp_run"
         gen = Generator(gen_path=test_dir, run_ID=run_ID, job=job)
-        print(gen.path)
-        
-    
+        gen.generate_experiment()
+        assert osp.isdir(gen.path)

@@ -171,7 +171,7 @@ class Generator:
         :return: A list of lists containing file system operations.
         """
         application_files = self.job.entity.files
-        file_operation_list = []
+        file_operation_list: t.List[t.Sequence[str]] = []
         # Generate copy file system operations
         file_operation_list.extend(
             self._get_copy_file_system_operation(file_copy)
@@ -189,7 +189,7 @@ class Generator:
         )
         return file_operation_list
 
-    def _write_tagged_entity_files(self, entity: Application) -> None:
+    def _write_tagged_entity_files(self, configure_file: str) -> t.Sequence[str]:
         """Read, configure and write the tagged input files for
            a Application instance within an ensemble. This function
            specifically deals with the tagged files attached to
@@ -197,38 +197,39 @@ class Generator:
 
         :param entity: a Application instance
         """
-        if entity.files:
-            to_write = []
+        # if entity.files:
+        #     to_write = []
 
-            def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
-                """Using a TaggedFileHierarchy, reproduce the tagged file
-                directory structure
+        #     def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
+        #         """Using a TaggedFileHierarchy, reproduce the tagged file
+        #         directory structure
 
-                :param tagged: a TaggedFileHierarchy to be built as a
-                               directory structure
-                """
-                for file in tagged.files:
-                    dst_path = path.join(entity.path, tagged.base, path.basename(file))
-                    shutil.copyfile(file, dst_path)
-                    to_write.append(dst_path)
+        #         :param tagged: a TaggedFileHierarchy to be built as a
+        #                        directory structure
+        #         """
+        #         for file in tagged.files:
+        #             dst_path = path.join(entity.path, tagged.base, path.basename(file))
+        #             shutil.copyfile(file, dst_path)
+        #             to_write.append(dst_path)
 
-                for tagged_dir in tagged.dirs:
-                    mkdir(
-                        path.join(
-                            entity.path, tagged.base, path.basename(tagged_dir.base)
-                        )
-                    )
-                    _build_tagged_files(tagged_dir)
+        #         for tagged_dir in tagged.dirs:
+        #             mkdir(
+        #                 path.join(
+        #                     entity.path, tagged.base, path.basename(tagged_dir.base)
+        #                 )
+        #             )
+        #             _build_tagged_files(tagged_dir)
 
-            if entity.files.tagged_hierarchy:
-                _build_tagged_files(entity.files.tagged_hierarchy)
+        #     if entity.files.tagged_hierarchy:
+        #         _build_tagged_files(entity.files.tagged_hierarchy)
 
-            # write in changes to configurations
-            if isinstance(entity, Application):
-                files_to_params = self._writer.configure_tagged_application_files(
-                    to_write, entity.params
-                )
-                self._log_params(entity, files_to_params)
+        #     # write in changes to configurations
+        #     if isinstance(entity, Application):
+        #         files_to_params = self._writer.configure_tagged_application_files(
+        #             to_write, entity.params
+        #         )
+        #         self._log_params(entity, files_to_params)
+        return ["temporary", "config"]
 
     # TODO replace with entrypoint operation
     @staticmethod

@@ -326,7 +326,7 @@ class SlurmArgBuilder(LaunchArgBuilder[t.Sequence[str]]):
         exe: ExecutableLike,
         env: t.Mapping[str, str | None],
         job_execution_path: str,
-    ) -> t.Sequence[str]:
+    ) -> t.Tuple[t.Sequence[str], str]:
         return (
             "srun",
             *(self.format_launch_args() or ()),
