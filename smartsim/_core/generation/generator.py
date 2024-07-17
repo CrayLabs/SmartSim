@@ -151,12 +151,13 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-        # TODO currently will always be true until FeatureStore impl
+        # TODO update this to execute the file operations when entrypoint is merged in
         # if isinstance(Application, type(self.job.entity)):
         #     file_operation_list = self.build_operations()
         #     self.execute_file_operations(file_operation_list)
         return self.path
 
+    # TODO update this to execute the file operations when entrypoint is merged in
     def execute_file_operations(
         self, file_ops: t.Sequence[t.Sequence[str]]
     ) -> None: ...
@@ -189,6 +190,7 @@ class Generator:
         )
         return file_operation_list
 
+    # TODO update this to execute the file operations when entrypoint is merged in
     def _write_tagged_entity_files(self, configure_file: str) -> t.Sequence[str]:
         """Read, configure and write the tagged input files for
            a Application instance within an ensemble. This function
