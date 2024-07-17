@@ -29,10 +29,10 @@ Detailed Notes
   to code scanning tools. Direct dependencies now appear directly
   in the setup call and the definition of the SmartRedis version
   has been removed
-  ([SmartSim-PR627](https://github.com/CrayLabs/SmartSim/pull/627))
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
 - The separate definition of dependencies for the docs in
   requirements-doc.txt is now defined as an extra.
-  ([SmartSim-PR627](https://github.com/CrayLabs/SmartSim/pull/627))
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
 - The new major version release of Numpy is incompatible with modules
   compiled against Numpy 1.x. For both SmartSim and SmartRedis we
   request a 1.x version of numpy. This is needed in SmartSim because
