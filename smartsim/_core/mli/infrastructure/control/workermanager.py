@@ -307,16 +307,22 @@ class WorkerManager(Service):
                 model_result = LoadModelResult(self._cached_models[request.model_key])
 
             else:
-                try:
-                    interm = time.perf_counter()  # timing
-                    fetch_model_result = self._worker.fetch_model(
-                        request, self._feature_store
-                    )
-                except Exception as e:
-                    exception_handler(
-                        e, request.callback, "Failed while fetching the model."
-                    )
-                    return
+                fetch_model_result = None
+                while fetch_model_result is None:
+                    try:
+                        interm = time.perf_counter()  # timing
+                        fetch_model_result = self._worker.fetch_model(
+                            request, self._feature_store
+                        )
+
+                    # do we want to keep this? it could cause an infinite loop
+                    except KeyError:
+                        time.sleep(0.01)
+                    except Exception as e:
+                        exception_handler(
+                            e, request.callback, "Failed while fetching the model."
+                        )
+                        return
 
                 timings.append(time.perf_counter() - interm)  # timing
                 interm = time.perf_counter()  # timing
