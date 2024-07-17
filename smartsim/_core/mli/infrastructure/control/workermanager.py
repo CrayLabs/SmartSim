@@ -276,7 +276,6 @@ class WorkerManager(Service):
                 response = build_reply(reply)
                 self._perf_timer.measure_time("build_reply")
 
-                # serialized = self._worker.serialize_reply(request, transformed_output)
                 serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
 
                 self._perf_timer.measure_time("serialize_resp")
