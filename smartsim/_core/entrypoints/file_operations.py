@@ -27,12 +27,29 @@
 import argparse
 import base64
 import collections
+import functools
 import os
+import pathlib
 import pickle
 import re
 import shutil
-from ast import literal_eval
-from distutils import dir_util  # pylint: disable=deprecated-module
+
+from typing import Callable
+
+from ...log import get_logger
+
+logger = get_logger(__name__)
+
+"""Run file operations move, remove, symlink, copy, and configure
+using command line arguments.
+"""
+
+
+def _abspath(s: str) -> pathlib.Path:
+    p = pathlib.Path(s)
+    if not p.is_absolute():
+        raise ValueError(f"path `{p}` must be absolute")
+    return p
 
 
 def move(parsed_args: argparse.Namespace) -> None:
@@ -42,18 +59,14 @@ def move(parsed_args: argparse.Namespace) -> None:
     must not already exist. If dest is an existing file, it will be overwritten.
 
     Sample usage:
-        python _core/entrypoints/file_operations.py move
-        /absolute/file/source/path /absolute/file/dest/path
+    .. highlight:: bash
+    .. code-block:: bash
+            python -m smartsim._core.entrypoints.file_operations \
+                move /absolute/file/source/path /absolute/file/dest/path
 
-        /absolute/file/source/path: File or directory to be moved
-        /absolute/file/dest/path: Path to a file or directory location
+    /absolute/file/source/path: File or directory to be moved
+    /absolute/file/dest/path: Path to a file or directory location
     """
-    if not os.path.isabs(parsed_args.source):
-        raise ValueError(f"path {parsed_args.source} must be absolute")
-
-    if not os.path.isabs(parsed_args.dest):
-        raise ValueError(f"path {parsed_args.dest} must be absolute")
-
     shutil.move(parsed_args.source, parsed_args.dest)
 
 
@@ -61,14 +74,13 @@ def remove(parsed_args: argparse.Namespace) -> None:
     """Remove a file or directory.
 
     Sample usage:
-        python _core/entrypoints/file_operations.py remove
-        /absolute/file/path
+    .. highlight:: bash
+    .. code-block:: bash
+            python -m smartsim._core.entrypoints.file_operations \
+                remove /absolute/file/path
 
-        /absolute/file/path: Path to the file or directory to be deleted
+    /absolute/file/path: Path to the file or directory to be deleted
     """
-    if not os.path.isabs(parsed_args.to_remove):
-        raise ValueError(f"path {parsed_args.to_remove} must be absolute")
-
     if os.path.isdir(parsed_args.to_remove):
         os.rmdir(parsed_args.to_remove)
     else:
@@ -80,22 +92,18 @@ def copy(parsed_args: argparse.Namespace) -> None:
     If source is a directory, copy the entire directory tree source to dest.
 
     Sample usage:
-        python _core/entrypoints/file_operations.py copy
-        /absolute/file/source/path /absolute/file/dest/path
+    .. highlight:: bash
+    .. code-block:: bash
+            python -m smartsim._core.entrypoints.file_operations \
+                copy /absolute/file/source/path /absolute/file/dest/path
 
-        /absolute/file/source/path: Path to directory, or path to file to
-            copy to a new location
-        /absolute/file/dest/path: Path to destination directory or path to
-            destination file
+    /absolute/file/source/path: Path to directory, or path to file to
+        copy to a new location
+    /absolute/file/dest/path: Path to destination directory or path to
+        destination file
     """
-    if not os.path.isabs(parsed_args.source):
-        raise ValueError(f"path {parsed_args.source} must be absolute")
-
-    if not os.path.isabs(parsed_args.dest):
-        raise ValueError(f"path {parsed_args.dest} must be absolute")
-
     if os.path.isdir(parsed_args.source):
-        dir_util.copy_tree(parsed_args.source, parsed_args.dest)
+        shutil.copytree(parsed_args.source, parsed_args.dest, dirs_exist_ok=True)
     else:
         shutil.copyfile(parsed_args.source, parsed_args.dest)
 
@@ -106,18 +114,14 @@ def symlink(parsed_args: argparse.Namespace) -> None:
     named link.
 
     Sample usage:
-        python _core/entrypoints/file_operations.py symlink
-        /absolute/file/source/path /absolute/file/dest/path
+    .. highlight:: bash
+    .. code-block:: bash
+            python -m smartsim._core.entrypoints.file_operations \
+                symlink /absolute/file/source/path /absolute/file/dest/path
 
-        /absolute/file/source/path: the exisiting source path
-        /absolute/file/dest/path: target name where the symlink will be created.
+    /absolute/file/source/path: the exisiting source path
+    /absolute/file/dest/path: target name where the symlink will be created.
     """
-    if not os.path.isabs(parsed_args.source):
-        raise ValueError(f"path {parsed_args.source} must be absolute")
-
-    if not os.path.isabs(parsed_args.dest):
-        raise ValueError(f"path {parsed_args.dest} must be absolute")
-
     os.symlink(parsed_args.source, parsed_args.dest)
 
 
@@ -131,29 +135,24 @@ def configure(parsed_args: argparse.Namespace) -> None:
     initializer argument used during ``Application`` creation:
 
     Sample usage:
-        python _core/entrypoints/file_operations.py configure
-        /absolute/file/source/pat /absolute/file/dest/path tag_deliminator param_dict
+    .. highlight:: bash
+    .. code-block:: bash
+            python -m smartsim._core.entrypoints.file_operations \
+                configure /absolute/file/source/pat /absolute/file/dest/path \
+                tag_deliminator param_dict
 
-        /absolute/file/source/path: The tagged files the search and replace operations
-        to be performed upon
-        /absolute/file/dest/path: The destination for configured files to be
-        written to.
-        tag_delimiter: tag for the configure operation to search for, defaults to
-            semi-colon e.g. ";"
-        param_dict: A dict of parameter names and values set for the file
+    /absolute/file/source/path: The tagged files the search and replace operations
+    to be performed upon
+    /absolute/file/dest/path: The destination for configured files to be
+    written to.
+    tag_delimiter: tag for the configure operation to search for, defaults to
+        semi-colon e.g. ";"
+    param_dict: A dict of parameter names and values set for the file
 
     """
-    if not os.path.isabs(parsed_args.source):
-        raise ValueError(f"path {parsed_args.source} must be absolute")
+    tag_delimiter = parsed_args.tag_delimiter
 
-    if not os.path.isabs(parsed_args.dest):
-        raise ValueError(f"path {parsed_args.dest} must be absolute")
-
-    tag_delimiter = ";"
-    if parsed_args.tag_delimiter:
-        tag_delimiter = parsed_args.tag_delimiter
-
-    decoded_dict = base64.b64decode(literal_eval(parsed_args.param_dict))
+    decoded_dict = base64.b64decode(parsed_args.param_dict)
     param_dict = pickle.loads(decoded_dict)
 
     if not param_dict:
@@ -165,19 +164,17 @@ def configure(parsed_args: argparse.Namespace) -> None:
         split_tag = tagged_line.split(tag_delimiter)
         return split_tag[1]
 
+    def make_substitution(tag_name: str, replacement: str) -> Callable[[str], str]:
+        return lambda s: s.replace(
+            f"{tag_delimiter}{tag_name}{tag_delimiter}", str(replacement)
+        )
+
     def _is_ensemble_spec(tagged_line: str, application_params: dict[str, str]) -> bool:
-        split_tag = tagged_line.split(tag_delimiter)
-        prev_val = split_tag[1]
-        if prev_val in application_params.keys():
-            return True
-        return False
+        prev_val = _get_prev_value(tagged_line)
+        return prev_val in application_params
 
     edited = []
-    used_params = {}
-
-    # Set the tag for the application writer to search for within
-    # tagged files attached to an entity.
-    regex = "".join(("(", tag_delimiter, ".+", tag_delimiter, ")"))
+    # used_params = {}
 
     # Set the lines to iterate over
     with open(parsed_args.source, "r+", encoding="utf-8") as file_stream:
@@ -185,35 +182,19 @@ def configure(parsed_args: argparse.Namespace) -> None:
 
     unused_tags = collections.defaultdict(list)
 
-    # Replace the tagged parameters within the file attached to this
-    # application. The tag defaults to ";"
-    for i, line in enumerate(lines, 1):
-        while search := re.search(regex, line):
-            tagged_line = search.group(0)
-            previous_value = _get_prev_value(tagged_line)
-            if _is_ensemble_spec(tagged_line, param_dict):
-                new_val = str(param_dict[previous_value])
-                line = re.sub(regex, new_val, line, 1)
-                used_params[previous_value] = new_val
+    substitutions = tuple(make_substitution(k, v) for k, v in param_dict.items())
+    replace_tags_in = lambda s: functools.reduce(lambda a, fn: fn(a), substitutions, s)
 
-            # if a tag_delimiter is found but is not in this application's
-            # configurations put in placeholder value
-            else:
-                tag_delimiter_ = tagged_line.split(tag_delimiter)[1]
-                unused_tags[tag_delimiter_].append(i)
-                line = re.sub(regex, previous_value, line)
-                break
-        edited.append(line)
+    edited = [replace_tags_in(line) for line in lines]
 
+    for tag, value in unused_tags.items():
+        missing_tag_message = f"Unused tag {tag} on line(s): {str(value)}"
+        logger.warning(missing_tag_message)
     lines = edited
 
-    # write configured file to destination specified. Default is an overwrite
-    if parsed_args.dest:
-        file_stream = parsed_args.dest
-
-    with open(parsed_args.source, "w+", encoding="utf-8") as file_stream:
-        for line in lines:
-            file_stream.write(line)
+    # write configured file to destination specified
+    with open(parsed_args.dest, "w+", encoding="utf-8") as file_stream:
+        file_stream.writelines(lines)
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -228,32 +209,32 @@ def get_parser() -> argparse.ArgumentParser:
     # Subparser for move op
     move_parser = subparsers.add_parser("move")
     move_parser.set_defaults(func=move)
-    move_parser.add_argument("source")
-    move_parser.add_argument("dest")
+    move_parser.add_argument("source", type=_abspath)
+    move_parser.add_argument("dest", type=_abspath)
 
     # Subparser for remove op
     remove_parser = subparsers.add_parser("remove")
     remove_parser.set_defaults(func=remove)
-    remove_parser.add_argument("to_remove", type=str)
+    remove_parser.add_argument("to_remove", type=_abspath)
 
     # Subparser for copy op
     copy_parser = subparsers.add_parser("copy")
     copy_parser.set_defaults(func=copy)
-    copy_parser.add_argument("source", type=str)
-    copy_parser.add_argument("dest", type=str)
+    copy_parser.add_argument("source", type=_abspath)
+    copy_parser.add_argument("dest", type=_abspath)
 
     # Subparser for symlink op
     symlink_parser = subparsers.add_parser("symlink")
     symlink_parser.set_defaults(func=symlink)
-    symlink_parser.add_argument("source", type=str)
-    symlink_parser.add_argument("dest", type=str)
+    symlink_parser.add_argument("source", type=_abspath)
+    symlink_parser.add_argument("dest", type=_abspath)
 
     # Subparser for configure op
     configure_parser = subparsers.add_parser("configure")
     configure_parser.set_defaults(func=configure)
-    configure_parser.add_argument("source", type=str)
-    configure_parser.add_argument("dest", type=str)
-    configure_parser.add_argument("tag_delimiter", type=str)
+    configure_parser.add_argument("source", type=_abspath)
+    configure_parser.add_argument("dest", type=_abspath)
+    configure_parser.add_argument("tag_delimiter", type=str, default=";")
     configure_parser.add_argument("param_dict", type=str)
 
     return arg_parser
@@ -266,14 +247,11 @@ def parse_arguments() -> argparse.Namespace:
     """
     parser = get_parser()
     parsed_args = parser.parse_args()
-    parsed_args.func(parsed_args)
     return parsed_args
 
 
 if __name__ == "__main__":
-    """Run file operations move, remove, symlink, copy, and configure
-    using command line arguments.
-    """
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     args = parse_arguments()
+    args.func(args)

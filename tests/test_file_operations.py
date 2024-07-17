@@ -24,19 +24,23 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import base64
 import filecmp
 import os
 import pathlib
 import pickle
-from distutils import dir_util
+
 from glob import glob
 from os import path as osp
+import shutil
 
 import pytest
 
 from smartsim._core.entrypoints import file_operations
 from smartsim._core.entrypoints.file_operations import get_parser
+
+pytestmark = pytest.mark.group_a
 
 
 def test_symlink_files(test_dir):
@@ -116,11 +120,12 @@ def test_symlink_not_absolute(test_dir):
     parser = get_parser()
     cmd = f"symlink {source_file} {entity_path}"
     args = cmd.split()
-    ns = parser.parse_args(args)
 
-    with pytest.raises(ValueError) as ex:
-        file_operations.symlink(ns)
-    assert f"path {entity_path} must be absolute" in ex.value.args
+    with pytest.raises(SystemExit) as e:
+        parser.parse_args(args)
+
+    assert isinstance(e.value.__context__, argparse.ArgumentError)
+    assert "invalid _abspath value" in e.value.__context__.message
 
 
 def test_copy_op_file(test_dir):
@@ -276,11 +281,12 @@ def test_copy_not_absolute(test_dir):
     parser = get_parser()
     cmd = f"copy {source_file} {bad_path}"
     args = cmd.split()
-    ns = parser.parse_args(args)
 
-    with pytest.raises(ValueError) as ex:
-        file_operations.copy(ns)
-    assert f"path {bad_path} must be absolute" in ex.value.args
+    with pytest.raises(SystemExit) as e:
+        parser.parse_args(args)
+
+    assert isinstance(e.value.__context__, argparse.ArgumentError)
+    assert "invalid _abspath value" in e.value.__context__.message
 
     # clean up
     os.remove(pathlib.Path(to_copy) / "copy_file.txt")
@@ -345,11 +351,12 @@ def test_move_not_absolute(test_dir):
     parser = get_parser()
     cmd = f"move {source_file} {dest_file}"
     args = cmd.split()
-    ns = parser.parse_args(args)
 
-    with pytest.raises(ValueError) as ex:
-        file_operations.move(ns)
-    assert f"path {dest_file} must be absolute" in ex.value.args
+    with pytest.raises(SystemExit) as e:
+        parser.parse_args(args)
+
+    assert isinstance(e.value.__context__, argparse.ArgumentError)
+    assert "invalid _abspath value" in e.value.__context__.message
 
 
 def test_remove_op_file(test_dir):
@@ -409,7 +416,7 @@ def test_remove_op_bad_path(test_dir):
     assert "No such file or directory" in ex.value.args
 
 
-def test_remove_op_no_absolute():
+def test_remove_op_not_absolute():
     """Test that ValueError is raised when a relative path
     is given to the operation to delete a file"""
 
@@ -418,11 +425,12 @@ def test_remove_op_no_absolute():
     parser = get_parser()
     cmd = f"remove {to_del}"
     args = cmd.split()
-    ns = parser.parse_args(args)
 
-    with pytest.raises(ValueError) as ex:
-        file_operations.remove(ns)
-    assert f"path {to_del} must be absolute" in ex.value.args
+    with pytest.raises(SystemExit) as e:
+        parser.parse_args(args)
+
+    assert isinstance(e.value.__context__, argparse.ArgumentError)
+    assert "invalid _abspath value" in e.value.__context__.message
 
 
 @pytest.mark.parametrize(
@@ -436,6 +444,7 @@ def test_remove_op_no_absolute():
                 "65": "70",
                 "placeholder": "group leftupper region",
                 "1200": "120",
+                "VALID": "valid",
             },
             "None",
             id="correct dict",
@@ -457,8 +466,16 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
     # retrieve files to compare after test
     correct_path = fileutils.get_test_conf_path(osp.join("tagged_tests", "correct/"))
 
+    conf_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "marked/")
+    )
+    # retrieve files to compare after test
+    correct_path = fileutils.get_test_conf_path(
+        osp.join("generator_files", "easy", "correct/")
+    )
+
     # copy files to test directory
-    dir_util.copy_tree(conf_path, test_dir)
+    shutil.copytree(conf_path, test_dir, dirs_exist_ok=True)
     assert osp.isdir(test_dir)
 
     tagged_files = sorted(glob(test_dir + "/*"))
@@ -468,7 +485,7 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
     pickled_dict = pickle.dumps(param_dict)
 
     # Encode the pickled dictionary with Base64
-    encoded_dict = base64.b64encode(pickled_dict)
+    encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
 
     # Run configure op on test files
     for tagged_file in tagged_files:
@@ -493,6 +510,29 @@ def test_configure_op(test_dir, fileutils, param_dict, error_type):
             assert filecmp.cmp(written, correct)
 
 
+def test_configure_invalid_tags(fileutils):
+
+    # = /home/users/putko/scratch/SmartSim/tests/test_configs/tagged_tests/invalidtag.txt
+    tagged_file = fileutils.get_test_conf_path(
+        osp.join("tagged_tests", "invalidtag.txt")
+    )
+
+    tag = ";"
+    param_dict = {"VALID": "valid"}
+
+    # Pickle the dictionary
+    pickled_dict = pickle.dumps(param_dict)
+
+    # Encode the pickled dictionary with Base64
+    encoded_dict = base64.b64encode(pickled_dict).decode("ascii")
+    parser = get_parser()
+    cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
+    args = cmd.split()
+    ns = parser.parse_args(args)
+
+    file_operations.configure(ns)
+
+
 def test_configure_not_absolute():
     """Test that ValueError is raised when tagged files
     given to configure op are not absolute paths
@@ -509,19 +549,20 @@ def test_configure_not_absolute():
     parser = get_parser()
     cmd = f"configure {tagged_file} {tagged_file} {tag} {encoded_dict}"
     args = cmd.split()
-    ns = parser.parse_args(args)
 
-    with pytest.raises(ValueError) as ex:
-        file_operations.move(ns)
-    assert f"path {tagged_file} must be absolute" in ex.value.args
+    with pytest.raises(SystemExit) as e:
+        parser.parse_args(args)
+
+    assert isinstance(e.value.__context__, argparse.ArgumentError)
+    assert "invalid _abspath value" in e.value.__context__.message
 
 
 def test_parser_move():
     """Test that the parser succeeds when receiving expected args for the move operation"""
     parser = get_parser()
 
-    src_path = "/absolute/file/src/path"
-    dest_path = "/absolute/file/dest/path"
+    src_path = pathlib.Path("/absolute/file/src/path")
+    dest_path = pathlib.Path("/absolute/file/dest/path")
 
     cmd = f"move {src_path} {dest_path}"
     args = cmd.split()
@@ -535,7 +576,7 @@ def test_parser_remove():
     """Test that the parser succeeds when receiving expected args for the remove operation"""
     parser = get_parser()
 
-    file_path = "/absolute/file/path"
+    file_path = pathlib.Path("/absolute/file/path")
     cmd = f"remove {file_path}"
 
     args = cmd.split()
@@ -548,8 +589,8 @@ def test_parser_symlink():
     """Test that the parser succeeds when receiving expected args for the symlink operation"""
     parser = get_parser()
 
-    src_path = "/absolute/file/src/path"
-    dest_path = "/absolute/file/dest/path"
+    src_path = pathlib.Path("/absolute/file/src/path")
+    dest_path = pathlib.Path("/absolute/file/dest/path")
     cmd = f"symlink {src_path} {dest_path}"
 
     args = cmd.split()
@@ -564,8 +605,8 @@ def test_parser_copy():
     """Test that the parser succeeds when receiving expected args for the copy operation"""
     parser = get_parser()
 
-    src_path = "/absolute/file/src/path"
-    dest_path = "/absolute/file/dest/path"
+    src_path = pathlib.Path("/absolute/file/src/path")
+    dest_path = pathlib.Path("/absolute/file/dest/path")
 
     cmd = f"copy {src_path} {dest_path}"
 
@@ -580,8 +621,8 @@ def test_parser_configure_parse():
     """Test that the parser succeeds when receiving expected args for the configure operation"""
     parser = get_parser()
 
-    src_path = "/absolute/file/src/path"
-    dest_path = "/absolute/file/dest/path"
+    src_path = pathlib.Path("/absolute/file/src/path")
+    dest_path = pathlib.Path("/absolute/file/dest/path")
     tag_delimiter = ";"
 
     param_dict = {
