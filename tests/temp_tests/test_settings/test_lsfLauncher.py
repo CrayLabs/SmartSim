@@ -91,6 +91,6 @@ def test_launch_args():
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = _as_jsrun_command(JsrunArgBuilder(args), echo_executable_like, {})
+def test_formatting_launch_args(mock_echo_executable, args, expected):
+    cmd = _as_jsrun_command(JsrunArgBuilder(args), mock_echo_executable, {})
     assert tuple(cmd) == expected

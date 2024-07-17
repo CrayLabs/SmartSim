@@ -341,11 +341,13 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 #       circular import caused by `DragonLauncher.supported_rs`
 # -----------------------------------------------------------------------------
 from smartsim.settings.builders.launch.dragon import DragonArgBuilder
-from smartsim.settings.dispatch import ExecutableLike, dispatch
+from smartsim.settings.dispatch import ExecutableProtocol, dispatch
 
 
 def _as_run_request_view(
-    run_req_args: DragonArgBuilder, exe: ExecutableLike, env: t.Mapping[str, str | None]
+    run_req_args: DragonArgBuilder,
+    exe: ExecutableProtocol,
+    env: t.Mapping[str, str | None],
 ) -> DragonRunRequestView:
     exe_, *args = exe.as_program_arguments()
     return DragonRunRequestView(

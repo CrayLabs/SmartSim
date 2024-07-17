@@ -253,6 +253,6 @@ def test_invalid_hostlist_format(launcher):
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, cls, fmt, cmd, args, expected):
-    fmt_cmd = fmt(cls(args), echo_executable_like, {})
+def test_formatting_launch_args(mock_echo_executable, cls, fmt, cmd, args, expected):
+    fmt_cmd = fmt(cls(args), mock_echo_executable, {})
     assert tuple(fmt_cmd) == (cmd,) + expected

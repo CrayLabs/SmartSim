@@ -37,14 +37,14 @@ NOT_SET = object()
 @pytest.mark.parametrize("nodes", (NOT_SET, 20, 40))
 @pytest.mark.parametrize("tasks_per_node", (NOT_SET, 1, 20))
 def test_formatting_launch_args_into_request(
-    echo_executable_like, nodes, tasks_per_node
+    mock_echo_executable, nodes, tasks_per_node
 ):
     args = DragonArgBuilder({})
     if nodes is not NOT_SET:
         args.set_nodes(nodes)
     if tasks_per_node is not NOT_SET:
         args.set_tasks_per_node(tasks_per_node)
-    req = _as_run_request_view(args, echo_executable_like, {})
+    req = _as_run_request_view(args, mock_echo_executable, {})
 
     args = {
         k: v

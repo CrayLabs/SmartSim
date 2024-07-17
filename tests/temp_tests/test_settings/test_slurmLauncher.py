@@ -288,6 +288,6 @@ def test_set_het_groups(monkeypatch):
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = _as_srun_command(SlurmArgBuilder(args), echo_executable_like, {})
+def test_formatting_launch_args(mock_echo_executable, args, expected):
+    cmd = _as_srun_command(SlurmArgBuilder(args), mock_echo_executable, {})
     assert tuple(cmd) == expected

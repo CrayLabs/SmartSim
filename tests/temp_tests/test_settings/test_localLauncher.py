@@ -114,6 +114,6 @@ def test_format_env_vars():
     assert localLauncher.format_env_vars() == ["A=a", "B=", "C=", "D=12"]
 
 
-def test_formatting_returns_original_exe(echo_executable_like):
-    cmd = _as_local_command(LocalArgBuilder({}), echo_executable_like, {})
+def test_formatting_returns_original_exe(mock_echo_executable):
+    cmd = _as_local_command(LocalArgBuilder({}), mock_echo_executable, {})
     assert tuple(cmd) == ("echo", "hello", "world")

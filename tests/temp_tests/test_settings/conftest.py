@@ -31,12 +31,12 @@ from smartsim.settings.builders import launchArgBuilder as launch
 
 
 @pytest.fixture
-def echo_executable_like():
-    class _ExeLike(dispatch.ExecutableLike):
+def mock_echo_executable():
+    class _MockExe(dispatch.ExecutableProtocol):
         def as_program_arguments(self):
             return ("echo", "hello", "world")
 
-    yield _ExeLike()
+    yield _MockExe()
 
 
 @pytest.fixture
@@ -50,8 +50,8 @@ def settings_builder():
 
 
 @pytest.fixture
-def launcher_like():
-    class _LuancherLike(dispatch.LauncherLike):
+def mock_launcher():
+    class _MockLauncher(dispatch.LauncherProtocol):
         def start(self, launchable):
             return dispatch.create_job_id()
 
@@ -59,4 +59,4 @@ def launcher_like():
         def create(cls, exp):
             return cls()
 
-    yield _LuancherLike()
+    yield _MockLauncher()

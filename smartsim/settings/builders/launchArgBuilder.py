@@ -37,9 +37,6 @@ from ..._core.utils.helpers import fmt_dict
 logger = get_logger(__name__)
 
 
-_T = t.TypeVar("_T")
-
-
 class LaunchArgBuilder(ABC):
     """Abstract base class that defines all generic launcher
     argument methods that are not supported.  It is the
@@ -48,6 +45,11 @@ class LaunchArgBuilder(ABC):
     """
 
     def __init__(self, launch_args: t.Dict[str, str | None] | None) -> None:
+        """Initialize a new `LaunchArgBuilder` instance.
+
+        :param launch_args: A mapping of argument to be used to initialize the
+            argument builder.
+        """
         self._launch_args = copy.deepcopy(launch_args) or {}
 
     @abstractmethod
@@ -56,7 +58,12 @@ class LaunchArgBuilder(ABC):
 
     @abstractmethod
     def set(self, arg: str, val: str | None) -> None:
-        """Set the launch arguments"""
+        """Set a launch argument
+
+        :param arg: The argument name to set
+        :param val: The value to set the argument to as a `str` (if
+            applicable). Otherwise `None`
+        """
 
     def format_launch_args(self) -> t.Union[t.List[str], None]:
         """Build formatted launch arguments"""

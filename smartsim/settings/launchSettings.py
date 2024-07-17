@@ -63,7 +63,7 @@ class LaunchSettings(BaseSettings):
 
     @property
     def launcher(self) -> str:
-        """Return the launcher name."""
+        """The launcher type"""
         return self._launcher.value
 
     @property
@@ -89,7 +89,13 @@ class LaunchSettings(BaseSettings):
         self._env_vars = copy.deepcopy(value)
 
     def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder:
-        """Map the Launcher to the LaunchArgBuilder"""
+        """Map the Launcher to the LaunchArgBuilder. This method should only be
+        called once during construction.
+
+        :param launch_args: A mapping of argument to be used to initialize the
+            argument builder.
+        :returns: The appropriate argument builder for the settings instance.
+        """
         if self._launcher == LauncherType.Slurm:
             return SlurmArgBuilder(launch_args)
         elif self._launcher == LauncherType.Mpiexec:

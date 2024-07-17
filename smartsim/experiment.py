@@ -55,8 +55,11 @@ from .log import ctx_exp_path, get_logger, method_contextualizer
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.builders.launchArgBuilder import LaunchArgBuilder
-    from smartsim.settings.dispatch import Dispatcher, ExecutableLike, LauncherLike
+    from smartsim.settings.dispatch import (
+        Dispatcher,
+        ExecutableProtocol,
+        LauncherProtocol,
+    )
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -106,13 +109,7 @@ class Experiment:
     and utilized throughout runtime.
     """
 
-    def __init__(
-        self,
-        name: str,
-        exp_path: str | None = None,
-        *,  # Keyword arguments only
-        settings_dispatcher: Dispatcher = DEFAULT_DISPATCHER,
-    ):
+    def __init__(self, name: str, exp_path: str | None = None):
         """Initialize an Experiment instance.
 
         With the default settings, the Experiment will use the
@@ -152,9 +149,6 @@ class Experiment:
 
         :param name: name for the ``Experiment``
         :param exp_path: path to location of ``Experiment`` directory
-        :param settings_dispatcher: The dispatcher the experiment will use to
-            figure determine how to launch a job. If none is provided, the
-            experiment will use the default dispatcher.
         """
         self.name = name
         if exp_path:
@@ -167,24 +161,39 @@ class Experiment:
             exp_path = osp.join(getcwd(), name)
 
         self.exp_path = exp_path
+        """The path under which the experiment operate"""
 
-        # TODO: Remove this! The contoller is becoming obsolete
+        # TODO: Remove this! The controller is becoming obsolete
         self._control = Controller(launcher="local")
-        self._dispatcher = settings_dispatcher
 
-        self._active_launchers: set[LauncherLike[t.Any]] = set()
+        self._active_launchers: set[LauncherProtocol[t.Any]] = set()
         """The active launchers created, used, and reused by the experiment"""
 
-        self.fs_identifiers: t.Set[str] = set()
+        self._fs_identifiers: t.Set[str] = set()
+        """Set of feature store identifiers currently in use by this
+        experiment"""
         self._telemetry_cfg = ExperimentTelemetryConfiguration()
+        """Switch to specify if telemetry data should be produced for this
+        experiment"""
 
-    def start_jobs(self, *jobs: Job) -> tuple[LaunchedJobID, ...]:
-        """WIP: replacemnt method to launch jobs using the new API"""
+    def start_jobs(
+        self, *jobs: Job, dispatcher: Dispatcher = DEFAULT_DISPATCHER
+    ) -> tuple[LaunchedJobID, ...]:
+        """Execute a collection of `Job` instances.
+
+        :param jobs: The collection of jobs instances to start
+        :param dispatcher: The dispatcher that should be used to determine how
+            to start a job based on its settings. If not specified it will
+            default to a dispatcher pre-configured by SmartSim.
+        :returns: A sequence of ids with order corresponding to the sequence of
+            jobs that can be used to query or alter the status of that
+            particular execution of the job.
+        """
 
         if not jobs:
             raise TypeError(
                 f"{type(self).__name__}.start_jobs() missing at least 1 required "
-                "positional argument"
+                "positional argument of type `Job`"
             )
 
         def _start(job: Job) -> LaunchedJobID:
@@ -194,9 +203,9 @@ class Experiment:
             # FIXME: Remove this cast after `SmartSimEntity` conforms to
             #        protocol. For now, live with the "dangerous" type cast
             # ---------------------------------------------------------------------
-            exe = t.cast("ExecutableLike", job.entity)
+            exe = t.cast("ExecutableProtocol", job.entity)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            dispatch = self._dispatcher.get_dispatch(args)
+            dispatch = dispatcher.get_dispatch(args)
             try:
                 launch_config = dispatch.configure_first_compatible_launcher(
                     from_available_launchers=self._active_launchers,
@@ -603,7 +612,7 @@ class Experiment:
         def create_entity_dir(
             entity: t.Union[FeatureStore, Application, Ensemble]
         ) -> None:
-            if not os.path.isdir(entity.path):
+            if not osp.isdir(entity.path):
                 os.makedirs(entity.path)
 
         for application in start_manifest.applications:
@@ -620,11 +629,11 @@ class Experiment:
 
     def _append_to_fs_identifier_list(self, fs_identifier: str) -> None:
         """Check if fs_identifier already exists when calling create_feature_store"""
-        if fs_identifier in self.fs_identifiers:
+        if fs_identifier in self._fs_identifiers:
             logger.warning(
                 f"A feature store with the identifier {fs_identifier} has already been made "
                 "An error will be raised if multiple Feature Stores are started "
                 "with the same identifier"
             )
         # Otherwise, add
-        self.fs_identifiers.add(fs_identifier)
+        self._fs_identifiers.add(fs_identifier)
