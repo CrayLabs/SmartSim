@@ -49,8 +49,8 @@ logger.propagate = False
 
 class Generator:
     """The primary job of the generator is to create the file structure
-    for a SmartSim experiment. The Generator is responsible for reading
-    and writing into configuration files as well.
+    for a SmartSim experiment. The Generator is also responsible for reading
+    and writing into configuration files.
     """
 
     def __init__(self, gen_path: str, run_ID: str, job: Job) -> None:
@@ -65,11 +65,32 @@ class Generator:
         :param job: Reference to a SmartSimEntity and LaunchSettings
         """
         self.job = job
-        # TODO revisit this check
+        self.path = self._generate_job_path(job, gen_path, run_ID)
+        self.log_path = self._generate_log_path(gen_path)
+
+    def _generate_log_path(self, gen_path: str) -> str:
+        """
+        Generates the path for logs.
+
+        :param gen_path: The base path for job generation
+        :returns str: The generated path for the log directory.
+        """
+        log_path = os.path.join(gen_path, "log")
+        return log_path
+    
+    def _generate_job_path(self, job: Job, gen_path: str, run_ID: str) -> str:
+        """
+        Generates the path for a job based on its type and ensemble name (if applicable).
+
+        :param job: The Job object
+        :param gen_path: The base path for job generation
+        :param run_ID: The unique run ID
+        :returns str: The generated path for the job.
+        """
         if job._ensemble_name is None:
             job_type = f"{job.__class__.__name__.lower()}s"
             entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-            self.path = os.path.join(
+            path = os.path.join(
                 gen_path,
                 run_ID,
                 job_type,
@@ -80,7 +101,7 @@ class Generator:
         else:
             job_type = "ensembles"
             entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-            self.path = os.path.join(
+            path = os.path.join(
                 gen_path,
                 run_ID,
                 job_type,
@@ -89,6 +110,7 @@ class Generator:
                 entity_type,
                 "run",
             )
+        return path
 
     @property
     def log_level(self) -> int:
@@ -142,6 +164,7 @@ class Generator:
 
         """
         pathlib.Path(self.path).mkdir(exist_ok=True, parents=True)
+        pathlib.Path(self.log_path).mkdir(exist_ok=True, parents=True)
 
         # The log_file only keeps track of the last generation
         # this is to avoid gigantic files in case the user repeats

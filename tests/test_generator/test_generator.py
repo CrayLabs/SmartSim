@@ -57,7 +57,6 @@ def job_group_instance(test_dir, wlmutils) -> Generator:
 def job_instance(test_dir, wlmutils) -> Generator:
     """Fixture to create an instance of Generator."""
     launch_settings = LaunchSettings(wlmutils.get_test_launcher())
-    application = Application("app_name", exe="python", run_settings="RunSettings")
     job = Job(EchoApp(), launch_settings)
     return job
 
@@ -80,12 +79,12 @@ def test_log_file_path(gen_instance_for_job):
     """Test if the log_file property returns the correct path."""
     expected_path = osp.join(gen_instance_for_job.path, "smartsim_params.txt")
     assert gen_instance_for_job.log_file == expected_path
-    print(gen_instance_for_job.path)
 
 
 def test_generate_job_directory(gen_instance_for_job):
     gen_instance_for_job.generate_experiment()
     assert osp.isdir(gen_instance_for_job.path)
+    assert osp.isdir(gen_instance_for_job.log_path)
 
 
 def test_full_exp_generate_job_directory(test_dir, job_instance):
