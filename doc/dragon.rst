@@ -89,11 +89,9 @@ that affinities are passed as a list of device indices.
 
 .. note::
 
-    SmartSim submits jobs in the order they are received. However, a process may
-    be allocated to a GPU node if only GPU nodes are available, regardless of
-    the requested features.
-
-    To ensure a process is allocated to a specific node, configure a hostname constraint.
+        SmartSim launches jobs in the order they are received on the first available
+        host in a round-robin pattern.  To ensure a process is launched on a node with
+        specific features, configure a hostname constraint.
     
 =================
 The Dragon Server

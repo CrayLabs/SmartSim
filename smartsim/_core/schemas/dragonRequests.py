@@ -52,7 +52,10 @@ class DragonRunPolicy(BaseModel):
     def from_run_args(
         run_args: t.Dict[str, t.Union[int, str, float, None]]
     ) -> "DragonRunPolicy":
-        """Create a DragonRunPolicy from a dictionary of run arguments"""
+        """Create a DragonRunPolicy with hardware constraints passed from
+        a dictionary of run arguments
+        :param run_args: Dictionary of run arguments
+        :returns: DragonRunPolicy instance created from the run arguments"""
         gpu_args = ""
         if gpu_arg_value := run_args.get("gpu-affinity", None):
             gpu_args = str(gpu_arg_value)

@@ -123,7 +123,7 @@ def build_failure_reply(status: "StatusEnum", message: str) -> Response:
     return MessageHandler.build_response(
         status=status,  # todo: need to indicate correct status
         message=message,  # todo: decide what these will be
-        result=[],
+        result=[],  # type: ignore
         custom_attributes=None,
     )
 

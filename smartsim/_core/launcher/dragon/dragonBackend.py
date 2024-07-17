@@ -294,6 +294,11 @@ class DragonBackend:
     def _can_honor_policy(
         self, request: DragonRunRequest
     ) -> t.Tuple[bool, t.Optional[str]]:
+        """Check if the policy can be honored with resources available
+        in the allocation.
+        :param request: DragonRunRequest containing policy information
+        :returns: Tuple indicating if the policy can be honored and
+        an optional error message"""
         # ensure the policy can be honored
         if request.policy:
             if request.policy.cpu_affinity:
@@ -445,6 +450,10 @@ class DragonBackend:
     def create_run_policy(
         request: DragonRequest, node_name: str
     ) -> "dragon_policy.Policy":
+        """Create a dragon Policy from the request and node name
+        :param request: DragonRunRequest containing policy information
+        :param node_name: Name of the node on which the process will run
+        :returns: dragon_policy.Policy object mapped from request properties"""
         if isinstance(request, DragonRunRequest):
             run_request: DragonRunRequest = request
 
@@ -454,7 +463,7 @@ class DragonBackend:
 
             # Customize policy only if the client requested it, otherwise use default
             if run_request.policy is not None:
-                # affinities are not mutually exclusive. If specified, both are used
+                # Affinities are not mutually exclusive. If specified, both are used
                 if run_request.policy.cpu_affinity:
                     affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     cpu_affinity = run_request.policy.cpu_affinity
