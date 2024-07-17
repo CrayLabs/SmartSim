@@ -7,7 +7,7 @@ import pytest
 
 from smartsim import Experiment
 from smartsim._core.generation.generator import Generator
-from smartsim.entity.model import Application
+from smartsim.entity import Application, Ensemble
 from smartsim.launchable import Job, JobGroup
 from smartsim.settings.builders.launch import SlurmArgBuilder
 from smartsim.settings.dispatch import Dispatcher
@@ -97,3 +97,14 @@ def test_full_exp_generate_job_directory(test_dir, job_instance):
     )
     job_execution_path = no_op_exp._generate(job_instance)
     assert osp.isdir(job_execution_path)
+
+def test_generate_ensemble_directory(test_dir, wlmutils):
+    ensemble = Ensemble("ensemble-name", "echo", replicas=2)
+    launch_settings = LaunchSettings(wlmutils.get_test_launcher())
+    job_list = ensemble.as_jobs(launch_settings)
+    for job in job_list:
+        run_ID = "temp_run"
+        gen = Generator(gen_path=test_dir, run_ID=run_ID, job=job)
+        print(gen.path)
+        
+    

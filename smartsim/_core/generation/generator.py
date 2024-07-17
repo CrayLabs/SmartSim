@@ -66,17 +66,29 @@ class Generator:
         """
         self.job = job
         # TODO revisit this check
-        if isinstance(job, (Job, JobGroup)):
+        if job._ensemble_name is None:
             job_type = f"{job.__class__.__name__.lower()}s"
-        entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
-        self.path = os.path.join(
-            gen_path,
-            run_ID,
-            job_type,
-            f"{job.name}-{create_short_id_str()}",
-            entity_type,
-            "run",
-        )
+            entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+            self.path = os.path.join(
+                gen_path,
+                run_ID,
+                job_type,
+                f"{job.name}-{create_short_id_str()}",
+                entity_type,
+                "run",
+            )
+        else:
+            job_type = "ensembles"
+            entity_type = f"{job.entity.__class__.__name__.lower()}-{create_short_id_str()}"
+            self.path = os.path.join(
+                gen_path,
+                run_ID,
+                job_type,
+                job._ensemble_name,
+                f"{job.name}",
+                entity_type,
+                "run",
+            )
 
     @property
     def log_level(self) -> int:
@@ -130,9 +142,6 @@ class Generator:
 
         """
         pathlib.Path(self.path).mkdir(exist_ok=True, parents=True)
-        # logger.log(
-        #     level=self.log_level, msg="Working in experiment "
-        # )
 
         # The log_file only keeps track of the last generation
         # this is to avoid gigantic files in case the user repeats
