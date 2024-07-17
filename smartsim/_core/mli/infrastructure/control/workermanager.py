@@ -174,21 +174,30 @@ def exception_handler(
     exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
 ) -> None:
     """
-    Logs exceptions, sets reply attributes, and sends the
-    failure response without taking down the WorkerManager.
+    Logs exceptions, calls send_failure to send the failed response back.
 
     :param exc: The exception to be logged
     :param reply_channel: The channel used to send replies
-    :param func_descriptor: Descriptor to help form error messages
-    :param reply: InferenceReply to modify
+    :param failure_message: Failure message to log and send back
     """
     logger.exception(
         f"{failure_message}\n"
         f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
-    response = build_failure_reply("fail", failure_message)
-    serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+    send_failure(reply_channel, failure_message)
+
+
+def send_failure(
+    reply_channel: t.Optional[CommChannelBase], failure_message: str
+) -> None:
+    """
+    Sends back the failed response.
+
+    :param reply_channel: The channel used to send replies
+    :param failure_message: Failure message for response
+    """
+    serialized_resp = MessageHandler.serialize_response(build_failure_reply("fail", failure_message))  # type: ignore
     if reply_channel:
         reply_channel.send(serialized_resp)
 
@@ -290,10 +299,7 @@ class WorkerManager(Service):
 
         if not request.raw_model:
             if request.model_key is None:
-                response = build_failure_reply("fail", "Could not read model key.")
-                serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
-                if request.callback:
-                    request.callback.send(serialized_resp)
+                send_failure(request.callback, "Could not find model key or model.")
                 return
             if request.model_key in self._cached_models:
                 timings.append(time.perf_counter() - interm)  # timing
@@ -301,45 +307,31 @@ class WorkerManager(Service):
                 model_result = LoadModelResult(self._cached_models[request.model_key])
 
             else:
-                fetch_model_result = None
-                while True:
-                    try:
-                        interm = time.perf_counter()  # timing
-                        fetch_model_result = self._worker.fetch_model(
-                            request, self._feature_store
-                        )
-                    except KeyError:
-                        time.sleep(0.1)
-                    except Exception as e:
-                        exception_handler(
-                            e, request.callback, "Failed while fetching the model."
-                        )
-                        break
+                try:
+                    interm = time.perf_counter()  # timing
+                    fetch_model_result = self._worker.fetch_model(
+                        request, self._feature_store
+                    )
+                except Exception as e:
+                    exception_handler(
+                        e, request.callback, "Failed while fetching the model."
+                    )
                     return
 
-                if fetch_model_result is None:
-                    response = build_failure_reply(
-                        "fail", "Could not retrieve model from feature store."
+                timings.append(time.perf_counter() - interm)  # timing
+                interm = time.perf_counter()  # timing
+                try:
+                    model_result = self._worker.load_model(
+                        request,
+                        fetch_result=fetch_model_result,
+                        device=self._device,
                     )
-                    serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
-                    if request.callback:
-                        request.callback.send(serialized_resp)
+                    self._cached_models[request.model_key] = model_result.model
+                except Exception as e:
+                    exception_handler(
+                        e, request.callback, "Failed while loading the model."
+                    )
                     return
-                else:
-                    timings.append(time.perf_counter() - interm)  # timing
-                    interm = time.perf_counter()  # timing
-                    try:
-                        model_result = self._worker.load_model(
-                            request,
-                            fetch_result=fetch_model_result,
-                            device=self._device,
-                        )
-                        self._cached_models[request.model_key] = model_result.model
-                    except Exception as e:
-                        exception_handler(
-                            e, request.callback, "Failed while loading the model."
-                        )
-                        return
 
         else:
             try:

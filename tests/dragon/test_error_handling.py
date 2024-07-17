@@ -40,6 +40,7 @@ from dragon.fli import FLInterface
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
+    send_failure,
 )
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
@@ -48,6 +49,7 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
 from smartsim._core.mli.infrastructure.worker.worker import (
     ExecuteResult,
     FetchInputResult,
+    FetchModelResult,
     InferenceReply,
     LoadModelResult,
     TransformInputResult,
@@ -63,7 +65,7 @@ pytestmark = pytest.mark.dragon
 
 
 @pytest.fixture
-def setup_worker_manager(test_dir, monkeypatch: pytest.MonkeyPatch):
+def setup_worker_manager_model_bytes(test_dir, monkeypatch: pytest.MonkeyPatch):
     integrated_worker = IntegratedTorchWorker()
 
     chan = Channel.make_process_local()
@@ -94,6 +96,38 @@ def setup_worker_manager(test_dir, monkeypatch: pytest.MonkeyPatch):
     return worker_manager, integrated_worker
 
 
+@pytest.fixture
+def setup_worker_manager_model_key(test_dir, monkeypatch: pytest.MonkeyPatch):
+    integrated_worker = IntegratedTorchWorker()
+
+    chan = Channel.make_process_local()
+    queue = FLInterface(main_ch=chan)
+    monkeypatch.setenv("SSQueue", du.B64.bytes_to_str(queue.serialize()))
+    storage = DDict()
+    feature_store = DragonFeatureStore(storage)
+    monkeypatch.setenv(
+        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
+    )
+
+    worker_manager = WorkerManager(
+        EnvironmentConfigLoader(),
+        integrated_worker,
+        as_service=False,
+        cooldown=3,
+        comm_channel_type=FileSystemCommChannel,
+    )
+
+    tensor_key = MessageHandler.build_tensor_key("key")
+    model_key = MessageHandler.build_model_key("model key")
+    request = MessageHandler.build_request(
+        test_dir, model_key, [tensor_key], [tensor_key], [], None
+    )
+    ser_request = MessageHandler.serialize_request(request)
+    worker_manager._task_queue.send(ser_request)
+
+    return worker_manager, integrated_worker
+
+
 def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stage):
     def mock_stage(*args, **kwargs):
         raise ValueError(f"Simulated error in {stage}")
@@ -105,16 +139,24 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         mock_reply_fn,
     )
 
-    def mock_exception_handler(exc, reply_channel, failure_message):
-        return exception_handler(exc, None, failure_message)
+    def mock_send_failure(reply_channel, failure_message):
+        return send_failure(None, failure_message)
 
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
-        mock_exception_handler,
+        "smartsim._core.mli.infrastructure.control.workermanager.send_failure",
+        mock_send_failure,
     )
+
     return mock_reply_fn
 
 
+@pytest.mark.parametrize(
+    "setup_worker_manager",
+    [
+        pytest.param("setup_worker_manager_model_bytes"),
+        pytest.param("setup_worker_manager_model_key"),
+    ],
+)
 @pytest.mark.parametrize(
     "stage, error_message",
     [
@@ -142,15 +184,22 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
     ],
 )
 def test_pipeline_stage_errors_handled(
+    request,
     setup_worker_manager,
     monkeypatch: pytest.MonkeyPatch,
     stage: str,
     error_message: str,
 ):
     """Ensures that the worker manager does not crash after a failure in various pipeline stages"""
-    worker_manager, integrated_worker = setup_worker_manager
-
+    worker_manager, integrated_worker = request.getfixturevalue(setup_worker_manager)
     mock_reply_fn = mock_pipeline_stage(monkeypatch, integrated_worker, stage)
+
+    if stage not in ["fetch_model"]:
+        monkeypatch.setattr(
+            integrated_worker,
+            "fetch_model",
+            MagicMock(return_value=FetchModelResult(b"result_bytes")),
+        )
 
     if stage not in ["fetch_model", "load_model"]:
         monkeypatch.setattr(
@@ -200,7 +249,7 @@ def test_pipeline_stage_errors_handled(
 
     worker_manager._on_iteration()
 
-    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", error_message)
 
 
@@ -218,5 +267,5 @@ def test_exception_handling_helper(monkeypatch: pytest.MonkeyPatch):
     test_exception = ValueError("Test ValueError")
     exception_handler(test_exception, None, "Failure while fetching the model.")
 
-    assert mock_reply_fn.called_once()
+    mock_reply_fn.assert_called_once()
     mock_reply_fn.assert_called_with("fail", "Failure while fetching the model.")
