@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import copy
 import functools
 import os.path as osp
 import pathlib
@@ -52,7 +51,7 @@ class Step:
         self.entity_name = name
         self.cwd = cwd
         self.managed = False
-        self.step_settings = copy.deepcopy(step_settings)
+        self.step_settings = step_settings
         self.meta: t.Dict[str, str] = {}
 
     @property
