@@ -254,9 +254,9 @@ class WorkerManager(Service):
 
         self.start_timings()
         request = deserialize_message(request_bytes, self._comm_channel_type)
-        self.measure_time("w_deserialize")
         if not self._validate_request(request):
             return
+        self.measure_time("w_deserialize")
 
         self._request_dispatcher.dispatch(request)
         self.measure_time("w_dispatch")
@@ -365,10 +365,10 @@ class WorkerManager(Service):
                         )
                     else:
                         reply.outputs = transformed_output.outputs
-                    self.measure_time("w_assign_output")
                 except Exception:
                     logger.exception("Error executing worker")
                     reply.failed = True
+                self.measure_time("w_assign_output")
 
 
                 if reply.failed:
@@ -380,7 +380,6 @@ class WorkerManager(Service):
                 response = build_reply(reply)
                 self.measure_time("w_build_reply")
 
-                # serialized = self._worker.serialize_reply(request, transformed_output)
                 serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
 
                 self.measure_time("w_serialize_resp")
