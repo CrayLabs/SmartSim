@@ -13,6 +13,7 @@ Jump to:
 
 Description
 
+- Add hardware pinning capability when using dragon
 - Add TorchWorker first implementation and mock inference app example
 - Add EnvironmentConfigLoader for ML Worker Manager
 - Add Model schema with model metadata included
