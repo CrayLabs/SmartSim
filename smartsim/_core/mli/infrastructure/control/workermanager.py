@@ -301,8 +301,9 @@ class WorkerManager(Service):
             else:
                 fetch_model_result = None
                 while fetch_model_result is None:
+                    timings.append(time.perf_counter() - interm)  # timing
+                    interm = time.perf_counter()  # timing
                     try:
-                        interm = time.perf_counter()  # timing
                         fetch_model_result = self._worker.fetch_model(
                             request, self._feature_store
                         )
@@ -332,6 +333,8 @@ class WorkerManager(Service):
                     return
 
         else:
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
             try:
                 fetch_model_result = self._worker.fetch_model(
                     request, self._feature_store
@@ -341,6 +344,9 @@ class WorkerManager(Service):
                     e, request.callback, "Failed while fetching the model."
                 )
                 return
+
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
             try:
                 model_result = self._worker.load_model(
                     request, fetch_result=fetch_model_result, device=self._device
@@ -373,7 +379,6 @@ class WorkerManager(Service):
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
-
         try:
             execute_result = self._worker.execute(
                 request, model_result, transformed_input
