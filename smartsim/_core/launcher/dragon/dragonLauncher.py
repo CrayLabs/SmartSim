@@ -29,8 +29,6 @@ from __future__ import annotations
 import os
 import typing as t
 
-from smartsim._core.schemas.dragonRequests import DragonRunPolicy
-
 from ...._core.launcher.stepMapping import StepMap
 from ....error import LauncherError, SmartSimError
 from ....log import get_logger
@@ -170,9 +168,6 @@ class DragonLauncher(WLMLauncher):
             merged_env = self._connector.merge_persisted_env(os.environ.copy())
             nodes = int(run_args.get("nodes", None) or 1)
             tasks_per_node = int(run_args.get("tasks-per-node", None) or 1)
-
-            policy = DragonRunPolicy.from_run_args(run_args)
-
             response = _assert_schema_type(
                 self._connector.send_request(
                     DragonRunRequest(
@@ -186,7 +181,6 @@ class DragonLauncher(WLMLauncher):
                         current_env=merged_env,
                         output_file=out,
                         error_file=err,
-                        policy=policy,
                     )
                 ),
                 DragonRunResponse,
