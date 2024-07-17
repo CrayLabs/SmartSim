@@ -360,7 +360,7 @@ class MessageHandler:
             request_attributes_capnp.TensorFlowRequestAttributes,
             None,
         ],
-    ) -> request_capnp.Request:
+    ) -> request_capnp.RequestBuilder:
         """
         Builds the request message.
 
@@ -508,7 +508,7 @@ class MessageHandler:
             response_attributes_capnp.TensorFlowResponseAttributes,
             None,
         ],
-    ) -> response_capnp.Response:
+    ) -> response_capnp.ResponseBuilder:
         """
         Builds the response message.
 

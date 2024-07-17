@@ -51,7 +51,7 @@ from ...infrastructure.worker.worker import (
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import Response
+from ...mli_schemas.response.response_capnp import Response, ResponseBuilder
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
@@ -124,10 +124,10 @@ def deserialize_message(
     return inference_request
 
 
-def build_failure_reply(status: "Status", message: str) -> Response:
+def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
     return MessageHandler.build_response(
-        status=status,  # todo: need to indicate correct status
-        message=message,  # todo: decide what these will be
+        status=status,
+        message=message,
         result=[],
         custom_attributes=None,
     )
@@ -159,7 +159,7 @@ def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
     return prepared_outputs
 
 
-def build_reply(reply: InferenceReply) -> Response:
+def build_reply(reply: InferenceReply) -> ResponseBuilder:
     results = prepare_outputs(reply)
 
     return MessageHandler.build_response(
@@ -185,7 +185,9 @@ def exception_handler(
         f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
-    serialized_resp = MessageHandler.serialize_response(build_failure_reply("fail", failure_message))  # type: ignore
+    serialized_resp = MessageHandler.serialize_response(
+        build_failure_reply("fail", failure_message)
+    )
     if reply_channel:
         reply_channel.send(serialized_resp)
 
@@ -423,7 +425,7 @@ class WorkerManager(Service):
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
 
-        serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+        serialized_resp = MessageHandler.serialize_response(response)
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
