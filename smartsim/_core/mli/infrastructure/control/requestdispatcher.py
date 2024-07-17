@@ -203,7 +203,6 @@ class BatchQueue(Queue[InferenceRequest]):
     def ready(self) -> bool:
         if self.empty():
             return False
-
         return self.full() or (self._waited_time >= self._batch_timeout)
 
     def make_disposable(self) -> None:
@@ -311,7 +310,6 @@ class RequestDispatcher:
                 self._perf_timer.measure_time("dispatch")
             finally:
                 self.flush_requests()
-                self._perf_timer.measure_time("flush_requests")
                 # TODO: implement this
                 # self.remove_queues()
 
@@ -374,11 +372,14 @@ class RequestDispatcher:
         for queue in self._queues:
             if queue.ready and queue.acquire(blocking=False):
                 try:
+
+                    self._perf_timer.measure_time("find_queue")
                     self._outgoing_queue.put(
                         InferenceBatch(
                             model_key=queue.model_key, requests=queue.flush()
                         )
                     )
+                    self._perf_timer.measure_time("flush_requests")
                 finally:
                     queue.release()
                 break

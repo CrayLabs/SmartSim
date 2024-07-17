@@ -28,7 +28,6 @@ import io
 
 import numpy as np
 import torch
-
 from .....error import SmartSimError
 from .....log import get_logger
 from ...mli_schemas.tensor import tensor_capnp
@@ -43,6 +42,7 @@ from .worker import (
     TransformOutputResult,
 )
 
+torch.set_num_threads(1)
 logger = get_logger(__name__)
 
 
