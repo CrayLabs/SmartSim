@@ -118,9 +118,7 @@ class DeviceManager:
                         loaded_model = worker.load_model(
                             batch, model_bytes, candidate_device.name
                         )
-                        candidate_device.add_model(
-                            batch.model_key, loaded_model.model
-                        )
+                        candidate_device.add_model(batch.model_key, loaded_model.model)
 
                         return_device = candidate_device
 

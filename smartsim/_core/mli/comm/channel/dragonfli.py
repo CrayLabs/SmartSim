@@ -59,10 +59,10 @@ class DragonFLIChannel(cch.CommChannelBase):
     def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
-        with self._fli.recvh(timeout=None) as recvh:
+        with self._fli.recvh() as recvh:
             try:
                 request_bytes: bytes
-                request_bytes, _ = recvh.recv_bytes(timeout=None)
+                request_bytes, _ = recvh.recv_bytes()
                 return request_bytes
             except fli.FLIEOT:
                 return b""

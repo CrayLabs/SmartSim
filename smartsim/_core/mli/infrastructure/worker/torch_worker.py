@@ -84,26 +84,31 @@ class TorchWorker(MachineLearningWorkerBase):
             partial_result = []
             if fetch_result.meta is None:
                 raise ValueError("Cannot reconstruct tensor without meta information")
-            for item, item_meta in zip(fetch_result.inputs, fetch_result.meta):
+            for idx, (item, item_meta) in enumerate(
+                zip(fetch_result.inputs, fetch_result.meta)
+            ):
                 tensor_desc: tensor_capnp.TensorDescriptor = item_meta
                 partial_result.append(
-                    torch.tensor(np.frombuffer(item, dtype=str(tensor_desc.dataType)))
-                    .to(device)
-                    .reshape(tuple(dim for dim in tensor_desc.dimensions))
+                    torch.tensor(
+                        np.frombuffer(item, dtype=str(tensor_desc.dataType))
+                    ).reshape(tuple(dim for dim in tensor_desc.dimensions))
                 )
+                if idx == 0:
+                    num_samples = tensor_desc.dimensions[0]
+                    slices.append(slice(start, start + num_samples))
+                    start = start + num_samples
             results.append(partial_result)
-            num_samples = fetch_result.meta[0].dimensions[0]
-            slices.append(slice(start, start + num_samples))
-            start = start + num_samples
 
         result: list[torch.Tensor] = []
         if len(batch.requests) > 1:
             for t_idx in range(len(results[0])):
                 result.append(
-                    torch.concatenate([partial_result[t_idx] for partial_result in results])
+                    torch.concatenate(
+                        [partial_result[t_idx] for partial_result in results]
+                    ).to(device)
                 )
         else:
-            result = results[0]
+            result = [tensor.to(device) for tensor in results[0]]
 
         return TransformInputResult(result, slices)
         # return data # note: this fails copy test!
@@ -134,11 +139,17 @@ class TorchWorker(MachineLearningWorkerBase):
         transformed_list: list[TransformOutputResult] = []
         for result_slice in execute_result.slices:
             if result_device != "cpu":
-                transformed = [item.to("cpu") for item in execute_result.predictions[result_slice]]
+                transformed = [
+                    item.to("cpu") for item in execute_result.predictions[result_slice]
+                ]
                 # todo: need the shape from latest schemas added here.
-                transformed_list.append(TransformOutputResult(transformed, None, "c", "float32"))  # fixme
+                transformed_list.append(
+                    TransformOutputResult(transformed, None, "c", "float32")
+                )  # fixme
 
-            transformed_list.append(TransformOutputResult(
-                execute_result.predictions[result_slice], None, "c", "float32"
-            ))  # fixme
+            transformed_list.append(
+                TransformOutputResult(
+                    execute_result.predictions[result_slice], None, "c", "float32"
+                )
+            )  # fixme
         return transformed_list

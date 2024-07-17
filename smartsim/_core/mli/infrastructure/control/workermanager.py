@@ -23,14 +23,18 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import typing as t
-import time
-import numpy as np
-import numbers
 
+import multiprocessing as mp
+import numbers
+import time
+import typing as t
 from collections import OrderedDict
 
-from .....log import ContextThread, get_logger
+import dragon
+import numpy as np
+
+from ....utils.timings import PerfTimer
+from .....log import get_logger
 from ....entrypoints.service import Service
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
@@ -52,62 +56,6 @@ if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
 
 logger = get_logger(__name__)
-
-
-def deserialize_message(
-    data_blob: bytes,
-    channel_type: t.Type[CommChannelBase],
-) -> InferenceRequest:
-    """Deserialize a message from a byte stream into an InferenceRequest
-    :param data_blob: The byte stream to deserialize"""
-    # todo: consider moving to XxxCore and only making
-    # workers implement the inputs and model conversion?
-
-    # alternatively, consider passing the capnproto models
-    # to this method instead of the data_blob...
-
-    # something is definitely wrong here... client shouldn't have to touch
-    # callback (or batch size)
-
-    request = MessageHandler.deserialize_request(data_blob)
-    # return request
-    model_key: t.Optional[str] = None
-    model_bytes: t.Optional[Model] = None
-
-    if request.model.which() == "key":
-        model_key = request.model.key.key
-    elif request.model.which() == "data":
-        model_bytes = request.model.data
-
-    callback_key = request.replyChannel.reply
-
-    # todo: shouldn't this be `CommChannel.find` instead of `DragonCommChannel`
-    comm_channel = channel_type(callback_key)
-    # comm_channel = DragonCommChannel(request.replyChannel)
-
-    input_keys: t.Optional[t.List[str]] = None
-    input_bytes: t.Optional[t.List[bytes]] = (
-        None  # these will really be tensors already
-    )
-
-    input_meta: t.List[t.Any] = []
-
-    if request.input.which() == "keys":
-        input_keys = [input_key.key for input_key in request.input.keys]
-    elif request.input.which() == "data":
-        input_bytes = [data.blob for data in request.input.data]
-        input_meta = [data.tensorDescriptor for data in request.input.data]
-
-    inference_request = InferenceRequest(
-        model_key=model_key,
-        callback=comm_channel,
-        raw_inputs=input_bytes,
-        input_meta=input_meta,
-        input_keys=input_keys,
-        raw_model=model_bytes,
-        batch_size=0,
-    )
-    return inference_request
 
 
 def build_failure_reply(status: "StatusEnum", message: str) -> Response:
@@ -197,79 +145,30 @@ class WorkerManager(Service):
         self._cached_models: dict[str, t.Any] = {}
         """Dictionary of previously loaded models"""
         self._request_dispatcher: RequestDispatcher = RequestDispatcher(
-            batch_timeout=batch_timeout, batch_size=batch_size
+            batch_timeout=batch_timeout,
+            batch_size=batch_size,
+            incoming_channel=self._task_queue,
+            comm_channel_type=comm_channel_type,
+            feature_store=self._feature_store,
         )
         """Dispatcher used to batch requests"""
-        self._dispatcher_threads = 1
-        """Number of threads which dispatch requests"""
         self._device_manager: DeviceManager = DeviceManager([WorkerDevice("gpu")])
-        self._start = None
-        self._interm = None
-        self._timings: OrderedDict[str, list[numbers.Number]] = OrderedDict()
-        self._timing_on = True
 
-    def _add_label_to_timings(self, label: str):
-        if label not in self._timings:
-            self._timings[label] = []
+        self._perf_timer = PerfTimer(prefix="w_")
 
-    @staticmethod
-    def _format_number(number: numbers.Number):
-        return f"{number:0.4e}"
-
-    def start_timings(self):
-        if self._timing_on:
-            # self._add_label_to_timings("batch_size")
-            # self._timings["batch_size"].append(batch_size)
-            self._start = time.perf_counter()
-            self._interm = time.perf_counter()
-
-    def end_timings(self):
-        if self._timing_on:
-            self._add_label_to_timings("total_time")
-            self._timings["total_time"].append(self._format_number(time.perf_counter()-self._start))
-
-    def measure_time(self, label: str):
-        if self._timing_on:
-            self._add_label_to_timings(label)
-            self._timings[label].append(self._format_number(time.perf_counter()-self._interm))
-            self._interm = time.perf_counter()
-
-    def print_timings(self, to_file: bool = False):
-        print(" ".join(self._timings.keys()))
-        value_array = np.array([value for  value in self._timings.values()], dtype=float)
-        value_array = np.transpose(value_array)
-        for i in range(value_array.shape[0]):
-            print(" ".join(self._format_number(value) for value in value_array[i]))
-        if to_file:
-            np.save("timings.npy", value_array)
-            np.savetxt("timings.txt", value_array)
-
-
-    def _receive_requests(self) -> None:
-        if self._task_queue is None:
-            return
-    # while not self._can_shutdown():
-        # perform default deserialization of the message envelope
-        request_bytes: bytes = self._task_queue.recv()
-
-        self.start_timings()
-        request = deserialize_message(request_bytes, self._comm_channel_type)
-        self.measure_time("w_deserialize")
-        if not self._validate_request(request):
-            return
-
-        self._request_dispatcher.dispatch(request)
-        self.measure_time("w_dispatch")
+        try:
+            mp.set_start_method("dragon")
+        except RuntimeError:
+            pass
+        self._dispatcher_process = mp.Process(
+            target=self._request_dispatcher.run, name="Dispatcher"
+        )
 
     def _on_start(self) -> None:
-        # for thread_idx in range(self._dispatcher_threads):
-        #     dispatcher_thread = ContextThread(
-        #         name=f"Dispatcher_{thread_idx}",
-        #         target=self._receive_requests,
-        #         daemon=True,
-        #     )
-        #     dispatcher_thread.start()
-        pass
+        self._dispatcher_process.start()
+
+    def _on_shutdown(self) -> None:
+        self._dispatcher_process.join()
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -307,14 +206,12 @@ class WorkerManager(Service):
         the inference pipeline"""
         logger.debug("executing worker manager pipeline")
 
-        self._receive_requests()
-
-        # logger.info("Getting request batch")
-        batch = self._request_dispatcher.flush_requests()
+        batch = self._request_dispatcher.task_queue.get()
+        self._perf_timer.start_timings()
         if batch is None or 0 == len(batch.requests):
             return
 
-        self.measure_time("w_flush_requests")
+        self._perf_timer.measure_time("flush_requests")
         # logger.info(f"Got batch of {len(batch.requests)} requests, acquiring device")
         device: WorkerDevice = next(
             self._device_manager.get_free_device(
@@ -323,20 +220,20 @@ class WorkerManager(Service):
                 feature_store=self._feature_store,
             )
         )
-        self.measure_time("w_fetch_model")
+        self._perf_timer.measure_time("fetch_model")
 
         # logger.info(f"Acquired device {device.name}")
 
         model_result = LoadModelResult(device.get_model(batch.model_key))
-        self.measure_time("w_load_model")
+        self._perf_timer.measure_time("load_model")
 
         fetch_input_results = self._worker.fetch_inputs(batch, self._feature_store)
-        self.measure_time("w_fetch_input")
+        self._perf_timer.measure_time("fetch_input")
 
         transformed_input = self._worker.transform_input(
             batch, fetch_input_results, self._device
         )
-        self.measure_time("w_transform_input")
+        self._perf_timer.measure_time("transform_input")
 
         replies = [InferenceReply() for _ in range(len(batch.requests))]
 
@@ -344,19 +241,19 @@ class WorkerManager(Service):
             execute_result = self._worker.execute(
                 batch, model_result, transformed_input
             )
-            self.measure_time("w_execute")
+            self._perf_timer.measure_time("execute")
             transformed_outputs = self._worker.transform_output(
                 batch, execute_result, self._device
             )
-            self.measure_time("w_transform_output")
+            self._perf_timer.measure_time("transform_output")
         except Exception:
             logger.exception("Error executing worker")
             for reply in replies:
                 reply.failed = True
         else:
-            for reply_idx, (request, transformed_output) in enumerate(zip(
-                batch.requests, transformed_outputs
-            )):
+            for reply_idx, (request, transformed_output) in enumerate(
+                zip(batch.requests, transformed_outputs)
+            ):
                 reply = replies[reply_idx]
                 try:
                     if request.output_keys:
@@ -365,11 +262,10 @@ class WorkerManager(Service):
                         )
                     else:
                         reply.outputs = transformed_output.outputs
-                    self.measure_time("w_assign_output")
+                    self._perf_timer.measure_time("assign_output")
                 except Exception:
                     logger.exception("Error executing worker")
                     reply.failed = True
-
 
                 if reply.failed:
                     response = build_failure_reply("fail", "failure-occurred")
@@ -378,21 +274,21 @@ class WorkerManager(Service):
                         response = build_failure_reply("fail", "no-results")
 
                 response = build_reply(reply)
-                self.measure_time("w_build_reply")
+                self._perf_timer.measure_time("build_reply")
 
                 # serialized = self._worker.serialize_reply(request, transformed_output)
                 serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
 
-                self.measure_time("w_serialize_resp")
+                self._perf_timer.measure_time("serialize_resp")
 
                 if request.callback:
                     request.callback.send(serialized_resp)
-                self.measure_time("w_send")
+                self._perf_timer.measure_time("send")
 
-        self.end_timings()
+        self._perf_timer.end_timings()
 
-        if len(self._timings["w_send"]) == 801:
-            self.print_timings(True)
+        if len(self._perf_timer._timings["w_send"]) == 801:
+            self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""

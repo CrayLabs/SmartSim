@@ -23,23 +23,92 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# isort: off
+# pylint: disable-next=unused-import
+import dragon
+from dragon.mpbridge.queues import DragonQueue
+# isort: on
+
+import multiprocessing as mp
 import time
 import typing as t
 import uuid
 from queue import Empty, Full, Queue
-from threading import RLock
+from threading import Lock
 from types import TracebackType
 
 from packaging.version import Version
 
+from .....error import SmartSimError
 from .....log import get_logger
+from ....utils.timings import PerfTimer
+from ...comm.channel.channel import CommChannelBase
+from ...comm.channel.dragonchannel import DragonCommChannel
+from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import InferenceBatch, InferenceRequest
+from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
 
-if t.TYPE_CHECKING:
-    from dragon.fli import FLInterface
-
 logger = get_logger("Request Dispatcher")
+
+
+def deserialize_message(
+    data_blob: bytes,
+    channel_type: t.Type[CommChannelBase],
+) -> InferenceRequest:
+    """Deserialize a message from a byte stream into an InferenceRequest
+    :param data_blob: The byte stream to deserialize"""
+    # todo: consider moving to XxxCore and only making
+    # workers implement the inputs and model conversion?
+
+    # alternatively, consider passing the capnproto models
+    # to this method instead of the data_blob...
+
+    # something is definitely wrong here... client shouldn't have to touch
+    # callback (or batch size)
+
+    request = MessageHandler.deserialize_request(data_blob)
+    # return request
+    model_key: t.Optional[str] = None
+    model_bytes: t.Optional[Model] = None
+
+    if request.model.which() == "key":
+        model_key = request.model.key.key
+    elif request.model.which() == "data":
+        model_bytes = request.model.data
+
+    callback_key = request.replyChannel.reply
+
+    # todo: shouldn't this be `CommChannel.find` instead of `DragonCommChannel`
+    comm_channel = channel_type(callback_key)
+    # comm_channel = DragonCommChannel(request.replyChannel)
+
+    input_keys: t.Optional[t.List[str]] = None
+    input_bytes: t.Optional[t.List[bytes]] = (
+        None  # these will really be tensors already
+    )
+
+    input_meta: t.List[t.Any] = []
+
+    if request.input.which() == "keys":
+        input_keys = [input_key.key for input_key in request.input.keys]
+    elif request.input.which() == "data":
+        input_bytes = [data.blob for data in request.input.data]
+        input_meta = [data.tensorDescriptor for data in request.input.data]
+
+    inference_request = InferenceRequest(
+        model_key=model_key,
+        callback=comm_channel,
+        raw_inputs=input_bytes,
+        input_meta=input_meta,
+        input_keys=input_keys,
+        raw_model=model_bytes,
+        batch_size=0,
+    )
+    return inference_request
+
 
 class WorkerDevice:
     def __init__(self, name: str) -> None:
@@ -50,7 +119,7 @@ class WorkerDevice:
         """The name used by the toolkit to identify this device"""
         self._models: dict[str, t.Any] = {}
         """Dictionary of model key to model for models stored on this device"""
-        self._lock = RLock()
+        self._lock = Lock()
         """Lock to ensure only one thread at the time accesses this device"""
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
@@ -79,11 +148,11 @@ class BatchQueue(Queue[InferenceRequest]):
         self._first_put: t.Optional[float] = None
         self._disposable = False
         self._model_key = model_key
-        self._flush_lock = RLock()
+        self._flush_lock = Lock()
         self._id = str(uuid.uuid4())
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self._id
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
@@ -114,7 +183,6 @@ class BatchQueue(Queue[InferenceRequest]):
         timeout: t.Optional[float] = 0.0,
     ) -> None:
         if not self.acquire(blocking=False):
-            logger.error(f"Could not acquire queue {self._id} to put")
             raise Full
         try:
             if self.full():
@@ -174,24 +242,98 @@ class RequestDispatcher:
         self,
         batch_timeout: float,
         batch_size: int,
+        incoming_channel: t.Optional[CommChannelBase],
+        comm_channel_type: t.Type[CommChannelBase] = DragonCommChannel,
+        feature_store: t.Optional[FeatureStore] = None,
     ) -> None:
+        mp.set_start_method("dragon")
         self._queues: list[BatchQueue] = []
         self._active_queues: dict[str, BatchQueue] = {}
         self._model_last_version: dict[str, Version] = {}
         self._model_name_to_key: dict[str, str] = {}
         self._batch_timeout = batch_timeout
         self._batch_size = batch_size
-        self._queue_swap_lock = RLock()
+        self._queue_swap_lock: t.Optional[Lock] = None
+        self._incoming_channel = incoming_channel
+        self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
+        self._feature_store = feature_store
+        self._comm_channel_type = comm_channel_type
+        self._perf_timer = PerfTimer(prefix="r_")
+
+    def _validate_request(self, request: InferenceRequest) -> bool:
+        """Ensure the request can be processed.
+        :param request: The request to validate
+        :return: True if the request is valid, False otherwise"""
+        if not self._feature_store:
+            if request.model_key:
+                logger.error("Unable to load model by key without feature store")
+                return False
+
+            if request.input_keys:
+                logger.error("Unable to load inputs by key without feature store")
+                return False
+
+            if request.output_keys:
+                logger.error("Unable to persist outputs by key without feature store")
+                return False
+
+        if not request.model_key and not request.raw_model:
+            logger.error("Unable to continue without model bytes or feature store key")
+            return False
+
+        if not request.input_keys and not request.raw_inputs:
+            logger.error("Unable to continue without input bytes or feature store keys")
+            return False
+
+        if request.callback is None:
+            logger.error("No callback channel provided in request")
+            return False
+
+        return True
+
+    def run(self) -> None:
+        self._queue_swap_lock = Lock()
+        if self._incoming_channel is None:
+            raise SmartSimError("No incoming channel for dispatcher")
+        while True:
+            try:
+                request_bytes: bytes = self._incoming_channel.recv()
+            except Exception:
+                pass
+            else:
+                self._perf_timer.start_timings()
+                request = deserialize_message(request_bytes, self._comm_channel_type)
+                self._perf_timer.measure_time("deserialize_message")
+                if not self._validate_request(request):
+                    return
+                self._perf_timer.measure_time("validate_request")
+                self.dispatch(request)
+                self._perf_timer.measure_time("dispatch")
+            finally:
+                self.flush_requests()
+                self._perf_timer.measure_time("flush_requests")
+                # TODO: implement this
+                # self.remove_queues()
+
+                self._perf_timer.end_timings()
+
+                # pylint: disable-next=protected-access
+            if len(self._perf_timer._timings["r_dispatch"]) == 801:
+                self._perf_timer.print_timings(True)
+
+    @property
+    def task_queue(self) -> DragonQueue:
+        return self._outgoing_queue
 
     def _swap_queue(self, model_key: str) -> None:
+        if self._queue_swap_lock is None:
+            raise SmartSimError("Queue was not locked")
         with self._queue_swap_lock:
             for queue in self._queues:
                 if queue.model_key == model_key and not queue.full():
-                    logger.info("Found queue, swapping")
                     self._active_queues[model_key] = queue
                     return
 
-            logger.info("Creating new queue")
             new_queue = BatchQueue(self._batch_timeout, self._batch_size, model_key)
             self._queues.append(new_queue)
             self._active_queues[model_key] = new_queue
@@ -210,14 +352,12 @@ class RequestDispatcher:
             return
 
         if request.model_key:
-            logger.info("Indirect inference requested, dispatching it to existing queue")
             success = False
             while not success:
                 try:
                     self._active_queues[request.model_key].put_nowait(request)
                     success = True
                 except (Full, KeyError):
-                    logger.info("Could not find non-full queue, swapping")
                     self._swap_queue(request.model_key)
 
     def _update_model_version(self, model: Model) -> None:
@@ -230,18 +370,15 @@ class RequestDispatcher:
             self._model_last_version[model.name] = Version(model.version)
             return
 
-    def flush_requests(self) -> t.Optional[InferenceBatch]:
-        result = None
+    def flush_requests(self) -> None:
         for queue in self._queues:
-            # logger.info("Acquiring queue to flush")
             if queue.ready and queue.acquire(blocking=False):
                 try:
-                    logger.info(f"Acquired queue {queue.id}")
-                    result = InferenceBatch(
-                        model_key=queue.model_key, requests=queue.flush()
+                    self._outgoing_queue.put(
+                        InferenceBatch(
+                            model_key=queue.model_key, requests=queue.flush()
+                        )
                     )
                 finally:
                     queue.release()
                 break
-
-        return result
