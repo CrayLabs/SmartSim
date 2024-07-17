@@ -40,7 +40,6 @@ from dragon.fli import FLInterface
 from smartsim._core.mli.infrastructure.control.workermanager import (
     WorkerManager,
     exception_handler,
-    send_failure,
 )
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
@@ -139,12 +138,12 @@ def mock_pipeline_stage(monkeypatch: pytest.MonkeyPatch, integrated_worker, stag
         mock_reply_fn,
     )
 
-    def mock_send_failure(reply_channel, failure_message):
-        return send_failure(None, failure_message)
+    def mock_exception_handler(exc, reply_channel, failure_message):
+        return exception_handler(exc, None, failure_message)
 
     monkeypatch.setattr(
-        "smartsim._core.mli.infrastructure.control.workermanager.send_failure",
-        mock_send_failure,
+        "smartsim._core.mli.infrastructure.control.workermanager.exception_handler",
+        mock_exception_handler,
     )
 
     return mock_reply_fn

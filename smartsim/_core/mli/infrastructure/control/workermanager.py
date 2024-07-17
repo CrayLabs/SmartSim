@@ -174,7 +174,7 @@ def exception_handler(
     exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
 ) -> None:
     """
-    Logs exceptions, calls send_failure to send the failed response back.
+    Logs exceptions and sends a failure response.
 
     :param exc: The exception to be logged
     :param reply_channel: The channel used to send replies
@@ -185,18 +185,6 @@ def exception_handler(
         f"Exception type: {type(exc).__name__}\n"
         f"Exception message: {str(exc)}"
     )
-    send_failure(reply_channel, failure_message)
-
-
-def send_failure(
-    reply_channel: t.Optional[CommChannelBase], failure_message: str
-) -> None:
-    """
-    Sends back the failed response.
-
-    :param reply_channel: The channel used to send replies
-    :param failure_message: Failure message for response
-    """
     serialized_resp = MessageHandler.serialize_response(build_failure_reply("fail", failure_message))  # type: ignore
     if reply_channel:
         reply_channel.send(serialized_resp)
@@ -299,7 +287,11 @@ class WorkerManager(Service):
 
         if not request.raw_model:
             if request.model_key is None:
-                send_failure(request.callback, "Could not find model key or model.")
+                exception_handler(
+                    ValueError("Could not find model key or model"),
+                    request.callback,
+                    "Could not find model key or model.",
+                )
                 return
             if request.model_key in self._cached_models:
                 timings.append(time.perf_counter() - interm)  # timing
