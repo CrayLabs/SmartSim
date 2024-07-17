@@ -189,6 +189,24 @@ extras_require = {
         "types-setuptools",
         "typing_extensions>=4.1.0",
     ],
+    "docs": [
+        "Sphinx==6.2.1",
+        "breathe==4.35.0",
+        "sphinx-fortran==1.1.1",
+        "sphinx-book-theme==1.0.1",
+        "sphinx-copybutton==0.5.2",
+        "sphinx-tabs==3.4.4",
+        "nbsphinx==0.9.3",
+        "docutils==0.18.1",
+        "torch==2.0.1",
+        "tensorflow==2.13.1",
+        "ipython",
+        "jinja2==3.1.2",
+        "sphinx-design",
+        "pypandoc",
+        "sphinx-autodoc-typehints",
+        "myst_parser",
+    ]
     # see smartsim/_core/_install/buildenv.py for more details
     **versions.ml_extras_required(),
 }
