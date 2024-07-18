@@ -424,6 +424,8 @@ class DragonBackend:
                 global_policy = dragon_policy.Policy(
                     placement=dragon_policy.Policy.Placement.HOST_NAME,
                     host_name=hosts[0],
+                    affinity = dragon_policy.Policy.Affinity.SPECIFIC,
+                    cpu_affinity=list(range(32))+list(range(64,64+32)),
                 )
                 options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
                 grp = dragon_process_group.ProcessGroup(
@@ -435,6 +437,8 @@ class DragonBackend:
                     local_policy = dragon_policy.Policy(
                         placement=dragon_policy.Policy.Placement.HOST_NAME,
                         host_name=node_name,
+                        affinity = dragon_policy.Policy.Affinity.SPECIFIC,
+                        cpu_affinity=list(range(32))+list(range(64,64+32)),
                     )
                     policies.extend([local_policy] * request.tasks_per_node)
                     tmp_proc = dragon_process.ProcessTemplate(

@@ -24,14 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import multiprocessing as mp
-import numbers
-import time
-import typing as t
-from collections import OrderedDict
-
 import dragon
-import numpy as np
+import dragon.data.ddict.ddict as dragon_ddict
+import dragon.infrastructure.connection as dragon_connection
+import dragon.infrastructure.policy as dragon_policy
+import dragon.infrastructure.process_desc as dragon_process_desc
+import dragon.native.group_state as dragon_group_state
+import dragon.native.process as dragon_process
+import dragon.native.process_group as dragon_process_group
+import dragon.native.machine as dragon_machine
+
+import multiprocessing as mp
+import os
+import socket
+import typing as t
 
 from ....utils.timings import PerfTimer
 from .....log import get_logger
@@ -160,9 +166,43 @@ class WorkerManager(Service):
             mp.set_start_method("dragon")
         except RuntimeError:
             pass
-        self._dispatcher_process = mp.Process(
-            target=self._request_dispatcher.run, name="Dispatcher"
+        # self._dispatcher_process = mp.Process(
+        #     target=self._request_dispatcher.run, name="Dispatcher"
+        # )
+        self._dispatcher_process = self._create_local_dispatcher_process()
+
+    def _create_local_dispatcher_process(self):
+        self_affinity = list(os.sched_getaffinity(os.getpid()))
+        os.sched_setaffinity(os.getpid(), self_affinity[:-8])
+        global_policy = dragon_policy.Policy(
+            placement=dragon_policy.Policy.Placement.HOST_NAME,
+            host_name=socket.gethostname(),
+            affinity = dragon_policy.Policy.Affinity.SPECIFIC,
+            cpu_affinity=self_affinity[-8:],
+            device=dragon_policy.Policy.Device.CPU,
+            distribution = dragon_policy.Policy.Distribution.BLOCK,
         )
+        options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
+        grp = dragon_process_group.ProcessGroup(
+            restart=False, pmi_enabled=True, policy=global_policy
+        )
+        local_policy = dragon_policy.Policy(
+            placement=dragon_policy.Policy.Placement.HOST_NAME,
+            host_name=socket.gethostname(),
+            affinity = dragon_policy.Policy.Affinity.SPECIFIC,
+            cpu_affinity=self_affinity[-8:],
+            device=dragon_policy.Policy.Device.CPU,
+        )
+        tmp_proc = dragon_process.ProcessTemplate(
+            target=self._request_dispatcher.run,
+            args=[],
+            cwd=os.getcwd(),
+            policy=local_policy,
+            options=options,
+        )
+        grp.add_process(nproc=1, template=tmp_proc)
+        grp.init()
+        return grp
 
     def _on_start(self) -> None:
         self._dispatcher_process.start()
