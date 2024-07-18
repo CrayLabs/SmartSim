@@ -67,7 +67,7 @@ class LaunchSettings(BaseSettings):
         return self._launcher.value
 
     @property
-    def launch_args(self) -> LaunchArgBuilder[t.Any]:
+    def launch_args(self) -> LaunchArgBuilder:
         """Return the launch argument translator."""
         return self._arg_builder
 
@@ -88,9 +88,7 @@ class LaunchSettings(BaseSettings):
         """Set the environment variables."""
         self._env_vars = copy.deepcopy(value)
 
-    def _get_arg_builder(
-        self, launch_args: StringArgument | None
-    ) -> LaunchArgBuilder[t.Any]:
+    def _get_arg_builder(self, launch_args: StringArgument | None) -> LaunchArgBuilder:
         """Map the Launcher to the LaunchArgBuilder"""
         if self._launcher == LauncherType.Slurm:
             return SlurmArgBuilder(launch_args)

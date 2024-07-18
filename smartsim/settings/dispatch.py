@@ -230,10 +230,38 @@ def create_job_id() -> LaunchedJobID:
     return LaunchedJobID(str(uuid.uuid4()))
 
 
+class ExecutableLike(t.Protocol):
+    def as_program_arguments(self) -> t.Sequence[str]: ...
+
+
 class LauncherLike(t.Protocol[_T_contra]):
     def start(self, launchable: _T_contra) -> LaunchedJobID: ...
     @classmethod
     def create(cls, exp: Experiment) -> Self: ...
+
+
+# TODO: This is just a nice helper function that I am using for the time being
+#       to wire everything up! In reality it might be a bit too confusing and
+#       meta-program-y for production code. Check with the core team to see
+#       what they think!!
+def shell_format(
+    run_command: str | None,
+) -> _FormatterType[LaunchArgBuilder, t.Sequence[str]]:
+    def impl(
+        args: LaunchArgBuilder, exe: ExecutableLike, env: _EnvironMappingType
+    ) -> t.Sequence[str]:
+        return (
+            (
+                run_command,
+                *(args.format_launch_args() or ()),
+                "--",
+                *exe.as_program_arguments(),
+            )
+            if run_command is not None
+            else exe.as_program_arguments()
+        )
+
+    return impl
 
 
 class ShellLauncher:
