@@ -215,7 +215,7 @@ extras_require = {
 # rest in setup.cfg
 setup(
     version=smartsim_version,
-    install_requires = [
+    install_requires=[
         "packaging>=24.0",
         "psutil>=5.7.2",
         "coloredlogs>=10.0",
@@ -230,7 +230,7 @@ setup(
         "pyzmq>=25.1.2",
         "pygithub>=2.3.0",
         "numpy<2",
-	    "smartredis>=0.5,<0.6",
+        "smartredis>=0.5,<0.6",
     ],
     cmdclass={
         "build_py": SmartSimBuild,
