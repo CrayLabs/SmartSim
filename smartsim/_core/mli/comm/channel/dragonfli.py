@@ -70,4 +70,3 @@ class DragonFLIChannel(cch.CommChannelBase):
                 except fli.FLIEOT as exc:
                     eot = True
         return messages
-
