@@ -16,6 +16,7 @@ To be released at some future point in time
 Description
 
 - Make dependencies more discoverable in setup.py
+- Add hardware pinning capability when using dragon
 - Pin NumPy version to 1.x
 - New launcher support for SGE (and similar derivatives)
 - Fix test outputs being created in incorrect directory

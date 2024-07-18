@@ -26,9 +26,10 @@
 
 import typing as t
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, ValidationError
 
 import smartsim._core.schemas.utils as _utils
+from smartsim.error.errors import SmartSimError
 
 # Black and Pylint disagree about where to put the `...`
 # pylint: disable=multiple-statements
@@ -37,6 +38,43 @@ request_registry = _utils.SchemaRegistry["DragonRequest"]()
 
 
 class DragonRequest(BaseModel): ...
+
+
+class DragonRunPolicy(BaseModel):
+    """Policy specifying hardware constraints when running a Dragon job"""
+
+    cpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    """List of CPU indices to which the job should be pinned"""
+    gpu_affinity: t.List[NonNegativeInt] = Field(default_factory=list)
+    """List of GPU indices to which the job should be pinned"""
+
+    @staticmethod
+    def from_run_args(
+        run_args: t.Dict[str, t.Union[int, str, float, None]]
+    ) -> "DragonRunPolicy":
+        """Create a DragonRunPolicy with hardware constraints passed from
+        a dictionary of run arguments
+        :param run_args: Dictionary of run arguments
+        :returns: DragonRunPolicy instance created from the run arguments"""
+        gpu_args = ""
+        if gpu_arg_value := run_args.get("gpu-affinity", None):
+            gpu_args = str(gpu_arg_value)
+
+        cpu_args = ""
+        if cpu_arg_value := run_args.get("cpu-affinity", None):
+            cpu_args = str(cpu_arg_value)
+
+        # run args converted to a string must be split back into a list[int]
+        gpu_affinity = [int(x.strip()) for x in gpu_args.split(",") if x]
+        cpu_affinity = [int(x.strip()) for x in cpu_args.split(",") if x]
+
+        try:
+            return DragonRunPolicy(
+                cpu_affinity=cpu_affinity,
+                gpu_affinity=gpu_affinity,
+            )
+        except ValidationError as ex:
+            raise SmartSimError("Unable to build DragonRunPolicy") from ex
 
 
 class DragonRunRequestView(DragonRequest):
@@ -57,6 +95,7 @@ class DragonRunRequestView(DragonRequest):
 @request_registry.register("run")
 class DragonRunRequest(DragonRunRequestView):
     current_env: t.Dict[str, t.Optional[str]] = {}
+    policy: t.Optional[DragonRunPolicy] = None
 
     def __str__(self) -> str:
         return str(DragonRunRequestView.parse_obj(self.dict(exclude={"current_env"})))
