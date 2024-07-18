@@ -47,9 +47,9 @@ from ..tensor.tensor_capnp import (
     OutputDescriptor,
     OutputDescriptorBuilder,
     OutputDescriptorReader,
-    Tensor,
-    TensorBuilder,
-    TensorReader,
+    TensorDescriptor,
+    TensorDescriptorBuilder,
+    TensorDescriptorReader,
 )
 from .request_attributes.request_attributes_capnp import (
     TensorFlowRequestAttributes,
@@ -61,7 +61,7 @@ from .request_attributes.request_attributes_capnp import (
 )
 
 class ChannelDescriptor:
-    reply: bytes
+    descriptor: bytes
     @staticmethod
     @contextmanager
     def from_bytes(
@@ -143,8 +143,10 @@ class Request:
 
     class Input:
         keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        data: Sequence[Tensor | TensorBuilder | TensorReader]
-        def which(self) -> Literal["keys", "data"]: ...
+        descriptors: Sequence[
+            TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+        ]
+        def which(self) -> Literal["keys", "descriptors"]: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -164,12 +166,14 @@ class Request:
 
     class InputReader(Request.Input):
         keys: Sequence[TensorKeyReader]
-        data: Sequence[TensorReader]
+        descriptors: Sequence[TensorDescriptorReader]
         def as_builder(self) -> Request.InputBuilder: ...
 
     class InputBuilder(Request.Input):
         keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        data: Sequence[Tensor | TensorBuilder | TensorReader]
+        descriptors: Sequence[
+            TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+        ]
         @staticmethod
         def from_dict(dictionary: dict) -> Request.InputBuilder: ...
         def copy(self) -> Request.InputBuilder: ...

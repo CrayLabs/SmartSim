@@ -42,7 +42,7 @@ struct Response {
   message @1 :Text;
   result :union {
     keys @2 :List(DataRef.TensorKey);
-    data @3 :List(Tensors.Tensor);
+    descriptors @3 :List(Tensors.TensorDescriptor);
   }
   customAttributes :union {
     torch @4 :ResponseAttributes.TorchResponseAttributes;

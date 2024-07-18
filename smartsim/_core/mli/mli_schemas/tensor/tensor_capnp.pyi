@@ -101,49 +101,6 @@ class TensorDescriptorBuilder(TensorDescriptor):
     @staticmethod
     def write_packed(file: BufferedWriter) -> None: ...
 
-class Tensor:
-    blob: bytes
-    tensorDescriptor: (
-        TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
-    )
-    def init(self, name: Literal["tensorDescriptor"]) -> TensorDescriptor: ...
-    @staticmethod
-    @contextmanager
-    def from_bytes(
-        data: bytes,
-        traversal_limit_in_words: int | None = ...,
-        nesting_limit: int | None = ...,
-    ) -> Iterator[TensorReader]: ...
-    @staticmethod
-    def from_bytes_packed(
-        data: bytes,
-        traversal_limit_in_words: int | None = ...,
-        nesting_limit: int | None = ...,
-    ) -> TensorReader: ...
-    @staticmethod
-    def new_message() -> TensorBuilder: ...
-    def to_dict(self) -> dict: ...
-
-class TensorReader(Tensor):
-    tensorDescriptor: TensorDescriptorReader
-    def as_builder(self) -> TensorBuilder: ...
-
-class TensorBuilder(Tensor):
-    tensorDescriptor: (
-        TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
-    )
-    @staticmethod
-    def from_dict(dictionary: dict) -> TensorBuilder: ...
-    def copy(self) -> TensorBuilder: ...
-    def to_bytes(self) -> bytes: ...
-    def to_bytes_packed(self) -> bytes: ...
-    def to_segments(self) -> list[bytes]: ...
-    def as_reader(self) -> TensorReader: ...
-    @staticmethod
-    def write(file: BufferedWriter) -> None: ...
-    @staticmethod
-    def write_packed(file: BufferedWriter) -> None: ...
-
 class OutputDescriptor:
     order: Order
     optionalKeys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]

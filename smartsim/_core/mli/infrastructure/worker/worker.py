@@ -59,7 +59,7 @@ class InferenceRequest:
         self.model_key = model_key
         self.raw_model = raw_model
         self.callback = callback
-        self.raw_inputs = raw_inputs
+        self.raw_inputs = raw_inputs or []
         self.input_keys = input_keys or []
         self.input_meta = input_meta or []
         self.output_keys = output_keys or []
