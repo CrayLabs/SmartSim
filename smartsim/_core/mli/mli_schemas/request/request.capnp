@@ -32,7 +32,7 @@ using DataRef = import "../data/data_references.capnp";
 using Models = import "../model/model.capnp";
 
 struct ChannelDescriptor {
-  reply @0 :Data;
+  descriptor @0 :Data;
 }
 
 struct Request {

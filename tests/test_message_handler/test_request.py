@@ -144,7 +144,7 @@ def test_build_request_indirect_successful(
         custom_attributes,
     )
     assert built_request is not None
-    assert built_request.replyChannel.reply == reply_channel
+    assert built_request.replyChannel.descriptor == reply_channel
     if built_request.model.which() == "key":
         assert built_request.model.key.key == model.key
     else:
@@ -319,7 +319,7 @@ def test_build_request_direct_successful(
         custom_attributes,
     )
     assert built_request is not None
-    assert built_request.replyChannel.reply == reply_channel
+    assert built_request.replyChannel.descriptor == reply_channel
     if built_request.model.which() == "key":
         assert built_request.model.key.key == model.key
     else:

@@ -233,7 +233,7 @@ class MessageHandler:
         :raises ValueError: if building fails
         """
         try:
-            request.replyChannel.reply = reply_channel
+            request.replyChannel.descriptor = reply_channel
         except Exception as e:
             raise ValueError("Error building reply channel portion of request.") from e
 

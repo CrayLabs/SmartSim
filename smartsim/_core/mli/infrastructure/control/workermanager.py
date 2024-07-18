@@ -89,27 +89,23 @@ def deserialize_message(
     elif request.model.which() == "data":
         model_bytes = request.model.data
 
-    callback_key = request.replyChannel.reply
+    callback_key = request.replyChannel.descriptor
 
     # todo: shouldn't this be `CommChannel.find` instead of `DragonCommChannel`
     comm_channel = channel_type(callback_key)
     # comm_channel = DragonCommChannel(request.replyChannel)
 
     input_keys: t.Optional[t.List[str]] = None
-    input_bytes: t.Optional[t.List[bytes]] = (
-        None  # these will really be tensors already
-    )
+    input_bytes: t.Optional[t.List[bytes]] = None
+
     output_keys: t.Optional[t.List[str]] = None
 
-    input_meta: t.List[TensorDescriptor] = []
+    input_meta: t.Optional[t.List[TensorDescriptor]] = None
 
     if request.input.which() == "keys":
         input_keys = [input_key.key for input_key in request.input.keys]
     elif request.input.which() == "descriptors":
         input_meta = request.input.descriptors  # type: ignore
-
-    if request.output:
-        output_keys = [tensor_key.key for tensor_key in request.output]
 
     if request.output:
         output_keys = [tensor_key.key for tensor_key in request.output]
@@ -146,11 +142,6 @@ def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
             prepared_outputs.append(msg_key)
     elif reply.outputs:
         for _ in reply.outputs:
-            # todo: need to have the output attributes specified in the req?
-            # maybe, add `MessageHandler.dtype_of(tensor)`?
-            # can `build_tensor` do dtype and shape?
-
-            # TODO isn't this what output descriptors are for?
             msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                 "c",
                 "float32",
@@ -275,20 +266,25 @@ class WorkerManager(Service):
         timings = []  # timing
 
         bytes_list: t.List[bytes] = self._task_queue.recv()
-        request_bytes: bytes = b""
-        tensor_list = []
 
-        if bytes_list:
-            request_bytes = bytes_list[0]
-            tensor_list = bytes_list[1:]
+        if not bytes_list:
+            exception_handler(
+                ValueError("No request data found"),
+                None,
+                "No request data found.",
+            )
+            return
+
+        request_bytes = bytes_list[0]
+        tensor_bytes_list = bytes_list[1:]
 
         interm = time.perf_counter()  # timing
         request = deserialize_message(
             request_bytes, self._comm_channel_type, self._device
         )
 
-        if request.input_meta and tensor_list:
-            request.raw_inputs = tensor_list
+        if request.input_meta and tensor_bytes_list:
+            request.raw_inputs = tensor_bytes_list
 
         if not self._validate_request(request):
             return

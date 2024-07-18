@@ -61,11 +61,13 @@ class DragonFLIChannel(cch.CommChannelBase):
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
         messages = []
+        eot = False
         with self._fli.recvh(timeout=None) as recvh:
-            while True:
+            while not eot:
                 try:
                     message, _ = recvh.recv_bytes(timeout=None)
                     messages.append(message)
                 except fli.FLIEOT as exc:
-                    break
+                    eot = True
         return messages
+
