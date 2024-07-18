@@ -210,8 +210,10 @@ class DragonBackend:
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
-            self._nodes = [dragon_machine.Node(node) for node in dragon_machine.System().nodes]
-            self._hosts: t.List[str]  = sorted(node.hostname for node in self._nodes)
+            self._nodes = [
+                dragon_machine.Node(node) for node in dragon_machine.System().nodes
+            ]
+            self._hosts: t.List[str] = sorted(node.hostname for node in self._nodes)
             self._cpus = [node.num_cpus for node in self._nodes]
             self._gpus = [node.num_gpus for node in self._nodes]
 
