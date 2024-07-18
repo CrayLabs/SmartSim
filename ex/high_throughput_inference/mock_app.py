@@ -112,7 +112,6 @@ class ProtoClient:
         built_tensor = MessageHandler.build_tensor(
             batch.numpy(), "c", "float32", list(batch.shape))
         self.measure_time("build_tensor")
-        built_model = None
         if isinstance(model, str):
             model_arg = MessageHandler.build_model_key(model)
         else:
@@ -130,7 +129,6 @@ class ProtoClient:
         self.measure_time("serialize_request")
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
-        logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.measure_time("send")
         with self._from_worker_ch.recvh(timeout=None) as from_recvh:

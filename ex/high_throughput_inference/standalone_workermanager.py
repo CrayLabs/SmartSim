@@ -45,6 +45,12 @@ from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim._core.mli.infrastructure.control.workermanager import WorkerManager
 from smartsim._core.mli.infrastructure.environmentloader import EnvironmentConfigLoader
 
+import os
+import socket
+pid = 0
+affinity = os.sched_getaffinity(pid)
+print("Entry point:", socket.gethostname(), affinity)
+print("CPUS:", os.cpu_count())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Worker Manager")

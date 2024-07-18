@@ -7,6 +7,7 @@ import sys
 from smartsim import Experiment
 from smartsim._core.mli.infrastructure.worker.torch_worker import TorchWorker
 from smartsim.status import TERMINAL_STATUSES
+from smartsim.settings import DragonRunSettings
 import time
 import typing as t
 
@@ -20,13 +21,13 @@ transport: t.Literal["hsta", "tcp"] = "hsta"
 
 os.environ["SMARTSIM_DRAGON_TRANSPORT"] = transport
 
-exp_path = os.path.join(filedir, f"MLI_proto_{transport.upper()}")
+exp_path = os.path.join(filedir, f"MLI_proto_batch_{transport.upper()}")
 os.makedirs(exp_path, exist_ok=True)
 exp = Experiment("MLI_proto", launcher="dragon", exp_path=exp_path)
 
 torch_worker_str = base64.b64encode(cloudpickle.dumps(TorchWorker)).decode("ascii")
 
-worker_manager_rs = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device, "--worker_class", torch_worker_str])
+worker_manager_rs: DragonRunSettings = exp.create_run_settings(sys.executable, [worker_manager_script_name, "--device", device, "--worker_class", torch_worker_str])
 worker_manager = exp.create_model("worker_manager", run_settings=worker_manager_rs)
 worker_manager.attach_generator_files(to_copy=[worker_manager_script_name])
 
@@ -40,11 +41,12 @@ exp.start(worker_manager, app, block=False)
 
 while True:
     if exp.get_status(app)[0] in TERMINAL_STATUSES:
+        time.sleep(10)
         exp.stop(worker_manager)
         break
     if exp.get_status(worker_manager)[0] in TERMINAL_STATUSES:
+        time.sleep(10)
         exp.stop(app)
         break
-    time.sleep(5)
 
 print("Exiting.")
