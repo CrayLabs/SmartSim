@@ -452,7 +452,11 @@ class DragonBackend:
                 if run_request.policy.gpu_affinity:
                     affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     gpu_affinity = run_request.policy.gpu_affinity
-            logger.debug(f"Affinity: {affinity}, {cpu_affinity}, {gpu_affinity}")
+            logger.debug(
+                f"Affinity strategy: {affinity}, "
+                f"CPU affinity mask: {cpu_affinity}, "
+                f"GPU affinity mask: {gpu_affinity}"
+            )
             if affinity != dragon_policy.Policy.Affinity.DEFAULT:
                 return dragon_policy.Policy(
                     placement=dragon_policy.Policy.Placement.HOST_NAME,
