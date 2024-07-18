@@ -32,7 +32,7 @@ using DataRef = import "../data/data_references.capnp";
 using Models = import "../model/model.capnp";
 
 struct ChannelDescriptor {
-  reply @0 :Data;
+  descriptor @0 :Data;
 }
 
 struct Request {
@@ -43,7 +43,7 @@ struct Request {
   }
   input :union {
     keys @3 :List(DataRef.TensorKey);
-    data @4 :List(Tensors.Tensor);
+    descriptors @4 :List(Tensors.TensorDescriptor);
   }
   output @5 :List(DataRef.TensorKey);
   outputDescriptors @6 :List(Tensors.OutputDescriptor);

@@ -30,18 +30,19 @@ using Tensors = import "../tensor/tensor.capnp";
 using ResponseAttributes = import "response_attributes/response_attributes.capnp";
 using DataRef = import "../data/data_references.capnp";
 
-enum StatusEnum {
+enum Status {
   complete @0;
   fail @1;
   timeout @2;
+  running @3;
 }
 
 struct Response {
-  status @0 :StatusEnum;
+  status @0 :Status;
   message @1 :Text;
   result :union {
     keys @2 :List(DataRef.TensorKey);
-    data @3 :List(Tensors.Tensor);
+    descriptors @3 :List(Tensors.TensorDescriptor);
   }
   customAttributes :union {
     torch @4 :ResponseAttributes.TorchResponseAttributes;

@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+import sys
+import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
 from smartsim.log import get_logger
@@ -48,9 +50,9 @@ class DragonCommChannel(cch.CommChannelBase):
         with self._channel.sendh(timeout=None) as sendh:
             sendh.send_bytes(value)
 
-    def recv(self) -> bytes:
+    def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
         with self._channel.recvh(timeout=None) as recvh:
             message_bytes: bytes = recvh.recv_bytes(timeout=None)
-            return message_bytes
+            return [message_bytes]

@@ -35,7 +35,11 @@ from io import BufferedWriter
 from typing import Iterator, Literal, Sequence, overload
 
 from ..data.data_references_capnp import TensorKey, TensorKeyBuilder, TensorKeyReader
-from ..tensor.tensor_capnp import Tensor, TensorBuilder, TensorReader
+from ..tensor.tensor_capnp import (
+    TensorDescriptor,
+    TensorDescriptorBuilder,
+    TensorDescriptorReader,
+)
 from .response_attributes.response_attributes_capnp import (
     TensorFlowResponseAttributes,
     TensorFlowResponseAttributesBuilder,
@@ -45,13 +49,15 @@ from .response_attributes.response_attributes_capnp import (
     TorchResponseAttributesReader,
 )
 
-StatusEnum = Literal["complete", "fail", "timeout"]
+Status = Literal["complete", "fail", "timeout", "running"]
 
 class Response:
     class Result:
         keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        data: Sequence[Tensor | TensorBuilder | TensorReader]
-        def which(self) -> Literal["keys", "data"]: ...
+        descriptors: Sequence[
+            TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+        ]
+        def which(self) -> Literal["keys", "descriptors"]: ...
         @staticmethod
         @contextmanager
         def from_bytes(
@@ -71,12 +77,14 @@ class Response:
 
     class ResultReader(Response.Result):
         keys: Sequence[TensorKeyReader]
-        data: Sequence[TensorReader]
+        descriptors: Sequence[TensorDescriptorReader]
         def as_builder(self) -> Response.ResultBuilder: ...
 
     class ResultBuilder(Response.Result):
         keys: Sequence[TensorKey | TensorKeyBuilder | TensorKeyReader]
-        data: Sequence[Tensor | TensorBuilder | TensorReader]
+        descriptors: Sequence[
+            TensorDescriptor | TensorDescriptorBuilder | TensorDescriptorReader
+        ]
         @staticmethod
         def from_dict(dictionary: dict) -> Response.ResultBuilder: ...
         def copy(self) -> Response.ResultBuilder: ...
@@ -150,7 +158,7 @@ class Response:
         def write(file: BufferedWriter) -> None: ...
         @staticmethod
         def write_packed(file: BufferedWriter) -> None: ...
-    status: StatusEnum
+    status: Status
     message: str
     result: Response.Result | Response.ResultBuilder | Response.ResultReader
     customAttributes: (

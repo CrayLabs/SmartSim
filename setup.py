@@ -165,26 +165,9 @@ class BinaryDistribution(Distribution):
 
 
 # Define needed dependencies for the installation
-deps = [
-    "packaging>=24.0",
-    "psutil>=5.7.2",
-    "coloredlogs>=10.0",
-    "tabulate>=0.8.9",
-    "redis>=4.5",
-    "tqdm>=4.50.2",
-    "filelock>=3.4.2",
-    "protobuf~=3.20",
-    "jinja2>=3.1.2",
-    "watchdog>=4.0.0",
-    "pycapnp==2.0.0",
-    "pydantic==1.10.14",
-    "pyzmq>=25.1.2",
-    "pygithub>=2.3.0",
-    "numpy<2"
-]
 
 # Add SmartRedis at specific version
-deps.append("smartredis>={}".format(versions.SMARTREDIS))
+# install_requires.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
@@ -206,6 +189,24 @@ extras_require = {
         "types-setuptools",
         "typing_extensions>=4.1.0",
     ],
+    "docs": [
+        "Sphinx==6.2.1",
+        "breathe==4.35.0",
+        "sphinx-fortran==1.1.1",
+        "sphinx-book-theme==1.0.1",
+        "sphinx-copybutton==0.5.2",
+        "sphinx-tabs==3.4.4",
+        "nbsphinx==0.9.3",
+        "docutils==0.18.1",
+        "torch==2.0.1",
+        "tensorflow==2.13.1",
+        "ipython",
+        "jinja2==3.1.2",
+        "sphinx-design",
+        "pypandoc",
+        "sphinx-autodoc-typehints",
+        "myst_parser",
+    ],
     # see smartsim/_core/_install/buildenv.py for more details
     **versions.ml_extras_required(),
 }
@@ -214,7 +215,24 @@ extras_require = {
 # rest in setup.cfg
 setup(
     version=smartsim_version,
-    install_requires=deps,
+    install_requires=[
+        "packaging>=24.0",
+        "psutil>=5.7.2",
+        "coloredlogs>=10.0",
+        "tabulate>=0.8.9",
+        "redis>=4.5",
+        "tqdm>=4.50.2",
+        "filelock>=3.4.2",
+        "protobuf~=3.20",
+        "jinja2>=3.1.2",
+        "watchdog>=4.0.0",
+        "pycapnp==2.0.0",
+        "pydantic==1.10.14",
+        "pyzmq>=25.1.2",
+        "pygithub>=2.3.0",
+        "numpy<2",
+        "smartredis>=0.5,<0.6",
+    ],
     cmdclass={
         "build_py": SmartSimBuild,
         "install": InstallPlatlib,

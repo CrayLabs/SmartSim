@@ -108,10 +108,12 @@ class ProtoClient:
 
 
     def run_model(self, model: bytes | str, batch: torch.Tensor):
+        tensors = [batch.numpy()]
         self.start_timings(batch.shape[0])
-        built_tensor = MessageHandler.build_tensor(
-            batch.numpy(), "c", "float32", list(batch.shape))
-        self.measure_time("build_tensor")
+        built_tensor_desc = MessageHandler.build_tensor_descriptor(
+            "c", "float32", list(batch.shape))
+        self.measure_time("build_tensor_descriptor")
+        built_model = None
         if isinstance(model, str):
             model_arg = MessageHandler.build_model_key(model)
         else:
@@ -119,7 +121,7 @@ class ProtoClient:
         request = MessageHandler.build_request(
             reply_channel=self._from_worker_ch_serialized,
             model= model_arg,
-            inputs=[built_tensor],
+            inputs=[built_tensor_desc],
             outputs=[],
             output_descriptors=[],
             custom_attributes=None,
@@ -129,6 +131,10 @@ class ProtoClient:
         self.measure_time("serialize_request")
         with self._to_worker_fli.sendh(timeout=None, stream_channel=self._to_worker_ch) as to_sendh:
             to_sendh.send_bytes(request_bytes)
+            for t in tensors:
+                to_sendh.send_bytes(t.tobytes()) #TODO NOT FAST ENOUGH!!!
+                # to_sendh.send_bytes(bytes(t.data))
+        logger.info(f"Message size: {len(request_bytes)} bytes")
 
         self.measure_time("send")
         with self._from_worker_ch.recvh(timeout=None) as from_recvh:
@@ -136,10 +142,12 @@ class ProtoClient:
             self.measure_time("receive")
             response = MessageHandler.deserialize_response(resp)
             self.measure_time("deserialize_response")
+            # list of data blobs? recv depending on the len(response.result.descriptors)?
+            data_blob = from_recvh.recv_bytes(timeout=None)
             result = torch.from_numpy(
                 numpy.frombuffer(
-                    response.result.data[0].blob,
-                    dtype=str(response.result.data[0].tensorDescriptor.dataType),
+                    data_blob,
+                    dtype=str(response.result.descriptors[0].dataType),
                 )
             )
             self.measure_time("deserialize_tensor")

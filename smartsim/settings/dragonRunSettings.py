@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import typing as t
 
+from typing_extensions import override
+
 from ..log import get_logger
 from .base import RunSettings
 
@@ -63,6 +65,7 @@ class DragonRunSettings(RunSettings):
             **kwargs,
         )
 
+    @override
     def set_nodes(self, nodes: int) -> None:
         """Set the number of nodes
 
@@ -70,9 +73,38 @@ class DragonRunSettings(RunSettings):
         """
         self.run_args["nodes"] = nodes
 
+    @override
     def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks for this job
 
         :param tasks_per_node: number of tasks per node
         """
         self.run_args["tasks-per-node"] = tasks_per_node
+
+    @override
+    def set_node_feature(self, feature_list: t.Union[str, t.List[str]]) -> None:
+        """Specify the node feature for this job
+
+        :param feature_list: a collection of strings representing the required
+         node features. Currently supported node features are: "gpu"
+        """
+        if isinstance(feature_list, str):
+            feature_list = feature_list.strip().split()
+        elif not all(isinstance(feature, str) for feature in feature_list):
+            raise TypeError("feature_list must be string or list of strings")
+
+        self.run_args["node-feature"] = ",".join(feature_list)
+
+    def set_cpu_affinity(self, devices: t.List[int]) -> None:
+        """Set the CPU affinity for this job
+
+        :param devices: list of CPU indices to execute on
+        """
+        self.run_args["cpu-affinity"] = ",".join(str(device) for device in devices)
+
+    def set_gpu_affinity(self, devices: t.List[int]) -> None:
+        """Set the GPU affinity for this job
+
+        :param devices: list of GPU indices to execute on.
+        """
+        self.run_args["gpu-affinity"] = ",".join(str(device) for device in devices)

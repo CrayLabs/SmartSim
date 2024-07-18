@@ -13,7 +13,9 @@ Jump to:
 
 Description
 
+- Adjust schemas for better performance
 - Add TorchWorker first implementation and mock inference app example
+- Add error handling in Worker Manager pipeline
 - Add EnvironmentConfigLoader for ML Worker Manager
 - Add Model schema with model metadata included
 - Removed device from schemas, MessageHandler and tests
@@ -28,6 +30,9 @@ To be released at some future point in time
 
 Description
 
+- Fix internal host name representation for Dragon backend
+- Make dependencies more discoverable in setup.py
+- Add hardware pinning capability when using dragon
 - Pin NumPy version to 1.x
 - New launcher support for SGE (and similar derivatives)
 - Fix test outputs being created in incorrect directory
@@ -37,6 +42,14 @@ Description
 
 Detailed Notes
 
+- setup.py used to define dependencies in a way that was not amenable
+  to code scanning tools. Direct dependencies now appear directly
+  in the setup call and the definition of the SmartRedis version
+  has been removed
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
+- The separate definition of dependencies for the docs in
+  requirements-doc.txt is now defined as an extra.
+  ([SmartSim-PR635](https://github.com/CrayLabs/SmartSim/pull/635))
 - The new major version release of Numpy is incompatible with modules
   compiled against Numpy 1.x. For both SmartSim and SmartRedis we
   request a 1.x version of numpy. This is needed in SmartSim because

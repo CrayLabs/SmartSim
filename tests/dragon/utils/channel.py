@@ -24,49 +24,41 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# isort: off
-from dragon import fli
-import dragon.channels as dch
-
-# isort: on
-
-import sys
+import pathlib
 import typing as t
 
-import smartsim._core.mli.comm.channel.channel as cch
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
 from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
 
-class DragonFLIChannel(cch.CommChannelBase):
-    """Passes messages by writing to a Dragon FLI Channel"""
+class FileSystemCommChannel(CommChannelBase):
+    """Passes messages by writing to a file"""
 
-    def __init__(self, fli_desc: bytes, sender_supplied: bool = True) -> None:
-        """Initialize the DragonFLIChannel instance"""
-        super().__init__(fli_desc)
-        # todo: do we need memory pool information to construct the channel correctly?
-        self._fli: "fli" = fli.FLInterface.attach(fli_desc)
-        self._channel: t.Optional["dch"] = (
-            dch.Channel.make_process_local() if sender_supplied else None
-        )
+    def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
+        """Initialize the FileSystemCommChannel instance"""
+        if not isinstance(key, bytes):
+            super().__init__(key.as_posix().encode("utf-8"))
+            self._file_path = key
+        else:
+            super().__init__(key)
+            self._file_path = pathlib.Path(key.decode("utf-8"))
+
+        if not self._file_path.parent.exists():
+            self._file_path.parent.mkdir(parents=True)
+
+        self._file_path.touch()
 
     def send(self, value: bytes) -> None:
-        """Send a message through the underlying communication channel
+        """Send a message throuh the underlying communication channel
         :param value: The value to send"""
-        with self._fli.sendh(timeout=None, stream_channel=self._channel) as sendh:
-            sendh.send_bytes(value)
+        logger.debug(
+            f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
+        )
+        self._file_path.write_bytes(value)
 
-    def recv(self) -> t.List[bytes]:
+    def recv(self) -> bytes:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
-        messages = []
-        eot = False
-        with self._fli.recvh(timeout=None) as recvh:
-            while not eot:
-                try:
-                    message, _ = recvh.recv_bytes(timeout=None)
-                    messages.append(message)
-                except fli.FLIEOT as exc:
-                    eot = True
-        return messages
+        ...

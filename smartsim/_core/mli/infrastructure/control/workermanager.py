@@ -53,21 +53,22 @@ from ...infrastructure.worker.worker import (
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import Response
+from ...mli_schemas.response.response_capnp import Response, ResponseBuilder
 from .devicemanager import DeviceManager, WorkerDevice
 from .requestdispatcher import RequestDispatcher
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
-    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
+    from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
 
 
-def build_failure_reply(status: "StatusEnum", message: str) -> Response:
+def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
     return MessageHandler.build_response(
-        status=status,  # todo: need to indicate correct status
-        message=message,  # todo: decide what these will be
+        status=status,
+        message=message,
         result=[],
         custom_attributes=None,
     )
@@ -82,32 +83,47 @@ def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
             msg_key = MessageHandler.build_tensor_key(key)
             prepared_outputs.append(msg_key)
     elif reply.outputs:
-        arrays: t.List[np.ndarray[t.Any, np.dtype[t.Any]]] = [
-            output.numpy() for output in reply.outputs
-        ]
-        for tensor in arrays:
-            # todo: need to have the output attributes specified in the req?
-            # maybe, add `MessageHandler.dtype_of(tensor)`?
-            # can `build_tensor` do dtype and shape?
-            msg_tensor = MessageHandler.build_tensor(
-                tensor,
+        for _ in reply.outputs:
+            msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                 "c",
                 "float32",
                 [1],
             )
-            prepared_outputs.append(msg_tensor)
+            prepared_outputs.append(msg_tensor_desc)
     return prepared_outputs
 
 
-def build_reply(reply: InferenceReply) -> Response:
+def build_reply(reply: InferenceReply) -> ResponseBuilder:
     results = prepare_outputs(reply)
 
     return MessageHandler.build_response(
-        status="complete",
-        message="success",
+        status=reply.status_enum,
+        message=reply.message,
         result=results,
         custom_attributes=None,
     )
+
+
+def exception_handler(
+    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+) -> None:
+    """
+    Logs exceptions and sends a failure response.
+
+    :param exc: The exception to be logged
+    :param reply_channel: The channel used to send replies
+    :param failure_message: Failure message to log and send back
+    """
+    logger.exception(
+        f"{failure_message}\n"
+        f"Exception type: {type(exc).__name__}\n"
+        f"Exception message: {str(exc)}"
+    )
+    serialized_resp = MessageHandler.serialize_response(
+        build_failure_reply("fail", failure_message)
+    )
+    if reply_channel:
+        reply_channel.send(serialized_resp)
 
 
 class WorkerManager(Service):
@@ -307,6 +323,12 @@ class WorkerManager(Service):
                     logger.exception("Error executing worker")
                     reply.failed = True
 
+        if reply.outputs is None or not reply.outputs:
+            response = build_failure_reply("fail", "Outputs not found.")
+        else:
+            reply.status_enum = "complete"
+            reply.message = "Success"
+            response = build_reply(reply)
                 if reply.failed:
                     response = build_failure_reply("fail", "failure-occurred")
                 else:
@@ -322,6 +344,10 @@ class WorkerManager(Service):
 
                 if request.callback:
                     request.callback.send(serialized_resp)
+            if reply.outputs:
+                # send tensor data after response
+                for output in reply.outputs:
+                    request.callback.send(output)
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()

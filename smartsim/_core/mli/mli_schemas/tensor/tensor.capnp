@@ -58,12 +58,7 @@ enum ReturnNumericalType {
   float32 @8; 
   float64 @9;
   none @10;
-  auto @ 11;
-}
-
-struct Tensor {
-  blob @0 :Data;
-  tensorDescriptor @1 :TensorDescriptor;
+  auto @11;
 }
 
 struct TensorDescriptor {

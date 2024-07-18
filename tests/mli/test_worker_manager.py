@@ -149,6 +149,7 @@ def mock_messages(
             model=message_model_key,
             inputs=[message_tensor_input_key],
             outputs=[message_tensor_output_key],
+            output_descriptors=[],
             custom_attributes=None,
         )
         request_bytes = MessageHandler.serialize_request(request)

@@ -26,13 +26,15 @@
 
 import typing as t
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 from .....error import SmartSimError
 from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
+
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger(__name__)
 
@@ -57,7 +59,7 @@ class InferenceRequest:
         self.model_key = model_key
         self.raw_model = raw_model
         self.callback = callback
-        self.raw_inputs = raw_inputs
+        self.raw_inputs = raw_inputs or []
         self.input_keys = input_keys or []
         self.input_meta = input_meta or []
         self.output_keys = output_keys or []
@@ -77,12 +79,14 @@ class InferenceReply:
         self,
         outputs: t.Optional[t.Collection[t.Any]] = None,
         output_keys: t.Optional[t.Collection[str]] = None,
-        failed: bool = False,
+        status_enum: "Status" = "running",
+        message: str = "In progress",
     ) -> None:
         """Initialize the object"""
         self.outputs: t.Collection[t.Any] = outputs or []
         self.output_keys: t.Collection[t.Optional[str]] = output_keys or []
-        self.failed = failed
+        self.status_enum = status_enum
+        self.message = message
 
 
 class LoadModelResult:
@@ -262,6 +266,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         """Given a loaded MachineLearningModel, ensure it is loaded into
         device memory
         :param request: The request that triggered the pipeline
+        :param device: The device on which the model must be placed
         :param device: The device on which the model must be placed
         :return: ModelLoadResult wrapping the model loaded for the request"""
 

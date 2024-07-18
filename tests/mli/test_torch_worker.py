@@ -95,17 +95,18 @@ def create_torch_model():
 def get_request() -> InferenceRequest:
 
     tensors = [get_batch() for _ in range(2)]
-    serialized_tensors = [
-        MessageHandler.build_tensor(tensor.numpy(), "c", "float32", list(tensor.shape))
+    tensor_numpy = [tensor.numpy() for tensor in tensors]
+    serialized_tensors_descriptors = [
+        MessageHandler.build_tensor_descriptor("c", "float32", list(tensor.shape))
         for tensor in tensors
     ]
 
     return InferenceRequest(
         model_key="model",
         callback=None,
-        raw_inputs=[s_tensor.blob for s_tensor in serialized_tensors],
+        raw_inputs=tensor_numpy,
         input_keys=None,
-        input_meta=[s_tensor.tensorDescriptor for s_tensor in serialized_tensors],
+        input_meta=serialized_tensors_descriptors,
         output_keys=None,
         raw_model=create_torch_model(),
         batch_size=0,
@@ -167,7 +168,9 @@ def test_transform_output(mlutils):
         sample_request, execute_result, torch_device[mlutils.get_test_device().lower()]
     )
 
-    assert transformed_output.outputs == execute_result.predictions
+    assert transformed_output.outputs == [
+        item.numpy().tobytes() for item in execute_result.predictions
+    ]
     assert transformed_output.shape == None
     assert transformed_output.order == "c"
     assert transformed_output.dtype == "float32"
