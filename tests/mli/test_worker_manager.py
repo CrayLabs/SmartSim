@@ -32,6 +32,8 @@ import time
 
 import pytest
 
+from tests.mli.featurestore import FileSystemFeatureStore
+
 torch = pytest.importorskip("torch")
 dragon = pytest.importorskip("dragon")
 
@@ -183,14 +185,11 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     )
 
     # create a mock client application to populate the request queue
-    feature_stores = config_loader.get_feature_stores()
-    fs_list = list(feature_stores.values())
-
     msg_pump = mp.Process(
         target=mock_messages,
         args=(
             config_loader.get_queue(),
-            fs_list[0],
+            FileSystemFeatureStore(fs_path),
             fs_path,
             comm_path,
         ),

@@ -34,7 +34,6 @@ from ....entrypoints.service import Service
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
-from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
     InferenceReply,
     InferenceRequest,
@@ -54,28 +53,14 @@ if t.TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def build_failure_reply(status: "StatusEnum", message: str) -> Response:
+def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
     """Build a response indicating a failure occurred
     :param status: The status of the response
     :param message: The error message to include in the response"""
     return MessageHandler.build_response(
-        status=status,  # todo: need to indicate correct status
-        message=message,  # todo: decide what these will be
+        status=status,
+        message=message,
         result=None,
-        custom_attributes=None,
-    )
-
-
-def build_reply(worker: MachineLearningWorkerBase, reply: InferenceReply) -> Response:
-    """Builds a response for a successful inference request
-    :param worker: A worker to process the reply with
-    :param reply: The internal representation of the reply"""
-    results = worker.prepare_outputs(reply)
-
-    return MessageHandler.build_response(
-        status=reply.status_enum,
-        message=reply.message,
-        result=results,
         custom_attributes=None,
     )
 
@@ -143,13 +128,15 @@ class WorkerManager(Service):
         """Ensures that all feature stores required by the request are available
         :param request: The request to validate"""
         # collect all feature stores required by the request
-        fs_model = {request.model_key.descriptor}
+        fs_model: t.Set[str] = set()
+        if request.model_key:
+            fs_model = {request.model_key.descriptor}
         fs_inputs = {key.descriptor for key in request.input_keys}
         fs_outputs = {key.descriptor for key in request.output_keys}
 
         # identify which feature stores are requested and unknown
-        fs_desired = fs_model + fs_inputs + fs_outputs
-        fs_actual = {key for key in self._feature_stores}
+        fs_desired = fs_model.union(fs_inputs).union(fs_outputs)
+        fs_actual = {item.descriptor for item in self._feature_stores.values()}
         fs_missing = fs_desired - fs_actual
 
         # exit if all desired feature stores are not available
@@ -259,7 +246,7 @@ class WorkerManager(Service):
                 interm = time.perf_counter()  # timing
                 try:
                     fetch_model_result = self._worker.fetch_model(
-                        request, self._feature_store
+                        request, self._feature_stores
                     )
                 except Exception as e:
                     exception_handler(
@@ -287,7 +274,7 @@ class WorkerManager(Service):
             interm = time.perf_counter()  # timing
             try:
                 fetch_model_result = self._worker.fetch_model(
-                    request, self._feature_store
+                    request, self._feature_stores
                 )
             except Exception as e:
                 exception_handler(
@@ -310,7 +297,9 @@ class WorkerManager(Service):
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
         try:
-            fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
+            fetch_input_result = self._worker.fetch_inputs(
+                request, self._feature_stores
+            )
         except Exception as e:
             exception_handler(e, request.callback, "Failed while fetching the inputs.")
             return
@@ -370,10 +359,16 @@ class WorkerManager(Service):
         if reply.outputs is None or not reply.outputs:
             response = build_failure_reply("fail", "Outputs not found.")
         else:
-            if reply.outputs is None or not reply.outputs:
-                response = build_failure_reply("fail", "no-results")
+            reply.status_enum = "complete"
+            reply.message = "Success"
 
-            response = build_reply(self._worker, reply)
+            results = self._worker.prepare_outputs(reply)
+            response = MessageHandler.build_response(
+                status=reply.status_enum,
+                message=reply.message,
+                result=results,
+                custom_attributes=None,
+            )
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing

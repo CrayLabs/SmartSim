@@ -115,7 +115,7 @@ class ProtoClient:
         self.measure_time("build_tensor_descriptor")
         built_model = None
         if isinstance(model, str):
-            model_arg = MessageHandler.build_model_key(model)
+            model_arg = MessageHandler.build_model_key(model)  # todo: this needs FSD
         else:
             model_arg = MessageHandler.build_model(model, "resnet-50", "1.0")
         request = MessageHandler.build_request(

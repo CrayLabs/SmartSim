@@ -439,6 +439,7 @@ class MessageHandler:
         result: t.Union[
             t.List[tensor_capnp.TensorDescriptor],
             t.List[data_references_capnp.TensorKey],
+            None,
         ],
     ) -> None:
         """
@@ -504,7 +505,7 @@ class MessageHandler:
         result: t.Union[
             t.List[tensor_capnp.TensorDescriptor],
             t.List[data_references_capnp.TensorKey],
-            None
+            None,
         ],
         custom_attributes: t.Union[
             response_attributes_capnp.TorchResponseAttributes,

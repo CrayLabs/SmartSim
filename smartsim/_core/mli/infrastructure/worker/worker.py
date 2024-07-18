@@ -27,8 +27,6 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-import numpy as np
-
 from .....error import SmartSimError
 from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
@@ -38,6 +36,7 @@ from ...mli_schemas.model.model_capnp import Model
 
 if t.TYPE_CHECKING:
     from smartsim._core.mli.mli_schemas.response.response_capnp import Status
+    from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
 
@@ -81,13 +80,13 @@ class InferenceReply:
     def __init__(
         self,
         outputs: t.Optional[t.Collection[t.Any]] = None,
-        output_keys: t.Optional[t.Collection[str]] = None,
+        output_keys: t.Optional[t.Collection[FeatureStoreKey]] = None,
         status_enum: "Status" = "running",
         message: str = "In progress",
     ) -> None:
         """Initialize the object"""
         self.outputs: t.Collection[t.Any] = outputs or []
-        self.output_keys: t.Collection[t.Optional[str]] = output_keys or []
+        self.output_keys: t.Collection[t.Optional[FeatureStoreKey]] = output_keys or []
         self.status_enum = status_enum
         self.message = message
 
@@ -175,27 +174,25 @@ class MachineLearningWorkerCore:
         elif request.model.which() == "data":
             model_bytes = request.model.data
 
-        callback_key = request.replyChannel.reply
+        callback_key = request.replyChannel.descriptor
         comm_channel = channel_type(callback_key)
-
         input_keys: t.Optional[t.List[FeatureStoreKey]] = None
         input_bytes: t.Optional[t.List[bytes]] = None
-        input_meta: t.List[t.Any] = []
+        output_keys: t.Optional[t.List[FeatureStoreKey]] = None
+        input_meta: t.Optional[t.List[TensorDescriptor]] = None
 
         if request.input.which() == "keys":
             input_keys = [
-                FeatureStoreKey(input_key.key, input_key.featureStoreDescriptor)
-                for input_key in request.input.keys
+                FeatureStoreKey(value.key, value.featureStoreDescriptor)
+                for value in request.input.keys
             ]
-        elif request.input.which() == "data":
-            input_bytes = [data.blob for data in request.input.data]
-            input_meta = [data.tensorDescriptor for data in request.input.data]
+        elif request.input.which() == "descriptors":
+            input_meta = request.input.descriptors  # type: ignore
 
-        output_keys: t.List[FeatureStoreKey] = []
         if request.output:
             output_keys = [
-                FeatureStoreKey(output_key.key, output_key.featureStoreDescriptor)
-                for output_key in request.output
+                FeatureStoreKey(value.key, value.featureStoreDescriptor)
+                for value in request.output
             ]
 
         inference_request = InferenceRequest(
@@ -214,27 +211,19 @@ class MachineLearningWorkerCore:
     def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
         prepared_outputs: t.List[t.Any] = []
         if reply.output_keys:
-            for fs_key in reply.output_keys:
-                if not fs_key:
+            for value in reply.output_keys:
+                if not value:
                     continue
-
-                msg_key = MessageHandler.build_tensor_key(fs_key.key, fs_key.descriptor)
+                msg_key = MessageHandler.build_tensor_key(value.key, value.descriptor)
                 prepared_outputs.append(msg_key)
         elif reply.outputs:
-            arrays: t.List[np.ndarray[t.Any, np.dtype[t.Any]]] = [
-                output.numpy() for output in reply.outputs
-            ]
-            for tensor in arrays:
-                # todo: need to have the output attributes specified in the req?
-                # maybe, add `MessageHandler.dtype_of(tensor)`?
-                # can `build_tensor` do dtype and shape?
-                msg_tensor = MessageHandler.build_tensor(
-                    tensor,
+            for _ in reply.outputs:
+                msg_tensor_desc = MessageHandler.build_tensor_descriptor(
                     "c",
                     "float32",
                     [1],
                 )
-                prepared_outputs.append(msg_tensor)
+                prepared_outputs.append(msg_tensor_desc)
         return prepared_outputs
 
     @staticmethod

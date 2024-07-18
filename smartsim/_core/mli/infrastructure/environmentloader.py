@@ -46,13 +46,10 @@ class EnvironmentConfigLoader:
     """
 
     def __init__(self) -> None:
-        self._feature_store_descriptor: t.Optional[str] = os.getenv(
-            "SSFeatureStore", None
-        )
         self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
-        self.feature_store: t.Optional[FeatureStore] = None
-        self.feature_stores: t.Optional[t.Dict[FeatureStore]] = None
+        self.feature_stores: t.Optional[t.Dict[str, FeatureStore]] = None
         self.queue: t.Optional[DragonFLIChannel] = None
+        self._prefix = "SSFeatureStore"
 
     def _load_feature_store(self, env_var: str) -> FeatureStore:
         """Load a feature store from a descriptor
@@ -62,10 +59,12 @@ class EnvironmentConfigLoader:
 
         value = os.getenv(env_var)
         if not value:
-            raise SmartSimError(f"Empty feature store descriptor in environment: {env_var}")
+            raise SmartSimError(
+                f"Empty feature store descriptor in environment: {env_var}"
+            )
 
         try:
-            return pickle.loads(base64.b64decode(value))
+            return t.cast(FeatureStore, pickle.loads(base64.b64decode(value)))
         except:
             raise SmartSimError(
                 f"Invalid feature store descriptor in environment: {env_var}"
@@ -74,9 +73,8 @@ class EnvironmentConfigLoader:
     def get_feature_stores(self) -> t.Dict[str, FeatureStore]:
         """Loads multiple Feature Stores by scanning environment for variables
         prefixed with `SSFeatureStore`"""
-        prefix = "SSFeatureStore"
-        if self.feature_stores is None:
-            env_vars = [var for var in os.environ if var.startswith(prefix)]
+        if not self.feature_stores:
+            env_vars = [var for var in os.environ if var.startswith(self._prefix)]
             stores = [self._load_feature_store(var) for var in env_vars]
             self.feature_stores = {fs.descriptor: fs for fs in stores}
         return self.feature_stores
