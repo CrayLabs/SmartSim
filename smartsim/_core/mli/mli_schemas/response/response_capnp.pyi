@@ -49,7 +49,7 @@ from .response_attributes.response_attributes_capnp import (
     TorchResponseAttributesReader,
 )
 
-StatusEnum = Literal["complete", "fail", "timeout"]
+Status = Literal["complete", "fail", "timeout", "running"]
 
 class Response:
     class Result:
@@ -158,7 +158,7 @@ class Response:
         def write(file: BufferedWriter) -> None: ...
         @staticmethod
         def write_packed(file: BufferedWriter) -> None: ...
-    status: StatusEnum
+    status: Status
     message: str
     result: Response.Result | Response.ResultBuilder | Response.ResultReader
     customAttributes: (

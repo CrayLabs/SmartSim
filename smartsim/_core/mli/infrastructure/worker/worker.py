@@ -33,6 +33,9 @@ from ...comm.channel.channel import CommChannelBase
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...mli_schemas.model.model_capnp import Model
 
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
+
 logger = get_logger(__name__)
 
 
@@ -70,12 +73,14 @@ class InferenceReply:
         self,
         outputs: t.Optional[t.Collection[t.Any]] = None,
         output_keys: t.Optional[t.Collection[str]] = None,
-        failed: bool = False,
+        status_enum: "Status" = "running",
+        message: str = "In progress",
     ) -> None:
         """Initialize the object"""
         self.outputs: t.Collection[t.Any] = outputs or []
         self.output_keys: t.Collection[t.Optional[str]] = output_keys or []
-        self.failed = failed
+        self.status_enum = status_enum
+        self.message = message
 
 
 class LoadModelResult:

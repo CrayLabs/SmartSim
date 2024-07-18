@@ -51,13 +51,13 @@ from ...infrastructure.worker.worker import (
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import Response
+from ...mli_schemas.response.response_capnp import Response, ResponseBuilder
 
 if t.TYPE_CHECKING:
     from dragon.fli import FLInterface
 
     from smartsim._core.mli.mli_schemas.model.model_capnp import Model
-    from smartsim._core.mli.mli_schemas.response.response_capnp import StatusEnum
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
     from smartsim._core.mli.mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger(__name__)
@@ -99,6 +99,7 @@ def deserialize_message(
     input_bytes: t.Optional[t.List[bytes]] = (
         None  # these will really be tensors already
     )
+    output_keys: t.Optional[t.List[str]] = None
 
     input_meta: t.List[TensorDescriptor] = []
 
@@ -107,22 +108,29 @@ def deserialize_message(
     elif request.input.which() == "descriptors":
         input_meta = request.input.descriptors  # type: ignore
 
+    if request.output:
+        output_keys = [tensor_key.key for tensor_key in request.output]
+
+    if request.output:
+        output_keys = [tensor_key.key for tensor_key in request.output]
+
     inference_request = InferenceRequest(
         model_key=model_key,
         callback=comm_channel,
         raw_inputs=input_bytes,
-        input_meta=input_meta,
         input_keys=input_keys,
+        input_meta=input_meta,
+        output_keys=output_keys,
         raw_model=model_bytes,
         batch_size=0,
     )
     return inference_request
 
 
-def build_failure_reply(status: "StatusEnum", message: str) -> Response:
+def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
     return MessageHandler.build_response(
-        status=status,  # todo: need to indicate correct status
-        message=message,  # todo: decide what these will be
+        status=status,
+        message=message,
         result=[],
         custom_attributes=None,
     )
@@ -152,15 +160,37 @@ def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
     return prepared_outputs
 
 
-def build_reply(reply: InferenceReply) -> Response:
+def build_reply(reply: InferenceReply) -> ResponseBuilder:
     results = prepare_outputs(reply)
 
     return MessageHandler.build_response(
-        status="complete",
-        message="success",
+        status=reply.status_enum,
+        message=reply.message,
         result=results,
         custom_attributes=None,
     )
+
+
+def exception_handler(
+    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+) -> None:
+    """
+    Logs exceptions and sends a failure response.
+
+    :param exc: The exception to be logged
+    :param reply_channel: The channel used to send replies
+    :param failure_message: Failure message to log and send back
+    """
+    logger.exception(
+        f"{failure_message}\n"
+        f"Exception type: {type(exc).__name__}\n"
+        f"Exception message: {str(exc)}"
+    )
+    serialized_resp = MessageHandler.serialize_response(
+        build_failure_reply("fail", failure_message)
+    )
+    if reply_channel:
+        reply_channel.send(serialized_resp)
 
 
 class WorkerManager(Service):
@@ -266,96 +296,147 @@ class WorkerManager(Service):
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
 
+        reply = InferenceReply()
+
         if not request.raw_model:
             if request.model_key is None:
-                # A valid request should never get here.
-                raise ValueError("Could not read model key")
+                exception_handler(
+                    ValueError("Could not find model key or model"),
+                    request.callback,
+                    "Could not find model key or model.",
+                )
+                return
             if request.model_key in self._cached_models:
                 timings.append(time.perf_counter() - interm)  # timing
                 interm = time.perf_counter()  # timing
                 model_result = LoadModelResult(self._cached_models[request.model_key])
 
             else:
-                fetch_model_result = None
-                while True:
-                    try:
-                        interm = time.perf_counter()  # timing
-                        fetch_model_result = self._worker.fetch_model(
-                            request, self._feature_store
-                        )
-                    except KeyError:
-                        time.sleep(0.1)
-                    else:
-                        break
-
-                if fetch_model_result is None:
-                    raise SmartSimError("Could not retrieve model from feature store")
                 timings.append(time.perf_counter() - interm)  # timing
                 interm = time.perf_counter()  # timing
-                model_result = self._worker.load_model(
-                    request, fetch_model_result, self._device
-                )
-                self._cached_models[request.model_key] = model_result.model
+                try:
+                    fetch_model_result = self._worker.fetch_model(
+                        request, self._feature_store
+                    )
+                except Exception as e:
+                    exception_handler(
+                        e, request.callback, "Failed while fetching the model."
+                    )
+                    return
+
+                timings.append(time.perf_counter() - interm)  # timing
+                interm = time.perf_counter()  # timing
+                try:
+                    model_result = self._worker.load_model(
+                        request,
+                        fetch_result=fetch_model_result,
+                        device=self._device,
+                    )
+                    self._cached_models[request.model_key] = model_result.model
+                except Exception as e:
+                    exception_handler(
+                        e, request.callback, "Failed while loading the model."
+                    )
+                    return
+
         else:
-            fetch_model_result = self._worker.fetch_model(request, None)
-            model_result = self._worker.load_model(
-                request, fetch_result=fetch_model_result, device=self._device
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
+            try:
+                fetch_model_result = self._worker.fetch_model(
+                    request, self._feature_store
+                )
+            except Exception as e:
+                exception_handler(
+                    e, request.callback, "Failed while fetching the model."
+                )
+                return
+
+            timings.append(time.perf_counter() - interm)  # timing
+            interm = time.perf_counter()  # timing
+            try:
+                model_result = self._worker.load_model(
+                    request, fetch_result=fetch_model_result, device=self._device
+                )
+            except Exception as e:
+                exception_handler(
+                    e, request.callback, "Failed while loading the model."
+                )
+                return
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+        try:
+            fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
+        except Exception as e:
+            exception_handler(e, request.callback, "Failed while fetching the inputs.")
+            return
+
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+        try:
+            transformed_input = self._worker.transform_input(
+                request, fetch_input_result, self._device
             )
+        except Exception as e:
+            exception_handler(
+                e, request.callback, "Failed while transforming the input."
+            )
+            return
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
-        fetch_input_result = self._worker.fetch_inputs(request, self._feature_store)
-
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-        transformed_input = self._worker.transform_input(
-            request, fetch_input_result, self._device
-        )
-
-        timings.append(time.perf_counter() - interm)  # timing
-        interm = time.perf_counter()  # timing
-
-        reply = InferenceReply()
-
         try:
             execute_result = self._worker.execute(
                 request, model_result, transformed_input
             )
+        except Exception as e:
+            exception_handler(e, request.callback, "Failed while executing.")
+            return
 
-            timings.append(time.perf_counter() - interm)  # timing
-            interm = time.perf_counter()  # timing
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+        try:
             transformed_output = self._worker.transform_output(
                 request, execute_result, self._device
             )
+        except Exception as e:
+            exception_handler(
+                e, request.callback, "Failed while transforming the output."
+            )
+            return
 
-            timings.append(time.perf_counter() - interm)  # timing
-            interm = time.perf_counter()  # timing
-            if request.output_keys:
+        timings.append(time.perf_counter() - interm)  # timing
+        interm = time.perf_counter()  # timing
+        if request.output_keys:
+            try:
                 reply.output_keys = self._worker.place_output(
-                    request, transformed_output, self._feature_store
+                    request,
+                    transformed_output,
+                    self._feature_store,
                 )
-            else:
-                reply.outputs = transformed_output.outputs
-        except Exception:
-            logger.exception("Error executing worker")
-            reply.failed = True
+            except Exception as e:
+                exception_handler(
+                    e, request.callback, "Failed while placing the output."
+                )
+                return
+        else:
+            reply.outputs = transformed_output.outputs
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
 
-        if reply.failed:
-            response = build_failure_reply("fail", "failure-occurred")
+        if reply.outputs is None or not reply.outputs:
+            response = build_failure_reply("fail", "Outputs not found.")
         else:
-            if reply.outputs is None or not reply.outputs:
-                response = build_failure_reply("fail", "no-results")
-
+            reply.status_enum = "complete"
+            reply.message = "Success"
             response = build_reply(reply)
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing
 
-        # serialized = self._worker.serialize_reply(request, transformed_output)
-        serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+        serialized_resp = MessageHandler.serialize_response(response)
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing

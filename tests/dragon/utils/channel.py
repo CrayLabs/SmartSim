@@ -1,18 +1,18 @@
 # BSD 2-Clause License
-
+#
 # Copyright (c) 2021-2024, Hewlett Packard Enterprise
 # All rights reserved.
-
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-
+#
 # 1. Redistributions of source code must retain the above copyright notice, this
 #    list of conditions and the following disclaimer.
-
+#
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
-
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,29 +24,41 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-@0xa05dcb4444780705;
+import pathlib
+import typing as t
 
-using Tensors = import "../tensor/tensor.capnp";
-using ResponseAttributes = import "response_attributes/response_attributes.capnp";
-using DataRef = import "../data/data_references.capnp";
+from smartsim._core.mli.comm.channel.channel import CommChannelBase
+from smartsim.log import get_logger
 
-enum Status {
-  complete @0;
-  fail @1;
-  timeout @2;
-  running @3;
-}
+logger = get_logger(__name__)
 
-struct Response {
-  status @0 :Status;
-  message @1 :Text;
-  result :union {
-    keys @2 :List(DataRef.TensorKey);
-    descriptors @3 :List(Tensors.TensorDescriptor);
-  }
-  customAttributes :union {
-    torch @4 :ResponseAttributes.TorchResponseAttributes;
-    tf @5 :ResponseAttributes.TensorFlowResponseAttributes;
-    none @6 :Void;
-  }
-}
+
+class FileSystemCommChannel(CommChannelBase):
+    """Passes messages by writing to a file"""
+
+    def __init__(self, key: t.Union[bytes, pathlib.Path]) -> None:
+        """Initialize the FileSystemCommChannel instance"""
+        if not isinstance(key, bytes):
+            super().__init__(key.as_posix().encode("utf-8"))
+            self._file_path = key
+        else:
+            super().__init__(key)
+            self._file_path = pathlib.Path(key.decode("utf-8"))
+
+        if not self._file_path.parent.exists():
+            self._file_path.parent.mkdir(parents=True)
+
+        self._file_path.touch()
+
+    def send(self, value: bytes) -> None:
+        """Send a message throuh the underlying communication channel
+        :param value: The value to send"""
+        logger.debug(
+            f"Channel {self.descriptor.decode('utf-8')} sending message to {self._file_path}"
+        )
+        self._file_path.write_bytes(value)
+
+    def recv(self) -> bytes:
+        """Receieve a message through the underlying communication channel
+        :returns: the received message"""
+        ...

@@ -15,6 +15,7 @@ Description
 
 - Adjust schemas for better performance
 - Add TorchWorker first implementation and mock inference app example
+- Add error handling in Worker Manager pipeline
 - Add EnvironmentConfigLoader for ML Worker Manager
 - Add Model schema with model metadata included
 - Removed device from schemas, MessageHandler and tests
@@ -29,6 +30,7 @@ To be released at some future point in time
 
 Description
 
+- Add hardware pinning capability when using dragon
 - Pin NumPy version to 1.x
 - New launcher support for SGE (and similar derivatives)
 - Fix test outputs being created in incorrect directory
