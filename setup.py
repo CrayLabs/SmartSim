@@ -179,7 +179,8 @@ deps = [
     "pydantic==1.10.14",
     "pyzmq>=25.1.2",
     "pygithub>=2.3.0",
-    "numpy<2"
+    "numpy<2",
+    "typing_extensions>=4.1.0",
 ]
 
 # Add SmartRedis at specific version
@@ -203,7 +204,6 @@ extras_require = {
         "types-tqdm",
         "types-tensorflow==2.12.0.9",
         "types-setuptools",
-        "typing_extensions>=4.1.0",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     **versions.ml_extras_required(),

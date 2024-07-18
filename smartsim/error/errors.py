@@ -112,6 +112,10 @@ class LauncherUnsupportedFeature(LauncherError):
     """Raised when the launcher does not support a given method"""
 
 
+class LauncherNotFoundError(LauncherError):
+    """A requested launcher could not be found"""
+
+
 class AllocationError(LauncherError):
     """Raised when there is a problem with the user WLM allocation"""
 

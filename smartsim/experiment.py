@@ -38,8 +38,7 @@ from os import environ, getcwd
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import first
-from smartsim.error.errors import SSUnsupportedError
+from smartsim.error.errors import LauncherNotFoundError, SSUnsupportedError
 from smartsim.settings.dispatch import default_dispatcher
 from smartsim.status import SmartSimStatus
 
@@ -58,11 +57,8 @@ from .settings import BatchSettings, Container, RunSettings
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
-    from smartsim.settings.builders.launchArgBuilder import (
-        ExecutableLike,
-        LaunchArgBuilder,
-    )
-    from smartsim.settings.dispatch import Dispatcher, LauncherLike
+    from smartsim.settings.builders.launchArgBuilder import LaunchArgBuilder
+    from smartsim.settings.dispatch import Dispatcher, ExecutableLike, LauncherLike
     from smartsim.types import LaunchedJobID
 
 logger = get_logger(__name__)
@@ -194,27 +190,30 @@ class Experiment:
             )
 
         def _start(job: Job) -> LaunchedJobID:
-            builder: LaunchArgBuilder[t.Any] = job.launch_settings.launch_args
-            launcher_type = self._dispatcher.get_launcher_for(builder)
-            launcher = first(
-                lambda launcher: type(launcher) is launcher_type,
-                self._active_launchers,
-            )
-            if launcher is None:
-                launcher = launcher_type.create(self)
-                self._active_launchers.add(launcher)
+            args = job.launch_settings.launch_args
+            env = job.launch_settings.env_vars
             # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            # FIXME: Opting out of type check here. Fix this later!!
-            # TODO: Very much dislike that we have to pass in attrs off of `job`
-            #       into `builder`, which is itself an attr of an attr of `job`.
-            #       Why is `Job` not generic based on launch arg builder?
-            # FIXME: Remove this dangerous cast after `SmartSimEntity` conforms
-            #        to protocol
+            # FIXME: Remove this cast after `SmartSimEntity` conforms to
+            #        protocol. For now, live with the "dangerous" type cast
             # ---------------------------------------------------------------------
-            exe_like = t.cast("ExecutableLike", job.entity)
-            finalized = builder.finalize(exe_like, job.launch_settings.env_vars)
+            exe = t.cast("ExecutableLike", job.entity)
             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            return launcher.start(finalized)
+            dispatch = self._dispatcher.get_dispatch(args)
+            try:
+                launch_config = dispatch.configure_first_compatible_launcher(
+                    from_available_launchers=self._active_launchers,
+                    with_settings=args,
+                )
+            except LauncherNotFoundError:
+                launch_config = dispatch.create_new_launcher_configuration(
+                    for_experiment=self, with_settings=args
+                )
+            # Save the underlying launcher instance. That way we do not need to
+            # spin up a launcher instance for each individual job, and it makes
+            # it easier to monitor job statuses
+            # pylint: disable-next=protected-access
+            self._active_launchers.add(launch_config._adapted_launcher)
+            return launch_config.start(exe, env)
 
         return tuple(map(_start, jobs))
 
