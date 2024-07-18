@@ -29,6 +29,7 @@ To be released at some future point in time
 
 Description
 
+- Fix internal host name representation
 - Add hardware pinning capability when using dragon
 - Pin NumPy version to 1.x
 - New launcher support for SGE (and similar derivatives)
