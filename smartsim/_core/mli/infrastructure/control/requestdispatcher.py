@@ -57,6 +57,7 @@ logger = get_logger("Request Dispatcher")
 def deserialize_message(
     data_blob: bytes,
     channel_type: t.Type[CommChannelBase],
+    device: t.Literal["cpu", "gpu"],
 ) -> InferenceRequest:
     """Deserialize a message from a byte stream into an InferenceRequest
     :param data_blob: The byte stream to deserialize"""
@@ -79,31 +80,34 @@ def deserialize_message(
     elif request.model.which() == "data":
         model_bytes = request.model.data
 
-    callback_key = request.replyChannel.reply
+    callback_key = request.replyChannel.descriptor
 
     # todo: shouldn't this be `CommChannel.find` instead of `DragonCommChannel`
     comm_channel = channel_type(callback_key)
     # comm_channel = DragonCommChannel(request.replyChannel)
 
     input_keys: t.Optional[t.List[str]] = None
-    input_bytes: t.Optional[t.List[bytes]] = (
-        None  # these will really be tensors already
-    )
+    input_bytes: t.Optional[t.List[bytes]] = None
 
-    input_meta: t.List[t.Any] = []
+    output_keys: t.Optional[t.List[str]] = None
+
+    input_meta: t.Optional[t.List[TensorDescriptor]] = None
 
     if request.input.which() == "keys":
         input_keys = [input_key.key for input_key in request.input.keys]
-    elif request.input.which() == "data":
-        input_bytes = [data.blob for data in request.input.data]
-        input_meta = [data.tensorDescriptor for data in request.input.data]
+    elif request.input.which() == "descriptors":
+        input_meta = request.input.descriptors  # type: ignore
+
+    if request.output:
+        output_keys = [tensor_key.key for tensor_key in request.output]
 
     inference_request = InferenceRequest(
         model_key=model_key,
         callback=comm_channel,
         raw_inputs=input_bytes,
-        input_meta=input_meta,
         input_keys=input_keys,
+        input_meta=input_meta,
+        output_keys=output_keys,
         raw_model=model_bytes,
         batch_size=0,
     )
@@ -235,7 +239,26 @@ class BatchQueue(Queue[InferenceRequest]):
     def empty(self) -> bool:
         return self.qsize() == 0
 
+def exception_handler(
+    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+) -> None:
+    """
+    Logs exceptions and sends a failure response.
 
+    :param exc: The exception to be logged
+    :param reply_channel: The channel used to send replies
+    :param failure_message: Failure message to log and send back
+    """
+    logger.exception(
+        f"{failure_message}\n"
+        f"Exception type: {type(exc).__name__}\n"
+        f"Exception message: {str(exc)}"
+    )
+    serialized_resp = MessageHandler.serialize_response(
+        build_failure_reply("fail", failure_message)
+    )
+    if reply_channel:
+        reply_channel.send(serialized_resp)
 class RequestDispatcher:
     def __init__(
         self,
@@ -296,10 +319,28 @@ class RequestDispatcher:
             raise SmartSimError("No incoming channel for dispatcher")
         while True:
             try:
-                request_bytes: bytes = self._incoming_channel.recv()
+                bytes_list: t.List[bytes] = self._incoming_channel.recv()
+
+                if not bytes_list:
+                    exception_handler(
+                        ValueError("No request data found"),
+                        None,
+                        "No request data found.",
+                    )
+                    return
+
+
             except Exception:
                 pass
             else:
+                request_bytes = bytes_list[0]
+                tensor_bytes_list = bytes_list[1:]
+
+                request = deserialize_message(
+                    request_bytes, self._comm_channel_type, self._device
+                )
+                if request.input_meta and tensor_bytes_list:
+                    request.raw_inputs = tensor_bytes_list
                 self._perf_timer.start_timings()
                 request = deserialize_message(request_bytes, self._comm_channel_type)
                 self._perf_timer.measure_time("deserialize_message")
