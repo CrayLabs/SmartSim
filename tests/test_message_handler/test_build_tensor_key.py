@@ -35,10 +35,12 @@ handler = MessageHandler()
 
 
 def test_build_tensor_key_successful():
-    tensor_key = handler.build_tensor_key("tensor_key")
+    fsd = "mock-feature-store-descriptor"
+    tensor_key = handler.build_tensor_key("tensor_key", fsd)
     assert tensor_key.key == "tensor_key"
 
 
 def test_build_tensor_key_unsuccessful():
     with pytest.raises(ValueError):
-        tensor_key = handler.build_tensor_key(100)
+        fsd = "mock-feature-store-descriptor"
+        tensor_key = handler.build_tensor_key(100, fsd)

@@ -57,6 +57,13 @@ class MemoryFeatureStore(FeatureStore):
         :param key: Unique key of an item to retrieve from the feature store"""
         return key in self._storage
 
+    @property
+    def descriptor(self) -> str:
+        """Return a unique identifier enabling a client to connect to
+        the feature store
+        :returns: A descriptor encoded as a string"""
+        return "file-system-fs"
+
 
 class FileSystemFeatureStore(FeatureStore):
     """Alternative feature store implementation for testing. Stores all
@@ -102,6 +109,13 @@ class FileSystemFeatureStore(FeatureStore):
             value.parent.mkdir(parents=True, exist_ok=True)
 
         return value
+
+    @property
+    def descriptor(self) -> str:
+        """Return a unique identifier enabling a client to connect to
+        the feature store
+        :returns: A descriptor encoded as a string"""
+        return "in-memory-fs"
 
 
 class DragonDict:

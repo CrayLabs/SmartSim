@@ -33,7 +33,8 @@ pytestmark = pytest.mark.group_a
 
 handler = MessageHandler()
 
-tensor_key = handler.build_tensor_key("key")
+fsd = "mock-feature-store-descriptor"
+tensor_key = handler.build_tensor_key("key", fsd)
 
 
 @pytest.mark.parametrize(

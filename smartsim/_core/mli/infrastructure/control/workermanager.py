@@ -25,17 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-
-# isort: off
-import dragon
-from dragon import fli
-
-# isort: on
-
 import time
 import typing as t
-
-import numpy as np
 
 from .....error import SmartSimError
 from .....log import get_logger
@@ -63,96 +54,23 @@ if t.TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def deserialize_message(
-    data_blob: bytes,
-    channel_type: t.Type[CommChannelBase],
-    device: t.Literal["cpu", "gpu"],
-) -> InferenceRequest:
-    """Deserialize a message from a byte stream into an InferenceRequest
-    :param data_blob: The byte stream to deserialize"""
-    # todo: consider moving to XxxCore and only making
-    # workers implement the inputs and model conversion?
-
-    # alternatively, consider passing the capnproto models
-    # to this method instead of the data_blob...
-
-    # something is definitely wrong here... client shouldn't have to touch
-    # callback (or batch size)
-
-    request = MessageHandler.deserialize_request(data_blob)
-    # return request
-    model_key: t.Optional[str] = None
-    model_bytes: t.Optional[Model] = None
-
-    if request.model.which() == "key":
-        model_key = request.model.key.key
-    elif request.model.which() == "data":
-        model_bytes = request.model.data
-
-    callback_key = request.replyChannel.descriptor
-
-    # todo: shouldn't this be `CommChannel.find` instead of `DragonCommChannel`
-    comm_channel = channel_type(callback_key)
-    # comm_channel = DragonCommChannel(request.replyChannel)
-
-    input_keys: t.Optional[t.List[str]] = None
-    input_bytes: t.Optional[t.List[bytes]] = None
-
-    output_keys: t.Optional[t.List[str]] = None
-
-    input_meta: t.Optional[t.List[TensorDescriptor]] = None
-
-    if request.input.which() == "keys":
-        input_keys = [input_key.key for input_key in request.input.keys]
-    elif request.input.which() == "descriptors":
-        input_meta = request.input.descriptors  # type: ignore
-
-    if request.output:
-        output_keys = [tensor_key.key for tensor_key in request.output]
-
-    inference_request = InferenceRequest(
-        model_key=model_key,
-        callback=comm_channel,
-        raw_inputs=input_bytes,
-        input_keys=input_keys,
-        input_meta=input_meta,
-        output_keys=output_keys,
-        raw_model=model_bytes,
-        batch_size=0,
-    )
-    return inference_request
-
-
-def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
+def build_failure_reply(status: "StatusEnum", message: str) -> Response:
+    """Build a response indicating a failure occurred
+    :param status: The status of the response
+    :param message: The error message to include in the response"""
     return MessageHandler.build_response(
-        status=status,
-        message=message,
-        result=[],
+        status=status,  # todo: need to indicate correct status
+        message=message,  # todo: decide what these will be
+        result=None,
         custom_attributes=None,
     )
 
 
-def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
-    prepared_outputs: t.List[t.Any] = []
-    if reply.output_keys:
-        for key in reply.output_keys:
-            if not key:
-                continue
-            msg_key = MessageHandler.build_tensor_key(key)
-            prepared_outputs.append(msg_key)
-    elif reply.outputs:
-        for _ in reply.outputs:
-            msg_tensor_desc = MessageHandler.build_tensor_descriptor(
-                "c",
-                "float32",
-                [1],
-            )
-            prepared_outputs.append(msg_tensor_desc)
-    return prepared_outputs
-
-
-def build_reply(reply: InferenceReply) -> ResponseBuilder:
-    results = prepare_outputs(reply)
+def build_reply(worker: MachineLearningWorkerBase, reply: InferenceReply) -> Response:
+    """Builds a response for a successful inference request
+    :param worker: A worker to process the reply with
+    :param reply: The internal representation of the reply"""
+    results = worker.prepare_outputs(reply)
 
     return MessageHandler.build_response(
         status=reply.status_enum,
@@ -210,10 +128,6 @@ class WorkerManager(Service):
 
         self._task_queue: t.Optional[CommChannelBase] = config_loader.get_queue()
         """the queue the manager monitors for new tasks"""
-        self._feature_store: t.Optional[FeatureStore] = (
-            config_loader.get_feature_store()
-        )
-        """a feature store to retrieve models from"""
         self._worker = worker
         """The ML Worker implementation"""
         self._comm_channel_type = comm_channel_type
@@ -222,37 +136,68 @@ class WorkerManager(Service):
         """Device on which workers need to run"""
         self._cached_models: dict[str, t.Any] = {}
         """Dictionary of previously loaded models"""
+        self._feature_stores = config_loader.get_feature_stores()
+        """A collection of attached feature stores"""
+
+    def _check_feature_stores(self, request: InferenceRequest) -> bool:
+        """Ensures that all feature stores required by the request are available
+        :param request: The request to validate"""
+        # collect all feature stores required by the request
+        fs_model = {request.model_key.descriptor}
+        fs_inputs = {key.descriptor for key in request.input_keys}
+        fs_outputs = {key.descriptor for key in request.output_keys}
+
+        # identify which feature stores are requested and unknown
+        fs_desired = fs_model + fs_inputs + fs_outputs
+        fs_actual = {key for key in self._feature_stores}
+        fs_missing = fs_desired - fs_actual
+
+        # exit if all desired feature stores are not available
+        if fs_missing:
+            logger.error(f"Missing feature store(s): {fs_missing}")
+            return False
+
+        return True
+
+    def _check_model(self, request: InferenceRequest) -> bool:
+        """Ensure that a model is available for the request
+        :param request: The request to validate"""
+        if request.model_key or request.raw_model:
+            return True
+
+        logger.error("Unable to continue without model bytes or feature store key")
+        return False
+
+    def _check_inputs(self, request: InferenceRequest) -> bool:
+        """Ensure that inputs are available for the request
+        :param request: The request to validate"""
+        if request.input_keys or request.raw_inputs:
+            return True
+
+        logger.error("Unable to continue without input bytes or feature store keys")
+        return False
+
+    def _check_callback(self, request: InferenceRequest) -> bool:
+        """Ensure that a callback channel is available for the request
+        :param request: The request to validate"""
+        if request.callback is not None:
+            return True
+
+        logger.error("No callback channel provided in request")
+        return False
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
         :param request: The request to validate
         :return: True if the request is valid, False otherwise"""
-        if not self._feature_store:
-            if request.model_key:
-                logger.error("Unable to load model by key without feature store")
-                return False
+        checks = [
+            self._check_feature_stores(request),
+            self._check_model(request),
+            self._check_inputs(request),
+            self._check_callback(request),
+        ]
 
-            if request.input_keys:
-                logger.error("Unable to load inputs by key without feature store")
-                return False
-
-            if request.output_keys:
-                logger.error("Unable to persist outputs by key without feature store")
-                return False
-
-        if not request.model_key and not request.raw_model:
-            logger.error("Unable to continue without model bytes or feature store key")
-            return False
-
-        if not request.input_keys and not request.raw_inputs:
-            logger.error("Unable to continue without input bytes or feature store keys")
-            return False
-
-        if request.callback is None:
-            logger.error("No callback channel provided in request")
-            return False
-
-        return True
+        return all(checks)
 
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
@@ -279,8 +224,8 @@ class WorkerManager(Service):
         tensor_bytes_list = bytes_list[1:]
 
         interm = time.perf_counter()  # timing
-        request = deserialize_message(
-            request_bytes, self._comm_channel_type, self._device
+        request = self._worker.deserialize_message(
+            request_bytes, self._comm_channel_type
         )
 
         if request.input_meta and tensor_bytes_list:
@@ -302,10 +247,12 @@ class WorkerManager(Service):
                     "Could not find model key or model.",
                 )
                 return
-            if request.model_key in self._cached_models:
+            if request.model_key.key in self._cached_models:
                 timings.append(time.perf_counter() - interm)  # timing
                 interm = time.perf_counter()  # timing
-                model_result = LoadModelResult(self._cached_models[request.model_key])
+                model_result = LoadModelResult(
+                    self._cached_models[request.model_key.key]
+                )
 
             else:
                 timings.append(time.perf_counter() - interm)  # timing
@@ -328,7 +275,7 @@ class WorkerManager(Service):
                         fetch_result=fetch_model_result,
                         device=self._device,
                     )
-                    self._cached_models[request.model_key] = model_result.model
+                    self._cached_models[request.model_key.key] = model_result.model
                 except Exception as e:
                     exception_handler(
                         e, request.callback, "Failed while loading the model."
@@ -407,9 +354,7 @@ class WorkerManager(Service):
         if request.output_keys:
             try:
                 reply.output_keys = self._worker.place_output(
-                    request,
-                    transformed_output,
-                    self._feature_store,
+                    request, transformed_output, self._feature_stores
                 )
             except Exception as e:
                 exception_handler(
@@ -425,9 +370,10 @@ class WorkerManager(Service):
         if reply.outputs is None or not reply.outputs:
             response = build_failure_reply("fail", "Outputs not found.")
         else:
-            reply.status_enum = "complete"
-            reply.message = "Success"
-            response = build_reply(reply)
+            if reply.outputs is None or not reply.outputs:
+                response = build_failure_reply("fail", "no-results")
+
+            response = build_reply(self._worker, reply)
 
         timings.append(time.perf_counter() - interm)  # timing
         interm = time.perf_counter()  # timing

@@ -27,8 +27,12 @@
 import base64
 import os
 import pickle
+import typing as t
 
 import pytest
+
+from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim.error.errors import SmartSimError
 
 dragon = pytest.importorskip("dragon")
 
@@ -42,7 +46,7 @@ from smartsim._core.mli.infrastructure.storage.dragonfeaturestore import (
     DragonFeatureStore,
 )
 
-from .utils.featurestore import MemoryFeatureStore
+from .featurestore import FileSystemFeatureStore, MemoryFeatureStore
 
 # The tests in this file belong to the dragon group
 pytestmark = pytest.mark.dragon
@@ -93,59 +97,70 @@ def test_environment_loader_FLI_fails(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "expected_keys, expected_values",
+    "feature_stores",
     [
-        pytest.param(["key1", "key2", "key3"], ["value1", "value2", "value3"]),
-        pytest.param(["another key"], ["another value"]),
+        pytest.param([], id="No feature stores"),
+        pytest.param([MemoryFeatureStore()], id="Single feature store"),
+        pytest.param(
+            [MemoryFeatureStore(), FileSystemFeatureStore()],
+            id="Multiple feature stores",
+        ),
     ],
 )
-def test_environment_loader_memory_featurestore(
-    expected_keys, expected_values, monkeypatch
+def test_environment_loader_featurestores(
+    feature_stores: t.List[FeatureStore], monkeypatch: pytest.MonkeyPatch
 ):
-    """MemoryFeatureStores can be correctly serialized and deserialized"""
-    feature_store = MemoryFeatureStore()
-    key_value_pairs = zip(expected_keys, expected_values)
-    for k, v in key_value_pairs:
-        feature_store[k] = v
-    monkeypatch.setenv(
-        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
-    )
-    config = EnvironmentConfigLoader()
-    config_feature_store = config.get_feature_store()
+    """FeatureStore can be correctly identified, serialized and deserialized"""
+    with monkeypatch.context() as m:
+        for fs in feature_stores:
+            value = base64.b64encode(pickle.dumps(fs)).decode("utf-8")
+            key = f"SSFeatureStore.{fs.descriptor}"
+            m.setenv(key, value)
 
-    for k, _ in key_value_pairs:
-        assert config_feature_store[k] == feature_store[k]
+        config = EnvironmentConfigLoader()
+        actual_feature_stores = config.get_feature_stores()
+
+        for fs in feature_stores:
+            # Confirm that the descriptors were used as keys in the loaded feature stores
+            assert fs.descriptor in actual_feature_stores
+
+            # Confirm that the value loaded from env var is a FeatureStore
+            # and it is consistent w/the key identifying it
+            loaded_fs = actual_feature_stores[fs.descriptor]
+            assert loaded_fs.descriptor == fs.descriptor
 
 
 @pytest.mark.parametrize(
-    "expected_keys, expected_values",
+    "value_to_use,error_filter",
     [
-        pytest.param(["key1", "key2", "key3"], ["value1", "value2", "value3"]),
-        pytest.param(["another key"], ["another value"]),
+        pytest.param("", "empty", id="Empty value"),
+        pytest.param("abcd", "invalid", id="Incorrectly serialized value"),
     ],
 )
-def test_environment_loader_dragon_featurestore(
-    expected_keys, expected_values, monkeypatch
+def test_environment_loader_featurestores_errors(
+    value_to_use: str, error_filter: str, monkeypatch: pytest.MonkeyPatch
 ):
-    """DragonFeatureStores can be correctly serialized and deserialized"""
-    storage = DDict()
-    feature_store = DragonFeatureStore(storage)
-    key_value_pairs = zip(expected_keys, expected_values)
-    for k, v in key_value_pairs:
-        feature_store[k] = v
-    monkeypatch.setenv(
-        "SSFeatureStore", base64.b64encode(pickle.dumps(feature_store)).decode("utf-8")
-    )
-    config = EnvironmentConfigLoader()
-    config_feature_store = config.get_feature_store()
+    """Verify that the environment loader reports an error when a feature store
+    env var is populated with something that cannot be loaded properly"""
 
-    for k, _ in key_value_pairs:
-        assert config_feature_store[k] == feature_store[k]
+    fs = FileSystemFeatureStore()  # just use for descriptor...
+    key = f"SSFeatureStore.{fs.descriptor}"
+
+    with monkeypatch.context() as m, pytest.raises(SmartSimError) as ex:
+        m.setenv(key, value_to_use)  # <----- simulate incorrect value in env var
+
+        config = EnvironmentConfigLoader()
+        config.get_feature_stores()  # <---- kick off validation
+
+    # confirm the specific key is reported in error message
+    assert key in ex.value.args[0]
+    # ensure the failure occurred during loading
+    assert error_filter in ex.value.args[0].lower()
 
 
 def test_environment_variables_not_set():
     """EnvironmentConfigLoader getters return None when environment
     variables are not set"""
     config = EnvironmentConfigLoader()
-    assert config.get_feature_store() == None
+    assert config.get_feature_stores() == {}
     assert config.get_queue() == None

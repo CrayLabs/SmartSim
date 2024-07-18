@@ -69,3 +69,10 @@ class DragonFeatureStore(FeatureStore):
         Return `True` if the key is found, `False` otherwise
         :param key: Unique key of an item to retrieve from the feature store"""
         return key in self._storage
+
+    @property
+    def descriptor(self) -> str:
+        """Return a unique identifier enabling a client to connect to
+        the feature store
+        :returns: A descriptor encoded as a string"""
+        return str(self._storage.serialize())

@@ -28,6 +28,16 @@ import typing as t
 from abc import ABC, abstractmethod
 
 
+class FeatureStoreKey:
+    """A key-value pair enabling retrieval of an item in a feature store"""
+
+    def __init__(self, key: str, descriptor: str) -> None:
+        self.key = key
+        """The unique key of an item in the feature store"""
+        self.descriptor = descriptor
+        """The unique identifier of the feature store containing the key"""
+
+
 class FeatureStore(ABC):
     """Abstract base class providing the common interface for retrieving
     values from a feature store implementation"""
@@ -48,3 +58,10 @@ class FeatureStore(ABC):
         """Membership operator to test for a key existing within the feature store.
         Return `True` if the key is found, `False` otherwise
         :param key: Unique key of an item to retrieve from the feature store"""
+
+    @property
+    @abstractmethod
+    def descriptor(self) -> str:
+        """Return a unique identifier enabling a client to connect to
+        the feature store
+        :returns: A descriptor encoded as a string"""

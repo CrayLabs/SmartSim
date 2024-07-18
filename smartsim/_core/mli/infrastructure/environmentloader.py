@@ -33,6 +33,10 @@ from dragon.fli import FLInterface  # pylint: disable=all
 
 from smartsim._core.mli.comm.channel.dragonfli import DragonFLIChannel
 from smartsim._core.mli.infrastructure.storage.featurestore import FeatureStore
+from smartsim.error.errors import SmartSimError
+from smartsim.log import get_logger
+
+logger = get_logger(__name__)
 
 
 class EnvironmentConfigLoader:
@@ -47,15 +51,35 @@ class EnvironmentConfigLoader:
         )
         self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
         self.feature_store: t.Optional[FeatureStore] = None
+        self.feature_stores: t.Optional[t.Dict[FeatureStore]] = None
         self.queue: t.Optional[DragonFLIChannel] = None
 
-    def get_feature_store(self) -> t.Optional[FeatureStore]:
-        """Loads the Feature Store previously set in SSFeatureStore"""
-        if self._feature_store_descriptor is not None:
-            self.feature_store = pickle.loads(
-                base64.b64decode(self._feature_store_descriptor)
+    def _load_feature_store(self, env_var: str) -> FeatureStore:
+        """Load a feature store from a descriptor
+        :param descriptor: The descriptor of the feature store
+        :returns: The hydrated feature store"""
+        logger.debug(f"Loading feature store from env: {env_var}")
+
+        value = os.getenv(env_var)
+        if not value:
+            raise SmartSimError(f"Empty feature store descriptor in environment: {env_var}")
+
+        try:
+            return pickle.loads(base64.b64decode(value))
+        except:
+            raise SmartSimError(
+                f"Invalid feature store descriptor in environment: {env_var}"
             )
-        return self.feature_store
+
+    def get_feature_stores(self) -> t.Dict[str, FeatureStore]:
+        """Loads multiple Feature Stores by scanning environment for variables
+        prefixed with `SSFeatureStore`"""
+        prefix = "SSFeatureStore"
+        if self.feature_stores is None:
+            env_vars = [var for var in os.environ if var.startswith(prefix)]
+            stores = [self._load_feature_store(var) for var in env_vars]
+            self.feature_stores = {fs.descriptor: fs for fs in stores}
+        return self.feature_stores
 
     def get_queue(self, sender_supplied: bool = True) -> t.Optional[DragonFLIChannel]:
         """Returns the Queue previously set in SSQueue"""

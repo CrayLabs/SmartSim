@@ -27,10 +27,13 @@
 import typing as t
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 from .....error import SmartSimError
 from .....log import get_logger
 from ...comm.channel.channel import CommChannelBase
-from ...infrastructure.storage.featurestore import FeatureStore
+from ...infrastructure.storage.featurestore import FeatureStore, FeatureStoreKey
+from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
 
 if t.TYPE_CHECKING:
@@ -44,26 +47,32 @@ class InferenceRequest:
 
     def __init__(
         self,
-        model_key: t.Optional[str] = None,
+        model_key: t.Optional[FeatureStoreKey] = None,
         callback: t.Optional[CommChannelBase] = None,
         raw_inputs: t.Optional[t.List[bytes]] = None,
-        # todo: copying byte array is likely to create a copy of the data in
-        # capnproto and will be a performance issue later
-        input_keys: t.Optional[t.List[str]] = None,
+        input_keys: t.Optional[t.List[FeatureStoreKey]] = None,
         input_meta: t.Optional[t.List[t.Any]] = None,
-        output_keys: t.Optional[t.List[str]] = None,
+        output_keys: t.Optional[t.List[FeatureStoreKey]] = None,
         raw_model: t.Optional[Model] = None,
         batch_size: int = 0,
     ):
         """Initialize the object"""
         self.model_key = model_key
+        """A tuple containing a (key, descriptor) pair"""
         self.raw_model = raw_model
+        """Raw bytes of an ML model"""
         self.callback = callback
+        """The channel used for notification of inference completion"""
         self.raw_inputs = raw_inputs or []
+        """Raw bytes of tensor inputs"""
         self.input_keys = input_keys or []
+        """A list of tuples containing a (key, descriptor) pair"""
         self.input_meta = input_meta or []
+        """Metadata about the input data"""
         self.output_keys = output_keys or []
+        """A list of tuples containing a (key, descriptor) pair"""
         self.batch_size = batch_size
+        """The batch size to apply when batching"""
 
 
 class InferenceReply:
@@ -149,12 +158,92 @@ class MachineLearningWorkerCore:
     """Basic functionality of ML worker that is shared across all worker types"""
 
     @staticmethod
+    def deserialize_message(
+        data_blob: bytes,
+        channel_type: t.Type[CommChannelBase],
+    ) -> InferenceRequest:
+        """Deserialize a message from a byte stream into an InferenceRequest
+        :param data_blob: The byte stream to deserialize"""
+        request = MessageHandler.deserialize_request(data_blob)
+        model_key: t.Optional[FeatureStoreKey] = None
+        model_bytes: t.Optional[Model] = None
+
+        if request.model.which() == "key":
+            model_key = FeatureStoreKey(
+                request.model.key.key, request.model.key.featureStoreDescriptor
+            )
+        elif request.model.which() == "data":
+            model_bytes = request.model.data
+
+        callback_key = request.replyChannel.reply
+        comm_channel = channel_type(callback_key)
+
+        input_keys: t.Optional[t.List[FeatureStoreKey]] = None
+        input_bytes: t.Optional[t.List[bytes]] = None
+        input_meta: t.List[t.Any] = []
+
+        if request.input.which() == "keys":
+            input_keys = [
+                FeatureStoreKey(input_key.key, input_key.featureStoreDescriptor)
+                for input_key in request.input.keys
+            ]
+        elif request.input.which() == "data":
+            input_bytes = [data.blob for data in request.input.data]
+            input_meta = [data.tensorDescriptor for data in request.input.data]
+
+        output_keys: t.List[FeatureStoreKey] = []
+        if request.output:
+            output_keys = [
+                FeatureStoreKey(output_key.key, output_key.featureStoreDescriptor)
+                for output_key in request.output
+            ]
+
+        inference_request = InferenceRequest(
+            model_key=model_key,
+            callback=comm_channel,
+            raw_inputs=input_bytes,
+            input_meta=input_meta,
+            input_keys=input_keys,
+            output_keys=output_keys,
+            raw_model=model_bytes,
+            batch_size=0,
+        )
+        return inference_request
+
+    @staticmethod
+    def prepare_outputs(reply: InferenceReply) -> t.List[t.Any]:
+        prepared_outputs: t.List[t.Any] = []
+        if reply.output_keys:
+            for fs_key in reply.output_keys:
+                if not fs_key:
+                    continue
+
+                msg_key = MessageHandler.build_tensor_key(fs_key.key, fs_key.descriptor)
+                prepared_outputs.append(msg_key)
+        elif reply.outputs:
+            arrays: t.List[np.ndarray[t.Any, np.dtype[t.Any]]] = [
+                output.numpy() for output in reply.outputs
+            ]
+            for tensor in arrays:
+                # todo: need to have the output attributes specified in the req?
+                # maybe, add `MessageHandler.dtype_of(tensor)`?
+                # can `build_tensor` do dtype and shape?
+                msg_tensor = MessageHandler.build_tensor(
+                    tensor,
+                    "c",
+                    "float32",
+                    [1],
+                )
+                prepared_outputs.append(msg_tensor)
+        return prepared_outputs
+
+    @staticmethod
     def fetch_model(
-        request: InferenceRequest, feature_store: t.Optional[FeatureStore]
+        request: InferenceRequest, feature_stores: t.Dict[str, FeatureStore]
     ) -> FetchModelResult:
         """Given a resource key, retrieve the raw model from a feature store
         :param request: The request that triggered the pipeline
-        :param feature_store: The feature store used for persistence
+        :param feature_stores: Available feature stores used for persistence
         :return: Raw bytes of the model"""
 
         if request.raw_model:
@@ -164,7 +253,7 @@ class MachineLearningWorkerCore:
             # short-circuit and return the directly supplied model
             return FetchModelResult(request.raw_model.data)
 
-        if not feature_store:
+        if not feature_stores:
             raise ValueError("Feature store is required for model retrieval")
 
         if not request.model_key:
@@ -172,44 +261,47 @@ class MachineLearningWorkerCore:
                 "Key must be provided to retrieve model from feature store"
             )
 
+        key, fsd = request.model_key.key, request.model_key.descriptor
+
         try:
-            raw_bytes: bytes = t.cast(bytes, feature_store[request.model_key])
+            feature_store = feature_stores[fsd]
+            raw_bytes: bytes = t.cast(bytes, feature_store[key])
             return FetchModelResult(raw_bytes)
         except FileNotFoundError as ex:
             logger.exception(ex)
-            raise SmartSimError(
-                f"Model could not be retrieved with key {request.model_key}"
-            ) from ex
+            raise SmartSimError(f"Model could not be retrieved with key {key}") from ex
 
     @staticmethod
     def fetch_inputs(
-        request: InferenceRequest, feature_store: t.Optional[FeatureStore]
+        request: InferenceRequest, feature_stores: t.Dict[str, FeatureStore]
     ) -> FetchInputResult:
         """Given a collection of ResourceKeys, identify the physical location
         and input metadata
         :param request: The request that triggered the pipeline
-        :param feature_store: The feature store used for persistence
+        :param feature_stores: Available feature stores used for persistence
         :return: the fetched input"""
 
         if request.raw_inputs:
             return FetchInputResult(request.raw_inputs, request.input_meta)
 
-        if not feature_store:
+        if not feature_stores:
             raise ValueError("No input and no feature store provided")
 
         if request.input_keys:
             data: t.List[bytes] = []
-            for input_ in request.input_keys:
+
+            for fs_key in request.input_keys:
                 try:
-                    tensor_bytes = t.cast(bytes, feature_store[input_])
+                    feature_store = feature_stores[fs_key.descriptor]
+                    tensor_bytes = t.cast(bytes, feature_store[fs_key.key])
                     data.append(tensor_bytes)
                 except KeyError as ex:
                     logger.exception(ex)
                     raise SmartSimError(
-                        f"Model could not be retrieved with key {input_}"
+                        f"Model could not be retrieved with key {fs_key.key}"
                     ) from ex
             return FetchInputResult(
-                data, None
+                data, meta=None
             )  # fixme: need to get both tensor and descriptor
 
         raise ValueError("No input source")
@@ -231,25 +323,26 @@ class MachineLearningWorkerCore:
     def place_output(
         request: InferenceRequest,
         transform_result: TransformOutputResult,
-        feature_store: t.Optional[FeatureStore],
-    ) -> t.Collection[t.Optional[str]]:
+        feature_stores: t.Dict[str, FeatureStore],
+    ) -> t.Collection[t.Optional[FeatureStoreKey]]:
         """Given a collection of data, make it available as a shared resource in the
         feature store
         :param request: The request that triggered the pipeline
         :param execute_result: Results from inference
-        :param feature_store: The feature store used for persistence
+        :param feature_stores: Available feature stores used for persistence
         :return: A collection of keys that were placed in the feature store"""
-        if not feature_store:
+        if not feature_stores:
             raise ValueError("Feature store is required for output persistence")
 
-        keys: t.List[t.Optional[str]] = []
+        keys: t.List[t.Optional[FeatureStoreKey]] = []
         # need to decide how to get back to original sub-batch inputs so they can be
         # accurately placed, datum might need to include this.
 
         # Consider parallelizing all PUT feature_store operations
-        for k, v in zip(request.output_keys, transform_result.outputs):
-            feature_store[k] = v
-            keys.append(k)
+        for fs_key, v in zip(request.output_keys, transform_result.outputs):
+            feature_store = feature_stores[fs_key.descriptor]
+            feature_store[fs_key.key] = v
+            keys.append(fs_key)
 
         return keys
 

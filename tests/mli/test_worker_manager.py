@@ -44,7 +44,6 @@ from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
 from .channel import FileSystemCommChannel
-from .featurestore import FileSystemFeatureStore
 from .worker import IntegratedTorchWorker
 
 logger = get_logger(__name__)
@@ -139,10 +138,11 @@ def mock_messages(
         tensor = torch.randn((1, 2), dtype=torch.float32)
         torch.save(tensor, buffer)
         feature_store[input_key] = buffer.getvalue()
+        fsd = feature_store.descriptor()
 
-        message_tensor_output_key = MessageHandler.build_tensor_key(output_key)
-        message_tensor_input_key = MessageHandler.build_tensor_key(input_key)
-        message_model_key = MessageHandler.build_model_key(model_key)
+        message_tensor_output_key = MessageHandler.build_tensor_key(output_key, fsd)
+        message_tensor_input_key = MessageHandler.build_tensor_key(input_key, fsd)
+        message_model_key = MessageHandler.build_model_key(model_key, fsd)
 
         request = MessageHandler.build_request(
             reply_channel=callback_channel.descriptor,
@@ -183,11 +183,14 @@ def test_worker_manager(prepare_environment: pathlib.Path) -> None:
     )
 
     # create a mock client application to populate the request queue
+    feature_stores = config_loader.get_feature_stores()
+    fs_list = list(feature_stores.values())
+
     msg_pump = mp.Process(
         target=mock_messages,
         args=(
             config_loader.get_queue(),
-            config_loader.get_feature_store(),
+            fs_list[0],
             fs_path,
             comm_path,
         ),
