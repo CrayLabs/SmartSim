@@ -49,7 +49,7 @@ class EnvironmentConfigLoader:
         self._queue_descriptor: t.Optional[str] = os.getenv("SSQueue", None)
         self.feature_stores: t.Optional[t.Dict[str, FeatureStore]] = None
         self.queue: t.Optional[DragonFLIChannel] = None
-        self._prefix = "SSFeatureStore"
+        self._feature_store_prefix = "SSFeatureStore"
 
     def _load_feature_store(self, env_var: str) -> FeatureStore:
         """Load a feature store from a descriptor
@@ -74,7 +74,7 @@ class EnvironmentConfigLoader:
         """Loads multiple Feature Stores by scanning environment for variables
         prefixed with `SSFeatureStore`"""
         if not self.feature_stores:
-            env_vars = [var for var in os.environ if var.startswith(self._prefix)]
+            env_vars = [var for var in os.environ if var.startswith(self._feature_store_prefix)]
             stores = [self._load_feature_store(var) for var in env_vars]
             self.feature_stores = {fs.descriptor: fs for fs in stores}
         return self.feature_stores

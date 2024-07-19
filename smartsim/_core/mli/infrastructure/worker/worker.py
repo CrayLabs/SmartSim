@@ -162,14 +162,18 @@ class MachineLearningWorkerCore:
         channel_type: t.Type[CommChannelBase],
     ) -> InferenceRequest:
         """Deserialize a message from a byte stream into an InferenceRequest
-        :param data_blob: The byte stream to deserialize"""
+        :param data_blob: The byte stream to deserialize
+        :param channel_type: Type to be used for callback communications
+        :returns: The raw input message deserialized into an InferenceRequest
+        """
         request = MessageHandler.deserialize_request(data_blob)
         model_key: t.Optional[FeatureStoreKey] = None
         model_bytes: t.Optional[Model] = None
 
         if request.model.which() == "key":
             model_key = FeatureStoreKey(
-                request.model.key.key, request.model.key.featureStoreDescriptor
+                key=request.model.key.key,
+                descriptor=request.model.key.featureStoreDescriptor,
             )
         elif request.model.which() == "data":
             model_bytes = request.model.data
@@ -183,7 +187,7 @@ class MachineLearningWorkerCore:
 
         if request.input.which() == "keys":
             input_keys = [
-                FeatureStoreKey(value.key, value.featureStoreDescriptor)
+                FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
                 for value in request.input.keys
             ]
         elif request.input.which() == "descriptors":
@@ -191,7 +195,7 @@ class MachineLearningWorkerCore:
 
         if request.output:
             output_keys = [
-                FeatureStoreKey(value.key, value.featureStoreDescriptor)
+                FeatureStoreKey(key=value.key, descriptor=value.featureStoreDescriptor)
                 for value in request.output
             ]
 

@@ -27,15 +27,16 @@
 import typing as t
 from abc import ABC, abstractmethod
 
+from pydantic import BaseModel, Field
 
-class FeatureStoreKey:
-    """A key-value pair enabling retrieval of an item in a feature store"""
 
-    def __init__(self, key: str, descriptor: str) -> None:
-        self.key = key
-        """The unique key of an item in the feature store"""
-        self.descriptor = descriptor
-        """The unique identifier of the feature store containing the key"""
+class FeatureStoreKey(BaseModel):
+    """A key,descriptor pair enabling retrieval of an item from a feature store"""
+
+    key: str = Field(min_length=1)
+    """The unique key of an item in a feature store"""
+    descriptor: str = Field(min_length=1)
+    """The unique identifier of the feature store containing the key"""
 
 
 class FeatureStore(ABC):

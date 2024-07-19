@@ -102,7 +102,7 @@ def get_request() -> InferenceRequest:
     ]
 
     return InferenceRequest(
-        model_key=FeatureStoreKey("model", ""),
+        model_key=FeatureStoreKey(key="model", descriptor="xyz"),
         callback=None,
         raw_inputs=tensor_numpy,
         input_keys=None,

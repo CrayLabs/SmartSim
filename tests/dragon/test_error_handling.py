@@ -84,7 +84,7 @@ def setup_worker_manager_model_bytes(test_dir, monkeypatch: pytest.MonkeyPatch):
         comm_channel_type=FileSystemCommChannel,
     )
 
-    tensor_key = MessageHandler.build_tensor_key("key")
+    tensor_key = MessageHandler.build_tensor_key("key", feature_store.descriptor)
     model = MessageHandler.build_model(b"model", "model name", "v 0.0.1")
     request = MessageHandler.build_request(
         test_dir, model, [tensor_key], [tensor_key], [], None
@@ -116,8 +116,8 @@ def setup_worker_manager_model_key(test_dir, monkeypatch: pytest.MonkeyPatch):
         comm_channel_type=FileSystemCommChannel,
     )
 
-    tensor_key = MessageHandler.build_tensor_key("key")
-    model_key = MessageHandler.build_model_key("model key")
+    tensor_key = MessageHandler.build_tensor_key("key", feature_store.descriptor)
+    model_key = MessageHandler.build_model_key("model key", feature_store.descriptor)
     request = MessageHandler.build_request(
         test_dir, model_key, [tensor_key], [tensor_key], [], None
     )
