@@ -213,10 +213,10 @@ class DragonBackend:
 
     def _initialize_hosts(self) -> None:
         with self._queue_lock:
-            self._hosts: t.List[str] = sorted(
-                node for node in dragon_machine.System().nodes
-            )
-            self._nodes = [dragon_machine.Node(node) for node in self._hosts]
+            self._nodes = [
+                dragon_machine.Node(node) for node in dragon_machine.System().nodes
+            ]
+            self._hosts: t.List[str] = sorted(node.hostname for node in self._nodes)
             self._cpus = [node.num_cpus for node in self._nodes]
             self._gpus = [node.num_gpus for node in self._nodes]
 
@@ -471,7 +471,11 @@ class DragonBackend:
                 if run_request.policy.gpu_affinity:
                     affinity = dragon_policy.Policy.Affinity.SPECIFIC
                     gpu_affinity = run_request.policy.gpu_affinity
-
+            logger.debug(
+                f"Affinity strategy: {affinity}, "
+                f"CPU affinity mask: {cpu_affinity}, "
+                f"GPU affinity mask: {gpu_affinity}"
+            )
             if affinity != dragon_policy.Policy.Affinity.DEFAULT:
                 return dragon_policy.Policy(
                     placement=dragon_policy.Policy.Placement.HOST_NAME,
