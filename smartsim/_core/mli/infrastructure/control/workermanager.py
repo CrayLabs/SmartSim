@@ -292,57 +292,70 @@ class WorkerManager(Service):
         )
         self._perf_timer.measure_time("transform_input")
 
-        replies = [InferenceReply() for _ in range(len(batch.requests))]
 
         try:
             execute_result = self._worker.execute(
                 batch, model_result, transformed_input
             )
-            self._perf_timer.measure_time("execute")
+        except Exception as e:
+            for request in batch.requests:
+                exception_handler(
+                    e, request.callback, "Error executing worker."
+                )
+                return
+        self._perf_timer.measure_time("execute")
+
+        try:
             transformed_outputs = self._worker.transform_output(
                 batch, execute_result, self._device
             )
-            self._perf_timer.measure_time("transform_output")
-        except Exception:
-            logger.exception("Error executing worker")
+        except Exception as e:
+            for request in batch.requests:
+                exception_handler(
+                    e, request.callback, "Failed while transforming the output."
+                )
+            return
+        self._perf_timer.measure_time("transform_output")
 
-        else:
-            for reply_idx, (request, transformed_output) in enumerate(
-                zip(batch.requests, transformed_outputs)
-            ):
-                reply = replies[reply_idx]
+        for request, transformed_output in zip(batch.requests, transformed_outputs):
+            reply = InferenceReply()
+            if request.output_keys:
                 try:
-                    if request.output_keys:
-                        reply.output_keys = self._worker.place_output(
-                            request, transformed_output, self._feature_store
-                        )
-                    else:
-                        reply.outputs = transformed_output.outputs
-                    self._perf_timer.measure_time("assign_output")
-                except Exception:
-                    logger.exception("Error executing worker")
+                    reply.output_keys = self._worker.place_output(
+                        request,
+                        transformed_output,
+                        self._feature_store,
+                    )
+                except Exception as e:
+                    exception_handler(
+                        e, request.callback, "Failed while placing the output."
+                    )
+                    continue
+            else:
+                reply.outputs = transformed_output.outputs
+            self._perf_timer.measure_time("assign_output")
 
-                if reply.outputs is None or not reply.outputs:
-                    response = build_failure_reply("fail", "Outputs not found.")
-                else:
-                    reply.status_enum = "complete"
-                    reply.message = "Success"
-                    response = build_reply(reply)
 
+            if reply.outputs is None:
+                response = build_failure_reply("fail", "Outputs not found.")
+            else:
+                reply.status_enum = "complete"
+                reply.message = "Success"
                 response = build_reply(reply)
-                self._perf_timer.measure_time("build_reply")
 
-                serialized_resp = MessageHandler.serialize_response(response)
+            self._perf_timer.measure_time("build_reply")
 
-                self._perf_timer.measure_time("serialize_resp")
+            serialized_resp = MessageHandler.serialize_response(response)
 
-                if request.callback:
-                    request.callback.send(serialized_resp)
-                    if reply.outputs:
-                        # send tensor data after response
-                        for output in reply.outputs:
-                            request.callback.send(output)
-                self._perf_timer.measure_time("send")
+            self._perf_timer.measure_time("serialize_resp")
+
+            if request.callback:
+                request.callback.send(serialized_resp)
+                if reply.outputs:
+                    # send tensor data after response
+                    for output in reply.outputs:
+                        request.callback.send(output)
+            self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()
 
