@@ -79,6 +79,12 @@ class PerfTimer:
             )
             self._interm = time.perf_counter()
 
+    @property
+    def max_length(self) -> int:
+        if len(self._timings) == 0:
+            return 0
+        return max(len(value) for value in self._timings.values())
+
     def print_timings(self, to_file: bool = False) -> None:
         print(" ".join(self._timings.keys()))
         value_array = np.array(list(self._timings.values()), dtype=float)

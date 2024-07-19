@@ -24,21 +24,24 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=import-error
+# pylint: disable-next=unused-import
+import dragon
+import dragon.infrastructure.policy as dragon_policy
+import dragon.infrastructure.process_desc as dragon_process_desc
+import dragon.native.process as dragon_process
+import dragon.native.process_group as dragon_process_group
+
+# pylint: enable=import-error
+
+# isort: off
+# isort: on
+
 import multiprocessing as mp
 import os
 import socket
 import sys
 import typing as t
-
-import dragon
-import dragon.data.ddict.ddict as dragon_ddict
-import dragon.infrastructure.connection as dragon_connection
-import dragon.infrastructure.policy as dragon_policy
-import dragon.infrastructure.process_desc as dragon_process_desc
-import dragon.native.group_state as dragon_group_state
-import dragon.native.machine as dragon_machine
-import dragon.native.process as dragon_process
-import dragon.native.process_group as dragon_process_group
 
 from .....log import get_logger
 from ....entrypoints.service import Service
@@ -263,8 +266,6 @@ class WorkerManager(Service):
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
         the inference pipeline"""
-        logger.debug("executing worker manager pipeline")
-
         batch = self._request_dispatcher.task_queue.get()
         self._perf_timer.start_timings()
         if batch is None or 0 == len(batch.requests):
@@ -292,17 +293,14 @@ class WorkerManager(Service):
         )
         self._perf_timer.measure_time("transform_input")
 
-
         try:
             execute_result = self._worker.execute(
                 batch, model_result, transformed_input
             )
         except Exception as e:
             for request in batch.requests:
-                exception_handler(
-                    e, request.callback, "Error executing worker."
-                )
-                return
+                exception_handler(e, request.callback, "Error executing worker.")
+            return
         self._perf_timer.measure_time("execute")
 
         try:
@@ -335,7 +333,6 @@ class WorkerManager(Service):
                 reply.outputs = transformed_output.outputs
             self._perf_timer.measure_time("assign_output")
 
-
             if reply.outputs is None:
                 response = build_failure_reply("fail", "Outputs not found.")
             else:
@@ -359,7 +356,7 @@ class WorkerManager(Service):
 
         self._perf_timer.end_timings()
 
-        if len(self._perf_timer._timings["w_send"]) == 801:
+        if self._perf_timer.max_length == 801:
             self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:

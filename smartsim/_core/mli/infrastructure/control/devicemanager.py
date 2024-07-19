@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
-from contextlib import contextmanager
 from threading import RLock
 from types import TracebackType
 
@@ -107,7 +106,8 @@ class DeviceManager:
                         return_device = device
                         break
 
-            # If the model is not loaded on a free device, load it on another device (if available)
+            # If the model is not loaded on a free device,
+            # load it on another device (if available)
             if return_device is None:
                 for candidate_device in self._devices:
                     if (

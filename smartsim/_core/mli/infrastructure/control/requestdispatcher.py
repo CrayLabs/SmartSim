@@ -24,12 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-# isort: off
+# pylint: disable=import-error
 # pylint: disable-next=unused-import
 import dragon
 from dragon.mpbridge.queues import DragonQueue
+# pylint: enable=import-error
 
+# isort: off
 # isort: on
 
 import multiprocessing as mp
@@ -157,7 +158,7 @@ class BatchQueue(Queue[InferenceRequest]):
         self._id = str(uuid.uuid4())
 
     @property
-    def id(self) -> str:
+    def queue_id(self) -> str:
         return self._id
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
@@ -327,9 +328,9 @@ class RequestDispatcher:
 
                 self._perf_timer.end_timings()
 
-                # pylint: disable-next=protected-access
-            if len(self._perf_timer._timings["r_dispatch"]) == 801:
-                self._perf_timer.print_timings(True)
+
+                if self._perf_timer.max_length == 801:
+                    self._perf_timer.print_timings(True)
 
     @property
     def task_queue(self) -> DragonQueue:
