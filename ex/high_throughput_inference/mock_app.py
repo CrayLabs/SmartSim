@@ -47,6 +47,9 @@ from collections import OrderedDict
 from smartsim._core.mli.message_handler import MessageHandler
 from smartsim.log import get_logger
 
+torch.set_num_interop_threads(16)
+torch.set_num_threads(1)
+
 logger = get_logger("App")
 
 class ProtoClient:

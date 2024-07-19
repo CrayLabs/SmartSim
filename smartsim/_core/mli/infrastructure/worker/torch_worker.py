@@ -64,7 +64,9 @@ class TorchWorker(MachineLearningWorkerBase):
             raise ValueError("Unable to load model without reference object")
 
         device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        device = device_to_torch[device]
+        for old, new in device_to_torch.items():
+            device = device.replace(old, new)
+
         buffer = io.BytesIO(initial_bytes=model_bytes)
         model = torch.jit.load(buffer, map_location=device)  # type: ignore
         result = LoadModelResult(model)
@@ -72,15 +74,11 @@ class TorchWorker(MachineLearningWorkerBase):
 
     @staticmethod
     def transform_input(
-        batch: InferenceBatch, fetch_results: list[FetchInputResult], device: str
+        batch: InferenceBatch, fetch_results: list[FetchInputResult]
     ) -> TransformInputResult:
         results: list[list[torch.Tensor]] = []
         start = 0
         slices: list[slice] = []
-
-        device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
-        for old, new in device_to_torch.items():
-            device = device.replace(old, new)
 
         for fetch_result in fetch_results:
             partial_result = []
@@ -107,10 +105,10 @@ class TorchWorker(MachineLearningWorkerBase):
                 result.append(
                     torch.concatenate(
                         [partial_result[t_idx] for partial_result in results]
-                    ).to(device)
+                    )
                 )
         else:
-            result = [tensor.to(device) for tensor in results[0]]
+            result = results[0]
 
         return TransformInputResult(result, slices)
         # return data # note: this fails copy test!
@@ -121,13 +119,18 @@ class TorchWorker(MachineLearningWorkerBase):
         batch: InferenceBatch,
         load_result: LoadModelResult,
         transform_result: TransformInputResult,
+        device: str,
     ) -> ExecuteResult:
         if not load_result.model:
             raise SmartSimError("Model must be loaded to execute")
-
+        device_to_torch = {"cpu": "cpu", "gpu": "cuda"}
+        for old, new in device_to_torch.items():
+            device = device.replace(old, new)
         model: torch.nn.Module = load_result.model
         model.eval()
-        results = [model(tensor).detach() for tensor in transform_result.transformed]
+        results = [
+            model(tensor.to(device)).detach() for tensor in transform_result.transformed
+        ]
 
         execute_result = ExecuteResult(results, transform_result.slices)
         return execute_result
@@ -140,18 +143,13 @@ class TorchWorker(MachineLearningWorkerBase):
     ) -> list[TransformOutputResult]:
         transformed_list: list[TransformOutputResult] = []
         for result_slice in execute_result.slices:
-            if result_device != "cpu":
-                transformed = [
-                    item.to("cpu") for item in execute_result.predictions[result_slice]
-                ]
-                # todo: need the shape from latest schemas added here.
-                transformed_list.append(
-                    TransformOutputResult(transformed, None, "c", "float32")
-                )  # fixme
-
+            transformed = [
+                item.to("cpu").numpy().tobytes()
+                for item in execute_result.predictions[result_slice]
+            ]
+            # todo: need the shape from latest schemas added here.
             transformed_list.append(
-                TransformOutputResult(
-                    execute_result.predictions[result_slice], None, "c", "float32"
-                )
+                TransformOutputResult(transformed, None, "c", "float32")
             )  # fixme
+
         return transformed_list

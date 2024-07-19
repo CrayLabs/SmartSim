@@ -232,41 +232,12 @@ class WorkerManager(Service):
     def _on_shutdown(self) -> None:
         self._dispatcher_process.join()
 
-    def _validate_request(self, request: InferenceRequest) -> bool:
-        """Ensure the request can be processed.
-        :param request: The request to validate
-        :return: True if the request is valid, False otherwise"""
-        if not self._feature_store:
-            if request.model_key:
-                logger.error("Unable to load model by key without feature store")
-                return False
-
-            if request.input_keys:
-                logger.error("Unable to load inputs by key without feature store")
-                return False
-
-            if request.output_keys:
-                logger.error("Unable to persist outputs by key without feature store")
-                return False
-
-        if not request.model_key and not request.raw_model:
-            logger.error("Unable to continue without model bytes or feature store key")
-            return False
-
-        if not request.input_keys and not request.raw_inputs:
-            logger.error("Unable to continue without input bytes or feature store keys")
-            return False
-
-        if request.callback is None:
-            logger.error("No callback channel provided in request")
-            return False
-
-        return True
-
     def _on_iteration(self) -> None:
         """Executes calls to the machine learning worker implementation to complete
         the inference pipeline"""
-        batch = self._request_dispatcher.task_queue.get()
+
+        batch: InferenceRequest = self._request_dispatcher.task_queue.get()
+
         self._perf_timer.start_timings()
         if batch is None or 0 == len(batch.requests):
             return
@@ -285,17 +256,11 @@ class WorkerManager(Service):
         model_result = LoadModelResult(device.get_model(batch.model_key))
         self._perf_timer.measure_time("load_model")
 
-        fetch_input_results = self._worker.fetch_inputs(batch, self._feature_store)
-        self._perf_timer.measure_time("fetch_input")
-
-        transformed_input = self._worker.transform_input(
-            batch, fetch_input_results, self._device
-        )
-        self._perf_timer.measure_time("transform_input")
+        transformed_input = batch.inputs
 
         try:
             execute_result = self._worker.execute(
-                batch, model_result, transformed_input
+                batch, model_result, transformed_input, device.name
             )
         except Exception as e:
             for request in batch.requests:
@@ -305,7 +270,7 @@ class WorkerManager(Service):
 
         try:
             transformed_outputs = self._worker.transform_output(
-                batch, execute_result, self._device
+                batch, execute_result, device.name
             )
         except Exception as e:
             for request in batch.requests:

@@ -30,15 +30,22 @@ from collections import OrderedDict
 
 import numpy as np
 
+from ...log import get_logger
+
+logger = get_logger("PerfTimer")
+
 
 class PerfTimer:
-    def __init__(self, filename: str = "timings", prefix: str = ""):
+    def __init__(
+        self, filename: str = "timings", prefix: str = "", debug: bool = False
+    ):
         self._start: t.Optional[float] = None
         self._interm: t.Optional[float] = None
         self._timings: OrderedDict[str, list[t.Union[float, int, str]]] = OrderedDict()
         self._timing_on = True
         self._filename = filename
         self._prefix = prefix
+        self._debug = debug
 
     def _add_label_to_timings(self, label: str) -> None:
         if label not in self._timings:
@@ -55,29 +62,39 @@ class PerfTimer:
     ) -> None:
         if self._timing_on:
             if first_label is not None and first_value is not None:
+                self._log(f"{first_label}: {first_value}")
                 self._add_label_to_timings(self._make_label(first_label))
-                self._timings[self._make_label(first_label)].append(first_value)
+                self._timings[self._make_label(first_label)].append(
+                    self._format_number(first_value)
+                )
             self._start = time.perf_counter()
             self._interm = time.perf_counter()
 
     def end_timings(self) -> None:
         if self._timing_on and self._start is not None:
             self._add_label_to_timings(self._make_label("total_time"))
-            self._timings[self._make_label("total_time")].append(
-                self._format_number(time.perf_counter() - self._start)
-            )
+            delta = self._format_number(time.perf_counter() - self._start)
+            self._timings[self._make_label("total_time")].append(delta)
+            self._log(f"total_time: {delta}")
             self._interm = None
 
     def _make_label(self, label: str) -> str:
         return self._prefix + label
 
+    def _get_delta(self) -> float | int:
+        return time.perf_counter() - self._interm
+
     def measure_time(self, label: str) -> None:
         if self._timing_on and self._interm is not None:
             self._add_label_to_timings(self._make_label(label))
-            self._timings[self._make_label(label)].append(
-                self._format_number(time.perf_counter() - self._interm)
-            )
+            delta = self._format_number(self._get_delta())
+            self._timings[self._make_label(label)].append(delta)
+            self._log(f"{label}: {delta}")
             self._interm = time.perf_counter()
+
+    def _log(self, msg: str) -> None:
+        if self._debug:
+            logger.info(msg)
 
     @property
     def max_length(self) -> int:
@@ -89,7 +106,8 @@ class PerfTimer:
         print(" ".join(self._timings.keys()))
         value_array = np.array(list(self._timings.values()), dtype=float)
         value_array = np.transpose(value_array)
-        for i in range(value_array.shape[0]):
-            print(" ".join(self._format_number(value) for value in value_array[i]))
+        if self._debug:
+            for i in range(value_array.shape[0]):
+                print(" ".join(self._format_number(value) for value in value_array[i]))
         if to_file:
             np.save(self._prefix + self._filename + ".npy", value_array)

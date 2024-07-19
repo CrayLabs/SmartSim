@@ -28,6 +28,7 @@
 # pylint: disable-next=unused-import
 import dragon
 from dragon.mpbridge.queues import DragonQueue
+
 # pylint: enable=import-error
 
 # isort: off
@@ -49,10 +50,15 @@ from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.storage.featurestore import FeatureStore
+from ...infrastructure.worker.torch_worker import TorchWorker
 from ...infrastructure.worker.worker import InferenceBatch, InferenceRequest
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
+from ...mli_schemas.response.response_capnp import ResponseBuilder
 from ...mli_schemas.tensor.tensor_capnp import TensorDescriptor
+
+if t.TYPE_CHECKING:
+    from smartsim._core.mli.mli_schemas.response.response_capnp import Status
 
 logger = get_logger("Request Dispatcher")
 
@@ -86,7 +92,6 @@ def deserialize_message(
 
     # todo: shouldn't this be `CommChannel.find` instead of `DragonCommChannel`
     comm_channel = channel_type(callback_key)
-    # comm_channel = DragonCommChannel(request.replyChannel)
 
     input_keys: t.Optional[t.List[str]] = None
     input_bytes: t.Optional[t.List[bytes]] = None
@@ -114,6 +119,37 @@ def deserialize_message(
         batch_size=0,
     )
     return inference_request
+
+
+def build_failure_reply(status: "Status", message: str) -> ResponseBuilder:
+    return MessageHandler.build_response(
+        status=status,
+        message=message,
+        result=[],
+        custom_attributes=None,
+    )
+
+
+def exception_handler(
+    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
+) -> None:
+    """
+    Logs exceptions and sends a failure response.
+
+    :param exc: The exception to be logged
+    :param reply_channel: The channel used to send replies
+    :param failure_message: Failure message to log and send back
+    """
+    logger.exception(
+        f"{failure_message}\n"
+        f"Exception type: {type(exc).__name__}\n"
+        f"Exception message: {str(exc)}"
+    )
+    serialized_resp = MessageHandler.serialize_response(
+        build_failure_reply("fail", failure_message)
+    )
+    if reply_channel:
+        reply_channel.send(serialized_resp)
 
 
 class WorkerDevice:
@@ -263,7 +299,8 @@ class RequestDispatcher:
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
         self._feature_store = feature_store
         self._comm_channel_type = comm_channel_type
-        self._perf_timer = PerfTimer(prefix="r_")
+        self._perf_timer = PerfTimer(prefix="r_", debug=False)
+        self._worker = TorchWorker()
 
     def _validate_request(self, request: InferenceRequest) -> bool:
         """Ensure the request can be processed.
@@ -303,21 +340,26 @@ class RequestDispatcher:
         while True:
             try:
                 bytes_list: t.List[bytes] = self._incoming_channel.recv()
-
             except Exception:
                 pass
             else:
+                if not bytes_list:
+                    exception_handler(
+                        ValueError("No request data found"),
+                        None,
+                        "No request data found.",
+                    )
+
                 request_bytes = bytes_list[0]
                 tensor_bytes_list = bytes_list[1:]
+                self._perf_timer.start_timings()
 
                 request = deserialize_message(request_bytes, self._comm_channel_type)
                 if request.input_meta and tensor_bytes_list:
                     request.raw_inputs = tensor_bytes_list
-                self._perf_timer.start_timings()
-                request = deserialize_message(request_bytes, self._comm_channel_type)
                 self._perf_timer.measure_time("deserialize_message")
                 if not self._validate_request(request):
-                    return
+                    continue
                 self._perf_timer.measure_time("validate_request")
                 self.dispatch(request)
                 self._perf_timer.measure_time("dispatch")
@@ -327,7 +369,6 @@ class RequestDispatcher:
                 # self.remove_queues()
 
                 self._perf_timer.end_timings()
-
 
                 if self._perf_timer.max_length == 801:
                     self._perf_timer.print_timings(True)
@@ -384,15 +425,25 @@ class RequestDispatcher:
     def flush_requests(self) -> None:
         for queue in self._queues:
             if queue.ready and queue.acquire(blocking=False):
+                self._perf_timer.measure_time("find_queue")
                 try:
-
-                    self._perf_timer.measure_time("find_queue")
-                    self._outgoing_queue.put(
-                        InferenceBatch(
-                            model_key=queue.model_key, requests=queue.flush()
-                        )
+                    batch = InferenceBatch(
+                        model_key=queue.model_key, requests=queue.flush(), inputs=None
                     )
-                    self._perf_timer.measure_time("flush_requests")
                 finally:
+                    self._perf_timer.measure_time("flush_requests")
                     queue.release()
-                break
+                fetch_results = self._worker.fetch_inputs(
+                    batch=batch, feature_store=self._feature_store
+                )
+                self._perf_timer.measure_time("fetch_input")
+                transformed_inputs = self._worker.transform_input(
+                    batch=batch, fetch_results=fetch_results
+                )
+                self._perf_timer.measure_time("transform_input")
+                batch.inputs = transformed_inputs
+                for request in batch.requests:
+                    request.raw_inputs = []
+                    request.input_meta = []
+                self._outgoing_queue.put(batch)
+                self._perf_timer.measure_time("put")

@@ -67,12 +67,6 @@ class InferenceRequest:
         self.batch_size = batch_size
 
 
-@dataclass
-class InferenceBatch:
-    model_key: str
-    requests: list[InferenceRequest]
-
-
 class InferenceReply:
     """Internal representation of the reply to a client request for inference"""
 
@@ -152,6 +146,13 @@ class FetchModelResult:
     def __init__(self, result: bytes) -> None:
         """Initialize the object"""
         self.model_bytes: bytes = result
+
+
+@dataclass
+class InferenceBatch:
+    model_key: str
+    requests: t.Optional[list[InferenceRequest]]
+    inputs: t.Optional[list[TransformInputResult]]
 
 
 class MachineLearningWorkerCore:
@@ -274,12 +275,11 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_input(
-        batch: InferenceBatch, fetch_results: list[FetchInputResult], device: str
+        batch: InferenceBatch, fetch_results: list[FetchInputResult]
     ) -> TransformInputResult:
         """Given a collection of data, perform a transformation on the data
         :param request: The request that triggered the pipeline
         :param fetch_result: Raw outputs from fetching inputs out of a feature store
-        :param device: The device on which the transformed input must be placed
         :return: The transformed inputs wrapped in a InputTransformResult"""
 
     @staticmethod
@@ -288,6 +288,7 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
         batch: InferenceBatch,
         load_result: LoadModelResult,
         transform_result: TransformInputResult,
+        device: str,
     ) -> ExecuteResult:
         """Execute an ML model on inputs transformed for use by the model
         :param request: The request that triggered the pipeline
