@@ -7,6 +7,9 @@ from smartsim.settings.builders.launch.mpi import (
     MpiArgBuilder,
     MpiexecArgBuilder,
     OrteArgBuilder,
+    _format_mpiexec_command,
+    _format_mpirun_command,
+    _format_orterun_command,
 )
 from smartsim.settings.launchCommand import LauncherType
 
@@ -210,11 +213,15 @@ def test_invalid_hostlist_format(launcher):
 
 
 @pytest.mark.parametrize(
-    "cls, cmd",
+    "cls, fmt, cmd",
     (
-        pytest.param(MpiArgBuilder, "mpirun", id="w/ mpirun"),
-        pytest.param(MpiexecArgBuilder, "mpiexec", id="w/ mpiexec"),
-        pytest.param(OrteArgBuilder, "orterun", id="w/ orterun"),
+        pytest.param(MpiArgBuilder, _format_mpirun_command, "mpirun", id="w/ mpirun"),
+        pytest.param(
+            MpiexecArgBuilder, _format_mpiexec_command, "mpiexec", id="w/ mpiexec"
+        ),
+        pytest.param(
+            OrteArgBuilder, _format_orterun_command, "orterun", id="w/ orterun"
+        ),
     ),
 )
 @pytest.mark.parametrize(
@@ -248,6 +255,6 @@ def test_invalid_hostlist_format(launcher):
         ),
     ),
 )
-def test_formatting_launch_args(echo_executable_like, cls, cmd, args, expected):
-    fmt = cls(args).finalize(echo_executable_like, {})
-    assert tuple(fmt) == (cmd,) + expected
+def test_formatting_launch_args(echo_executable_like, cls, fmt, cmd, args, expected):
+    fmt_cmd = fmt(cls(args), echo_executable_like, {})
+    assert tuple(fmt_cmd) == (cmd,) + expected

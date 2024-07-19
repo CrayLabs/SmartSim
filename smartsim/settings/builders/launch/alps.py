@@ -36,9 +36,10 @@ from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
+_format_aprun_command = shell_format(run_command="aprun")
 
 
-@dispatch(with_format=shell_format(run_command="aprun"), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_aprun_command, to_launcher=ShellLauncher)
 class AprunArgBuilder(LaunchArgBuilder):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""

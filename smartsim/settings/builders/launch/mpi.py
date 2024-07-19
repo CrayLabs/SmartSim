@@ -36,6 +36,9 @@ from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
+_format_mpirun_command = shell_format("mpirun")
+_format_mpiexec_command = shell_format("mpiexec")
+_format_orterun_command = shell_format("orterun")
 
 
 class _BaseMPIArgBuilder(LaunchArgBuilder):
@@ -215,21 +218,21 @@ class _BaseMPIArgBuilder(LaunchArgBuilder):
         self._launch_args[key] = value
 
 
-@dispatch(with_format=shell_format(run_command="mpirun"), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_mpirun_command, to_launcher=ShellLauncher)
 class MpiArgBuilder(_BaseMPIArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpirun.value
 
 
-@dispatch(with_format=shell_format(run_command="mpiexec"), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_mpiexec_command, to_launcher=ShellLauncher)
 class MpiexecArgBuilder(_BaseMPIArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""
         return LauncherType.Mpiexec.value
 
 
-@dispatch(with_format=shell_format(run_command="orterun"), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_orterun_command, to_launcher=ShellLauncher)
 class OrteArgBuilder(_BaseMPIArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""

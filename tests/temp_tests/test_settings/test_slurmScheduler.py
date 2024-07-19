@@ -105,6 +105,5 @@ def test_sbatch_manual():
     slurmScheduler.scheduler_args.set_account("A3531")
     slurmScheduler.scheduler_args.set_walltime("10:00:00")
     formatted = slurmScheduler.format_batch_args()
-    print(f"here: {formatted}")
     result = ["--nodes=5", "--account=A3531", "--time=10:00:00"]
     assert formatted == result

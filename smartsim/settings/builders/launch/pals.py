@@ -36,9 +36,10 @@ from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
+_format_mpiexec_command = shell_format(run_command="mpiexec")
 
 
-@dispatch(with_format=shell_format(run_command="mpiexec"), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_mpiexec_command, to_launcher=ShellLauncher)
 class PalsMpiexecArgBuilder(LaunchArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""

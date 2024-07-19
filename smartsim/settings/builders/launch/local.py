@@ -36,9 +36,10 @@ from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
+_format_local_command = shell_format(run_command=None)
 
 
-@dispatch(with_format=shell_format(run_command=None), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_local_command, to_launcher=ShellLauncher)
 class LocalArgBuilder(LaunchArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""

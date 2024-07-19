@@ -38,9 +38,10 @@ from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
+_format_srun_command = shell_format(run_command="srun")
 
 
-@dispatch(with_format=shell_format(run_command="srun"), to_launcher=ShellLauncher)
+@dispatch(with_format=_format_srun_command, to_launcher=ShellLauncher)
 class SlurmArgBuilder(LaunchArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""

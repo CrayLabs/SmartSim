@@ -1,5 +1,6 @@
 import pytest
 
+from smartsim._core.launcher.dragon.dragonLauncher import _as_run_request_view
 from smartsim._core.schemas.dragonRequests import DragonRunRequest
 from smartsim.settings import LaunchSettings
 from smartsim.settings.builders.launch.dragon import DragonArgBuilder
@@ -38,12 +39,12 @@ NOT_SET = object()
 def test_formatting_launch_args_into_request(
     echo_executable_like, nodes, tasks_per_node
 ):
-    builder = DragonArgBuilder({})
+    args = DragonArgBuilder({})
     if nodes is not NOT_SET:
-        builder.set_nodes(nodes)
+        args.set_nodes(nodes)
     if tasks_per_node is not NOT_SET:
-        builder.set_tasks_per_node(tasks_per_node)
-    req = builder.finalize(echo_executable_like, {})
+        args.set_tasks_per_node(tasks_per_node)
+    req = _as_run_request_view(args, echo_executable_like, {})
 
     args = dict(
         (k, v)

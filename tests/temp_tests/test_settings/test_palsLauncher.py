@@ -1,7 +1,10 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.pals import PalsMpiexecArgBuilder
+from smartsim.settings.builders.launch.pals import (
+    PalsMpiexecArgBuilder,
+    _format_mpiexec_command,
+)
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -103,5 +106,5 @@ def test_invalid_hostlist_format():
     ),
 )
 def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = PalsMpiexecArgBuilder(args).finalize(echo_executable_like, {})
+    cmd = _format_mpiexec_command(PalsMpiexecArgBuilder(args), echo_executable_like, {})
     assert tuple(cmd) == expected

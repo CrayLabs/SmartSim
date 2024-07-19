@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from unittest.mock import Mock
-
 import pytest
 
 from smartsim.settings import dispatch
@@ -34,7 +32,7 @@ from smartsim.settings.builders import launchArgBuilder as launch
 
 @pytest.fixture
 def echo_executable_like():
-    class _ExeLike(launch.ExecutableLike):
+    class _ExeLike(dispatch.ExecutableLike):
         def as_program_arguments(self):
             return ("echo", "hello", "world")
 
@@ -44,12 +42,9 @@ def echo_executable_like():
 @pytest.fixture
 def settings_builder():
     class _SettingsBuilder(launch.LaunchArgBuilder):
+        def set(self, arg, val): ...
         def launcher_str(self):
             return "Mock Settings Builder"
-
-        def set(self, arg, val): ...
-        def finalize(self, exe, env):
-            return Mock()
 
     yield _SettingsBuilder({})
 
