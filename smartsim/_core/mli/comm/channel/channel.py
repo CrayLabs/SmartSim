@@ -42,7 +42,6 @@ class CommChannelBase(ABC):
     @abstractmethod
     def send(self, value: bytes) -> None:
         """Send a message through the underlying communication channel
-        """Send a message through the underlying communication channel
         :param value: The value to send"""
 
     @abstractmethod

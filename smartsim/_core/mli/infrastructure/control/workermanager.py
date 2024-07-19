@@ -24,24 +24,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import multiprocessing as mp
+import os
+import socket
+import sys
+import typing as t
+
 import dragon
 import dragon.data.ddict.ddict as dragon_ddict
 import dragon.infrastructure.connection as dragon_connection
 import dragon.infrastructure.policy as dragon_policy
 import dragon.infrastructure.process_desc as dragon_process_desc
 import dragon.native.group_state as dragon_group_state
+import dragon.native.machine as dragon_machine
 import dragon.native.process as dragon_process
 import dragon.native.process_group as dragon_process_group
-import dragon.native.machine as dragon_machine
 
-import multiprocessing as mp
-import os
-import socket
-import typing as t
-
-from ....utils.timings import PerfTimer
 from .....log import get_logger
 from ....entrypoints.service import Service
+from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
@@ -53,7 +54,7 @@ from ...infrastructure.worker.worker import (
     MachineLearningWorkerBase,
 )
 from ...message_handler import MessageHandler
-from ...mli_schemas.response.response_capnp import Response, ResponseBuilder
+from ...mli_schemas.response.response_capnp import ResponseBuilder
 from .devicemanager import DeviceManager, WorkerDevice
 from .requestdispatcher import RequestDispatcher
 
@@ -187,16 +188,18 @@ class WorkerManager(Service):
         # )
         self._dispatcher_process = self._create_local_dispatcher_process()
 
-    def _create_local_dispatcher_process(self):
-        self_affinity = list(os.sched_getaffinity(os.getpid()))
-        os.sched_setaffinity(os.getpid(), self_affinity[:-8])
+    def _create_local_dispatcher_process(self) -> dragon_process_group.ProcessGroup:
+        if sys.platform != "darwin":
+            self_affinity: list[int] = list(os.sched_getaffinity(os.getpid()))
+            os.sched_setaffinity(os.getpid(), self_affinity[:-8])
+        else:
+            self_affinity: list[int] = []
         global_policy = dragon_policy.Policy(
             placement=dragon_policy.Policy.Placement.HOST_NAME,
             host_name=socket.gethostname(),
-            affinity = dragon_policy.Policy.Affinity.SPECIFIC,
+            affinity=dragon_policy.Policy.Affinity.SPECIFIC,
             cpu_affinity=self_affinity[-8:],
             device=dragon_policy.Policy.Device.CPU,
-            distribution = dragon_policy.Policy.Distribution.BLOCK,
         )
         options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
         grp = dragon_process_group.ProcessGroup(
@@ -205,7 +208,7 @@ class WorkerManager(Service):
         local_policy = dragon_policy.Policy(
             placement=dragon_policy.Policy.Placement.HOST_NAME,
             host_name=socket.gethostname(),
-            affinity = dragon_policy.Policy.Affinity.SPECIFIC,
+            affinity=dragon_policy.Policy.Affinity.SPECIFIC,
             cpu_affinity=self_affinity[-8:],
             device=dragon_policy.Policy.Device.CPU,
         )
@@ -278,8 +281,6 @@ class WorkerManager(Service):
         )
         self._perf_timer.measure_time("fetch_model")
 
-        # logger.info(f"Acquired device {device.name}")
-
         model_result = LoadModelResult(device.get_model(batch.model_key))
         self._perf_timer.measure_time("load_model")
 
@@ -304,8 +305,7 @@ class WorkerManager(Service):
             self._perf_timer.measure_time("transform_output")
         except Exception:
             logger.exception("Error executing worker")
-            for reply in replies:
-                reply.failed = True
+
         else:
             for reply_idx, (request, transformed_output) in enumerate(
                 zip(batch.requests, transformed_outputs)
@@ -321,33 +321,27 @@ class WorkerManager(Service):
                     self._perf_timer.measure_time("assign_output")
                 except Exception:
                     logger.exception("Error executing worker")
-                    reply.failed = True
 
-        if reply.outputs is None or not reply.outputs:
-            response = build_failure_reply("fail", "Outputs not found.")
-        else:
-            reply.status_enum = "complete"
-            reply.message = "Success"
-            response = build_reply(reply)
-                if reply.failed:
-                    response = build_failure_reply("fail", "failure-occurred")
+                if reply.outputs is None or not reply.outputs:
+                    response = build_failure_reply("fail", "Outputs not found.")
                 else:
-                    if reply.outputs is None or not reply.outputs:
-                        response = build_failure_reply("fail", "no-results")
+                    reply.status_enum = "complete"
+                    reply.message = "Success"
+                    response = build_reply(reply)
 
                 response = build_reply(reply)
                 self._perf_timer.measure_time("build_reply")
 
-                serialized_resp = MessageHandler.serialize_response(response)  # type: ignore
+                serialized_resp = MessageHandler.serialize_response(response)
 
                 self._perf_timer.measure_time("serialize_resp")
 
                 if request.callback:
                     request.callback.send(serialized_resp)
-            if reply.outputs:
-                # send tensor data after response
-                for output in reply.outputs:
-                    request.callback.send(output)
+                    if reply.outputs:
+                        # send tensor data after response
+                        for output in reply.outputs:
+                            request.callback.send(output)
                 self._perf_timer.measure_time("send")
 
         self._perf_timer.end_timings()

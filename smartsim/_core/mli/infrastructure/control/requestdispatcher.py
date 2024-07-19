@@ -29,6 +29,7 @@
 # pylint: disable-next=unused-import
 import dragon
 from dragon.mpbridge.queues import DragonQueue
+
 # isort: on
 
 import multiprocessing as mp
@@ -50,6 +51,7 @@ from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import InferenceBatch, InferenceRequest
 from ...message_handler import MessageHandler
 from ...mli_schemas.model.model_capnp import Model
+from ...mli_schemas.tensor.tensor_capnp import TensorDescriptor
 
 logger = get_logger("Request Dispatcher")
 
@@ -57,7 +59,6 @@ logger = get_logger("Request Dispatcher")
 def deserialize_message(
     data_blob: bytes,
     channel_type: t.Type[CommChannelBase],
-    device: t.Literal["cpu", "gpu"],
 ) -> InferenceRequest:
     """Deserialize a message from a byte stream into an InferenceRequest
     :param data_blob: The byte stream to deserialize"""
@@ -239,26 +240,7 @@ class BatchQueue(Queue[InferenceRequest]):
     def empty(self) -> bool:
         return self.qsize() == 0
 
-def exception_handler(
-    exc: Exception, reply_channel: t.Optional[CommChannelBase], failure_message: str
-) -> None:
-    """
-    Logs exceptions and sends a failure response.
 
-    :param exc: The exception to be logged
-    :param reply_channel: The channel used to send replies
-    :param failure_message: Failure message to log and send back
-    """
-    logger.exception(
-        f"{failure_message}\n"
-        f"Exception type: {type(exc).__name__}\n"
-        f"Exception message: {str(exc)}"
-    )
-    serialized_resp = MessageHandler.serialize_response(
-        build_failure_reply("fail", failure_message)
-    )
-    if reply_channel:
-        reply_channel.send(serialized_resp)
 class RequestDispatcher:
     def __init__(
         self,
@@ -321,24 +303,13 @@ class RequestDispatcher:
             try:
                 bytes_list: t.List[bytes] = self._incoming_channel.recv()
 
-                if not bytes_list:
-                    exception_handler(
-                        ValueError("No request data found"),
-                        None,
-                        "No request data found.",
-                    )
-                    return
-
-
             except Exception:
                 pass
             else:
                 request_bytes = bytes_list[0]
                 tensor_bytes_list = bytes_list[1:]
 
-                request = deserialize_message(
-                    request_bytes, self._comm_channel_type, self._device
-                )
+                request = deserialize_message(request_bytes, self._comm_channel_type)
                 if request.input_meta and tensor_bytes_list:
                     request.raw_inputs = tensor_bytes_list
                 self._perf_timer.start_timings()

@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-import sys
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
