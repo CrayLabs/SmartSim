@@ -299,7 +299,7 @@ class RequestDispatcher:
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
         self._feature_store = feature_store
         self._comm_channel_type = comm_channel_type
-        self._perf_timer = PerfTimer(prefix="r_", debug=False)
+        self._perf_timer = PerfTimer(prefix="r_", debug=True)
         self._worker = TorchWorker()
 
     def _validate_request(self, request: InferenceRequest) -> bool:
@@ -370,8 +370,8 @@ class RequestDispatcher:
 
                 self._perf_timer.end_timings()
 
-                if self._perf_timer.max_length == 801:
-                    self._perf_timer.print_timings(True)
+                if self._perf_timer.max_length == 4*801:
+                    self._perf_timer.print_timings(False)
 
     @property
     def task_queue(self) -> DragonQueue:

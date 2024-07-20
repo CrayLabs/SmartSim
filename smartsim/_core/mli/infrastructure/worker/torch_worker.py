@@ -27,6 +27,7 @@
 import io
 
 import numpy as np
+import pickle
 import torch
 
 from .....error import SmartSimError
@@ -44,7 +45,7 @@ from .worker import (
 )
 
 torch.set_num_threads(1)
-torch.set_num_interop_threads(16)
+torch.set_num_interop_threads(2)
 logger = get_logger(__name__)
 
 
@@ -139,13 +140,13 @@ class TorchWorker(MachineLearningWorkerBase):
     def transform_output(
         batch: InferenceBatch,
         execute_result: ExecuteResult,
-        result_device: str,
     ) -> list[TransformOutputResult]:
         transformed_list: list[TransformOutputResult] = []
         for result_slice in execute_result.slices:
+            print(result_slice, flush=True)
             transformed = [
-                item.to("cpu").numpy().tobytes()
-                for item in execute_result.predictions[result_slice]
+                item[result_slice].to("cpu").numpy().tobytes()
+                for item in execute_result.predictions
             ]
             # todo: need the shape from latest schemas added here.
             transformed_list.append(

@@ -180,7 +180,7 @@ class WorkerManager(Service):
         """Dispatcher used to batch requests"""
         self._device_manager: DeviceManager = DeviceManager([WorkerDevice("gpu")])
 
-        self._perf_timer = PerfTimer(prefix="w_")
+        self._perf_timer = PerfTimer(prefix="w_", debug=False)
 
         try:
             mp.set_start_method("dragon")
@@ -192,17 +192,17 @@ class WorkerManager(Service):
         self._dispatcher_process = self._create_local_dispatcher_process()
 
     def _create_local_dispatcher_process(self) -> dragon_process_group.ProcessGroup:
+        dispatcher_cpus = 2
         if sys.platform != "darwin":
             self_affinity: list[int] = list(os.sched_getaffinity(os.getpid()))
-            os.sched_setaffinity(os.getpid(), self_affinity[:-8])
+            os.sched_setaffinity(os.getpid(), self_affinity[:-dispatcher_cpus])
         else:
             self_affinity: list[int] = []
         global_policy = dragon_policy.Policy(
             placement=dragon_policy.Policy.Placement.HOST_NAME,
             host_name=socket.gethostname(),
             affinity=dragon_policy.Policy.Affinity.SPECIFIC,
-            cpu_affinity=self_affinity[-8:],
-            device=dragon_policy.Policy.Device.CPU,
+            cpu_affinity=self_affinity[-dispatcher_cpus:],
         )
         options = dragon_process_desc.ProcessOptions(make_inf_channels=True)
         grp = dragon_process_group.ProcessGroup(
@@ -212,8 +212,7 @@ class WorkerManager(Service):
             placement=dragon_policy.Policy.Placement.HOST_NAME,
             host_name=socket.gethostname(),
             affinity=dragon_policy.Policy.Affinity.SPECIFIC,
-            cpu_affinity=self_affinity[-8:],
-            device=dragon_policy.Policy.Device.CPU,
+            cpu_affinity=self_affinity[-dispatcher_cpus:],
         )
         tmp_proc = dragon_process.ProcessTemplate(
             target=self._request_dispatcher.run,
@@ -243,7 +242,6 @@ class WorkerManager(Service):
             return
 
         self._perf_timer.measure_time("flush_requests")
-        # logger.info(f"Got batch of {len(batch.requests)} requests, acquiring device")
         device: WorkerDevice = next(
             self._device_manager.get_free_device(
                 worker=self._worker,
@@ -270,7 +268,7 @@ class WorkerManager(Service):
 
         try:
             transformed_outputs = self._worker.transform_output(
-                batch, execute_result, device.name
+                batch, execute_result
             )
         except Exception as e:
             for request in batch.requests:
@@ -281,6 +279,7 @@ class WorkerManager(Service):
         self._perf_timer.measure_time("transform_output")
 
         for request, transformed_output in zip(batch.requests, transformed_outputs):
+            print(len(transformed_output.outputs), flush=True)
             reply = InferenceReply()
             if request.output_keys:
                 try:
@@ -321,7 +320,7 @@ class WorkerManager(Service):
 
         self._perf_timer.end_timings()
 
-        if self._perf_timer.max_length == 801:
+        if self._perf_timer.max_length == 4*801:
             self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:

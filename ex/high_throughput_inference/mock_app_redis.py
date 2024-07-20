@@ -29,6 +29,7 @@ import io
 import numpy
 import time
 import torch
+from mpi4py import MPI
 from smartsim.log import get_logger
 from smartredis import Client
 
@@ -56,6 +57,9 @@ class ResNetWrapper():
 
 if __name__ == "__main__":
 
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
     parser = argparse.ArgumentParser("Mock application")
     parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
@@ -73,9 +77,11 @@ if __name__ == "__main__":
             timing = [batch_size]
             logger.info(f"Iteration: {iteration_number}")
             start = time.perf_counter()
-            client.put_tensor(name="batch", data=resnet.get_batch(batch_size).numpy())
-            client.run_model(name=resnet.name, inputs=["batch"], outputs=["result"])
-            result = client.get_tensor(name="result")
+            input_name = f"batch_{rank}"
+            output_name = f"result_{rank}"
+            client.put_tensor(name=input_name, data=resnet.get_batch(batch_size).numpy())
+            client.run_model(name=resnet.name, inputs=[input_name], outputs=[output_name])
+            result = client.get_tensor(name=output_name)
             end = time.perf_counter()
             timing.append(end-start)
             timings.append(timing)
@@ -83,6 +89,6 @@ if __name__ == "__main__":
 
 
     timings_np = numpy.asarray(timings)
-    numpy.save("timings.npy", timings_np)
+    numpy.save(f"timings_{rank}.npy", timings_np)
     for timing in timings:
         print(" ".join(str(t) for t in timing))

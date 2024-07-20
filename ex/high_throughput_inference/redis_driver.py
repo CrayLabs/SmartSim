@@ -29,23 +29,24 @@ import sys
 from smartsim import Experiment
 from smartsim.status import TERMINAL_STATUSES
 import time
-import typing as t
 
-device = "gpu"
+DEVICE = "gpu"
 filedir = os.path.dirname(__file__)
 app_script_name = os.path.join(filedir, "mock_app_redis.py")
-model_name = os.path.join(filedir, f"resnet50.{device.upper()}.pt")
+model_name = os.path.join(filedir, f"resnet50.{DEVICE.upper()}.pt")
 
 
-exp_path = os.path.join(filedir, "redis_ai")
+exp_path = os.path.join(filedir, "redis_ai_multi")
 os.makedirs(exp_path, exist_ok=True)
-exp = Experiment("redis_ai", launcher="slurm", exp_path=exp_path)
+exp = Experiment("redis_ai_multi", launcher="slurm", exp_path=exp_path)
 
 db = exp.create_database(interface="hsn0")
 
-app_rs = exp.create_run_settings(sys.executable, exe_args = [app_script_name, "--device", device])
+app_rs = exp.create_run_settings(
+    sys.executable, exe_args = [app_script_name, "--device", DEVICE]
+    )
 app_rs.set_nodes(1)
-app_rs.set_tasks(1)
+app_rs.set_tasks(4)
 app = exp.create_model("app", run_settings=app_rs)
 app.attach_generator_files(to_copy=[app_script_name], to_symlink=[model_name])
 

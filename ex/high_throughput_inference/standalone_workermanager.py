@@ -100,5 +100,7 @@ if __name__ == "__main__":
         cooldown=10,
         comm_channel_type=DragonCommChannel,
         device = args.device,
+        batch_size=4,
+        batch_timeout=0.1,
     )
     worker_manager.execute()

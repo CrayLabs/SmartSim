@@ -299,11 +299,10 @@ class MachineLearningWorkerBase(MachineLearningWorkerCore, ABC):
     @staticmethod
     @abstractmethod
     def transform_output(
-        batch: InferenceBatch, execute_result: ExecuteResult, result_device: str
+        batch: InferenceBatch, execute_result: ExecuteResult
     ) -> t.List[TransformOutputResult]:
         """Given inference results, perform transformations required to
         transmit results to the requestor.
         :param request: The request that triggered the pipeline
         :param execute_result: The result of inference wrapped in an ExecuteResult
-        :param result_device: The device on which the result of inference is placed
         :return:"""

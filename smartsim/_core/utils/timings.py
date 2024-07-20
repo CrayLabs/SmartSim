@@ -37,7 +37,7 @@ logger = get_logger("PerfTimer")
 
 class PerfTimer:
     def __init__(
-        self, filename: str = "timings", prefix: str = "", debug: bool = False
+        self, filename: str = "timings", prefix: str = "", timing_on: bool = True, debug: bool = False
     ):
         self._start: t.Optional[float] = None
         self._interm: t.Optional[float] = None
@@ -62,34 +62,40 @@ class PerfTimer:
     ) -> None:
         if self._timing_on:
             if first_label is not None and first_value is not None:
-                self._log(f"{first_label}: {first_value}")
-                self._add_label_to_timings(self._make_label(first_label))
-                self._timings[self._make_label(first_label)].append(
-                    self._format_number(first_value)
+                mod_label = self._make_label(first_label)
+                value = self._format_number(first_value)
+                self._log(f"Started timing: {first_label}: {value}")
+                self._add_label_to_timings(mod_label)
+                self._timings[mod_label].append(
+                    value
                 )
             self._start = time.perf_counter()
             self._interm = time.perf_counter()
 
     def end_timings(self) -> None:
         if self._timing_on and self._start is not None:
-            self._add_label_to_timings(self._make_label("total_time"))
+            mod_label = self._make_label("total_time")
+            self._add_label_to_timings(mod_label)
             delta = self._format_number(time.perf_counter() - self._start)
             self._timings[self._make_label("total_time")].append(delta)
-            self._log(f"total_time: {delta}")
+            self._log(f"Finished timing: {mod_label}: {delta}")
             self._interm = None
 
     def _make_label(self, label: str) -> str:
         return self._prefix + label
 
     def _get_delta(self) -> float | int:
+        if self._interm is None:
+            return 0
         return time.perf_counter() - self._interm
 
     def measure_time(self, label: str) -> None:
         if self._timing_on and self._interm is not None:
-            self._add_label_to_timings(self._make_label(label))
+            mod_label = self._make_label(label)
+            self._add_label_to_timings(mod_label)
             delta = self._format_number(self._get_delta())
-            self._timings[self._make_label(label)].append(delta)
-            self._log(f"{label}: {delta}")
+            self._timings[mod_label].append(delta)
+            self._log(f"{mod_label}: {delta}")
             self._interm = time.perf_counter()
 
     def _log(self, msg: str) -> None:
