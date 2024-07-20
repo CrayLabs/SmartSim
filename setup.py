@@ -180,7 +180,7 @@ deps = [
     "pyzmq>=25.1.2",
     "pygithub>=2.3.0",
     "numpy<2",
-    "typing_extensions>=4.1.0",
+    "typing_extensions>=4.1.0,<4.6",
 ]
 
 # Add SmartRedis at specific version

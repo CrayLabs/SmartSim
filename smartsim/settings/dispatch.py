@@ -38,7 +38,6 @@ from smartsim.error import errors
 from smartsim.types import LaunchedJobID
 
 if t.TYPE_CHECKING:
-
     from smartsim.experiment import Experiment
     from smartsim.settings.builders import LaunchArgBuilder
 
@@ -47,7 +46,7 @@ _T = t.TypeVar("_T")
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
 _TDispatchable = t.TypeVar("_TDispatchable", bound="LaunchArgBuilder")
-_EnvironMappingType: t.TypeAlias = t.Mapping[str, str | None]
+_EnvironMappingType: t.TypeAlias = t.Mapping[str, "str | None"]
 _FormatterType: t.TypeAlias = t.Callable[
     [_TDispatchable, "ExecutableLike", _EnvironMappingType], _T
 ]
@@ -163,7 +162,7 @@ class _DispatchRegistration(t.Generic[_TDispatchable, _T]):
     formatter: _FormatterType[_TDispatchable, _T]
     launcher_type: type[LauncherLike[_T]]
 
-    def _is_compatible_launcher(self, launcher) -> bool:
+    def _is_compatible_launcher(self, launcher: LauncherLike[t.Any]) -> bool:
         return type(launcher) is self.launcher_type
 
     def create_new_launcher_configuration(
