@@ -1,10 +1,7 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.slurm import (
-    SlurmArgBuilder,
-    _format_srun_command,
-)
+from smartsim.settings.builders.launch.slurm import SlurmArgBuilder, _as_srun_command
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -292,5 +289,5 @@ def test_set_het_groups(monkeypatch):
     ),
 )
 def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = _format_srun_command(SlurmArgBuilder(args), echo_executable_like, {})
+    cmd = _as_srun_command(SlurmArgBuilder(args), echo_executable_like, {})
     assert tuple(cmd) == expected

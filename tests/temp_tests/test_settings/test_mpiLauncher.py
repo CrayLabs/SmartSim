@@ -7,9 +7,9 @@ from smartsim.settings.builders.launch.mpi import (
     MpiArgBuilder,
     MpiexecArgBuilder,
     OrteArgBuilder,
-    _format_mpiexec_command,
-    _format_mpirun_command,
-    _format_orterun_command,
+    _as_mpiexec_command,
+    _as_mpirun_command,
+    _as_orterun_command,
 )
 from smartsim.settings.launchCommand import LauncherType
 
@@ -215,13 +215,11 @@ def test_invalid_hostlist_format(launcher):
 @pytest.mark.parametrize(
     "cls, fmt, cmd",
     (
-        pytest.param(MpiArgBuilder, _format_mpirun_command, "mpirun", id="w/ mpirun"),
+        pytest.param(MpiArgBuilder, _as_mpirun_command, "mpirun", id="w/ mpirun"),
         pytest.param(
-            MpiexecArgBuilder, _format_mpiexec_command, "mpiexec", id="w/ mpiexec"
+            MpiexecArgBuilder, _as_mpiexec_command, "mpiexec", id="w/ mpiexec"
         ),
-        pytest.param(
-            OrteArgBuilder, _format_orterun_command, "orterun", id="w/ orterun"
-        ),
+        pytest.param(OrteArgBuilder, _as_orterun_command, "orterun", id="w/ orterun"),
     ),
 )
 @pytest.mark.parametrize(

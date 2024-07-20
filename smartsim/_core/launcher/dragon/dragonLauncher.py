@@ -338,7 +338,7 @@ def _assert_schema_type(obj: object, typ: t.Type[_SchemaT], /) -> _SchemaT:
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO: Remove this registry and move back to builder file after fixing
-#       circular import
+#       circular import caused by `DragonLauncher.supported_rs`
 # -----------------------------------------------------------------------------
 from smartsim.settings.builders.launch.dragon import DragonArgBuilder
 from smartsim.settings.dispatch import ExecutableLike, dispatch

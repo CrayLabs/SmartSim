@@ -31,17 +31,17 @@ import re
 import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import ShellLauncher, dispatch, shell_format
+from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 
 from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
-_format_srun_command = shell_format(run_command="srun")
+_as_srun_command = make_shell_format_fn(run_command="srun")
 
 
-@dispatch(with_format=_format_srun_command, to_launcher=ShellLauncher)
+@dispatch(with_format=_as_srun_command, to_launcher=ShellLauncher)
 class SlurmArgBuilder(LaunchArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""

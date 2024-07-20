@@ -26,17 +26,11 @@
 
 from __future__ import annotations
 
-import os
-import typing as t
-
 from smartsim.log import get_logger
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
-
-if t.TYPE_CHECKING:
-    from smartsim.settings.dispatch import ExecutableLike
 
 logger = get_logger(__name__)
 

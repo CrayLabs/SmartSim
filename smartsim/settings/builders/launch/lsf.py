@@ -29,17 +29,17 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import ShellLauncher, dispatch, shell_format
+from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
-_format_jsrun_command = shell_format(run_command="jsrun")
+_as_jsrun_command = make_shell_format_fn(run_command="jsrun")
 
 
-@dispatch(with_format=_format_jsrun_command, to_launcher=ShellLauncher)
+@dispatch(with_format=_as_jsrun_command, to_launcher=ShellLauncher)
 class JsrunArgBuilder(LaunchArgBuilder):
     def launcher_str(self) -> str:
         """Get the string representation of the launcher"""

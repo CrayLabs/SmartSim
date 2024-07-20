@@ -28,7 +28,6 @@
 
 from __future__ import annotations
 
-import itertools
 import os
 import os.path as osp
 import textwrap
@@ -38,8 +37,8 @@ from os import environ, getcwd
 from tabulate import tabulate
 
 from smartsim._core.config import CONFIG
-from smartsim.error.errors import LauncherNotFoundError, SSUnsupportedError
-from smartsim.settings.dispatch import default_dispatcher
+from smartsim.error import errors
+from smartsim.settings.dispatch import DEFAULT_DISPATCHER
 from smartsim.status import SmartSimStatus
 
 from ._core import Controller, Generator, Manifest, previewrenderer
@@ -53,7 +52,6 @@ from .entity import (
 )
 from .error import SmartSimError
 from .log import ctx_exp_path, get_logger, method_contextualizer
-from .settings import BatchSettings, Container, RunSettings
 
 if t.TYPE_CHECKING:
     from smartsim.launchable.job import Job
@@ -113,7 +111,7 @@ class Experiment:
         name: str,
         exp_path: str | None = None,
         *,  # Keyword arguments only
-        settings_dispatcher: Dispatcher = default_dispatcher,
+        settings_dispatcher: Dispatcher = DEFAULT_DISPATCHER,
     ):
         """Initialize an Experiment instance.
 
@@ -204,7 +202,7 @@ class Experiment:
                     from_available_launchers=self._active_launchers,
                     with_settings=args,
                 )
-            except LauncherNotFoundError:
+            except errors.LauncherNotFoundError:
                 launch_config = dispatch.create_new_launcher_configuration(
                     for_experiment=self, with_settings=args
                 )

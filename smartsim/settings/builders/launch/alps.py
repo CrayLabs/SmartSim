@@ -29,17 +29,17 @@ from __future__ import annotations
 import typing as t
 
 from smartsim.log import get_logger
-from smartsim.settings.dispatch import ShellLauncher, dispatch, shell_format
+from smartsim.settings.dispatch import ShellLauncher, dispatch, make_shell_format_fn
 
-from ...common import StringArgument, set_check_input
+from ...common import set_check_input
 from ...launchCommand import LauncherType
 from ..launchArgBuilder import LaunchArgBuilder
 
 logger = get_logger(__name__)
-_format_aprun_command = shell_format(run_command="aprun")
+_as_aprun_command = make_shell_format_fn(run_command="aprun")
 
 
-@dispatch(with_format=_format_aprun_command, to_launcher=ShellLauncher)
+@dispatch(with_format=_as_aprun_command, to_launcher=ShellLauncher)
 class AprunArgBuilder(LaunchArgBuilder):
     def _reserved_launch_args(self) -> set[str]:
         """Return reserved launch arguments."""

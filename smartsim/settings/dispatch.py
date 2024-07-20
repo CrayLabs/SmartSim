@@ -31,7 +31,7 @@ import subprocess as sp
 import typing as t
 import uuid
 
-from typing_extensions import Self, TypeVarTuple, Unpack
+from typing_extensions import Self, TypeAlias, TypeVarTuple, Unpack
 
 from smartsim._core.utils import helpers
 from smartsim.error import errors
@@ -41,17 +41,17 @@ if t.TYPE_CHECKING:
     from smartsim.experiment import Experiment
     from smartsim.settings.builders import LaunchArgBuilder
 
-
-_T = t.TypeVar("_T")
 _Ts = TypeVarTuple("_Ts")
 _T_contra = t.TypeVar("_T_contra", contravariant=True)
-_TDispatchable = t.TypeVar("_TDispatchable", bound="LaunchArgBuilder")
-_EnvironMappingType: t.TypeAlias = t.Mapping[str, "str | None"]
-_FormatterType: t.TypeAlias = t.Callable[
-    [_TDispatchable, "ExecutableLike", _EnvironMappingType], _T
+_DispatchableT = t.TypeVar("_DispatchableT", bound="LaunchArgBuilder")
+_LaunchableT = t.TypeVar("_LaunchableT")
+
+_EnvironMappingType: TypeAlias = t.Mapping[str, "str | None"]
+_FormatterType: TypeAlias = t.Callable[
+    [_DispatchableT, "ExecutableLike", _EnvironMappingType], _LaunchableT
 ]
-_LaunchConfigType: t.TypeAlias = "_LauncherAdapter[ExecutableLike, _EnvironMappingType]"
-_UnkownType: t.TypeAlias = t.NoReturn
+_LaunchConfigType: TypeAlias = "_LauncherAdapter[ExecutableLike, _EnvironMappingType]"
+_UnkownType: TypeAlias = t.NoReturn
 
 
 @t.final
@@ -81,27 +81,27 @@ class Dispatcher:
         self,
         args: None = ...,
         *,
-        with_format: _FormatterType[_TDispatchable, _T],
-        to_launcher: type[LauncherLike[_T]],
+        with_format: _FormatterType[_DispatchableT, _LaunchableT],
+        to_launcher: type[LauncherLike[_LaunchableT]],
         allow_overwrite: bool = ...,
-    ) -> t.Callable[[type[_TDispatchable]], type[_TDispatchable]]: ...
+    ) -> t.Callable[[type[_DispatchableT]], type[_DispatchableT]]: ...
     @t.overload
     def dispatch(
         self,
-        args: type[_TDispatchable],
+        args: type[_DispatchableT],
         *,
-        with_format: _FormatterType[_TDispatchable, _T],
-        to_launcher: type[LauncherLike[_T]],
+        with_format: _FormatterType[_DispatchableT, _LaunchableT],
+        to_launcher: type[LauncherLike[_LaunchableT]],
         allow_overwrite: bool = ...,
     ) -> None: ...
     def dispatch(
         self,
-        args: type[_TDispatchable] | None = None,
+        args: type[_DispatchableT] | None = None,
         *,
-        with_format: _FormatterType[_TDispatchable, _T],
-        to_launcher: type[LauncherLike[_T]],
+        with_format: _FormatterType[_DispatchableT, _LaunchableT],
+        to_launcher: type[LauncherLike[_LaunchableT]],
         allow_overwrite: bool = False,
-    ) -> t.Callable[[type[_TDispatchable]], type[_TDispatchable]] | None:
+    ) -> t.Callable[[type[_DispatchableT]], type[_DispatchableT]] | None:
         """A type safe way to add a mapping of settings builder to launcher to
         handle the settings at launch time.
         """
@@ -113,7 +113,7 @@ class Dispatcher:
         if err_msg is not None:
             raise TypeError(err_msg)
 
-        def register(args_: type[_TDispatchable], /) -> type[_TDispatchable]:
+        def register(args_: type[_DispatchableT], /) -> type[_DispatchableT]:
             if args_ in self._dispatch_registry and not allow_overwrite:
                 launcher_type = self._dispatch_registry[args_].launcher_type
                 raise TypeError(
@@ -131,48 +131,51 @@ class Dispatcher:
         return register
 
     def get_dispatch(
-        self, args: _TDispatchable | type[_TDispatchable]
-    ) -> _DispatchRegistration[_TDispatchable, _UnkownType]:
+        self, args: _DispatchableT | type[_DispatchableT]
+    ) -> _DispatchRegistration[_DispatchableT, _UnkownType]:
         """Find a type of launcher that is registered as being able to launch
         the output of the provided builder
         """
         if not isinstance(args, type):
             args = type(args)
-        dispatch = self._dispatch_registry.get(args, None)
-        if dispatch is None:
+        dispatch_ = self._dispatch_registry.get(args, None)
+        if dispatch_ is None:
             raise TypeError(
                 f"No dispatch for `{type(args).__name__}` has been registered "
                 f"has been registered with {type(self).__name__} `{self}`"
             )
         # Note the sleight-of-hand here: we are secretly casting a type of
         # `_DispatchRegistration[Any, Any]` ->
-        #     `_DispatchRegistration[_TDispatchable, _T]`.
-        #  where `_T` is unbound!
+        #     `_DispatchRegistration[_DispatchableT, _LaunchableT]`.
+        #  where `_LaunchableT` is unbound!
         #
         # This is safe to do if all entries in the mapping were added using a
         # type safe method (e.g.  `Dispatcher.dispatch`), but if a user were to
         # supply a custom dispatch registry or otherwise modify the registry
         # this is not necessarily 100% type safe!!
-        return dispatch
+        return dispatch_
 
 
 @t.final
 @dataclasses.dataclass(frozen=True)
-class _DispatchRegistration(t.Generic[_TDispatchable, _T]):
-    formatter: _FormatterType[_TDispatchable, _T]
-    launcher_type: type[LauncherLike[_T]]
+class _DispatchRegistration(t.Generic[_DispatchableT, _LaunchableT]):
+    formatter: _FormatterType[_DispatchableT, _LaunchableT]
+    launcher_type: type[LauncherLike[_LaunchableT]]
 
     def _is_compatible_launcher(self, launcher: LauncherLike[t.Any]) -> bool:
+        # Disabling because we want to match the the type of the dispatch
+        # *exactly* as specified by the user
+        # pylint: disable-next=unidiomatic-typecheck
         return type(launcher) is self.launcher_type
 
     def create_new_launcher_configuration(
-        self, for_experiment: Experiment, with_settings: _TDispatchable
+        self, for_experiment: Experiment, with_settings: _DispatchableT
     ) -> _LaunchConfigType:
         launcher = self.launcher_type.create(for_experiment)
         return self.create_adapter_from_launcher(launcher, with_settings)
 
     def create_adapter_from_launcher(
-        self, launcher: LauncherLike[_T], settings: _TDispatchable
+        self, launcher: LauncherLike[_LaunchableT], settings: _DispatchableT
     ) -> _LaunchConfigType:
         if not self._is_compatible_launcher(launcher):
             raise TypeError(
@@ -181,14 +184,14 @@ class _DispatchRegistration(t.Generic[_TDispatchable, _T]):
                 f"exactly `{self.launcher_type}`"
             )
 
-        def format_(exe: ExecutableLike, env: _EnvironMappingType) -> _T:
+        def format_(exe: ExecutableLike, env: _EnvironMappingType) -> _LaunchableT:
             return self.formatter(settings, exe, env)
 
         return _LauncherAdapter(launcher, format_)
 
     def configure_first_compatible_launcher(
         self,
-        with_settings: _TDispatchable,
+        with_settings: _DispatchableT,
         from_available_launchers: t.Iterable[LauncherLike[t.Any]],
     ) -> _LaunchConfigType:
         launcher = helpers.first(self._is_compatible_launcher, from_available_launchers)
@@ -203,11 +206,14 @@ class _DispatchRegistration(t.Generic[_TDispatchable, _T]):
 @t.final
 class _LauncherAdapter(t.Generic[Unpack[_Ts]]):
     def __init__(
-        self, launcher: LauncherLike[_T], map_: t.Callable[[Unpack[_Ts]], _T]
+        self,
+        launcher: LauncherLike[_LaunchableT],
+        map_: t.Callable[[Unpack[_Ts]], _LaunchableT],
     ) -> None:
-        # NOTE: We need to cast off the `_T` -> `Any` in the `__init__`
-        #       signature to hide the transform from users of this class. If
-        #       possible, try not to expose outside of protected methods!
+        # NOTE: We need to cast off the `_LaunchableT` -> `Any` in the
+        #       `__init__` method signature to hide the transform from users of
+        #       this class. If possible, this type should not be exposed to
+        #       users of this class!
         self._adapt: t.Callable[[Unpack[_Ts]], t.Any] = map_
         self._adapted_launcher: LauncherLike[t.Any] = launcher
 
@@ -216,8 +222,11 @@ class _LauncherAdapter(t.Generic[Unpack[_Ts]]):
         return self._adapted_launcher.start(payload)
 
 
-default_dispatcher: t.Final = Dispatcher()
-dispatch: t.Final = default_dispatcher.dispatch
+DEFAULT_DISPATCHER: t.Final = Dispatcher()
+# Disabling because we want this to look and feel like a top level function,
+# but don't want to have a second copy of the nasty overloads
+# pylint: disable-next=invalid-name
+dispatch: t.Final = DEFAULT_DISPATCHER.dispatch
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -236,18 +245,14 @@ class ExecutableLike(t.Protocol):
 class LauncherLike(t.Protocol[_T_contra]):
     def start(self, launchable: _T_contra) -> LaunchedJobID: ...
     @classmethod
-    def create(cls, exp: Experiment) -> Self: ...
+    def create(cls, exp: Experiment, /) -> Self: ...
 
 
-# TODO: This is just a nice helper function that I am using for the time being
-#       to wire everything up! In reality it might be a bit too confusing and
-#       meta-program-y for production code. Check with the core team to see
-#       what they think!!
-def shell_format(
+def make_shell_format_fn(
     run_command: str | None,
 ) -> _FormatterType[LaunchArgBuilder, t.Sequence[str]]:
     def impl(
-        args: LaunchArgBuilder, exe: ExecutableLike, env: _EnvironMappingType
+        args: LaunchArgBuilder, exe: ExecutableLike, _env: _EnvironMappingType
     ) -> t.Sequence[str]:
         return (
             (
@@ -272,11 +277,12 @@ class ShellLauncher:
     def start(self, launchable: t.Sequence[str]) -> LaunchedJobID:
         id_ = create_job_id()
         exe, *rest = launchable
+        # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
         return id_
 
     @classmethod
-    def create(cls, exp: Experiment) -> Self:
+    def create(cls, _: Experiment) -> Self:
         return cls()
 
 

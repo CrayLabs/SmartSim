@@ -1,10 +1,7 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.local import (
-    LocalArgBuilder,
-    _format_local_command,
-)
+from smartsim.settings.builders.launch.local import LocalArgBuilder, _as_local_command
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -118,5 +115,5 @@ def test_format_env_vars():
 
 
 def test_formatting_returns_original_exe(echo_executable_like):
-    cmd = _format_local_command(LocalArgBuilder({}), echo_executable_like, {})
+    cmd = _as_local_command(LocalArgBuilder({}), echo_executable_like, {})
     assert tuple(cmd) == ("echo", "hello", "world")

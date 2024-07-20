@@ -1,7 +1,7 @@
 import pytest
 
 from smartsim._core.launcher.dragon.dragonLauncher import _as_run_request_view
-from smartsim._core.schemas.dragonRequests import DragonRunRequest
+from smartsim._core.schemas.dragonRequests import DragonRunRequestView
 from smartsim.settings import LaunchSettings
 from smartsim.settings.builders.launch.dragon import DragonArgBuilder
 from smartsim.settings.launchCommand import LauncherType
@@ -46,18 +46,17 @@ def test_formatting_launch_args_into_request(
         args.set_tasks_per_node(tasks_per_node)
     req = _as_run_request_view(args, echo_executable_like, {})
 
-    args = dict(
-        (k, v)
-        for k, v in (
-            ("nodes", nodes),
-            ("tasks_per_node", tasks_per_node),
-        )
+    args = {
+        k: v
+        for k, v in {
+            "nodes": nodes,
+            "tasks_per_node": tasks_per_node,
+        }.items()
         if v is not NOT_SET
-    )
-    expected = DragonRunRequest(
+    }
+    expected = DragonRunRequestView(
         exe="echo", exe_args=["hello", "world"], path="/tmp", env={}, **args
     )
-
     assert req.nodes == expected.nodes
     assert req.tasks_per_node == expected.tasks_per_node
     assert req.hostlist == expected.hostlist

@@ -1,7 +1,7 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.lsf import JsrunArgBuilder, _format_jsrun_command
+from smartsim.settings.builders.launch.lsf import JsrunArgBuilder, _as_jsrun_command
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -92,5 +92,5 @@ def test_launch_args():
     ),
 )
 def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = _format_jsrun_command(JsrunArgBuilder(args), echo_executable_like, {})
+    cmd = _as_jsrun_command(JsrunArgBuilder(args), echo_executable_like, {})
     assert tuple(cmd) == expected

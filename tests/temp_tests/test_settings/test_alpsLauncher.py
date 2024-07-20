@@ -1,10 +1,7 @@
 import pytest
 
 from smartsim.settings import LaunchSettings
-from smartsim.settings.builders.launch.alps import (
-    AprunArgBuilder,
-    _format_aprun_command,
-)
+from smartsim.settings.builders.launch.alps import AprunArgBuilder, _as_aprun_command
 from smartsim.settings.launchCommand import LauncherType
 
 pytestmark = pytest.mark.group_a
@@ -186,5 +183,5 @@ def test_invalid_exclude_hostlist_format():
     ),
 )
 def test_formatting_launch_args(echo_executable_like, args, expected):
-    cmd = _format_aprun_command(AprunArgBuilder(args), echo_executable_like, {})
+    cmd = _as_aprun_command(AprunArgBuilder(args), echo_executable_like, {})
     assert tuple(cmd) == expected
