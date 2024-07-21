@@ -245,7 +245,7 @@ class ExecutableProtocol(t.Protocol):
 
 
 class LauncherProtocol(t.Protocol[_T_contra]):
-    def start(self, launchable: _T_contra) -> LaunchedJobID: ...
+    def start(self, launchable: _T_contra, /) -> LaunchedJobID: ...
     @classmethod
     def create(cls, exp: Experiment, /) -> Self: ...
 
@@ -276,9 +276,9 @@ class ShellLauncher:
     def __init__(self) -> None:
         self._launched: dict[LaunchedJobID, sp.Popen[bytes]] = {}
 
-    def start(self, launchable: t.Sequence[str]) -> LaunchedJobID:
+    def start(self, command: t.Sequence[str]) -> LaunchedJobID:
         id_ = create_job_id()
-        exe, *rest = launchable
+        exe, *rest = command
         # pylint: disable-next=consider-using-with
         self._launched[id_] = sp.Popen((helpers.expand_exe_path(exe), *rest))
         return id_

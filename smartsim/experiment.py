@@ -177,11 +177,12 @@ class Experiment:
         experiment"""
 
     def start_jobs(
-        self, *jobs: Job, dispatcher: Dispatcher = DEFAULT_DISPATCHER
+        self, job: Job, *jobs: Job, dispatcher: Dispatcher = DEFAULT_DISPATCHER
     ) -> tuple[LaunchedJobID, ...]:
         """Execute a collection of `Job` instances.
 
-        :param jobs: The collection of jobs instances to start
+        :param job: The job instance to start
+        :param jobs: A collection of other job instances to start
         :param dispatcher: The dispatcher that should be used to determine how
             to start a job based on its settings. If not specified it will
             default to a dispatcher pre-configured by SmartSim.
@@ -189,12 +190,6 @@ class Experiment:
             jobs that can be used to query or alter the status of that
             particular execution of the job.
         """
-
-        if not jobs:
-            raise TypeError(
-                f"{type(self).__name__}.start_jobs() missing at least 1 required "
-                "positional argument of type `Job`"
-            )
 
         def _start(job: Job) -> LaunchedJobID:
             args = job.launch_settings.launch_args
@@ -222,7 +217,7 @@ class Experiment:
             self._active_launchers.add(launch_config._adapted_launcher)
             return launch_config.start(exe, env)
 
-        return tuple(map(_start, jobs))
+        return _start(job), *map(_start, jobs)
 
     @_contextualize
     def start(
@@ -592,8 +587,8 @@ class Experiment:
             === Launch Summary ===
             Experiment: {self.name}
             Experiment Path: {self.exp_path}
-            Launchers:
-            {textwrap.indent("  - ", launcher_list)}
+            Launcher(s):
+            {textwrap.indent("  - ", launcher_list) if launcher_list else "  <None>"}
             """)
 
         if manifest.applications:
