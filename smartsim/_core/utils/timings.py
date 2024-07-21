@@ -37,12 +37,16 @@ logger = get_logger("PerfTimer")
 
 class PerfTimer:
     def __init__(
-        self, filename: str = "timings", prefix: str = "", timing_on: bool = True, debug: bool = False
+        self,
+        filename: str = "timings",
+        prefix: str = "",
+        timing_on: bool = True,
+        debug: bool = False,
     ):
         self._start: t.Optional[float] = None
         self._interm: t.Optional[float] = None
         self._timings: OrderedDict[str, list[t.Union[float, int, str]]] = OrderedDict()
-        self._timing_on = True
+        self._timing_on = timing_on
         self._filename = filename
         self._prefix = prefix
         self._debug = debug
@@ -66,9 +70,7 @@ class PerfTimer:
                 value = self._format_number(first_value)
                 self._log(f"Started timing: {first_label}: {value}")
                 self._add_label_to_timings(mod_label)
-                self._timings[mod_label].append(
-                    value
-                )
+                self._timings[mod_label].append(value)
             self._start = time.perf_counter()
             self._interm = time.perf_counter()
 
@@ -88,6 +90,15 @@ class PerfTimer:
         if self._interm is None:
             return 0
         return time.perf_counter() - self._interm
+
+    def get_last(self, label: str) -> str:
+        mod_label = self._make_label(label)
+        if mod_label in self._timings:
+            value = self._timings[mod_label][-1]
+            if value:
+                return f"{label}: {value}"
+
+        return "Not measured yet"
 
     def measure_time(self, label: str) -> None:
         if self._timing_on and self._interm is not None:
