@@ -38,14 +38,15 @@ import multiprocessing as mp
 import time
 import typing as t
 import uuid
+from concurrent.futures import Future, ThreadPoolExecutor
 from queue import Empty, Full, Queue
-from threading import Lock
+from threading import RLock
 from types import TracebackType
 
 from packaging.version import Version
 
 from .....error import SmartSimError
-from .....log import get_logger
+from .....log import ContextThread, get_logger
 from ....utils.timings import PerfTimer
 from ...comm.channel.channel import CommChannelBase
 from ...comm.channel.dragonchannel import DragonCommChannel
@@ -161,7 +162,7 @@ class WorkerDevice:
         """The name used by the toolkit to identify this device"""
         self._models: dict[str, t.Any] = {}
         """Dictionary of model key to model for models stored on this device"""
-        self._lock = Lock()
+        self._lock = RLock()
         """Lock to ensure only one thread at the time accesses this device"""
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> t.Optional[bool]:
@@ -190,7 +191,7 @@ class BatchQueue(Queue[InferenceRequest]):
         self._first_put: t.Optional[float] = None
         self._disposable = False
         self._model_key = model_key
-        self._flush_lock = Lock()
+        self._flush_lock = RLock()
         self._id = str(uuid.uuid4())
 
     @property
@@ -294,12 +295,12 @@ class RequestDispatcher:
         self._model_name_to_key: dict[str, str] = {}
         self._batch_timeout = batch_timeout
         self._batch_size = batch_size
-        self._queue_swap_lock: t.Optional[Lock] = None
+        self._queue_swap_lock: t.Optional[RLock] = None
         self._incoming_channel = incoming_channel
         self._outgoing_queue: DragonQueue = mp.Queue(maxsize=0)
         self._feature_store = feature_store
         self._comm_channel_type = comm_channel_type
-        self._perf_timer = PerfTimer(prefix="r_", debug=True)
+        self._perf_timer = PerfTimer(prefix="r_", debug=False, timing_on=False)
         self._worker = TorchWorker()
 
     def _validate_request(self, request: InferenceRequest) -> bool:
@@ -334,7 +335,7 @@ class RequestDispatcher:
         return True
 
     def run(self) -> None:
-        self._queue_swap_lock = Lock()
+        self._queue_swap_lock = RLock()
         if self._incoming_channel is None:
             raise SmartSimError("No incoming channel for dispatcher")
         while True:
@@ -357,11 +358,14 @@ class RequestDispatcher:
                 request = deserialize_message(request_bytes, self._comm_channel_type)
                 if request.input_meta and tensor_bytes_list:
                     request.raw_inputs = tensor_bytes_list
+
                 self._perf_timer.measure_time("deserialize_message")
                 if not self._validate_request(request):
                     continue
+
                 self._perf_timer.measure_time("validate_request")
                 self.dispatch(request)
+
                 self._perf_timer.measure_time("dispatch")
             finally:
                 self.flush_requests()
@@ -369,9 +373,6 @@ class RequestDispatcher:
                 # self.remove_queues()
 
                 self._perf_timer.end_timings()
-
-                if self._perf_timer.max_length == 4*801:
-                    self._perf_timer.print_timings(False)
 
     @property
     def task_queue(self) -> DragonQueue:
@@ -425,6 +426,7 @@ class RequestDispatcher:
     def flush_requests(self) -> None:
         for queue in self._queues:
             if queue.ready and queue.acquire(blocking=False):
+                self._perf_timer.start_timings()
                 self._perf_timer.measure_time("find_queue")
                 try:
                     batch = InferenceBatch(
@@ -445,5 +447,7 @@ class RequestDispatcher:
                 for request in batch.requests:
                     request.raw_inputs = []
                     request.input_meta = []
+
                 self._outgoing_queue.put(batch)
                 self._perf_timer.measure_time("put")
+                self._perf_timer.end_timings()

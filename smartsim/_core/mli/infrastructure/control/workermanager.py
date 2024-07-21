@@ -51,8 +51,8 @@ from ...comm.channel.dragonchannel import DragonCommChannel
 from ...infrastructure.environmentloader import EnvironmentConfigLoader
 from ...infrastructure.storage.featurestore import FeatureStore
 from ...infrastructure.worker.worker import (
+    InferenceBatch,
     InferenceReply,
-    InferenceRequest,
     LoadModelResult,
     MachineLearningWorkerBase,
 )
@@ -178,21 +178,21 @@ class WorkerManager(Service):
             feature_store=self._feature_store,
         )
         """Dispatcher used to batch requests"""
-        self._device_manager: DeviceManager = DeviceManager([WorkerDevice("gpu")])
-
-        self._perf_timer = PerfTimer(prefix="w_", debug=False)
+        self._device_manager: DeviceManager = DeviceManager(
+            [WorkerDevice(f"gpu:{idx}") for idx in range(4)]
+        )
+        self._device_idx: int = 0
+        self._perf_timer = PerfTimer(prefix="w_", debug=False, timing_on=False)
 
         try:
             mp.set_start_method("dragon")
         except RuntimeError:
             pass
-        # self._dispatcher_process = mp.Process(
-        #     target=self._request_dispatcher.run, name="Dispatcher"
-        # )
+
         self._dispatcher_process = self._create_local_dispatcher_process()
 
     def _create_local_dispatcher_process(self) -> dragon_process_group.ProcessGroup:
-        dispatcher_cpus = 2
+        dispatcher_cpus = 16
         if sys.platform != "darwin":
             self_affinity: list[int] = list(os.sched_getaffinity(os.getpid()))
             os.sched_setaffinity(os.getpid(), self_affinity[:-dispatcher_cpus])
@@ -235,7 +235,7 @@ class WorkerManager(Service):
         """Executes calls to the machine learning worker implementation to complete
         the inference pipeline"""
 
-        batch: InferenceRequest = self._request_dispatcher.task_queue.get()
+        batch: InferenceBatch = self._request_dispatcher.task_queue.get()
 
         self._perf_timer.start_timings()
         if batch is None or 0 == len(batch.requests):
@@ -254,6 +254,14 @@ class WorkerManager(Service):
         model_result = LoadModelResult(device.get_model(batch.model_key))
         self._perf_timer.measure_time("load_model")
 
+        if batch.inputs is None:
+            for request in batch.requests:
+                exception_handler(
+                    ValueError("Error batching inputs"),
+                    request.callback,
+                    "Error batching inputs.",
+                )
+            return
         transformed_input = batch.inputs
 
         try:
@@ -267,9 +275,7 @@ class WorkerManager(Service):
         self._perf_timer.measure_time("execute")
 
         try:
-            transformed_outputs = self._worker.transform_output(
-                batch, execute_result
-            )
+            transformed_outputs = self._worker.transform_output(batch, execute_result)
         except Exception as e:
             for request in batch.requests:
                 exception_handler(
@@ -279,7 +285,6 @@ class WorkerManager(Service):
         self._perf_timer.measure_time("transform_output")
 
         for request, transformed_output in zip(batch.requests, transformed_outputs):
-            print(len(transformed_output.outputs), flush=True)
             reply = InferenceReply()
             if request.output_keys:
                 try:
@@ -320,8 +325,8 @@ class WorkerManager(Service):
 
         self._perf_timer.end_timings()
 
-        if self._perf_timer.max_length == 4*801:
-            self._perf_timer.print_timings(True)
+        # if self._perf_timer.max_length == 4 * 801:
+        #     self._perf_timer.print_timings(True)
 
     def _can_shutdown(self) -> bool:
         """Return true when the criteria to shut down the service are met."""

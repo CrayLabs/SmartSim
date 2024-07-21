@@ -101,6 +101,6 @@ if __name__ == "__main__":
         comm_channel_type=DragonCommChannel,
         device = args.device,
         batch_size=4,
-        batch_timeout=0.1,
+        batch_timeout=0.0005,  # 1e-3 is the best with ResNet50
     )
     worker_manager.execute()

@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import typing as t
 
 import smartsim._core.mli.comm.channel.channel as cch
@@ -52,6 +51,6 @@ class DragonCommChannel(cch.CommChannelBase):
     def recv(self) -> t.List[bytes]:
         """Receieve a message through the underlying communication channel
         :returns: the received message"""
-        with self._channel.recvh(timeout=None) as recvh:
-            message_bytes: bytes = recvh.recv_bytes(timeout=None)
+        with self._channel.recvh(timeout=0.01) as recvh:
+            message_bytes: bytes = recvh.recv_bytes(timeout=1)
             return [message_bytes]

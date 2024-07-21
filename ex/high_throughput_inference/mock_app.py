@@ -160,10 +160,12 @@ if __name__ == "__main__":
 
     TOTAL_ITERATIONS = 100
 
-    for b_size in [1, 2, 4, 8, 16, 32, 64, 128]:
+    for log2_bsize in range(7):
+        b_size: int = 2**log2_bsize
         logger.info(f"Batch size: {b_size}")
         for iteration_number in range(TOTAL_ITERATIONS + int(b_size==1)):
             logger.info(f"Iteration: {iteration_number}")
             client.run_model(resnet.name, resnet.get_batch(b_size))
+            logger.info(client._perf_timer.get_last("total_time"))
 
     client.print_timings(to_file=True)

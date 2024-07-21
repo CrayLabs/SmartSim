@@ -151,8 +151,8 @@ class FetchModelResult:
 @dataclass
 class InferenceBatch:
     model_key: str
-    requests: t.Optional[list[InferenceRequest]]
-    inputs: t.Optional[list[TransformInputResult]]
+    requests: list[InferenceRequest]
+    inputs: t.Optional[TransformInputResult]
 
 
 class MachineLearningWorkerCore:
